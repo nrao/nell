@@ -14,8 +14,9 @@ import com.extjs.gxt.ui.client.widget.layout.RowLayout;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.MouseListenerAdapter;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.widgetideas.graphics.client.GWTCanvas;
 
-class SemesterCalendar extends LayoutContainer {
+class SemesterCalendar extends LayoutContainer implements CanvasClient {
     public SemesterCalendar() {
         initLayout();
     }
@@ -51,6 +52,8 @@ class SemesterCalendar extends LayoutContainer {
     }
 
     private void addListeners() {
+        calendar.addClient(this);
+
         calendar.addMouseListener(new MouseListenerAdapter() {
             public void onMouseDown(Widget sender, int x, int y) {
                 dragTarget = hitTestAllocation(x, y);
@@ -87,6 +90,12 @@ class SemesterCalendar extends LayoutContainer {
     }
 
     private void draw(boolean showConflicts) {
+        this.showConflicts = showConflicts;
+        calendar.draw();
+        this.showConflicts = false;
+    }
+
+    public void onPaint(GWTCanvas canvas) {
         // If there is a drag target or current allocation, only blink its conflicts.
         Set<Session> conflicts = null;
         if (dragTarget != null) {
@@ -102,7 +111,6 @@ class SemesterCalendar extends LayoutContainer {
             conflicts = sudoku.findConflicts(allocations);
         }
 
-        calendar.draw();
         for (Session a : allocations) {
             if (! showConflicts && conflicts.contains(a)) { continue; }
             if (a != dragTarget && a != current) {
@@ -181,4 +189,6 @@ class SemesterCalendar extends LayoutContainer {
     private int dragStartDay;
     private int mouseX;
     private int mouseY;
+    
+    private boolean showConflicts = false;
 }

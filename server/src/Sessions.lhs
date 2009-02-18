@@ -16,31 +16,8 @@
 > import qualified Data.ByteString.Lazy.Char8 as L
 
 > data Session = Session {
->     session_id   :: Int
->   , name         :: Maybe String
->   , project      :: Maybe String
->   , session_type :: Maybe String
->   , lst          :: Maybe Double
->   , dec          :: Maybe Double
->   , frequency    :: Maybe Double
->   , minDuration  :: Maybe Int
->   , maxDuration  :: Maybe Int
->   , timeBetween  :: Maybe Int
->   , allotted     :: Maybe Int
->   }
-
-> defaultSession = Session {
->     session_id   = 0
->   , name         = Nothing
->   , project      = Nothing
->   , session_type = Nothing
->   , lst          = Nothing
->   , dec          = Nothing
->   , frequency    = Nothing
->   , minDuration  = Nothing
->   , maxDuration  = Nothing
->   , timeBetween  = Nothing
->   , allotted     = Nothing
+>     session_id :: Int
+>   , fields     :: [(String, String)]
 >   }
 
 > instance JSON Session where
@@ -49,25 +26,8 @@
 
 > jsonToSession _ = undefined
 
-> sessionToJson session = makeObj $
->       ("id", showJSON . session_id $ session)
->     : concatMap field [
->           ("name",         showJSON' . name)
->         , ("project",      showJSON' . project)
->         , ("session_type", showJSON' . session_type)
->         , ("lst",          showJSON' . lst)
->         , ("dec",          showJSON' . dec)
->         , ("frequency",    showJSON' . frequency)
->         , ("min_duration", showJSON' . minDuration)
->         , ("max_duration", showJSON' . maxDuration)
->         , ("time_between", showJSON' . timeBetween)
->         , ("allotted",     showJSON' . allotted)
->         ]
->   where
->     field (name, accessor) = maybeToList . fmap ((,) name) . accessor $ session
-
-> showJSON' :: JSON a => Maybe a -> Maybe JSValue
-> showJSON' = fmap showJSON
+> sessionToJson (Session sid fields) = makeObj $
+>     ("id", showJSON sid) : [(key, showJSON value) | (key, value) <- fields]
 
 > sessionsHandler     :: Connection -> Handler ()
 > sessionsHandler cnn = hMethodRouter [
@@ -75,24 +35,18 @@
 >     , (POST, handlePost cnn)
 >     ] $ hError NotFound
 
+> -- GET /sessions
 > listSessions cnn = do
->     rst <- liftIO $ quickQuery' cnn query []
->     let sessions = map buildSession rst
+>     sessions <- liftIO $ listSessions' cnn
 >     jsonHandler $ makeObj [("sessions", showJSON sessions)]
->   where
->     query           = "SELECT * FROM sessions"
->     buildSession xs = defaultSession {
->         session_id   = fromSql $ xs !! 0
->       , name         = fromSql $ xs !! 1
->       , project      = fromSql $ xs !! 2
->       , session_type = fromSql $ xs !! 3
->       , lst          = fromSql $ xs !! 4
->       , dec          = fromSql $ xs !! 5
->       , minDuration  = fromSql $ xs !! 6
->       , maxDuration  = fromSql $ xs !! 7
->       , timeBetween  = fromSql $ xs !! 8
->       , allotted     = fromSql $ xs !! 9
->       }
+
+> listSessions' cnn = do
+>     rst <- quickQuery' cnn "SELECT id FROM sessions" []
+>     mapM (readSession cnn) [fromSql sid | [sid] <- rst]
+
+> readSession cnn sid = do
+>     rst <- quickQuery' cnn "SELECT key, value FROM fields where session_id = ?" [toSql sid]
+>     return $ Session sid [(fromSql key, fromSql value) | [key, value] <- rst]
 
 > handlePost cnn = do
 >     bytes <- contents
@@ -102,22 +56,32 @@
 >         Just "delete" -> deleteSession cnn params
 >         Just "put"    -> saveSession cnn params
 
+> -- POST /sessions
 > newSession cnn params = do
->     [[n]] <- liftIO $ withTransaction cnn $ \cnn -> do
->         run cnn query []
->         quickQuery' cnn "SELECT CURRVAL('sessions_id_seq')" []
->     jsonHandler $ defaultSession { session_id = fromSql n }
->   where
->     query = "INSERT INTO sessions(name) VALUES('')"
+>     [[sid]] <- liftIO $ newSession' cnn
+>     saveSession' cnn (fromSql sid) params
+
+> newSession' cnn = withTransaction cnn $ \cnn -> do
+>     run cnn "INSERT INTO sessions(dummy) values(0)" []
+>     quickQuery' cnn "SELECT CURRVAL('sessions_id_seq')" []
 
 > -- PUT /sessions/:id
 > saveSession cnn params = do
 >     '/' : sid <- getM $ path % uri % request
->     liftIO $ updateQuery cnn sid slots
->     jsonHandler $ makeObj [("success", showJSON "ok")]
+>     saveSession' cnn (read sid) params
+
+> saveSession' cnn sid params = do      
+>     liftIO $ saveSession'' cnn sid params'
+>     session <- liftIO $ readSession cnn sid
+>     jsonHandler session
 >   where
->     getParam name = maybeToList . fmap ((,) name) . lookup' Nothing name $ params
->     slots = concatMap getParam ["name", "project", "session_type", "lst", "dec", "frequency", "min_duration", "max_duration", "time_between", "allotted"]
+>     params' = [(key, value) | (key, Just value) <- params, not $ key `elem` ["_method", "id"]]
+
+> saveSession'' :: Connection -> Int -> [(String, String)] -> IO ()
+> saveSession'' cnn sid params = withTransaction cnn $ \cnn -> do
+>     run cnn "DELETE FROM fields WHERE session_id = ?" [toSql sid]
+>     flip mapM_ params $ \(key, value) ->
+>         run cnn "INSERT INTO fields(session_id, key, value) VALUES(?, ?, ?)" [toSql sid, toSql key, toSql value]
 
 > updateQuery :: Connection -> String -> [(String, String)] -> IO ()
 > updateQuery cnn key slots = withTransaction cnn $ \cnn -> do
@@ -127,4 +91,14 @@
 >     query  = "UPDATE sessions SET " ++ query' ++ " WHERE id = ?"
 >     query' = intercalate ", " $ [name ++ " = ?" | (name, _) <- slots]
 
-> deleteSession _ _ = hError NotFound
+> -- DELETE /sessions/:id
+> deleteSession cnn _ = do
+>     '/' : sid <- getM $ path % uri % request
+>     liftIO $ deleteSession' cnn (read sid)
+>     jsonHandler $ makeObj [("success", showJSON "ok")]
+
+> deleteSession' :: Connection -> Int -> IO ()
+> deleteSession' cnn sid = withTransaction cnn $ \cnn -> do
+>     run cnn "DELETE FROM fields WHERE session_id = ?" [toSql sid]
+>     run cnn "DELETE FROM sessions WHERE id = ?" [toSql sid]
+>     return ()

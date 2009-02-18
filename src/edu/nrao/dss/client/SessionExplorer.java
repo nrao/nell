@@ -8,6 +8,8 @@ import com.extjs.gxt.ui.client.Style.HorizontalAlignment;
 import com.extjs.gxt.ui.client.data.BaseListLoadConfig;
 import com.extjs.gxt.ui.client.data.BaseListLoadResult;
 import com.extjs.gxt.ui.client.data.BaseListLoader;
+import com.extjs.gxt.ui.client.data.BaseModelData;
+import com.extjs.gxt.ui.client.data.DataField;
 import com.extjs.gxt.ui.client.data.DataReader;
 import com.extjs.gxt.ui.client.data.HttpProxy;
 import com.extjs.gxt.ui.client.data.JsonReader;
@@ -25,7 +27,6 @@ import com.extjs.gxt.ui.client.store.ListStore;
 import com.extjs.gxt.ui.client.store.StoreEvent;
 import com.extjs.gxt.ui.client.store.StoreListener;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
-import com.extjs.gxt.ui.client.widget.form.NumberField;
 import com.extjs.gxt.ui.client.widget.form.SimpleComboBox;
 import com.extjs.gxt.ui.client.widget.form.TextField;
 import com.extjs.gxt.ui.client.widget.form.ComboBox.TriggerAction;
@@ -44,8 +45,8 @@ import com.extjs.gxt.ui.client.widget.toolbar.SeparatorToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.TextToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.user.client.Window;
 
 class SessionExplorer extends ContentPanel {
     public SessionExplorer() {
@@ -58,36 +59,31 @@ class SessionExplorer extends ContentPanel {
         setHeaderVisible(false);
         setLayout(new FitLayout());
 
-        CheckBoxSelectionModel<SessionModel> selection = new CheckBoxSelectionModel<SessionModel>();
+        CheckBoxSelectionModel<BaseModelData> selection = new CheckBoxSelectionModel<BaseModelData>();
 
         ColumnConfig[] columns = new ColumnConfig[] {
                 selection.getColumn(),
                 textField(new ColumnConfig("name", "Name", 100)),
                 textField(new ColumnConfig("project", "Project", 100)),
-                typeField(new ColumnConfig("session_type", "Type", 80)),
-                timeField(new ColumnConfig("lst", "LST", 80)),
-                doubleField(new ColumnConfig("dec", "DEC", 60), -180.0, 180.0),
-                doubleField(new ColumnConfig("frequency", "Frequency", 80), 0.0, 100.0),
-                intField(new ColumnConfig("min_duration", "Min. Duration", 100), 2, 8),
-                intField(new ColumnConfig("max_duration", "Max. Duration", 100), 4, 24),
+                typeField(new ColumnConfig("type", "Type", 80)),
+                doubleField(new ColumnConfig("lst", "LST", 80)),
+                doubleField(new ColumnConfig("dec", "DEC", 60)),
+                intField(new ColumnConfig("frequency", "Frequency", 80)),
+                intField(new ColumnConfig("min_duration", "Min. Duration", 100)),
+                intField(new ColumnConfig("max_duration", "Max. Duration", 100)),
                 intField(new ColumnConfig("time_between", "Time Between",  100)),
                 intField(new ColumnConfig("allotted", "Allotted", 60))
         };
 
         RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, "/sessions");
-        DataReader     reader  = new JsonReader<BaseListLoadConfig>(new SessionType()) {
-            @Override
-            public ModelData newModelInstance() {
-                return new SessionModel();
-            }
-        };
+        DataReader     reader  = new JsonReader<BaseListLoadConfig>(new SessionType());
 
-        HttpProxy<BaseListLoadConfig, BaseListLoadResult<SessionModel>> proxy =
-            new HttpProxy<BaseListLoadConfig, BaseListLoadResult<SessionModel>>(builder);
-        loader = new BaseListLoader<BaseListLoadConfig, BaseListLoadResult<SessionModel>>(proxy, reader);
-        store  = new ListStore<SessionModel>(loader);
+        HttpProxy<BaseListLoadConfig, BaseListLoadResult<BaseModelData>> proxy =
+            new HttpProxy<BaseListLoadConfig, BaseListLoadResult<BaseModelData>>(builder);
+        loader = new BaseListLoader<BaseListLoadConfig, BaseListLoadResult<BaseModelData>>(proxy, reader);
+        store  = new ListStore<BaseModelData>(loader);
 
-        grid   = new EditorGrid<SessionModel>(store, new ColumnModel(Arrays.asList(columns)));
+        grid   = new EditorGrid<BaseModelData>(store, new ColumnModel(Arrays.asList(columns)));
         add(grid);
 
         grid.setSelectionModel(selection);
@@ -104,53 +100,44 @@ class SessionExplorer extends ContentPanel {
         grid.addListener(Events.AfterEdit, new Listener<GridEvent>() {
             public void handleEvent(GridEvent ge) {
                 Object value = ge.record.get(ge.property);
-                for (SessionModel model : grid.getSelectionModel().getSelectedItems()) {
+                for (BaseModelData model : grid.getSelectionModel().getSelectedItems()) {
                     store.getRecord(model).set(ge.property, value);
                 }
             }
         });
         
-        store.addStoreListener(new StoreListener<SessionModel>() {
+        store.addStoreListener(new StoreListener<BaseModelData>() {
             @Override
-            public void storeUpdate(StoreEvent<SessionModel> se) {
-                JSONRequest.save("/sessions/"+se.model.getId(), se.model, null);
+            public void storeUpdate(StoreEvent<BaseModelData> se) {
+                JSONRequest.save("/sessions/"+((Number) se.model.get("id")).intValue(), se.model, null);
             }
         });
     }
 
-    private ColumnConfig doubleField(ColumnConfig column, double minimum, double maximum) {
-        NumberField field = new NumberField();
-        field.setPropertyEditorType(Double.class);
-        field.setMinValue(minimum);
-        field.setMaxValue(maximum);
-
+    private ColumnConfig doubleField(ColumnConfig column) {
+        textField(column);
         column.setAlignment(HorizontalAlignment.RIGHT);
-        column.setEditor(new CellEditor(field));
-        column.setNumberFormat(NumberFormat.getFormat("0.00"));
+        
+        // NumberField field = new NumberField();
+        // field.setPropertyEditorType(Double.class);
+        // field.setMinValue(minimum);
+        // field.setMaxValue(maximum);
+
+        // column.setEditor(new CellEditor(field));
+        // column.setNumberFormat(NumberFormat.getFormat("0.00"));
 
         return column;
     }
 
     private ColumnConfig intField(ColumnConfig column) {
-        NumberField field = new NumberField();
-        field.setPropertyEditorType(Integer.class);
-
+        textField(column);
         column.setAlignment(HorizontalAlignment.RIGHT);
-        column.setEditor(new CellEditor(field));
-        column.setNumberFormat(NumberFormat.getFormat("0"));
+        
+        // NumberField field = new NumberField();
+        // field.setPropertyEditorType(Integer.class);
 
-        return column;
-    }
-
-    private ColumnConfig intField(ColumnConfig column, int minimum, int maximum) {
-        NumberField field = new NumberField();
-        field.setPropertyEditorType(Integer.class);
-        field.setMinValue(minimum);
-        field.setMaxValue(maximum);
-
-        column.setAlignment(HorizontalAlignment.RIGHT);
-        column.setEditor(new CellEditor(field));
-        column.setNumberFormat(NumberFormat.getFormat("0"));
+        // column.setEditor(new CellEditor(field));
+        // column.setNumberFormat(NumberFormat.getFormat("0"));
 
         return column;
     }
@@ -161,14 +148,15 @@ class SessionExplorer extends ContentPanel {
         return column;
     }
 
-    private ColumnConfig timeField(ColumnConfig column) {
+    @SuppressWarnings("unused")
+	private ColumnConfig timeField(ColumnConfig column) {
         TextField<String> timeField = new TextField<String>();
         timeField.setRegex("[0-2]\\d:\\d\\d:\\d\\d(\\.\\d+)?");
 
         column.setAlignment(HorizontalAlignment.RIGHT);
 
-        column.setRenderer(new GridCellRenderer<SessionModel>() {
-            public String render(SessionModel model, String property, ColumnData config, int rowIndex, int colIndex, ListStore<SessionModel> store) {
+        column.setRenderer(new GridCellRenderer<BaseModelData>() {
+            public String render(BaseModelData model, String property, ColumnData config, int rowIndex, int colIndex, ListStore<BaseModelData> store) {
                 return Conversions.radiansToTime(((Double) model.get(property)).doubleValue());
             }
         });
@@ -297,23 +285,32 @@ class SessionExplorer extends ContentPanel {
             @Override
             public void onSuccess(JSONObject json) {
                 int id = (int) json.get("id").isNumber().doubleValue();
+
+                BaseModelData model = new BaseModelData();
+                model.set("id", id);
                 
-                SessionModel model = new SessionModel();
-                model.setId(id);
+                SessionType type = new SessionType();
+                for (int i = 0; i < type.getFieldCount(); ++i) {
+                	DataField field = type.getField(i);
+                	if (field.name == "id") {
+                		continue;
+                	}
+                	
+                	if (json.containsKey(field.name)) {
+                		model.set(field.name, json.get(field.name).isString().stringValue());
+                	}
+                }
                 
                 store.add(model);
             }
         });
-        
-        //SessionWizard wizard = new SessionWizard();
-        //wizard.show();
     }
 
     /** Provides basic spreadsheet-like functionality. */
-    private EditorGrid<SessionModel>       grid;
+    private EditorGrid<BaseModelData>      grid;
 
     /** Use store.add() to remember dynamically created sessions. */
-    private ListStore<SessionModel>        store;
+    private ListStore<BaseModelData>       store;
 
     /** Use loader.load() to refresh with the list of sessions on the server. */
     private ListLoader<BaseListLoadConfig> loader;
