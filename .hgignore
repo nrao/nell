@@ -17,5 +17,7 @@ Scheduler-shell
 Scheduler.launch
 
 bin/
+client
 dist/
 tomcat/
+www/
