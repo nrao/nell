@@ -1,19 +1,62 @@
 package edu.nrao.dss.client;
 
+import com.google.gwt.user.client.ui.MouseListenerAdapter;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.widgetideas.graphics.client.Color;
+import com.google.gwt.widgetideas.graphics.client.GWTCanvas;
 
 class Calendar extends CanvasComponent {
     public Calendar() {
-        super(WIDTH, HEIGHT);
+        super(WIDTH, 2*HEIGHT);
+
+        addMouseListener(new MouseListenerAdapter() {
+            public void onMouseEnter(Widget sender) {
+                mouseEnter = true;
+            }
+            public void onMouseLeave(Widget sender) {
+                mouseEnter = false;
+            }
+            public void onMouseMove(Widget sender, int x, int y) {
+                mouseX = x;
+                mouseY = y;
+            }
+        });
     }
 
-    public void draw() {
-		eraseBackground();
-		drawGrid();
+    public void paint(GWTCanvas canvas) {
+        doPaint(canvas);
+
+        if (mouseEnter) {
+            canvas.beginPath();
+            canvas.arc(mouseX, mouseY, 160, 0, 2*Math.PI, true);
+            clip();
+            canvas.scale(2.0, 2.0);
+            canvas.translate(-mouseX/2.0, -mouseY/2.0);
+            canvas.clear();
+            doPaint(canvas);
+        }
 	}
 
+    private void doPaint(GWTCanvas canvas) {
+        canvas.saveContext();
+
+        canvas.translate(0.0, HEIGHT/2.0);
+        canvas.beginPath();
+        canvas.moveTo(0, 0);
+        canvas.lineTo(WIDTH, 0);
+        canvas.lineTo(WIDTH, HEIGHT);
+        canvas.lineTo(0, HEIGHT);
+        canvas.lineTo(0, 0);
+        clip();
+
+        drawGrid(canvas);
+        super.paint(canvas);
+
+        canvas.restoreContext();
+    }
+
     public int positionToHour(int y) {
-		return y / HOUR_HEIGHT;
+		return (y - HEIGHT/2) / HOUR_HEIGHT;
 	}
 
     public int positionToDay(int x) {
@@ -34,68 +77,44 @@ class Calendar extends CanvasComponent {
             fillRect(startDay+1, 0, numDays, startHour + numHours - 24);
             return;
         }
-		getCanvas().fillRect(startDay*DAY_WIDTH, startHour*HOUR_HEIGHT, numDays*DAY_WIDTH, numHours*HOUR_HEIGHT);
-	}
-
-    public void restoreContext() {
-		getCanvas().restoreContext();
-	}
-
-    public void saveContext() {
-		getCanvas().saveContext();
-	}
-
-    public void setFillStyle(Color color) {
-		getCanvas().setFillStyle(color);
-	}
-
-    public void setLineWidth(double width) {
-		getCanvas().setLineWidth(width);
-	}
-
-    public void setStrokeStyle(Color color) {
-		getCanvas().setStrokeStyle(color);
+        getCanvas().fillRect(startDay*DAY_WIDTH, startHour*HOUR_HEIGHT, numDays*DAY_WIDTH, numHours*HOUR_HEIGHT);
 	}
 
     public void strokeRect(int startHour, int startDay, int numHours, int numDays) {
-		getCanvas().strokeRect(startDay*DAY_WIDTH, startHour*HOUR_HEIGHT, numDays*DAY_WIDTH, numHours*HOUR_HEIGHT);
-	}
+        getCanvas().strokeRect(startDay*DAY_WIDTH, startHour*HOUR_HEIGHT, numDays*DAY_WIDTH, numHours*HOUR_HEIGHT);
+    }
 
-    public void translate(int x, int y) {
-		getCanvas().translate(x, y);
-	}
+    private void drawGrid(GWTCanvas canvas) {
+        canvas.setLineWidth(1);
+		canvas.setStrokeStyle(Color.BLACK);
+        canvas.strokeRect(0, 0, WIDTH, HEIGHT);
 
-    private void eraseBackground() {
-		getCanvas().clear();
-	}
-
-    private void drawGrid() {
-		getCanvas().setLineWidth(1);
-		getCanvas().setStrokeStyle(Color.BLACK);
-		getCanvas().strokeRect(0, 0, WIDTH, HEIGHT);
-
-		getCanvas().beginPath();
+		canvas.beginPath();
         for (int j = 1; j < NUM_DAYS; ++j) {
             int x = DAY_WIDTH*j;
-            getCanvas().moveTo(x, 0);
-            getCanvas().lineTo(x, HEIGHT);
+            canvas.moveTo(x, 0);
+            canvas.lineTo(x, HEIGHT);
         }
 		for (int i = 1; i < NUM_HOURS; ++i) {
 			int y = HOUR_HEIGHT*i;
-			getCanvas().moveTo(0, y);
-			getCanvas().lineTo(WIDTH, y);
+			canvas.moveTo(0, y);
+			canvas.lineTo(WIDTH, y);
 		}
-		getCanvas().stroke();
+		canvas.stroke();
 
-		getCanvas().setLineWidth(2);
-		getCanvas().setStrokeStyle(Color.BLUE);
+		canvas.setLineWidth(2);
+		canvas.setStrokeStyle(Color.BLUE);
 		int y1 = 314;
 		int y2 = y1 - minutesToPixels(4*NUM_DAYS);
-		getCanvas().beginPath();
-		getCanvas().moveTo(0, y1);
-		getCanvas().lineTo(WIDTH, y2);
-		getCanvas().stroke();
+		canvas.beginPath();
+		canvas.moveTo(0, y1);
+		canvas.lineTo(WIDTH, y2);
+		canvas.stroke();
 	}
+
+    boolean mouseEnter = false;
+    int     mouseX;
+    int     mouseY;
 
     private static final int HOUR_HEIGHT = 12;
     private static final int NUM_HOURS   = 24;
