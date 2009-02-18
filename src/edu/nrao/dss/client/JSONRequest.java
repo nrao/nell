@@ -86,7 +86,7 @@ class JSONRequest implements RequestCallback {
 	}
 
 	public static void post(String uri, HashMap<String, Object> data, final JSONCallback cb){
-		Set <String> keys  = data.keySet();
+		Set <String> keys           = data.keySet();
     	ArrayList<String> strKeys   = new ArrayList<String>();
     	ArrayList<String> strValues = new ArrayList<String>();
     	for(Object k : keys) {

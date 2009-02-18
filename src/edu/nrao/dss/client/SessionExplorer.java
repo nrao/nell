@@ -235,7 +235,24 @@ class SessionExplorer extends ContentPanel {
                 addSession(new HashMap());
             }
         });
+        
+        MenuItem lowfreq = new MenuItem("Low Frequency Session", new SelectionListener<ComponentEvent>() {
+            @Override
+            public void componentSelected(ComponentEvent ce) {
+            	HashMap hm = new HashMap();
+            	hm.put("session_type", "open");
+            	hm.put("frequency", 1.42);
+            	hm.put("min_duration", 120);
+            	hm.put("max_duration", 360);
+            	hm.put("time_between", 0);
+            	//TBF: need more fields.
+            	
+                addSession(hm);
+            }
+        });
+        
         addMenu.add(empty);
+        addMenu.add(lowfreq);
         addItem.setMenu(addMenu);
 
         TextToolItem removeItem = new TextToolItem("Delete");
