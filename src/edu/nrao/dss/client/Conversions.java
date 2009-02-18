@@ -1,0 +1,46 @@
+package edu.nrao.dss.client;
+
+import com.google.gwt.i18n.client.NumberFormat;
+
+class Conversions {
+    public static String radiansToTime(double radians) {
+        return degreesToTime(radiansToDegrees(radians));
+    }
+
+    public static String degreesToTime(double degrees) {
+        int    hours   = (int)  (degrees / 15.0);
+        int    minutes = (int) ((degrees / 15.0 - hours) * 60.0);
+        double seconds =       ((degrees / 15.0 - hours) * 60.0 - minutes) * 60.0;
+
+        StringBuilder result = new StringBuilder();
+        result.append(NumberFormat.getFormat("00").format(hours))
+              .append(":")
+              .append(NumberFormat.getFormat("00").format(minutes))
+              .append(":")
+              .append(NumberFormat.getFormat("00.0").format(seconds));
+
+        return result.toString();
+    }
+
+    /** HH:MM:SS.S -> Radians */
+    public static double timeToRadians(String time) {
+        return degreesToRadians(timeToDegrees(time));
+    }
+
+    /** HH:MM:SS.S -> Degrees */
+    public static double timeToDegrees(String time) {
+        double hours   = Double.parseDouble(time.substring(0, 2));
+        double minutes = Double.parseDouble(time.substring(3, 5));
+        double seconds = Double.parseDouble(time.substring(6));
+        
+        return (hours + (minutes + seconds / 60.0) / 60.0) * 15.0;
+    }
+
+    public static double radiansToDegrees(double radians) {
+        return radians * 180.0 / Math.PI;
+    }
+
+    public static double degreesToRadians(double degrees) {
+        return degrees * Math.PI / 180.0;
+    }
+}

@@ -1,0 +1,2 @@
+applicationCreator -out nell -eclipse Scheduler edu.nrao.dss.client.Scheduler
+projectCreator -out nell -eclipse Scheduler

@@ -1,0 +1,21 @@
+syntax: glob
+
+#*
+*~
+*.class
+*.hi
+*.o
+*.orig
+*.prof
+*.swp
+
+.classpath
+.project
+
+Scheduler-compile
+Scheduler-shell
+Scheduler.launch
+
+bin/
+dist/
+tomcat/
