@@ -1,6 +1,7 @@
 package edu.nrao.dss.client;
 
 import java.util.Arrays;
+import java.util.HashMap;
 
 import com.extjs.gxt.ui.client.Events;
 import com.extjs.gxt.ui.client.Style.HorizontalAlignment;
@@ -13,6 +14,7 @@ import com.extjs.gxt.ui.client.data.JsonReader;
 import com.extjs.gxt.ui.client.data.ListLoader;
 import com.extjs.gxt.ui.client.data.ModelData;
 import com.extjs.gxt.ui.client.event.BaseEvent;
+import com.extjs.gxt.ui.client.event.ComponentEvent;
 import com.extjs.gxt.ui.client.event.GridEvent;
 import com.extjs.gxt.ui.client.event.Listener;
 import com.extjs.gxt.ui.client.event.SelectionChangedEvent;
@@ -35,6 +37,8 @@ import com.extjs.gxt.ui.client.widget.grid.ColumnModel;
 import com.extjs.gxt.ui.client.widget.grid.EditorGrid;
 import com.extjs.gxt.ui.client.widget.grid.GridCellRenderer;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
+import com.extjs.gxt.ui.client.widget.menu.Menu;
+import com.extjs.gxt.ui.client.widget.menu.MenuItem;
 import com.extjs.gxt.ui.client.widget.toolbar.FillToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.SeparatorToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.TextToolItem;
@@ -224,6 +228,15 @@ class SessionExplorer extends ContentPanel {
         TextToolItem addItem = new TextToolItem("Add");
         toolBar.add(addItem);
         addItem.setToolTip("Add a new session.");
+        Menu addMenu   = new Menu();
+        MenuItem empty = new MenuItem("Empty Session", new SelectionListener<ComponentEvent>() {
+            @Override
+            public void componentSelected(ComponentEvent ce) {
+                addSession(new HashMap());
+            }
+        });
+        addMenu.add(empty);
+        addItem.setMenu(addMenu);
 
         TextToolItem removeItem = new TextToolItem("Delete");
         toolBar.add(removeItem);
@@ -240,14 +253,6 @@ class SessionExplorer extends ContentPanel {
 
         TextToolItem saveItem = new TextToolItem("Save");
         toolBar.add(saveItem);
-
-        // Show the new session wizard.
-        addItem.addSelectionListener(new SelectionListener<ToolBarEvent>() {
-            @Override
-            public void componentSelected(ToolBarEvent ce) {
-                addSession();
-            }
-        });
 
         // Commit outstanding changes to the server.
         saveItem.addSelectionListener(new SelectionListener<ToolBarEvent>() {
@@ -270,8 +275,8 @@ class SessionExplorer extends ContentPanel {
     }
 
     /** Show the SessionWizard. */
-    private void addSession() {
-        JSONRequest.post("/sessions", null, null, new JSONCallbackAdapter() {
+    private void addSession(HashMap<String, Object> data) {
+        JSONRequest.post("/sessions", data, new JSONCallbackAdapter() {
             @Override
             public void onSuccess(JSONObject json) {
                 int id = (int) json.get("id").isNumber().doubleValue();
@@ -283,8 +288,8 @@ class SessionExplorer extends ContentPanel {
             }
         });
         
-        SessionWizard wizard = new SessionWizard();
-        wizard.show();
+        //SessionWizard wizard = new SessionWizard();
+        //wizard.show();
     }
 
     /** Provides basic spreadsheet-like functionality. */

@@ -1,7 +1,9 @@
 package edu.nrao.dss.client;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import com.extjs.gxt.ui.client.data.ModelData;
 import com.extjs.gxt.ui.client.widget.MessageBox;
@@ -83,6 +85,17 @@ class JSONRequest implements RequestCallback {
 		}
 	}
 
+	public static void post(String uri, HashMap<String, Object> data, final JSONCallback cb){
+		Set <String> keys  = data.keySet();
+    	ArrayList<String> strKeys   = new ArrayList<String>();
+    	ArrayList<String> strValues = new ArrayList<String>();
+    	for(Object k : keys) {
+    		strKeys.add(k.toString());
+    		strValues.add(data.get(k).toString());
+    	}
+    	post("/sessions", strKeys.toArray(new String[]{}), strValues.toArray(new String[]{}), cb);
+	}
+	
 	public static void post(String uri, String[] keys, String[] values, final JSONCallback cb) {
 		RequestBuilder post = new RequestBuilder(RequestBuilder.POST, uri);
 		post.setHeader("Accept", "application/json");
