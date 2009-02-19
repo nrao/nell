@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
+import com.extjs.gxt.ui.client.Style.Orientation;
 import com.extjs.gxt.ui.client.Style.Scroll;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
 import com.extjs.gxt.ui.client.widget.Text;
@@ -22,13 +23,15 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
     }
 
     private void initLayout() {
-        setLayout(new RowLayout());
+        setLayout(new RowLayout(Orientation.VERTICAL));
         setScrollMode(Scroll.AUTO);
         
         LayoutContainer top = new LayoutContainer();
-        add(top, new RowData(-1.0, 1.0));
+        add(top, new RowData(-1.0, 1.5 * Calendar.HEIGHT));
         top.setLayout(new CenterLayout());
         top.add(calendar);
+        
+        add(label, new RowData(-1.0, 300));
 
         addListeners();
 
@@ -96,23 +99,8 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
     }
 
     public void onPaint(GWTCanvas canvas) {
-        // If there is a drag target or current allocation, only blink its conflicts.
-        Set<Session> conflicts = null;
-        if (dragTarget != null) {
-            dragTarget.setStartDay(dragStartDay + calendar.pixelsToDays(mouseX - dragStartX));
-            conflicts = sudoku.conflictsWith(dragTarget, allocations);
-            dragTarget.setStartDay(dragStartDay);
-        } else if (current != null) {
-            conflicts = sudoku.conflictsWith(current, allocations);
-            if (conflicts.isEmpty()) {
-                conflicts = sudoku.findConflicts(allocations);
-            }
-        } else {
-            conflicts = sudoku.findConflicts(allocations);
-        }
-
         for (Session a : allocations) {
-            if (! showConflicts && conflicts.contains(a)) { continue; }
+            if (! showConflicts && problems != null && problems.contains(a)) { continue; }
             if (a != dragTarget && a != current) {
                 a.setAlpha(0.6f);
                 a.draw(calendar);
@@ -155,7 +143,6 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
         allocations = Project.collectAllocations(projects);
         
         sortAllocations();
-        
         Project.allocateColors(projects);
     }
 
@@ -171,6 +158,8 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
                 return 0;
             }
         });
+
+        problems = sudoku.findProblem(allocations);
     }
 
     private final Calendar calendar = new Calendar();
@@ -178,10 +167,11 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
     private final Sudoku   sudoku   = new Sudoku();
 
     /** Set to true to enable annoying blinking effects. */
-    private final boolean  animated = false;
+    private final boolean  animated = true;
 
     private List<Project> projects;
     private List<Session> allocations;
+    private List<Session> problems;
     private Session       dragTarget;
     private Session       current;
 

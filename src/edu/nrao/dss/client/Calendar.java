@@ -121,6 +121,6 @@ class Calendar extends CanvasComponent {
     private static final int DAY_WIDTH   = 12;
     private static final int NUM_DAYS    = 120;
 
-    private static final int WIDTH  = NUM_DAYS  * DAY_WIDTH;
-    private static final int HEIGHT = NUM_HOURS * HOUR_HEIGHT;
+    public static final int WIDTH  = NUM_DAYS  * DAY_WIDTH;
+    public static final int HEIGHT = NUM_HOURS * HOUR_HEIGHT;
 }
