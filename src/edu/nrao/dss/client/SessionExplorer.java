@@ -1,10 +1,12 @@
 package edu.nrao.dss.client;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
 import com.extjs.gxt.ui.client.Events;
 import com.extjs.gxt.ui.client.Style.HorizontalAlignment;
+import com.extjs.gxt.ui.client.Style.SelectionMode;
 import com.extjs.gxt.ui.client.data.BaseListLoadConfig;
 import com.extjs.gxt.ui.client.data.BaseListLoadResult;
 import com.extjs.gxt.ui.client.data.BaseListLoader;
@@ -27,6 +29,7 @@ import com.extjs.gxt.ui.client.store.ListStore;
 import com.extjs.gxt.ui.client.store.StoreEvent;
 import com.extjs.gxt.ui.client.store.StoreListener;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
+import com.extjs.gxt.ui.client.widget.form.CheckBox;
 import com.extjs.gxt.ui.client.widget.form.SimpleComboBox;
 import com.extjs.gxt.ui.client.widget.form.TextField;
 import com.extjs.gxt.ui.client.widget.form.ComboBox.TriggerAction;
@@ -59,20 +62,34 @@ class SessionExplorer extends ContentPanel {
         setLayout(new FitLayout());
 
         CheckBoxSelectionModel<BaseModelData> selection = new CheckBoxSelectionModel<BaseModelData>();
-
+        selection.setSelectionMode(SelectionMode.MULTI);
+        
+        HashMap<String, String> fc = SessionMap.getAllFieldsWithClass();
+        ArrayList columnsA = new ArrayList();
+        columnsA.add(selection.getColumn());
+        for (String fName : fc.keySet()) {
+        	columnsA.add(callField(fName, fc.get(fName)));
+        }
+        
+        ColumnConfig[] columns = (ColumnConfig[]) columnsA.toArray(new ColumnConfig[] {});
+        
+        /*
         ColumnConfig[] columns = new ColumnConfig[] {
                 selection.getColumn(),
                 textField(new ColumnConfig("name", "Name", 100)),
                 textField(new ColumnConfig("project", "Project", 100)),
-                typeField(new ColumnConfig("type", "Type", 80)),
+                typeField(new ColumnConfig("type", "Type", 80), new String[] {"open", "fixed", "windowed"}),
                 doubleField(new ColumnConfig("lst", "LST", 80)),
                 doubleField(new ColumnConfig("dec", "DEC", 60)),
                 intField(new ColumnConfig("frequency", "Frequency", 80)),
                 intField(new ColumnConfig("min_duration", "Min. Duration", 100)),
                 intField(new ColumnConfig("max_duration", "Max. Duration", 100)),
                 intField(new ColumnConfig("time_between", "Time Between",  100)),
-                intField(new ColumnConfig("allotted", "Allotted", 60))
+                intField(new ColumnConfig("allotted", "Allotted", 60)),
+                typeField(new ColumnConfig("grade", "Grade", 60), new String[] {"A", "B", "C"}),
+                checkboxField(new ColumnConfig("enabled", "Enabled", 60))
         };
+        */
 
         RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, "/sessions");
         DataReader     reader  = new JsonReader<BaseListLoadConfig>(new SessionType());
@@ -93,6 +110,16 @@ class SessionExplorer extends ContentPanel {
         initListeners();
 
         loader.load();
+    }
+    
+    private ColumnConfig callField(String fName, String cName) {
+    	if (cName == "int") {
+    		return intField(new ColumnConfig(fName, fName, 80));
+    	} else if (cName == "double") {
+    		return doubleField(new ColumnConfig(fName, fName, 80));
+    	} else {
+    		return textField(new ColumnConfig(fName, fName, 80));
+    	}
     }
     
     private void initListeners() {
@@ -147,6 +174,11 @@ class SessionExplorer extends ContentPanel {
         return column;
     }
 
+    private ColumnConfig checkboxField(ColumnConfig column) {
+        column.setEditor(new CellEditor(new CheckBox()));
+        return column;
+    }
+
     @SuppressWarnings("unused")
 	private ColumnConfig timeField(ColumnConfig column) {
         TextField<String> timeField = new TextField<String>();
@@ -180,12 +212,13 @@ class SessionExplorer extends ContentPanel {
         return column;
     }
 
-    private ColumnConfig typeField(ColumnConfig column) {
+    private ColumnConfig typeField(ColumnConfig column, String[] options) {
         final SimpleComboBox<String> typeCombo = new SimpleComboBox<String>();
         typeCombo.setTriggerAction(TriggerAction.ALL);
-        typeCombo.add("fixed");
-        typeCombo.add("open");
-        typeCombo.add("windowed");
+        
+        for (String o : options) {
+        	typeCombo.add(o);
+        }
 
         column.setEditor(new CellEditor(typeCombo) {
             @Override
@@ -216,36 +249,41 @@ class SessionExplorer extends ContentPanel {
         toolBar.add(addItem);
         addItem.setToolTip("Add a new session.");
         Menu addMenu   = new Menu();
-        MenuItem empty = new MenuItem("Empty Session", new SelectionListener<ComponentEvent>() {
-            @Override
-            public void componentSelected(ComponentEvent ce) {
-                addSession(new HashMap());
-            }
-        });
         
-        MenuItem lowfreq = new MenuItem("Low Frequency Session", new SelectionListener<ComponentEvent>() {
-            @Override
-            public void componentSelected(ComponentEvent ce) {
-            	HashMap hm = new HashMap();
-            	hm.put("session_type", "open");
-            	hm.put("frequency", 1.42);
-            	hm.put("min_duration", 120);
-            	hm.put("max_duration", 360);
-            	hm.put("time_between", 0);
-            	//TBF: need more fields.
-            	
-                addSession(hm);
-            }
-        });
+        for (final String mk : SessionMap.master.keySet()) {
+        	final HashMap<String, Object> field = SessionMap.master.get(mk);
+        	MenuItem mi = new MenuItem(mk);
+        	mi.addSelectionListener(new SelectionListener<ComponentEvent>() {
+                @Override
+                public void componentSelected(ComponentEvent ce) {
+                	addSession(field);
+                	int count = grid.getColumnModel().getColumnCount();
+                	for (int i = 1; i < count; ++i) {
+                		String column_id = grid.getColumnModel().getColumnId(i);
+                		grid.getColumnModel().getColumnById(column_id).setHidden(!SessionMap.master.get(mk).containsKey(column_id));
+                	}
+                	grid.getView().refresh(true);
+                }
+            });
+        	addMenu.add(mi);
+        }
         
-        addMenu.add(empty);
-        addMenu.add(lowfreq);
         addItem.setMenu(addMenu);
 
         TextToolItem removeItem = new TextToolItem("Delete");
         toolBar.add(removeItem);
         removeItem.setToolTip("Delete a session.");
-
+        removeItem.addSelectionListener(new SelectionListener<ToolBarEvent>() {
+            @Override
+            public void componentSelected(ToolBarEvent ce) {
+            	JSONRequest.delete("/sessions/" + ((Number) grid.getSelectionModel().getSelectedItem().get("id")).intValue(), new JSONCallbackAdapter() {
+            		public void onSuccess(JSONObject json) {
+            			store.remove(grid.getSelectionModel().getSelectedItem());
+            		}
+            	});
+            }
+        });
+        
         toolBar.add(new SeparatorToolItem());
 
         final TextToolItem duplicateItem = new TextToolItem("Duplicate");
@@ -294,7 +332,6 @@ class SessionExplorer extends ContentPanel {
                 	if (field.name == "id") {
                 		continue;
                 	}
-                	
                 	if (json.containsKey(field.name)) {
                 		model.set(field.name, json.get(field.name).isString().stringValue());
                 	}

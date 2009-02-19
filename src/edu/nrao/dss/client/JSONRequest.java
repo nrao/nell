@@ -103,7 +103,7 @@ class JSONRequest implements RequestCallback {
 		try {
 			post.sendRequest(postData(keys, values), new JSONRequest(cb));
 		} catch (RequestException e) {
-		}
+	    }
 	}
 
 	@SuppressWarnings("unchecked")
