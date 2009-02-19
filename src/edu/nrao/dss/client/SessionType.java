@@ -7,15 +7,9 @@ class SessionType extends ModelType {
         this.root = "sessions";
 
         addField("id");
-        addField("name");
-        addField("project");
-        addField("type");
-        addField("lst");
-        addField("dec");
-        addField("frequency");
-        addField("min_duration");
-        addField("max_duration");
-        addField("time_between");
-        addField("allotted");
+        for (String f : SessionMap.getAllFields()) {
+        	addField(f);
+        }
+        
     }
 }
