@@ -7,12 +7,12 @@ import java.util.Set;
 class SessionMap {
 	public static final HashMap<String, HashMap<String, Object>> master =
 		new HashMap<String, HashMap<String,Object>>();
-	
+
 	static {
 		HashMap<String, Object> empty = new HashMap<String, Object>();
 		master.put("Empty", empty);
 		empty.put("name", "");
-		
+
 		//empty.put("project", "");
 		//empty.put("type", "");
 		//empty.put("ra", "");
@@ -24,7 +24,7 @@ class SessionMap {
 		//empty.put("allotted", "");
 		//empty.put("grade", "A");
 		//empty.put("enabled", true);
-		
+
 		HashMap<String, Object> lowfreq = new HashMap<String, Object>();
 		master.put("Low Frequency No RFI", lowfreq);
 		lowfreq.put("name", "");
@@ -37,14 +37,14 @@ class SessionMap {
 		lowfreq.put("dec", "12:00:00");
 		lowfreq.put("onsite", "f");
 		lowfreq.put("total_session", 25);
-		lowfreq.put("grade", "A");
+		lowfreq.put("grade", new GradeField("A"));
 		lowfreq.put("req_rx(s)", "1_2");
 		lowfreq.put("min", 2);
 		lowfreq.put("max", 5);
 		lowfreq.put("between", 0);
 		lowfreq.put("rfi_night", "false");
 		lowfreq.put("ptcs_night", "false");
-		
+
 		HashMap<String, Object> lowfreq_rfi = new HashMap<String, Object>();
 		master.put("Low Frequency RFI", lowfreq_rfi);
 		lowfreq_rfi.put("name", "");
@@ -57,7 +57,7 @@ class SessionMap {
 		lowfreq_rfi.put("dec", "12:00:00");
 		lowfreq_rfi.put("onsite", "f");
 		lowfreq_rfi.put("total_session", 25);
-		lowfreq_rfi.put("grade", "A");
+		lowfreq_rfi.put("grade", new GradeField("A"));
 		lowfreq_rfi.put("req_rx(s)", "1_2");
 		lowfreq_rfi.put("min", 2);
 		lowfreq_rfi.put("max", 5);
@@ -65,7 +65,6 @@ class SessionMap {
 		lowfreq_rfi.put("rfi_night", "true");
 		lowfreq_rfi.put("freq_range", "1-1.7");
 		lowfreq_rfi.put("ptcs_night", "false");
-		
     }
 
 	public static Set<String> getAllFields() {
@@ -78,11 +77,12 @@ class SessionMap {
 		return fields;
 	}
 	
-	public static HashMap<String, String> getAllFieldsWithClass() {
-		HashMap<String, String> fields = new HashMap<String, String>();
+	@SuppressWarnings("unchecked")
+    public static HashMap<String, Class> getAllFieldsWithClass() {
+		HashMap<String, Class> fields = new HashMap<String, Class>();
 		for (HashMap<String, Object> m : master.values()) {
 			for (String k : m.keySet()) {
-				fields.put(k, m.get(k).getClass().getName());
+				fields.put(k, m.get(k).getClass());
 			}
 		}
 		return fields;
@@ -92,7 +92,8 @@ class SessionMap {
 		return master.get(sType).keySet();
 	}
 	
-	public static String getFieldClass(String sType, String fName) {
-		return master.get(sType).get(fName).getClass().getName();
+	@SuppressWarnings("unchecked")
+    public static Class getFieldClass(String fName) {
+	    return getAllFieldsWithClass().get(fName);
 	}
  }

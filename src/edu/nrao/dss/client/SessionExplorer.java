@@ -30,6 +30,7 @@ import com.extjs.gxt.ui.client.store.StoreEvent;
 import com.extjs.gxt.ui.client.store.StoreListener;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
 import com.extjs.gxt.ui.client.widget.form.CheckBox;
+import com.extjs.gxt.ui.client.widget.form.NumberField;
 import com.extjs.gxt.ui.client.widget.form.SimpleComboBox;
 import com.extjs.gxt.ui.client.widget.form.TextField;
 import com.extjs.gxt.ui.client.widget.form.ComboBox.TriggerAction;
@@ -48,7 +49,9 @@ import com.extjs.gxt.ui.client.widget.toolbar.SeparatorToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.TextToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.user.client.Window;
 
 class SessionExplorer extends ContentPanel {
     public SessionExplorer() {
@@ -64,7 +67,7 @@ class SessionExplorer extends ContentPanel {
         CheckBoxSelectionModel<BaseModelData> selection = new CheckBoxSelectionModel<BaseModelData>();
         selection.setSelectionMode(SelectionMode.MULTI);
         
-        HashMap<String, String> fc = SessionMap.getAllFieldsWithClass();
+        HashMap<String, Class> fc = SessionMap.getAllFieldsWithClass();
         ArrayList columnsA = new ArrayList();
         columnsA.add(selection.getColumn());
         for (String fName : fc.keySet()) {
@@ -112,11 +115,14 @@ class SessionExplorer extends ContentPanel {
         loader.load();
     }
     
-    private ColumnConfig callField(String fName, String cName) {
-    	if (cName == "int") {
+    @SuppressWarnings("unchecked")
+    private ColumnConfig callField(String fName, Class clasz) {
+    	if (clasz == Integer.class) {
     		return intField(new ColumnConfig(fName, fName, 80));
-    	} else if (cName == "double") {
+    	} else if (clasz == Double.class) {
     		return doubleField(new ColumnConfig(fName, fName, 80));
+    	} else if (clasz == GradeField.class) {
+    	    return typeField(new ColumnConfig(fName, fName, 80), GradeField.values);
     	} else {
     		return textField(new ColumnConfig(fName, fName, 80));
     	}
@@ -141,29 +147,63 @@ class SessionExplorer extends ContentPanel {
     }
 
     private ColumnConfig doubleField(ColumnConfig column) {
-        textField(column);
-        column.setAlignment(HorizontalAlignment.RIGHT);
-        
-        // NumberField field = new NumberField();
-        // field.setPropertyEditorType(Double.class);
-        // field.setMinValue(minimum);
-        // field.setMaxValue(maximum);
+        NumberField field = new NumberField();
+        field.setPropertyEditorType(Double.class);
 
-        // column.setEditor(new CellEditor(field));
-        // column.setNumberFormat(NumberFormat.getFormat("0.00"));
+        column.setAlignment(HorizontalAlignment.RIGHT);
+        column.setEditor(new CellEditor(field) {
+            @Override
+            public Object preProcessValue(Object value) {
+                if (value == null) {
+                    return null;
+                }
+                return Double.valueOf(value.toString());
+            }
+            @Override
+            public Object postProcessValue(Object value) {
+                if (value == null) {
+                    return null;
+                }
+                return value.toString();
+            }
+        });
+        column.setNumberFormat(NumberFormat.getFormat("0"));
+        column.setRenderer(new GridCellRenderer<BaseModelData>() {
+            public String render(BaseModelData model, String property, ColumnData config, int rowIndex, int colIndex, ListStore<BaseModelData> store) {
+                return model.get(property).toString();
+            }
+        });
 
         return column;
     }
 
     private ColumnConfig intField(ColumnConfig column) {
-        textField(column);
-        column.setAlignment(HorizontalAlignment.RIGHT);
-        
-        // NumberField field = new NumberField();
-        // field.setPropertyEditorType(Integer.class);
+        NumberField field = new NumberField();
+        field.setPropertyEditorType(Integer.class);
 
-        // column.setEditor(new CellEditor(field));
-        // column.setNumberFormat(NumberFormat.getFormat("0"));
+        column.setAlignment(HorizontalAlignment.RIGHT);
+        column.setEditor(new CellEditor(field) {
+            @Override
+            public Object preProcessValue(Object value) {
+                if (value == null) {
+                    return null;
+                }
+                return Integer.parseInt(value.toString());
+            }
+            @Override
+            public Object postProcessValue(Object value) {
+                if (value == null) {
+                    return null;
+                }
+                return value.toString();
+            }
+        });
+        column.setNumberFormat(NumberFormat.getFormat("0"));
+        column.setRenderer(new GridCellRenderer<BaseModelData>() {
+            public String render(BaseModelData model, String property, ColumnData config, int rowIndex, int colIndex, ListStore<BaseModelData> store) {
+                return model.get(property).toString();
+            }
+        });
 
         return column;
     }

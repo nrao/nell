@@ -8,8 +8,7 @@ class SessionType extends ModelType {
 
         addField("id");
         for (String f : SessionMap.getAllFields()) {
-        	addField(f);
+                addField(f);
         }
-        
     }
 }
