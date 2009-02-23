@@ -16,6 +16,7 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.user.client.Window;
 
 interface JSONCallback {
 	public void onSuccess(JSONObject json);
@@ -46,7 +47,7 @@ class JSONRequest implements RequestCallback {
 	}
 
 	public void onResponseReceived(Request request, Response response) {
-	    // Window.alert(response.getText());
+	    //Window.alert(response.getText());
 		if (cb == null) {
 			// We don't care about the response.
 			return;

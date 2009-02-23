@@ -5,67 +5,326 @@ import java.util.HashSet;
 import java.util.Set;
 
 class SessionMap {
-	public static final HashMap<String, HashMap<String, Object>> master =
+public static final HashMap<String, HashMap<String, Object>> master =
 		new HashMap<String, HashMap<String,Object>>();
 
+	@SuppressWarnings("unchecked")
+	public static final HashMap<String, Class> typeMap;
+
 	static {
-		HashMap<String, Object> empty = new HashMap<String, Object>();
-		master.put("Empty", empty);
-		empty.put("name", "");
+		HashMap<String, Object> sFields = new HashMap<String, Object>();
+		master.put("Empty", sFields);
+		sFields.put("name", "");
 
-		//empty.put("project", "");
-		//empty.put("type", "");
-		//empty.put("ra", "");
-		//empty.put("dec", "");
-		//empty.put("frequency", "");
-		//empty.put("min_duration", "");
-		//empty.put("max_duration", "");
-		//empty.put("time_between", "");
-		//empty.put("allotted", "");
-		//empty.put("grade", "A");
-		//empty.put("enabled", true);
+		// sFields.put("project", "");
+		// sFields.put("type", "");
+		// sFields.put("ra", "");
+		// sFields.put("dec", "");
+		// sFields.put("frequency", "");
+		// sFields.put("min_duration", "");
+		// sFields.put("max_duration", "");
+		// sFields.put("time_between", "");
+		// sFields.put("allotted", "");
+		// sFields.put("grade", "A");
+		// sFields.put("enabled", true);
 
-		HashMap<String, Object> lowfreq = new HashMap<String, Object>();
-		master.put("Low Frequency No RFI", lowfreq);
-		lowfreq.put("name", "");
-		lowfreq.put("enabled", "true");
-		lowfreq.put("authorized", "true");
-		lowfreq.put("complete", "false");
-		lowfreq.put("contact", "Joe");
-		lowfreq.put("thesis", "N");
-		lowfreq.put("ra", "12:00:00");
-		lowfreq.put("dec", "12:00:00");
-		lowfreq.put("onsite", "f");
-		lowfreq.put("total_session", 25);
-		lowfreq.put("grade", new GradeField("A"));
-		lowfreq.put("req_rx(s)", "1_2");
-		lowfreq.put("min", 2);
-		lowfreq.put("max", 5);
-		lowfreq.put("between", 0);
-		lowfreq.put("rfi_night", "false");
-		lowfreq.put("ptcs_night", "false");
+		sFields = new HashMap<String, Object>();
+		master.put("Low frequency observations with no RFI", sFields);
+		sFields.put("name", "");
+		sFields.put("enabled", "true");
+		sFields.put("authorized", "true");
+		sFields.put("complete", "false");
+		sFields.put("contact", "Joe");
+		sFields.put("thesis", "false");
+		sFields.put("ra", "12:00:00");
+		sFields.put("dec", "12:00:00");
+		sFields.put("onsite", "f");
+		sFields.put("total_session", 25);
+		sFields.put("grade", new GradeField("A"));
+		sFields.put("req_rx(s)", "1_2");
+		sFields.put("min", 2);
+		sFields.put("max", 5);
+		sFields.put("between", 0);
+		sFields.put("rfi_night", "false");
+		sFields.put("ptcs_night", "false");
 
-		HashMap<String, Object> lowfreq_rfi = new HashMap<String, Object>();
-		master.put("Low Frequency RFI", lowfreq_rfi);
-		lowfreq_rfi.put("name", "");
-		lowfreq_rfi.put("enabled", "true");
-		lowfreq_rfi.put("authorized", "true");
-		lowfreq_rfi.put("complete", "false");
-		lowfreq_rfi.put("contact", "Joe");
-		lowfreq_rfi.put("thesis", "N");
-		lowfreq_rfi.put("ra", "12:00:00");
-		lowfreq_rfi.put("dec", "12:00:00");
-		lowfreq_rfi.put("onsite", "f");
-		lowfreq_rfi.put("total_session", 25);
-		lowfreq_rfi.put("grade", new GradeField("A"));
-		lowfreq_rfi.put("req_rx(s)", "1_2");
-		lowfreq_rfi.put("min", 2);
-		lowfreq_rfi.put("max", 5);
-		lowfreq_rfi.put("between", 0);
-		lowfreq_rfi.put("rfi_night", "true");
-		lowfreq_rfi.put("freq_range", "1-1.7");
-		lowfreq_rfi.put("ptcs_night", "false");
-    }
+		sFields = new HashMap<String, Object>();
+		master.put("Low frequency observations with RFI", sFields);
+		sFields.put("name", "");
+		sFields.put("enabled", "true");
+		sFields.put("authorized", "true");
+		sFields.put("complete", "false");
+		sFields.put("contact", "Joe");
+		sFields.put("thesis", "false");
+		sFields.put("ra", "12:00:00");
+		sFields.put("dec", "12:00:00");
+		sFields.put("onsite", "f");
+		sFields.put("total_session", 25);
+		sFields.put("grade", new GradeField("A"));
+		sFields.put("req_rx(s)", "1_2");
+		sFields.put("min", 2);
+		sFields.put("max", 5);
+		sFields.put("between", 0);
+		sFields.put("rfi_night", "true");
+		sFields.put("freq_range", null);
+		sFields.put("ptcs_night", "false");
+
+		sFields = new HashMap<String, Object>();
+		master.put("High frequency spectral line observations", sFields);
+		sFields.put("name", "");
+		sFields.put("enabled", "true");
+		sFields.put("authorized", "true");
+		sFields.put("complete", "false");
+		sFields.put("contact", "Joe");
+		sFields.put("thesis", "false");
+		sFields.put("ra", "12:00:00");
+		sFields.put("dec", "12:00:00");
+		sFields.put("onsite", "f");
+		sFields.put("total_session", 25);
+		sFields.put("grade", new GradeField("A"));
+		sFields.put("req_rx(s)", "18_26");
+		sFields.put("min", 2);
+		sFields.put("max", 5);
+		sFields.put("between", 0);
+		sFields.put("rfi_night", "false");
+		sFields.put("ptcs_night", "false");
+
+		sFields = new HashMap<String, Object>();
+		master.put("High frequency continuum observations", sFields);
+		sFields.put("name", "");
+		sFields.put("enabled", "true");
+		sFields.put("authorized", "true");
+		sFields.put("complete", "false");
+		sFields.put("contact", "Joe");
+		sFields.put("thesis", "false");
+		sFields.put("ra", "12:00:00");
+		sFields.put("dec", "12:00:00");
+		sFields.put("onsite", "f");
+		sFields.put("total_session", 25);
+		sFields.put("grade", new GradeField("A"));
+		sFields.put("req_rx(s)", "18_26");
+		sFields.put("min", 2);
+		sFields.put("max", 5);
+		sFields.put("between", 0);
+		sFields.put("rfi_night", "false");
+		sFields.put("clouds", .25);
+		sFields.put("ptcs_night", "false");
+
+		sFields = new HashMap<String, Object>();
+		master.put("High frequency continuum observations", sFields);
+		sFields.put("name", "");
+		sFields.put("enabled", "true");
+		sFields.put("authorized", "true");
+		sFields.put("complete", "false");
+		sFields.put("contact", "Joe");
+		sFields.put("thesis", "false");
+		sFields.put("ra", "12:00:00");
+		sFields.put("dec", "12:00:00");
+		sFields.put("onsite", "f");
+		sFields.put("total_session", 25);
+		sFields.put("grade", new GradeField("A"));
+		sFields.put("req_rx(s)", "18_26");
+		sFields.put("min", 2);
+		sFields.put("max", 5);
+		sFields.put("between", 0);
+		sFields.put("rfi_night", "false");
+		sFields.put("clouds", .25);
+		sFields.put("ptcs_night", "false");
+
+		sFields = new HashMap<String, Object>();
+		master.put("Low frequency monitoring observations with RFI", sFields);
+		sFields.put("name", "");
+		sFields.put("enabled", "true");
+		sFields.put("authorized", "true");
+		sFields.put("complete", "false");
+		sFields.put("contact", "Joe");
+		sFields.put("thesis", "false");
+		sFields.put("ra", "12:00:00");
+		sFields.put("dec", "12:00:00");
+		sFields.put("onsite", "f");
+		sFields.put("total_session", 25);
+		sFields.put("grade", new GradeField("A"));
+		sFields.put("req_rx(s)", "1_2");
+		sFields.put("min", 2);
+		sFields.put("max", 5);
+		sFields.put("between", 0);
+		sFields.put("rfi_night", "false");
+		sFields.put("freq_range", "1-1.7");
+		sFields.put("ptcs_night", "false");
+		sFields.put("required?", "true");
+		
+		sFields = new HashMap<String, Object>();
+		master.put("Low and high frequency observations", sFields);
+		sFields.put("name", "");
+		sFields.put("enabled", "true");
+		sFields.put("authorized", "true");
+		sFields.put("complete", "false");
+		sFields.put("contact", "Joe");
+		sFields.put("thesis", "false");
+		sFields.put("ra", "12:00:00");
+		sFields.put("dec", "12:00:00");
+		sFields.put("onsite", "false");
+		sFields.put("total_session", 25);
+		sFields.put("grade", new GradeField("B"));
+		sFields.put("req_rx(s)", "40_50");
+		sFields.put("desired_rx(s)", "1_2 or 2_3");
+		sFields.put("min", 2);
+		sFields.put("max", 5);
+		sFields.put("between", 0);
+		sFields.put("rfi_night", "false");
+		sFields.put("ptcs_night", "false");
+
+		sFields = new HashMap<String, Object>();
+		master.put("Large proposal", sFields);
+		sFields.put("name", "");
+		sFields.put("enabled", "true");
+		sFields.put("authorized", "true");
+		sFields.put("complete", "false");
+		sFields.put("contact", "Joe");
+		sFields.put("thesis", "false");
+		sFields.put("ra", "12:00:00");
+		sFields.put("dec", "12:00:00");
+		sFields.put("onsite", "false");
+		sFields.put("total_session", 300);
+		sFields.put("grade", new GradeField("A"));
+		sFields.put("req_rx(s)", "1_2");
+		sFields.put("min", 2);
+		sFields.put("max", 5);
+		sFields.put("between", 0);
+		sFields.put("rfi_night", "false");
+		sFields.put("ptcs_night", "false");
+
+		sFields = new HashMap<String, Object>();
+		master.put("Polarization project", sFields);
+		sFields.put("name", "");
+		sFields.put("enabled", "true");
+		sFields.put("authorized", "true");
+		sFields.put("complete", "false");
+		sFields.put("contact", "Joe");
+		sFields.put("thesis", "false");
+		sFields.put("ra", "12:00:00");
+		sFields.put("dec", "12:00:00");
+		sFields.put("onsite", "false");
+		sFields.put("total_session", 25);
+		sFields.put("grade", new GradeField("A"));
+		sFields.put("req_rx(s)", "1_2");
+		sFields.put("min", 2);
+		sFields.put("max", 5);
+		sFields.put("between", 0);
+		sFields.put("rfi_night", "false");
+		sFields.put("ptcs_night", "false");
+
+		sFields = new HashMap<String, Object>();
+		master.put("PTCS night time holography", sFields);
+		sFields.put("name", "");
+		sFields.put("enabled", "true");
+		sFields.put("authorized", "true");
+		sFields.put("complete", "false");
+		sFields.put("contact", "Joe");
+		sFields.put("onsite", "false");
+		sFields.put("total_session", 25);
+		sFields.put("req_rx(s)", "Holo");
+		sFields.put("min", 4);
+		sFields.put("max", 6);
+		sFields.put("between", 0);
+		sFields.put("rfi_night", "false");
+		sFields.put("ptcs_night", "true");
+
+		sFields = new HashMap<String, Object>();
+		master.put("PTCS servo tests in high winds", sFields);
+		sFields.put("name", "");
+		sFields.put("enabled", "true");
+		sFields.put("authorized", "true");
+		sFields.put("complete", "false");
+		sFields.put("contact", "Joe");
+		sFields.put("onsite", "false");
+		sFields.put("total_session", 25);
+		sFields.put("grade", new GradeField("B"));
+		sFields.put("req_rx(s)", "40_50");
+		sFields.put("min", 2);
+		sFields.put("max", 5);
+		sFields.put("between", 0);
+		sFields.put("rfi_night", "false");
+		sFields.put("ptcs_night", "false");
+
+		sFields = new HashMap<String, Object>();
+		master.put("Fixed maintenance", sFields);
+		sFields.put("name", "");
+		sFields.put("enabled", "true");
+		sFields.put("authorized", "true");
+		sFields.put("complete", "false");
+		sFields.put("contact", "Joe");
+		sFields.put("req_rx(s)", "40_50");
+                sFields.put("length", 10);
+                sFields.put("start", "12 Dec 09 09:00 EST");
+
+		sFields = new HashMap<String, Object>();
+		master.put("Windowed maintenance", sFields);
+		sFields.put("name", "");
+		sFields.put("enabled", "true");
+		sFields.put("authorized", "true");
+		sFields.put("complete", "false");
+		sFields.put("contact", "Joe");
+                sFields.put("length", 10);
+
+		sFields = new HashMap<String, Object>();
+		master.put("Dynamic VLBI", sFields);
+		sFields.put("name", "");
+		sFields.put("enabled", "true");
+		sFields.put("authorized", "true");
+		sFields.put("complete", "false");
+		sFields.put("contact", "Joe");
+		sFields.put("ra", "12:00:00");
+		sFields.put("dec", "12:00:00");
+		sFields.put("onsite", "false");
+		sFields.put("total_session", 25);
+		sFields.put("grade", new GradeField("A"));
+		sFields.put("req_rx(s)", "18_26");
+        sFields.put("length", 6);
+		sFields.put("rfi_night", "false");
+		sFields.put("ptcs_night", "false");
+
+		sFields = new HashMap<String, Object>();
+		master.put("Fixed radar", sFields);
+		sFields.put("name", "");
+		sFields.put("enabled", "true");
+		sFields.put("authorized", "true");
+		sFields.put("complete", "false");
+		sFields.put("contact", "Joe");
+		sFields.put("thesis", "N");
+		sFields.put("ra", "12:00:00");
+		sFields.put("dec", "12:00:00");
+		sFields.put("onsite", "false");
+		sFields.put("total_session", 25);
+		sFields.put("grade", new GradeField("A"));
+		sFields.put("req_rx(s)", "1_2");
+		sFields.put("desired_rx(s)", "1_2 or 2_3");
+        sFields.put("length", 4);
+		sFields.put("between", 0);
+		sFields.put("rfi_night", "false");
+		sFields.put("ptcs_night", "false");
+                sFields.put("start", "12 Dec 09 09:00 EST");
+
+		sFields = new HashMap<String, Object>();
+		master.put("Tsys calibration measurement", sFields);
+		sFields.put("name", "");
+		sFields.put("enabled", "true");
+		sFields.put("authorized", "true");
+		sFields.put("complete", "false");
+		sFields.put("contact", "Joe");
+		sFields.put("min", 2);
+		sFields.put("max", 5);
+		sFields.put("between", 0);
+		sFields.put("rfi_night", "false");
+		sFields.put("ptcs_night", "false");
+		sFields.put("required?", "false");
+
+		// use the above maps to figure out what all the types are.
+		typeMap = createTypeMap();
+		// here are the one's that are defined as null above
+		typeMap.put("freq_range", String.class);
+		
+	}
 
 	public static Set<String> getAllFields() {
 		Set<String> fields = new HashSet<String>();
@@ -76,7 +335,20 @@ class SessionMap {
 		}
 		return fields;
 	}
-	
+
+	@SuppressWarnings("unchecked")
+	public static HashMap<String, Class> createTypeMap() {
+		HashMap<String, Class> fields = new HashMap<String, Class>();
+		for (HashMap<String, Object> m : master.values()) {
+			for (String k : m.keySet()) {
+				if (m.get(k) != null) {
+				    fields.put(k, m.get(k).getClass());
+			    }
+			}
+		}
+		return fields;
+	}
+
 	@SuppressWarnings("unchecked")
     public static HashMap<String, Class> getAllFieldsWithClass() {
 		HashMap<String, Class> fields = new HashMap<String, Class>();
@@ -87,7 +359,7 @@ class SessionMap {
 		}
 		return fields;
 	}
-	
+
 	public static Set<String> getNames(String sType) {
 		return master.get(sType).keySet();
 	}
@@ -96,4 +368,16 @@ class SessionMap {
     public static Class getFieldClass(String fName) {
 	    return getAllFieldsWithClass().get(fName);
 	}
- }
+
+	public static Set<String> getRequiredFields(String sType) {
+		HashMap<String, Object> sFields = master.get(sType);
+		Set<String> requiredFields = new HashSet<String>();
+		for (String k : sFields.keySet()) {
+			// if no value here, then user must specify it
+			if (sFields.get(k) == null) {
+				requiredFields.add(k);
+			}
+		}
+		return requiredFields;
+	}
+}
