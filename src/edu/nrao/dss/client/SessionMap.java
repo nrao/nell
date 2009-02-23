@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.google.gwt.user.client.Window;
-
 class SessionMap {
 	public static final HashMap<String, HashMap<String, Object>> master = new HashMap<String, HashMap<String, Object>>();
 

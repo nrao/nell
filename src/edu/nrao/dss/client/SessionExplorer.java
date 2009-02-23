@@ -3,6 +3,7 @@ package edu.nrao.dss.client;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Set;
 
 import com.extjs.gxt.ui.client.Events;
 import com.extjs.gxt.ui.client.Style.HorizontalAlignment;
@@ -29,7 +30,11 @@ import com.extjs.gxt.ui.client.store.ListStore;
 import com.extjs.gxt.ui.client.store.StoreEvent;
 import com.extjs.gxt.ui.client.store.StoreListener;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
+import com.extjs.gxt.ui.client.widget.Dialog;
+import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.form.CheckBox;
+import com.extjs.gxt.ui.client.widget.form.Field;
+import com.extjs.gxt.ui.client.widget.form.FormPanel;
 import com.extjs.gxt.ui.client.widget.form.SimpleComboBox;
 import com.extjs.gxt.ui.client.widget.form.TextField;
 import com.extjs.gxt.ui.client.widget.form.ComboBox.TriggerAction;
@@ -49,6 +54,7 @@ import com.extjs.gxt.ui.client.widget.toolbar.TextToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.user.client.Window;
 
 class SessionExplorer extends ContentPanel {
     public SessionExplorer() {
@@ -64,7 +70,7 @@ class SessionExplorer extends ContentPanel {
         CheckBoxSelectionModel<BaseModelData> selection = new CheckBoxSelectionModel<BaseModelData>();
         selection.setSelectionMode(SelectionMode.MULTI);
         
-        HashMap<String, String> fc = SessionMap.getAllFieldsWithClass();
+        HashMap<String, String> fc = SessionMap.typeMap;
         ArrayList columnsA = new ArrayList();
         columnsA.add(selection.getColumn());
         for (String fName : fc.keySet()) {
@@ -73,24 +79,6 @@ class SessionExplorer extends ContentPanel {
         
         ColumnConfig[] columns = (ColumnConfig[]) columnsA.toArray(new ColumnConfig[] {});
         
-        /*
-        ColumnConfig[] columns = new ColumnConfig[] {
-                selection.getColumn(),
-                textField(new ColumnConfig("name", "Name", 100)),
-                textField(new ColumnConfig("project", "Project", 100)),
-                typeField(new ColumnConfig("type", "Type", 80), new String[] {"open", "fixed", "windowed"}),
-                doubleField(new ColumnConfig("lst", "LST", 80)),
-                doubleField(new ColumnConfig("dec", "DEC", 60)),
-                intField(new ColumnConfig("frequency", "Frequency", 80)),
-                intField(new ColumnConfig("min_duration", "Min. Duration", 100)),
-                intField(new ColumnConfig("max_duration", "Max. Duration", 100)),
-                intField(new ColumnConfig("time_between", "Time Between",  100)),
-                intField(new ColumnConfig("allotted", "Allotted", 60)),
-                typeField(new ColumnConfig("grade", "Grade", 60), new String[] {"A", "B", "C"}),
-                checkboxField(new ColumnConfig("enabled", "Enabled", 60))
-        };
-        */
-
         RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, "/sessions");
         DataReader     reader  = new JsonReader<BaseListLoadConfig>(new SessionType());
 
@@ -240,6 +228,71 @@ class SessionExplorer extends ContentPanel {
         return column;
     }
 
+    private void createNewSessionRow(String mk,  HashMap<String, Object> fields) {
+    	addSession(fields);
+    	int count = grid.getColumnModel().getColumnCount();
+    	for (int i = 1; i < count; ++i) {
+    		String column_id = grid.getColumnModel().getColumnId(i);
+    		grid.getColumnModel().getColumnById(column_id).setHidden(!SessionMap.master.get(mk).containsKey(column_id));
+    	}
+    	grid.getView().refresh(true);
+    }
+
+    @SuppressWarnings("unchecked")
+	private void createRequiredFieldsDialog(final String sType, Set<String> requiredFields, final HashMap<String, Object> sFields) {
+		final Dialog d = new Dialog();
+		d.setHeading(sType);
+		d.addText("Please enter the required fields.");
+		d.setButtons(Dialog.OKCANCEL);
+		d.setHeight(200);
+		d.setWidth(400);
+		
+		FormPanel fp = new FormPanel();
+		
+		final ArrayList<Field> formFields = new ArrayList<Field>();
+		for (String rf : requiredFields) {
+			// TBF need to make this data type sensitive
+			TextField<String> f = new TextField<String>();
+			f.setFieldLabel(rf);
+			f.setEmptyText(rf);
+			f.setAllowBlank(false);
+			f.setMinLength(4);
+			fp.add(f);
+			formFields.add(f);
+		}
+		
+		d.add(fp);
+		d.show();
+		
+		Button cancel = d.getButtonById(Dialog.CANCEL);
+		cancel.addSelectionListener(new SelectionListener<ComponentEvent>() {
+	        @Override
+	        public void componentSelected(ComponentEvent ce) {
+	        	d.close();
+	        }
+		});
+	
+		Button ok = d.getButtonById(Dialog.OK);
+		ok.addSelectionListener(new SelectionListener<ComponentEvent>() {
+	        @Override
+	        public void componentSelected(ComponentEvent ce) {
+	        	HashMap<String, Object> sFieldsP = populateSessionFields(sFields, formFields);
+	            createNewSessionRow(sType, sFieldsP);
+	        	d.close();
+	        }
+		});
+    }
+
+    @SuppressWarnings("unchecked")
+	private HashMap<String, Object> populateSessionFields(HashMap<String, Object> sFields,
+    		                                              ArrayList<Field> fFields) {
+    	HashMap<String, Object> retval = new HashMap<String, Object>(sFields);
+    	for (Field f : fFields) {
+    		retval.put(f.getFieldLabel(), f.getValue());
+    	}
+    	return retval;
+    }
+    
     @SuppressWarnings("unchecked")
     private void initToolBar() {
         ToolBar toolBar = new ToolBar();
@@ -251,23 +304,28 @@ class SessionExplorer extends ContentPanel {
         Menu addMenu   = new Menu();
         
         for (final String mk : SessionMap.master.keySet()) {
-        	final HashMap<String, Object> field = SessionMap.master.get(mk);
-        	MenuItem mi = new MenuItem(mk);
-        	mi.addSelectionListener(new SelectionListener<ComponentEvent>() {
-                @Override
-                public void componentSelected(ComponentEvent ce) {
-                	addSession(field);
-                	int count = grid.getColumnModel().getColumnCount();
-                	for (int i = 1; i < count; ++i) {
-                		String column_id = grid.getColumnModel().getColumnId(i);
-                		grid.getColumnModel().getColumnById(column_id).setHidden(!SessionMap.master.get(mk).containsKey(column_id));
-                	}
-                	grid.getView().refresh(true);
-                }
-            });
-        	addMenu.add(mi);
+        	final HashMap<String, Object> fields = SessionMap.master.get(mk);
+        	final MenuItem mi = new MenuItem(mk);
+        	// if anyone of the fields is null, then user must provide a value
+			final Set<String> requiredFields = SessionMap.getRequiredFields(mk);
+        	if (requiredFields.isEmpty()) {
+            	mi.addSelectionListener(new SelectionListener<ComponentEvent>() {
+            		@Override
+            		public void componentSelected(ComponentEvent ce) {
+            			createNewSessionRow(mk, fields);
+            		}
+            	});
+        	} else {
+        		mi.addSelectionListener(new SelectionListener<ComponentEvent>() {
+        	        @Override
+        	        public void componentSelected(ComponentEvent ce) {
+        	        	createRequiredFieldsDialog(mk, requiredFields, fields);
+        	        }
+        	    });
+        	}
+	    	addMenu.add(mi);
         }
-        
+
         addItem.setMenu(addMenu);
 
         TextToolItem removeItem = new TextToolItem("Delete");
@@ -336,7 +394,6 @@ class SessionExplorer extends ContentPanel {
                 		model.set(field.name, json.get(field.name).isString().stringValue());
                 	}
                 }
-                
                 store.add(model);
             }
         });
