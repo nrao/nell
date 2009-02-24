@@ -56,7 +56,6 @@ import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.user.client.Window;
 
 class SessionExplorer extends ContentPanel {
     public SessionExplorer() {
@@ -83,12 +82,12 @@ class SessionExplorer extends ContentPanel {
         
         RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, "/sessions");
         DataReader     reader  = new JsonReader<BaseListLoadConfig>(new SessionType());
-
+        
         HttpProxy<BaseListLoadConfig, BaseListLoadResult<BaseModelData>> proxy =
             new HttpProxy<BaseListLoadConfig, BaseListLoadResult<BaseModelData>>(builder);
         loader = new BaseListLoader<BaseListLoadConfig, BaseListLoadResult<BaseModelData>>(proxy, reader);
         store  = new ListStore<BaseModelData>(loader);
-
+        
         grid   = new EditorGrid<BaseModelData>(store, new ColumnModel(Arrays.asList(columns)));
         add(grid);
 
@@ -98,7 +97,7 @@ class SessionExplorer extends ContentPanel {
 
         initToolBar();
         initListeners();
-
+        
         loader.load();
     }
     
@@ -108,6 +107,8 @@ class SessionExplorer extends ContentPanel {
     		return intField(new ColumnConfig(fName, fName, 80));
     	} else if (clasz == Double.class) {
     		return doubleField(new ColumnConfig(fName, fName, 80));
+    	} else if (clasz == Boolean.class) {
+    		return checkboxField(new ColumnConfig(fName, fName, 80));
     	} else if (clasz == GradeField.class) {
     	    return typeField(new ColumnConfig(fName, fName, 80), GradeField.values);
     	} else {
@@ -203,14 +204,27 @@ class SessionExplorer extends ContentPanel {
         return column;
     }
 
-    /** Construct an editable field supporting free-form text. */
-    private ColumnConfig textField(ColumnConfig column) {
-        column.setEditor(new CellEditor(new TextField<String>()));
+    private ColumnConfig checkboxField(ColumnConfig column) {
+        column.setEditor(new CellEditor(new CheckBox()) {
+        	@Override
+            public Object preProcessValue(Object value) {
+        		return value.equals("true");
+        	}
+            @Override
+            public Object postProcessValue(Object value) {
+                if (value == null) {
+                    return null;
+                }
+                return value.toString();
+            }
+        });
+        
         return column;
     }
 
-    private ColumnConfig checkboxField(ColumnConfig column) {
-        column.setEditor(new CellEditor(new CheckBox()));
+    /** Construct an editable field supporting free-form text. */
+    private ColumnConfig textField(ColumnConfig column) {
+        column.setEditor(new CellEditor(new TextField<String>()));
         return column;
     }
 
@@ -340,6 +354,31 @@ class SessionExplorer extends ContentPanel {
     	return retval;
     }
     
+    private void addMenuItems(Menu addMenu) {
+	    for (final String mk : SessionMap.master.keySet()) {
+	    	final HashMap<String, Object> fields = SessionMap.master.get(mk);
+	    	final MenuItem mi = new MenuItem(mk);
+	    	// if anyone of the fields is null, then user must provide a value
+			final Set<String> requiredFields = SessionMap.getRequiredFields(mk);
+	    	if (requiredFields.isEmpty()) {
+	        	mi.addSelectionListener(new SelectionListener<ComponentEvent>() {
+	        		@Override
+	        		public void componentSelected(ComponentEvent ce) {
+	        			createNewSessionRow(mk, fields);
+	        		}
+	        	});
+	    	} else {
+	    		mi.addSelectionListener(new SelectionListener<ComponentEvent>() {
+	    	        @Override
+	    	        public void componentSelected(ComponentEvent ce) {
+	    	        	createRequiredFieldsDialog(mk, requiredFields, fields);
+	    	        }
+	    	    });
+	    	}
+	    	addMenu.add(mi);
+	    }
+    }
+    
     @SuppressWarnings("unchecked")
     private void initToolBar() {
         ToolBar toolBar = new ToolBar();
@@ -350,31 +389,23 @@ class SessionExplorer extends ContentPanel {
         addItem.setToolTip("Add a new session.");
         Menu addMenu   = new Menu();
         
-        for (final String mk : SessionMap.master.keySet()) {
-        	final HashMap<String, Object> fields = SessionMap.master.get(mk);
-        	final MenuItem mi = new MenuItem(mk);
-        	// if anyone of the fields is null, then user must provide a value
-			final Set<String> requiredFields = SessionMap.getRequiredFields(mk);
-        	if (requiredFields.isEmpty()) {
-            	mi.addSelectionListener(new SelectionListener<ComponentEvent>() {
-            		@Override
-            		public void componentSelected(ComponentEvent ce) {
-            			createNewSessionRow(mk, fields);
-            		}
-            	});
-        	} else {
-        		mi.addSelectionListener(new SelectionListener<ComponentEvent>() {
-        	        @Override
-        	        public void componentSelected(ComponentEvent ce) {
-        	        	createRequiredFieldsDialog(mk, requiredFields, fields);
-        	        }
-        	    });
-        	}
-	    	addMenu.add(mi);
-        }
-
+        addMenuItems(addMenu);
         addItem.setMenu(addMenu);
 
+        final TextToolItem duplicateItem = new TextToolItem("Duplicate");
+        toolBar.add(duplicateItem);
+        duplicateItem.setToolTip("Copy a session.");
+        duplicateItem.setEnabled(false);
+        duplicateItem.addSelectionListener(new SelectionListener<ToolBarEvent>() {
+        	@Override
+            public void componentSelected(ToolBarEvent ce) {
+        		HashMap<String, Object> fields = 
+        			(HashMap<String, Object>) grid.getSelectionModel().getSelectedItem().getProperties();
+        		addSession(fields);
+            	grid.getView().refresh(true);
+            }
+        });
+        
         TextToolItem removeItem = new TextToolItem("Delete");
         toolBar.add(removeItem);
         removeItem.setToolTip("Delete a session.");
@@ -390,12 +421,6 @@ class SessionExplorer extends ContentPanel {
         });
         
         toolBar.add(new SeparatorToolItem());
-
-        final TextToolItem duplicateItem = new TextToolItem("Duplicate");
-        toolBar.add(duplicateItem);
-        duplicateItem.setToolTip("Copy a session.");
-        duplicateItem.setEnabled(false);
-
         toolBar.add(new FillToolItem());
 
         TextToolItem saveItem = new TextToolItem("Save");

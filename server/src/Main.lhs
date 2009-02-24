@@ -15,7 +15,7 @@
 > import Network.Socket                      (inet_addr)
 > import Sessions
 
-> connect = handleSqlError $ connectPostgreSQL "dbname=dss user=dss"
+> connect = handleSqlError $ connectPostgreSQL "dbname=dss_mccarty user=dss"
 
 > main = do
 >     addr <- inet_addr "127.0.0.1"

@@ -9,9 +9,7 @@ import com.google.gwt.user.client.ui.MouseListener;
 import com.google.gwt.widgetideas.graphics.client.Color;
 import com.google.gwt.widgetideas.graphics.client.GWTCanvas;
 
-interface CanvasClient {
-    public void onPaint(GWTCanvas canvas);
-}
+
 
 class CanvasComponent extends WidgetComponent {
     public CanvasComponent(int width, int height) {
