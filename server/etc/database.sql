@@ -5,8 +5,8 @@ CREATE TABLE sessions (
 
 CREATE TABLE fields (
     session_id INTEGER     REFERENCES sessions(id)
-  , key        VARCHAR(30) NOT NULL
-  , value      VARCHAR(30) NOT NULL
+  , key        VARCHAR(64) NOT NULL
+  , value      VARCHAR(64) NOT NULL
 
   , UNIQUE(session_id, key)
 );
