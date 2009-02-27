@@ -56,6 +56,7 @@ import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.user.client.Window;
 
 class SessionExplorer extends ContentPanel {
     public SessionExplorer() {
@@ -129,7 +130,7 @@ class SessionExplorer extends ContentPanel {
         store.addStoreListener(new StoreListener<BaseModelData>() {
             @Override
             public void storeUpdate(StoreEvent<BaseModelData> se) {
-                JSONRequest.save("/sessions/"+((Number) se.model.get("id")).intValue(), se.model, null);
+            	JSONRequest.save("/sessions/"+((Number) se.model.get("id")).intValue(), se.model, null);
             }
         });
     }

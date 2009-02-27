@@ -16,6 +16,7 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.user.client.Window;
 
 interface JSONCallback {
 	public void onSuccess(JSONObject json);
@@ -103,7 +104,7 @@ class JSONRequest implements RequestCallback {
 		try {
 			post.sendRequest(postData(keys, values), new JSONRequest(cb));
 		} catch (RequestException e) {
-	    }
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -149,7 +150,7 @@ class JSONRequest implements RequestCallback {
 			}
 			postData.append(URL.encode(keys[i])).append("=").append(URL.encode(values[i]));
 		}
-
+		
 		return postData.toString();
 	}
 
