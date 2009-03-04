@@ -8,8 +8,8 @@ class Sessions(models.Model):
 
 class Fields (models.Model):
     session = models.ForeignKey(Sessions)
-    key     = models.CharField(max_length = 30)
-    value   = models.CharField(max_length = 30)
+    key     = models.CharField(max_length = 64)
+    value   = models.CharField(max_length = 64)
 
     class Meta:
         db_table = "fields"

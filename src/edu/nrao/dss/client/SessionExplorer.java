@@ -61,6 +61,7 @@ import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.user.client.Window;
 
 class SessionExplorer extends ContentPanel {
 	public SessionExplorer() {
@@ -408,9 +409,12 @@ class SessionExplorer extends ContentPanel {
 			layout = new FormLayout();
 			layout.setLabelAlign(LabelAlign.TOP);
 			columns[c].setLayout(layout);
-			for (int f = c*nFields/columnCnt; f < (c + 1)*nFields/columnCnt; ++f) {
+			for (int f = c*nFields/columnCnt;
+                     f < (c + 1)*nFields/columnCnt;
+                   ++f) {
 				CheckBox cb = new CheckBox();
-				cb.setFieldLabel(field.next());
+				cb.setBoxLabel(field.next());
+				//cb.setFieldLabel(field.next());
 				//cb.setAllowBlank(false);
 				//cb.setMinLength(4);
 				columns[c].add(cb);
@@ -460,25 +464,26 @@ class SessionExplorer extends ContentPanel {
 		for (final String mk : SessionMap.master.keySet()) {
 			final HashMap<String, Object> fields = SessionMap.master.get(mk);
 			final MenuItem mi = new MenuItem(mk);
-			// if anyone of the fields is null, then user must provide a value
+			// If anyone of the fields is null, then user must
+            // provide a value
 			final Set<String> requiredFields = SessionMap.getRequiredFields(mk);
 			if (requiredFields.isEmpty()) {
-				mi
-						.addSelectionListener(new SelectionListener<ComponentEvent>() {
-							@Override
-							public void componentSelected(ComponentEvent ce) {
-								createNewSessionRow(mk, fields);
-							}
-						});
+				mi.addSelectionListener(
+                                new SelectionListener<ComponentEvent>() {
+                    @Override
+                    public void componentSelected(ComponentEvent ce) {
+                        createNewSessionRow(mk, fields);
+                    }
+                });
 			} else {
-				mi
-						.addSelectionListener(new SelectionListener<ComponentEvent>() {
-							@Override
-							public void componentSelected(ComponentEvent ce) {
-								createRequiredFieldsDialog(mk, requiredFields,
-										fields);
-							}
-						});
+				mi.addSelectionListener(
+                                new SelectionListener<ComponentEvent>() {
+                    @Override
+                    public void componentSelected(ComponentEvent ce) {
+                        createRequiredFieldsDialog(mk, requiredFields,
+                                fields);
+                    }
+                });
 			}
 			addMenu.add(mi);
 		}
@@ -493,50 +498,25 @@ class SessionExplorer extends ContentPanel {
 		toolBar.add(addItem);
 		addItem.setToolTip("Add a new session.");
 		Menu addMenu = new Menu();
-		for (final String mk : SessionMap.master.keySet()) {
-			final HashMap<String, Object> fields = SessionMap.master.get(mk);
-			final MenuItem mi = new MenuItem(mk);
-			// if anyone of the fields is null, then user must provide a value
-			final Set<String> requiredFields = SessionMap.getRequiredFields(mk);
-			if (requiredFields.isEmpty()) {
-				mi
-						.addSelectionListener(new SelectionListener<ComponentEvent>() {
-							@Override
-							public void componentSelected(ComponentEvent ce) {
-								createNewSessionRow(mk, fields);
-							}
-						});
-			} else {
-				mi
-						.addSelectionListener(new SelectionListener<ComponentEvent>() {
-							@Override
-							public void componentSelected(ComponentEvent ce) {
-								createRequiredFieldsDialog(mk, requiredFields,
-										fields);
-							}
-						});
-			}
-			addMenu.add(mi);
-		}
-
 		addMenuItems(addMenu);
 		addItem.setMenu(addMenu);
 
+		// TBF these sections should be separate functions like the add menu above
 		final TextToolItem duplicateItem = new TextToolItem("Duplicate");
 		toolBar.add(duplicateItem);
 		duplicateItem.setToolTip("Copy a session.");
 		duplicateItem.setEnabled(false);
-		duplicateItem
-				.addSelectionListener(new SelectionListener<ToolBarEvent>() {
-					@Override
-					public void componentSelected(ToolBarEvent ce) {
-						HashMap<String, Object> fields = (HashMap<String, Object>) grid
-								.getSelectionModel().getSelectedItem()
-								.getProperties();
-						addSession(fields);
-						grid.getView().refresh(true);
-					}
-				});
+		duplicateItem.addSelectionListener(
+                                new SelectionListener<ToolBarEvent>() {
+            @Override
+            public void componentSelected(ToolBarEvent ce) {
+                HashMap<String, Object> fields = (HashMap<String, Object>) grid
+                        .getSelectionModel().getSelectedItem()
+                        .getProperties();
+                addSession(fields);
+                grid.getView().refresh(true);
+            }
+        });
 
 		TextToolItem removeItem = new TextToolItem("Delete");
 		toolBar.add(removeItem);
@@ -578,7 +558,8 @@ class SessionExplorer extends ContentPanel {
 			viewMenu.add(mi);
 		}
 
-		viewMenu.add(new MenuItem("---")); // TBF only way to add a separator?
+		// TBF only way to add a separator?
+		viewMenu.add(new MenuItem("---"));
 		final Set<String> nfields = SessionMap.getAllFields();
 		final MenuItem nmk = new MenuItem("New ..");
 		nmk.addSelectionListener(new SelectionListener<ComponentEvent>() {
