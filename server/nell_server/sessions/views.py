@@ -4,14 +4,8 @@ from nell_server.sessions.models   import Sessions, Fields
 
 import simplejson as json
 
-def build_dict(s):
-    d = {"id":s.id}
-    for f in s.fields_set.all():
-        if f.key != "id":
-            d[f.key] = f.value
-    return d
-
 class SessionResource(Resource):
+
     def create(self, request, *args, **kws):
         method = request.POST.get("_method", None)
         if method == "put":
@@ -27,11 +21,11 @@ class SessionResource(Resource):
                 f = Fields(session = s, key = k, value = v)
                 f.save()
         
-        return HttpResponse(json.dumps(build_dict(s)))
+        return HttpResponse(json.dumps(self.build_dict(s)))
 
     def read(self, request):
         sessions = Sessions.objects.all()
-        return HttpResponse(json.dumps({"sessions":[build_dict(s) for s in sessions]})
+        return HttpResponse(json.dumps({"sessions":[self.build_dict(s) for s in sessions]})
                           , mimetype = "text/plain")
 
     def update(self, request, *args, **kws):
@@ -58,3 +52,34 @@ class SessionResource(Resource):
         s.delete()
         
         return HttpResponse(json.dumps({"success": "ok"}))
+
+    def build_dict(self, s):
+        d = {"id":s.id}
+        for f in s.fields_set.all():
+            if f.key != "id":
+                d[f.key] = f.value
+        return d
+
+
+class PerspectiveResource(Resource):
+
+    def create(self, request, *args, **kws):
+        # TBF:  duplicate code
+        method = request.POST.get("_method", None)
+        if method == "put":
+            return self.update(request, *args)
+        elif method == "delete":
+            return self.delete(request, *args)
+
+        print "create: ", request.POST
+        return HttpResponse("")
+
+    def read(self, request):
+        return HttpResponse("")
+
+    def update(self, request, *args, **kws):
+        print "update: ", request.POST
+        return HttpResponse("")
+
+    def delete(self, request, *args):
+        return HttpResponse("")

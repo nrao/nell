@@ -94,7 +94,7 @@ class JSONRequest implements RequestCallback {
     		strKeys.add(k.toString());
     		strValues.add(data.get(k).toString());
     	}
-    	post("/sessions", strKeys.toArray(new String[]{}), strValues.toArray(new String[]{}), cb);
+    	post(uri, strKeys.toArray(new String[]{}), strValues.toArray(new String[]{}), cb);
 	}
 	
 	public static void post(String uri, String[] keys, String[] values, final JSONCallback cb) {

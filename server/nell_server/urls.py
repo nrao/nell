@@ -1,10 +1,12 @@
 from django.conf.urls.defaults     import *
-from nell_server.sessions.views import SessionResource
+from nell_server.sessions.views import SessionResource, PerspectiveResource
 
 urlpatterns = patterns('',
    # ...
    url(r'^sessions$',       SessionResource(permitted_methods=('GET', 'PUT', 'POST'))),
    url(r'^sessions/(\d+)$', SessionResource(permitted_methods=('PUT', 'GET', 'POST'))),
+   url(r'^sessions/perspective$', PerspectiveResource(permitted_methods=('GET', 'PUT', 'POST'))),
+   url(r'^sessions/perspective/(\d+)$', PerspectiveResource(permitted_methods=('PUT', 'GET', 'POST'))),
 )
 
 

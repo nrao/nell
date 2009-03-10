@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import com.extjs.gxt.ui.client.Events;
@@ -385,7 +386,17 @@ class SessionExplorer extends ContentPanel {
 		});
 	}
 
-	private void createColumnSelectionDialog(Set<String> fields) {
+	private HashMap<String, Boolean> getColumnHeaders() {
+		HashMap<String, Boolean> retval = new HashMap<String, Boolean>();
+		int count = grid.getColumnModel().getColumnCount();
+	    for (int i = 1; i < count; ++i) {
+	        String column_id = grid.getColumnModel().getColumnId(i);
+	        retval.put(column_id, grid.getColumnModel().getColumnById(column_id).isHidden());
+	    }
+	    return retval;
+	}
+	
+	private void createPerspectiveDialog(Set<String> fields) {
 		final Dialog d = new Dialog();
 		d.setHeading("New View");
 		d.addText("Please select the desired column headings.");
@@ -394,36 +405,26 @@ class SessionExplorer extends ContentPanel {
 		//d.setAutoWidth(true);
 		d.setHeight(500);
 		d.setWidth(1200);
-
-		FormPanel panel = new FormPanel();
-		LayoutContainer main = new LayoutContainer();
-		main.setLayout(new ColumnLayout());
-		
-		FormLayout layout;
+        
+		List<ColumnConfig> configs = new ArrayList<ColumnConfig>();
 		int columnCnt = 3;
-		LayoutContainer[] columns = new LayoutContainer[columnCnt];
-		Iterator<String> field = fields.iterator();
-		int nFields = fields.size();
 		for (int c = 0; c < columnCnt; ++c) {
-			columns[c] = new LayoutContainer();
-			layout = new FormLayout();
-			layout.setLabelAlign(LabelAlign.TOP);
-			columns[c].setLayout(layout);
-			for (int f = c*nFields/columnCnt;
-                     f < (c + 1)*nFields/columnCnt;
-                   ++f) {
-				CheckBox cb = new CheckBox();
-				cb.setBoxLabel(field.next());
-				//cb.setFieldLabel(field.next());
-				//cb.setAllowBlank(false);
-				//cb.setMinLength(4);
-				columns[c].add(cb);
-			}
-			main.add(columns[c], new com.extjs.gxt.ui.client.widget.layout.ColumnData(.33));
+			configs.add(checkboxField(new ColumnConfig("header", "header", 150)));
+		}	
+		
+		ListStore<PerspectiveSelection> dstore = new ListStore<PerspectiveSelection>();
+		dstore.setMonitorChanges(true);
+		
+		HashMap<String, Boolean> currPerspec = getColumnHeaders();
+		List<PerspectiveSelection> models = new ArrayList<PerspectiveSelection>();
+		for (String fName : currPerspec.keySet()) {
+			models.add(new PerspectiveSelection(fName, currPerspec.get(fName).toString()));
 		}
-		panel.add(main);
-
-		d.add(panel);
+		dstore.add(models);
+		
+		EditorGrid<PerspectiveSelection> dgrid = new EditorGrid<PerspectiveSelection>(dstore, new ColumnModel(configs));
+		
+		d.add(dgrid);
 		d.show();
 
 		Button cancel = d.getButtonById(Dialog.CANCEL);
@@ -438,6 +439,8 @@ class SessionExplorer extends ContentPanel {
 		ok.addSelectionListener(new SelectionListener<ComponentEvent>() {
 			@Override
 			public void componentSelected(ComponentEvent ce) {
+				HashMap<String, Object> data = new HashMap<String, Object>();
+				JSONRequest.post("/sessions/perspective/2", data, null);
 				// HashMap<String, Object> sFieldsP =
 				// populateSessionFields(sFields, formFields);
 				// createNewSessionRow(sType, sFieldsP);
@@ -456,7 +459,7 @@ class SessionExplorer extends ContentPanel {
 		return retval;
 	}
 
-	private Set<String> getViewColumnHeaders(String view) {
+	private Set<String> getViewPointColumnHeaders(String view) {
         return SessionMap.getAllFields();  //TBF get from db
 	}
 
@@ -547,7 +550,7 @@ class SessionExplorer extends ContentPanel {
 		views[1] = "View #2";
 		views[2] = "View #3";
 		for (final String mk : views) {
-			final Set<String> fields = getViewColumnHeaders(mk);
+			final Set<String> fields = getViewPointColumnHeaders(mk);
 			final MenuItem mi = new MenuItem(mk);
 			mi.addSelectionListener(new SelectionListener<ComponentEvent>() {
 				@Override
@@ -565,7 +568,7 @@ class SessionExplorer extends ContentPanel {
 		nmk.addSelectionListener(new SelectionListener<ComponentEvent>() {
 			@Override
 			public void componentSelected(ComponentEvent ce) {
-				createColumnSelectionDialog(nfields);
+				createPerspectiveDialog(nfields);
 				// TBF if OK send new view and fields to db
 			}
 		});
