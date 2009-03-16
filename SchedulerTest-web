@@ -1,0 +1,3 @@
+#!/bin/sh
+APPDIR=`dirname $0`;
+java  -Dgwt.args="-web -out www-test" -Xmx256M -cp "$APPDIR/src:$APPDIR/test:$APPDIR/bin:/home/dss/conundrum/gwt/junit-4.5.jar:/home/dss/conundrum/gwt/gwt-linux-1.5.3/gwt-user.jar:/home/dss/conundrum/gwt/gwt-linux-1.5.3/gwt-dev-linux.jar:/home/dss/conundrum/gwt/gwt-linux-1.5.3/gxt-1.2.3/gxt.jar:/home/dss/conundrum/gwt/gwt-linux-1.5.3/gwt-incubator_1-5_Dec_28.jar" junit.textui.TestRunner edu.nrao.dss.client.SchedulerTest "$@";
