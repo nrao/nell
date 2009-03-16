@@ -61,7 +61,6 @@ import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.user.client.Window;
 
 class SessionExplorer extends ContentPanel {
 	public SessionExplorer() {
@@ -317,7 +316,7 @@ class SessionExplorer extends ContentPanel {
 		return column;
 	}
 
-	private void createNewSessionRow(String mk, HashMap<String, Object> fields) {
+	public void createNewSessionRow(String mk, HashMap<String, Object> fields) {
             addSession(fields);
             Set<String> headers = SessionMap.master.get(mk).keySet();
             setColumnHeaders(headers);
@@ -339,6 +338,7 @@ class SessionExplorer extends ContentPanel {
         grid.getView().refresh(true);
     }
 
+	/*
 	@SuppressWarnings("unchecked")
 	private void createRequiredFieldsDialog(final String sType, Set<String> requiredFields, final HashMap<String, Object> sFields) {
 		final Dialog d = new Dialog();
@@ -384,6 +384,7 @@ class SessionExplorer extends ContentPanel {
 			}
 		});
 	}
+	*/
 
 	private void createColumnSelectionDialog(Set<String> fields) {
 		final Dialog d = new Dialog();
@@ -447,7 +448,7 @@ class SessionExplorer extends ContentPanel {
 	}
 
 	@SuppressWarnings("unchecked")
-	private HashMap<String, Object> populateSessionFields(
+	public HashMap<String, Object> populateSessionFields(
 			HashMap<String, Object> sFields, ArrayList<Field> fFields) {
 		HashMap<String, Object> retval = new HashMap<String, Object>(sFields);
 		for (Field f : fFields) {
@@ -461,6 +462,7 @@ class SessionExplorer extends ContentPanel {
 	}
 
 	private void addMenuItems(Menu addMenu) {
+		final SessionExplorer sx_this = this;
 		for (final String mk : SessionMap.master.keySet()) {
 			final HashMap<String, Object> fields = SessionMap.master.get(mk);
 			final MenuItem mi = new MenuItem(mk);
@@ -480,8 +482,8 @@ class SessionExplorer extends ContentPanel {
                                 new SelectionListener<ComponentEvent>() {
                     @Override
                     public void componentSelected(ComponentEvent ce) {
-                        createRequiredFieldsDialog(mk, requiredFields,
-                                fields);
+                    	new RequiredFieldsDialog(mk, requiredFields, fields, sx_this);
+                        //createRequiredFieldsDialog(mk, requiredFields, fields);
                     }
                 });
 			}
