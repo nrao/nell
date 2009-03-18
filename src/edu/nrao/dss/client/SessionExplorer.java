@@ -80,7 +80,7 @@ class SessionExplorer extends ContentPanel {
 		ArrayList columnsA = new ArrayList();
 		columnsA.add(selection.getColumn());
 		for (String fName : fc.keySet()) {
-			columnsA.add(callField(fName, fc.get(fName)));
+			columnsA.add(new SessionColConfig(fName, fc.get(fName)));
 		}
 
 		ColumnConfig[] columns = (ColumnConfig[]) columnsA
@@ -111,22 +111,6 @@ class SessionExplorer extends ContentPanel {
 		loader.load();
 	}
 
-	@SuppressWarnings("unchecked")
-	private ColumnConfig callField(String fName, Class clasz) {
-		if (clasz == Integer.class) {
-			return intField(new ColumnConfig(fName, fName, 80));
-		} else if (clasz == Double.class) {
-			return doubleField(new ColumnConfig(fName, fName, 80));
-		} else if (clasz == Boolean.class) {
-			return checkboxField(new ColumnConfig(fName, fName, 80));
-		} else if (clasz == GradeField.class) {
-			return typeField(new ColumnConfig(fName, fName, 80),
-					GradeField.values);
-		} else {
-			return textField(new ColumnConfig(fName, fName, 80));
-		}
-	}
-
 	private void initListeners() {
 		grid.addListener(Events.AfterEdit, new Listener<GridEvent>() {
 			public void handleEvent(GridEvent ge) {
@@ -146,174 +130,6 @@ class SessionExplorer extends ContentPanel {
 						null);
 			}
 		});
-	}
-
-	private ColumnConfig doubleField(ColumnConfig column) {
-		NumberField field = new NumberField();
-		field.setPropertyEditorType(Double.class);
-
-		column.setAlignment(HorizontalAlignment.RIGHT);
-		column.setEditor(new CellEditor(field) {
-			@Override
-			public Object preProcessValue(Object value) {
-				if (value == null) {
-					return null;
-				}
-				return Double.valueOf(value.toString());
-			}
-
-			@Override
-			public Object postProcessValue(Object value) {
-				if (value == null) {
-					return null;
-				}
-				return value.toString();
-			}
-		});
-		column.setNumberFormat(NumberFormat.getFormat("0"));
-		column.setRenderer(new GridCellRenderer<BaseModelData>() {
-			public String render(BaseModelData model, String property,
-					ColumnData config, int rowIndex, int colIndex,
-					ListStore<BaseModelData> store) {
-				if (model.get(property) != null) {
-					return model.get(property).toString();
-				} else {
-					return "";
-				}
-			}
-		});
-
-		return column;
-	}
-
-	private ColumnConfig intField(ColumnConfig column) {
-		NumberField field = new NumberField();
-		field.setPropertyEditorType(Integer.class);
-
-		column.setAlignment(HorizontalAlignment.RIGHT);
-		column.setEditor(new CellEditor(field) {
-			@Override
-			public Object preProcessValue(Object value) {
-				if (value == null) {
-					return null;
-				}
-				return Integer.parseInt(value.toString());
-			}
-
-			@Override
-			public Object postProcessValue(Object value) {
-				if (value == null) {
-					return null;
-				}
-				return value.toString();
-			}
-		});
-		column.setNumberFormat(NumberFormat.getFormat("0"));
-		column.setRenderer(new GridCellRenderer<BaseModelData>() {
-			public String render(BaseModelData model, String property,
-					ColumnData config, int rowIndex, int colIndex,
-					ListStore<BaseModelData> store) {
-				if (model.get(property) != null) {
-					return model.get(property).toString();
-				} else {
-					return "";
-				}
-			}
-		});
-
-		return column;
-	}
-
-	private ColumnConfig checkboxField(ColumnConfig column) {
-		column.setEditor(new CellEditor(new CheckBox()) {
-			@Override
-			public Object preProcessValue(Object value) {
-				return value.equals("true");
-			}
-
-			@Override
-			public Object postProcessValue(Object value) {
-				if (value == null) {
-					return null;
-				}
-				return value.toString();
-			}
-		});
-
-		return column;
-	}
-
-	/** Construct an editable field supporting free-form text. */
-	private ColumnConfig textField(ColumnConfig column) {
-		column.setEditor(new CellEditor(new TextField<String>()));
-		return column;
-	}
-
-	@SuppressWarnings("unused")
-	private ColumnConfig timeField(ColumnConfig column) {
-		TextField<String> timeField = new TextField<String>();
-		timeField.setRegex("[0-2]\\d:\\d\\d:\\d\\d(\\.\\d+)?");
-
-		column.setAlignment(HorizontalAlignment.RIGHT);
-
-		column.setRenderer(new GridCellRenderer<BaseModelData>() {
-			public String render(BaseModelData model, String property,
-					ColumnData config, int rowIndex, int colIndex,
-					ListStore<BaseModelData> store) {
-				return Conversions.radiansToTime(((Double) model.get(property))
-						.doubleValue());
-			}
-		});
-
-		column.setEditor(new CellEditor(timeField) {
-			@Override
-			public Object preProcessValue(Object value) {
-				if (value == null) {
-					return Conversions.radiansToTime(0.0);
-				}
-				return Conversions
-						.radiansToTime(((Double) value).doubleValue());
-			}
-
-			@Override
-			public Object postProcessValue(Object value) {
-				if (value == null) {
-					return 0.0;
-				}
-				return Conversions.timeToRadians(value.toString());
-			}
-		});
-
-		return column;
-	}
-
-	private ColumnConfig typeField(ColumnConfig column, String[] options) {
-		final SimpleComboBox<String> typeCombo = new SimpleComboBox<String>();
-		typeCombo.setTriggerAction(TriggerAction.ALL);
-
-		for (String o : options) {
-			typeCombo.add(o);
-		}
-
-		column.setEditor(new CellEditor(typeCombo) {
-			@Override
-			public Object preProcessValue(Object value) {
-				if (value == null) {
-					return value;
-				}
-				return typeCombo.findModel(value.toString());
-			}
-
-			@Override
-			public Object postProcessValue(Object value) {
-				if (value == null) {
-					return value;
-				}
-				return ((ModelData) value).get("value");
-			}
-		});
-
-		return column;
 	}
 
 	public void createNewSessionRow(String mk, HashMap<String, Object> fields) {
@@ -605,7 +421,6 @@ class SessionExplorer extends ContentPanel {
 
 	}
 
-	/** Show the SessionWizard. */
 	private void addSession(HashMap<String, Object> data) {
 		JSONRequest.post("/sessions", data, new JSONCallbackAdapter() {
 			@Override
