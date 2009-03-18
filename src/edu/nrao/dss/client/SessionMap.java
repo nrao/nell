@@ -340,7 +340,9 @@ class SessionMap {
         HashMap<String, Class> fields = new HashMap<String, Class>();
         for (HashMap<String, Object> m : master.values()) {
             for (String k : m.keySet()) {
-                    fields.put(k, m.get(k).getClass());
+            	if (m.get(k) != null){
+            		fields.put(k, m.get(k).getClass());
+            	}
             }
         }
         return fields;
@@ -351,7 +353,7 @@ class SessionMap {
     }
     
     @SuppressWarnings("unchecked")
-public static Class getFieldClass(String fName) {
+    public static Class getFieldClass(String fName) {
         return getAllFieldsWithClass().get(fName);
     }
 

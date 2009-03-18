@@ -18,5 +18,5 @@ public class SchedulerTest extends GWTTestCase {
 	  Scheduler s = new Scheduler();
 	  assertNotNull(s);
   }
-
+  
 }
