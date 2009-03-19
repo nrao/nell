@@ -13,6 +13,7 @@ public class SchedulerTestSuite extends GWTTestCase {
 		TestSuite suite = new TestSuite("Test for a Scheduler Application");
 		suite.addTestSuite(SchedulerTest.class); 
 		suite.addTestSuite(SessionMapTest.class);
+		suite.addTestSuite(SessionColConfigTest.class);
 		return suite;
   }
 }
