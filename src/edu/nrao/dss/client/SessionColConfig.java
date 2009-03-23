@@ -26,6 +26,20 @@ class SessionColConfig extends ColumnConfig {
 			checkboxField();
 		} else if (clasz == GradeField.class) {
 			typeField(GradeField.values);
+		} else if (clasz == CadenceField.class) {
+			typeField(CadenceField.values);
+		} else if (clasz == CoordModeField.class) {
+			typeField(CoordModeField.values);
+		} else if (clasz == OrderDependencyField.class) {
+			typeField(OrderDependencyField.values);
+		} else if (clasz == PriorityField.class) {
+			typeField(PriorityField.values);
+		} else if (clasz == ScienceField.class) {
+			typeField(ScienceField.values);
+		} else if (clasz == STypeField.class) {
+			typeField(STypeField.values);
+		} else if (clasz == TimeOfDayField.class) {
+			typeField(TimeOfDayField.values);
 		} else {
 			textField();
 		}
