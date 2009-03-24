@@ -2,7 +2,6 @@ package edu.nrao.dss.client;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Set;
 
 import com.extjs.gxt.ui.client.event.ComponentEvent;
 import com.extjs.gxt.ui.client.event.SelectionListener;
@@ -12,14 +11,10 @@ import com.extjs.gxt.ui.client.widget.form.Field;
 import com.extjs.gxt.ui.client.widget.form.FormPanel;
 import com.extjs.gxt.ui.client.widget.form.TextField;
 
-public class RequiredFieldsDialog extends Dialog {
-	
+class RequiredFieldsDialog extends Dialog {
 	@SuppressWarnings("unchecked")
-	public RequiredFieldsDialog(final String sType,
-			                     Set<String> requiredFields,
-			                     final HashMap<String, Object> sFields,
-			                     final SessionExplorer sx) {
-		setHeading(sType);
+    public RequiredFieldsDialog(final SessionExplorer sx, final RowType row) {
+		setHeading(row.getName());
 		addText("Please enter the required fields.");
 		setButtons(Dialog.OKCANCEL);
 		setHeight(200);
@@ -28,7 +23,7 @@ public class RequiredFieldsDialog extends Dialog {
 		FormPanel fp = new FormPanel();
 
 		final ArrayList<Field> formFields = new ArrayList<Field>();
-		for (String rf : requiredFields) {
+		for (String rf : row.getRequiredFields()) {
 			// TBF need to make this data type sensitive
 			TextField<String> f = new TextField<String>();
 			f.setFieldLabel(rf);
@@ -54,9 +49,9 @@ public class RequiredFieldsDialog extends Dialog {
 		ok.addSelectionListener(new SelectionListener<ComponentEvent>() {
 			@Override
 			public void componentSelected(ComponentEvent ce) {
-				HashMap<String, Object> sFieldsP = sx.populateSessionFields(
-						sFields, formFields);
-				sx.createNewSessionRow(sType, sFieldsP);
+				HashMap<String, Object> sFieldsP =
+				    sx.populateSessionFields(row.getRequiredFields(), formFields);
+				sx.createNewSessionRow(row, sFieldsP);
 				close();
 			}
 		});

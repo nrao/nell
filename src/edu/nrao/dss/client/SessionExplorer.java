@@ -1,13 +1,11 @@
 package edu.nrao.dss.client;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.List;
 
 import com.extjs.gxt.ui.client.Events;
-import com.extjs.gxt.ui.client.Style.HorizontalAlignment;
 import com.extjs.gxt.ui.client.Style.SelectionMode;
 import com.extjs.gxt.ui.client.data.BaseListLoadConfig;
 import com.extjs.gxt.ui.client.data.BaseListLoadResult;
@@ -18,7 +16,6 @@ import com.extjs.gxt.ui.client.data.DataReader;
 import com.extjs.gxt.ui.client.data.HttpProxy;
 import com.extjs.gxt.ui.client.data.JsonReader;
 import com.extjs.gxt.ui.client.data.ListLoader;
-import com.extjs.gxt.ui.client.data.ModelData;
 import com.extjs.gxt.ui.client.event.BaseEvent;
 import com.extjs.gxt.ui.client.event.ComponentEvent;
 import com.extjs.gxt.ui.client.event.GridEvent;
@@ -37,29 +34,20 @@ import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.form.CheckBox;
 import com.extjs.gxt.ui.client.widget.form.Field;
 import com.extjs.gxt.ui.client.widget.form.FormPanel;
-import com.extjs.gxt.ui.client.widget.form.NumberField;
-import com.extjs.gxt.ui.client.widget.form.SimpleComboBox;
-import com.extjs.gxt.ui.client.widget.form.TextField;
-import com.extjs.gxt.ui.client.widget.form.ComboBox.TriggerAction;
 import com.extjs.gxt.ui.client.widget.form.FormPanel.LabelAlign;
-import com.extjs.gxt.ui.client.widget.grid.CellEditor;
 import com.extjs.gxt.ui.client.widget.grid.CheckBoxSelectionModel;
-import com.extjs.gxt.ui.client.widget.grid.ColumnConfig;
-import com.extjs.gxt.ui.client.widget.grid.ColumnData;
-import com.extjs.gxt.ui.client.widget.grid.ColumnModel;
 import com.extjs.gxt.ui.client.widget.grid.EditorGrid;
-import com.extjs.gxt.ui.client.widget.grid.GridCellRenderer;
 import com.extjs.gxt.ui.client.widget.layout.ColumnLayout;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
 import com.extjs.gxt.ui.client.widget.layout.FormLayout;
 import com.extjs.gxt.ui.client.widget.menu.Menu;
 import com.extjs.gxt.ui.client.widget.menu.MenuItem;
+import com.extjs.gxt.ui.client.widget.menu.SeparatorMenuItem;
 import com.extjs.gxt.ui.client.widget.toolbar.FillToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.SeparatorToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.TextToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONObject;
 
 class SessionExplorer extends ContentPanel {
@@ -76,20 +64,10 @@ class SessionExplorer extends ContentPanel {
 		CheckBoxSelectionModel<BaseModelData> selection = new CheckBoxSelectionModel<BaseModelData>();
 		selection.setSelectionMode(SelectionMode.MULTI);
 
-		HashMap<String, Class> fc = SessionMap.typeMap;
-		ArrayList columnsA = new ArrayList();
-		columnsA.add(selection.getColumn());
-		for (String fName : fc.keySet()) {
-			columnsA.add(new SessionColConfig(fName, fc.get(fName)));
-		}
-
-		ColumnConfig[] columns = (ColumnConfig[]) columnsA
-				.toArray(new ColumnConfig[] {});
-
 		RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
 				"/sessions");
 		DataReader reader = new JsonReader<BaseListLoadConfig>(
-				new SessionType());
+				new SessionType(rows.getColumnDefinition()));
 
 		HttpProxy<BaseListLoadConfig, BaseListLoadResult<BaseModelData>> proxy = new HttpProxy<BaseListLoadConfig, BaseListLoadResult<BaseModelData>>(
 				builder);
@@ -97,8 +75,7 @@ class SessionExplorer extends ContentPanel {
 				proxy, reader);
 		store = new ListStore<BaseModelData>(loader);
 
-		grid = new EditorGrid<BaseModelData>(store, new ColumnModel(Arrays
-				.asList(columns)));
+		grid = new EditorGrid<BaseModelData>(store, rows.getColumnModel());
 		add(grid);
 
 		grid.setSelectionModel(selection);
@@ -132,13 +109,18 @@ class SessionExplorer extends ContentPanel {
 		});
 	}
 
-	public void createNewSessionRow(String mk, HashMap<String, Object> fields) {
-            addSession(fields);
-            Set<String> headers = SessionMap.master.get(mk).keySet();
-            setColumnHeaders(headers);
+	public void createNewSessionRow(RowType row, HashMap<String, Object> fields) {
+	    if (fields == null) {
+	        fields = new HashMap<String, Object>();
+	    }
+
+	    row.populateDefaultValues(fields);
+	    addSession(fields);
+
+	    setColumnHeaders(row.getFieldNames());
 	}
 
-	private void setColumnHeaders(Set<String> headers) {
+	private void setColumnHeaders(List<String> headers) {
 		int count = grid.getColumnModel().getColumnCount();
         for (int i = 1; i < count; ++i) {
             String column_id = grid.getColumnModel().getColumnId(i);
@@ -154,55 +136,7 @@ class SessionExplorer extends ContentPanel {
         grid.getView().refresh(true);
     }
 
-	/*
-	@SuppressWarnings("unchecked")
-	private void createRequiredFieldsDialog(final String sType, Set<String> requiredFields, final HashMap<String, Object> sFields) {
-		final Dialog d = new Dialog();
-		d.setHeading(sType);
-		d.addText("Please enter the required fields.");
-		d.setButtons(Dialog.OKCANCEL);
-		d.setHeight(200);
-		d.setWidth(400);
-
-		FormPanel fp = new FormPanel();
-
-		final ArrayList<Field> formFields = new ArrayList<Field>();
-		for (String rf : requiredFields) {
-			// TBF need to make this data type sensitive
-			TextField<String> f = new TextField<String>();
-			f.setFieldLabel(rf);
-			f.setEmptyText(rf);
-			f.setAllowBlank(false);
-			f.setMinLength(4);
-			fp.add(f);
-			formFields.add(f);
-		}
-
-		d.add(fp);
-		d.show();
-
-		Button cancel = d.getButtonById(Dialog.CANCEL);
-		cancel.addSelectionListener(new SelectionListener<ComponentEvent>() {
-			@Override
-			public void componentSelected(ComponentEvent ce) {
-				d.close();
-			}
-		});
-
-		Button ok = d.getButtonById(Dialog.OK);
-		ok.addSelectionListener(new SelectionListener<ComponentEvent>() {
-			@Override
-			public void componentSelected(ComponentEvent ce) {
-				HashMap<String, Object> sFieldsP = populateSessionFields(
-						sFields, formFields);
-				createNewSessionRow(sType, sFieldsP);
-				d.close();
-			}
-		});
-	}
-	*/
-
-	private void createColumnSelectionDialog(Set<String> fields) {
+	private void createColumnSelectionDialog(List<String> fields) {
 		final Dialog d = new Dialog();
 		d.setHeading("New View");
 		d.addText("Please select the desired column headings.");
@@ -265,48 +199,35 @@ class SessionExplorer extends ContentPanel {
 
 	@SuppressWarnings("unchecked")
 	public HashMap<String, Object> populateSessionFields(
-			HashMap<String, Object> sFields, ArrayList<Field> fFields) {
-		HashMap<String, Object> retval = new HashMap<String, Object>(sFields);
+			List<String> sFields, ArrayList<Field> fFields) {
+		HashMap<String, Object> retval = new HashMap<String, Object>();
 		for (Field f : fFields) {
 			retval.put(f.getFieldLabel(), f.getValue());
 		}
 		return retval;
 	}
 
-	private Set<String> getViewColumnHeaders(String view) {
-        return SessionMap.getAllFields();  //TBF get from db
+	private List<String> getViewColumnHeaders(String view) {
+	    return rows.getAllFieldNames();
 	}
 
 	private void addMenuItems(Menu addMenu) {
-		final SessionExplorer sx_this = this;
-		for (final String mk : SessionMap.master.keySet()) {
-			final HashMap<String, Object> fields = SessionMap.master.get(mk);
-			final MenuItem mi = new MenuItem(mk);
-			// If anyone of the fields is null, then user must
-            // provide a value
-			final Set<String> requiredFields = SessionMap.getRequiredFields(mk);
-			if (requiredFields.isEmpty()) {
-				mi.addSelectionListener(
-                                new SelectionListener<ComponentEvent>() {
-                    @Override
-                    public void componentSelected(ComponentEvent ce) {
-                        createNewSessionRow(mk, fields);
-                    }
-                });
-			} else {
-				mi.addSelectionListener(
-                                new SelectionListener<ComponentEvent>() {
-                    @Override
-                    public void componentSelected(ComponentEvent ce) {
-                    	new RequiredFieldsDialog(mk, requiredFields, fields, sx_this);
-                        //createRequiredFieldsDialog(mk, requiredFields, fields);
-                    }
-                });
-			}
-			addMenu.add(mi);
+		for (final RowType row : rows.getAllRows()) {
+		    String   name = row.getName() + (row.hasRequiredFields() ? "..." : "");
+		    MenuItem mi   = new MenuItem(name, new SelectionListener<ComponentEvent>() {
+		        @Override
+		        public void componentSelected(ComponentEvent ce) {
+		            if (row.hasRequiredFields()) {
+		                new RequiredFieldsDialog(SessionExplorer.this, row);
+		            } else {
+		                createNewSessionRow(row, null);
+		            }
+		        }
+		    });
+		    addMenu.add(mi);
 		}
 	}
-
+		
 	@SuppressWarnings("unchecked")
 	private void initToolBar() {
 		ToolBar toolBar = new ToolBar();
@@ -365,7 +286,7 @@ class SessionExplorer extends ContentPanel {
 		views[1] = "View #2";
 		views[2] = "View #3";
 		for (final String mk : views) {
-			final Set<String> fields = getViewColumnHeaders(mk);
+			final List<String> fields = getViewColumnHeaders(mk);
 			final MenuItem mi = new MenuItem(mk);
 			mi.addSelectionListener(new SelectionListener<ComponentEvent>() {
 				@Override
@@ -376,9 +297,8 @@ class SessionExplorer extends ContentPanel {
 			viewMenu.add(mi);
 		}
 
-		// TBF only way to add a separator?
-		viewMenu.add(new MenuItem("---"));
-		final Set<String> nfields = SessionMap.getAllFields();
+		viewMenu.add(new SeparatorMenuItem());
+		final List<String> nfields = rows.getAllFieldIds();
 		final MenuItem nmk = new MenuItem("New ..");
 		nmk.addSelectionListener(new SelectionListener<ComponentEvent>() {
 			@Override
@@ -430,7 +350,7 @@ class SessionExplorer extends ContentPanel {
 				BaseModelData model = new BaseModelData();
 				model.set("id", id);
 
-				SessionType type = new SessionType();
+				SessionType type = new SessionType(rows.getColumnDefinition());
 				for (int i = 0; i < type.getFieldCount(); ++i) {
 					DataField field = type.getField(i);
 					if (field.name == "id") {
@@ -445,6 +365,8 @@ class SessionExplorer extends ContentPanel {
 			}
 		});
 	}
+	
+	private final RowDefinition rows = new RowDefinition();
 
 	/** Provides basic spreadsheet-like functionality. */
 	private EditorGrid<BaseModelData> grid;

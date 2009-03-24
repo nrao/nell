@@ -16,8 +16,10 @@ import com.extjs.gxt.ui.client.widget.grid.GridCellRenderer;
 import com.google.gwt.i18n.client.NumberFormat;
 
 class SessionColConfig extends ColumnConfig {
-	public SessionColConfig(String fName, Class clasz){
-		super(fName, fName, 80);
+	@SuppressWarnings("unchecked")
+    public SessionColConfig(String fName, String name, int width, Class clasz){
+		super(fName, name, width);
+
 		if (clasz == Integer.class) {
 			intField();
 		} else if (clasz == Double.class) {
