@@ -31,57 +31,185 @@ class RowDefinition {
     private class BaseRowType extends RowType {
         public BaseRowType(String name) {
             super(columns);
-
             addColumn(ColumnDefinition.NAME,           name);
+        }
+    }
+
+    private final RowType empty        = new BaseRowType("Empty") {
+        {
+        }
+    };
+
+    private final RowType lowFreqNoRFI = new BaseRowType("Low Frequency With No RFI") {
+        {
+            addColumn(ColumnDefinition.CODE,           null);
+            addColumn(ColumnDefinition.ORIG_ID,        0);
+            addColumn(ColumnDefinition.ID,             0);
             addColumn(ColumnDefinition.TYPE,           new STypeField("open"));
-            addColumn(ColumnDefinition.SCIENCE,        new ScienceField("spectral line"));
+            addColumn(ColumnDefinition.SCIENCE,        null); //new ScienceField("spectral line"));
             addColumn(ColumnDefinition.PSC_TIME,       null);
             addColumn(ColumnDefinition.TOTAL_TIME,     null);
-            addColumn(ColumnDefinition.GRADE,          new GradeField("A"));
+            //addColumn(ColumnDefinition.TRI_TIME,       100);
+            addColumn(ColumnDefinition.GRADE,          null); //new GradeField("A"));
             addColumn(ColumnDefinition.AUTHORIZED,     true);
             addColumn(ColumnDefinition.ENABLED,        false);
             addColumn(ColumnDefinition.COMPLETE,       false);
             addColumn(ColumnDefinition.COORD_MODE,     new CoordModeField("J2000"));
             addColumn(ColumnDefinition.CNTR_SKY_AREA,  null);
             addColumn(ColumnDefinition.FREQ,           null);
-            addColumn(ColumnDefinition.FREQ_RANGE,     null);
-            addColumn(ColumnDefinition.RECEIVERS,      null);
+            //addColumn(ColumnDefinition.FREQ_RNGE_L,    null);
+            //addColumn(ColumnDefinition.FREQ_RNGE_H,    null);
+            addColumn(ColumnDefinition.PRI_RCVR,       null);
+            //addColumn(ColumnDefinition.OPT_RCVRS,      null);
             addColumn(ColumnDefinition.REQ_MIN,        2.0);
             addColumn(ColumnDefinition.REQ_MAX,        6.0);
             addColumn(ColumnDefinition.ABS_MIN,        1.5);
             addColumn(ColumnDefinition.ABS_MAX,        10.0);
             addColumn(ColumnDefinition.BETWEEN,        0.0);
-            addColumn(ColumnDefinition.OBS_EFF_LIMIT,  null);
-            addColumn(ColumnDefinition.ATMOS_ST_LIMIT, null);
-            addColumn(ColumnDefinition.TR_ERR_LIMIT,   null);
-            addColumn(ColumnDefinition.MIN_EFF_TSYS,   null);
-            addColumn(ColumnDefinition.HA_LIMIT,       null);
+            //addColumn(ColumnDefinition.OBS_EFF_LIMIT,  0.0);
+            //addColumn(ColumnDefinition.ATMOS_ST_LIMIT, 0.0);
+            //addColumn(ColumnDefinition.TR_ERR_LIMIT,   0.0);
+            //addColumn(ColumnDefinition.MIN_EFF_TSYS,   0.0);
+            //addColumn(ColumnDefinition.HA_LIMIT,       0.0);
             addColumn(ColumnDefinition.ZA_LIMIT,       85.0);
             addColumn(ColumnDefinition.SOLAR_AVOID,    false);
-            addColumn(ColumnDefinition.USE_DEPEND,     false);
+            //addColumn(ColumnDefinition.PRECIP,         0.0);
+            //addColumn(ColumnDefinition.WIND,           0.0);
+            //addColumn(ColumnDefinition.TIME,           new TimeOfDayField("RFI");
             addColumn(ColumnDefinition.TRANSIT,        false);
-        }
-    }
-
-    private final RowType empty        = new RowType(columns) {
-        {
-            addColumn(ColumnDefinition.NAME,           "Empty");
+            //addColumn(ColumnDefinition.CADENCE,        new CadenceField("regular");
         }
     };
 
-    private final RowType lowFreqNoRFI = new BaseRowType("Low Frequency With No RFI") {
+    private final RowType lowFreqRFI = new BaseRowType("Low Frequency With RFI") {
         {
+            addColumn(ColumnDefinition.CODE,           null);
             addColumn(ColumnDefinition.ORIG_ID,        0);
             addColumn(ColumnDefinition.ID,             0);
+            addColumn(ColumnDefinition.TYPE,           new STypeField("open"));
+            addColumn(ColumnDefinition.SCIENCE,        null); //new ScienceField("spectral line"));
+            addColumn(ColumnDefinition.PSC_TIME,       null);
+            addColumn(ColumnDefinition.TOTAL_TIME,     null);
+            //addColumn(ColumnDefinition.TRI_TIME,       100);
+            addColumn(ColumnDefinition.GRADE,          null); //new GradeField("A"));
+            addColumn(ColumnDefinition.AUTHORIZED,     true);
+            addColumn(ColumnDefinition.ENABLED,        false);
+            addColumn(ColumnDefinition.COMPLETE,       false);
+            addColumn(ColumnDefinition.COORD_MODE,     new CoordModeField("J2000"));
+            addColumn(ColumnDefinition.CNTR_SKY_AREA,  null);
+            addColumn(ColumnDefinition.FREQ,           null);
+            addColumn(ColumnDefinition.FREQ_RNGE_L,    1.0);
+            addColumn(ColumnDefinition.FREQ_RNGE_H,    1.7);
+            addColumn(ColumnDefinition.PRI_RCVR,       null);
+            //addColumn(ColumnDefinition.OPT_RCVRS,      null);
+            addColumn(ColumnDefinition.REQ_MIN,        2.0);
+            addColumn(ColumnDefinition.REQ_MAX,        6.0);
+            addColumn(ColumnDefinition.ABS_MIN,        1.5);
+            addColumn(ColumnDefinition.ABS_MAX,        10.0);
+            addColumn(ColumnDefinition.BETWEEN,        0.0);
+            //addColumn(ColumnDefinition.OBS_EFF_LIMIT,  0.0);
+            //addColumn(ColumnDefinition.ATMOS_ST_LIMIT, 0.0);
+            //addColumn(ColumnDefinition.TR_ERR_LIMIT,   0.0);
+            //addColumn(ColumnDefinition.MIN_EFF_TSYS,   0.0);
+            //addColumn(ColumnDefinition.HA_LIMIT,       0.0);
+            addColumn(ColumnDefinition.ZA_LIMIT,       85.0);
+            addColumn(ColumnDefinition.SOLAR_AVOID,    false);
+            //addColumn(ColumnDefinition.PRECIP,         0.0);
+            //addColumn(ColumnDefinition.WIND,           0.0);
+            addColumn(ColumnDefinition.TIME_DAY,       new TimeOfDayField("RFI"));
+            addColumn(ColumnDefinition.TRANSIT,        false);
+            //addColumn(ColumnDefinition.CADENCE,        new CadenceField("regular"));
+        }
+    };
+
+    private final RowType hiFreqSpecLine = new BaseRowType("High Frequency Spectral Line") {
+        {
+            addColumn(ColumnDefinition.CODE,           null);
+            addColumn(ColumnDefinition.ORIG_ID,        0);
+            addColumn(ColumnDefinition.ID,             0);
+            addColumn(ColumnDefinition.TYPE,           new STypeField("open"));
+            addColumn(ColumnDefinition.SCIENCE,        null); //new ScienceField("spectral line"));
+            addColumn(ColumnDefinition.PSC_TIME,       null);
+            addColumn(ColumnDefinition.TOTAL_TIME,     null);
+            //addColumn(ColumnDefinition.TRI_TIME,       100);
+            addColumn(ColumnDefinition.GRADE,          null); //new GradeField("A"));
+            addColumn(ColumnDefinition.AUTHORIZED,     true);
+            addColumn(ColumnDefinition.ENABLED,        false);
+            addColumn(ColumnDefinition.COMPLETE,       false);
+            addColumn(ColumnDefinition.COORD_MODE,     new CoordModeField("J2000"));
+            addColumn(ColumnDefinition.CNTR_SKY_AREA,  null);
+            addColumn(ColumnDefinition.FREQ,           null);
+            //addColumn(ColumnDefinition.FREQ_RNGE_L,    null);
+            //addColumn(ColumnDefinition.FREQ_RNGE_H,    null);
+            addColumn(ColumnDefinition.PRI_RCVR,       null);
+            //addColumn(ColumnDefinition.OPT_RCVRS,      null);
+            addColumn(ColumnDefinition.REQ_MIN,        2.0);
+            addColumn(ColumnDefinition.REQ_MAX,        6.0);
+            addColumn(ColumnDefinition.ABS_MIN,        1.5);
+            addColumn(ColumnDefinition.ABS_MAX,        10.0);
+            addColumn(ColumnDefinition.BETWEEN,        0.0);
+            //addColumn(ColumnDefinition.OBS_EFF_LIMIT,  0.0);
+            //addColumn(ColumnDefinition.ATMOS_ST_LIMIT, 0.0);
+            //addColumn(ColumnDefinition.TR_ERR_LIMIT,   0.0);
+            //addColumn(ColumnDefinition.MIN_EFF_TSYS,   0.0);
+            //addColumn(ColumnDefinition.HA_LIMIT,       0.0);
+            addColumn(ColumnDefinition.ZA_LIMIT,       85.0);
+            addColumn(ColumnDefinition.SOLAR_AVOID,    false);
+            //addColumn(ColumnDefinition.PRECIP,         0.0);
+            //addColumn(ColumnDefinition.WIND,           0.0);
+            //addColumn(ColumnDefinition.TIME,           new TimeOfDayField("RFI");
+            addColumn(ColumnDefinition.TRANSIT,        false);
+            //addColumn(ColumnDefinition.CADENCE,        new CadenceField("regular");
+        }
+    };
+
+    private final RowType hiFreqCont = new BaseRowType("High Frequency Continuum") {
+        {
+            addColumn(ColumnDefinition.CODE,           null);
+            addColumn(ColumnDefinition.ORIG_ID,        0);
+            addColumn(ColumnDefinition.ID,             0);
+            addColumn(ColumnDefinition.TYPE,           new STypeField("open"));
+            addColumn(ColumnDefinition.SCIENCE,        null); //new ScienceField("continuum"));
+            addColumn(ColumnDefinition.PSC_TIME,       null);
+            addColumn(ColumnDefinition.TOTAL_TIME,     null);
+            //addColumn(ColumnDefinition.TRI_TIME,       100);
+            addColumn(ColumnDefinition.GRADE,          null); //new GradeField("A"));
+            addColumn(ColumnDefinition.AUTHORIZED,     true);
+            addColumn(ColumnDefinition.ENABLED,        false);
+            addColumn(ColumnDefinition.COMPLETE,       false);
+            addColumn(ColumnDefinition.COORD_MODE,     new CoordModeField("J2000"));
+            addColumn(ColumnDefinition.CNTR_SKY_AREA,  null);
+            addColumn(ColumnDefinition.FREQ,           null);
+            //addColumn(ColumnDefinition.FREQ_RNGE_L,    null);
+            //addColumn(ColumnDefinition.FREQ_RNGE_H,    null);
+            addColumn(ColumnDefinition.PRI_RCVR,       null);
+            //addColumn(ColumnDefinition.OPT_RCVRS,      null);
+            addColumn(ColumnDefinition.REQ_MIN,        2.0);
+            addColumn(ColumnDefinition.REQ_MAX,        6.0);
+            addColumn(ColumnDefinition.ABS_MIN,        1.5);
+            addColumn(ColumnDefinition.ABS_MAX,        10.0);
+            addColumn(ColumnDefinition.BETWEEN,        0.0);
+            //addColumn(ColumnDefinition.OBS_EFF_LIMIT,  0.0);
+            //addColumn(ColumnDefinition.ATMOS_ST_LIMIT, 0.0);
+            //addColumn(ColumnDefinition.TR_ERR_LIMIT,   0.0);
+            //addColumn(ColumnDefinition.MIN_EFF_TSYS,   0.0);
+            //addColumn(ColumnDefinition.HA_LIMIT,       0.0);
+            addColumn(ColumnDefinition.ZA_LIMIT,       85.0);
+            addColumn(ColumnDefinition.SOLAR_AVOID,    false);
+            //addColumn(ColumnDefinition.PRECIP,         0.0);
+            //addColumn(ColumnDefinition.WIND,           0.0);
+            //addColumn(ColumnDefinition.TIME,           new TimeOfDayField("RFI");
+            addColumn(ColumnDefinition.TRANSIT,        false);
+            //addColumn(ColumnDefinition.CADENCE,        new CadenceField("regular");
         }
     };
 
     private final RowType[] rows = new RowType[] {
             empty,
             lowFreqNoRFI,
-            new BaseRowType("Low Frequency With RFI"),
-            new BaseRowType("High frequency spectral line"),
-            new BaseRowType("High frequency continuum"),
+            lowFreqRFI,
+            hiFreqSpecLine,
+            hiFreqCont,
             new BaseRowType("Low frequency monitoring with RFI"),
             new BaseRowType("Low and high frequency"),
             new BaseRowType("Large proposal"),

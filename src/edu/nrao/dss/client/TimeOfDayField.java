@@ -1,8 +1,7 @@
 package edu.nrao.dss.client;
 
 class TimeOfDayField {
-    public static final String[] values = new String[] { "any"
-                                                       , "RFI"
+    public static final String[] values = new String[] { "RFI"
                                                        , "work"
                                                        , "PTCS"
                                                        , "other!?"

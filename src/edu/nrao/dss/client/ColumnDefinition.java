@@ -16,6 +16,7 @@ class ColumnDefinition {
     public static final String ATMOS_ST_LIMIT    = "atmos_st_limit";
     public static final String AUTHORIZED        = "authorized";
     public static final String BETWEEN           = "between";
+    public static final String CODE              = "proj_code";
     public static final String CNTR_SKY_AREA     = "cntr_sky_area";
     public static final String COMPLETE          = "complete";
     public static final String COORD_MODE        = "coord_mode";
@@ -23,7 +24,8 @@ class ColumnDefinition {
     public static final String DEPEND_ORDER      = "depend_order";
     public static final String ENABLED           = "enabled";
     public static final String FREQ              = "freq";
-    public static final String FREQ_RANGE        = "freq_range";
+    public static final String FREQ_RNGE_L       = "freq_range_low";
+    public static final String FREQ_RNGE_H       = "freq_range_hi";
     public static final String GRADE             = "grade";
     public static final String HA_LIMIT          = "ha_limit";
     public static final String ID                = "ID";
@@ -32,8 +34,9 @@ class ColumnDefinition {
     public static final String OBS_EFF_LIMIT     = "obs_eff_limit";
     public static final String ORIG_ID           = "orig_ID";
     public static final String PRECIP            = "precip";
+    public static final String PRI_RCVR          = "receiver";
+    public static final String OPT_RCVRS         = "opt_rcvrs";
     public static final String PSC_TIME          = "PSC_time";
-    public static final String RECEIVERS         = "receivers";
     public static final String REQ_MAX           = "req_max";
     public static final String REQ_MIN           = "req_min";
     public static final String SCIENCE           = "science";
@@ -134,6 +137,7 @@ class ColumnDefinition {
 
     private final ColumnType[] columns = new ColumnType[] {
             new ColumnType(NAME,           "Name",           100, String.class,               null),
+            new ColumnType(CODE,           "Proj Code",      100, String.class,               null),
             new ColumnType(ORIG_ID,        "Orig ID",        100, Integer.class,              null),
             new ColumnType(ID,             "ID",             100, Integer.class,              null),
             new ColumnType(TYPE,           "Type",           100, STypeField.class,           null),
@@ -148,8 +152,10 @@ class ColumnDefinition {
             new ColumnType(COORD_MODE,     "Coord Mode",     100, CoordModeField.class,       null),
             new ColumnType(CNTR_SKY_AREA,  "Cntr Sky Area",  100, String.class,               null),
             new ColumnType(FREQ,           "Freq",           100, Double.class,               null),
-            new ColumnType(FREQ_RANGE,     "Freq Range",     100, Double.class,               null),
-            new ColumnType(RECEIVERS,      "Receivers",      100, String.class,               receivers),
+            new ColumnType(FREQ_RNGE_L,    "Freq Range Low", 100, Double.class,               null),
+            new ColumnType(FREQ_RNGE_H,    "Freq Range Hi",  100, Double.class,               null),
+            new ColumnType(PRI_RCVR,       "Receiver",       100, String.class,               receivers),
+            new ColumnType(OPT_RCVRS,      "Opt Rcvrs",      100, String.class,               receivers),
             new ColumnType(REQ_MIN,        "Req Min",        100, Double.class,               null),
             new ColumnType(REQ_MAX,        "Req Max",        100, Double.class,               null),
             new ColumnType(ABS_MIN,        "Abs Min",        100, Double.class,               null),
@@ -164,12 +170,13 @@ class ColumnDefinition {
             new ColumnType(SOLAR_AVOID,    "Solar Avoid",    100, Boolean.class,              null),
             new ColumnType(PRECIP,         "Precip",         100, Double.class,               null),
             new ColumnType(WIND,           "Wind",           100, Double.class,               null),
-            new ColumnType(USE_DEPEND,     "Use Depend",     100, Boolean.class,              null),
-            new ColumnType(DEPEND_ID,      "Depend ID",      100, Integer.class,              null),
-            new ColumnType(DEPEND_ORDER,   "Depend Order",   100, OrderDependencyField.class, null),
+            new ColumnType(TIME_DAY,       "Time Day",       100, TimeOfDayField.class,       null),
+            //new ColumnType(USE_DEPEND,     "Use Depend",     100, Boolean.class,              null),
+            //new ColumnType(DEPEND_ID,      "Depend ID",      100, Integer.class,              null),
+            //new ColumnType(DEPEND_ORDER,   "Depend Order",   100, OrderDependencyField.class, null),
             new ColumnType(TRANSIT,        "Transit",        100, Boolean.class,              null),
-            new ColumnType(TRANSIT_BEFORE, "Transit Before", 100, Integer.class,              null),
-            new ColumnType(TRANSIT_AFTER,  "Transit After",  100, Integer.class,              null)
+            //new ColumnType(TRANSIT_BEFORE, "Transit Before", 100, Integer.class,              null),
+            //new ColumnType(TRANSIT_AFTER,  "Transit After",  100, Integer.class,              null)
     };
 
     private final HashMap<String, ColumnType> columnsMap = new HashMap<String, ColumnType>();
