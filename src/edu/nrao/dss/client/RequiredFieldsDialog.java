@@ -24,12 +24,7 @@ class RequiredFieldsDialog extends Dialog {
 
 		final ArrayList<Field> formFields = new ArrayList<Field>();
 		for (String rf : row.getRequiredFields()) {
-			// TBF need to make this data type sensitive
-			TextField<String> f = new TextField<String>();
-			f.setFieldLabel(rf);
-			f.setEmptyText(rf);
-			f.setAllowBlank(false);
-			f.setMinLength(4);
+			Field f = row.getField(rf);
 			fp.add(f);
 			formFields.add(f);
 		}

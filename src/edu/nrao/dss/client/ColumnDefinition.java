@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.extjs.gxt.ui.client.widget.BoxComponent;
+import com.extjs.gxt.ui.client.widget.form.Field;
 import com.extjs.gxt.ui.client.widget.grid.ColumnConfig;
 import com.extjs.gxt.ui.client.widget.grid.ColumnModel;
 
@@ -97,6 +99,11 @@ class ColumnDefinition {
 
     public Object getValue(String id, RowType row, Map<String, Object> model) {
         return getColumn(id).getValue(row, model);
+    }
+    
+    @SuppressWarnings("unchecked")
+	public Field getField(String id) {
+    	return getColumn(id).getField();
     }
 
     private final CalculatedField receivers = new CalculatedField() {
