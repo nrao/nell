@@ -11,12 +11,15 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = 'mysql'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-DATABASE_NAME = 'dss_mmccarty2'             # Or path to database file if using sqlite3.
-DATABASE_USER = 'dss'             # Not used with sqlite3.
-DATABASE_PASSWORD = 'asdf5!'         # Not used with sqlite3.
-DATABASE_HOST = 'trent'             # Set to empty string for localhost. Not used with sqlite3.
-DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
+DATABASE_ENGINE = 'mysql'     # 'postgresql_psycopg2', 'postgresql', 'mysql',
+                              # 'sqlite3' or 'oracle'.
+DATABASE_NAME = 'dss_esessoms'  # Modify to your database name or path to
+                              # database file if using sqlite3.
+DATABASE_USER = 'dss'         # Not used with sqlite3.
+DATABASE_PASSWORD = 'asdf5!'  # Not used with sqlite3.
+DATABASE_HOST = 'trent'       # Set to empty string for localhost. Not used
+                              # with sqlite3.
+DATABASE_PORT = ''            # Set to empty string for default. Not used with sqlite3.
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

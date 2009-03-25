@@ -1,6 +1,5 @@
 syntax: glob
 
-#*
 *~
 *.pyc
 *.class
@@ -13,12 +12,11 @@ syntax: glob
 .classpath
 .project
 
-Scheduler-compile
-Scheduler-shell
-Scheduler.launch
+*.launch
 
 bin/
-client
+client/
 dist/
 tomcat/
 www/
+www-test/

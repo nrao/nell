@@ -16,7 +16,6 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
-import com.google.gwt.user.client.Window;
 
 interface JSONCallback {
 	public void onSuccess(JSONObject json);
