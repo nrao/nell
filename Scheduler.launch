@@ -17,11 +17,7 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.google.gwt.dev.GWTShell"/>
-<<<<<<< local
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-whitelist &quot; ^http[:][/][/]trent[:]8004&quot; -port 8892 -out www http://trent:8004/scheduler/edu.nrao.dss.Scheduler/Scheduler.html"/>
-=======
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-whitelist &quot; ^http[:][/][/]trent[:]8002&quot; -port 8890 -out www http://trent:8002/scheduler/edu.nrao.dss.Scheduler/Scheduler.html"/>
->>>>>>> other
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Scheduler"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-XstartOnFirstThread  -Xmx256M"/>
 </launchConfiguration>
