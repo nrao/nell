@@ -75,7 +75,7 @@ class SessionExplorer extends ContentPanel {
 				proxy, reader);
 		store = new ListStore<BaseModelData>(loader);
 
-		grid = new EditorGrid<BaseModelData>(store, rows.getColumnModel());
+		grid = new EditorGrid<BaseModelData>(store, rows.getColumnModel(selection.getColumn()));
 		add(grid);
 
 		grid.setSelectionModel(selection);

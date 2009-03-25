@@ -68,8 +68,12 @@ class ColumnDefinition {
     }
 
     /** Return a ColumnModel suitable for defining a grid. */
-    public ColumnModel getColumnModel() {
-        return new ColumnModel(Arrays.asList((ColumnConfig[]) columns));
+    public ColumnModel getColumnModel(ColumnConfig column) {
+        ArrayList<ColumnConfig> columns = new ArrayList();
+        columns.add(column);
+        columns.addAll(Arrays.asList((ColumnConfig[]) this.columns));
+
+        return new ColumnModel(columns);
     }
 
     /** Return the master list of all know columns. */
