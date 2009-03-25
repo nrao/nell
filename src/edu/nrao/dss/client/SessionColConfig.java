@@ -204,4 +204,6 @@ class SessionColConfig extends ColumnConfig {
 			}
 		});
 	}
+
+	private final Class clasz;
 }
