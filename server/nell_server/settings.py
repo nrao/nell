@@ -13,7 +13,7 @@ MANAGERS = ADMINS
 
 DATABASE_ENGINE = 'mysql'     # 'postgresql_psycopg2', 'postgresql', 'mysql',
                               # 'sqlite3' or 'oracle'.
-DATABASE_NAME = DATABASENAME  # Modify to your database name or path to
+DATABASE_NAME = 'dss_mclark'  # Modify to your database name or path to
                               # database file if using sqlite3.
 DATABASE_USER = 'dss'         # Not used with sqlite3.
 DATABASE_PASSWORD = 'asdf5!'  # Not used with sqlite3.

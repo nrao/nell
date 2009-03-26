@@ -178,7 +178,7 @@ class SessionColConfig extends ColumnConfig {
 		});
 	}
 
-	private Field getCheckboxField() {
+	private Field<Boolean> getCheckboxField() {
 		return new CheckBox();
 	}
 
@@ -279,5 +279,6 @@ class SessionColConfig extends ColumnConfig {
 		});
 	}
 
+	@SuppressWarnings("unchecked")
 	private final Class clasz;
 }

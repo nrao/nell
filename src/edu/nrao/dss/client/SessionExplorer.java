@@ -34,6 +34,7 @@ import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.form.CheckBox;
 import com.extjs.gxt.ui.client.widget.form.Field;
 import com.extjs.gxt.ui.client.widget.form.FormPanel;
+import com.extjs.gxt.ui.client.widget.form.SimpleComboValue;
 import com.extjs.gxt.ui.client.widget.form.FormPanel.LabelAlign;
 import com.extjs.gxt.ui.client.widget.grid.CheckBoxSelectionModel;
 import com.extjs.gxt.ui.client.widget.grid.EditorGrid;
@@ -202,7 +203,12 @@ class SessionExplorer extends ContentPanel {
 			List<String> sFields, ArrayList<Field> fFields) {
 		HashMap<String, Object> retval = new HashMap<String, Object>();
 		for (Field f : fFields) {
-			retval.put(f.getFieldLabel(), f.getValue());
+			Object value = f.getValue();
+			if (value instanceof SimpleComboValue) {
+				retval.put(f.getFieldLabel(), ((SimpleComboValue) value).getValue());
+			} else {
+				retval.put(f.getFieldLabel(), value);
+			}
 		}
 		return retval;
 	}
@@ -296,8 +302,8 @@ class SessionExplorer extends ContentPanel {
 			});
 			viewMenu.add(mi);
 		}
-
 		viewMenu.add(new SeparatorMenuItem());
+		
 		final List<String> nfields = rows.getAllFieldIds();
 		final MenuItem nmk = new MenuItem("New ..");
 		nmk.addSelectionListener(new SelectionListener<ComponentEvent>() {
@@ -308,10 +314,14 @@ class SessionExplorer extends ContentPanel {
 			}
 		});
 		viewMenu.add(nmk);
-
 		viewItem.setMenu(viewMenu);
 
+
 		toolBar.add(new SeparatorToolItem());
+		
+		FilterItem filterItem = new FilterItem(SessionExplorer.this);
+		toolBar.add(filterItem);
+
 		toolBar.add(new FillToolItem());
 
 		TextToolItem saveItem = new TextToolItem("Save");

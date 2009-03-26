@@ -9,7 +9,6 @@ import com.extjs.gxt.ui.client.widget.Dialog;
 import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.form.Field;
 import com.extjs.gxt.ui.client.widget.form.FormPanel;
-import com.extjs.gxt.ui.client.widget.form.TextField;
 
 class RequiredFieldsDialog extends Dialog {
 	@SuppressWarnings("unchecked")
@@ -17,8 +16,8 @@ class RequiredFieldsDialog extends Dialog {
 		setHeading(row.getName());
 		addText("Please enter the required fields.");
 		setButtons(Dialog.OKCANCEL);
-		setHeight(200);
-		setWidth(400);
+		setHeight(400);
+		setWidth(350);
 
 		FormPanel fp = new FormPanel();
 
@@ -27,6 +26,7 @@ class RequiredFieldsDialog extends Dialog {
 			Field f = row.getField(rf);
 			fp.add(f);
 			formFields.add(f);
+			//Window.alert(f.getValue());
 		}
 
 		add(fp);

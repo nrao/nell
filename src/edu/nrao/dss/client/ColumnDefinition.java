@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.extjs.gxt.ui.client.widget.BoxComponent;
 import com.extjs.gxt.ui.client.widget.form.Field;
 import com.extjs.gxt.ui.client.widget.grid.ColumnConfig;
 import com.extjs.gxt.ui.client.widget.grid.ColumnModel;
@@ -69,7 +68,7 @@ class ColumnDefinition {
 
     /** Return a ColumnModel suitable for defining a grid. */
     public ColumnModel getColumnModel(ColumnConfig column) {
-        ArrayList<ColumnConfig> columns = new ArrayList();
+        ArrayList<ColumnConfig> columns = new ArrayList<ColumnConfig>();
         columns.add(column);
         columns.addAll(Arrays.asList((ColumnConfig[]) this.columns));
 
