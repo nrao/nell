@@ -1,11 +1,13 @@
 package edu.nrao.dss.client;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
 import com.extjs.gxt.ui.client.Events;
+import com.extjs.gxt.ui.client.Style;
 import com.extjs.gxt.ui.client.Style.SelectionMode;
 import com.extjs.gxt.ui.client.data.BaseListLoadConfig;
 import com.extjs.gxt.ui.client.data.BaseListLoadResult;
@@ -50,6 +52,7 @@ import com.extjs.gxt.ui.client.widget.toolbar.TextToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.user.client.Window;
 
 class SessionExplorer extends ContentPanel {
 	public SessionExplorer() {
@@ -75,6 +78,7 @@ class SessionExplorer extends ContentPanel {
 		loader = new BaseListLoader<BaseListLoadConfig, BaseListLoadResult<BaseModelData>>(
 				proxy, reader);
 		store = new ListStore<BaseModelData>(loader);
+		filtered = new ArrayList<BaseModelData>();
 
 		grid = new EditorGrid<BaseModelData>(store, rows.getColumnModel(selection.getColumn()));
 		add(grid);
@@ -211,6 +215,52 @@ class SessionExplorer extends ContentPanel {
 			}
 		}
 		return retval;
+	}
+	
+	public void filterSessions(String filter) {
+		// Restore previously removed rows, if any
+		store.add(filtered);
+		filtered.clear();
+
+		// To maintain some type of order since removing and adding mixes rows
+		store.sort("name", Style.SortDir.ASC);
+
+		// Is there not a filter or any rows to filter?
+		if (filter == "" || store.getCount() == 0) {
+			return;
+		}
+
+		// Borrow first row to get column names
+		BaseModelData row = store.getAt(0);
+		Collection<String> column_names = row.getPropertyNames();
+		// Examine each row
+		for (int r = 0; r < store.getCount(); ++r) {
+			row = store.getAt(r);
+			
+			Boolean keep_flag = false;
+			// Examine each column as a string
+			for (String name : column_names) {
+				Object x = row.get(name);
+				String value_name = x.toString();
+				// Does this field contain the filter string?
+				if (value_name.indexOf(filter) >= 0) {
+					keep_flag = true;
+					// Good enough for me!
+					break;
+				}
+			}
+
+			// Find the target string anywhere in the row?
+			if (!keep_flag) {
+				// Set aside for removal from store
+				filtered.add(row);
+			}
+		}
+		
+		// Remove filtered rows from store
+		for (BaseModelData f : filtered) {
+			store.remove(f);
+		}
 	}
 
 	private List<String> getViewColumnHeaders(String view) {
@@ -383,6 +433,9 @@ class SessionExplorer extends ContentPanel {
 
 	/** Use store.add() to remember dynamically created sessions. */
 	private ListStore<BaseModelData> store;
+	
+	/** Use filtered.add() to remember filtered sessions. */
+	private ArrayList<BaseModelData> filtered;
 
 	/** Use loader.load() to refresh with the list of sessions on the server. */
 	private ListLoader<BaseListLoadConfig> loader;
