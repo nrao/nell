@@ -12,7 +12,7 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = 'mysql'     # 'postgresql_psycopg2', 'postgresql', 'mysql',
+DATABASE_ENGINE = 'postgresql'     # 'postgresql_psycopg2', 'postgresql', 'mysql',
                               # 'sqlite3' or 'oracle'.
 DATABASE_NAME = 'dss_mmccarty'  # Modify to your database name or path to
                               # database file if using sqlite3.
