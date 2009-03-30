@@ -24,15 +24,3 @@ class ColumnHeaders(models.Model):
         ordering = ('name',)
         db_table = "columnheaders"
 
-class Perspectives(models.Model):
-    title = models.CharField(max_length = 32)
-
-    def __unicode__(self):
-        return self.title
-
-    class Meta:
-        ordering = ('title',)
-        db_table = "perspectives"
-
-    headers = models.ManyToManyField(ColumnHeaders)
-

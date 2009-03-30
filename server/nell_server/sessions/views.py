@@ -60,26 +60,3 @@ class SessionResource(Resource):
                 d[f.key] = f.value
         return d
 
-
-class PerspectiveResource(Resource):
-
-    def create(self, request, *args, **kws):
-        # TBF:  duplicate code
-        method = request.POST.get("_method", None)
-        if method == "put":
-            return self.update(request, *args)
-        elif method == "delete":
-            return self.delete(request, *args)
-
-        print "create: ", request.POST
-        return HttpResponse("")
-
-    def read(self, request):
-        return HttpResponse("")
-
-    def update(self, request, *args, **kws):
-        print "update: ", request.POST
-        return HttpResponse("")
-
-    def delete(self, request, *args):
-        return HttpResponse("")

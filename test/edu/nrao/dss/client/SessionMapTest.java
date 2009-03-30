@@ -18,6 +18,7 @@ public class SessionMapTest extends GWTTestCase {
     return "edu.nrao.dss.Scheduler";
   }
 
+  /*
   public void testCreate(){
 	  SessionMap sm = new SessionMap();
 	  assertNotNull(sm);
@@ -78,4 +79,5 @@ public class SessionMapTest extends GWTTestCase {
 	  Set<String> expected = new HashSet<String>();
 	  assertEquals(expected, result);
   }
+  	  */
 }

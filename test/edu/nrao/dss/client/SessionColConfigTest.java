@@ -22,6 +22,7 @@ public class SessionColConfigTest extends GWTTestCase {
   /**
    * Add as many tests as you like.
    */
+  /*
   public void test_IntegerField() {
 	  SessionColConfig sColConf = new SessionColConfig("test", Integer.class);
 	  assertNotNull(sColConf);
@@ -56,4 +57,5 @@ public class SessionColConfigTest extends GWTTestCase {
 	  Field result   = sColConf.getEditor().getField();
 	  assertEquals(result.getClass(), TextField.class);
   }
+  */
 }

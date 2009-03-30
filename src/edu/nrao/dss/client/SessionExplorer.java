@@ -52,7 +52,7 @@ import com.extjs.gxt.ui.client.widget.toolbar.TextToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.user.client.Window;
+
 
 class SessionExplorer extends ContentPanel {
 	public SessionExplorer() {
