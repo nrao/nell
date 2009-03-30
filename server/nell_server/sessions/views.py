@@ -14,9 +14,9 @@ class SessionResource(Resource):
 
         s = Sessions()
         s.init_from_json(request.POST)
-        s.save()
         
-        return HttpResponse(json.dumps(s.jsondict()))
+        return HttpResponse(json.dumps(s.jsondict())
+                          , mimetype = "text/plain")
 
     def read(self, request):
         sessions = Sessions.objects.all()
@@ -25,20 +25,9 @@ class SessionResource(Resource):
 
     def update(self, request, *args, **kws):
         id    = int(args[0])
-        fData = request.POST
         s     = Sessions.objects.get(id = id)
-        print s
+        s.update_from_json(request.POST)
 
-        #for k, v in fData.items():
-        #    if k != "_method":
-        #        result_set = Fields.objects.filter(session = s, key = k)
-        #        if len(result_set) == 0:
-        #            f = Fields(session = s, key = k, value = v)
-        #            f.save()
-        #        else:
-        #            f       = result_set[0]
-        #            f.value = v
-        #            f.save()
         return HttpResponse("")
 
     def delete(self, request, *args):

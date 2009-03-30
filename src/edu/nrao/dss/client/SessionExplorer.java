@@ -49,6 +49,7 @@ import com.extjs.gxt.ui.client.widget.toolbar.TextToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.user.client.Window;
 
 class SessionExplorer extends ContentPanel {
 	public SessionExplorer() {
@@ -349,7 +350,7 @@ class SessionExplorer extends ContentPanel {
 
 				BaseModelData model = new BaseModelData();
 				model.set("id", id);
-
+				
 				SessionType type = new SessionType(rows.getColumnDefinition());
 				for (int i = 0; i < type.getFieldCount(); ++i) {
 					DataField field = type.getField(i);
@@ -357,8 +358,10 @@ class SessionExplorer extends ContentPanel {
 						continue;
 					}
 					if (json.containsKey(field.name)) {
-						model.set(field.name, json.get(field.name).isString()
-								.stringValue());
+						if (json.get(field.name).isString() == null) {
+							Window.alert(field.name);
+						}
+						model.set(field.name, json.get(field.name).isString().stringValue());
 					}
 				}
 				store.add(model);

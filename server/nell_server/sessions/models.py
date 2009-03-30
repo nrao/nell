@@ -1,5 +1,8 @@
 from django.db import models
 
+def first(results, default = None):
+    return default if len(results) == 0 else results[0]
+
 class Semester(models.Model):
     semester = models.CharField(max_length = 64)
 
@@ -71,6 +74,9 @@ class Sessions(models.Model):
     >>> s    = Sessions.objects.create()
     >>> data = {}
     >>> s.init_from_json(data)
+    >>> assert(False)
+    >>> print s
+    
     """
     
     project            = models.ForeignKey(Project)
@@ -91,9 +97,11 @@ class Sessions(models.Model):
         fobstype = fdata.get("science", "testing")
         frcvr    = fdata.get("receiver", "Rcvr1_2")
 
-        p  = Project.objects.filter(pcode = "GBT09A-001").all()[0]
-        st = Session_Type.objects.filter(type = fsestype).all()[0]
-        ot = Observing_Type.objects.filter(type = fobstype).all()[0]
+        p  = first(Project.objects.filter(pcode = "GBT09A-001").all())
+        st = first(Session_Type.objects.filter(type = fsestype).all()
+                 , Session_Type.objects.all()[0])
+        ot = first(Observing_Type.objects.filter(type = fobstype).all()
+                 , Observing_Type.objects.all()[0])
         allot = Allotment(psc_time          = fdata.get("PSC_time", 0.0)
                         , total_time        = fdata.get("total_time", 0.0)
                         , max_semester_time = fdata.get("sem_time", 0.0)
@@ -113,11 +121,12 @@ class Sessions(models.Model):
         self.grade            = fdata.get("grade", None)
 
         self.save()
-        
-        rcvr   = Receiver.objects.filter(name = frcvr).all()[0]
+
+        rcvr   = first(Receiver.objects.filter(name = frcvr).all()
+                     , Receiver.objects.all()[0])
         rg     = Receiver_Group(session = self)
         rg.save()
-        rg.receivers.add(rcvr)
+        rg.receiver_group_receiver_set.add(rcvr)
         rg.save()
         
         status = Status(session    = self
@@ -128,7 +137,8 @@ class Sessions(models.Model):
                         )
         status.save()
 
-        system = System.objects.filter(name = "J2000").all()[0]
+        system = first(System.objects.filter(name = "J2000").all()
+                     , System.objects.all()[0])
 
         v_axis = fdata.get("v_axis", 2.0) #TBF
         h_axis = fdata.get("h_axis", 2.0) #TBF
@@ -140,15 +150,62 @@ class Sessions(models.Model):
                       , horizontal = h_axis
                         )
         target.save()
+        self.save()
+
+    def update_from_json(self, fdata):
+        fsestype = fdata.get("type", "open")
+        fobstype = fdata.get("science", "testing")
+        frcvr    = fdata.get("receiver", "Rcvr1_2")
+
+        p  = first(Project.objects.filter(pcode = "GBT09A-001").all())
+        st = first(Session_Type.objects.filter(type = fsestype).all()
+                 , Session_Type.objects.all()[0])
+        ot = first(Observing_Type.objects.filter(type = fobstype).all()
+                 , Observing_Type.objects.all()[0])
+
+        self.allotment.psc_time          = fdata.get("PSC_time", 0.0)
+        self.allotment.total_time        = fdata.get("total_time", 0.0)
+        self.allotment.max_semester_time = fdata.get("sem_time", 0.0)
+
+        self.project          = p
+        self.session_type     = st
+        self.observing_type   = ot
+        self.original_id      = fdata.get("orig_ID", None)
+        self.name             = fdata.get("name", None)
+        self.frequency        = fdata.get("freq", None)
+        self.max_duration     = fdata.get("req_max", None)
+        self.min_duration     = fdata.get("req_min", None)
+        self.time_between     = fdata.get("between", None)
+        self.grade            = fdata.get("grade", None)
+
+        # TBF DO SOMETHING WITH RECEIVERS!
+
+        self.status_set.get().enabled    = fdata.get("enabled", True)
+        self.status_set.get().authorized = fdata.get("authorized", True)
+        self.status_set.get().complete   = fdata.get("complete", True)
+        self.status_set.get().backup     = fdata.get("backup", True)
+
+        system = first(System.objects.filter(name = "J2000").all()
+                     , System.objects.all()[0])
+
+        v_axis = fdata.get("v_axis", 2.0) #TBF
+        h_axis = fdata.get("h_axis", 2.0) #TBF
+
+        self.target_set.get().system     = system
+        self.target_set.get().source     = fdata.get("source", None)
+        self.target_set.get().vertical   = v_axis
+        self.target_set.get().horizontal = h_axis
+
+        self.save()
 
     def get_receiver_req(self):
-        return self.receiver_group_set.get().receivers.all()[0]
+        return first(self.receiver_group_set.get().receivers.all())
         
     def jsondict(self):
-        status = self.status_set.all()[0]
+        status = first(self.status_set.all())
+        target = first(self.target_set.all())
         rcvr   = self.get_receiver_req()
-        
-        target = self.target_set.all()[0]
+
         d = {"id"         : self.id
            , "proj_code"  : self.project.pcode
            , "type"       : self.session_type.type
@@ -156,7 +213,6 @@ class Sessions(models.Model):
            , "total_time" : self.allotment.total_time
            , "PSC_time"   : self.allotment.psc_time
            , "sem_time"   : self.allotment.max_semester_time
-           , "receiver"   : rcvr.abbreviation
            , "orig_ID"    : self.original_id
            , "name"       : self.name
            , "freq"       : self.frequency
@@ -164,13 +220,34 @@ class Sessions(models.Model):
            , "req_min"    : self.min_duration
            , "between"    : self.time_between
            , "grade"      : self.grade
-           , "enabled"    : status.enabled
-           , "authorized" : status.authorized
-           , "complete"   : status.complete
-           , "backup"     : status.backup
-           , "source"     : target.source
              }
-        
+
+        if rcvr is not None:
+            d.update({"receiver"   : rcvr.abbreviation})
+            
+        if status is not None:
+            s_d = {"enabled"    : status.enabled
+                 , "authorized" : status.authorized
+                 , "complete"   : status.complete
+                 , "backup"     : status.backup
+                   }
+            for k, v in s_d.items():
+                s_d[k] = str(v).lower()
+                
+            d.update(s_d)
+
+        if target is not None:
+            d.update({"source" : target.source})
+
+        #  Remove all None values
+        for k, v in d.items():
+            if v is None:
+                _ = d.pop(k)
+
+        for k, v in d.items():
+            if k != "id":
+                d[k] = str(v)
+
         return d
 
     class Meta:
@@ -179,10 +256,17 @@ class Sessions(models.Model):
 class Receiver_Group(models.Model):
     session        = models.ForeignKey(Sessions)
     receivers      = models.ManyToManyField(Receiver
-                                          , db_table = "receiver_groups_receivers")
+                                          , through = "Receiver_Group_Receiver")
 
     class Meta:
         db_table = "receiver_groups"
+
+class Receiver_Group_Receiver(models.Model):
+    group          = models.ForeignKey(Receiver_Group)
+    receiver       = models.ForeignKey(Receiver)
+
+    class Meta:
+        db_table = "receiver_groups_receiver"
 
 class Observing_Parameter(models.Model):
     session        = models.ForeignKey(Sessions)
