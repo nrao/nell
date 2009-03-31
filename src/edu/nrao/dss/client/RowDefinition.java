@@ -3,11 +3,12 @@ package edu.nrao.dss.client;
 import java.util.Arrays;
 import java.util.List;
 
+import com.extjs.gxt.ui.client.widget.grid.ColumnConfig;
 import com.extjs.gxt.ui.client.widget.grid.ColumnModel;
 
 class RowDefinition {
-    public ColumnModel getColumnModel() {
-        return columns.getColumnModel();
+    public ColumnModel getColumnModel(ColumnConfig column) {
+        return columns.getColumnModel(column);
     }
 
     public List<String> getAllFieldNames() {

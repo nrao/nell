@@ -9,7 +9,6 @@ import com.extjs.gxt.ui.client.widget.Dialog;
 import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.form.Field;
 import com.extjs.gxt.ui.client.widget.form.FormPanel;
-import com.extjs.gxt.ui.client.widget.form.TextField;
 
 class RequiredFieldsDialog extends Dialog {
 	@SuppressWarnings("unchecked")
@@ -17,21 +16,17 @@ class RequiredFieldsDialog extends Dialog {
 		setHeading(row.getName());
 		addText("Please enter the required fields.");
 		setButtons(Dialog.OKCANCEL);
-		setHeight(200);
-		setWidth(400);
+		setHeight(400);
+		setWidth(350);
 
 		FormPanel fp = new FormPanel();
 
 		final ArrayList<Field> formFields = new ArrayList<Field>();
 		for (String rf : row.getRequiredFields()) {
-			// TBF need to make this data type sensitive
-			TextField<String> f = new TextField<String>();
-			f.setFieldLabel(rf);
-			f.setEmptyText(rf);
-			f.setAllowBlank(false);
-			f.setMinLength(4);
+			Field f = row.getField(rf);
 			fp.add(f);
 			formFields.add(f);
+			//Window.alert(f.getValue());
 		}
 
 		add(fp);

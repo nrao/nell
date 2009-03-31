@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.extjs.gxt.ui.client.widget.form.Field;
 import com.extjs.gxt.ui.client.widget.grid.ColumnConfig;
 import com.extjs.gxt.ui.client.widget.grid.ColumnModel;
 
@@ -66,8 +67,12 @@ class ColumnDefinition {
     }
 
     /** Return a ColumnModel suitable for defining a grid. */
-    public ColumnModel getColumnModel() {
-        return new ColumnModel(Arrays.asList((ColumnConfig[]) columns));
+    public ColumnModel getColumnModel(ColumnConfig column) {
+        ArrayList<ColumnConfig> columns = new ArrayList<ColumnConfig>();
+        columns.add(column);
+        columns.addAll(Arrays.asList((ColumnConfig[]) this.columns));
+
+        return new ColumnModel(columns);
     }
 
     /** Return the master list of all know columns. */
@@ -97,6 +102,11 @@ class ColumnDefinition {
 
     public Object getValue(String id, RowType row, Map<String, Object> model) {
         return getColumn(id).getValue(row, model);
+    }
+    
+    @SuppressWarnings("unchecked")
+	public Field getField(String id) {
+    	return getColumn(id).getField();
     }
 
     private final CalculatedField receivers = new CalculatedField() {
@@ -146,15 +156,15 @@ class ColumnDefinition {
             new ColumnType(PSC_TIME,       "PSC Time",       100, Integer.class,              null),
             new ColumnType(TOTAL_TIME,     "Total Time",     100, Integer.class,              null),
             new ColumnType(SEM_TIME,       "Semester Time",  100, Integer.class,              null),
-            new ColumnType(GRADE,          "Grade",          100, GradeField.class,           null),
+            new ColumnType(GRADE,          "Grade",          100, Double.class,               null),
             new ColumnType(AUTHORIZED,     "Authorized",     100, Boolean.class,              null),
             new ColumnType(ENABLED,        "Enabled",        100, Boolean.class,              null),
             new ColumnType(COMPLETE,       "Complete",       100, Boolean.class,              null),
             new ColumnType(COORD_MODE,     "Coord Mode",     100, CoordModeField.class,       null),
             new ColumnType(CNTR_SKY_AREA,  "Cntr Sky Area",  100, String.class,               null),
-            new ColumnType(FREQ,           "Freq",           100, Double.class,               null),
-            new ColumnType(FREQ_RNGE_L,    "Freq Range Low", 100, Double.class,               null),
-            new ColumnType(FREQ_RNGE_H,    "Freq Range Hi",  100, Double.class,               null),
+            new ColumnType(FREQ,           "Freq",            55, Double.class,               null),
+            new ColumnType(FREQ_RNGE_L,    "Freq Range Low",  55, Double.class,               null),
+            new ColumnType(FREQ_RNGE_H,    "Freq Range Hi",   55, Double.class,               null),
             new ColumnType(PRI_RCVR,       "Receiver",       100, String.class,               receivers),
             new ColumnType(OPT_RCVRS,      "Opt Rcvrs",      100, String.class,               receivers),
             new ColumnType(REQ_MIN,        "Req Min",        100, Double.class,               null),
@@ -176,7 +186,7 @@ class ColumnDefinition {
             //new ColumnType(USE_DEPEND,     "Use Depend",     100, Boolean.class,              null),
             //new ColumnType(DEPEND_ID,      "Depend ID",      100, Integer.class,              null),
             //new ColumnType(DEPEND_ORDER,   "Depend Order",   100, OrderDependencyField.class, null),
-            new ColumnType(TRANSIT,        "Transit",        100, Boolean.class,              null),
+            new ColumnType(TRANSIT,        "Transit",         60, Boolean.class,              null),
             //new ColumnType(TRANSIT_BEFORE, "Transit Before", 100, Integer.class,              null),
             //new ColumnType(TRANSIT_AFTER,  "Transit After",  100, Integer.class,              null)
     };

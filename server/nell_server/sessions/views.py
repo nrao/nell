@@ -5,6 +5,7 @@ from nell_server.sessions.models   import Project, Sessions
 import simplejson as json
 
 class SessionResource(Resource):
+
     def create(self, request, *args, **kws):
         method = request.POST.get("_method", None)
         if method == "put":
@@ -39,3 +40,11 @@ class SessionResource(Resource):
         #s.delete()
         
         return HttpResponse(json.dumps({"success": "ok"}))
+
+    def build_dict(self, s):
+        d = {"id":s.id}
+        for f in s.fields_set.all():
+            if f.key != "id":
+                d[f.key] = f.value
+        return d
+

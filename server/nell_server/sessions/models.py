@@ -261,6 +261,18 @@ class Receiver_Group(models.Model):
     class Meta:
         db_table = "receiver_groups"
 
+"""
+class ColumnHeaders(models.Model):
+    name = models.CharField(max_length = 32)
+
+    def __unicode__(self):
+        return self.name
+
+    class Meta:
+        ordering = ('name',)
+        db_table = "columnheaders"
+"""
+
 class Receiver_Group_Receiver(models.Model):
     group          = models.ForeignKey(Receiver_Group)
     receiver       = models.ForeignKey(Receiver)

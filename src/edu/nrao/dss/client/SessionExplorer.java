@@ -1,11 +1,13 @@
 package edu.nrao.dss.client;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
 import com.extjs.gxt.ui.client.Events;
+import com.extjs.gxt.ui.client.Style;
 import com.extjs.gxt.ui.client.Style.SelectionMode;
 import com.extjs.gxt.ui.client.data.BaseListLoadConfig;
 import com.extjs.gxt.ui.client.data.BaseListLoadResult;
@@ -34,6 +36,7 @@ import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.form.CheckBox;
 import com.extjs.gxt.ui.client.widget.form.Field;
 import com.extjs.gxt.ui.client.widget.form.FormPanel;
+import com.extjs.gxt.ui.client.widget.form.SimpleComboValue;
 import com.extjs.gxt.ui.client.widget.form.FormPanel.LabelAlign;
 import com.extjs.gxt.ui.client.widget.grid.CheckBoxSelectionModel;
 import com.extjs.gxt.ui.client.widget.grid.EditorGrid;
@@ -49,7 +52,6 @@ import com.extjs.gxt.ui.client.widget.toolbar.TextToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.user.client.Window;
 
 class SessionExplorer extends ContentPanel {
 	public SessionExplorer() {
@@ -75,8 +77,9 @@ class SessionExplorer extends ContentPanel {
 		loader = new BaseListLoader<BaseListLoadConfig, BaseListLoadResult<BaseModelData>>(
 				proxy, reader);
 		store = new ListStore<BaseModelData>(loader);
+		filtered = new ArrayList<BaseModelData>();
 
-		grid = new EditorGrid<BaseModelData>(store, rows.getColumnModel());
+		grid = new EditorGrid<BaseModelData>(store, rows.getColumnModel(selection.getColumn()));
 		add(grid);
 
 		grid.setSelectionModel(selection);
@@ -203,9 +206,60 @@ class SessionExplorer extends ContentPanel {
 			List<String> sFields, ArrayList<Field> fFields) {
 		HashMap<String, Object> retval = new HashMap<String, Object>();
 		for (Field f : fFields) {
-			retval.put(f.getFieldLabel(), f.getValue());
+			Object value = f.getValue();
+			if (value instanceof SimpleComboValue) {
+				retval.put(f.getFieldLabel(), ((SimpleComboValue) value).getValue());
+			} else {
+				retval.put(f.getFieldLabel(), value);
+			}
 		}
 		return retval;
+	}
+	
+	public void filterSessions(String filter) {
+		// Restore previously removed rows, if any
+		store.add(filtered);
+		filtered.clear();
+
+		// To maintain some type of order since removing and adding mixes rows
+		store.sort("name", Style.SortDir.ASC);
+
+		// Is there not a filter or any rows to filter?
+		if (filter == "" || store.getCount() == 0) {
+			return;
+		}
+
+		// Borrow first row to get column names
+		BaseModelData row = store.getAt(0);
+		Collection<String> column_names = row.getPropertyNames();
+		// Examine each row
+		for (int r = 0; r < store.getCount(); ++r) {
+			row = store.getAt(r);
+			
+			Boolean keep_flag = false;
+			// Examine each column as a string
+			for (String name : column_names) {
+				Object x = row.get(name);
+				String value_name = x.toString();
+				// Does this field contain the filter string?
+				if (value_name.indexOf(filter) >= 0) {
+					keep_flag = true;
+					// Good enough for me!
+					break;
+				}
+			}
+
+			// Find the target string anywhere in the row?
+			if (!keep_flag) {
+				// Set aside for removal from store
+				filtered.add(row);
+			}
+		}
+		
+		// Remove filtered rows from store
+		for (BaseModelData f : filtered) {
+			store.remove(f);
+		}
 	}
 
 	private List<String> getViewColumnHeaders(String view) {
@@ -297,8 +351,8 @@ class SessionExplorer extends ContentPanel {
 			});
 			viewMenu.add(mi);
 		}
-
 		viewMenu.add(new SeparatorMenuItem());
+		
 		final List<String> nfields = rows.getAllFieldIds();
 		final MenuItem nmk = new MenuItem("New ..");
 		nmk.addSelectionListener(new SelectionListener<ComponentEvent>() {
@@ -309,10 +363,14 @@ class SessionExplorer extends ContentPanel {
 			}
 		});
 		viewMenu.add(nmk);
-
 		viewItem.setMenu(viewMenu);
 
+
 		toolBar.add(new SeparatorToolItem());
+		
+		FilterItem filterItem = new FilterItem(SessionExplorer.this);
+		toolBar.add(filterItem);
+
 		toolBar.add(new FillToolItem());
 
 		TextToolItem saveItem = new TextToolItem("Save");
@@ -359,7 +417,7 @@ class SessionExplorer extends ContentPanel {
 					}
 					if (json.containsKey(field.name)) {
 						if (json.get(field.name).isString() == null) {
-							Window.alert(field.name);
+							//Window.alert(field.name);
 						}
 						model.set(field.name, json.get(field.name).isString().stringValue());
 					}
@@ -376,6 +434,9 @@ class SessionExplorer extends ContentPanel {
 
 	/** Use store.add() to remember dynamically created sessions. */
 	private ListStore<BaseModelData> store;
+	
+	/** Use filtered.add() to remember filtered sessions. */
+	private ArrayList<BaseModelData> filtered;
 
 	/** Use loader.load() to refresh with the list of sessions on the server. */
 	private ListLoader<BaseListLoadConfig> loader;

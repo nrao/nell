@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.extjs.gxt.ui.client.widget.form.Field;
+
 class RowType {
     public RowType(ColumnDefinition columns) {
         this.columns = columns;
@@ -28,6 +30,11 @@ class RowType {
                 }
             }
         }
+    }
+    
+    @SuppressWarnings("unchecked")
+	public Field getField(String id) {
+    	return columns.getField(id);
     }
 
     public Object getValue(String id, Map<String, Object> model) {
