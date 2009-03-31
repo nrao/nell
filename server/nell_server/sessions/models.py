@@ -92,6 +92,10 @@ class Sessions(models.Model):
     time_between       = models.FloatField(null = True)
     grade              = models.FloatField(null = True)
 
+    def delete(self):
+        self.allotment.delete()
+        super(Sessions, self).delete()
+        
     def init_from_json(self, fdata):
         fsestype = fdata.get("type", "open")
         fobstype = fdata.get("science", "testing")
@@ -231,6 +235,7 @@ class Sessions(models.Model):
                  , "complete"   : status.complete
                  , "backup"     : status.backup
                    }
+            # TBF turning all data to strings for GWT code
             for k, v in s_d.items():
                 s_d[k] = str(v).lower()
                 
@@ -244,6 +249,7 @@ class Sessions(models.Model):
             if v is None:
                 _ = d.pop(k)
 
+        # TBF turning all data to strings for GWT code
         for k, v in d.items():
             if k != "id":
                 d[k] = str(v)

@@ -34,10 +34,7 @@ class SessionResource(Resource):
     def delete(self, request, *args):
         id = int(args[0])
         s  = Sessions.objects.get(id = id)
-        print s
-        #for f in s.fields_set.all():
-        #    f.delete()
-        #s.delete()
+        s.delete()
         
         return HttpResponse(json.dumps({"success": "ok"}))
 
