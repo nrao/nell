@@ -21,5 +21,9 @@ class ColumnType extends SessionColConfig {
         return value;
     }
 
+    public Class getClasz(String id) {
+    	return this.clasz;
+    }
+    
     private final Object value;
 }

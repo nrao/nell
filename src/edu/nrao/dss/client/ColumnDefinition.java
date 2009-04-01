@@ -28,7 +28,7 @@ class ColumnDefinition {
     public static final String FREQ_RNGE_H       = "freq_range_hi";
     public static final String GRADE             = "grade";
     public static final String HA_LIMIT          = "ha_limit";
-    public static final String ID                = "ID";
+    public static final String ID                = "id";
     public static final String MIN_EFF_TSYS      = "min_eff_tsys";
     public static final String NAME              = "name";
     public static final String OBS_EFF_LIMIT     = "obs_eff_limit";
@@ -105,8 +105,13 @@ class ColumnDefinition {
     }
     
     @SuppressWarnings("unchecked")
-	public Field getField(String id) {
-    	return getColumn(id).getField();
+	public Class getClasz(String id) {
+        return columnsMap.get(id).clasz;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Field getField(String id) {
+        return getColumn(id).getField();
     }
 
     private final CalculatedField receivers = new CalculatedField() {
@@ -146,7 +151,7 @@ class ColumnDefinition {
     };
 
     private final ColumnType[] columns = new ColumnType[] {
-    		new ColumnType(SOURCE,         "Source",         100, Boolean.class,              null),
+            new ColumnType(SOURCE,         "Source",         100, String.class,               null),
             new ColumnType(NAME,           "Name",           100, String.class,               null),
             new ColumnType(CODE,           "Proj Code",      100, String.class,               null),
             new ColumnType(ORIG_ID,        "Orig ID",        100, Integer.class,              null),

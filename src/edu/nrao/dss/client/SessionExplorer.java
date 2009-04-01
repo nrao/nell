@@ -52,6 +52,8 @@ import com.extjs.gxt.ui.client.widget.toolbar.TextToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.Window;
 
 class SessionExplorer extends ContentPanel {
 	public SessionExplorer() {
@@ -397,29 +399,47 @@ class SessionExplorer extends ContentPanel {
 					public void selectionChanged(SelectionChangedEvent se) {
 					}
 				});
-
 	}
 
 	private void addSession(HashMap<String, Object> data) {
 		JSONRequest.post("/sessions", data, new JSONCallbackAdapter() {
+			@SuppressWarnings("unchecked")
 			@Override
 			public void onSuccess(JSONObject json) {
-				int id = (int) json.get("id").isNumber().doubleValue();
+				System.out.println("onSuccess");
+				//int id = (int) json.get("id").isNumber().doubleValue();
 
 				BaseModelData model = new BaseModelData();
-				model.set("id", id);
+				//model.set("id", id);
 				
 				SessionType type = new SessionType(rows.getColumnDefinition());
 				for (int i = 0; i < type.getFieldCount(); ++i) {
 					DataField field = type.getField(i);
-					if (field.name == "id") {
-						continue;
-					}
 					if (json.containsKey(field.name)) {
-						if (json.get(field.name).isString() == null) {
-							//Window.alert(field.name);
+						System.out.println(field.name);
+						Class target_type = rows.getColumnDefinition().getClasz(field.name);
+						//System.out.println("Target_type:");
+						//System.out.println(target_type.toString());
+						
+						// Set model value dependent on data type
+						JSONValue value = json.get(field.name);
+						if (value.isNumber() != null) {
+							double numValue = value.isNumber().doubleValue();
+							if (target_type == Integer.class) {
+							    model.set(field.name, (int) numValue);
+							} else {
+								model.set(field.name, numValue);
+							}
+						} else if (value.isBoolean()!= null) {
+							model.set(field.name, value.isBoolean().booleanValue());
+						} else if (value.isString() != null) {
+							//System.out.println(value.isString().toString());
+							//System.out.println(value);
+							model.set(field.name, value.isString().stringValue());
+							//model.set(field.name, value);
+						} else {
+							Window.alert("unknown JSON value type");
 						}
-						model.set(field.name, json.get(field.name).isString().stringValue());
 					}
 				}
 				store.add(model);

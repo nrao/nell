@@ -235,10 +235,6 @@ class Sessions(models.Model):
                  , "complete"   : status.complete
                  , "backup"     : status.backup
                    }
-            # TBF turning all data to strings for GWT code
-            for k, v in s_d.items():
-                s_d[k] = str(v).lower()
-                
             d.update(s_d)
 
         if target is not None:
@@ -248,11 +244,6 @@ class Sessions(models.Model):
         for k, v in d.items():
             if v is None:
                 _ = d.pop(k)
-
-        # TBF turning all data to strings for GWT code
-        for k, v in d.items():
-            if k != "id":
-                d[k] = str(v)
 
         return d
 
@@ -266,18 +257,6 @@ class Receiver_Group(models.Model):
 
     class Meta:
         db_table = "receiver_groups"
-
-"""
-class ColumnHeaders(models.Model):
-    name = models.CharField(max_length = 32)
-
-    def __unicode__(self):
-        return self.name
-
-    class Meta:
-        ordering = ('name',)
-        db_table = "columnheaders"
-"""
 
 class Receiver_Group_Receiver(models.Model):
     group          = models.ForeignKey(Receiver_Group)

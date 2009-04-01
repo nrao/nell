@@ -276,5 +276,5 @@ class SessionColConfig extends ColumnConfig {
 	}
 
 	@SuppressWarnings("unchecked")
-	private final Class clasz;
+	protected final Class clasz;
 }

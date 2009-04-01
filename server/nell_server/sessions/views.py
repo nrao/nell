@@ -1,6 +1,6 @@
 from django.http                   import HttpResponse
 from django_restapi.resource       import Resource
-from nell_server.sessions.models   import Project, Sessions
+from nell_server.sessions.models   import first, Project, Sessions
 
 import simplejson as json
 
@@ -15,6 +15,8 @@ class SessionResource(Resource):
 
         s = Sessions()
         s.init_from_json(request.POST)
+        # Query the database to insure data is in the correct data type
+        s = first(Sessions.objects.filter(id = s.id))
         
         return HttpResponse(json.dumps(s.jsondict())
                           , mimetype = "text/plain")

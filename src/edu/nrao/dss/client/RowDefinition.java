@@ -51,7 +51,7 @@ class RowDefinition {
             addColumn(ColumnDefinition.PSC_TIME,       null);
             addColumn(ColumnDefinition.TOTAL_TIME,     null);
             //addColumn(ColumnDefinition.TRI_TIME,       100);
-            addColumn(ColumnDefinition.GRADE,          null); //new GradeField("A"));
+            addColumn(ColumnDefinition.GRADE,          null);
             addColumn(ColumnDefinition.AUTHORIZED,     true);
             addColumn(ColumnDefinition.ENABLED,        false);
             addColumn(ColumnDefinition.COMPLETE,       false);
@@ -92,7 +92,7 @@ class RowDefinition {
             addColumn(ColumnDefinition.PSC_TIME,       null);
             addColumn(ColumnDefinition.TOTAL_TIME,     null);
             //addColumn(ColumnDefinition.TRI_TIME,       100);
-            addColumn(ColumnDefinition.GRADE,          null); //new GradeField("A"));
+            addColumn(ColumnDefinition.GRADE,          null);
             addColumn(ColumnDefinition.AUTHORIZED,     true);
             addColumn(ColumnDefinition.ENABLED,        false);
             addColumn(ColumnDefinition.COMPLETE,       false);
@@ -133,7 +133,7 @@ class RowDefinition {
             addColumn(ColumnDefinition.PSC_TIME,       null);
             addColumn(ColumnDefinition.TOTAL_TIME,     null);
             //addColumn(ColumnDefinition.TRI_TIME,       100);
-            addColumn(ColumnDefinition.GRADE,          null); //new GradeField("A"));
+            addColumn(ColumnDefinition.GRADE,          null);
             addColumn(ColumnDefinition.AUTHORIZED,     true);
             addColumn(ColumnDefinition.ENABLED,        false);
             addColumn(ColumnDefinition.COMPLETE,       false);
@@ -174,7 +174,7 @@ class RowDefinition {
             addColumn(ColumnDefinition.PSC_TIME,       null);
             addColumn(ColumnDefinition.TOTAL_TIME,     null);
             //addColumn(ColumnDefinition.TRI_TIME,       100);
-            addColumn(ColumnDefinition.GRADE,          null); //new GradeField("A"));
+            addColumn(ColumnDefinition.GRADE,          null);
             addColumn(ColumnDefinition.AUTHORIZED,     true);
             addColumn(ColumnDefinition.ENABLED,        false);
             addColumn(ColumnDefinition.COMPLETE,       false);
