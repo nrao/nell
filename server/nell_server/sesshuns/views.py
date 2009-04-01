@@ -4,15 +4,23 @@ from nell_server.sesshuns.models   import Project, Sesshun
 
 import simplejson as json
 
-class SessionResource(Resource):
+class NellResource(Resource):
 
     def create(self, request, *args, **kws):
         method = request.POST.get("_method", None)
         if method == "put":
-            return self.update(request, *args)
+            return self.update(request, *args, **kws)
         elif method == "delete":
-            return self.delete(request, *args)
+            return self.delete(request, *args, **kws)
+        else:
+            return self.create_worker(request, *args, **kws)
 
+class SessionResource(NellResource):
+    
+    def create(self, request, *args, **kws):
+        return super(SessionResource, self).create(request, *args, **kws)
+    
+    def create_worker(self, request, *args, **kws):
         s = Sesshun()
         s.init_from_json(request.POST)
         

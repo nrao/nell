@@ -245,7 +245,6 @@ class Sesshun(models.Model):
         for k, v in d.items():
             if k != "id":
                 d[k] = str(v)
-
         """
         return d
 

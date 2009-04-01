@@ -3,9 +3,9 @@ from nell_server.sesshuns.views import SessionResource
 
 urlpatterns = patterns('',
    # ...
-   url(r'^sessions(/(\d+))?$', SessionResource(permitted_methods=('GET', 'PUT', 'POST'))),
-#   url(r'^sessions$',       SessionResource(permitted_methods=('GET', 'PUT', 'POST'))),
-#   url(r'^sessions/(\d+)$', SessionResource(permitted_methods=('PUT', 'GET', 'POST'))),
+#   url(r'^sessions(/(\d+)$)?$', SessionResource(permitted_methods=('GET', 'PUT', 'POST'))),
+   url(r'^sessions$',       SessionResource(permitted_methods=('GET', 'PUT', 'POST'))),
+   url(r'^sessions/(\d+)$', SessionResource(permitted_methods=('PUT', 'GET', 'POST'))),
 )
 
 

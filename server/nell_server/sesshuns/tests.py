@@ -1,17 +1,10 @@
-import unittest
-import pg
-from sesshuns.models import *
-from nell_server import settings
+from django.test.client import Client
 
-class TestSesshun(unittest.TestCase):
+from sesshuns.models                     import *
+from nell_server.test_utils.NellTestCase import NellTestCase
 
-    def setUp(self):
-        dbname = "test_" + settings.DATABASE_NAME
-        c = pg.connect(user = "dss", dbname = dbname)
-        sql = open("populate_db.sql").read()
-        c.query(sql)
-        c.close()
-        
+class TestSesshun(NellTestCase):
+
     def test_create(self):
         fdata = {"total_time": "3"
                , "req_max": "6"
@@ -26,10 +19,40 @@ class TestSesshun(unittest.TestCase):
                , "req_min": "2"
                , "freq": "6"
                , "type": "open"
-               , "id": 2}
+                }
         s = Sesshun()
         s.init_from_json(fdata)
         s.save()
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.name, fdata["name"])
 
+class TestSessionResource(NellTestCase):
+
+    def setUp(self):
+        
+        super(TestSessionResource, self).setUp()
+        self.client = Client()
+        s = Sesshun()
+        s.init_from_json({})
+        s.save()
+
+    def test_create(self):
+        
+        response = self.client.post('/sessions')
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_read(self):
+        
+        response = self.client.get('/sessions')
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_update(self):
+        
+        response = self.client.post('/sessions/1', {'_method' : 'put'})
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_delete(self):
+        
+        response = self.client.post('/sessions/1', {'_method' : 'delete'})
+        self.failUnlessEqual(response.status_code, 200)
+    
