@@ -1,6 +1,6 @@
 from django.http                   import HttpResponse
 from django_restapi.resource       import Resource
-from nell_server.sessions.models   import Project, Sessions
+from nell_server.sesshuns.models   import Project, Sesshun
 
 import simplejson as json
 
@@ -13,35 +13,28 @@ class SessionResource(Resource):
         elif method == "delete":
             return self.delete(request, *args)
 
-        s = Sessions()
+        s = Sesshun()
         s.init_from_json(request.POST)
         
         return HttpResponse(json.dumps(s.jsondict())
                           , mimetype = "text/plain")
 
     def read(self, request):
-        sessions = Sessions.objects.all()
+        sessions = Sesshun.objects.all()
         return HttpResponse(json.dumps({"sessions":[s.jsondict() for s in sessions]})
                           , mimetype = "text/plain")
 
     def update(self, request, *args, **kws):
         id    = int(args[0])
-        s     = Sessions.objects.get(id = id)
+        s     = Sesshun.objects.get(id = id)
         s.update_from_json(request.POST)
 
         return HttpResponse("")
 
     def delete(self, request, *args):
         id = int(args[0])
-        s  = Sessions.objects.get(id = id)
+        s  = Sesshun.objects.get(id = id)
         s.delete()
         
         return HttpResponse(json.dumps({"success": "ok"}))
-
-    def build_dict(self, s):
-        d = {"id":s.id}
-        for f in s.fields_set.all():
-            if f.key != "id":
-                d[f.key] = f.value
-        return d
 
