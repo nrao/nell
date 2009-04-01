@@ -84,8 +84,8 @@ class Sesshun(models.Model):
     def delete(self):
         self.allotment.delete()
         super(Sesshun, self).delete()
-        
-    def init_from_json(self, fdata):
+
+    def set_base_fields(self, fdata):
         fsestype = fdata.get("type", "open")
         fobstype = fdata.get("science", "testing")
         frcvr    = fdata.get("receiver", "Rcvr1_2")
@@ -95,16 +95,10 @@ class Sesshun(models.Model):
                  , Session_Type.objects.all()[0])
         ot = first(Observing_Type.objects.filter(type = fobstype).all()
                  , Observing_Type.objects.all()[0])
-        allot = Allotment(psc_time          = fdata.get("PSC_time", 0.0)
-                        , total_time        = fdata.get("total_time", 0.0)
-                        , max_semester_time = fdata.get("sem_time", 0.0)
-                          )
-        allot.save()
 
         self.project          = p
         self.session_type     = st
         self.observing_type   = ot
-        self.allotment        = allot
         self.original_id      = fdata.get("orig_ID", None)
         self.name             = fdata.get("name", None)
         self.frequency        = fdata.get("freq", None)
@@ -113,8 +107,17 @@ class Sesshun(models.Model):
         self.time_between     = fdata.get("between", None)
         self.grade            = fdata.get("grade", None)
 
+    def init_from_post(self, fdata):
+        self.set_base_fields(fdata)
+        allot = Allotment(psc_time          = fdata.get("PSC_time", 0.0)
+                        , total_time        = fdata.get("total_time", 0.0)
+                        , max_semester_time = fdata.get("sem_time", 0.0)
+                          )
+        allot.save()
+        self.allotment        = allot
         self.save()
-
+        
+        frcvr  = fdata.get("receiver", "Rcvr1_2")
         rcvr   = first(Receiver.objects.filter(name = frcvr).all()
                      , Receiver.objects.all()[0])
         rg     = Receiver_Group(session = self)
@@ -145,31 +148,12 @@ class Sesshun(models.Model):
         target.save()
         self.save()
 
-    def update_from_json(self, fdata):
-        fsestype = fdata.get("type", "open")
-        fobstype = fdata.get("science", "testing")
-        frcvr    = fdata.get("receiver", "Rcvr1_2")
-
-        p  = first(Project.objects.filter(pcode = "GBT09A-001").all())
-        st = first(Session_Type.objects.filter(type = fsestype).all()
-                 , Session_Type.objects.all()[0])
-        ot = first(Observing_Type.objects.filter(type = fobstype).all()
-                 , Observing_Type.objects.all()[0])
-
+    def update_from_post(self, fdata):
+        self.set_base_fields(fdata)
+        
         self.allotment.psc_time          = fdata.get("PSC_time", 0.0)
         self.allotment.total_time        = fdata.get("total_time", 0.0)
         self.allotment.max_semester_time = fdata.get("sem_time", 0.0)
-
-        self.project          = p
-        self.session_type     = st
-        self.observing_type   = ot
-        self.original_id      = fdata.get("orig_ID", None)
-        self.name             = fdata.get("name", None)
-        self.frequency        = fdata.get("freq", None)
-        self.max_duration     = fdata.get("req_max", None)
-        self.min_duration     = fdata.get("req_min", None)
-        self.time_between     = fdata.get("between", None)
-        self.grade            = fdata.get("grade", None)
 
         # TBF DO SOMETHING WITH RECEIVERS!
 

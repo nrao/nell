@@ -21,7 +21,7 @@ class TestSesshun(NellTestCase):
                , "type": "open"
                 }
         s = Sesshun()
-        s.init_from_json(fdata)
+        s.init_from_post(fdata)
         s.save()
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.name, fdata["name"])
@@ -33,7 +33,7 @@ class TestSessionResource(NellTestCase):
         super(TestSessionResource, self).setUp()
         self.client = Client()
         s = Sesshun()
-        s.init_from_json({})
+        s.init_from_post({})
         s.save()
 
     def test_create(self):
