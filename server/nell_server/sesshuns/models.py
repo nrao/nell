@@ -66,18 +66,7 @@ class Parameter(models.Model):
     class Meta:
         db_table = "parameters"
 
-class Sessions(models.Model):
-    """
-    Sessions hold meta data used to create a period.
-
-    # Create some sessions
-    >>> s    = Sessions.objects.create()
-    >>> data = {}
-    >>> s.init_from_json(data)
-    >>> assert(False)
-    >>> print s
-    
-    """
+class Sesshun(models.Model):
     
     project            = models.ForeignKey(Project)
     session_type       = models.ForeignKey(Session_Type)
@@ -94,7 +83,7 @@ class Sessions(models.Model):
 
     def delete(self):
         self.allotment.delete()
-        super(Sessions, self).delete()
+        super(Sesshun, self).delete()
         
     def init_from_json(self, fdata):
         fsestype = fdata.get("type", "open")
@@ -235,7 +224,6 @@ class Sessions(models.Model):
                  , "complete"   : status.complete
                  , "backup"     : status.backup
                    }
-            d.update(s_d)
 
         if target is not None:
             d.update({"source" : target.source})
@@ -251,7 +239,7 @@ class Sessions(models.Model):
         db_table = "sessions"
 
 class Receiver_Group(models.Model):
-    session        = models.ForeignKey(Sessions)
+    session        = models.ForeignKey(Sesshun)
     receivers      = models.ManyToManyField(Receiver
                                           , through = "Receiver_Group_Receiver")
 
@@ -266,7 +254,7 @@ class Receiver_Group_Receiver(models.Model):
         db_table = "receiver_groups_receiver"
 
 class Observing_Parameter(models.Model):
-    session        = models.ForeignKey(Sessions)
+    session        = models.ForeignKey(Sesshun)
     parameter      = models.ForeignKey(Parameter)
     string_value   = models.CharField(null = True, max_length = 64)
     integer_value  = models.IntegerField(null = True)
@@ -279,7 +267,7 @@ class Observing_Parameter(models.Model):
         unique_together = ("session", "parameter")
 
 class Status(models.Model):
-    session    = models.ForeignKey(Sessions)
+    session    = models.ForeignKey(Sesshun)
     enabled    = models.BooleanField()
     authorized = models.BooleanField()
     complete   = models.BooleanField()
@@ -289,7 +277,7 @@ class Status(models.Model):
         db_table = "status"
 
 class Window(models.Model):
-    session  = models.ForeignKey(Sessions)
+    session  = models.ForeignKey(Sesshun)
     required = models.BooleanField()
 
     class Meta:
@@ -312,7 +300,7 @@ class System(models.Model):
         db_table = "systems"
 
 class Target(models.Model):
-    session    = models.ForeignKey(Sessions)
+    session    = models.ForeignKey(Sesshun)
     system     = models.ForeignKey(System)
     source     = models.CharField(null = True, max_length = 32)
     vertical   = models.FloatField()

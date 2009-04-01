@@ -1,49 +1,50 @@
 from django.http                   import HttpResponse
 from django_restapi.resource       import Resource
-from nell_server.sessions.models   import first, Project, Sessions
+from nell_server.sesshuns.models   import first, Project, Sesshun
 
 import simplejson as json
 
-class SessionResource(Resource):
+class NellResource(Resource):
 
     def create(self, request, *args, **kws):
         method = request.POST.get("_method", None)
         if method == "put":
-            return self.update(request, *args)
+            return self.update(request, *args, **kws)
         elif method == "delete":
-            return self.delete(request, *args)
+            return self.delete(request, *args, **kws)
+        else:
+            return self.create_worker(request, *args, **kws)
 
-        s = Sessions()
+class SessionResource(NellResource):
+    
+    def create(self, request, *args, **kws):
+        return super(SessionResource, self).create(request, *args, **kws)
+    
+    def create_worker(self, request, *args, **kws):
+        s = Sesshun()
         s.init_from_json(request.POST)
         # Query the database to insure data is in the correct data type
-        s = first(Sessions.objects.filter(id = s.id))
+        s = first(Sesshun.objects.filter(id = s.id))
         
         return HttpResponse(json.dumps(s.jsondict())
                           , mimetype = "text/plain")
 
     def read(self, request):
-        sessions = Sessions.objects.all()
+        sessions = Sesshun.objects.all()
         return HttpResponse(json.dumps({"sessions":[s.jsondict() for s in sessions]})
                           , mimetype = "text/plain")
 
     def update(self, request, *args, **kws):
         id    = int(args[0])
-        s     = Sessions.objects.get(id = id)
+        s     = Sesshun.objects.get(id = id)
         s.update_from_json(request.POST)
 
         return HttpResponse("")
 
     def delete(self, request, *args):
         id = int(args[0])
-        s  = Sessions.objects.get(id = id)
+        s  = Sesshun.objects.get(id = id)
         s.delete()
         
         return HttpResponse(json.dumps({"success": "ok"}))
-
-    def build_dict(self, s):
-        d = {"id":s.id}
-        for f in s.fields_set.all():
-            if f.key != "id":
-                d[f.key] = f.value
-        return d
 
