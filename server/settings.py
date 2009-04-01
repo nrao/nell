@@ -1,4 +1,4 @@
-# Django settings for nell_server project.
+# Django settings for server project.
 
 DEBUG = True
 
@@ -14,7 +14,7 @@ MANAGERS = ADMINS
 
 DATABASE_ENGINE = 'postgresql'     # 'postgresql_psycopg2', 'postgresql', 'mysql',
                               # 'sqlite3' or 'oracle'.
-DATABASE_NAME = 'dss_mclark'  # Modify to your database name or path to
+DATABASE_NAME = 'dss_mmccarty'  # Modify to your database name or path to
                               # database file if using sqlite3.
 DATABASE_USER = 'dss'         # Not used with sqlite3.
 DATABASE_PASSWORD = ''  # Not used with sqlite3.
@@ -69,7 +69,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
 )
 
-ROOT_URLCONF = 'nell_server.urls'
+ROOT_URLCONF = 'server.urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -82,5 +82,5 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
-    'nell_server.sesshuns'
+    'server.sesshuns'
 )

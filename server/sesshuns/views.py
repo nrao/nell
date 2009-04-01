@@ -1,6 +1,6 @@
 from django.http                   import HttpResponse
 from django_restapi.resource       import Resource
-from nell_server.sesshuns.models   import first, Project, Sesshun
+from server.sesshuns.models   import first, Project, Sesshun
 
 import simplejson as json
 

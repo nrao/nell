@@ -1,7 +1,7 @@
 import unittest
 import pg
 
-from nell_server import settings
+from server import settings
 
 class NellTestCase(unittest.TestCase):
 

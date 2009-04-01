@@ -1,7 +1,7 @@
 from django.test.client import Client
 
 from sesshuns.models                     import *
-from nell_server.test_utils.NellTestCase import NellTestCase
+from server.test_utils.NellTestCase import NellTestCase
 
 class TestSesshun(NellTestCase):
 
