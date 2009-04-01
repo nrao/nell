@@ -16,7 +16,7 @@
 > import Sessions
 
 > -- set DATABASE to name of database
-> connect = handleSqlError $ connectPostgreSQL "dbname=DATABASE user=dss"
+> connect = handleSqlError $ connectPostgreSQL "dbname=dss_mclark user=dss"
 
 > main = do
 >     addr <- inet_addr "127.0.0.1"
@@ -26,7 +26,7 @@
 >       , email      = "nubgames@gmail.com"
 >       , listenAddr = addr
 >       -- set CCCC to UI server port
->       , listenPort = CCCC
+>       , listenPort = 9002
 >       }
 >     mkHandler >>= start cfg'
 
