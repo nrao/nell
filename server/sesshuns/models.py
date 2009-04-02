@@ -1,3 +1,4 @@
+from datetime  import datetime
 from django.db import models
 
 def first(results, default = None):
@@ -264,6 +265,30 @@ class Window(models.Model):
     session  = models.ForeignKey(Sesshun)
     required = models.BooleanField()
 
+    def init_from_post(self, fdata):
+        self.required = fdata.get("required", False)
+        self.save()
+        start_time    = fdata.getlist("start_time")
+        duration      = fdata.getlist("duration")
+        for st, d in zip(start_time, duration):
+            self.str2opportunity(st, d)
+
+    def str2opportunity(self, start_time, duration):
+        d, t      = start_time.split(' ')
+        y, m, d   = map(int, d.split('-'))
+        h, mm, ss = map(int, map(float, t.split(':')))
+        st        = datetime(y, m, d, h, mm, ss)
+        o = Opportunity(window = self
+                      , start_time = st
+                      , duration = float(duration))
+        o.save()
+
+    def jsondict(self):
+        return {"id"       : self.id
+              , "required" : self.required
+              , "opportunities" : [o.jsondict() for o in self.opportunity_set.all()]
+                }
+        
     class Meta:
         db_table = "windows"
 
@@ -272,6 +297,12 @@ class Opportunity(models.Model):
     start_time = models.DateTimeField()
     duration   = models.FloatField()
 
+    def jsondict(self):
+        return {"id"         : self.id
+              , "start_time" : str(self.start_time)
+              , "duration"   : self.duration
+                }
+    
     class Meta:
         db_table = "opportunities"
 

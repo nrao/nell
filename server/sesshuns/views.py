@@ -1,6 +1,6 @@
-from django.http                   import HttpResponse
-from django_restapi.resource       import Resource
-from server.sesshuns.models   import first, Project, Sesshun
+from django.http              import HttpResponse
+from django_restapi.resource  import Resource
+from server.sesshuns.models   import first, Project, Sesshun, Window
 
 import simplejson as json
 
@@ -48,3 +48,38 @@ class SessionResource(NellResource):
         
         return HttpResponse(json.dumps({"success": "ok"}))
 
+class WindowResource(NellResource):
+
+    def create(self, request, *args, **kws):
+        return super(WindowResource, self).create(request, *args, **kws)
+    
+    def create_worker(self, request, *args, **kws):
+        s_id = int(request.POST["session_id"])
+        s = first(Sesshun.objects.filter(id = s_id))
+        w = Window(session = s)
+        w.save()
+        w.init_from_post(request.POST)
+        
+        # Query the database to insure data is in the correct data type
+        w = first(Window.objects.filter(id = s.id))
+        return HttpResponse(json.dumps(w.jsondict())
+                          , mimetype = "text/plain")
+
+    def read(self, request):
+        windows = Window.objects.all()
+        return HttpResponse(json.dumps({"windows":[w.jsondict() for w in windows]})
+                          , mimetype = "text/plain")
+
+    def update(self, request, *args, **kws):
+        id    = int(args[0])
+        w     = first(Window.objects.filter(id = id))
+        w.update_from_post(request.POST)
+
+        return HttpResponse("")
+
+    def delete(self, request, *args):
+        id = int(args[0])
+        w  = first(Window.objects.filter(id = id))
+        w.delete()
+        
+        return HttpResponse(json.dumps({"success": "ok"}))
