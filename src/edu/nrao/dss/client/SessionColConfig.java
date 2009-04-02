@@ -51,11 +51,11 @@ class SessionColConfig extends ColumnConfig {
 	public Field getField() {
 		Field field;
 		if (this.clasz == Integer.class) {
-			field = getIntegerField();
+			field = createIntegerField();
 		} else if (this.clasz == Double.class) {
-			field = getDoubleField();
+			field = createDoubleField();
 		} else if (this.clasz == Boolean.class) {
-			field = getCheckboxField();
+			field = createCheckboxField();
 		} else if (this.clasz == CadenceField.class) {
 			field = createSimpleComboBox(CadenceField.values);
 		} else if (this.clasz == CoordModeField.class) {
@@ -71,7 +71,7 @@ class SessionColConfig extends ColumnConfig {
 		} else if (this.clasz == TimeOfDayField.class) {
 			field = createSimpleComboBox(TimeOfDayField.values);
 		} else {
-			field = getTextField();
+			field = createTextField();
 		}
 		// field.setAllowBlank(false);
 		field.setFieldLabel(getId());
@@ -82,11 +82,6 @@ class SessionColConfig extends ColumnConfig {
 	private NumberField createDoubleField() {
 		NumberField field = new NumberField();
 		field.setPropertyEditorType(Double.class);
-		return field;
-	}
-
-	private NumberField getDoubleField() {
-		NumberField field = createDoubleField();
 		return field;
 	}
 
@@ -132,15 +127,8 @@ class SessionColConfig extends ColumnConfig {
 		return field;
 	}
 
-	private NumberField getIntegerField() {
-		NumberField field = createIntegerField();
-		return field;
-	}
-
 	private void intField() {
 		NumberField field = createIntegerField();
-		// NumberField field = new NumberField();
-		// field.setPropertyEditorType(Integer.class);
 
 		setAlignment(HorizontalAlignment.RIGHT);
 		setEditor(new CellEditor(field) {
@@ -174,7 +162,7 @@ class SessionColConfig extends ColumnConfig {
 		});
 	}
 
-	private Field<Boolean> getCheckboxField() {
+	private Field<Boolean> createCheckboxField() {
 		return new CheckBox();
 	}
 
@@ -195,7 +183,7 @@ class SessionColConfig extends ColumnConfig {
 		});
 	}
 
-	private TextField<String> getTextField() {
+	private TextField<String> createTextField() {
 		TextField<String> field = new TextField<String>();
 		return field;
 	}
