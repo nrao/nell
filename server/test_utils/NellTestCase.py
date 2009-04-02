@@ -1,7 +1,8 @@
 import unittest
 import pg
+from django.db import transaction
 
-from nell_server import settings
+from server import settings
 
 class NellTestCase(unittest.TestCase):
 
@@ -28,11 +29,14 @@ class NellTestCase(unittest.TestCase):
               """
         r = c.query(sql)
         
-        # Filter out unneed information
+        # Filter out information not needed
         tables = [i["Name"] for i in r.dictresult()
                      if 'auth' not in i["Name"] and
                         'django' not in i["Name"] and
                         '_id_seq' not in i["Name"]]
+
+        #  Commit any outstanding db transactions before truncating tables
+        transaction.commit()
 
         # Truncate all tables
         sql = "truncate table " + ", ".join(tables)

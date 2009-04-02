@@ -1,6 +1,6 @@
 from django.http                   import HttpResponse
 from django_restapi.resource       import Resource
-from nell_server.sesshuns.models   import first, Project, Sesshun
+from server.sesshuns.models   import first, Project, Sesshun
 
 import simplejson as json
 
@@ -22,7 +22,7 @@ class SessionResource(NellResource):
     
     def create_worker(self, request, *args, **kws):
         s = Sesshun()
-        s.init_from_json(request.POST)
+        s.init_from_post(request.POST)
         # Query the database to insure data is in the correct data type
         s = first(Sesshun.objects.filter(id = s.id))
         
@@ -37,7 +37,7 @@ class SessionResource(NellResource):
     def update(self, request, *args, **kws):
         id    = int(args[0])
         s     = Sesshun.objects.get(id = id)
-        s.update_from_json(request.POST)
+        s.update_from_post(request.POST)
 
         return HttpResponse("")
 
