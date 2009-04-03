@@ -2,6 +2,8 @@ from datetime              import datetime
 from django.db             import models
 from django.http import QueryDict
 
+#from server.utilities import OpportunityGenerator
+
 def first(results, default = None):
     return default if len(results) == 0 else results[0]
 
@@ -24,11 +26,12 @@ class Allotment(models.Model):
 
     class Meta:
         db_table = "allotment"
-
+        
 class Project(models.Model):
     semester     = models.ForeignKey(Semester)
     project_type = models.ForeignKey(Project_Type)
-    allotment    = models.ForeignKey(Allotment)
+    #allotment    = models.ForeignKey(Allotment)
+    allotments   = models.ManyToManyField(Allotment)
     pcode        = models.CharField(max_length = 32)
     name         = models.CharField(max_length = 60)
     thesis       = models.BooleanField()
@@ -224,6 +227,16 @@ class Sesshun(models.Model):
     class Meta:
         db_table = "sessions"
 
+class Cadence(models.Model):
+    session    = models.ForeignKey(Sesshun)
+    start_date = models.DateTimeField(null = True)
+    end_date   = models.DateTimeField(null = True)
+    repeats    = models.IntegerField(null = True)
+    intervals  = models.CharField(null = True, max_length = 64)
+
+    class Meta:
+        db_table = "cadences"
+
 class Receiver_Group(models.Model):
     session        = models.ForeignKey(Sesshun)
     receivers      = models.ManyToManyField(Receiver
@@ -294,7 +307,35 @@ class Window(models.Model):
               , "required" : self.required
               , "opportunities" : [o.jsondict() for o in self.opportunity_set.all()]
                 }
+    """
+    def gen_opportunities(self):
+        w = first(self.opportunity_set.all())
+        if w is None:
+            return []
         
+        # Does the window already have one or more(!) sessions?
+        # (Note if a session falls in the overlap of two
+        # intersecting windows -- which should not be allowed
+        # in any case -- then it satisfies both windows)
+        # Note that the window start hour only applies to UTC windows,
+        # the window itself starts at the beginning of the start date.
+        start = datetime(w.start_time.year, w.start_time.month, w.start_time.day)
+
+        # TBF: Need to check to see if the window as already been satisfied.
+
+        limit = HourAngleLimit.query.filter(
+            and_(
+              HourAngleLimit.frequency ==
+                               alloc.frequencyIndex(),
+              HourAngleLimit.declination ==
+                               alloc.declinationIndex()
+                )).first()
+        ha_limit = int(limit.limit) if limit \
+                   else int(round((
+                            alloc.min_duration + 119) / 120))
+
+        return OpportunityGenerator(self.now).generate(w, w.sesshun, ha_limit)
+    """                  
     class Meta:
         db_table = "windows"
 
