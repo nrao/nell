@@ -1,5 +1,6 @@
-from datetime  import datetime
-from django.db import models
+from datetime              import datetime
+from django.db             import models
+from django.http import QueryDict
 
 def first(results, default = None):
     return default if len(results) == 0 else results[0]
@@ -265,7 +266,7 @@ class Window(models.Model):
     session  = models.ForeignKey(Sesshun)
     required = models.BooleanField()
 
-    def init_from_post(self, fdata):
+    def init_from_post(self, fdata = QueryDict({})):
         self.required = fdata.get("required", False)
         self.save()
         start_time    = fdata.getlist("start_time")
@@ -283,6 +284,11 @@ class Window(models.Model):
                       , duration = float(duration))
         o.save()
 
+    def update_from_post(self, fdata = QueryDict({})):
+        for o in self.opportunity_set.all():
+            o.delete()
+        self.init_from_post(fdata)
+        
     def jsondict(self):
         return {"id"       : self.id
               , "required" : self.required

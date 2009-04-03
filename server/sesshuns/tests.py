@@ -136,10 +136,37 @@ class TestWindowResource(NellTestCase):
         self.failUnlessEqual(response.status_code, 200)
 
     def test_update(self):
-        response = self.client.post('/windows/1', {'_method' : 'put'})
+        s = first(Sesshun.objects.all())
+        w = Window(session = s)
+        w.init_from_post()
+
+        num_opps = 4
+        starts = [datetime(2009, 4, 10, 12) + timedelta(days = d) for d in range(num_opps)]
+        fdata = {"session_id" : "1"
+               , "start_time" : map(str, starts)
+               , "duration"   : [1 + i for i in range(len(starts))]
+                 }
+        fdata.update({'_method' : 'put'})
+        response = self.client.post('/windows/%i' % w.id
+                                  , fdata)
+
         self.failUnlessEqual(response.status_code, 200)
 
+        expected = first(w.opportunity_set.all()).start_time
+        self.assertEqual(expected, datetime(2009, 4, 10, 12))
+
+
     def test_delete(self):
-        response = self.client.post('/windows/1', {'_method' : 'delete'})
+        s = first(Sesshun.objects.all())
+        w = Window(session = s)
+        w.init_from_post()
+
+        response = self.client.post('/windows/%i' % w.id, {'_method' : 'delete'})
         self.failUnlessEqual(response.status_code, 200)
+
+        # Make sure that deleting the window deletes all opportunities
+        opps = Opportunity.objects.filter(window = w)
+        self.failUnlessEqual(len(opps), 0)
+
+        
     
