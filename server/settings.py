@@ -12,12 +12,15 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+#DATABASE_ENGINE = 'mysql'
 DATABASE_ENGINE = 'postgresql'     # 'postgresql_psycopg2', 'postgresql', 'mysql',
                               # 'sqlite3' or 'oracle'.
+#DATABASE_NAME = 'dss_prime'  # Modify to your database name or path to
 DATABASE_NAME = 'dss_mmccarty'  # Modify to your database name or path to
                               # database file if using sqlite3.
 DATABASE_USER = 'dss'         # Not used with sqlite3.
 DATABASE_PASSWORD = ''  # Not used with sqlite3.
+#DATABASE_PASSWORD = 'asdf5!'  # Not used with sqlite3.
 DATABASE_HOST = ''       # Set to empty string for localhost. Not used
                               # with sqlite3.
 DATABASE_PORT = ''            # Set to empty string for default. Not used with sqlite3.

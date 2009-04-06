@@ -83,3 +83,15 @@ class WindowResource(NellResource):
         w.delete()
         
         return HttpResponse(json.dumps({"success": "ok"}))
+
+def gen_opportunities(self, *args, **kws):
+    if len(args) == 0:
+        windows = Window.objects.all()
+        return HttpResponse(json.dumps({"windows":[w.jsondict(generate = True) for w in windows]})
+                          , mimetype = "text/plain")
+    else:
+        id    = int(args[0])
+        w     = first(Window.objects.filter(id = id))
+        return HttpResponse(json.dumps(w.jsondict(generate = True))
+                          , mimetype = "text/plain")
+

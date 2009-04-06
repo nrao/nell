@@ -2,7 +2,7 @@ from datetime              import datetime
 from django.db             import models
 from django.http import QueryDict
 
-#from server.utilities import OpportunityGenerator
+from server.utilities import OpportunityGenerator, TimeAgent
 
 def first(results, default = None):
     return default if len(results) == 0 else results[0]
@@ -86,6 +86,8 @@ class Sesshun(models.Model):
     time_between       = models.FloatField(null = True)
     grade              = models.FloatField(null = True)
 
+    restrictions = "Unrestricted" # TBF Do we still need restrictions?
+
     def delete(self):
         self.allotment.delete()
         super(Sesshun, self).delete()
@@ -107,8 +109,8 @@ class Sesshun(models.Model):
         self.original_id      = fdata.get("orig_ID", None)
         self.name             = fdata.get("name", None)
         self.frequency        = fdata.get("freq", None)
-        self.max_duration     = fdata.get("req_max", None)
-        self.min_duration     = fdata.get("req_min", None)
+        self.max_duration     = fdata.get("req_max", 8.0)
+        self.min_duration     = fdata.get("req_min", 2.0)
         self.time_between     = fdata.get("between", None)
 
         # grade - UI deals w/ letters (A,B,C) - DB deals with floats
@@ -198,6 +200,16 @@ class Sesshun(models.Model):
 
         self.save()
 
+    def get_ra_dec(self):
+        target = first(self.target_set.all())
+        if target is None:
+            return None, None
+        return target.vertical, target.horizontal
+
+    def get_ignore_ha(self):
+        # TBF:  Need specification of ignore_ha
+        return False
+        
     def get_receiver_req(self):
         return first(self.receiver_group_set.get().receivers.all())
         
@@ -244,6 +256,25 @@ class Sesshun(models.Model):
                 _ = d.pop(k)
 
         return d
+
+    def hourAngleAtHorizon(self):
+        "Returns the absolute hour angle in hours at the telescope limits."
+        _, dec = self.get_ra_dec()
+        lat = TimeAgent.GbtLatitudeInRadians()
+        dec = TimeAgent.deg2rad(dec)
+        za  = TimeAgent.deg2rad(85)
+
+        # Are we looking at polaris or thereabouts?
+        denominator = cos(lat)*cos(dec)
+        if abs(denominator) <= 1e-3:
+            return 12.0
+
+        cosha = (cos(za) - sin(lat)*sin(dec))/denominator
+        # Dropped below the horizon?
+        if abs(cosha) >= 1:
+            return 12.0
+        ha = TimeAgent.rad2hr(acos(cosha))
+        return abs(ha)
 
     class Meta:
         db_table = "sessions"
@@ -323,16 +354,24 @@ class Window(models.Model):
             o.delete()
         self.init_from_post(fdata)
         
-    def jsondict(self):
+    def jsondict(self, generate = False):
+        windowed = first(Session_Type.objects.filter(type = 'windowed'))
+        if self.session.session_type == windowed and generate:
+            opportunities = self.gen_opportunities()
+        else:
+            opportunities = self.opportunity_set.all()
+            
         return {"id"       : self.id
               , "required" : self.required
-              , "opportunities" : [o.jsondict() for o in self.opportunity_set.all()]
+              , "opportunities" : [o.jsondict() for o in opportunities]
                 }
-    """
-    def gen_opportunities(self):
+
+    def gen_opportunities(self, now = None):
         w = first(self.opportunity_set.all())
         if w is None:
             return []
+
+        now = datetime.utcnow() if now is None else now
         
         # Does the window already have one or more(!) sessions?
         # (Note if a session falls in the overlap of two
@@ -340,10 +379,11 @@ class Window(models.Model):
         # in any case -- then it satisfies both windows)
         # Note that the window start hour only applies to UTC windows,
         # the window itself starts at the beginning of the start date.
-        start = datetime(w.start_time.year, w.start_time.month, w.start_time.day)
+        #start = datetime(w.start_time.year, w.start_time.month, w.start_time.day)
 
         # TBF: Need to check to see if the window as already been satisfied.
 
+        """
         limit = HourAngleLimit.query.filter(
             and_(
               HourAngleLimit.frequency ==
@@ -351,12 +391,14 @@ class Window(models.Model):
               HourAngleLimit.declination ==
                                alloc.declinationIndex()
                 )).first()
+        """
+        limit = None
         ha_limit = int(limit.limit) if limit \
                    else int(round((
-                            alloc.min_duration + 119) / 120))
+                            self.session.min_duration + 119) / 120))
 
-        return OpportunityGenerator(self.now).generate(w, w.sesshun, ha_limit)
-    """                  
+        return OpportunityGenerator(now).generate(w, self.session, ha_limit)
+
     class Meta:
         db_table = "windows"
 

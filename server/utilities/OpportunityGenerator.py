@@ -1,4 +1,4 @@
-from TimeAgent          import TimeAgent
+import TimeAgent
 
 from datetime import datetime, timedelta
 import copy
@@ -9,6 +9,20 @@ class GenOpportunity:
         self.start_time = start_time
         self.duration   = duration
 
+    def jsondict(self):
+        return {"start_time" : str(self.start_time)
+              , "duration"   : self.duration
+                }
+    
+    def __repr__(self):
+        return "%s - %s" % (self.start_time
+                          , self.start_time + timedelta(hours = self.duration))
+
+    def __eq__(self, other):
+        return self.start_time == other.start_time \
+            and self.duration == other.duration \
+            and self.window == other.window
+        
 STEPSIZE = 15
 
 class OpportunityGenerator:
@@ -37,9 +51,10 @@ class OpportunityGenerator:
                                          start_day.day)).days
         duration  = 0 if duration < 0 else duration
         for day_no in xrange(duration):
-            day = start_day + timedelta(days = day_no)
+            day     = start_day + timedelta(days = day_no)
+            ra, _   = sesshun.get_ra_dec()
             transit = \
-                   TimeAgent.RelativeLST2AbsoluteTime(sesshun.ra, day)
+                   TimeAgent.RelativeLST2AbsoluteTime(ra, day)
 
             # What kind of windowing are we dealing with?
             if sesshun.restrictions == 'UTC':
@@ -60,7 +75,7 @@ class OpportunityGenerator:
                 # Opportunities are only generated for where the hour angle
                 # limits allow us to observe.
                 # Find the recommended hour angle limits
-                limit = int(sesshun.hourAngleAtHorizon()) if sesshun.ignore_HA /
+                limit = int(sesshun.hourAngleAtHorizon()) if sesshun.get_ignore_ha() \
                                                           else ha_limit
 
                 begin = max(transit - timedelta(hours = limit), start_day)
@@ -88,7 +103,7 @@ class OpportunityGenerator:
         duration = timedelta(minutes = sesshun.min_duration)
         step = timedelta(minutes = STEPSIZE)
         while begin + duration <= end:
-            oppt = GenOpportuntiy(window, begin, sesshun.min_duration)
+            oppt = GenOpportunity(window, begin, sesshun.min_duration)
             opportunities.append(oppt)
             begin += step
         return opportunities
