@@ -1,4 +1,8 @@
-from django.db import models
+from datetime              import datetime
+from django.db             import models
+from django.http import QueryDict
+
+#from server.utilities import OpportunityGenerator
 
 def first(results, default = None):
     return default if len(results) == 0 else results[0]
@@ -22,11 +26,12 @@ class Allotment(models.Model):
 
     class Meta:
         db_table = "allotment"
-
+        
 class Project(models.Model):
     semester     = models.ForeignKey(Semester)
     project_type = models.ForeignKey(Project_Type)
-    allotment    = models.ForeignKey(Allotment)
+    #allotment    = models.ForeignKey(Allotment)
+    allotments   = models.ManyToManyField(Allotment)
     pcode        = models.CharField(max_length = 32)
     name         = models.CharField(max_length = 60)
     thesis       = models.BooleanField()
@@ -243,6 +248,16 @@ class Sesshun(models.Model):
     class Meta:
         db_table = "sessions"
 
+class Cadence(models.Model):
+    session    = models.ForeignKey(Sesshun)
+    start_date = models.DateTimeField(null = True)
+    end_date   = models.DateTimeField(null = True)
+    repeats    = models.IntegerField(null = True)
+    intervals  = models.CharField(null = True, max_length = 64)
+
+    class Meta:
+        db_table = "cadences"
+
 class Receiver_Group(models.Model):
     session        = models.ForeignKey(Sesshun)
     receivers      = models.ManyToManyField(Receiver
@@ -285,6 +300,63 @@ class Window(models.Model):
     session  = models.ForeignKey(Sesshun)
     required = models.BooleanField()
 
+    def init_from_post(self, fdata = QueryDict({})):
+        self.required = fdata.get("required", False)
+        self.save()
+        start_time    = fdata.getlist("start_time")
+        duration      = fdata.getlist("duration")
+        for st, d in zip(start_time, duration):
+            self.str2opportunity(st, d)
+
+    def str2opportunity(self, start_time, duration):
+        d, t      = start_time.split(' ')
+        y, m, d   = map(int, d.split('-'))
+        h, mm, ss = map(int, map(float, t.split(':')))
+        st        = datetime(y, m, d, h, mm, ss)
+        o = Opportunity(window = self
+                      , start_time = st
+                      , duration = float(duration))
+        o.save()
+
+    def update_from_post(self, fdata = QueryDict({})):
+        for o in self.opportunity_set.all():
+            o.delete()
+        self.init_from_post(fdata)
+        
+    def jsondict(self):
+        return {"id"       : self.id
+              , "required" : self.required
+              , "opportunities" : [o.jsondict() for o in self.opportunity_set.all()]
+                }
+    """
+    def gen_opportunities(self):
+        w = first(self.opportunity_set.all())
+        if w is None:
+            return []
+        
+        # Does the window already have one or more(!) sessions?
+        # (Note if a session falls in the overlap of two
+        # intersecting windows -- which should not be allowed
+        # in any case -- then it satisfies both windows)
+        # Note that the window start hour only applies to UTC windows,
+        # the window itself starts at the beginning of the start date.
+        start = datetime(w.start_time.year, w.start_time.month, w.start_time.day)
+
+        # TBF: Need to check to see if the window as already been satisfied.
+
+        limit = HourAngleLimit.query.filter(
+            and_(
+              HourAngleLimit.frequency ==
+                               alloc.frequencyIndex(),
+              HourAngleLimit.declination ==
+                               alloc.declinationIndex()
+                )).first()
+        ha_limit = int(limit.limit) if limit \
+                   else int(round((
+                            alloc.min_duration + 119) / 120))
+
+        return OpportunityGenerator(self.now).generate(w, w.sesshun, ha_limit)
+    """                  
     class Meta:
         db_table = "windows"
 
@@ -293,6 +365,12 @@ class Opportunity(models.Model):
     start_time = models.DateTimeField()
     duration   = models.FloatField()
 
+    def jsondict(self):
+        return {"id"         : self.id
+              , "start_time" : str(self.start_time)
+              , "duration"   : self.duration
+                }
+    
     class Meta:
         db_table = "opportunities"
 
