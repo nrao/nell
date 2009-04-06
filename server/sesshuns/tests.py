@@ -44,6 +44,22 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.allotment.total_time, self.fdata["total_time"])
         self.assertEqual(s.target_set.get().source, self.fdata["source"])
 
+    def test_grade_abc_2_float(self):
+
+        s = Sesshun()
+        values = [('A',4.0),('B',3.0),('C',2.0)]
+        for letter, num in values:
+            fltGrade = s.grade_abc_2_float(letter)
+            self.assertEqual(num, fltGrade)
+
+    def test_grade_float_2_abc(self):
+
+        s = Sesshun()
+        values = [('A',4.0),('B',3.0),('C',2.0)]
+        for letter, num in values:
+            letterGrade = s.grade_float_2_abc(num)
+            self.assertEqual(letter, letterGrade)
+
 class TestSessionResource(NellTestCase):
 
     def setUp(self):
