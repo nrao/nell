@@ -127,10 +127,20 @@ class SessionExplorer extends ContentPanel {
 	}
 
 	private void setColumnHeaders(List<String> headers) {
+		setColumnHeaders(headers, true);
+	}
+	
+	private void setColumnHeaders(List<String> headers, Boolean invert) {
+		Boolean hidden;
 		int count = grid.getColumnModel().getColumnCount();
         for (int i = 1; i < count; ++i) {
             String column_id = grid.getColumnModel().getColumnId(i);
-            grid.getColumnModel().getColumnById(column_id).setHidden(!headers.contains(column_id));
+            if (invert == true) {
+            	hidden = !headers.contains(column_id);
+            } else {
+            	hidden = headers.contains(column_id);
+            }
+            grid.getColumnModel().getColumnById(column_id).setHidden(hidden);
         }
         
         store.addStoreListener(new StoreListener<BaseModelData>() {
@@ -264,8 +274,31 @@ class SessionExplorer extends ContentPanel {
 		}
 	}
 
-	private List<String> getViewColumnHeaders(String view) {
-	    return rows.getAllFieldNames();
+	// TBF: there's a better way to do this, but since "View All Columns" is our only 
+	// view, run with it.
+	private List<String> getViewColumnHeaders(String view, String views[]) {
+		/*
+		if (view == "View All Columns") {
+			return rows.getAllFieldNames();
+		} else if (view == "View Name Columns") {
+			// TBF: this view is just to see if things are working - better way to do this
+			ArrayList<String> colHeaders = new ArrayList<String>();
+			colHeaders.add(rows.getColumnDefinition().getColumn(ColumnDefinition.NAME).getHeader());
+			return colHeaders;
+		} else {
+		    return rows.getAllFieldNames();
+		}
+		*/
+		if (view == "View All Columns") {
+			return rows.getAllFieldIds();
+		} else if (view == "View Name Columns") {
+			// TBF: this view is just to see if things are working - better way to do this
+			ArrayList<String> colHeaders = new ArrayList<String>();
+			colHeaders.add(ColumnDefinition.NAME);
+			return colHeaders;
+		} else {
+		    return rows.getAllFieldIds();
+		}		
 	}
 
 	private void addMenuItems(Menu addMenu) {
@@ -337,22 +370,26 @@ class SessionExplorer extends ContentPanel {
 		viewItem.setToolTip("Select or create a set of column headers.");
 		Menu viewMenu = new Menu();
 
-		String[] views = new String[3];
-
-		views[0] = "View #1";
-		views[1] = "View #2";
-		views[2] = "View #3";
-		for (final String mk : views) {
-			final List<String> fields = getViewColumnHeaders(mk);
-			final MenuItem mi = new MenuItem(mk);
+		// TBF: the mapping of views to the columns they show can be better done,
+		// but for now 'View All Columns' is our only required view.
+		String[] views = new String[2];
+		views[0] = "View All Columns";
+		views[1] = "View Name Columns";
+		for (final String view : views) {
+			// which columns to show for this particular view?
+			final List<String> fields = getViewColumnHeaders(view, views);
+			final MenuItem mi = new MenuItem(view);
 			mi.addSelectionListener(new SelectionListener<ComponentEvent>() {
 				@Override
 				public void componentSelected(ComponentEvent ce) {
+					// when this menu option is chosen, show these fields
 					setColumnHeaders(fields);
 				}
 			});
 			viewMenu.add(mi);
 		}
+		
+		
 		viewMenu.add(new SeparatorMenuItem());
 		
 		final List<String> nfields = rows.getAllFieldIds();
