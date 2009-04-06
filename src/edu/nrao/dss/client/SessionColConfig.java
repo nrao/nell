@@ -42,6 +42,8 @@ class SessionColConfig extends ColumnConfig {
 			typeField(STypeField.values);
 		} else if (clasz == TimeOfDayField.class) {
 			typeField(TimeOfDayField.values);
+		} else if (clasz == GradeField.class) {
+			typeField(GradeField.values);
 		} else {
 			textField();
 		}
@@ -70,6 +72,8 @@ class SessionColConfig extends ColumnConfig {
 			field = createSimpleComboBox(STypeField.values);
 		} else if (this.clasz == TimeOfDayField.class) {
 			field = createSimpleComboBox(TimeOfDayField.values);
+		} else if (this.clasz == GradeField.class) {
+			field = createSimpleComboBox(GradeField.values);
 		} else {
 			field = createTextField();
 		}

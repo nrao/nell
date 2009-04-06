@@ -83,6 +83,14 @@ public class SessionColConfigTest extends GWTTestCase {
 	  Field result   = sColConf.getEditor().getField();
 	  assertEquals(result.getClass(), SimpleComboBox.class);
   }
+
+  @SuppressWarnings("unchecked")
+  public void test_GradeField() {
+	  SessionColConfig sColConf = new SessionColConfig("test", "Test", 100, GradeField.class);
+	  assertNotNull(sColConf);
+	  Field result   = sColConf.getEditor().getField();
+	  assertEquals(result.getClass(), SimpleComboBox.class);
+  }
   
   @SuppressWarnings("unchecked")
   public void test_TimeOfDayField() {

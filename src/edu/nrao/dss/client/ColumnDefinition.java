@@ -161,7 +161,7 @@ class ColumnDefinition {
             new ColumnType(PSC_TIME,       "PSC Time",       100, Integer.class,              null),
             new ColumnType(TOTAL_TIME,     "Total Time",     100, Integer.class,              null),
             new ColumnType(SEM_TIME,       "Semester Time",  100, Integer.class,              null),
-            new ColumnType(GRADE,          "Grade",          100, Double.class,               null),
+            new ColumnType(GRADE,          "Grade",          100, GradeField.class,           null),
             new ColumnType(AUTHORIZED,     "Authorized",     100, Boolean.class,              null),
             new ColumnType(ENABLED,        "Enabled",        100, Boolean.class,              null),
             new ColumnType(COMPLETE,       "Complete",       100, Boolean.class,              null),
