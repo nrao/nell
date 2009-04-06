@@ -105,7 +105,25 @@ class Sesshun(models.Model):
         self.max_duration     = fdata.get("req_max", None)
         self.min_duration     = fdata.get("req_min", None)
         self.time_between     = fdata.get("between", None)
-        self.grade            = fdata.get("grade", None)
+
+        # grade - UI deals w/ letters (A,B,C) - DB deals with floats
+        self.grade            = \
+            self.grade_abc_2_float(fdata.get("grade", None))
+
+
+    def grade_abc_2_float(self, abc):
+        grades = {'A' : 4.0, 'B' : 3.0, 'C' : 2.0}
+        return grades.get(abc, None)
+
+    def grade_float_2_abc(self, grade):
+        grades = ['A', 'B', 'C']
+        floats = [4.0, 3.0, 2.0]
+        gradeLetter = 'C'
+        for i in range(len(grades)):
+            if grade >= (floats[i] - 10e-5):
+                gradeLetter = grades[i]
+                break
+        return gradeLetter
 
     def init_from_post(self, fdata):
         self.set_base_fields(fdata)
@@ -196,8 +214,11 @@ class Sesshun(models.Model):
            , "req_max"    : self.max_duration
            , "req_min"    : self.min_duration
            , "between"    : self.time_between
-           , "grade"      : self.grade
              }
+
+        # DB deals with floats, UI presents letters (A,B,C)
+        if self.grade is not None:
+            d.update({"grade" : self.grade_float_2_abc(self.grade)})
 
         if rcvr is not None:
             d.update({"receiver"   : rcvr.abbreviation})
