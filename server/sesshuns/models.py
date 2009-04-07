@@ -179,6 +179,8 @@ class Sesshun(models.Model):
         self.allotment.psc_time          = fdata.get("PSC_time", 0.0)
         self.allotment.total_time        = fdata.get("total_time", 0.0)
         self.allotment.max_semester_time = fdata.get("sem_time", 0.0)
+        self.allotment.save()
+        self.save()
 
         # TBF DO SOMETHING WITH RECEIVERS!
 
@@ -193,10 +195,18 @@ class Sesshun(models.Model):
         v_axis = fdata.get("v_axis", 2.0) #TBF
         h_axis = fdata.get("h_axis", 2.0) #TBF
 
-        self.target_set.get().system     = system
-        self.target_set.get().source     = fdata.get("source", None)
-        self.target_set.get().vertical   = v_axis
-        self.target_set.get().horizontal = h_axis
+        # TBF: why does this notation not actually save off the values?
+        #self.target_set.get().system     = system
+        #self.target_set.get().source     = fdata.get("source", None)
+        #self.target_set.get().vertical   = v_axis
+        #self.target_set.get().horizontal = h_axis
+        #self.target_set.get().save()
+        t = self.target_set.get()
+        t.system     = system
+        t.source     = fdata.get("source", None)
+        t.vertical   = v_axis
+        t.horizontal = h_axis
+        t.save()
 
         self.save()
 
