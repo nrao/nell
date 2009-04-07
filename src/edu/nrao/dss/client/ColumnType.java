@@ -21,7 +21,8 @@ class ColumnType extends SessionColConfig {
         return value;
     }
 
-    public Class getClasz(String id) {
+    @SuppressWarnings("unchecked")
+	public Class getClasz(String id) {
     	return this.clasz;
     }
     
