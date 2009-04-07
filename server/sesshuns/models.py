@@ -66,6 +66,10 @@ class Receiver(models.Model):
     class Meta:
         db_table = "receivers"
 
+    @staticmethod
+    def get_abbreviations():
+        return [r.abbreviation for r in Receiver.objects.all()]
+
 class Parameter(models.Model):
     name = models.CharField(max_length = 64)
     type = models.CharField(max_length = 32)

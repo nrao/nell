@@ -51,7 +51,15 @@ def create_sesshun():
 
 # Testing models
 
+class TestReceiver(NellTestCase):
+
+    def test_get_abbreviations(self):
+        nn = Receiver.get_abbreviations()
+        self.assertTrue(len(nn) > 18)
+        self.assertEquals([n for n in nn if n == 'Ka'], ['Ka'])
+
 class TestSesshun(NellTestCase):
+
     def setUp(self):
         super(TestSesshun, self).setUp()
         self.sesshun = create_sesshun()
