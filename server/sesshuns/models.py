@@ -354,10 +354,11 @@ class Window(models.Model):
             o.delete()
         self.init_from_post(fdata)
         
-    def jsondict(self, generate = False):
+    def jsondict(self, generate = False, now = None):
+        now      = now or datetime.utcnow()
         windowed = first(Session_Type.objects.filter(type = 'windowed'))
         if self.session.session_type == windowed and generate:
-            opportunities = self.gen_opportunities()
+            opportunities = self.gen_opportunities(now)
         else:
             opportunities = self.opportunity_set.all()
             
@@ -371,7 +372,7 @@ class Window(models.Model):
         if w is None:
             return []
 
-        now = datetime.utcnow() if now is None else now
+        now = now or datetime.utcnow()
         
         # Does the window already have one or more(!) sessions?
         # (Note if a session falls in the overlap of two

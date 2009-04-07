@@ -119,7 +119,7 @@ class TestWindow(NellTestCase):
         o.save()
         w = first(Window.objects.filter(id = self.w.id))
 
-        results = w.jsondict()
+        results = w.jsondict(now = start_time)
 
         expected = {'required'     : True
                   , 'id'           : 1
@@ -133,7 +133,7 @@ class TestWindow(NellTestCase):
         s = w.session
         s.session_type = first(Session_Type.objects.filter(type = 'windowed'))
 
-        results = w.jsondict(generate = True)
+        results = w.jsondict(generate = True, now = start_time)
 
         expected = {'required'     : True
                   , 'id'           : 1
@@ -281,7 +281,8 @@ class TestWindowGenView(NellTestCase):
         o.save()
 
     def test_read(self):
-        response = self.client.get('/gen_opportunities')
+        now = datetime(2009, 4, 6, 12)
+        response = self.client.get('/gen_opportunities', {"now" : now})
         self.failUnlessEqual(response.status_code, 200)
         expected = json.dumps({"windows": [{
              "required": True
