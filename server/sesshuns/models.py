@@ -184,10 +184,18 @@ class Sesshun(models.Model):
 
         # TBF DO SOMETHING WITH RECEIVERS!
 
-        self.status_set.get().enabled    = fdata.get("enabled", True)
-        self.status_set.get().authorized = fdata.get("authorized", True)
-        self.status_set.get().complete   = fdata.get("complete", True)
-        self.status_set.get().backup     = fdata.get("backup", True)
+        # TBF: why does this notation not actually save off the values?
+        #self.status_set.get().enabled    = fdata.get("enabled", True)
+        #self.status_set.get().authorized = fdata.get("authorized", True)
+        #self.status_set.get().complete   = fdata.get("complete", True)
+        #self.status_set.get().backup     = fdata.get("backup", True)
+        status = self.status_set.get()
+        status.enabled    = fdata.get("enabled", True)
+        status.authorized = fdata.get("authorized", True)
+        status.complete   = fdata.get("complete", True)
+        status.backup     = fdata.get("backup", True)
+        status.save()
+        self.save()
 
         system = first(System.objects.filter(name = "J2000").all()
                      , System.objects.all()[0])
