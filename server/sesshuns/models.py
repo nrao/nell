@@ -179,13 +179,23 @@ class Sesshun(models.Model):
         self.allotment.psc_time          = fdata.get("PSC_time", 0.0)
         self.allotment.total_time        = fdata.get("total_time", 0.0)
         self.allotment.max_semester_time = fdata.get("sem_time", 0.0)
+        self.allotment.save()
+        self.save()
 
         # TBF DO SOMETHING WITH RECEIVERS!
 
-        self.status_set.get().enabled    = fdata.get("enabled", True)
-        self.status_set.get().authorized = fdata.get("authorized", True)
-        self.status_set.get().complete   = fdata.get("complete", True)
-        self.status_set.get().backup     = fdata.get("backup", True)
+        # TBF: why does this notation not actually save off the values?
+        #self.status_set.get().enabled    = fdata.get("enabled", True)
+        #self.status_set.get().authorized = fdata.get("authorized", True)
+        #self.status_set.get().complete   = fdata.get("complete", True)
+        #self.status_set.get().backup     = fdata.get("backup", True)
+        status = self.status_set.get()
+        status.enabled    = fdata.get("enabled", True)
+        status.authorized = fdata.get("authorized", True)
+        status.complete   = fdata.get("complete", True)
+        status.backup     = fdata.get("backup", True)
+        status.save()
+        self.save()
 
         system = first(System.objects.filter(name = "J2000").all()
                      , System.objects.all()[0])
@@ -193,10 +203,18 @@ class Sesshun(models.Model):
         v_axis = fdata.get("v_axis", 2.0) #TBF
         h_axis = fdata.get("h_axis", 2.0) #TBF
 
-        self.target_set.get().system     = system
-        self.target_set.get().source     = fdata.get("source", None)
-        self.target_set.get().vertical   = v_axis
-        self.target_set.get().horizontal = h_axis
+        # TBF: why does this notation not actually save off the values?
+        #self.target_set.get().system     = system
+        #self.target_set.get().source     = fdata.get("source", None)
+        #self.target_set.get().vertical   = v_axis
+        #self.target_set.get().horizontal = h_axis
+        #self.target_set.get().save()
+        t = self.target_set.get()
+        t.system     = system
+        t.source     = fdata.get("source", None)
+        t.vertical   = v_axis
+        t.horizontal = h_axis
+        t.save()
 
         self.save()
 

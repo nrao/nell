@@ -21,6 +21,10 @@ fdata = {"total_time": "3"
        , "freq": "6"
        , "type": "open"
        , "source" : "blah"
+       , "enabled" : False
+       , "authorized" : False
+       , "complete" : False
+       , "backup" : False
          }
 
 def create_sesshun():
@@ -63,6 +67,41 @@ class TestSesshun(NellTestCase):
         
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.target_set.get().source, fdata["source"])
+        self.assertEqual(s.status_set.get().enabled, fdata["enabled"])
+
+        # does this still work if you requery the DB?
+        ss = Sesshun.objects.all()
+        self.assertEqual(2, len(ss))
+        s = ss[1]
+        # notice the change in type when we compare this way!
+        self.assertEqual(s.allotment.total_time, float(fdata["total_time"]))
+        self.assertEqual(s.target_set.get().source, fdata["source"])
+        self.assertEqual(s.status_set.get().enabled, fdata["enabled"])
+
+    def test_update_from_post(self):
+        ss = Sesshun.objects.all()
+        s = Sesshun()
+        s.init_from_post(fdata)
+        
+        self.assertEqual(s.frequency, fdata["freq"])
+        self.assertEqual(s.allotment.total_time, fdata["total_time"])
+        self.assertEqual(s.target_set.get().source, fdata["source"])
+        self.assertEqual(s.status_set.get().enabled, fdata["enabled"])
+
+        # change a number of things and see if it catches it
+        fdata["freq"] = "10"
+        fdata["source"] = "new source"
+        fdata["total_time"] = "99"
+        fdata["enabled"] = True 
+        s.update_from_post(fdata)
+        
+        # now get this session from the DB
+        ss = Sesshun.objects.all()
+        s = ss[1]
+        self.assertEqual(s.frequency, float(fdata["freq"]))
+        self.assertEqual(s.allotment.total_time, float(fdata["total_time"]))
+        self.assertEqual(s.target_set.get().source, fdata["source"])
+        self.assertEqual(s.status_set.get().enabled, fdata["enabled"])
 
     def test_grade_abc_2_float(self):
         s = Sesshun()
