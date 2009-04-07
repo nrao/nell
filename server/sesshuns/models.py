@@ -4,6 +4,8 @@ from django.http import QueryDict
 
 from server.utilities import OpportunityGenerator, TimeAgent
 
+import sys
+
 def first(results, default = None):
     return default if len(results) == 0 else results[0]
 
@@ -106,7 +108,8 @@ class Sesshun(models.Model):
         self.project          = p
         self.session_type     = st
         self.observing_type   = ot
-        self.original_id      = fdata.get("orig_ID", None)
+        self.original_id      = \
+            self.get_field(fdata, "orig_ID", None, self.cast_int)
         self.name             = fdata.get("name", None)
         self.frequency        = fdata.get("freq", None)
         self.max_duration     = fdata.get("req_max", 8.0)
@@ -117,6 +120,14 @@ class Sesshun(models.Model):
         self.grade            = \
             self.grade_abc_2_float(fdata.get("grade", None))
 
+    def cast_int(self, strValue):
+        "Handles casting of strings where int is displayed as float. ex: 1.0"
+        return int(float(strValue))
+
+    def get_field(self, fdata, key, defaultValue, cast):
+        "Some values from the JSON dict we know we need to type cast"
+        value = fdata.get(key, defaultValue)
+        return value if value is None else cast(value) 
 
     def grade_abc_2_float(self, abc):
         grades = {'A' : 4.0, 'B' : 3.0, 'C' : 2.0}
@@ -151,10 +162,10 @@ class Sesshun(models.Model):
         rg.save()
         
         status = Status(session    = self
-                      , enabled    = fdata.get("enabled", True)
-                      , authorized = fdata.get("authorized", True)
-                      , complete   = fdata.get("complete", True)
-                      , backup     = fdata.get("backup", True)
+                 , enabled    = self.get_field(fdata, "enabled", True, bool)
+                 , authorized = self.get_field(fdata, "authorized", True, bool)
+                 , complete   = self.get_field(fdata, "complete", True, bool) 
+                 , backup     = self.get_field(fdata, "backup", True, bool) 
                         )
         status.save()
 
@@ -175,7 +186,8 @@ class Sesshun(models.Model):
 
     def update_from_post(self, fdata):
         self.set_base_fields(fdata)
-        
+        self.save()
+
         self.allotment.psc_time          = fdata.get("PSC_time", 0.0)
         self.allotment.total_time        = fdata.get("total_time", 0.0)
         self.allotment.max_semester_time = fdata.get("sem_time", 0.0)
@@ -190,10 +202,10 @@ class Sesshun(models.Model):
         #self.status_set.get().complete   = fdata.get("complete", True)
         #self.status_set.get().backup     = fdata.get("backup", True)
         status = self.status_set.get()
-        status.enabled    = fdata.get("enabled", True)
-        status.authorized = fdata.get("authorized", True)
-        status.complete   = fdata.get("complete", True)
-        status.backup     = fdata.get("backup", True)
+        status.enabled    = self.get_field(fdata, "enabled", True, bool) 
+        status.authorized = self.get_field(fdata, "authorized", True, bool)
+        status.complete   = self.get_field(fdata, "complete", True, bool) 
+        status.backup     = self.get_field(fdata, "backup", True, bool) 
         status.save()
         self.save()
 

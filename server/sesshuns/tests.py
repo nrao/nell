@@ -103,6 +103,34 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.target_set.get().source, fdata["source"])
         self.assertEqual(s.status_set.get().enabled, fdata["enabled"])
 
+    def test_update_from_post2(self):
+        ss = Sesshun.objects.all()
+        s = Sesshun()
+        s.init_from_post(fdata)
+        
+        self.assertEqual(s.frequency, fdata["freq"])
+        self.assertEqual(s.allotment.total_time, fdata["total_time"])
+        self.assertEqual(s.target_set.get().source, fdata["source"])
+        self.assertEqual(s.status_set.get().enabled, fdata["enabled"])
+        self.assertEqual(s.original_id, int(fdata["orig_ID"]))
+
+        # check to see if we can handle odd types 
+        fdata["freq"] = "10.5"
+        fdata["source"] = None 
+        fdata["total_time"] = "99.9"
+        fdata["orig_ID"] = "0.0"
+        fdata["enabled"] = "True" 
+        s.update_from_post(fdata)
+        
+        # now get this session from the DB
+        ss = Sesshun.objects.all()
+        s = ss[1]
+        self.assertEqual(s.frequency, float(fdata["freq"]))
+        self.assertEqual(s.allotment.total_time, float(fdata["total_time"]))
+        self.assertEqual(s.target_set.get().source, fdata["source"])
+        self.assertEqual(s.status_set.get().enabled, True) # "True" -> True
+        self.assertEqual(s.original_id, 0) #fdata["orig_ID"]) -- "0.0" -> Int
+
     def test_grade_abc_2_float(self):
         s = Sesshun()
         values = [('A',4.0),('B',3.0),('C',2.0)]
