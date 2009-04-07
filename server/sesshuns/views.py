@@ -2,6 +2,7 @@ from django.http              import HttpResponse
 from django_restapi.resource  import Resource
 from server.sesshuns.models   import first, Project, Sesshun, Window
 
+from datetime import datetime
 import simplejson as json
 
 class NellResource(Resource):
@@ -84,14 +85,21 @@ class WindowResource(NellResource):
         
         return HttpResponse(json.dumps({"success": "ok"}))
 
-def gen_opportunities(self, *args, **kws):
+def gen_opportunities(request, *args, **kws):
+    now = request.GET.get("now", None)
+    if now is not None:
+        d, t      = now.split(' ')
+        y, m, d   = map(int, d.split('-'))
+        h, mm, ss = map(int, map(float, t.split(':')))
+        now = datetime(y, m, d, h, mm, ss)
     if len(args) == 0:
         windows = Window.objects.all()
-        return HttpResponse(json.dumps({"windows":[w.jsondict(generate = True) for w in windows]})
+        return HttpResponse(json.dumps(
+                {"windows":[w.jsondict(generate = True, now = now) for w in windows]})
                           , mimetype = "text/plain")
     else:
         id    = int(args[0])
         w     = first(Window.objects.filter(id = id))
-        return HttpResponse(json.dumps(w.jsondict(generate = True))
+        return HttpResponse(json.dumps(w.jsondict(generate = True, now = now))
                           , mimetype = "text/plain")
 
