@@ -4,6 +4,7 @@ import simplejson as json
 
 from sesshuns.models                       import *
 from server.test_utils.NellTestCase        import NellTestCase
+from server.utilities.Generate             import Generate
 from server.utilities.OpportunityGenerator import OpportunityGenerator, GenOpportunity
 
 # Test field data
@@ -410,6 +411,38 @@ class TestWindowGenView(NellTestCase):
         self.assertTrue(expected, response.content)
 
 # Testing Utilities
+
+class TestGenerate(NellTestCase):
+
+    def test_create(self):
+        #                 open  wind  fixd
+        ratio          = (0.45, 0.15, 0.4)
+        total_sem_time = 2920 # hours
+        g = Generate(2009, ratio, total_sem_time)
+        self.assertEqual(g.open_time, ratio[0] * total_sem_time)
+        
+    def test_generate(self):
+        #                 open  wind  fixd
+        ratio          = (0.45, 0.15, 0.4)
+        total_sem_time = 2920 # hours
+        g  = Generate(2009, ratio, total_sem_time)
+        ss = g.generate()
+        self.assertTrue(len(ss) > 0)
+        for s in ss:
+            print s.name
+            w = first(s.window_set.all())
+            for o in w.opportunity_set.all():
+                print "\t", o
+
+    def test_generate_session(self):
+        #                 open  wind  fixd
+        ratio          = (0.45, 0.15, 0.4)
+        total_sem_time = 2920 # hours
+        g = Generate(2009, ratio, total_sem_time)
+        fixed_type = first(Session_Type.objects.filter(type = "fixed"))
+        s = g.generate_session(1, "Fixed", fixed_type)
+        self.assertNotEqual(s, None)
+        self.assertEqual(s.name, "Fixed 1")
 
 class TestOpportunityGenerator(NellTestCase):
 

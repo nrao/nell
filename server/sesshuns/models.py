@@ -1,6 +1,7 @@
-from datetime              import datetime
+from datetime              import datetime, timedelta
 from django.db             import models
 from django.http import QueryDict
+from math                  import asin, acos, cos, sin
 
 from server.utilities import OpportunityGenerator, TimeAgent
 
@@ -25,6 +26,7 @@ class Allotment(models.Model):
     psc_time          = models.FloatField()
     total_time        = models.FloatField()
     max_semester_time = models.FloatField()
+    grade             = models.FloatField()
 
     class Meta:
         db_table = "allotment"
@@ -35,7 +37,7 @@ class Project(models.Model):
     #allotment    = models.ForeignKey(Allotment)
     allotments   = models.ManyToManyField(Allotment)
     pcode        = models.CharField(max_length = 32)
-    name         = models.CharField(max_length = 60)
+    name         = models.CharField(max_length = 150)
     thesis       = models.BooleanField()
     complete     = models.BooleanField()
     ignore_grade = models.BooleanField()
@@ -200,11 +202,6 @@ class Sesshun(models.Model):
 
         # TBF DO SOMETHING WITH RECEIVERS!
 
-        # TBF: why does this notation not actually save off the values?
-        #self.status_set.get().enabled    = fdata.get("enabled", True)
-        #self.status_set.get().authorized = fdata.get("authorized", True)
-        #self.status_set.get().complete   = fdata.get("complete", True)
-        #self.status_set.get().backup     = fdata.get("backup", True)
         status = self.status_set.get()
         status.enabled    = self.get_field(fdata, "enabled", True, bool) 
         status.authorized = self.get_field(fdata, "authorized", True, bool)
@@ -219,12 +216,6 @@ class Sesshun(models.Model):
         v_axis = fdata.get("v_axis", 2.0) #TBF
         h_axis = fdata.get("h_axis", 2.0) #TBF
 
-        # TBF: why does this notation not actually save off the values?
-        #self.target_set.get().system     = system
-        #self.target_set.get().source     = fdata.get("source", None)
-        #self.target_set.get().vertical   = v_axis
-        #self.target_set.get().horizontal = h_axis
-        #self.target_set.get().save()
         t = self.target_set.get()
         t.system     = system
         t.source     = fdata.get("source", None)
@@ -240,6 +231,13 @@ class Sesshun(models.Model):
             return None, None
         return target.vertical, target.horizontal
 
+    def set_dec(self, new_dec):
+        target = first(self.target_set.all())
+        if target is None:
+            return
+        target.horizontal = new_dec
+        target.save()
+        
     def get_ignore_ha(self):
         # TBF:  Need specification of ignore_ha
         return False
@@ -309,6 +307,19 @@ class Sesshun(models.Model):
             return 12.0
         ha = TimeAgent.rad2hr(acos(cosha))
         return abs(ha)
+
+    def zenithAngle(self, dt):
+        "Returns zenith angle at the given time in degrees."
+        ra, dec = self.get_ra_dec()
+        lat = TimeAgent.GbtLatitudeInRadians()
+        dec = TimeAgent.deg2rad(dec)
+        ra  = TimeAgent.hr2rad(ra)
+        lst = TimeAgent.hr2rad(TimeAgent.Absolute2RelativeLST(dt))
+        ha  = lst - ra
+            
+        # Equation (5) in DS Project Note 5.2
+        radians = acos(sin(lat) * sin(dec) + cos(lat) * cos(dec) * cos(ha))
+        return TimeAgent.rad2deg(radians)
 
     class Meta:
         db_table = "sessions"
@@ -448,6 +459,14 @@ class Opportunity(models.Model):
               , "duration"   : self.duration
                 }
     
+    def __repr__(self):
+        return "%s - %s" % (self.start_time
+                          , self.start_time + timedelta(hours = self.duration))
+
+    def __str__(self):
+        return "%s - %s" % (self.start_time
+                          , self.start_time + timedelta(hours = self.duration))
+
     class Meta:
         db_table = "opportunities"
 
