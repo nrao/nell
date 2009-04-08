@@ -11,7 +11,7 @@ from server.utilities.OpportunityGenerator import OpportunityGenerator, GenOppor
 fdata = {"total_time": "3"
        , "req_max": "6"
        , "name": "Low Frequency With No RFI"
-       , "grade": "4"
+       , "grade": "A"
        , "science": "pulsar"
        , "orig_ID": "0"
        , "between": "0"
@@ -36,6 +36,7 @@ def create_sesshun():
     allot = Allotment(psc_time          = fdata.get("PSC_time", 0.0)
                     , total_time        = fdata.get("total_time", 0.0)
                     , max_semester_time = fdata.get("sem_time", 0.0)
+                    , grade             = 4.0
                       )
     allot.save()
     s.allotment        = allot
@@ -428,11 +429,13 @@ class TestGenerate(NellTestCase):
         g  = Generate(2009, ratio, total_sem_time)
         ss = g.generate()
         self.assertTrue(len(ss) > 0)
+        """
         for s in ss:
             print s.name
             w = first(s.window_set.all())
             for o in w.opportunity_set.all():
                 print "\t", o
+        """
 
     def test_generate_session(self):
         #                 open  wind  fixd
