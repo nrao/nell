@@ -12,11 +12,17 @@ def first(results, default = None):
 class Semester(models.Model):
     semester = models.CharField(max_length = 64)
 
+    def __unicode__(self):
+        return self.semester
+
     class Meta:
         db_table = "semesters"
 
 class Project_Type(models.Model):
     type = models.CharField(max_length = 64)
+
+    def __unicode__(self):
+        return self.type
 
     class Meta:
         db_table = "project_types"
@@ -25,6 +31,11 @@ class Allotment(models.Model):
     psc_time          = models.FloatField()
     total_time        = models.FloatField()
     max_semester_time = models.FloatField()
+
+    def __unicode__(self):
+        return "Total: %5.2f, PSC: %5.2f, Max: %5.2f" % (self.total_time
+                                      , self.psc_time
+                                      , self.max_semester_time) 
 
     class Meta:
         db_table = "allotment"
@@ -42,17 +53,26 @@ class Project(models.Model):
     start_date   = models.DateTimeField(null = True)
     end_date     = models.DateTimeField(null = True)
 
+    def __unicode__(self):
+        return "%s, %s, %s" % (self.name, self.semester, self.pcode)
+
     class Meta:
         db_table = "projects"
 
 class Session_Type(models.Model):
     type = models.CharField(max_length = 64)
 
+    def __unicode__(self):
+        return self.type
+
     class Meta:
         db_table = "session_types"
 
 class Observing_Type(models.Model):
     type = models.CharField(max_length = 64)
+
+    def __unicode__(self):
+        return self.type
 
     class Meta:
         db_table = "observing_types"
@@ -62,6 +82,9 @@ class Receiver(models.Model):
     abbreviation = models.CharField(max_length = 32)
     freq_low     = models.FloatField()
     freq_hi      = models.FloatField()
+
+    def __unicode__(self):
+        return self.name
 
     class Meta:
         db_table = "receivers"
@@ -73,6 +96,9 @@ class Receiver(models.Model):
 class Parameter(models.Model):
     name = models.CharField(max_length = 64)
     type = models.CharField(max_length = 32)
+
+    def __unicode__(self):
+        return "%s : %s" % (self.name, self.type)
 
     class Meta:
         db_table = "parameters"
@@ -93,6 +119,11 @@ class Sesshun(models.Model):
     grade              = models.FloatField(null = True)
 
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
+
+    def __unicode__(self):
+        return "%s : %5.2f GHz, %5.2f Hrs" % (self.name
+                                            , self.frequency
+                                            , self.allotment.total_time)
 
     def delete(self):
         self.allotment.delete()
@@ -280,6 +311,13 @@ class Sesshun(models.Model):
                  , "complete"   : status.complete
                  , "backup"     : status.backup
                    }
+            d.update(s_d)
+        #else:           
+        #    s_d = {"enabled"    : False
+        #         , "authorized" : False
+        #         , "complete"   : False
+        #         , "backup"     : False
+        #           }
 
         if target is not None:
             d.update({"source" : target.source})
