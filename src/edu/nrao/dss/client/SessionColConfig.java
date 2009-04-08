@@ -174,6 +174,9 @@ class SessionColConfig extends ColumnConfig {
 		setEditor(new CellEditor(new CheckBox()) {
 			@Override
 			public Object preProcessValue(Object value) {
+				if (value == null) {
+					return null;
+				}
 				return value.equals("true");
 			}
 
