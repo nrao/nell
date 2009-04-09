@@ -1,6 +1,7 @@
-from datetime              import datetime
+from datetime              import datetime, timedelta
 from django.db             import models
 from django.http import QueryDict
+from math                  import asin, acos, cos, sin
 
 from server.utilities import OpportunityGenerator, TimeAgent
 
@@ -31,6 +32,7 @@ class Allotment(models.Model):
     psc_time          = models.FloatField()
     total_time        = models.FloatField()
     max_semester_time = models.FloatField()
+    grade             = models.FloatField()
 
     def __unicode__(self):
         return "Total: %5.2f, PSC: %5.2f, Max: %5.2f" % (self.total_time
@@ -46,7 +48,7 @@ class Project(models.Model):
     #allotment    = models.ForeignKey(Allotment)
     allotments   = models.ManyToManyField(Allotment)
     pcode        = models.CharField(max_length = 32)
-    name         = models.CharField(max_length = 60)
+    name         = models.CharField(max_length = 150)
     thesis       = models.BooleanField()
     complete     = models.BooleanField()
     ignore_grade = models.BooleanField()
@@ -103,12 +105,22 @@ class Parameter(models.Model):
     class Meta:
         db_table = "parameters"
 
+class Status(models.Model):
+    enabled    = models.BooleanField()
+    authorized = models.BooleanField()
+    complete   = models.BooleanField()
+    backup     = models.BooleanField()
+
+    class Meta:
+        db_table = "status"
+
 class Sesshun(models.Model):
     
     project            = models.ForeignKey(Project)
     session_type       = models.ForeignKey(Session_Type)
     observing_type     = models.ForeignKey(Observing_Type)
     allotment          = models.ForeignKey(Allotment)
+    status             = models.ForeignKey(Status)
     original_id        = models.IntegerField(null = True)
     name               = models.CharField(null = True
                                         , max_length = 64)
@@ -116,7 +128,6 @@ class Sesshun(models.Model):
     max_duration       = models.FloatField(null = True)
     min_duration       = models.FloatField(null = True)
     time_between       = models.FloatField(null = True)
-    grade              = models.FloatField(null = True)
 
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
@@ -151,10 +162,6 @@ class Sesshun(models.Model):
         self.min_duration     = fdata.get("req_min", 2.0)
         self.time_between     = fdata.get("between", None)
 
-        # grade - UI deals w/ letters (A,B,C) - DB deals with floats
-        self.grade            = \
-            self.grade_abc_2_float(fdata.get("grade", None))
-
     def cast_int(self, strValue):
         "Handles casting of strings where int is displayed as float. ex: 1.0"
         return int(float(strValue))
@@ -180,12 +187,24 @@ class Sesshun(models.Model):
 
     def init_from_post(self, fdata):
         self.set_base_fields(fdata)
+        # grade - UI deals w/ letters (A,B,C) - DB deals with floats
+        grade = self.grade_abc_2_float(fdata.get("grade", 'A'))
         allot = Allotment(psc_time          = fdata.get("PSC_time", 0.0)
                         , total_time        = fdata.get("total_time", 0.0)
                         , max_semester_time = fdata.get("sem_time", 0.0)
+                        , grade             = grade
                           )
         allot.save()
         self.allotment        = allot
+
+        status = Status(
+                   enabled    = self.get_field(fdata, "enabled", True, bool)
+                 , authorized = self.get_field(fdata, "authorized", True, bool)
+                 , complete   = self.get_field(fdata, "complete", True, bool) 
+                 , backup     = self.get_field(fdata, "backup", True, bool) 
+                        )
+        status.save()
+        self.status = status
         self.save()
         
         frcvr  = fdata.get("receiver", "Rcvr1_2")
@@ -196,14 +215,6 @@ class Sesshun(models.Model):
         rg.receiver_group_receiver_set.add(rcvr)
         rg.save()
         
-        status = Status(session    = self
-                 , enabled    = self.get_field(fdata, "enabled", True, bool)
-                 , authorized = self.get_field(fdata, "authorized", True, bool)
-                 , complete   = self.get_field(fdata, "complete", True, bool) 
-                 , backup     = self.get_field(fdata, "backup", True, bool) 
-                        )
-        status.save()
-
         system = first(System.objects.filter(name = "J2000").all()
                      , System.objects.all()[0])
 
@@ -223,25 +234,21 @@ class Sesshun(models.Model):
         self.set_base_fields(fdata)
         self.save()
 
+        grade = self.grade_abc_2_float(fdata.get("grade", 'A'))
         self.allotment.psc_time          = fdata.get("PSC_time", 0.0)
         self.allotment.total_time        = fdata.get("total_time", 0.0)
         self.allotment.max_semester_time = fdata.get("sem_time", 0.0)
+        self.allotment.grade             = grade
         self.allotment.save()
         self.save()
 
         # TBF DO SOMETHING WITH RECEIVERS!
 
-        # TBF: why does this notation not actually save off the values?
-        #self.status_set.get().enabled    = fdata.get("enabled", True)
-        #self.status_set.get().authorized = fdata.get("authorized", True)
-        #self.status_set.get().complete   = fdata.get("complete", True)
-        #self.status_set.get().backup     = fdata.get("backup", True)
-        status = self.status_set.get()
-        status.enabled    = self.get_field(fdata, "enabled", True, bool) 
-        status.authorized = self.get_field(fdata, "authorized", True, bool)
-        status.complete   = self.get_field(fdata, "complete", True, bool) 
-        status.backup     = self.get_field(fdata, "backup", True, bool) 
-        status.save()
+        self.status.enabled    = self.get_field(fdata, "enabled", True, bool) 
+        self.status.authorized = self.get_field(fdata, "authorized", True, bool)
+        self.status.complete   = self.get_field(fdata, "complete", True, bool) 
+        self.status.backup     = self.get_field(fdata, "backup", True, bool) 
+        self.status.save()
         self.save()
 
         system = first(System.objects.filter(name = "J2000").all()
@@ -250,12 +257,6 @@ class Sesshun(models.Model):
         v_axis = fdata.get("v_axis", 2.0) #TBF
         h_axis = fdata.get("h_axis", 2.0) #TBF
 
-        # TBF: why does this notation not actually save off the values?
-        #self.target_set.get().system     = system
-        #self.target_set.get().source     = fdata.get("source", None)
-        #self.target_set.get().vertical   = v_axis
-        #self.target_set.get().horizontal = h_axis
-        #self.target_set.get().save()
         t = self.target_set.get()
         t.system     = system
         t.source     = fdata.get("source", None)
@@ -271,6 +272,13 @@ class Sesshun(models.Model):
             return None, None
         return target.vertical, target.horizontal
 
+    def set_dec(self, new_dec):
+        target = first(self.target_set.all())
+        if target is None:
+            return
+        target.horizontal = new_dec
+        target.save()
+        
     def get_ignore_ha(self):
         # TBF:  Need specification of ignore_ha
         return False
@@ -279,7 +287,6 @@ class Sesshun(models.Model):
         return first(self.receiver_group_set.get().receivers.all())
         
     def jsondict(self):
-        status = first(self.status_set.all())
         target = first(self.target_set.all())
         rcvr   = self.get_receiver_req()
 
@@ -290,35 +297,22 @@ class Sesshun(models.Model):
            , "total_time" : self.allotment.total_time
            , "PSC_time"   : self.allotment.psc_time
            , "sem_time"   : self.allotment.max_semester_time
+           , "grade"      : self.grade_float_2_abc(self.allotment.grade)
            , "orig_ID"    : self.original_id
            , "name"       : self.name
            , "freq"       : self.frequency
            , "req_max"    : self.max_duration
            , "req_min"    : self.min_duration
            , "between"    : self.time_between
-             }
-
-        # DB deals with floats, UI presents letters (A,B,C)
-        if self.grade is not None:
-            d.update({"grade" : self.grade_float_2_abc(self.grade)})
+           , "enabled"    : self.status.enabled
+           , "authorized" : self.status.authorized
+           , "complete"   : self.status.complete
+           , "backup"     : self.status.backup
+               }
 
         if rcvr is not None:
             d.update({"receiver"   : rcvr.abbreviation})
             
-        if status is not None:
-            s_d = {"enabled"    : status.enabled
-                 , "authorized" : status.authorized
-                 , "complete"   : status.complete
-                 , "backup"     : status.backup
-                   }
-            d.update(s_d)
-        #else:           
-        #    s_d = {"enabled"    : False
-        #         , "authorized" : False
-        #         , "complete"   : False
-        #         , "backup"     : False
-        #           }
-
         if target is not None:
             d.update({"source" : target.source})
 
@@ -347,6 +341,19 @@ class Sesshun(models.Model):
             return 12.0
         ha = TimeAgent.rad2hr(acos(cosha))
         return abs(ha)
+
+    def zenithAngle(self, dt):
+        "Returns zenith angle at the given time in degrees."
+        ra, dec = self.get_ra_dec()
+        lat = TimeAgent.GbtLatitudeInRadians()
+        dec = TimeAgent.deg2rad(dec)
+        ra  = TimeAgent.hr2rad(ra)
+        lst = TimeAgent.hr2rad(TimeAgent.Absolute2RelativeLST(dt))
+        ha  = lst - ra
+            
+        # Equation (5) in DS Project Note 5.2
+        radians = acos(sin(lat) * sin(dec) + cos(lat) * cos(dec) * cos(ha))
+        return TimeAgent.rad2deg(radians)
 
     class Meta:
         db_table = "sessions"
@@ -388,16 +395,6 @@ class Observing_Parameter(models.Model):
     class Meta:
         db_table = "observing_parameters"
         unique_together = ("session", "parameter")
-
-class Status(models.Model):
-    session    = models.ForeignKey(Sesshun)
-    enabled    = models.BooleanField()
-    authorized = models.BooleanField()
-    complete   = models.BooleanField()
-    backup     = models.BooleanField()
-
-    class Meta:
-        db_table = "status"
 
 class Window(models.Model):
     session  = models.ForeignKey(Sesshun)
@@ -486,6 +483,14 @@ class Opportunity(models.Model):
               , "duration"   : self.duration
                 }
     
+    def __repr__(self):
+        return "%s - %s" % (self.start_time
+                          , self.start_time + timedelta(hours = self.duration))
+
+    def __str__(self):
+        return "%s - %s" % (self.start_time
+                          , self.start_time + timedelta(hours = self.duration))
+
     class Meta:
         db_table = "opportunities"
 

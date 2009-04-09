@@ -4,13 +4,14 @@ import simplejson as json
 
 from sesshuns.models                       import *
 from server.test_utils.NellTestCase        import NellTestCase
+from server.utilities.Generate             import Generate
 from server.utilities.OpportunityGenerator import OpportunityGenerator, GenOpportunity
 
 # Test field data
 fdata = {"total_time": "3"
        , "req_max": "6"
        , "name": "Low Frequency With No RFI"
-       , "grade": "4"
+       , "grade": "A"
        , "science": "pulsar"
        , "orig_ID": "0"
        , "between": "0"
@@ -35,9 +36,18 @@ def create_sesshun():
     allot = Allotment(psc_time          = fdata.get("PSC_time", 0.0)
                     , total_time        = fdata.get("total_time", 0.0)
                     , max_semester_time = fdata.get("sem_time", 0.0)
+                    , grade             = 4.0
                       )
     allot.save()
     s.allotment        = allot
+    status = Status(
+               enabled    = True
+             , authorized = True
+             , complete   = False
+             , backup     = False
+                        )
+    status.save()
+    s.status = status
     s.save()
 
     t = Target(session    = s
@@ -75,7 +85,7 @@ class TestSesshun(NellTestCase):
         
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.target_set.get().source, fdata["source"])
-        self.assertEqual(s.status_set.get().enabled, fdata["enabled"])
+        self.assertEqual(s.status.enabled, fdata["enabled"])
 
         # does this still work if you requery the DB?
         ss = Sesshun.objects.all()
@@ -84,7 +94,7 @@ class TestSesshun(NellTestCase):
         # notice the change in type when we compare this way!
         self.assertEqual(s.allotment.total_time, float(fdata["total_time"]))
         self.assertEqual(s.target_set.get().source, fdata["source"])
-        self.assertEqual(s.status_set.get().enabled, fdata["enabled"])
+        self.assertEqual(s.status.enabled, fdata["enabled"])
 
     def test_update_from_post(self):
         ss = Sesshun.objects.all()
@@ -94,7 +104,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.frequency, fdata["freq"])
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.target_set.get().source, fdata["source"])
-        self.assertEqual(s.status_set.get().enabled, fdata["enabled"])
+        self.assertEqual(s.status.enabled, fdata["enabled"])
 
         # change a number of things and see if it catches it
         fdata["freq"] = "10"
@@ -109,7 +119,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.frequency, float(fdata["freq"]))
         self.assertEqual(s.allotment.total_time, float(fdata["total_time"]))
         self.assertEqual(s.target_set.get().source, fdata["source"])
-        self.assertEqual(s.status_set.get().enabled, fdata["enabled"])
+        self.assertEqual(s.status.enabled, fdata["enabled"])
 
     def test_update_from_post2(self):
         ss = Sesshun.objects.all()
@@ -119,7 +129,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.frequency, fdata["freq"])
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.target_set.get().source, fdata["source"])
-        self.assertEqual(s.status_set.get().enabled, fdata["enabled"])
+        self.assertEqual(s.status.enabled, fdata["enabled"])
         self.assertEqual(s.original_id, int(fdata["orig_ID"]))
 
         # check to see if we can handle odd types 
@@ -136,7 +146,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.frequency, float(fdata["freq"]))
         self.assertEqual(s.allotment.total_time, float(fdata["total_time"]))
         self.assertEqual(s.target_set.get().source, fdata["source"])
-        self.assertEqual(s.status_set.get().enabled, True) # "True" -> True
+        self.assertEqual(s.status.enabled, True) # "True" -> True
         self.assertEqual(s.original_id, 0) #fdata["orig_ID"]) -- "0.0" -> Int
 
     def test_grade_abc_2_float(self):
@@ -277,22 +287,17 @@ class TestWindowResource(NellTestCase):
                  }
         response = self.client.post('/windows', fdata)
 
-        expected = json.dumps({"required": False
-                             , "id": 1
-                             , "opportunities": [{"duration": 1.0
-                                                , "start_time": "2009-04-01 12:00:00"
-                                                , "id": 1}
-                                               , {"duration": 2.0
-                                                , "start_time": "2009-04-02 12:00:00"
-                                                , "id": 2}
-                                               , {"duration": 3.0
-                                                , "start_time": "2009-04-03 12:00:00"
-                                                , "id": 3}
-                                               , {"duration": 4.0
-                                                , "start_time": "2009-04-04 12:00:00"
-                                                , "id": 4}]})
+        expected = ["2009-04-01 12:00:00"
+                  , "2009-04-02 12:00:00"
+                  , "2009-04-03 12:00:00"
+                  , "2009-04-04 12:00:00"
+                    ]
+        
         self.failUnlessEqual(response.status_code, 200)
-        self.assertEqual(expected, response.content)
+        r_json = json.loads(response.content)
+        results = [r["start_time"] for r in r_json["opportunities"]]
+        for e in expected:
+            self.assertTrue(e in results)
 
     def test_read(self):
         response = self.client.get('/windows')
@@ -315,8 +320,8 @@ class TestWindowResource(NellTestCase):
 
         self.failUnlessEqual(response.status_code, 200)
 
-        expected = first(w.opportunity_set.all()).start_time
-        self.assertEqual(expected, datetime(2009, 4, 10, 12))
+        expected = [o.start_time for o in w.opportunity_set.all()]
+        self.assertTrue(datetime(2009, 4, 10, 12) in expected)
 
 
     def test_delete(self):
@@ -410,6 +415,40 @@ class TestWindowGenView(NellTestCase):
         self.assertTrue(expected, response.content)
 
 # Testing Utilities
+
+class TestGenerate(NellTestCase):
+
+    def test_create(self):
+        #                 open  wind  fixd
+        ratio          = (0.45, 0.15, 0.4)
+        total_sem_time = 2920 # hours
+        g = Generate(2009, ratio, total_sem_time)
+        self.assertEqual(g.open_time, ratio[0] * total_sem_time)
+        
+    def test_generate(self):
+        #                 open  wind  fixd
+        ratio          = (0.45, 0.15, 0.4)
+        total_sem_time = 2920 # hours
+        g  = Generate(2009, ratio, total_sem_time)
+        ss = g.generate()
+        self.assertTrue(len(ss) > 0)
+        """
+        for s in ss:
+            print s.name
+            w = first(s.window_set.all())
+            for o in w.opportunity_set.all():
+                print "\t", o
+        """
+
+    def test_generate_session(self):
+        #                 open  wind  fixd
+        ratio          = (0.45, 0.15, 0.4)
+        total_sem_time = 2920 # hours
+        g = Generate(2009, ratio, total_sem_time)
+        fixed_type = first(Session_Type.objects.filter(type = "fixed"))
+        s = g.generate_session(1, "Fixed", fixed_type)
+        self.assertNotEqual(s, None)
+        self.assertEqual(s.name, "Fixed 1")
 
 class TestOpportunityGenerator(NellTestCase):
 
