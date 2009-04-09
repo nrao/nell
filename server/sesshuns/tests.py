@@ -279,22 +279,17 @@ class TestWindowResource(NellTestCase):
                  }
         response = self.client.post('/windows', fdata)
 
-        expected = json.dumps({"required": False
-                             , "id": 1
-                             , "opportunities": [{"duration": 1.0
-                                                , "start_time": "2009-04-01 12:00:00"
-                                                , "id": 1}
-                                               , {"duration": 2.0
-                                                , "start_time": "2009-04-02 12:00:00"
-                                                , "id": 2}
-                                               , {"duration": 3.0
-                                                , "start_time": "2009-04-03 12:00:00"
-                                                , "id": 3}
-                                               , {"duration": 4.0
-                                                , "start_time": "2009-04-04 12:00:00"
-                                                , "id": 4}]})
+        expected = ["2009-04-01 12:00:00"
+                  , "2009-04-02 12:00:00"
+                  , "2009-04-03 12:00:00"
+                  , "2009-04-04 12:00:00"
+                    ]
+        
         self.failUnlessEqual(response.status_code, 200)
-        self.assertEqual(expected, response.content)
+        r_json = json.loads(response.content)
+        results = [r["start_time"] for r in r_json["opportunities"]]
+        for e in expected:
+            self.assertTrue(e in results)
 
     def test_read(self):
         response = self.client.get('/windows')
@@ -317,8 +312,8 @@ class TestWindowResource(NellTestCase):
 
         self.failUnlessEqual(response.status_code, 200)
 
-        expected = first(w.opportunity_set.all()).start_time
-        self.assertEqual(expected, datetime(2009, 4, 10, 12))
+        expected = [o.start_time for o in w.opportunity_set.all()]
+        self.assertTrue(datetime(2009, 4, 10, 12) in expected)
 
 
     def test_delete(self):
