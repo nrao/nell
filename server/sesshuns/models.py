@@ -374,6 +374,14 @@ class Cadence(models.Model):
     class Meta:
         db_table = "cadences"
 
+    def __unicode__(self):
+        return "Cadence for Sess (%d): %s - %s, r:%d, ints: %s" % \
+          ( self.session.id
+          , self.start_date
+          , self.end_date
+          , self.repeats
+          , self.intervals )
+
 class Receiver_Group(models.Model):
     session        = models.ForeignKey(Sesshun)
     receivers      = models.ManyToManyField(Receiver
@@ -414,6 +422,12 @@ class Observing_Parameter(models.Model):
 class Window(models.Model):
     session  = models.ForeignKey(Sesshun)
     required = models.BooleanField()
+
+    def __unicode__(self):
+        return "Window (%d) for Sess (%d), Num Opts: %d" % \
+            (self.id
+           , self.session.id
+           , len(self.opportunity_set.all()))
 
     def init_from_post(self, fdata = QueryDict({})):
         self.required = fdata.get("required", False)
@@ -491,6 +505,12 @@ class Opportunity(models.Model):
     window     = models.ForeignKey(Window)
     start_time = models.DateTimeField()
     duration   = models.FloatField()
+
+    def __unicode__(self):
+        return "Opt (%d) for Win (%d): %s for %5.2f hrs" % (self.id
+                                                          , self.window.id
+                                                          , self.start_time
+                                                          , self.duration)
 
     def jsondict(self):
         return {"id"         : self.id
