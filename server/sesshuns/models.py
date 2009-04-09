@@ -132,7 +132,8 @@ class Sesshun(models.Model):
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
     def __unicode__(self):
-        return "%s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s" % (self.name
+        return "(%d) %s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s" % (self.id
+                                            , self.name
                                             , self.frequency
                                             , self.allotment.total_time
                                             , self.receiver_list())
@@ -382,7 +383,7 @@ class Receiver_Group(models.Model):
         db_table = "receiver_groups"
 
     def __unicode__(self):
-        return "Session: %s, ORed Receivers: %s" % (self.session, " ".join([r.abbreviation for r in self.receivers.all()]))
+        return "Rcvr Group for Sess: (%s): %s" % (self.session.id, " ".join([r.abbreviation for r in self.receivers.all()]))
 
     def __str__(self):
         return "(%s)" % " OR ".join([r.abbreviation for r in self.receivers.all()])
@@ -393,6 +394,9 @@ class Receiver_Group_Receiver(models.Model):
 
     class Meta:
         db_table = "receiver_groups_receiver"
+
+    def __unicode__(self):
+        return "%s, Rcvr: %s" % (self.group, self.receiver.abbreviation)
 
 class Observing_Parameter(models.Model):
     session        = models.ForeignKey(Sesshun)
