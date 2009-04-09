@@ -1,4 +1,26 @@
 BEGIN;
+CREATE TABLE `authors` (
+    `id` integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    `project_id` integer NOT NULL,
+    `first` varchar(32) NOT NULL,
+    `last` varchar(150) NOT NULL,
+    `peoplekey` varchar(150) NOT NULL,
+    `email` varchar(150) NOT NULL,
+    `pi` bool NOT NULL,
+    `co_i` bool NOT NULL
+)
+;
+ALTER TABLE `authors` ADD CONSTRAINT project_id FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`);
+CREATE TABLE `friends` (
+    `id` integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    `first` varchar(32) NOT NULL,
+    `last` varchar(150) NOT NULL,
+    `peoplekey` varchar(150) NOT NULL,
+    `email` varchar(150) NOT NULL,
+    `pi` bool NOT NULL,
+    `co_i` bool NOT NULL
+)
+;
 CREATE TABLE `semesters` (
     `id` integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
     `semester` varchar(64) NOT NULL
@@ -21,6 +43,7 @@ CREATE TABLE `projects` (
     `id` integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
     `semester_id` integer NOT NULL,
     `project_type_id` integer NOT NULL,
+    `friend_id` integer,
     `pcode` varchar(32) NOT NULL,
     `name` varchar(150) NOT NULL,
     `thesis` bool NOT NULL,
@@ -30,6 +53,7 @@ CREATE TABLE `projects` (
     `end_date` datetime NULL
 )
 ;
+ALTER TABLE `projects` ADD CONSTRAINT friend_id FOREIGN KEY (`friend_id`) REFERENCES `friends` (`id`);
 ALTER TABLE `projects` ADD CONSTRAINT project_type_id_refs_id_30e1275 FOREIGN KEY (`project_type_id`) REFERENCES `project_types` (`id`);
 ALTER TABLE `projects` ADD CONSTRAINT semester_id_refs_id_7b0fb7e9 FOREIGN KEY (`semester_id`) REFERENCES `semesters` (`id`);
 CREATE TABLE `session_types` (
@@ -62,15 +86,16 @@ CREATE TABLE `sessions` (
     `session_type_id` integer NOT NULL,
     `observing_type_id` integer NOT NULL,
     `allotment_id` integer NOT NULL,
+    `status_id` integer NOT NULL,
     `original_id` integer NULL,
     `name` varchar(64) NULL,
     `frequency` varchar(12) NULL,
     `max_duration` varchar(12) NULL,
     `min_duration` varchar(12) NULL,
-    `time_between` varchar(12) NULL,
-    `grade` varchar(12) NULL
+    `time_between` varchar(12) NULL
 )
 ;
+ALTER TABLE `sessions` ADD CONSTRAINT status_id29393 FOREIGN KEY (`status_id`) REFERENCES `status_id` (`id`);
 ALTER TABLE `sessions` ADD CONSTRAINT session_type_id_refs_id_10cc792b FOREIGN KEY (`session_type_id`) REFERENCES `session_types` (`id`);
 ALTER TABLE `sessions` ADD CONSTRAINT observing_type_id_refs_id_7e9f43c0 FOREIGN KEY (`observing_type_id`) REFERENCES `observing_types` (`id`);
 ALTER TABLE `sessions` ADD CONSTRAINT project_id_refs_id_3043d88e FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`);
@@ -91,14 +116,14 @@ CREATE TABLE `receiver_groups` (
 )
 ;
 ALTER TABLE `receiver_groups` ADD CONSTRAINT session_id_refs_id_46df204b FOREIGN KEY (`session_id`) REFERENCES `sessions` (`id`);
-CREATE TABLE `receiver_groups_receiver` (
+CREATE TABLE `rg_receiver` (
     `id` integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
     `group_id` integer NOT NULL,
     `receiver_id` integer NOT NULL
 )
 ;
-ALTER TABLE `receiver_groups_receiver` ADD CONSTRAINT receiver_id_refs_id_2114f018 FOREIGN KEY (`receiver_id`) REFERENCES `receivers` (`id`);
-ALTER TABLE `receiver_groups_receiver` ADD CONSTRAINT group_id_refs_id_369b9b32 FOREIGN KEY (`group_id`) REFERENCES `receiver_groups` (`id`);
+ALTER TABLE `rg_receiver` ADD CONSTRAINT receiver_id_refs_id_2114f018 FOREIGN KEY (`receiver_id`) REFERENCES `receivers` (`id`);
+ALTER TABLE `rg_receiver` ADD CONSTRAINT group_id_refs_id_369b9b32 FOREIGN KEY (`group_id`) REFERENCES `receiver_groups` (`id`);
 CREATE TABLE `observing_parameters` (
     `id` integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
     `session_id` integer NOT NULL,
@@ -115,14 +140,12 @@ ALTER TABLE `observing_parameters` ADD CONSTRAINT parameter_id_refs_id_6ead48a9 
 ALTER TABLE `observing_parameters` ADD CONSTRAINT session_id_refs_id_30d47126 FOREIGN KEY (`session_id`) REFERENCES `sessions` (`id`);
 CREATE TABLE `status` (
     `id` integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
-    `session_id` integer NOT NULL,
     `enabled` bool NOT NULL,
     `authorized` bool NOT NULL,
     `complete` bool NOT NULL,
     `backup` bool NOT NULL
 )
 ;
-ALTER TABLE `status` ADD CONSTRAINT session_id_refs_id_4b7f150e FOREIGN KEY (`session_id`) REFERENCES `sessions` (`id`);
 CREATE TABLE `windows` (
     `id` integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
     `session_id` integer NOT NULL,
