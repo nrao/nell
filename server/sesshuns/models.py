@@ -132,9 +132,14 @@ class Sesshun(models.Model):
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
     def __unicode__(self):
-        return "%s : %5.2f GHz, %5.2f Hrs" % (self.name
+        return "%s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s" % (self.name
                                             , self.frequency
-                                            , self.allotment.total_time)
+                                            , self.allotment.total_time
+                                            , self.receiver_list())
+
+    def receiver_list(self):
+        "Returns a string representation of the rcvr logic."
+        return " AND ".join([rg.__str__() for rg in self.receiver_group_set.all()])
 
     def delete(self):
         self.allotment.delete()
@@ -375,6 +380,12 @@ class Receiver_Group(models.Model):
 
     class Meta:
         db_table = "receiver_groups"
+
+    def __unicode__(self):
+        return "Session: %s, ORed Receivers: %s" % (self.session, " ".join([r.abbreviation for r in self.receivers.all()]))
+
+    def __str__(self):
+        return "(%s)" % " OR ".join([r.abbreviation for r in self.receivers.all()])
 
 class Receiver_Group_Receiver(models.Model):
     group          = models.ForeignKey(Receiver_Group)
