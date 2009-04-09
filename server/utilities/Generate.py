@@ -136,15 +136,22 @@ class Generate(object):
                   , max_duration   = total_time
                   , min_duration   = total_time
                   , time_between   = choice(between_dist)
-                  , grade          = choice(grade_dist)
                     )
         allot = Allotment(psc_time          = total_time
                         , total_time        = total_time
                         , max_semester_time = total_time
-                        , grade             = s.grade
+                        , grade             = choice(grade_dist)
                           )
         allot.save()
         s.allotment = allot
+
+        status = Status(enabled    = True
+                      , authorized = True
+                      , complete   = False
+                      , backup     = False
+                        )
+        status.save()
+        s.status = status
         s.save()
 
         rcvr_name = self.deriveReceiver(s.frequency)
@@ -155,14 +162,6 @@ class Generate(object):
         rg.receiver_group_receiver_set.add(rcvr)
         rg.save()
         
-        status = Status(session    = s
-                      , enabled    = True
-                      , authorized = True
-                      , complete   = False
-                      , backup     = False
-                        )
-        status.save()
-
         self.generate_target(s)
         s.save()
         return s

@@ -40,6 +40,14 @@ def create_sesshun():
                       )
     allot.save()
     s.allotment        = allot
+    status = Status(
+               enabled    = True
+             , authorized = True
+             , complete   = False
+             , backup     = False
+                        )
+    status.save()
+    s.status = status
     s.save()
 
     t = Target(session    = s
@@ -77,7 +85,7 @@ class TestSesshun(NellTestCase):
         
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.target_set.get().source, fdata["source"])
-        self.assertEqual(s.status_set.get().enabled, fdata["enabled"])
+        self.assertEqual(s.status.enabled, fdata["enabled"])
 
         # does this still work if you requery the DB?
         ss = Sesshun.objects.all()
@@ -86,7 +94,7 @@ class TestSesshun(NellTestCase):
         # notice the change in type when we compare this way!
         self.assertEqual(s.allotment.total_time, float(fdata["total_time"]))
         self.assertEqual(s.target_set.get().source, fdata["source"])
-        self.assertEqual(s.status_set.get().enabled, fdata["enabled"])
+        self.assertEqual(s.status.enabled, fdata["enabled"])
 
     def test_update_from_post(self):
         ss = Sesshun.objects.all()
@@ -96,7 +104,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.frequency, fdata["freq"])
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.target_set.get().source, fdata["source"])
-        self.assertEqual(s.status_set.get().enabled, fdata["enabled"])
+        self.assertEqual(s.status.enabled, fdata["enabled"])
 
         # change a number of things and see if it catches it
         fdata["freq"] = "10"
@@ -111,7 +119,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.frequency, float(fdata["freq"]))
         self.assertEqual(s.allotment.total_time, float(fdata["total_time"]))
         self.assertEqual(s.target_set.get().source, fdata["source"])
-        self.assertEqual(s.status_set.get().enabled, fdata["enabled"])
+        self.assertEqual(s.status.enabled, fdata["enabled"])
 
     def test_update_from_post2(self):
         ss = Sesshun.objects.all()
@@ -121,7 +129,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.frequency, fdata["freq"])
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.target_set.get().source, fdata["source"])
-        self.assertEqual(s.status_set.get().enabled, fdata["enabled"])
+        self.assertEqual(s.status.enabled, fdata["enabled"])
         self.assertEqual(s.original_id, int(fdata["orig_ID"]))
 
         # check to see if we can handle odd types 
@@ -138,7 +146,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.frequency, float(fdata["freq"]))
         self.assertEqual(s.allotment.total_time, float(fdata["total_time"]))
         self.assertEqual(s.target_set.get().source, fdata["source"])
-        self.assertEqual(s.status_set.get().enabled, True) # "True" -> True
+        self.assertEqual(s.status.enabled, True) # "True" -> True
         self.assertEqual(s.original_id, 0) #fdata["orig_ID"]) -- "0.0" -> Int
 
     def test_grade_abc_2_float(self):
