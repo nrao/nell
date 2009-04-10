@@ -25,49 +25,74 @@ class DBReporter:
         projs = Project.objects.all()
         numProjs = len(projs)
         totalProjHrs = sum([self.ta.getProjectTotalTime(p) for p in projs])
-        print numProjs, totalProjHrs
+        print "*** Projects ***"
+        print "Total # of Projects: %d, Total Hrs: %5.2f" % (numProjs, totalProjHrs)
+        print ""
     
         semesters = Semester.objects.all()
         proj_types = Project_Type.objects.all()
     
-        print self.binProject(projs, semesters, "semester")
-        print self.binProject(projs, proj_types, "project_type")
-        print self.binProject(projs, [True, False], "thesis")
+
+        projSems = self.binProject(projs, semesters, "semester")
+        self.printInfo(projSems, "Projects by Semester: ", "Semester")
+
+        projTypes = self.binProject(projs, proj_types, "project_type")
+        self.printInfo(projTypes, "Projects by Type: ", "Type")
+
+        projThesis = self.binProject(projs, [True, False], "thesis")
+        self.printInfo(projThesis, "Projects by Thesis: ", "Thesis")
 
         # gather stats on sessions - how many, how many of what type, total hrs ..
         sess = Sesshun.objects.all()
         numSess = len(sess)
         totalSessHrs = sum([s.allotment.total_time for s in sess])
-        print numSess, totalSessHrs
+        print "*** Sessions ***" 
+        print "Total # of Sessions: %d, Total Hrs: %5.2f" % (numSess, totalSessHrs)
+        print ""
 
         sess_types = Session_Type.objects.all()
         obs_types = Observing_Type.objects.all()
         grade_types = ['A','B','C']
         num_rcvr_grps = range(4)
         bools = [True, False]
-        print self.binSesshun(sess, sess_types, "session_type")
-        print self.binSesshun(sess, obs_types, "observing_type")
-        print self.binSesshun(sess, grade_types, "letter_grade", True)
-        print self.binSesshun(sess, num_rcvr_grps, "num_rcvr_groups", True)
-        print self.binSesshun(sess, bools, "status.enabled") 
-        print self.binSesshun(sess, bools, "status.authorized") 
-        print self.binSesshun(sess, bools, "status.complete") 
-        print self.binSesshun(sess, bools, "status.backup") 
-        print self.binSesshun(sess, bools, "scheduable") 
+
+        info = self.binSesshun(sess, sess_types, "session_type")
+        self.printInfo(info, "Sessions By Type:", "Type") 
+
+        info = self.binSesshun(sess, obs_types, "observing_type")
+        self.printInfo(info, "Sessions By Obs Type:", "Obs Type") 
+
+        info = self.binSesshun(sess, grade_types, "letter_grade", True)
+        self.printInfo(info, "Sessions By Grade:", "Grade") 
+        info = self.binSesshun(sess, num_rcvr_grps, "num_rcvr_groups", True)
+        self.printInfo(info, "Sessions By Num Receiver Groups:", "# Rcvr Grps") 
+        info = self.binSesshun(sess, bools, "status.enabled") 
+        self.printInfo(info, "Sessions By Enabled:", "Enabled") 
+        info = self.binSesshun(sess, bools, "status.authorized") 
+        self.printInfo(info, "Sessions By Authorized:", "Authorized") 
+        info = self.binSesshun(sess, bools, "status.complete") 
+        self.printInfo(info, "Sessions By Complete:", "Complete") 
+        info = self.binSesshun(sess, bools, "status.backup") 
+        self.printInfo(info, "Sessions By Backup:", "Backup") 
+        info = self.binSesshun(sess, bools, "scheduable", True) 
+        self.printInfo(info, "Sessions By Scheduable:", "Scheduable") 
 
         # gather stats on windows - how many, how many hrs, etc
         # TBF: what to do with cadence?
         wins = Window.objects.all()
-        print self.binWindow(wins, [True, False], "required") 
+        info = self.binWindow(wins, [True, False], "required") 
+        self.printInfo(info, "Windows by Required (Hrs is N/A):", "Required")
+
         numOpts = {}
-        numOpts['0'] = len([w for w in wins if w.num_opportunities() == 0])
-        numOpts['1'] = len([w for w in wins if w.num_opportunities() == 1])
-        numOpts['>1'] = len([w for w in wins if w.num_opportunities() > 1])
-        print numOpts
+        numOpts['0'] = (len([w for w in wins if w.num_opportunities() == 0]),0)
+        numOpts['1'] = (len([w for w in wins if w.num_opportunities() == 1]),0)
+        numOpts['>1'] = (len([w for w in wins if w.num_opportunities() > 1]),0)
+        self.printInfo(numOpts, "Windows by Num Opportunities (Hrs is N/A):"
+                     , "# Opts")
         
         # gather stats on periods
 
-        # *** Problems ***
+        print "*** Problems ***"
         # projects w/ out sessions?
         print "Projects w/ out sessions: ", len([p for p in projs if len(p.sesshun_set.all()) == 0])
 
@@ -93,7 +118,7 @@ class DBReporter:
         r = {}
         for bin in bins:
             binW = [w for w in windows if w.__getattribute__(attrib) == bin]
-            r[str(bin)] = len(binW)
+            r[str(bin)] = (len(binW), 0) # Hrs is N/A
         return r
 
     def binProject(self, projs, bins, attrib):
@@ -128,5 +153,18 @@ class DBReporter:
             r[str(bin)] = (len(binSess), binSessHrs)
         return r
 
+    def printInfo(self, info, title, header):
 
+        # the first col should have a width to accomodate the biggest thing
+        keys = info.keys()
+        keys.sort()
+        maxKeys = max(keys, key=len)
+        col1 = len(max([header, maxKeys], key=len))
+        cols = [col1, 5, 10]
+        print title 
+        print header.rjust(cols[0]), "#".rjust(cols[1]), "Hrs".rjust(cols[2])
+        print "-" * (sum(cols) + 3)
+        for k in keys:
+            print k.rjust(cols[0]), str(info[k][0]).rjust(cols[1]), str(info[k][1]).rjust(cols[2]) 
+        print ""
 
