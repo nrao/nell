@@ -100,10 +100,10 @@ class DBReporter:
         print "Sessions w/ out projects: ", len([s for s in sess if s.project is None])
 
         # windowed sessions w/ no windows?
-        print "Windowed Sessions /w out windows: ", len([s for s in sess if (s.session_type.type in ['Windowed','VLBI']) and len(s.window_set.all()) == 0])
+        print "Windowed Sessions /w out windows: ", len([s for s in sess if (s.session_type.type in ['windowed','vlbi','fixed']) and len(s.window_set.all()) == 0])
 
         # non-windowed sessions w/ a window?
-        print "Non-Windowed Sessions /w windows: ", len([s for s in sess if (s.session_type.type not in ['Windowed','VLBI']) and len(s.window_set.all()) > 0])
+        print "Non-Windowed Sessions /w windows: ", len([s for s in sess if (s.session_type.type not in ['windowed','vlbi','fixed']) and len(s.window_set.all()) > 0])
 
         # windows w/ out sessions?
 
