@@ -14,9 +14,27 @@ class DBReporter:
 
     # TBF: cant' calculate used times because there are no Periods
 
-    def __init__(self):
+    def __init__(self, quiet = False, filename = None):
         
         self.ta = TimeAccounting()
+        self.lines = ""
+        self.quiet = quiet
+        self.filename = filename 
+
+    def add(self, lines):
+        if not self.quiet:
+            print lines
+        self.lines += lines
+
+    def printLines(self):
+        
+        #if not self.quiet:
+        #    print self.lines
+
+        if self.filename:
+            f = file(self.filename, 'w')
+            f.writelines(self.lines)
+            f.close()
 
     def report(self):
 
@@ -25,9 +43,8 @@ class DBReporter:
         projs = Project.objects.all()
         numProjs = len(projs)
         totalProjHrs = sum([self.ta.getProjectTotalTime(p) for p in projs])
-        print "*** Projects ***"
-        print "Total # of Projects: %d, Total Hrs: %5.2f" % (numProjs, totalProjHrs)
-        print ""
+        self.add("\n*** Projects ***\n")
+        self.add("Total # of Projects: %d, Total Hrs: %5.2f\n\n" % (numProjs, totalProjHrs))
     
         semesters = Semester.objects.all()
         proj_types = Project_Type.objects.all()
@@ -46,9 +63,8 @@ class DBReporter:
         sess = Sesshun.objects.all()
         numSess = len(sess)
         totalSessHrs = sum([s.allotment.total_time for s in sess])
-        print "*** Sessions ***" 
-        print "Total # of Sessions: %d, Total Hrs: %5.2f" % (numSess, totalSessHrs)
-        print ""
+        self.add( "\n*** Sessions ***\n") 
+        self.add( "Total # of Sessions: %d, Total Hrs: %5.2f\n\n" % (numSess, totalSessHrs))
 
         sess_types = Session_Type.objects.all()
         obs_types = Observing_Type.objects.all()
@@ -92,33 +108,31 @@ class DBReporter:
         
         # gather stats on periods
 
-        print "*** Problems ***"
+        self.add("\n*** Problems ***\n")
         # projects w/ out sessions?
-        print "Projects w/ out sessions: ", len([p for p in projs if len(p.sesshun_set.all()) == 0])
+        self.add("Projects w/ out sessions: %d\n" % len([p for p in projs if len(p.sesshun_set.all()) == 0]))
 
         # sessions w/ out projects?
-        print "Sessions w/ out projects: ", len([s for s in sess if s.project is None])
+        self.add("Sessions w/ out projects: %d\n" % len([s for s in sess if s.project is None]))
 
         # windowed sessions w/ no windows?
-        print "Windowed Sessions /w out windows: ", len([s for s in sess if (s.session_type.type in ['windowed','vlbi','fixed']) and len(s.window_set.all()) == 0])
+        self.add("Windowed Sessions /w out windows: %d\n" % len([s for s in sess if (s.session_type.type in ['windowed','vlbi','fixed']) and len(s.window_set.all()) == 0]))
 
         # non-windowed sessions w/ a window?
-        print "Non-Windowed Sessions /w windows: ", len([s for s in sess if (s.session_type.type not in ['windowed','vlbi','fixed']) and len(s.window_set.all()) > 0])
+        self.add("Non-Windowed Sessions /w windows: %d\n" % len([s for s in sess if (s.session_type.type not in ['windowed','vlbi','fixed']) and len(s.window_set.all()) > 0]))
 
         # windows w/ out sessions?
 
         # session w/ min > max duration
-        print "Sessions w/ min > max duration: ", [s for s in sess if s.min_duration > s.max_duration]
+        self.add("Sessions w/ min > max duration: %d\n" % len([s for s in sess if s.min_duration > s.max_duration]))
         # sessions w/ time < min duration?
-        print "Sessions w/ min duration < total time: ", [s for s in sess if s.min_duration > s.allotment.total_time]
+        self.add("Sessions w/ min duration < total time: %d\n" % len([s for s in sess if s.min_duration > s.allotment.total_time]))
 
         # sessions w/ hr angle range < min duration?
 
         # try to reproduce the project listing that Carl produces
         # in openpropstbsdetail.pdf
-        print ""
-        print "*** Project Details ***"
-        print ""
+        self.add("\nProject Details ***\n")
 
         # Here's a summary of Carl's report content
         # Trimester Header
@@ -140,7 +154,7 @@ class DBReporter:
         semesterCols = [7, 9, 9]
 
         for sem in semesters:
-            print "*** Trimester: %s" % sem.semester
+            self.add("Trimester: %s\n" % sem.semester)
             s = Semester.objects.get(semester = sem)
             # get the projects for this semester
             projs = Project.objects.filter(semester = s).order_by("pcode")
@@ -204,9 +218,8 @@ class DBReporter:
                 self.printData(semesterFooter, semesterCols, True)
                 self.printData(semData       , semesterCols)
 
-
-
-
+        # finally ...
+        self.printLines()
 
     def binWindow(self, windows, bins, attrib):
         r = {}
@@ -255,15 +268,13 @@ class DBReporter:
         maxKeys = max(keys, key=len)
         col1 = len(max([header, maxKeys], key=len))
         cols = [col1, 5, 10]
-        print title 
-        print header.rjust(cols[0]), "#".rjust(cols[1]), "Hrs".rjust(cols[2])
-        print "-" * (sum(cols) + 3)
+        self.add("\n" + title + "\n") 
+        self.printData([header, "#", "Hrs"], cols, True)
         for k in keys:
-            print k.rjust(cols[0]), str(info[k][0]).rjust(cols[1]), str(info[k][1]).rjust(cols[2]) 
-        print ""
+            self.add(" ".join([k.rjust(cols[0]), str(info[k][0]).rjust(cols[1]), str(info[k][1]).rjust(cols[2])]) + "\n")
 
     def printData(self, data, cols, header = False):
-        print " ".join([h.rjust(c) for h, c in zip(data, cols)])
+        self.add(" ".join([h.rjust(c) for h, c in zip(data, cols)]) + "\n")
         if header:
-            print "-" * (sum(cols) + len(cols))
+            self.add(("-" * (sum(cols) + len(cols))) + "\n")
         
