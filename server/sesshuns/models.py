@@ -150,6 +150,12 @@ class Sesshun(models.Model):
     def num_rcvr_groups(self):
         return len(self.receiver_group_set.all())
 
+    def scheduable(self):
+        "A simple check for all explicit flags"
+        return (self.status.enabled) and \
+               (self.status.authorized) and \
+               (self.status.complete)
+
     def delete(self):
         self.allotment.delete()
         super(Sesshun, self).delete()
