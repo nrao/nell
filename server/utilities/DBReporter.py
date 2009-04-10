@@ -56,12 +56,12 @@ class DBReporter:
         num_rcvr_grps = range(4)
         bools = [True, False]
 
+        info = self.binSesshun(sess, semesters, "project.semester")
+        self.printInfo(info, "Sessions By Semester:", "Semester") 
         info = self.binSesshun(sess, sess_types, "session_type")
         self.printInfo(info, "Sessions By Type:", "Type") 
-
         info = self.binSesshun(sess, obs_types, "observing_type")
         self.printInfo(info, "Sessions By Obs Type:", "Obs Type") 
-
         info = self.binSesshun(sess, grade_types, "letter_grade", True)
         self.printInfo(info, "Sessions By Grade:", "Grade") 
         info = self.binSesshun(sess, num_rcvr_grps, "num_rcvr_groups", True)
@@ -113,6 +113,9 @@ class DBReporter:
         print "Sessions w/ min duration < total time: ", [s for s in sess if s.min_duration > s.allotment.total_time]
 
         # sessions w/ hr angle range < min duration?
+
+        # try to reproduce the project listing that Carl produces
+        # in openpropstbsdetail.pdf
 
     def binWindow(self, windows, bins, attrib):
         r = {}
