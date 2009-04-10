@@ -154,7 +154,7 @@ class Sesshun(models.Model):
         "A simple check for all explicit flags"
         return (self.status.enabled) and \
                (self.status.authorized) and \
-               (self.status.complete)
+               (not self.status.complete)
 
     def delete(self):
         self.allotment.delete()
