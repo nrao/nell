@@ -506,5 +506,5 @@ class TestDBReporter(NellTestCase):
 
     def test_DBReporter(self):
         "Simply make sure that no exceptions are raised."
-        db = DBReporter()
+        db = DBReporter(quiet=True)
         db.report()
