@@ -4,6 +4,7 @@ import simplejson as json
 
 from sesshuns.models                       import *
 from server.test_utils.NellTestCase        import NellTestCase
+from server.utilities.DBReporter           import DBReporter
 from server.utilities.Generate             import Generate
 from server.utilities.OpportunityGenerator import OpportunityGenerator, GenOpportunity
 
@@ -499,3 +500,11 @@ class TestOpportunityGenerator(NellTestCase):
                     ]
 
         self.assertEqual(expected, results)
+
+            
+class TestDBReporter(NellTestCase):
+
+    def test_DBReporter(self):
+        "Simply make sure that no exceptions are raised."
+        db = DBReporter()
+        db.report()
