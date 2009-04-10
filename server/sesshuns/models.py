@@ -35,7 +35,9 @@ class Allotment(models.Model):
     grade             = models.FloatField()
 
     def __unicode__(self):
-        return "Total: %5.2f, PSC: %5.2f, Max: %5.2f" % (self.total_time
+        return "Total: %5.2f, Grade: %5.2f, PSC: %5.2f, Max: %5.2f" % \
+                                       (self.total_time
+                                      , self.grade
                                       , self.psc_time
                                       , self.max_semester_time) 
 
@@ -141,6 +143,12 @@ class Sesshun(models.Model):
     def receiver_list(self):
         "Returns a string representation of the rcvr logic."
         return " AND ".join([rg.__str__() for rg in self.receiver_group_set.all()])
+
+    def letter_grade(self):
+        return self.grade_float_2_abc(self.allotment.grade)
+
+    def num_rcvr_groups(self):
+        return len(self.receiver_group_set.all())
 
     def delete(self):
         self.allotment.delete()
@@ -428,6 +436,9 @@ class Window(models.Model):
             (self.id
            , self.session.id
            , len(self.opportunity_set.all()))
+
+    def num_opportunities(self):
+        return len(self.opportunity_set.all())
 
     def init_from_post(self, fdata = QueryDict({})):
         self.required = fdata.get("required", False)
