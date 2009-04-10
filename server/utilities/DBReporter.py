@@ -116,6 +116,97 @@ class DBReporter:
 
         # try to reproduce the project listing that Carl produces
         # in openpropstbsdetail.pdf
+        print ""
+        print "*** Project Details ***"
+        print ""
+
+        # Here's a summary of Carl's report content
+        # Trimester Header
+        # Project Header:
+        # Code, Title, Rk, Grade, PI, Alloc. time, B/D (?), Sched. time, Bands, 
+        # Backends, Obs Type, Prop. Type
+        projHeaders = ["Code", "Name", "Rk?", "Grade(s)", "PI", "Total"
+                     , "B/D?", "Sched.", "Rcvr(s)", "Backends", "Obs Type"
+                     , "Proj Type"]
+        projHeaderCols = [12, 15, 3, 8, 12, 5, 5, 5, 12, 12, 12]
+        # Session Header:
+        # name?, #, len(hrs), LST, +/- (?), Sep, Del, Cmpl, TotHrs, lobs, 
+        # Comment, Grade, Alloc, B/D, Sched, Bands, Backedns, Req, Outer#, Sep 
+        sessHeaders = ["" "Name", "#", "len(hrs)", "LST", "+/-", "?", "Sep(d)", "Del(?)", "Completed", "TotalTime", "LastObs", "Comment (?)", "Grade", "Alloc?", "B\D?", "Scheduled", "Rcvrs", "Backends", "Req", "Outer#?", "Sep?"]
+        sessCols = [4, 12, 1, 8, 12, 3, 1, 6, 6, 9, 9, 7, 12, 5, 6, 4, 8, 15, 8, 3, 5, 5]
+        # Trimester Footer:
+        # # proposals, total time, time remaining, # proposals started (?)
+        semesterFooter = ["Total #", "TotalTime", "Remaining"]
+        semesterCols = [7, 9, 9]
+
+        for sem in semesters:
+            print "*** Trimester: %s" % sem.semester
+            s = Semester.objects.get(semester = sem)
+            # get the projects for this semester
+            projs = Project.objects.filter(semester = s).order_by("pcode")
+            if len(projs) > 0:
+                self.printData(projHeaders, projHeaderCols, True) 
+             
+            for proj in projs:
+                # for each proj, print summary
+                projData = [proj.pcode
+                          , proj.name
+                          , "?"
+                          , "TBF" #proj.letter_grades()
+                          , "TBF"
+                          , "%5.2f" % self.ta.getProjectTotalTime(proj)
+                          , "?"
+                          , "TBF"
+                          , "TBF"
+                          , "N/A"
+                          , "TBF"
+                          , str(proj.project_type)]
+                self.printData(projData, projHeaderCols)          
+
+                ss = proj.sesshun_set.order_by("name")
+
+                # print session header
+                if len(ss) > 0:
+                    self.printData(sessHeaders, sessCols, True)
+
+                for s in ss:    
+                    # for each session, print summary
+                    sData = [""
+                           , s.name # s.unique_name()
+                           , "?"
+                           , "?"
+                           , "?"
+                           , "?"
+                           , "?"
+                           , "?"
+                           , "TBF"
+                           , "%5.2f" % s.allotment.total_time
+                           , "TBF"
+                           , "?"
+                           , s.letter_grade()
+                           , "?"
+                           , "?"
+                           , "?"
+                           , s.receiver_list()
+                           , "N/A"
+                           , "?"
+                           , "?"
+                           , "?"]
+                    self.printData(sData, sessCols)    
+
+
+            # print semester summary
+            semData = ["%d" % (len(projs))
+                     , "%5.2f" % sum([self.ta.getProjectTotalTime(p) \
+                                         for p in projs])
+                     , "TBF"]
+            if len(projs) > 0:
+                self.printData(semesterFooter, semesterCols, True)
+                self.printData(semData       , semesterCols)
+
+
+
+
 
     def binWindow(self, windows, bins, attrib):
         r = {}
@@ -171,3 +262,8 @@ class DBReporter:
             print k.rjust(cols[0]), str(info[k][0]).rjust(cols[1]), str(info[k][1]).rjust(cols[2]) 
         print ""
 
+    def printData(self, data, cols, header = False):
+        print " ".join([h.rjust(c) for h, c in zip(data, cols)])
+        if header:
+            print "-" * (sum(cols) + len(cols))
+        
