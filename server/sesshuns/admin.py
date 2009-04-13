@@ -5,12 +5,32 @@ class Receiver_GroupInline(admin.TabularInline):
     model = Receiver_Group
     extra = 1
 
+class CadenceInline(admin.TabularInline):
+    model = Cadence
+    extra = 1
+
+class WindowInline(admin.TabularInline):
+    model = Window
+    extra = 1
+
+class TargetInline(admin.TabularInline):
+    model = Target
+    extra = 1
+
+class Observing_ParameterInline(admin.TabularInline):    
+    model = Observing_Parameter
+    extra = 1
+
 class SesshunAdmin(admin.ModelAdmin):
     list_display = ['name', 'project', 'frequency', 'allotment', 'receiver_list']
     list_filter = ['name',  'project']
     search_fields = ['name']
     #date_hierarchy = 'pub_date'
-    inlines = [Receiver_GroupInline]
+    inlines = [Receiver_GroupInline
+             , TargetInline
+             , Observing_ParameterInline
+             , CadenceInline
+             , WindowInline]
 
 class SesshunInline(admin.TabularInline):
     model = Sesshun
@@ -62,11 +82,15 @@ class Observing_ParameterAdmin(admin.ModelAdmin):
 class StatusAdmin(admin.ModelAdmin):
     pass
 
-class WindowAdmin(admin.ModelAdmin):
-    pass
-
 class OpportunityAdmin(admin.ModelAdmin):
     pass
+
+class OpportunityInline(admin.TabularInline):
+    model = Opportunity
+    extra = 1
+
+class WindowAdmin(admin.ModelAdmin):
+    inlines = [OpportunityInline]
 
 class SystemAdmin(admin.ModelAdmin):
     pass
