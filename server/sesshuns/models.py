@@ -113,9 +113,13 @@ class Status(models.Model):
     complete   = models.BooleanField()
     backup     = models.BooleanField()
 
+    def __unicode__(self):
+        return "e: %s; a: %s; c: %s; b: %s" % \
+            (self.enabled, self.authorized, self.complete, self.backup)
+
     class Meta:
         db_table = "status"
-
+    
 class Sesshun(models.Model):
     
     project            = models.ForeignKey(Project)
@@ -551,6 +555,9 @@ class System(models.Model):
     v_unit = models.CharField(max_length = 32)
     h_unit = models.CharField(max_length = 32)
 
+    def __unicode__(self):
+        return "%s (%s, %s)" % (self.name, self.v_unit, self.h_unit)
+
     class Meta:
         db_table = "systems"
 
@@ -560,6 +567,10 @@ class Target(models.Model):
     source     = models.CharField(null = True, max_length = 32)
     vertical   = models.FloatField()
     horizontal = models.FloatField()
+
+    def __unicode__(self):
+        return "%s @ (%5.2f, %5.2f), Sys: %s" % \
+            (self.source, self.vertical, self.horizontal, self.system)
 
     class Meta:
         db_table = "targets"
