@@ -34,8 +34,7 @@ class ColumnDefinition {
     public static final String OBS_EFF_LIMIT     = "obs_eff_limit";
     public static final String ORIG_ID           = "orig_ID";
     public static final String PRECIP            = "precip";
-    public static final String PRI_RCVR          = "receiver";
-    public static final String OPT_RCVRS         = "opt_rcvrs";
+    public static final String RECEIVER          = "receiver";
     public static final String PSC_TIME          = "PSC_time";
     public static final String REQ_MAX           = "req_max";
     public static final String REQ_MIN           = "req_min";
@@ -105,7 +104,7 @@ class ColumnDefinition {
     }
     
     @SuppressWarnings("unchecked")
-	public Class getClasz(String id) {
+    public Class getClasz(String id) {
         return columnsMap.get(id).clasz;
     }
 
@@ -116,9 +115,64 @@ class ColumnDefinition {
 
     private final CalculatedField receivers = new CalculatedField() {
         public Object calculate(RowType row, Map<String, Object> model) {
-            return row.getValue(FREQ, model);
+            return deriveReceiver(row.getValue(FREQ, model));
         }
     };
+    
+    // TBF cardinal sin: code duplicated in server - Generate.py
+    private Object deriveReceiver(Object freq) {
+    	Double frequency = (Double)freq;
+        String receiver_name = "NoiseSource";
+        if (frequency <= .012) {
+            receiver_name = "Rcvr_RRI";
+        }
+        else if (frequency <= .395) {
+            receiver_name = "Rcvr_342";
+        }
+        else if (frequency <= .52) {
+            receiver_name = "Rcvr_450";
+        }
+        else if (frequency <= .69) {
+            receiver_name = "Rcvr_600";
+        }
+        else if (frequency <= .92) {
+            receiver_name = "Rcvr_800";;
+        }
+        else if (frequency <= 1.23) {
+            receiver_name = "Rcvr_1070";;
+        }
+        else if (frequency <= 1.73) {
+            receiver_name = "Rcvr1_2";
+        }
+        else if (frequency <= 3.275) {
+            receiver_name = "Rcvr2_3";;
+        }
+        else if (frequency <= 6.925) {
+            receiver_name = "Rcvr4_6";
+        }
+        else if (frequency <= 11.0) {
+            receiver_name = "Rcvr8_10";
+        }
+        else if (frequency <= 16.7) {
+            receiver_name = "Rcvr12_18";
+        }
+        else if (frequency <= 22.0) {
+            receiver_name = "Rcvr18_22";;
+        }
+        else if (frequency <= 26.25) {
+            receiver_name = "Rcvr22_26";
+        }
+        else if (frequency <= 40.5) {
+            receiver_name = "Rcvr26_40";
+        }
+        else if (frequency <= 52.0) {
+            receiver_name = "Rcvr40_52";
+        } else if (87.0 <= frequency && frequency <= 91.0) {
+            receiver_name = "Rcvr_PAR";
+        }
+
+        return receiver_name;
+    }
 
     private final CalculatedField obsEffLimit = new CalculatedField() {
         public Object calculate(RowType row, Map<String, Object> model) {
@@ -170,8 +224,7 @@ class ColumnDefinition {
             new ColumnType(FREQ,           "Freq",            50, Double.class,               null),
             new ColumnType(FREQ_RNGE_L,    "Freq Range Low", 100, Double.class,               null),
             new ColumnType(FREQ_RNGE_H,    "Freq Range Hi",  100, Double.class,               null),
-            new ColumnType(PRI_RCVR,       "Receiver",       100, String.class,               receivers),
-            new ColumnType(OPT_RCVRS,      "Opt Rcvrs",      100, String.class,               receivers),
+            new ColumnType(RECEIVER,       "Receiver(s)",    100, String.class,               receivers),
             new ColumnType(REQ_MIN,        "Req Min",         60, Double.class,               null),
             new ColumnType(REQ_MAX,        "Req Max",         60, Double.class,               null),
             new ColumnType(ABS_MIN,        "Abs Min",         60, Double.class,               null),

@@ -1,5 +1,5 @@
 from django.conf.urls.defaults     import *
-from server.sesshuns.views import SessionResource, WindowResource, gen_opportunities
+from server.sesshuns.views import get_bands, gen_opportunities, SessionResource, WindowResource
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
@@ -14,5 +14,6 @@ urlpatterns = patterns('',
    , url(r'^windows/(\d+)$',  WindowResource(permitted_methods=('PUT', 'GET', 'POST')))
    , url(r'^gen_opportunities$',        gen_opportunities)
    , url(r'^gen_opportunities/(\d+)$',  gen_opportunities)
+   , url(r'^get_bands$',                get_bands)
    , (r'^admin/(.*)', admin.site.root)
 )

@@ -1,11 +1,12 @@
 from datetime              import datetime, timedelta
 from django.db             import models
-from django.http import QueryDict
+from django.http           import QueryDict
 from math                  import asin, acos, cos, sin
 
 from server.utilities import OpportunityGenerator, TimeAgent
 
 import sys
+import pdb
 
 def first(results, default = None):
     return default if len(results) == 0 else results[0]
@@ -148,7 +149,6 @@ class Sesshun(models.Model):
     def set_base_fields(self, fdata):
         fsestype = fdata.get("type", "open")
         fobstype = fdata.get("science", "testing")
-        frcvr    = fdata.get("receiver", "Rcvr1_2")
 
         p  = first(Project.objects.filter(pcode = "GBT09A-001").all())
         st = first(Session_Type.objects.filter(type = fsestype).all()
@@ -214,10 +214,10 @@ class Sesshun(models.Model):
         
         frcvr  = fdata.get("receiver", "Rcvr1_2")
         rcvr   = first(Receiver.objects.filter(name = frcvr).all()
-                     , Receiver.objects.all()[0])
+                     , Receiver.objects.all()[0])  # TBF want default?
         rg     = Receiver_Group(session = self)
         rg.save()
-        rg.receiver_group_receiver_set.add(rcvr)
+        rg.receivers.add(rcvr)
         rg.save()
         
         system = first(System.objects.filter(name = "J2000").all()
@@ -375,24 +375,21 @@ class Cadence(models.Model):
 
 class Receiver_Group(models.Model):
     session        = models.ForeignKey(Sesshun)
-    receivers      = models.ManyToManyField(Receiver
-                                          , through = "Receiver_Group_Receiver")
+    receivers      = models.ManyToManyField(
+                                  Receiver
+                                , db_table = "receiver_groups_receivers")
 
     class Meta:
         db_table = "receiver_groups"
 
     def __unicode__(self):
-        return "Session: %s, ORed Receivers: %s" % (self.session, " ".join([r.abbreviation for r in self.receivers.all()]))
+        return "Session: %s, ORed Receivers: %s" % \
+               (self.session,
+                " ".join([r.abbreviation for r in self.receivers.all()]))
 
     def __str__(self):
-        return "(%s)" % " OR ".join([r.abbreviation for r in self.receivers.all()])
-
-class Receiver_Group_Receiver(models.Model):
-    group          = models.ForeignKey(Receiver_Group)
-    receiver       = models.ForeignKey(Receiver)
-
-    class Meta:
-        db_table = "receiver_groups_receiver"
+        return "(%s)" % \
+               " OR ".join([r.abbreviation for r in self.receivers.all()])
 
 class Observing_Parameter(models.Model):
     session        = models.ForeignKey(Sesshun)
@@ -437,6 +434,7 @@ class Window(models.Model):
     def jsondict(self, generate = False, now = None):
         now      = now or datetime.utcnow()
         windowed = first(Session_Type.objects.filter(type = 'windowed'))
+        #pdb.set_trace()
         if self.session.session_type == windowed and generate:
             opportunities = self.gen_opportunities(now)
         else:

@@ -159,7 +159,7 @@ class Generate(object):
                      , Receiver.objects.all()[0])
         rg     = Receiver_Group(session = s)
         rg.save()
-        rg.receiver_group_receiver_set.add(rcvr)
+        rg.receivers.add(rcvr)
         rg.save()
         
         self.generate_target(s)
@@ -203,6 +203,7 @@ class Generate(object):
         return s.zenithAngle(starttime) > 85 or \
                s.zenithAngle(endtime) > 85
 
+    # TBF cardinal sin: code duplicated in client - ColumnDefinition.java
     def deriveReceiver(self, frequency):
         frequencies = [
               (.012,  "Rcvr_RRI")

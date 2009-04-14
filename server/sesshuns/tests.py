@@ -63,10 +63,24 @@ def create_sesshun():
 
 class TestReceiver(NellTestCase):
 
+    def setUp(self):
+        super(TestReceiver, self).setUp()
+        self.client = Client()
+        s = Sesshun()
+        s.init_from_post({})
+        s.save()
+
     def test_get_abbreviations(self):
         nn = Receiver.get_abbreviations()
         self.assertTrue(len(nn) > 18)
         self.assertEquals([n for n in nn if n == 'Ka'], ['Ka'])
+
+    def test_get_bands(self):
+        now = datetime(2009, 4, 6, 12)
+        response = self.client.get('/get_bands')
+        self.failUnlessEqual(response.status_code, 200)
+        expected = json.dumps(Receiver.get_abbreviations())
+        self.assertEqual(expected, response.content)
 
 class TestSesshun(NellTestCase):
 
@@ -310,6 +324,20 @@ class TestSessionResource(NellTestCase):
     def test_delete(self):
         response = self.client.post('/sessions/1', {'_method' : 'delete'})
         self.failUnlessEqual(response.status_code, 200)
+
+    def test_create_rcvr(self):
+        response = self.client.post('/sessions', {'receiver' : 'Rcvr1_2'})
+        self.failUnlessEqual(response.status_code, 200)
+        r_json = json.loads(response.content)
+        self.assertTrue(r_json.has_key('receiver'))
+        self.assertEquals(r_json['receiver'], 'L')
+    
+    def xtest_create_rcvrs(self):   # TBF hold until handles multiple rcvrs
+        response = self.client.post('/sessions', {'receiver' : 'K & (L | S)'})
+        self.failUnlessEqual(response.status_code, 200)
+        r_json = json.loads(response.content)
+        self.assertTrue(r_json.has_key('receiver'))
+        # etc
     
 class TestWindowResource(NellTestCase):
 

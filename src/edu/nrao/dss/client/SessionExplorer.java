@@ -119,8 +119,7 @@ class SessionExplorer extends ContentPanel {
 	    if (fields == null) {
 	        fields = new HashMap<String, Object>();
 	    }
-
-	    row.populateDefaultValues(fields);
+        row.populateDefaultValues(fields);
 	    addSession(fields);
 
 	    setColumnHeaders(row.getFieldNames());
@@ -443,20 +442,13 @@ class SessionExplorer extends ContentPanel {
 			@SuppressWarnings("unchecked")
 			@Override
 			public void onSuccess(JSONObject json) {
-				System.out.println("onSuccess");
-				//int id = (int) json.get("id").isNumber().doubleValue();
 
-				BaseModelData model = new BaseModelData();
-				//model.set("id", id);
-				
+				BaseModelData model = new BaseModelData();	
 				SessionType type = new SessionType(rows.getColumnDefinition());
 				for (int i = 0; i < type.getFieldCount(); ++i) {
 					DataField field = type.getField(i);
 					if (json.containsKey(field.name)) {
-						System.out.println(field.name);
 						Class target_type = rows.getColumnDefinition().getClasz(field.name);
-						//System.out.println("Target_type:");
-						//System.out.println(target_type.toString());
 						
 						// Set model value dependent on data type
 						JSONValue value = json.get(field.name);
@@ -470,10 +462,7 @@ class SessionExplorer extends ContentPanel {
 						} else if (value.isBoolean()!= null) {
 							model.set(field.name, value.isBoolean().booleanValue());
 						} else if (value.isString() != null) {
-							//System.out.println(value.isString().toString());
-							//System.out.println(value);
 							model.set(field.name, value.isString().stringValue());
-							//model.set(field.name, value);
 						} else {
 							Window.alert("unknown JSON value type");
 						}
