@@ -28,9 +28,9 @@ STEPSIZE = 15
 class OpportunityGenerator:
     def __init__(self, now):
         self.now = now or datetime.utcnow()
-        self.opportunities = []
 
     def generate(self, window, sesshun, ha_limit):
+        opportunities = []
 
         # Prepare to generate the opportunites day by day:
         # Start at the begining of the Window, or Now, whichever is bigger.
@@ -53,8 +53,7 @@ class OpportunityGenerator:
         for day_no in xrange(duration):
             day     = start_day + timedelta(days = day_no)
             ra, _   = sesshun.get_ra_dec()
-            transit = \
-                   TimeAgent.RelativeLST2AbsoluteTime(ra, day)
+            transit = TimeAgent.RelativeLST2AbsoluteTime(ra, day)
 
             # What kind of windowing are we dealing with?
             if sesshun.restrictions == 'UTC':
@@ -78,6 +77,7 @@ class OpportunityGenerator:
                 limit = int(sesshun.hourAngleAtHorizon()) if sesshun.get_ignore_ha() \
                                                           else ha_limit
 
+                # TBF why max/min?
                 begin = max(transit - timedelta(hours = limit), start_day)
                 end   = min(transit + timedelta(hours = limit),
                             start_day + timedelta(days = duration))
@@ -89,8 +89,8 @@ class OpportunityGenerator:
 
             # Generate the opportunities in 15-min increments, in the range
             # specified, for this particular day.
-            self.opportunities.extend(self.generate_daily(sesshun, window, begin, end))
-            return self.opportunities
+            opportunities.extend(self.generate_daily(sesshun, window, begin, end))
+        return opportunities
 
     def generate_daily(self, sesshun, window, begin, end):
         """

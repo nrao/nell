@@ -60,8 +60,7 @@ class RowDefinition {
             addColumn(ColumnDefinition.FREQ,           null);
             //addColumn(ColumnDefinition.FREQ_RNGE_L,    null);
             //addColumn(ColumnDefinition.FREQ_RNGE_H,    null);
-            addColumn(ColumnDefinition.PRI_RCVR,       null);
-            //addColumn(ColumnDefinition.OPT_RCVRS,      null);
+            //addColumn(ColumnDefinition.RECEIVER,       null);
             addColumn(ColumnDefinition.REQ_MIN,        2.0);
             addColumn(ColumnDefinition.REQ_MAX,        6.0);
             addColumn(ColumnDefinition.ABS_MIN,        1.5);
@@ -101,8 +100,7 @@ class RowDefinition {
             addColumn(ColumnDefinition.FREQ,           null);
             addColumn(ColumnDefinition.FREQ_RNGE_L,    1.0);
             addColumn(ColumnDefinition.FREQ_RNGE_H,    1.7);
-            addColumn(ColumnDefinition.PRI_RCVR,       null);
-            //addColumn(ColumnDefinition.OPT_RCVRS,      null);
+            //addColumn(ColumnDefinition.RECEIVER,       null);
             addColumn(ColumnDefinition.REQ_MIN,        2.0);
             addColumn(ColumnDefinition.REQ_MAX,        6.0);
             addColumn(ColumnDefinition.ABS_MIN,        1.5);
@@ -142,8 +140,7 @@ class RowDefinition {
             addColumn(ColumnDefinition.FREQ,           null);
             //addColumn(ColumnDefinition.FREQ_RNGE_L,    null);
             //addColumn(ColumnDefinition.FREQ_RNGE_H,    null);
-            addColumn(ColumnDefinition.PRI_RCVR,       null);
-            //addColumn(ColumnDefinition.OPT_RCVRS,      null);
+            //addColumn(ColumnDefinition.RECEIVER,       null);
             addColumn(ColumnDefinition.REQ_MIN,        2.0);
             addColumn(ColumnDefinition.REQ_MAX,        6.0);
             addColumn(ColumnDefinition.ABS_MIN,        1.5);
@@ -183,8 +180,7 @@ class RowDefinition {
             addColumn(ColumnDefinition.FREQ,           null);
             //addColumn(ColumnDefinition.FREQ_RNGE_L,    null);
             //addColumn(ColumnDefinition.FREQ_RNGE_H,    null);
-            addColumn(ColumnDefinition.PRI_RCVR,       null);
-            //addColumn(ColumnDefinition.OPT_RCVRS,      null);
+            //addColumn(ColumnDefinition.RECEIVER,       null);
             addColumn(ColumnDefinition.REQ_MIN,        2.0);
             addColumn(ColumnDefinition.REQ_MAX,        6.0);
             addColumn(ColumnDefinition.ABS_MIN,        1.5);

@@ -73,9 +73,6 @@ class CadenceAdmin(admin.ModelAdmin):
 class Receiver_GroupAdmin(admin.ModelAdmin):
     pass
 
-class Receiver_Group_ReceiverAdmin(admin.ModelAdmin):
-    pass
-
 class Observing_ParameterAdmin(admin.ModelAdmin):
     pass
 
@@ -109,7 +106,6 @@ admin.site.register(Receiver, ReceiverAdmin)
 admin.site.register(Parameter, ParameterAdmin)
 admin.site.register(Cadence, CadenceAdmin)
 admin.site.register(Receiver_Group, Receiver_GroupAdmin)
-admin.site.register(Receiver_Group_Receiver, Receiver_Group_ReceiverAdmin)
 admin.site.register(Observing_Parameter, Observing_ParameterAdmin)
 admin.site.register(Status, StatusAdmin)
 admin.site.register(Window, WindowAdmin)

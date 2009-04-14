@@ -22,7 +22,7 @@ class RowType {
     }
 
     public void populateDefaultValues(HashMap<String, Object> model) {
-        for (String field : getFieldNames()) {
+        for (String field : this.columns.getAllFieldIds()) {
             if (! model.containsKey(field)) {
                 Object value = getValue(field, model);
                 if (value != null) {
@@ -33,23 +33,21 @@ class RowType {
     }
     
     @SuppressWarnings("unchecked")
-	public Field getField(String id) {
-    	return columns.getField(id);
+    public Field getField(String id) {
+        return columns.getField(id);
     }
 
     public Object getValue(String id, Map<String, Object> model) {
         if (model != null && model.get(id) != null) {
             return model.get(id);
         }
-
         if (values.containsKey(id)) {
-            if (values.get(id) != null) {
-                return values.get(id);
+        	Object value = values.get(id);
+            if (value != null) {
+                return value;
             }
-            return columns.getValue(id, this, model);
         }
-
-        return null;
+        return columns.getValue(id, this, model);
     }
 
     public List<String> getRequiredFields() {

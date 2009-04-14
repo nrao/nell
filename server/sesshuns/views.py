@@ -1,6 +1,6 @@
 from django.http              import HttpResponse
 from django_restapi.resource  import Resource
-from server.sesshuns.models   import first, Project, Sesshun, Window
+from server.sesshuns.models   import first, Project, Receiver, Sesshun, Window
 
 from datetime import datetime
 import simplejson as json
@@ -103,3 +103,6 @@ def gen_opportunities(request, *args, **kws):
         return HttpResponse(json.dumps(w.jsondict(generate = True, now = now))
                           , mimetype = "text/plain")
 
+def get_bands(request, *args, **kws):
+    bands = Receiver.get_abbreviations()
+    return HttpResponse(json.dumps(bands))
