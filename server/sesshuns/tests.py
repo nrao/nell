@@ -184,15 +184,40 @@ class TestWindow(NellTestCase):
         w = first(Window.objects.filter(id = self.w.id))
         results = [(o.start_time, o.duration) for o in w.gen_opportunities(start_time)]
 
-        expected = [(datetime(2009, 4, 6, 17, 30), 2.0)
-                  , (datetime(2009, 4, 6, 17, 45), 2.0)
-                  , (datetime(2009, 4, 6, 18,  0), 2.0)
-                  , (datetime(2009, 4, 6, 18, 15), 2.0)
-                  , (datetime(2009, 4, 6, 18, 30), 2.0)
-                  , (datetime(2009, 4, 6, 18, 45), 2.0)
-                  , (datetime(2009, 4, 6, 19,  0), 2.0)
-                  , (datetime(2009, 4, 6, 19, 15), 2.0)
-                    ]
+        expected = [
+                     (datetime(2009, 4, 6, 17, 30), 2.0)
+                   , (datetime(2009, 4, 6, 17, 45), 2.0)
+                   , (datetime(2009, 4, 6, 18, 0), 2.0)
+                   , (datetime(2009, 4, 6, 18, 15), 2.0)
+                   , (datetime(2009, 4, 6, 18, 30), 2.0)
+                   , (datetime(2009, 4, 6, 18, 45), 2.0)
+                   , (datetime(2009, 4, 6, 19, 0), 2.0)
+                   , (datetime(2009, 4, 6, 19, 15), 2.0)
+                   , (datetime(2009, 4, 7, 17, 30), 2.0)
+                   , (datetime(2009, 4, 7, 17, 45), 2.0)
+                   , (datetime(2009, 4, 7, 18, 0), 2.0)
+                   , (datetime(2009, 4, 7, 18, 15), 2.0)
+                   , (datetime(2009, 4, 7, 18, 30), 2.0)
+                   , (datetime(2009, 4, 7, 18, 45), 2.0)
+                   , (datetime(2009, 4, 7, 19, 0), 2.0)
+                   , (datetime(2009, 4, 7, 19, 15), 2.0)
+                   , (datetime(2009, 4, 8, 17, 30), 2.0)
+                   , (datetime(2009, 4, 8, 17, 45), 2.0)
+                   , (datetime(2009, 4, 8, 18, 0), 2.0)
+                   , (datetime(2009, 4, 8, 18, 15), 2.0)
+                   , (datetime(2009, 4, 8, 18, 30), 2.0)
+                   , (datetime(2009, 4, 8, 18, 45), 2.0)
+                   , (datetime(2009, 4, 8, 19, 0), 2.0)
+                   , (datetime(2009, 4, 8, 19, 15), 2.0)
+                   , (datetime(2009, 4, 9, 17, 30), 2.0)
+                   , (datetime(2009, 4, 9, 17, 45), 2.0)
+                   , (datetime(2009, 4, 9, 18, 0), 2.0)
+                   , (datetime(2009, 4, 9, 18, 15), 2.0)
+                   , (datetime(2009, 4, 9, 18, 30), 2.0)
+                   , (datetime(2009, 4, 9, 18, 45), 2.0)
+                   , (datetime(2009, 4, 9, 19, 0), 2.0)
+                   , (datetime(2009, 4, 9, 19, 15), 2.0)
+                   ]
 
         self.assertEqual(expected, results)
 
@@ -222,23 +247,40 @@ class TestWindow(NellTestCase):
 
         expected = {'required'     : True
                   , 'id'           : 1
-                  , 'opportunities': [{'duration'  : 2.0
-                                     , 'start_time': '2009-04-06 17:30:00'}
-                                    , {'duration'  : 2.0
-                                     , 'start_time': '2009-04-06 17:45:00'}
-                                    , {'duration'  : 2.0
-                                     , 'start_time': '2009-04-06 18:00:00'}
-                                    , {'duration'  : 2.0
-                                     , 'start_time': '2009-04-06 18:15:00'}
-                                    , {'duration'  : 2.0
-                                     , 'start_time': '2009-04-06 18:30:00'}
-                                    , {'duration'  : 2.0
-                                     , 'start_time': '2009-04-06 18:45:00'}
-                                    , {'duration'  : 2.0
-                                     , 'start_time': '2009-04-06 19:00:00'}
-                                    , {'duration'  : 2.0
-                                     , 'start_time': '2009-04-06 19:15:00'}
-                                      ]
+                  , 'opportunities': [
+                       {"duration": 2.0, "start_time": "2009-04-06 17:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 17:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 18:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 18:15:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 18:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 18:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 19:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 19:15:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-07 17:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-07 17:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-07 18:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-07 18:15:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-07 18:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-07 18:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-07 19:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-07 19:15:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-08 17:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-08 17:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-08 18:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-08 18:15:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-08 18:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-08 18:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-08 19:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-08 19:15:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-09 17:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-09 17:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-09 18:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-09 18:15:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-09 18:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-09 18:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-09 19:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-09 19:15:00"}
+                                     ]
                     }
         self.assertEqual(expected, results)
 
@@ -367,15 +409,41 @@ class TestWindowGenView(NellTestCase):
         expected = json.dumps({"windows": [{
              "required": True
            , "id": 1
-           , "opportunities": [{"duration": 2.0, "start_time": "2009-04-06 17:30:00"}
-                             , {"duration": 2.0, "start_time": "2009-04-06 17:45:00"}
-                             , {"duration": 2.0, "start_time": "2009-04-06 18:00:00"}
-                             , {"duration": 2.0, "start_time": "2009-04-06 18:15:00"}
-                             , {"duration": 2.0, "start_time": "2009-04-06 18:30:00"}
-                             , {"duration": 2.0, "start_time": "2009-04-06 18:45:00"}
-                             , {"duration": 2.0, "start_time": "2009-04-06 19:00:00"}
-                             , {"duration": 2.0, "start_time": "2009-04-06 19:15:00"}
-                               ]
+           , "opportunities":
+                      [
+                       {"duration": 2.0, "start_time": "2009-04-06 17:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 17:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 18:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 18:15:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 18:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 18:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 19:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 19:15:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-07 17:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-07 17:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-07 18:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-07 18:15:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-07 18:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-07 18:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-07 19:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-07 19:15:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-08 17:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-08 17:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-08 18:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-08 18:15:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-08 18:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-08 18:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-08 19:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-08 19:15:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-09 17:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-09 17:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-09 18:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-09 18:15:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-09 18:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-09 18:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-09 19:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-09 19:15:00"}
+                      ]
                               }
            , {"required": True
             , "id": 2
@@ -391,15 +459,16 @@ class TestWindowGenView(NellTestCase):
         expected = json.dumps({
              "required": True
            , "id": 1
-           , "opportunities": [{"duration": 2.0, "start_time": "2009-04-06 17:30:00"}
-                             , {"duration": 2.0, "start_time": "2009-04-06 17:45:00"}
-                             , {"duration": 2.0, "start_time": "2009-04-06 18:00:00"}
-                             , {"duration": 2.0, "start_time": "2009-04-06 18:15:00"}
-                             , {"duration": 2.0, "start_time": "2009-04-06 18:30:00"}
-                             , {"duration": 2.0, "start_time": "2009-04-06 18:45:00"}
-                             , {"duration": 2.0, "start_time": "2009-04-06 19:00:00"}
-                             , {"duration": 2.0, "start_time": "2009-04-06 19:15:00"}
-                               ]
+           , "opportunities":
+                      [{"duration": 2.0, "start_time": "2009-04-06 17:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 17:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 18:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 18:15:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 18:30:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 18:45:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 19:00:00"}
+                     , {"duration": 2.0, "start_time": "2009-04-06 19:15:00"}
+                      ]
                               }
                              )
         self.assertTrue(expected, response.content)
@@ -472,7 +541,8 @@ class TestOpportunityGenerator(NellTestCase):
 
         results  = [(o.start_time, o.duration) for o in og.generate(gen_opp, s, ha_limit)]
 
-        expected = [(datetime(2009, 4, 6, 15, 15), 2.0)
+        expected = [
+                    (datetime(2009, 4, 6, 15, 15), 2.0)
                   , (datetime(2009, 4, 6, 15, 30), 2.0)
                   , (datetime(2009, 4, 6, 15, 45), 2.0)
                   , (datetime(2009, 4, 6, 16, 0 ), 2.0)
@@ -496,6 +566,78 @@ class TestOpportunityGenerator(NellTestCase):
                   , (datetime(2009, 4, 6, 20, 30), 2.0)
                   , (datetime(2009, 4, 6, 20, 45), 2.0)
                   , (datetime(2009, 4, 6, 21, 0 ), 2.0)
-                    ]
+                  , (datetime(2009, 4, 7, 15, 15), 2.0)
+                  , (datetime(2009, 4, 7, 15, 30), 2.0)
+                  , (datetime(2009, 4, 7, 15, 45), 2.0)
+                  , (datetime(2009, 4, 7, 16, 0), 2.0)
+                  , (datetime(2009, 4, 7, 16, 15), 2.0)
+                  , (datetime(2009, 4, 7, 16, 30), 2.0)
+                  , (datetime(2009, 4, 7, 16, 45), 2.0)
+                  , (datetime(2009, 4, 7, 17, 0), 2.0)
+                  , (datetime(2009, 4, 7, 17, 15), 2.0)
+                  , (datetime(2009, 4, 7, 17, 30), 2.0)
+                  , (datetime(2009, 4, 7, 17, 45), 2.0)
+                  , (datetime(2009, 4, 7, 18, 0), 2.0)
+                  , (datetime(2009, 4, 7, 18, 15), 2.0)
+                  , (datetime(2009, 4, 7, 18, 30), 2.0)
+                  , (datetime(2009, 4, 7, 18, 45), 2.0)
+                  , (datetime(2009, 4, 7, 19, 0), 2.0)
+                  , (datetime(2009, 4, 7, 19, 15), 2.0)
+                  , (datetime(2009, 4, 7, 19, 30), 2.0)
+                  , (datetime(2009, 4, 7, 19, 45), 2.0)
+                  , (datetime(2009, 4, 7, 20, 0), 2.0)
+                  , (datetime(2009, 4, 7, 20, 15), 2.0)
+                  , (datetime(2009, 4, 7, 20, 30), 2.0)
+                  , (datetime(2009, 4, 7, 20, 45), 2.0)
+                  , (datetime(2009, 4, 7, 21, 0), 2.0)
+                  , (datetime(2009, 4, 8, 15, 15), 2.0)
+                  , (datetime(2009, 4, 8, 15, 30), 2.0)
+                  , (datetime(2009, 4, 8, 15, 45), 2.0)
+                  , (datetime(2009, 4, 8, 16, 0), 2.0)
+                  , (datetime(2009, 4, 8, 16, 15), 2.0)
+                  , (datetime(2009, 4, 8, 16, 30), 2.0)
+                  , (datetime(2009, 4, 8, 16, 45), 2.0)
+                  , (datetime(2009, 4, 8, 17, 0), 2.0)
+                  , (datetime(2009, 4, 8, 17, 15), 2.0)
+                  , (datetime(2009, 4, 8, 17, 30), 2.0)
+                  , (datetime(2009, 4, 8, 17, 45), 2.0)
+                  , (datetime(2009, 4, 8, 18, 0), 2.0)
+                  , (datetime(2009, 4, 8, 18, 15), 2.0)
+                  , (datetime(2009, 4, 8, 18, 30), 2.0)
+                  , (datetime(2009, 4, 8, 18, 45), 2.0)
+                  , (datetime(2009, 4, 8, 19, 0), 2.0)
+                  , (datetime(2009, 4, 8, 19, 15), 2.0)
+                  , (datetime(2009, 4, 8, 19, 30), 2.0)
+                  , (datetime(2009, 4, 8, 19, 45), 2.0)
+                  , (datetime(2009, 4, 8, 20, 0), 2.0)
+                  , (datetime(2009, 4, 8, 20, 15), 2.0)
+                  , (datetime(2009, 4, 8, 20, 30), 2.0)
+                  , (datetime(2009, 4, 8, 20, 45), 2.0)
+                  , (datetime(2009, 4, 8, 21, 0), 2.0)
+                  , (datetime(2009, 4, 9, 15, 0), 2.0)
+                  , (datetime(2009, 4, 9, 15, 15), 2.0)
+                  , (datetime(2009, 4, 9, 15, 30), 2.0)
+                  , (datetime(2009, 4, 9, 15, 45), 2.0)
+                  , (datetime(2009, 4, 9, 16, 0), 2.0)
+                  , (datetime(2009, 4, 9, 16, 15), 2.0)
+                  , (datetime(2009, 4, 9, 16, 30), 2.0)
+                  , (datetime(2009, 4, 9, 16, 45), 2.0)
+                  , (datetime(2009, 4, 9, 17, 0), 2.0)
+                  , (datetime(2009, 4, 9, 17, 15), 2.0)
+                  , (datetime(2009, 4, 9, 17, 30), 2.0)
+                  , (datetime(2009, 4, 9, 17, 45), 2.0)
+                  , (datetime(2009, 4, 9, 18, 0), 2.0)
+                  , (datetime(2009, 4, 9, 18, 15), 2.0)
+                  , (datetime(2009, 4, 9, 18, 30), 2.0)
+                  , (datetime(2009, 4, 9, 18, 45), 2.0)
+                  , (datetime(2009, 4, 9, 19, 0), 2.0)
+                  , (datetime(2009, 4, 9, 19, 15), 2.0)
+                  , (datetime(2009, 4, 9, 19, 30), 2.0)
+                  , (datetime(2009, 4, 9, 19, 45), 2.0)
+                  , (datetime(2009, 4, 9, 20, 0), 2.0)
+                  , (datetime(2009, 4, 9, 20, 15), 2.0)
+                  , (datetime(2009, 4, 9, 20, 30), 2.0)
+                  , (datetime(2009, 4, 9, 20, 45), 2.0)
+                   ]
 
         self.assertEqual(expected, results)
