@@ -116,19 +116,31 @@ class DSSPrime2DSS(object):
 
             for c in self.cursor.fetchall():
                 cad = Cadence(session = s
-                            , start_date = row[2]
-                            , end_date   = row[3]
-                            , repeats    = row[4]
-                            , intervals  = row[5]
+                            , start_date = c[2]
+                            , end_date   = c[3]
+                            , repeats    = c[4]
+                            , intervals  = c[5]
                               )
+                cad.save()
 
-            """
             query = "SELECT id FROM receiver_groups WHERE session_id = %s" % s_id_prime
             self.cursor.execute(query)
 
-            for id for self.cursor.fetchall():
-            """
-                
+            for id in self.cursor.fetchall():
+                rg = Receiver_Group(session = s)
+                rg.save()
+
+                query = """SELECT receivers.name
+                           FROM rg_receiver
+                           INNER JOIN receivers ON rg_receiver.receiver_id = receivers.id
+                           WHERE group_id = %s
+                        """ % id
+                self.cursor.execute(query)
+
+                for r_name in self.cursor.fetchall():
+                    rcvr = first(Receiver.objects.filter(name = r_name[0]))
+                    rg.receivers.add(rcvr)
+                rg.save()
                 
         #self.populate_windows()
 
