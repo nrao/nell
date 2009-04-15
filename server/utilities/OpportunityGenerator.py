@@ -38,7 +38,7 @@ class OpportunityGenerator:
         orig_start = datetime(window.start_time.year,
                               window.start_time.month,
                               window.start_time.day)
-        orig_end   = orig_start + timedelta(days = window.duration)
+        orig_end   = orig_start + timedelta(hours = window.duration)
 
         start_day = max( datetime(orig_start.year,
                                   orig_start.month,
