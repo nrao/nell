@@ -2,11 +2,12 @@ from datetime           import datetime, timedelta
 from django.test.client import Client
 import simplejson as json
 
-from sesshuns.models                       import *
-from server.test_utils.NellTestCase        import NellTestCase
-from server.utilities.DBReporter           import DBReporter
-from server.utilities.Generate             import Generate
-from server.utilities.OpportunityGenerator import OpportunityGenerator, GenOpportunity
+from sesshuns.models                        import *
+from server.test_utils.NellTestCase         import NellTestCase
+from server.utilities.DBReporter            import DBReporter
+from server.utilities.Generate              import Generate
+from server.utilities.OpportunityGenerator  import OpportunityGenerator, GenOpportunity
+from server.utilities.database              import DSSPrime2DSS
 
 # Test field data
 fdata = {"total_time": "3"
@@ -508,3 +509,9 @@ class TestDBReporter(NellTestCase):
         "Simply make sure that no exceptions are raised."
         db = DBReporter(quiet=True)
         db.report()
+
+class TestDSSPrime2DSS(NellTestCase):
+
+    def test_DSSPrime2DSS(self):
+        t = DSSPrime2DSS()
+        t.transfer()

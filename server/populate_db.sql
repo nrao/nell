@@ -30,6 +30,8 @@ INSERT INTO session_types VALUES (DEFAULT, 'vlbi');
 INSERT INTO session_types VALUES (DEFAULT, 'maintenance');
 INSERT INTO session_types VALUES (DEFAULT, 'commissioning');
 
+INSERT INTO observing_types VALUES (DEFAULT, 'radar');
+INSERT INTO observing_types VALUES (DEFAULT, 'vlbi');
 INSERT INTO observing_types VALUES (DEFAULT, 'pulsar');
 INSERT INTO observing_types VALUES (DEFAULT, 'continuum');
 INSERT INTO observing_types VALUES (DEFAULT, 'spectral line');
@@ -67,6 +69,8 @@ INSERT INTO systems VALUES (DEFAULT, 'ApparentRaDec', 'ra',  'dec');
 INSERT INTO systems VALUES (DEFAULT, 'CableWrap',     'az',  'el');
 INSERT INTO systems VALUES (DEFAULT, 'Encoder',       'az',  'el');
 
+INSERT INTO parameters VALUES (DEFAULT, 'UTC Flag', 'boolean');
+INSERT INTO parameters VALUES (DEFAULT, 'Night-time Flag', 'boolean');
 INSERT INTO parameters VALUES (DEFAULT, 'Obs Eff Limit', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Atmos St Limit', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Tr Err Limit', 'float');

@@ -4,6 +4,7 @@ import com.extjs.gxt.ui.client.event.ComponentEvent;
 import com.extjs.gxt.ui.client.event.KeyListener;
 import com.extjs.gxt.ui.client.widget.form.TextField;
 import com.extjs.gxt.ui.client.widget.toolbar.AdapterToolItem;
+import com.google.gwt.user.client.Window;
 
 public class FilterItem extends AdapterToolItem {
 	@SuppressWarnings("unchecked")
@@ -18,12 +19,13 @@ public class FilterItem extends AdapterToolItem {
 		textField.addKeyListener(new KeyListener() {
 			@Override
 			public void componentKeyPress(ComponentEvent e) {
+				/*
 				// Note: entry does NOT hold the current key stroke
 				String entry = textField.getValue();
 				if (entry == null) {
 					entry = "";
 				}
-
+				
 				// Handle the newly added character and possible backspaces
 				String filter;
 				int keycode = e.getKeyCode();
@@ -36,8 +38,13 @@ public class FilterItem extends AdapterToolItem {
 				} else {
 					filter = entry;
 				}
-				sx.filterSessions(filter);
-				focus();
+				*/
+				//System.out.print(e.getKeyCode());
+				if (e.getKeyCode() == 13) {
+					sx.filterSessions(textField.getValue());
+				}
+				//focus();
+				
 			}
 		});
 	}

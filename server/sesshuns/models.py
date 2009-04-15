@@ -10,6 +10,24 @@ import sys
 def first(results, default = None):
     return default if len(results) == 0 else results[0]
 
+class User(models.Model):
+    original_id = models.IntegerField()
+    pst_id      = models.IntegerField(null = True)
+    username    = models.CharField(max_length = 32, null = True)
+    sancioned   = models.BooleanField()
+    first_name  = models.CharField(max_length = 32)
+    last_name   = models.CharField(max_length = 150)
+
+    def __str__(self):
+        return "%s, %s" % (self.last_name, self.first_name)
+
+    class Meta:
+        db_table = "users"
+
+class Email(models.Model):
+    user  = models.ForeignKey(User)
+    email = models.CharField(max_length = 255)
+
 class Semester(models.Model):
     semester = models.CharField(max_length = 64)
 
@@ -47,7 +65,6 @@ class Allotment(models.Model):
 class Project(models.Model):
     semester     = models.ForeignKey(Semester)
     project_type = models.ForeignKey(Project_Type)
-    #allotment    = models.ForeignKey(Allotment)
     allotments   = models.ManyToManyField(Allotment)
     pcode        = models.CharField(max_length = 32)
     name         = models.CharField(max_length = 150)
@@ -60,8 +77,22 @@ class Project(models.Model):
     def __unicode__(self):
         return "%s, %s, %s" % (self.name, self.semester, self.pcode)
 
+    def __str__(self):
+        return self.pcode
+    
     class Meta:
         db_table = "projects"
+
+class Investigators(models.Model):
+    project           = models.ForeignKey(Project)
+    user              = models.ForeignKey(User)
+    friend            = models.BooleanField(default = False)
+    observer          = models.BooleanField(default = False)
+    principal_contact = models.BooleanField(default = False)
+    priority          = models.IntegerField(default = 1)
+
+    class Meta:
+        db_table = "investigators"
 
 class Session_Type(models.Model):
     type = models.CharField(max_length = 64)
@@ -567,6 +598,12 @@ class Target(models.Model):
     source     = models.CharField(null = True, max_length = 32)
     vertical   = models.FloatField()
     horizontal = models.FloatField()
+
+    def __str__(self):
+        return "%s at %s : %s" % (self.source
+                                , self.vertical
+                                , self.horizontal
+                                  )
 
     def __unicode__(self):
         return "%s @ (%5.2f, %5.2f), Sys: %s" % \
