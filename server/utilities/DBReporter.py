@@ -28,9 +28,9 @@ class DBReporter:
 
     def printLines(self):
         
-        #if not self.quiet:
-        #    print self.lines
-
+        if not self.quiet:
+            print self.lines
+            
         if self.filename:
             f = file(self.filename, 'w')
             f.writelines(self.lines)
@@ -142,12 +142,12 @@ class DBReporter:
         projHeaders = ["Code", "Name", "Rk?", "Grade(s)", "PI", "Total"
                      , "B/D?", "Sched.", "Rcvr(s)", "Backends", "Obs Type"
                      , "Proj Type"]
-        projHeaderCols = [12, 15, 3, 8, 12, 5, 5, 5, 12, 12, 12]
+        projHeaderCols = [12, 76, 3, 8, 12, 5, 5, 5, 12, 12, 12]
         # Session Header:
         # name?, #, len(hrs), LST, +/- (?), Sep, Del, Cmpl, TotHrs, lobs, 
         # Comment, Grade, Alloc, B/D, Sched, Bands, Backedns, Req, Outer#, Sep 
         sessHeaders = ["" "Name", "#", "len(hrs)", "LST", "+/-", "?", "Sep(d)", "Del(?)", "Completed", "TotalTime", "LastObs", "Comment (?)", "Grade", "Alloc?", "B\D?", "Scheduled", "Rcvrs", "Backends", "Req", "Outer#?", "Sep?"]
-        sessCols = [4, 12, 1, 8, 12, 3, 1, 6, 6, 9, 9, 7, 12, 5, 6, 4, 8, 15, 8, 3, 5, 5]
+        sessCols = [4, 14, 1, 8, 12, 3, 1, 6, 6, 9, 9, 7, 12, 5, 6, 4, 8, 15, 8, 3, 5, 5]
         # Trimester Footer:
         # # proposals, total time, time remaining, # proposals started (?)
         semesterFooter = ["Total #", "TotalTime", "Remaining"]
@@ -271,10 +271,12 @@ class DBReporter:
         self.add("\n" + title + "\n") 
         self.printData([header, "#", "Hrs"], cols, True)
         for k in keys:
-            self.add(" ".join([k.rjust(cols[0]), str(info[k][0]).rjust(cols[1]), str(info[k][1]).rjust(cols[2])]) + "\n")
+            self.add(" ".join([k[0:cols[0]].rjust(cols[0]), \
+                               str(info[k][0])[0:cols[1]].rjust(cols[1]), \
+                               str(info[k][1])[0:cols[2]].rjust(cols[2])]) + "\n")
 
     def printData(self, data, cols, header = False):
-        self.add(" ".join([h.rjust(c) for h, c in zip(data, cols)]) + "\n")
+        self.add(" ".join([h[0:c].rjust(c) for h, c in zip(data, cols)]) + "\n")
         if header:
             self.add(("-" * (sum(cols) + len(cols))) + "\n")
         
