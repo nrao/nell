@@ -139,10 +139,10 @@ class DBReporter:
         # Project Header:
         # Code, Title, Rk, Grade, PI, Alloc. time, B/D (?), Sched. time, Bands, 
         # Backends, Obs Type, Prop. Type
-        projHeaders = ["Code", "Name", "Rk?", "Grade(s)", "PI", "Total"
-                     , "B/D?", "Sched.", "Rcvr(s)", "Backends", "Obs Type"
-                     , "Proj Type"]
-        projHeaderCols = [12, 76, 3, 8, 12, 5, 5, 5, 12, 12, 12]
+        projHeaders = ["Proposal", "Title", "P.I.", "Rk", "G", "Alloc"
+                     , "B/D", "Sched", "Bands", "Back Ends", "Obs Type"
+                     , "T-J"]
+        projHeaderCols = [12, 76, 24, 3, 1, 5, 5, 5, 12, 12, 12, 3]
         # Session Header:
         # name?, #, len(hrs), LST, +/- (?), Sep, Del, Cmpl, TotHrs, lobs, 
         # Comment, Grade, Alloc, B/D, Sched, Bands, Backedns, Req, Outer#, Sep 
@@ -154,27 +154,37 @@ class DBReporter:
         semesterCols = [7, 9, 9]
 
         for sem in semesters:
-            self.add("Trimester: %s\n" % sem.semester)
+            self.add("Trimester: %s\n\n" % sem.semester)
             s = Semester.objects.get(semester = sem)
             # get the projects for this semester
             projs = Project.objects.filter(semester = s).order_by("pcode")
             if len(projs) > 0:
                 self.printData(projHeaders, projHeaderCols, True) 
              
+            # TBF: time accounting: Carl isn't giving us history here
+            # so if a project was allotted 30 hours, and used up 18,
+            # we'll just see that it was allotted 12 ...
             for proj in projs:
+                pi = proj.principal_contact()
+                if pi is None:
+                    pi = ""
+                else:
+                    pi = pi.__str__()
                 # for each proj, print summary
                 projData = [proj.pcode
                           , proj.name
-                          , "?"
-                          , "TBF" #proj.letter_grades()
-                          , "TBF"
+                          , pi   
+                          , "N/A" # DSS doesn't care about ranke
+                          , "" #TBF: Carl doesn't list project grade
                           , "%5.2f" % self.ta.getProjectTotalTime(proj)
-                          , "?"
-                          , "TBF"
-                          , "TBF"
-                          , "N/A"
-                          , "TBF"
-                          , str(proj.project_type)]
+                          , "N/A" #TBF: how to map B/D?
+                          , "" # Carl leaves these blank instead of zero
+                          , self.getCarlRcvrs(proj.rcvrs_specified())
+                          , "N/A" # DSS doesn't care about back ends
+                          , "TBF" # TBF: how to map these to our Session types?
+                          , "TBF" # TBF: what to do with these?
+                          ]
+                print projData          
                 self.printData(projData, projHeaderCols)          
 
                 ss = proj.sesshun_set.order_by("name")
@@ -279,4 +289,8 @@ class DBReporter:
         self.add(" ".join([h[0:c].rjust(c) for h, c in zip(data, cols)]) + "\n")
         if header:
             self.add(("-" * (sum(cols) + len(cols))) + "\n")
-        
+
+    def getCarlRcvrs(self, rcvrs):
+        "Given an array of DSS rcvr names, return concated Carl version."
+        # TBF: convert to Carl abbreviations
+        return "".join(rcvrs)
