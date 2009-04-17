@@ -46,7 +46,7 @@ class DBReporter:
         self.add("\n*** Projects ***\n")
         self.add("Total # of Projects: %d, Total Hrs: %5.2f\n\n" % (numProjs, totalProjHrs))
     
-        semesters = Semester.objects.all()
+        semesters = Semester.objects.all().order_by('semester')
         proj_types = Project_Type.objects.all()
     
 
@@ -146,8 +146,8 @@ class DBReporter:
         # Session Header:
         # name?, #, len(hrs), LST, +/- (?), Sep, Del, Cmpl, TotHrs, lobs, 
         # Comment, Grade, Alloc, B/D, Sched, Bands, Backedns, Req, Outer#, Sep 
-        sessHeaders = ["" "Name", "#", "len(hrs)", "LST", "+/-", "?", "Sep(d)", "Del(?)", "Completed", "TotalTime", "LastObs", "Comment (?)", "Grade", "Alloc?", "B\D?", "Scheduled", "Rcvrs", "Backends", "Req", "Outer#?", "Sep?"]
-        sessCols = [4, 14, 1, 8, 12, 3, 1, 6, 6, 9, 9, 7, 12, 5, 6, 4, 8, 15, 8, 3, 5, 5]
+        sessHeaders = ["Name", "#", "Len(hrs)", "LST", "+/-", "Sep(d)", "Del(d)", "Compl", "TotHrs", "lobs", "Comment", "G", "Alloc", "B\D", "Sched", "Bands", "Back Ends", "Req", "Outer#", "Sep"]
+        sessCols = [14, 1, 8, 12, 3, 6, 6, 5, 6, 9, 12, 1, 5, 3, 5, 8, 9, 8, 3, 5]
         # Trimester Footer:
         # # proposals, total time, time remaining, # proposals started (?)
         semesterFooter = ["Total #", "TotalTime", "Remaining"]
@@ -195,27 +195,28 @@ class DBReporter:
 
                 for s in ss:    
                     # for each session, print summary
-                    sData = [""
-                           , s.name # s.unique_name()
-                           , "?"
-                           , "?"
-                           , "?"
-                           , "?"
-                           , "?"
-                           , "?"
-                           , "TBF"
+                    sData = [
+                             s.name # s.unique_name()
+                           , "%d" % self.getCarlRepeats(s) 
+                           , "%5.2f" % self.getCarlLenHrs(s)
+                           , "TBF" # how to compute LST?
+                           , "TBF" # how to compute LST range?
+                           , "TBF" # use cadence interval?
+                           , "0" # TBF: del always zero?
+                           , "TBF" # TBF WTF?
                            , "%5.2f" % s.allotment.total_time
-                           , "TBF"
-                           , "?"
+                           , "N/A" # last obs. unknown cause no history
+                           , self.getCarlSessionComment(s)
                            , s.letter_grade()
-                           , "?"
-                           , "?"
-                           , "?"
-                           , s.receiver_list()
+                           , "%5.2f" % s.allotment.total_time
                            , "N/A"
-                           , "?"
-                           , "?"
-                           , "?"]
+                           , ""
+                           , self.getCarlRcvrs(s.rcvrs_specified())
+                           , "N/A"
+                           , "TBF"
+                           , "TBF"
+                           , "TBF"]
+
                     self.printData(sData, sessCols)    
 
 
@@ -294,3 +295,23 @@ class DBReporter:
         "Given an array of DSS rcvr names, return concated Carl version."
         # TBF: convert to Carl abbreviations
         return "".join(rcvrs)
+
+    def getCarlRepeats(self, sess):
+        # assume one or no cadences
+        cs = sess.cadence_set.all()
+        if len(cs) == 1:
+            return cs[0].repeats
+        else:
+            return 0
+
+    def getCarlSessionComment(self, sess):
+        # TBF: get source name, position ...
+        return ""
+
+    def getCarlLenHrs(self, sess):
+        # TBF: is this right?
+        repeats = self.getCarlRepeats(sess)
+        if repeats != 0:
+            return sess.allotment.total_time/repeats
+        else:
+            return 0
