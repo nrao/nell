@@ -12,6 +12,7 @@ class DSSPrime2DSS(object):
                      , user = "dss"
                      , passwd = "asdf5!"
                      , database = "dss_prime"
+                     , silent   = True
                  ):
         self.db = m.connect(host   = host
                           , user   = user
@@ -19,6 +20,7 @@ class DSSPrime2DSS(object):
                           , db     = database
                             )
         self.cursor = self.db.cursor()
+        self.silent = silent
 
     def __del__(self):
         self.cursor.close()
@@ -223,7 +225,8 @@ class DSSPrime2DSS(object):
                 try:
                     psc, total, max_sem, grade = map(float, row[2:])
                 except TypeError:
-                    print "No alloment for project", p.pcode
+                    if not self.silent:
+                        print "No alloment for project", p.pcode
                 else:
                     a = Allotment(psc_time          = psc
                                 , total_time        = total

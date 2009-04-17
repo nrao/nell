@@ -194,7 +194,7 @@ class TestWindow(NellTestCase):
         start_time = datetime(2009, 4, 6, 12)
         o = Opportunity(window     = self.w
                       , start_time = start_time
-                      , duration   = 4)
+                      , duration   = 4 * 24)
         o.save()
 
         w = first(Window.objects.filter(id = self.w.id))
@@ -258,6 +258,8 @@ class TestWindow(NellTestCase):
 
         s = w.session
         s.session_type = first(Session_Type.objects.filter(type = 'windowed'))
+        o.duration *= 24
+        o.save()
 
         results = w.jsondict(generate = True, now = start_time)
 
@@ -418,7 +420,7 @@ class TestWindowGenView(NellTestCase):
         start_time = datetime(2009, 4, 6, 12)
         o = Opportunity(window     = self.w
                       , start_time = start_time
-                      , duration   = 4)
+                      , duration   = 4 * 24)
         o.save()
         s = self.w.session
         s.session_type = first(Session_Type.objects.filter(type = 'windowed'))
@@ -429,7 +431,7 @@ class TestWindowGenView(NellTestCase):
         start_time = datetime(2009, 5, 6, 12)
         o = Opportunity(window     = self.w2
                       , start_time = start_time
-                      , duration   = 4)
+                      , duration   = 4 * 24)
         o.save()
 
     def test_read(self):
@@ -440,48 +442,45 @@ class TestWindowGenView(NellTestCase):
              "required": True
            , "id": 1
            , "opportunities":
-                      [
-                       {"duration": 2.0, "start_time": "2009-04-06 17:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 17:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 18:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 18:15:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 18:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 18:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 19:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 19:15:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-07 17:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-07 17:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-07 18:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-07 18:15:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-07 18:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-07 18:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-07 19:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-07 19:15:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-08 17:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-08 17:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-08 18:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-08 18:15:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-08 18:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-08 18:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-08 19:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-08 19:15:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-09 17:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-09 17:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-09 18:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-09 18:15:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-09 18:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-09 18:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-09 19:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-09 19:15:00"}
-                      ]
-                              }
-           , {"required": True
-            , "id": 2
-            , "opportunities": [{"duration": 4.0, "start_time": "2009-05-06 12:00:00", "id": 2}]
-                                 }
-                                ]
-              }
-             )
+                 [{"duration": 2.0, "start_time": "2009-04-06 17:30:00"}
+                , {"duration": 2.0, "start_time": "2009-04-06 17:45:00"}
+                , {"duration": 2.0, "start_time": "2009-04-06 18:00:00"}
+                , {"duration": 2.0, "start_time": "2009-04-06 18:15:00"}
+                , {"duration": 2.0, "start_time": "2009-04-06 18:30:00"}
+                , {"duration": 2.0, "start_time": "2009-04-06 18:45:00"}
+                , {"duration": 2.0, "start_time": "2009-04-06 19:00:00"}
+                , {"duration": 2.0, "start_time": "2009-04-06 19:15:00"}
+                , {"duration": 2.0, "start_time": "2009-04-07 17:30:00"}
+                , {"duration": 2.0, "start_time": "2009-04-07 17:45:00"}
+                , {"duration": 2.0, "start_time": "2009-04-07 18:00:00"}
+                , {"duration": 2.0, "start_time": "2009-04-07 18:15:00"}
+                , {"duration": 2.0, "start_time": "2009-04-07 18:30:00"}
+                , {"duration": 2.0, "start_time": "2009-04-07 18:45:00"}
+                , {"duration": 2.0, "start_time": "2009-04-07 19:00:00"}
+                , {"duration": 2.0, "start_time": "2009-04-07 19:15:00"}
+                , {"duration": 2.0, "start_time": "2009-04-08 17:30:00"}
+                , {"duration": 2.0, "start_time": "2009-04-08 17:45:00"}
+                , {"duration": 2.0, "start_time": "2009-04-08 18:00:00"}
+                , {"duration": 2.0, "start_time": "2009-04-08 18:15:00"}
+                , {"duration": 2.0, "start_time": "2009-04-08 18:30:00"}
+                , {"duration": 2.0, "start_time": "2009-04-08 18:45:00"}
+                , {"duration": 2.0, "start_time": "2009-04-08 19:00:00"}
+                , {"duration": 2.0, "start_time": "2009-04-08 19:15:00"}
+                , {"duration": 2.0, "start_time": "2009-04-09 17:30:00"}
+                , {"duration": 2.0, "start_time": "2009-04-09 17:45:00"}
+                , {"duration": 2.0, "start_time": "2009-04-09 18:00:00"}
+                , {"duration": 2.0, "start_time": "2009-04-09 18:15:00"}
+                , {"duration": 2.0, "start_time": "2009-04-09 18:30:00"}
+                , {"duration": 2.0, "start_time": "2009-04-09 18:45:00"}
+                , {"duration": 2.0, "start_time": "2009-04-09 19:00:00"}
+                , {"duration": 2.0, "start_time": "2009-04-09 19:15:00"}
+                  ]
+             }
+          , {"required": True
+           , "id": 2
+           , "opportunities": [{"duration": 96.0, "start_time": "2009-05-06 12:00:00", "id": 2}]}]
+                               }
+                              )
         self.assertEqual(expected, response.content)
 
         response = self.client.get('/gen_opportunities/1')
@@ -564,7 +563,7 @@ class TestOpportunityGenerator(NellTestCase):
 
     def test_generate(self):
         now      = datetime(2009, 4, 6, 15, 15)
-        gen_opp  = GenOpportunity(start_time = now, duration = 4)
+        gen_opp  = GenOpportunity(start_time = now, duration = 4 * 24)
         og       = OpportunityGenerator(now)
         ha_limit = 3 #hrs
         s        = first(Sesshun.objects.all())
