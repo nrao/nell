@@ -81,6 +81,26 @@ class Project(models.Model):
     def __str__(self):
         return self.pcode
     
+    def principal_contact(self):
+        "Who is the principal contact for this Project?"
+        pc = None
+        for inv in self.investigators_set.all():
+            # if more then one, it's arbitrary
+            if inv.principal_contact:
+                pc = inv.user
+        return pc        
+
+    def rcvrs_specified(self):
+        "Returns an array of rcvrs for this project, w/ out their relations"
+        # For use in recreating Carl's reports
+        rcvrs = []
+        for s in self.sesshun_set.all():
+            rs = s.rcvrs_specified()
+            for r in rs:
+                if r not in rcvrs:
+                    rcvrs.append(r)
+        return rcvrs            
+
     class Meta:
         db_table = "projects"
 
@@ -91,6 +111,15 @@ class Investigators(models.Model):
     observer          = models.BooleanField(default = False)
     principal_contact = models.BooleanField(default = False)
     priority          = models.IntegerField(default = 1)
+
+    def __unicode__(self):
+        return "%s (%d) for %s; fr : %s, obs : %s, PI : %s" % \
+            ( self.user
+            , self.user.id
+            , self.project.pcode
+            , self.friend
+            , self.observer
+            , self.principal_contact )
 
     class Meta:
         db_table = "investigators"
@@ -180,6 +209,17 @@ class Sesshun(models.Model):
         "Returns a string representation of the rcvr logic."
         return " AND ".join([rg.__str__() for rg in self.receiver_group_set.all()])
 
+    def rcvrs_specified(self):
+        "Returns an array of rcvrs for this sesshun, w/ out their relations"
+        # For use in recreating Carl's reports
+        rcvrs = []
+        for rg in self.receiver_group_set.all():
+            rs = [r.abbreviation for r in rg.receivers.all()]
+            for r in rs:
+                if r not in rcvrs:
+                    rcvrs.append(r)
+        return rcvrs        
+        
     def letter_grade(self):
         return self.grade_float_2_abc(self.allotment.grade)
 

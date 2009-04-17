@@ -28,9 +28,9 @@ class DBReporter:
 
     def printLines(self):
         
-        #if not self.quiet:
-        #    print self.lines
-
+        if not self.quiet:
+            print self.lines
+            
         if self.filename:
             f = file(self.filename, 'w')
             f.writelines(self.lines)
@@ -46,7 +46,7 @@ class DBReporter:
         self.add("\n*** Projects ***\n")
         self.add("Total # of Projects: %d, Total Hrs: %5.2f\n\n" % (numProjs, totalProjHrs))
     
-        semesters = Semester.objects.all()
+        semesters = Semester.objects.all().order_by('semester')
         proj_types = Project_Type.objects.all()
     
 
@@ -92,7 +92,7 @@ class DBReporter:
         self.printInfo(info, "Sessions By Backup:", "Backup") 
         info = self.binSesshun(sess, bools, "scheduable", True) 
         self.printInfo(info, "Sessions By Scheduable:", "Scheduable") 
-
+         
         # gather stats on windows - how many, how many hrs, etc
         # TBF: what to do with cadence?
         wins = Window.objects.all()
@@ -139,42 +139,52 @@ class DBReporter:
         # Project Header:
         # Code, Title, Rk, Grade, PI, Alloc. time, B/D (?), Sched. time, Bands, 
         # Backends, Obs Type, Prop. Type
-        projHeaders = ["Code", "Name", "Rk?", "Grade(s)", "PI", "Total"
-                     , "B/D?", "Sched.", "Rcvr(s)", "Backends", "Obs Type"
-                     , "Proj Type"]
-        projHeaderCols = [12, 15, 3, 8, 12, 5, 5, 5, 12, 12, 12]
+        projHeaders = ["Proposal", "Title", "P.I.", "Rk", "G", "Alloc"
+                     , "B/D", "Sched", "Bands", "Back Ends", "Obs Type"
+                     , "T-J"]
+        projHeaderCols = [12, 76, 24, 3, 1, 5, 5, 5, 12, 12, 12, 3]
         # Session Header:
         # name?, #, len(hrs), LST, +/- (?), Sep, Del, Cmpl, TotHrs, lobs, 
         # Comment, Grade, Alloc, B/D, Sched, Bands, Backedns, Req, Outer#, Sep 
-        sessHeaders = ["" "Name", "#", "len(hrs)", "LST", "+/-", "?", "Sep(d)", "Del(?)", "Completed", "TotalTime", "LastObs", "Comment (?)", "Grade", "Alloc?", "B\D?", "Scheduled", "Rcvrs", "Backends", "Req", "Outer#?", "Sep?"]
-        sessCols = [4, 12, 1, 8, 12, 3, 1, 6, 6, 9, 9, 7, 12, 5, 6, 4, 8, 15, 8, 3, 5, 5]
+        sessHeaders = ["Name", "#", "Len(hrs)", "LST", "+/-", "Sep(d)", "Del(d)", "Compl", "TotHrs", "lobs", "Comment", "G", "Alloc", "B\D", "Sched", "Bands", "Back Ends", "Req", "Outer#", "Sep"]
+        sessCols = [14, 3, 8, 12, 3, 6, 6, 5, 6, 9, 30, 1, 5, 3, 5, 8, 9, 8, 3, 5]
         # Trimester Footer:
         # # proposals, total time, time remaining, # proposals started (?)
         semesterFooter = ["Total #", "TotalTime", "Remaining"]
         semesterCols = [7, 9, 9]
 
         for sem in semesters:
-            self.add("Trimester: %s\n" % sem.semester)
+            self.add("\nTrimester: %s\n\n" % sem.semester)
             s = Semester.objects.get(semester = sem)
             # get the projects for this semester
             projs = Project.objects.filter(semester = s).order_by("pcode")
             if len(projs) > 0:
                 self.printData(projHeaders, projHeaderCols, True) 
              
+            # TBF: time accounting: Carl isn't giving us history here
+            # so if a project was allotted 30 hours, and used up 18,
+            # we'll just see that it was allotted 12 ...
             for proj in projs:
+                pi = proj.principal_contact()
+                if pi is None:
+                    pi = ""
+                else:
+                    pi = pi.__str__()
                 # for each proj, print summary
                 projData = [proj.pcode
                           , proj.name
-                          , "?"
-                          , "TBF" #proj.letter_grades()
-                          , "TBF"
+                          , pi   
+                          , "N/A" # DSS doesn't care about ranke
+                          , "" #TBF: Carl doesn't list project grade
                           , "%5.2f" % self.ta.getProjectTotalTime(proj)
-                          , "?"
-                          , "TBF"
-                          , "TBF"
-                          , "N/A"
-                          , "TBF"
-                          , str(proj.project_type)]
+                          , "N/A" #TBF: how to map B/D?
+                          , "" # Carl leaves these blank instead of zero
+                          , self.getCarlRcvrs(proj.rcvrs_specified())
+                          , "N/A" # DSS doesn't care about back ends
+                          , "TBF" # TBF: how to map these to our Session types?
+                          , "TBF" # TBF: what to do with these?
+                          ]
+                print projData          
                 self.printData(projData, projHeaderCols)          
 
                 ss = proj.sesshun_set.order_by("name")
@@ -185,29 +195,32 @@ class DBReporter:
 
                 for s in ss:    
                     # for each session, print summary
-                    sData = [""
-                           , s.name # s.unique_name()
-                           , "?"
-                           , "?"
-                           , "?"
-                           , "?"
-                           , "?"
-                           , "?"
-                           , "TBF"
+                    sData = [
+                             s.name # s.unique_name()
+                           , "%d" % self.getCarlRepeats(s) 
+                           , "%5.2f" % self.getCarlLenHrs(s)
+                           , "TBF" # how to compute LST?
+                           , "TBF" # how to compute LST range?
+                           , "TBF" # use cadence interval?
+                           , "0" # TBF: del always zero?
+                           , "TBF" # TBF WTF?
                            , "%5.2f" % s.allotment.total_time
-                           , "TBF"
-                           , "?"
+                           , "N/A" # last obs. unknown cause no history
+                           , self.getCarlSessionComment(s)
                            , s.letter_grade()
-                           , "?"
-                           , "?"
-                           , "?"
-                           , s.receiver_list()
+                           , "%5.2f" % s.allotment.total_time
                            , "N/A"
-                           , "?"
-                           , "?"
-                           , "?"]
+                           , ""
+                           , self.getCarlRcvrs(s.rcvrs_specified())
+                           , "N/A"
+                           , "TBF"
+                           , "TBF"
+                           , "TBF"]
+
                     self.printData(sData, sessCols)    
 
+                # give a space between each project
+                self.add("\n\n")
 
             # print semester summary
             semData = ["%d" % (len(projs))
@@ -271,10 +284,45 @@ class DBReporter:
         self.add("\n" + title + "\n") 
         self.printData([header, "#", "Hrs"], cols, True)
         for k in keys:
-            self.add(" ".join([k.rjust(cols[0]), str(info[k][0]).rjust(cols[1]), str(info[k][1]).rjust(cols[2])]) + "\n")
+            self.add(" ".join([k[0:cols[0]].rjust(cols[0]), \
+                               str(info[k][0])[0:cols[1]].rjust(cols[1]), \
+                               str(info[k][1])[0:cols[2]].rjust(cols[2])]) + "\n")
 
     def printData(self, data, cols, header = False):
-        self.add(" ".join([h.rjust(c) for h, c in zip(data, cols)]) + "\n")
+        self.add(" ".join([h[0:c].rjust(c) for h, c in zip(data, cols)]) + "\n")
         if header:
             self.add(("-" * (sum(cols) + len(cols))) + "\n")
-        
+
+    def getCarlRcvrs(self, rcvrs):
+        "Given an array of DSS rcvr names, return concated Carl version."
+        # TBF: convert to Carl abbreviations
+        return "".join(rcvrs)
+
+    def getCarlRepeats(self, sess):
+        # assume one or no cadences
+        cs = sess.cadence_set.all()
+        if len(cs) == 1:
+            return cs[0].repeats
+        else:
+            return 0
+
+    def getCarlSessionComment(self, sess):
+        # get source name, position ...
+        # TBF: assume one target?
+        ts = sess.target_set.all()
+        if len(ts) > 0:
+            posName = "[%5.2f, %5.2f]/%s" % (ts[0].horizontal
+                                           , ts[0].vertical
+                                           , ts[0].source)
+        else:
+            posName = ""
+        return "[%d] %s" % ( sess.id, posName)
+                                          
+
+    def getCarlLenHrs(self, sess):
+        # TBF: is this right?
+        repeats = self.getCarlRepeats(sess)
+        if repeats != 0:
+            return sess.allotment.total_time/repeats
+        else:
+            return 0
