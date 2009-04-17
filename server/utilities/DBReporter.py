@@ -92,7 +92,7 @@ class DBReporter:
         self.printInfo(info, "Sessions By Backup:", "Backup") 
         info = self.binSesshun(sess, bools, "scheduable", True) 
         self.printInfo(info, "Sessions By Scheduable:", "Scheduable") 
-
+         
         # gather stats on windows - how many, how many hrs, etc
         # TBF: what to do with cadence?
         wins = Window.objects.all()
@@ -147,14 +147,14 @@ class DBReporter:
         # name?, #, len(hrs), LST, +/- (?), Sep, Del, Cmpl, TotHrs, lobs, 
         # Comment, Grade, Alloc, B/D, Sched, Bands, Backedns, Req, Outer#, Sep 
         sessHeaders = ["Name", "#", "Len(hrs)", "LST", "+/-", "Sep(d)", "Del(d)", "Compl", "TotHrs", "lobs", "Comment", "G", "Alloc", "B\D", "Sched", "Bands", "Back Ends", "Req", "Outer#", "Sep"]
-        sessCols = [14, 1, 8, 12, 3, 6, 6, 5, 6, 9, 12, 1, 5, 3, 5, 8, 9, 8, 3, 5]
+        sessCols = [14, 3, 8, 12, 3, 6, 6, 5, 6, 9, 30, 1, 5, 3, 5, 8, 9, 8, 3, 5]
         # Trimester Footer:
         # # proposals, total time, time remaining, # proposals started (?)
         semesterFooter = ["Total #", "TotalTime", "Remaining"]
         semesterCols = [7, 9, 9]
 
         for sem in semesters:
-            self.add("Trimester: %s\n\n" % sem.semester)
+            self.add("\nTrimester: %s\n\n" % sem.semester)
             s = Semester.objects.get(semester = sem)
             # get the projects for this semester
             projs = Project.objects.filter(semester = s).order_by("pcode")
@@ -219,6 +219,8 @@ class DBReporter:
 
                     self.printData(sData, sessCols)    
 
+                # give a space between each project
+                self.add("\n\n")
 
             # print semester summary
             semData = ["%d" % (len(projs))
@@ -305,8 +307,17 @@ class DBReporter:
             return 0
 
     def getCarlSessionComment(self, sess):
-        # TBF: get source name, position ...
-        return ""
+        # get source name, position ...
+        # TBF: assume one target?
+        ts = sess.target_set.all()
+        if len(ts) > 0:
+            posName = "[%5.2f, %5.2f]/%s" % (ts[0].horizontal
+                                           , ts[0].vertical
+                                           , ts[0].source)
+        else:
+            posName = ""
+        return "[%d] %s" % ( sess.id, posName)
+                                          
 
     def getCarlLenHrs(self, sess):
         # TBF: is this right?
