@@ -39,11 +39,11 @@ INSERT INTO observing_types VALUES (DEFAULT, 'testing');
 
 INSERT INTO receivers VALUES (DEFAULT, 'NoiseSource',  'NS',   0.000,   0.000);
 INSERT INTO receivers VALUES (DEFAULT, 'Rcvr_RRI',     'RRI',  0.100,   1.600);
-INSERT INTO receivers VALUES (DEFAULT, 'Rcvr_342',     'PF1',  0.290,   0.395);
-INSERT INTO receivers VALUES (DEFAULT, 'Rcvr_450',     'PF1',  0.385,   0.520);
-INSERT INTO receivers VALUES (DEFAULT, 'Rcvr_600',     'PF1',  0.510,   0.690);
-INSERT INTO receivers VALUES (DEFAULT, 'Rcvr_800',     'PF1',  0.680,   0.920);
-INSERT INTO receivers VALUES (DEFAULT, 'Rcvr_1070',    'PF2',  0.910,   1.230);
+INSERT INTO receivers VALUES (DEFAULT, 'Rcvr_342',     '342',  0.290,   0.395);
+INSERT INTO receivers VALUES (DEFAULT, 'Rcvr_450',     '450',  0.385,   0.520);
+INSERT INTO receivers VALUES (DEFAULT, 'Rcvr_600',     '600',  0.510,   0.690);
+INSERT INTO receivers VALUES (DEFAULT, 'Rcvr_800',     '800',  0.680,   0.920);
+INSERT INTO receivers VALUES (DEFAULT, 'Rcvr_1070',   '1070',  0.910,   1.230);
 INSERT INTO receivers VALUES (DEFAULT, 'Rcvr1_2',      'L',    1.150,   1.730);
 INSERT INTO receivers VALUES (DEFAULT, 'Rcvr2_3',      'S',    1.730,   2.600);
 INSERT INTO receivers VALUES (DEFAULT, 'Rcvr4_6',      'C',    3.950,   6.100);

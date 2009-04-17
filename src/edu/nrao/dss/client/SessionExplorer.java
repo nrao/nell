@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.extjs.gxt.ui.client.Events;
 import com.extjs.gxt.ui.client.Style;
@@ -18,6 +19,7 @@ import com.extjs.gxt.ui.client.data.DataReader;
 import com.extjs.gxt.ui.client.data.HttpProxy;
 import com.extjs.gxt.ui.client.data.JsonReader;
 import com.extjs.gxt.ui.client.data.ListLoader;
+import com.extjs.gxt.ui.client.data.ModelData;
 import com.extjs.gxt.ui.client.event.BaseEvent;
 import com.extjs.gxt.ui.client.event.ComponentEvent;
 import com.extjs.gxt.ui.client.event.GridEvent;
@@ -108,11 +110,35 @@ class SessionExplorer extends ContentPanel {
 		store.addStoreListener(new StoreListener<BaseModelData>() {
 			@Override
 			public void storeUpdate(StoreEvent<BaseModelData> se) {
-				JSONRequest.save("/sessions/"
-						+ ((Number) se.model.get("id")).intValue(), se.model,
-						null);
+				save(se.model);
 			}
 		});
+	}
+	
+	private void save(ModelData model) {
+        ArrayList<String> keys   = new ArrayList<String>();
+        ArrayList<String> values = new ArrayList<String>();
+
+        keys.add("_method");
+        values.add("put");
+
+        Map<String, Object> map = model.getProperties();
+        for (String name : model.getPropertyNames()) {
+            if (model.get(name) != null) {
+            	Object value = model.get(name);
+            	if (! rows.isDefault(name, map)) {
+                    keys.add(name);
+                    values.add(value.toString());
+            	}
+            	else {
+            		System.out.println(name);
+            	}
+            }
+        }
+        JSONRequest.post("/sessions/" + ((Number) model.get("id")).intValue(),
+        		         keys.toArray(new String[]{}),
+        		         values.toArray(new String[]{}),
+        		         null);
 	}
 
 	public void createNewSessionRow(RowType row, HashMap<String, Object> fields) {
@@ -145,7 +171,11 @@ class SessionExplorer extends ContentPanel {
         store.addStoreListener(new StoreListener<BaseModelData>() {
             @Override
             public void storeUpdate(StoreEvent<BaseModelData> se) {
-            	JSONRequest.save("/sessions/"+((Number) se.model.get("id")).intValue(), se.model, null);
+				save(se.model);
+            }
+            
+            @Override
+            public void storeDataChanged(StoreEvent<BaseModelData> se) {
             }
         });
         grid.getView().refresh(true);
@@ -273,33 +303,6 @@ class SessionExplorer extends ContentPanel {
 		}
 	}
 
-	// TBF: there's a better way to do this, but since "View All Columns" is our only 
-	// view, run with it.
-	private List<String> getViewColumnHeaders(String view, String views[]) {
-		/*
-		if (view == "View All Columns") {
-			return rows.getAllFieldNames();
-		} else if (view == "View Name Columns") {
-			// TBF: this view is just to see if things are working - better way to do this
-			ArrayList<String> colHeaders = new ArrayList<String>();
-			colHeaders.add(rows.getColumnDefinition().getColumn(ColumnDefinition.NAME).getHeader());
-			return colHeaders;
-		} else {
-		    return rows.getAllFieldNames();
-		}
-		*/
-		if (view == "View All Columns") {
-			return rows.getAllFieldIds();
-		} else if (view == "View Name Columns") {
-			// TBF: this view is just to see if things are working - better way to do this
-			ArrayList<String> colHeaders = new ArrayList<String>();
-			colHeaders.add(ColumnDefinition.NAME);
-			return colHeaders;
-		} else {
-		    return rows.getAllFieldIds();
-		}		
-	}
-
 	private void addMenuItems(Menu addMenu) {
 		for (final RowType row : rows.getAllRows()) {
 		    String   name = row.getName() + (row.hasRequiredFields() ? "..." : "");
@@ -369,25 +372,28 @@ class SessionExplorer extends ContentPanel {
 		viewItem.setToolTip("Select or create a set of column headers.");
 		Menu viewMenu = new Menu();
 
-		// TBF: the mapping of views to the columns they show can be better done,
-		// but for now 'View All Columns' is our only required view.
-		String[] views = new String[2];
-		views[0] = "View All Columns";
-		views[1] = "View Name Columns";
-		for (final String view : views) {
-			// which columns to show for this particular view?
-			final List<String> fields = getViewColumnHeaders(view, views);
-			final MenuItem mi = new MenuItem(view);
+		// TBF: the mapping of views to the columns they show can be done better
+		final MenuItem mi1 = new MenuItem("All columns");
+		mi1.addSelectionListener(new SelectionListener<ComponentEvent>() {
+			@Override
+			public void componentSelected(ComponentEvent ce) {
+				// when this menu option is chosen, show all fields
+				setColumnHeaders(rows.getAllFieldIds());
+			}
+		});
+		viewMenu.add(mi1);
+		final HashMap<String,List<String>> views = rows.getRowNamesAndIds();
+		for (final String name : rows.getRowNames()) {
+			final MenuItem mi = new MenuItem(name);
 			mi.addSelectionListener(new SelectionListener<ComponentEvent>() {
 				@Override
 				public void componentSelected(ComponentEvent ce) {
-					// when this menu option is chosen, show these fields
-					setColumnHeaders(fields);
+					// when this menu option is chosen, show row-type fields
+					setColumnHeaders(views.get(name));
 				}
 			});
 			viewMenu.add(mi);
 		}
-		
 		
 		viewMenu.add(new SeparatorMenuItem());
 		
@@ -438,6 +444,7 @@ class SessionExplorer extends ContentPanel {
 	}
 
 	private void addSession(HashMap<String, Object> data) {
+		
 		JSONRequest.post("/sessions", data, new JSONCallbackAdapter() {
 			@SuppressWarnings("unchecked")
 			@Override
