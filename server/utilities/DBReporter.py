@@ -93,6 +93,26 @@ class DBReporter:
         info = self.binSesshun(sess, bools, "scheduable", True) 
         self.printInfo(info, "Sessions By Scheduable:", "Scheduable") 
          
+        info = self.binSesshunNumTargets(sess)
+        self.printInfo(info, "Sessions By Num Targets:", "# Targets") 
+
+        info = self.binSesshunNumCadences(sess)
+        self.printInfo(info, "Sessions By Num Cadences:", "# Cadences") 
+
+        info = self.binSesshunNumCadences([s for s in sess 
+            if s.session_type.type == "vlbi"])
+        self.printInfo(info, "VLBI Sessions By Num Cadences:", "# Cadences") 
+
+        info = self.binSesshunNumCadences([s for s in sess 
+            if s.session_type.type == "fixed"])
+        self.printInfo(info, "Fixed Sessions By Num Cadences:", "# Cadences") 
+
+        info = self.binSesshunNumCadences([s for s in sess 
+            if s.session_type.type == "windowed"])
+        self.printInfo(info, "Windowed Sessions By Num Cadences:", "# Cadences") 
+        info = self.binSesshunNumCadences([s for s in sess 
+            if s.session_type.type == "open"])
+        self.printInfo(info, "Open Sessions By Num Cadences:", "# Cadences") 
         # gather stats on windows - how many, how many hrs, etc
         # TBF: what to do with cadence?
         wins = Window.objects.all()
@@ -181,10 +201,9 @@ class DBReporter:
                           , "" # Carl leaves these blank instead of zero
                           , self.getCarlRcvrs(proj.rcvrs_specified())
                           , "N/A" # DSS doesn't care about back ends
-                          , "TBF" # TBF: how to map these to our Session types?
+                          , self.getObsTypes(proj) # use DSS obs types  
                           , "TBF" # TBF: what to do with these?
                           ]
-                print projData          
                 self.printData(projData, projHeaderCols)          
 
                 ss = proj.sesshun_set.order_by("name")
@@ -201,16 +220,16 @@ class DBReporter:
                            , "%5.2f" % self.getCarlLenHrs(s)
                            , "TBF" # how to compute LST?
                            , "TBF" # how to compute LST range?
-                           , "TBF" # use cadence interval?
+                           , "%s" % self.getCarlSeperation(s) 
                            , "0" # TBF: del always zero?
                            , "TBF" # TBF WTF?
                            , "%5.2f" % s.allotment.total_time
-                           , "N/A" # last obs. unknown cause no history
+                           , "N/A" # last obs. unknown because no history
                            , self.getCarlSessionComment(s)
                            , s.letter_grade()
                            , "%5.2f" % s.allotment.total_time
-                           , "N/A"
-                           , ""
+                           , self.getSessionTypeLetter(s) # use DSS own meaning
+                           , "" # no history
                            , self.getCarlRcvrs(s.rcvrs_specified())
                            , "N/A"
                            , "TBF"
@@ -273,6 +292,20 @@ class DBReporter:
             r[str(bin)] = (len(binSess), binSessHrs)
         return r
 
+    def binSesshunNumTargets(self, sess):
+        nums = {}
+        nums['0']  = (len([s for s in sess if s.target_set.all() == []])    , 0)
+        nums['1']  = (len([s for s in sess if len(s.target_set.all()) == 1]), 0)
+        nums['>1'] = (len([s for s in sess if len(s.target_set.all()) > 1]) , 0)
+        return nums
+
+    def binSesshunNumCadences(self, ss):
+        nums = {}
+        nums['0']  = (len([s for s in ss if len(s.cadence_set.all()) == 0]), 0)
+        nums['1']  = (len([s for s in ss if len(s.cadence_set.all()) == 1]), 0)
+        nums['>1'] = (len([s for s in ss if len(s.cadence_set.all()) > 1]) , 0)
+        return nums
+
     def printInfo(self, info, title, header):
 
         # the first col should have a width to accomodate the biggest thing
@@ -293,6 +326,18 @@ class DBReporter:
         if header:
             self.add(("-" * (sum(cols) + len(cols))) + "\n")
 
+    def getSessionTypeLetter(self, s):
+        return s.session_type.type[0].upper()
+
+    def getObsTypes(self, proj):
+        "Creates a string representing all the different obs types in the proj"
+        types = []
+        for s in proj.sesshun_set.all():
+            type = s.observing_type.type[0].upper()
+            if type not in types:
+                types.append(type)
+        return "".join(types)
+
     def getCarlRcvrs(self, rcvrs):
         "Given an array of DSS rcvr names, return concated Carl version."
         # TBF: convert to Carl abbreviations
@@ -304,7 +349,15 @@ class DBReporter:
         if len(cs) == 1:
             return cs[0].repeats
         else:
-            return 0
+            return 1
+
+    def getCarlSeperation(self, sess):
+        # assume one or no cadences
+        cs = sess.cadence_set.all()
+        if len(cs) == 1:
+            return cs[0].intervals
+        else:
+            return ""
 
     def getCarlSessionComment(self, sess):
         # get source name, position ...
