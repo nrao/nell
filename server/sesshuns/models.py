@@ -537,12 +537,16 @@ class Window(models.Model):
         for o in self.opportunity_set.all():
             o.delete()
         self.init_from_post(fdata)
+
+    def is_classic(self):
+        opt = first(self.opportunity_set.all())
+        return len(self.opportunity_set.all()) == 1 and \
+                 opt.duration > self.session.max_duration
         
     def jsondict(self, generate = False, now = None):
         now      = now or datetime.utcnow()
         windowed = first(Session_Type.objects.filter(type = 'windowed'))
-        #pdb.set_trace()
-        if self.session.session_type == windowed and generate:
+        if self.session.session_type == windowed and generate and self.is_classic():
             opportunities = self.gen_opportunities(now)
         else:
             opportunities = self.opportunity_set.all()
