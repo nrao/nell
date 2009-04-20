@@ -55,7 +55,7 @@ class JSONRequest implements RequestCallback {
 		try {
 			JSONObject json = JSONParser.parse(response.getText()).isObject();
 			if (json == null) {
-			    MessageBox.alert("Error", "Expected JSON response.", null);
+				MessageBox.alert("Error", "Expected JSON response.", null);
 			} else if (json.containsKey("error")) {
 				cb.onError(getString(json, "error"), json);
 			} else {

@@ -77,13 +77,6 @@ class TestReceiver(NellTestCase):
         self.assertTrue(len(nn) > 18)
         self.assertEquals([n for n in nn if n == 'Ka'], ['Ka'])
 
-    def test_get_bands(self):
-        now = datetime(2009, 4, 6, 12)
-        response = self.client.get('/get_bands')
-        self.failUnlessEqual(response.status_code, 200)
-        expected = json.dumps(Receiver.get_abbreviations())
-        self.assertEqual(expected, response.content)
-
 class TestSesshun(NellTestCase):
 
     def setUp(self):
@@ -512,6 +505,12 @@ class TestWindowGenView(NellTestCase):
                               )
         self.assertTrue(expected, response.content)
 
+class TestGetPCodes(NellTestCase):
+
+    def test_get_pcodes(self):
+        c = Client()
+        response = c.get('/projects')
+         
 # Testing Utilities
 
 class TestGenerate(NellTestCase):

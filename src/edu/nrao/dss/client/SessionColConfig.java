@@ -1,5 +1,7 @@
 package edu.nrao.dss.client;
 
+import java.util.ArrayList;
+
 import com.extjs.gxt.ui.client.store.ListStore;
 import com.extjs.gxt.ui.client.Style.HorizontalAlignment;
 import com.extjs.gxt.ui.client.data.BaseModelData;
@@ -15,11 +17,16 @@ import com.extjs.gxt.ui.client.widget.grid.ColumnConfig;
 import com.extjs.gxt.ui.client.widget.grid.ColumnData;
 import com.extjs.gxt.ui.client.widget.grid.GridCellRenderer;
 import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.json.client.JSONArray;
+import com.google.gwt.json.client.JSONObject;
 
 class SessionColConfig extends ColumnConfig {
+	public final ArrayList<String> proj_codes = new ArrayList<String>();
+	
 	@SuppressWarnings("unchecked")
 	public SessionColConfig(String fName, String name, int width, Class clasz) {
 		super(fName, name, width);
+		
 		this.clasz = clasz;
 
 		if (clasz == Integer.class) {
@@ -40,6 +47,8 @@ class SessionColConfig extends ColumnConfig {
 			typeField(ScienceField.values);
 		} else if (clasz == STypeField.class) {
 			typeField(STypeField.values);
+		} else if (clasz == PCodeField.class) {
+			setPCodeOptions();
 		} else if (clasz == TimeOfDayField.class) {
 			typeField(TimeOfDayField.values);
 		} else if (clasz == GradeField.class) {
@@ -49,6 +58,21 @@ class SessionColConfig extends ColumnConfig {
 		}
 	};
 
+	public void setPCodeOptions() {
+		JSONRequest.get("/projects", new JSONCallbackAdapter() {
+			@SuppressWarnings("unchecked")
+			@Override
+			public void onSuccess(JSONObject json) {
+				JSONArray pcodes = json.get("project codes").isArray();
+				for (int i = 0; i < pcodes.size(); ++i){
+					proj_codes.add(pcodes.get(i).toString().replace('"', ' ').trim());
+				}
+				typeField(proj_codes.toArray(new String[] {}));
+			}
+    	});
+		
+	}
+	
 	@SuppressWarnings("unchecked")
 	public Field getField() {
 		Field field;
@@ -70,6 +94,8 @@ class SessionColConfig extends ColumnConfig {
 			field = createSimpleComboBox(ScienceField.values);
 		} else if (this.clasz == STypeField.class) {
 			field = createSimpleComboBox(STypeField.values);
+		} else if (this.clasz == PCodeField.class) {
+			field = createSimpleComboBox(proj_codes.toArray(new String[] {}));
 		} else if (this.clasz == TimeOfDayField.class) {
 			field = createSimpleComboBox(TimeOfDayField.values);
 		} else if (this.clasz == GradeField.class) {

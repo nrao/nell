@@ -1,4 +1,5 @@
 package edu.nrao.dss.client;
+
 import com.google.gwt.junit.client.GWTTestCase;
 import junit.framework.Test;
 import junit.framework.TestSuite;

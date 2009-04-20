@@ -87,7 +87,7 @@ class SessionExplorer extends ContentPanel {
 		grid.setSelectionModel(selection);
 		grid.addPlugin(selection);
 		grid.setBorders(true);
-
+		
 		initToolBar();
 		initListeners();
 
