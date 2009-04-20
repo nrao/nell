@@ -205,12 +205,12 @@ class ColumnDefinition {
     };
 
     private final ColumnType[] columns = new ColumnType[] {
-            new ColumnType(SOURCE,         "Source",         100, String.class,               null),
+    		new ColumnType(CODE,           "Proj Code",      100, PCodeField.class,           null),
             new ColumnType(NAME,           "Name",           175, String.class,               null),
-            new ColumnType(CODE,           "Proj Code",       75, PCodeField.class,           null),
+            new ColumnType(SOURCE,         "Source",         100, String.class,               null),
             new ColumnType(ORIG_ID,        "Orig ID",         50, Integer.class,              null),
             new ColumnType(ID,             "ID",              50, Integer.class,              null),
-            new ColumnType(TYPE,           "Type",            50, STypeField.class,           null),
+            new ColumnType(TYPE,           "Type",            60, STypeField.class,           null),
             new ColumnType(SCIENCE,        "Science",         75, ScienceField.class,         null),
             new ColumnType(PSC_TIME,       "PSC Time",        60, Integer.class,              null),
             new ColumnType(TOTAL_TIME,     "Total Time",      60, Integer.class,              null),
