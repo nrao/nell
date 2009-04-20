@@ -20,6 +20,10 @@ class ColumnType extends SessionColConfig {
 
         return value;
     }
+    
+    public boolean hasDefault() {
+    	return value != null;
+    }
 
     @SuppressWarnings("unchecked")
 	public Class getClasz(String id) {

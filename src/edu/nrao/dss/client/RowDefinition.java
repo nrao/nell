@@ -9,6 +9,8 @@ import java.util.Map;
 import com.extjs.gxt.ui.client.widget.grid.ColumnConfig;
 import com.extjs.gxt.ui.client.widget.grid.ColumnModel;
 
+import edu.nrao.dss.client.model.Receiver;
+
 class RowDefinition {
     public ColumnModel getColumnModel(ColumnConfig column) {
         return columns.getColumnModel(column);
@@ -33,7 +35,15 @@ class RowDefinition {
     public boolean isDefault(String name, Map<String, Object> map) {
     	Object value = map.get(name);
     	Object preset = columns.getValue(name, null, map);
-    	return value == preset;
+    	if (preset == null) {
+    		return false;
+    	} else {
+	    	return preset.toString().equals(value.toString());
+    	}
+    }
+    
+    public boolean hasDefault(String name) {
+    	return columns.hasDefault(name);
     }
     
     public List<String> getRowNames() {
@@ -104,8 +114,7 @@ class RowDefinition {
             addColumn(ColumnDefinition.FREQ,           null);
             //addColumn(ColumnDefinition.FREQ_RNGE_L,    null);
             //addColumn(ColumnDefinition.FREQ_RNGE_H,    null);
-            //addColumn(ColumnDefinition.RECEIVER,       null);
-            //addColumn(ColumnDefinition.RECEIVER,       null);
+            addColumn(ColumnDefinition.RECEIVER,       null);
             addColumn(ColumnDefinition.REQ_MIN,        2.0);
             addColumn(ColumnDefinition.REQ_MAX,        6.0);
             addColumn(ColumnDefinition.ABS_MIN,        1.5);
@@ -146,7 +155,7 @@ class RowDefinition {
             addColumn(ColumnDefinition.FREQ,           null);
             addColumn(ColumnDefinition.FREQ_RNGE_L,    1.0);
             addColumn(ColumnDefinition.FREQ_RNGE_H,    1.7);
-            //addColumn(ColumnDefinition.RECEIVER,       null);
+            addColumn(ColumnDefinition.RECEIVER,       null);
             addColumn(ColumnDefinition.REQ_MIN,        2.0);
             addColumn(ColumnDefinition.REQ_MAX,        6.0);
             addColumn(ColumnDefinition.ABS_MIN,        1.5);
@@ -187,7 +196,7 @@ class RowDefinition {
             addColumn(ColumnDefinition.FREQ,           null);
             //addColumn(ColumnDefinition.FREQ_RNGE_L,    null);
             //addColumn(ColumnDefinition.FREQ_RNGE_H,    null);
-            //addColumn(ColumnDefinition.RECEIVER,       null);
+            addColumn(ColumnDefinition.RECEIVER,       null);
             addColumn(ColumnDefinition.REQ_MIN,        2.0);
             addColumn(ColumnDefinition.REQ_MAX,        6.0);
             addColumn(ColumnDefinition.ABS_MIN,        1.5);
@@ -228,7 +237,7 @@ class RowDefinition {
             addColumn(ColumnDefinition.FREQ,           null);
             //addColumn(ColumnDefinition.FREQ_RNGE_L,    null);
             //addColumn(ColumnDefinition.FREQ_RNGE_H,    null);
-            //addColumn(ColumnDefinition.RECEIVER,       null);
+            addColumn(ColumnDefinition.RECEIVER,       null);
             addColumn(ColumnDefinition.REQ_MIN,        2.0);
             addColumn(ColumnDefinition.REQ_MAX,        6.0);
             addColumn(ColumnDefinition.ABS_MIN,        1.5);

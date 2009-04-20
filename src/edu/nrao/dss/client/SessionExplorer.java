@@ -1,5 +1,6 @@
 package edu.nrao.dss.client;
 
+import edu.nrao.dss.client.view.UndefaultedValuesDialog;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -57,7 +58,7 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 
-class SessionExplorer extends ContentPanel {
+public class SessionExplorer extends ContentPanel {
 	public SessionExplorer() {
 		initLayout();
 	}
@@ -122,19 +123,26 @@ class SessionExplorer extends ContentPanel {
         keys.add("_method");
         values.add("put");
 
+        ArrayList<String> undefaulted = new ArrayList<String>();
         Map<String, Object> map = model.getProperties();
         for (String name : model.getPropertyNames()) {
-            if (model.get(name) != null) {
-            	Object value = model.get(name);
-            	if (! rows.isDefault(name, map)) {
-                    keys.add(name);
-                    values.add(value.toString());
-            	}
-            	else {
-            		System.out.println(name);
-            	}
+        	Object value = model.get(name);
+            if (value != null && !rows.isDefault(name, map)) {
+                keys.add(name);
+                values.add(value.toString());
+                if (rows.hasDefault(name)) {
+                	undefaulted.add(name);
+                }
             }
         }
+        if (undefaulted.isEmpty()) {
+        	saveModel(model, keys, values);
+        } else {
+        	new UndefaultedValuesDialog(this, undefaulted, model, keys, values);
+        }
+	}
+	
+	public void saveModel(ModelData model, ArrayList<String> keys, ArrayList<String> values) {
         JSONRequest.post("/sessions/" + ((Number) model.get("id")).intValue(),
         		         keys.toArray(new String[]{}),
         		         values.toArray(new String[]{}),

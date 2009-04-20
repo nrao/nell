@@ -108,6 +108,10 @@ class ColumnDefinition {
     public Object getValue(String id, RowType row, Map<String, Object> model) {
         return getColumn(id).getValue(row, model);
     }
+
+    public boolean hasDefault(String id) {
+    	return getColumn(id).hasDefault();
+    }
     
     @SuppressWarnings("unchecked")
     public Class getClasz(String id) {
@@ -123,7 +127,7 @@ class ColumnDefinition {
         public Object calculate(RowType row, Map<String, Object> model) {
         	double frequency;
         	if (row == null) {
-        		frequency = ((Double)(model.get(FREQ))).doubleValue();
+        		frequency = Double.parseDouble(model.get(FREQ).toString());
         	}
         	else {
         		frequency = ((Double)(row.getValue(FREQ, model))).doubleValue();
