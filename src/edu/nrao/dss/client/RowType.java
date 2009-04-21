@@ -53,7 +53,7 @@ public class RowType {
     public List<String> getRequiredFields() {
         ArrayList<String> result = new ArrayList<String>();
         for (String id : values.keySet()) {
-            if (values.get(id) == null) {
+            if (values.get(id) == null && !columns.hasColumnDefault(id)) {
                 result.add(id);
             }
         }

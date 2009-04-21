@@ -303,9 +303,11 @@ class Sesshun(models.Model):
         self.status = status
         self.save()
         
-        frcvr  = fdata.get("receiver", "Rcvr1_2")
-        rcvr   = first(Receiver.objects.filter(name = frcvr).all()
+        frcvr  = fdata.get("receiver", "L")
+        print "****************** frcvr", frcvr
+        rcvr   = first(Receiver.objects.filter(abbreviation = frcvr).all()
                      , Receiver.objects.all()[0])  # TBF want default?
+        print "****************** rcvr", rcvr
         rg     = Receiver_Group(session = self)
         rg.save()
         rg.receivers.add(rcvr)
