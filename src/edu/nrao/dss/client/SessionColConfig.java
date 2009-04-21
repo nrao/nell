@@ -70,7 +70,6 @@ class SessionColConfig extends ColumnConfig {
 				typeField(proj_codes.toArray(new String[] {}));
 			}
     	});
-		
 	}
 	
 	@SuppressWarnings("unchecked")
