@@ -32,7 +32,7 @@ class RowDefinition {
         return columns;
     }
     
-    public boolean isDefault(String name, Map<String, Object> map) {
+    public boolean isColumnDefault(String name, Map<String, Object> map) {
     	Object value = map.get(name);
     	Object preset = columns.getValue(name, null, map);
     	if (preset == null) {
@@ -42,8 +42,8 @@ class RowDefinition {
     	}
     }
     
-    public boolean hasDefault(String name) {
-    	return columns.hasDefault(name);
+    public boolean hasColumnDefault(String name) {
+    	return columns.hasColumnDefault(name);
     }
     
     public List<String> getRowNames() {
@@ -95,6 +95,9 @@ class RowDefinition {
         }
     };
 
+    // The defaults found in these table are specific to the initial version of the
+    // given row type.  Therefore those sessions having
+    // these defaults will forward them to the server and database.
     private final RowType lowFreqNoRFI = new BaseRowType("Low Frequency With No RFI") {
         {
             addColumn(ColumnDefinition.CODE,           null);

@@ -109,8 +109,8 @@ class ColumnDefinition {
         return getColumn(id).getValue(row, model);
     }
 
-    public boolean hasDefault(String id) {
-    	return getColumn(id).hasDefault();
+    public boolean hasColumnDefault(String id) {
+    	return getColumn(id).hasColumnDefault();
     }
     
     @SuppressWarnings("unchecked")
@@ -176,6 +176,9 @@ class ColumnDefinition {
         }
     };
 
+    // The defaults found in this table are constant across all possible row types
+    // and are also defaulted on the server side.  Therefore those sessions having
+    // these defaults will not forward them to the server and database.
     private final ColumnType[] columns = new ColumnType[] {
     		new ColumnType(CODE,           "Proj Code",      100, PCodeField.class,           null),
             new ColumnType(NAME,           "Name",           175, String.class,               null),

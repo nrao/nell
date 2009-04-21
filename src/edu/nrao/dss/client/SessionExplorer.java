@@ -127,10 +127,10 @@ public class SessionExplorer extends ContentPanel {
         Map<String, Object> map = model.getProperties();
         for (String name : model.getPropertyNames()) {
         	Object value = model.get(name);
-            if (value != null && !rows.isDefault(name, map)) {
+            if (value != null && !rows.isColumnDefault(name, map)) {
                 keys.add(name);
                 values.add(value.toString());
-                if (rows.hasDefault(name)) {
+                if (rows.hasColumnDefault(name)) {
                 	undefaulted.add(name);
                 }
             }

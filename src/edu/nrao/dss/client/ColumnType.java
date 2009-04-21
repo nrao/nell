@@ -21,7 +21,7 @@ class ColumnType extends SessionColConfig {
         return value;
     }
     
-    public boolean hasDefault() {
+    public boolean hasColumnDefault() {
     	return value != null;
     }
 
