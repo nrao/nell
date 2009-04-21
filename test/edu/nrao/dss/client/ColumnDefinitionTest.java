@@ -25,7 +25,7 @@ public class ColumnDefinitionTest extends GWTTestCase {
     SessionColConfig sColConf = new SessionColConfig("test", "Test", 100, Integer.class);
     ColumnModel colMod = colDef.getColumnModel(sColConf);
     assertEquals(colMod.getColumnCount(), 39);
-    assertEquals(colMod.getColumnHeader(1), "Source");
+    assertEquals(colMod.getColumnHeader(3), "Source");
     assertTrue(colDef.getAllFieldNames().contains("Proj Code"));
     assertTrue(colDef.hasColumn(ColumnDefinition.TR_ERR_LIMIT));
     assertFalse(colDef.hasColumn("Pinky_Hippo"));
