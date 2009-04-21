@@ -7,7 +7,7 @@ import java.util.Map;
 
 import com.extjs.gxt.ui.client.widget.form.Field;
 
-class RowType {
+public class RowType {
     public RowType(ColumnDefinition columns) {
         this.columns = columns;
     }
