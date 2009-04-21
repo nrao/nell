@@ -103,7 +103,7 @@ def gen_opportunities(request, *args, **kws):
         return HttpResponse(json.dumps(w.jsondict(generate = True, now = now))
                           , mimetype = "text/plain")
 
-def get_pcodes(request, *args, **kws):
+def get_options(request, *args, **kws):
     projects = Project.objects.order_by('pcode')
     return HttpResponse(json.dumps({'project codes' : [ p.pcode for p in projects]})
                       , mimetype = "text/plain")

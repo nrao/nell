@@ -505,11 +505,11 @@ class TestWindowGenView(NellTestCase):
                               )
         self.assertTrue(expected, response.content)
 
-class TestGetPCodes(NellTestCase):
+class TestGetOptions(NellTestCase):
 
-    def test_get_pcodes(self):
+    def test_get_options(self):
         c = Client()
-        response = c.get('/projects')
+        response = c.get('/sessions/options')
          
 # Testing Utilities
 
