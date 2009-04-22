@@ -24,7 +24,6 @@ class ColumnDefinition {
     public static final String BETWEEN           = "between";
     public static final String BACKUP            = "backup";
     public static final String CODE              = "proj_code";
-    public static final String CNTR_SKY_AREA     = "cntr_sky_area";
     public static final String COMPLETE          = "complete";
     public static final String COORD_MODE        = "coord_mode";
     public static final String ENABLED           = "enabled";
@@ -47,6 +46,8 @@ class ColumnDefinition {
     public static final String SEM_TIME          = "sem_time";
     public static final String SOLAR_AVOID       = "solar_avoid";
     public static final String SOURCE            = "source";
+    public static final String SOURCE_H          = "source_h";
+    public static final String SOURCE_V          = "source_v";
     public static final String SOURCE_SZ         = "source_size";
     public static final String TIME_DAY          = "time_day";
     public static final String TOTAL_TIME        = "total_time";
@@ -195,7 +196,8 @@ class ColumnDefinition {
             new ColumnType(ENABLED,        "Enabled",         75, Boolean.class,              null),
             new ColumnType(COMPLETE,       "Complete",        75, Boolean.class,              null),
             new ColumnType(COORD_MODE,     "Coord Mode",      75, CoordModeField.class,       null),
-            new ColumnType(CNTR_SKY_AREA,  "Cntr Sky Area",  100, String.class,               null),
+            new ColumnType(SOURCE_H,       "Source H",        75, Double.class,               null),
+            new ColumnType(SOURCE_V,       "Source V",        75, Double.class,               null),
             new ColumnType(FREQ,           "Freq",            50, Double.class,               null),
             new ColumnType(FREQ_RNGE_L,    "Freq Range Low", 100, Double.class,               null),
             new ColumnType(FREQ_RNGE_H,    "Freq Range Hi",  100, Double.class,               null),

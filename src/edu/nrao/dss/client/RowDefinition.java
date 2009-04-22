@@ -113,7 +113,8 @@ class RowDefinition {
             addColumn(ColumnDefinition.ENABLED,        false);
             addColumn(ColumnDefinition.COMPLETE,       false);
             addColumn(ColumnDefinition.COORD_MODE,     new CoordModeField("J2000"));
-            addColumn(ColumnDefinition.CNTR_SKY_AREA,  null);
+            addColumn(ColumnDefinition.SOURCE_H,       null);
+            addColumn(ColumnDefinition.SOURCE_V,       null);
             addColumn(ColumnDefinition.FREQ,           null);
             //addColumn(ColumnDefinition.FREQ_RNGE_L,    null);
             //addColumn(ColumnDefinition.FREQ_RNGE_H,    null);
@@ -154,7 +155,8 @@ class RowDefinition {
             addColumn(ColumnDefinition.ENABLED,        false);
             addColumn(ColumnDefinition.COMPLETE,       false);
             addColumn(ColumnDefinition.COORD_MODE,     new CoordModeField("J2000"));
-            addColumn(ColumnDefinition.CNTR_SKY_AREA,  null);
+            addColumn(ColumnDefinition.SOURCE_H,       null);
+            addColumn(ColumnDefinition.SOURCE_V,       null);
             addColumn(ColumnDefinition.FREQ,           null);
             addColumn(ColumnDefinition.FREQ_RNGE_L,    1.0);
             addColumn(ColumnDefinition.FREQ_RNGE_H,    1.7);
@@ -195,7 +197,8 @@ class RowDefinition {
             addColumn(ColumnDefinition.ENABLED,        false);
             addColumn(ColumnDefinition.COMPLETE,       false);
             addColumn(ColumnDefinition.COORD_MODE,     new CoordModeField("J2000"));
-            addColumn(ColumnDefinition.CNTR_SKY_AREA,  null);
+            addColumn(ColumnDefinition.SOURCE_H,       null);
+            addColumn(ColumnDefinition.SOURCE_V,       null);
             addColumn(ColumnDefinition.FREQ,           null);
             //addColumn(ColumnDefinition.FREQ_RNGE_L,    null);
             //addColumn(ColumnDefinition.FREQ_RNGE_H,    null);
@@ -236,7 +239,8 @@ class RowDefinition {
             addColumn(ColumnDefinition.ENABLED,        false);
             addColumn(ColumnDefinition.COMPLETE,       false);
             addColumn(ColumnDefinition.COORD_MODE,     new CoordModeField("J2000"));
-            addColumn(ColumnDefinition.CNTR_SKY_AREA,  null);
+            addColumn(ColumnDefinition.SOURCE_H,       null);
+            addColumn(ColumnDefinition.SOURCE_V,       null);
             addColumn(ColumnDefinition.FREQ,           null);
             //addColumn(ColumnDefinition.FREQ_RNGE_L,    null);
             //addColumn(ColumnDefinition.FREQ_RNGE_H,    null);
