@@ -15,12 +15,16 @@ import com.extjs.gxt.ui.client.data.BaseListLoadConfig;
 import com.extjs.gxt.ui.client.data.BaseListLoadResult;
 import com.extjs.gxt.ui.client.data.BaseListLoader;
 import com.extjs.gxt.ui.client.data.BaseModelData;
+import com.extjs.gxt.ui.client.data.BasePagingLoadConfig;
+import com.extjs.gxt.ui.client.data.BasePagingLoadResult;
+import com.extjs.gxt.ui.client.data.BasePagingLoader;
 import com.extjs.gxt.ui.client.data.DataField;
 import com.extjs.gxt.ui.client.data.DataReader;
 import com.extjs.gxt.ui.client.data.HttpProxy;
 import com.extjs.gxt.ui.client.data.JsonReader;
 import com.extjs.gxt.ui.client.data.ListLoader;
 import com.extjs.gxt.ui.client.data.ModelData;
+import com.extjs.gxt.ui.client.data.PagingLoader;
 import com.extjs.gxt.ui.client.event.BaseEvent;
 import com.extjs.gxt.ui.client.event.ComponentEvent;
 import com.extjs.gxt.ui.client.event.GridEvent;
@@ -35,6 +39,7 @@ import com.extjs.gxt.ui.client.store.StoreListener;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
 import com.extjs.gxt.ui.client.widget.Dialog;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
+import com.extjs.gxt.ui.client.widget.PagingToolBar;
 import com.extjs.gxt.ui.client.widget.button.Button;
 import com.extjs.gxt.ui.client.widget.form.CheckBox;
 import com.extjs.gxt.ui.client.widget.form.Field;
@@ -74,16 +79,25 @@ public class SessionExplorer extends ContentPanel {
 
 		RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
 				"/sessions");
-		DataReader reader = new JsonReader<BaseListLoadConfig>(
-				new SessionType(rows.getColumnDefinition()));
+		/*
+		DataReader reader = new JsonReader<BaseListLoadConfig>(new SessionType(rows.getColumnDefinition()));
+		HttpProxy<BaseListLoadConfig, BaseListLoadResult<BaseModelData>> proxy = new HttpProxy<BaseListLoadConfig, BaseListLoadResult<BaseModelData>>(builder);
+		loader = new BaseListLoader<BaseListLoadConfig, BaseListLoadResult<BaseModelData>>(proxy, reader);
+		loader.setRemoteSort(true);
+		loader.load(0, 50);
+		final PagingToolBar toolBar = new PagingToolBar(50);  
+		toolBar.bind(loader);
+		 */
 
-		HttpProxy<BaseListLoadConfig, BaseListLoadResult<BaseModelData>> proxy = new HttpProxy<BaseListLoadConfig, BaseListLoadResult<BaseModelData>>(
-				builder);
-		loader = new BaseListLoader<BaseListLoadConfig, BaseListLoadResult<BaseModelData>>(
-				proxy, reader);
+		DataReader reader = new JsonReader<BasePagingLoadConfig>(new SessionType(rows.getColumnDefinition()));
+		HttpProxy<BasePagingLoadConfig, BasePagingLoadResult<BaseModelData>> proxy = new HttpProxy<BasePagingLoadConfig, BasePagingLoadResult<BaseModelData>>(builder);
+		loader = new BasePagingLoader<BasePagingLoadConfig, BasePagingLoadResult<BaseModelData>>(proxy, reader);  
+		loader.load();
+
 		store = new ListStore<BaseModelData>(loader);
 		filtered = new ArrayList<BaseModelData>();
 
+		
 		grid = new EditorGrid<BaseModelData>(store, rows.getColumnModel(selection.getColumn()));
 		add(grid);
 
@@ -93,8 +107,6 @@ public class SessionExplorer extends ContentPanel {
 		
 		initToolBar();
 		initListeners();
-
-		loader.load();
 	}
 
 	private void initListeners() {
@@ -500,5 +512,6 @@ public class SessionExplorer extends ContentPanel {
 	private ArrayList<BaseModelData> filtered;
 
 	/** Use loader.load() to refresh with the list of sessions on the server. */
-	private ListLoader<BaseListLoadConfig> loader;
+	//private ListLoader<BaseListLoadConfig> loader;
+	private PagingLoader<BasePagingLoadConfig> loader;
 }

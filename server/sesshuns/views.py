@@ -31,7 +31,7 @@ class SessionResource(NellResource):
                           , mimetype = "text/plain")
 
     def read(self, request):
-        sessions = Sesshun.objects.all()
+        sessions = Sesshun.objects.all()[0:20]
         return HttpResponse(json.dumps({"sessions":[s.jsondict() for s in sessions]})
                           , mimetype = "text/plain")
 
