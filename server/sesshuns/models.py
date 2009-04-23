@@ -423,7 +423,10 @@ class Sesshun(models.Model):
             d.update({"receiver"   : rcvrs})
             
         if target is not None:
-            d.update({"source" : target.source})
+            d.update({"source" :     target.source})
+            d.update({"coord_mode" : target.system.name})
+            d.update({"source_h" :   target.horizontal})
+            d.update({"source_v" :   target.vertical})
 
         #  Remove all None values
         for k, v in d.items():
