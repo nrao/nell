@@ -9,13 +9,13 @@ public class ReceiverTest extends GWTTestCase {
     }
 	
 	public void test_deriveReceiver() {
-		assertEquals(Receiver.deriveReceiver(.011), "Rcvr_RRI");
-		assertEquals(Receiver.deriveReceiver(.013), "Rcvr_342");
-		assertEquals(Receiver.deriveReceiver(10.9), "Rcvr8_10");
-		assertEquals(Receiver.deriveReceiver(11.1), "Rcvr12_18");
-		assertEquals(Receiver.deriveReceiver(51.9), "Rcvr40_52");
-		assertEquals(Receiver.deriveReceiver(52.1), "NoiseSource");
-		assertEquals(Receiver.deriveReceiver(55.9), "NoiseSource");
-		assertEquals(Receiver.deriveReceiver(90.9), "Rcvr_PAR");
+		assertEquals("RRI", Receiver.deriveReceiver(.011));
+		assertEquals("342", Receiver.deriveReceiver(.013));
+		assertEquals("X",   Receiver.deriveReceiver(10.9));
+		assertEquals("Ku",  Receiver.deriveReceiver(11.1));
+		assertEquals("Q",   Receiver.deriveReceiver(51.9));
+		assertEquals("K",   Receiver.deriveReceiver(24.1));
+		assertEquals("MBA", Receiver.deriveReceiver(55.9));
+		assertEquals("MBA", Receiver.deriveReceiver(90.9));
 	}
 }

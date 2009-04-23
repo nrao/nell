@@ -1,12 +1,12 @@
-from datetime              import datetime, timedelta
-from django.db             import models
-from django.http           import QueryDict
-from math                  import asin, acos, cos, sin
+from datetime                  import datetime, timedelta
+from math                      import asin, acos, cos, sin
+from django.db                 import models
+from django.http               import QueryDict
 
-from server.utilities import OpportunityGenerator, TimeAgent
+from server.utilities          import OpportunityGenerator, TimeAgent
+from server.utilities.receiver import ReceiverCompile
 
 import sys
-import pdb
 
 def first(results, default = None):
     return default if len(results) == 0 else results[0]
@@ -303,15 +303,18 @@ class Sesshun(models.Model):
         self.status = status
         self.save()
         
-        frcvr  = fdata.get("receiver", "L")
-        print "****************** frcvr", frcvr
-        rcvr   = first(Receiver.objects.filter(abbreviation = frcvr).all()
-                     , Receiver.objects.all()[0])  # TBF want default?
-        print "****************** rcvr", rcvr
-        rg     = Receiver_Group(session = self)
-        rg.save()
-        rg.receivers.add(rcvr)
-        rg.save()
+        abbreviations = [r.abbreviation for r in Receiver.objects.all()]
+        frcvr  = fdata.get("receiver")
+        # TBF catch errors and report to user
+        rc = ReceiverCompile(abbreviations)
+        ands = rc.normalize(frcvr)
+        for ors in ands:
+            rg = Receiver_Group(session = self)
+            rg.save()
+            for rcvr in ors:
+                rcvrId = first(Receiver.objects.filter(abbreviation = rcvr))
+                rg.receivers.add(rcvrId)
+                rg.save()
         
         system = first(System.objects.filter(name = "J2000").all()
                      , System.objects.all()[0])
@@ -382,11 +385,19 @@ class Sesshun(models.Model):
         return False
         
     def get_receiver_req(self):
-        return first(self.receiver_group_set.get().receivers.all())
+        rgs = self.receiver_group_set.all()
+        ands = []
+        for rg in rgs:
+            rs = rg.receivers.all()
+            ands.append(' | '.join([r.abbreviation for r in rs]))
+        if len(ands) == 1:
+            return ands[0]
+        else:
+            return ' & '.join(['(' + rg + ')' for rg in ands])
         
     def jsondict(self):
         target = first(self.target_set.all())
-        rcvr   = self.get_receiver_req()
+        rcvrs  = self.get_receiver_req()
 
         d = {"id"         : self.id
            , "proj_code"  : self.project.pcode
@@ -408,8 +419,8 @@ class Sesshun(models.Model):
            , "backup"     : self.status.backup
                }
 
-        if rcvr is not None:
-            d.update({"receiver"   : rcvr.abbreviation})
+        if rcvrs is not None:
+            d.update({"receiver"   : rcvrs})
             
         if target is not None:
             d.update({"source" : target.source})

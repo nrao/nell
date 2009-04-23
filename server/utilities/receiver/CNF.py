@@ -3,11 +3,11 @@
    INPUT FORMAT: a parse tree (nested list) of this format:
 
    L ::=  [ op, L, L ]  |  [ "-", L ]  |  "p"
-          where op is any of  "&", "v", "->"
+          where op is any of  "&", "|", "->"
                 p  is a string of letters
 
   Here are examples:
-      ["&", ["v", "p", "q"], "r"]
+      ["&", ["|", "p", "q"], "r"]
       ["-", ["->", "p", ["-", "s"]]]
       ["-", ["-", "p"]]
       ["->", "a", "b"]
@@ -23,7 +23,7 @@
      F ::=  "p"  |  "-p"
             where  p  is a string of letters
 
-   Example: the cnf,   (p v q v -r) & (s) & (-p v s),  is presented as the
+   Example: the cnf,   (p | q | -r) & (s) & (-p | s),  is presented as the
    nested list,        [["p", "q", "-r"], ["s"], ["-p", "s"]]
 
 
@@ -34,38 +34,8 @@
 # operators:
 IMPLIES = "->"
 NOT = "-"
-OR = "v"
+OR = "|"
 AND  = "&"
-
-
-def main():
-    """main lets you test the algorithm with interactive input"""
-    import Parse
-    text = raw_input("Type a proposition: ")
-    print
-    prop0 = Parse.parse(Parse.scan(text))
-    print "parse tree: "
-    print prop0
-    print
-    prop1 = removeImplications(prop0)
-    print "-> removed:"
-    print prop1
-    print
-    prop2 = moveNegations(prop1)
-    print "- shifted inwards:"
-    print prop2
-    print
-    prop3 = makeIntoCNF(prop2)
-    print "cnf:"
-    print  prop3
-    print
-    prop4 = flattenCNF(prop3)
-    print "flattened cnf:"
-    print  prop4
-    print
-    prop5 = removeDuplicates(prop4)
-    prop6 = removeTautologies(prop5)
-    print "simplified cnf:", prop6
 
 def goSequent() :
     """goSequent helps a user interactively type a sequent to be proved,
@@ -76,7 +46,7 @@ def goSequent() :
        where     D ::=  [F1, F2, ... Fm]
                  F ::=  "p"  |  "-p"
                          where  p  is a string of letters
-       Example: the input,    p->r, q->r |- (p v q) -> r,
+       Example: the input,    p->r, q->r |- (p | q) -> r,
        is mapped to the cnf form,
                [['-p', 'r'], ['-q', 'r'], ['p', 'q'], ['-r']]
        and the string,
@@ -130,7 +100,7 @@ def cnf(parsetree) :
 
 def removeImplications(prop) :  # textbook, p.63, calls it, IMPL_FREE
     """removeImplications replaces every implication in  prop  via this 
-       equivalence:  P -> Q  -||-  -P v Q
+       equivalence:  P -> Q  -||-  -P | Q
 
        pre: prop is a nested-list parsetree
        post: answer is equivalent to prop, where every occurrence of
@@ -235,12 +205,12 @@ def makeIntoCNF(prop) :  # textbook, p. 60, calls this  CNF
 
 
 def distribute_Or(p1, p2):  # textbook, p.61, calls this  DISTR
-    """distribute_Or  converts a proposition of form,   p1 v p2,
+    """distribute_Or  converts a proposition of form,   p1 | p2,
        where  p1  and  p2  are already in cnf,  into an answer in cnf  via:
-          (P11 & P12) v P2  -||-  (P11 v P2) & (P12 v P2)
+          (P11 & P12) | P2  -||-  (P11 | P2) & (P12 | P2)
 
        pre: p1 and p2 are nested-list parsetrees in cnf
-       post: answer is equivalent to  p1 v p2  but is in cnf
+       post: answer is equivalent to  p1 | p2  but is in cnf
     """
     if isinstance(p1, list) and p1[0] == AND :
         """{ assert:  p1 = P11 & P12 }"""
@@ -344,4 +314,35 @@ def isTautology(d):
        if opposite in d :
            return True
     return False
+
+
+if __name__ == '__main__':
+#def main():
+    """main lets you test the algorithm with interactive input"""
+    import Parse
+    text = raw_input("Type a proposition: ")
+    print
+    prop0 = Parse.parse(Parse.scan(text))
+    print "parse tree: "
+    print prop0
+    print
+    prop1 = removeImplications(prop0)
+    print "-> removed:"
+    print prop1
+    print
+    prop2 = moveNegations(prop1)
+    print "- shifted inwards:"
+    print prop2
+    print
+    prop3 = makeIntoCNF(prop2)
+    print "cnf:"
+    print  prop3
+    print
+    prop4 = flattenCNF(prop3)
+    print "flattened cnf:"
+    print  prop4
+    print
+    prop5 = removeDuplicates(prop4)
+    prop6 = removeTautologies(prop5)
+    print "simplified cnf:", prop6
 

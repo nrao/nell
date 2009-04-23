@@ -9,29 +9,29 @@
    E ::=  T op T  |  T
    T ::=  -F  |  F
    F ::=  p  |  ( E )
-          where  op  is any of  &, v, ->
+          where  op  is any of  &, |, ->
                  p   is an alphabetic letter (or string of letters)
 
    All compound propositions must be bracketed with parens.
-   Examples:   (p v q) & r 
+   Examples:   (p | q) & r 
                -( p -> -s )
                - ( - p )
                ((a -> (b)) )
                p
    
    These examples are incorrect because they lack adequate parens:
-       p v q v r
+       p | q | r
        - -p
 
    Format of parsed propsition: a nested listed of this form:
 
    L ::=  [ op, L, L ]  |  [ "-", L ]  |  "p"
-          where op is any of  "&", "v", "->"
+          where op is any of  "&", "|", "->"
                 p  is a lower-case letter
 
   The nested list is a simple-minded representation of a parse tree.
   Here are the parsed nested lists corresponding to the above examples:
-      ["&", ["v", "p", "q"], "r"]
+      ["&", ["|", "p", "q"], "r"]
       ["-", ["->", "p", ["-", "s"]]]
       ["-", ["-", "p"]]
       ["->", "a", "b"]
@@ -47,7 +47,8 @@ symbol = ""    # holds the next symbol to be placed into the parse tree
 EOF = "$"
 AND = "&"
 ALTAND = "^"
-OR = "v"
+OR = "|"
+ALTOR = "v"
 NOT = "-"
 IMPLIES = "->"
 LEFTPAREN = "("
@@ -57,14 +58,6 @@ NEWLINE = "\\n"
 BINARYOPS = (AND, OR, NOT, IMPLIES)
 SEPARATORS = (AND, OR, NOT, LEFTPAREN, RIGHTPAREN, SPACE, NEWLINE)
 
-
-def main() :
-    """main lets you interactively type a proposition and parse it.
-       Input: a proposition according to the above grammar
-       Output: the parse tree"""
-    text = raw_input("Type proposition: ")
-    tree = parse(scan(text))
-    print "parse:", tree
 
 
 
@@ -83,6 +76,10 @@ def scan(text) :
         if letter == ALTAND:
             print "WARNING: Replacing ^ with &"
             letter = AND
+        # Convert ALTOR to OR  
+        if letter == ALTOR:
+            print "WARNING: Replacing v with |"
+            letter = OR
         # see if word in  next  is complete and should be appended to answer:
         if letter in SEPARATORS and next != "" :
             answer.append(next)
@@ -117,7 +114,8 @@ def parse(wordlist) :
     getNext()
     answer = parseE()
     if symbol != EOF :  # consumed all the symbols ?
-        print "error: extra symbols:", symbol, tokens
+        raise SyntaxError, "extra symbols: %s, %s" % (symbol, tokens)
+        #print "error: extra symbols:", symbol, tokens
     return answer
 
 
@@ -163,7 +161,7 @@ def parseT():
 def parseF():
     """builds a tree (nested list) that matches this grammar rule:
        F ::=  p  |  ( E )"""
-    if symbol.isalpha() : # p
+    if symbol.isalnum() : # p
         answer = symbol
         getNext()
     elif symbol == "(" :  # ( E ) 
@@ -172,9 +170,20 @@ def parseF():
         if symbol == ")" :
             getNext()
         else :
-            print "error F1: missing right paren"
+            raise SyntaxError, "F1: missing right paren"
+            #print "error F1: missing right paren"
     else :
         answer = []
-        print "error F2: illegal symbol"
+        raise SyntaxError, "F2: illegal symbol"
+        #print "error F2: illegal symbol"
     return answer
+
+if __name__ == '__main__':
+#def main() :
+    """main lets you interactively type a proposition and parse it.
+       Input: a proposition according to the above grammar
+       Output: the parse tree"""
+    text = raw_input("Type proposition: ")
+    tree = parse(scan(text))
+    print "parse:", tree
 
