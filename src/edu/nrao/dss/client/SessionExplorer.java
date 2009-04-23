@@ -77,39 +77,29 @@ public class SessionExplorer extends ContentPanel {
 		CheckBoxSelectionModel<BaseModelData> selection = new CheckBoxSelectionModel<BaseModelData>();
 		selection.setSelectionMode(SelectionMode.MULTI);
 
-		RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
-				"/sessions");
-		
-		// ListLoader
-		DataReader reader = new JsonReader<BaseListLoadConfig>(new SessionType(rows.getColumnDefinition()));
-		HttpProxy<BaseListLoadConfig, BaseListLoadResult<BaseModelData>> proxy = new HttpProxy<BaseListLoadConfig, BaseListLoadResult<BaseModelData>>(builder);
-		loader = new BaseListLoader<BaseListLoadConfig, BaseListLoadResult<BaseModelData>>(proxy, reader);
-		loader.load();
+		RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, "/sessions");
 
-		/*
-		//PagingLoader
-		DataReader reader = new JsonReader<BasePagingLoadConfig>(new SessionType(rows.getColumnDefinition()));
+		DataReader reader = new PagingJsonReader<BasePagingLoadConfig>(new SessionType(rows.getColumnDefinition()));
 		HttpProxy<BasePagingLoadConfig, BasePagingLoadResult<BaseModelData>> proxy = new HttpProxy<BasePagingLoadConfig, BasePagingLoadResult<BaseModelData>>(builder);
 		loader = new BasePagingLoader<BasePagingLoadConfig, BasePagingLoadResult<BaseModelData>>(proxy, reader);  
 		loader.setRemoteSort(true);
-		loader.load(0, 50);
-		final PagingToolBar toolBar = new PagingToolBar(50);  
-		toolBar.bind(loader);
-		*/
-		
+		//final PagingToolBar toolBar = new PagingToolBar(50);  
+		//toolBar.bind(loader);
+
 		store = new ListStore<BaseModelData>(loader);
 		filtered = new ArrayList<BaseModelData>();
 
-		
 		grid = new EditorGrid<BaseModelData>(store, rows.getColumnModel(selection.getColumn()));
 		add(grid);
 
 		grid.setSelectionModel(selection);
 		grid.addPlugin(selection);
 		grid.setBorders(true);
-		
+
 		initToolBar();
 		initListeners();
+
+		loader.load(0, 50);
 	}
 
 	private void initListeners() {
@@ -515,6 +505,5 @@ public class SessionExplorer extends ContentPanel {
 	private ArrayList<BaseModelData> filtered;
 
 	/** Use loader.load() to refresh with the list of sessions on the server. */
-	private ListLoader<BaseListLoadConfig> loader;
-	//private PagingLoader<BasePagingLoadConfig> loader;
+	private PagingLoader<BasePagingLoadConfig> loader;
 }
