@@ -31,9 +31,14 @@ class SessionResource(NellResource):
                           , mimetype = "text/plain")
 
     def read(self, request):
+	total    = Sesshun.objects.count()
         sessions = Sesshun.objects.all()
-        return HttpResponse(json.dumps({"sessions":[s.jsondict() for s in sessions]})
-                          , mimetype = "text/plain")
+	if "start" in request.GET and "limit" in request.GET:
+	    start = int(request.GET["start"])
+	    limit = int(request.GET["limit"])
+	    sessions = sessions[start:start+limit]
+        return HttpResponse(json.dumps(dict(total = total, sessions = [s.jsondict() for s in sessions]))
+                          , content_type = "application/json")
 
     def update(self, request, *args, **kws):
         id    = int(args[0])
