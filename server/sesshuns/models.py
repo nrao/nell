@@ -396,8 +396,9 @@ class Sesshun(models.Model):
             return ' & '.join(['(' + rg + ')' for rg in ands])
         
     def jsondict(self):
-        target = first(self.target_set.all())
+        target  = first(self.target_set.all())
         rcvrs  = self.get_receiver_req()
+        cadence = first(self.cadence_set.all())
 
         d = {"id"         : self.id
            , "proj_code"  : self.project.pcode
@@ -423,11 +424,23 @@ class Sesshun(models.Model):
             d.update({"receiver"   : rcvrs})
             
         if target is not None:
-            d.update({"source" :     target.source})
-            d.update({"coord_mode" : target.system.name})
-            d.update({"source_h" :   target.horizontal})
-            d.update({"source_v" :   target.vertical})
+            d.update({"source"     : target.source
+                    , "coord_mode" : target.system.name
+                    , "source_h"   : target.horizontal
+                    , "source_v"   : target.vertical
+                      })
 
+        if cadence is not None:
+            sd = None if cadence.start_date is None \
+                else cadence.start_date.strftime("%m-%d-%y")
+            ed = None if cadence.end_date is None \
+                else cadence.end_date.strftime("%m-%d-%y")
+            d.update({"cad_start_date" : sd
+                    , "cad_end_date"   : ed
+                    , "cad_repeats"    : cadence.repeats
+                    , "cad_intervals"  : cadence.intervals
+                      })
+            
         #  Remove all None values
         for k, v in d.items():
             if v is None:

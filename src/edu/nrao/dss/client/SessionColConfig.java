@@ -1,12 +1,14 @@
 package edu.nrao.dss.client;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import com.extjs.gxt.ui.client.store.ListStore;
 import com.extjs.gxt.ui.client.Style.HorizontalAlignment;
 import com.extjs.gxt.ui.client.data.BaseModelData;
 import com.extjs.gxt.ui.client.data.ModelData;
 import com.extjs.gxt.ui.client.widget.form.CheckBox;
+import com.extjs.gxt.ui.client.widget.form.DateField;
 import com.extjs.gxt.ui.client.widget.form.Field;
 import com.extjs.gxt.ui.client.widget.form.NumberField;
 import com.extjs.gxt.ui.client.widget.form.SimpleComboBox;
@@ -53,6 +55,8 @@ class SessionColConfig extends ColumnConfig {
 			typeField(TimeOfDayField.values);
 		} else if (clasz == GradeField.class) {
 			typeField(GradeField.values);
+		} else if (clasz == DateEditField.class) {
+			dateField();
 		} else {
 			textField();
 		}
@@ -99,6 +103,8 @@ class SessionColConfig extends ColumnConfig {
 			field = createSimpleComboBox(TimeOfDayField.values);
 		} else if (this.clasz == GradeField.class) {
 			field = createSimpleComboBox(GradeField.values);
+		} else if (clasz == DateEditField.class) {
+			field = new DateField();
 		} else {
 			field = createTextField();
 		}
@@ -214,7 +220,31 @@ class SessionColConfig extends ColumnConfig {
 			}
 		});
 	}
+	
+	private void dateField() {
+		setEditor(new CellEditor(new DateField()){
+			@Override
+			public Object preProcessValue(Object value) {
+				if (value == null) {
+					return null;
+				}
+				//return DateFormat.getDateInstance().parse(value.toString());
+				String[] df_str = value.toString().split("-");
+				System.out.println(df_str);
+				
+				return new Date();
+			}
 
+			@Override
+			public Object postProcessValue(Object value) {
+				if (value == null) {
+					return null;
+				}
+				return value.toString();
+			}
+		});
+	}
+	
 	private TextField<String> createTextField() {
 		TextField<String> field = new TextField<String>();
 		return field;

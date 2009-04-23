@@ -306,12 +306,23 @@ class TestSessionResource(NellTestCase):
         s = Sesshun()
         s.init_from_post({})
         s.save()
+        self.s = s
 
     def test_create(self):
         response = self.client.post('/sessions')
         self.failUnlessEqual(response.status_code, 200)
 
     def test_read(self):
+        response = self.client.get('/sessions')
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_read_cadence(self):
+        c = Cadence(session    = self.s
+                  , start_date = datetime(2009, 4, 22)
+                  , repeats    = 4
+                  , intervals  = "3"
+                    )
+        c.save()
         response = self.client.get('/sessions')
         self.failUnlessEqual(response.status_code, 200)
 
