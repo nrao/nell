@@ -83,8 +83,6 @@ public class SessionExplorer extends ContentPanel {
 		HttpProxy<BasePagingLoadConfig, BasePagingLoadResult<BaseModelData>> proxy = new HttpProxy<BasePagingLoadConfig, BasePagingLoadResult<BaseModelData>>(builder);
 		loader = new BasePagingLoader<BasePagingLoadConfig, BasePagingLoadResult<BaseModelData>>(proxy, reader);  
 		loader.setRemoteSort(true);
-		//final PagingToolBar toolBar = new PagingToolBar(50);  
-		//toolBar.bind(loader);
 
 		store = new ListStore<BaseModelData>(loader);
 		filtered = new ArrayList<BaseModelData>();
@@ -96,7 +94,11 @@ public class SessionExplorer extends ContentPanel {
 		grid.addPlugin(selection);
 		grid.setBorders(true);
 
-		initToolBar();
+		PagingToolBar toolBar = new PagingToolBar(50);
+		setBottomComponent(toolBar);
+        toolBar.bind(loader);
+
+        initToolBar();
 		initListeners();
 
 		loader.load(0, 50);
