@@ -283,6 +283,7 @@ class Sesshun(models.Model):
 
     def init_from_post(self, fdata):
         self.set_base_fields(fdata)
+
         # grade - UI deals w/ letters (A,B,C) - DB deals with floats
         grade = self.grade_abc_2_float(fdata.get("grade", 'A'))
         allot = Allotment(psc_time          = fdata.get("PSC_time", 0.0)
@@ -303,18 +304,8 @@ class Sesshun(models.Model):
         self.status = status
         self.save()
         
-        abbreviations = [r.abbreviation for r in Receiver.objects.all()]
-        frcvr  = fdata.get("receiver")
-        # TBF catch errors and report to user
-        rc = ReceiverCompile(abbreviations)
-        ands = rc.normalize(frcvr)
-        for ors in ands:
-            rg = Receiver_Group(session = self)
-            rg.save()
-            for rcvr in ors:
-                rcvrId = first(Receiver.objects.filter(abbreviation = rcvr))
-                rg.receivers.add(rcvrId)
-                rg.save()
+        proposition = fdata.get("receiver")
+        self.save_receivers(proposition)
         
         system = first(System.objects.filter(name = "J2000").all()
                      , System.objects.all()[0])
@@ -331,10 +322,24 @@ class Sesshun(models.Model):
         target.save()
         self.save()
 
+    def save_receivers(self, proposition):
+        abbreviations = [r.abbreviation for r in Receiver.objects.all()]
+        # TBF catch errors and report to user
+        rc = ReceiverCompile(abbreviations)
+        ands = rc.normalize(proposition)
+        for ors in ands:
+            rg = Receiver_Group(session = self)
+            rg.save()
+            for rcvr in ors:
+                rcvrId = Receiver.objects.filter(abbreviation = rcvr)[0]
+                rg.receivers.add(rcvrId)
+                rg.save()
+
     def update_from_post(self, fdata):
         self.set_base_fields(fdata)
         self.save()
 
+        # grade - UI deals w/ letters (A,B,C) - DB deals with floats
         grade = self.grade_abc_2_float(fdata.get("grade", 'A'))
         self.allotment.psc_time          = fdata.get("PSC_time", 0.0)
         self.allotment.total_time        = fdata.get("total_time", 0.0)
@@ -351,6 +356,11 @@ class Sesshun(models.Model):
         self.status.backup     = self.get_field(fdata, "backup", True, bool) 
         self.status.save()
         self.save()
+
+        proposition = fdata.get("receiver", None)
+        if proposition is not None:
+            self.receiver_group_set.all().delete()
+            self.save_receivers(proposition)
 
         system = first(System.objects.filter(name = "J2000").all()
                      , System.objects.all()[0])

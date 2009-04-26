@@ -147,7 +147,7 @@ class JSONRequest implements RequestCallback {
 			if (i > 0) {
 				postData.append("&");
 			}
-			postData.append(URL.encode(keys[i])).append("=").append(URL.encode(values[i]));
+			postData.append(URL.encodeComponent(keys[i])).append("=").append(URL.encodeComponent(values[i]));
 		}
 		
 		return postData.toString();

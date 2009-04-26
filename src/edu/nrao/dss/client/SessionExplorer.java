@@ -73,6 +73,7 @@ public class SessionExplorer extends ContentPanel {
 	private void initLayout() {
 		setHeaderVisible(false);
 		setLayout(new FitLayout());
+		commitState = false;
 
 		CheckBoxSelectionModel<BaseModelData> selection = new CheckBoxSelectionModel<BaseModelData>();
 		selection.setSelectionMode(SelectionMode.MULTI);
@@ -132,6 +133,9 @@ public class SessionExplorer extends ContentPanel {
 	}
 	
 	private void save(ModelData model) {
+		if (!commitState) {
+			return;
+		}
         ArrayList<String> keys   = new ArrayList<String>();
         ArrayList<String> values = new ArrayList<String>();
 
@@ -447,7 +451,9 @@ public class SessionExplorer extends ContentPanel {
 		saveItem.addSelectionListener(new SelectionListener<ToolBarEvent>() {
 			@Override
 			public void componentSelected(ToolBarEvent ce) {
+				commitState = true;
 				store.commitChanges();
+				commitState = false;
 			}
 		});
 
@@ -517,4 +523,7 @@ public class SessionExplorer extends ContentPanel {
 	/** Use loader.load() to refresh with the list of sessions on the server. */
 	private ListLoader<BaseListLoadConfig> loader;
 	//private PagingLoader<BasePagingLoadConfig> loader;
+	
+	/** Flag for enforcing saves only on Save button press. **/
+	private boolean commitState;
 }
