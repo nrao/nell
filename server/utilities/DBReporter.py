@@ -1,5 +1,6 @@
 from sesshuns.models import *
 from utilities.TimeAccounting import TimeAccounting
+from utilities                import TimeAgent
 
 class DBReporter:
 
@@ -135,6 +136,12 @@ class DBReporter:
         # sessions w/ out projects?
         self.add("Sessions w/ out projects: %d\n" % len([s for s in sess if s.project is None]))
 
+        # project time != sum( session time) - only applicable for our import
+        badProjTimes = [(p, self.ta.getProjectTotalTime(p) - self.ta.getProjSessionsTotalTime(p)) for p in projs if abs(self.ta.getProjectTotalTime(p) - self.ta.getProjSessionsTotalTime(p)) > 0.1]
+        if len(badProjTimes) > 0:
+            self.add("Projects w/ times != sum(session times): %s\n" % badProjTimes)
+
+        totalProjHrs = sum([self.ta.getProjectTotalTime(p) for p in projs])
         # windowed sessions w/ no windows?
         self.add("Windowed Sessions /w out windows: %d\n" % len([s for s in sess if (s.session_type.type in ['windowed','vlbi','fixed']) and len(s.window_set.all()) == 0]))
 
@@ -166,8 +173,8 @@ class DBReporter:
         # Session Header:
         # name?, #, len(hrs), LST, +/- (?), Sep, Del, Cmpl, TotHrs, lobs, 
         # Comment, Grade, Alloc, B/D, Sched, Bands, Backedns, Req, Outer#, Sep 
-        sessHeaders = ["Name", "#", "Len(hrs)", "LST", "+/-", "Sep(d)", "Del(d)", "Compl", "TotHrs", "lobs", "Comment", "G", "Alloc", "B\D", "Sched", "Bands", "Back Ends", "Req", "Outer#", "Sep"]
-        sessCols = [14, 3, 8, 12, 3, 6, 6, 5, 6, 9, 30, 1, 5, 3, 5, 8, 9, 8, 3, 5]
+        sessHeaders = ["Name", "#", "Len(hrs)", "LST", "N", "+/-", "Sep(d)", "Del(d)", "Compl", "TotHrs", "lobs", "Comment", "G", "Alloc", "B\D", "Sched", "Bands", "Back Ends", "Req", "Outer#", "Sep"]
+        sessCols = [14, 3, 8, 12, 1, 3, 6, 6, 5, 6, 9, 30, 1, 5, 3, 5, 8, 9, 8, 3, 5]
         # Trimester Footer:
         # # proposals, total time, time remaining, # proposals started (?)
         semesterFooter = ["Total #", "TotalTime", "Remaining"]
@@ -202,7 +209,7 @@ class DBReporter:
                           , self.getCarlRcvrs(proj.rcvrs_specified())
                           , "N/A" # DSS doesn't care about back ends
                           , self.getObsTypes(proj) # use DSS obs types  
-                          , "TBF" # TBF: what to do with these?
+                          , "N/A" # TBF: what to do with these?
                           ]
                 self.printData(projData, projHeaderCols)          
 
@@ -219,10 +226,11 @@ class DBReporter:
                            , "%d" % self.getCarlRepeats(s) 
                            , "%5.2f" % self.getCarlLenHrs(s)
                            , "TBF" # how to compute LST?
+                           , self.getCarlNightTimeFlag(s)
                            , "TBF" # how to compute LST range?
                            , "%s" % self.getCarlSeperation(s) 
-                           , "0" # TBF: del always zero?
-                           , "TBF" # TBF WTF?
+                           , "N/A" # TBF: del always zero?
+                           , "0" # no history, always zero
                            , "%5.2f" % s.allotment.total_time
                            , "N/A" # last obs. unknown because no history
                            , self.getCarlSessionComment(s)
@@ -232,11 +240,18 @@ class DBReporter:
                            , "" # no history
                            , self.getCarlRcvrs(s.rcvrs_specified())
                            , "N/A"
-                           , "TBF"
-                           , "TBF"
-                           , "TBF"]
+                           , self.getCarlStartDate(s) 
+                           , "N/A"
+                           , "N/A"]
 
                     self.printData(sData, sessCols)    
+
+                    # print any details that are getting cutoff:
+                    if len(sData[11]) > sessCols[11]:
+                        self.add("\nComment Details: %s\n\n" % sData[11])
+                    #if len(s.cadence_set.all()) > 0:    
+                    #    ests = [TimeAgent.est2utc(c.start_date) for c in s.cadence_set.all() if c.start_date is not None]
+                    #    self.add("Cadences: %s, UTC starts: %s\n\n" % (s.cadence_set.all(), ests))
 
                 # give a space between each project
                 self.add("\n\n")
@@ -343,6 +358,19 @@ class DBReporter:
         # TBF: convert to Carl abbreviations
         return "".join(rcvrs)
 
+    def getCarlStartDate(self, sess):
+        # assume one cadence
+        cs = sess.cadence_set.all()
+        if len(cs) > 0:
+            c = cs[0]
+            if c.start_date is not None:
+                start = TimeAgent.est2utc(c.start_date).strftime("%m/%d/%y")
+            else:
+                start = ""
+        else:
+            start = ""
+        return start    
+
     def getCarlRepeats(self, sess):
         # assume one or no cadences
         cs = sess.cadence_set.all()
@@ -359,6 +387,13 @@ class DBReporter:
         else:
             return ""
 
+    def getCarlNightTimeFlag(self, sess):
+        flag = ""
+        for op in sess.observing_parameter_set.all():
+            if op.parameter.name == "Night-time Flag" and op.boolean_value:
+                flag = "T"
+        return flag
+
     def getCarlSessionComment(self, sess):
         # get source name, position ...
         # TBF: assume one target?
@@ -369,7 +404,15 @@ class DBReporter:
                                            , ts[0].source)
         else:
             posName = ""
-        return "[%d] %s" % ( sess.id, posName)
+        # params
+        ops = sess.observing_parameter_set.all()
+        opList = [] 
+        for op in ops:
+            value = "%s(%s)" % (op.parameter.name, op.value())
+            opList.append(value)
+        opStr = ",".join(opList)    
+            
+        return "[%d] %s/%s" % ( sess.original_id, posName, opStr)
                                           
 
     def getCarlLenHrs(self, sess):
