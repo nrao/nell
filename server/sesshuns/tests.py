@@ -78,6 +78,27 @@ class TestReceiver(NellTestCase):
         self.assertTrue(len(nn) > 17)
         self.assertEquals([n for n in nn if n == 'Ka'], ['Ka'])
 
+    def test_save_receivers(self):
+        s = Sesshun.objects.all()[0]
+        rcvr = 'L'
+        s.save_receivers(rcvr)
+        rgs = s.receiver_group_set.all()
+        self.assertEqual(1, len(rgs))
+        self.assertEqual(rcvr, rgs[0].receivers.all()[0].abbreviation)
+
+        s.receiver_group_set.all().delete()
+        s.save_receivers('L | (X & S)')
+        rgs = s.receiver_group_set.all()
+        print rgs
+        # TBF WTF? now it is S, then it is X??
+        print rgs[0].receivers.all()[1].abbreviation
+        self.assertEqual(2, len(rgs))
+        print rgs[0].receivers.all()[1].abbreviation
+        self.assertEqual('L', rgs[0].receivers.all()[0].abbreviation)
+        self.assertEqual('X', rgs[0].receivers.all()[1].abbreviation)
+        self.assertEqual('L', rgs[1].receivers.all()[0].abbreviation)
+        self.assertEqual('S', rgs[1].receivers.all()[1].abbreviation)
+
 class TestSesshun(NellTestCase):
 
     def setUp(self):

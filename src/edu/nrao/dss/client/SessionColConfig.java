@@ -67,7 +67,6 @@ class SessionColConfig extends ColumnConfig {
 
 	public void setPCodeOptions() {
 		JSONRequest.get("/sessions/options", new JSONCallbackAdapter() {
-			@SuppressWarnings("unchecked")
 			@Override
 			public void onSuccess(JSONObject json) {
 				JSONArray pcodes = json.get("project codes").isArray();

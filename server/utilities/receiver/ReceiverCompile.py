@@ -19,11 +19,10 @@ class ReceiverCompile:
         'and' may be represented by '&' or '^' and 'or' may be represented
         by '|' or 'v'.
         """
-        if isinstance(text, unicode):
-            text = text.encode("ascii")
-        text = text
         if text is None:
             return []
+        if isinstance(text, unicode):
+            text = text.encode("ascii")
         prop = parse(scan('(' + text + ')'))
         rcvr_grps = cnf(prop)
         self.checkAbbreviations(rcvr_grps)
