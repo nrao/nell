@@ -58,12 +58,10 @@ class ColumnDefinition {
     public static final String TYPE              = "type";
     public static final String USE_DEPEND        = "use_depend";
     public static final String WIND              = "wind";
-    public static final String WINDOW_CADENCE    = "window_cadence";
-    public static final String WINDOW_DURATION   = "window_duration";
-    public static final String WINDOW_INTERVAL   = "window_interval";
-    public static final String WINDOW_PERIOD_LEN = "window_period_len";
-    public static final String WINDOW_PRIORITY   = "window_priority";
-    public static final String WINDOW_START      = "window_start";
+    public static final String CADENCE_START     = "cad_start_date";
+    public static final String CADENCE_END       = "cad_end_date";
+    public static final String CADENCE_REPEATS   = "cad_repeats";
+    public static final String CADENCE_INTERVALS = "cad_intervals";
     public static final String ZA_LIMIT          = "za_limit";
 
     public ColumnDefinition() {
@@ -208,6 +206,10 @@ class ColumnDefinition {
             new ColumnType(ABS_MAX,        "Abs Max",         60, Double.class,               null),
             new ColumnType(BETWEEN,        "Between",         60, Double.class,               null),
             new ColumnType(BACKUP,         "Backup",          50, Boolean.class,              null),
+            new ColumnType(CADENCE_START,  "Cadence Start",   75, DateEditField.class,        null),
+            new ColumnType(CADENCE_END,    "Cadence End",     75, String.class,               null),
+            new ColumnType(CADENCE_REPEATS,"Cadence Repeats", 75, String.class,               null),
+            new ColumnType(CADENCE_INTERVALS, "Cadence Intervals", 75, String.class,          null),
             new ColumnType(OBS_EFF_LIMIT,  "Obs Eff Limit",   75, Double.class,               obsEffLimit),
             new ColumnType(ATMOS_ST_LIMIT, "Atmos St Limit", 100, Integer.class,              25), // atmosStLimit),
             new ColumnType(TR_ERR_LIMIT,   "Tr Err Limit",    75, Double.class,               0.2), //trErrLimit),

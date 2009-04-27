@@ -78,6 +78,27 @@ class TestReceiver(NellTestCase):
         self.assertTrue(len(nn) > 17)
         self.assertEquals([n for n in nn if n == 'Ka'], ['Ka'])
 
+    def test_save_receivers(self):
+        s = Sesshun.objects.all()[0]
+        rcvr = 'L'
+        s.save_receivers(rcvr)
+        rgs = s.receiver_group_set.all()
+        self.assertEqual(1, len(rgs))
+        self.assertEqual(rcvr, rgs[0].receivers.all()[0].abbreviation)
+
+        s.receiver_group_set.all().delete()
+        s.save_receivers('L | (X & S)')
+        rgs = s.receiver_group_set.all()
+        print rgs
+        # TBF WTF? now it is S, then it is X??
+        print rgs[0].receivers.all()[1].abbreviation
+        self.assertEqual(2, len(rgs))
+        print rgs[0].receivers.all()[1].abbreviation
+        self.assertEqual('L', rgs[0].receivers.all()[0].abbreviation)
+        self.assertEqual('X', rgs[0].receivers.all()[1].abbreviation)
+        self.assertEqual('L', rgs[1].receivers.all()[0].abbreviation)
+        self.assertEqual('S', rgs[1].receivers.all()[1].abbreviation)
+
 class TestSesshun(NellTestCase):
 
     def setUp(self):
@@ -306,6 +327,7 @@ class TestSessionResource(NellTestCase):
         s = Sesshun()
         s.init_from_post({})
         s.save()
+        self.s = s
 
     def test_create(self):
         response = self.client.post('/sessions')
@@ -315,9 +337,40 @@ class TestSessionResource(NellTestCase):
         response = self.client.get('/sessions')
         self.failUnlessEqual(response.status_code, 200)
 
+    def test_read_cadence(self):
+        c = Cadence(session    = self.s
+                  , start_date = datetime(2009, 4, 22)
+                  , repeats    = 4
+                  , intervals  = "3"
+                    )
+        c.save()
+        response = self.client.get('/sessions')
+        self.failUnlessEqual(response.status_code, 200)
+
     def test_update(self):
         response = self.client.post('/sessions/1', {'_method' : 'put'})
         self.failUnlessEqual(response.status_code, 200)
+
+    def test_update_cadence(self):
+        c = Cadence(session    = self.s
+                  , start_date = datetime(2009, 4, 22)
+                  , repeats    = 4
+                  , intervals  = "3"
+                    )
+        c.save()
+        new_s = datetime(2009, 4, 23)
+        new_r = 3
+        new_i = "3,4,5,6"
+        response = self.client.post('/sessions/1', {'_method'        : 'put'
+                                                  , 'cad_start_date' : new_s.strftime("%m/%d/%Y")
+                                                  , 'cad_repeats'    : new_r
+                                                  , 'cad_intervals'  : new_i
+                                                    })
+        self.failUnlessEqual(response.status_code, 200)
+        cu = first(Cadence.objects.filter(id = c.id))
+        self.assertEquals(new_s, cu.start_date)
+        self.assertEquals(new_r, cu.repeats)
+        self.assertEquals(new_i, cu.intervals)
 
     def test_delete(self):
         response = self.client.post('/sessions/1', {'_method' : 'delete'})

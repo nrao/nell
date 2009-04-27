@@ -9,8 +9,6 @@ import java.util.Map;
 import com.extjs.gxt.ui.client.widget.grid.ColumnConfig;
 import com.extjs.gxt.ui.client.widget.grid.ColumnModel;
 
-import edu.nrao.dss.client.model.Receiver;
-
 class RowDefinition {
     public ColumnModel getColumnModel(ColumnConfig column) {
         return columns.getColumnModel(column);

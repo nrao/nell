@@ -283,6 +283,7 @@ class Sesshun(models.Model):
 
     def init_from_post(self, fdata):
         self.set_base_fields(fdata)
+
         # grade - UI deals w/ letters (A,B,C) - DB deals with floats
         grade = self.grade_abc_2_float(fdata.get("grade", 'A'))
         allot = Allotment(psc_time          = fdata.get("PSC_time", 0.0)
@@ -303,18 +304,8 @@ class Sesshun(models.Model):
         self.status = status
         self.save()
         
-        abbreviations = [r.abbreviation for r in Receiver.objects.all()]
-        frcvr  = fdata.get("receiver")
-        # TBF catch errors and report to user
-        rc = ReceiverCompile(abbreviations)
-        ands = rc.normalize(frcvr)
-        for ors in ands:
-            rg = Receiver_Group(session = self)
-            rg.save()
-            for rcvr in ors:
-                rcvrId = first(Receiver.objects.filter(abbreviation = rcvr))
-                rg.receivers.add(rcvrId)
-                rg.save()
+        proposition = fdata.get("receiver")
+        self.save_receivers(proposition)
         
         system = first(System.objects.filter(name = "J2000").all()
                      , System.objects.all()[0])
@@ -331,10 +322,60 @@ class Sesshun(models.Model):
         target.save()
         self.save()
 
+    def str2dt(self, str):
+        if str is None:
+            return None
+
+        if ' ' in str:
+            d, t      = str.split(' ')
+            m, d, y  = map(int, d.split('/'))
+            time      = t.split(':')
+            h, mm, ss = map(int, map(float, time))
+            return datetime(y, m, d, h, mm, ss)
+        m, d, y   = map(int, str.split('/'))
+        return datetime(y, m, d)
+
+    def save_receivers(self, proposition):
+        abbreviations = [r.abbreviation for r in Receiver.objects.all()]
+        # TBF catch errors and report to user
+        rc = ReceiverCompile(abbreviations)
+        ands = rc.normalize(proposition)
+        for ors in ands:
+            rg = Receiver_Group(session = self)
+            rg.save()
+            for rcvr in ors:
+                rcvrId = Receiver.objects.filter(abbreviation = rcvr)[0]
+                rg.receivers.add(rcvrId)
+                rg.save()
+
+    def get_cadence(self):
+        c = first(self.cadence_set.all())
+        if c is None:
+            return Cadence(session = self)
+        return c
+
+    def create_update_cadence(self, fdata):
+        c_start_date = self.str2dt(fdata.get("cad_start_date", None))
+        c_end_date   = self.str2dt(fdata.get("cad_end_date", None))
+        c_repeats    = fdata.get("cad_repeats", None)
+        c_intervals  = fdata.get("cad_intervals", None)
+
+        if c_start_date is not None or \
+           c_end_date is not None or \
+           c_repeats is not None or \
+           c_intervals is not None:
+            c            = self.get_cadence()
+            c.start_date = c_start_date
+            c.end_date   = c_end_date
+            c.repeats    = int(float(c_repeats)) if c_repeats is not None else c_repeats
+            c.intervals  = fdata.get("cad_intervals", None)
+            c.save()
+        
     def update_from_post(self, fdata):
         self.set_base_fields(fdata)
         self.save()
 
+        # grade - UI deals w/ letters (A,B,C) - DB deals with floats
         grade = self.grade_abc_2_float(fdata.get("grade", 'A'))
         self.allotment.psc_time          = fdata.get("PSC_time", 0.0)
         self.allotment.total_time        = fdata.get("total_time", 0.0)
@@ -352,19 +393,25 @@ class Sesshun(models.Model):
         self.status.save()
         self.save()
 
+        proposition = fdata.get("receiver", None)
+        if proposition is not None:
+            self.receiver_group_set.all().delete()
+            self.save_receivers(proposition)
+
         system = first(System.objects.filter(name = "J2000").all()
                      , System.objects.all()[0])
 
         v_axis = fdata.get("v_axis", 2.0) #TBF
         h_axis = fdata.get("h_axis", 2.0) #TBF
 
-        t = self.target_set.get()
+        t            = self.target_set.get()
         t.system     = system
         t.source     = fdata.get("source", None)
         t.vertical   = v_axis
         t.horizontal = h_axis
         t.save()
 
+        self.create_update_cadence(fdata)
         self.save()
 
     def get_ra_dec(self):
@@ -396,8 +443,9 @@ class Sesshun(models.Model):
             return ' & '.join(['(' + rg + ')' for rg in ands])
         
     def jsondict(self):
-        target = first(self.target_set.all())
+        target  = first(self.target_set.all())
         rcvrs  = self.get_receiver_req()
+        cadence = first(self.cadence_set.all())
 
         d = {"id"         : self.id
            , "proj_code"  : self.project.pcode
@@ -423,11 +471,23 @@ class Sesshun(models.Model):
             d.update({"receiver"   : rcvrs})
             
         if target is not None:
-            d.update({"source" :     target.source})
-            d.update({"coord_mode" : target.system.name})
-            d.update({"source_h" :   target.horizontal})
-            d.update({"source_v" :   target.vertical})
+            d.update({"source"     : target.source
+                    , "coord_mode" : target.system.name
+                    , "source_h"   : target.horizontal
+                    , "source_v"   : target.vertical
+                      })
 
+        if cadence is not None:
+            sd = None if cadence.start_date is None \
+                else cadence.start_date.strftime("%m/%d/%Y")
+            ed = None if cadence.end_date is None \
+                else cadence.end_date.strftime("%m/%d/%Y")
+            d.update({"cad_start_date" : sd
+                    , "cad_end_date"   : ed
+                    , "cad_repeats"    : cadence.repeats
+                    , "cad_intervals"  : cadence.intervals
+                      })
+            
         #  Remove all None values
         for k, v in d.items():
             if v is None:

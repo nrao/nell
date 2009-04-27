@@ -24,9 +24,9 @@ INSERT INTO project_types VALUES (DEFAULT, 'non-science');
 INSERT INTO session_types VALUES (DEFAULT, 'open');
 INSERT INTO session_types VALUES (DEFAULT, 'fixed');
 INSERT INTO session_types VALUES (DEFAULT, 'windowed');
+INSERT INTO session_types VALUES (DEFAULT, 'commissioning');
 INSERT INTO session_types VALUES (DEFAULT, 'vlbi');
 INSERT INTO session_types VALUES (DEFAULT, 'maintenance');
-INSERT INTO session_types VALUES (DEFAULT, 'commissioning');
 
 INSERT INTO observing_types VALUES (DEFAULT, 'radar');
 INSERT INTO observing_types VALUES (DEFAULT, 'vlbi');

@@ -4,7 +4,6 @@ import com.extjs.gxt.ui.client.event.ComponentEvent;
 import com.extjs.gxt.ui.client.event.KeyListener;
 import com.extjs.gxt.ui.client.widget.form.TextField;
 import com.extjs.gxt.ui.client.widget.toolbar.AdapterToolItem;
-import com.google.gwt.user.client.Window;
 
 public class FilterItem extends AdapterToolItem {
 	@SuppressWarnings("unchecked")
