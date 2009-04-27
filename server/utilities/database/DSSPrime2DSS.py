@@ -94,6 +94,7 @@ class DSSPrime2DSS(object):
                         )
             s.save()
 
+            # now get the sources
             s_id_prime = row[0]
             query = """
                     SELECT *
@@ -102,17 +103,30 @@ class DSSPrime2DSS(object):
                     """ % s_id_prime
             self.cursor.execute(query)
 
-            # System not set in DBase export!
+            # All Systems J2000!
             system = first(System.objects.filter(name = "J2000"))
+
             for t in self.cursor.fetchall():
-                target = Target(session    = s
+                try:
+                    vertical = float(t[4])
+                except:
+                    vertical = None
+                    print "Exception with row: ", t, s
+                try:
+                    horizontal = float(t[5])
+                except:
+                    horizontal = None
+                    print "Exception with row: ", t, s
+                if vertical is not None and horizontal is not None:    
+                    target = Target(session    = s
                               , system     = system
                               , source     = t[3]
                               , vertical   = float(t[4])
                               , horizontal = float(t[5])
                                 )
-                target.save()
+                    target.save()
 
+            # now get the cadences
             query = "SELECT * FROM cadences WHERE session_id = %s" % s_id_prime
             self.cursor.execute(query)
 
@@ -125,6 +139,7 @@ class DSSPrime2DSS(object):
                               )
                 cad.save()
 
+            # now get the rcvrs
             query = "SELECT id FROM receiver_groups WHERE session_id = %s" % s_id_prime
             self.cursor.execute(query)
 
@@ -144,6 +159,29 @@ class DSSPrime2DSS(object):
                     rg.receivers.add(rcvr)
                 rg.save()
                 
+            # now get the observing parameters
+            query = """SELECT * 
+                       FROM observing_parameters 
+                       WHERE session_id = %s
+                    """ % s_id_prime
+            self.cursor.execute(query)
+
+            for o in self.cursor.fetchall():
+                p  = first(Parameter.objects.filter(id = o[2]))
+                if p.name == 'Instruments' and o[3] == "None":
+                    print "Not passing over Observing Parameter = Instruments(None)"
+                else:    
+                    op = Observing_Parameter(
+                    session        = s
+                  , parameter      = p
+                  , string_value   = o[3] if o[3] is not None else None
+                  , integer_value  = o[4] if o[4] is not None else None 
+                  , float_value    = float(o[5]) if o[5] is not None else None
+                  , boolean_value  = o[6] == 1 if o[6] is not None else None
+                  , datetime_value = o[7] if o[7] is not None else None
+                )
+                    op.save()
+
         #self.populate_windows()
 
     def transfer_authors(self):
@@ -245,6 +283,7 @@ class DSSPrime2DSS(object):
             _   = self.create_user(row)
 
     def create_user(self, row):
+
         # Check to see if the user is already in the system
         user = first(User.objects.filter(original_id = int(row[3])).all())
 
@@ -253,10 +292,22 @@ class DSSPrime2DSS(object):
             row = self.cursor.fetchone()
             return user
             
+        try:
+            firstName = unicode(row[1])
+        except:
+            print "exception with name: ", row[1]
+            firstName = "exception"
+
+        try:
+            lastName = unicode(row[2])
+        except:
+            print "exception with name: ", row[2]
+            lastName = "exception"
+
         u = User(original_id = int(row[3])
                , sancioned   = False
-               , first_name  = row[1]
-               , last_name   = row[2]
+               , first_name  = firstName #row[1]
+               , last_name   = lastName #row[2]
                  )
         u.save()
 
