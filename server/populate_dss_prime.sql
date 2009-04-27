@@ -66,6 +66,7 @@ INSERT INTO systems VALUES (DEFAULT, 'ApparentRaDec', 'ra',   'dec');
 INSERT INTO systems VALUES (DEFAULT, 'CableWrap',     'az',    'el');
 INSERT INTO systems VALUES (DEFAULT, 'Encoder',       'az',    'el');
 
+INSERT INTO parameters VALUES (DEFAULT , 'Instruments',      'string');
 INSERT INTO parameters VALUES (DEFAULT , 'LST Include Low',   'float');
 INSERT INTO parameters VALUES (DEFAULT , 'LST Include Hi',    'float');
 INSERT INTO parameters VALUES (DEFAULT , 'LST Exclude Low',   'float');
