@@ -10,3 +10,6 @@ class TimeAccounting:
     def getProjectTotalTime(self, proj):
         return sum([a.total_time for a in proj.allotments.all()])
 
+    def getProjSessionsTotalTime(self, proj):
+        ss = proj.sesshun_set.all()
+        return sum([s.allotment.total_time for s in ss])
