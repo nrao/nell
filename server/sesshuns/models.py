@@ -519,6 +519,37 @@ class Observing_Parameter(models.Model):
         db_table = "observing_parameters"
         unique_together = ("session", "parameter")
 
+    def value(self):
+        if self.parameter.type == "string":
+            return self.string_value
+        elif self.parameter.type == "integer":
+            return self.integer_value
+        elif self.parameter.type == "float":
+            return self.float_value
+        elif self.parameter.type == "boolean":
+            return self.boolean_value
+        elif self.parameter.type == "datetime":
+            return self.datetime_value
+        else:
+            return None
+
+    def __unicode__(self):
+        if self.string_value is not None:
+            value = self.string_value
+        elif self.integer_value is not None:
+            value = str(self.integer_value)
+        elif self.float_value is not None:
+            value = str(self.float_value)
+        elif self.boolean_value is not None:
+            value = str(self.boolean_value)
+        elif self.datetime_value is not None:
+            value = str(self.datetime_value)
+        else:
+            value = ""
+        return "%s with value %s for Sesshun (%d)" % (self.parameter
+                                                    , value
+                                                    , self.session.id)
+
 class Window(models.Model):
     session  = models.ForeignKey(Sesshun)
     required = models.BooleanField()
