@@ -68,6 +68,11 @@ INSERT INTO systems VALUES (DEFAULT, 'ApparentRaDec', 'ra',  'dec');
 INSERT INTO systems VALUES (DEFAULT, 'CableWrap',     'az',  'el');
 INSERT INTO systems VALUES (DEFAULT, 'Encoder',       'az',  'el');
 
+INSERT INTO parameters VALUES (DEFAULT , 'Instruments', 'string');
+INSERT INTO parameters VALUES (DEFAULT, 'LST Include Low', 'float');
+INSERT INTO parameters VALUES (DEFAULT, 'LST Include Hi', 'float');
+INSERT INTO parameters VALUES (DEFAULT, 'LST Exclude Low', 'float');
+INSERT INTO parameters VALUES (DEFAULT, 'LST Exclude Hi', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'UTC Flag', 'boolean');
 INSERT INTO parameters VALUES (DEFAULT, 'Night-time Flag', 'boolean');
 INSERT INTO parameters VALUES (DEFAULT, 'Obs Eff Limit', 'float');
