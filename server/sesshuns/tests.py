@@ -8,6 +8,7 @@ from server.utilities.DBReporter            import DBReporter
 from server.utilities.Generate              import Generate
 from server.utilities.OpportunityGenerator  import OpportunityGenerator, GenOpportunity
 from server.utilities.database              import DSSPrime2DSS
+from server.utilities.receiver              import ReceiverCompile
 
 # Test field data
 fdata = {"total_time": "3"
@@ -74,7 +75,7 @@ class TestReceiver(NellTestCase):
 
     def test_get_abbreviations(self):
         nn = Receiver.get_abbreviations()
-        self.assertTrue(len(nn) > 18)
+        self.assertTrue(len(nn) > 17)
         self.assertEquals([n for n in nn if n == 'Ka'], ['Ka'])
 
 class TestSesshun(NellTestCase):
@@ -305,6 +306,7 @@ class TestSessionResource(NellTestCase):
         s = Sesshun()
         s.init_from_post({})
         s.save()
+        self.s = s
 
     def test_create(self):
         response = self.client.post('/sessions')
@@ -314,27 +316,66 @@ class TestSessionResource(NellTestCase):
         response = self.client.get('/sessions')
         self.failUnlessEqual(response.status_code, 200)
 
+    def test_read_cadence(self):
+        c = Cadence(session    = self.s
+                  , start_date = datetime(2009, 4, 22)
+                  , repeats    = 4
+                  , intervals  = "3"
+                    )
+        c.save()
+        response = self.client.get('/sessions')
+        self.failUnlessEqual(response.status_code, 200)
+
     def test_update(self):
         response = self.client.post('/sessions/1', {'_method' : 'put'})
         self.failUnlessEqual(response.status_code, 200)
+
+    def test_update_cadence(self):
+        c = Cadence(session    = self.s
+                  , start_date = datetime(2009, 4, 22)
+                  , repeats    = 4
+                  , intervals  = "3"
+                    )
+        c.save()
+        new_s = datetime(2009, 4, 23)
+        new_r = 3
+        new_i = "3,4,5,6"
+        response = self.client.post('/sessions/1', {'_method'        : 'put'
+                                                  , 'cad_start_date' : new_s.strftime("%m/%d/%Y")
+                                                  , 'cad_repeats'    : new_r
+                                                  , 'cad_intervals'  : new_i
+                                                    })
+        self.failUnlessEqual(response.status_code, 200)
+        cu = first(Cadence.objects.filter(id = c.id))
+        self.assertEquals(new_s, cu.start_date)
+        self.assertEquals(new_r, cu.repeats)
+        self.assertEquals(new_i, cu.intervals)
 
     def test_delete(self):
         response = self.client.post('/sessions/1', {'_method' : 'delete'})
         self.failUnlessEqual(response.status_code, 200)
 
     def test_create_rcvr(self):
-        response = self.client.post('/sessions', {'receiver' : 'Rcvr1_2'})
+        response = self.client.post('/sessions', {'receiver' : 'L'})
         self.failUnlessEqual(response.status_code, 200)
         r_json = json.loads(response.content)
         self.assertTrue(r_json.has_key('receiver'))
         self.assertEquals(r_json['receiver'], 'L')
     
-    def xtest_create_rcvrs(self):   # TBF hold until handles multiple rcvrs
-        response = self.client.post('/sessions', {'receiver' : 'K & (L | S)'})
+    def test_create_rcvrs(self):   # TBF hold until handles multiple rcvrs
+        response = self.client.post('/sessions',
+                                    {'receiver' : 'K & (L | S)'})
         self.failUnlessEqual(response.status_code, 200)
         r_json = json.loads(response.content)
         self.assertTrue(r_json.has_key('receiver'))
+        self.assertEquals(r_json['receiver'], u'(K) & (L | S)')
         # etc
+        response = self.client.post('/sessions',
+                                    {'receiver' : 'Ka | (342 & S)'})
+        self.failUnlessEqual(response.status_code, 200)
+        r_json = json.loads(response.content)
+        self.assertTrue(r_json.has_key('receiver'))
+        self.assertEquals(r_json['receiver'], u'(342 | Ka) & (S | Ka)')
     
 class TestWindowResource(NellTestCase):
 
@@ -683,3 +724,24 @@ class TestDSSPrime2DSS(NellTestCase):
     def test_DSSPrime2DSS(self):
         t = DSSPrime2DSS()
         t.transfer()
+
+class TestReceiverCompile(NellTestCase):
+
+    def test_normalize(self):
+        nn = Receiver.get_abbreviations()
+        rc = ReceiverCompile(nn)
+        self.assertEquals(rc.normalize(u'Q'), [[u'Q']])
+        self.assertEquals(rc.normalize('K & (L | S)'),
+                                       [['K'], ['L', 'S']])
+        self.assertEquals(rc.normalize('342 | (K & Ka)'),
+                                       [['342', 'K'], ['342', 'Ka']])
+        self.assertEquals(rc.normalize('(L ^ 342) v (K & Ka)'),
+                                       [['L', 'K'],   ['L', 'Ka'],
+                                        ['342', 'K'], ['342', 'Ka']])
+        try:
+            self.assertEquals(rc.normalize('J'), [['J']])
+        except ValueError:
+            pass
+        else:
+            self.fail()
+
