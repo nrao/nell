@@ -8,7 +8,9 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
    # ...
-     url(r'^sessions/options$',        get_options)
+     url(r'^cadences$',        CadenceResource(permitted_methods=('GET', 'PUT', 'POST')))
+   , url(r'^cadences/(\d+)$',  CadenceResource(permitted_methods=('PUT', 'GET', 'POST')))
+   , url(r'^sessions/options$',        get_options)
    , url(r'^sessions$',       SessionResource(permitted_methods=('GET', 'PUT', 'POST')))
    , url(r'^sessions/(\d+)$', SessionResource(permitted_methods=('PUT', 'GET', 'POST')))
    , url(r'^windows$',        WindowResource(permitted_methods=('GET', 'PUT', 'POST')))

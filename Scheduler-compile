@@ -1,5 +1,3 @@
 #!/bin/sh
 APPDIR=`dirname $0`;
-java  -Xmx256M -cp "$APPDIR/src:$APPDIR/bin:/home/dss/conundrum/gwt/gwt-linux-1.5.3/gwt-user.jar:/home/dss/conundrum/gwt/gwt-linux-1.5.3/gwt-dev-linux.jar:/home/dss/conundrum/gwt/gwt-linux-1.5.3/gxt-1.2.3/gxt.jar:/home/dss/conundrum/gwt/gwt-linux-1.5.3/gwt-incubator_1-5_Dec_28.jar" com.google.gwt.dev.GWTCompiler -out "$APPDIR/www" "$@" edu.nrao.dss.Scheduler;
-cd www/edu.nrao.dss.Scheduler
-ln -s Scheduler.html index.html
+java  -Xmx256M -cp "$APPDIR/src:$APPDIR/bin:/home/dss/conundrum/gwt/gwt-linux-1.5.3/gwt-user.jar:/home/dss/conundrum/gwt/gwt-linux-1.5.3/gwt-dev-linux.jar" com.google.gwt.dev.GWTCompiler -out "$APPDIR/www" "$@" edu.nrao.dss.Scheduler;

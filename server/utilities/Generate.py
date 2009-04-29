@@ -40,6 +40,9 @@ class Generate(object):
         self.windowed_interval_period_distribution = \
                     [(7, 3), (14, 3), (30, 7), (30, 5), (30, 5)]
 
+        # Defines the range in which as session's windows are distrubited throughout
+        # the trimester.
+        self.windowed_range = (2, 4, 4, 7, 7, 7, 7, 7, 7, 14, 14, 14, 14, 30, 90)
         self.year = year
         o, f, w = [r * total_avaliable for r in ratio]
         self.open_time      = o
@@ -71,7 +74,7 @@ class Generate(object):
             s = self.generate_session(i, "Windowed", self.windowed_type)
             self.generate_windowed(s)
             s.save()
-            windowed_time_assigned += s.min_duration
+            windowed_time_assigned += s.min_duration * 2
             i += 1
             ss.append(s)
         return ss
@@ -84,8 +87,8 @@ class Generate(object):
 
         first_day  = randint(2, 28)
         start_date = datetime(self.year, first_month, first_day)
-        end_date   = datetime(self.year, first_month, 1) + \
-                                                    timedelta(days = 90)
+        end_date   = datetime(self.year, first_month, first_day) + \
+                                                    timedelta(days = choice(self.windowed_range))
         while start_date < end_date:
             w = Window(session = s, required = True)
             w.save()

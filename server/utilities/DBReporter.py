@@ -60,6 +60,20 @@ class DBReporter:
         projThesis = self.binProject(projs, [True, False], "thesis")
         self.printInfo(projThesis, "Projects by Thesis: ", "Thesis")
 
+        # project summary: for each project, how many sess, hrs, etc.
+        self.add("\n")    
+        header = ["Name", "#", "Hrs", "Original IDs"]
+        cols = [10, 5, 6, 50]
+        self.printData(header, cols, True)
+        for p in projs:
+            ss = p.sesshun_set.all()
+            hrs = self.ta.getProjSessionsTotalTime(p)
+            ssIds = ["%d" % s.original_id for s in ss]
+            ssIdStrs = " ".join(ssIds)
+            data = [p.pcode, str(len(ss)), "%5.2f" % hrs, ssIdStrs]
+            self.printData(data, cols)
+        self.add("\n")    
+
         # gather stats on sessions - how many, how many of what type, total hrs ..
         sess = Sesshun.objects.all()
         numSess = len(sess)
@@ -127,6 +141,28 @@ class DBReporter:
         self.printInfo(numOpts, "Windows by Num Opportunities (Hrs is N/A):"
                      , "# Opts")
         
+        # more details on cadences ...
+        data = self.cadenceDetails([s for s in sess
+            if s.session_type.type == "open"])
+        self.printCadenceDetails("Open Session Cadence Details: ", data)
+        data = self.cadenceDetails([s for s in sess
+            if s.session_type.type == "fixed"])
+        self.printCadenceDetails("Fixed Session Cadence Details: ", data)
+        data = self.cadenceDetails([s for s in sess
+            if s.session_type.type == "windowed"])
+        self.printCadenceDetails("Windowed Session Cadence Details: ", data)
+        
+        # more details on windows
+        # TBF: this might get ugly once we start creating these from 
+        # cadences
+        self.add("\n\nDetails on Windows: \n")
+        wins = Window.objects.all()
+        for w in wins:
+            self.add("%s: %s\n" % (w.session.name, w))
+            for o in w.opportunity_set.all():
+                self.add("    %s\n" % o)
+        self.add("\n")        
+
         # gather stats on periods
 
         self.add("\n*** Problems ***\n")
@@ -341,6 +377,83 @@ class DBReporter:
         if header:
             self.add(("-" * (sum(cols) + len(cols))) + "\n")
 
+    def cadenceDetails(self, ss):
+        all = [s for s in ss if  len(s.cadence_set.all()) != 0]
+        # sessions w/ out start dates?
+        noStart = [s for s in ss 
+            if len(s.cadence_set.all()) != 0
+            and self.getCadenceAttr(s, "start_date") is None]
+        # sessions w/ out end dates
+        noEnd = [s for s in ss 
+            if len(s.cadence_set.all()) != 0
+            and self.getCadenceAttr(s, "end_date") is None]
+        # sessions w/ and intervals = 0
+        #singles  = [s for s in ss if self.getCadenceAttr(s, "repeats") == 1 \
+        #                         and self.getCadenceAttr(s, "intervals") == "0"]
+        singles  = [s for s in ss if self.getCadenceAttr(s, "intervals") == "0"]
+        # intervals == "#" or "#,#,..."?                         
+        regulars = [s for s in ss 
+            if self.getCadenceAttr(s, "intervals") is not None and
+            "," not in self.getCadenceAttr(s, "intervals")] 
+        electives = [s for s in ss  
+            if self.getCadenceAttr(s, "intervals") is not None and
+            "," in self.getCadenceAttr(s, "intervals")] 
+        return dict( all       = all
+                   , noStart   = noStart
+                   , noEnd     = noEnd
+                   , singles   = singles
+                   , regulars  = regulars
+                   , electives = electives )
+
+    def getCadenceAttr(self, s, a):
+        cs = s.cadence_set.all()
+        if len(cs) == 0:
+            return None
+        else:
+            return cs[0].__getattribute__(a)
+
+    def printLongLine(self, line, width):
+        numLines = (len(line) / width) + 1
+        start = 0
+        for i in range(numLines):
+            start = i * width
+            end = start + width
+            part = line[start:end]
+            self.add(part + "\n")
+
+    def printCadenceDetails(self, title, details):
+        self.add("\n" + title + "\n")
+        header = ["Type", "#", "Some Examples"]
+        cols = [18, 5, 80]
+        self.printData(header, cols, True)
+        types = [("All", "all")
+               , ("No End Date", "noEnd")
+               , ("No Start Date", "noStart")
+               , ("Intervals = 0", "singles")
+               , ("Scalar Intervals", "regulars")
+               , ("Vector Intervals", "electives")
+               ]
+        for type, key in types:
+            num = str(len(details[key]))
+            names = ",".join([s.name for s in details[key]])
+            self.printData([type, num, names], cols)
+
+        # all examples
+        for type, key in types:
+            names = ",".join([s.name for s in details[key]])
+            if len(names) > cols[2]:
+                self.add("\nAll Examples for %s : \n" % type)
+                self.printLongLine(names, cols[2])
+
+         # all examples w/ details
+        for type, key in types:
+            ss = details[key]
+            if len(ss) > 0:
+                self.add("\nAll Examples w/ Details for %s : \n" % type)
+                for s in ss:
+                    #self.add("Org.ID: %d, Session: %s, %s\n" % (s.original_id, s, s.cadence_set.all()))
+                    self.printLongLine("Org.ID: %d, Session: %s, %s\n" % (s.original_id, s, s.cadence_set.all()), cols[2])
+
     def getSessionTypeLetter(self, s):
         return s.session_type.type[0].upper()
 
@@ -359,6 +472,7 @@ class DBReporter:
         return "".join(rcvrs)
 
     def getCarlStartDate(self, sess):
+        # TBF: watch for Window entries as well.
         # assume one cadence
         cs = sess.cadence_set.all()
         if len(cs) > 0:

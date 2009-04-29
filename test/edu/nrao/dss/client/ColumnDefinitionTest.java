@@ -24,15 +24,15 @@ public class ColumnDefinitionTest extends GWTTestCase {
     assertNotNull(colDef);
     SessionColConfig sColConf = new SessionColConfig("test", "Test", 100, Integer.class);
     ColumnModel colMod = colDef.getColumnModel(sColConf);
-    assertEquals(40, colMod.getColumnCount());
-    assertEquals(colMod.getColumnHeader(3), "Source");
+    assertEquals(44, colMod.getColumnCount());
+    assertEquals("Proj Code", colMod.getColumnHeader(1));
     assertTrue(colDef.getAllFieldNames().contains("Proj Code"));
     assertTrue(colDef.hasColumn(ColumnDefinition.TR_ERR_LIMIT));
     assertFalse(colDef.hasColumn("Pinky_Hippo"));
-    assertEquals(colDef.getColumn(ColumnDefinition.PRECIP).getHeader(), "Precip");
+    assertEquals("Precip", colDef.getColumn(ColumnDefinition.PRECIP).getHeader());
     //assertEquals(colDef.getValue( ??
-    assertEquals(colDef.getClasz("science"), ScienceField.class);
-    assertEquals(colDef.getField(ColumnDefinition.COORD_MODE).getOriginalValue(), null);
-    assertEquals(colDef.getField(ColumnDefinition.COORD_MODE).getFieldLabel(), ColumnDefinition.COORD_MODE);
+    assertEquals(ScienceField.class, colDef.getClasz("science"));
+    assertEquals(null, colDef.getField(ColumnDefinition.COORD_MODE).getOriginalValue());
+    assertEquals(ColumnDefinition.COORD_MODE, colDef.getField(ColumnDefinition.COORD_MODE).getFieldLabel());
   }
 }

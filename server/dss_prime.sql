@@ -74,6 +74,14 @@ CREATE TABLE `receivers` (
     `freq_hi` varchar(12) NOT NULL
 )
 ;
+CREATE TABLE `receiver_schedule` (
+    `id` integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    `receiver_id` integer NOT NULL,
+    `start_date` datetime NULL,
+    `end_date` datetime NULL
+)
+;
+ALTER TABLE `receiver_schedule` ADD CONSTRAINT receiver_id29394 FOREIGN KEY (`receiver_id`) REFERENCES `receiver_id` (`id`);
 CREATE TABLE `parameters` (
     `id` integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
     `name` varchar(64) NOT NULL,
@@ -106,6 +114,7 @@ CREATE TABLE `cadences` (
     `start_date` datetime NULL,
     `end_date` datetime NULL,
     `repeats` integer NULL,
+    `full_size` varchar(64) NULL,
     `intervals` varchar(64) NULL
 )
 ;

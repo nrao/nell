@@ -31,52 +31,52 @@ class RowDefinition {
     }
     
     public boolean isColumnDefault(String name, Map<String, Object> map) {
-    	Object value = map.get(name);
-    	Object preset = columns.getValue(name, null, map);
-    	if (preset == null) {
-    		return false;
-    	} else {
-	    	return preset.toString().equals(value.toString());
-    	}
+        Object value = map.get(name);
+        Object preset = columns.getValue(name, null, map);
+        if (preset == null) {
+            return false;
+        } else {
+            return preset.toString().equals(value.toString());
+        }
     }
     
     public boolean hasColumnDefault(String name) {
-    	return columns.hasColumnDefault(name);
+        return columns.hasColumnDefault(name);
     }
     
     public List<String> getRowNames() {
-    	ArrayList<String> retval = new ArrayList<String>();
-    	for (RowType r : rows) {
-    		retval.add(r.getName());
-    	}
-    	return retval;
+        ArrayList<String> retval = new ArrayList<String>();
+        for (RowType r : rows) {
+            retval.add(r.getName());
+        }
+        return retval;
     }
     
     public HashMap<String,List<String>> getRowNamesAndIds() {
-    	HashMap<String,List<String>> retval = new HashMap<String,List<String>>();
-    	for (RowType r : rows) {
-    		retval.put(r.getName(), r.getFieldNames());
-    	}
-    	return retval;
+        HashMap<String,List<String>> retval = new HashMap<String,List<String>>();
+        for (RowType r : rows) {
+            retval.put(r.getName(), r.getFieldNames());
+        }
+        return retval;
     }
     
     public RowType findRowType(String name) {
-    	for (RowType r : rows) {
-    		if (name == r.getName()) {
-    			return r;
-    		}
-    	}
-    	return null;
+        for (RowType r : rows) {
+            if (name == r.getName()) {
+                return r;
+            }
+        }
+        return null;
     }
     
     public List<String> findFieldIds(String name) {
-    	RowType row = findRowType(name);
-    	if (row != null) {
-    		return row.getFieldNames();
-    	}
-    	else {
-    		return getAllFieldIds();
-    	}
+        RowType row = findRowType(name);
+        if (row != null) {
+            return row.getFieldNames();
+        }
+        else {
+            return getAllFieldIds();
+        }
     }
 
     private final ColumnDefinition columns = new ColumnDefinition();
@@ -96,6 +96,53 @@ class RowDefinition {
     // The defaults found in these table are specific to the initial version of the
     // given row type.  Therefore those sessions having
     // these defaults will forward them to the server and database.
+    /*
+    // A template for copying and creating new RowType definitions:
+    private final RowType TEMPLATE = new BaseRowType("NAME HERE") {
+        {
+            addColumn(ColumnDefinition.CODE,           null);
+            addColumn(ColumnDefinition.ORIG_ID,        0);
+            addColumn(ColumnDefinition.ID,             0);
+            addColumn(ColumnDefinition.TYPE,           new STypeField("open"));
+            addColumn(ColumnDefinition.SCIENCE,        null);
+            addColumn(ColumnDefinition.PSC_TIME,       null);
+            addColumn(ColumnDefinition.TOTAL_TIME,     null);
+            //addColumn(ColumnDefinition.TRI_TIME,     100);
+            addColumn(ColumnDefinition.GRADE,          new GradeField("A");
+            addColumn(ColumnDefinition.AUTHORIZED,     true);
+            addColumn(ColumnDefinition.ENABLED,        false);
+            addColumn(ColumnDefinition.COMPLETE,       false);
+            addColumn(ColumnDefinition.COORD_MODE,     new CoordModeField("J2000"));
+            addColumn(ColumnDefinition.SOURCE_H,       null);
+            addColumn(ColumnDefinition.SOURCE_V,       null);
+            addColumn(ColumnDefinition.FREQ,           null);
+            //addColumn(ColumnDefinition.FREQ_RNGE_L,  null);
+            //addColumn(ColumnDefinition.FREQ_RNGE_H,  null);
+            addColumn(ColumnDefinition.RECEIVER,       null);
+            addColumn(ColumnDefinition.REQ_MIN,        3.0);
+            addColumn(ColumnDefinition.REQ_MAX,        12.0);
+            addColumn(ColumnDefinition.ABS_MIN,        1.5);
+            addColumn(ColumnDefinition.ABS_MAX,        12.0);
+            addColumn(ColumnDefinition.BETWEEN,        0.0);
+            //addColumn(ColumnDefinition.OBS_EFF_LIMIT,  null);
+            //addColumn(ColumnDefinition.ATMOS_ST_LIMIT, 25);
+            //addColumn(ColumnDefinition.TR_ERR_LIMIT,   0.2);
+            //addColumn(ColumnDefinition.SOURCE_SZ,      0.0);
+            //addColumn(ColumnDefinition.MIN_EFF_TSYS,   1.0);
+            //addColumn(ColumnDefinition.HA_LIMIT,       0.0);
+            //addColumn(ColumnDefinition.ZA_LIMIT,       85.0);
+            addColumn(ColumnDefinition.SOLAR_AVOID,    false);
+            //addColumn(ColumnDefinition.PRECIP,         0.0);
+            //addColumn(ColumnDefinition.WIND,           0.0);
+            //addColumn(ColumnDefinition.TIME,           new TimeOfDayField("Any");
+            addColumn(ColumnDefinition.TRANSIT,        false);
+            //addColumn(ColumnDefinition.TRANSIT_BEFORE, 25);
+            //addColumn(ColumnDefinition.TRANSIT_AFTER,  25);
+            //addColumn(ColumnDefinition.CADENCE,        new CadenceField("regular");
+        }
+    };
+    */
+
     private final RowType lowFreqNoRFI = new BaseRowType("Low Frequency With No RFI") {
         {
             addColumn(ColumnDefinition.CODE,           null);

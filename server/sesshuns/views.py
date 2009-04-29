@@ -1,6 +1,6 @@
 from django.http              import HttpResponse
 from django_restapi.resource  import Resource
-from server.sesshuns.models   import first, Project, Receiver, Sesshun, Window
+from server.sesshuns.models   import first, Cadence, Project, Receiver, Sesshun, Window
 
 from datetime import datetime
 import simplejson as json
@@ -30,15 +30,22 @@ class SessionResource(NellResource):
         return HttpResponse(json.dumps(s.jsondict())
                           , mimetype = "text/plain")
 
-    def read(self, request):
-	total    = Sesshun.objects.count()
-        sessions = Sesshun.objects.all()
-	if "start" in request.GET and "limit" in request.GET:
-	    start = int(request.GET["start"])
-	    limit = int(request.GET["limit"])
-	    sessions = sessions[start:start+limit]
-        return HttpResponse(json.dumps(dict(total = total, sessions = [s.jsondict() for s in sessions]))
-                          , content_type = "application/json")
+    def read(self, request, *args, **kws):
+        if len(args) == 0:
+            total     = Sesshun.objects.count()
+            sortField = request.GET.get("sortField", "pcode")
+            #sessions  = Sesshun.objects.order_by(sortField)
+            sessions  = Sesshun.objects.all()
+            start = int(request.GET.get("start", 0))
+            limit = int(request.GET.get("limit", 50))
+            
+            sessions = sessions[start:start+limit]
+            return HttpResponse(json.dumps(dict(total = total, sessions = [s.jsondict() for s in sessions]))
+                              , content_type = "application/json")
+        else:
+            s_id  = args[0]
+            s     = first(Sesshun.objects.filter(id = s_id))
+            return HttpResponse(json.dumps(dict(session = s.jsondict())))
 
     def update(self, request, *args, **kws):
         id    = int(args[0])
@@ -51,6 +58,47 @@ class SessionResource(NellResource):
         id = int(args[0])
         s  = Sesshun.objects.get(id = id)
         s.delete()
+        
+        return HttpResponse(json.dumps({"success": "ok"}))
+
+class CadenceResource(NellResource):
+
+    def create(self, request, *args, **kws):
+        return super(CadenceResource, self).create(request, *args, **kws)
+    
+    def create_worker(self, request, *args, **kws):
+        s_id = int(request.POST["session_id"])
+        s = first(Sesshun.objects.filter(id = s_id))
+        c = Cadence(session = s)
+        c.save()
+        c.init_from_post(request.POST)
+        c.gen_windows()
+        
+        # Query the database to insure data is in the correct data type
+        c = first(Cadence.objects.filter(id = c.id))
+        return HttpResponse(json.dumps(c.jsondict())
+                          , mimetype = "text/plain")
+    def read(self, request, *args, **kws):
+        s_id = args[0]
+        s = first(Sesshun.objects.filter(id = s_id))
+        c = first(s.cadence_set.all())
+        return HttpResponse(json.dumps(c.jsondict())
+                          , mimetype = "text/plain")
+
+    def update(self, request, *args, **kws):
+        s_id = int(args[0])
+        s    = first(Sesshun.objects.filter(id = s_id))
+        c    = s.get_cadence()
+        c.init_from_post(request.POST)
+        c.gen_windows()
+
+        return HttpResponse("")
+
+    def delete(self, request, *args):
+        id = int(args[0])
+        s  = first(Sesshun.objects.filter(id = id))
+        c  = s.get_cadence()
+        c.delete()
         
         return HttpResponse(json.dumps({"success": "ok"}))
 
@@ -67,7 +115,7 @@ class WindowResource(NellResource):
         w.init_from_post(request.POST)
         
         # Query the database to insure data is in the correct data type
-        w = first(Window.objects.filter(id = s.id))
+        w = first(Window.objects.filter(id = w.id))
         return HttpResponse(json.dumps(w.jsondict())
                           , mimetype = "text/plain")
 

@@ -64,6 +64,60 @@ def create_sesshun():
 
 # Testing models
 
+class TestCadence(NellTestCase):
+
+    def setUp(self):
+        super(TestCadence, self).setUp()
+        self.client = Client()
+        s = Sesshun()
+        s.init_from_post({})
+        s.save()
+        self.s = s
+
+    def test_gen_windows(self):
+        sd = datetime(2009, 4, 28)
+        c = Cadence(session = self.s
+                  , start_date = sd
+                  , repeats    = 4
+                  , intervals  = "1,2,3,5"
+                  , full_size  = "1,1,1,1"
+                    )
+        c.save()
+        c.gen_windows()
+
+        expected = ((sd,                       24)
+                  , (sd + timedelta(days = 1), 24)
+                  , (sd + timedelta(days = 2), 24)
+                  , (sd + timedelta(days = 4), 24)
+                    )
+        for i, w in enumerate(self.s.window_set.all()):
+            o = first(w.opportunity_set.all())
+            result = (o.start_time
+                    , o.duration
+                      )
+            self.assertEqual(expected[i], result)
+    
+        c = Cadence(session = self.s
+                  , start_date = sd
+                  , repeats    = 3
+                  , intervals  = "30"
+                  , full_size  = "6"
+                    )
+        c.save()
+        c.gen_windows()
+
+        expected = ((sd,                        6*24)
+                  , (sd + timedelta(days = 30), 6*24)
+                  , (sd + timedelta(days = 60), 6*24)
+                  , (sd + timedelta(days = 90), 6*24)
+                    )
+        for i, w in enumerate(self.s.window_set.all()):
+            o = first(w.opportunity_set.all())
+            result = (o.start_time
+                    , o.duration
+                      )
+            self.assertEqual(expected[i], result)
+    
 class TestReceiver(NellTestCase):
 
     def setUp(self):
@@ -89,11 +143,11 @@ class TestReceiver(NellTestCase):
         s.receiver_group_set.all().delete()
         s.save_receivers('L | (X & S)')
         rgs = s.receiver_group_set.all()
-        print rgs
+        #print rgs
         # TBF WTF? now it is S, then it is X??
-        print rgs[0].receivers.all()[1].abbreviation
+        #print rgs[0].receivers.all()[1].abbreviation
         self.assertEqual(2, len(rgs))
-        print rgs[0].receivers.all()[1].abbreviation
+        #print rgs[0].receivers.all()[1].abbreviation
         self.assertEqual('L', rgs[0].receivers.all()[0].abbreviation)
         self.assertEqual('X', rgs[0].receivers.all()[1].abbreviation)
         self.assertEqual('L', rgs[1].receivers.all()[0].abbreviation)
@@ -337,6 +391,13 @@ class TestSessionResource(NellTestCase):
         response = self.client.get('/sessions')
         self.failUnlessEqual(response.status_code, 200)
 
+    def test_read_one(self):
+        response = self.client.get('/sessions/%s' % self.s.id)
+        self.failUnlessEqual(response.status_code, 200)
+
+        r_json = json.loads(response.content)
+        self.assertEqual(0.0, r_json["session"]["total_time"])
+
     def test_read_cadence(self):
         c = Cadence(session    = self.s
                   , start_date = datetime(2009, 4, 22)
@@ -398,6 +459,93 @@ class TestSessionResource(NellTestCase):
         self.assertTrue(r_json.has_key('receiver'))
         self.assertEquals(r_json['receiver'], u'(342 | Ka) & (S | Ka)')
     
+class TestCadenceResource(NellTestCase):
+
+    def setUp(self):
+        super(TestCadenceResource, self).setUp()
+        self.client = Client()
+        s = Sesshun()
+        s.init_from_post({})
+        s.save()
+        self.s = s
+
+    def test_create(self):
+        sd    = datetime(2009, 4, 1, 12)
+        fdata = {"session_id" : str(self.s.id)
+               , "start_date" : sd.strftime("%m/%d/%Y")
+               , "repeats"    : 4
+               , "intervals"  : "3"
+               , "full_size"  : "3"
+                 }
+        response = self.client.post('/cadences', fdata)
+        self.failUnlessEqual(response.status_code, 200)
+
+        r_json = json.loads(response.content)
+        
+        self.assertEqual(r_json["session_id"], int(fdata["session_id"]))
+        self.assertEqual(r_json["start_date"], fdata["start_date"])
+        self.assertEqual(r_json["repeats"],    fdata["repeats"])
+        self.assertEqual(r_json["full_size"],  fdata["full_size"])
+        self.assertEqual(r_json["intervals"],  fdata["intervals"])
+
+    def test_read(self):
+        sd = datetime(2009, 4, 22)
+        c = Cadence(session    = self.s
+                  , start_date = sd
+                  , repeats    = 4
+                  , full_size  = "4"
+                  , intervals  = "3"
+                    )
+        c.save()
+        response = self.client.get('/cadences/%s' % self.s.id)
+
+        r_json = json.loads(response.content)
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertEqual(r_json["session_id"], self.s.id)
+        self.assertEqual(r_json["start_date"], sd.strftime("%m/%d/%Y"))
+        self.assertEqual(r_json["repeats"],    c.repeats)
+        self.assertEqual(r_json["full_size"],  c.full_size)
+        self.assertEqual(r_json["intervals"],  c.intervals)
+
+    def test_update(self):
+        sd = datetime(2009, 4, 22)
+        c = Cadence(session    = self.s
+                  , start_date = sd
+                  , repeats    = 4
+                  , intervals  = "3"
+                  , full_size  = "3"
+                    )
+        c.save()
+
+        fdata = {"session_id" : str(self.s.id)
+               , "start_date" : sd.strftime("%m/%d/%Y")
+               , "repeats"    : 4
+               , "intervals"  : "3"
+               , "full_size"  : "3"
+                 }
+        fdata.update({'_method' : 'put'})
+        response = self.client.post('/cadences/%i' % self.s.id
+                                  , fdata)
+
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_delete(self):
+        s = first(Sesshun.objects.all())
+        sd = datetime(2009, 4, 22)
+        c = Cadence(session    = self.s
+                  , start_date = sd
+                  , repeats    = 4
+                  , intervals  = "3"
+                    )
+        c.save()
+
+        response = self.client.post('/cadences/%i' % s.id, {'_method' : 'delete'})
+        self.failUnlessEqual(response.status_code, 200)
+
+        # Make sure that deleting the window deletes all opportunities
+        cads = Cadence.objects.filter(session = s)
+        self.failUnlessEqual(len(cads), 0)
+
 class TestWindowResource(NellTestCase):
 
     def setUp(self):
@@ -597,6 +745,10 @@ class TestGenerate(NellTestCase):
             w = first(s.window_set.all())
             for o in w.opportunity_set.all():
                 print "\t", o
+
+        windowed = first(Session_Type.objects.filter(type = "windowed"))
+        print "Windowed Sessions", len(Sesshun.objects.filter(session_type = windowed))
+        print "Opportunities ", len(Opportunity.objects.all())
         """
 
     def test_generate_session(self):
@@ -632,102 +784,102 @@ class TestOpportunityGenerator(NellTestCase):
         results  = [(o.start_time, o.duration) for o in og.generate(gen_opp, s, ha_limit)]
 
         expected = [
-                    (datetime(2009, 4, 6, 15, 15), 2.0)
-                  , (datetime(2009, 4, 6, 15, 30), 2.0)
-                  , (datetime(2009, 4, 6, 15, 45), 2.0)
-                  , (datetime(2009, 4, 6, 16, 0 ), 2.0)
-                  , (datetime(2009, 4, 6, 16, 15), 2.0)
-                  , (datetime(2009, 4, 6, 16, 30), 2.0)
-                  , (datetime(2009, 4, 6, 16, 45), 2.0)
-                  , (datetime(2009, 4, 6, 17, 0 ), 2.0)
-                  , (datetime(2009, 4, 6, 17, 15), 2.0)
-                  , (datetime(2009, 4, 6, 17, 30), 2.0)
-                  , (datetime(2009, 4, 6, 17, 45), 2.0)
-                  , (datetime(2009, 4, 6, 18, 0 ), 2.0)
-                  , (datetime(2009, 4, 6, 18, 15), 2.0)
-                  , (datetime(2009, 4, 6, 18, 30), 2.0)
-                  , (datetime(2009, 4, 6, 18, 45), 2.0)
-                  , (datetime(2009, 4, 6, 19, 0 ), 2.0)
-                  , (datetime(2009, 4, 6, 19, 15), 2.0)
-                  , (datetime(2009, 4, 6, 19, 30), 2.0)
-                  , (datetime(2009, 4, 6, 19, 45), 2.0)
-                  , (datetime(2009, 4, 6, 20, 0 ), 2.0)
-                  , (datetime(2009, 4, 6, 20, 15), 2.0)
-                  , (datetime(2009, 4, 6, 20, 30), 2.0)
-                  , (datetime(2009, 4, 6, 20, 45), 2.0)
-                  , (datetime(2009, 4, 6, 21, 0 ), 2.0)
-                  , (datetime(2009, 4, 7, 15, 15), 2.0)
-                  , (datetime(2009, 4, 7, 15, 30), 2.0)
-                  , (datetime(2009, 4, 7, 15, 45), 2.0)
-                  , (datetime(2009, 4, 7, 16, 0), 2.0)
-                  , (datetime(2009, 4, 7, 16, 15), 2.0)
-                  , (datetime(2009, 4, 7, 16, 30), 2.0)
-                  , (datetime(2009, 4, 7, 16, 45), 2.0)
-                  , (datetime(2009, 4, 7, 17, 0), 2.0)
-                  , (datetime(2009, 4, 7, 17, 15), 2.0)
-                  , (datetime(2009, 4, 7, 17, 30), 2.0)
-                  , (datetime(2009, 4, 7, 17, 45), 2.0)
-                  , (datetime(2009, 4, 7, 18, 0), 2.0)
-                  , (datetime(2009, 4, 7, 18, 15), 2.0)
-                  , (datetime(2009, 4, 7, 18, 30), 2.0)
-                  , (datetime(2009, 4, 7, 18, 45), 2.0)
-                  , (datetime(2009, 4, 7, 19, 0), 2.0)
-                  , (datetime(2009, 4, 7, 19, 15), 2.0)
-                  , (datetime(2009, 4, 7, 19, 30), 2.0)
-                  , (datetime(2009, 4, 7, 19, 45), 2.0)
-                  , (datetime(2009, 4, 7, 20, 0), 2.0)
-                  , (datetime(2009, 4, 7, 20, 15), 2.0)
-                  , (datetime(2009, 4, 7, 20, 30), 2.0)
-                  , (datetime(2009, 4, 7, 20, 45), 2.0)
-                  , (datetime(2009, 4, 7, 21, 0), 2.0)
-                  , (datetime(2009, 4, 8, 15, 15), 2.0)
-                  , (datetime(2009, 4, 8, 15, 30), 2.0)
-                  , (datetime(2009, 4, 8, 15, 45), 2.0)
-                  , (datetime(2009, 4, 8, 16, 0), 2.0)
-                  , (datetime(2009, 4, 8, 16, 15), 2.0)
-                  , (datetime(2009, 4, 8, 16, 30), 2.0)
-                  , (datetime(2009, 4, 8, 16, 45), 2.0)
-                  , (datetime(2009, 4, 8, 17, 0), 2.0)
-                  , (datetime(2009, 4, 8, 17, 15), 2.0)
-                  , (datetime(2009, 4, 8, 17, 30), 2.0)
-                  , (datetime(2009, 4, 8, 17, 45), 2.0)
-                  , (datetime(2009, 4, 8, 18, 0), 2.0)
-                  , (datetime(2009, 4, 8, 18, 15), 2.0)
-                  , (datetime(2009, 4, 8, 18, 30), 2.0)
-                  , (datetime(2009, 4, 8, 18, 45), 2.0)
-                  , (datetime(2009, 4, 8, 19, 0), 2.0)
-                  , (datetime(2009, 4, 8, 19, 15), 2.0)
-                  , (datetime(2009, 4, 8, 19, 30), 2.0)
-                  , (datetime(2009, 4, 8, 19, 45), 2.0)
-                  , (datetime(2009, 4, 8, 20, 0), 2.0)
-                  , (datetime(2009, 4, 8, 20, 15), 2.0)
-                  , (datetime(2009, 4, 8, 20, 30), 2.0)
-                  , (datetime(2009, 4, 8, 20, 45), 2.0)
-                  , (datetime(2009, 4, 8, 21, 0), 2.0)
-                  , (datetime(2009, 4, 9, 15, 0), 2.0)
-                  , (datetime(2009, 4, 9, 15, 15), 2.0)
-                  , (datetime(2009, 4, 9, 15, 30), 2.0)
-                  , (datetime(2009, 4, 9, 15, 45), 2.0)
-                  , (datetime(2009, 4, 9, 16, 0), 2.0)
-                  , (datetime(2009, 4, 9, 16, 15), 2.0)
-                  , (datetime(2009, 4, 9, 16, 30), 2.0)
-                  , (datetime(2009, 4, 9, 16, 45), 2.0)
-                  , (datetime(2009, 4, 9, 17, 0), 2.0)
-                  , (datetime(2009, 4, 9, 17, 15), 2.0)
-                  , (datetime(2009, 4, 9, 17, 30), 2.0)
-                  , (datetime(2009, 4, 9, 17, 45), 2.0)
-                  , (datetime(2009, 4, 9, 18, 0), 2.0)
-                  , (datetime(2009, 4, 9, 18, 15), 2.0)
-                  , (datetime(2009, 4, 9, 18, 30), 2.0)
-                  , (datetime(2009, 4, 9, 18, 45), 2.0)
-                  , (datetime(2009, 4, 9, 19, 0), 2.0)
-                  , (datetime(2009, 4, 9, 19, 15), 2.0)
-                  , (datetime(2009, 4, 9, 19, 30), 2.0)
-                  , (datetime(2009, 4, 9, 19, 45), 2.0)
-                  , (datetime(2009, 4, 9, 20, 0), 2.0)
-                  , (datetime(2009, 4, 9, 20, 15), 2.0)
-                  , (datetime(2009, 4, 9, 20, 30), 2.0)
-                  , (datetime(2009, 4, 9, 20, 45), 2.0)
+                   (datetime(2009, 4, 6, 15, 15), 3.0),
+                   (datetime(2009, 4, 6, 15, 30), 3.0),
+                   (datetime(2009, 4, 6, 15, 45), 3.0),
+                   (datetime(2009, 4, 6, 16, 0), 3.0),
+                   (datetime(2009, 4, 6, 16, 15), 3.0),
+                   (datetime(2009, 4, 6, 16, 30), 3.0),
+                   (datetime(2009, 4, 6, 16, 45), 3.0),
+                   (datetime(2009, 4, 6, 17, 0), 3.0),
+                   (datetime(2009, 4, 6, 17, 15), 3.0),
+                   (datetime(2009, 4, 6, 17, 30), 3.0),
+                   (datetime(2009, 4, 6, 17, 45), 3.0),
+                   (datetime(2009, 4, 6, 18, 0), 3.0),
+                   (datetime(2009, 4, 6, 18, 15), 3.0),
+                   (datetime(2009, 4, 6, 18, 30), 3.0),
+                   (datetime(2009, 4, 6, 18, 45), 3.0),
+                   (datetime(2009, 4, 6, 19, 0), 3.0),
+                   (datetime(2009, 4, 6, 19, 15), 3.0),
+                   (datetime(2009, 4, 6, 19, 30), 3.0),
+                   (datetime(2009, 4, 6, 19, 45), 3.0),
+                   (datetime(2009, 4, 6, 20, 0), 3.0),
+                   (datetime(2009, 4, 6, 20, 15), 3.0),
+                   (datetime(2009, 4, 6, 20, 30), 3.0),
+                   (datetime(2009, 4, 6, 20, 45), 3.0),
+                   (datetime(2009, 4, 6, 21, 0), 3.0),
+                   (datetime(2009, 4, 7, 15, 15), 3.0),
+                   (datetime(2009, 4, 7, 15, 30), 3.0),
+                   (datetime(2009, 4, 7, 15, 45), 3.0),
+                   (datetime(2009, 4, 7, 16, 0), 3.0),
+                   (datetime(2009, 4, 7, 16, 15), 3.0),
+                   (datetime(2009, 4, 7, 16, 30), 3.0),
+                   (datetime(2009, 4, 7, 16, 45), 3.0),
+                   (datetime(2009, 4, 7, 17, 0), 3.0),
+                   (datetime(2009, 4, 7, 17, 15), 3.0),
+                   (datetime(2009, 4, 7, 17, 30), 3.0),
+                   (datetime(2009, 4, 7, 17, 45), 3.0),
+                   (datetime(2009, 4, 7, 18, 0), 3.0),
+                   (datetime(2009, 4, 7, 18, 15), 3.0),
+                   (datetime(2009, 4, 7, 18, 30), 3.0),
+                   (datetime(2009, 4, 7, 18, 45), 3.0),
+                   (datetime(2009, 4, 7, 19, 0), 3.0),
+                   (datetime(2009, 4, 7, 19, 15), 3.0),
+                   (datetime(2009, 4, 7, 19, 30), 3.0),
+                   (datetime(2009, 4, 7, 19, 45), 3.0),
+                   (datetime(2009, 4, 7, 20, 0), 3.0),
+                   (datetime(2009, 4, 7, 20, 15), 3.0),
+                   (datetime(2009, 4, 7, 20, 30), 3.0),
+                   (datetime(2009, 4, 7, 20, 45), 3.0),
+                   (datetime(2009, 4, 7, 21, 0), 3.0),
+                   (datetime(2009, 4, 8, 15, 15), 3.0),
+                   (datetime(2009, 4, 8, 15, 30), 3.0),
+                   (datetime(2009, 4, 8, 15, 45), 3.0),
+                   (datetime(2009, 4, 8, 16, 0), 3.0),
+                   (datetime(2009, 4, 8, 16, 15), 3.0),
+                   (datetime(2009, 4, 8, 16, 30), 3.0),
+                   (datetime(2009, 4, 8, 16, 45), 3.0),
+                   (datetime(2009, 4, 8, 17, 0), 3.0),
+                   (datetime(2009, 4, 8, 17, 15), 3.0),
+                   (datetime(2009, 4, 8, 17, 30), 3.0),
+                   (datetime(2009, 4, 8, 17, 45), 3.0),
+                   (datetime(2009, 4, 8, 18, 0), 3.0),
+                   (datetime(2009, 4, 8, 18, 15), 3.0),
+                   (datetime(2009, 4, 8, 18, 30), 3.0),
+                   (datetime(2009, 4, 8, 18, 45), 3.0),
+                   (datetime(2009, 4, 8, 19, 0), 3.0),
+                   (datetime(2009, 4, 8, 19, 15), 3.0),
+                   (datetime(2009, 4, 8, 19, 30), 3.0),
+                   (datetime(2009, 4, 8, 19, 45), 3.0),
+                   (datetime(2009, 4, 8, 20, 0), 3.0),
+                   (datetime(2009, 4, 8, 20, 15), 3.0),
+                   (datetime(2009, 4, 8, 20, 30), 3.0),
+                   (datetime(2009, 4, 8, 20, 45), 3.0),
+                   (datetime(2009, 4, 8, 21, 0), 3.0),
+                   (datetime(2009, 4, 9, 15, 0), 3.0),
+                   (datetime(2009, 4, 9, 15, 15), 3.0),
+                   (datetime(2009, 4, 9, 15, 30), 3.0),
+                   (datetime(2009, 4, 9, 15, 45), 3.0),
+                   (datetime(2009, 4, 9, 16, 0), 3.0),
+                   (datetime(2009, 4, 9, 16, 15), 3.0),
+                   (datetime(2009, 4, 9, 16, 30), 3.0),
+                   (datetime(2009, 4, 9, 16, 45), 3.0),
+                   (datetime(2009, 4, 9, 17, 0), 3.0),
+                   (datetime(2009, 4, 9, 17, 15), 3.0),
+                   (datetime(2009, 4, 9, 17, 30), 3.0),
+                   (datetime(2009, 4, 9, 17, 45), 3.0),
+                   (datetime(2009, 4, 9, 18, 0), 3.0),
+                   (datetime(2009, 4, 9, 18, 15), 3.0),
+                   (datetime(2009, 4, 9, 18, 30), 3.0),
+                   (datetime(2009, 4, 9, 18, 45), 3.0),
+                   (datetime(2009, 4, 9, 19, 0), 3.0),
+                   (datetime(2009, 4, 9, 19, 15), 3.0),
+                   (datetime(2009, 4, 9, 19, 30), 3.0),
+                   (datetime(2009, 4, 9, 19, 45), 3.0),
+                   (datetime(2009, 4, 9, 20, 0), 3.0),
+                   (datetime(2009, 4, 9, 20, 15), 3.0),
+                   (datetime(2009, 4, 9, 20, 30), 3.0),
+                   (datetime(2009, 4, 9, 20, 45), 3.0)
                    ]
 
         self.assertEqual(expected, results)

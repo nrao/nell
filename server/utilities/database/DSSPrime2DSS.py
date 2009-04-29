@@ -111,12 +111,12 @@ class DSSPrime2DSS(object):
                     vertical = float(t[4])
                 except:
                     vertical = None
-                    print "Exception with row: ", t, s
+                    #print "Exception with row: ", t, s
                 try:
                     horizontal = float(t[5])
                 except:
                     horizontal = None
-                    print "Exception with row: ", t, s
+                    #print "Exception with row: ", t, s
                 if vertical is not None and horizontal is not None:    
                     target = Target(session    = s
                               , system     = system
@@ -135,9 +135,28 @@ class DSSPrime2DSS(object):
                             , start_date = c[2]
                             , end_date   = c[3]
                             , repeats    = c[4]
-                            , intervals  = c[5]
+                            , full_size  = c[5]
+                            , intervals  = c[6]
                               )
                 cad.save()
+
+            # now get the windows & opportunities
+            # TBF: initially, we thought there would be none of these, and
+            # they'd all be determined via the Cadences!
+            query = "SELECT * FROM windows WHERE session_id = %s" % s_id_prime
+            self.cursor.execute(query)
+            for w in self.cursor.fetchall():
+                win = Window(session = s, required = w[2])
+                win.save()
+  
+                query = "SELECT * FROM opportunities WHERE window_id = %s" % w[0]
+                self.cursor.execute(query)
+                for o in self.cursor.fetchall():
+                    op = Opportunity(window = win
+                                   , start_time = o[2]
+                                   , duration = float(o[3])
+                                   )
+                    op.save()
 
             # now get the rcvrs
             query = "SELECT id FROM receiver_groups WHERE session_id = %s" % s_id_prime
@@ -169,7 +188,8 @@ class DSSPrime2DSS(object):
             for o in self.cursor.fetchall():
                 p  = first(Parameter.objects.filter(id = o[2]))
                 if p.name == 'Instruments' and o[3] == "None":
-                    print "Not passing over Observing Parameter = Instruments(None)"
+                    pass
+                    #print "Not passing over Observing Parameter = Instruments(None)"
                 else:    
                     op = Observing_Parameter(
                     session        = s
@@ -292,16 +312,17 @@ class DSSPrime2DSS(object):
             row = self.cursor.fetchone()
             return user
             
+        # TBF: we must support outrageous accents
         try:
             firstName = unicode(row[1])
         except:
-            print "exception with name: ", row[1]
+            #print "exception with name: ", row[1]
             firstName = "exception"
 
         try:
             lastName = unicode(row[2])
         except:
-            print "exception with name: ", row[2]
+            #print "exception with name: ", row[2]
             lastName = "exception"
 
         u = User(original_id = int(row[3])

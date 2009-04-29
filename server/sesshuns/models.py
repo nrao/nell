@@ -11,6 +11,19 @@ import sys
 def first(results, default = None):
     return default if len(results) == 0 else results[0]
 
+def str2dt(str):
+    if str is None:
+        return None
+
+    if ' ' in str:
+        d, t      = str.split(' ')
+        m, d, y  = map(int, d.split('/'))
+        time      = t.split(':')
+        h, mm, ss = map(int, map(float, time))
+        return datetime(y, m, d, h, mm, ss)
+    m, d, y   = map(int, str.split('/'))
+    return datetime(y, m, d)
+
 class User(models.Model):
     original_id = models.IntegerField()
     pst_id      = models.IntegerField(null = True)
@@ -158,6 +171,20 @@ class Receiver(models.Model):
     def get_abbreviations():
         return [r.abbreviation for r in Receiver.objects.all()]
 
+class Receiver_Schedule(models.Model):
+    receiver   = models.ForeignKey(Receiver)
+    start_date = models.DateTimeField(null = True)
+    end_date   = models.DateTimeField(null = True)
+
+    def __unicode__(self):
+        return "Availability for %d: %s - %s" % \
+          ( self.receiver.name
+          , self.start_date
+          , self.end_date)
+
+    class Meta:
+        db_table = "receiver_schedule"
+
 class Parameter(models.Model):
     name = models.CharField(max_length = 64)
     type = models.CharField(max_length = 32)
@@ -254,8 +281,8 @@ class Sesshun(models.Model):
             self.get_field(fdata, "orig_ID", None, self.cast_int)
         self.name             = fdata.get("name", None)
         self.frequency        = fdata.get("freq", None)
-        self.max_duration     = fdata.get("req_max", 8.0)
-        self.min_duration     = fdata.get("req_min", 2.0)
+        self.max_duration     = fdata.get("req_max", 12.0)
+        self.min_duration     = fdata.get("req_min",  3.0)
         self.time_between     = fdata.get("between", None)
 
     def cast_int(self, strValue):
@@ -280,6 +307,22 @@ class Sesshun(models.Model):
                 gradeLetter = grades[i]
                 break
         return gradeLetter
+
+    def validate(self, fdata):
+        "Detect illegal values in client modifications to the model."
+        """
+        # Validate frequency/receiver settings
+        given_frequency = fdata.get("frequency", None)
+        given_receivers  = fdata.get("receiver", None)
+        # Has the frequency changed?
+        if frequency and frequency != self.frequency:
+            default_receiver = Receiver.getDefault(given_frequency)
+            # Do the specified receivers include the one for this frequency?
+            if default_receiver != "NS" and \
+               not default_receiver.find(given_receivers):
+                return False
+        """
+        return True
 
     def init_from_post(self, fdata):
         self.set_base_fields(fdata)
@@ -322,19 +365,6 @@ class Sesshun(models.Model):
         target.save()
         self.save()
 
-    def str2dt(self, str):
-        if str is None:
-            return None
-
-        if ' ' in str:
-            d, t      = str.split(' ')
-            m, d, y  = map(int, d.split('/'))
-            time      = t.split(':')
-            h, mm, ss = map(int, map(float, time))
-            return datetime(y, m, d, h, mm, ss)
-        m, d, y   = map(int, str.split('/'))
-        return datetime(y, m, d)
-
     def save_receivers(self, proposition):
         abbreviations = [r.abbreviation for r in Receiver.objects.all()]
         # TBF catch errors and report to user
@@ -355,21 +385,19 @@ class Sesshun(models.Model):
         return c
 
     def create_update_cadence(self, fdata):
-        c_start_date = self.str2dt(fdata.get("cad_start_date", None))
-        c_end_date   = self.str2dt(fdata.get("cad_end_date", None))
-        c_repeats    = fdata.get("cad_repeats", None)
-        c_intervals  = fdata.get("cad_intervals", None)
+        start_date = str2dt(fdata.get("cad_start_date", None))
+        end_date   = str2dt(fdata.get("cad_end_date", None))
+        repeats    = fdata.get("cad_repeats", None)
+        intervals  = fdata.get("cad_intervals", None)
+        full_size  = fdata.get("cad_full_size", None)
 
-        if c_start_date is not None or \
-           c_end_date is not None or \
-           c_repeats is not None or \
-           c_intervals is not None:
-            c            = self.get_cadence()
-            c.start_date = c_start_date
-            c.end_date   = c_end_date
-            c.repeats    = int(float(c_repeats)) if c_repeats is not None else c_repeats
-            c.intervals  = fdata.get("cad_intervals", None)
-            c.save()
+        if start_date is not None or \
+           end_date is not None or \
+           repeats is not None or \
+           full_size is not None or \
+           intervals is not None:
+            c = self.get_cadence()
+            c.set_fields(start_date, end_date, repeats, full_size, intervals)
         
     def update_from_post(self, fdata):
         self.set_base_fields(fdata)
@@ -448,7 +476,7 @@ class Sesshun(models.Model):
         cadence = first(self.cadence_set.all())
 
         d = {"id"         : self.id
-           , "proj_code"  : self.project.pcode
+           , "pcode"      : self.project.pcode
            , "type"       : self.session_type.type
            , "science"    : self.observing_type.type
            , "total_time" : self.allotment.total_time
@@ -535,18 +563,92 @@ class Cadence(models.Model):
     start_date = models.DateTimeField(null = True)
     end_date   = models.DateTimeField(null = True)
     repeats    = models.IntegerField(null = True)
+    full_size  = models.CharField(null = True, max_length = 64)
     intervals  = models.CharField(null = True, max_length = 64)
 
     class Meta:
         db_table = "cadences"
 
     def __unicode__(self):
-        return "Cadence for Sess (%d): %s - %s, r:%d, ints: %s" % \
+        return "Cadence for Sess (%d): %s - %s, r:%d, size: %s ints: %s" % \
           ( self.session.id
           , self.start_date
           , self.end_date
           , self.repeats
+          , self.full_size
           , self.intervals )
+
+    def init_from_post(self, fdata):
+        s_id = int(fdata["session_id"])
+        s    = first(Sesshun.objects.filter(id = s_id))
+        c    = s.get_cadence()
+
+        start_date = str2dt(fdata.get("start_date", None))
+        end_date   = str2dt(fdata.get("end_date", None))
+        repeats    = fdata.get("repeats", None)
+        intervals  = fdata.get("intervals", None)
+        full_size  = fdata.get("full_size", None)
+        self.set_fields(start_date, end_date, repeats, full_size, intervals)
+
+    def set_fields(self, start_date, end_date, repeats, full_size, intervals):
+        self.start_date = start_date
+        self.end_date   = end_date
+        self.repeats    = int(float(repeats)) if repeats is not None else repeats
+        self.intervals  = intervals
+        self.full_size  = full_size
+        self.save()
+
+    def jsondict(self):
+        sd = None if self.start_date is None \
+            else self.start_date.strftime("%m/%d/%Y")
+        ed = None if self.end_date is None \
+            else self.end_date.strftime("%m/%d/%Y")
+        d = {"session_id" : self.session.id
+           , "start_date" : sd
+           , "end_date"   : ed
+           , "repeats"    : self.repeats
+           , "full_size"  : self.full_size
+           , "intervals"  : self.intervals
+             }
+            
+        #  Remove all None values
+        for k, v in d.items():
+            if v is None:
+                _ = d.pop(k)
+
+        return d
+
+    def gen_windows(self):
+        if self.start_date is not None:
+            #  Delete all the previously generated windows
+            for w in self.session.window_set.all():
+                w.delete()
+                
+            intervals  = self.intervals.split(',')
+            full_sizes = self.full_size.split(',')
+            if len(intervals) == self.repeats and len(full_sizes) == self.repeats:
+                for i in range(self.repeats):
+                    interval = int(intervals[i]) - 1
+                    size     = int(full_sizes[i])
+                    w = Window(session = self.session, required = True)
+                    w.save()
+                    o = Opportunity(window = w
+                                  , start_time = \
+                                        self.start_date + timedelta(days = interval)
+                                  , duration   = size * 24
+                                    )
+                    o.save()
+
+            else:
+                for i in range(self.repeats):
+                    w = Window(session = self.session, required = True)
+                    w.save()
+                    o = Opportunity(window = w
+                                  , start_time = \
+                           self.start_date + timedelta(days = int(self.intervals)*i)
+                                  , duration   = int(self.full_size) * 24
+                                    )
+                    o.save()
 
 class Receiver_Group(models.Model):
     session        = models.ForeignKey(Sesshun)
