@@ -161,3 +161,9 @@ def get_options(request, *args, **kws):
     projects = Project.objects.order_by('pcode')
     return HttpResponse(json.dumps({'project codes' : [ p.pcode for p in projects]})
                       , mimetype = "text/plain")
+
+def get_selected(request):
+    selected = Sesshun.objects.filter(selected = True)
+    ids = [s.id for s in selected]
+    response = json.dumps(dict(selected = ids))
+    return HttpResponse(response, content_type = "text/plain")

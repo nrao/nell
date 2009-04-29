@@ -43,6 +43,7 @@ class ColumnDefinition {
     public static final String REQ_MAX           = "req_max";
     public static final String REQ_MIN           = "req_min";
     public static final String SCIENCE           = "science";
+    public static final String SELECTED          = "selected";
     public static final String SEM_TIME          = "sem_time";
     public static final String SOLAR_AVOID       = "solar_avoid";
     public static final String SOURCE            = "source";
@@ -73,7 +74,9 @@ class ColumnDefinition {
     /** Return a ColumnModel suitable for defining a grid. */
     public ColumnModel getColumnModel(ColumnConfig column) {
         ArrayList<ColumnConfig> columns = new ArrayList<ColumnConfig>();
-        columns.add(column);
+        if (column != null) {
+            columns.add(column);
+        }
         columns.addAll(Arrays.asList((ColumnConfig[]) this.columns));
 
         return new ColumnModel(columns);
@@ -179,6 +182,7 @@ class ColumnDefinition {
     // and are also defaulted on the server side.  Therefore those sessions having
     // these defaults will not forward them to the server and database.
     private final ColumnType[] columns = new ColumnType[] {
+            new ColumnType(SELECTED,       "Selected",        75, Boolean.class,              null),
     		new ColumnType(CODE,           "Proj Code",      100, PCodeField.class,           null),
             new ColumnType(NAME,           "Name",           175, String.class,               null),
             new ColumnType(SOURCE,         "Source",         100, String.class,               null),
