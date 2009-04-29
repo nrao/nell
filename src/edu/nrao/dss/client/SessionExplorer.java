@@ -71,9 +71,6 @@ public class SessionExplorer extends ContentPanel {
 		setLayout(new FitLayout());
 		commitState = false;
 
-		CheckBoxSelectionModel<BaseModelData> selection = new CheckBoxSelectionModel<BaseModelData>();
-		selection.setSelectionMode(SelectionMode.MULTI);
-
 		RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, "/sessions");
 
 		DataReader reader = new PagingJsonReader<BasePagingLoadConfig>(new SessionType(rows.getColumnDefinition()));
@@ -84,11 +81,9 @@ public class SessionExplorer extends ContentPanel {
 		store = new ListStore<BaseModelData>(loader);
 		filtered = new ArrayList<BaseModelData>();
 
-		grid = new EditorGrid<BaseModelData>(store, rows.getColumnModel(selection.getColumn()));
+		grid = new EditorGrid<BaseModelData>(store, rows.getColumnModel(null));  // selection.getColumn()));
 		add(grid);
 
-		grid.setSelectionModel(selection);
-		grid.addPlugin(selection);
 		grid.setBorders(true);
 
 		PagingToolBar toolBar = new PagingToolBar(50);
