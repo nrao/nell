@@ -26,13 +26,13 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
     private void initLayout() {
         setLayout(new RowLayout(Orientation.VERTICAL));
         setScrollMode(Scroll.AUTO);
-        
+
         LayoutContainer top = new LayoutContainer();
         add(top, new RowData(-1.0, 1.5 * Calendar.HEIGHT));
         top.setLayout(new CenterLayout());
         top.add(calendar);
-        
-        add(label, new RowData(-1.0, 300));
+
+        add(info, new RowData(-1.0, 300));
 
         addListeners();
 
@@ -43,7 +43,7 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
                 }
                 draw(blinkOn);
             }
-            
+
             private int     blinkCount = 0;
             private boolean blinkOn    = true;
         };
@@ -71,7 +71,7 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
                 if (dragTarget != null) {
                     int deltaDays = calendar.pixelsToDays(x) - dragStartDay;
                     dragTarget.setStartDay(dragTarget.getStartDay() + deltaDays);
-                    sortAllocations();
+                    sortSessions();
                 }
 
                 dragTarget = null;
@@ -85,7 +85,6 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
                 if (current == null) {
                     current = findCurrentAllocation();
                 }
-                label.setText(current != null ? current.getInfoText() : "");
 
                 if (! animated) {
                     draw(true);
@@ -149,7 +148,7 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
                 for (int i = 0; i < 200; ++i) {
                     sessions.add(allocs.get(i));
                 }
-                sortAllocations();
+                sortSessions();
 
                 ArrayList<Project> projects = new ArrayList<Project>();
                 for (Session a : sessions) {
@@ -161,18 +160,19 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
         });
     }
 
+    /** Sort sessions chronologically, so they can be drawn such the everything is visible. */
     @SuppressWarnings("unchecked")
-    private void sortAllocations() {
+    private void sortSessions() {
         Collections.sort(sessions);
         problems = sudoku.findProblem(sessions);
     }
 
-    private final Calendar calendar = new Calendar();
-    private final Text     label    = new Text();
-    private final Sudoku   sudoku   = new Sudoku();
+    private final Calendar    calendar = new Calendar();
+    private final SessionInfo info     = new SessionInfo();
+    private final Sudoku      sudoku   = new Sudoku();
 
     /** Set to true to enable annoying blinking effects. */
-    private final boolean  animated = true;
+    private final boolean  animated = false;
 
     private List<Session> sessions = new ArrayList<Session>();
     private List<Session> problems;
@@ -183,6 +183,6 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
     private int dragStartDay;
     private int mouseX;
     private int mouseY;
-    
+
     private boolean showConflicts = false;
 }

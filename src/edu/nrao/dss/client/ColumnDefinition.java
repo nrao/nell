@@ -21,13 +21,9 @@ class ColumnDefinition {
     public static final String ABS_MIN           = "abs_min";
     public static final String ATMOS_ST_LIMIT    = "atmos_st_limit";
     public static final String AUTHORIZED        = "authorized";
-    public static final String BACKUP            = "backup";
     public static final String BETWEEN           = "between";
-    public static final String CADENCE_START     = "cad_start_date";
-    public static final String CADENCE_END       = "cad_end_date";
-    public static final String CADENCE_REPEATS   = "cad_repeats";
-    public static final String CADENCE_INTERVALS = "cad_intervals";
-    public static final String CODE              = "pcode";
+    public static final String BACKUP            = "backup";
+    public static final String CODE              = "proj_code";
     public static final String COMPLETE          = "complete";
     public static final String COORD_MODE        = "coord_mode";
     public static final String ENABLED           = "enabled";
@@ -62,6 +58,10 @@ class ColumnDefinition {
     public static final String TYPE              = "type";
     public static final String USE_DEPEND        = "use_depend";
     public static final String WIND              = "wind";
+    public static final String CADENCE_START     = "cad_start_date";
+    public static final String CADENCE_END       = "cad_end_date";
+    public static final String CADENCE_REPEATS   = "cad_repeats";
+    public static final String CADENCE_INTERVALS = "cad_intervals";
     public static final String ZA_LIMIT          = "za_limit";
 
     public ColumnDefinition() {
@@ -186,7 +186,6 @@ class ColumnDefinition {
             new ColumnType(ID,             "ID",              50, Integer.class,              null),
             new ColumnType(TYPE,           "Type",            60, STypeField.class,           null),
             new ColumnType(SCIENCE,        "Science",         75, ScienceField.class,         null),
-            new ColumnType(BACKUP,         "Backup",          50, Boolean.class,              null),
             new ColumnType(PSC_TIME,       "PSC Time",        60, Double.class,               null),
             new ColumnType(TOTAL_TIME,     "Total Time",      60, Double.class,               null),
             new ColumnType(SEM_TIME,       "Semester Time",  100, Double.class,               null),
@@ -206,11 +205,16 @@ class ColumnDefinition {
             new ColumnType(ABS_MIN,        "Abs Min",         60, Double.class,               null),
             new ColumnType(ABS_MAX,        "Abs Max",         60, Double.class,               null),
             new ColumnType(BETWEEN,        "Between",         60, Double.class,               null),
+            new ColumnType(BACKUP,         "Backup",          50, Boolean.class,              null),
+            new ColumnType(CADENCE_START,  "Cadence Start",   75, DateEditField.class,        null),
+            new ColumnType(CADENCE_END,    "Cadence End",     75, String.class,               null),
+            new ColumnType(CADENCE_REPEATS,"Cadence Repeats", 75, String.class,               null),
+            new ColumnType(CADENCE_INTERVALS, "Cadence Intervals", 75, String.class,          null),
             new ColumnType(OBS_EFF_LIMIT,  "Obs Eff Limit",   75, Double.class,               obsEffLimit),
             new ColumnType(ATMOS_ST_LIMIT, "Atmos St Limit", 100, Integer.class,              25), // atmosStLimit),
             new ColumnType(TR_ERR_LIMIT,   "Tr Err Limit",    75, Double.class,               0.2), //trErrLimit),
             new ColumnType(SOURCE_SZ,      "Src Size",        75, Double.class,               0.0),
-            new ColumnType(MIN_EFF_TSYS,   "Min Eff Factor",  75, Double.class,               1.0), //minEffTsys),
+            new ColumnType(MIN_EFF_TSYS,   "Min Eff TSys",    75, Double.class,               1.0), //minEffTsys),
             new ColumnType(HA_LIMIT,       "HA Limit",        75, Double.class,               haLimit),
             new ColumnType(ZA_LIMIT,       "ZA Limit",        75, Double.class,               null),
             new ColumnType(SOLAR_AVOID,    "Solar Avoid",     75, Boolean.class,              null),
@@ -223,10 +227,6 @@ class ColumnDefinition {
             new ColumnType(TRANSIT,        "Transit",         50, Boolean.class,              null),
             //new ColumnType(TRANSIT_BEFORE, "Transit Before", 100, Integer.class,              null),
             //new ColumnType(TRANSIT_AFTER,  "Transit After",  100, Integer.class,              null)
-            new ColumnType(CADENCE_START,  "Cadence Start",   75, DateEditField.class,        null),
-            new ColumnType(CADENCE_END,    "Cadence End",     75, String.class,               null),
-            new ColumnType(CADENCE_REPEATS,"Cadence Repeats", 75, String.class,               null),
-            new ColumnType(CADENCE_INTERVALS, "Cadence Intervals", 75, String.class,          null),
     };
 
     private final HashMap<String, ColumnType> columnsMap = new HashMap<String, ColumnType>();

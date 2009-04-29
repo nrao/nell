@@ -24,7 +24,6 @@ import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 
-
 class SessionColConfig extends ColumnConfig {
 	public final ArrayList<String> proj_codes = new ArrayList<String>();
 	

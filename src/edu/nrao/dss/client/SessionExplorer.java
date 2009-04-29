@@ -1,6 +1,5 @@
 package edu.nrao.dss.client;
 
-import edu.nrao.dss.client.view.UndefaultedValuesDialog;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -11,9 +10,6 @@ import java.util.Map;
 import com.extjs.gxt.ui.client.Events;
 import com.extjs.gxt.ui.client.Style;
 import com.extjs.gxt.ui.client.Style.SelectionMode;
-import com.extjs.gxt.ui.client.data.BaseListLoadConfig;
-import com.extjs.gxt.ui.client.data.BaseListLoadResult;
-import com.extjs.gxt.ui.client.data.BaseListLoader;
 import com.extjs.gxt.ui.client.data.BaseModelData;
 import com.extjs.gxt.ui.client.data.BasePagingLoadConfig;
 import com.extjs.gxt.ui.client.data.BasePagingLoadResult;
@@ -21,8 +17,6 @@ import com.extjs.gxt.ui.client.data.BasePagingLoader;
 import com.extjs.gxt.ui.client.data.DataField;
 import com.extjs.gxt.ui.client.data.DataReader;
 import com.extjs.gxt.ui.client.data.HttpProxy;
-import com.extjs.gxt.ui.client.data.JsonReader;
-import com.extjs.gxt.ui.client.data.ListLoader;
 import com.extjs.gxt.ui.client.data.ModelData;
 import com.extjs.gxt.ui.client.data.PagingLoader;
 import com.extjs.gxt.ui.client.event.BaseEvent;
@@ -62,6 +56,8 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
+
+import edu.nrao.dss.client.view.UndefaultedValuesDialog;
 
 public class SessionExplorer extends ContentPanel {
 	public SessionExplorer() {
@@ -452,14 +448,13 @@ public class SessionExplorer extends ContentPanel {
 		// Enable the "Duplicate" button only if there is a selection.
 		grid.getSelectionModel().addSelectionChangedListener(
 				new SelectionChangedListener() {
-					@SuppressWarnings("unused")
-					public void handleEvent(BaseEvent be) {
-						duplicateItem.setEnabled(!grid.getSelectionModel()
-								.getSelectedItems().isEmpty());
-					}
-
 					@Override
 					public void selectionChanged(SelectionChangedEvent se) {
+					}
+					@SuppressWarnings("unused")
+                    public void handleEvent(BaseEvent e) {
+                        //Window.alert(""+grid.getSelectionModel().getSelectionMode());
+                        duplicateItem.setEnabled(!grid.getSelectionModel().getSelectedItems().isEmpty());
 					}
 				});
 	}
