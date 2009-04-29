@@ -38,7 +38,7 @@ class SessionResource(NellResource):
             sessions  = Sesshun.objects.all()
             start = int(request.GET.get("start", 0))
             limit = int(request.GET.get("limit", 50))
-            
+            print start,limit
             sessions = sessions[start:start+limit]
             return HttpResponse(json.dumps(dict(total = total, sessions = [s.jsondict() for s in sessions]))
                               , content_type = "application/json")
