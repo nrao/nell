@@ -34,8 +34,8 @@ class SessionResource(NellResource):
         if len(args) == 0:
             total     = Sesshun.objects.count()
             sortField = request.GET.get("sortField", "pcode")
-            #sessions  = Sesshun.objects.order_by(sortField)
-            sessions  = Sesshun.objects.all()
+            sessions  = Sesshun.objects.order_by("id")
+            #sessions  = Sesshun.objects.all()
             start = int(request.GET.get("start", 0))
             limit = int(request.GET.get("limit", 50))
             print start,limit
