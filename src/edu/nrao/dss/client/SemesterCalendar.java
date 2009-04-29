@@ -1,7 +1,8 @@
 package edu.nrao.dss.client;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import com.extjs.gxt.ui.client.Style.Orientation;
@@ -11,6 +12,7 @@ import com.extjs.gxt.ui.client.widget.Text;
 import com.extjs.gxt.ui.client.widget.layout.CenterLayout;
 import com.extjs.gxt.ui.client.widget.layout.RowData;
 import com.extjs.gxt.ui.client.widget.layout.RowLayout;
+import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.MouseListenerAdapter;
 import com.google.gwt.user.client.ui.Widget;
@@ -49,7 +51,7 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
             timer.scheduleRepeating(1000 / 10);
         }
 
-        generateTestData();
+        loadData();
         draw(true);
     }
 
@@ -61,13 +63,14 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
                 dragTarget = hitTestAllocation(x, y);
                 if (dragTarget != null) {
                     dragStartX   = x;
-                    dragStartDay = dragTarget.getStartDay();
+                    dragStartDay = calendar.pixelsToDays(x);
                 }
             }
 
             public void onMouseUp(Widget sender, int x, int y) {
                 if (dragTarget != null) {
-                    dragTarget.setStartDay(dragStartDay + calendar.pixelsToDays(x - dragStartX));
+                    int deltaDays = calendar.pixelsToDays(x) - dragStartDay;
+                    dragTarget.setStartDay(dragTarget.getStartDay() + deltaDays);
                     sortAllocations();
                 }
 
@@ -98,7 +101,7 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
     }
 
     public void onPaint(GWTCanvas canvas) {
-        for (Session a : allocations) {
+        for (Session a : sessions) {
             if (! showConflicts && problems != null && problems.contains(a)) { continue; }
             if (a != dragTarget && a != current) {
                 a.setAlpha(0.6f);
@@ -127,7 +130,7 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
         int hour = calendar.positionToHour(y);
 
         Session result = null;
-        for (Session a : allocations) {
+        for (Session a : sessions) {
             if (a.contains(day, hour)) {
                 result = a;
             }
@@ -136,29 +139,32 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
         return result;
     }
 
-    private void generateTestData() {
-        TestData data = new TestData();
-        projects    = data.getProjects();
-        allocations = Project.collectAllocations(projects);
-        
-        sortAllocations();
-        Project.allocateColors(projects);
-    }
+    /** Fetch the calendar data from the server. */
+    private void loadData() {
+        JSONRequest.get("/gen_opportunities", new JSONCallbackAdapter() {
+            @Override
+            public void onSuccess(JSONObject json) {
+                List<Session> allocs = Session.parseJSON(json);
+                sessions = new ArrayList<Session>();
+                for (int i = 0; i < 200; ++i) {
+                    sessions.add(allocs.get(i));
+                }
+                sortAllocations();
 
-    private void sortAllocations() {
-        Collections.sort(allocations, new Comparator<Session>() {
-            public int compare(Session lhs, Session rhs) {
-                if (lhs.getStartHour() < rhs.getStartHour()) {
-                    return -1;
+                ArrayList<Project> projects = new ArrayList<Project>();
+                for (Session a : sessions) {
+                    projects.add(new Project("dummy", Arrays.asList(new Session[]{a})));
                 }
-                if (rhs.getStartHour() < lhs.getStartHour()) {
-                    return +1;
-                }
-                return 0;
+                Project.allocateColors(projects);
+                draw(false);
             }
         });
+    }
 
-        problems = sudoku.findProblem(allocations);
+    @SuppressWarnings("unchecked")
+    private void sortAllocations() {
+        Collections.sort(sessions);
+        problems = sudoku.findProblem(sessions);
     }
 
     private final Calendar calendar = new Calendar();
@@ -168,8 +174,7 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
     /** Set to true to enable annoying blinking effects. */
     private final boolean  animated = true;
 
-    private List<Project> projects;
-    private List<Session> allocations;
+    private List<Session> sessions = new ArrayList<Session>();
     private List<Session> problems;
     private Session       dragTarget;
     private Session       current;

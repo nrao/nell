@@ -18,10 +18,10 @@ public class Scheduler extends Viewport implements EntryPoint {
         setLayout(new FitLayout());
         add(tabPanel);
 
-        addTab(new SessionExplorer(), "Session Explorer", "Define and edit sessions.");
+        // addTab(new SessionExplorer(), "Session Explorer", "Define and edit sessions.");
         
         // TBF: Comment to disable SemesterCalendar due to lack of canvas support in gwt-linux :(
-        //addTab(new SemesterCalendar(), "Semester Calendar", "Schedule windowed, fixed, and maintenance sessions.");
+        addTab(new SemesterCalendar(), "Semester Calendar", "Schedule windowed, fixed, and maintenance sessions.");
     }
 
     private void addTab(LayoutContainer container, String title, String toolTip) {

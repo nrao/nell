@@ -109,7 +109,7 @@ class ColumnDefinition {
     }
 
     public boolean hasColumnDefault(String id) {
-        return getColumn(id).hasColumnDefault();
+    	return getColumn(id).hasColumnDefault();
     }
     
     @SuppressWarnings("unchecked")
@@ -124,27 +124,27 @@ class ColumnDefinition {
 
     private final CalculatedField receivers = new CalculatedField() {
         public Object calculate(RowType row, Map<String, Object> model) {
-            double frequency;
-            if (row == null) {
-                frequency = Double.parseDouble(model.get(FREQ).toString());
-            }
-            else {
-                frequency = ((Double)(row.getValue(FREQ, model))).doubleValue();
-            }
+        	double frequency;
+        	if (row == null) {
+        		frequency = Double.parseDouble(model.get(FREQ).toString());
+        	}
+        	else {
+        		frequency = ((Double)(row.getValue(FREQ, model))).doubleValue();
+        	}
             return Receiver.deriveReceiver(frequency);
         }
     };
     
     private final CalculatedField obsEffLimit = new CalculatedField() {
         public Object calculate(RowType row, Map<String, Object> model) {
-            double frequency;
-            if (row == null) {
-                frequency = ((Double)(model.get(FREQ))).doubleValue();
-            }
-            else {
-                frequency = ((Double)(row.getValue(FREQ, model))).doubleValue();
-            }
-            MinimumObservingEfficiency moe = new MinimumObservingEfficiency();
+        	double frequency;
+        	if (row == null) {
+        		frequency = ((Double)(model.get(FREQ))).doubleValue();
+        	}
+        	else {
+        		frequency = ((Double)(row.getValue(FREQ, model))).doubleValue();
+        	}
+        	MinimumObservingEfficiency moe = new MinimumObservingEfficiency();
             return moe.efficiency(frequency);
         }
     };
@@ -179,7 +179,7 @@ class ColumnDefinition {
     // and are also defaulted on the server side.  Therefore those sessions having
     // these defaults will not forward them to the server and database.
     private final ColumnType[] columns = new ColumnType[] {
-            new ColumnType(CODE,           "Proj Code",      100, PCodeField.class,           null),
+    		new ColumnType(CODE,           "Proj Code",      100, PCodeField.class,           null),
             new ColumnType(NAME,           "Name",           175, String.class,               null),
             new ColumnType(SOURCE,         "Source",         100, String.class,               null),
             new ColumnType(ORIG_ID,        "Orig ID",         50, Integer.class,              null),
