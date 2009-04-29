@@ -164,6 +164,5 @@ def get_options(request, *args, **kws):
 
 def get_selected(request):
     selected = Sesshun.objects.filter(selected = True)
-    ids = [s.id for s in selected]
-    response = json.dumps(dict(selected = ids))
+    response = json.dumps(dict(sessions = [{'id': s.id, 'name': s.name} for s in selected]))
     return HttpResponse(response, content_type = "text/plain")
