@@ -1,13 +1,27 @@
 package edu.nrao.dss.client;
 
+import java.util.HashMap;
+
+import com.extjs.gxt.ui.client.event.SelectionChangedEvent;
+import com.extjs.gxt.ui.client.event.SelectionChangedListener;
 import com.extjs.gxt.ui.client.widget.form.FormPanel;
 import com.extjs.gxt.ui.client.widget.form.SimpleComboBox;
+import com.extjs.gxt.ui.client.widget.form.SimpleComboValue;
 import com.extjs.gxt.ui.client.widget.form.TextField;
 import com.extjs.gxt.ui.client.widget.form.ComboBox.TriggerAction;
+import com.google.gwt.json.client.JSONObject;
 
 class SessionDetails extends FormPanel {
     public SessionDetails() {
         initLayout();
+    }
+    
+    public void setSessionSelection(HashMap<String, Integer> selectedSessions) {
+    	this.selectedSessions = selectedSessions;
+    	sessions.removeAll();
+    	for (String name : selectedSessions.keySet()) {
+    		sessions.add(name);
+    	}
     }
 
     private void initLayout() {
@@ -18,19 +32,36 @@ class SessionDetails extends FormPanel {
         
         add(receivers);
         receivers.setFieldLabel("Receivers");
-        receivers.disable();
+        receivers.setReadOnly(true);
         
         add(frequency);
         frequency.setFieldLabel("Frequency");
-        frequency.disable();
+        frequency.setReadOnly(true);
         
         add(lst);
         lst.setFieldLabel("LST");
-        lst.disable();
+        lst.setReadOnly(true);
         
         add(observing);
         observing.setFieldLabel("Observing Type");
-        observing.disable();
+        observing.setReadOnly(true);
+        
+        sessions.addSelectionChangedListener(new SelectionChangedListener<SimpleComboValue<String>>(){
+        	@Override
+			public void selectionChanged(SelectionChangedEvent<SimpleComboValue<String>> se) {
+        		String s_name = se.getSelectedItem().getValue();
+        		String s_id = selectedSessions.get(s_name).toString();
+        		JSONRequest.get("/sessions/"+ s_id, new JSONCallbackAdapter() {
+        			public void onSuccess(JSONObject json) {
+        				Session sess = Session.parseJSON(json);
+        				receivers.setValue(sess.getReceivers());
+        				frequency.setValue(sess.getFrequency());
+        				lst.setValue(sess.getHorizontal());
+        				observing.setValue(sess.getScience());
+        			}
+        		});
+			}
+        });
     }
 
     private void initSessionsList() {
@@ -39,11 +70,16 @@ class SessionDetails extends FormPanel {
         sessions.setToolTip("Pick a session from the working set.");
         
         sessions.setTriggerAction(TriggerAction.ALL);
-        sessions.add("Dummy #1");
-        sessions.add("Dummy #2");
-        sessions.add("Dummy #3");
+        //sessions.add("Dummy #1");
+        //sessions.add("Dummy #2");
+        //sessions.add("Dummy #3");
     }
 
+    public SimpleComboBox<String> getSessions(){
+    	return sessions;
+    }
+    
+    private HashMap<String, Integer> selectedSessions = new HashMap<String, Integer>();
     private final SimpleComboBox<String> sessions  = new SimpleComboBox<String>();
     private final TextField<String>      receivers = new TextField<String>();
     private final TextField<String>      frequency = new TextField<String>();

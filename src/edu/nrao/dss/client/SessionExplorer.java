@@ -496,6 +496,10 @@ public class SessionExplorer extends ContentPanel {
 		});
 	}
 	
+	public EditorGrid<BaseModelData> getGrid(){
+		return grid;
+	}
+	
 	private final RowDefinition rows = new RowDefinition();
 
 	/** Provides basic spreadsheet-like functionality. */

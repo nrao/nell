@@ -23,7 +23,7 @@ class ColumnDefinition {
     public static final String AUTHORIZED        = "authorized";
     public static final String BETWEEN           = "between";
     public static final String BACKUP            = "backup";
-    public static final String CODE              = "proj_code";
+    public static final String CODE              = "pcode";
     public static final String COMPLETE          = "complete";
     public static final String COORD_MODE        = "coord_mode";
     public static final String ENABLED           = "enabled";

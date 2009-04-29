@@ -477,7 +477,7 @@ class TestCadenceResource(NellTestCase):
                , "intervals"  : "3"
                , "full_size"  : "3"
                  }
-        response = self.client.post('/cadences', fdata)
+        response = self.client.post('/sessions/cadences', fdata)
         self.failUnlessEqual(response.status_code, 200)
 
         r_json = json.loads(response.content)
@@ -497,7 +497,7 @@ class TestCadenceResource(NellTestCase):
                   , intervals  = "3"
                     )
         c.save()
-        response = self.client.get('/cadences/%s' % self.s.id)
+        response = self.client.get('/sessions/cadences/%s' % self.s.id)
 
         r_json = json.loads(response.content)
         self.failUnlessEqual(response.status_code, 200)
@@ -524,7 +524,7 @@ class TestCadenceResource(NellTestCase):
                , "full_size"  : "3"
                  }
         fdata.update({'_method' : 'put'})
-        response = self.client.post('/cadences/%i' % self.s.id
+        response = self.client.post('/sessions/cadences/%i' % self.s.id
                                   , fdata)
 
         self.failUnlessEqual(response.status_code, 200)
@@ -539,7 +539,7 @@ class TestCadenceResource(NellTestCase):
                     )
         c.save()
 
-        response = self.client.post('/cadences/%i' % s.id, {'_method' : 'delete'})
+        response = self.client.post('/sessions/cadences/%i' % s.id, {'_method' : 'delete'})
         self.failUnlessEqual(response.status_code, 200)
 
         # Make sure that deleting the window deletes all opportunities
