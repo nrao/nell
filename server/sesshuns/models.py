@@ -222,6 +222,7 @@ class Sesshun(models.Model):
     max_duration       = models.FloatField(null = True)
     min_duration       = models.FloatField(null = True)
     time_between       = models.FloatField(null = True)
+    selected           = models.BooleanField(default = False)
 
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
@@ -284,6 +285,7 @@ class Sesshun(models.Model):
         self.max_duration     = fdata.get("req_max", 12.0)
         self.min_duration     = fdata.get("req_min",  3.0)
         self.time_between     = fdata.get("between", None)
+        self.selected         = fdata.get("selected", False)
 
     def cast_int(self, strValue):
         "Handles casting of strings where int is displayed as float. ex: 1.0"
@@ -489,6 +491,7 @@ class Sesshun(models.Model):
            , "req_max"    : self.max_duration
            , "req_min"    : self.min_duration
            , "between"    : self.time_between
+           , "selected"   : self.selected
            , "enabled"    : self.status.enabled
            , "authorized" : self.status.authorized
            , "complete"   : self.status.complete

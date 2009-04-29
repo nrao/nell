@@ -10,6 +10,7 @@ urlpatterns = patterns('',
    # ...
      url(r'^cadences$',        CadenceResource(permitted_methods=('GET', 'PUT', 'POST')))
    , url(r'^cadences/(\d+)$',  CadenceResource(permitted_methods=('PUT', 'GET', 'POST')))
+   , url(r'^selected$',                get_selected)
    , url(r'^sessions/options$',        get_options)
    , url(r'^sessions$',       SessionResource(permitted_methods=('GET', 'PUT', 'POST')))
    , url(r'^sessions/(\d+)$', SessionResource(permitted_methods=('PUT', 'GET', 'POST')))
