@@ -52,7 +52,7 @@ class Session {
     }
 
     public void loadWindows() {
-        JSONRequest.get("/windows/"+id, new JSONCallbackAdapter() {
+        JSONRequest.get("/sessions/"+id+"/windows", new JSONCallbackAdapter() {
             @Override
             public void onSuccess(JSONObject json) {
                 windows = new ArrayList<Window>();

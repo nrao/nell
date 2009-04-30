@@ -33,9 +33,12 @@ public class Scheduler extends Viewport implements EntryPoint {
 
     private TabItem addTab(LayoutContainer container, String title, String toolTip) {
         TabItem item = new TabItem(title);
+        tabPanel.add(item);
+
+        item.add(container);
         item.getHeader().setToolTip(toolTip);
         item.setLayout(new FitLayout());
-        tabPanel.add(item);
+
         return item;
     }
 
