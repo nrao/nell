@@ -83,7 +83,8 @@ class CadenceResource(NellResource):
         s_id = args[0]
         s = first(Sesshun.objects.filter(id = s_id))
         c = first(s.cadence_set.all())
-        return HttpResponse(json.dumps(c.jsondict())
+        jsonDict = c.jsondict() if c else {}
+        return HttpResponse(json.dumps(jsonDict)
                           , mimetype = "text/plain")
 
     def update(self, request, *args, **kws):

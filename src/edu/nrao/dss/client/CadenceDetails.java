@@ -51,11 +51,19 @@ class CadenceDetails extends FormPanel {
         		JSONRequest.get("/sessions/cadences/"+ s_id, new JSONCallbackAdapter() {
         			public void onSuccess(JSONObject json) {
         				Cadence cad = Cadence.parseJSON(json);
-        				startDate.setValue(cad.getStartDate());
-        				endDate.setValue(cad.getEndDate());
-        				repeats.setValue(cad.getRepeats());
-        				intervals.setValue(cad.getIntervals());
-        				fullSize.setValue(cad.getFullSize());
+        				if (cad == null) {
+        					startDate.setEmptyText("");
+        					endDate.setEmptyText("");
+        					repeats.setEmptyText("");
+        					intervals.setEmptyText("");
+        					fullSize.setEmptyText("");
+        				} else {
+	        				startDate.setValue(cad.getStartDate());
+	        				endDate.setValue(cad.getEndDate());
+	        				repeats.setValue(cad.getRepeats());
+	        				intervals.setValue(cad.getIntervals());
+	        				fullSize.setValue(cad.getFullSize());
+        				}
         			}
         		});
 			}
