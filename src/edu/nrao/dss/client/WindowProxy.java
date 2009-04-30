@@ -3,23 +3,23 @@ package edu.nrao.dss.client;
 import java.util.ArrayList;
 import java.util.List;
 
-class SessionProxy {
-    public SessionProxy(Session session) {
-        this.session   = session;
+class WindowProxy {
+    public WindowProxy(Window window) {
+        this.window    = window;
+        this.intervals = window.getIntervals();
+    }
+
+    public WindowProxy(WindowProxy session) {
+        this.window    = session.getWindow();
         this.intervals = session.getIntervals();
     }
 
-    public SessionProxy(SessionProxy session) {
-        this.session   = session.getSession();
-        this.intervals = session.getIntervals();
-    }
-
-    public boolean conflicts(SessionProxy rhs) {
+    public boolean conflicts(WindowProxy rhs) {
         return Interval.overlapIntervals(intervals, rhs.getIntervals());
     }
 
-    public Session getSession() {
-        return session;
+    public Window getWindow() {
+        return window;
     }
 
     public List<Interval> getIntervals() {
@@ -44,6 +44,6 @@ class SessionProxy {
         intervals = result;
     }
 
-    private Session        session;
+    private Window         window;
     private List<Interval> intervals;
 }
