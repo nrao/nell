@@ -1,6 +1,7 @@
 package edu.nrao.dss.client;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import com.extjs.gxt.ui.client.event.SelectionChangedEvent;
 import com.extjs.gxt.ui.client.event.SelectionChangedListener;
@@ -15,8 +16,8 @@ class SessionDetails extends FormPanel {
     public SessionDetails() {
         initLayout();
     }
-    
-    public void setSessionSelection(HashMap<String, Integer> selectedSessions) {
+
+    public void setSessionSelection(Map<String, Integer> selectedSessions) {
     	this.selectedSessions = selectedSessions;
     	sessions.removeAll();
     	for (String name : selectedSessions.keySet()) {
@@ -79,7 +80,7 @@ class SessionDetails extends FormPanel {
     	return sessions;
     }
     
-    private HashMap<String, Integer> selectedSessions = new HashMap<String, Integer>();
+    private Map<String, Integer> selectedSessions = new HashMap<String, Integer>();
     private final SimpleComboBox<String> sessions  = new SimpleComboBox<String>();
     private final TextField<String>      receivers = new TextField<String>();
     private final TextField<String>      frequency = new TextField<String>();
