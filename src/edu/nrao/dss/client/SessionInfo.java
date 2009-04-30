@@ -19,6 +19,7 @@ class SessionInfo extends LayoutContainer {
 
         add(details, new RowData(0.25, 1.0, new Margins(10)));
         add(cadence, new RowData(0.25, 1.0, new Margins(10)));
+        add(window,  new RowData(0.5,  1.0, new Margins(10)));
     }
     
     public void loadSessions(HashMap<String, Integer> selected){
@@ -28,4 +29,5 @@ class SessionInfo extends LayoutContainer {
 
     private final SessionDetails details   = new SessionDetails();
     private final CadenceDetails cadence   = new CadenceDetails(details.getSessions());
+    private final WindowDetails window     = new WindowDetails();
 }
