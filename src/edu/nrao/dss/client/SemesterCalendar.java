@@ -219,7 +219,7 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
     private final Sudoku      sudoku   = new Sudoku();
 
     /** Set to true to enable annoying blinking effects. */
-    private final boolean  animated = false;
+    private final boolean  animated = true;
 
     private List<Session> sessions = new ArrayList<Session>();
     private List<Window>  windows  = new ArrayList<Window>();
