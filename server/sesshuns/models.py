@@ -227,6 +227,7 @@ class Sesshun(models.Model):
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
     def __unicode__(self):
+        #TBF something is funny here: wrong type
         return "(%d) %s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s" % (self.id
                                             , self.name
                                             , self.frequency
@@ -581,8 +582,7 @@ class Cadence(models.Model):
           , self.full_size
           , self.intervals )
 
-    def init_from_post(self, fdata):
-        s_id = int(fdata["session_id"])
+    def init_from_post(self, s_id, fdata):
         s    = first(Sesshun.objects.filter(id = s_id))
         c    = s.get_cadence()
 

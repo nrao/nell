@@ -68,17 +68,17 @@ class CadenceResource(NellResource):
         return super(CadenceResource, self).create(request, *args, **kws)
     
     def create_worker(self, request, *args, **kws):
-        s_id = int(request.POST["session_id"])
+        s_id = args[0]
         s = first(Sesshun.objects.filter(id = s_id))
-        c = Cadence(session = s)
-        c.save()
-        c.init_from_post(request.POST)
+        c = s.get_cadence()
+        c.init_from_post(s_id, request.POST)
         c.gen_windows()
         
         # Query the database to insure data is in the correct data type
         c = first(Cadence.objects.filter(id = c.id))
         return HttpResponse(json.dumps(c.jsondict())
                           , mimetype = "text/plain")
+
     def read(self, request, *args, **kws):
         s_id = args[0]
         s = first(Sesshun.objects.filter(id = s_id))
@@ -91,7 +91,7 @@ class CadenceResource(NellResource):
         s_id = int(args[0])
         s    = first(Sesshun.objects.filter(id = s_id))
         c    = s.get_cadence()
-        c.init_from_post(request.POST)
+        c.init_from_post(s_id, request.POST)
         c.gen_windows()
 
         return HttpResponse("")

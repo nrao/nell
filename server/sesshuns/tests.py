@@ -471,18 +471,18 @@ class TestCadenceResource(NellTestCase):
 
     def test_create(self):
         sd    = datetime(2009, 4, 1, 12)
-        fdata = {"session_id" : str(self.s.id)
-               , "start_date" : sd.strftime("%m/%d/%Y")
+        fdata = {
+                 "start_date" : sd.strftime("%m/%d/%Y")
                , "repeats"    : 4
                , "intervals"  : "3"
                , "full_size"  : "3"
                  }
-        response = self.client.post('/sessions/cadences', fdata)
+        response = self.client.post('/sessions/%s/cadences' % self.s.id, fdata)
         self.failUnlessEqual(response.status_code, 200)
 
         r_json = json.loads(response.content)
         
-        self.assertEqual(r_json["session_id"], int(fdata["session_id"]))
+        self.assertEqual(r_json["session_id"], self.s.id)
         self.assertEqual(r_json["start_date"], fdata["start_date"])
         self.assertEqual(r_json["repeats"],    fdata["repeats"])
         self.assertEqual(r_json["full_size"],  fdata["full_size"])
@@ -497,7 +497,7 @@ class TestCadenceResource(NellTestCase):
                   , intervals  = "3"
                     )
         c.save()
-        response = self.client.get('/sessions/cadences/%s' % self.s.id)
+        response = self.client.get('/sessions/%s/cadences' % self.s.id)
 
         r_json = json.loads(response.content)
         self.failUnlessEqual(response.status_code, 200)
@@ -524,7 +524,7 @@ class TestCadenceResource(NellTestCase):
                , "full_size"  : "3"
                  }
         fdata.update({'_method' : 'put'})
-        response = self.client.post('/sessions/cadences/%i' % self.s.id
+        response = self.client.post('/sessions/%i/cadences' % self.s.id
                                   , fdata)
 
         self.failUnlessEqual(response.status_code, 200)
@@ -539,7 +539,7 @@ class TestCadenceResource(NellTestCase):
                     )
         c.save()
 
-        response = self.client.post('/sessions/cadences/%i' % s.id, {'_method' : 'delete'})
+        response = self.client.post('/sessions/%i/cadences' % s.id, {'_method' : 'delete'})
         self.failUnlessEqual(response.status_code, 200)
 
         # Make sure that deleting the window deletes all opportunities
