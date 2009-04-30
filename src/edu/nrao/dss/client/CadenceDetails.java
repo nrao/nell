@@ -34,21 +34,16 @@ class CadenceDetails extends FormPanel {
         startDate.setFormatValue(true);
         startDate.getPropertyEditor().setFormat(DateTimeFormat.getFormat("yyyy-MM-dd"));
         
-        add(endDate);
-        endDate.setFieldLabel("End Date");
-        endDate.setFormatValue(true);
-        endDate.getPropertyEditor().setFormat(DateTimeFormat.getFormat("yyyy-MM-dd"));
-        
         add(repeats);
-        repeats.setFieldLabel("Count");
+        repeats.setFieldLabel("Repeats");
         repeats.setAllowDecimals(false);
         repeats.setAllowNegative(false);
         
         add(intervals);
-        intervals.setFieldLabel("Intervals");
+        intervals.setFieldLabel("Interval(s)");
         
         add(fullSize);
-        fullSize.setFieldLabel("Full Size");
+        fullSize.setFieldLabel("Duration(s)");
         
         sessions.addSelectionChangedListener(new SelectionChangedListener<SimpleComboValue<String>>(){
         	@Override
@@ -61,14 +56,12 @@ class CadenceDetails extends FormPanel {
         				if (cad == null) {
         					create = true;
         					startDate.reset();
-        					endDate.reset();
         					repeats.reset();
         					intervals.reset();
         					fullSize.reset();
         				} else {
         					create = false;
 	        				startDate.setValue(cad.getStartDate());
-	        				endDate.setValue(cad.getEndDate());
 	        				repeats.setValue(cad.getRepeats());
 	        				intervals.setValue(cad.getIntervals());
 	        				fullSize.setValue(cad.getFullSize());
@@ -82,7 +75,7 @@ class CadenceDetails extends FormPanel {
         	public void componentSelected(ComponentEvent event) {
 
         		// Possible keys and values
-        		String[] pkeys = {"start_date", "end_date", "repeats", "intervals", "full_size"};
+        		String[] pkeys = {"start_date", "repeats", "intervals", "full_size"};
         		// Handling the null case for repeats
         		String r_str = null;
         		Number r_value = repeats.getValue();
@@ -90,7 +83,6 @@ class CadenceDetails extends FormPanel {
         			r_str = ((Double)r_value.doubleValue()).toString();	
         		}
                 String[] pvalues = {safeFormatDate(startDate.getValue())
-		                          , safeFormatDate(endDate.getValue())
 		                          , r_str
 		                          , intervals.getValue()
 		                          , fullSize.getValue()};
@@ -135,7 +127,6 @@ class CadenceDetails extends FormPanel {
     private boolean                            create = false;
     private HashMap<String, Integer> selectedSessions = new HashMap<String, Integer>();
     private final DateField                 startDate = new DateField();
-    private final DateField                 endDate   = new DateField();
     private final NumberField               repeats   = new NumberField();
     private final TextField<String>         intervals = new TextField<String>();
     private final TextField<String>         fullSize  = new TextField<String>();
