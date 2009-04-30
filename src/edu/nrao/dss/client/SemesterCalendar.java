@@ -68,13 +68,22 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
             }
         });
     }
+    
+    public void reload() {
+        loading  = new ArrayList<Integer>();
+        for (Session s : sessions) {
+            loading.add(s.getId());
+        }
+        sessions = new ArrayList<Session>();
+        loadNext();
+    }
 
     /** Fetch the calendar data from the server. */
     private void loadData(Map<String, Integer> selected) {
         info.loadSessions(selected);
 
-        sessions = new ArrayList<Session>();
         loading  = new ArrayList<Integer>(selected.values());
+        sessions = new ArrayList<Session>();
         loadNext();
     }
 
@@ -87,7 +96,11 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
 
                     windows = new ArrayList<Window>();
                     for (Session s : sessions) {
-                        windows.addAll(s.getWindows());
+                        for (Window w : s.getWindows()) {
+                            if (w.getNumIntervals() > 0) {
+                                windows.add(w);
+                            }
+                        }
                     }
 
                     sortWindows();
@@ -202,11 +215,11 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
     }
 
     private final Calendar    calendar = new Calendar();
-    private final SessionInfo info     = new SessionInfo();
+    private final SessionInfo info     = new SessionInfo(this);
     private final Sudoku      sudoku   = new Sudoku();
 
     /** Set to true to enable annoying blinking effects. */
-    private final boolean  animated = false;
+    private final boolean  animated = true;
 
     private List<Session> sessions = new ArrayList<Session>();
     private List<Window>  windows  = new ArrayList<Window>();
