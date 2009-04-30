@@ -562,7 +562,7 @@ class TestWindowResource(NellTestCase):
                , "start_time" : map(str, starts)
                , "duration"   : [1 + i for i in range(len(starts))]
                  }
-        response = self.client.post('/windows', fdata)
+        response = self.client.post('/sessions/windows', fdata)
 
         expected = ["2009-04-01 12:00:00"
                   , "2009-04-02 12:00:00"
@@ -577,7 +577,11 @@ class TestWindowResource(NellTestCase):
             self.assertTrue(e in results)
 
     def test_read(self):
-        response = self.client.get('/windows')
+        s = first(Sesshun.objects.all())
+        w = Window(session = s)
+        w.init_from_post()
+
+        response = self.client.get('/sessions/1/windows')
         self.failUnlessEqual(response.status_code, 200)
 
     def test_update(self):
@@ -592,7 +596,7 @@ class TestWindowResource(NellTestCase):
                , "duration"   : [1 + i for i in range(len(starts))]
                  }
         fdata.update({'_method' : 'put'})
-        response = self.client.post('/windows/%i' % w.id
+        response = self.client.post('/sessions/windows/%i' % w.id
                                   , fdata)
 
         self.failUnlessEqual(response.status_code, 200)
@@ -606,7 +610,7 @@ class TestWindowResource(NellTestCase):
         w = Window(session = s)
         w.init_from_post()
 
-        response = self.client.post('/windows/%i' % w.id, {'_method' : 'delete'})
+        response = self.client.post('/sessions/windows/%i' % w.id, {'_method' : 'delete'})
         self.failUnlessEqual(response.status_code, 200)
 
         # Make sure that deleting the window deletes all opportunities
