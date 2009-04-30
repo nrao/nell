@@ -23,6 +23,10 @@ class ColumnDefinition {
     public static final String AUTHORIZED        = "authorized";
     public static final String BETWEEN           = "between";
     public static final String BACKUP            = "backup";
+    public static final String CADENCE_START     = "cad_start_date";
+    public static final String CADENCE_END       = "cad_end_date";
+    public static final String CADENCE_REPEATS   = "cad_repeats";
+    public static final String CADENCE_INTERVALS = "cad_intervals";
     public static final String CODE              = "pcode";
     public static final String COMPLETE          = "complete";
     public static final String COORD_MODE        = "coord_mode";
@@ -59,10 +63,6 @@ class ColumnDefinition {
     public static final String TYPE              = "type";
     public static final String USE_DEPEND        = "use_depend";
     public static final String WIND              = "wind";
-    public static final String CADENCE_START     = "cad_start_date";
-    public static final String CADENCE_END       = "cad_end_date";
-    public static final String CADENCE_REPEATS   = "cad_repeats";
-    public static final String CADENCE_INTERVALS = "cad_intervals";
     public static final String ZA_LIMIT          = "za_limit";
 
     public ColumnDefinition() {

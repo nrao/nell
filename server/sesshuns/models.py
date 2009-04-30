@@ -24,49 +24,36 @@ def str2dt(str):
     m, d, y   = map(int, str.split('/'))
     return datetime(y, m, d)
 
-jsonMap = {"id"         : "id"
-         , "pcode"      : "project__pcode"
-         , "type"       : "session_type__type"
-         , "science"    : "observing_type__type"
-         , "total_time" : "allotment__total_time"
-         , "PSC_time"   : "allotment__psc_time"
-         , "sem_time"   : "allotment__max_semester_time"
-         , "grade"      : "allotment__grade"
-         , "orig_ID"    : "original_id"
-         , "name"       : "name"
-         , "freq"       : "frequency"
-         , "req_max"    : "max_duration"
-         , "req_min"    : "min_duration"
-         , "between"    : "time_between"
-         , "selected"   : "selected"
-         , "enabled"    : "status__enabled"
-         , "authorized" : "status__authorized"
-         , "complete"   : "status__complete"
-         , "backup"     : "status__backup"
+jsonMap = {"authorized"     : "status__authorized"
+         , "between"        : "time_between"
+         , "backup"         : "status__backup"
+         , "pcode"          : "project__pcode"
+         , "cad_start_date" : "cadence__start_date"
+         , "cad_repeats"    : "cadence__repeats"
+         , "cad_intervals"  : "cadence__intervals"
+         , "cad_duration"   : "cadence__full_size"
+         , "complete"       : "status__complete"
+         , "coord_mode"     : "target__system__name"
+         , "enabled"        : "status__enabled"
+         , "freq"           : "frequency"
+         , "grade"          : "allotment__grade"
+         , "id"             : "id"
+         , "name"           : "name"
+         , "orig_ID"        : "original_id"
+# TBF         , "receiver"   : "rcvrs"
+         , "PSC_time"       : "allotment__psc_time"
+         , "req_max"        : "max_duration"
+         , "req_min"        : "min_duration"
+         , "science"        : "observing_type__type"
+         , "selected"       : "selected"
+         , "sem_time"       : "allotment__max_semester_time"
+         , "source"         : "target__source"
+         , "source_h"       : "target__horizontal"
+         , "source_v"       : "target__vertical"
+         , "total_time"     : "allotment__total_time"
+         , "type"           : "session_type__type"
                }
-"""
-        if rcvrs is not None:
-            d.update({"receiver"   : rcvrs})
-            
-        if target is not None:
-            d.update({"source"     : target.source
-                    , "coord_mode" : target.system.name
-                    , "source_h"   : target.horizontal
-                    , "source_v"   : target.vertical
-                      })
 
-        if cadence is not None:
-            sd = None if cadence.start_date is None \
-                else cadence.start_date.strftime("%m/%d/%Y")
-            ed = None if cadence.end_date is None \
-                else cadence.end_date.strftime("%m/%d/%Y")
-            d.update({"cad_start_date" : sd
-                    , "cad_end_date"   : ed
-                    , "cad_repeats"    : cadence.repeats
-                    , "cad_intervals"  : cadence.intervals
-                      })
-            
-"""
 class User(models.Model):
     original_id = models.IntegerField()
     pst_id      = models.IntegerField(null = True)

@@ -34,7 +34,8 @@ class SessionResource(NellResource):
         if len(args) == 0:
             total     = Sesshun.objects.count()
             sortField = jsonMap.get(request.GET.get("sortField", "id"), "id")
-            sessions  = Sesshun.objects.order_by(sortField)
+            order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
+            sessions  = Sesshun.objects.order_by(order + sortField)
             #sessions  = Sesshun.objects.all()
             start = int(request.GET.get("start", 0))
             limit = int(request.GET.get("limit", 50))
