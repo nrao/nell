@@ -789,10 +789,13 @@ class Window(models.Model):
                  opt.duration > self.session.max_duration
         
     def jsondict(self, generate = False, now = None):
-        now      = now or datetime.utcnow()
-        windowed = first(Session_Type.objects.filter(type = 'windowed'))
+        now       = now or datetime.utcnow()
+        windowed  = first(Session_Type.objects.filter(type = 'windowed'))
+        receivers = [[r.abbreviation for r in rg.receivers.all()]
+                    for rg in self.session.receiver_group_set.all()]
         d = {"id"       : self.id
            , "required" : self.required
+           , "receiver" : receivers
             }
         if self.session.session_type == windowed and generate and self.is_classic():
             o = first(self.opportunity_set.all())
