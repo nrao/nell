@@ -1,7 +1,6 @@
 package edu.nrao.dss.client;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +18,6 @@ import com.extjs.gxt.ui.client.widget.form.SimpleComboValue;
 import com.extjs.gxt.ui.client.widget.form.TextField;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.user.client.Window;
 
 class CadenceDetails extends FormPanel {
     public CadenceDetails(SimpleComboBox<String> sessions) {
@@ -128,13 +126,13 @@ class CadenceDetails extends FormPanel {
 		return fmt.format(date);
     }
     
-    public void setSessionSelection(HashMap<String, Integer> selectedSessions) {
+    public void setSessionSelection(Map<String, Integer> selectedSessions) {
     	this.selectedSessions = selectedSessions;
     }
 
     private String                 selectedSession_id = new String();
     private boolean                            create = false;
-    private HashMap<String, Integer> selectedSessions = new HashMap<String, Integer>();
+    private Map<String, Integer> selectedSessions = new HashMap<String, Integer>();
     private final DateField                 startDate = new DateField();
     private final DateField                 endDate   = new DateField();
     private final NumberField               repeats   = new NumberField();

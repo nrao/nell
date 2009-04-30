@@ -87,7 +87,11 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
 
                     windows = new ArrayList<Window>();
                     for (Session s : sessions) {
-                        windows.addAll(s.getWindows());
+                        for (Window w : s.getWindows()) {
+                            if (w.getNumIntervals() > 0) {
+                                windows.add(w);
+                            }
+                        }
                     }
 
                     sortWindows();
