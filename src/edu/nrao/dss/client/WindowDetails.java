@@ -9,6 +9,9 @@ public class WindowDetails extends FormPanel{
 		initLayout();
 	}
 	
+	public void showWindowDetails(Window widow) {
+	}
+	
 	private void initLayout() {
 		setHeading("Window Details");
 		

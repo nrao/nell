@@ -159,12 +159,17 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
                 if (current == null) {
                     current = findCurrentWindow();
                 }
+                details.showWindowDetails(current);
 
                 if (! animated) {
                     draw(true);
                 }
             }
         });
+    }
+    
+    public WindowDetails getWindowDetails() {
+        return details;
     }
 
     private void draw(boolean showConflicts) {
@@ -240,6 +245,8 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
     private final Calendar    calendar = new Calendar();
     private final SessionInfo info     = new SessionInfo(this);
     private final Sudoku      sudoku   = new Sudoku();
+
+    private final WindowDetails  details    = new WindowDetails();
 
     /** Set to true to enable annoying blinking effects. */
     private final boolean  animated = true;

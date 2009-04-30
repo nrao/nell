@@ -12,6 +12,7 @@ import com.extjs.gxt.ui.client.widget.layout.RowLayout;
 class SessionInfo extends LayoutContainer {
     public SessionInfo(SemesterCalendar cal) {
         cadence = new CadenceDetails(cal, details.getSessions());
+        window  = cal.getWindowDetails();
         initLayout();
     }
 
@@ -30,5 +31,5 @@ class SessionInfo extends LayoutContainer {
 
     private final SessionDetails details   = new SessionDetails();
     private final CadenceDetails cadence;
-    private final WindowDetails  window    = new WindowDetails();
+    private final WindowDetails  window;
 }
