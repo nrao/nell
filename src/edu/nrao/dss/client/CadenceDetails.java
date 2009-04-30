@@ -1,6 +1,7 @@
 package edu.nrao.dss.client;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import com.extjs.gxt.ui.client.event.SelectionChangedEvent;
 import com.extjs.gxt.ui.client.event.SelectionChangedListener;
@@ -62,11 +63,11 @@ class CadenceDetails extends FormPanel {
         });
     }
 
-    public void setSessionSelection(HashMap<String, Integer> selectedSessions) {
+    public void setSessionSelection(Map<String, Integer> selectedSessions) {
     	this.selectedSessions = selectedSessions;
     }
     
-    private HashMap<String, Integer> selectedSessions = new HashMap<String, Integer>();
+    private Map<String, Integer> selectedSessions = new HashMap<String, Integer>();
     private final DateField         startDate = new DateField();
     private final DateField         endDate   = new DateField();
     private final NumberField       repeats   = new NumberField();

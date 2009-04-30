@@ -1,6 +1,6 @@
 package edu.nrao.dss.client;
 
-import java.util.HashMap;
+import java.util.Map;
 
 import com.extjs.gxt.ui.client.Style.Orientation;
 import com.extjs.gxt.ui.client.util.Margins;
@@ -20,12 +20,12 @@ class SessionInfo extends LayoutContainer {
         add(details, new RowData(0.25, 1.0, new Margins(10)));
         add(cadence, new RowData(0.25, 1.0, new Margins(10)));
     }
-    
-    public void loadSessions(HashMap<String, Integer> selected){
+
+    public void loadSessions(Map<String, Integer> selected){
     	details.setSessionSelection(selected);
     	cadence.setSessionSelection(selected);
     }
 
-    private final SessionDetails details   = new SessionDetails();
-    private final CadenceDetails cadence   = new CadenceDetails(details.getSessions());
+    private final SessionDetails details = new SessionDetails();
+    private final CadenceDetails cadence = new CadenceDetails(details.getSessions());
 }
