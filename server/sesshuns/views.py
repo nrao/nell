@@ -94,7 +94,10 @@ class CadenceResource(NellResource):
         c.init_from_post(s_id, request.POST)
         c.gen_windows()
 
-        return HttpResponse("")
+        # Query the database to insure data is in the correct data type
+        c = first(Cadence.objects.filter(id = c.id))
+        return HttpResponse(json.dumps(c.jsondict())
+                          , mimetype = "text/plain")
 
     def delete(self, request, *args):
         id = int(args[0])
