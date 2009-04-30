@@ -13,19 +13,17 @@ import com.google.gwt.json.client.JSONObject;
 /** Represents an opportunity or an overlapping sequence of opportunities. */
 @SuppressWarnings("unchecked")
 class Interval implements Comparable {
-    private static class SimpleDateFormat extends DateTimeFormat {
-        public SimpleDateFormat() {
-            super("yyyy-MM-dd HH:mm:ss");
-        }
-    }
-
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat();
-    private static final long             DAY_LENGTH  = 24*60*60;
+    private static final DateTimeFormat DATE_FORMAT = DateTimeFormat.getFormat("yyyy-MM-dd HH:mm:ss");
+    private static final long           DAY_LENGTH  = 24*60*60;
 
     public static List<Interval> parseIntervals(Window window, JSONArray intervals) {
         ArrayList<Interval> result = new ArrayList<Interval>();
         for (int i = 0; i < intervals.size(); ++i) {
-            result.add(parseInterval(window, intervals.get(i).isObject()));
+            Interval interval = parseInterval(window, intervals.get(i).isObject());
+            if (interval.getStartDay() > 120) {
+                break;
+            }
+            result.add(interval);
         }
 
         Collections.sort(result);

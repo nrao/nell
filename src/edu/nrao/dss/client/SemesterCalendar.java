@@ -9,6 +9,7 @@ import java.util.Map;
 import com.extjs.gxt.ui.client.Style.Orientation;
 import com.extjs.gxt.ui.client.Style.Scroll;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
+import com.extjs.gxt.ui.client.widget.Text;
 import com.extjs.gxt.ui.client.widget.layout.CenterLayout;
 import com.extjs.gxt.ui.client.widget.layout.RowData;
 import com.extjs.gxt.ui.client.widget.layout.RowLayout;
@@ -28,7 +29,6 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
         setLayout(new RowLayout(Orientation.VERTICAL));
         setScrollMode(Scroll.AUTO);
 
-        LayoutContainer top = new LayoutContainer();
         add(top, new RowData(-1.0, 1.5 * Calendar.HEIGHT));
         top.setLayout(new CenterLayout());
         top.add(calendar);
@@ -49,6 +49,11 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
         if (animated) {
             timer.scheduleRepeating(1000 / 10);
         }
+        
+        Text text = new Text("receivers go here");
+        top.add(text);
+        labels.add(text);
+        offsets.add(0);
 
         draw(true);
     }
@@ -166,7 +171,24 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
         this.showConflicts = showConflicts;
         calendar.draw();
         this.showConflicts = false;
+        
+        drawLabels();
     }
+
+    private void drawLabels() {
+        for (int i = 0; i < labels.size(); ++i) {
+            int x = dayToX(offsets.get(i));
+            labels.get(i).setPosition(x, 50);
+        }
+    }
+    
+    private int dayToX(int day) {
+        int center = this.getWidth() / 2;
+        return center + (day - 60) * 12;
+    }
+
+    private ArrayList<Text>    labels  = new ArrayList<Text>();
+    private ArrayList<Integer> offsets = new ArrayList<Integer>();
 
     public void onPaint(GWTCanvas canvas) {
         for (Window a : windows) {
@@ -214,6 +236,7 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
         problems = sudoku.findProblem(windows);
     }
 
+    private final LayoutContainer top  = new LayoutContainer();
     private final Calendar    calendar = new Calendar();
     private final SessionInfo info     = new SessionInfo(this);
     private final Sudoku      sudoku   = new Sudoku();

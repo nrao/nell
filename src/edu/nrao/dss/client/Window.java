@@ -1,24 +1,33 @@
 package edu.nrao.dss.client;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.widgetideas.graphics.client.Color;
 
 @SuppressWarnings("unchecked")
 class Window implements Comparable {
+    private static final DateTimeFormat DATE_FORMAT = DateTimeFormat.getFormat("yyyy-MM-dd HH:mm:ss");
+
     public static Window parseJSON(JSONObject json) {
         int id = (int) json.get("id").isNumber().doubleValue();
-        Window window = new Window(id);
+        int duration = (int) json.get("duration").isNumber().doubleValue();
+        String start_time = json.get("start_time").isString().stringValue();
+        
+        Window window = new Window(id, DATE_FORMAT.parse(start_time), duration);
         
         List<Interval> intervals = Interval.parseIntervals(window, json.get("opportunities").isArray());
         window.setIntervals(intervals);
         return window;
     }
-    
-    public Window(int id) {
-        this.id = id;
+
+    public Window(int id, Date startTime, int duration) {
+        this.id        = id;
+        this.startTime = startTime;
+        this.duration  = duration;
     }
 
     public boolean contains(int day, int hour) {
@@ -106,6 +115,12 @@ class Window implements Comparable {
         for (Interval interval : intervals) {
             interval.setStartDay(interval.getStartDay() + deltaDays);
         }
+        
+        startTime = new Date(startTime.getTime() + deltaDays * 86400 * 100);
+        JSONRequest.post("/sessions/windows/"+id,
+                new String[] {"_method", "start_time", "duration"},
+                new String[] {"put", DATE_FORMAT.format(startTime), ""+duration},
+                null);
     }
 
     public Color getColor() {
@@ -127,6 +142,8 @@ class Window implements Comparable {
     }
 
     private int            id;
+    private Date           startTime;
+    private int            duration;
     private List<Interval> intervals;
 
     private int   red   = 0;
