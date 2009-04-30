@@ -7,36 +7,36 @@ import java.util.List;
 
 class Sudoku {
     /** Return a list of those sessions the user needs to be most concerned about. */
-    public List<Session> findProblem(List<Session> sessions) {
+    public List<Window> findProblem(List<Window> windows) {
         // Convert in...
-        ArrayList<SessionProxy> proxies = new ArrayList<SessionProxy>();
-        for (Session session : sessions) {
-            proxies.add(new SessionProxy(session));
+        ArrayList<WindowProxy> proxies = new ArrayList<WindowProxy>();
+        for (Window window : windows) {
+            proxies.add(new WindowProxy(window));
         }
 
         // Process...
-        List<SessionProxy> problem = findProblem1(proxies);
+        List<WindowProxy> problem = findProblem1(proxies);
         if (problem == null) {
             return null;
         }
 
         // Convert out...
-        ArrayList<Session> result = new ArrayList<Session>();
-        for (SessionProxy session : problem) {
-            result.add((Session) session.getSession());
+        ArrayList<Window> result = new ArrayList<Window>();
+        for (WindowProxy window : problem) {
+            result.add(window.getWindow());
         }
 
         return result;
     }
 
     /** Return a list of those sessions the user needs to be most concerned about. */
-    private List<SessionProxy> findProblem1(List<SessionProxy> sessions) {
+    private List<WindowProxy> findProblem1(List<WindowProxy> sessions) {
         // Find the distinct subsets of the input.
-        List<List<SessionProxy>> partitions = partition(sessions);
+        List<List<WindowProxy>> partitions = partition(sessions);
 
         // We'll deal with the smallest partitions first, in the name of expediency.
-        Collections.sort(partitions, new Comparator<List<SessionProxy>>() {
-            public int compare(List<SessionProxy> lhs, List<SessionProxy> rhs) {
+        Collections.sort(partitions, new Comparator<List<WindowProxy>>() {
+            public int compare(List<WindowProxy> lhs, List<WindowProxy> rhs) {
                 if (lhs.size() < rhs.size()) { return -1; }
                 if (rhs.size() < lhs.size()) { return +1; }
                 return 0;
@@ -44,7 +44,7 @@ class Sudoku {
         });
 
         // Return the first problem identified, if any.
-        for (List<SessionProxy> partition : partitions) {
+        for (List<WindowProxy> partition : partitions) {
             if (isProblem(partition)) {
                 return partition;
             }
@@ -55,7 +55,7 @@ class Sudoku {
     }
 
     /** Decide if a specific group of sessions is a problem. */
-    private boolean isProblem(List<SessionProxy> sessions) {
+    private boolean isProblem(List<WindowProxy> sessions) {
         if (! trivialElimination(sessions)) {
             return true;
         }
@@ -71,10 +71,10 @@ class Sudoku {
         return false;
     }
 
-    private boolean trivialElimination(List<SessionProxy> sessions) {
+    private boolean trivialElimination(List<WindowProxy> sessions) {
         while (sessions.size() > 0) {
-            Collections.sort(sessions, new Comparator<SessionProxy>() {
-                public int compare(SessionProxy lhs, SessionProxy rhs) {
+            Collections.sort(sessions, new Comparator<WindowProxy>() {
+                public int compare(WindowProxy lhs, WindowProxy rhs) {
                     if (lhs.getNumIntervals() < rhs.getNumIntervals()) { return -1; }
                     if (rhs.getNumIntervals() < lhs.getNumIntervals()) { return +1; }
                     return 0;
@@ -89,7 +89,7 @@ class Sudoku {
             }
             if (sessions.get(0).getNumIntervals() == 1) {
                 Interval interval = sessions.get(0).getInterval(0);
-                for (SessionProxy session : sessions) {
+                for (WindowProxy session : sessions) {
                     session.nukeInterval(interval);
                 }
                 sessions.remove(sessions.get(0));
@@ -99,9 +99,9 @@ class Sudoku {
         return true;
     }
 
-    private boolean computationallyFeasible(List<SessionProxy> sessions) {
+    private boolean computationallyFeasible(List<WindowProxy> sessions) {
         int size = 1;
-        for (SessionProxy session : sessions) {
+        for (WindowProxy session : sessions) {
             size *= session.getNumIntervals();
             if (size > THRESHOLD) {
                 return false;
@@ -111,14 +111,14 @@ class Sudoku {
         return true;
     }
 
-    private boolean sudokuElimination(List<SessionProxy> sessions) {
+    private boolean sudokuElimination(List<WindowProxy> sessions) {
         // Succeed.
         if (sessions.size() == 0) {
             return true;
         }
 
-        Collections.sort(sessions, new Comparator<SessionProxy>() {
-            public int compare(SessionProxy lhs, SessionProxy rhs) {
+        Collections.sort(sessions, new Comparator<WindowProxy>() {
+            public int compare(WindowProxy lhs, WindowProxy rhs) {
                 if (lhs.getNumIntervals() < rhs.getNumIntervals()) { return -1; }
                 if (rhs.getNumIntervals() < lhs.getNumIntervals()) { return +1; }
                 return 0;
@@ -133,7 +133,7 @@ class Sudoku {
         // Only one option, recur.
         if (sessions.get(0).getNumIntervals() == 1) {
             Interval interval = sessions.get(0).getInterval(0);
-            for (SessionProxy session : sessions) {
+            for (WindowProxy session : sessions) {
                 session.nukeInterval(interval);
             }
             sessions.remove(sessions.get(0));
@@ -142,9 +142,9 @@ class Sudoku {
 
         // Multiple options, try them each.
         for (Interval interval : sessions.get(0).getIntervals()) {
-            ArrayList<SessionProxy> proxies = new ArrayList<SessionProxy>();
+            ArrayList<WindowProxy> proxies = new ArrayList<WindowProxy>();
             for (int i = 1; i < sessions.size(); ++i) {
-                SessionProxy proxy = new SessionProxy(sessions.get(i));
+                WindowProxy proxy = new WindowProxy(sessions.get(i));
                 proxy.nukeInterval(interval);
             }
 
@@ -159,7 +159,7 @@ class Sudoku {
     }
 
     /** Organize a list of sessions into mutually-exclusive subsets. */
-    private List<List<SessionProxy>> partition(List<SessionProxy> sessions) {
+    private List<List<WindowProxy>> partition(List<WindowProxy> sessions) {
         int         n         = sessions.size();
         boolean[][] conflicts = new boolean[n][n];
 
@@ -180,12 +180,12 @@ class Sudoku {
         }
 
         // Traverse the resulting graph.
-        List<List<SessionProxy>> result  = new ArrayList<List<SessionProxy>>();
+        List<List<WindowProxy>> result  = new ArrayList<List<WindowProxy>>();
         boolean[]                visited = new boolean[n];
         for (int i = 0; i < n; ++i) {
             if (visited[i]) { continue; }
 
-            ArrayList<SessionProxy> group = new ArrayList<SessionProxy>();
+            ArrayList<WindowProxy> group = new ArrayList<WindowProxy>();
             for (int j = 0; j < n; ++j) {
                 if (conflicts[i][j]) {
                     group.add(sessions.get(j));
