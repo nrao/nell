@@ -622,7 +622,10 @@ class Cadence(models.Model):
         return d
 
     def gen_windows(self):
-        if self.start_date is not None:
+        if self.start_date is not None and \
+           self.repeats is not None and \
+           self.intervals is not None and \
+           self.full_size is not None:
             #  Delete all the previously generated windows
             for w in self.session.window_set.all():
                 w.delete()

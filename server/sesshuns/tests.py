@@ -488,6 +488,25 @@ class TestCadenceResource(NellTestCase):
         self.assertEqual(r_json["full_size"],  fdata["full_size"])
         self.assertEqual(r_json["intervals"],  fdata["intervals"])
 
+        self.assertNotEqual(0, len(Window.objects.filter(session = self.s)))
+
+    def test_create_invalid(self):
+        sd    = datetime(2009, 4, 1, 12)
+        fdata = {
+                 "repeats"    : 4
+               , "intervals"  : "3"
+                 }
+        response = self.client.post('/sessions/%s/cadences' % self.s.id, fdata)
+        self.failUnlessEqual(response.status_code, 200)
+
+        r_json = json.loads(response.content)
+        
+        self.assertEqual(r_json["session_id"], self.s.id)
+        self.assertEqual(r_json["repeats"],    fdata["repeats"])
+        self.assertEqual(r_json["intervals"],  fdata["intervals"])
+
+        self.assertEqual(0, len(Window.objects.filter(session = self.s)))
+
     def test_read(self):
         sd = datetime(2009, 4, 22)
         c = Cadence(session    = self.s
