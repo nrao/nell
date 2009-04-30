@@ -10,7 +10,8 @@ import com.extjs.gxt.ui.client.widget.layout.RowLayout;
 
 /** Display session and cadence details on the overview calendar page. */
 class SessionInfo extends LayoutContainer {
-    public SessionInfo() {
+    public SessionInfo(SemesterCalendar cal) {
+        cadence = new CadenceDetails(cal, details.getSessions());
         initLayout();
     }
 
@@ -27,5 +28,5 @@ class SessionInfo extends LayoutContainer {
     }
 
     private final SessionDetails details = new SessionDetails();
-    private final CadenceDetails cadence = new CadenceDetails(details.getSessions());
+    private final CadenceDetails cadence;
 }

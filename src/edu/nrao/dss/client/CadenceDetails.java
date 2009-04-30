@@ -20,7 +20,8 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.json.client.JSONObject;
 
 class CadenceDetails extends FormPanel {
-    public CadenceDetails(SimpleComboBox<String> sessions) {
+    public CadenceDetails(SemesterCalendar cal, SimpleComboBox<String> sessions) {
+        this.cal = cal;
     	initLayout(sessions);
     }
 
@@ -104,7 +105,12 @@ class CadenceDetails extends FormPanel {
         		JSONRequest.post("/sessions/" + selectedSession_id + "/cadences"
         				       , keys.toArray(new String[]{})
         				       , values.toArray(new String[]{})
-        				       , null);
+        				       , new JSONCallbackAdapter() {
+        		                    @Override
+        		                    public void onSuccess(JSONObject json) {
+        		                        cal.reload();
+        		                    }
+        		});
         	}
         });
         add(apply);
@@ -129,4 +135,6 @@ class CadenceDetails extends FormPanel {
     private final NumberField               repeats   = new NumberField();
     private final TextField<String>         intervals = new TextField<String>();
     private final TextField<String>         fullSize  = new TextField<String>();
+    
+    private final SemesterCalendar cal;
 }
