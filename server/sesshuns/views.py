@@ -121,8 +121,9 @@ class WindowResource(NellResource):
         return HttpResponse(json.dumps(w.jsondict())
                           , mimetype = "text/plain")
 
-    def read(self, request):
-        windows = Window.objects.all()
+    def read(self, request, *args, **kws):
+        s_id = args[0]
+        windows = Window.objects.filter(session = s_id)
         return HttpResponse(json.dumps({"windows":[w.jsondict() for w in windows]})
                           , mimetype = "text/plain")
 
