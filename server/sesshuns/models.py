@@ -804,15 +804,21 @@ class Window(models.Model):
     def jsondict(self, generate = False, now = None):
         now      = now or datetime.utcnow()
         windowed = first(Session_Type.objects.filter(type = 'windowed'))
+        d = {"id"       : self.id
+           , "required" : self.required
+            }
         if self.session.session_type == windowed and generate and self.is_classic():
+            o = first(self.opportunity_set.all())
+            d.update({"start_time" : str(o.start_time)
+                    , "duration"   : o.duration
+                     })
             opportunities = self.gen_opportunities(now)
         else:
             opportunities = self.opportunity_set.all()
-            
-        return {"id"       : self.id
-              , "required" : self.required
-              , "opportunities" : [o.jsondict() for o in opportunities]
-                }
+
+        d.update({"opportunities" : [o.jsondict() for o in opportunities]})
+
+        return d
 
     def gen_opportunities(self, now = None):
         w = first(self.opportunity_set.all())
