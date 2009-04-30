@@ -1,4 +1,3 @@
-#!/bin/sh
 APPDIR=`dirname $0`;
 GWT=/home/dss/conundrum/gwt/gwt-linux-1.5.3;
 java  -Xmx256M -cp "$APPDIR/src:$APPDIR/bin:$GWT/gwt-user.jar:$GWT/gwt-dev-linux.jar:$GWT/gwt-incubator_1-5_Dec_28.jar:$GWT/gxt-1.2.3/gxt.jar" com.google.gwt.dev.GWTCompiler -out "$APPDIR/www" "$@" edu.nrao.dss.Scheduler;
