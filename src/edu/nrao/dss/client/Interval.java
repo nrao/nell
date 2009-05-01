@@ -13,26 +13,24 @@ import com.google.gwt.json.client.JSONObject;
 /** Represents an opportunity or an overlapping sequence of opportunities. */
 @SuppressWarnings("unchecked")
 class Interval implements Comparable {
-    private static class SimpleDateFormat extends DateTimeFormat {
-        public SimpleDateFormat() {
-            super("yyyy-MM-dd HH:mm:ss");
-        }
-    }
+    private static final DateTimeFormat DATE_FORMAT = DateTimeFormat.getFormat("yyyy-MM-dd HH:mm:ss");
+    private static final long           DAY_LENGTH  = 24*60*60;
 
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat();
-    private static final long             DAY_LENGTH  = 24*60*60;
-
-    public static List<Interval> parseIntervals(Session allocation, JSONArray intervals) {
+    public static List<Interval> parseIntervals(Window window, JSONArray intervals) {
         ArrayList<Interval> result = new ArrayList<Interval>();
         for (int i = 0; i < intervals.size(); ++i) {
-            result.add(parseInterval(allocation, intervals.get(i).isObject()));
+            Interval interval = parseInterval(window, intervals.get(i).isObject());
+            if (interval.getStartDay() > 120) {
+                break;
+            }
+            result.add(interval);
         }
 
         Collections.sort(result);
         return reduce(result);
     }
 
-    private static Interval parseInterval(Session allocation, JSONObject interval) {
+    private static Interval parseInterval(Window window, JSONObject interval) {
         try {
             Date start_time = DATE_FORMAT.parse(interval.get("start_time").isString().stringValue());
             int  duration   = (int) interval.get("duration").isNumber().doubleValue();
@@ -40,7 +38,7 @@ class Interval implements Comparable {
             long today = truncate(new Date().getTime(), DAY_LENGTH*1000);
             long start = (start_time.getTime() - today) / (3600*1000);
 
-            return new Interval(allocation, (int) start, duration);
+            return new Interval(window, (int) start, duration);
         } catch (Exception e) {
             GWT.log("Interval.parseInterval", e);
             return null;
@@ -59,14 +57,14 @@ class Interval implements Comparable {
         for (int i = 1; i < intervals.size(); ++i) {
             Interval interval = intervals.get(i);
             if (intervals.get(i).startHour >= start + duration) {
-                result.add(new Interval(interval.session, start, duration));
+                result.add(new Interval(interval.window, start, duration));
                 start    = interval.startHour;
                 duration = interval.numHours;
             } else {
                 duration = interval.startHour + interval.numHours - start;
             }
         }
-        result.add(new Interval(intervals.get(0).session, start, duration));
+        result.add(new Interval(intervals.get(0).window, start, duration));
 
         return result;
     }
@@ -92,8 +90,8 @@ class Interval implements Comparable {
         return false;
     }
 
-    public Interval(Session session, int startHour, int numHours) {
-        this.session   = session;
+    public Interval(Window window, int startHour, int numHours) {
+        this.window    = window;
         this.startHour = startHour;
         this.numHours  = numHours;
     }
@@ -120,8 +118,8 @@ class Interval implements Comparable {
         return +1;
     }
 
-    public Session getSession() {
-        return session;
+    public Window getWindow() {
+        return window;
     }
 
     // TODO: need to account for LST drift.
@@ -151,7 +149,7 @@ class Interval implements Comparable {
         return startHour + numHours;
     }
 
-    private Session session;
+    private Window  window;
     private int     startHour;
     private int     numHours;
 }

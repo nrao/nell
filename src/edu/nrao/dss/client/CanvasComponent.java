@@ -9,8 +9,6 @@ import com.google.gwt.user.client.ui.MouseListener;
 import com.google.gwt.widgetideas.graphics.client.Color;
 import com.google.gwt.widgetideas.graphics.client.GWTCanvas;
 
-
-
 class CanvasComponent extends WidgetComponent {
     public CanvasComponent(int width, int height) {
         super(new FocusPanel());
