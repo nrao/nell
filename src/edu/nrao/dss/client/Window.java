@@ -146,12 +146,7 @@ class Window implements Comparable {
         JSONRequest.post("/sessions/windows/"+id,
                 new String[] {"_method", "start_time", "duration"},
                 new String[] {"put", DATE_FORMAT.format(startTime), ""+duration},
-                new JSONCallbackAdapter() {
-                    @Override
-                    public void onSuccess(JSONObject json) {
-                        com.google.gwt.user.client.Window.alert(json.toString());
-                    }
-        });
+                null);
     }
 
     public Color getColor() {
