@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.widgetideas.graphics.client.Color;
 
@@ -16,18 +17,43 @@ class Window implements Comparable {
         int id = (int) json.get("id").isNumber().doubleValue();
         int duration = (int) json.get("duration").isNumber().doubleValue();
         String start_time = json.get("start_time").isString().stringValue();
+        List<String> receivers = parseReceivers(json.get("receiver").isArray());
         
-        Window window = new Window(id, DATE_FORMAT.parse(start_time), duration);
+        Window window = new Window(id, DATE_FORMAT.parse(start_time), duration, receivers);
         
         List<Interval> intervals = Interval.parseIntervals(window, json.get("opportunities").isArray());
         window.setIntervals(intervals);
         return window;
     }
+    
+    public static List<String> parseReceivers(JSONArray json) {
+        ArrayList<String> receivers = new ArrayList<String>();
+        for (int i = 0; i < json.size(); ++i) {
+            JSONArray arr = json.get(i).isArray();
+            for (int j = 0; j < arr.size(); ++j) {
+                String rcvr = arr.get(j).isString().stringValue();
+                receivers.add(rcvr);
+            }
+        }
+        return receivers;
+    }
 
-    public Window(int id, Date startTime, int duration) {
+    public Window(int id, Date startTime, int duration, List<String> receivers) {
         this.id        = id;
         this.startTime = startTime;
         this.duration  = duration;
+        this.receivers = receivers;
+    }
+
+    public String getReceivers() {
+        StringBuilder sb = new StringBuilder();
+        for (String s : receivers) {
+            if (sb.length() > 0) {
+                sb.append(",");
+            }
+            sb.append(s);
+        }
+        return sb.toString();
     }
 
     public boolean contains(int day, int hour) {
@@ -145,6 +171,7 @@ class Window implements Comparable {
     private Date           startTime;
     private int            duration;
     private List<Interval> intervals;
+    private List<String>   receivers;
 
     private int   red   = 0;
     private int   green = 0;
