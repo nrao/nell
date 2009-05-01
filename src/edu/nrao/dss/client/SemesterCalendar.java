@@ -13,10 +13,12 @@ import com.extjs.gxt.ui.client.widget.Text;
 import com.extjs.gxt.ui.client.widget.layout.CenterLayout;
 import com.extjs.gxt.ui.client.widget.layout.RowData;
 import com.extjs.gxt.ui.client.widget.layout.RowLayout;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.MouseListenerAdapter;
+import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.widgetideas.graphics.client.GWTCanvas;
 
@@ -50,10 +52,12 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
             timer.scheduleRepeating(1000 / 10);
         }
         
-        Text text = new Text("receivers go here");
-        top.add(text);
-        labels.add(text);
-        offsets.add(0);
+        for (int i = 0; i < 120; ++i) {
+            Text text = new Text("");
+            top.add(text);
+            text.setStyleAttribute("display", "inline");
+            pool.add(text);
+        }
 
         draw(true);
     }
@@ -183,17 +187,38 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
     private void drawLabels() {
         for (int i = 0; i < labels.size(); ++i) {
             int x = dayToX(offsets.get(i));
-            labels.get(i).setPosition(x, 50);
+            labels.get(i).setPagePosition(x, 80);
         }
     }
     
     private int dayToX(int day) {
-        int center = this.getWidth() / 2;
+        int center = top.getWidth() / 2;
         return center + (day - 60) * 12;
     }
 
     private ArrayList<Text>    labels  = new ArrayList<Text>();
     private ArrayList<Integer> offsets = new ArrayList<Integer>();
+    private ArrayList<Text>    pool    = new ArrayList<Text>();
+    
+    private void displayReceivers() {
+        for (Text text : labels) {
+            text.setText("");
+            text.setPosition(0, 0);
+        }
+        labels  = new ArrayList<Text>();
+        offsets = new ArrayList<Integer>();
+        
+        for (int i = 0; i < windows.size(); ++i) {
+            Window w = windows.get(i);
+            Text text = pool.get(i);
+            text.setText(w.getReceivers());
+            text.setWidth(0);
+            labels.add(text);
+            offsets.add(w.getStartDay());
+        }
+
+        drawLabels();
+    }
 
     public void onPaint(GWTCanvas canvas) {
         for (Window a : windows) {
@@ -239,6 +264,8 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
     private void sortWindows() {
         Collections.sort(windows);
         problems = sudoku.findProblem(windows);
+        
+        displayReceivers();
     }
 
     private final LayoutContainer top  = new LayoutContainer();
