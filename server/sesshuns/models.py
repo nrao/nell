@@ -174,13 +174,11 @@ class Receiver(models.Model):
 class Receiver_Schedule(models.Model):
     receiver   = models.ForeignKey(Receiver)
     start_date = models.DateTimeField(null = True)
-    end_date   = models.DateTimeField(null = True)
 
     def __unicode__(self):
-        return "Availability for %d: %s - %s" % \
+        return "%s on %s" % \
           ( self.receiver.name
-          , self.start_date
-          , self.end_date)
+          , self.start_date)
 
     class Meta:
         db_table = "receiver_schedule"
