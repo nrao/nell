@@ -74,11 +74,11 @@ def scan(text) :
               read so far from  text  with spaces/newlines  removed }"""
         # Convert ALTAND to AND  
         if letter == ALTAND:
-            print "WARNING: Replacing ^ with &"
+            #print "WARNING: Replacing ^ with &"
             letter = AND
         # Convert ALTOR to OR  
         if letter == ALTOR:
-            print "WARNING: Replacing v with |"
+            #print "WARNING: Replacing v with |"
             letter = OR
         # see if word in  next  is complete and should be appended to answer:
         if letter in SEPARATORS and next != "" :

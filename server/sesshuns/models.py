@@ -24,6 +24,36 @@ def str2dt(str):
     m, d, y   = map(int, str.split('/'))
     return datetime(y, m, d)
 
+jsonMap = {"authorized"     : "status__authorized"
+         , "between"        : "time_between"
+         , "backup"         : "status__backup"
+         , "pcode"          : "project__pcode"
+         , "cad_start_date" : "cadence__start_date"
+         , "cad_repeats"    : "cadence__repeats"
+         , "cad_intervals"  : "cadence__intervals"
+         , "cad_duration"   : "cadence__full_size"
+         , "complete"       : "status__complete"
+         , "coord_mode"     : "target__system__name"
+         , "enabled"        : "status__enabled"
+         , "freq"           : "frequency"
+         , "grade"          : "allotment__grade"
+         , "id"             : "id"
+         , "name"           : "name"
+         , "orig_ID"        : "original_id"
+# TBF         , "receiver"   : "rcvrs"
+         , "PSC_time"       : "allotment__psc_time"
+         , "req_max"        : "max_duration"
+         , "req_min"        : "min_duration"
+         , "science"        : "observing_type__type"
+         , "selected"       : "selected"
+         , "sem_time"       : "allotment__max_semester_time"
+         , "source"         : "target__source"
+         , "source_h"       : "target__horizontal"
+         , "source_v"       : "target__vertical"
+         , "total_time"     : "allotment__total_time"
+         , "type"           : "session_type__type"
+               }
+
 class User(models.Model):
     original_id = models.IntegerField()
     pst_id      = models.IntegerField(null = True)
@@ -225,11 +255,13 @@ class Sesshun(models.Model):
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
     def __unicode__(self):
-        return "(%d) %s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s" % (self.id
-                                            , self.name
-                                            , self.frequency
-                                            , self.allotment.total_time
-                                            , self.receiver_list())
+        return "(%d) %s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s" % (
+                  self.id
+                , self.name if self.name is not None else ""
+                , self.frequency if self.frequency is not None else 0
+                , self.allotment.total_time
+                      if self.allotment.total_time is not None else 0
+                , self.receiver_list())
 
     def receiver_list(self):
         "Returns a string representation of the rcvr logic."
@@ -579,8 +611,7 @@ class Cadence(models.Model):
           , self.full_size
           , self.intervals )
 
-    def init_from_post(self, fdata):
-        s_id = int(fdata["session_id"])
+    def init_from_post(self, s_id, fdata):
         s    = first(Sesshun.objects.filter(id = s_id))
         c    = s.get_cadence()
 
@@ -620,7 +651,10 @@ class Cadence(models.Model):
         return d
 
     def gen_windows(self):
-        if self.start_date is not None:
+        if self.start_date is not None and \
+           self.repeats is not None and \
+           self.intervals is not None and \
+           self.full_size is not None:
             #  Delete all the previously generated windows
             for w in self.session.window_set.all():
                 w.delete()
@@ -755,17 +789,26 @@ class Window(models.Model):
                  opt.duration > self.session.max_duration
         
     def jsondict(self, generate = False, now = None):
-        now      = now or datetime.utcnow()
-        windowed = first(Session_Type.objects.filter(type = 'windowed'))
+        now       = now or datetime.utcnow()
+        windowed  = first(Session_Type.objects.filter(type = 'windowed'))
+        receivers = [[r.abbreviation for r in rg.receivers.all()]
+                    for rg in self.session.receiver_group_set.all()]
+        d = {"id"       : self.id
+           , "required" : self.required
+           , "receiver" : receivers
+            }
         if self.session.session_type == windowed and generate and self.is_classic():
+            o = first(self.opportunity_set.all())
+            d.update({"start_time" : str(o.start_time)
+                    , "duration"   : o.duration
+                     })
             opportunities = self.gen_opportunities(now)
         else:
             opportunities = self.opportunity_set.all()
-            
-        return {"id"       : self.id
-              , "required" : self.required
-              , "opportunities" : [o.jsondict() for o in opportunities]
-                }
+
+        d.update({"opportunities" : [o.jsondict() for o in opportunities]})
+
+        return d
 
     def gen_opportunities(self, now = None):
         w = first(self.opportunity_set.all())

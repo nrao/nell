@@ -1,6 +1,6 @@
 from django.http              import HttpResponse
 from django_restapi.resource  import Resource
-from server.sesshuns.models   import first, Cadence, Project, Receiver, Sesshun, Window
+from server.sesshuns.models   import *
 
 from datetime import datetime
 import simplejson as json
@@ -33,8 +33,9 @@ class SessionResource(NellResource):
     def read(self, request, *args, **kws):
         if len(args) == 0:
             total     = Sesshun.objects.count()
-            sortField = request.GET.get("sortField", "pcode")
-            sessions  = Sesshun.objects.order_by("id")
+            sortField = jsonMap.get(request.GET.get("sortField", "id"), "id")
+            order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
+            sessions  = Sesshun.objects.order_by(order + sortField)
             #sessions  = Sesshun.objects.all()
             start = int(request.GET.get("start", 0))
             limit = int(request.GET.get("limit", 50))
@@ -68,32 +69,36 @@ class CadenceResource(NellResource):
         return super(CadenceResource, self).create(request, *args, **kws)
     
     def create_worker(self, request, *args, **kws):
-        s_id = int(request.POST["session_id"])
+        s_id = args[0]
         s = first(Sesshun.objects.filter(id = s_id))
-        c = Cadence(session = s)
-        c.save()
-        c.init_from_post(request.POST)
+        c = s.get_cadence()
+        c.init_from_post(s_id, request.POST)
         c.gen_windows()
         
         # Query the database to insure data is in the correct data type
         c = first(Cadence.objects.filter(id = c.id))
         return HttpResponse(json.dumps(c.jsondict())
                           , mimetype = "text/plain")
+
     def read(self, request, *args, **kws):
         s_id = args[0]
         s = first(Sesshun.objects.filter(id = s_id))
         c = first(s.cadence_set.all())
-        return HttpResponse(json.dumps(c.jsondict())
+        jsonDict = c.jsondict() if c else {}
+        return HttpResponse(json.dumps(jsonDict)
                           , mimetype = "text/plain")
 
     def update(self, request, *args, **kws):
         s_id = int(args[0])
         s    = first(Sesshun.objects.filter(id = s_id))
         c    = s.get_cadence()
-        c.init_from_post(request.POST)
+        c.init_from_post(s_id, request.POST)
         c.gen_windows()
 
-        return HttpResponse("")
+        # Query the database to insure data is in the correct data type
+        c = first(Cadence.objects.filter(id = c.id))
+        return HttpResponse(json.dumps(c.jsondict())
+                          , mimetype = "text/plain")
 
     def delete(self, request, *args):
         id = int(args[0])
@@ -123,7 +128,7 @@ class WindowResource(NellResource):
     def read(self, request, *args, **kws):
         s_id = args[0]
         windows = Window.objects.filter(session = s_id)
-        return HttpResponse(json.dumps({"windows":[w.jsondict() for w in windows]})
+        return HttpResponse(json.dumps({"windows":[w.jsondict(generate = True) for w in windows]})
                           , mimetype = "text/plain")
 
     def update(self, request, *args, **kws):
