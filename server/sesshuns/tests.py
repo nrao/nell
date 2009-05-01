@@ -1,5 +1,6 @@
 from datetime           import datetime, timedelta
 from django.test.client import Client
+from django.http        import QueryDict
 import simplejson as json
 
 from sesshuns.models                        import *
@@ -622,6 +623,35 @@ class TestWindowResource(NellTestCase):
 
         expected = [o.start_time for o in w.opportunity_set.all()]
         self.assertTrue(datetime(2009, 4, 10, 12) in expected)
+
+    def test_update_one(self):
+        s         = first(Sesshun.objects.all())
+        windowed  = first(Session_Type.objects.filter(type = 'windowed'))
+        s.session_type = windowed
+        s.save()
+        w         = Window(session = s)
+        os        = datetime.now() + timedelta(days = 10)
+        org_start = datetime(os.year, os.month, os.day, os.hour, os.minute, 1)
+        fdata = QueryDict("start_time=%s&duration=24" % str(org_start))
+        w.init_from_post(fdata)
+
+        new_start = org_start + timedelta(days = -5)
+        print new_start
+        fdata = fdata.copy()
+        fdata.update({'_method' : 'put'
+                    , "start_time" : str(new_start)
+                      })
+        response = self.client.post('/sessions/windows/%i' % w.id
+                                  , fdata)
+
+        self.failUnlessEqual(response.status_code, 200)
+
+        expected = [o.start_time for o in w.opportunity_set.all()]
+        self.assertTrue(len(expected), 1)
+        self.assertEqual(new_start, expected[0])
+
+        response = self.client.get('/sessions/%i/windows' % s.id)
+        print response.content
 
 
     def test_delete(self):
