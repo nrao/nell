@@ -56,6 +56,7 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
             Text text = new Text("");
             top.add(text);
             text.setStyleAttribute("display", "inline");
+            text.setWidth(0);
             pool.add(text);
         }
 
@@ -173,6 +174,7 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
     }
     
     public WindowDetails getWindowDetails() {
+        details = new WindowDetails();
         return details;
     }
 
@@ -203,7 +205,7 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
     private void displayReceivers() {
         for (Text text : labels) {
             text.setText("");
-            text.setPosition(0, 0);
+            text.setPagePosition(0, 0);
         }
         labels  = new ArrayList<Text>();
         offsets = new ArrayList<Integer>();
@@ -212,7 +214,6 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
             Window w = windows.get(i);
             Text text = pool.get(i);
             text.setText(w.getReceivers());
-            text.setWidth(0);
             labels.add(text);
             offsets.add(w.getStartDay());
         }
@@ -273,7 +274,7 @@ class SemesterCalendar extends LayoutContainer implements CanvasClient {
     private final SessionInfo info     = new SessionInfo(this);
     private final Sudoku      sudoku   = new Sudoku();
 
-    private final WindowDetails  details    = new WindowDetails();
+    private WindowDetails  details;
 
     /** Set to true to enable annoying blinking effects. */
     private final boolean  animated = true;

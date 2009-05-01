@@ -7,6 +7,7 @@ import com.extjs.gxt.ui.client.util.Margins;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
 import com.extjs.gxt.ui.client.widget.layout.RowData;
 import com.extjs.gxt.ui.client.widget.layout.RowLayout;
+import com.google.gwt.core.client.GWT;
 
 /** Display session and cadence details on the overview calendar page. */
 class SessionInfo extends LayoutContainer {
@@ -21,7 +22,7 @@ class SessionInfo extends LayoutContainer {
 
         add(details, new RowData(0.25, 1.0, new Margins(10)));
         add(cadence, new RowData(0.25, 1.0, new Margins(10)));
-        //add(window,  new RowData(0.5,  1.0, new Margins(10)));
+        add(window,  new RowData(0.5,  1.0, new Margins(10)));
     }
 
     public void loadSessions(Map<String, Integer> selected){
