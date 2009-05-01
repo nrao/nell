@@ -80,7 +80,7 @@ class Calendar extends CanvasComponent {
         getCanvas().fillRect(startDay*DAY_WIDTH, startHour*HOUR_HEIGHT, numDays*DAY_WIDTH, numHours*HOUR_HEIGHT);
 	}
 
-    public void strokeRect(int startHour, int startDay, int numHours, int numDays) {
+    public void strokeRect(int startDay, int startHour, int numDays, int numHours) {
         getCanvas().strokeRect(startDay*DAY_WIDTH, startHour*HOUR_HEIGHT, numDays*DAY_WIDTH, numHours*HOUR_HEIGHT);
     }
 

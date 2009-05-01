@@ -1,11 +1,10 @@
 package edu.nrao.dss.client;
 
 class TimeOfDayField {
-    public static final String[] values = new String[] { "Any"
-                                                       , "RFI"
+    public static final String[] values = new String[] { "RFI"
+                                                       , "work"
                                                        , "PTCS"
-                                                       , "Maintenance"
-                                                       , "SolarDay"
+                                                       , "other!?"
                                                        };
 
     public TimeOfDayField(String value) {
