@@ -257,11 +257,13 @@ class Sesshun(models.Model):
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
     def __unicode__(self):
-        return "(%d) %s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s" % (self.id
-                                            , self.name if self.name is not None else ""
-                                            , self.frequency if self.frequency is not None else 0
-                                            , self.allotment.total_time if self.allotment.total_time is not None else 0
-                                            , self.receiver_list())
+        return "(%d) %s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s" % (
+                  self.id
+                , self.name if self.name is not None else ""
+                , self.frequency if self.frequency is not None else 0
+                , self.allotment.total_time
+                      if self.allotment.total_time is not None else 0
+                , self.receiver_list())
 
     def receiver_list(self):
         "Returns a string representation of the rcvr logic."
