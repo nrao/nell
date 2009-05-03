@@ -153,6 +153,29 @@ class TestReceiver(NellTestCase):
         self.assertEqual('L', rgs[1].receivers.all()[0].abbreviation)
         self.assertEqual('S', rgs[1].receivers.all()[1].abbreviation)
 
+class TestReceiverSchedule(NellTestCase):
+
+    def setUp(self):
+        super(TestReceiverSchedule, self).setUp()
+        self.client = Client()
+
+        d = datetime(2009, 4, 1, 0)
+        for i in range(9):
+            start_date = d + timedelta(i)
+            for j in range(1,4):
+                rs = Receiver_Schedule()
+                rs.start_date = start_date
+                rs.receiver = Receiver.objects.get(id = i + j)
+                rs.save()
+
+    def test_receivers_schedule(self):
+        startdate = datetime(2009, 4, 6, 12)
+        response = self.client.get('/receivers/schedule',
+                                   {"startdate" : startdate,
+                                    "duration" : 6})
+        self.failUnlessEqual(response.status_code, 200)
+        #self.assertEqual(expected, response.content)
+
 class TestSesshun(NellTestCase):
 
     def setUp(self):

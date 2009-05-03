@@ -213,6 +213,18 @@ class Receiver_Schedule(models.Model):
     class Meta:
         db_table = "receiver_schedule"
 
+    @staticmethod
+    def extract_schedule(startdate = None, days=120):
+        startdate = startdate or datetime.utcnow()
+        enddate   = startdate + timedelta(days=days)
+        schedule = dict()
+        for dt_rcvr in [dt_rcvr for dt_rcvr in Receiver_Schedule.objects.filter(
+                                              start_date__gte = startdate
+                                                     ).filter(
+                                              start_date__lte = enddate)]:
+            schedule.setdefault(dt_rcvr.start_date, []).append(dt_rcvr.receiver)
+        return schedule
+
 class Parameter(models.Model):
     name = models.CharField(max_length = 64)
     type = models.CharField(max_length = 32)

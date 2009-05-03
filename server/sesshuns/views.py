@@ -163,6 +163,20 @@ def gen_opportunities(request, *args, **kws):
         return HttpResponse(json.dumps(w.jsondict(generate = True, now = now))
                           , mimetype = "text/plain")
 
+def receivers_schedule(request, *args, **kws):
+    startdate = request.GET.get("startdate", None)
+    if startdate is not None:
+        d, t      = startdate.split(' ')
+        y, m, d   = map(int, d.split('-'))
+        h, mm, ss = map(int, map(float, t.split(':')))
+        startdate = datetime(y, m, d, h, mm, ss)
+    duration = request.GET.get("duration", None)
+    if duration is not None:
+        duration = int(duration)
+    schedule = Receiver_Schedule.extract_schedule(startdate, duration)
+    return HttpResponse(json.dumps({"schedule" : schedule})
+                      , mimetype = "text/plain")
+
 def get_options(request, *args, **kws):
     projects = Project.objects.order_by('pcode')
     return HttpResponse(json.dumps({'project codes' : [ p.pcode for p in projects]})

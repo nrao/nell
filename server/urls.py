@@ -19,5 +19,6 @@ urlpatterns = patterns('',
    , url(r'^sessions/windows/(\d+)$',  WindowResource(permitted_methods=('PUT', 'POST')))
    , url(r'^gen_opportunities$',        gen_opportunities)
    , url(r'^gen_opportunities/(\d+)$',  gen_opportunities)
+   , url(r'^receivers/schedule$',       receivers_schedule)
    , (r'^admin/(.*)', admin.site.root)
 )
