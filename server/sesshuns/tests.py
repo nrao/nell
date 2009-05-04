@@ -708,7 +708,6 @@ class TestWindowResource(NellTestCase):
         w.init_from_post(fdata)
 
         new_start = org_start + timedelta(days = -5)
-        print new_start
         fdata = fdata.copy()
         fdata.update({'_method' : 'put'
                     , "start_time" : str(new_start)
@@ -723,7 +722,6 @@ class TestWindowResource(NellTestCase):
         self.assertEqual(new_start, expected[0])
 
         response = self.client.get('/sessions/%i/windows' % s.id)
-        print response.content
 
 
     def test_delete(self):
