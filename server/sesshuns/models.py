@@ -297,7 +297,7 @@ class Sesshun(models.Model):
     def set_base_fields(self, fdata):
         fsestype = fdata.get("type", "open")
         fobstype = fdata.get("science", "testing")
-        proj_code = fdata.get("proj_code", "GBT09A-001")
+        proj_code = fdata.get("pcode", "GBT09A-001")
 
         p  = first(Project.objects.filter(pcode = proj_code).all())
         st = first(Session_Type.objects.filter(type = fsestype).all()
