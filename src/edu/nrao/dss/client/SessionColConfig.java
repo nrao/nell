@@ -24,7 +24,6 @@ import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 
-
 class SessionColConfig extends ColumnConfig {
 	public final ArrayList<String> proj_codes = new ArrayList<String>();
 	
@@ -44,8 +43,14 @@ class SessionColConfig extends ColumnConfig {
 			typeField(CadenceField.values);
 		} else if (clasz == CoordModeField.class) {
 			typeField(CoordModeField.values);
+		} else if (clasz == DateEditField.class) {
+			dateField();
+		} else if (clasz == GradeField.class) {
+			typeField(GradeField.values);
 		} else if (clasz == OrderDependencyField.class) {
 			typeField(OrderDependencyField.values);
+		} else if (clasz == TimeField.class) {
+			timeField();
 		} else if (clasz == PriorityField.class) {
 			typeField(PriorityField.values);
 		} else if (clasz == ScienceField.class) {
@@ -56,10 +61,6 @@ class SessionColConfig extends ColumnConfig {
 			setPCodeOptions();
 		} else if (clasz == TimeOfDayField.class) {
 			typeField(TimeOfDayField.values);
-		} else if (clasz == GradeField.class) {
-			typeField(GradeField.values);
-		} else if (clasz == DateEditField.class) {
-			dateField();
 		} else {
 			textField();
 		}
@@ -91,8 +92,14 @@ class SessionColConfig extends ColumnConfig {
 			field = createSimpleComboBox(CadenceField.values);
 		} else if (this.clasz == CoordModeField.class) {
 			field = createSimpleComboBox(CoordModeField.values);
+		} else if (this.clasz == DateEditField.class) {
+			field = new DateField();
+		} else if (this.clasz == GradeField.class) {
+			field = createSimpleComboBox(GradeField.values);
 		} else if (this.clasz == OrderDependencyField.class) {
 			field = createSimpleComboBox(OrderDependencyField.values);
+		} else if (this.clasz == TimeField.class) {
+			field = createTextField();
 		} else if (this.clasz == PriorityField.class) {
 			field = createSimpleComboBox(PriorityField.values);
 		} else if (this.clasz == ScienceField.class) {
@@ -103,10 +110,6 @@ class SessionColConfig extends ColumnConfig {
 			field = createSimpleComboBox(proj_codes.toArray(new String[] {}));
 		} else if (this.clasz == TimeOfDayField.class) {
 			field = createSimpleComboBox(TimeOfDayField.values);
-		} else if (this.clasz == GradeField.class) {
-			field = createSimpleComboBox(GradeField.values);
-		} else if (clasz == DateEditField.class) {
-			field = new DateField();
 		} else {
 			field = createTextField();
 		}
@@ -259,10 +262,9 @@ class SessionColConfig extends ColumnConfig {
 		setEditor(new CellEditor(new TextField<String>()));
 	}
 
-	@SuppressWarnings("unused")
 	private void timeField() {
-		TextField<String> timeField = new TextField<String>();
-		timeField.setRegex("[0-2]\\d:\\d\\d:\\d\\d(\\.\\d+)?");
+		TextField<String> positionField = new TextField<String>();
+		positionField.setRegex("[0-2]\\d:\\d\\d:\\d\\d(\\.\\d+)?");
 
 		setAlignment(HorizontalAlignment.RIGHT);
 
@@ -270,19 +272,60 @@ class SessionColConfig extends ColumnConfig {
 			public String render(BaseModelData model, String property,
 					ColumnData config, int rowIndex, int colIndex,
 					ListStore<BaseModelData> store) {
-				return Conversions.radiansToTime(((Double) model.get(property))
-						.doubleValue());
+				Object val = model.get(property);
+				if (val != null) {
+					return Conversions.radiansToTime(((Double) val).doubleValue());
+				} else {
+					return "00:00:00";
+				}
 			}
 		});
 
-		setEditor(new CellEditor(timeField) {
+		setEditor(new CellEditor(positionField) {
 			@Override
 			public Object preProcessValue(Object value) {
 				if (value == null) {
 					return Conversions.radiansToTime(0.0);
 				}
-				return Conversions
-						.radiansToTime(((Double) value).doubleValue());
+				return Conversions.radiansToTime(((Double) value).doubleValue());
+			}
+
+			@Override
+			public Object postProcessValue(Object value) {
+				if (value == null) {
+					return 0.0;
+				}
+				return Conversions.timeToRadians(value.toString());
+			}
+		});
+	}
+
+	private void degreeField() {
+		TextField<String> degreeField = new TextField<String>();
+		degreeField.setRegex("[0-2]\\d:\\d\\d:\\d\\d(\\.\\d+)?");
+
+		setAlignment(HorizontalAlignment.RIGHT);
+
+		setRenderer(new GridCellRenderer<BaseModelData>() {
+			public String render(BaseModelData model, String property,
+					ColumnData config, int rowIndex, int colIndex,
+					ListStore<BaseModelData> store) {
+				Object val = model.get(property);
+				if (val != null) {
+					return Conversions.radiansToTime(((Double) val).doubleValue());
+				} else {
+					return "00:00:00";
+				}
+			}
+		});
+
+		setEditor(new CellEditor(degreeField) {
+			@Override
+			public Object preProcessValue(Object value) {
+				if (value == null) {
+					return Conversions.radiansToTime(0.0);
+				}
+				return Conversions.radiansToTime(((Double) value).doubleValue());
 			}
 
 			@Override

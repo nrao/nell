@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class SessionProxy {
-    public SessionProxy(ISession session) {
+    public SessionProxy(Session session) {
         this.session   = session;
         this.intervals = session.getIntervals();
     }
@@ -18,7 +18,7 @@ class SessionProxy {
         return Interval.overlapIntervals(intervals, rhs.getIntervals());
     }
 
-    public ISession getSession() {
+    public Session getSession() {
         return session;
     }
 
@@ -44,6 +44,6 @@ class SessionProxy {
         intervals = result;
     }
 
-    private ISession       session;
+    private Session        session;
     private List<Interval> intervals;
 }

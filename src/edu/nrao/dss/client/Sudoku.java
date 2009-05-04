@@ -10,7 +10,7 @@ class Sudoku {
     public List<Session> findProblem(List<Session> sessions) {
         // Convert in...
         ArrayList<SessionProxy> proxies = new ArrayList<SessionProxy>();
-        for (ISession session : sessions) {
+        for (Session session : sessions) {
             proxies.add(new SessionProxy(session));
         }
 

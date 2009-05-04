@@ -34,13 +34,14 @@ class SessionResource(NellResource):
         if len(args) == 0:
             total     = Sesshun.objects.count()
             sortField = request.GET.get("sortField", "pcode")
-            #sessions  = Sesshun.objects.order_by(sortField)
-            sessions  = Sesshun.objects.all()
+            sessions  = Sesshun.objects.order_by("id")
+            #sessions  = Sesshun.objects.all()
             start = int(request.GET.get("start", 0))
             limit = int(request.GET.get("limit", 50))
-            
+            print start,limit
             sessions = sessions[start:start+limit]
-            return HttpResponse(json.dumps(dict(total = total, sessions = [s.jsondict() for s in sessions]))
+            return HttpResponse(json.dumps(dict(total = total
+                                              , sessions = [s.jsondict() for s in sessions]))
                               , content_type = "application/json")
         else:
             s_id  = args[0]
@@ -119,8 +120,9 @@ class WindowResource(NellResource):
         return HttpResponse(json.dumps(w.jsondict())
                           , mimetype = "text/plain")
 
-    def read(self, request):
-        windows = Window.objects.all()
+    def read(self, request, *args, **kws):
+        s_id = args[0]
+        windows = Window.objects.filter(session = s_id)
         return HttpResponse(json.dumps({"windows":[w.jsondict() for w in windows]})
                           , mimetype = "text/plain")
 
@@ -160,3 +162,8 @@ def get_options(request, *args, **kws):
     projects = Project.objects.order_by('pcode')
     return HttpResponse(json.dumps({'project codes' : [ p.pcode for p in projects]})
                       , mimetype = "text/plain")
+
+def get_selected(request):
+    selected = Sesshun.objects.filter(selected = True)
+    response = json.dumps(dict(sessions = [{'id': s.id, 'name': s.name} for s in selected]))
+    return HttpResponse(response, content_type = "text/plain")
