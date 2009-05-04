@@ -197,6 +197,9 @@ class Receiver(models.Model):
     class Meta:
         db_table = "receivers"
 
+    def jsondict(self):
+        return self.abbreviation
+
     @staticmethod
     def get_abbreviations():
         return [r.abbreviation for r in Receiver.objects.all()]
@@ -204,16 +207,46 @@ class Receiver(models.Model):
 class Receiver_Schedule(models.Model):
     receiver   = models.ForeignKey(Receiver)
     start_date = models.DateTimeField(null = True)
-    end_date   = models.DateTimeField(null = True)
 
     def __unicode__(self):
-        return "Availability for %d: %s - %s" % \
+        return "%s on %s" % \
           ( self.receiver.name
-          , self.start_date
-          , self.end_date)
+          , self.start_date)
 
     class Meta:
         db_table = "receiver_schedule"
+
+    @staticmethod
+    def jsondict(schedule):
+        jschedule = {}
+        for d in schedule:
+            jd = None if d is None else d.strftime("%m/%d/%Y")
+            jschedule[jd] = [r.jsondict() for r in schedule[d]]
+        return jschedule
+
+    @staticmethod
+    def extract_schedule(startdate = None, days=None):
+        startdate = startdate or datetime.utcnow()
+        startdate = Receiver_Schedule.previousDate(startdate)
+        days = days or 120
+        enddate   = startdate + timedelta(days=days)
+        schedule = dict()
+        for dt_rcvr in [dt_rcvr
+                        for dt_rcvr in Receiver_Schedule.objects.filter(
+                                              start_date__gte = startdate
+                                                     ).filter(
+                                              start_date__lte = enddate)]:
+            schedule.setdefault(dt_rcvr.start_date, []).append(dt_rcvr.receiver)
+        return schedule
+
+    @staticmethod
+    def previousDate(date):
+        prev = date
+        try:
+            prev = Receiver_Schedule.objects.filter(start_date__lte = date).order_by('-start_date')[0].start_date
+        except IndexError:
+            pass
+        return prev
 
 class Parameter(models.Model):
     name = models.CharField(max_length = 64)
@@ -257,11 +290,13 @@ class Sesshun(models.Model):
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
     def __unicode__(self):
-        return "(%d) %s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s" % (self.id
-                                            , self.name if self.name is not None else ""
-                                            , self.frequency if self.frequency is not None else 0
-                                            , self.allotment.total_time if self.allotment.total_time is not None else 0
-                                            , self.receiver_list())
+        return "(%d) %s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s" % (
+                  self.id
+                , self.name if self.name is not None else ""
+                , self.frequency if self.frequency is not None else 0
+                , self.allotment.total_time
+                      if self.allotment.total_time is not None else 0
+                , self.receiver_list())
 
     def receiver_list(self):
         "Returns a string representation of the rcvr logic."

@@ -77,8 +77,7 @@ CREATE TABLE `receivers` (
 CREATE TABLE `receiver_schedule` (
     `id` integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
     `receiver_id` integer NOT NULL,
-    `start_date` datetime NULL,
-    `end_date` datetime NULL
+    `start_date` datetime NULL
 )
 ;
 ALTER TABLE `receiver_schedule` ADD CONSTRAINT receiver_id29394 FOREIGN KEY (`receiver_id`) REFERENCES `receiver_id` (`id`);

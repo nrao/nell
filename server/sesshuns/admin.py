@@ -67,6 +67,9 @@ class ReceiverAdmin(admin.ModelAdmin):
 class ParameterAdmin(admin.ModelAdmin):
     list_display = ['name', 'type']
 
+class Receiver_ScheduleAdmin(admin.ModelAdmin):
+    pass
+
 class CadenceAdmin(admin.ModelAdmin):
     pass
 
@@ -103,6 +106,7 @@ admin.site.register(Project, ProjectAdmin)
 admin.site.register(Session_Type, Session_TypeAdmin)
 admin.site.register(Observing_Type, Observing_TypeAdmin)
 admin.site.register(Receiver, ReceiverAdmin)
+admin.site.register(Receiver_Schedule, Receiver_ScheduleAdmin)
 admin.site.register(Parameter, ParameterAdmin)
 admin.site.register(Cadence, CadenceAdmin)
 admin.site.register(Receiver_Group, Receiver_GroupAdmin)

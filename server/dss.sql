@@ -77,8 +77,7 @@ CREATE TABLE "receivers" (
 CREATE TABLE "receiver_schedule" (
     "id" serial NOT NULL PRIMARY KEY,
     "receiver_id" integer NOT NULL REFERENCES "receivers" ("id") DEFERRABLE INITIALLY DEFERRED,
-    "start_date" timestamp with time zone NULL,
-    "end_date" timestamp with time zone NULL
+    "start_date" timestamp with time zone NULL
 )
 ;
 CREATE TABLE "parameters" (
