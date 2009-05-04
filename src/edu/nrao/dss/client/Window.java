@@ -45,7 +45,6 @@ class Window implements Comparable {
         this.startTime = startTime;
         this.duration  = duration;
         this.receivers = receivers;
-        GWT.log(startTime.toString(), null);
     }
 
     public String getReceivers() {
@@ -149,7 +148,8 @@ class Window implements Comparable {
             interval.setStartDay(interval.getStartDay() + deltaDays);
         }
         
-        startTime = new Date(startTime.getTime() + deltaDays * 86400 * 100);
+        long date = startTime.getTime() + (long) deltaDays * (long) 86400 * (long) 1000;
+        startTime = new Date(date);
         JSONRequest.post("/sessions/windows/"+id,
                 new String[] {"_method", "start_time", "duration"},
                 new String[] {"put", DATE_FORMAT.format(startTime), ""+duration},
