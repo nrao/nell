@@ -1,6 +1,7 @@
 package edu.nrao.dss.client;
 
 import com.extjs.gxt.ui.client.widget.form.FormPanel;
+import com.extjs.gxt.ui.client.widget.form.NumberField;
 import com.extjs.gxt.ui.client.widget.form.TextField;
 
 public class WindowDetails extends FormPanel{
@@ -9,7 +10,29 @@ public class WindowDetails extends FormPanel{
 		initLayout();
 	}
 	
-	public void showWindowDetails(Window widow) {
+	public void showWindowDetails(Window window) {
+		if (window != null){
+			Session s = window.getSession();
+			project.setValue(s.getPcode());
+			session.setValue(s.getName());
+			type.setValue(s.getType());
+			observing.setValue(s.getScience());
+			receivers.setValue(s.getReceivers());
+			frequency.setValue(s.getFrequency());
+			lst.setValue(s.getHorizontal());
+			start.setValue(window.getStartTime().toString());
+			duration.setValue(window.getDuration());
+		} else {
+			project.reset();
+			session.reset();
+			type.reset();
+			observing.reset();
+			receivers.reset();
+			frequency.reset();
+			lst.reset();
+			start.reset();
+			duration.reset();
+		}
 	}
 	
 	private void initLayout() {
@@ -61,5 +84,5 @@ public class WindowDetails extends FormPanel{
     private final TextField<String> frequency = new TextField<String>();
     private final TextField<String> lst       = new TextField<String>();
     private final TextField<String> start     = new TextField<String>();
-    private final TextField<String> duration  = new TextField<String>();
+    private final NumberField       duration  = new NumberField();
 }

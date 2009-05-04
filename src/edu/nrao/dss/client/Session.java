@@ -38,27 +38,30 @@ class Session {
     	JSONObject session = json.get("session").isObject();
 
     	Session sess    = new Session((int)session.get("id").isNumber().doubleValue());
+    	sess.pcode      = session.get("pcode").isString().stringValue();
     	sess.name       = session.get("name").isString().stringValue();
+    	sess.type       = session.get("type").isString().stringValue();
     	sess.receiver   = session.get("receiver").isString().stringValue();
     	sess.frequency  = "" + session.get("freq").isNumber().doubleValue();
     	sess.horizontal = "" + session.get("source_h").isNumber().doubleValue();
     	sess.science    = session.get("science").isString().stringValue();
-
+    	
     	if (deep) {
-    	    sess.loadWindows();
+    	    sess.loadWindows(sess);
     	}
 
     	return sess;
     }
 
-    public void loadWindows() {
+    public void loadWindows(final Session sess) {
         JSONRequest.get("/sessions/"+id+"/windows", new JSONCallbackAdapter() {
             @Override
             public void onSuccess(JSONObject json) {
                 windows = new ArrayList<Window>();
                 JSONArray ws = json.get("windows").isArray();
                 for (int i = 0; i < ws.size(); ++i) {
-                    windows.add(Window.parseJSON(ws.get(i).isObject()));
+                    windows.add(Window.parseJSON(sess, ws.get(i).isObject()));
+                    
                 }
             }
         });
@@ -79,11 +82,19 @@ class Session {
     public List<Window> getWindows() {
         return windows;
     }
+    
+    public String getPcode() {
+    	return pcode;
+    }
 
     public String getName() {
     	return name;
     }
 
+    public String getType() {
+    	return type;
+    }
+    
     public String getReceivers() {
     	return receiver;
     }
@@ -111,7 +122,9 @@ class Session {
     }
 
     private int    id         =  0;
+    private String pcode      = "";
     private String name       = "";
+    private String type       = "";
     private String receiver   = "";
     private String frequency  = "";
     private String horizontal = "";

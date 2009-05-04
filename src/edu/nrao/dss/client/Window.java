@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
@@ -13,13 +14,13 @@ import com.google.gwt.widgetideas.graphics.client.Color;
 class Window implements Comparable {
     private static final DateTimeFormat DATE_FORMAT = DateTimeFormat.getFormat("yyyy-MM-dd HH:mm:ss");
 
-    public static Window parseJSON(JSONObject json) {
+    public static Window parseJSON(Session session, JSONObject json) {
         int id = (int) json.get("id").isNumber().doubleValue();
         int duration = (int) json.get("duration").isNumber().doubleValue();
         String start_time = json.get("start_time").isString().stringValue();
         List<String> receivers = parseReceivers(json.get("receiver").isArray());
         
-        Window window = new Window(id, DATE_FORMAT.parse(start_time), duration, receivers);
+        Window window = new Window(id, session, DATE_FORMAT.parse(start_time), duration, receivers);
         
         List<Interval> intervals = Interval.parseIntervals(window, json.get("opportunities").isArray());
         window.setIntervals(intervals);
@@ -38,11 +39,13 @@ class Window implements Comparable {
         return receivers;
     }
 
-    public Window(int id, Date startTime, int duration, List<String> receivers) {
+    public Window(int id, Session session, Date startTime, int duration, List<String> receivers) {
         this.id        = id;
+        this.session   = session;
         this.startTime = startTime;
         this.duration  = duration;
         this.receivers = receivers;
+        GWT.log(startTime.toString(), null);
     }
 
     public String getReceivers() {
@@ -117,6 +120,10 @@ class Window implements Comparable {
         return +1;
     }
 
+    public Session getSession() {
+    	return session;
+    }
+    
     /** A window begins on the day of its first opportunity. */
     public int getStartDay() {
         return intervals.get(0).getStartDay();
@@ -148,6 +155,14 @@ class Window implements Comparable {
                 new String[] {"put", DATE_FORMAT.format(startTime), ""+duration},
                 null);
     }
+    
+    public Date getStartTime() {
+    	return startTime;
+    }
+    
+    public int getDuration() {
+    	return duration;
+    }
 
     public Color getColor() {
         return new Color(red, green, blue, alpha);
@@ -168,6 +183,7 @@ class Window implements Comparable {
     }
 
     private int            id;
+    private Session        session;
     private Date           startTime;
     private int            duration;
     private List<Interval> intervals;

@@ -11,6 +11,7 @@ syntax: glob
 
 .classpath
 .project
+.metadata
 
 *.launch
 
