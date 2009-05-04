@@ -45,6 +45,8 @@ class SessionColConfig extends ColumnConfig {
 			typeField(CoordModeField.values);
 		} else if (clasz == DateEditField.class) {
 			dateField();
+		} else if (clasz == DegreeField.class) {
+			degreeField();
 		} else if (clasz == GradeField.class) {
 			typeField(GradeField.values);
 		} else if (clasz == OrderDependencyField.class) {
@@ -94,12 +96,12 @@ class SessionColConfig extends ColumnConfig {
 			field = createSimpleComboBox(CoordModeField.values);
 		} else if (this.clasz == DateEditField.class) {
 			field = new DateField();
+		} else if (this.clasz == DegreeField.class) {
+			field = createTextField();
 		} else if (this.clasz == GradeField.class) {
 			field = createSimpleComboBox(GradeField.values);
 		} else if (this.clasz == OrderDependencyField.class) {
 			field = createSimpleComboBox(OrderDependencyField.values);
-		} else if (this.clasz == TimeField.class) {
-			field = createTextField();
 		} else if (this.clasz == PriorityField.class) {
 			field = createSimpleComboBox(PriorityField.values);
 		} else if (this.clasz == ScienceField.class) {
@@ -108,6 +110,8 @@ class SessionColConfig extends ColumnConfig {
 			field = createSimpleComboBox(STypeField.values);
 		} else if (this.clasz == PCodeField.class) {
 			field = createSimpleComboBox(proj_codes.toArray(new String[] {}));
+		} else if (this.clasz == TimeField.class) {
+			field = createTextField();
 		} else if (this.clasz == TimeOfDayField.class) {
 			field = createSimpleComboBox(TimeOfDayField.values);
 		} else {
@@ -312,7 +316,7 @@ class SessionColConfig extends ColumnConfig {
 					ListStore<BaseModelData> store) {
 				Object val = model.get(property);
 				if (val != null) {
-					return Conversions.radiansToTime(((Double) val).doubleValue());
+					return Conversions.radiansToSexagesimal(((Double) val).doubleValue());
 				} else {
 					return "00:00:00";
 				}
@@ -323,9 +327,9 @@ class SessionColConfig extends ColumnConfig {
 			@Override
 			public Object preProcessValue(Object value) {
 				if (value == null) {
-					return Conversions.radiansToTime(0.0);
+					return Conversions.radiansToSexagesimal(0.0);
 				}
-				return Conversions.radiansToTime(((Double) value).doubleValue());
+				return Conversions.radiansToSexagesimal(((Double) value).doubleValue());
 			}
 
 			@Override
@@ -333,7 +337,7 @@ class SessionColConfig extends ColumnConfig {
 				if (value == null) {
 					return 0.0;
 				}
-				return Conversions.timeToRadians(value.toString());
+				return Conversions.sexagesimalToRadians(value.toString());
 			}
 		});
 	}
