@@ -161,20 +161,52 @@ class TestReceiverSchedule(NellTestCase):
 
         d = datetime(2009, 4, 1, 0)
         for i in range(9):
-            start_date = d + timedelta(i)
+            start_date = d + timedelta(5*i)
             for j in range(1,4):
                 rs = Receiver_Schedule()
                 rs.start_date = start_date
                 rs.receiver = Receiver.objects.get(id = i + j)
                 rs.save()
 
+    def test_extract_schedule(self):
+        startdate = datetime(2009, 4, 6, 12)
+        duration = 15
+        schedule = Receiver_Schedule.extract_schedule(startdate = startdate,
+                                                      days = duration)
+        expected = [datetime(2009, 4, 11, 0, 0)
+                  , datetime(2009, 4, 16, 0, 0)
+                  , datetime(2009, 4, 6, 0, 0)
+                  , datetime(2009, 4, 21, 0, 0)]
+        self.assertEqual(expected, schedule.keys())
+        jschedule = Receiver_Schedule.jsondict(schedule)
+        expected = {'04/11/2009': [u'342', u'450', u'600']
+                  , '04/16/2009': [u'450', u'600', u'800']
+                  , '04/06/2009': [u'RRI', u'342', u'450']
+                  , '04/21/2009': [u'600', u'800', u'1070']}
+        self.assertEqual(expected, jschedule)
+
+    def test_previousDate(self):
+        self.assertEqual(datetime(2009, 4, 6, 0),
+                         Receiver_Schedule.previousDate(
+                             datetime(2009, 4, 6, 12)))
+        self.assertEqual(datetime(2009, 4, 1, 0),
+                         Receiver_Schedule.previousDate(
+                             datetime(2009, 4, 5, 23)))
+        self.assertEqual(datetime(2009, 5, 11, 0),
+                         Receiver_Schedule.previousDate(
+                             datetime(2009, 7, 1, 0)))
+        self.assertEqual(datetime(2009, 4, 1, 0),
+                         Receiver_Schedule.previousDate(
+                             datetime(2009, 4, 1, 0)))
+
     def test_receivers_schedule(self):
         startdate = datetime(2009, 4, 6, 12)
         response = self.client.get('/receivers/schedule',
                                    {"startdate" : startdate,
-                                    "duration" : 6})
+                                    "duration" : 7})
         self.failUnlessEqual(response.status_code, 200)
-        #self.assertEqual(expected, response.content)
+        expected = '{"schedule": {"04/11/2009": ["342", "450", "600"], "04/06/2009": ["RRI", "342", "450"]}}'
+        self.assertEqual(expected, response.content)
 
 class TestSesshun(NellTestCase):
 

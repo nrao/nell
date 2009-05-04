@@ -36,10 +36,8 @@ class SessionResource(NellResource):
             sortField = jsonMap.get(request.GET.get("sortField", "id"), "id")
             order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
             sessions  = Sesshun.objects.order_by(order + sortField)
-            #sessions  = Sesshun.objects.all()
             start = int(request.GET.get("start", 0))
             limit = int(request.GET.get("limit", 50))
-            print start,limit
             sessions = sessions[start:start+limit]
             return HttpResponse(json.dumps(dict(total = total
                                               , sessions = [s.jsondict() for s in sessions]))
@@ -174,8 +172,9 @@ def receivers_schedule(request, *args, **kws):
     if duration is not None:
         duration = int(duration)
     schedule = Receiver_Schedule.extract_schedule(startdate, duration)
-    return HttpResponse(json.dumps({"schedule" : schedule})
-                      , mimetype = "text/plain")
+    return HttpResponse(
+            json.dumps({"schedule" : Receiver_Schedule.jsondict(schedule)})
+          , mimetype = "text/plain")
 
 def get_options(request, *args, **kws):
     projects = Project.objects.order_by('pcode')

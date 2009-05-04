@@ -197,6 +197,9 @@ class Receiver(models.Model):
     class Meta:
         db_table = "receivers"
 
+    def jsondict(self):
+        return self.abbreviation
+
     @staticmethod
     def get_abbreviations():
         return [r.abbreviation for r in Receiver.objects.all()]
@@ -214,16 +217,36 @@ class Receiver_Schedule(models.Model):
         db_table = "receiver_schedule"
 
     @staticmethod
-    def extract_schedule(startdate = None, days=120):
+    def jsondict(schedule):
+        jschedule = {}
+        for d in schedule:
+            jd = None if d is None else d.strftime("%m/%d/%Y")
+            jschedule[jd] = [r.jsondict() for r in schedule[d]]
+        return jschedule
+
+    @staticmethod
+    def extract_schedule(startdate = None, days=None):
         startdate = startdate or datetime.utcnow()
+        startdate = Receiver_Schedule.previousDate(startdate)
+        days = days or 120
         enddate   = startdate + timedelta(days=days)
         schedule = dict()
-        for dt_rcvr in [dt_rcvr for dt_rcvr in Receiver_Schedule.objects.filter(
+        for dt_rcvr in [dt_rcvr
+                        for dt_rcvr in Receiver_Schedule.objects.filter(
                                               start_date__gte = startdate
                                                      ).filter(
                                               start_date__lte = enddate)]:
             schedule.setdefault(dt_rcvr.start_date, []).append(dt_rcvr.receiver)
         return schedule
+
+    @staticmethod
+    def previousDate(date):
+        prev = date
+        try:
+            prev = Receiver_Schedule.objects.filter(start_date__lte = date).order_by('-start_date')[0].start_date
+        except IndexError:
+            pass
+        return prev
 
 class Parameter(models.Model):
     name = models.CharField(max_length = 64)
