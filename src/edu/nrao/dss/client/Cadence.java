@@ -20,9 +20,9 @@ public class Cadence {
     		return null;
     	}
     	Cadence cad    = new Cadence((int) json.get("session_id").isNumber().doubleValue());
-    	cad.startDate  = JSONObjectToDate(json, "start_date");
-    	cad.endDate    = JSONObjectToDate(json, "end_date");
-    	JSONValue repeats = safeGet(json, "repeats");
+		cad.startDate  = JSONObjectToDate(json, "start_date");
+		cad.endDate    = JSONObjectToDate(json, "end_date");
+		JSONValue repeats = safeGet(json, "repeats");
     	if (repeats != null){
     		cad.repeats    = (int) repeats.isNumber().doubleValue();
     	}
@@ -50,7 +50,7 @@ public class Cadence {
     		JSONString str = json.get(key).isString();
     		DateTimeFormat fmt = DateTimeFormat.getFormat("MM/dd/yyyy");
     		return fmt.parse(str.stringValue());
-    	} catch (NullPointerException e){
+    	} catch (Exception e){
     		return null;
     	}
     }
