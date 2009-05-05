@@ -909,6 +909,10 @@ class TestOpportunityGenerator(NellTestCase):
         ha_limit = 3 #hrs
         s        = first(Sesshun.objects.all())
 
+        t = first(s.target_set.all())
+        t.horizontal = 2.0
+        t.vertical   = 2.0
+        t.save()
         results  = [(o.start_time, o.duration) for o in og.generate(gen_opp, s, ha_limit)]
 
         expected = [

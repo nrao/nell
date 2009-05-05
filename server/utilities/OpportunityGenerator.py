@@ -53,6 +53,8 @@ class OpportunityGenerator:
         for day_no in xrange(duration):
             day     = start_day + timedelta(days = day_no)
             ra, _   = sesshun.get_ra_dec()
+            if ra is None:
+                return []
             transit = TimeAgent.RelativeLST2AbsoluteTime(ra, day)
 
             # What kind of windowing are we dealing with?

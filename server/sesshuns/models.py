@@ -420,8 +420,8 @@ class Sesshun(models.Model):
         system = first(System.objects.filter(name = "J2000").all()
                      , System.objects.all()[0])
 
-        v_axis = fdata["source_v"]
-        h_axis = fdata["source_h"]
+        v_axis = fdata.get("source_v", None)
+        h_axis = fdata.get("source_h", None)
         
         target = Target(session    = self
                       , system     = system
@@ -494,16 +494,14 @@ class Sesshun(models.Model):
         system = first(System.objects.filter(name = "J2000").all()
                      , System.objects.all()[0])
 
-        print "geting source"
-        v_axis = fdata["source_v"]
-        h_axis = fdata["source_h"]
-        print h_axis
+        v_axis = fdata.get("source_v", None)
+        h_axis = fdata.get("source_h", None)
 
         t            = self.target_set.get()
         t.system     = system
         t.source     = fdata.get("source", None)
-        t.vertical   = v_axis
-        t.horizontal = h_axis
+        t.vertical   = v_axis if v_axis is not None else t.vertical
+        t.horizontal = h_axis if h_axis is not None else t.horizontal
         t.save()
 
         self.create_update_cadence(fdata)
@@ -839,15 +837,23 @@ class Window(models.Model):
                      })
             opportunities = self.gen_opportunities(now)
         else:
-            opportunities = self.opportunity_set.all()
+            opportunities = self.opportunity_set.order_by('start_time').all()
+            if len(opportunities) > 0:
+                start_time = opportunities[0].start_time
+                last       = opportunities.reverse()[0].start_time
+                # TBF: In Hours!
+                duration   = (start_time - datetime(last.year, last.month, last.day, 23, 59)).seconds / 3600
+            else:
+                print "no opportunities!!!"
 
         d.update({"opportunities" : [o.jsondict() for o in opportunities]})
 
         return d
 
     def gen_opportunities(self, now = None):
-        w = first(self.opportunity_set.all())
-        if w is None:
+        o = first(self.opportunity_set.all())
+        target = first(self.session.target_set.all())
+        if o is None or target is None or target.horizontal is None:
             return []
 
         now = now or datetime.utcnow()
@@ -876,7 +882,7 @@ class Window(models.Model):
                    else int(round((
                             self.session.min_duration + 119) / 120))
 
-        return OpportunityGenerator(now).generate(w, self.session, ha_limit)
+        return OpportunityGenerator(now).generate(o, self.session, ha_limit)
 
     class Meta:
         db_table = "windows"
@@ -924,8 +930,8 @@ class Target(models.Model):
     session    = models.ForeignKey(Sesshun)
     system     = models.ForeignKey(System)
     source     = models.CharField(null = True, max_length = 32)
-    vertical   = models.FloatField()
-    horizontal = models.FloatField()
+    vertical   = models.FloatField(null = True)
+    horizontal = models.FloatField(null = True)
 
     def __str__(self):
         return "%s at %s : %s" % (self.source
