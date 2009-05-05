@@ -420,8 +420,8 @@ class Sesshun(models.Model):
         system = first(System.objects.filter(name = "J2000").all()
                      , System.objects.all()[0])
 
-        v_axis = fdata.get("v_axis", 2.0) #TBF
-        h_axis = fdata.get("h_axis", 2.0) #TBF
+        v_axis = fdata["source_v"]
+        h_axis = fdata["source_h"]
         
         target = Target(session    = self
                       , system     = system
@@ -479,8 +479,6 @@ class Sesshun(models.Model):
         self.allotment.save()
         self.save()
 
-        # TBF DO SOMETHING WITH RECEIVERS!
-
         self.status.enabled    = self.get_field(fdata, "enabled", True, bool) 
         self.status.authorized = self.get_field(fdata, "authorized", True, bool)
         self.status.complete   = self.get_field(fdata, "complete", True, bool) 
@@ -496,8 +494,10 @@ class Sesshun(models.Model):
         system = first(System.objects.filter(name = "J2000").all()
                      , System.objects.all()[0])
 
-        v_axis = fdata.get("v_axis", 2.0) #TBF
-        h_axis = fdata.get("h_axis", 2.0) #TBF
+        print "geting source"
+        v_axis = fdata["source_v"]
+        h_axis = fdata["source_h"]
+        print h_axis
 
         t            = self.target_set.get()
         t.system     = system
