@@ -122,8 +122,8 @@ class DSSPrime2DSS(object):
                     target = Target(session    = s
                               , system     = system
                               , source     = t[3]
-                              , vertical   = float(t[4])
-                              , horizontal = float(t[5])
+                              , vertical   = float(t[4]) * (math.pi / 180)
+                              , horizontal = float(t[5]) * (math.pi / 12)
                                 )
                     target.save()
 
