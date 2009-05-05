@@ -350,7 +350,7 @@ class Sesshun(models.Model):
         self.max_duration     = fdata.get("req_max", 12.0)
         self.min_duration     = fdata.get("req_min",  3.0)
         self.time_between     = fdata.get("between", None)
-        self.selected         = fdata.get("selected", False)
+        self.selected         = fdata.get("selected", False) == "true"
 
     def cast_int(self, strValue):
         "Handles casting of strings where int is displayed as float. ex: 1.0"
@@ -494,10 +494,8 @@ class Sesshun(models.Model):
         system = first(System.objects.filter(name = "J2000").all()
                      , System.objects.all()[0])
 
-        print "geting source"
         v_axis = fdata["source_v"]
         h_axis = fdata["source_h"]
-        print h_axis
 
         t            = self.target_set.get()
         t.system     = system
