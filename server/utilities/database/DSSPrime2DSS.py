@@ -1,5 +1,5 @@
 from sesshuns.models import *
-import math
+from datetime        import datetime, timedelta
 import MySQLdb as m
 
 class DSSPrime2DSS(object):
@@ -122,8 +122,8 @@ class DSSPrime2DSS(object):
                     target = Target(session    = s
                               , system     = system
                               , source     = t[3]
-                              , vertical   = float(t[4]) * (math.pi / 180)
-                              , horizontal = float(t[5]) * (math.pi / 12)
+                              , vertical   = float(t[4])
+                              , horizontal = float(t[5])
                                 )
                     target.save()
 
@@ -348,3 +348,124 @@ class DSSPrime2DSS(object):
         good = bad.replace('\xad', '')
         return good
     
+    def create_summer_maintanence(self):
+        """
+        Creates the maintanence session and dates needed for 09B.
+        These aren't being transferred by Carl, so we must create them:
+        June 1 - Sep. 30: Mon - Thr, starting at 7 AM for 10.5 Hrs
+        Holiday Weekends: Mon - Thr, starting at 8 AM for 8.5  Hrs
+        NRAO Holidays 09: July 3, Sep 7
+        There will be some fixed sessions (VLBI, Radar) that will conflict
+        with these - they should be managed by hand.
+        """
+
+        # clean up!
+        ps = Project.objects.filter(pcode = "Maintenance")
+        empty = [p.delete() for p in ps]
+        ss = Sesshun.objects.filter(name = "Fixed Summer Maintenance")
+        empty = [s.delete() for s in ss]
+
+        # first, just set up the project and single session
+        semesterName = "09B" 
+        semesterStart = datetime(2009, 6, 1)
+        semesterEnd = datetime(2009, 9, 30)
+
+        semester = first(Semester.objects.filter(semester = "09B"))
+        ptype    = first(Project_Type.objects.filter(type = "non-science"))
+
+        p = Project(semester     = semester
+                  , project_type = ptype
+                  , pcode        = "Maintenance"
+                  , name         = "Maintenance"
+                  , thesis       = False 
+                  , complete     = False
+                  , ignore_grade = False
+                  , start_date   = semesterStart 
+                  , end_date     = semesterEnd
+                    )
+        p.save()
+
+        # max hours should be some generous estimate of the time needed
+        maxHrs = (16 * 10.5)
+        allot = Allotment(psc_time          = maxHrs
+                        , total_time        = maxHrs
+                        , max_semester_time = maxHrs
+                        , grade             = 4.0 
+                          )
+        allot.save()
+        p.allotments.add(allot)
+        status = Status(enabled    = True 
+                      , authorized = True
+                      , complete   = False 
+                      , backup     = False
+                        )
+        status.save()
+        otype    = first(Observing_Type.objects.filter(type = "maintenance"))
+        stype    = first(Session_Type.objects.filter(type = "fixed"))
+        s = Sesshun(project        = p
+                  , session_type   = stype
+                  , observing_type = otype
+                  , allotment      = allot
+                  , status         = status
+                  , original_id    = 666 # TBF? 
+                  , name           = "Fixed Summer Maintenance" 
+                  , frequency      = 0.0 #None
+                  , max_duration   = 12.0 #None
+                  , min_duration   = 0.0 #None
+                  , time_between   = 0.0 #None
+                    )
+        s.save()
+        print s
+
+        # TBF: put in a dummy target so that Antioch can pick it up!
+        system = first(System.objects.filter(name = "J2000"))
+        target = Target(session    = s
+                      , system     = system
+                      , source     = "maintanence" 
+                      , vertical   = 0.0
+                      , horizontal = 0.0
+                    )
+        target.save()
+        
+        # now create entries in Windows and Opportunities that can be
+        # translated into Periods for this fixed session
+
+        # what weeks have NRAO holidays in them?
+        # July 3, Friday!
+        holidayWeek1 = [datetime(2009, 6, 29) + timedelta(days=i) for i in range(4)]
+        holidayWeek2 = [datetime(2009, 9,  7) + timedelta(days=i) for i in range(4)]
+        holidayWeeks = holidayWeek1
+        holidayWeeks.extend(holidayWeek2)
+
+        # first, loop through weeks
+        for week in range(18):
+            # then loop through Mon - Thrs
+            for day in range(4): 
+                # TBF: what time zone are we using?  See what happens to these
+                # times when we load them up in Antioch ...
+                dt = semesterStart + timedelta(days = (week*7) + day)
+                # do we need to adjust for NRAO holiday?
+                if dt in holidayWeeks:
+                    # holiday week
+                    # watch for that pesky labor day - it falls on a Monday
+                    start = dt + timedelta(seconds = 4 * 60 * 60) #4 == 8 AM
+                    if start == datetime(2009, 9, 7):
+                        # schedule monday's on friday!
+                        start = datetime(2009, 9, 11)
+                    dur = 8.5 # hrs
+                else:
+                    # normal week
+                    start = dt + timedelta(seconds = 3 * 60 * 60) #3 == 7 AM
+                    dur = 10.5 # hrs
+
+                # create the table entries
+                # don't do this past Sep 30!
+                if start <= semesterEnd:
+                    w = Window( session = s, required = True)
+                    w.save()
+                    o = Opportunity( window     = w
+                                   , start_time = start
+                                   , duration   = dur
+                                   )
+                    o.save()               
+
