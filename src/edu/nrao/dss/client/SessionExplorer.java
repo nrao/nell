@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.extjs.gxt.ui.client.Events;
 import com.extjs.gxt.ui.client.Style;
+import com.extjs.gxt.ui.client.Style.SelectionMode;
 import com.extjs.gxt.ui.client.data.BaseModelData;
 import com.extjs.gxt.ui.client.data.BasePagingLoadConfig;
 import com.extjs.gxt.ui.client.data.BasePagingLoadResult;
@@ -40,6 +41,7 @@ import com.extjs.gxt.ui.client.widget.form.FormPanel;
 import com.extjs.gxt.ui.client.widget.form.SimpleComboValue;
 import com.extjs.gxt.ui.client.widget.form.FormPanel.LabelAlign;
 import com.extjs.gxt.ui.client.widget.grid.EditorGrid;
+import com.extjs.gxt.ui.client.widget.grid.GridSelectionModel;
 import com.extjs.gxt.ui.client.widget.layout.ColumnLayout;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
 import com.extjs.gxt.ui.client.widget.layout.FormLayout;
@@ -80,6 +82,9 @@ public class SessionExplorer extends ContentPanel {
 		filtered = new ArrayList<BaseModelData>();
 
 		grid = new EditorGrid<BaseModelData>(store, rows.getColumnModel(null));  // selection.getColumn()));
+		GridSelectionModel<BaseModelData> selectionModel = new GridSelectionModel<BaseModelData>();
+		selectionModel.setSelectionMode(SelectionMode.MULTI);
+		grid.setSelectionModel(selectionModel);
 		add(grid);
 
 		grid.setBorders(true);

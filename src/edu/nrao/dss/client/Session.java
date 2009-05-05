@@ -3,6 +3,7 @@ package edu.nrao.dss.client;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 
@@ -43,7 +44,7 @@ class Session {
     	sess.type       = session.get("type").isString().stringValue();
     	sess.receiver   = session.get("receiver").isString().stringValue();
     	sess.frequency  = "" + session.get("freq").isNumber().doubleValue();
-    	sess.horizontal = "" + session.get("source_h").isNumber().doubleValue();
+    	sess.horizontal = Conversions.radiansToTime(session.get("source_h").isNumber().doubleValue());
     	sess.science    = session.get("science").isString().stringValue();
     	
     	if (deep) {
