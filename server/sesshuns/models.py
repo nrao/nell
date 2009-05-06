@@ -350,7 +350,7 @@ class Sesshun(models.Model):
         self.max_duration     = fdata.get("req_max", 12.0)
         self.min_duration     = fdata.get("req_min",  3.0)
         self.time_between     = fdata.get("between", None)
-        self.selected         = fdata.get("selected", False)
+        self.selected         = fdata.get("selected", False) == "true"
 
     def cast_int(self, strValue):
         "Handles casting of strings where int is displayed as float. ex: 1.0"
