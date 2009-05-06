@@ -843,8 +843,10 @@ class Window(models.Model):
                 last       = opportunities.reverse()[0].start_time
                 # TBF: In Hours!
                 duration   = (start_time - datetime(last.year, last.month, last.day, 23, 59)).seconds / 3600
-            else:
-                print "no opportunities!!!"
+                d.update({"start_time" : str(start_time)
+                        , "duration"   : duration
+                          }
+                         )
 
         d.update({"opportunities" : [o.jsondict() for o in opportunities]})
 
