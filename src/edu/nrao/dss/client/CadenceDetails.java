@@ -43,7 +43,8 @@ class CadenceDetails extends FormPanel {
         intervals.setFieldLabel("Interval(s)");
         
         add(fullSize);
-        fullSize.setFieldLabel("Duration(s)");
+        fullSize.setFieldLabel("Window Duration(s)");
+        fullSize.setToolTip("Window duration in days.");
         
         sessions.addSelectionChangedListener(new SelectionChangedListener<SimpleComboValue<String>>(){
         	@Override
