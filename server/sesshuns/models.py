@@ -858,30 +858,11 @@ class Window(models.Model):
 
         now = now or datetime.utcnow()
         
-        # Does the window already have one or more(!) sessions?
-        # (Note if a session falls in the overlap of two
-        # intersecting windows -- which should not be allowed
-        # in any case -- then it satisfies both windows)
-        # Note that the window start hour only applies to UTC windows,
-        # the window itself starts at the beginning of the start date.
-        #start = datetime(w.start_time.year, w.start_time.month, w.start_time.day)
-
         # TBF: Need to check to see if the window as already been satisfied.
-
-        """
-        limit = HourAngleLimit.query.filter(
-            and_(
-              HourAngleLimit.frequency ==
-                               alloc.frequencyIndex(),
-              HourAngleLimit.declination ==
-                               alloc.declinationIndex()
-                )).first()
-        """
-        limit = None
-        ha_limit = int(limit.limit) if limit \
-                   else int(round((
-                            self.session.min_duration + 119) / 120))
-
+        ha_limit = HourAngleLimit().limit(self.session.frequency
+                                        , self.session.ra
+                                        , self.session.dec
+                                        , True)
         return OpportunityGenerator(now).generate(o, self.session, ha_limit)
 
     class Meta:

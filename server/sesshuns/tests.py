@@ -7,6 +7,7 @@ from sesshuns.models                        import *
 from server.test_utils.NellTestCase         import NellTestCase
 from server.utilities.DBReporter            import DBReporter
 from server.utilities.Generate              import Generate
+from server.utilities.HourAngleLimit        import HourAngleLimit
 from server.utilities.OpportunityGenerator  import OpportunityGenerator, GenOpportunity
 from server.utilities.database              import DSSPrime2DSS
 from server.utilities.receiver              import ReceiverCompile
@@ -760,58 +761,11 @@ class TestWindowGenView(NellTestCase):
                       , duration   = 4 * 24)
         o.save()
 
-    def xtest_read(self):
+    def test_read(self):
         now = datetime(2009, 4, 6, 12)
         response = self.client.get('/gen_opportunities', {"now" : now})
         self.failUnlessEqual(response.status_code, 200)
-        expected = json.dumps(
-             {"windows": [{
-                 "receiver": []
-               , "duration": 96.0
-               , "start_time": "2009-04-06 12:00:00"
-               , "required": True
-               , "id": 1
-               , "opportunities":
-                   [{"duration": 2.0, "start_time": "2009-04-06 17:30:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-06 17:45:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-06 18:00:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-06 18:15:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-06 18:30:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-06 18:45:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-06 19:00:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-06 19:15:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-07 17:30:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-07 17:45:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-07 18:00:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-07 18:15:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-07 18:30:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-07 18:45:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-07 19:00:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-07 19:15:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-08 17:30:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-08 17:45:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-08 18:00:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-08 18:15:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-08 18:30:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-08 18:45:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-08 19:00:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-08 19:15:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-09 17:30:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-09 17:45:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-09 18:00:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-09 18:15:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-09 18:30:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-09 18:45:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-09 19:00:00"}
-                  , {"duration": 2.0, "start_time": "2009-04-09 19:15:00"}]}
-          , {
-             "required": True
-           , "id": 2
-           , "opportunities":
-               [{"duration": 96.0, "start_time": "2009-05-06 12:00:00", "id": 2}]
-           , "receiver": []
-           }]}
-           )
+        expected = '{"windows": [{"receiver": [], "duration": 96.0, "start_time": "2009-04-06 12:00:00", "required": true, "id": 1, "opportunities": [{"duration": 2.0, "start_time": "2009-04-06 17:30:00"}, {"duration": 2.0, "start_time": "2009-04-06 17:45:00"}, {"duration": 2.0, "start_time": "2009-04-06 18:00:00"}, {"duration": 2.0, "start_time": "2009-04-06 18:15:00"}, {"duration": 2.0, "start_time": "2009-04-06 18:30:00"}, {"duration": 2.0, "start_time": "2009-04-06 18:45:00"}, {"duration": 2.0, "start_time": "2009-04-06 19:00:00"}, {"duration": 2.0, "start_time": "2009-04-06 19:15:00"}, {"duration": 2.0, "start_time": "2009-04-07 17:30:00"}, {"duration": 2.0, "start_time": "2009-04-07 17:45:00"}, {"duration": 2.0, "start_time": "2009-04-07 18:00:00"}, {"duration": 2.0, "start_time": "2009-04-07 18:15:00"}, {"duration": 2.0, "start_time": "2009-04-07 18:30:00"}, {"duration": 2.0, "start_time": "2009-04-07 18:45:00"}, {"duration": 2.0, "start_time": "2009-04-07 19:00:00"}, {"duration": 2.0, "start_time": "2009-04-07 19:15:00"}, {"duration": 2.0, "start_time": "2009-04-08 17:30:00"}, {"duration": 2.0, "start_time": "2009-04-08 17:45:00"}, {"duration": 2.0, "start_time": "2009-04-08 18:00:00"}, {"duration": 2.0, "start_time": "2009-04-08 18:15:00"}, {"duration": 2.0, "start_time": "2009-04-08 18:30:00"}, {"duration": 2.0, "start_time": "2009-04-08 18:45:00"}, {"duration": 2.0, "start_time": "2009-04-08 19:00:00"}, {"duration": 2.0, "start_time": "2009-04-08 19:15:00"}, {"duration": 2.0, "start_time": "2009-04-09 17:30:00"}, {"duration": 2.0, "start_time": "2009-04-09 17:45:00"}, {"duration": 2.0, "start_time": "2009-04-09 18:00:00"}, {"duration": 2.0, "start_time": "2009-04-09 18:15:00"}, {"duration": 2.0, "start_time": "2009-04-09 18:30:00"}, {"duration": 2.0, "start_time": "2009-04-09 18:45:00"}, {"duration": 2.0, "start_time": "2009-04-09 19:00:00"}, {"duration": 2.0, "start_time": "2009-04-09 19:15:00"}]}, {"required": true, "id": 2, "opportunities": [{"duration": 96.0, "start_time": "2009-05-06 12:00:00", "id": 2}], "receiver": []}]}'
         self.assertEqual(expected, response.content)
 
         response = self.client.get('/gen_opportunities/1')
@@ -888,6 +842,15 @@ class TestGenerate(NellTestCase):
         s = g.generate_session(1, "Fixed", fixed_type)
         self.assertNotEqual(s, None)
         self.assertEqual(s.name, "Fixed 1")
+
+class TestHourAngleLimit(NellTestCase):
+
+    def test_limit(self):
+        hal = HourAngleLimit()
+        result = hal.limit(32.4, 3.142, .175)
+        self.assertEqual(result, 4.717)
+        result = hal.limit(102.3, 3.142, -2.34)
+        self.assertEqual(result, 0.65)
 
 class TestOpportunityGenerator(NellTestCase):
 
