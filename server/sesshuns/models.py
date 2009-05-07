@@ -133,6 +133,15 @@ class Project(models.Model):
                 pc = inv.user
         return pc        
 
+    def principal_investigator(self):
+        "Who is the principal investigator for this Project?"
+        pc = None
+        for inv in self.investigators_set.all():
+            # if more then one, it's arbitrary
+            if inv.principal_investigator:
+                pc = inv.user
+        return pc    
+
     def rcvrs_specified(self):
         "Returns an array of rcvrs for this project, w/ out their relations"
         # For use in recreating Carl's reports
@@ -148,21 +157,23 @@ class Project(models.Model):
         db_table = "projects"
 
 class Investigators(models.Model):
-    project           = models.ForeignKey(Project)
-    user              = models.ForeignKey(User)
-    friend            = models.BooleanField(default = False)
-    observer          = models.BooleanField(default = False)
-    principal_contact = models.BooleanField(default = False)
-    priority          = models.IntegerField(default = 1)
+    project                = models.ForeignKey(Project)
+    user                   = models.ForeignKey(User)
+    friend                 = models.BooleanField(default = False)
+    observer               = models.BooleanField(default = False)
+    principal_contact      = models.BooleanField(default = False)
+    principal_investigator = models.BooleanField(default = False)
+    priority               = models.IntegerField(default = 1)
 
     def __unicode__(self):
-        return "%s (%d) for %s; fr : %s, obs : %s, PI : %s" % \
+        return "%s (%d) for %s; fr : %s, obs : %s, PC : %s, PI : %s" % \
             ( self.user
             , self.user.id
             , self.project.pcode
             , self.friend
             , self.observer
-            , self.principal_contact )
+            , self.principal_contact
+            , self.principal_investigator )
 
     class Meta:
         db_table = "investigators"
