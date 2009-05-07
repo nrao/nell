@@ -223,7 +223,8 @@ class DSSPrime2DSS(object):
 
             i = Investigators(project = p
                             , user    = u
-                            , principal_contact = row[5] == 1
+                            , principal_contact      = row[6] == 1
+                            , principal_investigator = row[5] == 1
                               )
             i.save()
 
