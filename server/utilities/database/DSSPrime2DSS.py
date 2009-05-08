@@ -32,6 +32,7 @@ class DSSPrime2DSS(object):
         self.transfer_projects()
         self.transfer_authors()
         self.transfer_sessions()
+        self.transfer_project_blackouts_09B()
 
     def transfer_sessions(self):
         query = """
@@ -227,6 +228,52 @@ class DSSPrime2DSS(object):
                             , principal_investigator = row[5] == 1
                               )
             i.save()
+
+    def transfer_project_blackouts_09B(self):
+        "Only needed for scheduling 09B: project blackouts will then go away."
+
+        query = "SELECT * from blackouts"
+        self.cursor.execute(query)
+        blackoutRows = self.cursor.fetchall()
+
+        for row in blackoutRows:
+            start       = row[1]
+            end         = row[2]
+            description = row[3]
+            pkey        = row[5]
+            pcodes      = row[6]
+
+            # the people key and the pcodes must be matched to the right
+            # people and projects
+            query = "SELECT * FROM authors WHERE peoplekey = %d" % pkey
+            self.cursor.execute(query)
+            authors = self.cursor.fetchall()
+            if len(authors) > 0:
+                authorRow = list(authors[0])
+                # we need to pop off the project id in order to be able to
+                # use the create_user method
+                p_id = authorRow.pop(1) 
+                u = self.create_user(authorRow)
+            else:
+                # TBF: the fact that this is happening seems like a big
+                # bug to me, but Carl just left us for a month. WTF
+                print "WARNING: peoplekey in blackouts ~ in authors: ", pkey
+                u = None
+
+            # now what different projects is this for?
+            pcodeList = pcodes.split(",")
+            for pcode in pcodes.split(","):
+                # each project gets its own project blackout!
+                p = first(Project.objects.filter(pcode = pcode.strip()))
+                if p is not None:
+                    pb = Project_Blackout_09B(
+                        project     = p
+                      , requester   = u
+                      , start       = start
+                      , end         = end
+                      , description = description
+                    )
+                    pb.save()
 
     def transfer_projects(self):
         query = """
