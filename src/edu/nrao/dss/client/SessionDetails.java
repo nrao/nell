@@ -10,7 +10,6 @@ import com.extjs.gxt.ui.client.widget.form.SimpleComboBox;
 import com.extjs.gxt.ui.client.widget.form.SimpleComboValue;
 import com.extjs.gxt.ui.client.widget.form.TextField;
 import com.extjs.gxt.ui.client.widget.form.ComboBox.TriggerAction;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.json.client.JSONObject;
 
 class SessionDetails extends FormPanel {
@@ -36,6 +35,10 @@ class SessionDetails extends FormPanel {
         receivers.setFieldLabel("Receivers");
         receivers.setReadOnly(true);
         
+        add(duration);
+        duration.setFieldLabel("Period Duration");
+        duration.setReadOnly(true);
+        
         add(frequency);
         frequency.setFieldLabel("Frequency");
         frequency.setReadOnly(true);
@@ -56,6 +59,7 @@ class SessionDetails extends FormPanel {
         		JSONRequest.get("/sessions/"+ s_id, new JSONCallbackAdapter() {
         			public void onSuccess(JSONObject json) {
         				Session sess = Session.parseJSON(json);
+        				duration.setValue(sess.getMinDuration());
         				receivers.setValue(sess.getReceivers());
         				frequency.setValue(sess.getFrequency());
         				lst.setValue(sess.getHorizontal());
@@ -69,12 +73,9 @@ class SessionDetails extends FormPanel {
     private void initSessionsList() {
         add(sessions);
         sessions.setFieldLabel("Choose Session");
-        sessions.setToolTip("Pick a session from the working set.");
+        sessions.setToolTip("Pick a session from the working set select in the Session Explorer.");
         
         sessions.setTriggerAction(TriggerAction.ALL);
-        //sessions.add("Dummy #1");
-        //sessions.add("Dummy #2");
-        //sessions.add("Dummy #3");
     }
 
     public SimpleComboBox<String> getSessions(){
@@ -83,6 +84,7 @@ class SessionDetails extends FormPanel {
     
     private Map<String, Integer> selectedSessions = new HashMap<String, Integer>();
     private final SimpleComboBox<String> sessions  = new SimpleComboBox<String>();
+    private final TextField<String>      duration  = new TextField<String>();
     private final TextField<String>      receivers = new TextField<String>();
     private final TextField<String>      frequency = new TextField<String>();
     private final TextField<String>      lst       = new TextField<String>();

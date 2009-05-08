@@ -73,6 +73,7 @@ public class WindowDetails extends FormPanel{
 		add(duration);
 		duration.setFieldLabel("Duration");
 		duration.setReadOnly(true);
+		duration.setToolTip("Window duration in hours.");
 		
 	}
 	

@@ -228,15 +228,10 @@ class DBReporter:
             # so if a project was allotted 30 hours, and used up 18,
             # we'll just see that it was allotted 12 ...
             for proj in projs:
-                pi = proj.principal_contact()
-                if pi is None:
-                    pi = ""
-                else:
-                    pi = pi.__str__()
                 # for each proj, print summary
                 projData = [proj.pcode
                           , proj.name
-                          , pi   
+                          , self.getCarlInvestigators(proj)   
                           , "N/A" # DSS doesn't care about ranke
                           , "" #TBF: Carl doesn't list project grade
                           , "%5.2f" % self.ta.getProjectTotalTime(proj)
@@ -453,6 +448,24 @@ class DBReporter:
                 for s in ss:
                     #self.add("Org.ID: %d, Session: %s, %s\n" % (s.original_id, s, s.cadence_set.all()))
                     self.printLongLine("Org.ID: %d, Session: %s, %s\n" % (s.original_id, s, s.cadence_set.all()), cols[2])
+
+    def getCarlInvestigators(self, proj):
+        "String looks like: pi [coi], only if coi is different from pi"
+        pi = proj.principal_investigator()
+        if pi is None:
+            pi = ""
+        else:
+            pi = pi.__str__()
+        pc = proj.principal_contact()
+        if pc is None:
+            pc = ""
+        else:
+            pc = pc.__str__()
+        if pi == pc:
+            invs = pi
+        else:
+            invs = "%s[%s]" % (pi, pc)
+        return invs    
 
     def getSessionTypeLetter(self, s):
         return s.session_type.type[0].upper()

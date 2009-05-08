@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
@@ -16,15 +15,19 @@ class Window implements Comparable {
 
     public static Window parseJSON(Session session, JSONObject json) {
         int id = (int) json.get("id").isNumber().doubleValue();
-        int duration = (int) json.get("duration").isNumber().doubleValue();
-        String start_time = json.get("start_time").isString().stringValue();
-        List<String> receivers = parseReceivers(json.get("receiver").isArray());
-        
-        Window window = new Window(id, session, DATE_FORMAT.parse(start_time), duration, receivers);
-        
-        List<Interval> intervals = Interval.parseIntervals(window, json.get("opportunities").isArray());
-        window.setIntervals(intervals);
-        return window;
+        try {
+        	int duration = (int) json.get("duration").isNumber().doubleValue();
+            String start_time = json.get("start_time").isString().stringValue();
+            List<String> receivers = parseReceivers(json.get("receiver").isArray());
+            
+            Window window = new Window(id, session, DATE_FORMAT.parse(start_time), duration, receivers);
+            
+            List<Interval> intervals = Interval.parseIntervals(window, json.get("opportunities").isArray());
+            window.setIntervals(intervals);
+            return window;
+        } catch (NullPointerException e) {
+        	return null;
+        }
     }
     
     public static List<String> parseReceivers(JSONArray json) {
@@ -79,7 +82,7 @@ class Window implements Comparable {
 
         grid.setFillStyle(getColor());
         grid.fillRect(startDay, startHour, numDays, numHours);
-        if (numDays == 1) {
+        if (session.getType().equals("fixed")) { //if (numDays == 1) {
             grid.setStrokeStyle(new Color(0, 0, 0, getAlpha()));
             grid.setLineWidth(4);
             grid.strokeRect(startDay, startHour, 1, numHours);

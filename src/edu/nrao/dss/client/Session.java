@@ -3,7 +3,6 @@ package edu.nrao.dss.client;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 
@@ -38,14 +37,15 @@ class Session {
     public static Session parseJSON(JSONObject json, boolean deep) {
     	JSONObject session = json.get("session").isObject();
 
-    	Session sess    = new Session((int)session.get("id").isNumber().doubleValue());
-    	sess.pcode      = session.get("pcode").isString().stringValue();
-    	sess.name       = session.get("name").isString().stringValue();
-    	sess.type       = session.get("type").isString().stringValue();
-    	sess.receiver   = session.get("receiver").isString().stringValue();
-    	sess.frequency  = "" + session.get("freq").isNumber().doubleValue();
-    	sess.horizontal = Conversions.radiansToTime(session.get("source_h").isNumber().doubleValue());
-    	sess.science    = session.get("science").isString().stringValue();
+    	Session sess      = new Session((int)session.get("id").isNumber().doubleValue());
+    	sess.pcode        = session.get("pcode").isString().stringValue();
+    	sess.name         = session.get("name").isString().stringValue();
+    	sess.type         = session.get("type").isString().stringValue();
+    	sess.min_duration = "" + session.get("req_min").isNumber().doubleValue();
+    	sess.receiver     = session.get("receiver").isString().stringValue();
+    	sess.frequency    = "" + session.get("freq").isNumber().doubleValue();
+    	sess.horizontal   = Conversions.radiansToTime(session.get("source_h").isNumber().doubleValue());
+    	sess.science      = session.get("science").isString().stringValue();
     	
     	if (deep) {
     	    sess.loadWindows(sess);
@@ -61,7 +61,10 @@ class Session {
                 windows = new ArrayList<Window>();
                 JSONArray ws = json.get("windows").isArray();
                 for (int i = 0; i < ws.size(); ++i) {
-                    windows.add(Window.parseJSON(sess, ws.get(i).isObject()));
+                	Window window = Window.parseJSON(sess, ws.get(i).isObject());
+                	if (window != null){
+                		windows.add(window);
+                	}
                     
                 }
             }
@@ -96,6 +99,10 @@ class Session {
     	return type;
     }
     
+    public String getMinDuration() {
+    	return min_duration;
+    }
+    
     public String getReceivers() {
     	return receiver;
     }
@@ -122,14 +129,15 @@ class Session {
         }
     }
 
-    private int    id         =  0;
-    private String pcode      = "";
-    private String name       = "";
-    private String type       = "";
-    private String receiver   = "";
-    private String frequency  = "";
-    private String horizontal = "";
-    private String science    = "";
+    private int    id           = 0;
+    private String pcode        = "";
+    private String name         = "";
+    private String type         = "";
+    private String min_duration = "";
+    private String receiver     = "";
+    private String frequency    = "";
+    private String horizontal   = "";
+    private String science      = "";
 
     private List<Window> windows;
 }
