@@ -3,14 +3,14 @@ from django.test.client import Client
 from django.http        import QueryDict
 import simplejson as json
 
-from sesshuns.models                        import *
-from server.test_utils.NellTestCase         import NellTestCase
-from server.utilities.DBReporter            import DBReporter
-from server.utilities.Generate              import Generate
-from server.utilities.HourAngleLimit        import HourAngleLimit
-from server.utilities.OpportunityGenerator  import OpportunityGenerator, GenOpportunity
-from server.utilities.database              import DSSPrime2DSS
-from server.utilities.receiver              import ReceiverCompile
+from models                          import *
+from test_utils.NellTestCase         import NellTestCase
+from tools                           import DBReporter
+from tools                           import Generate
+from utilities                       import HourAngleLimit
+from utilities                       import OpportunityGenerator, GenOpportunity
+from utilities.database              import DSSPrime2DSS
+from utilities.receiver              import ReceiverCompile
 
 # Test field data
 fdata = {"total_time": "3"
@@ -249,19 +249,20 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.status.enabled, fdata["enabled"])
 
         # change a number of things and see if it catches it
-        fdata["freq"] = "10"
-        fdata["source"] = "new source"
-        fdata["total_time"] = "99"
-        fdata["enabled"] = True 
-        s.update_from_post(fdata)
+        ldata = dict(fdata)
+        ldata["freq"] = "10"
+        ldata["source"] = "new source"
+        ldata["total_time"] = "99"
+        ldata["enabled"] = True 
+        s.update_from_post(ldata)
         
         # now get this session from the DB
         ss = Sesshun.objects.all()
         s = ss[1]
-        self.assertEqual(s.frequency, float(fdata["freq"]))
-        self.assertEqual(s.allotment.total_time, float(fdata["total_time"]))
-        self.assertEqual(s.target_set.get().source, fdata["source"])
-        self.assertEqual(s.status.enabled, fdata["enabled"])
+        self.assertEqual(s.frequency, float(ldata["freq"]))
+        self.assertEqual(s.allotment.total_time, float(ldata["total_time"]))
+        self.assertEqual(s.target_set.get().source, ldata["source"])
+        self.assertEqual(s.status.enabled, ldata["enabled"])
 
     def test_update_from_post2(self):
         ss = Sesshun.objects.all()
@@ -275,21 +276,22 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.original_id, int(fdata["orig_ID"]))
 
         # check to see if we can handle odd types 
-        fdata["freq"] = "10.5"
-        fdata["source"] = None 
-        fdata["total_time"] = "99.9"
-        fdata["orig_ID"] = "0.0"
-        fdata["enabled"] = "True" 
-        s.update_from_post(fdata)
+        ldata = dict(fdata)
+        ldata["freq"] = "10.5"
+        ldata["source"] = None 
+        ldata["total_time"] = "99.9"
+        ldata["orig_ID"] = "0.0"
+        ldata["enabled"] = "True" 
+        s.update_from_post(ldata)
         
         # now get this session from the DB
         ss = Sesshun.objects.all()
         s = ss[1]
-        self.assertEqual(s.frequency, float(fdata["freq"]))
-        self.assertEqual(s.allotment.total_time, float(fdata["total_time"]))
-        self.assertEqual(s.target_set.get().source, fdata["source"])
+        self.assertEqual(s.frequency, float(ldata["freq"]))
+        self.assertEqual(s.allotment.total_time, float(ldata["total_time"]))
+        self.assertEqual(s.target_set.get().source, ldata["source"])
         self.assertEqual(s.status.enabled, True) # "True" -> True
-        self.assertEqual(s.original_id, 0) #fdata["orig_ID"]) -- "0.0" -> Int
+        self.assertEqual(s.original_id, 0) #ldata["orig_ID"]) -- "0.0" -> Int
 
     def test_grade_abc_2_float(self):
         s = Sesshun()
@@ -326,42 +328,31 @@ class TestWindow(NellTestCase):
         w = first(Window.objects.filter(id = self.w.id))
         results = [(o.start_time, o.duration) for o in w.gen_opportunities(start_time)]
 
-        expected = [
-                     (datetime(2009, 4, 6, 17, 30), 2.0)
-                   , (datetime(2009, 4, 6, 17, 45), 2.0)
-                   , (datetime(2009, 4, 6, 18, 0), 2.0)
-                   , (datetime(2009, 4, 6, 18, 15), 2.0)
-                   , (datetime(2009, 4, 6, 18, 30), 2.0)
-                   , (datetime(2009, 4, 6, 18, 45), 2.0)
-                   , (datetime(2009, 4, 6, 19, 0), 2.0)
-                   , (datetime(2009, 4, 6, 19, 15), 2.0)
-                   , (datetime(2009, 4, 7, 17, 30), 2.0)
-                   , (datetime(2009, 4, 7, 17, 45), 2.0)
-                   , (datetime(2009, 4, 7, 18, 0), 2.0)
-                   , (datetime(2009, 4, 7, 18, 15), 2.0)
-                   , (datetime(2009, 4, 7, 18, 30), 2.0)
-                   , (datetime(2009, 4, 7, 18, 45), 2.0)
-                   , (datetime(2009, 4, 7, 19, 0), 2.0)
-                   , (datetime(2009, 4, 7, 19, 15), 2.0)
-                   , (datetime(2009, 4, 8, 17, 30), 2.0)
-                   , (datetime(2009, 4, 8, 17, 45), 2.0)
-                   , (datetime(2009, 4, 8, 18, 0), 2.0)
-                   , (datetime(2009, 4, 8, 18, 15), 2.0)
-                   , (datetime(2009, 4, 8, 18, 30), 2.0)
-                   , (datetime(2009, 4, 8, 18, 45), 2.0)
-                   , (datetime(2009, 4, 8, 19, 0), 2.0)
-                   , (datetime(2009, 4, 8, 19, 15), 2.0)
-                   , (datetime(2009, 4, 9, 17, 30), 2.0)
-                   , (datetime(2009, 4, 9, 17, 45), 2.0)
-                   , (datetime(2009, 4, 9, 18, 0), 2.0)
-                   , (datetime(2009, 4, 9, 18, 15), 2.0)
-                   , (datetime(2009, 4, 9, 18, 30), 2.0)
-                   , (datetime(2009, 4, 9, 18, 45), 2.0)
-                   , (datetime(2009, 4, 9, 19, 0), 2.0)
-                   , (datetime(2009, 4, 9, 19, 15), 2.0)
-                   ]
+        expected_head = [(datetime(2009, 4, 6, 11, 0), 2.0)
+                       , (datetime(2009, 4, 6, 11, 15), 2.0)
+                       , (datetime(2009, 4, 6, 11, 30), 2.0)
+                       , (datetime(2009, 4, 6, 11, 45), 2.0)
+                       , (datetime(2009, 4, 6, 12, 0), 2.0)
+                       , (datetime(2009, 4, 6, 12, 15), 2.0)
+                       , (datetime(2009, 4, 6, 12, 30), 2.0)
+                       , (datetime(2009, 4, 6, 12, 45), 2.0)
+                       , (datetime(2009, 4, 6, 13, 0), 2.0)
+                       , (datetime(2009, 4, 6, 13, 15), 2.0)
+        ]
+        expected_tail = [(datetime(2009, 4, 9, 21, 30), 2.0)
+                       , (datetime(2009, 4, 9, 21, 45), 2.0)
+                       , (datetime(2009, 4, 9, 22, 0), 2.0)
+                       , (datetime(2009, 4, 9, 22, 15), 2.0)
+                       , (datetime(2009, 4, 9, 22, 30), 2.0)
+                       , (datetime(2009, 4, 9, 22, 45), 2.0)
+                       , (datetime(2009, 4, 9, 23, 0), 2.0)
+                       , (datetime(2009, 4, 9, 23, 15), 2.0)
+                       , (datetime(2009, 4, 9, 23, 30), 2.0)
+                       , (datetime(2009, 4, 9, 23, 45), 2.0)
+        ]
 
-        self.assertEqual(expected, results)
+        self.assertEqual(expected_head, results[:10])
+        self.assertEqual(expected_tail, results[-10:])
 
     def test_jsondict(self):
         start_time = datetime(2009, 4, 6, 12)
@@ -390,47 +381,37 @@ class TestWindow(NellTestCase):
 
         results = w.jsondict(generate = True, now = start_time)
 
-        expected = {'receiver'     : []
-                  , 'duration': 96.0
-                  , 'start_time': '2009-04-06 12:00:00'
-                  , 'required'     : True
-                  , 'id'           : 1
-                  , 'opportunities': [
-                       {"duration": 2.0, "start_time": "2009-04-06 17:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 17:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 18:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 18:15:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 18:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 18:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 19:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 19:15:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-07 17:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-07 17:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-07 18:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-07 18:15:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-07 18:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-07 18:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-07 19:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-07 19:15:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-08 17:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-08 17:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-08 18:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-08 18:15:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-08 18:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-08 18:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-08 19:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-08 19:15:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-09 17:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-09 17:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-09 18:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-09 18:15:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-09 18:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-09 18:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-09 19:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-09 19:15:00"}
-                                     ]
-                    }
-        self.assertEqual(expected, results)
+        self.assertEqual([], results['receiver'])
+        self.assertEqual(96.0, results['duration'])
+        self.assertEqual('2009-04-06 12:00:00', results['start_time'])
+        self.assertEqual(True, results['required'])
+        self.assertEqual(1, results['id'])
+        expected_head = [
+                 {'duration': 2.0, 'start_time': '2009-04-06 11:00:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-06 11:15:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-06 11:30:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-06 11:45:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-06 12:00:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-06 12:15:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-06 12:30:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-06 12:45:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-06 13:00:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-06 13:15:00'}
+        ]
+        expected_tail = [
+                 {'duration': 2.0, 'start_time': '2009-04-09 21:30:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-09 21:45:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-09 22:00:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-09 22:15:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-09 22:30:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-09 22:45:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-09 23:00:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-09 23:15:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-09 23:30:00'}
+               , {'duration': 2.0, 'start_time': '2009-04-09 23:45:00'}
+        ]
+        self.assertEqual(expected_head, results['opportunities'][:10])
+        self.assertEqual(expected_tail, results['opportunities'][-10:])
 
 # Testing View Resources
 
@@ -747,7 +728,7 @@ class TestWindowGenView(NellTestCase):
         start_time = datetime(2009, 4, 6, 12)
         o = Opportunity(window     = self.w
                       , start_time = start_time
-                      , duration   = 4 * 24)
+                      , duration   = 1 * 24)
         o.save()
         s = self.w.session
         s.session_type = first(Session_Type.objects.filter(type = 'windowed'))
@@ -758,14 +739,14 @@ class TestWindowGenView(NellTestCase):
         start_time = datetime(2009, 5, 6, 12)
         o = Opportunity(window     = self.w2
                       , start_time = start_time
-                      , duration   = 4 * 24)
+                      , duration   = 2 * 24)
         o.save()
 
     def test_read(self):
         now = datetime(2009, 4, 6, 12)
         response = self.client.get('/gen_opportunities', {"now" : now})
         self.failUnlessEqual(response.status_code, 200)
-        expected = '{"windows": [{"receiver": [], "duration": 96.0, "start_time": "2009-04-06 12:00:00", "required": true, "id": 1, "opportunities": [{"duration": 2.0, "start_time": "2009-04-06 17:30:00"}, {"duration": 2.0, "start_time": "2009-04-06 17:45:00"}, {"duration": 2.0, "start_time": "2009-04-06 18:00:00"}, {"duration": 2.0, "start_time": "2009-04-06 18:15:00"}, {"duration": 2.0, "start_time": "2009-04-06 18:30:00"}, {"duration": 2.0, "start_time": "2009-04-06 18:45:00"}, {"duration": 2.0, "start_time": "2009-04-06 19:00:00"}, {"duration": 2.0, "start_time": "2009-04-06 19:15:00"}, {"duration": 2.0, "start_time": "2009-04-07 17:30:00"}, {"duration": 2.0, "start_time": "2009-04-07 17:45:00"}, {"duration": 2.0, "start_time": "2009-04-07 18:00:00"}, {"duration": 2.0, "start_time": "2009-04-07 18:15:00"}, {"duration": 2.0, "start_time": "2009-04-07 18:30:00"}, {"duration": 2.0, "start_time": "2009-04-07 18:45:00"}, {"duration": 2.0, "start_time": "2009-04-07 19:00:00"}, {"duration": 2.0, "start_time": "2009-04-07 19:15:00"}, {"duration": 2.0, "start_time": "2009-04-08 17:30:00"}, {"duration": 2.0, "start_time": "2009-04-08 17:45:00"}, {"duration": 2.0, "start_time": "2009-04-08 18:00:00"}, {"duration": 2.0, "start_time": "2009-04-08 18:15:00"}, {"duration": 2.0, "start_time": "2009-04-08 18:30:00"}, {"duration": 2.0, "start_time": "2009-04-08 18:45:00"}, {"duration": 2.0, "start_time": "2009-04-08 19:00:00"}, {"duration": 2.0, "start_time": "2009-04-08 19:15:00"}, {"duration": 2.0, "start_time": "2009-04-09 17:30:00"}, {"duration": 2.0, "start_time": "2009-04-09 17:45:00"}, {"duration": 2.0, "start_time": "2009-04-09 18:00:00"}, {"duration": 2.0, "start_time": "2009-04-09 18:15:00"}, {"duration": 2.0, "start_time": "2009-04-09 18:30:00"}, {"duration": 2.0, "start_time": "2009-04-09 18:45:00"}, {"duration": 2.0, "start_time": "2009-04-09 19:00:00"}, {"duration": 2.0, "start_time": "2009-04-09 19:15:00"}]}, {"required": true, "id": 2, "opportunities": [{"duration": 96.0, "start_time": "2009-05-06 12:00:00", "id": 2}], "receiver": []}]}'
+        expected = '{"windows": [{"receiver": [], "duration": 24.0, "start_time": "2009-04-06 12:00:00", "required": true, "id": 1, "opportunities": [{"duration": 2.0, "start_time": "2009-04-06 11:00:00"}, {"duration": 2.0, "start_time": "2009-04-06 11:15:00"}, {"duration": 2.0, "start_time": "2009-04-06 11:30:00"}, {"duration": 2.0, "start_time": "2009-04-06 11:45:00"}, {"duration": 2.0, "start_time": "2009-04-06 12:00:00"}, {"duration": 2.0, "start_time": "2009-04-06 12:15:00"}, {"duration": 2.0, "start_time": "2009-04-06 12:30:00"}, {"duration": 2.0, "start_time": "2009-04-06 12:45:00"}, {"duration": 2.0, "start_time": "2009-04-06 13:00:00"}, {"duration": 2.0, "start_time": "2009-04-06 13:15:00"}, {"duration": 2.0, "start_time": "2009-04-06 13:30:00"}, {"duration": 2.0, "start_time": "2009-04-06 13:45:00"}, {"duration": 2.0, "start_time": "2009-04-06 14:00:00"}, {"duration": 2.0, "start_time": "2009-04-06 14:15:00"}, {"duration": 2.0, "start_time": "2009-04-06 14:30:00"}, {"duration": 2.0, "start_time": "2009-04-06 14:45:00"}, {"duration": 2.0, "start_time": "2009-04-06 15:00:00"}, {"duration": 2.0, "start_time": "2009-04-06 15:15:00"}, {"duration": 2.0, "start_time": "2009-04-06 15:30:00"}, {"duration": 2.0, "start_time": "2009-04-06 15:45:00"}, {"duration": 2.0, "start_time": "2009-04-06 16:00:00"}, {"duration": 2.0, "start_time": "2009-04-06 16:15:00"}, {"duration": 2.0, "start_time": "2009-04-06 16:30:00"}, {"duration": 2.0, "start_time": "2009-04-06 16:45:00"}, {"duration": 2.0, "start_time": "2009-04-06 17:00:00"}, {"duration": 2.0, "start_time": "2009-04-06 17:15:00"}, {"duration": 2.0, "start_time": "2009-04-06 17:30:00"}, {"duration": 2.0, "start_time": "2009-04-06 17:45:00"}, {"duration": 2.0, "start_time": "2009-04-06 18:00:00"}, {"duration": 2.0, "start_time": "2009-04-06 18:15:00"}, {"duration": 2.0, "start_time": "2009-04-06 18:30:00"}, {"duration": 2.0, "start_time": "2009-04-06 18:45:00"}, {"duration": 2.0, "start_time": "2009-04-06 19:00:00"}, {"duration": 2.0, "start_time": "2009-04-06 19:15:00"}, {"duration": 2.0, "start_time": "2009-04-06 19:30:00"}, {"duration": 2.0, "start_time": "2009-04-06 19:45:00"}, {"duration": 2.0, "start_time": "2009-04-06 20:00:00"}, {"duration": 2.0, "start_time": "2009-04-06 20:15:00"}, {"duration": 2.0, "start_time": "2009-04-06 20:30:00"}, {"duration": 2.0, "start_time": "2009-04-06 20:45:00"}, {"duration": 2.0, "start_time": "2009-04-06 21:00:00"}, {"duration": 2.0, "start_time": "2009-04-06 21:15:00"}, {"duration": 2.0, "start_time": "2009-04-06 21:30:00"}, {"duration": 2.0, "start_time": "2009-04-06 21:45:00"}, {"duration": 2.0, "start_time": "2009-04-06 22:00:00"}, {"duration": 2.0, "start_time": "2009-04-06 22:15:00"}, {"duration": 2.0, "start_time": "2009-04-06 22:30:00"}, {"duration": 2.0, "start_time": "2009-04-06 22:45:00"}, {"duration": 2.0, "start_time": "2009-04-06 23:00:00"}, {"duration": 2.0, "start_time": "2009-04-06 23:15:00"}, {"duration": 2.0, "start_time": "2009-04-06 23:30:00"}, {"duration": 2.0, "start_time": "2009-04-06 23:45:00"}]}, {"required": true, "id": 2, "opportunities": [{"duration": 48.0, "start_time": "2009-05-06 12:00:00", "id": 2}], "receiver": []}]}'
         self.assertEqual(expected, response.content)
 
         response = self.client.get('/gen_opportunities/1')
@@ -774,15 +755,15 @@ class TestWindowGenView(NellTestCase):
              "required": True
            , "id": 1
            , "opportunities":
-                      [{"duration": 2.0, "start_time": "2009-04-06 17:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 17:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 18:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 18:15:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 18:30:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 18:45:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 19:00:00"}
-                     , {"duration": 2.0, "start_time": "2009-04-06 19:15:00"}
-                      ]
+                  [{"duration": 2.0, "start_time": "2009-04-06 17:30:00"}
+                 , {"duration": 2.0, "start_time": "2009-04-06 17:45:00"}
+                 , {"duration": 2.0, "start_time": "2009-04-06 18:00:00"}
+                 , {"duration": 2.0, "start_time": "2009-04-06 18:15:00"}
+                 , {"duration": 2.0, "start_time": "2009-04-06 18:30:00"}
+                 , {"duration": 2.0, "start_time": "2009-04-06 18:45:00"}
+                 , {"duration": 2.0, "start_time": "2009-04-06 19:00:00"}
+                 , {"duration": 2.0, "start_time": "2009-04-06 19:15:00"}
+                  ]
                               }
                              )
         self.assertTrue(expected, response.content)
@@ -847,9 +828,9 @@ class TestHourAngleLimit(NellTestCase):
 
     def test_limit(self):
         hal = HourAngleLimit()
-        result = hal.limit(32.4, 3.142, .175)
+        result = hal.limit(32.4, .175)
         self.assertEqual(result, 4.717)
-        result = hal.limit(102.3, 3.142, -2.34)
+        result = hal.limit(102.3, -2.34)
         self.assertEqual(result, 0.65)
 
 class TestOpportunityGenerator(NellTestCase):

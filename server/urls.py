@@ -1,5 +1,5 @@
 from django.conf.urls.defaults     import *
-from server.sesshuns.views import *
+from sesshuns.views                import *
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin

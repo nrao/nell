@@ -1,4 +1,4 @@
-from sesshuns.models import *
+#from sesshuns.models import *
 
 class TimeAccounting:
 

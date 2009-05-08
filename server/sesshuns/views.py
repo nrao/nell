@@ -1,6 +1,6 @@
 from django.http              import HttpResponse
 from django_restapi.resource  import Resource
-from server.sesshuns.models   import *
+from models                   import *
 
 from datetime import datetime
 import simplejson as json

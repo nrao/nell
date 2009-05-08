@@ -2,9 +2,9 @@ from datetime                  import datetime, timedelta
 from math                      import asin, acos, cos, sin
 from django.db                 import models
 from django.http               import QueryDict
-
-from server.utilities          import OpportunityGenerator, TimeAgent
-from server.utilities.receiver import ReceiverCompile
+from utilities                 import HourAngleLimit
+from utilities                 import OpportunityGenerator, TimeAgent
+from utilities.receiver        import ReceiverCompile
 
 import sys
 
@@ -859,10 +859,15 @@ class Window(models.Model):
         now = now or datetime.utcnow()
         
         # TBF: Need to check to see if the window as already been satisfied.
-        ha_limit = HourAngleLimit().limit(self.session.frequency
-                                        , self.session.ra
-                                        , self.session.dec
-                                        , True)
+        dec = None
+        target  = first(Target.objects.filter(session = self.session).all())
+        if target:
+            system = first(System.objects.filter(target = target).all())
+            if system.h_unit == 'dec':
+                dec = target.horizontal
+
+        ha_limit = HourAngleLimit().limit(self.session.frequency, dec)
+
         return OpportunityGenerator(now).generate(o, self.session, ha_limit)
 
     class Meta:

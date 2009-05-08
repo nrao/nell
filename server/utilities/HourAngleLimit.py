@@ -1,4 +1,4 @@
-from utilities    import TimeAgent
+import TimeAgent
 import pg
 
 db = 'dss'
@@ -8,7 +8,7 @@ class HourAngleLimit:
     def __init__(self):
         self.c = pg.connect(user = "dss", dbname = db)
 
-    def limit(self, freq, ha, dec):
+    def limit(self, freq, dec):
         "Returns the HA offset in hours."
         pquery = self.c.query(
             """SELECT boundary FROM hour_angle_boundaries

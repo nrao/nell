@@ -1,9 +1,10 @@
-from datetime import timedelta
-from math     import asin, sin
-from random   import choice, randint, random, uniform
+from datetime  import timedelta
+from math      import asin, sin
+from random    import choice, randint, random, uniform
+from utilities import TimeAgent
 import slalib
 
-from server.sesshuns.models import *
+from sesshuns.models import *
 
 between_dist    = [4, 8, 10, 24, 48]
 freq_dist       = [2, 3, 5, 8, 13, 21, 34, 55]

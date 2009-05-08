@@ -1,5 +1,5 @@
-from server.sesshuns.models import * 
-from django.contrib import admin
+from sesshuns.models import * 
+from django.contrib  import admin
 
 class Receiver_GroupInline(admin.TabularInline):
     model = Receiver_Group

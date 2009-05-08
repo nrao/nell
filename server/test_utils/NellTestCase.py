@@ -2,7 +2,7 @@ import unittest
 import pg
 from django.db import transaction
 
-from server import settings
+import settings
 
 class NellTestCase(unittest.TestCase):
 
