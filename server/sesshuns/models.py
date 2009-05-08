@@ -156,6 +156,37 @@ class Project(models.Model):
     class Meta:
         db_table = "projects"
 
+# TBF: recurrences don't apply for 09B, but we'll need to do these latter
+class Blackout(models.Model):
+    user         = models.ForeignKey(User)
+    #recurrence  = models.ForeignKey(Recurrence)
+    start        = models.DateTimeField(null = True)
+    end          = models.DateTimeField(null = True)
+    description  = models.CharField(null = True, max_length = 512)
+
+    def __unicode__(self):
+        return "Blackout for %s: %s - %s" % (self.user, self.start, self.end)
+
+    class Meta:
+        db_table = "blackouts"
+
+# TBF: temporary table/class for scheduling just 09B.  We can safely
+# dispose of this after 09B is complete.  Delete Me!
+class Project_Blackout_09B(models.Model):
+    project      = models.ForeignKey(Project)
+    requester    = models.ForeignKey(User)
+    start        = models.DateTimeField(null = True)
+    end          = models.DateTimeField(null = True)
+    description  = models.CharField(null = True, max_length = 512)
+
+    def __unicode__(self):
+        return "Blackout for %s: %s - %s" % (self.project.pcode, self.start, self.end)
+
+    class Meta:
+        # Note: using upper case B at the end of this name causes 
+        # problems with postrgreSQL
+        db_table = "project_blackouts_09b"
+
 class Investigators(models.Model):
     project                = models.ForeignKey(Project)
     user                   = models.ForeignKey(User)
