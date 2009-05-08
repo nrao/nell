@@ -22,6 +22,8 @@ public class Scheduler extends Viewport implements EntryPoint {
         add(tabPanel);
 
         addTab(se, "Session Explorer", "Define and edit sessions.");
+        // TBF This addTab is needed for the overview calendar, but must be excluded
+        // for unit tests!!
         addTab(sc, "Semester Calendar", "Schedule windowed, fixed, and maintenance sessions.")
         .addListener(Events.Select, new SelectionListener<ComponentEvent>() {
             @Override
@@ -44,5 +46,7 @@ public class Scheduler extends Viewport implements EntryPoint {
 
     private final TabPanel         tabPanel = new TabPanel();
     private final SessionExplorer  se       = new SessionExplorer();
+    // TBF This SemesterCalendar is needed for the overview calendar, but must be excluded
+    // for unit tests!!
     private final SemesterCalendar sc       = new SemesterCalendar();
 }
