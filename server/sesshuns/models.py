@@ -843,6 +843,8 @@ class Window(models.Model):
                 last       = opportunities.reverse()[0].start_time
                 # TBF: In Hours!
                 duration   = (start_time - datetime(last.year, last.month, last.day, 23, 59)).seconds / 3600
+                if len(opportunities) == 1:
+                    duration = opportunities[0].duration
                 d.update({"start_time" : str(start_time)
                         , "duration"   : duration
                           }
