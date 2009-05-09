@@ -16,6 +16,7 @@ urlpatterns = patterns('',
    , url(r'^sessions/(\d+)$', SessionResource(permitted_methods=('PUT', 'GET', 'POST')))
    , url(r'^sessions/windows$',        WindowResource(permitted_methods=('PUT', 'POST')))
    , url(r'^sessions/(\d+)/windows$',  WindowResource(permitted_methods=('GET', 'POST')))
+   , url(r'^sessions/(\d+)/windows/(\d+)$',  WindowResource(permitted_methods=('GET', 'POST')))
    , url(r'^sessions/windows/(\d+)$',  WindowResource(permitted_methods=('PUT', 'POST')))
    , url(r'^gen_opportunities$',        gen_opportunities)
    , url(r'^gen_opportunities/(\d+)$',  gen_opportunities)

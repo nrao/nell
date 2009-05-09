@@ -124,10 +124,16 @@ class WindowResource(NellResource):
                           , mimetype = "text/plain")
 
     def read(self, request, *args, **kws):
-        s_id = args[0]
-        windows = Window.objects.filter(session = s_id)
-        return HttpResponse(json.dumps({"windows":[w.jsondict(generate = True) for w in windows]})
-                          , mimetype = "text/plain")
+        if len(args) == 2:
+            _, w_id = args
+            window   = first(Window.objects.filter(id = w_id))
+            return HttpResponse(json.dumps(window.jsondict())
+                              , mimetype = "text/plain")
+        else:
+            s_id     = args[0]
+            windows  = Window.objects.filter(session = s_id)
+            return HttpResponse(json.dumps({"windows":[w.jsondict(generate = True) for w in windows]})
+                              , mimetype = "text/plain")
 
     def update(self, request, *args, **kws):
         id    = int(args[0])
