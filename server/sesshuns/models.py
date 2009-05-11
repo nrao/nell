@@ -978,3 +978,19 @@ class Target(models.Model):
     class Meta:
         db_table = "targets"
 
+class Period(models.Model):
+    session    = models.ForeignKey(Sesshun)
+    start      = models.DateTimeField()
+    duration   = models.FloatField()
+    score      = models.FloatField(null = True)
+    forecast   = models.DateTimeField(null = True)
+    backup     = models.BooleanField()
+
+    def __unicode__(self):
+        return "Period for Session (%d): %s for %5.2f Hrs" % \
+            (self.session.session_id, self.start, self.duration)
+
+    class Meta:
+        db_table = "periods"
+    
+
