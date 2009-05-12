@@ -32,8 +32,18 @@ class IcalMap:
                                 , p.session.frequency
                                  )
                      )
-            # TBF model for event.add('description', )
-            #${item.allocation.project.get_title()}. This telescope period has a duration of ${item.duration / 60.0} hours.\nThe observer listed as first contact is ${item.allocation.project.getProjectFirstContact().lastName}.\nThe receiver in use for this telescope period is ${item.allocation.getReceiverNames()}.\nTo see the cover page for all project details, click ${"http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode=" + item.allocation.project.name}
+            event.add('description',
+"""
+%s:  This telescope period has a duration of %.2f hours.
+The receiver requirements for this telescope period are %s.
+The cover page containing all project details is at http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode=%s
+""" %
+                                      (p.session.name
+                                     , p.duration
+                                     , p.session.receiver_list()
+                                     , p.session.project.pcode
+                                      )
+                     )
             event.add('priority', 9)
             self.cal.add_component(event)
 
@@ -41,3 +51,5 @@ class IcalMap:
         f = open(filepath, 'wb')
         f.write(self.cal.as_string())
         f.close()
+
+#${item.allocation.project.get_title()}. This telescope period has a duration of ${item.duration / 60.0} hours.\nThe observer listed as first contact is ${item.allocation.project.getProjectFirstContact().lastName}.\nThe receiver in use for this telescope period is ${item.allocation.getReceiverNames()}.\nTo see the cover page for all project details, click ${"http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode=" + item.allocation.project.name}
