@@ -32,12 +32,7 @@ class IcalMap:
                                 , p.session.frequency
                                  )
                      )
-            event.add('description',
-"""
-%s:  This telescope period has a duration of %.2f hours.
-The receiver requirements for this telescope period are %s.
-The cover page containing all project details is at http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode=%s
-""" %
+            event.add('description', "%s:  This telescope period has a duration of %.2f hours. The receiver requirements for this telescope period are %s. The cover page containing all project details is at http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode=%s" %
                                       (p.session.name
                                      , p.duration
                                      , p.session.receiver_list()
