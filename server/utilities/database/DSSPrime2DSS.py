@@ -427,6 +427,46 @@ class DSSPrime2DSS(object):
         rcvrs = ['L', 'C', 'X', 'Ku', 'S', '800'] 
         rcvrChanges.append((dt, rcvrs))
 
+        # PF1*8 down, RRI up
+        dt = datetime(2009, 7, 22, 16)
+        rcvrs = ['L', 'C', 'X', 'Ku', 'S', 'RRI'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # RRI down, A up?
+        dt = datetime(2009, 7, 28, 16)
+        rcvrs = ['L', 'C', 'X', 'Ku', 'S', '1070'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # A down, PF1*3 up
+        dt = datetime(2009, 8, 4, 16)
+        rcvrs = ['L', 'C', 'X', 'Ku', 'S', '342'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # PF1*3 down, PF1*8 up
+        dt = datetime(2009, 8, 13, 16)
+        rcvrs = ['L', 'C', 'X', 'Ku', 'S', '800'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # PF1*8 down RRI up
+        dt = datetime(2009, 8, 27, 16)
+        rcvrs = ['L', 'C', 'X', 'Ku', 'S', 'RRI'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # RRI down, PF1*3 up
+        dt = datetime(2009, 9, 3, 16)
+        rcvrs = ['L', 'C', 'X', 'Ku', 'S', '342'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # PF1*3 down, PF1*8 up
+        dt = datetime(2009, 9, 15, 16)
+        rcvrs = ['L', 'C', 'X', 'Ku', 'S', '800'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # PF1*8 down A up
+        dt = datetime(2009, 9, 28, 16)
+        rcvrs = ['L', 'C', 'X', 'Ku', 'S', 'RRI'] 
+        rcvrChanges.append((dt, rcvrs))
+
         for dt, rcvrs in rcvrChanges:
             for rcvr in rcvrs:
                 r = first(Receiver.objects.filter(abbreviation = rcvr))
@@ -518,9 +558,9 @@ class DSSPrime2DSS(object):
 
         # some maintanence days can't be scheduled normaly because of 
         # radar runs and the like
-        conflicts = [ datetime(2009, 6,  9, 11)
-                    , datetime(2009, 6, 16, 11)
-                    ]
+        conflicts = [ datetime(2009, 6,  9, 11) ]
+                    #, datetime(2009, 6, 16, 11)
+                    #]
 
         # what weeks have NRAO holidays in them?
         # July 3, Friday!
@@ -553,14 +593,53 @@ class DSSPrime2DSS(object):
 
                 # create the table entries
                 # don't do this past Sep 30!
-                if start <= semesterEnd and start not in conflicts:
-                    w = Window( session = s, required = True)
-                    w.save()
-                    o = Opportunity( window     = w
+                if start <= semesterEnd:
+                    if start not in conflicts:
+                        w = Window( session = s, required = True)
+                        w.save()
+                        o = Opportunity( window     = w
                                    , start_time = start
                                    , duration   = dur
                                    )
-                    o.save()               
+                        o.save()               
+                        # create TP's for the first two weeks!
+                        if start < scheduledUpTo:
+                            period = Period( session = s
+                                           , start_time = start
+                                           , duration = dur
+                                           , backup = False )
+                    else:
+                        # we have conflicts!
+                        if start == datetime(2009, 6, 9, 11):
+                            #dt1 = start + timedelta(seconds = int(7.75 * 60 * 60))
+                            dt1 = start
+                            durHrs1 = 6.75
+                            dt2 = start + timedelta(seconds = int(8 * 60 * 60))
+                            durHrs2 = 2.5
+                        #elif start == datetime(2009, 6, 16, 11): 
+                        #    dt1 = start
+                        #    durHrs1 = 6.00
+                        #    dt2 = start + timedelta(seconds = int(7.5 * 60 * 60))
+                        #    durHrs2 = 3.0 
+                        else:
+                            raise "SHIT!"
+                        for dt, duration in [(dt1,durHrs1),(dt2,durHrs2)]:
+                            w = Window( session = s, required = True)
+                            w.save()
+                            o = Opportunity( window     = w
+                               , start_time = dt
+                               , duration   = duration
+                               )
+                            o.save()           
+                            # create TP's for the first two weeks!
+                            if start < scheduledUpTo:
+                                period = Period( session = s
+                                           , start_time = start
+                                           , duration = dur 
+                                           , backup = False )
+
+
+
 
     def create_other_fixed_periods(self):
 
@@ -650,10 +729,10 @@ class DSSPrime2DSS(object):
         ,("GBT09B-044", "GBT09B-044-01", datetime(2009, 6, 11, 5, 0), 6.0)
         ,("GBT08C-014", "GBT08C-014-01", datetime(2009, 6, 12, 6, 45), 0.75)
         ,("GBT08C-023", "GBT08C-023-01", datetime(2009, 6, 12, 7, 30), 3.75)
-        ,("GBT09B-048", "GBT09B-048-01", datetime(2009, 6, 13, 17, 30), 1.0)
+        ,("GBT09B-048", "GBT09B-048-01", datetime(2009, 6, 13, 17, 30), 1.25)
         ,("BB240", "BB240-01", datetime(2009, 6, 14, 2, 0), 8.5)
         ,("Tests", "testing", datetime(2009, 6, 14, 13, 0), 4.0) # GUPPI
-        ,("GBT09B-048", "GBT09B-048-01", datetime(2009, 6, 14, 17, 30), 1.0)
+        ,("GBT09B-048", "GBT09B-048-01", datetime(2009, 6, 14, 17, 30), 1.25)
         ,("GBT08A-037", "GBT08A-037-01", datetime(2009, 6, 15, 0, 30), 4.5)
         ,("GBT09B-006", "GBT09B-006-01", datetime(2009, 6, 15, 5, 0), 1.5)
         ,("Tests", "testing", datetime(2009, 6, 15, 21, 30), 1.5) # RCO*8
@@ -712,10 +791,67 @@ class DSSPrime2DSS(object):
                            )
             op.save()
             print op
+
+    def create_history_09B(self):
+        "The first few weeks of 09B have already been scheduled."
+
+        fixed = [
+         ("GBT08A-073", "GBT08A-073-01", datetime(2009, 6, 1, 23, 30), 1.0)
+        ,("Tests", "testing", datetime(2009, 6, 2, 0, 30), 3.5) # RRI
+        ,("Tests", "testing", datetime(2009, 6, 2, 4, 0), 7.0) # Point B
+        ,("Tests", "testing", datetime(2009, 6, 2, 21, 30), 1.5) # RCO U
+        ,("Tests", "testing", datetime(2009, 6, 3, 4, 0), 3.5) # GUPPI
+        ,("GLST011217", "GLST011217-01", datetime(2009, 6, 3, 7, 30), 2.0)
+        ,("Tests", "testing", datetime(2009, 6, 3, 21, 30), 4.0) #RRI
+        ,("Tests", "testing", datetime(2009, 6, 4, 21, 30), 1.5) # RCO*A
+        ,("Tests", "testing", datetime(2009, 6, 6, 12, 30), 4.0) # GUPPI
+        ,("BB240", "BB240-02", datetime(2009, 6, 6, 17, 30), 8.5)
+        ,("GBT09B-048", "GBT09B-048-01", datetime(2009, 6, 9, 17, 45), 1.25)
+        ,("GLST011217", "GLST011217-01", datetime(2009, 6, 10, 7, 0), 2.0)
+        ,("Tests", "testing", datetime(2009, 6, 10, 21, 30), 1.5) # RCO*3
+        ,("GBT09B-044", "GBT09B-044-01", datetime(2009, 6, 11, 5, 0), 6.0)
+        ,("GBT08C-014", "GBT08C-014-01", datetime(2009, 6, 12, 6, 45), 0.75)
+        ,("GBT08C-023", "GBT08C-023-01", datetime(2009, 6, 12, 7, 30), 3.75)
+        ,("GBT09B-048", "GBT09B-048-01", datetime(2009, 6, 13, 17, 30), 1.25)
+        ,("BB240", "BB240-01", datetime(2009, 6, 14, 2, 0), 8.5)
+        ,("Tests", "testing", datetime(2009, 6, 14, 13, 0), 4.0) # GUPPI
+        ,("GBT09B-048", "GBT09B-048-01", datetime(2009, 6, 14, 17, 30), 1.25)
+        ]
+
+        for pName, sName, start, durHrs in fixed:
+            #p = first(Project.objects.filter( name = pName )
+            print pName, sName, start, durHrs
+            s = first(Sesshun.objects.filter( name = sName ))
+            print "period for session: ", s
+            p = Period( session = s
+                      , start = start
+                      , duration = durHrs
+                      , backup = False )
+            p.save()           
             
+
+    def set_fixed_projects(self):
+        "temporary fix until carl's DB gets these as fixed."
+
+        stype    = first(Session_Type.objects.filter(type = "fixed"))
+        pcodes = ["GBT09A-092"
+            , "GBT09A-093"
+            , "GBT09A-094"
+            , "GBT09A-096"]
+        for pcode in pcodes:
+            p = first(Project.objects.filter(pcode = pcode).all())
+            print p
+            ss = p.sesshun_set.all()
+            for s in ss:
+                s.session_type = stype
+                s.save()
+
     def create_summer_conditions(self):
         self.create_summer_maintanence()
         self.create_summer_rcvr_schedule()
-        self.create_other_fixed_periods()
+        #self.create_other_fixed_periods()
+        self.set_fixed_projects()
 
- 
+    def create_09B_database(self):
+        self.transfer()
+        self.create_summer_conditions()
