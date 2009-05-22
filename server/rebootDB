@@ -1,0 +1,14 @@
+#!/bin/bash
+echo Rebooting DB $1 ...
+
+# We don't want to drop then create this DB because it may contain
+# weather data
+#dropdb -U dss dss_pmargani
+#createdb -U dss dss_pmargani
+
+# Instead, drop the tables that django knows about
+psql -U dss -d $1 < drop_model_tables.sql 
+python manage.py syncdb
+psql -U dss -d $1 < populate_db.sql
+
+echo DB $1 Rebooted.
