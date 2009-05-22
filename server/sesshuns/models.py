@@ -988,7 +988,7 @@ class Period(models.Model):
 
     def __unicode__(self):
         return "Period for Session (%d): %s for %5.2f Hrs" % \
-            (self.session.session_id, self.start, self.duration)
+            (self.session.id, self.start, self.duration)
 
     class Meta:
         db_table = "periods"
