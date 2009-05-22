@@ -24,6 +24,20 @@ class DSSPrime2DSS(object):
         self.cursor = self.db.cursor()
         self.silent = silent
 
+        # TBF: right now some of Carl's tables have been dumped
+        # directly to a *separate* DB
+        self.db2 = m.connect(host   = host
+                          , user   = user
+                          , passwd = passwd
+                          , db     = "dss_rcreager"
+                            )
+        self.cursor2 = self.db2.cursor()
+
+        # Carl transferred only Astronomy Windows & Opportunities.
+        # set this to false if you are to ignore these and instead want
+        # to use our self.create_summer_opportunities 
+        self.use_transferred_windows = False
+
     def __del__(self):
         self.cursor.close()
 
@@ -146,21 +160,22 @@ class DSSPrime2DSS(object):
             # now get the windows & opportunities
             # TBF: initially, we thought there would be none of these, and
             # they'd all be determined via the Cadences!
-            query = "SELECT * FROM windows WHERE session_id = %s" % s_id_prime
-            self.cursor.execute(query)
-            for w in self.cursor.fetchall():
-                win = Window(session = s, required = w[2])
-                win.save()
-  
-                query = "SELECT * FROM opportunities WHERE window_id = %s" % w[0]
+            if self.use_transferred_windows:
+                query = "SELECT * FROM windows WHERE session_id = %s" % s_id_prime
                 self.cursor.execute(query)
-                
-                for o in self.cursor.fetchall():
-                    op = Opportunity(window = win
-                                   , start_time = o[2]
-                                   , duration = float(o[3])
-                                   )
-                    op.save()
+                for w in self.cursor.fetchall():
+                    win = Window(session = s, required = w[2])
+                    win.save()
+      
+                    query = "SELECT * FROM opportunities WHERE window_id = %s" % w[0]
+                    self.cursor.execute(query)
+                    
+                    for o in self.cursor.fetchall():
+                        op = Opportunity(window = win
+                                       , start_time = o[2]
+                                       , duration = float(o[3])
+                                       )
+                        op.save()
 
             # now get the rcvrs
             query = "SELECT id FROM receiver_groups WHERE session_id = %s" % s_id_prime
@@ -474,15 +489,9 @@ class DSSPrime2DSS(object):
                 rs.save()
                 print rs
 
-    def create_summer_maintanence(self):
+    def create_maintanence_session(self):
         """
-        Creates the maintanence session and dates needed for 09B.
-        These aren't being transferred by Carl, so we must create them:
-        June 1 - Sep. 30: Mon - Thr, starting at 7 AM for 10.5 Hrs
-        Holiday Weekends: Mon - Thr, starting at 8 AM for 8.5  Hrs
-        NRAO Holidays 09: July 3, Sep 7
-        There will be some fixed sessions (VLBI, Radar) that will conflict
-        with these - they should be managed by hand.
+        Creates the maintanence session, but not the date
         """
 
         # clean up!
@@ -553,6 +562,19 @@ class DSSPrime2DSS(object):
                     )
         target.save()
         
+    def create_maintanence_opts(self):
+        """
+        Create the summer maintanence dates needed for 09B.
+        These aren't being transferred by Carl, so we must create them:
+        June 1 - Sep. 30: Mon - Thr, starting at 7 AM for 10.5 Hrs
+        Holiday Weekends: Mon - Thr, starting at 8 AM for 8.5  Hrs
+        NRAO Holidays 09: July 3, Sep 7
+        There will be some fixed sessions (VLBI, Radar) that will conflict
+        with these - they should be managed by hand.
+        """
+
+        s = first(Sesshun.objects.filter(name = "Fixed Summer Maintenance"))
+
         # now create entries in Windows and Opportunities that can be
         # translated into Periods for this fixed session
 
@@ -641,7 +663,7 @@ class DSSPrime2DSS(object):
 
 
 
-    def create_other_fixed_periods(self):
+    def create_testing_session(self):
 
         # create the test project w/ associated sessions.
         tooMuch = 10000.0
@@ -709,7 +731,11 @@ class DSSPrime2DSS(object):
                                 )
         target.save()
 
+    def create_other_fixed_opts(self):
+
+        s = first(Sesshun.objects.fitler(name = "testing").all())
         print "session: ", s
+
         # project, session, date time, dur (Hrs)
         # dates are in UT (+4 from ET)
         fixed = [
@@ -846,11 +872,137 @@ class DSSPrime2DSS(object):
                 s.session_type = stype
                 s.save()
 
+    def create_summer_opportunities(self):
+        """
+        We can dump Carl's DB into MySQL tables and use these to suck
+        whatever info we need in addition to what is in the DB that
+        Carl dumped to.
+        Here we will take all 'scheduled dates' and replicate them
+        as opportunities so that in the simulations they get translated
+        into fixed periods that we pack around.
+        """
+
+        times = []
+
+        start = "20090601"
+        end   = "20091001"
+        #end   = "20090603"
+
+        query = """
+        SELECT etdate, startet, stopet, lengthet, type, pcode, vpkey
+        FROM schedtime
+        WHERE etdate >= %s AND etdate < %s
+        ORDER BY etdate, startet
+        """ % (start, end)
+
+        self.cursor2.execute(query)
+        rows = self.cursor2.fetchall()
+
+        for row in rows:
+            #print row
+
+            # translate row 
+            dt = row[0]
+            year = int(dt[:4])
+            month = int(dt[4:6])
+            day = int(dt[6:])
+
+            start_time = row[1]
+            hour = int(start_time[:2])
+            minutesTrue = int(start_time[2:])
+
+            # DSS operates on hourly quarters: so minutes must be -
+            # 0, 15, 30, 45
+            # round down to avoid overlaps!
+            if 0 <= minutesTrue and minutesTrue < 15:
+                minute = 0
+            elif 15 <= minutesTrue and minutesTrue < 30:
+                minute = 15 
+            elif 30 <= minutesTrue and minutesTrue < 45:
+                minute = 30 
+            else:
+                minute = 45
+
+            if minute != minutesTrue:
+                print "minutes changed from %d to %d" % (minutesTrue, minute)
+                print "for row: ", row
+
+            durationHrs = float(row[3].strip())
+
+            # DSS operates on hourly quarters: we need to truncate these
+            # down to the nearest quarter to avoid overlaps
+            duration = (int((durationHrs * 60) / 15) * 15 ) / 60.0
+
+            if abs(duration - durationHrs) > 0.01:
+                print "duration changed from %f to %f" % (durationHrs, duration)
+                print "for row: ", row
+
+            type = row[4].strip()
+            pcode = row[5].strip()
+            
+            try:
+                original_id = int(row[6])
+            except:
+                original_id = None
+
+            # translate from ET to UT
+            start = datetime(year, month, day, hour, minute) + \
+                    timedelta(seconds = 4 * 60 * 60)
+
+            # what session to link this to?
+            # the vpkey CANNOT be used for Maintenance & Tests
+            if type == "Tests":
+                s = first(Sesshun.objects.filter(name = "testing").all())
+            elif type == "Maintenance":
+                s = first(Sesshun.objects.filter(name = "Fixed Summer Maintenance").all())
+            else: # just type == Astronomoy?
+                # can we use the vpkey?
+                if original_id is not None and original_id != 0:
+                    s = first(Sesshun.objects.filter(original_id = original_id).all())
+                elif pcode is not None and pcode != "":
+                    print "Getting Session from pcode: ", pcode
+                    p = first(Project.objects.filter(pcode = pcode).all())
+                    s = p.sesshun_set.all()[0] # TBF: arbitrary!
+                else:
+                    s = None
+
+            # save this as a fixed period to the opts table
+            #print s, start, duration
+
+            # don't save stuff that will cause overlaps
+            causesOverlap = self.findOverlap(start, duration, times)
+            if s is not None and causesOverlap:
+                print "Causes Overlap!: ", s, start, duration
+
+            if s is not None and not causesOverlap:
+                win = Window(session = s, required = True)
+                win.save()
+                op = Opportunity(window = win
+                               , start_time = start
+                               , duration = duration)
+                op.save()
+                #print "op: ", op
+                times.append((s, start, duration))
+
+    def findOverlap(self, start, dur, times):
+        for time in times:
+            if self.overlap(start, dur, time[1], time[2]):
+                print "overlap: ", start, dur, time
+                return True
+        return False        
+
+    def overlap(self, start1, dur1, start2, dur2):
+        end1 = start1 + timedelta(seconds = dur1 * 60 * 60)
+        end2 = start2 + timedelta(seconds = dur2 * 60 * 60)
+        return start1 < end2 and start2 < end1
+ 
     def create_summer_conditions(self):
-        self.create_summer_maintanence()
+        self.create_testing_session()
+        self.create_maintanence_session()
         self.create_summer_rcvr_schedule()
         #self.create_other_fixed_periods()
         self.set_fixed_projects()
+        self.create_summer_opportunities()
 
     def create_09B_database(self):
         self.transfer()
