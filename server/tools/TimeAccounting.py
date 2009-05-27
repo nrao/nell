@@ -22,3 +22,6 @@ class TimeAccounting:
         ps = sess.period_set.all()
         return sum([p.duration for p in ps])
         
+    def getTimeLeft(self, sess):
+        obs = self.getObservedTime(sess)
+        return sess.allotment.total_time - obs
