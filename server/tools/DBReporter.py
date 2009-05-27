@@ -105,6 +105,22 @@ class DBReporter:
             self.printData(data, cols)
         self.add("\n")    
 
+        # now, try to point out any sessions that have time left that really 
+        # should not:
+        #   * only worry about open - that's all we're responsible
+        #   * only worry about sessions that rcvrs up for the summer.
+        badRcvrs = ['450', '600', 'K', 'Ka', 'Q', 'MBA', 'Z', 'Hol']
+        ss = Sesshun.objects.order_by('name')
+        for s in ss:
+            timeLeft = self.ta.getTimeLeft(s)
+            if timeLeft > s.min_duration and \
+               s.session_type.type == 'open' and \
+               True not in [r in badRcvrs for r in  s.rcvrs_specified()]:
+                self.add("Session that should have been scheduled more: %s\n" % s)
+                #self.add( "open session w/ bad rcvr: %s\n" % s)
+                #self.add( "rcvr: %s\n" % "".join(s.rcvrs_specified()))
+
+            
 
         # gather stats on sessions - how many, how many of what type, total hrs ..
         sess = Sesshun.objects.all()
