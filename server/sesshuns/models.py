@@ -175,12 +175,12 @@ class Blackout(models.Model):
 class Project_Blackout_09B(models.Model):
     project      = models.ForeignKey(Project)
     requester    = models.ForeignKey(User)
-    start        = models.DateTimeField(null = True)
-    end          = models.DateTimeField(null = True)
+    start_date   = models.DateTimeField(null = True)
+    end_date     = models.DateTimeField(null = True)
     description  = models.CharField(null = True, max_length = 512)
 
     def __unicode__(self):
-        return "Blackout for %s: %s - %s" % (self.project.pcode, self.start, self.end)
+        return "Blackout for %s: %s - %s" % (self.project.pcode, self.start_date, self.end_date)
 
     class Meta:
         # Note: using upper case B at the end of this name causes 
@@ -988,7 +988,7 @@ class Period(models.Model):
 
     def __unicode__(self):
         return "Period for Session (%d): %s for %5.2f Hrs" % \
-            (self.session.session_id, self.start, self.duration)
+            (self.session.id, self.start, self.duration)
 
     class Meta:
         db_table = "periods"

@@ -62,6 +62,7 @@ class DBReporter:
 
         # project summary: for each project, how many sess, hrs, etc.
         self.add("\n")    
+        self.add("Project Summary (modeled from Carl's report): \n")
         header = ["Name", "#", "Hrs", "Original IDs"]
         cols = [10, 5, 6, 50]
         self.printData(header, cols, True)
@@ -73,6 +74,53 @@ class DBReporter:
             data = [p.pcode, str(len(ss)), "%5.2f" % hrs, ssIdStrs]
             self.printData(data, cols)
         self.add("\n")    
+
+        # now do the same kind of thing, but this time specifying 
+        # how much time is left
+        self.add("\n")    
+        self.add("Project Time Usage Summary: \n")
+        header = ["Name", "Rcvrs", "Grade", "Type", "Proj Hrs", "Obs Hrs", "Proj Left"]
+        cols = [15, 15, 10, 10, 10, 10, 10]
+        self.printData(header, cols, True)
+        for p in projs:
+            rcvrs = "".join(p.rcvrs_specified())
+            total = self.ta.getProjectTotalTime(p)
+            sTotal = self.ta.getProjSessionsTotalTime(p)
+            observed = self.ta.getObservedProjTime(p)
+            remaining = total - observed
+            sRemaining = sTotal - observed
+            ss = p.sesshun_set.all()
+            types = []
+            for s in ss:
+                t = s.session_type.type
+                type = t[0]
+                if type not in types:
+                    types.append(type)
+            numSess = len(p.sesshun_set.all())
+            if numSess == 0:
+                aveGrade = 0.0
+            else:
+                aveGrade = sum([s.allotment.grade for s in p.sesshun_set.all()])/numSess
+            data = [p.pcode, rcvrs, "%5.2f" % aveGrade, "%s" % "".join(types), "%5.2f" % total, "%5.2f" % observed, "%5.2f" % remaining]
+            self.printData(data, cols)
+        self.add("\n")    
+
+        # now, try to point out any sessions that have time left that really 
+        # should not:
+        #   * only worry about open - that's all we're responsible
+        #   * only worry about sessions that rcvrs up for the summer.
+        badRcvrs = ['450', '600', 'K', 'Ka', 'Q', 'MBA', 'Z', 'Hol']
+        ss = Sesshun.objects.order_by('name')
+        for s in ss:
+            timeLeft = self.ta.getTimeLeft(s)
+            if timeLeft > s.min_duration and \
+               s.session_type.type == 'open' and \
+               True not in [r in badRcvrs for r in  s.rcvrs_specified()]:
+                self.add("Session that should have been scheduled more: %s\n" % s)
+                #self.add( "open session w/ bad rcvr: %s\n" % s)
+                #self.add( "rcvr: %s\n" % "".join(s.rcvrs_specified()))
+
+            
 
         # gather stats on sessions - how many, how many of what type, total hrs ..
         sess = Sesshun.objects.all()

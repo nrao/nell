@@ -1,3 +1,16 @@
+-- we don't want time zones in the DB
+alter table projects alter column start_date type timestamp without time zone;
+alter table projects alter column end_date type timestamp without time zone;
+alter table project_blackouts_09b alter column start_date type timestamp without time zone;
+alter table project_blackouts_09b alter column end_date type timestamp without time zone;
+alter table receiver_schedule alter column start_date type timestamp without time zone;
+alter table cadences alter column start_date type timestamp without time zone;
+alter table cadences alter column end_date type timestamp without time zone;
+alter table observing_parameters alter column datetime_value type timestamp without time zone;
+alter table opportunities alter column start_time type timestamp without time zone;
+alter table periods alter column start type timestamp without time zone;
+alter table periods alter column forecast type timestamp without time zone;
+
 -- Example project
 INSERT INTO allotment VALUES (DEFAULT, 100.5, 100.5, 100.5, 4.0);
 
