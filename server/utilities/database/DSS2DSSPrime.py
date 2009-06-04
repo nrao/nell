@@ -44,21 +44,39 @@ class DSS2DSSPrime(object):
             # what is the correct session for this period in DSS'?
             s = p.session
             print s.name
-            if s.name in ['Fixed Summer Maintenance', 'testing']:
-                print "skipping: ", s.name
-                continue
+            #if s.name in ['Fixed Summer Maintenance', 'testing']:
+            #    print "skipping: ", s.name
+            #    continue
             id = s.original_id
             query = "SELECT id, name FROM sessions WHERE original_id = %d" % id
+            print query
             self.cursor.execute(query)
             rows = self.cursor.fetchall()
-            assert len(rows) == 1
-            dss_prime_session_id = rows[0][0]
-            name = rows[0][1]
-            print name
-
+            # should always get at least one or none
+            assert len(rows) < 2 
+            # because testing and maintenance isn't in dss'
+            if p.session.name in ['testing', 'Fixed Summer Maintenance']:
+                original_id = 'NULL'
+                dss_prime_session_id  = 'NULL'
+            else:
+                original_id = str(p.session.original_id)
+                dss_prime_session_id = str(rows[0][0])
+                
             # okay, write it to DSS'!
-            query = "INSERT INTO periods VALUES (DEFAULT, %d, '%s', %5.2f)" % \
-                (dss_prime_session_id
+            # strucutre
+            # id - PK
+            # session_name- string (to id sessions w/ out ids)
+            # original_id - int, can be null (testing & maintenance ~in dss')
+            # session_id  - int, can be null
+            # start       - datetime
+            # duration    - string (cant handle floats)
+            query = """
+            INSERT INTO periods VALUES
+            (DEFAULT, %s, %s, '%s', '%s', %5.2f)
+            """ % \
+                (original_id
+               , dss_prime_session_id
+               , s.name
                , p.start
                , p.duration)
             print query
