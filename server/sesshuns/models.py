@@ -836,8 +836,9 @@ class Window(models.Model):
         return len(self.opportunity_set.all())
 
     def init_from_post(self, fdata = QueryDict({})):
-        self.required = fdata.get("required", False)
-        self.save()
+        # TBF:  Not touching required until its actually used post 09B
+        #self.required = fdata.get("required", "false") == "true"
+        #self.save()
         start_time    = fdata.getlist("start_time")
         duration      = fdata.getlist("duration")
         for st, d in zip(start_time, duration):
