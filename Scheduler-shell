@@ -1,3 +1,0 @@
-#!/bin/sh
-APPDIR=`dirname $0`;
-java -XstartOnFirstThread -Xmx256M -cp "$APPDIR/src:$APPDIR/bin:/Users/mike/apps/gwt-mac-1.5.2/gwt-user.jar:/Users/mike/apps/gwt-mac-1.5.2/gwt-dev-mac.jar" com.google.gwt.dev.GWTShell -out "$APPDIR/www" "$@" edu.nrao.dss.Scheduler/Scheduler.html;
