@@ -1,0 +1,2430 @@
+
+*** Projects ***
+Total # of Projects: 101, Total Hrs: 4071.22
+
+
+Projects by Semester: 
+Semester     #        Hrs
+--------------------------
+     04A     1        5.5
+     05A     0          0
+     05B     0          0
+     05C     1        5.0
+     06A     0          0
+     06B     0          0
+     06C     1        1.5
+     07A     5     1070.7
+     07B     0          0
+     07C     1       10.0
+     08A     6       62.9
+     08B     5      73.75
+     08C    14     430.92
+     09A    22      430.3
+     09B    45    1980.65
+     09C     0          0
+
+Projects by Type: 
+       Type     #        Hrs
+-----------------------------
+non-science     0          0
+    science   101    4071.22
+
+Projects by Thesis: 
+Thesis     #        Hrs
+------------------------
+ False    75    3086.19
+  True    26     985.03
+
+      Name     #    Hrs                                       Original IDs
+---------------------------------------------------------------------------
+GBT09A-001     0   0.00                                                   
+     BB240    16 808.00 4213 4214 4215 4216 4217 4218 4219 4220 4221 4222 
+     BB261     1  96.00                                               3742
+     BB268     1  32.00                                               4246
+     BM290     1  10.00                                               3712
+     BM305     1   8.00                                               4247
+     BM306     1   6.00                                               4248
+     BP157     4  40.00                                4249 4291 4292 4293
+GBT04A-003     2   5.50                                          4187 4188
+GBT05C-027     1   5.00                                               2342
+GBT06C-048     1   1.50                                               3136
+GBT07A-035     1   5.00                                               1985
+GBT07A-051     3 204.00                                     2314 2322 4034
+GBT07A-086     1   8.70                                               2103
+GBT07A-087     2  45.00                                          2106 2108
+GBT07C-032     1  10.00                                               2515
+GBT08A-004     1  12.00                                               2811
+GBT08A-037     1   4.50                                               4044
+GBT08A-048     1   3.00                                               2928
+GBT08A-073     2   4.40                                          2977 3708
+GBT08A-085     4  27.00                                3019 3020 3021 3022
+GBT08B-005     4  26.75                                3992 4182 4183 4184
+GBT08B-010     1   6.00                                               3279
+GBT08B-025     2  11.00                                          3305 3306
+GBT08B-026     1  20.00                                               4263
+GBT08B-049     1  10.00                                               3778
+GBT08C-009     2  24.00                                          3514 3515
+GBT08C-014     1   6.00                                               3527
+GBT08C-023     2  37.75                                          3547 3548
+GBT08C-026     1  24.00                                               3553
+GBT08C-035     4 120.00                                3569 3570 3746 4043
+GBT08C-049     2  12.00                                          4041 4042
+GBT08C-061     1   6.00                                               3619
+GBT08C-065     2  18.67                                          3624 3625
+GBT08C-070     1   7.00                                               3631
+GBT08C-073     3  44.00                                     3643 3644 3646
+GBT08C-076     2  17.00                                          3651 3652
+GBT08C-078     1   8.50                                               3655
+GBT09A-002     1  25.00                                               3781
+GBT09A-003     1  12.00                                               3998
+GBT09A-004     3  30.00                                     3786 3787 3788
+GBT09A-007     2  30.00                                          3797 3798
+GBT09A-012     4  25.35                                3810 3811 3812 3814
+GBT09A-021     1   5.00                                               3843
+GBT09A-025    10  25.02  3999 4000 4001 4002 4003 4004 4005 4006 4007 4008
+GBT09A-034     8  17.60            3867 3868 3869 3870 3871 3872 3873 3874
+GBT09A-038     1   4.00                                               3880
+GBT09A-040     2  60.00                                          3882 3883
+GBT09A-046     4  53.88                                3894 3895 3896 3897
+GBT09A-055     4  10.40                                3908 3909 3910 3911
+GBT09A-058     2  10.00                                          3917 4023
+GBT09A-062     1  10.55                                               3927
+GBT09A-070     1  10.00                                               3935
+GBT09A-081     2   7.00                                          3967 3969
+GBT09A-092     3  16.00                                     4200 4210 4211
+GBT09A-093     3  34.00                                     4201 4202 4203
+GBT09A-094     5  20.00                           4204 4205 4206 4207 4208
+GBT09A-095     1   6.00                                               4212
+GBT09A-096     6  18.50                      4273 4274 4275 4276 4277 4278
+GBT09B-001     1  50.00                                               4055
+GBT09B-002     1  50.00                                               4056
+GBT09B-003     3  11.50                                     4057 4058 4059
+GBT09B-004     2  11.00                                          4060 4197
+GBT09B-005     6  19.36                      4061 4062 4063 4064 4065 4066
+GBT09B-006     4  21.00                                4067 4068 4069 4070
+GBT09B-008     1  18.00                                               4071
+GBT09B-010     3  22.00                                     4080 4191 4192
+GBT09B-011     1  11.00                                               4083
+GBT09B-012     3  71.61                                     4086 4087 4088
+GBT09B-013     2  30.00                                          4089 4090
+GBT09B-014     1   4.50                                               4091
+GBT09B-015     2  40.00                                          4092 4282
+GBT09B-016     2  20.00                                          4093 4094
+GBT09B-017     4  20.00                                4095 4096 4097 4098
+GBT09B-018     4  16.25                                4177 4178 4179 4194
+GBT09B-019     2  15.00                                          4099 4100
+GBT09B-021     1   9.50                                               4103
+GBT09B-022     1   7.00                                               4104
+GBT09B-023     2  11.00                                          4105 4106
+GBT09B-024     2  31.50                                          4107 4108
+GBT09B-025     1  18.00                                               4109
+GBT09B-026     1   4.00                                               4110
+GBT09B-028     4  38.50                                4113 4114 4115 4116
+GBT09B-029     5 104.50                           4117 4118 4119 4120 4198
+GBT09B-030     1  12.00                                               4121
+GBT09B-031     4  82.35                                4122 4123 4195 4196
+GBT09B-032     1  21.00                                               4124
+GBT09B-034     2 152.00                                          4128 4129
+GBT09B-035     1   4.00                                               4285
+GBT09B-036     2  80.00                                          4131 4132
+GBT09B-037     1   2.00                                               4133
+GBT09B-039     2   3.50                                          4135 4136
+GBT09B-040     2  28.00                                          4137 4138
+GBT09B-041     3 672.00                                     4139 4140 4141
+GBT09B-042     1  88.00                                               4142
+GBT09B-043    15  15.00 4143 4144 4145 4146 4147 4148 4149 4150 4151 4152 
+GBT09B-044     2  54.00                                          4158 4297
+GBT09B-045     7  24.50                 4159 4160 4161 4162 4163 4164 4165
+GBT09B-046     2  16.00                                          4166 4167
+GBT09B-048     6   9.00                      4171 4286 4287 4288 4289 4290
+GLST011217     1  12.00                                               4045
+
+
+*** Sessions ***
+Total # of Sessions: 254, Total Hrs: 4095.14
+
+
+Sessions By Semester:
+Semester     #        Hrs
+--------------------------
+     04A     2        5.5
+     05A     0          0
+     05B     0          0
+     05C     1        5.0
+     06A     0          0
+     06B     0          0
+     06C     1        1.5
+     07A    23     1070.7
+     07B     0          0
+     07C     1       10.0
+     08A    10       62.9
+     08B     9      73.75
+     08C    24     430.92
+     09A    65      430.3
+     09B   118    2004.57
+     09C     0          0
+
+Sessions By Type:
+         Type     #        Hrs
+-------------------------------
+commissioning     0          0
+        fixed    18     217.75
+  maintenance     0          0
+         open   184    1868.04
+         vlbi     0          0
+     windowed    52    2009.35
+
+Sessions By Obs Type:
+     Obs Type     #        Hrs
+-------------------------------
+  calibration     0          0
+    continuum    14     317.11
+  maintenance     0          0
+       pulsar   100     1394.4
+        radar    12      55.75
+spectral line   103    1327.88
+      testing     0          0
+         vlbi    25     1000.0
+
+Sessions By Grade:
+Grade     #        Hrs
+-----------------------
+    A   171    3292.46
+    B    83     802.68
+    C     0          0
+
+Sessions By Num Receiver Groups:
+# Rcvr Grps     #        Hrs
+-----------------------------
+          0     0          0
+          1   254    4095.14
+          2     0          0
+          3     0          0
+
+Sessions By Enabled:
+Enabled     #        Hrs
+-------------------------
+  False   254    4095.14
+   True     0          0
+
+Sessions By Authorized:
+Authorized     #        Hrs
+----------------------------
+     False     0          0
+      True   254    4095.14
+
+Sessions By Complete:
+Complete     #        Hrs
+--------------------------
+   False   254    4095.14
+    True     0          0
+
+Sessions By Backup:
+Backup     #        Hrs
+------------------------
+ False   254    4095.14
+  True     0          0
+
+Sessions By Scheduable:
+Scheduable     #        Hrs
+----------------------------
+     False   254    4095.14
+      True     0          0
+
+Sessions By Num Targets:
+# Targets     #        Hrs
+---------------------------
+        0     0          0
+        1   253          0
+       >1     0          0
+
+Sessions By Num Cadences:
+# Cadences     #        Hrs
+----------------------------
+         0   202          0
+         1    52          0
+        >1     0          0
+
+VLBI Sessions By Num Cadences:
+# Cadences     #        Hrs
+----------------------------
+         0     0          0
+         1     0          0
+        >1     0          0
+
+Fixed Sessions By Num Cadences:
+# Cadences     #        Hrs
+----------------------------
+         0    18          0
+         1     0          0
+        >1     0          0
+
+Windowed Sessions By Num Cadences:
+# Cadences     #        Hrs
+----------------------------
+         0     0          0
+         1    52          0
+        >1     0          0
+
+Open Sessions By Num Cadences:
+# Cadences     #        Hrs
+----------------------------
+         0   184          0
+         1     0          0
+        >1     0          0
+
+Windows by Required (Hrs is N/A):
+Required     #        Hrs
+--------------------------
+   False     0          0
+    True    18          0
+
+Windows by Num Opportunities (Hrs is N/A):
+# Opts     #        Hrs
+------------------------
+     0     9          0
+     1     9          0
+    >1     0          0
+
+Open Session Cadence Details: 
+              Type     #                                                                    Some Examples
+----------------------------------------------------------------------------------------------------------
+               All     0                                                                                 
+       No End Date     0                                                                                 
+     No Start Date     0                                                                                 
+     Intervals = 0     0                                                                                 
+  Scalar Intervals     0                                                                                 
+  Vector Intervals     0                                                                                 
+
+Fixed Session Cadence Details: 
+              Type     #                                                                    Some Examples
+----------------------------------------------------------------------------------------------------------
+               All     0                                                                                 
+       No End Date     0                                                                                 
+     No Start Date     0                                                                                 
+     Intervals = 0     0                                                                                 
+  Scalar Intervals     0                                                                                 
+  Vector Intervals     0                                                                                 
+
+Windowed Session Cadence Details: 
+              Type     #                                                                    Some Examples
+----------------------------------------------------------------------------------------------------------
+               All    52 BB240-01,BB240-02,BB240-03,BB240-04,BB240-05,BB240-06,BB240-07,BB240-08,BB240-09
+       No End Date    52 BB240-01,BB240-02,BB240-03,BB240-04,BB240-05,BB240-06,BB240-07,BB240-08,BB240-09
+     No Start Date     5            GBT09A-038-01,GBT09B-028-02,GBT09B-041-03,GBT09B-044-01,GBT09B-044-02
+     Intervals = 0     0                                                                                 
+  Scalar Intervals    47 BB240-01,BB240-02,BB240-03,BB240-04,BB240-05,BB240-06,BB240-07,BB240-08,BB240-09
+  Vector Intervals     5            GBT09B-006-04,GBT09B-018-01,GBT09B-028-02,GBT09B-031-01,GBT09B-031-03
+
+All Examples for All : 
+BB240-01,BB240-02,BB240-03,BB240-04,BB240-05,BB240-06,BB240-07,BB240-08,BB240-09
+,BB240-10,BB240-11,BB240-12,BB240-13,BB240-14,BB240-15,BB240-16,BM290-01,GBT07A-
+087-01,GBT07A-087-02,GBT08A-037-01,GBT08A-048-01,GBT08B-025-01,GBT08B-025-02,GBT
+08C-014-01,GBT08C-023-01,GBT08C-023-02,GBT08C-035-01,GBT08C-035-04,GBT08C-049-01
+,GBT08C-076-01,GBT08C-076-02,GBT09A-003-01,GBT09A-038-01,GBT09B-006-01,GBT09B-00
+6-04,GBT09B-008-01,GBT09B-018-01,GBT09B-018-04,GBT09B-028-02,GBT09B-029-01,GBT09
+B-029-02,GBT09B-029-03,GBT09B-031-01,GBT09B-031-02,GBT09B-031-03,GBT09B-031-04,G
+BT09B-041-01,GBT09B-041-02,GBT09B-041-03,GBT09B-044-01,GBT09B-044-02,GLST011217-
+01
+
+All Examples for No End Date : 
+BB240-01,BB240-02,BB240-03,BB240-04,BB240-05,BB240-06,BB240-07,BB240-08,BB240-09
+,BB240-10,BB240-11,BB240-12,BB240-13,BB240-14,BB240-15,BB240-16,BM290-01,GBT07A-
+087-01,GBT07A-087-02,GBT08A-037-01,GBT08A-048-01,GBT08B-025-01,GBT08B-025-02,GBT
+08C-014-01,GBT08C-023-01,GBT08C-023-02,GBT08C-035-01,GBT08C-035-04,GBT08C-049-01
+,GBT08C-076-01,GBT08C-076-02,GBT09A-003-01,GBT09A-038-01,GBT09B-006-01,GBT09B-00
+6-04,GBT09B-008-01,GBT09B-018-01,GBT09B-018-04,GBT09B-028-02,GBT09B-029-01,GBT09
+B-029-02,GBT09B-029-03,GBT09B-031-01,GBT09B-031-02,GBT09B-031-03,GBT09B-031-04,G
+BT09B-041-01,GBT09B-041-02,GBT09B-041-03,GBT09B-044-01,GBT09B-044-02,GLST011217-
+01
+
+All Examples for Scalar Intervals : 
+BB240-01,BB240-02,BB240-03,BB240-04,BB240-05,BB240-06,BB240-07,BB240-08,BB240-09
+,BB240-10,BB240-11,BB240-12,BB240-13,BB240-14,BB240-15,BB240-16,BM290-01,GBT07A-
+087-01,GBT07A-087-02,GBT08A-037-01,GBT08A-048-01,GBT08B-025-01,GBT08B-025-02,GBT
+08C-014-01,GBT08C-023-01,GBT08C-023-02,GBT08C-035-01,GBT08C-035-04,GBT08C-049-01
+,GBT08C-076-01,GBT08C-076-02,GBT09A-003-01,GBT09A-038-01,GBT09B-006-01,GBT09B-00
+8-01,GBT09B-018-04,GBT09B-029-01,GBT09B-029-02,GBT09B-029-03,GBT09B-031-02,GBT09
+B-031-04,GBT09B-041-01,GBT09B-041-02,GBT09B-041-03,GBT09B-044-01,GBT09B-044-02,G
+LST011217-01
+
+All Examples w/ Details for All : 
+Org.ID: 4213, Session: (1) BB240-01 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (1): 2009-05-23 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+Org.ID: 4214, Session: (2) BB240-02 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (2): 2009-05-30 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+Org.ID: 4215, Session: (3) BB240-03 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (3): 2009-06-06 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+Org.ID: 4216, Session: (4) BB240-04 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (4): 2009-06-13 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+Org.ID: 4217, Session: (5) BB240-05 :  9.00 GHz, 64.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (5): 2009-06-23 20:00:00 - None, r:8, size: 24 ints: 120>]
+
+Org.ID: 4218, Session: (6) BB240-06 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (6): 2009-06-30 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+Org.ID: 4219, Session: (7) BB240-07 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (7): 2009-07-07 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+Org.ID: 4220, Session: (8) BB240-08 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (8): 2009-07-14 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+Org.ID: 4221, Session: (9) BB240-09 :  9.00 GHz, 40.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (9): 2009-07-25 20:00:00 - None, r:5, size: 24 ints: 120>]
+
+Org.ID: 4222, Session: (10) BB240-10 :  9.00 GHz, 40.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (10): 2009-08-01 20:00:00 - None, r:5, size: 24 ints: 120>]
+
+
+Org.ID: 4223, Session: (11) BB240-11 :  9.00 GHz, 40.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (11): 2009-08-08 20:00:00 - None, r:5, size: 24 ints: 120>]
+
+
+Org.ID: 4224, Session: (12) BB240-12 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (12): 2009-08-15 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+
+Org.ID: 4225, Session: (13) BB240-13 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (13): 2009-08-22 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+
+Org.ID: 4226, Session: (14) BB240-14 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (14): 2009-08-29 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+
+Org.ID: 4227, Session: (15) BB240-15 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (15): 2009-09-05 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+
+Org.ID: 4229, Session: (16) BB240-16 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (16): 2009-09-12 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+
+Org.ID: 3712, Session: (19) BM290-01 :  9.00 GHz, 10.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (19): 2009-08-16 20:00:00 - None, r:2, size: 18 ints: 90>]
+
+
+Org.ID: 2106, Session: (35) GBT07A-087-01 :  0.80 GHz, 22.50 Hrs, Rcvrs: (800), 
+[<Cadence: Cadence for Sess (35): 2009-06-16 20:00:00 - None, r:3, size: 6 ints:
+ 30>]
+
+Org.ID: 2108, Session: (36) GBT07A-087-02 :  1.44 GHz, 22.50 Hrs, Rcvrs: (L), [<
+Cadence: Cadence for Sess (36): 2009-06-17 20:00:00 - None, r:3, size: 6 ints: 3
+0>]
+
+Org.ID: 4044, Session: (39) GBT08A-037-01 :  2.17 GHz,  4.50 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (39): 2009-06-07 20:00:00 - None, r:1, size: 12 ints: 
+60>]
+
+Org.ID: 2928, Session: (40) GBT08A-048-01 : 22.20 GHz,  3.00 Hrs, Rcvrs: (C OR K
+u OR K), [<Cadence: Cadence for Sess (40): 2010-03-27 20:00:00 - None, r:2, size
+: 74 ints: 365>]
+
+Org.ID: 3305, Session: (52) GBT08B-025-01 :  0.80 GHz,  5.50 Hrs, Rcvrs: (800), 
+[<Cadence: Cadence for Sess (52): 2009-06-12 20:00:00 - None, r:1, size: 12 ints
+: 60>]
+
+Org.ID: 3306, Session: (53) GBT08B-025-02 :  1.44 GHz,  5.50 Hrs, Rcvrs: (L), [<
+Cadence: Cadence for Sess (53): 2009-07-17 20:00:00 - None, r:1, size: 12 ints: 
+60>]
+
+Org.ID: 3527, Session: (58) GBT08C-014-01 :  2.17 GHz,  6.00 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (58): 2009-06-06 20:00:00 - None, r:8, size: 4 ints: 1
+5>]
+
+Org.ID: 3547, Session: (59) GBT08C-023-01 :  2.17 GHz, 33.75 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (59): 2009-06-10 20:00:00 - None, r:9, size: 2 ints: 1
+4>]
+
+Org.ID: 3548, Session: (60) GBT08C-023-02 :  0.80 GHz,  4.00 Hrs, Rcvrs: (800), 
+[<Cadence: Cadence for Sess (60): 2009-06-16 20:00:00 - None, r:4, size: 6 ints:
+ 30>]
+
+Org.ID: 3569, Session: (62) GBT08C-035-01 : 22.20 GHz,  8.00 Hrs, Rcvrs: (K), [<
+Cadence: Cadence for Sess (62): 2009-07-26 20:00:00 - None, r:1, size: 36 ints: 
+180>]
+
+Org.ID: 4043, Session: (65) GBT08C-035-04 : 22.20 GHz, 72.00 Hrs, Rcvrs: (K), [<
+Cadence: Cadence for Sess (65): 2009-09-28 20:00:00 - None, r:4, size: 6 ints: 3
+0>]
+
+Org.ID: 4041, Session: (66) GBT08C-049-01 :  2.17 GHz,  6.00 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (66): 2009-07-01 20:00:00 - None, r:1, size: 10 ints: 
+45>]
+
+Org.ID: 3651, Session: (75) GBT08C-076-01 :  2.17 GHz,  8.00 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (75): 2009-08-03 20:00:00 - None, r:1, size: 18 ints: 
+91>]
+
+Org.ID: 3652, Session: (76) GBT08C-076-02 :  2.17 GHz,  9.00 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (76): 2009-07-29 20:00:00 - None, r:1, size: 18 ints: 
+91>]
+
+Org.ID: 3998, Session: (79) GBT09A-003-01 :  2.17 GHz, 12.00 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (79): 2009-07-01 20:00:00 - None, r:4, size: 12 ints: 
+60>]
+
+Org.ID: 3880, Session: (108) GBT09A-038-01 :  2.17 GHz,  4.00 Hrs, Rcvrs: (S), [
+<Cadence: Cadence for Sess (108): None - None, r:8, size: 6 ints: 30>]
+
+Org.ID: 4067, Session: (156) GBT09B-006-01 :  2.17 GHz, 15.00 Hrs, Rcvrs: (S), [
+<Cadence: Cadence for Sess (156): 2009-06-11 20:00:00 - None, r:12, size: 6 ints
+: 30>]
+
+Org.ID: 4070, Session: (159) GBT09B-006-04 :  2.17 GHz,  3.00 Hrs, Rcvrs: (S), [
+<Cadence: Cadence for Sess (159): 2009-06-30 20:00:00 - None, r:4, size: 1,1,1,1
+ ints: 1,1,2,3>]
+
+Org.ID: 4071, Session: (160) GBT09B-008-01 :  0.34 GHz, 18.00 Hrs, Rcvrs: (342),
+ [<Cadence: Cadence for Sess (160): 2009-06-30 20:00:00 - None, r:2, size: 0 int
+s: 2>]
+
+Org.ID: 4177, Session: (179) GBT09B-018-01 :  2.17 GHz,  7.00 Hrs, Rcvrs: (S), [
+<Cadence: Cadence for Sess (179): 2009-06-16 20:00:00 - None, r:4, size: 1,1,1,2
+ ints: 1,2,3,10>]
+
+Org.ID: 4194, Session: (182) GBT09B-018-04 :  2.17 GHz,  5.25 Hrs, Rcvrs: (S), [
+<Cadence: Cadence for Sess (182): 2009-07-01 20:00:00 - None, r:3, size: 6 ints:
+ 30>]
+
+Org.ID: 4114, Session: (194) GBT09B-028-02 :  0.34 GHz, 22.00 Hrs, Rcvrs: (342),
+ [<Cadence: Cadence for Sess (194): None - None, r:4, size: 1,1,1,6 ints: 1,2,3,
+30>]
+
+Org.ID: 4117, Session: (197) GBT09B-029-01 :  0.80 GHz,  8.50 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (197): 2009-11-01 19:00:00 - None, r:2, size: 36 in
+ts: 180>]
+
+Org.ID: 4118, Session: (198) GBT09B-029-02 :  0.80 GHz, 33.00 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (198): 2009-08-11 20:00:00 - None, r:6, size: 12 in
+ts: 60>]
+
+Org.ID: 4119, Session: (199) GBT09B-029-03 :  1.44 GHz, 33.00 Hrs, Rcvrs: (L), [
+<Cadence: Cadence for Sess (199): 2009-09-15 20:00:00 - None, r:6, size: 12 ints
+: 60>]
+
+Org.ID: 4122, Session: (203) GBT09B-031-01 :  0.80 GHz, 16.22 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (203): 2009-06-22 20:00:00 - None, r:7, size: 1,1,1
+,1,1,2,2 ints: 1,2,3,6,11,18,28>]
+
+Org.ID: 4123, Session: (204) GBT09B-031-02 :  0.80 GHz, 25.63 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (204): 2009-08-17 20:00:00 - None, r:11, size: 6 in
+ts: 30>]
+
+Org.ID: 4195, Session: (205) GBT09B-031-03 :  0.80 GHz, 15.75 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (205): 2009-06-22 20:00:00 - None, r:7, size: 1,1,1
+,1,1,2,2 ints: 1,2,3,6,11,18,28>]
+
+Org.ID: 4196, Session: (206) GBT09B-031-04 :  0.80 GHz, 24.75 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (206): 2009-08-17 20:00:00 - None, r:11, size: 6 in
+ts: 30>]
+
+Org.ID: 4139, Session: (218) GBT09B-041-01 :  1.44 GHz, 306.00 Hrs, Rcvrs: (L), 
+[<Cadence: Cadence for Sess (218): 2009-09-16 20:00:00 - None, r:36, size: 6 int
+s: 30>]
+
+Org.ID: 4140, Session: (219) GBT09B-041-02 :  0.80 GHz, 306.00 Hrs, Rcvrs: (800)
+, [<Cadence: Cadence for Sess (219): 2009-09-18 20:00:00 - None, r:36, size: 6 i
+nts: 30>]
+
+Org.ID: 4141, Session: (220) GBT09B-041-03 :  1.44 GHz, 60.00 Hrs, Rcvrs: (L), [
+<Cadence: Cadence for Sess (220): None - None, r:20, size: 2 ints: 14>]
+
+Org.ID: 4158, Session: (237) GBT09B-044-01 :  0.34 GHz, 30.00 Hrs, Rcvrs: (342),
+ [<Cadence: Cadence for Sess (237): None - None, r:5, size: 2 ints: 5>]
+
+Org.ID: 4297, Session: (238) GBT09B-044-02 :  0.34 GHz, 24.00 Hrs, Rcvrs: (342),
+ [<Cadence: Cadence for Sess (238): None - None, r:4, size: 2 ints: 5>]
+
+Org.ID: 4045, Session: (254) GLST011217-01 :  9.00 GHz, 12.00 Hrs, Rcvrs: (C OR 
+X), [<Cadence: Cadence for Sess (254): 2009-06-01 20:00:00 - None, r:6, size: 2 
+ints: 7>]
+
+
+All Examples w/ Details for No End Date : 
+Org.ID: 4213, Session: (1) BB240-01 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (1): 2009-05-23 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+Org.ID: 4214, Session: (2) BB240-02 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (2): 2009-05-30 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+Org.ID: 4215, Session: (3) BB240-03 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (3): 2009-06-06 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+Org.ID: 4216, Session: (4) BB240-04 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (4): 2009-06-13 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+Org.ID: 4217, Session: (5) BB240-05 :  9.00 GHz, 64.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (5): 2009-06-23 20:00:00 - None, r:8, size: 24 ints: 120>]
+
+Org.ID: 4218, Session: (6) BB240-06 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (6): 2009-06-30 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+Org.ID: 4219, Session: (7) BB240-07 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (7): 2009-07-07 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+Org.ID: 4220, Session: (8) BB240-08 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (8): 2009-07-14 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+Org.ID: 4221, Session: (9) BB240-09 :  9.00 GHz, 40.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (9): 2009-07-25 20:00:00 - None, r:5, size: 24 ints: 120>]
+
+Org.ID: 4222, Session: (10) BB240-10 :  9.00 GHz, 40.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (10): 2009-08-01 20:00:00 - None, r:5, size: 24 ints: 120>]
+
+
+Org.ID: 4223, Session: (11) BB240-11 :  9.00 GHz, 40.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (11): 2009-08-08 20:00:00 - None, r:5, size: 24 ints: 120>]
+
+
+Org.ID: 4224, Session: (12) BB240-12 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (12): 2009-08-15 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+
+Org.ID: 4225, Session: (13) BB240-13 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (13): 2009-08-22 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+
+Org.ID: 4226, Session: (14) BB240-14 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (14): 2009-08-29 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+
+Org.ID: 4227, Session: (15) BB240-15 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (15): 2009-09-05 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+
+Org.ID: 4229, Session: (16) BB240-16 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (16): 2009-09-12 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+
+Org.ID: 3712, Session: (19) BM290-01 :  9.00 GHz, 10.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (19): 2009-08-16 20:00:00 - None, r:2, size: 18 ints: 90>]
+
+
+Org.ID: 2106, Session: (35) GBT07A-087-01 :  0.80 GHz, 22.50 Hrs, Rcvrs: (800), 
+[<Cadence: Cadence for Sess (35): 2009-06-16 20:00:00 - None, r:3, size: 6 ints:
+ 30>]
+
+Org.ID: 2108, Session: (36) GBT07A-087-02 :  1.44 GHz, 22.50 Hrs, Rcvrs: (L), [<
+Cadence: Cadence for Sess (36): 2009-06-17 20:00:00 - None, r:3, size: 6 ints: 3
+0>]
+
+Org.ID: 4044, Session: (39) GBT08A-037-01 :  2.17 GHz,  4.50 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (39): 2009-06-07 20:00:00 - None, r:1, size: 12 ints: 
+60>]
+
+Org.ID: 2928, Session: (40) GBT08A-048-01 : 22.20 GHz,  3.00 Hrs, Rcvrs: (C OR K
+u OR K), [<Cadence: Cadence for Sess (40): 2010-03-27 20:00:00 - None, r:2, size
+: 74 ints: 365>]
+
+Org.ID: 3305, Session: (52) GBT08B-025-01 :  0.80 GHz,  5.50 Hrs, Rcvrs: (800), 
+[<Cadence: Cadence for Sess (52): 2009-06-12 20:00:00 - None, r:1, size: 12 ints
+: 60>]
+
+Org.ID: 3306, Session: (53) GBT08B-025-02 :  1.44 GHz,  5.50 Hrs, Rcvrs: (L), [<
+Cadence: Cadence for Sess (53): 2009-07-17 20:00:00 - None, r:1, size: 12 ints: 
+60>]
+
+Org.ID: 3527, Session: (58) GBT08C-014-01 :  2.17 GHz,  6.00 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (58): 2009-06-06 20:00:00 - None, r:8, size: 4 ints: 1
+5>]
+
+Org.ID: 3547, Session: (59) GBT08C-023-01 :  2.17 GHz, 33.75 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (59): 2009-06-10 20:00:00 - None, r:9, size: 2 ints: 1
+4>]
+
+Org.ID: 3548, Session: (60) GBT08C-023-02 :  0.80 GHz,  4.00 Hrs, Rcvrs: (800), 
+[<Cadence: Cadence for Sess (60): 2009-06-16 20:00:00 - None, r:4, size: 6 ints:
+ 30>]
+
+Org.ID: 3569, Session: (62) GBT08C-035-01 : 22.20 GHz,  8.00 Hrs, Rcvrs: (K), [<
+Cadence: Cadence for Sess (62): 2009-07-26 20:00:00 - None, r:1, size: 36 ints: 
+180>]
+
+Org.ID: 4043, Session: (65) GBT08C-035-04 : 22.20 GHz, 72.00 Hrs, Rcvrs: (K), [<
+Cadence: Cadence for Sess (65): 2009-09-28 20:00:00 - None, r:4, size: 6 ints: 3
+0>]
+
+Org.ID: 4041, Session: (66) GBT08C-049-01 :  2.17 GHz,  6.00 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (66): 2009-07-01 20:00:00 - None, r:1, size: 10 ints: 
+45>]
+
+Org.ID: 3651, Session: (75) GBT08C-076-01 :  2.17 GHz,  8.00 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (75): 2009-08-03 20:00:00 - None, r:1, size: 18 ints: 
+91>]
+
+Org.ID: 3652, Session: (76) GBT08C-076-02 :  2.17 GHz,  9.00 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (76): 2009-07-29 20:00:00 - None, r:1, size: 18 ints: 
+91>]
+
+Org.ID: 3998, Session: (79) GBT09A-003-01 :  2.17 GHz, 12.00 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (79): 2009-07-01 20:00:00 - None, r:4, size: 12 ints: 
+60>]
+
+Org.ID: 3880, Session: (108) GBT09A-038-01 :  2.17 GHz,  4.00 Hrs, Rcvrs: (S), [
+<Cadence: Cadence for Sess (108): None - None, r:8, size: 6 ints: 30>]
+
+Org.ID: 4067, Session: (156) GBT09B-006-01 :  2.17 GHz, 15.00 Hrs, Rcvrs: (S), [
+<Cadence: Cadence for Sess (156): 2009-06-11 20:00:00 - None, r:12, size: 6 ints
+: 30>]
+
+Org.ID: 4070, Session: (159) GBT09B-006-04 :  2.17 GHz,  3.00 Hrs, Rcvrs: (S), [
+<Cadence: Cadence for Sess (159): 2009-06-30 20:00:00 - None, r:4, size: 1,1,1,1
+ ints: 1,1,2,3>]
+
+Org.ID: 4071, Session: (160) GBT09B-008-01 :  0.34 GHz, 18.00 Hrs, Rcvrs: (342),
+ [<Cadence: Cadence for Sess (160): 2009-06-30 20:00:00 - None, r:2, size: 0 int
+s: 2>]
+
+Org.ID: 4177, Session: (179) GBT09B-018-01 :  2.17 GHz,  7.00 Hrs, Rcvrs: (S), [
+<Cadence: Cadence for Sess (179): 2009-06-16 20:00:00 - None, r:4, size: 1,1,1,2
+ ints: 1,2,3,10>]
+
+Org.ID: 4194, Session: (182) GBT09B-018-04 :  2.17 GHz,  5.25 Hrs, Rcvrs: (S), [
+<Cadence: Cadence for Sess (182): 2009-07-01 20:00:00 - None, r:3, size: 6 ints:
+ 30>]
+
+Org.ID: 4114, Session: (194) GBT09B-028-02 :  0.34 GHz, 22.00 Hrs, Rcvrs: (342),
+ [<Cadence: Cadence for Sess (194): None - None, r:4, size: 1,1,1,6 ints: 1,2,3,
+30>]
+
+Org.ID: 4117, Session: (197) GBT09B-029-01 :  0.80 GHz,  8.50 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (197): 2009-11-01 19:00:00 - None, r:2, size: 36 in
+ts: 180>]
+
+Org.ID: 4118, Session: (198) GBT09B-029-02 :  0.80 GHz, 33.00 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (198): 2009-08-11 20:00:00 - None, r:6, size: 12 in
+ts: 60>]
+
+Org.ID: 4119, Session: (199) GBT09B-029-03 :  1.44 GHz, 33.00 Hrs, Rcvrs: (L), [
+<Cadence: Cadence for Sess (199): 2009-09-15 20:00:00 - None, r:6, size: 12 ints
+: 60>]
+
+Org.ID: 4122, Session: (203) GBT09B-031-01 :  0.80 GHz, 16.22 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (203): 2009-06-22 20:00:00 - None, r:7, size: 1,1,1
+,1,1,2,2 ints: 1,2,3,6,11,18,28>]
+
+Org.ID: 4123, Session: (204) GBT09B-031-02 :  0.80 GHz, 25.63 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (204): 2009-08-17 20:00:00 - None, r:11, size: 6 in
+ts: 30>]
+
+Org.ID: 4195, Session: (205) GBT09B-031-03 :  0.80 GHz, 15.75 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (205): 2009-06-22 20:00:00 - None, r:7, size: 1,1,1
+,1,1,2,2 ints: 1,2,3,6,11,18,28>]
+
+Org.ID: 4196, Session: (206) GBT09B-031-04 :  0.80 GHz, 24.75 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (206): 2009-08-17 20:00:00 - None, r:11, size: 6 in
+ts: 30>]
+
+Org.ID: 4139, Session: (218) GBT09B-041-01 :  1.44 GHz, 306.00 Hrs, Rcvrs: (L), 
+[<Cadence: Cadence for Sess (218): 2009-09-16 20:00:00 - None, r:36, size: 6 int
+s: 30>]
+
+Org.ID: 4140, Session: (219) GBT09B-041-02 :  0.80 GHz, 306.00 Hrs, Rcvrs: (800)
+, [<Cadence: Cadence for Sess (219): 2009-09-18 20:00:00 - None, r:36, size: 6 i
+nts: 30>]
+
+Org.ID: 4141, Session: (220) GBT09B-041-03 :  1.44 GHz, 60.00 Hrs, Rcvrs: (L), [
+<Cadence: Cadence for Sess (220): None - None, r:20, size: 2 ints: 14>]
+
+Org.ID: 4158, Session: (237) GBT09B-044-01 :  0.34 GHz, 30.00 Hrs, Rcvrs: (342),
+ [<Cadence: Cadence for Sess (237): None - None, r:5, size: 2 ints: 5>]
+
+Org.ID: 4297, Session: (238) GBT09B-044-02 :  0.34 GHz, 24.00 Hrs, Rcvrs: (342),
+ [<Cadence: Cadence for Sess (238): None - None, r:4, size: 2 ints: 5>]
+
+Org.ID: 4045, Session: (254) GLST011217-01 :  9.00 GHz, 12.00 Hrs, Rcvrs: (C OR 
+X), [<Cadence: Cadence for Sess (254): 2009-06-01 20:00:00 - None, r:6, size: 2 
+ints: 7>]
+
+
+All Examples w/ Details for No Start Date : 
+Org.ID: 3880, Session: (108) GBT09A-038-01 :  2.17 GHz,  4.00 Hrs, Rcvrs: (S), [
+<Cadence: Cadence for Sess (108): None - None, r:8, size: 6 ints: 30>]
+
+Org.ID: 4114, Session: (194) GBT09B-028-02 :  0.34 GHz, 22.00 Hrs, Rcvrs: (342),
+ [<Cadence: Cadence for Sess (194): None - None, r:4, size: 1,1,1,6 ints: 1,2,3,
+30>]
+
+Org.ID: 4141, Session: (220) GBT09B-041-03 :  1.44 GHz, 60.00 Hrs, Rcvrs: (L), [
+<Cadence: Cadence for Sess (220): None - None, r:20, size: 2 ints: 14>]
+
+Org.ID: 4158, Session: (237) GBT09B-044-01 :  0.34 GHz, 30.00 Hrs, Rcvrs: (342),
+ [<Cadence: Cadence for Sess (237): None - None, r:5, size: 2 ints: 5>]
+
+Org.ID: 4297, Session: (238) GBT09B-044-02 :  0.34 GHz, 24.00 Hrs, Rcvrs: (342),
+ [<Cadence: Cadence for Sess (238): None - None, r:4, size: 2 ints: 5>]
+
+
+All Examples w/ Details for Scalar Intervals : 
+Org.ID: 4213, Session: (1) BB240-01 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (1): 2009-05-23 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+Org.ID: 4214, Session: (2) BB240-02 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (2): 2009-05-30 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+Org.ID: 4215, Session: (3) BB240-03 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (3): 2009-06-06 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+Org.ID: 4216, Session: (4) BB240-04 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (4): 2009-06-13 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+Org.ID: 4217, Session: (5) BB240-05 :  9.00 GHz, 64.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (5): 2009-06-23 20:00:00 - None, r:8, size: 24 ints: 120>]
+
+Org.ID: 4218, Session: (6) BB240-06 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (6): 2009-06-30 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+Org.ID: 4219, Session: (7) BB240-07 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (7): 2009-07-07 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+Org.ID: 4220, Session: (8) BB240-08 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (8): 2009-07-14 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+Org.ID: 4221, Session: (9) BB240-09 :  9.00 GHz, 40.00 Hrs, Rcvrs: (X), [<Cadenc
+e: Cadence for Sess (9): 2009-07-25 20:00:00 - None, r:5, size: 24 ints: 120>]
+
+Org.ID: 4222, Session: (10) BB240-10 :  9.00 GHz, 40.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (10): 2009-08-01 20:00:00 - None, r:5, size: 24 ints: 120>]
+
+
+Org.ID: 4223, Session: (11) BB240-11 :  9.00 GHz, 40.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (11): 2009-08-08 20:00:00 - None, r:5, size: 24 ints: 120>]
+
+
+Org.ID: 4224, Session: (12) BB240-12 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (12): 2009-08-15 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+
+Org.ID: 4225, Session: (13) BB240-13 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (13): 2009-08-22 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+
+Org.ID: 4226, Session: (14) BB240-14 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (14): 2009-08-29 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+
+Org.ID: 4227, Session: (15) BB240-15 :  9.00 GHz, 56.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (15): 2009-09-05 20:00:00 - None, r:7, size: 24 ints: 120>]
+
+
+Org.ID: 4229, Session: (16) BB240-16 :  9.00 GHz, 48.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (16): 2009-09-12 20:00:00 - None, r:6, size: 24 ints: 120>]
+
+
+Org.ID: 3712, Session: (19) BM290-01 :  9.00 GHz, 10.00 Hrs, Rcvrs: (X), [<Caden
+ce: Cadence for Sess (19): 2009-08-16 20:00:00 - None, r:2, size: 18 ints: 90>]
+
+
+Org.ID: 2106, Session: (35) GBT07A-087-01 :  0.80 GHz, 22.50 Hrs, Rcvrs: (800), 
+[<Cadence: Cadence for Sess (35): 2009-06-16 20:00:00 - None, r:3, size: 6 ints:
+ 30>]
+
+Org.ID: 2108, Session: (36) GBT07A-087-02 :  1.44 GHz, 22.50 Hrs, Rcvrs: (L), [<
+Cadence: Cadence for Sess (36): 2009-06-17 20:00:00 - None, r:3, size: 6 ints: 3
+0>]
+
+Org.ID: 4044, Session: (39) GBT08A-037-01 :  2.17 GHz,  4.50 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (39): 2009-06-07 20:00:00 - None, r:1, size: 12 ints: 
+60>]
+
+Org.ID: 2928, Session: (40) GBT08A-048-01 : 22.20 GHz,  3.00 Hrs, Rcvrs: (C OR K
+u OR K), [<Cadence: Cadence for Sess (40): 2010-03-27 20:00:00 - None, r:2, size
+: 74 ints: 365>]
+
+Org.ID: 3305, Session: (52) GBT08B-025-01 :  0.80 GHz,  5.50 Hrs, Rcvrs: (800), 
+[<Cadence: Cadence for Sess (52): 2009-06-12 20:00:00 - None, r:1, size: 12 ints
+: 60>]
+
+Org.ID: 3306, Session: (53) GBT08B-025-02 :  1.44 GHz,  5.50 Hrs, Rcvrs: (L), [<
+Cadence: Cadence for Sess (53): 2009-07-17 20:00:00 - None, r:1, size: 12 ints: 
+60>]
+
+Org.ID: 3527, Session: (58) GBT08C-014-01 :  2.17 GHz,  6.00 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (58): 2009-06-06 20:00:00 - None, r:8, size: 4 ints: 1
+5>]
+
+Org.ID: 3547, Session: (59) GBT08C-023-01 :  2.17 GHz, 33.75 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (59): 2009-06-10 20:00:00 - None, r:9, size: 2 ints: 1
+4>]
+
+Org.ID: 3548, Session: (60) GBT08C-023-02 :  0.80 GHz,  4.00 Hrs, Rcvrs: (800), 
+[<Cadence: Cadence for Sess (60): 2009-06-16 20:00:00 - None, r:4, size: 6 ints:
+ 30>]
+
+Org.ID: 3569, Session: (62) GBT08C-035-01 : 22.20 GHz,  8.00 Hrs, Rcvrs: (K), [<
+Cadence: Cadence for Sess (62): 2009-07-26 20:00:00 - None, r:1, size: 36 ints: 
+180>]
+
+Org.ID: 4043, Session: (65) GBT08C-035-04 : 22.20 GHz, 72.00 Hrs, Rcvrs: (K), [<
+Cadence: Cadence for Sess (65): 2009-09-28 20:00:00 - None, r:4, size: 6 ints: 3
+0>]
+
+Org.ID: 4041, Session: (66) GBT08C-049-01 :  2.17 GHz,  6.00 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (66): 2009-07-01 20:00:00 - None, r:1, size: 10 ints: 
+45>]
+
+Org.ID: 3651, Session: (75) GBT08C-076-01 :  2.17 GHz,  8.00 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (75): 2009-08-03 20:00:00 - None, r:1, size: 18 ints: 
+91>]
+
+Org.ID: 3652, Session: (76) GBT08C-076-02 :  2.17 GHz,  9.00 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (76): 2009-07-29 20:00:00 - None, r:1, size: 18 ints: 
+91>]
+
+Org.ID: 3998, Session: (79) GBT09A-003-01 :  2.17 GHz, 12.00 Hrs, Rcvrs: (S), [<
+Cadence: Cadence for Sess (79): 2009-07-01 20:00:00 - None, r:4, size: 12 ints: 
+60>]
+
+Org.ID: 3880, Session: (108) GBT09A-038-01 :  2.17 GHz,  4.00 Hrs, Rcvrs: (S), [
+<Cadence: Cadence for Sess (108): None - None, r:8, size: 6 ints: 30>]
+
+Org.ID: 4067, Session: (156) GBT09B-006-01 :  2.17 GHz, 15.00 Hrs, Rcvrs: (S), [
+<Cadence: Cadence for Sess (156): 2009-06-11 20:00:00 - None, r:12, size: 6 ints
+: 30>]
+
+Org.ID: 4071, Session: (160) GBT09B-008-01 :  0.34 GHz, 18.00 Hrs, Rcvrs: (342),
+ [<Cadence: Cadence for Sess (160): 2009-06-30 20:00:00 - None, r:2, size: 0 int
+s: 2>]
+
+Org.ID: 4194, Session: (182) GBT09B-018-04 :  2.17 GHz,  5.25 Hrs, Rcvrs: (S), [
+<Cadence: Cadence for Sess (182): 2009-07-01 20:00:00 - None, r:3, size: 6 ints:
+ 30>]
+
+Org.ID: 4117, Session: (197) GBT09B-029-01 :  0.80 GHz,  8.50 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (197): 2009-11-01 19:00:00 - None, r:2, size: 36 in
+ts: 180>]
+
+Org.ID: 4118, Session: (198) GBT09B-029-02 :  0.80 GHz, 33.00 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (198): 2009-08-11 20:00:00 - None, r:6, size: 12 in
+ts: 60>]
+
+Org.ID: 4119, Session: (199) GBT09B-029-03 :  1.44 GHz, 33.00 Hrs, Rcvrs: (L), [
+<Cadence: Cadence for Sess (199): 2009-09-15 20:00:00 - None, r:6, size: 12 ints
+: 60>]
+
+Org.ID: 4123, Session: (204) GBT09B-031-02 :  0.80 GHz, 25.63 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (204): 2009-08-17 20:00:00 - None, r:11, size: 6 in
+ts: 30>]
+
+Org.ID: 4196, Session: (206) GBT09B-031-04 :  0.80 GHz, 24.75 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (206): 2009-08-17 20:00:00 - None, r:11, size: 6 in
+ts: 30>]
+
+Org.ID: 4139, Session: (218) GBT09B-041-01 :  1.44 GHz, 306.00 Hrs, Rcvrs: (L), 
+[<Cadence: Cadence for Sess (218): 2009-09-16 20:00:00 - None, r:36, size: 6 int
+s: 30>]
+
+Org.ID: 4140, Session: (219) GBT09B-041-02 :  0.80 GHz, 306.00 Hrs, Rcvrs: (800)
+, [<Cadence: Cadence for Sess (219): 2009-09-18 20:00:00 - None, r:36, size: 6 i
+nts: 30>]
+
+Org.ID: 4141, Session: (220) GBT09B-041-03 :  1.44 GHz, 60.00 Hrs, Rcvrs: (L), [
+<Cadence: Cadence for Sess (220): None - None, r:20, size: 2 ints: 14>]
+
+Org.ID: 4158, Session: (237) GBT09B-044-01 :  0.34 GHz, 30.00 Hrs, Rcvrs: (342),
+ [<Cadence: Cadence for Sess (237): None - None, r:5, size: 2 ints: 5>]
+
+Org.ID: 4297, Session: (238) GBT09B-044-02 :  0.34 GHz, 24.00 Hrs, Rcvrs: (342),
+ [<Cadence: Cadence for Sess (238): None - None, r:4, size: 2 ints: 5>]
+
+Org.ID: 4045, Session: (254) GLST011217-01 :  9.00 GHz, 12.00 Hrs, Rcvrs: (C OR 
+X), [<Cadence: Cadence for Sess (254): 2009-06-01 20:00:00 - None, r:6, size: 2 
+ints: 7>]
+
+
+All Examples w/ Details for Vector Intervals : 
+Org.ID: 4070, Session: (159) GBT09B-006-04 :  2.17 GHz,  3.00 Hrs, Rcvrs: (S), [
+<Cadence: Cadence for Sess (159): 2009-06-30 20:00:00 - None, r:4, size: 1,1,1,1
+ ints: 1,1,2,3>]
+
+Org.ID: 4177, Session: (179) GBT09B-018-01 :  2.17 GHz,  7.00 Hrs, Rcvrs: (S), [
+<Cadence: Cadence for Sess (179): 2009-06-16 20:00:00 - None, r:4, size: 1,1,1,2
+ ints: 1,2,3,10>]
+
+Org.ID: 4114, Session: (194) GBT09B-028-02 :  0.34 GHz, 22.00 Hrs, Rcvrs: (342),
+ [<Cadence: Cadence for Sess (194): None - None, r:4, size: 1,1,1,6 ints: 1,2,3,
+30>]
+
+Org.ID: 4122, Session: (203) GBT09B-031-01 :  0.80 GHz, 16.22 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (203): 2009-06-22 20:00:00 - None, r:7, size: 1,1,1
+,1,1,2,2 ints: 1,2,3,6,11,18,28>]
+
+Org.ID: 4195, Session: (205) GBT09B-031-03 :  0.80 GHz, 15.75 Hrs, Rcvrs: (800),
+ [<Cadence: Cadence for Sess (205): 2009-06-22 20:00:00 - None, r:7, size: 1,1,1
+,1,1,2,2 ints: 1,2,3,6,11,18,28>]
+
+
+
+Details on Windows: 
+BB261-01: Window (1) for Sess (17), Num Opts: 0
+BB268-01: Window (2) for Sess (18), Num Opts: 0
+BM305-01: Window (3) for Sess (20), Num Opts: 0
+BM306-01: Window (4) for Sess (21), Num Opts: 0
+BP157-01: Window (5) for Sess (22), Num Opts: 0
+BP157-02: Window (6) for Sess (23), Num Opts: 0
+BP157-03: Window (7) for Sess (24), Num Opts: 0
+BP157-04: Window (8) for Sess (25), Num Opts: 0
+GBT08B-005-01: Window (9) for Sess (47), Num Opts: 0
+GBT08B-005-02: Window (10) for Sess (48), Num Opts: 1
+    2009-07-15 04:00:00 - 2009-07-15 07:45:00
+GBT08B-005-03: Window (11) for Sess (49), Num Opts: 1
+    2009-07-16 05:00:00 - 2009-07-16 08:30:00
+GBT08B-005-04: Window (12) for Sess (50), Num Opts: 1
+    2009-07-17 06:00:00 - 2009-07-17 09:30:00
+GBT09B-048-01: Window (13) for Sess (248), Num Opts: 1
+    2009-06-19 13:45:00 - 2009-06-19 15:15:00
+GBT09B-048-02: Window (14) for Sess (249), Num Opts: 1
+    2009-06-26 13:00:00 - 2009-06-26 14:30:00
+GBT09B-048-03: Window (15) for Sess (250), Num Opts: 1
+    2009-06-09 13:30:00 - 2009-06-09 15:00:00
+GBT09B-048-04: Window (16) for Sess (251), Num Opts: 1
+    2009-06-14 13:00:00 - 2009-06-14 14:30:00
+GBT09B-048-05: Window (17) for Sess (252), Num Opts: 1
+    2009-06-16 13:00:00 - 2009-06-16 14:30:00
+GBT09B-048-06: Window (18) for Sess (253), Num Opts: 1
+    2009-06-21 12:30:00 - 2009-06-21 14:00:00
+
+
+*** Problems ***
+Projects w/ out sessions: 1
+Sessions w/ out projects: 0
+Projects w/ times != sum(session times): [(<Project: Cyclotron emission from the exo-planet HD 189733b - copy, 09B, GBT09B-044>, -24.0)]
+Windowed Sessions /w out windows: 52
+Non-Windowed Sessions /w windows: 0
+Sessions w/ min > max duration: 0
+Sessions w/ min duration < total time: 3
+
+Project Details ***
+
+Trimester: 04A
+
+    Proposal                                                                        Title                     P.I.  Rk G Alloc   B/D Sched        Bands    Back Ends     Obs Type T-J
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  GBT04A-003                        Highly Redshifted HI and OH Absorption in Red Quasars            Curran, Steve N/A    5.50   N/A            8001070          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT04A-003-01   1     2.75          TBF T TBF           N/A     0   2.75       N/A [4187] [ 6.00, -0.15]/2252-090 A  2.75   O            800       N/A          N/A   N/A
+
+Comment Details: [4187] [ 6.00, -0.15]/2252-090/Night-time Flag(True)
+
+ GBT04A-003-02   1     2.75          TBF T TBF           N/A     0   2.75       N/A [4188] [ 6.00, -0.15]/2252-090 A  2.75   O           1070       N/A          N/A   N/A
+
+Comment Details: [4188] [ 6.00, -0.15]/2252-090/Night-time Flag(True)
+
+
+
+Total # TotalTime Remaining
+----------------------------
+      1      5.50       TBF
+
+Trimester: 05A
+
+
+Trimester: 05B
+
+
+Trimester: 05C
+
+    Proposal                                                                        Title                     P.I.  Rk G Alloc   B/D Sched        Bands    Back Ends     Obs Type T-J
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  GBT05C-027                An Exact Identification of High Densities in Molecular Clouds             Mangum, Jeff N/A    5.00   N/A               KuKa          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT05C-027-01   1     5.00          TBF   TBF           N/A     0   5.00       N/A [2342] [ 4.84,  0.02]/G34.3,S6 A  5.00   O           KuKa       N/A          N/A   N/A
+
+Comment Details: [2342] [ 4.84,  0.02]/G34.3,S68N,DR21OH/
+
+
+
+Total # TotalTime Remaining
+----------------------------
+      1      5.00       TBF
+
+Trimester: 06A
+
+
+Trimester: 06B
+
+
+Trimester: 06C
+
+    Proposal                                                                        Title                     P.I.  Rk G Alloc   B/D Sched        Bands    Back Ends     Obs Type T-J
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  GBT06C-048    HI 21cm absorption in strong MgII and CI absorbers in the redshift desert          Kanekar, Nissim N/A    1.50   N/A                600          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT06C-048-01   1     1.50          TBF T TBF           N/A     0   1.50       N/A [3136] [ 0.70, -0.40]/PKS B023 A  1.50   O            600       N/A          N/A   N/A
+
+Comment Details: [3136] [ 0.70, -0.40]/PKS B0237-233/confirm/Night-time Flag(True)
+
+
+
+Total # TotalTime Remaining
+----------------------------
+      1      1.50       TBF
+
+Trimester: 07A
+
+    Proposal                                                                        Title                     P.I.  Rk G Alloc   B/D Sched        Bands    Back Ends     Obs Type T-J
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+       BB240                                    RIPL: Radio Interferometric PLanet Search             Bower, Geoff N/A   808.0   N/A                  X          N/A            V N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      BB240-01   6     8.00          TBF   TBF    120    N/A     0  48.00       N/A [4213] [ 4.58, -0.11]/644C,120 A 48.00   W              X       N/A 05/24/09 N/A   N/A
+
+Comment Details: [4213] [ 4.58, -0.11]/644C,1207/Instruments(Gb,VLBA)
+
+      BB240-02   6     8.00          TBF   TBF    120    N/A     0  48.00       N/A [4214] [ 2.36,  0.09]/2066,352 A 48.00   W              X       N/A 05/31/09 N/A   N/A
+
+Comment Details: [4214] [ 2.36,  0.09]/2066,3522/Instruments(Gb,VLBA)
+
+      BB240-03   7     8.00          TBF   TBF    120    N/A     0  56.00       N/A [4215] [ 5.37, -0.03]/803,4247 A 56.00   W              X       N/A 06/07/09 N/A   N/A
+
+Comment Details: [4215] [ 5.37, -0.03]/803,4247/Instruments(Gb,VLBA)
+
+      BB240-04   7     8.00          TBF   TBF    120    N/A     0  56.00       N/A [4216] [ 4.71,  0.26]/661A/B,1 A 56.00   W              X       N/A 06/14/09 N/A   N/A
+
+Comment Details: [4216] [ 4.71,  0.26]/661A/B,1224/Instruments(Gb,VLBA)
+
+      BB240-05   8     8.00          TBF   TBF    120    N/A     0  64.00       N/A [4217] [ 5.50, -0.39]/729,867B A 64.00   W              X       N/A 06/24/09 N/A   N/A
+
+Comment Details: [4217] [ 5.50, -0.39]/729,867B/Instruments(Gb,VLBA)
+
+      BB240-06   6     8.00          TBF   TBF    120    N/A     0  48.00       N/A [4218] [ 5.50,  0.08]/1230A/B, A 48.00   W              X       N/A 07/01/09 N/A   N/A
+
+Comment Details: [4218] [ 5.50,  0.08]/1230A/B,866/Instruments(Gb,VLBA)
+
+      BB240-07   7     8.00          TBF   TBF    120    N/A     0  56.00       N/A [4219] [ 4.97,  0.64]/4063,LSR A 56.00   W              X       N/A 07/08/09 N/A   N/A
+
+Comment Details: [4219] [ 4.97,  0.64]/4063,LSRJ1835+3259/Instruments(Gb,VLBA)
+
+      BB240-08   7     8.00          TBF   TBF    120    N/A     0  56.00       N/A [4220] [ 0.39, -0.29]/1005A,84 A 56.00   W              X       N/A 07/15/09 N/A   N/A
+
+Comment Details: [4220] [ 0.39, -0.29]/1005A,84/Instruments(Gb,VLBA)
+
+      BB240-09   5     8.00          TBF   TBF    120    N/A     0  40.00       N/A [4221] [ 0.13,  0.87]/873,53B/ A 40.00   W              X       N/A 07/26/09 N/A   N/A
+
+Comment Details: [4221] [ 0.13,  0.87]/873,53B/Instruments(Gb,VLBA)
+
+      BB240-10   5     8.00          TBF   TBF    120    N/A     0  40.00       N/A [4222] [ 4.97,  0.02]/686,1224 A 40.00   W              X       N/A 08/02/09 N/A   N/A
+
+Comment Details: [4222] [ 4.97,  0.02]/686,1224/Instruments(Gb,VLBA)
+
+      BB240-11   5     8.00          TBF   TBF    120    N/A     0  40.00       N/A [4223] [ 3.40,  0.64]/412B,378 A 40.00   W              X       N/A 08/09/09 N/A   N/A
+
+Comment Details: [4223] [ 3.40,  0.64]/412B,3789/Instruments(Gb,VLBA)
+
+      BB240-12   6     8.00          TBF   TBF    120    N/A     0  48.00       N/A [4224] [ 0.26, -0.30]/4360,65A A 48.00   W              X       N/A 08/16/09 N/A   N/A
+
+Comment Details: [4224] [ 0.26, -0.30]/4360,65A/B/Instruments(Gb,VLBA)
+
+      BB240-13   7     8.00          TBF   TBF    120    N/A     0  56.00       N/A [4225] [ 2.36,  0.45]/278C,111 A 56.00   W              X       N/A 08/23/09 N/A   N/A
+
+Comment Details: [4225] [ 2.36,  0.45]/278C,1116A/B/Instruments(Gb,VLBA)
+
+      BB240-14   6     8.00          TBF   TBF    120    N/A     0  48.00       N/A [4226] [ 0.79,  0.44]/102,109/ A 48.00   W              X       N/A 08/30/09 N/A   N/A
+
+Comment Details: [4226] [ 0.79,  0.44]/102,109/Instruments(Gb,VLBA)
+
+      BB240-15   7     8.00          TBF   TBF    120    N/A     0  56.00       N/A [4227] [ 1.96,  0.01]/234A/B,2 A 56.00   W              X       N/A 09/06/09 N/A   N/A
+
+Comment Details: [4227] [ 1.96,  0.01]/234A/B,285/Instruments(Gb,VLBA)
+
+      BB240-16   6     8.00          TBF   TBF    120    N/A     0  48.00       N/A [4229] [ 0.39,  0.29]/896A,314 A 48.00   W              X       N/A 09/13/09 N/A   N/A
+
+Comment Details: [4229] [ 0.39,  0.29]/896A,3146/Instruments(Gb,VLBA)
+
+
+
+  GBT07A-035                  Using CCH lines to measure changes in fundamental constants          Kanekar, Nissim N/A    5.00   N/A                  Q          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT07A-035-01   1     5.00          TBF   TBF           N/A     0   5.00       N/A [1985] [ 4.86, -0.37]/PKS1830- A  5.00   O              Q       N/A          N/A   N/A
+
+Comment Details: [1985] [ 4.86, -0.37]/PKS1830-21/
+
+
+
+  GBT07A-051     A GBT Legacy Survey of Prebiotic Molecules Toward SgrB2(N-LMH) and TMC-1             Hollis, Mike N/A   204.0   N/A            KQKa600          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT07A-051-01   1   102.00          TBF   TBF           N/A     0 102.00       N/A        [2314] [ 4.66, -0.50]// A 102.0   O           KQKa       N/A          N/A   N/A
+ GBT07A-051-02   1    96.00          TBF   TBF           N/A     0  96.00       N/A        [2322] [ 4.66, -0.50]// A 96.00   O           KQKa       N/A          N/A   N/A
+ GBT07A-051-03   1     6.00          TBF T TBF           N/A     0   6.00       N/A [4034] [ 4.66, -0.50]//Night-t A  6.00   O            600       N/A          N/A   N/A
+
+Comment Details: [4034] [ 4.66, -0.50]//Night-time Flag(True)
+
+
+
+  GBT07A-086                     The Detection of  the Missing Baryons with the NVII Line            Bregman, Joel N/A    8.70   N/A                 Ka          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT07A-086-01   1     8.70          TBF   TBF           N/A     0   8.70       N/A   [2103] [ 3.39, -0.10]/3C279/ A  8.70   O             Ka       N/A          N/A   N/A
+
+
+  GBT07A-087            Detecting nHz Gravitational Radiation using a Pulsar Timing Array           Demorest, Paul N/A   45.00   N/A               800L          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT07A-087-01   3     7.50          TBF   TBF     30    N/A     0  22.50       N/A  [2106] [ 4.07, -0.03]/* (12)/ A 22.50   W            800       N/A 06/17/09 N/A   N/A
+ GBT07A-087-02   3     7.50          TBF   TBF     30    N/A     0  22.50       N/A  [2108] [ 4.07, -0.03]/* (12)/ A 22.50   W              L       N/A 06/18/09 N/A   N/A
+
+
+Total # TotalTime Remaining
+----------------------------
+      5   1070.70       TBF
+
+Trimester: 07B
+
+
+Trimester: 07C
+
+    Proposal                                                                        Title                     P.I.  Rk G Alloc   B/D Sched        Bands    Back Ends     Obs Type T-J
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  GBT07C-032           What is the gas temperature in the nearest cluster-forming region?            Bourke, Tyler N/A   10.00   N/A                  K          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT07C-032-01   1    10.00          TBF   TBF           N/A     0  10.00       N/A   [2515] [ 4.30, -0.43]/Oph A/ A 10.00   O              K       N/A          N/A   N/A
+
+
+Total # TotalTime Remaining
+----------------------------
+      1     10.00       TBF
+
+Trimester: 08A
+
+    Proposal                                                                        Title                     P.I.  Rk G Alloc   B/D Sched        Bands    Back Ends     Obs Type T-J
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  GBT08A-004                 OH Absorption In the Lensing and Host Galaxies of J0414+0534            Curran, Steve N/A   12.00   N/A                450          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08A-004-01   1    12.00          TBF T TBF           N/A     0  12.00       N/A [2811] [ 1.11,  0.10]/J0414+05 A 12.00   O            450       N/A          N/A   N/A
+
+Comment Details: [2811] [ 1.11,  0.10]/J0414+0534-host/Night-time Flag(True)
+
+
+
+  GBT08A-037                                                Radio monitoring of magnetars          Edel, Stanislav N/A    4.50   N/A                  S          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08A-037-01   1     4.50          TBF   TBF     60    N/A     0   4.50       N/A   [4044] [ 4.21,  0.06]/* (9)/ B  4.50   W              S       N/A 06/08/09 N/A   N/A
+
+
+  GBT08A-048 Correlated Variability of Astrophysical Masers I: monitoring of NGC7538 IRS1           Araya, Esteban N/A    3.00   N/A               CKuK          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08A-048-01   2     1.50          TBF   TBF    365    N/A     0   3.00       N/A [2928] [ 6.08,  1.07]/NGC7538  A  3.00   W           CKuK       N/A 03/28/10 N/A   N/A
+
+Comment Details: [2928] [ 6.08,  1.07]/NGC7538 IRS1/
+
+
+
+  GBT08A-073               A deep search for associated HI 21cm absorption in red quasars          Marthi, Viswesh N/A    4.40   N/A             600450          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08A-073-01   1     2.40          TBF T TBF           N/A     0   2.40       N/A [2977] [ 2.13,  0.32]/TXS0213- A  2.40   O            600       N/A          N/A   N/A
+
+Comment Details: [2977] [ 2.13,  0.32]/TXS0213-026 * (4)/Night-time Flag(True)
+
+ GBT08A-073-02   1     2.00          TBF T TBF           N/A     0   2.00       N/A [3708] [ 0.21,  0.61]//Night-t A  2.00   O            450       N/A          N/A   N/A
+
+Comment Details: [3708] [ 0.21,  0.61]//Night-time Flag(True)
+
+
+
+  GBT08A-085                                 "Tomography" of Pulsar Polar Emission Region             Maan, Yogesh N/A   27.00   N/A                RRI          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08A-085-01   1     7.00          TBF   TBF           N/A     0   7.00       N/A [3019] [ 0.61,  0.35]/B0031-07 A  7.00   O            RRI       N/A          N/A   N/A
+
+Comment Details: [3019] [ 0.61,  0.35]/B0031-07 * (4)/
+
+ GBT08A-085-02   1     7.00          TBF   TBF           N/A     0   7.00       N/A [3020] [ 2.29,  0.33]/B0809+74 A  7.00   O            RRI       N/A          N/A   N/A
+
+Comment Details: [3020] [ 2.29,  0.33]/B0809+74 * (4)/
+
+ GBT08A-085-03   1     6.00          TBF   TBF           N/A     0   6.00       N/A [3021] [ 4.29,  0.16]/B1237+25 A  6.00   O            RRI       N/A          N/A   N/A
+
+Comment Details: [3021] [ 4.29,  0.16]/B1237+25,B1702-19,B1919+21/
+
+ GBT08A-085-04   1     7.00          TBF   TBF           N/A     0   7.00       N/A [3022] [ 5.48,  0.29]/B1929+10 A  7.00   O            RRI       N/A          N/A   N/A
+
+Comment Details: [3022] [ 5.48,  0.29]/B1929+10 * (4)/
+
+
+
+  GLST011217 Probing the High Energy Emission of Microquasars with Multi-wavelength obser            Tomsick, John N/A   12.00   N/A                 CX          N/A            C N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GLST011217-01   6     2.00          TBF T TBF      7    N/A     0  12.00       N/A [4045] [ 5.13,  0.40]/Cyg X-1, A 12.00   W             CX       N/A 06/02/09 N/A   N/A
+
+Comment Details: [4045] [ 5.13,  0.40]/Cyg X-1,GRS1915+105,Cyg X-3/Night-time Flag(True)
+
+
+
+Total # TotalTime Remaining
+----------------------------
+      6     62.90       TBF
+
+Trimester: 08B
+
+    Proposal                                                                        Title                     P.I.  Rk G Alloc   B/D Sched        Bands    Back Ends     Obs Type T-J
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  GBT08B-005            High-Resolution 12.6-cm Radar Mapping of the Nearside of the Moon          Campbell, Bruce N/A   26.75   N/A                  S          N/A            R N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08B-005-01   1    16.00          TBF   TBF           N/A     0  16.00       N/A    [3992] [ 0.00,  0.00]/Moon/ A 16.00   F              S       N/A          N/A   N/A
+ GBT08B-005-02   1     3.75          TBF   TBF           N/A     0   3.75       N/A [4182] [ 0.00,  0.00]/Moon/UTC A  3.75   F              S       N/A          N/A   N/A
+
+Comment Details: [4182] [ 0.00,  0.00]/Moon/UTC Flag(True)
+
+ GBT08B-005-03   1     3.50          TBF   TBF           N/A     0   3.50       N/A [4183] [ 0.00,  0.00]/Moon/UTC A  3.50   F              S       N/A          N/A   N/A
+
+Comment Details: [4183] [ 0.00,  0.00]/Moon/UTC Flag(True)
+
+ GBT08B-005-04   1     3.50          TBF   TBF           N/A     0   3.50       N/A [4184] [ 0.00,  0.00]/Moon/UTC A  3.50   F              S       N/A          N/A   N/A
+
+Comment Details: [4184] [ 0.00,  0.00]/Moon/UTC Flag(True)
+
+
+
+  GBT08B-010                          Molecular Line Survey of Edge Cloud 2 Southern Core             Ruffle, Paul N/A    6.00   N/A                 Ku          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08B-010-01   1     6.00          TBF   TBF           N/A     0   6.00       N/A [3279] [ 0.74,  1.02]/EC2-Sout A  6.00   O             Ku       N/A          N/A   N/A
+
+Comment Details: [3279] [ 0.74,  1.02]/EC2-SouthPeak/
+
+
+
+  GBT08B-025                    Timing and General Relativity in the Double Pulsar System          Kramer, Michael N/A   11.00   N/A               800L          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08B-025-01   1     5.50          TBF   TBF     60    N/A     0   5.50       N/A [3305] [ 2.00, -0.54]/PSR J073 A  5.50   W            800       N/A 06/13/09 N/A   N/A
+
+Comment Details: [3305] [ 2.00, -0.54]/PSR J0737-3039/
+
+ GBT08B-025-02   1     5.50          TBF   TBF     60    N/A     0   5.50       N/A [3306] [ 2.00, -0.54]/PSR J073 A  5.50   W              L       N/A 07/18/09 N/A   N/A
+
+Comment Details: [3306] [ 2.00, -0.54]/PSR J0737-3039/
+
+
+
+  GBT08B-026     The H 2p-2s fine-structure line toward HII Regions and Planetary Nebulae            Minter, Toney N/A   20.00   N/A                  X          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08B-026-01   1    20.00          TBF   TBF           N/A     0  20.00       N/A        [4263] [ 5.39,  0.66]// A 20.00   O              X       N/A          N/A   N/A
+
+
+  GBT08B-049 Observations of the Chandrayaan-1 and Lunar Reconnaissance Orbiter Spacecraf            Butler, Bryan N/A   10.00   N/A                  S          N/A            R N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08B-049-01   1    10.00          TBF   TBF           N/A     0  10.00       N/A     [3778] [ 0.00,  0.00]/C-1/ A 10.00   O              S       N/A          N/A   N/A
+
+
+Total # TotalTime Remaining
+----------------------------
+      5     73.75       TBF
+
+Trimester: 08C
+
+    Proposal                                                                        Title                     P.I.  Rk G Alloc   B/D Sched        Bands    Back Ends     Obs Type T-J
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+       BB261                                      The Megamaser Cosmology Project: Year 2              Braatz, Jim N/A   96.00   N/A                  K          N/A            V N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      BB261-01   1    96.00          TBF   TBF           N/A     0  96.00       N/A [3742] /Instruments(Eb,Gb,Y27, A 96.00   F              K       N/A          N/A   N/A
+
+Comment Details: [3742] /Instruments(Eb,Gb,Y27,VLBA)
+
+
+
+       BM290            A direct geometric distance to a quiescent black hole Xray binary      Miller-Jones, James N/A   10.00   N/A                  X          N/A            V N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      BM290-01   2     5.00          TBF   TBF     90    N/A     0  10.00       N/A [3712] [ 5.89,  0.59]/V404Cyg/ A 10.00   W              X       N/A 08/17/09 N/A   N/A
+
+Comment Details: [3712] [ 5.89,  0.59]/V404Cyg/Instruments(Gb,VLBA)
+
+
+
+  GBT08C-009                              A Combined GBT/PdBI CO Survey of Submm Galaxies               Smail, Ian N/A   24.00   N/A                 Ka          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08C-009-01   1     8.00          TBF   TBF           N/A     0   8.00       N/A [3514] [ 3.30,  1.08]/SMMJ1237 A  8.00   O             Ka       N/A          N/A   N/A
+
+Comment Details: [3514] [ 3.30,  1.08]/SMMJ123707.21D,SMMJ123600.10B/
+
+ GBT08C-009-02   1    16.00          TBF   TBF           N/A     0  16.00       N/A [3515] [ 3.30,  1.09]/SMMJ1236 A 16.00   O             Ka       N/A          N/A   N/A
+
+Comment Details: [3515] [ 3.30,  1.09]/SMMJ123622.65O,SMMJ123712.05B/
+
+
+
+  GBT08C-014                                          Studying the magnetar XTE J1810-197         Camilo, Fernando N/A    6.00   N/A                  S          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08C-014-01   8     0.75          TBF   TBF     15    N/A     0   6.00       N/A [3527] [ 4.75, -0.34]/XTE J181 A  6.00   W              S       N/A 06/07/09 N/A   N/A
+
+Comment Details: [3527] [ 4.75, -0.34]/XTE J1810-197/
+
+
+
+  GBT08C-023                             GLAST timing at GBT: six key radio-faint pulsars         Camilo, Fernando N/A   37.75   N/A               S800          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08C-023-01   9     3.75          TBF   TBF     14    N/A     0  33.75       N/A   [3547] [ 4.22,  0.79]/* (5)/ A 33.75   W              S       N/A 06/11/09 N/A   N/A
+ GBT08C-023-02   4     1.00          TBF   TBF     30    N/A     0   4.00       N/A [3548] [ 4.86, -0.18]/PSR J183 A  4.00   W            800       N/A 06/17/09 N/A   N/A
+
+Comment Details: [3548] [ 4.86, -0.18]/PSR J1833-1034/
+
+
+
+  GBT08C-026                               3.3 mm MUSTANG Imaging of the Vega Debris Disk            Wilner, David N/A   24.00   N/A                MBA          N/A            C N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08C-026-01   1    24.00          TBF   TBF           N/A     0  24.00       N/A    [3553] [ 4.87,  0.68]/vega/ A 24.00   O            MBA       N/A          N/A   N/A
+
+
+  GBT08C-035                                      The Megamaser Cosmology Project: Year 2              Braatz, Jim N/A   120.0   N/A                  K          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08C-035-01   1     8.00          TBF   TBF    180    N/A     0   8.00       N/A [3569] [ 3.14,  0.17]/Monitor  A  8.00   W              K       N/A 07/27/09 N/A   N/A
+
+Comment Details: [3569] [ 3.14,  0.17]/Monitor 180dy/
+
+ GBT08C-035-02   1    20.00          TBF   TBF           N/A     0  20.00       N/A [3570] [ 3.40,  0.17]/SDSS gal A 20.00   O              K       N/A          N/A   N/A
+
+Comment Details: [3570] [ 3.40,  0.17]/SDSS galaxies/
+
+ GBT08C-035-03   1    20.00          TBF   TBF           N/A     0  20.00       N/A [3746] [ 3.40,  0.17]/SDSS gal A 20.00   O              K       N/A          N/A   N/A
+
+Comment Details: [3746] [ 3.40,  0.17]/SDSS galaxies/
+
+ GBT08C-035-04   4    18.00          TBF   TBF     30    N/A     0  72.00       N/A [4043] [ 3.14,  0.17]/Monitor  A 72.00   W              K       N/A 09/29/09 N/A   N/A
+
+Comment Details: [4043] [ 3.14,  0.17]/Monitor galaxies/
+
+
+
+  GBT08C-049              Timing of Newly Discovered MSPs in the Globular Cluster NGC6517              Lynch, Ryan N/A   12.00   N/A                  S          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08C-049-01   1     6.00          TBF   TBF     45    N/A     0   6.00       N/A [4041] [ 4.72, -0.16]/NGC6517, A  6.00   W              S       N/A 07/02/09 N/A   N/A
+
+Comment Details: [4041] [ 4.72, -0.16]/NGC6517,M22/
+
+ GBT08C-049-02   1     6.00          TBF   TBF           N/A     0   6.00       N/A [4042] [ 4.72, -0.16]/NGC6517, A  6.00   O              S       N/A          N/A   N/A
+
+Comment Details: [4042] [ 4.72, -0.16]/NGC6517,M22/
+
+
+
+  GBT08C-061   Search for prebiotic molecules in the Solar-type protostar IRAS 16293-2422         Loinard, Laurent N/A    6.00   N/A                  Q          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08C-061-01   1     6.00          TBF   TBF           N/A     0   6.00       N/A [3619] [ 4.30, -0.43]/IR16293/ A  6.00   O              Q       N/A          N/A   N/A
+
+
+  GBT08C-065                                 Search for Zeeman Splitting at High Redshift               Wolfe, Art N/A   18.67   N/A                450          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08C-065-01   1    14.67          TBF   TBF           N/A     0  14.67       N/A [3624] [ 2.43,  0.25]/PKS0458- A 14.67   O            450       N/A          N/A   N/A
+
+Comment Details: [3624] [ 2.43,  0.25]/PKS0458-02/
+
+ GBT08C-065-02   1     4.00          TBF   TBF           N/A     0   4.00       N/A   [3625] [ 2.43,  0.25]/3C286/ A  4.00   O            450       N/A          N/A   N/A
+
+
+  GBT08C-070                   Deep Zpectrometer integration toward the Cloverleaf galaxy         Zonak, Stephanie N/A    7.00   N/A                 Ka          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08C-070-01   1     7.00          TBF   TBF           N/A     0   7.00       N/A [3631] [ 3.73,  0.20]/Cloverle A  7.00   O             Ka       N/A          N/A   N/A
+
+Comment Details: [3631] [ 3.73,  0.20]/Cloverleaf,CRSSJ1415.1+1140/
+
+
+
+  GBT08C-073                          A CO(1-0) Survey of Dusty Galaxies at High Redshift             Harris, Andy N/A   44.00   N/A                 Ka          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08C-073-01   1    15.20          TBF   TBF           N/A     0  15.20       N/A [3643] [ 3.30,  1.09]/SMMJ1236 A 15.20   O             Ka       N/A          N/A   N/A
+
+Comment Details: [3643] [ 3.30,  1.09]/SMMJ12360+6210 * (2)/
+
+ GBT08C-073-02   1     9.00          TBF   TBF           N/A     0   9.00       N/A [3644] [ 4.11,  1.16]/MMJ15412 A  9.00   O             Ka       N/A          N/A   N/A
+
+Comment Details: [3644] [ 4.11,  1.16]/MMJ154127+6615,MMJ154127+6616/
+
+ GBT08C-073-03   1    19.80          TBF   TBF           N/A     0  19.80       N/A [3646] [ 4.35,  0.72]/SMMJ1636 A 19.80   O             Ka       N/A          N/A   N/A
+
+Comment Details: [3646] [ 4.35,  0.72]/SMMJ16363+4055 * (3)/
+
+
+
+  GBT08C-076           Long Term Timing of 55 Recycled Pulsars in Bulge Globular Clusters            Ransom, Scott N/A   17.00   N/A                  S          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08C-076-01   1     8.00          TBF   TBF     91    N/A     0   8.00       N/A    [3651] [ 4.66, -0.43]/Ter5/ A  8.00   W              S       N/A 08/04/09 N/A   N/A
+ GBT08C-076-02   1     9.00          TBF   TBF     91    N/A     0   9.00       N/A [3652] [ 4.72, -0.48]/NGC6440, A  9.00   W              S       N/A 07/30/09 N/A   N/A
+
+Comment Details: [3652] [ 4.72, -0.48]/NGC6440,NGC6441,M28/
+
+
+
+  GBT08C-078                                             MUSTANG Observations of Cygnus A             Cotton, Bill N/A    8.50   N/A                MBA          N/A            C N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT08C-078-01   1     8.50          TBF   TBF           N/A     0   8.50       N/A [3655] [ 5.23,  0.71]/Cynus A/ A  8.50   O            MBA       N/A          N/A   N/A
+
+
+Total # TotalTime Remaining
+----------------------------
+     14    430.92       TBF
+
+Trimester: 09A
+
+    Proposal                                                                        Title                     P.I.  Rk G Alloc   B/D Sched        Bands    Back Ends     Obs Type T-J
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  GBT09A-001                                                                                                       N/A    0.00   N/A                             N/A              N/A
+
+
+  GBT09A-002                                            Discovering Milky Way HII Regions          Anderson, Loren N/A   25.00   N/A                  X          N/A            C N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-002-01   1    25.00          TBF   TBF           N/A     0  25.00       N/A  [3781] [ 4.97,  0.06]/* (10)/ B 25.00   O              X       N/A          N/A   N/A
+
+
+  GBT09A-003                             Timing the pulsars in M62, NGC 6544 and NGC 6624            Freire, Paulo N/A   12.00   N/A                  S          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-003-01   4     3.00          TBF   TBF     60    N/A     0  12.00       N/A   [3998] [ 4.69, -0.48]/* (8)/ A 12.00   W              S       N/A 07/02/09 N/A   N/A
+
+
+  GBT09A-004           Search for HI 21cm absorption in a complete sample of DLAs at z>2.            Gupta, Neeraj N/A   30.00   N/A                342          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-004-01   1    10.00          TBF T TBF           N/A     0  10.00       N/A [3786] [ 2.26,  0.35]/J0839+20 B 10.00   O            342       N/A          N/A   N/A
+
+Comment Details: [3786] [ 2.26,  0.35]/J0839+2002/Night-time Flag(True)
+
+ GBT09A-004-02   1    10.00          TBF T TBF           N/A     0  10.00       N/A [3787] [ 2.32,  0.43]/J0852+24 B 10.00   O            342       N/A          N/A   N/A
+
+Comment Details: [3787] [ 2.32,  0.43]/J0852+2431/Night-time Flag(True)
+
+ GBT09A-004-03   1    10.00          TBF T TBF           N/A     0  10.00       N/A [3788] [ 3.25,  0.88]/J1223+50 B 10.00   O            342       N/A          N/A   N/A
+
+Comment Details: [3788] [ 3.25,  0.88]/J1223+5037/Night-time Flag(True)
+
+
+
+  GBT09A-007                                          Straightening Out the Galactic Warp             Lockman, Jay N/A   30.00   N/A                  L          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-007-01   1    17.50          TBF   TBF           N/A     0  17.50       N/A   [3797] [ 5.08,  0.14]/* (5)/ B 17.50   O              L       N/A          N/A   N/A
+ GBT09A-007-02   1    12.50          TBF   TBF           N/A     0  12.50       N/A   [3798] [ 4.23,  0.29]/* (6)/ B 12.50   O              L       N/A          N/A   N/A
+
+
+  GBT09A-012  Study of the ISM conditions in normal star forming galaxies at $z \sim 1.5$           Carilli, Chris N/A   25.35   N/A                  Q          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-012-01   1     7.15          TBF   TBF           N/A     0   7.15       N/A   [3810] [ 3.30,  1.09]/* (5)/ A  7.15   O              Q       N/A          N/A   N/A
+ GBT09A-012-02   1     0.00          TBF   TBF           N/A     0   0.00       N/A   [3811] [ 3.30,  1.09]/* (5)/ A  0.00   O              Q       N/A          N/A   N/A
+ GBT09A-012-03   1     5.20          TBF   TBF           N/A     0   5.20       N/A   [3812] [ 3.30,  1.09]/* (5)/ A  5.20   O              Q       N/A          N/A   N/A
+ GBT09A-012-04   1    13.00          TBF   TBF           N/A     0  13.00       N/A   [3814] [ 3.30,  1.09]/* (5)/ A 13.00   O              Q       N/A          N/A   N/A
+
+
+  GBT09A-021 SO2: A molecule with maser emission and line absorption line in cold dark cl         Cernicharo, Jose N/A    5.00   N/A                 Ku          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-021-01   1     5.00          TBF   TBF           N/A     0   5.00       N/A   [3843] [ 1.21,  0.38]/* (6)/ B  5.00   O             Ku       N/A          N/A   N/A
+
+
+  GBT09A-025             The spin temperature of high redshift damped Lyman-alpha systems          Kanekar, Nissim N/A   25.02   N/A                450          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-025-01   1     1.40          TBF T TBF           N/A     0   1.40       N/A [3999] [ 2.87, -0.53]/PKS1055- A  1.40   O            450       N/A          N/A   N/A
+
+Comment Details: [3999] [ 2.87, -0.53]/PKS1055-301/Night-time Flag(True)
+
+ GBT09A-025-02   1     3.40          TBF T TBF           N/A     0   3.40       N/A [4000] [ 1.08, -0.77]/CTQ247 0 A  3.40   O            450       N/A          N/A   N/A
+
+Comment Details: [4000] [ 1.08, -0.77]/CTQ247 0405-443/Night-time Flag(True)
+
+ GBT09A-025-03   1     1.40          TBF T TBF           N/A     0   1.40       N/A [4001] [ 3.29, -0.18]/PKS1230- A  1.40   O            450       N/A          N/A   N/A
+
+Comment Details: [4001] [ 3.29, -0.18]/PKS1230-101/Night-time Flag(True)
+
+ GBT09A-025-04   1     4.42          TBF T TBF           N/A     0   4.42       N/A [4002] [ 3.14,  0.02]/TXS1157+ A  4.42   O            450       N/A          N/A   N/A
+
+Comment Details: [4002] [ 3.14,  0.02]/TXS1157+014/Night-time Flag(True)
+
+ GBT09A-025-05   1     6.40          TBF T TBF           N/A     0   6.40       N/A [4003] [ 1.00, -0.37]/PKSB0347 A  6.40   O            450       N/A          N/A   N/A
+
+Comment Details: [4003] [ 1.00, -0.37]/PKSB0347-211/Night-time Flag(True)
+
+ GBT09A-025-06   1     1.40          TBF T TBF           N/A     0   1.40       N/A [4004] [ 3.90,  0.87]/TXS1452+ A  1.40   O            450       N/A          N/A   N/A
+
+Comment Details: [4004] [ 3.90,  0.87]/TXS1452+502/Night-time Flag(True)
+
+ GBT09A-025-07   1     1.40          TBF T TBF           N/A     0   1.40       N/A [4005] [ 4.69,  1.01]/TXS1755+ A  1.40   O            450       N/A          N/A   N/A
+
+Comment Details: [4005] [ 4.69,  1.01]/TXS1755+578/Night-time Flag(True)
+
+ GBT09A-025-08   1     1.40          TBF T TBF           N/A     0   1.40       N/A [4006] [ 4.94,  0.70]/TXS1850+ A  1.40   O            450       N/A          N/A   N/A
+
+Comment Details: [4006] [ 4.94,  0.70]/TXS1850+402/Night-time Flag(True)
+
+ GBT09A-025-09   1     1.40          TBF T TBF           N/A     0   1.40       N/A [4007] [ 3.22,  0.58]/QSO1215+ A  1.40   O            450       N/A          N/A   N/A
+
+Comment Details: [4007] [ 3.22,  0.58]/QSO1215+333/Night-time Flag(True)
+
+ GBT09A-025-10   1     2.40          TBF T TBF           N/A     0   2.40       N/A [4008] [ 1.68,  0.68]/TXS0620+ A  2.40   O            450       N/A          N/A   N/A
+
+Comment Details: [4008] [ 1.68,  0.68]/TXS0620+389/Night-time Flag(True)
+
+
+
+  GBT09A-034                 21 cm HI Observations of intermediate-z Clusters of Galaxies   Garcia-Marin, Macarena N/A   17.60   N/A               1070          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-034-01   1     2.20          TBF T TBF           N/A     0   2.20       N/A [3867] [ 0.29,  0.01]/RS30/Nig B  2.20   O           1070       N/A          N/A   N/A
+
+Comment Details: [3867] [ 0.29,  0.01]/RS30/Night-time Flag(True)
+
+ GBT09A-034-02   1     2.20          TBF T TBF           N/A     0   2.20       N/A [3868] [ 0.40,  0.01]/RS38/Nig B  2.20   O           1070       N/A          N/A   N/A
+
+Comment Details: [3868] [ 0.40,  0.01]/RS38/Night-time Flag(True)
+
+ GBT09A-034-03   1     2.20          TBF T TBF           N/A     0   2.20       N/A [3869] [ 0.60, -0.01]/RS56/Nig B  2.20   O           1070       N/A          N/A   N/A
+
+Comment Details: [3869] [ 0.60, -0.01]/RS56/Night-time Flag(True)
+
+ GBT09A-034-04   1     2.20          TBF T TBF           N/A     0   2.20       N/A [3870] [ 0.72, -0.01]/RS59/Nig B  2.20   O           1070       N/A          N/A   N/A
+
+Comment Details: [3870] [ 0.72, -0.01]/RS59/Night-time Flag(True)
+
+ GBT09A-034-05   1     2.20          TBF T TBF           N/A     0   2.20       N/A [3871] [ 0.80,  0.02]/RS62/Nig B  2.20   O           1070       N/A          N/A   N/A
+
+Comment Details: [3871] [ 0.80,  0.02]/RS62/Night-time Flag(True)
+
+ GBT09A-034-06   1     2.20          TBF T TBF           N/A     0   2.20       N/A [3872] [ 0.81, -0.02]/RS63/Nig B  2.20   O           1070       N/A          N/A   N/A
+
+Comment Details: [3872] [ 0.81, -0.02]/RS63/Night-time Flag(True)
+
+ GBT09A-034-07   1     2.20          TBF T TBF           N/A     0   2.20       N/A [3873] [ 0.84,  0.02]/RS65/Nig B  2.20   O           1070       N/A          N/A   N/A
+
+Comment Details: [3873] [ 0.84,  0.02]/RS65/Night-time Flag(True)
+
+ GBT09A-034-08   1     2.20          TBF T TBF           N/A     0   2.20       N/A [3874] [ 0.91,  0.01]/RS67/Nig B  2.20   O           1070       N/A          N/A   N/A
+
+Comment Details: [3874] [ 0.91,  0.01]/RS67/Night-time Flag(True)
+
+
+
+  GBT09A-038                                           Continued Timing of Pulsars in M22              Lynch, Ryan N/A    4.00   N/A                  S          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-038-01   8     0.50          TBF   TBF     30    N/A     0   4.00       N/A [3880] [ 4.87, -0.42]/M22/adde A  4.00   W              S       N/A          N/A   N/A
+
+Comment Details: [3880] [ 4.87, -0.42]/M22/added to 8C49/
+
+
+
+  GBT09A-040 Probing the Gas Properties of Star-Forming Galaxies at High-z via Strong Len           Swinbank, Mark N/A   60.00   N/A                 Ka          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-040-01   1    40.00          TBF   TBF           N/A     0  40.00       N/A [3882] [ 3.26,  1.02]/A2218arc A 40.00   O             Ka       N/A          N/A   N/A
+
+Comment Details: [3882] [ 3.26,  1.02]/A2218arc z=2.52 * (3)/
+
+ GBT09A-040-02   1    20.00          TBF   TBF           N/A     0  20.00       N/A [3883] [ 3.26,  1.02]/A2218arc A 20.00   O             Ka       N/A          N/A   N/A
+
+Comment Details: [3883] [ 3.26,  1.02]/A2218arc z=2.52 * (3)/
+
+
+
+  GBT09A-046                A Search for Faint Extended HI in Nearby Galaxy Groups - copy         Chynoweth, Katie N/A   53.88   N/A                  L          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-046-01   1    15.75          TBF   TBF           N/A     0  15.75       N/A [3894] [ 3.30,  0.67]/CanesIa, B 15.75   O              L       N/A          N/A   N/A
+
+Comment Details: [3894] [ 3.30,  0.67]/CanesIa,CanesIb/LST Exclude Low(15.0),LST Exclude Hi(21.0)
+
+ GBT09A-046-02   1    33.00          TBF   TBF           N/A     0  33.00       N/A     [3895] [ 0.05, -0.41]/N45/ B 33.00   O              L       N/A          N/A   N/A
+ GBT09A-046-03   1     5.13          TBF   TBF           N/A     0   5.13       N/A [3896] [ 0.48,  0.53]/N672a,N6 B  5.13   O              L       N/A          N/A   N/A
+
+Comment Details: [3896] [ 0.48,  0.53]/N672a,N672b/
+
+ GBT09A-046-04   1     0.00          TBF   TBF           N/A     0   0.00       N/A     [3897] [ 2.60,  1.21]/M81/ B  0.00   O              L       N/A          N/A   N/A
+
+
+  GBT09A-055             A New Approach to Discovering Highly Obscured Radio-Loud Quasars             Stocke, John N/A   10.40   N/A         6008001070          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-055-01   1     1.73          TBF T TBF           N/A     0   1.73       N/A [3908] [ 2.76,  0.69]/B2 1030+ B  1.73   O            600       N/A          N/A   N/A
+
+Comment Details: [3908] [ 2.76,  0.69]/B2 1030+39/Night-time Flag(True)
+
+ GBT09A-055-02   1     4.77          TBF T TBF           N/A     0   4.77       N/A [3909] [ 2.85,  0.77]/4C+24.19 B  4.77   O            800       N/A          N/A   N/A
+
+Comment Details: [3909] [ 2.85,  0.77]/4C+24.19 * (3)/Night-time Flag(True)
+
+ GBT09A-055-03   1     1.30          TBF T TBF           N/A     0   1.30       N/A [3910] [ 1.56,  0.05]/PKS 0001 B  1.30   O           1070       N/A          N/A   N/A
+
+Comment Details: [3910] [ 1.56,  0.05]/PKS 0001-11 * (3)/Night-time Flag(True)
+
+ GBT09A-055-04   1     2.60          TBF T TBF           N/A     0   2.60       N/A [3911] [ 1.56,  0.05]/PKS 0001 B  2.60   O           1070       N/A          N/A   N/A
+
+Comment Details: [3911] [ 1.56,  0.05]/PKS 0001-11 * (3)/Night-time Flag(True)
+
+
+
+  GBT09A-058               Confirmation Observations of New Pulsars Discovered by the PSC            Rosen, Rachel N/A   10.00   N/A             342800          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-058-01   1     2.00          TBF   TBF           N/A     0   2.00       N/A [3917] [ 2.09, -0.26]/New Puls A  2.00   O            342       N/A          N/A   N/A
+
+Comment Details: [3917] [ 2.09, -0.26]/New Pulsars - unknown/
+
+ GBT09A-058-02   1     8.00          TBF   TBF           N/A     0   8.00       N/A [4023] [ 2.09, -0.26]/New Puls A  8.00   O            800       N/A          N/A   N/A
+
+Comment Details: [4023] [ 2.09, -0.26]/New Pulsars - unknown/
+
+
+
+  GBT09A-062                          New pulsar identifications of TeV gamma-ray sources         Camilo, Fernando N/A   10.55   N/A                  S          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-062-01   1    10.55          TBF   TBF           N/A     0  10.55       N/A [3927] [ 4.87, -0.12]/J1837-06 B 10.55   O              S       N/A          N/A   N/A
+
+Comment Details: [3927] [ 4.87, -0.12]/J1837-069/
+
+
+
+  GBT09A-070             Calibrating the Transmitted Radar Signal from the LRO Spacecraft            Butler, Bryan N/A   10.00   N/A                  S          N/A            R N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-070-01   1    10.00          TBF   TBF           N/A     0  10.00       N/A     [3935] [ 0.00,  0.00]/LRO/ A 10.00   O              S       N/A          N/A   N/A
+
+
+  GBT09A-081                              A search for giant pulses in interpulse pulsars         Kondratiev, Vlad N/A    7.00   N/A                342          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-081-01   1     3.50          TBF   TBF           N/A     0   3.50       N/A [3967] [ 2.67,  0.93]/PSRJ1012 B  3.50   O            342       N/A          N/A   N/A
+
+Comment Details: [3967] [ 2.67,  0.93]/PSRJ1012+5307/
+
+ GBT09A-081-02   1     3.50          TBF   TBF           N/A     0   3.50       N/A [3969] [ 5.86, -0.11]/PSRJ2124 B  3.50   O            342       N/A          N/A   N/A
+
+Comment Details: [3969] [ 5.86, -0.11]/PSRJ2124-3358,PSRJ2322+2057/LST Exclude Low(15.0),LST Exclude Hi(21.0)
+
+
+
+  GBT09A-092                                           Maintenance Observing with the GBT       Heatherly, Sue Ann N/A   16.00   N/A            342800L          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-092-01   1     0.00          TBF   TBF           N/A     0   0.00       N/A [4200] [ 3.14,  0.00]/All Sky  B  0.00   O            342       N/A          N/A   N/A
+
+Comment Details: [4200] [ 3.14,  0.00]/All Sky Drift Scans/
+
+ GBT09A-092-02   1     8.00          TBF   TBF           N/A     0   8.00       N/A [4210] [ 3.14,  0.00]/All Sky  B  8.00   O            800       N/A          N/A   N/A
+
+Comment Details: [4210] [ 3.14,  0.00]/All Sky Drift Scans/
+
+ GBT09A-092-03   1     8.00          TBF   TBF           N/A     0   8.00       N/A [4211] [ 3.14,  0.00]/All Sky  B  8.00   O              L       N/A          N/A   N/A
+
+Comment Details: [4211] [ 3.14,  0.00]/All Sky Drift Scans/
+
+
+
+  GBT09A-093                                              Educational Projects on the GBT       Heatherly, Sue Ann N/A   34.00   N/A          LCX342800          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-093-01   1    12.00          TBF   TBF           N/A     0  12.00       N/A [4201] [ 0.72,  0.04]/Galactic A 12.00   O            LCX       N/A          N/A   N/A
+
+Comment Details: [4201] [ 0.72,  0.04]/Galactic Plane,Orion/
+
+ GBT09A-093-02   1    10.00          TBF   TBF           N/A     0  10.00       N/A [4202] [ 0.00,  0.00]/followup A 10.00   O         342800       N/A          N/A   N/A
+
+Comment Details: [4202] [ 0.00,  0.00]/followup/
+
+ GBT09A-093-03   1    12.00          TBF   TBF           N/A     0  12.00       N/A [4203] [ 0.72,  0.04]/Galactic A 12.00   O            LCX       N/A          N/A   N/A
+
+Comment Details: [4203] [ 0.72,  0.04]/Galactic Plane,Orion/
+
+
+
+  GBT09A-094                             NRAO 2009 CV/GB Summer Student Observing Project             Mangum, Jeff N/A   20.00   N/A             LSCXKu          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-094-01   1     4.00          TBF   TBF           N/A     0   4.00       N/A [4204] [ 1.04, -0.06]/C2007W1B A  4.00   O         LSCXKu       N/A          N/A   N/A
+
+Comment Details: [4204] [ 1.04, -0.06]/C2007W1Boattini/
+
+ GBT09A-094-02   1     6.00          TBF   TBF           N/A     0   6.00       N/A  [4205] [ 3.40,  0.19]/* (15)/ A  6.00   O         LSCXKu       N/A          N/A   N/A
+ GBT09A-094-03   1     3.00          TBF   TBF           N/A     0   3.00       N/A [4206] [ 5.43,  1.09]/DR21,L11 A  3.00   O         LSCXKu       N/A          N/A   N/A
+
+Comment Details: [4206] [ 5.43,  1.09]/DR21,L1157,L1228/
+
+ GBT09A-094-04   1     5.00          TBF   TBF           N/A     0   5.00       N/A [4207] [ 5.47,  0.74]/NGC7027, A  5.00   O         LSCXKu       N/A          N/A   N/A
+
+Comment Details: [4207] [ 5.47,  0.74]/NGC7027,DR21/
+
+ GBT09A-094-05   1     2.00          TBF T TBF           N/A     0   2.00       N/A [4208] [ 4.73, -0.15]/B335,L16 A  2.00   O         LSCXKu       N/A          N/A   N/A
+
+Comment Details: [4208] [ 4.73, -0.15]/B335,L1689S/Night-time Flag(True)
+
+
+
+  GBT09A-095                                    Searching for Variability in PSR J0348+04              Lynch, Ryan N/A    6.00   N/A               342S          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-095-01   1     6.00          TBF   TBF           N/A     0   6.00       N/A [4212] [ 1.00,  0.08]/J0348+04 A  6.00   O           342S       N/A          N/A   N/A
+
+Comment Details: [4212] [ 1.00,  0.08]/J0348+04/
+
+
+
+  GBT09A-096                        Observations for the 5th NAIC/NRAO Single Dish School            O'Neil, Karen N/A   18.50   N/A                XLS          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09A-096-01   1     4.00          TBF   TBF           N/A     0   4.00       N/A [4273] [ 5.47,  0.74]/NGC 7027 A  4.00   O              X       N/A          N/A   N/A
+
+Comment Details: [4273] [ 5.47,  0.74]/NGC 7027,DR 21/
+
+ GBT09A-096-02   1     3.50          TBF   TBF           N/A     0   3.50       N/A   [4274] [ 1.49,  0.87]/3C147/ A  3.50   O              L       N/A          N/A   N/A
+ GBT09A-096-03   1     3.00          TBF   TBF           N/A     0   3.00       N/A  [4275] [ 0.13,  0.00]/Pulsar/ A  3.00   O              S       N/A          N/A   N/A
+ GBT09A-096-04   1     2.00          TBF   TBF           N/A     0   2.00       N/A [4276] [ 0.13,  0.00]/Galaxies A  2.00   O              L       N/A          N/A   N/A
+
+Comment Details: [4276] [ 0.13,  0.00]/Galaxies/
+
+ GBT09A-096-05   1     3.00          TBF   TBF           N/A     0   3.00       N/A [4277] [ 0.13,  0.00]/Continuu A  3.00   O              L       N/A          N/A   N/A
+
+Comment Details: [4277] [ 0.13,  0.00]/Continuum Source/
+
+ GBT09A-096-06   1     3.00          TBF   TBF           N/A     0   3.00       N/A [4278] [ 0.13,  0.00]/Milky Wa A  3.00   O              L       N/A          N/A   N/A
+
+Comment Details: [4278] [ 0.13,  0.00]/Milky Way (non-GC)/
+
+
+
+Total # TotalTime Remaining
+----------------------------
+     22    430.30       TBF
+
+Trimester: 09B
+
+    Proposal                                                                        Title                     P.I.  Rk G Alloc   B/D Sched        Bands    Back Ends     Obs Type T-J
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+       BB268                                                 Detecting the nucleus of M31      Brunthaler, Andreas N/A   32.00   N/A                  C          N/A            V N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      BB268-01   1    32.00          TBF   TBF           N/A     0  32.00       N/A [4246] [ 0.26,  0.72]/* (5)/In A 32.00   F              C       N/A          N/A   N/A
+
+Comment Details: [4246] [ 0.26,  0.72]/* (5)/Instruments(Eb,Gb,Y27,VLBA)
+
+
+
+       BM305 Resolving the Radio Emission of the Luminous SMM Galaxy GOODS 850-16 Resolvi        Momjian, Emmanuel N/A    8.00   N/A                  L          N/A            V N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      BM305-01   1     8.00          TBF   TBF           N/A     0   8.00       N/A [4247] [ 3.86,  1.08]/GOODS850 A  8.00   F              L       N/A          N/A   N/A
+
+Comment Details: [4247] [ 3.86,  1.08]/GOODS850-16/Instruments(Gb,Y27,VLBA)
+
+
+
+       BM306                            Imaging the interacting young binary V773 Tau A/B        Mioduszewski, Amy N/A    6.00   N/A                  X          N/A            V N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      BM306-01   1     6.00          TBF   TBF           N/A     0   6.00       N/A [4248] [ 0.52,  0.49]/V773TauA A  6.00   F              X       N/A          N/A   N/A
+
+Comment Details: [4248] [ 0.52,  0.49]/V773TauA on6/17or8/7or9/27/Instruments(Eb,Gb,Y27,VLBA)
+
+
+
+       BP157                      Confirmation of Large Coronal Loops on an RS CVN Binary        Peterson, William N/A   40.00   N/A                 Ku          N/A            V N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      BP157-01   1    10.00          TBF   TBF           N/A     0  10.00       N/A [4249] [ 1.83,  0.57]/UXArieti A 10.00   F             Ku       N/A          N/A   N/A
+
+Comment Details: [4249] [ 1.83,  0.57]/UXArietis * (4)/Instruments(Eb,Gb,VLBA)
+
+      BP157-02   1    10.00          TBF T TBF           N/A     0  10.00       N/A [4291] [ 1.83,  0.57]/UXArieti A 10.00   F             Ku       N/A          N/A   N/A
+
+Comment Details: [4291] [ 1.83,  0.57]/UXArietis * (4)/Instruments(Eb,Gb,VLBA),Night-time Flag(True)
+
+      BP157-03   1    10.00          TBF T TBF           N/A     0  10.00       N/A [4292] [ 1.83,  0.57]/UXArieti A 10.00   F             Ku       N/A          N/A   N/A
+
+Comment Details: [4292] [ 1.83,  0.57]/UXArietis * (4)/Instruments(Eb,Gb,VLBA),Night-time Flag(True)
+
+      BP157-04   1    10.00          TBF T TBF           N/A     0  10.00       N/A [4293] [ 1.83,  0.57]/UXArieti A 10.00   F             Ku       N/A          N/A   N/A
+
+Comment Details: [4293] [ 1.83,  0.57]/UXArietis * (4)/Instruments(Eb,Gb,VLBA),Night-time Flag(True)
+
+
+
+  GBT09B-001                                Searching for Star Formation in the 3 kpc Arm               Bania, Tom N/A   50.00   N/A                  X          N/A            C N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-001-01   1    50.00          TBF   TBF           N/A     0  50.00       N/A  [4055] [ 4.65, -0.49]/* (10)/ A 50.00   O              X       N/A          N/A   N/A
+
+
+  GBT09B-002                                            Discovering Milky Way HII Regions          Anderson, Loren N/A   50.00   N/A                  X          N/A            C N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-002-01   1    50.00          TBF   TBF           N/A     0  50.00       N/A [4056] [ 4.87, -0.12]/HII 01,H A 50.00   O              X       N/A          N/A   N/A
+
+Comment Details: [4056] [ 4.87, -0.12]/HII 01,HII 02,HII 03,HII 04/
+
+
+
+  GBT09B-003         On the Trail of the Enigmatic Millisecond Binary Pulsar PSR J1723-28     Crawford, Fronefield N/A   11.50   N/A            800342S          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-003-01   1     3.50          TBF   TBF           N/A     0   3.50       N/A [4057] [ 4.55, -0.50]/PSR J172 B  3.50   O            800       N/A          N/A   N/A
+
+Comment Details: [4057] [ 4.55, -0.50]/PSR J1723-28/
+
+ GBT09B-003-02   1     3.50          TBF   TBF           N/A     0   3.50       N/A [4058] [ 4.55, -0.50]/PSR J172 B  3.50   O            342       N/A          N/A   N/A
+
+Comment Details: [4058] [ 4.55, -0.50]/PSR J1723-28/
+
+ GBT09B-003-03   1     4.50          TBF   TBF           N/A     0   4.50       N/A [4059] [ 4.55, -0.50]/PSR J172 B  4.50   O              S       N/A          N/A   N/A
+
+Comment Details: [4059] [ 4.55, -0.50]/PSR J1723-28/
+
+
+
+  GBT09B-004                                     Noise and Signal in Pulsar Scintillation              Gwinn, Carl N/A   11.00   N/A                342          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-004-01   1     5.50          TBF   TBF           N/A     0   5.50       N/A [4060] [ 2.26,  0.11]/PSR B083 B  5.50   O            342       N/A          N/A   N/A
+
+Comment Details: [4060] [ 2.26,  0.11]/PSR B0834+06/
+
+ GBT09B-004-02   1     5.50          TBF T TBF           N/A     0   5.50       N/A [4197] [ 3.03,  0.28]/PSR B113 B  5.50   O            342       N/A          N/A   N/A
+
+Comment Details: [4197] [ 3.03,  0.28]/PSR B1133+16/Night-time Flag(True)
+
+
+
+  GBT09B-005    A Search for HI Absorption Toward Red AGN in Non-Elliptical Host Galaxies             Stocke, John N/A   19.40   N/A         6008001070          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-005-01   1     1.73          TBF T TBF           N/A     0   1.73       N/A [4061] [ 2.76,  0.69]/B2 1030+ A  1.73   O            600       N/A          N/A   N/A
+
+Comment Details: [4061] [ 2.76,  0.69]/B2 1030+39/Night-time Flag(True)
+
+ GBT09B-005-02   1     6.36          TBF T TBF           N/A     0   6.36       N/A [4062] [ 2.67,  0.31]/* (7)/Ni A  6.36   O            800       N/A          N/A   N/A
+
+Comment Details: [4062] [ 2.67,  0.31]/* (7)/Night-time Flag(True)
+
+ GBT09B-005-03   1     1.30          TBF T TBF           N/A     0   1.30       N/A [4063] [ 1.56,  0.05]/PKS 0001 A  1.30   O           1070       N/A          N/A   N/A
+
+Comment Details: [4063] [ 1.56,  0.05]/PKS 0001-11 * (3)/Night-time Flag(True)
+
+ GBT09B-005-04   1     4.77          TBF T TBF           N/A     0   4.77       N/A [4064] [ 2.67,  0.31]/* (7)/Ni A  4.77   O            800       N/A          N/A   N/A
+
+Comment Details: [4064] [ 2.67,  0.31]/* (7)/Night-time Flag(True)
+
+ GBT09B-005-05   1     3.90          TBF T TBF           N/A     0   3.90       N/A [4065] [ 2.16,  0.03]/* (5)/Ni A  3.90   O           1070       N/A          N/A   N/A
+
+Comment Details: [4065] [ 2.16,  0.03]/* (5)/Night-time Flag(True)
+
+ GBT09B-005-06   1     1.30          TBF T TBF           N/A     0   1.30       N/A [4066] [ 2.16,  0.03]/* (5)/Ni A  1.30   O           1070       N/A          N/A   N/A
+
+Comment Details: [4066] [ 2.16,  0.03]/* (5)/Night-time Flag(True)
+
+
+
+  GBT09B-006                                               Three newly discovered pulsars         Camilo, Fernando N/A   21.00   N/A                SCL          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-006-01  12     1.25          TBF   TBF     30    N/A     0  15.00       N/A   [4067] [ 4.99,  0.07]/* (7)/ A 15.00   W              S       N/A 06/12/09 N/A   N/A
+ GBT09B-006-02   1     2.00          TBF   TBF           N/A     0   2.00       N/A [4068] [ 4.89, -0.09]/PSR J184 A  2.00   O              C       N/A          N/A   N/A
+
+Comment Details: [4068] [ 4.89, -0.09]/PSR J1841-0457,PSR J1841-0457/
+
+ GBT09B-006-03   1     1.00          TBF   TBF           N/A     0   1.00       N/A   [4069] [ 5.03,  0.13]/* (5)/ A  1.00   O              L       N/A          N/A   N/A
+ GBT09B-006-04   4     0.75          TBF   TBF 1,1,2,    N/A     0   3.00       N/A [4070] [ 4.79, -0.26]/PSR J181 A  3.00   W              S       N/A 07/01/09 N/A   N/A
+
+Comment Details: [4070] [ 4.79, -0.26]/PSR J1818-1502 * (3)/
+
+
+
+  GBT09B-008                               Confirmation of Radio Pulsar Candidates in M31   Rubio-Herrera, Eduardo N/A   18.00   N/A                342          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-008-01   2     9.00          TBF   TBF      2    N/A     0  18.00       N/A [4071] [ 0.19,  0.72]/M31R001  A 18.00   W            342       N/A 07/01/09 N/A   N/A
+
+Comment Details: [4071] [ 0.19,  0.72]/M31R001 * (4)/
+
+
+
+  GBT09B-010                 Surveying Cyanoformaldehyde (CNCHO) in Galactic Environments            Remijan, Tony N/A   22.00   N/A                  X          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-010-01   1     4.00          TBF   TBF           N/A     0   4.00       N/A [4080] [ 4.84, -0.18]/grB2(M), B  4.00   O              X       N/A          N/A   N/A
+
+Comment Details: [4080] [ 4.84, -0.18]/grB2(M),SgrB2(S),G34.3+0.2,W51/
+
+ GBT09B-010-02   1     4.00          TBF   TBF           N/A     0   4.00       N/A [4191] [ 4.33, -0.43]/IRS16293 B  4.00   O              X       N/A          N/A   N/A
+
+Comment Details: [4191] [ 4.33, -0.43]/IRS16293-2422/
+
+ GBT09B-010-03   1    14.00          TBF   TBF           N/A     0  14.00       N/A [4192] [ 1.26,  0.25]/OrionKL, A 14.00   O              X       N/A          N/A   N/A
+
+Comment Details: [4192] [ 1.26,  0.25]/OrionKL,Bar,TMC-1CP,NH3,L1448C/LST Exclude Low(15.0),LST Exclude Hi(21.0)
+
+
+
+  GBT09B-011                         HI Mass Determinations of Compact Groups of Galaxies            Whelan, David N/A   11.00   N/A                  L          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-011-01   1    11.00          TBF   TBF           N/A     0  11.00       N/A [4083] [ 3.33,  0.42]/* (6)/LS B 11.00   O              L       N/A          N/A   N/A
+
+Comment Details: [4083] [ 3.33,  0.42]/* (6)/LST Include Low(9.0),LST Include Hi(14.0)
+
+
+
+  GBT09B-012                                     Relativistic Probes of the WHIM  (redux)           Rudnick, Larry N/A   71.60   N/A                  L          N/A            C N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-012-01   1    44.80          TBF   TBF           N/A     0  44.80       N/A   [4086] [ 2.21,  0.20]/* (6)/ A 44.80   O              L       N/A          N/A   N/A
+ GBT09B-012-02   1    26.80          TBF   TBF           N/A     0  26.80       N/A [4087] [ 3.25,  0.68]/A1367,N4 A 26.80   O              L       N/A          N/A   N/A
+
+Comment Details: [4087] [ 3.25,  0.68]/A1367,N45,NGC6251,HB13/
+
+ GBT09B-012-03   1     0.01          TBF   TBF           N/A     0   0.01       N/A   [4088] [ 2.21,  0.20]/* (6)/ A  0.01   O              L       N/A          N/A   N/A
+
+
+  GBT09B-013 A search for luminous H2O maser emission in lensed, FIR luminous QSOs at z~4          Aravena, Manuel N/A   30.00   N/A                  C          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-013-01   1    15.00          TBF   TBF           N/A     0  15.00       N/A [4089] [ 6.12,  0.34]/PSSJ2322 B 15.00   O              C       N/A          N/A   N/A
+
+Comment Details: [4089] [ 6.12,  0.34]/PSSJ2322/
+
+ GBT09B-013-02   1    15.00          TBF   TBF           N/A     0  15.00       N/A [4090] [ 2.23,  0.92]/APM08279 A 15.00   O              C       N/A          N/A   N/A
+
+Comment Details: [4090] [ 2.23,  0.92]/APM08279/
+
+
+
+  GBT09B-014                                            GBT radio monitoring of magnetars          Edel, Stanislav N/A    4.50   N/A                  S          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-014-01   1     4.50          TBF   TBF           N/A     0   4.50       N/A   [4091] [ 3.88,  0.24]/* (9)/ B  4.50   O              S       N/A          N/A   N/A
+
+
+  GBT09B-015  Chemical complexity in the nuclei of galaxies. The nucleus of the Milky way           Armijos, Jairo N/A   40.00   N/A                 Ku          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-015-01   1    20.00          TBF   TBF           N/A     0  20.00       N/A [4092] [ 4.65, -0.51]/MC-0.02, A 20.00   O             Ku       N/A          N/A   N/A
+
+Comment Details: [4092] [ 4.65, -0.51]/MC-0.02,MC-0.11,MC+0.693/
+
+ GBT09B-015-02   1    20.00          TBF   TBF           N/A     0  20.00       N/A [4282] [ 4.65, -0.51]/MC-0.02, B 20.00   O             Ku       N/A          N/A   N/A
+
+Comment Details: [4282] [ 4.65, -0.51]/MC-0.02,MC-0.11,MC+0.693/
+
+
+
+  GBT09B-016             Searching for low column density HI around NGC 2997 and NGC 6946             Pisano, D.J. N/A   20.00   N/A                  L          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-016-01   1    10.00          TBF   TBF           N/A     0  10.00       N/A [4093] [ 2.56, -0.54]/NGC2997/ A 10.00   O              L       N/A          N/A   N/A
+ GBT09B-016-02   1    10.00          TBF   TBF           N/A     0  10.00       N/A [4094] [ 5.39,  1.05]/NGC 6946 A 10.00   O              L       N/A          N/A   N/A
+
+Comment Details: [4094] [ 5.39,  1.05]/NGC 6946/
+
+
+
+  GBT09B-017                     Are the Arches and Quintuplet Clusters Pulsar Nurseries?            Deneva, Julia N/A   20.00   N/A                 CS          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-017-01   1     7.00          TBF   TBF           N/A     0   7.00       N/A [4095] [ 4.65, -0.50]/Arches c B  7.00   O              C       N/A          N/A   N/A
+
+Comment Details: [4095] [ 4.65, -0.50]/Arches cluster/
+
+ GBT09B-017-02   1     7.00          TBF   TBF           N/A     0   7.00       N/A [4096] [ 4.65, -0.50]/Quintupl B  7.00   O              C       N/A          N/A   N/A
+
+Comment Details: [4096] [ 4.65, -0.50]/Quintuplet cluster/
+
+ GBT09B-017-03   1     3.00          TBF   TBF           N/A     0   3.00       N/A [4097] [ 4.65, -0.50]/Arches c B  3.00   O              S       N/A          N/A   N/A
+
+Comment Details: [4097] [ 4.65, -0.50]/Arches cluster/
+
+ GBT09B-017-04   1     3.00          TBF   TBF           N/A     0   3.00       N/A [4098] [ 4.65, -0.50]/Quintupl B  3.00   O              S       N/A          N/A   N/A
+
+Comment Details: [4098] [ 4.65, -0.50]/Quintuplet cluster/
+
+
+
+  GBT09B-018 Two Very Dispersed Pulsars Near SgrA*: Continued Timing and Spectrum Estimat            Deneva, Julia N/A   16.25   N/A               SXKu          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-018-01   4     1.75          TBF   TBF 1,2,3,    N/A     0   7.00       N/A [4177] [ 4.65, -0.50]/J1746-28 B  7.00   W              S       N/A 06/17/09 N/A   N/A
+
+Comment Details: [4177] [ 4.65, -0.50]/J1746-2850I * (3)/
+
+ GBT09B-018-02   1     2.00          TBF   TBF           N/A     0   2.00       N/A [4178] [ 4.65, -0.50]/J1746-28 B  2.00   O              X       N/A          N/A   N/A
+
+Comment Details: [4178] [ 4.65, -0.50]/J1746-2850I,J1746-2850I/
+
+ GBT09B-018-03   1     2.00          TBF   TBF           N/A     0   2.00       N/A [4179] [ 4.65, -0.50]/J1746-28 B  2.00   O             Ku       N/A          N/A   N/A
+
+Comment Details: [4179] [ 4.65, -0.50]/J1746-2850I,J1746-2850I/
+
+ GBT09B-018-04   3     1.75          TBF   TBF     30    N/A     0   5.25       N/A [4194] [ 4.65, -0.50]/J1746-28 B  5.25   W              S       N/A 07/02/09 N/A   N/A
+
+Comment Details: [4194] [ 4.65, -0.50]/J1746-2850I * (3)/
+
+
+
+  GBT09B-019 Constraining the Anomalous Emission in the Perseus Region on Arcminute Scale       Tibbs, Christopher N/A   15.00   N/A                 LC          N/A            C N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-019-01   1     3.50          TBF   TBF           N/A     0   3.50       N/A [4099] [ 0.97,  0.56]/Strip 1, A  3.50   O              L       N/A          N/A   N/A
+
+Comment Details: [4099] [ 0.97,  0.56]/Strip 1,Strip 2,Strip 3/
+
+ GBT09B-019-02   1    11.50          TBF   TBF           N/A     0  11.50       N/A [4100] [ 0.97,  0.56]/Strip 1, A 11.50   O              C       N/A          N/A   N/A
+
+Comment Details: [4100] [ 0.97,  0.56]/Strip 1,Strip 2,Strip 3/
+
+
+
+  GBT09B-021                               A search for the youngest pulsar in the Galaxy           Ridley, Joshua N/A    9.50   N/A                  C          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-021-01   1     9.50          TBF   TBF           N/A     0   9.50       N/A [4103] [ 4.66,  0.47]/G1.9+0.3 A  9.50   O              C       N/A          N/A   N/A
+
+Comment Details: [4103] [ 4.66,  0.47]/G1.9+0.3/
+
+
+
+  GBT09B-022 Constraining Galactic Chemical Evolution:  3-Helium Benchmark Abundances in                 Rood, Bob N/A    7.00   N/A                  X          N/A            C N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-022-01   1     7.00          TBF   TBF           N/A     0   7.00       N/A [4104] [ 0.87,  0.99]/S209,W3/ B  7.00   O              X       N/A          N/A   N/A
+
+
+  GBT09B-023     Search for Radio Pulsations from Gamma-Ray Pulsars Discovered with Fermi                Ray, Paul N/A   11.00   N/A               S800          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-023-01   1     4.50          TBF   TBF           N/A     0   4.50       N/A [4105] [ 4.68, -0.39]/LEO0056, A  4.50   O              S       N/A          N/A   N/A
+
+Comment Details: [4105] [ 4.68, -0.39]/LEO0056,AUG0103/
+
+ GBT09B-023-02   1     6.50          TBF   TBF           N/A     0   6.50       N/A [4106] [ 3.87,  0.41]/AUG0140, A  6.50   O            800       N/A          N/A   N/A
+
+Comment Details: [4106] [ 3.87,  0.41]/AUG0140,AUG0096,AUG0028/
+
+
+
+  GBT09B-024             Searching for Radio Pulsars in Fermi Bright Unidentified Sources            Ransom, Scott N/A   31.50   N/A                800          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-024-01   1    19.00          TBF   TBF           N/A     0  19.00       N/A  [4107] [ 4.83,  0.04]/* (27)/ A 19.00   O            800       N/A          N/A   N/A
+ GBT09B-024-02   1    12.50          TBF   TBF           N/A     0  12.50       N/A  [4108] [ 4.83,  0.04]/* (27)/ A 12.50   O            800       N/A          N/A   N/A
+
+
+  GBT09B-025           An OH Absorption Line Survey of the Galactic Scale Molecular Loops            Kudo, Natsuko N/A   18.00   N/A                  L          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-025-01   1    18.00          TBF   TBF           N/A     0  18.00       N/A   [4109] [ 4.59, -0.55]/* (6)/ A 18.00   O              L       N/A          N/A   N/A
+
+
+  GBT09B-026                                         Cyclic Spectroscopy of Three Pulsars           Demorest, Paul N/A    4.00   N/A                342          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-026-01   1     4.00          TBF   TBF           N/A     0   4.00       N/A [4110] [ 3.89,  0.37]/B1642-03 A  4.00   O            342       N/A          N/A   N/A
+
+Comment Details: [4110] [ 3.89,  0.37]/B1642-03 * (4)/
+
+
+
+  GBT09B-028                       Timing of New and Old Rotating Radio Transient Sources        McLaughlin, Maura N/A   38.50   N/A             800342          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-028-01   1     5.50          TBF   TBF           N/A     0   5.50       N/A   [4113] [ 4.77, -0.19]/* (5)/ B  5.50   O            800       N/A          N/A   N/A
+ GBT09B-028-02   4     5.50          TBF   TBF 1,2,3,    N/A     0  22.00       N/A   [4114] [ 4.77, -0.19]/* (5)/ B 22.00   W            342       N/A          N/A   N/A
+ GBT09B-028-03   1     5.50          TBF   TBF           N/A     0   5.50       N/A   [4115] [ 4.67, -0.39]/* (5)/ B  5.50   O            800       N/A          N/A   N/A
+ GBT09B-028-04   1     5.50          TBF   TBF           N/A     0   5.50       N/A   [4116] [ 4.67, -0.39]/* (5)/ B  5.50   O            342       N/A          N/A   N/A
+
+
+  GBT09B-029                    Timing and General Relativity in the Double Pulsar System          Kramer, Michael N/A   104.5   N/A               800L          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-029-01   2     4.25          TBF   TBF    180    N/A     0   8.50       N/A [4117] [ 5.12,  0.19]/PSR B192 A  8.50   W            800       N/A 11/02/09 N/A   N/A
+
+Comment Details: [4117] [ 5.12,  0.19]/PSR B1929+10/
+
+ GBT09B-029-02   6     5.50          TBF   TBF     60    N/A     0  33.00       N/A [4118] [ 2.00, -0.54]/PSR J073 A 33.00   W            800       N/A 08/12/09 N/A   N/A
+
+Comment Details: [4118] [ 2.00, -0.54]/PSR J0737-3039/
+
+ GBT09B-029-03   6     5.50          TBF   TBF     60    N/A     0  33.00       N/A [4119] [ 2.00, -0.54]/PSR J073 A 33.00   W              L       N/A 09/16/09 N/A   N/A
+
+Comment Details: [4119] [ 2.00, -0.54]/PSR J0737-3039/
+
+ GBT09B-029-04   1    15.00          TBF   TBF           N/A     0  15.00       N/A [4120] [ 2.00, -0.54]/PSR J073 A 15.00   O            800       N/A          N/A   N/A
+
+Comment Details: [4120] [ 2.00, -0.54]/PSR J0737-3039/
+
+ GBT09B-029-05   1    15.00          TBF   TBF           N/A     0  15.00       N/A [4198] [ 2.00, -0.54]/PSR J073 A 15.00   O            800       N/A          N/A   N/A
+
+Comment Details: [4198] [ 2.00, -0.54]/PSR J0737-3039/
+
+
+
+  GBT09B-030                                             Optically Compact Dwarf Galaxies             Cannon, John N/A   12.00   N/A                  L          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-030-01   1    12.00          TBF   TBF           N/A     0  12.00       N/A   [4121] [ 3.73,  0.71]/* (8)/ A 12.00   O              L       N/A          N/A   N/A
+
+
+  GBT09B-031                                Timing the New GBT 350 MHz Drift Scan Pulsars              Lynch, Ryan N/A   82.40   N/A                800          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-031-01   7     2.32          TBF   TBF 1,2,3,    N/A     0  16.22       N/A  [4122] [ 4.56, -0.03]/* (11)/ A 16.22   W            800       N/A 06/23/09 N/A   N/A
+ GBT09B-031-02  11     2.33          TBF   TBF     30    N/A     0  25.63       N/A  [4123] [ 4.56, -0.03]/* (11)/ A 25.63   W            800       N/A 08/18/09 N/A   N/A
+ GBT09B-031-03   7     2.25          TBF   TBF 1,2,3,    N/A     0  15.75       N/A  [4195] [ 4.06, -0.07]/* (10)/ A 15.75   W            800       N/A 06/23/09 N/A   N/A
+ GBT09B-031-04  11     2.25          TBF   TBF     30    N/A     0  24.75       N/A  [4196] [ 4.06, -0.07]/* (10)/ A 24.75   W            800       N/A 08/18/09 N/A   N/A
+
+
+  GBT09B-032   Ionized Material in the LMXB-MSP Transition System FIRST J102347.67+003841          Archibald, Anne N/A   21.00   N/A                  L          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-032-01   1    21.00          TBF   TBF           N/A     0  21.00       N/A [4124] [ 2.72,  0.01]/FIRST J1 B 21.00   O              L       N/A          N/A   N/A
+
+Comment Details: [4124] [ 2.72,  0.01]/FIRST J102347.67+003841/
+
+
+
+  GBT09B-034              Deep Observations of Possible HVC Analogs in the NGC 2403 Group         Chynoweth, Katie N/A   152.0   N/A                  L          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-034-01   1    62.00          TBF   TBF           N/A     0  62.00       N/A [4128] [ 1.98,  1.18]/NGC2403, B 62.00   O              L       N/A          N/A   N/A
+
+Comment Details: [4128] [ 1.98,  1.18]/NGC2403,NGC2366/
+
+ GBT09B-034-02   1    90.00          TBF   TBF           N/A     0  90.00       N/A [4129] [ 2.22,  1.21]/UGC4305, B 90.00   O              L       N/A          N/A   N/A
+
+Comment Details: [4129] [ 2.22,  1.21]/UGC4305,UGC4483,K52,DDO53/
+
+
+
+  GBT09B-035          Confirming a tentative detection of HI 21cm absorption at z ~ 2.193          Kanekar, Nissim N/A    4.00   N/A                450          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-035-01   1     4.00          TBF   TBF           N/A     0   4.00       N/A [4285] [ 3.28, -0.20]/PKS B122 B  4.00   O            450       N/A          N/A   N/A
+
+Comment Details: [4285] [ 3.28, -0.20]/PKS B1228-113/
+
+
+
+  GBT09B-036                                 CS(1-0) survey of dense gas at high-redshift                  Gao, Yu N/A   80.00   N/A                KuX          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-036-01   1    26.00          TBF   TBF           N/A     0  26.00       N/A   [4131] [ 3.17,  0.50]/* (6)/ B 26.00   O            KuX       N/A          N/A   N/A
+ GBT09B-036-02   1    54.00          TBF   TBF           N/A     0  54.00       N/A   [4132] [ 3.17,  0.50]/* (6)/ B 54.00   O            KuX       N/A          N/A   N/A
+
+
+  GBT09B-037           A search for CH3CHO 1065 MHz emission in Galactic molecular clouds          Kanekar, Nissim N/A    2.00   N/A               1070          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-037-01   1     2.00          TBF T TBF           N/A     0   2.00       N/A [4133] [ 4.34, -0.19]/* (7)/Ni B  2.00   O           1070       N/A          N/A   N/A
+
+Comment Details: [4133] [ 4.34, -0.19]/* (7)/Night-time Flag(True)
+
+
+
+  GBT09B-039 C3H2 in the Gravitational Lens B0218+357: Chemical Evolution and Densitometr              Zeiger, Ben N/A    3.50   N/A                XKu          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-039-01   1     2.00          TBF   TBF           N/A     0   2.00       N/A [4135] [ 0.62,  0.63]/B0218+35 A  2.00   O            XKu       N/A          N/A   N/A
+
+Comment Details: [4135] [ 0.62,  0.63]/B0218+357/
+
+ GBT09B-039-02   1     1.50          TBF   TBF           N/A     0   1.50       N/A [4136] [ 0.62,  0.63]/B0218+35 A  1.50   O            XKu       N/A          N/A   N/A
+
+Comment Details: [4136] [ 0.62,  0.63]/B0218+357/
+
+
+
+  GBT09B-040                               A search for CS 1-0 emission at high redshifts          Kanekar, Nissim N/A   28.00   N/A                 Ku          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-040-01   1    18.00          TBF   TBF           N/A     0  18.00       N/A [4137] [ 3.73,  0.20]/HB1413+1 A 18.00   O             Ku       N/A          N/A   N/A
+
+Comment Details: [4137] [ 3.73,  0.20]/HB1413+115/
+
+ GBT09B-040-02   1    10.00          TBF   TBF           N/A     0  10.00       N/A [4138] [ 2.73,  0.82]/F10214+4 A 10.00   O             Ku       N/A          N/A   N/A
+
+Comment Details: [4138] [ 2.73,  0.82]/F10214+4724/
+
+
+
+  GBT09B-041            Detecting nHz Gravitational Radiation using a Pulsar Timing Array           Demorest, Paul N/A   672.0   N/A               L800          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-041-01  36     8.50          TBF   TBF     30    N/A     0 306.00       N/A  [4139] [ 3.98, -0.07]/* (15)/ A 306.0   W              L       N/A 09/17/09 N/A   N/A
+ GBT09B-041-02  36     8.50          TBF   TBF     30    N/A     0 306.00       N/A  [4140] [ 3.98, -0.07]/* (15)/ A 306.0   W            800       N/A 09/19/09 N/A   N/A
+ GBT09B-041-03  20     3.00          TBF   TBF     14    N/A     0  60.00       N/A  [4141] [ 3.93,  0.02]/* (11)/ A 60.00   W              L       N/A          N/A   N/A
+
+
+  GBT09B-042 Establishing a scenario of molecule formation from high Galactic latitude si           Joncas, Gilles N/A   88.00   N/A                  L          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-042-01   1    88.00          TBF   TBF           N/A     0  88.00       N/A  [4142] [ 2.61,  1.07]/* (11)/ B 88.00   O              L       N/A          N/A   N/A
+
+
+  GBT09B-043                   A Search for Radio Pulsations from Low-Mass X-ray Binaries           DeCesar, Megan N/A   15.00   N/A                  S          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-043-01   1     1.00          TBF   TBF           N/A     0   1.00       N/A [4143] [ 4.97, -0.43]/HETE J19 B  1.00   O              S       N/A          N/A   N/A
+
+Comment Details: [4143] [ 4.97, -0.43]/HETE J1900.1-2455/
+
+ GBT09B-043-02   1     1.00          TBF   TBF           N/A     0   1.00       N/A [4144] [ 3.92, -0.55]/V822 Cen B  1.00   O              S       N/A          N/A   N/A
+
+Comment Details: [4144] [ 3.92, -0.55]/V822 Cen/
+
+ GBT09B-043-03   1     1.00          TBF   TBF           N/A     0   1.00       N/A  [4145] [ 5.61,  0.34]/IK Peg/ B  1.00   O              S       N/A          N/A   N/A
+ GBT09B-043-04   1     1.00          TBF   TBF           N/A     0   1.00       N/A [4146] [ 1.78, -0.77]/HD 49798 B  1.00   O              S       N/A          N/A   N/A
+
+Comment Details: [4146] [ 1.78, -0.77]/HD 49798/
+
+ GBT09B-043-05   1     1.00          TBF   TBF           N/A     0   1.00       N/A [4147] [ 4.75, -0.65]/SAX J180 B  1.00   O              S       N/A          N/A   N/A
+
+Comment Details: [4147] [ 4.75, -0.65]/SAX J1808.4-3658/
+
+ GBT09B-043-06   1     1.00          TBF   TBF           N/A     0   1.00       N/A [4148] [ 0.13,  1.04]/IGR J002 B  1.00   O              S       N/A          N/A   N/A
+
+Comment Details: [4148] [ 0.13,  1.04]/IGR J00291+5934/
+
+ GBT09B-043-07   1     1.00          TBF   TBF           N/A     0   1.00       N/A [4149] [ 4.66, -0.36]/SAX J174 B  1.00   O              S       N/A          N/A   N/A
+
+Comment Details: [4149] [ 4.66, -0.36]/SAX J1748.9-2021/
+
+ GBT09B-043-08   1     1.00          TBF   TBF           N/A     0   1.00       N/A [4150] [ 4.77, -0.59]/XTE J181 B  1.00   O              S       N/A          N/A   N/A
+
+Comment Details: [4150] [ 4.77, -0.59]/XTE J1814-338/
+
+ GBT09B-043-09   1     1.00          TBF   TBF           N/A     0   1.00       N/A [4151] [ 2.48, -0.55]/XTE J092 B  1.00   O              S       N/A          N/A   N/A
+
+Comment Details: [4151] [ 2.48, -0.55]/XTE J0929-314/
+
+ GBT09B-043-10   1     1.00          TBF   TBF           N/A     0   1.00       N/A [4152] [ 4.74, -0.51]/XTE J180 B  1.00   O              S       N/A          N/A   N/A
+
+Comment Details: [4152] [ 4.74, -0.51]/XTE J1807-294/
+
+ GBT09B-043-11   1     1.00          TBF   TBF           N/A     0   1.00       N/A [4153] [ 4.70, -0.44]/SWIFT J1 B  1.00   O              S       N/A          N/A   N/A
+
+Comment Details: [4153] [ 4.70, -0.44]/SWIFT J1756.9-2508/
+
+ GBT09B-043-12   1     1.00          TBF   TBF           N/A     0   1.00       N/A [4154] [ 4.67, -0.53]/XTE J175 B  1.00   O              S       N/A          N/A   N/A
+
+Comment Details: [4154] [ 4.67, -0.53]/XTE J1751-305/
+
+ GBT09B-043-13   1     1.00          TBF   TBF           N/A     0   1.00       N/A [4155] [ 4.53, -0.49]/IGR J171 B  1.00   O              S       N/A          N/A   N/A
+
+Comment Details: [4155] [ 4.53, -0.49]/IGR J17191-2821/
+
+ GBT09B-043-14   1     1.00          TBF   TBF           N/A     0   1.00       N/A [4156] [ 5.69,  0.67]/V1341 Cy B  1.00   O              S       N/A          N/A   N/A
+
+Comment Details: [4156] [ 5.69,  0.67]/V1341 Cyg/
+
+ GBT09B-043-15   1     1.00          TBF   TBF           N/A     0   1.00       N/A [4157] [ 1.87, -0.01]/V651 Mon B  1.00   O              S       N/A          N/A   N/A
+
+Comment Details: [4157] [ 1.87, -0.01]/V651 Mon/
+
+
+
+  GBT09B-044                     Cyclotron emission from the exo-planet HD 189733b - copy            Smith, Alexis N/A   30.00   N/A                342          N/A            C N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-044-01   5     6.00          TBF   TBF      5    N/A     0  30.00       N/A [4158] [ 5.24,  0.40]/HD 18973 B 30.00   W            342       N/A          N/A   N/A
+
+Comment Details: [4158] [ 5.24,  0.40]/HD 189733/UTC Flag(True)
+
+ GBT09B-044-02   4     6.00          TBF T TBF      5    N/A     0  24.00       N/A [4297] [ 5.24,  0.40]/HD 18973 B 24.00   W            342       N/A          N/A   N/A
+
+Comment Details: [4297] [ 5.24,  0.40]/HD 189733/Night-time Flag(True)
+
+
+
+  GBT09B-045         Searching For New Pulsars in Eight Low Metallicity Globular Clusters              Lynch, Ryan N/A   24.50   N/A                  S          N/A            P N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-045-01   1     3.50          TBF   TBF           N/A     0   3.50       N/A [4159] [ 4.00, -0.37]/NGC5897/ B  3.50   O              S       N/A          N/A   N/A
+ GBT09B-045-02   1     3.50          TBF   TBF           N/A     0   3.50       N/A [4160] [ 4.13, -0.66]/NGC 5986 B  3.50   O              S       N/A          N/A   N/A
+
+Comment Details: [4160] [ 4.13, -0.66]/NGC 5986/
+
+ GBT09B-045-03   1     3.50          TBF   TBF           N/A     0   3.50       N/A    [4161] [ 4.53,  0.75]/M 92/ B  3.50   O              S       N/A          N/A   N/A
+ GBT09B-045-04   1     3.50          TBF   TBF           N/A     0   3.50       N/A    [4162] [ 4.59, -0.52]/HP 1/ B  3.50   O              S       N/A          N/A   N/A
+ GBT09B-045-05   1     3.50          TBF   TBF           N/A     0   3.50       N/A [4163] [ 4.66, -0.58]/Djorg 1/ A  3.50   O              S       N/A          N/A   N/A
+ GBT09B-045-06   1     3.50          TBF   TBF           N/A     0   3.50       N/A [4164] [ 4.72, -0.47]/Terzan 9 A  3.50   O              S       N/A          N/A   N/A
+
+Comment Details: [4164] [ 4.72, -0.47]/Terzan 9/
+
+ GBT09B-045-07   1     3.50          TBF   TBF           N/A     0   3.50       N/A   [4165] [ 4.64, -0.46]/Pal 6/ A  3.50   O              S       N/A          N/A   N/A
+
+
+  GBT09B-046        Tracing the Physical Conditions in NGC 3079 and Mrk 348 with Methanol   Impellizzeri, Violette N/A   16.00   N/A                 Ku          N/A            S N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-046-01   1    12.00          TBF   TBF           N/A     0  12.00       N/A [4166] [ 1.42,  0.76]/NGC 3079 A 12.00   O             Ku       N/A          N/A   N/A
+
+Comment Details: [4166] [ 1.42,  0.76]/NGC 3079,Mrk 348/
+
+ GBT09B-046-02   1     4.00          TBF   TBF           N/A     0   4.00       N/A [4167] [ 1.42,  0.76]/NGC 3079 A  4.00   O             Ku       N/A          N/A   N/A
+
+Comment Details: [4167] [ 1.42,  0.76]/NGC 3079,Mrk 348/
+
+
+
+  GBT09B-048                                                          Venus spin dynamics         Margot, Jean-Luc N/A    9.00   N/A                  X          N/A            R N/A
+          Name   # Len(hrs)          LST N +/- Sep(d) Del(d) Compl TotHrs      lobs                        Comment G Alloc B\D Sched    Bands Back Ends      Req Out   Sep
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GBT09B-048-01   1     1.50          TBF   TBF           N/A     0   1.50       N/A [4171] [ 0.00,  0.00]/Mercury/ A  1.50   F              X       N/A          N/A   N/A
+
+Comment Details: [4171] [ 0.00,  0.00]/Mercury/UTC Flag(True)
+
+ GBT09B-048-02   1     1.50          TBF   TBF           N/A     0   1.50       N/A [4286] [ 0.00,  0.00]/Mercury/ A  1.50   F              X       N/A          N/A   N/A
+
+Comment Details: [4286] [ 0.00,  0.00]/Mercury/UTC Flag(True)
+
+ GBT09B-048-03   1     1.50          TBF   TBF           N/A     0   1.50       N/A [4287] [ 0.00,  0.00]/Venus/UT A  1.50   F              X       N/A          N/A   N/A
+
+Comment Details: [4287] [ 0.00,  0.00]/Venus/UTC Flag(True)
+
+ GBT09B-048-04   1     1.50          TBF   TBF           N/A     0   1.50       N/A [4288] [ 0.00,  0.00]/Venus/UT A  1.50   F              X       N/A          N/A   N/A
+
+Comment Details: [4288] [ 0.00,  0.00]/Venus/UTC Flag(True)
+
+ GBT09B-048-05   1     1.50          TBF   TBF           N/A     0   1.50       N/A [4289] [ 0.00,  0.00]/Venus/UT A  1.50   F              X       N/A          N/A   N/A
+
+Comment Details: [4289] [ 0.00,  0.00]/Venus/UTC Flag(True)
+
+ GBT09B-048-06   1     1.50          TBF   TBF           N/A     0   1.50       N/A [4290] [ 0.00,  0.00]/Venus/UT A  1.50   F              X       N/A          N/A   N/A
+
+Comment Details: [4290] [ 0.00,  0.00]/Venus/UTC Flag(True)
+
+
+
+Total # TotalTime Remaining
+----------------------------
+     45   1980.65       TBF
+
+Trimester: 09C
+
