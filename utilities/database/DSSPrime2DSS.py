@@ -143,20 +143,6 @@ class DSSPrime2DSS(object):
                                 )
                     target.save()
 
-            # now get the cadences
-            query = "SELECT * FROM cadences WHERE session_id = %s" % s_id_prime
-            self.cursor.execute(query)
-
-            for c in self.cursor.fetchall():
-                cad = Cadence(session = s
-                            , start_date = c[2]
-                            , end_date   = c[3]
-                            , repeats    = c[4]
-                            , full_size  = c[5]
-                            , intervals  = c[6]
-                              )
-                cad.save()
-
             # now get the windows & opportunities
             # TBF: initially, we thought there would be none of these, and
             # they'd all be determined via the Cadences!
@@ -273,7 +259,7 @@ class DSSPrime2DSS(object):
             else:
                 # TBF: the fact that this is happening seems like a big
                 # bug to me, but Carl just left us for a month. WTF
-                print "WARNING: peoplekey in blackouts ~ in authors: ", pkey
+                #print "WARNING: peoplekey in blackouts ~ in authors: ", pkey
                 u = None
 
             # now what different projects is this for?

@@ -28,10 +28,6 @@ jsonMap = {"authorized"     : "status__authorized"
          , "between"        : "time_between"
          , "backup"         : "status__backup"
          , "pcode"          : "project__pcode"
-         , "cad_start_date" : "cadence__start_date"
-         , "cad_repeats"    : "cadence__repeats"
-         , "cad_intervals"  : "cadence__intervals"
-         , "cad_duration"   : "cadence__full_size"
          , "complete"       : "status__complete"
          , "coord_mode"     : "target__system__name"
          , "enabled"        : "status__enabled"
@@ -45,7 +41,6 @@ jsonMap = {"authorized"     : "status__authorized"
          , "req_max"        : "max_duration"
          , "req_min"        : "min_duration"
          , "science"        : "observing_type__type"
-         , "selected"       : "selected"
          , "sem_time"       : "allotment__max_semester_time"
          , "source"         : "target__source"
          , "source_h"       : "target__horizontal"
@@ -327,7 +322,6 @@ class Sesshun(models.Model):
     max_duration       = models.FloatField(null = True)
     min_duration       = models.FloatField(null = True)
     time_between       = models.FloatField(null = True)
-    selected           = models.BooleanField(default = False)
 
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
@@ -392,7 +386,6 @@ class Sesshun(models.Model):
         self.max_duration     = fdata.get("req_max", 12.0)
         self.min_duration     = fdata.get("req_min",  3.0)
         self.time_between     = fdata.get("between", None)
-        self.selected         = fdata.get("selected", False) == "true"
 
     def cast_int(self, strValue):
         "Handles casting of strings where int is displayed as float. ex: 1.0"
@@ -487,27 +480,6 @@ class Sesshun(models.Model):
                 rg.receivers.add(rcvrId)
                 rg.save()
 
-    def get_cadence(self):
-        c = first(self.cadence_set.all())
-        if c is None:
-            return Cadence(session = self)
-        return c
-
-    def create_update_cadence(self, fdata):
-        start_date = str2dt(fdata.get("cad_start_date", None))
-        end_date   = str2dt(fdata.get("cad_end_date", None))
-        repeats    = fdata.get("cad_repeats", None)
-        intervals  = fdata.get("cad_intervals", None)
-        full_size  = fdata.get("cad_full_size", None)
-
-        if start_date is not None or \
-           end_date is not None or \
-           repeats is not None or \
-           full_size is not None or \
-           intervals is not None:
-            c = self.get_cadence()
-            c.set_fields(start_date, end_date, repeats, full_size, intervals)
-        
     def update_from_post(self, fdata):
         self.set_base_fields(fdata)
         self.save()
@@ -546,7 +518,6 @@ class Sesshun(models.Model):
         t.horizontal = h_axis if h_axis is not None else t.horizontal
         t.save()
 
-        self.create_update_cadence(fdata)
         self.save()
 
     def get_ra_dec(self):
@@ -580,7 +551,6 @@ class Sesshun(models.Model):
     def jsondict(self):
         target  = first(self.target_set.all())
         rcvrs  = self.get_receiver_req()
-        cadence = first(self.cadence_set.all())
 
         d = {"id"         : self.id
            , "pcode"      : self.project.pcode
@@ -596,7 +566,6 @@ class Sesshun(models.Model):
            , "req_max"    : self.max_duration
            , "req_min"    : self.min_duration
            , "between"    : self.time_between
-           , "selected"   : self.selected
            , "enabled"    : self.status.enabled
            , "authorized" : self.status.authorized
            , "complete"   : self.status.complete
@@ -613,152 +582,15 @@ class Sesshun(models.Model):
                     , "source_v"   : target.vertical
                       })
 
-        if cadence is not None:
-            sd = None if cadence.start_date is None \
-                else cadence.start_date.strftime("%m/%d/%Y")
-            ed = None if cadence.end_date is None \
-                else cadence.end_date.strftime("%m/%d/%Y")
-            d.update({"cad_start_date" : sd
-                    , "cad_end_date"   : ed
-                    , "cad_repeats"    : cadence.repeats
-                    , "cad_intervals"  : cadence.intervals
-                      })
-            
         #  Remove all None values
         for k, v in d.items():
             if v is None:
                 _ = d.pop(k)
 
         return d
-
-    def hourAngleAtHorizon(self):
-        "Returns the absolute hour angle in hours at the telescope limits."
-        _, dec = self.get_ra_dec()
-        lat = TimeAgent.GbtLatitudeInRadians()
-        dec = TimeAgent.deg2rad(dec)
-        za  = TimeAgent.deg2rad(85)
-
-        # Are we looking at polaris or thereabouts?
-        denominator = cos(lat)*cos(dec)
-        if abs(denominator) <= 1e-3:
-            return 12.0
-
-        cosha = (cos(za) - sin(lat)*sin(dec))/denominator
-        # Dropped below the horizon?
-        if abs(cosha) >= 1:
-            return 12.0
-        ha = TimeAgent.rad2hr(acos(cosha))
-        return abs(ha)
-
-    def zenithAngle(self, dt):
-        "Returns zenith angle at the given time in degrees."
-        ra, dec = self.get_ra_dec()
-        lat = TimeAgent.GbtLatitudeInRadians()
-        dec = TimeAgent.deg2rad(dec)
-        ra  = TimeAgent.hr2rad(ra)
-        lst = TimeAgent.hr2rad(TimeAgent.Absolute2RelativeLST(dt))
-        ha  = lst - ra
-            
-        # Equation (5) in DS Project Note 5.2
-        radians = acos(sin(lat) * sin(dec) + cos(lat) * cos(dec) * cos(ha))
-        return TimeAgent.rad2deg(radians)
 
     class Meta:
         db_table = "sessions"
-
-class Cadence(models.Model):
-    session    = models.ForeignKey(Sesshun)
-    start_date = models.DateTimeField(null = True)
-    end_date   = models.DateTimeField(null = True)
-    repeats    = models.IntegerField(null = True)
-    full_size  = models.CharField(null = True, max_length = 64)
-    intervals  = models.CharField(null = True, max_length = 64)
-
-    class Meta:
-        db_table = "cadences"
-
-    def __unicode__(self):
-        return "Cadence for Sess (%d): %s - %s, r:%d, size: %s ints: %s" % \
-          ( self.session.id
-          , self.start_date
-          , self.end_date
-          , self.repeats
-          , self.full_size
-          , self.intervals )
-
-    def init_from_post(self, s_id, fdata):
-        s    = first(Sesshun.objects.filter(id = s_id))
-        c    = s.get_cadence()
-
-        start_date = str2dt(fdata.get("start_date", None))
-        end_date   = str2dt(fdata.get("end_date", None))
-        repeats    = fdata.get("repeats", None)
-        intervals  = fdata.get("intervals", None)
-        full_size  = fdata.get("full_size", None)
-        self.set_fields(start_date, end_date, repeats, full_size, intervals)
-
-    def set_fields(self, start_date, end_date, repeats, full_size, intervals):
-        self.start_date = start_date
-        self.end_date   = end_date
-        self.repeats    = int(float(repeats)) if repeats is not None else repeats
-        self.intervals  = intervals
-        self.full_size  = full_size
-        self.save()
-
-    def jsondict(self):
-        sd = None if self.start_date is None \
-            else self.start_date.strftime("%m/%d/%Y")
-        ed = None if self.end_date is None \
-            else self.end_date.strftime("%m/%d/%Y")
-        d = {"session_id" : self.session.id
-           , "start_date" : sd
-           , "end_date"   : ed
-           , "repeats"    : self.repeats
-           , "full_size"  : self.full_size
-           , "intervals"  : self.intervals
-             }
-            
-        #  Remove all None values
-        for k, v in d.items():
-            if v is None:
-                _ = d.pop(k)
-
-        return d
-
-    def gen_windows(self):
-        if self.start_date is not None and \
-           self.repeats is not None and \
-           self.intervals is not None and \
-           self.full_size is not None:
-            #  Delete all the previously generated windows
-            for w in self.session.window_set.all():
-                w.delete()
-                
-            intervals  = self.intervals.split(',')
-            full_sizes = self.full_size.split(',')
-            if len(intervals) == self.repeats and len(full_sizes) == self.repeats:
-                for i in range(self.repeats):
-                    interval = int(intervals[i]) - 1
-                    size     = int(full_sizes[i])
-                    w = Window(session = self.session, required = True)
-                    w.save()
-                    o = Opportunity(window = w
-                                  , start_time = \
-                                        self.start_date + timedelta(days = interval)
-                                  , duration   = size * 24
-                                    )
-                    o.save()
-
-            else:
-                for i in range(self.repeats):
-                    w = Window(session = self.session, required = True)
-                    w.save()
-                    o = Opportunity(window = w
-                                  , start_time = \
-                           self.start_date + timedelta(days = int(self.intervals)*i)
-                                  , duration   = int(self.full_size) * 24
-                                    )
-                    o.save()
 
 class Receiver_Group(models.Model):
     session        = models.ForeignKey(Sesshun)
@@ -832,91 +664,6 @@ class Window(models.Model):
            , self.session.id
            , len(self.opportunity_set.all()))
 
-    def num_opportunities(self):
-        return len(self.opportunity_set.all())
-
-    def init_from_post(self, fdata = QueryDict({})):
-        # TBF:  Not touching required until its actually used post 09B
-        #self.required = fdata.get("required", "false") == "true"
-        #self.save()
-        start_time    = fdata.getlist("start_time")
-        duration      = fdata.getlist("duration")
-        for st, d in zip(start_time, duration):
-            self.str2opportunity(st, d)
-
-    def str2opportunity(self, start_time, duration):
-        d, t      = start_time.split(' ')
-        y, m, d   = map(int, d.split('-'))
-        h, mm, ss = map(int, map(float, t.split(':')))
-        st        = datetime(y, m, d, h, mm, ss)
-        o = Opportunity(window = self
-                      , start_time = st
-                      , duration = float(duration))
-        o.save()
-
-    def update_from_post(self, fdata = QueryDict({})):
-        for o in self.opportunity_set.all():
-            o.delete()
-        self.init_from_post(fdata)
-
-    def is_classic(self):
-        opt = first(self.opportunity_set.all())
-        return len(self.opportunity_set.all()) == 1 and \
-                 opt.duration > self.session.max_duration
-        
-    def jsondict(self, generate = False, now = None):
-        now       = now or datetime.utcnow()
-        windowed  = first(Session_Type.objects.filter(type = 'windowed'))
-        receivers = [[r.abbreviation for r in rg.receivers.all()]
-                    for rg in self.session.receiver_group_set.all()]
-        d = {"id"       : self.id
-           , "required" : self.required
-           , "receiver" : receivers
-            }
-        if self.session.session_type == windowed and generate and self.is_classic():
-            o = first(self.opportunity_set.all())
-            d.update({"start_time" : str(o.start_time)
-                    , "duration"   : o.duration
-                     })
-            opportunities = self.gen_opportunities(now)
-        else:
-            opportunities = self.opportunity_set.order_by('start_time').all()
-            if len(opportunities) > 0:
-                start_time = opportunities[0].start_time
-                last       = opportunities.reverse()[0].start_time
-                # TBF: In Hours!
-                duration   = (start_time - datetime(last.year, last.month, last.day, 23, 59)).seconds / 3600
-                if len(opportunities) == 1:
-                    duration = opportunities[0].duration
-                d.update({"start_time" : str(start_time)
-                        , "duration"   : duration
-                          }
-                         )
-
-        d.update({"opportunities" : [o.jsondict() for o in opportunities]})
-
-        return d
-
-    def gen_opportunities(self, now = None):
-        o = first(self.opportunity_set.all())
-        target = first(self.session.target_set.all())
-        if o is None or target is None or target.horizontal is None:
-            return []
-
-        now = now or datetime.utcnow()
-        
-        # TBF: Need to check to see if the window as already been satisfied.
-        dec = None
-        target  = first(Target.objects.filter(session = self.session).all())
-        if target:
-            system = first(System.objects.filter(target = target).all())
-            if system.h_unit == 'dec':
-                dec = target.horizontal
-
-        ha_limit = HourAngleLimit().limit(self.session.frequency, dec)
-
-        return OpportunityGenerator(now).generate(o, self.session, ha_limit)
-
     class Meta:
         db_table = "windows"
 
@@ -931,12 +678,6 @@ class Opportunity(models.Model):
                                                           , self.start_time
                                                           , self.duration)
 
-    def jsondict(self):
-        return {"id"         : self.id
-              , "start_time" : str(self.start_time)
-              , "duration"   : self.duration
-                }
-    
     def __repr__(self):
         return "%s - %s" % (self.start_time
                           , self.start_time + timedelta(hours = self.duration))

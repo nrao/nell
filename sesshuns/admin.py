@@ -5,9 +5,6 @@ class Receiver_GroupInline(admin.TabularInline):
     model = Receiver_Group
     extra = 1
 
-class CadenceInline(admin.TabularInline):
-    model = Cadence
-    extra = 1
 
 class WindowInline(admin.TabularInline):
     model = Window
@@ -29,7 +26,6 @@ class SesshunAdmin(admin.ModelAdmin):
     inlines = [Receiver_GroupInline
              , TargetInline
              , Observing_ParameterInline
-             , CadenceInline
              , WindowInline]
 
 class SesshunInline(admin.TabularInline):
@@ -70,8 +66,7 @@ class ParameterAdmin(admin.ModelAdmin):
 class Receiver_ScheduleAdmin(admin.ModelAdmin):
     pass
 
-class CadenceAdmin(admin.ModelAdmin):
-    pass
+
 
 class Receiver_GroupAdmin(admin.ModelAdmin):
     pass
@@ -108,7 +103,6 @@ admin.site.register(Observing_Type, Observing_TypeAdmin)
 admin.site.register(Receiver, ReceiverAdmin)
 admin.site.register(Receiver_Schedule, Receiver_ScheduleAdmin)
 admin.site.register(Parameter, ParameterAdmin)
-admin.site.register(Cadence, CadenceAdmin)
 admin.site.register(Receiver_Group, Receiver_GroupAdmin)
 admin.site.register(Observing_Parameter, Observing_ParameterAdmin)
 admin.site.register(Status, StatusAdmin)
