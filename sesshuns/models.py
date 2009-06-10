@@ -2,8 +2,6 @@ from datetime                  import datetime, timedelta
 from math                      import asin, acos, cos, sin
 from django.db                 import models
 from django.http               import QueryDict
-from utilities                 import HourAngleLimit
-from utilities                 import OpportunityGenerator, TimeAgent
 from utilities.receiver        import ReceiverCompile
 
 import sys
