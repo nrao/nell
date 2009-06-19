@@ -90,8 +90,9 @@ class Allotment(models.Model):
     grade             = models.FloatField()
 
     def __unicode__(self):
-        return "Total: %5.2f, Grade: %5.2f, PSC: %5.2f, Max: %5.2f" % \
-                                       (self.total_time
+        return "(%d) Total: %5.2f, Grade: %5.2f, PSC: %5.2f, Max: %5.2f" % \
+                                       (self.id
+                                      , self.total_time
                                       , self.grade
                                       , self.psc_time
                                       , self.max_semester_time) 
@@ -112,7 +113,7 @@ class Project(models.Model):
     end_date     = models.DateTimeField(null = True)
 
     def __unicode__(self):
-        return "%s, %s, %s" % (self.name, self.semester, self.pcode)
+        return "%s, %s, %s" % (self.pcode, self.semester, self.name)
 
     def __str__(self):
         return self.pcode
@@ -300,8 +301,8 @@ class Status(models.Model):
     backup     = models.BooleanField()
 
     def __unicode__(self):
-        return "e: %s; a: %s; c: %s; b: %s" % \
-            (self.enabled, self.authorized, self.complete, self.backup)
+        return "(%d) e: %s; a: %s; c: %s; b: %s" % \
+            (self.id, self.enabled, self.authorized, self.complete, self.backup)
 
     class Meta:
         db_table = "status"
