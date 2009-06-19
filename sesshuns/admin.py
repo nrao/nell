@@ -40,7 +40,7 @@ class Project_TypeAdmin(admin.ModelAdmin):
     display = 'type'
 
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ['name', 'pcode', 'semester', 'project_type']
+    list_display = ['pcode', 'name', 'semester', 'project_type']
     inlines = [SesshunInline]
 
 class ProjectInline(admin.TabularInline):
@@ -48,7 +48,7 @@ class ProjectInline(admin.TabularInline):
     extra = 1
 
 class AllotmentAdmin(admin.ModelAdmin):
-    list_display = ['psc_time', 'total_time', 'max_semester_time']
+    list_display = ['id', 'psc_time', 'total_time', 'max_semester_time']
     inlines = [SesshunInline]
 
 class Session_TypeAdmin(admin.ModelAdmin):
@@ -75,7 +75,7 @@ class Observing_ParameterAdmin(admin.ModelAdmin):
     pass
 
 class StatusAdmin(admin.ModelAdmin):
-    pass
+    search_fields = ['id'] 
 
 class OpportunityAdmin(admin.ModelAdmin):
     pass
