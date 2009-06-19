@@ -405,26 +405,39 @@ class DSSPrime2DSS(object):
 
         # the first three days of 09B
         dt = datetime(2009, 5, 30, 0)
-        rcvrs = ['L', 'C', 'X', 'RRI'] # TBF: bug w/ K band!
+        rcvrs = ['L', 'C', 'X', 'S', 'RRI'] # TBF: bug w/ K band!
         rcvrChanges.append((dt, rcvrs))
+     
+        # June 2:
+        # Ku Up, K down
 
         # A up, K down, U up (RRI down?)
         dt = datetime(2009, 6, 4, 16)
-        rcvrs = ['L', 'C', 'X', 'Ku', '1070'] # TBF: which one is A band!
+        rcvrs = ['L', 'C', 'X', 'S', 'Ku', '1070'] # TBF: which one is A band!
         rcvrChanges.append((dt, rcvrs))
 
         # A down, PF1*3 up
         dt = datetime(2009, 6, 10, 16)
-        rcvrs = ['L', 'C', 'X', 'Ku', '342'] # TBF: which one is PF1*3 band!
+        rcvrs = ['L', 'C', 'X', 'S', 'Ku', '342'] # TBF: which one is PF1*3 band!
         rcvrChanges.append((dt, rcvrs))
 
-        # S up 
-        dt = datetime(2009, 6, 11, 16)
-        rcvrs = ['L', 'C', 'X', 'Ku', '342', 'S'] 
-        rcvrChanges.append((dt, rcvrs))
+        # S up - cancelded!  it never came down 
+        #dt = datetime(2009, 6, 11, 16)
+        #rcvrs = ['L', 'C', 'X', 'Ku', '342', 'S'] 
+        #rcvrChanges.append((dt, rcvrs))
 
         # PF1*3 down, PF1*8 up
         dt = datetime(2009, 6, 15, 16)
+        rcvrs = ['L', 'C', 'X', 'Ku', 'S', '800'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # PF1*8 down, PF1*3 up
+        dt = datetime(2009, 7, 6, 16)
+        rcvrs = ['L', 'C', 'X', 'Ku', 'S', '342'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # PF1*3 down, PF*8 up
+        dt = datetime(2009, 7, 14, 16)
         rcvrs = ['L', 'C', 'X', 'Ku', 'S', '800'] 
         rcvrChanges.append((dt, rcvrs))
 
@@ -433,9 +446,9 @@ class DSSPrime2DSS(object):
         rcvrs = ['L', 'C', 'X', 'Ku', 'S', 'RRI'] 
         rcvrChanges.append((dt, rcvrs))
 
-        # RRI down, A up?
+        # RRI down, PF1*8 up 
         dt = datetime(2009, 7, 28, 16)
-        rcvrs = ['L', 'C', 'X', 'Ku', 'S', '1070'] 
+        rcvrs = ['L', 'C', 'X', 'Ku', 'S', '800'] 
         rcvrChanges.append((dt, rcvrs))
 
         # A down, PF1*3 up
@@ -444,28 +457,34 @@ class DSSPrime2DSS(object):
         rcvrChanges.append((dt, rcvrs))
 
         # PF1*3 down, PF1*8 up
-        dt = datetime(2009, 8, 13, 16)
+        dt = datetime(2009, 8, 11, 16)
         rcvrs = ['L', 'C', 'X', 'Ku', 'S', '800'] 
         rcvrChanges.append((dt, rcvrs))
 
         # PF1*8 down RRI up
-        dt = datetime(2009, 8, 27, 16)
+        dt = datetime(2009, 8, 26, 16)
         rcvrs = ['L', 'C', 'X', 'Ku', 'S', 'RRI'] 
         rcvrChanges.append((dt, rcvrs))
 
         # RRI down, PF1*3 up
-        dt = datetime(2009, 9, 3, 16)
+        dt = datetime(2009, 9, 2, 16)
         rcvrs = ['L', 'C', 'X', 'Ku', 'S', '342'] 
         rcvrChanges.append((dt, rcvrs))
 
-        # PF1*3 down, PF1*8 up
-        dt = datetime(2009, 9, 15, 16)
+        # Sept 8 
+        # PF1*3 down, PF1*4 up
+        dt = datetime(2009, 9, 8, 16)
+        rcvrs = ['L', 'C', 'X', 'Ku', 'S', '450'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # PF1*4 down, PF1*8 up
+        dt = datetime(2009, 9, 16, 16)
         rcvrs = ['L', 'C', 'X', 'Ku', 'S', '800'] 
         rcvrChanges.append((dt, rcvrs))
 
         # PF1*8 down A up
         dt = datetime(2009, 9, 28, 16)
-        rcvrs = ['L', 'C', 'X', 'Ku', 'S', 'RRI'] 
+        rcvrs = ['L', 'C', 'X', 'Ku', 'S', '1070'] 
         rcvrChanges.append((dt, rcvrs))
 
         for dt, rcvrs in rcvrChanges:
@@ -473,7 +492,7 @@ class DSSPrime2DSS(object):
                 r = first(Receiver.objects.filter(abbreviation = rcvr))
                 rs = Receiver_Schedule(receiver = r, start_date = dt)
                 rs.save()
-                print rs
+                #print rs
 
     def create_maintanence_session(self):
         """
@@ -849,7 +868,11 @@ class DSSPrime2DSS(object):
         pcodes = ["GBT09A-092"
             , "GBT09A-093"
             , "GBT09A-094"
-            , "GBT09A-096"]
+            , "GBT09A-096"
+            , "GBT07C-013"
+            , "GBT09B-006"
+            , "GBT09B-031"
+            , "GBT09B-029"]            
         for pcode in pcodes:
             p = first(Project.objects.filter(pcode = pcode).all())
             print p
