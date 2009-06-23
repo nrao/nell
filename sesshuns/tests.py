@@ -266,6 +266,34 @@ class TestSessionResource(NellTestCase):
         response = self.client.post('/sessions')
         self.failUnlessEqual(response.status_code, 200)
 
+    def test_create2(self):
+        fdata = {'req_max': ['6.0']
+               , 'grade': ['A']
+               , 'req_min': ['2.0']
+               , 'sem_time': ['1.0']
+               , 'id': ['0']
+               , 'source': ['1']
+               , 'authorized': ['true']
+               , 'between': ['0.0']
+               , 'type': ['open']
+               , 'total_time': ['1.0']
+               , 'coord_mode': ['J2000']
+               , 'complete': ['false']
+               , 'source_h': ['1']
+               , 'source_v': ['1']
+               , 'PSC_time': ['1.0']
+               , 'freq': ['1.0']
+               , 'name': ['All Fields']
+               , 'science': ['pulsar']
+               , 'orig_ID': ['0']
+               , 'enabled': ['false']
+               , 'receiver': ['1070']
+               , 'backup': ['false']
+                 }
+
+        response = self.client.post('/sessions', fdata)
+        self.failUnlessEqual(response.status_code, 200)
+
     def test_read(self):
         response = self.client.get('/sessions')
         self.failUnlessEqual(response.status_code, 200)
