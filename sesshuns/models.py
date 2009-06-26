@@ -409,22 +409,6 @@ class Sesshun(models.Model):
                 break
         return gradeLetter
 
-    def validate(self, fdata):
-        "Detect illegal values in client modifications to the model."
-        """
-        # Validate frequency/receiver settings
-        given_frequency = fdata.get("frequency", None)
-        given_receivers  = fdata.get("receiver", None)
-        # Has the frequency changed?
-        if frequency and frequency != self.frequency:
-            default_receiver = Receiver.getDefault(given_frequency)
-            # Do the specified receivers include the one for this frequency?
-            if default_receiver != "NS" and \
-               not default_receiver.find(given_receivers):
-                return False
-        """
-        return True
-
     def init_from_post(self, fdata):
         self.set_base_fields(fdata)
 

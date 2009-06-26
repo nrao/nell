@@ -1,7 +1,7 @@
 from django.http              import HttpResponse
 from django_restapi.resource  import Resource
+from django.db.models         import Q
 from models                   import *
-
 from datetime import datetime
 import simplejson as json
 
@@ -35,7 +35,17 @@ class SessionResource(NellResource):
             total     = Sesshun.objects.count()
             sortField = jsonMap.get(request.GET.get("sortField", "id"), "id")
             order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
-            sessions  = Sesshun.objects.order_by(order + sortField)
+
+            filterText = request.GET.get("filterText", None)
+            if filterText is None:
+                sessions = Sesshun.objects.order_by(order + sortField)
+            else:
+                sessions = Sesshun.objects.filter(Q(name__contains=filterText) |\
+                    Q(project__pcode__contains=filterText) |\
+                    Q(project__semester__semester__contains=filterText) |
+                    Q(session_type__type__contains=filterText) |
+                    Q(observing_type__type__contains=filterText)).\
+                    order_by(order + sortField)
             start = int(request.GET.get("start", 0))
             limit = int(request.GET.get("limit", 50))
             sessions = sessions[start:start+limit]
