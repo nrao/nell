@@ -86,5 +86,6 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'nell.sesshuns',
-    'django.contrib.admin'
+    'django.contrib.admin',
+    'nell.sesshuns.templatetags',
 )
