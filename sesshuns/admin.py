@@ -1,10 +1,9 @@
-from sesshuns.models import * 
 from django.contrib  import admin
+from sesshuns.models import * 
 
 class Receiver_GroupInline(admin.TabularInline):
     model = Receiver_Group
     extra = 1
-
 
 class WindowInline(admin.TabularInline):
     model = Window
@@ -19,10 +18,9 @@ class Observing_ParameterInline(admin.TabularInline):
     extra = 1
 
 class SesshunAdmin(admin.ModelAdmin):
-    list_display = ['name', 'project', 'frequency', 'allotment', 'receiver_list']
-    list_filter = ['name',  'project']
+    list_display = ['name', 'project', 'frequency', 'allotment', 'receiver_list', 'session_type', 'observing_type', 'status']
+    list_filter = ['session_type', 'observing_type', 'frequency']
     search_fields = ['name']
-    #date_hierarchy = 'pub_date'
     inlines = [Receiver_GroupInline
              , TargetInline
              , Observing_ParameterInline
@@ -39,8 +37,17 @@ class Project_TypeAdmin(admin.ModelAdmin):
     list_display = ['type']
     display = 'type'
 
+def mark_as_completed(modeladmin, request, queryset):
+    queryset.update(complete = True)
+mark_as_completed.short_description = "Mark selected sessions as completed"
+
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ['pcode', 'name', 'semester', 'project_type']
+    list_display = ['pcode', 'name', 'semester', 'project_type', 'principal_contact', 'thesis', 'complete', 'start_date']
+    actions = [mark_as_completed]
+    ordering = ['pcode']
+    list_filter = ['semester', 'project_type', 'complete', 'thesis']
+    search_fields = ['pcode']
+    date_hierarchy = 'start_date'
     inlines = [SesshunInline]
 
 class ProjectInline(admin.TabularInline):
@@ -66,13 +73,12 @@ class ParameterAdmin(admin.ModelAdmin):
 class Receiver_ScheduleAdmin(admin.ModelAdmin):
     pass
 
-
-
 class Receiver_GroupAdmin(admin.ModelAdmin):
     pass
 
 class Observing_ParameterAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['session', 'parameter', 'value']
+    list_filter = ['parameter']
 
 class StatusAdmin(admin.ModelAdmin):
     search_fields = ['id'] 
@@ -103,9 +109,9 @@ admin.site.register(Observing_Type, Observing_TypeAdmin)
 admin.site.register(Receiver, ReceiverAdmin)
 admin.site.register(Receiver_Schedule, Receiver_ScheduleAdmin)
 admin.site.register(Parameter, ParameterAdmin)
-admin.site.register(Receiver_Group, Receiver_GroupAdmin)
+#admin.site.register(Receiver_Group, Receiver_GroupAdmin)
 admin.site.register(Observing_Parameter, Observing_ParameterAdmin)
-admin.site.register(Status, StatusAdmin)
+#admin.site.register(Status, StatusAdmin)
 admin.site.register(Window, WindowAdmin)
 admin.site.register(Opportunity, OpportunityAdmin)
 admin.site.register(System, SystemAdmin)
