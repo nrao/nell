@@ -1,5 +1,7 @@
+from django.template          import Context, loader
 from django.http              import HttpResponse
 from django_restapi.resource  import Resource
+from django.shortcuts         import render_to_response
 from models                   import *
 
 from datetime import datetime
@@ -80,3 +82,8 @@ def get_options(request, *args, **kws):
     projects = Project.objects.order_by('pcode')
     return HttpResponse(json.dumps({'project codes' : [ p.pcode for p in projects]})
                       , mimetype = "text/plain")
+
+def get_schedule(request, *args, **kws):
+    now = datetime.now()
+    periods = Period.objects.filter(start__gte=now).filter(start__lte=(now+timedelta(days=2))).order_by('start')
+    return render_to_response('sessions/schedule/index.html', {'periods': periods})

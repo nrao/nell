@@ -1,0 +1,31 @@
+{% load custom %}
+
+<h1>Schedule</h1>
+
+<form action="/sessions/vote/" method="post">
+    <input type="submit" value="Schedule" />
+    <!--
+    start at <input type="text" name="start" \>
+    for <input type="text" name="duration" \> hours<br \>
+    -->
+</form>
+
+{% if periods %}
+    <ul>
+    {% for period in periods %}
+        <li>{{ period.session.name }}
+            ({{ period.session.observing_type }})
+            at {{ period.start|dt2sex }} UTC
+            for {{ period.duration|hrs2sex }}
+            {% ifnotequal period.session.observing_type.type "maintenance" %}
+                at {{ period.session.frequency }} GHz
+            {% endifnotequal %}
+            {% if period.backup %}
+                (backup)
+            {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No periods scheduled.</p>
+{% endif %}
