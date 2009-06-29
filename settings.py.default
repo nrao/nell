@@ -89,3 +89,9 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'nell.sesshuns.templatetags',
 )
+ 
+# this is needed for making direct calls to the Antioch server
+# via the proxy.  Use your port specified in
+# /home/dss/conundrum/conf/nginx.conf
+
+PROXY_PORT = 8001 
