@@ -1,5 +1,7 @@
 # Django settings for nell project.
 
+# Look for variables marked with #MODIFY# to adapt to your installation
+
 DEBUG = True
 
 TEMPLATE_DEBUG = DEBUG
@@ -15,7 +17,8 @@ MANAGERS = ADMINS
 #DATABASE_ENGINE = 'mysql'
 DATABASE_ENGINE = 'postgresql'     # 'postgresql_psycopg2', 'postgresql', 'mysql',
                               # 'sqlite3' or 'oracle'.
-#DATABASE_NAME = 'dss_prime'  # Modify to your database name or path to
+DATABASE_NAME = 'dss_prime'   #MODIFY#
+                              # Modify to your database name or path to
                               # database file if using sqlite3.
 DATABASE_USER = 'dss'         # Not used with sqlite3.
 DATABASE_PASSWORD = ''  # Not used with sqlite3.
@@ -75,7 +78,7 @@ ROOT_URLCONF = 'nell.urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
-    "/home/dss/integration/nell/templates"
+    "/home/dss/integration/nell/templates"    #MODIFY#
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
 )
@@ -94,4 +97,4 @@ INSTALLED_APPS = (
 # via the proxy.  Use your port specified in
 # /home/dss/conundrum/conf/nginx.conf
 
-PROXY_PORT = 8001 
+PROXY_PORT = 8001     #MODIFY#
