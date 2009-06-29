@@ -3,6 +3,7 @@ from django.http              import HttpResponse
 from django_restapi.resource  import Resource
 from django.shortcuts         import render_to_response
 from models                   import *
+from settings                 import PROXY_PORT
 
 from datetime import datetime
 import simplejson as json
@@ -84,6 +85,11 @@ def get_options(request, *args, **kws):
                       , mimetype = "text/plain")
 
 def get_schedule(request, *args, **kws):
-    now = datetime.now()
-    periods = Period.objects.filter(start__gte=now).filter(start__lte=(now+timedelta(days=2))).order_by('start')
-    return render_to_response('sessions/schedule/index.html', {'periods': periods})
+    # for now, show all periods so we can see affect of calling antioch
+    #periods = Period.objects.filter(start__gte=now).filter(start__lte=(now+timedelta(days=2))).order_by('start')
+    periods = Period.objects.all()
+    proxyPort = PROXY_PORT 
+    action = "http://trent.gb.nrao.edu:%d/schedule_algo" % proxyPort
+    return render_to_response('sessions/schedule/index.html'
+                            , {'periods': periods
+                             , 'action' : action})
