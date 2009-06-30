@@ -6,6 +6,9 @@ from datetime import datetime
 import simplejson as json
 
 class NellResource(Resource):
+    def __init__(self, dbobject, *args, **kws):
+        self.dbobject = dbobject
+        super(NellResource, self).__init__(*args, **kws)
 
     def create(self, request, *args, **kws):
         method = request.POST.get("_method", None)
@@ -16,23 +19,59 @@ class NellResource(Resource):
         else:
             return self.create_worker(request, *args, **kws)
 
-class SessionResource(NellResource):
+    def create_worker(self, request, *args, **kws):
+        o = self.dbobject()
+        o.init_from_post(request.POST)
+        # Query the database to insure data is in the correct data type
+        o = first(self.dbobject.objects.filter(id = o.id))
+        
+        return HttpResponse(json.dumps(o.jsondict())
+                          , mimetype = "text/plain")
+
+    def update(self, request, *args, **kws):
+        id    = int(args[0])
+        o     = self.dbobject.objects.get(id = id)
+        o.update_from_post(request.POST)
+
+        return HttpResponse("")
+
+    def delete(self, request, *args):
+        id = int(args[0])
+        o  = self.dbobject.objects.get(id = id)
+        o.delete()
+        
+        return HttpResponse(json.dumps({"success": "ok"}))
+
+class ProjectResource(NellResource):
+    def __init__(self, *args, **kws):
+        super(ProjectResource, self).__init__(Project, *args, **kws)
+
+    def create(self, request, *args, **kws):
+        return super(ProjectResource, self).create(request, *args, **kws)
     
+    def read(self, request, *args, **kws):
+        sortField = request.GET.get("sortField", "id")
+        sortField = "id" if sortField == "null" else sortField
+        order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
+
+        projects = Project.objects.order_by(order + sortField)
+        total    = len(projects)
+        offset   = int(request.GET.get("offset", 0))
+        limit    = int(request.GET.get("limit", 50))
+        projects = projects[offset:offset+limit]
+        return HttpResponse(json.dumps(dict(total = total
+                                          , projects = [p.jsondict() for p in projects]))
+                          , content_type = "application/json")
+
+class SessionResource(NellResource):
+    def __init__(self, *args, **kws):
+        super(SessionResource, self).__init__(Sesshun, *args, **kws)
+ 
     def create(self, request, *args, **kws):
         return super(SessionResource, self).create(request, *args, **kws)
-    
-    def create_worker(self, request, *args, **kws):
-        s = Sesshun()
-        s.init_from_post(request.POST)
-        # Query the database to insure data is in the correct data type
-        s = first(Sesshun.objects.filter(id = s.id))
-        
-        return HttpResponse(json.dumps(s.jsondict())
-                          , mimetype = "text/plain")
 
     def read(self, request, *args, **kws):
         if len(args) == 0:
-            total     = Sesshun.objects.count()
             sortField = jsonMap.get(request.GET.get("sortField", "id"), "id")
             order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
 
@@ -46,9 +85,10 @@ class SessionResource(NellResource):
                     Q(session_type__type__contains=filterText) |
                     Q(observing_type__type__contains=filterText)).\
                     order_by(order + sortField)
-            start = int(request.GET.get("start", 0))
-            limit = int(request.GET.get("limit", 50))
-            sessions = sessions[start:start+limit]
+            total  = len(sessions)
+            offset = int(request.GET.get("offset", 0))
+            limit  = int(request.GET.get("limit", 50))
+            sessions = sessions[offset:offset+limit]
             return HttpResponse(json.dumps(dict(total = total
                                               , sessions = [s.jsondict() for s in sessions]))
                               , content_type = "application/json")
@@ -56,20 +96,6 @@ class SessionResource(NellResource):
             s_id  = args[0]
             s     = first(Sesshun.objects.filter(id = s_id))
             return HttpResponse(json.dumps(dict(session = s.jsondict())))
-
-    def update(self, request, *args, **kws):
-        id    = int(args[0])
-        s     = Sesshun.objects.get(id = id)
-        s.update_from_post(request.POST)
-
-        return HttpResponse("")
-
-    def delete(self, request, *args):
-        id = int(args[0])
-        s  = Sesshun.objects.get(id = id)
-        s.delete()
-        
-        return HttpResponse(json.dumps({"success": "ok"}))
 
 def receivers_schedule(request, *args, **kws):
     startdate = request.GET.get("startdate", None)

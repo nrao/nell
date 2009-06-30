@@ -252,6 +252,24 @@ class TestSesshun(NellTestCase):
 
 # Testing View Resources
 
+class TestProjectResource(NellTestCase):
+
+    def setUp(self):
+        super(TestProjectResource, self).setUp()
+        self.client = Client()
+
+    def test_create(self):
+        fdata = {'semester'   : '09C'
+               , 'type'       : 'science'
+               , 'pcode'      : 'mike'
+               , 'name'       : 'mike awesome project!'
+               , 'PSC_time'   : '100.0'
+               , 'total_time' : '100.0'
+               , 'sem_time'   : '50.0'
+                 }
+        response = self.client.post('/projects', fdata)
+        self.failUnlessEqual(response.status_code, 200)
+    
 class TestSessionResource(NellTestCase):
 
     def setUp(self):
