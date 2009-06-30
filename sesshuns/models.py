@@ -98,10 +98,10 @@ class Project_Type(models.Model):
         db_table = "project_types"
 
 class Allotment(models.Model):
-    psc_time          = models.FloatField()
-    total_time        = models.FloatField()
-    max_semester_time = models.FloatField()
-    grade             = models.FloatField()
+    psc_time          = models.FloatField(help_text = "Hours")
+    total_time        = models.FloatField(help_text = "Hours")
+    max_semester_time = models.FloatField(help_text = "Hours")
+    grade             = models.FloatField(help_text = "0.0 - 4.0")
 
     def __unicode__(self):
         return "(%d) Total: %5.2f, Grade: %5.2f, PSC: %5.2f, Max: %5.2f" % \
@@ -279,8 +279,8 @@ class Observing_Type(models.Model):
 class Receiver(models.Model):
     name         = models.CharField(max_length = 32)
     abbreviation = models.CharField(max_length = 32)
-    freq_low     = models.FloatField()
-    freq_hi      = models.FloatField()
+    freq_low     = models.FloatField(help_text = "GHz")
+    freq_hi      = models.FloatField(help_text = "GHz")
 
     def __unicode__(self):
         return self.name
@@ -372,10 +372,10 @@ class Sesshun(models.Model):
     original_id        = models.IntegerField(null = True)
     name               = models.CharField(null = True
                                         , max_length = 64)
-    frequency          = models.FloatField(null = True)
-    max_duration       = models.FloatField(null = True)
-    min_duration       = models.FloatField(null = True)
-    time_between       = models.FloatField(null = True)
+    frequency          = models.FloatField(null = True, help_text = "GHz")
+    max_duration       = models.FloatField(null = True, help_text = "Hours")
+    min_duration       = models.FloatField(null = True, help_text = "Hours")
+    time_between       = models.FloatField(null = True, help_text = "Hours")
 
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
@@ -694,7 +694,7 @@ class Window(models.Model):
 class Opportunity(models.Model):
     window     = models.ForeignKey(Window)
     start_time = models.DateTimeField()
-    duration   = models.FloatField()
+    duration   = models.FloatField(help_text = "Hours")
 
     def __unicode__(self):
         return "Opt (%d) for Win (%d): %s for %5.2f hrs" % (self.id
@@ -747,7 +747,7 @@ class Target(models.Model):
 class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
     start      = models.DateTimeField()
-    duration   = models.FloatField()
+    duration   = models.FloatField(help_text = "Hours")
     score      = models.FloatField(null = True)
     forecast   = models.DateTimeField(null = True)
     backup     = models.BooleanField()
