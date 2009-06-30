@@ -22,6 +22,20 @@ def str2dt(str):
     m, d, y   = map(int, str.split('/'))
     return datetime(y, m, d)
 
+def grade_abc_2_float(abc):
+    grades = {'A' : 4.0, 'B' : 3.0, 'C' : 2.0}
+    return grades.get(abc, None)
+
+def grade_float_2_abc(grade):
+    grades = ['A', 'B', 'C']
+    floats = [4.0, 3.0, 2.0]
+    gradeLetter = 'C'
+    for i in range(len(grades)):
+        if grade >= (floats[i] - 10e-5):
+            gradeLetter = grades[i]
+            break
+    return gradeLetter
+
 jsonMap = {"authorized"     : "status__authorized"
          , "between"        : "time_between"
          , "backup"         : "status__backup"
@@ -117,7 +131,48 @@ class Project(models.Model):
 
     def __str__(self):
         return self.pcode
-    
+
+    def init_from_post(self, fdata):
+        fproj_type = fdata.get("type", "science")
+        p_type     = first(Project_Type.objects.filter(type = fproj_type))
+        fsemester  = fdata.get("semester", None)
+        semester   = first(Semester.objects.filter(semester = fsemester))
+
+        self.semester     = semester
+        self.project_type = p_type
+        self.pcode        = fdata.get("pcode", None)
+        self.name         = fdata.get("name", None)
+        self.thesis       = fdata.get("thesis", "false") == "true"
+        self.complete     = fdata.get("complete", "false") == "true"
+        self.ignore_grade = fdata.get("ignore_grade", "false") == "true"
+
+        """
+        TBF: Add support for multiple many2many allotment
+        grade = grade_abc_2_float(fdata.get("grade", 'A'))
+        allot = Allotment(psc_time          = fdata.get("PSC_time", 0.0)
+                        , total_time        = fdata.get("total_time", 0.0)
+                        , max_semester_time = fdata.get("sem_time", 0.0)
+                        , grade             = grade
+                          )
+        allot.save()
+        self.allotment        = allot
+        """
+        self.save()
+
+    def jsondict(self):
+        return {"id"           : self.id
+              , "semester"     : self.semester.semester
+              , "type"         : self.project_type.type
+           #   , "total_time"   : self.allotment.total_time
+           #   , "PSC_time"     : self.allotment.psc_time
+           #   , "sem_time"     : self.allotment.max_semester_time
+              , "pcode"        : self.pcode
+              , "name"         : self.name
+              , "these"        : self.thesis
+              , "complete"     : self.complete
+              , "ignore_grade" : self.ignore_grade
+                }
+
     def principal_contact(self):
         "Who is the principal contact for this Project?"
         pc = None
@@ -349,7 +404,7 @@ class Sesshun(models.Model):
         return rcvrs        
         
     def letter_grade(self):
-        return self.grade_float_2_abc(self.allotment.grade)
+        return grade_float_2_abc(self.allotment.grade)
 
     def num_rcvr_groups(self):
         return len(self.receiver_group_set.all())
@@ -395,25 +450,11 @@ class Sesshun(models.Model):
         value = fdata.get(key, defaultValue)
         return value if value is None else cast(value) 
 
-    def grade_abc_2_float(self, abc):
-        grades = {'A' : 4.0, 'B' : 3.0, 'C' : 2.0}
-        return grades.get(abc, None)
-
-    def grade_float_2_abc(self, grade):
-        grades = ['A', 'B', 'C']
-        floats = [4.0, 3.0, 2.0]
-        gradeLetter = 'C'
-        for i in range(len(grades)):
-            if grade >= (floats[i] - 10e-5):
-                gradeLetter = grades[i]
-                break
-        return gradeLetter
-
     def init_from_post(self, fdata):
         self.set_base_fields(fdata)
 
         # grade - UI deals w/ letters (A,B,C) - DB deals with floats
-        grade = self.grade_abc_2_float(fdata.get("grade", 'A'))
+        grade = grade_abc_2_float(fdata.get("grade", 'A'))
         allot = Allotment(psc_time          = fdata.get("PSC_time", 0.0)
                         , total_time        = fdata.get("total_time", 0.0)
                         , max_semester_time = fdata.get("sem_time", 0.0)
@@ -468,7 +509,7 @@ class Sesshun(models.Model):
         self.save()
 
         # grade - UI deals w/ letters (A,B,C) - DB deals with floats
-        grade = self.grade_abc_2_float(fdata.get("grade", 'A'))
+        grade = grade_abc_2_float(fdata.get("grade", 'A'))
         self.allotment.psc_time          = fdata.get("PSC_time", 0.0)
         self.allotment.total_time        = fdata.get("total_time", 0.0)
         self.allotment.max_semester_time = fdata.get("sem_time", 0.0)
@@ -542,7 +583,7 @@ class Sesshun(models.Model):
            , "total_time" : self.allotment.total_time
            , "PSC_time"   : self.allotment.psc_time
            , "sem_time"   : self.allotment.max_semester_time
-           , "grade"      : self.grade_float_2_abc(self.allotment.grade)
+           , "grade"      : grade_float_2_abc(self.allotment.grade)
            , "orig_ID"    : self.original_id
            , "name"       : self.name
            , "freq"       : self.frequency
