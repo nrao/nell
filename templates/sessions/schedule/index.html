@@ -48,8 +48,8 @@
       <td>{{ period.start }}</td>
       <td rowspan="{{ period.dur }}">{{ period.sname }}</td>
       <td rowspan="{{ period.dur }}">{{ period.stype }}</td>
-      <td rowspan="{{ period.dur }}">{{ period.freq }}</td>
-      <td rowspan="{{ period.dur }}">{{ period.notes }}</td>
+      <td rowspan="{{ period.dur }}">{{ period.freq|safe }}</td>
+      <td rowspan="{{ period.dur }}">{{ period.notes|safe }}</td>
     </tr>
     {% for quarter in period.durs %}
       <tr>

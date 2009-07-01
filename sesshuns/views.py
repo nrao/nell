@@ -135,15 +135,15 @@ def get_schedule(request, *args, **kws):
 
     pfs = []
     for p in periods:
-        if end < p.start:   # hole
-            # within a day?
+        # Is there a hole between periods?
+        if end < p.start:
+            # that is within a day?
             if p.start.day == end.day:
                 dur = p.start - end
                 pfs.append(
                     createPeriodDict(end, 24*dur.days + dur.seconds/3600.))
-            # spanning over midnight?
+            # or is spanning over midnight?
             else:
-                # need total time before and after midnight!!
                 p_start_end = TimeAgent.truncateDt(p.start)
                 pfs.append(
                     createPeriodDict(end,
@@ -151,20 +151,23 @@ def get_schedule(request, *args, **kws):
                 pfs.append(
                     createPeriodDict(p_end_start,
                                      TimeAgent.timedelta2minutes(p.start - p_start_end)/60.))
-        elif p.start < end: #overlap
+        # or an overlap?
+        elif p.start < end:
             pass
-        # within a day?
+        # that is within a day?
         p_end = p.start + timedelta(hours=p.duration)
         if p.start.day == p_end.day:
             pfs.append(createPeriodDict(p.start, p.duration, p))
+        # or is spanning over midnight?
         else:
-            # need total time before and after midnight!!
             p_end_start = TimeAgent.truncateDt(p_end)
             pfs.append(createPeriodDict(p.start,
-                                        TimeAgent.timedelta2minutes(p_end_start - p.start)/60.,
+                                        TimeAgent.timedelta2minutes(
+                                                p_end_start - p.start)/60.,
                                         p))
             pfs.append(createPeriodDict(p_end_start,
-                                        TimeAgent.timedelta2minutes(p_end - p_end_start)/60.,
+                                        TimeAgent.timedelta2minutes(
+                                                p_end - p_end_start)/60.,
                                         p,
                                         " (cont)"))
         end = p.start + timedelta(hours=p.duration)
