@@ -99,6 +99,10 @@ def dt2mjd(dt):
     "Translates from built-in module datetime to MJD."
     return dt2mxDT(dt).mjd
 
+def truncateDt(dt):
+    "Returns only the year/month/day portion of a datetime."
+    return datetime.datetime(year = dt.year, month=dt.month, day=dt.day)
+
 def dt2tlst(dt):
     "Translates from UT datetime to LST time."
     relative_hours = Absolute2RelativeLST(dt)

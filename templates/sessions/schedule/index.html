@@ -29,3 +29,32 @@
 {% else %}
     <p>No periods scheduled.</p>
 {% endif %}
+
+<table border="1">
+  {% for period in pfs %}
+    {% ifchanged %}
+      <tr>
+        <th colspan="5">{{ period.date }}</th>
+      </tr>
+      <tr>
+      <th>&nbsp;</th>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Freq (GHz)</th>
+      <th>Notes</th>
+      </tr>
+    {% endifchanged %}
+    <tr>
+      <td>{{ period.start }}</td>
+      <td rowspan="{{ period.dur }}">{{ period.sname }}</td>
+      <td rowspan="{{ period.dur }}">{{ period.stype }}</td>
+      <td rowspan="{{ period.dur }}">{{ period.freq }}</td>
+      <td rowspan="{{ period.dur }}">{{ period.notes }}</td>
+    </tr>
+    {% for quarter in period.durs %}
+      <tr>
+        <td>{{ quarter }}</td>
+      </tr>
+    {% endfor %}
+  {% endfor %}
+</table>
