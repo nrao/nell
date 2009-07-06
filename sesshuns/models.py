@@ -132,20 +132,23 @@ class Project(models.Model):
     def __str__(self):
         return self.pcode
 
-    def init_from_post(self, fdata):
+    def set_base_fields(self, fdata):
         fproj_type = fdata.get("type", "science")
         p_type     = first(Project_Type.objects.filter(type = fproj_type))
-        fsemester  = fdata.get("semester", None)
+        fsemester  = fdata.get("semester", "09C")
         semester   = first(Semester.objects.filter(semester = fsemester))
 
         self.semester     = semester
         self.project_type = p_type
-        self.pcode        = fdata.get("pcode", None)
-        self.name         = fdata.get("name", None)
+        self.pcode        = fdata.get("pcode", "")
+        self.name         = fdata.get("name", "")
         self.thesis       = fdata.get("thesis", "false") == "true"
         self.complete     = fdata.get("complete", "false") == "true"
         self.ignore_grade = fdata.get("ignore_grade", "false") == "true"
 
+    def init_from_post(self, fdata):
+        self.set_base_fields(fdata)
+        
         """
         TBF: Add support for multiple many2many allotment
         grade = grade_abc_2_float(fdata.get("grade", 'A'))
@@ -159,16 +162,26 @@ class Project(models.Model):
         """
         self.save()
 
+    def update_from_post(self, fdata):
+        self.set_base_fields(fdata)
+        self.save()
+
     def jsondict(self):
+        totals   = ', '.join([str(a.total_time) for a in self.allotments.all()])
+        pscs     = ', '.join([str(a.psc_time) for a in self.allotments.all()])
+        max_sems = ', '.join([str(a.max_semester_time) for a in self.allotments.all()])
+        grades   = ', '.join([grade_float_2_abc(a.grade) for a in self.allotments.all()])
+
         return {"id"           : self.id
               , "semester"     : self.semester.semester
               , "type"         : self.project_type.type
-           #   , "total_time"   : self.allotment.total_time
-           #   , "PSC_time"     : self.allotment.psc_time
-           #   , "sem_time"     : self.allotment.max_semester_time
+              , "total_time"   : totals
+              , "PSC_time"     : pscs
+              , "sem_time"     : max_sems
+              , "grade"        : grades
               , "pcode"        : self.pcode
               , "name"         : self.name
-              , "these"        : self.thesis
+              , "thesis"       : self.thesis
               , "complete"     : self.complete
               , "ignore_grade" : self.ignore_grade
                 }
@@ -424,7 +437,8 @@ class Sesshun(models.Model):
         fobstype = fdata.get("science", "testing")
         proj_code = fdata.get("pcode", "GBT09A-001")
 
-        p  = first(Project.objects.filter(pcode = proj_code).all())
+        p  = first(Project.objects.filter(pcode = proj_code).all()
+                 , Project.objects.all()[0])
         st = first(Session_Type.objects.filter(type = fsestype).all()
                  , Session_Type.objects.all()[0])
         ot = first(Observing_Type.objects.filter(type = fobstype).all()
@@ -448,7 +462,10 @@ class Sesshun(models.Model):
     def get_field(self, fdata, key, defaultValue, cast):
         "Some values from the JSON dict we know we need to type cast"
         value = fdata.get(key, defaultValue)
-        return value if value is None else cast(value) 
+        if cast != bool:
+            return value if value is None else cast(value)
+        else:
+            return value == "true"
 
     def init_from_post(self, fdata):
         self.set_base_fields(fdata)

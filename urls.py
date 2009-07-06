@@ -8,6 +8,7 @@ admin.autodiscover()
 
 urlpatterns = patterns(''
    , url(r'^projects$',           ProjectResource(permitted_methods=('GET', 'PUT', 'POST')))
+   , url(r'^projects/(\d+)$',     ProjectResource(permitted_methods=('PUT', 'GET', 'POST')))
    , url(r'^sessions/options$',   get_options)
    , url(r'^sessions/schedule$',  get_schedule)
    , url(r'^sessions$',           SessionResource(permitted_methods=('GET', 'PUT', 'POST')))

@@ -257,18 +257,40 @@ class TestProjectResource(NellTestCase):
     def setUp(self):
         super(TestProjectResource, self).setUp()
         self.client = Client()
+        self.fdata = {'semester'   : '09C'
+                    , 'type'       : 'science'
+                    , 'pcode'      : 'mike'
+                    , 'name'       : 'mike awesome project!'
+                    , 'PSC_time'   : '100.0'
+                    , 'total_time' : '100.0'
+                    , 'sem_time'   : '50.0'
+                      }
+        self.p = Project()
+        self.p.init_from_post(self.fdata)
+        self.p.save()
 
     def test_create(self):
-        fdata = {'semester'   : '09C'
-               , 'type'       : 'science'
-               , 'pcode'      : 'mike'
-               , 'name'       : 'mike awesome project!'
-               , 'PSC_time'   : '100.0'
-               , 'total_time' : '100.0'
-               , 'sem_time'   : '50.0'
-                 }
-        response = self.client.post('/projects', fdata)
+        response = self.client.post('/projects', self.fdata)
         self.failUnlessEqual(response.status_code, 200)
+
+    def test_create_empty(self):
+        response = self.client.post('/projects')
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_read(self):
+        response = self.client.get('/projects')
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_update(self):
+        fdata = self.fdata
+        fdata.update({"_method" : "put"})
+        response = self.client.post('/projects/%s' % self.p.id, fdata)
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_delete(self):
+        response = self.client.post('/projects/%s' % self.p.id, {"_method" : "delete"})
+        self.failUnlessEqual(response.status_code, 200)
+        
     
 class TestSessionResource(NellTestCase):
 
@@ -314,6 +336,13 @@ class TestSessionResource(NellTestCase):
 
     def test_read(self):
         response = self.client.get('/sessions')
+        self.failUnlessEqual(response.status_code, 200)
+
+        response = self.client.get('/sessions', {'limit'     : 50
+                                               , 'sortField' : 'null'
+                                               , 'sortDir'   : 'NONE'
+                                               , 'offset'    : 0
+                                                 })
         self.failUnlessEqual(response.status_code, 200)
 
     def test_read_one(self):

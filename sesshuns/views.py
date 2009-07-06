@@ -56,10 +56,19 @@ class ProjectResource(NellResource):
     
     def read(self, request, *args, **kws):
         sortField = request.GET.get("sortField", "id")
-        sortField = "id" if sortField == "null" else sortField
+        sortField = "pcode" if sortField == "null" else sortField
         order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
 
-        projects = Project.objects.order_by(order + sortField)
+        filterText = request.GET.get("filterText", None)
+        if filterText is None:
+            projects = Project.objects.order_by(order + sortField)
+        else:
+            projects = Project.objects.filter(Q(name__contains=filterText) |\
+                    Q(pcode__contains=filterText) |\
+                    Q(semester__semester__contains=filterText) |
+                    Q(name__contains=filterText) |
+                    Q(project_type__type__contains=filterText)).\
+                    order_by(order + sortField)
         total    = len(projects)
         offset   = int(request.GET.get("offset", 0))
         limit    = int(request.GET.get("limit", 50))
@@ -77,7 +86,7 @@ class SessionResource(NellResource):
 
     def read(self, request, *args, **kws):
         if len(args) == 0:
-            sortField = jsonMap.get(request.GET.get("sortField", "id"), "id")
+            sortField = jsonMap.get(request.GET.get("sortField", "pcode"), "project__pcode")
             order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
 
             filterText = request.GET.get("filterText", None)
