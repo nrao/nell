@@ -615,7 +615,7 @@ class Observing_Parameter(models.Model):
     string_value   = models.CharField(null = True, max_length = 64)
     integer_value  = models.IntegerField(null = True)
     float_value    = models.FloatField(null = True)
-    boolean_value  = models.BooleanField(null = True)
+    boolean_value  = models.NullBooleanField(null = True)
     datetime_value = models.DateTimeField(null = True)
 
     class Meta:
