@@ -132,7 +132,10 @@ class Project(models.Model):
     def __str__(self):
         return self.pcode
 
-    def set_base_fields(self, fdata):
+    def init_from_post(self, fdata):
+        self.update_from_post(fdata)
+
+    def update_from_post(self, fdata):
         fproj_type = fdata.get("type", "science")
         p_type     = first(Project_Type.objects.filter(type = fproj_type))
         fsemester  = fdata.get("semester", "09C")
@@ -146,24 +149,41 @@ class Project(models.Model):
         self.complete     = fdata.get("complete", "false") == "true"
         self.ignore_grade = fdata.get("ignore_grade", "false") == "true"
 
-    def init_from_post(self, fdata):
-        self.set_base_fields(fdata)
-        
-        """
-        TBF: Add support for multiple many2many allotment
-        grade = grade_abc_2_float(fdata.get("grade", 'A'))
-        allot = Allotment(psc_time          = fdata.get("PSC_time", 0.0)
-                        , total_time        = fdata.get("total_time", 0.0)
-                        , max_semester_time = fdata.get("sem_time", 0.0)
-                        , grade             = grade
-                          )
-        allot.save()
-        self.allotment        = allot
-        """
         self.save()
 
-    def update_from_post(self, fdata):
-        self.set_base_fields(fdata)
+        totals   = map(float, fdata.get("total_time", "0.0").split(', '))
+        pscs     = map(float, fdata.get("PSC_time", "0.0").split(', '))
+        max_sems = map(float, fdata.get("sem_time", "0.0").split(', '))
+        grades   = map(grade_abc_2_float, fdata.get("grade", "A").split(', '))
+        
+        assert len(totals) == len(pscs) and \
+            len(totals) == len(max_sems) and \
+            len(totals) == len(grades)
+
+        num_new = len(totals)
+        num_cur = len(self.allotments.all())
+        if num_new > num_cur:
+            for i in range(num_new - num_cur):
+                a = Allotment(psc_time = 0.0
+                            , total_time = 0.0
+                            , max_semester_time = 0.0
+                            , grade             = 0.0
+                              )
+                a.save()
+                self.allotments.add(a)
+        elif num_new < num_cur:
+            for a in self.allotments.all()[:(num_cur - num_new)]:
+                a.delete()
+                
+        allotment_data = zip(totals, pscs, max_sems, grades)
+        for data, a in zip(allotment_data, self.allotments.all()):
+            t, p, m, g = data
+            a.total_time        = t
+            a.psc_time          = p
+            a.max_semester_time = m
+            a.grade             = g
+            a.save()
+        
         self.save()
 
     def jsondict(self):

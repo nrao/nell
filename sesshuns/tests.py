@@ -153,6 +153,66 @@ class TestReceiverSchedule(NellTestCase):
         expected = '{"schedule": {"04/11/2009": ["342", "450", "600"], "04/06/2009": ["RRI", "342", "450"]}}'
         self.assertEqual(expected, response.content)
 
+class TestProject(NellTestCase):
+
+    def test_init_from_post(self):
+        p1 = Project()
+        p2 = Project()
+        self.gitrdone(p1, p1.init_from_post, p2, p2.init_from_post)
+
+        p3 = Project()
+        p3.init_from_post({})
+
+    def test_update_from_post(self):
+        p1 = Project()
+        p2 = Project()
+        self.gitrdone(p1, p1.update_from_post, p2, p2.update_from_post)
+
+    def gitrdone(self, p1, f1, p2, f2):
+        p_fdata = {"semester" : "09A"
+                 , "type"     : "science"
+                 , "total_time" : "10.0"
+                 , "PSC_time"   : "10.0"
+                 , "sem_time"   : "10.0"
+                 , "grade"      : "A"
+                   }
+        f1(p_fdata)
+        self.defaultAssertion(p_fdata, p1)
+        
+        p_fdata1 = {"semester" : "09A"
+                 , "type"     : "science"
+                 , "total_time" : "10.0, 5.0"
+                 , "PSC_time"   : "10.0, 5.0"
+                 , "sem_time"   : "10.0, 5.0"
+                 , "grade"      : "A, B"
+                   }
+        f2(p_fdata1)
+        self.defaultAssertion(p_fdata1, p2)
+
+        p_fdata = {"semester" : "09A"
+                 , "type"     : "science"
+                 , "total_time" : "10.0, 5.0, 1.0"
+                 , "PSC_time"   : "10.0, 5.0, 1.0"
+                 , "sem_time"   : "10.0, 5.0, 1.0"
+                 , "grade"      : "A, B, C"
+                   }
+        f2(p_fdata)
+        self.defaultAssertion(p_fdata, p2)
+
+        f2(p_fdata1)
+        self.defaultAssertion(p_fdata1, p2)
+
+    def defaultAssertion(self, p_fdata, p):
+        totals = map(float, p_fdata.get("total_time").split(', '))
+        pscs     = map(float, p_fdata.get("PSC_time", "").split(', '))
+        max_sems = map(float, p_fdata.get("sem_time", "").split(', '))
+        grades   = map(grade_abc_2_float, p_fdata.get("grade", "").split(', '))
+        for a in p.allotments.all():
+            self.assertTrue(a.total_time in totals)
+            self.assertTrue(a.psc_time in pscs)
+            self.assertTrue(a.max_semester_time in max_sems)
+            self.assertTrue(a.grade in grades)
+        
 class TestSesshun(NellTestCase):
 
     def setUp(self):
