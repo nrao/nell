@@ -13,6 +13,10 @@ class TargetInline(admin.TabularInline):
     model = Target
     extra = 1
 
+class PeriodInline(admin.TabularInline):
+    model = Period
+    extra = 1
+
 class Observing_ParameterInline(admin.TabularInline):    
     model = Observing_Parameter
     extra = 1
@@ -24,6 +28,7 @@ class SesshunAdmin(admin.ModelAdmin):
     inlines = [Receiver_GroupInline
              , TargetInline
              , Observing_ParameterInline
+             , PeriodInline
              , WindowInline]
 
 class SesshunInline(admin.TabularInline):
@@ -32,6 +37,13 @@ class SesshunInline(admin.TabularInline):
 
 class SemesterAdmin(admin.ModelAdmin):
     list_display = ['semester']
+
+class PeriodAdmin(admin.ModelAdmin):
+    list_display = ['start', 'duration', 'session']
+    ordering = ['start']
+    list_filter = ['start', 'session']
+    search_fields = ['start','session']
+    date_hierarchy = 'start'
 
 class Project_TypeAdmin(admin.ModelAdmin):
     list_display = ['type']
@@ -116,4 +128,5 @@ admin.site.register(Window, WindowAdmin)
 admin.site.register(Opportunity, OpportunityAdmin)
 admin.site.register(System, SystemAdmin)
 admin.site.register(Target, TargetAdmin)
+admin.site.register(Period, PeriodAdmin)
 

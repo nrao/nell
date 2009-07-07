@@ -1,0 +1,60 @@
+{% load custom %}
+
+<h1>Schedule</h1>
+
+<form action="{{action}}" method="post">
+    <input type="submit" value="Schedule Now!" >
+    <!--
+    start at <input type="text" name="start" \>
+    for <input type="text" name="duration" \> hours<br \>
+    -->
+</form>
+
+{% if periods %}
+    <ul>
+    {% for period in periods %}
+        <li>{{ period.session.name }}
+            ({{ period.session.observing_type }})
+            at {{ period.start|dt2sex }} UTC
+            for {{ period.duration|hrs2sex }}
+            {% ifnotequal period.session.observing_type.type "maintenance" %}
+                at {{ period.session.frequency }} GHz
+            {% endifnotequal %}
+            {% if period.backup %}
+                (backup)
+            {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No periods scheduled.</p>
+{% endif %}
+
+<table border="1">
+  {% for period in pfs %}
+    {% ifchanged %}
+      <tr>
+        <th colspan="5">{{ period.date }}</th>
+      </tr>
+      <tr>
+      <th>&nbsp;</th>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Freq (GHz)</th>
+      <th>Notes</th>
+      </tr>
+    {% endifchanged %}
+    <tr>
+      <td>{{ period.start }}</td>
+      <td rowspan="{{ period.dur }}">{{ period.sname }}</td>
+      <td rowspan="{{ period.dur }}">{{ period.stype }}</td>
+      <td rowspan="{{ period.dur }}">{{ period.freq|safe }}</td>
+      <td rowspan="{{ period.dur }}">{{ period.notes|safe }}</td>
+    </tr>
+    {% for quarter in period.durs %}
+      <tr>
+        <td>{{ quarter }}</td>
+      </tr>
+    {% endfor %}
+  {% endfor %}
+</table>

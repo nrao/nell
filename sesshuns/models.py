@@ -22,6 +22,20 @@ def str2dt(str):
     m, d, y   = map(int, str.split('/'))
     return datetime(y, m, d)
 
+def grade_abc_2_float(abc):
+    grades = {'A' : 4.0, 'B' : 3.0, 'C' : 2.0}
+    return grades.get(abc, None)
+
+def grade_float_2_abc(grade):
+    grades = ['A', 'B', 'C']
+    floats = [4.0, 3.0, 2.0]
+    gradeLetter = 'C'
+    for i in range(len(grades)):
+        if grade >= (floats[i] - 10e-5):
+            gradeLetter = grades[i]
+            break
+    return gradeLetter
+
 jsonMap = {"authorized"     : "status__authorized"
          , "between"        : "time_between"
          , "backup"         : "status__backup"
@@ -84,10 +98,10 @@ class Project_Type(models.Model):
         db_table = "project_types"
 
 class Allotment(models.Model):
-    psc_time          = models.FloatField()
-    total_time        = models.FloatField()
-    max_semester_time = models.FloatField()
-    grade             = models.FloatField()
+    psc_time          = models.FloatField(help_text = "Hours")
+    total_time        = models.FloatField(help_text = "Hours")
+    max_semester_time = models.FloatField(help_text = "Hours")
+    grade             = models.FloatField(help_text = "0.0 - 4.0")
 
     def __unicode__(self):
         return "(%d) Total: %5.2f, Grade: %5.2f, PSC: %5.2f, Max: %5.2f" % \
@@ -117,7 +131,81 @@ class Project(models.Model):
 
     def __str__(self):
         return self.pcode
-    
+
+    def init_from_post(self, fdata):
+        self.update_from_post(fdata)
+
+    def update_from_post(self, fdata):
+        fproj_type = fdata.get("type", "science")
+        p_type     = first(Project_Type.objects.filter(type = fproj_type))
+        fsemester  = fdata.get("semester", "09C")
+        semester   = first(Semester.objects.filter(semester = fsemester))
+
+        self.semester     = semester
+        self.project_type = p_type
+        self.pcode        = fdata.get("pcode", "")
+        self.name         = fdata.get("name", "")
+        self.thesis       = fdata.get("thesis", "false") == "true"
+        self.complete     = fdata.get("complete", "false") == "true"
+        self.ignore_grade = fdata.get("ignore_grade", "false") == "true"
+
+        self.save()
+
+        totals   = map(float, fdata.get("total_time", "0.0").split(', '))
+        pscs     = map(float, fdata.get("PSC_time", "0.0").split(', '))
+        max_sems = map(float, fdata.get("sem_time", "0.0").split(', '))
+        grades   = map(grade_abc_2_float, fdata.get("grade", "A").split(', '))
+        
+        assert len(totals) == len(pscs) and \
+            len(totals) == len(max_sems) and \
+            len(totals) == len(grades)
+
+        num_new = len(totals)
+        num_cur = len(self.allotments.all())
+        if num_new > num_cur:
+            for i in range(num_new - num_cur):
+                a = Allotment(psc_time = 0.0
+                            , total_time = 0.0
+                            , max_semester_time = 0.0
+                            , grade             = 0.0
+                              )
+                a.save()
+                self.allotments.add(a)
+        elif num_new < num_cur:
+            for a in self.allotments.all()[:(num_cur - num_new)]:
+                a.delete()
+                
+        allotment_data = zip(totals, pscs, max_sems, grades)
+        for data, a in zip(allotment_data, self.allotments.all()):
+            t, p, m, g = data
+            a.total_time        = t
+            a.psc_time          = p
+            a.max_semester_time = m
+            a.grade             = g
+            a.save()
+        
+        self.save()
+
+    def jsondict(self):
+        totals   = ', '.join([str(a.total_time) for a in self.allotments.all()])
+        pscs     = ', '.join([str(a.psc_time) for a in self.allotments.all()])
+        max_sems = ', '.join([str(a.max_semester_time) for a in self.allotments.all()])
+        grades   = ', '.join([grade_float_2_abc(a.grade) for a in self.allotments.all()])
+
+        return {"id"           : self.id
+              , "semester"     : self.semester.semester
+              , "type"         : self.project_type.type
+              , "total_time"   : totals
+              , "PSC_time"     : pscs
+              , "sem_time"     : max_sems
+              , "grade"        : grades
+              , "pcode"        : self.pcode
+              , "name"         : self.name
+              , "thesis"       : self.thesis
+              , "complete"     : self.complete
+              , "ignore_grade" : self.ignore_grade
+                }
+
     def principal_contact(self):
         "Who is the principal contact for this Project?"
         pc = None
@@ -224,8 +312,8 @@ class Observing_Type(models.Model):
 class Receiver(models.Model):
     name         = models.CharField(max_length = 32)
     abbreviation = models.CharField(max_length = 32)
-    freq_low     = models.FloatField()
-    freq_hi      = models.FloatField()
+    freq_low     = models.FloatField(help_text = "GHz")
+    freq_hi      = models.FloatField(help_text = "GHz")
 
     def __unicode__(self):
         return self.name
@@ -317,10 +405,10 @@ class Sesshun(models.Model):
     original_id        = models.IntegerField(null = True)
     name               = models.CharField(null = True
                                         , max_length = 64)
-    frequency          = models.FloatField(null = True)
-    max_duration       = models.FloatField(null = True)
-    min_duration       = models.FloatField(null = True)
-    time_between       = models.FloatField(null = True)
+    frequency          = models.FloatField(null = True, help_text = "GHz")
+    max_duration       = models.FloatField(null = True, help_text = "Hours")
+    min_duration       = models.FloatField(null = True, help_text = "Hours")
+    time_between       = models.FloatField(null = True, help_text = "Hours")
 
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
@@ -349,7 +437,7 @@ class Sesshun(models.Model):
         return rcvrs        
         
     def letter_grade(self):
-        return self.grade_float_2_abc(self.allotment.grade)
+        return grade_float_2_abc(self.allotment.grade)
 
     def num_rcvr_groups(self):
         return len(self.receiver_group_set.all())
@@ -369,7 +457,8 @@ class Sesshun(models.Model):
         fobstype = fdata.get("science", "testing")
         proj_code = fdata.get("pcode", "GBT09A-001")
 
-        p  = first(Project.objects.filter(pcode = proj_code).all())
+        p  = first(Project.objects.filter(pcode = proj_code).all()
+                 , Project.objects.all()[0])
         st = first(Session_Type.objects.filter(type = fsestype).all()
                  , Session_Type.objects.all()[0])
         ot = first(Observing_Type.objects.filter(type = fobstype).all()
@@ -393,43 +482,16 @@ class Sesshun(models.Model):
     def get_field(self, fdata, key, defaultValue, cast):
         "Some values from the JSON dict we know we need to type cast"
         value = fdata.get(key, defaultValue)
-        return value if value is None else cast(value) 
-
-    def grade_abc_2_float(self, abc):
-        grades = {'A' : 4.0, 'B' : 3.0, 'C' : 2.0}
-        return grades.get(abc, None)
-
-    def grade_float_2_abc(self, grade):
-        grades = ['A', 'B', 'C']
-        floats = [4.0, 3.0, 2.0]
-        gradeLetter = 'C'
-        for i in range(len(grades)):
-            if grade >= (floats[i] - 10e-5):
-                gradeLetter = grades[i]
-                break
-        return gradeLetter
-
-    def validate(self, fdata):
-        "Detect illegal values in client modifications to the model."
-        """
-        # Validate frequency/receiver settings
-        given_frequency = fdata.get("frequency", None)
-        given_receivers  = fdata.get("receiver", None)
-        # Has the frequency changed?
-        if frequency and frequency != self.frequency:
-            default_receiver = Receiver.getDefault(given_frequency)
-            # Do the specified receivers include the one for this frequency?
-            if default_receiver != "NS" and \
-               not default_receiver.find(given_receivers):
-                return False
-        """
-        return True
+        if cast != bool:
+            return value if value is None else cast(value)
+        else:
+            return value == "true"
 
     def init_from_post(self, fdata):
         self.set_base_fields(fdata)
 
         # grade - UI deals w/ letters (A,B,C) - DB deals with floats
-        grade = self.grade_abc_2_float(fdata.get("grade", 'A'))
+        grade = grade_abc_2_float(fdata.get("grade", 'A'))
         allot = Allotment(psc_time          = fdata.get("PSC_time", 0.0)
                         , total_time        = fdata.get("total_time", 0.0)
                         , max_semester_time = fdata.get("sem_time", 0.0)
@@ -484,7 +546,7 @@ class Sesshun(models.Model):
         self.save()
 
         # grade - UI deals w/ letters (A,B,C) - DB deals with floats
-        grade = self.grade_abc_2_float(fdata.get("grade", 'A'))
+        grade = grade_abc_2_float(fdata.get("grade", 'A'))
         self.allotment.psc_time          = fdata.get("PSC_time", 0.0)
         self.allotment.total_time        = fdata.get("total_time", 0.0)
         self.allotment.max_semester_time = fdata.get("sem_time", 0.0)
@@ -558,7 +620,7 @@ class Sesshun(models.Model):
            , "total_time" : self.allotment.total_time
            , "PSC_time"   : self.allotment.psc_time
            , "sem_time"   : self.allotment.max_semester_time
-           , "grade"      : self.grade_float_2_abc(self.allotment.grade)
+           , "grade"      : grade_float_2_abc(self.allotment.grade)
            , "orig_ID"    : self.original_id
            , "name"       : self.name
            , "freq"       : self.frequency
@@ -669,7 +731,7 @@ class Window(models.Model):
 class Opportunity(models.Model):
     window     = models.ForeignKey(Window)
     start_time = models.DateTimeField()
-    duration   = models.FloatField()
+    duration   = models.FloatField(help_text = "Hours")
 
     def __unicode__(self):
         return "Opt (%d) for Win (%d): %s for %5.2f hrs" % (self.id
@@ -722,7 +784,7 @@ class Target(models.Model):
 class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
     start      = models.DateTimeField()
-    duration   = models.FloatField()
+    duration   = models.FloatField(help_text = "Hours")
     score      = models.FloatField(null = True)
     forecast   = models.DateTimeField(null = True)
     backup     = models.BooleanField()

@@ -153,6 +153,66 @@ class TestReceiverSchedule(NellTestCase):
         expected = '{"schedule": {"04/11/2009": ["342", "450", "600"], "04/06/2009": ["RRI", "342", "450"]}}'
         self.assertEqual(expected, response.content)
 
+class TestProject(NellTestCase):
+
+    def test_init_from_post(self):
+        p1 = Project()
+        p2 = Project()
+        self.gitrdone(p1, p1.init_from_post, p2, p2.init_from_post)
+
+        p3 = Project()
+        p3.init_from_post({})
+
+    def test_update_from_post(self):
+        p1 = Project()
+        p2 = Project()
+        self.gitrdone(p1, p1.update_from_post, p2, p2.update_from_post)
+
+    def gitrdone(self, p1, f1, p2, f2):
+        p_fdata = {"semester" : "09A"
+                 , "type"     : "science"
+                 , "total_time" : "10.0"
+                 , "PSC_time"   : "10.0"
+                 , "sem_time"   : "10.0"
+                 , "grade"      : "A"
+                   }
+        f1(p_fdata)
+        self.defaultAssertion(p_fdata, p1)
+        
+        p_fdata1 = {"semester" : "09A"
+                 , "type"     : "science"
+                 , "total_time" : "10.0, 5.0"
+                 , "PSC_time"   : "10.0, 5.0"
+                 , "sem_time"   : "10.0, 5.0"
+                 , "grade"      : "A, B"
+                   }
+        f2(p_fdata1)
+        self.defaultAssertion(p_fdata1, p2)
+
+        p_fdata = {"semester" : "09A"
+                 , "type"     : "science"
+                 , "total_time" : "10.0, 5.0, 1.0"
+                 , "PSC_time"   : "10.0, 5.0, 1.0"
+                 , "sem_time"   : "10.0, 5.0, 1.0"
+                 , "grade"      : "A, B, C"
+                   }
+        f2(p_fdata)
+        self.defaultAssertion(p_fdata, p2)
+
+        f2(p_fdata1)
+        self.defaultAssertion(p_fdata1, p2)
+
+    def defaultAssertion(self, p_fdata, p):
+        totals = map(float, p_fdata.get("total_time").split(', '))
+        pscs     = map(float, p_fdata.get("PSC_time", "").split(', '))
+        max_sems = map(float, p_fdata.get("sem_time", "").split(', '))
+        grades   = map(grade_abc_2_float, p_fdata.get("grade", "").split(', '))
+        for a in p.allotments.all():
+            self.assertTrue(a.total_time in totals)
+            self.assertTrue(a.psc_time in pscs)
+            self.assertTrue(a.max_semester_time in max_sems)
+            self.assertTrue(a.grade in grades)
+        
 class TestSesshun(NellTestCase):
 
     def setUp(self):
@@ -252,6 +312,46 @@ class TestSesshun(NellTestCase):
 
 # Testing View Resources
 
+class TestProjectResource(NellTestCase):
+
+    def setUp(self):
+        super(TestProjectResource, self).setUp()
+        self.client = Client()
+        self.fdata = {'semester'   : '09C'
+                    , 'type'       : 'science'
+                    , 'pcode'      : 'mike'
+                    , 'name'       : 'mike awesome project!'
+                    , 'PSC_time'   : '100.0'
+                    , 'total_time' : '100.0'
+                    , 'sem_time'   : '50.0'
+                      }
+        self.p = Project()
+        self.p.init_from_post(self.fdata)
+        self.p.save()
+
+    def test_create(self):
+        response = self.client.post('/projects', self.fdata)
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_create_empty(self):
+        response = self.client.post('/projects')
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_read(self):
+        response = self.client.get('/projects')
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_update(self):
+        fdata = self.fdata
+        fdata.update({"_method" : "put"})
+        response = self.client.post('/projects/%s' % self.p.id, fdata)
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_delete(self):
+        response = self.client.post('/projects/%s' % self.p.id, {"_method" : "delete"})
+        self.failUnlessEqual(response.status_code, 200)
+        
+    
 class TestSessionResource(NellTestCase):
 
     def setUp(self):
@@ -266,8 +366,43 @@ class TestSessionResource(NellTestCase):
         response = self.client.post('/sessions')
         self.failUnlessEqual(response.status_code, 200)
 
+    def test_create2(self):
+        fdata = {'req_max': ['6.0']
+               , 'grade': ['A']
+               , 'req_min': ['2.0']
+               , 'sem_time': ['1.0']
+               , 'id': ['0']
+               , 'source': ['1']
+               , 'authorized': ['true']
+               , 'between': ['0.0']
+               , 'type': ['open']
+               , 'total_time': ['1.0']
+               , 'coord_mode': ['J2000']
+               , 'complete': ['false']
+               , 'source_h': ['1']
+               , 'source_v': ['1']
+               , 'PSC_time': ['1.0']
+               , 'freq': ['1.0']
+               , 'name': ['All Fields']
+               , 'science': ['pulsar']
+               , 'orig_ID': ['0']
+               , 'enabled': ['false']
+               , 'receiver': ['1070']
+               , 'backup': ['false']
+                 }
+
+        response = self.client.post('/sessions', fdata)
+        self.failUnlessEqual(response.status_code, 200)
+
     def test_read(self):
         response = self.client.get('/sessions')
+        self.failUnlessEqual(response.status_code, 200)
+
+        response = self.client.get('/sessions', {'limit'     : 50
+                                               , 'sortField' : 'null'
+                                               , 'sortDir'   : 'NONE'
+                                               , 'offset'    : 0
+                                                 })
         self.failUnlessEqual(response.status_code, 200)
 
     def test_read_one(self):
