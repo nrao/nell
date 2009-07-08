@@ -5,7 +5,6 @@ from sesshuns.views                import *
 from django.contrib import admin
 admin.autodiscover()
 
-
 urlpatterns = patterns(''
    , url(r'^projects$',           ProjectResource(permitted_methods=('GET', 'PUT', 'POST')))
    , url(r'^projects/(\d+)$',     ProjectResource(permitted_methods=('PUT', 'GET', 'POST')))
@@ -18,5 +17,5 @@ urlpatterns = patterns(''
    , url(r'^period/form/(\d+)$',  period_form)
    , url(r'^period$',             PeriodResource(permitted_methods=('GET', 'PUT', 'POST')))
    , url(r'^period/(\d+)$',       PeriodResource(permitted_methods=('PUT', 'GET', 'POST')))
-   , url(r'^admin/(.*)',          admin.site.root)
+   , (r'^admin/',                 include(admin.site.urls))
 )
