@@ -3,6 +3,7 @@ from math                      import asin, acos, cos, sin
 from django.db                 import models
 from django.http               import QueryDict
 from utilities.receiver        import ReceiverCompile
+from utilities                 import TimeAgent
 
 import sys
 
@@ -14,12 +15,12 @@ def str2dt(str):
         return None
 
     if ' ' in str:
-        d, t      = str.split(' ')
-        m, d, y  = map(int, d.split('/'))
-        time      = t.split(':')
-        h, mm, ss = map(int, map(float, time))
+        dstr, tstr = str.split(' ')
+        y, m, d    = map(int, dstr.split('-'))
+        time       = tstr.split(':')
+        h, mm, ss  = map(int, map(float, time))
         return datetime(y, m, d, h, mm, ss)
-    m, d, y   = map(int, str.split('/'))
+    m, d, y   = map(int, str.split('-'))
     return datetime(y, m, d)
 
 def grade_abc_2_float(abc):
@@ -746,10 +747,10 @@ class Target(models.Model):
 
 class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
-    start      = models.DateTimeField()
+    start      = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm:ss")
     duration   = models.FloatField(help_text = "Hours")
-    score      = models.FloatField(null = True)
-    forecast   = models.DateTimeField(null = True)
+    score      = models.FloatField(null = True, editable=False)
+    forecast   = models.DateTimeField(null = True, editable=False)
     backup     = models.BooleanField()
 
     def __unicode__(self):
@@ -759,4 +760,18 @@ class Period(models.Model):
     class Meta:
         db_table = "periods"
     
+    def init_from_post(self, fdata):
+        self.from_post(fdata)
 
+    def update_from_post(self, fdata):
+        self.from_post(fdata)
+
+    def from_post(self, fdata):
+        self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
+        now = datetime.utcnow()
+        self.start    = TimeAgent.quarter(str2dt(fdata.get("start", now)))
+        self.duration = round(4*float(fdata.get("duration", "0.0")))/4
+        self.score    = None # TBF call to antioch to get score
+        self.forecast = now
+        self.backup   = fdata.get("backup", False)
+        self.save()
