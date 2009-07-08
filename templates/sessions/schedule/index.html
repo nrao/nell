@@ -2,7 +2,7 @@
 
 <h1>Schedule</h1>
 
-<form action="{{action}}" method="post">
+<form action="{{ schedule }}" method="post">
     <input type="submit" value="Schedule Now!" >
     <!--
     start at <input type="text" name="start" \>
@@ -30,25 +30,31 @@
     <p>No periods scheduled.</p>
 {% endif %}
 
+<a href="/period/form">
+  New Period
+</a> <p>
+
 <table border="1">
   {% for period in pfs %}
     {% ifchanged %}
-      <tr>
-        <th colspan="5">{{ period.date }}</th>
+      <tr bgcolor=orange>
+        <th colspan="7">{{ period.date }}</th>
       </tr>
-      <tr>
-      <th>&nbsp;</th>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Freq (GHz)</th>
-      <th>Notes</th>
+      <tr bgcolor=orange>
+        <th>Time</th>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Freq (GHz)</th>
+        <th>Score</th>
+        <th>Notes</th>
       </tr>
     {% endifchanged %}
     <tr>
       <td>{{ period.start }}</td>
-      <td rowspan="{{ period.dur }}">{{ period.sname }}</td>
+      {{ period.cntrl|safe }}
       <td rowspan="{{ period.dur }}">{{ period.stype }}</td>
       <td rowspan="{{ period.dur }}">{{ period.freq|safe }}</td>
+      <td rowspan="{{ period.dur }}">{{ period.score|safe }}</td>
       <td rowspan="{{ period.dur }}">{{ period.notes|safe }}</td>
     </tr>
     {% for quarter in period.durs %}
