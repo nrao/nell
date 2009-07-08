@@ -69,7 +69,7 @@ class TestPeriod(NellTestCase):
         super(TestPeriod, self).setUp()
         self.sesshun = create_sesshun()
         self.fdata = {"session":  1
-                    , "start":    "6/1/2009 12:15:00"
+                    , "start":    "2009-6-1 12:15:00"
                     , "duration": 4.25
                     , "backup":   False
                      }
