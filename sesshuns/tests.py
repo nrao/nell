@@ -63,6 +63,26 @@ def create_sesshun():
 
 # Testing models
 
+class TestPeriod(NellTestCase):
+
+    def setUp(self):
+        super(TestPeriod, self).setUp()
+        self.sesshun = create_sesshun()
+        self.fdata = {"session":  1
+                    , "start":    "2009-6-1 12:15:00"
+                    , "duration": 4.25
+                    , "backup":   False
+                     }
+
+    def test_update_from_post(self):
+        p = Period()
+        p.init_from_post(self.fdata)
+        
+        self.assertEqual(p.session, self.sesshun)
+        self.assertEqual(p.start, datetime(2009, 6, 1, 12, 15))
+        self.assertEqual(p.duration, self.fdata["duration"])
+        self.assertEqual(p.backup, self.fdata["backup"])
+
 class TestReceiver(NellTestCase):
 
     def setUp(self):
