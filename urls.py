@@ -5,7 +5,6 @@ from sesshuns.views                import *
 from django.contrib import admin
 admin.autodiscover()
 
-
 urlpatterns = patterns(''
    , url(r'^projects$',           ProjectResource(permitted_methods=('GET', 'PUT', 'POST')))
    , url(r'^projects/(\d+)$',     ProjectResource(permitted_methods=('PUT', 'GET', 'POST')))
@@ -14,5 +13,5 @@ urlpatterns = patterns(''
    , url(r'^sessions$',           SessionResource(permitted_methods=('GET', 'PUT', 'POST')))
    , url(r'^sessions/(\d+)$',     SessionResource(permitted_methods=('PUT', 'GET', 'POST')))
    , url(r'^receivers/schedule$', receivers_schedule)
-   , (r'^admin/(.*)', admin.site.root)
+   , (r'^admin/',                 include(admin.site.urls))
 )
