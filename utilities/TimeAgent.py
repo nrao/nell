@@ -131,6 +131,9 @@ def hour(dt):
     return dt.replace(hour=0, minute=0, second=0, microsecond=0) + \
                                            datetime.timedelta(hours=hours)
 
+def rndHr2Qtr(hours):
+    return round(4*hours)/4
+
 def quarter(dt):
     "Rounds datetime to nearest 15 minutes."
     minutes = int(round(dt.minute/15.0))*15

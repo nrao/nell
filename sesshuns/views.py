@@ -229,13 +229,13 @@ def get_schedule(request, *args, **kws):
                                      TimeAgent.timedelta2minutes(
                                              p_start_end - end)/60.))
                 pfs.append(
-                    createPeriodDict(p_end_start,
+                    createPeriodDict(p_start_end,
                                      TimeAgent.timedelta2minutes(
                                              p.start - p_start_end)/60.))
         # or an overlap?
         elif p.start < end:
             pass
-        # that is within a day?
+        # Is the period within a day?
         p_end = p.start + timedelta(hours=p.duration)
         if p.start.day == p_end.day:
             pfs.append(createPeriodDict(p.start, p.duration, p))
