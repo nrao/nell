@@ -24,7 +24,6 @@
 
 from mx       import DateTime
 import math
-import slalib
 import datetime
 import pytz
 
@@ -139,57 +138,6 @@ def quarter(dt):
     minutes = int(round(dt.minute/15.0))*15
     return dt.replace(minute=0, second=0, microsecond=0) + datetime.timedelta(minutes=minutes)
 
-GBTLAT  = deg2rad(DateTime.DateTimeDeltaFrom(GBT_LOCATION[1]).hours)
-GBTLONG = DateTime.DateTimeDeltaFrom(GBT_LOCATION[0]).hours
-
-def Absolute2RelativeLST(absolute):
-    "Returns LST as hours given UTC as a datetime."
-    absolute = dt2mxDT(absolute)
-    gmst = (180.0/math.pi)*slalib.sla_gmst(absolute.mjd)
-    gbls = (gmst + GBTLONG)/15.0
-    if gbls < 0:
-        gbls = 24 + gbls
-    return gbls
-
-def RelativeLST2AbsoluteTime(lst, now = None):
-    """
-    Returns today's DateTime in UTC, defined as first corresponding
-    time after now, from given LST in hours.
-    """
-    lst = DateTime.DateTimeDelta(0, lst, 0, 0)
-    if now is None:
-        now = DateTime.gmt()
-    else:
-        now = dt2mxDT(now)
-
-    # Now's mjd at 0h
-    mjd0 = int(now.mjd)
-
-    # Convert requested LST to degrees
-    requested_lst = 15*lst.hours
-
-    # Local LMST for 0h UT in degrees
-    lst0 = (180.0/math.pi)*slalib.sla_gmst(mjd0) + GBTLONG
-
-    # LST difference between 0h UT and requested LST
-    lst_offset = requested_lst - lst0
-
-    solar_sidereal_ratio = (365.25/366.25)
-
-    # options for solar time at 1 day sidereal intervals
-    options = []
-    for cycle in range(720, -1080, -360):
-        solar_time = ((lst_offset-cycle)/15.0)*solar_sidereal_ratio
-        mjd = mjd0 + solar_time/24
-        options.append(DateTime.DateTimeFromMJD(mjd))
-
-    # Select the time following the target time
-    target = DateTime.DateTimeFromMJD(now.mjd)
-    for option in options:
-        if target < option:
-            return mxDT2dt(option)
-    return mxDT2dt(option[-1])
-
 def TimeStamp2DateTime(mjd, secs):
     "Translates MJD integer and double seconds since midnight into a datetime."
     mxDT = DateTime.DateTimeFromMJD(mjd + secs/86400)
@@ -205,12 +153,6 @@ def DateTime2TimeStamp(dt):
     mjd = int(mjdf)
     secs = 86400.0*(mjdf - mjd)
     return (mjd, secs)
-
-def GbtLatitudeInRadians():
-    """
-    Translates GBT latitude from degrees, minutes, and seconds to radians
-    """
-    return GBTLAT
 
 def dt2semester(dt):
     trimesterMonth = [None,'C','A','A','A','A','B','B','B','B','C','C','C']
