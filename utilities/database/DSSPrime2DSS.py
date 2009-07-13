@@ -345,7 +345,7 @@ class DSSPrime2DSS(object):
                                   )
                     a.save()
 
-                    pa = Project_Allotments(project = p, allotment = a)
+                    pa = Project_Allotment(project = p, allotment = a)
                     pa.save()
 
     def transfer_friends(self):

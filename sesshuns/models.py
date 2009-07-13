@@ -118,7 +118,7 @@ class Allotment(models.Model):
 class Project(models.Model):
     semester     = models.ForeignKey(Semester)
     project_type = models.ForeignKey(Project_Type)
-    allotments   = models.ManyToManyField(Allotment, through = "Project_Allotments")
+    allotments   = models.ManyToManyField(Allotment, through = "Project_Allotment")
     pcode        = models.CharField(max_length = 32)
     name         = models.CharField(max_length = 150)
     thesis       = models.BooleanField()
@@ -175,7 +175,7 @@ class Project(models.Model):
                               )
                 a.save()
 
-                pa = Project_Allotments(project = self, allotment = a)
+                pa = Project_Allotment(project = self, allotment = a)
                 pa.save()
         elif num_new < num_cur:
             for a in self.allotments.all()[:(num_cur - num_new)]:
@@ -244,7 +244,7 @@ class Project(models.Model):
     class Meta:
         db_table = "projects"
 
-class Project_Allotments(models.Model):
+class Project_Allotment(models.Model):
     project = models.ForeignKey(Project)
     allotment = models.ForeignKey(Allotment)
 

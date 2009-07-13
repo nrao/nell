@@ -89,7 +89,6 @@ class ProjectInline(admin.TabularInline):
 
 class AllotmentAdmin(admin.ModelAdmin):
     list_display = ['id', 'psc_time', 'total_time', 'max_semester_time', 'grade']
-    inlines      = [SesshunInline]
 
 class Session_TypeAdmin(admin.ModelAdmin):
     list_display = ['type']
@@ -125,6 +124,7 @@ admin.site.register(Opportunity)
 admin.site.register(Parameter, ParameterAdmin)
 admin.site.register(Period, PeriodAdmin)
 admin.site.register(Project, ProjectAdmin)
+#admin.site.register(Project_Allotment)
 admin.site.register(Project_Type, Project_TypeAdmin)
 admin.site.register(Receiver, ReceiverAdmin)
 #admin.site.register(Receiver_Group)
