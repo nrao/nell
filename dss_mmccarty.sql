@@ -521,7 +521,7 @@ CREATE TABLE users (
     original_id integer NOT NULL,
     pst_id integer,
     username character varying(32),
-    sancioned boolean NOT NULL,
+    sanctioned boolean NOT NULL,
     first_name character varying(32) NOT NULL,
     last_name character varying(150) NOT NULL
 );
