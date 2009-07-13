@@ -344,7 +344,9 @@ class DSSPrime2DSS(object):
                                 , grade             = grade
                                   )
                     a.save()
-                    p.allotments.add(a)
+
+                    pa = Project_Allotments(project = p, allotment = a)
+                    pa.save()
 
     def transfer_friends(self):
 

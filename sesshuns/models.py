@@ -174,7 +174,9 @@ class Project(models.Model):
                             , grade             = 0.0
                               )
                 a.save()
-                self.allotments.add(a)
+
+                pa = Project_Allotments(project = self, allotment = a)
+                pa.save()
         elif num_new < num_cur:
             for a in self.allotments.all()[:(num_cur - num_new)]:
                 a.delete()
