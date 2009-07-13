@@ -1,0 +1,16 @@
+{% load i18n %}
+<div class="inline-group">
+  <h2> {{ label }}</h2>
+
+{% for id, thing in things %}
+<blockquote>
+  {{ thing }}
+  <a class="changelink" href="/admin/{{ url }}/{{ id }}/" onclick="return showAddAnotherPopup(this);">Edit</a>, 
+  <a class="deletelink" href="/admin/{{ url }}/{{ id }}/delete/">Delete</a>
+</blockquote>
+{% endfor %}
+
+<ul class="tools">
+  <li><a class="add" href="/admin/{{ url }}/add/" onclick="return showAddAnotherPopup(this);">Add another {{ label }}</a></li>
+</ul>
+</div>

@@ -22,7 +22,7 @@ class Observing_ParameterInline(admin.TabularInline):
     extra = 1
 
 class SesshunAdmin(admin.ModelAdmin):
-    list_display = ['name', 'project', 'frequency', 'allotment', 'receiver_list', 'session_type', 'observing_type', 'status']
+    list_display = ['name', 'project', 'letter_grade', 'frequency', 'allotment', 'receiver_list', 'session_type', 'observing_type', 'status', 'schedulable']
     list_filter = ['session_type', 'observing_type', 'frequency']
     search_fields = ['name']
     inlines = [Receiver_GroupInline
@@ -38,10 +38,19 @@ class SesshunInline(admin.TabularInline):
 class SemesterAdmin(admin.ModelAdmin):
     list_display = ['semester']
 
+def mark_as_backup(modeladmin, request, queryset):
+    queryset.update(backup = True)
+mark_as_backup.short_description = "Mark selected periods as being backup"
+
+def mark_as_not_backup(modeladmin, request, queryset):
+    queryset.update(backup = False)
+mark_as_not_backup.short_description = "Mark selected periods as not being backup"
+
 class PeriodAdmin(admin.ModelAdmin):
     list_display = ['start', 'duration', 'session']
+    actions = [mark_as_backup, mark_as_not_backup]
     ordering = ['start']
-    list_filter = ['start', 'session']
+    list_filter = ['backup', 'start', 'duration', 'score']
     search_fields = ['start','session']
     date_hierarchy = 'start'
 
@@ -49,15 +58,27 @@ class Project_TypeAdmin(admin.ModelAdmin):
     list_display = ['type']
     display = 'type'
 
+def ignore_grade(modeladmin, request, queryset):
+    queryset.update(ignore_grade = True)
+ignore_grade.short_description = "Ignore grade on selected projects"
+
+def do_not_ignore_grade(modeladmin, request, queryset):
+    queryset.update(ignore_grade = False)
+do_not_ignore_grade.short_description = "Do not ignore grade on selected projects"
+
+def mark_as_not_completed(modeladmin, request, queryset):
+    queryset.update(complete = False)
+mark_as_not_completed.short_description = "Mark selected projects as not complete"
+
 def mark_as_completed(modeladmin, request, queryset):
     queryset.update(complete = True)
-mark_as_completed.short_description = "Mark selected sessions as completed"
+mark_as_completed.short_description = "Mark selected projects as complete"
 
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ['pcode', 'name', 'semester', 'project_type', 'principal_contact', 'thesis', 'complete', 'start_date']
-    actions = [mark_as_completed]
+    list_display = ['pcode', 'name', 'semester', 'project_type', 'principal_contact', 'thesis', 'ignore_grade', 'complete', 'start_date', 'end_date']
+    actions = [mark_as_completed, mark_as_not_completed, ignore_grade, do_not_ignore_grade]
     ordering = ['pcode']
-    list_filter = ['semester', 'project_type', 'complete', 'thesis']
+    list_filter = ['semester', 'project_type', 'complete', 'thesis', 'ignore_grade']
     search_fields = ['pcode']
     date_hierarchy = 'start_date'
     inlines = [SesshunInline]
@@ -67,8 +88,8 @@ class ProjectInline(admin.TabularInline):
     extra = 1
 
 class AllotmentAdmin(admin.ModelAdmin):
-    list_display = ['id', 'psc_time', 'total_time', 'max_semester_time']
-    inlines = [SesshunInline]
+    list_display = ['id', 'psc_time', 'total_time', 'max_semester_time', 'grade']
+    inlines      = [SesshunInline]
 
 class Session_TypeAdmin(admin.ModelAdmin):
     list_display = ['type']
@@ -82,21 +103,12 @@ class ReceiverAdmin(admin.ModelAdmin):
 class ParameterAdmin(admin.ModelAdmin):
     list_display = ['name', 'type']
 
-class Receiver_ScheduleAdmin(admin.ModelAdmin):
-    pass
-
-class Receiver_GroupAdmin(admin.ModelAdmin):
-    pass
-
 class Observing_ParameterAdmin(admin.ModelAdmin):
     list_display = ['session', 'parameter', 'value']
     list_filter = ['parameter']
 
 class StatusAdmin(admin.ModelAdmin):
     search_fields = ['id'] 
-
-class OpportunityAdmin(admin.ModelAdmin):
-    pass
 
 class OpportunityInline(admin.TabularInline):
     model = Opportunity
@@ -105,28 +117,22 @@ class OpportunityInline(admin.TabularInline):
 class WindowAdmin(admin.ModelAdmin):
     inlines = [OpportunityInline]
 
-class SystemAdmin(admin.ModelAdmin):
-    pass
-
-class TargetAdmin(admin.ModelAdmin):
-    pass
-
-admin.site.register(Sesshun, SesshunAdmin)
-admin.site.register(Semester, SemesterAdmin)
-admin.site.register(Project_Type, Project_TypeAdmin)
 admin.site.register(Allotment, AllotmentAdmin)
-admin.site.register(Project, ProjectAdmin)
-admin.site.register(Session_Type, Session_TypeAdmin)
-admin.site.register(Observing_Type, Observing_TypeAdmin)
-admin.site.register(Receiver, ReceiverAdmin)
-admin.site.register(Receiver_Schedule, Receiver_ScheduleAdmin)
-admin.site.register(Parameter, ParameterAdmin)
-#admin.site.register(Receiver_Group, Receiver_GroupAdmin)
+admin.site.register(Blackout)
 admin.site.register(Observing_Parameter, Observing_ParameterAdmin)
-#admin.site.register(Status, StatusAdmin)
-admin.site.register(Window, WindowAdmin)
-admin.site.register(Opportunity, OpportunityAdmin)
-admin.site.register(System, SystemAdmin)
-admin.site.register(Target, TargetAdmin)
+admin.site.register(Observing_Type, Observing_TypeAdmin)
+admin.site.register(Opportunity)
+admin.site.register(Parameter, ParameterAdmin)
 admin.site.register(Period, PeriodAdmin)
-
+admin.site.register(Project, ProjectAdmin)
+admin.site.register(Project_Type, Project_TypeAdmin)
+admin.site.register(Receiver, ReceiverAdmin)
+#admin.site.register(Receiver_Group)
+admin.site.register(Receiver_Schedule)
+admin.site.register(Semester, SemesterAdmin)
+admin.site.register(Sesshun, SesshunAdmin)
+admin.site.register(Session_Type, Session_TypeAdmin)
+#admin.site.register(Status, StatusAdmin)
+admin.site.register(System)
+admin.site.register(Target)
+admin.site.register(Window, WindowAdmin)
