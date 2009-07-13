@@ -66,7 +66,7 @@ class User(models.Model):
     original_id = models.IntegerField()
     pst_id      = models.IntegerField(null = True)
     username    = models.CharField(max_length = 32, null = True)
-    sancioned   = models.BooleanField()
+    sanctioned  = models.BooleanField()
     first_name  = models.CharField(max_length = 32)
     last_name   = models.CharField(max_length = 150)
 
@@ -118,20 +118,23 @@ class Allotment(models.Model):
 class Project(models.Model):
     semester     = models.ForeignKey(Semester)
     project_type = models.ForeignKey(Project_Type)
-    allotments   = models.ManyToManyField(Allotment)
+    allotments   = models.ManyToManyField(Allotment, through = "Project_Allotments")
     pcode        = models.CharField(max_length = 32)
     name         = models.CharField(max_length = 150)
     thesis       = models.BooleanField()
     complete     = models.BooleanField()
     ignore_grade = models.BooleanField()
-    start_date   = models.DateTimeField(null = True)
-    end_date     = models.DateTimeField(null = True)
+    start_date   = models.DateTimeField(null = True, blank = True)
+    end_date     = models.DateTimeField(null = True, blank = True)
 
     def __unicode__(self):
         return "%s, %s, %s" % (self.pcode, self.semester, self.name)
 
     def __str__(self):
         return self.pcode
+
+    def get_allotments_display(self):
+        return self.allotments.all()
 
     def init_from_post(self, fdata):
         self.update_from_post(fdata)
@@ -238,6 +241,13 @@ class Project(models.Model):
 
     class Meta:
         db_table = "projects"
+
+class Project_Allotments(models.Model):
+    project = models.ForeignKey(Project)
+    allotment = models.ForeignKey(Allotment)
+
+    class Meta:
+        db_table = "projects_allotments"
 
 # TBF: recurrences don't apply for 09B, but we'll need to do these latter
 class Blackout(models.Model):
@@ -409,7 +419,7 @@ class Sesshun(models.Model):
     frequency          = models.FloatField(null = True, help_text = "GHz")
     max_duration       = models.FloatField(null = True, help_text = "Hours")
     min_duration       = models.FloatField(null = True, help_text = "Hours")
-    time_between       = models.FloatField(null = True, help_text = "Hours")
+    time_between       = models.FloatField(null = True, help_text = "Hours", blank = True)
 
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
@@ -443,7 +453,7 @@ class Sesshun(models.Model):
     def num_rcvr_groups(self):
         return len(self.receiver_group_set.all())
 
-    def scheduable(self):
+    def schedulable(self):
         "A simple check for all explicit flags"
         return (self.status.enabled) and \
                (self.status.authorized) and \

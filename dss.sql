@@ -4,7 +4,7 @@ CREATE TABLE "users" (
     "original_id" integer NOT NULL,
     "pst_id" integer NULL,
     "username" varchar(32) NULL,
-    "sancioned" boolean NOT NULL,
+    "sanctioned" boolean NOT NULL,
     "first_name" varchar(32) NOT NULL,
     "last_name" varchar(150) NOT NULL
 )
