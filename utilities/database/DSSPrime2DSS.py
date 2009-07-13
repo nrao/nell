@@ -378,7 +378,7 @@ class DSSPrime2DSS(object):
             lastName = "exception"
 
         u = User(original_id = int(row[3])
-               , sancioned   = False
+               , sanctioned  = False
                , first_name  = firstName #row[1]
                , last_name   = lastName #row[2]
                  )
