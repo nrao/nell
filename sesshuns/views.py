@@ -229,7 +229,7 @@ def get_schedule(request, *args, **kws):
                                      TimeAgent.timedelta2minutes(
                                              p_start_end - end)/60.))
                 pfs.append(
-                    createPeriodDict(p_end_start,
+                    createPeriodDict(p_start_end,
                                      TimeAgent.timedelta2minutes(
                                              p.start - p_start_end)/60.))
         # or an overlap?

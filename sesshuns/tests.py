@@ -276,7 +276,7 @@ class TestSesshun(NellTestCase):
         ldata["freq"] = "10"
         ldata["source"] = "new source"
         ldata["total_time"] = "99"
-        ldata["enabled"] = True 
+        ldata["enabled"] = "true"
         s.update_from_post(ldata)
         
         # now get this session from the DB
@@ -285,7 +285,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.frequency, float(ldata["freq"]))
         self.assertEqual(s.allotment.total_time, float(ldata["total_time"]))
         self.assertEqual(s.target_set.get().source, ldata["source"])
-        self.assertEqual(s.status.enabled, ldata["enabled"])
+        self.assertEqual(s.status.enabled, ldata["enabled"] == "true")
 
     def test_update_from_post2(self):
         ss = Sesshun.objects.all()
@@ -304,7 +304,7 @@ class TestSesshun(NellTestCase):
         ldata["source"] = None 
         ldata["total_time"] = "99.9"
         ldata["orig_ID"] = "0.0"
-        ldata["enabled"] = "True" 
+        ldata["enabled"] = "true" 
         s.update_from_post(ldata)
         
         # now get this session from the DB
@@ -320,14 +320,14 @@ class TestSesshun(NellTestCase):
         s = Sesshun()
         values = [('A',4.0),('B',3.0),('C',2.0)]
         for letter, num in values:
-            fltGrade = s.grade_abc_2_float(letter)
+            fltGrade = grade_abc_2_float(letter)
             self.assertEqual(num, fltGrade)
 
     def test_grade_float_2_abc(self):
         s = Sesshun()
         values = [('A',4.0),('B',3.0),('C',2.0)]
         for letter, num in values:
-            letterGrade = s.grade_float_2_abc(num)
+            letterGrade = grade_float_2_abc(num)
             self.assertEqual(letter, letterGrade)
 
 # Testing View Resources
