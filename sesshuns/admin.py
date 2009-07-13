@@ -1,42 +1,39 @@
-from django.contrib  import admin
-from sesshuns.models import * 
+from django.contrib    import admin
+from django.http       import HttpResponse
+from django.utils.html import escape
+from sesshuns.models   import * 
 
-class Receiver_GroupInline(admin.TabularInline):
-    model = Receiver_Group
-    extra = 1
+# Inlines
 
-class WindowInline(admin.TabularInline):
-    model = Window
-    extra = 1
-
-class TargetInline(admin.TabularInline):
-    model = Target
+class Observing_ParameterInline(admin.TabularInline):    
+    model = Observing_Parameter
     extra = 1
 
 class PeriodInline(admin.TabularInline):
     model = Period
     extra = 1
 
-class Observing_ParameterInline(admin.TabularInline):    
-    model = Observing_Parameter
+class ProjectInline(admin.TabularInline):
+    model = Project
     extra = 1
 
-class SesshunAdmin(admin.ModelAdmin):
-    list_display = ['name', 'project', 'letter_grade', 'frequency', 'allotment', 'receiver_list', 'session_type', 'observing_type', 'status', 'schedulable']
-    list_filter = ['session_type', 'observing_type', 'frequency']
-    search_fields = ['name']
-    inlines = [Receiver_GroupInline
-             , TargetInline
-             , Observing_ParameterInline
-             , PeriodInline
-             , WindowInline]
+class Receiver_GroupInline(admin.StackedInline):
+    model = Receiver_Group
+    extra = 1
 
 class SesshunInline(admin.TabularInline):
     model = Sesshun
     extra = 1
 
-class SemesterAdmin(admin.ModelAdmin):
-    list_display = ['semester']
+class TargetInline(admin.TabularInline):
+    model = Target
+    extra = 1
+
+class WindowInline(admin.TabularInline):
+    model = Window
+    extra = 1
+
+# Actions for Periods
 
 def mark_as_backup(modeladmin, request, queryset):
     queryset.update(backup = True)
@@ -46,17 +43,7 @@ def mark_as_not_backup(modeladmin, request, queryset):
     queryset.update(backup = False)
 mark_as_not_backup.short_description = "Mark selected periods as not being backup"
 
-class PeriodAdmin(admin.ModelAdmin):
-    list_display = ['start', 'duration', 'session']
-    actions = [mark_as_backup, mark_as_not_backup]
-    ordering = ['start']
-    list_filter = ['backup', 'start', 'duration', 'score']
-    search_fields = ['start','session']
-    date_hierarchy = 'start'
-
-class Project_TypeAdmin(admin.ModelAdmin):
-    list_display = ['type']
-    display = 'type'
+# Actions for Projects
 
 def ignore_grade(modeladmin, request, queryset):
     queryset.update(ignore_grade = True)
@@ -74,6 +61,39 @@ def mark_as_completed(modeladmin, request, queryset):
     queryset.update(complete = True)
 mark_as_completed.short_description = "Mark selected projects as complete"
 
+# Administrative Interfaces
+
+class AllotmentAdmin(admin.ModelAdmin):
+    list_display = ['id', 'psc_time', 'total_time', 'max_semester_time', 'grade']
+
+    def response_change(self, request, obj):
+        if request.POST.has_key('_popup'):
+            # Get rid of pop-ups and refresh parent.
+            return HttpResponse('<script type="text/javascript">window.opener.location.href = window.opener.location.href; window.close();</script>')
+        return admin.ModelAdmin.response_change(self, request, obj)
+
+class Observing_ParameterAdmin(admin.ModelAdmin):
+    list_display = ['session', 'parameter', 'value']
+    list_filter = ['parameter']
+
+class Observing_TypeAdmin(admin.ModelAdmin):
+    list_display = ['type']
+
+class OpportunityInline(admin.TabularInline):
+    model = Opportunity
+    extra = 1
+
+class ParameterAdmin(admin.ModelAdmin):
+    list_display = ['name', 'type']
+
+class PeriodAdmin(admin.ModelAdmin):
+    list_display = ['start', 'duration', 'session']
+    actions = [mark_as_backup, mark_as_not_backup]
+    ordering = ['start']
+    list_filter = ['backup', 'start', 'duration', 'score']
+    search_fields = ['start','session']
+    date_hierarchy = 'start'
+
 class ProjectAdmin(admin.ModelAdmin):
     list_display = ['pcode', 'name', 'semester', 'project_type', 'principal_contact', 'thesis', 'ignore_grade', 'complete', 'start_date', 'end_date']
     actions = [mark_as_completed, mark_as_not_completed, ignore_grade, do_not_ignore_grade]
@@ -83,38 +103,37 @@ class ProjectAdmin(admin.ModelAdmin):
     date_hierarchy = 'start_date'
     inlines = [SesshunInline]
 
-class ProjectInline(admin.TabularInline):
-    model = Project
-    extra = 1
-
-class AllotmentAdmin(admin.ModelAdmin):
-    list_display = ['id', 'psc_time', 'total_time', 'max_semester_time', 'grade']
-
-class Session_TypeAdmin(admin.ModelAdmin):
+class Project_TypeAdmin(admin.ModelAdmin):
     list_display = ['type']
-
-class Observing_TypeAdmin(admin.ModelAdmin):
-    list_display = ['type']
+    display = 'type'
 
 class ReceiverAdmin(admin.ModelAdmin):
     list_display = ['name', 'abbreviation', 'freq_low', 'freq_hi']
 
-class ParameterAdmin(admin.ModelAdmin):
-    list_display = ['name', 'type']
+class SemesterAdmin(admin.ModelAdmin):
+    list_display = ['semester']
 
-class Observing_ParameterAdmin(admin.ModelAdmin):
-    list_display = ['session', 'parameter', 'value']
-    list_filter = ['parameter']
+class SesshunAdmin(admin.ModelAdmin):
+    list_display = ['name', 'project', 'letter_grade', 'frequency', 'allotment', 'receiver_list', 'session_type', 'observing_type', 'status', 'schedulable']
+    list_filter = ['session_type', 'observing_type', 'frequency']
+    search_fields = ['name']
+    exclude = ('allotment',)
+    inlines = [Receiver_GroupInline
+             , TargetInline
+             , Observing_ParameterInline
+             , PeriodInline
+             , WindowInline]
+
+class Session_TypeAdmin(admin.ModelAdmin):
+    list_display = ['type']
 
 class StatusAdmin(admin.ModelAdmin):
     search_fields = ['id'] 
 
-class OpportunityInline(admin.TabularInline):
-    model = Opportunity
-    extra = 1
-
 class WindowAdmin(admin.ModelAdmin):
     inlines = [OpportunityInline]
+
+# Registration of Administrative Interfaces
 
 admin.site.register(Allotment, AllotmentAdmin)
 admin.site.register(Blackout)
@@ -124,7 +143,6 @@ admin.site.register(Opportunity)
 admin.site.register(Parameter, ParameterAdmin)
 admin.site.register(Period, PeriodAdmin)
 admin.site.register(Project, ProjectAdmin)
-#admin.site.register(Project_Allotment)
 admin.site.register(Project_Type, Project_TypeAdmin)
 admin.site.register(Receiver, ReceiverAdmin)
 #admin.site.register(Receiver_Group)

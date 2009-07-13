@@ -104,6 +104,8 @@ class Allotment(models.Model):
     max_semester_time = models.FloatField(help_text = "Hours")
     grade             = models.FloatField(help_text = "0.0 - 4.0")
 
+    base_url = "/sesshuns/allotment/"
+
     def __unicode__(self):
         return "(%d) Total: %5.2f, Grade: %5.2f, PSC: %5.2f, Max: %5.2f" % \
                                        (self.id
@@ -111,6 +113,9 @@ class Allotment(models.Model):
                                       , self.grade
                                       , self.psc_time
                                       , self.max_semester_time) 
+
+    def get_absolute_url(self):
+        return "/sesshuns/allotment/%i/" % self.id
 
     class Meta:
         db_table = "allotment"
@@ -126,6 +131,8 @@ class Project(models.Model):
     ignore_grade = models.BooleanField()
     start_date   = models.DateTimeField(null = True, blank = True)
     end_date     = models.DateTimeField(null = True, blank = True)
+
+    base_url = "/sesshuns/project/"
 
     def __unicode__(self):
         return "%s, %s, %s" % (self.pcode, self.semester, self.name)
@@ -425,6 +432,8 @@ class Sesshun(models.Model):
 
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
+    base_url = "/sesshuns/sesshun/"
+
     def __unicode__(self):
         return "(%d) %s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s" % (
                   self.id
@@ -433,6 +442,9 @@ class Sesshun(models.Model):
                 , self.allotment.total_time
                       if self.allotment.total_time is not None else 0
                 , self.receiver_list())
+
+    def get_absolute_url(self):
+        return "/sesshuns/sesshun/%i/" % self.id
 
     def receiver_list(self):
         "Returns a string representation of the rcvr logic."
