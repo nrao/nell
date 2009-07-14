@@ -128,17 +128,29 @@ class ProjectResource(NellResource):
         sortField = request.GET.get("sortField", "id")
         sortField = "pcode" if sortField == "null" else sortField
         order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
+        query_set = Project.objects
+
+        filterClp= request.GET.get("filterClp", None)
+        if filterClp is not None:
+            query_set = query_set.filter(
+                complete = (filterClp.lower() == "true"))
+
+        filterType = request.GET.get("filterType", None)
+        if filterType is not None:
+            query_set = query_set.filter(project_type__type = filterType.lower())
+
+        filterSem = request.GET.get("filterSem", None)
+        if filterSem is not None:
+            query_set = query_set.filter(semester__semester__contains = filterSem)
 
         filterText = request.GET.get("filterText", None)
-        if filterText is None:
-            projects = Project.objects.order_by(order + sortField)
-        else:
-            projects = Project.objects.filter(Q(name__contains=filterText) |\
+        if filterText is not None:
+            query_set = query_set.filter(Q(name__contains=filterText) |\
                     Q(pcode__contains=filterText) |\
                     Q(semester__semester__contains=filterText) |
                     Q(name__contains=filterText) |
-                    Q(project_type__type__contains=filterText)).\
-                    order_by(order + sortField)
+                    Q(project_type__type__contains=filterText))
+        projects = query_set.order_by(order + sortField)
         total    = len(projects)
         offset   = int(request.GET.get("offset", 0))
         limit    = int(request.GET.get("limit", 50))
@@ -158,17 +170,37 @@ class SessionResource(NellResource):
         if len(args) == 0:
             sortField = jsonMap.get(request.GET.get("sortField", "pcode"), "project__pcode")
             order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
+            query_set = Sesshun.objects
+
+            filterClp= request.GET.get("filterClp", None)
+            if filterClp is not None:
+                query_set = query_set.filter(
+                    status__complete = (filterClp.lower() == "true"))
+
+            filterType = request.GET.get("filterType", None)
+            if filterType is not None:
+                query_set = query_set.filter(session_type__type = filterType.lower())
+
+            filterSci = request.GET.get("filterSci", None)
+            if filterSci is not None:
+                query_set = query_set.filter(observing_type__type = filterSci.lower())
+
+            filterSem = request.GET.get("filterSem", None)
+            if filterSem is not None:
+                query_set = query_set.filter(project__semester__semester__contains = filterSem)
+
+            filterFreq = request.GET.get("filterFreq", None)
+            if filterFreq is not None:
+                query_set = query_set.filter(frequency__gt = float(filterFreq))
 
             filterText = request.GET.get("filterText", None)
-            if filterText is None:
-                sessions = Sesshun.objects.order_by(order + sortField)
-            else:
-                sessions = Sesshun.objects.filter(Q(name__contains=filterText) |\
+            if filterText is not None:
+                query_set = query_set.filter(Q(name__contains=filterText) |\
                     Q(project__pcode__contains=filterText) |\
                     Q(project__semester__semester__contains=filterText) |
                     Q(session_type__type__contains=filterText) |
-                    Q(observing_type__type__contains=filterText)).\
-                    order_by(order + sortField)
+                    Q(observing_type__type__contains=filterText))
+            sessions = query_set.order_by(order + sortField)
             total  = len(sessions)
             offset = int(request.GET.get("offset", 0))
             limit  = int(request.GET.get("limit", 50))

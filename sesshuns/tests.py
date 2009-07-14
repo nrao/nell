@@ -425,6 +425,17 @@ class TestSessionResource(NellTestCase):
                                                  })
         self.failUnlessEqual(response.status_code, 200)
 
+        response = self.client.get('/sessions', {'limit'     : 50
+                                               , 'sortField' : 'null'
+                                               , 'sortDir'   : 'NONE'
+                                               , 'offset'    : 0
+                                               , 'filterType': "Open"
+                                               , 'filterFreq': "20"
+                                               , 'filterClp' : "True"
+                                                 })
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue("windowed" not in response.content)
+
     def test_read_one(self):
         response = self.client.get('/sessions/%s' % self.s.id)
         self.failUnlessEqual(response.status_code, 200)
