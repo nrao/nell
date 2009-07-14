@@ -837,3 +837,5 @@ class Period(models.Model):
         self.forecast = now
         self.backup   = fdata.get("backup", False)
         self.save()
+
+
