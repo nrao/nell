@@ -356,7 +356,7 @@ class TestPeriodResource(NellTestCase):
 
     def setUp(self):
         super(TestPeriodResource, self).setUp()
-        self.rootURL = '/periodJSON'
+        self.rootURL = '/periods'
         self.sess = create_sesshun()
         self.client = Client()
         self.fdata = {'session'  : self.sess.id

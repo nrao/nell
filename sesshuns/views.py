@@ -50,9 +50,9 @@ class NellResource(Resource):
         
         return HttpResponse(json.dumps({"success": "ok"}))
 
-class PeriodJSONResource(NellResource):
+class PeriodResource(NellResource):
     def __init__(self, *args, **kws):
-        super(PeriodJSONResource, self).__init__(Period, *args, **kws)
+        super(PeriodResource, self).__init__(Period, *args, **kws)
 
     def read(self, request, *args, **kws):
         # one or many?
@@ -84,74 +84,6 @@ class PeriodJSONResource(NellResource):
             p_id  = args[0]
             p     = first(Period.objects.filter(id = p_id))
             return HttpResponse(json.dumps(dict(period = p.jsondict())))
-
-
-def period_form(request, *args, **kws):
-    if args:
-        period = Period.objects.get(id=int(args[0]))
-        form = PeriodForm(instance=period)
-        action = '/period/%s' % args[0]
-        update = True
-    else:
-        form = PeriodForm()
-        action = '/period'
-        update = False
-    return render_to_response('sessions/periods/period.html'
-                            , {'action': action
-                             , 'form':   form
-                             , 'update': update
-                              })
-
-class PeriodResource(NellResource):
-    def __init__(self, *args, **kws):
-        super(PeriodResource, self).__init__(Period, *args, **kws)
-
-    def create_worker(self, request, *args, **kws):
-        form = PeriodForm(request.POST)
-        if form.is_valid():
-            o     = Period()
-            o.init_from_post(request.POST)
-            return HttpResponseRedirect(ROOT_URL + "/schedule")
-        else:
-            action = ROOT_URL + '/period'
-            update = False
-            return render_to_response('sessions/periods/period.html'
-                                    , {'action': action
-                                     , 'form':   form
-                                     , 'update': update
-                                      })
-
-
-    def read(self, request, *args, **kws):
-        pass
-
-    def update(self, request, *args, **kws):
-        form = PeriodForm(request.POST)
-        if form.is_valid():
-            id    = int(args[0])
-            o     = self.dbobject.objects.get(id = id)
-            o.update_from_post(request.POST)
-            return HttpResponseRedirect(ROOT_URL + "/schedule")
-        else:
-            action = '%s/period/%s' % (ROOT_URL, args[0])
-            update = True
-            return render_to_response('sessions/periods/period.html'
-                                    , {'action': action
-                                     , 'form':   form
-                                     , 'update': update
-                                      })
-
-    def delete(self, request, *args):
-        id    = int(args[0])
-        o     = self.dbobject.objects.get(id = id)
-        o.delete()
-
-        return HttpResponseRedirect(ROOT_URL + "/schedule")
-
-class PeriodForm(ModelForm):
-    #duration = TimeField(input_formats=["%H:%M"])
-    class Meta:
-        model = Period
 
 class ProjectResource(NellResource):
     def __init__(self, *args, **kws):
@@ -269,95 +201,4 @@ def get_options(request, *args, **kws):
     return HttpResponse(json.dumps({'project codes' : [ p.pcode for p in projects]})
                       , mimetype = "text/plain")
 
-def get_schedule(request, *args, **kws):
-    #  This:
-    # static two-day display
-    #now = TimeAgent.quarter(datetime.utcnow())
-    #periods = Period.objects.filter(start__gte=now).filter(start__lte=(now+timedelta(days=2))).order_by('start')
-    #end = now
-    #   Or:
-    # for now, show all periods so we can see affect of calling antioch
-    periods = Period.objects.order_by('start')
-    end = datetime(2009, 6, 1, 0, 0, 0)
 
-    pfs = []
-    for p in periods:
-        # Is there a hole between periods?
-        if end < p.start:
-            # that is within a day?
-            if p.start.day == end.day:
-                dur = p.start - end
-                pfs.append(
-                    createPeriodDict(end, 24*dur.days + dur.seconds/3600.))
-            # or is spanning over midnight?
-            else:
-                p_start_end = TimeAgent.truncateDt(p.start)
-                pfs.append(
-                    createPeriodDict(end,
-                                     TimeAgent.timedelta2minutes(
-                                             p_start_end - end)/60.))
-                pfs.append(
-                    createPeriodDict(p_start_end,
-                                     TimeAgent.timedelta2minutes(
-                                             p.start - p_start_end)/60.))
-        # or an overlap?
-        elif p.start < end:
-            pass
-        # Is the period within a day?
-        p_end = p.start + timedelta(hours=p.duration)
-        if p.start.day == p_end.day:
-            pfs.append(createPeriodDict(p.start, p.duration, p))
-        # or is spanning over midnight?
-        else:
-            p_end_start = TimeAgent.truncateDt(p_end)
-            pfs.append(createPeriodDict(p.start,
-                                        TimeAgent.timedelta2minutes(
-                                                p_end_start - p.start)/60.,
-                                        p))
-            pfs.append(createPeriodDict(p_end_start,
-                                        TimeAgent.timedelta2minutes(
-                                                p_end - p_end_start)/60.,
-                                        p,
-                                        " (cont)"))
-        end = p.start + timedelta(hours=p.duration)
-    schedule = ROOT_URL + "/schedule_algo"
-    return render_to_response('sessions/schedule/index.html'
-                            , {'periods': periods
-                            ,  'pfs': pfs
-                            ,  'schedule' : schedule
-                            })
-
-def createPeriodDict(start, dur, per = None, suffix = ""):
-    strt = start - datetime(year = start.year, month=start.month, day=start.day)
-    day  = date(year = start.year, month=start.month, day=start.day)
-    nqtr = int(round(60*dur)/15)
-    return dict(
-        stype = "" if per is None else per.session.observing_type.type
-      , date  = str(day)
-      , start = str(strt)[:-3]
-      , dur   = str(nqtr)
-      , cntrl = "" if per is None else periodControls(per, nqtr, suffix)
-      , durs  = [str(strt + timedelta(minutes=q))[:-3] for q in range(15, 15*nqtr, 15)]
-      , freq  = "" if per is None else str(per.session.frequency) if per.session.observing_type.type != 'maintenance' else "&nbsp;"
-      , score = "" if per is None else "&nbsp;" if per.score is None else str(per.score)
-      , notes = "" if per is None else 'backup' if per.backup else "&nbsp;"
-               )
-
-def periodControls(period, nqtr, suffix):
-    return """
-      <td rowspan="%d">%s
-        <form action="%s/period/form/%d" method="get">
-          <input type="submit" value="E" >
-        </form>
-        <form action="%s/period/%d" method="post">
-          <input type="hidden" name="_method" value="delete" >
-          <input type="submit" value="D" >
-        </form>
-      </td>
-           """ % (nqtr
-                , period.session.name + suffix
-                , ROOT_URL
-                , period.id
-                , ROOT_URL
-                , period.id
-                 )
