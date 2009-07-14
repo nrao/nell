@@ -271,7 +271,7 @@ def get_schedule(request, *args, **kws):
         # or an overlap?
         elif p.start < end:
             pass
-        # that is within a day?
+        # Is the period within a day?
         p_end = p.start + timedelta(hours=p.duration)
         if p.start.day == p_end.day:
             pfs.append(createPeriodDict(p.start, p.duration, p))

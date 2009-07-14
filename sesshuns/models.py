@@ -77,7 +77,7 @@ class User(models.Model):
     original_id = models.IntegerField()
     pst_id      = models.IntegerField(null = True)
     username    = models.CharField(max_length = 32, null = True)
-    sancioned   = models.BooleanField()
+    sanctioned  = models.BooleanField()
     first_name  = models.CharField(max_length = 32)
     last_name   = models.CharField(max_length = 150)
 
@@ -115,6 +115,8 @@ class Allotment(models.Model):
     max_semester_time = models.FloatField(help_text = "Hours")
     grade             = models.FloatField(help_text = "0.0 - 4.0")
 
+    base_url = "/sesshuns/allotment/"
+
     def __unicode__(self):
         return "(%d) Total: %5.2f, Grade: %5.2f, PSC: %5.2f, Max: %5.2f" % \
                                        (self.id
@@ -123,26 +125,34 @@ class Allotment(models.Model):
                                       , self.psc_time
                                       , self.max_semester_time) 
 
+    def get_absolute_url(self):
+        return "/sesshuns/allotment/%i/" % self.id
+
     class Meta:
         db_table = "allotment"
         
 class Project(models.Model):
     semester     = models.ForeignKey(Semester)
     project_type = models.ForeignKey(Project_Type)
-    allotments   = models.ManyToManyField(Allotment)
+    allotments   = models.ManyToManyField(Allotment, through = "Project_Allotment")
     pcode        = models.CharField(max_length = 32)
     name         = models.CharField(max_length = 150)
     thesis       = models.BooleanField()
     complete     = models.BooleanField()
     ignore_grade = models.BooleanField()
-    start_date   = models.DateTimeField(null = True)
-    end_date     = models.DateTimeField(null = True)
+    start_date   = models.DateTimeField(null = True, blank = True)
+    end_date     = models.DateTimeField(null = True, blank = True)
+
+    base_url = "/sesshuns/project/"
 
     def __unicode__(self):
         return "%s, %s, %s" % (self.pcode, self.semester, self.name)
 
     def __str__(self):
         return self.pcode
+
+    def get_allotments_display(self):
+        return self.allotments.all()
 
     def init_from_post(self, fdata):
         self.update_from_post(fdata)
@@ -182,7 +192,9 @@ class Project(models.Model):
                             , grade             = 0.0
                               )
                 a.save()
-                self.allotments.add(a)
+
+                pa = Project_Allotment(project = self, allotment = a)
+                pa.save()
         elif num_new < num_cur:
             for a in self.allotments.all()[:(num_cur - num_new)]:
                 a.delete()
@@ -249,6 +261,13 @@ class Project(models.Model):
 
     class Meta:
         db_table = "projects"
+
+class Project_Allotment(models.Model):
+    project = models.ForeignKey(Project)
+    allotment = models.ForeignKey(Allotment)
+
+    class Meta:
+        db_table = "projects_allotments"
 
 # TBF: recurrences don't apply for 09B, but we'll need to do these latter
 class Blackout(models.Model):
@@ -420,9 +439,11 @@ class Sesshun(models.Model):
     frequency          = models.FloatField(null = True, help_text = "GHz")
     max_duration       = models.FloatField(null = True, help_text = "Hours")
     min_duration       = models.FloatField(null = True, help_text = "Hours")
-    time_between       = models.FloatField(null = True, help_text = "Hours")
+    time_between       = models.FloatField(null = True, help_text = "Hours", blank = True)
 
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
+
+    base_url = "/sesshuns/sesshun/"
 
     def __unicode__(self):
         return "(%d) %s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s" % (
@@ -432,6 +453,9 @@ class Sesshun(models.Model):
                 , self.allotment.total_time
                       if self.allotment.total_time is not None else 0
                 , self.receiver_list())
+
+    def get_absolute_url(self):
+        return "/sesshuns/sesshun/%i/" % self.id
 
     def receiver_list(self):
         "Returns a string representation of the rcvr logic."
@@ -454,7 +478,7 @@ class Sesshun(models.Model):
     def num_rcvr_groups(self):
         return len(self.receiver_group_set.all())
 
-    def scheduable(self):
+    def schedulable(self):
         "A simple check for all explicit flags"
         return (self.status.enabled) and \
                (self.status.authorized) and \
@@ -819,6 +843,7 @@ class Period(models.Model):
         now = dt2str(datetime.utcnow())
         self.start    = TimeAgent.quarter(str2dt(fdata.get("start", now)))
         self.duration = round(4*float(fdata.get("duration", "0.0")))/4
+        self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
         self.score    = None # TBF call to antioch to get score
         self.forecast = now
         self.backup   = fdata.get("backup", False)
@@ -833,4 +858,3 @@ class Period(models.Model):
               , "forecast"     : dt2str(self.forecast)
               , "backup"       : self.backup
                 }
-        

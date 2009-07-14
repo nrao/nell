@@ -1,0 +1,20 @@
+{% load i18n %}
+<div class="inline-group">
+  <h2> {{ label }}</h2>
+
+{% for id, thing in things %}
+<blockquote>
+  {{ thing }}
+  <a class="changelink" href="/admin{{ thing.get_absolute_url }}" onclick="return showAddAnotherPopup(this);">Edit</a>
+  {% if not edit_only %},
+  <a class="deletelink" href="/admin{{ thing.get_absolute_url }}delete/">Delete</a>
+  {% endif %}
+</blockquote>
+{% endfor %}
+
+{% if not edit_only %}
+<ul class="tools">
+  <li><a class="add" href="/admin{{ base_url }}add/" onclick="return showAddAnotherPopup(this);">Add another {{ label }}</a></li>
+</ul>
+{% endif %}
+</div>
