@@ -50,6 +50,42 @@ class NellResource(Resource):
         
         return HttpResponse(json.dumps({"success": "ok"}))
 
+class PeriodJSONResource(NellResource):
+    def __init__(self, *args, **kws):
+        super(PeriodJSONResource, self).__init__(Period, *args, **kws)
+
+    def read(self, request, *args, **kws):
+        # one or many?
+        if len(args) == 0:
+            # we are getting periods from within a range of dates
+            sortField = jsonMap.get(request.GET.get("sortField", "start"), "start")
+            order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
+
+            startPeriods = request.GET.get("startPeriods", None)
+            daysPeriods  = request.GET.get("daysPeriods", None)
+            if startPeriods is None or daysPeriods is None:
+                periods = Period.objects.order_by(order + sortField)
+            else:
+                start = str2dt(startPeriods)
+                days = int(daysPeriods)
+                end = start + timedelta(days = days)
+                # TBF: get the order working
+                #periods = Period.objects.filter(\
+                #    start__gte=start
+                #  , start__lte=end).\
+                #  order_by(order + sortField)    
+                periods = Period.objects.filter(start__gte=start, start__lte=end)
+            total  = len(periods)
+            return HttpResponse(json.dumps(dict(total = total
+                                              , periods = [p.jsondict() for p in periods]))
+                              , content_type = "application/json")
+        else:
+            # we're getting a single period as specified by ID
+            p_id  = args[0]
+            p     = first(Period.objects.filter(id = p_id))
+            return HttpResponse(json.dumps(dict(period = p.jsondict())))
+
+
 def period_form(request, *args, **kws):
     if args:
         period = Period.objects.get(id=int(args[0]))
@@ -75,9 +111,9 @@ class PeriodResource(NellResource):
         if form.is_valid():
             o     = Period()
             o.init_from_post(request.POST)
-            return HttpResponseRedirect("/schedule")
+            return HttpResponseRedirect(ROOT_URL + "/schedule")
         else:
-            action = '/period'
+            action = ROOT_URL + '/period'
             update = False
             return render_to_response('sessions/periods/period.html'
                                     , {'action': action
@@ -95,9 +131,9 @@ class PeriodResource(NellResource):
             id    = int(args[0])
             o     = self.dbobject.objects.get(id = id)
             o.update_from_post(request.POST)
-            return HttpResponseRedirect("/schedule")
+            return HttpResponseRedirect(ROOT_URL + "/schedule")
         else:
-            action = '/period/%s' % args[0]
+            action = '%s/period/%s' % (ROOT_URL, args[0])
             update = True
             return render_to_response('sessions/periods/period.html'
                                     , {'action': action
@@ -110,7 +146,7 @@ class PeriodResource(NellResource):
         o     = self.dbobject.objects.get(id = id)
         o.delete()
 
-        return HttpResponseRedirect("/schedule")
+        return HttpResponseRedirect(ROOT_URL + "/schedule")
 
 class PeriodForm(ModelForm):
     #duration = TimeField(input_formats=["%H:%M"])
@@ -261,13 +297,13 @@ def get_schedule(request, *args, **kws):
                                      TimeAgent.timedelta2minutes(
                                              p_start_end - end)/60.))
                 pfs.append(
-                    createPeriodDict(p_end_start,
+                    createPeriodDict(p_start_end,
                                      TimeAgent.timedelta2minutes(
                                              p.start - p_start_end)/60.))
         # or an overlap?
         elif p.start < end:
             pass
-        # that is within a day?
+        # Is the period within a day?
         p_end = p.start + timedelta(hours=p.duration)
         if p.start.day == p_end.day:
             pfs.append(createPeriodDict(p.start, p.duration, p))
@@ -310,14 +346,18 @@ def createPeriodDict(start, dur, per = None, suffix = ""):
 def periodControls(period, nqtr, suffix):
     return """
       <td rowspan="%d">%s
-        <form action="/period/form/%d" method="get">
+        <form action="%s/period/form/%d" method="get">
           <input type="submit" value="E" >
         </form>
-        <form action="/period/%d" method="post">
+        <form action="%s/period/%d" method="post">
           <input type="hidden" name="_method" value="delete" >
           <input type="submit" value="D" >
         </form>
       </td>
-           """ % (nqtr, period.session.name + suffix
-                , period.id, period.id
+           """ % (nqtr
+                , period.session.name + suffix
+                , ROOT_URL
+                , period.id
+                , ROOT_URL
+                , period.id
                  )

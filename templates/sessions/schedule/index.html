@@ -2,12 +2,15 @@
 
 <h1>Schedule</h1>
 
+<!--
+<a href="{{ schedule }}">
+Schedule Please.
+</a>
+-->
 <form action="{{ schedule }}" method="post">
     <input type="submit" value="Schedule Now!" >
-    <!--
     start at <input type="text" name="start" \>
-    for <input type="text" name="duration" \> hours<br \>
-    -->
+    for <input type="text" name="duration" \> days<br \>
 </form>
 
 {% if periods %}

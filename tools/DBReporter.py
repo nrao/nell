@@ -153,7 +153,7 @@ class DBReporter:
         self.printInfo(info, "Sessions By Complete:", "Complete") 
         info = self.binSesshun(sess, bools, "status.backup") 
         self.printInfo(info, "Sessions By Backup:", "Backup") 
-        info = self.binSesshun(sess, bools, "scheduable", True) 
+        info = self.binSesshun(sess, bools, "schedulable", True) 
         self.printInfo(info, "Sessions By Scheduable:", "Scheduable") 
          
         info = self.binSesshunNumTargets(sess)
