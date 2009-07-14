@@ -11,6 +11,7 @@ def first(results, default = None):
     return default if len(results) == 0 else results[0]
 
 def str2dt(str):
+    "'YYYY-MM-DD hh:mm:ss' to datetime object"
     if str is None:
         return None
 
@@ -20,8 +21,18 @@ def str2dt(str):
         time       = tstr.split(':')
         h, mm, ss  = map(int, map(float, time))
         return datetime(y, m, d, h, mm, ss)
-    m, d, y   = map(int, str.split('-'))
+
+    #TBF: was this intentional (m, d, y), or a bug?    
+    #m, d, y   = map(int, str.split('-'))
+    y, m, d   = map(int, str.split('-'))
     return datetime(y, m, d)
+
+def dt2str(dt):
+    "datetime object to YYYY-MM-DD hh:mm:ss string"
+    if dt is None:
+        return None
+    else:    
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
 
 def grade_abc_2_float(abc):
     grades = {'A' : 4.0, 'B' : 3.0, 'C' : 2.0}
@@ -595,7 +606,7 @@ class Sesshun(models.Model):
         target.horizontal = new_dec
         target.save()
         
-    def get_ignore_ha(self):
+    def get_ignore_ha(self)  :
         # TBF:  Need specification of ignore_ha
         return False
         
@@ -805,10 +816,21 @@ class Period(models.Model):
 
     def from_post(self, fdata):
         self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
-        now = datetime.utcnow()
+        now = dt2str(datetime.utcnow())
         self.start    = TimeAgent.quarter(str2dt(fdata.get("start", now)))
         self.duration = round(4*float(fdata.get("duration", "0.0")))/4
         self.score    = None # TBF call to antioch to get score
         self.forecast = now
         self.backup   = fdata.get("backup", False)
         self.save()
+
+    def jsondict(self):
+        return {"id"           : self.id
+              , "session"      : self.session.jsondict()
+              , "start"        : dt2str(self.start)
+              , "duration"     : self.duration
+              , "score"        : self.score
+              , "forecast"     : dt2str(self.forecast)
+              , "backup"       : self.backup
+                }
+        
