@@ -56,29 +56,23 @@ class PeriodResource(NellResource):
 
     def read(self, request, *args, **kws):
         # one or many?
-        if len(args) == 0:
+        if not args:
             # we are getting periods from within a range of dates
             sortField = jsonMap.get(request.GET.get("sortField", "start"), "start")
             order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
-
-            startPeriods = request.GET.get("startPeriods", None)
-            daysPeriods  = request.GET.get("daysPeriods", None)
-            if startPeriods is None or daysPeriods is None:
-                periods = Period.objects.order_by(order + sortField)
-            else:
-                start = str2dt(startPeriods)
-                days = int(daysPeriods)
-                end = start + timedelta(days = days)
-                # TBF: get the order working
-                #periods = Period.objects.filter(\
-                #    start__gte=start
-                #  , start__lte=end).\
-                #  order_by(order + sortField)    
-                periods = Period.objects.filter(start__gte=start, start__lte=end)
-            total  = len(periods)
-            return HttpResponse(json.dumps(dict(total = total
-                                              , periods = [p.jsondict() for p in periods]))
-                              , content_type = "application/json")
+            startPeriods = request.GET.get("startPeriods"
+                                         , datetime.now().strftime("%Y-%m-%d"))
+            daysPeriods  = request.GET.get("daysPeriods", "1")
+            start = str2dt(startPeriods)
+            days = int(daysPeriods)
+            end = start + timedelta(days = days)
+            periods = Period.objects.filter(
+                                start__gte=start
+                              , start__lte=end).order_by(order + sortField)
+            return HttpResponse(
+                        json.dumps(dict(total = len(periods)
+                                      , periods = [p.jsondict() for p in periods]))
+                      , content_type = "application/json")
         else:
             # we're getting a single period as specified by ID
             p_id  = args[0]
