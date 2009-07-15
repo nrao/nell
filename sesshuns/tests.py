@@ -376,7 +376,10 @@ class TestPeriodResource(NellTestCase):
         self.failUnlessEqual(response.status_code, 200)
 
     def test_read(self):
-        response = self.client.get(self.rootURL)
+        url = "%s?startPeriods=%s&daysPeriods=%d" % (self.rootURL 
+                                                   , self.fdata['start']
+                                                   , 2)
+        response = self.client.get(url)
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(response.content[:11], '{"total": 1')
 
