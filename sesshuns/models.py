@@ -839,22 +839,36 @@ class Period(models.Model):
         self.from_post(fdata)
 
     def from_post(self, fdata):
-        self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
+        handle = fdata.get("handle", "")
+        if handle:
+            self.session = self.handle2session(handle)
+        else:
+            self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
         now = dt2str(datetime.utcnow())
         self.start    = TimeAgent.quarter(str2dt(fdata.get("start", now)))
-        self.duration = round(4*float(fdata.get("duration", "0.0")))/4
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
         self.score    = None # TBF call to antioch to get score
         self.forecast = now
         self.backup   = fdata.get("backup", False)
         self.save()
 
+    def handle2session(self, h):
+        n, p = h.rsplit('(', 1)
+        name = n.strip()
+        pcode = p[:-1]
+        return Sesshun.objects.filter(project__pcode__exact=pcode).get(name=name)
+
+    def toHandle(self):
+        return "%s (%s)" % (self.session.name, self.session.project.pcode)
+
     def jsondict(self):
         return {"id"           : self.id
               , "session"      : self.session.jsondict()
+              , "handle"       : self.toHandle()
               , "start"        : dt2str(self.start)
               , "duration"     : self.duration
               , "score"        : self.score
               , "forecast"     : dt2str(self.forecast)
               , "backup"       : self.backup
                 }
+

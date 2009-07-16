@@ -191,8 +191,19 @@ def receivers_schedule(request, *args, **kws):
           , mimetype = "text/plain")
 
 def get_options(request, *args, **kws):
-    projects = Project.objects.order_by('pcode')
-    return HttpResponse(json.dumps({'project codes' : [ p.pcode for p in projects]})
-                      , mimetype = "text/plain")
-
-
+    mode = request.GET.get("mode", None)
+    if mode == "project_codes":
+        projects = Project.objects.order_by('pcode')
+        return HttpResponse(json.dumps({'project codes':
+                                        [ p.pcode for p in projects]})
+                          , mimetype = "text/plain")
+    elif mode == "session_handles":
+        ss = Sesshun.objects.order_by('name')
+        return HttpResponse(json.dumps({'session handles':
+                                        ["%s (%s)" % (s.name, s.project.pcode)
+                                         for s in ss
+                                        ]})
+                          , mimetype = "text/plain")
+    else:
+        print "RETURNING NOTHING"
+        return HttpResponse("")

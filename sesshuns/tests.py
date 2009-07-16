@@ -555,8 +555,15 @@ class TestSessionResource(NellTestCase):
 class TestGetOptions(NellTestCase):
 
     def test_get_options(self):
+        create_sesshun()
         c = Client()
-        response = c.get('/sessions/options')
+        response = c.get('/sessions/options', dict(mode='project_codes'))
+        self.assertEquals(response.content,
+                          '{"project codes": ["GBT09A-001"]}')
+        response = c.get('/sessions/options', dict(mode='session_handles'))
+        self.assertEquals(response.content,
+                          '{"session handles": ["Low Frequency With No RFI (GBT09A-001)"]}')
+
          
 # Testing Utilities
 
