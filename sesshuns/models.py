@@ -847,7 +847,7 @@ class Period(models.Model):
         now = dt2str(datetime.utcnow())
         self.start    = TimeAgent.quarter(str2dt(fdata.get("start", now)))
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
-        self.score    = None # TBF call to antioch to get score
+        self.score    = 0.0 # TBF call to antioch to get score
         self.forecast = now
         self.backup   = fdata.get("backup", False)
         self.save()
