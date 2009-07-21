@@ -22,17 +22,32 @@ def str2dt(str):
         h, mm, ss  = map(int, map(float, time))
         return datetime(y, m, d, h, mm, ss)
 
-    #TBF: was this intentional (m, d, y), or a bug?    
-    #m, d, y   = map(int, str.split('-'))
     y, m, d   = map(int, str.split('-'))
     return datetime(y, m, d)
 
+def strStr2dt(dstr, tstr):
+    return str2dt(dstr + ' ' + tstr + ':00') if tstr else str2dt(dstr)
+        
 def dt2str(dt):
     "datetime object to YYYY-MM-DD hh:mm:ss string"
     if dt is None:
         return None
     else:    
         return dt.strftime("%Y-%m-%d %H:%M:%S")
+
+def d2str(dt):
+    "datetime object to YYYY-MM-DD string"
+    if dt is None:
+        return None
+    else:    
+        return dt.strftime("%Y-%m-%d")
+
+def t2str(dt):
+    "datetime object to hh:mm string"
+    if dt is None:
+        return None
+    else:    
+        return dt.strftime("%H:%M")
 
 def grade_abc_2_float(abc):
     grades = {'A' : 4.0, 'B' : 3.0, 'C' : 2.0}
@@ -845,7 +860,9 @@ class Period(models.Model):
         else:
             self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
         now = dt2str(datetime.utcnow())
-        self.start    = TimeAgent.quarter(str2dt(fdata.get("start", now)))
+        date          = fdata.get("date", "")
+        time          = fdata.get("time", "")
+        self.start    = TimeAgent.quarter(strStr2dt(date, time))
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
         self.score    = 0.0 # TBF call to antioch to get score
         self.forecast = now
@@ -865,7 +882,8 @@ class Period(models.Model):
         return {"id"           : self.id
               , "session"      : self.session.jsondict()
               , "handle"       : self.toHandle()
-              , "start"        : dt2str(self.start)
+              , "date"         : d2str(self.start)
+              , "time"         : t2str(self.start)
               , "duration"     : self.duration
               , "score"        : self.score
               , "forecast"     : dt2str(self.forecast)
