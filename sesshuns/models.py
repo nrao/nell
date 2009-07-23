@@ -309,6 +309,7 @@ class Blackout(models.Model):
     end          = models.DateTimeField(null = True)
     tz           = models.ForeignKey(TimeZone)
     repeat       = models.ForeignKey(Repeat)
+    until        = models.DateTimeField(null = True)
     description  = models.CharField(null = True, max_length = 512)
 
     def __unicode__(self):

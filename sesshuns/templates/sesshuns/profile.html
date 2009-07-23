@@ -63,6 +63,7 @@
               <th>End</th>
               <th>Time Zone</th>
               <th>Repeat</th>
+              <th>Until</th>
               <th>Description</th>
             </tr>
             {% for b in u.blackout_set.all %}
@@ -71,6 +72,7 @@
               <td>{{b.end}}</td>
               <td>{{b.tz.timeZone}}</td>
               <td>{{b.repeat.repeat}}</td>
+              <td>{{b.until|pretty_none}}</td>
               <td>{{b.description}}</td>
               <td>
                 <a href="/profile/{{u.id}}/blackout/form?_method=PUT&id={{b.id}}">edit</a> |

@@ -21,7 +21,7 @@
               <th>Session</th>
               <th>Start Time</th>
               <th>Duration</th>
-              <th>Billable Hours</th>
+              <th>Billed Hours</th>
             </tr>
             {% for s in p.sesshun_set.all %}
               {% for per in s.period_set.all %}
@@ -132,6 +132,7 @@
               <th>End</th>
               <th>Time Zone</th>
               <th>Repeat</th>
+              <th>Until</th>
               <th>Description</th>
             </tr>
             {% for i in p.investigators_set.all %}
@@ -144,6 +145,7 @@
                   <td>{{b.end}}</td>
                   <td>{{b.tz.timeZone}}</td>
                   <td>{{b.repeat.repeat}}</td>
+                  <td>{{b.until|pretty_none}}</td>
                   <td>{{b.description}}</td>
                 </tr>
               {% endfor %}
