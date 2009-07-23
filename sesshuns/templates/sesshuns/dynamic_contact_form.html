@@ -1,0 +1,9 @@
+{% extends "sesshuns/base.html" %}
+{% block title %}Dynamic Contact{% endblock %}
+{% block content %}
+<form action="/profile/{{u.id}}/dynamic_contact" method="POST">
+  <textarea name="contact_instructions">{{u.contact_instructions}}</textarea>
+  <br/>
+  <input type="submit" value="Save"/>
+</form>
+{% endblock %}

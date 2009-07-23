@@ -1,0 +1,12 @@
+{% extends "sesshuns/base.html" %}
+{% block title %}Blackout{% endblock %}
+{% block content %}
+<form action="/profile/{{u.id}}/blackout" method="POST">
+  {{ form.as_p }}
+  {% if b %}
+  <input type="hidden" name="_method" value="{{method}}" />
+  <input type="hidden" name="id" value="{{b.id}}" />
+  {% endif %}
+  <input type="submit" value="Save"/>
+</form>
+{% endblock %}

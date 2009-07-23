@@ -1,0 +1,178 @@
+{% extends "sesshuns/base.html" %}
+{% load custom %}
+{% block title %} {{p.pcode}} {% endblock %}
+{% block scripts %}
+    <script type="text/javascript" src="/static/javascript/lib/jquery.js"> </script>
+    <script type="text/javascript" src="/static/javascript/project.js"></script>
+{% endblock %}
+{% block content %}
+      <div id="header" class="span-24 last">
+        <h1>{{p.pcode}}</h1>
+      </div>
+      <div id="subheader" class="span-24 last">
+        <h3 class="alt">{{p.name}}</h3>
+        <hr />
+      </div>
+      <div class="span-17 colborder" id="content">
+        <h3 class="loud"><span id = "tp" style = "cursor: pointer;">+</span> Telescope Periods Completed</h3>
+        <div id ="tp_div" style="display: none;">
+          <table>
+            <tr>
+              <th>Session</th>
+              <th>Start Time</th>
+              <th>Duration</th>
+              <th>Billable Hours</th>
+            </tr>
+            {% for s in p.sesshun_set.all %}
+              {% for per in s.period_set.all %}
+                <tr>
+                  <td>{{s.name}}<td>
+                  <td>{{per.start_time}}</td>
+                  <td>{{per.duration}}</td>
+                  <td>add billable hours</td>
+                </tr>
+              {% endfor %}
+            {% endfor %}
+          </table>
+        </div>
+        <h3 class="loud"><span id = "se" style = "cursor: pointer;">-</span> Project Sessions</h3>
+        <div id = "se_div">
+          <table>
+            <tr>
+              <th style="{width: 100px;}">Name</th>
+              <th>Horizontal Coord</th>
+              <th>Vertical Coord</th>
+              <th>Frequency</th>
+              <th>Total Time</th>
+              <th>Type</th>
+              <th style="{width: 80px;}">Science</th>
+              <th>Enabled?</th>
+            {% for s in p.sesshun_set.all %}
+            <tr>
+              <td>{{s.name}}</td>
+              <td>{{s|target_horz}}</td>
+              <td>{{s|target_vert}}</td>
+              <td>{{s.frequency}}</td>
+              <td>{{s.allotment.total_time}}</td>
+              <td>{{s.session_type.type}}</td>
+              <td>{{s.observing_type.type}}</td>
+              <td>
+                <form action="/project/{{p.pcode}}/session/{{s.name}}/enable" method="POST">
+                  {% if s.status.enabled %}
+                  <input type="checkbox" name="enabled" checked onclick="submit();"/>
+                  {% else %}
+                  <input type="checkbox" name="enabled" onclick="submit();"/>
+                  {% endif %}
+                </form>
+              </td>
+            <tr>
+            {% endfor %}
+          </table>
+        </div>
+        <h3 class="loud"><span id = "obs" style = "cursor: pointer;">-</span> Observers</h3>
+        <div id = "obs_div">
+          <table>
+            <tr>
+              <th>Name</th>
+              <th>Email(s)</th>
+              <th>PI</th>
+              <th>Contact</th>
+              <th>Friend</th>
+              <th>Observer?</th>
+            </tr>
+            {% for i in p.investigators_set.all %}
+            <tr>
+              <td><a href="/profile/{{i.user.id}}">{{i.user|display_name}}</a></td>
+              <td>
+                {% for e in i.user.email_set.all %}
+                {{e.email}}<br/>
+                {% endfor %}
+              </td>
+              <td>
+                  {% if i.principal_investigator %}
+                  <input type="checkbox" name="pi" disabled="true" checked />
+                  {% else %}
+                  <input type="checkbox" name="pi" disabled="true" />
+                  {% endif %}
+              </td>
+              <td>
+                  {% if i.principal_contact %}
+                  <input type="checkbox" name="contact" disabled="true" checked />
+                  {% else %}
+                  <input type="checkbox" name="contact" disabled="true" />
+                  {% endif %}
+              </td>
+              <td>
+                  {% if i.friend %}
+                  <input type="checkbox" name="friend" disabled="true" checked />
+                  {% else %}
+                  <input type="checkbox" name="friend" disabled="true" />
+                  {% endif %}
+
+              </td>
+              <td>
+                <form action="/project/{{p.pcode}}/investigator/{{i.id}}/observer" method="POST">
+                  {% if i.observer %}
+                  <input type="checkbox" name="observer" checked onclick="submit();"/>
+                  {% else %}
+                  <input type="checkbox" name="observer" onclick="submit();"/>
+                  {% endif %}
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+        <h3 class="loud"><span id = "black" style = "cursor: pointer;">+</span> Observer Blackouts</h3>
+        <div id = "black_div" style = "display: none;">
+          <table>
+            <tr>
+              <th>Observer</th>
+              <th>Begin</th>
+              <th>End</th>
+              <th>Time Zone</th>
+              <th>Repeat</th>
+              <th>Description</th>
+            </tr>
+            {% for i in p.investigators_set.all %}
+              {% for b in i.user.blackout_set.all %}
+                <tr>
+                  <td>
+                    <a href="/profile/{{i.user.id}}">{{i.user|display_name}}</a>
+                  </td>
+                  <td>{{b.start}}</td>
+                  <td>{{b.end}}</td>
+                  <td>{{b.tz.timeZone}}</td>
+                  <td>{{b.repeat.repeat}}</td>
+                  <td>{{b.description}}</td>
+                </tr>
+              {% endfor %}
+            {% endfor %}
+          </table>
+        </div>
+        <h3 class="loud">Project Calendar</h3>
+        <div>
+        </div>
+      </div>
+      <div class="span-6 last" id="sidebar">
+        <div id="observer_info">
+          <h3 class="caps">Information</h3>
+          <div class="box">
+            <dl>
+              <dt>Trimester</dt>
+              <dd>{{p.semester.semester}}</dd>
+              <dt>Thesis?</dt>
+              <dd>{% if p.thesis %}Yes{% else %}No{% endif %}</dd>
+              <dt>Complete?</dt>
+              <dd>{% if p.complete %}Yes{% else %}No{% endif %}</dd>
+            </dl>
+          </div>
+        </div>
+        <div id="reservation">
+          <h3 class="caps">Upcoming Reservations</h3>
+          <div class="box">
+            List of reservations this week or month.
+          </div>
+        </div>
+      </div>
+{% endblock %}

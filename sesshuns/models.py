@@ -69,6 +69,7 @@ class User(models.Model):
     sancioned   = models.BooleanField()
     first_name  = models.CharField(max_length = 32)
     last_name   = models.CharField(max_length = 150)
+    contact_instructions = models.TextField()
 
     def __str__(self):
         return "%s, %s" % (self.last_name, self.first_name)
@@ -239,12 +240,30 @@ class Project(models.Model):
     class Meta:
         db_table = "projects"
 
-# TBF: recurrences don't apply for 09B, but we'll need to do these latter
+class Repeat(models.Model):
+    repeat = models.CharField(max_length = 32)
+
+    def __str__(self):
+        return self.repeat
+
+    class Meta:
+        db_table = "repeats"
+        
+class TimeZone(models.Model):
+    timeZone = models.CharField(max_length = 128)
+
+    def __str__(self):
+        return self.timeZone
+        
+    class Meta:
+        db_table = "timezones"
+        
 class Blackout(models.Model):
     user         = models.ForeignKey(User)
-    #recurrence  = models.ForeignKey(Recurrence)
     start        = models.DateTimeField(null = True)
     end          = models.DateTimeField(null = True)
+    tz           = models.ForeignKey(TimeZone)
+    repeat       = models.ForeignKey(Repeat)
     description  = models.CharField(null = True, max_length = 512)
 
     def __unicode__(self):
