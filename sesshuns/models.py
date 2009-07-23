@@ -859,10 +859,10 @@ class Period(models.Model):
             self.session = self.handle2session(handle)
         else:
             self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
-        now = dt2str(datetime.utcnow())
-        date          = fdata.get("date", "")
-        time          = fdata.get("time", "")
-        self.start    = TimeAgent.quarter(strStr2dt(date, time))
+        now           = dt2str(TimeAgent.quarter(datetime.utcnow()))
+        date          = fdata.get("date", None)
+        time          = fdata.get("time", None)
+        self.start    = TimeAgent.quarter(strStr2dt(date, time)) if time is not None and date is not None else now
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
         self.score    = 0.0 # TBF call to antioch to get score
         self.forecast = now
