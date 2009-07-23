@@ -1,5 +1,6 @@
 from django      import template
 from datetime    import timedelta
+from sesshuns    import models
 
 from sesshuns.models     import first
 from utilities.TimeAgent import rad2hr, rad2deg
@@ -30,12 +31,36 @@ def target_horz(value):
         secs = 0.0
     return ":".join(map(str, [int(horz), int(mins), "%.1f" % secs]))
 
+@register.inclusion_tag('flatten.html')
+def edit_allotment(sesshun_id):
+    session   = models.Sesshun.objects.get(id__exact = sesshun_id)
+    allotment = session.allotment
+    return {
+        'things'   : [(allotment.id, allotment)]
+      , 'label'    : 'Allotment'
+      , 'edit_only': True
+      , 'base_url' : models.Allotment.base_url
+    }
+
 @register.filter
 def target_vert(value):
     t = first(value.target_set.all())
     if t is None:
         return ""
     return "%.3f" % rad2deg(t.vertical)
+
+@register.inclusion_tag('flatten.html')
+def display_allotments_for_project(project_id):
+    project    = models.Project.objects.get(id__exact = project_id)
+    allotments = project.allotments.all()
+    ids        = [a.id for a in allotments]
+
+    return {
+        'things'   : zip(ids, allotments)
+      , 'label'    : 'Allotment'
+      , 'edit_only': False
+      , 'base_url' : models.Allotment.base_url
+    }
 
 @register.filter
 def display_name(user):

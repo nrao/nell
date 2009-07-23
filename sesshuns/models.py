@@ -11,6 +11,7 @@ def first(results, default = None):
     return default if len(results) == 0 else results[0]
 
 def str2dt(str):
+    "'YYYY-MM-DD hh:mm:ss' to datetime object"
     if str is None:
         return None
 
@@ -20,8 +21,33 @@ def str2dt(str):
         time       = tstr.split(':')
         h, mm, ss  = map(int, map(float, time))
         return datetime(y, m, d, h, mm, ss)
-    m, d, y   = map(int, str.split('-'))
+
+    y, m, d   = map(int, str.split('-'))
     return datetime(y, m, d)
+
+def strStr2dt(dstr, tstr):
+    return str2dt(dstr + ' ' + tstr + ':00') if tstr else str2dt(dstr)
+        
+def dt2str(dt):
+    "datetime object to YYYY-MM-DD hh:mm:ss string"
+    if dt is None:
+        return None
+    else:    
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
+
+def d2str(dt):
+    "datetime object to YYYY-MM-DD string"
+    if dt is None:
+        return None
+    else:    
+        return dt.strftime("%Y-%m-%d")
+
+def t2str(dt):
+    "datetime object to hh:mm string"
+    if dt is None:
+        return None
+    else:    
+        return dt.strftime("%H:%M")
 
 def grade_abc_2_float(abc):
     grades = {'A' : 4.0, 'B' : 3.0, 'C' : 2.0}
@@ -66,7 +92,7 @@ class User(models.Model):
     original_id = models.IntegerField()
     pst_id      = models.IntegerField(null = True)
     username    = models.CharField(max_length = 32, null = True)
-    sancioned   = models.BooleanField()
+    sanctioned  = models.BooleanField()
     first_name  = models.CharField(max_length = 32)
     last_name   = models.CharField(max_length = 150)
     contact_instructions = models.TextField()
@@ -105,6 +131,8 @@ class Allotment(models.Model):
     max_semester_time = models.FloatField(help_text = "Hours")
     grade             = models.FloatField(help_text = "0.0 - 4.0")
 
+    base_url = "/sesshuns/allotment/"
+
     def __unicode__(self):
         return "(%d) Total: %5.2f, Grade: %5.2f, PSC: %5.2f, Max: %5.2f" % \
                                        (self.id
@@ -113,26 +141,34 @@ class Allotment(models.Model):
                                       , self.psc_time
                                       , self.max_semester_time) 
 
+    def get_absolute_url(self):
+        return "/sesshuns/allotment/%i/" % self.id
+
     class Meta:
         db_table = "allotment"
         
 class Project(models.Model):
     semester     = models.ForeignKey(Semester)
     project_type = models.ForeignKey(Project_Type)
-    allotments   = models.ManyToManyField(Allotment)
+    allotments   = models.ManyToManyField(Allotment, through = "Project_Allotment")
     pcode        = models.CharField(max_length = 32)
     name         = models.CharField(max_length = 150)
     thesis       = models.BooleanField()
     complete     = models.BooleanField()
     ignore_grade = models.BooleanField()
-    start_date   = models.DateTimeField(null = True)
-    end_date     = models.DateTimeField(null = True)
+    start_date   = models.DateTimeField(null = True, blank = True)
+    end_date     = models.DateTimeField(null = True, blank = True)
+
+    base_url = "/sesshuns/project/"
 
     def __unicode__(self):
         return "%s, %s, %s" % (self.pcode, self.semester, self.name)
 
     def __str__(self):
         return self.pcode
+
+    def get_allotments_display(self):
+        return self.allotments.all()
 
     def init_from_post(self, fdata):
         self.update_from_post(fdata)
@@ -172,7 +208,9 @@ class Project(models.Model):
                             , grade             = 0.0
                               )
                 a.save()
-                self.allotments.add(a)
+
+                pa = Project_Allotment(project = self, allotment = a)
+                pa.save()
         elif num_new < num_cur:
             for a in self.allotments.all()[:(num_cur - num_new)]:
                 a.delete()
@@ -239,6 +277,13 @@ class Project(models.Model):
 
     class Meta:
         db_table = "projects"
+
+class Project_Allotment(models.Model):
+    project = models.ForeignKey(Project)
+    allotment = models.ForeignKey(Allotment)
+
+    class Meta:
+        db_table = "projects_allotments"
 
 class Repeat(models.Model):
     repeat = models.CharField(max_length = 32)
@@ -428,9 +473,11 @@ class Sesshun(models.Model):
     frequency          = models.FloatField(null = True, help_text = "GHz")
     max_duration       = models.FloatField(null = True, help_text = "Hours")
     min_duration       = models.FloatField(null = True, help_text = "Hours")
-    time_between       = models.FloatField(null = True, help_text = "Hours")
+    time_between       = models.FloatField(null = True, help_text = "Hours", blank = True)
 
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
+
+    base_url = "/sesshuns/sesshun/"
 
     def __unicode__(self):
         return "(%d) %s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s" % (
@@ -440,6 +487,9 @@ class Sesshun(models.Model):
                 , self.allotment.total_time
                       if self.allotment.total_time is not None else 0
                 , self.receiver_list())
+
+    def get_absolute_url(self):
+        return "/sesshuns/sesshun/%i/" % self.id
 
     def receiver_list(self):
         "Returns a string representation of the rcvr logic."
@@ -462,7 +512,7 @@ class Sesshun(models.Model):
     def num_rcvr_groups(self):
         return len(self.receiver_group_set.all())
 
-    def scheduable(self):
+    def schedulable(self):
         "A simple check for all explicit flags"
         return (self.status.enabled) and \
                (self.status.authorized) and \
@@ -614,7 +664,7 @@ class Sesshun(models.Model):
         target.horizontal = new_dec
         target.save()
         
-    def get_ignore_ha(self):
+    def get_ignore_ha(self)  :
         # TBF:  Need specification of ignore_ha
         return False
         
@@ -823,11 +873,39 @@ class Period(models.Model):
         self.from_post(fdata)
 
     def from_post(self, fdata):
-        self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
-        now = datetime.utcnow()
-        self.start    = TimeAgent.quarter(str2dt(fdata.get("start", now)))
-        self.duration = round(4*float(fdata.get("duration", "0.0")))/4
-        self.score    = None # TBF call to antioch to get score
+        handle = fdata.get("handle", "")
+        if handle:
+            self.session = self.handle2session(handle)
+        else:
+            self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
+        now = dt2str(datetime.utcnow())
+        date          = fdata.get("date", "")
+        time          = fdata.get("time", "")
+        self.start    = TimeAgent.quarter(strStr2dt(date, time))
+        self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
+        self.score    = 0.0 # TBF call to antioch to get score
         self.forecast = now
         self.backup   = fdata.get("backup", False)
         self.save()
+
+    def handle2session(self, h):
+        n, p = h.rsplit('(', 1)
+        name = n.strip()
+        pcode = p[:-1]
+        return Sesshun.objects.filter(project__pcode__exact=pcode).get(name=name)
+
+    def toHandle(self):
+        return "%s (%s)" % (self.session.name, self.session.project.pcode)
+
+    def jsondict(self):
+        return {"id"           : self.id
+              , "session"      : self.session.jsondict()
+              , "handle"       : self.toHandle()
+              , "date"         : d2str(self.start)
+              , "time"         : t2str(self.start)
+              , "duration"     : self.duration
+              , "score"        : self.score
+              , "forecast"     : dt2str(self.forecast)
+              , "backup"       : self.backup
+                }
+

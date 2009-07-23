@@ -1,0 +1,7 @@
+{% extends "admin/change_form.html" %}
+
+{% load custom %}
+
+{% block after_field_sets %}
+  {% if object_id %}{% edit_allotment object_id %}{% endif %}
+  {% endblock %}

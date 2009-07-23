@@ -83,6 +83,26 @@ class TestPeriod(NellTestCase):
         self.assertEqual(p.duration, self.fdata["duration"])
         self.assertEqual(p.backup, self.fdata["backup"])
 
+    def test_jsondict(self):
+         
+        start = datetime(2009, 6, 1, 12, 15)
+        dur   = 180
+        
+        p = Period()
+        p.start = start
+        p.duration = dur
+        p.session = self.sesshun
+        p.backup = True
+
+        p.save()
+
+        jd = p.jsondict()
+
+        self.assertEqual(jd["duration"], dur)
+        self.assertEqual(jd["start"], "2009-06-01 12:15:00")
+
+        p.delete()
+
 class TestReceiver(NellTestCase):
 
     def setUp(self):
@@ -332,6 +352,65 @@ class TestSesshun(NellTestCase):
 
 # Testing View Resources
 
+class TestPeriodResource(NellTestCase):
+
+    def setUp(self):
+        super(TestPeriodResource, self).setUp()
+        self.rootURL = '/periods'
+        self.sess = create_sesshun()
+        self.client = Client()
+        self.fdata = {'session'  : self.sess.id
+                    , 'start'    : '2009-06-01 00:00:00'
+                    , 'duration' : 1.0
+                    , 'backup'   : True}
+        self.p = Period()
+        self.p.init_from_post(self.fdata)
+        self.p.save()
+
+    def test_create(self):
+        response = self.client.post(self.rootURL, self.fdata)
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_create_empty(self):
+        response = self.client.post(self.rootURL)
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_read(self):
+        url = "%s?startPeriods=%s&daysPeriods=%d" % (self.rootURL 
+                                                   , self.fdata['start']
+                                                   , 2)
+        response = self.client.get(url)
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertEqual(response.content[:11], '{"total": 1')
+
+    def test_read_keywords(self):
+        # use a date range that picks up our one period
+        url = "%s?startPeriods=%s&daysPeriods=%d" % (self.rootURL 
+                                                   , self.fdata['start']
+                                                   , 3)
+        response = self.client.get(url)
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertEqual(response.content[:11], '{"total": 1')
+        # now use a date range that doesn't
+        url = "%s?startPeriods=%s&daysPeriods=%d" % (self.rootURL 
+                                                   , '2009-06-02 00:00:00' 
+                                                   , 3)
+        response = self.client.get(url)
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertEqual(response.content[:11], '{"total": 0')
+
+
+    def test_update(self):
+        fdata = self.fdata
+        fdata.update({"_method" : "put"})
+        response = self.client.post('%s/%s' % (self.rootURL, self.p.id), fdata)
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_delete(self):
+        response = self.client.post('%s/%s' % (self.rootURL, self.p.id)
+                                  , {"_method" : "delete"})
+        self.failUnlessEqual(response.status_code, 200)
+
 class TestProjectResource(NellTestCase):
 
     def setUp(self):
@@ -476,8 +555,15 @@ class TestSessionResource(NellTestCase):
 class TestGetOptions(NellTestCase):
 
     def test_get_options(self):
+        create_sesshun()
         c = Client()
-        response = c.get('/sessions/options')
+        response = c.get('/sessions/options', dict(mode='project_codes'))
+        self.assertEquals(response.content,
+                          '{"project codes": ["GBT09A-001"]}')
+        response = c.get('/sessions/options', dict(mode='session_handles'))
+        self.assertEquals(response.content,
+                          '{"session handles": ["Low Frequency With No RFI (GBT09A-001)"]}')
+
          
 # Testing Utilities
 
