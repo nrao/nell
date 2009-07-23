@@ -67,7 +67,7 @@ from django.forms import ModelForm
 class BlackoutForm(ModelForm):
     class Meta:
         model = Blackout
-        fields = ('start', 'end', 'tz', 'repeat', 'description')
+        fields = ('start', 'end', 'tz', 'repeat', 'until', 'description')
 
 def blackout_form(request, *args, **kws):
     method = request.GET.get('_method', '')
@@ -105,6 +105,7 @@ def blackout(request, *args, **kws):
         b.end         = form.cleaned_data['end']
         b.tz          = form.cleaned_data['tz']
         b.repeat      = form.cleaned_data['repeat']
+        b.until       = form.cleaned_data['until']
         b.description = form.cleaned_data['description']
         b.save()
         
