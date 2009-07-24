@@ -95,6 +95,7 @@ class User(models.Model):
     sanctioned  = models.BooleanField()
     first_name  = models.CharField(max_length = 32)
     last_name   = models.CharField(max_length = 150)
+    contact_instructions = models.TextField()
 
     def __str__(self):
         return "%s, %s" % (self.last_name, self.first_name)
@@ -284,12 +285,31 @@ class Project_Allotment(models.Model):
     class Meta:
         db_table = "projects_allotments"
 
-# TBF: recurrences don't apply for 09B, but we'll need to do these latter
+class Repeat(models.Model):
+    repeat = models.CharField(max_length = 32)
+
+    def __str__(self):
+        return self.repeat
+
+    class Meta:
+        db_table = "repeats"
+        
+class TimeZone(models.Model):
+    timeZone = models.CharField(max_length = 128)
+
+    def __str__(self):
+        return self.timeZone
+        
+    class Meta:
+        db_table = "timezones"
+        
 class Blackout(models.Model):
     user         = models.ForeignKey(User)
-    #recurrence  = models.ForeignKey(Recurrence)
     start        = models.DateTimeField(null = True)
     end          = models.DateTimeField(null = True)
+    tz           = models.ForeignKey(TimeZone)
+    repeat       = models.ForeignKey(Repeat)
+    until        = models.DateTimeField(null = True)
     description  = models.CharField(null = True, max_length = 512)
 
     def __unicode__(self):
@@ -859,10 +879,10 @@ class Period(models.Model):
             self.session = self.handle2session(handle)
         else:
             self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
-        now = dt2str(datetime.utcnow())
-        date          = fdata.get("date", "")
-        time          = fdata.get("time", "")
-        self.start    = TimeAgent.quarter(strStr2dt(date, time))
+        now           = dt2str(TimeAgent.quarter(datetime.utcnow()))
+        date          = fdata.get("date", None)
+        time          = fdata.get("time", None)
+        self.start    = TimeAgent.quarter(strStr2dt(date, time)) if time is not None and date is not None else now
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
         self.score    = 0.0 # TBF call to antioch to get score
         self.forecast = now

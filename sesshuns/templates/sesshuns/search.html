@@ -1,0 +1,35 @@
+{% extends "sesshuns/base.html" %}
+{% load custom %}
+{% block content %}
+{% if ps %}
+<h3 class="loud">Projects</h3>
+<table>
+  <tr>
+    <th>PCode</th>
+    <th>Name</th>
+  </tr>
+  {% for p in ps %}
+  <tr>
+    <td>
+      <a href="/project/{{p.pcode}}">{{p.pcode}}</a>
+    </td>
+    <td>
+      {{p.name}}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% if us %}
+<h3 class="loud">Observers</h3>
+<ul>
+  {% for u in us %}
+  <li>
+    <a href="/profile/{{u.id}}">{{u|display_name}}</a>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% endblock %}

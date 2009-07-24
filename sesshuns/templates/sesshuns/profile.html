@@ -1,0 +1,95 @@
+{% extends "sesshuns/base.html" %}
+{% load custom %}
+{% block title %}Profile - {{u|display_name}} {% endblock %}
+{% block content %}
+      <div id="header" class="span-24 last">
+        <h1>{{u|display_name}}</h1>
+      </div>
+      <div id="subheader" class="span-24 last">
+        Add affiliation here.
+        <hr />
+      </div>
+      <div class="span-17 colborder" id="content">
+        <h3 class="loud">Projects</h3>
+        <div>
+          <table>
+            <tr>
+              <th>PCode</th>
+              <th>Name</th>
+            </tr>
+              {% for i in u.investigators_set.all %}
+                <tr>
+                  <td><a href="/project/{{i.project.pcode}}">{{i.project.pcode}}</a></td>
+                  <td>{{i.project.name}}</td>
+                </tr>
+              {% endfor %}
+          </table>
+          <hr />
+        </div>
+        <div class="span-8 colborder">  
+          <h4 class="loud">Dynamic Contact</h3>
+          <p>{{u.contact_instructions}}</p>
+          <a href="/profile/{{u.id}}/dynamic_contact/form">edit</a>
+        </div>  
+        <div class="span-8 last">  
+          <h4 class="prepend-5">Static Contact</h4>  
+          <table>
+            <tr>
+              <th>Email(s)</th>
+            </tr>
+              {% for e in u.email_set.all %}
+                <tr>
+                  <td>{{e.email}}</td>
+                </tr>
+              {% endfor %}
+          </table>
+          <table>
+            <tr>
+              <th>Phone(s)</th>
+            </tr>
+              {% for p in u.phone_set.all %}
+                <tr>
+                  <td>{{p.phone}}</td>
+                </tr>
+              {% endfor %}
+          </table>
+        </div>
+        <hr />
+        <div>
+          <h3 class="loud">Blackout Dates</h3>
+          <table>
+            <tr>
+              <th>Begin</th>
+              <th>End</th>
+              <th>Time Zone</th>
+              <th>Repeat</th>
+              <th>Until</th>
+              <th>Description</th>
+            </tr>
+            {% for b in u.blackout_set.all %}
+            <tr>
+              <td>{{b.start}}</td>
+              <td>{{b.end}}</td>
+              <td>{{b.tz.timeZone}}</td>
+              <td>{{b.repeat.repeat}}</td>
+              <td>{{b.until|pretty_none}}</td>
+              <td>{{b.description}}</td>
+              <td>
+                <a href="/profile/{{u.id}}/blackout/form?_method=PUT&id={{b.id}}">edit</a> |
+                <a href="/profile/{{u.id}}/blackout?_method=DELETE&id={{b.id}}">delete</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+          <a href="/profile/{{u.id}}/blackout/form">add</a>
+        </div>
+      </div>
+      <div class="span-6 last" id="sidebar">
+        <div id="periods">
+          <h3 class="caps">Upcoming Observations</h3>
+          <div class="box">
+            List of telescope periods.
+          </div>
+        </div>
+      </div>
+{% endblock %}
