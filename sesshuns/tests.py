@@ -69,7 +69,8 @@ class TestPeriod(NellTestCase):
         super(TestPeriod, self).setUp()
         self.sesshun = create_sesshun()
         self.fdata = {"session":  1
-                    , "start":    "2009-6-1 12:15:00"
+                    , "date":    "2009-6-1"
+                    , "time":    "12:15"
                     , "duration": 4.25
                     , "backup":   False
                      }
@@ -99,7 +100,8 @@ class TestPeriod(NellTestCase):
         jd = p.jsondict()
 
         self.assertEqual(jd["duration"], dur)
-        self.assertEqual(jd["start"], "2009-06-01 12:15:00")
+        self.assertEqual(jd["date"], "2009-06-01")
+        self.assertEqual(jd["time"], "12:15")
 
         p.delete()
 
@@ -132,7 +134,10 @@ class TestReceiver(NellTestCase):
         # TBF WTF? now it is S, then it is X??
         #print rgs[0].receivers.all()[1].abbreviation
         self.assertEqual(2, len(rgs))
+        #print rgs[0].receivers.all()[0].abbreviation
         #print rgs[0].receivers.all()[1].abbreviation
+        #print rgs[1].receivers.all()[0].abbreviation
+        #print rgs[1].receivers.all()[1].abbreviation
         self.assertEqual('L', rgs[0].receivers.all()[0].abbreviation)
         self.assertEqual('X', rgs[0].receivers.all()[1].abbreviation)
         self.assertEqual('L', rgs[1].receivers.all()[0].abbreviation)
@@ -360,7 +365,8 @@ class TestPeriodResource(NellTestCase):
         self.sess = create_sesshun()
         self.client = Client()
         self.fdata = {'session'  : self.sess.id
-                    , 'start'    : '2009-06-01 00:00:00'
+                    , 'date'    : '2009-06-01'
+                    , 'time'    : '00:00'
                     , 'duration' : 1.0
                     , 'backup'   : True}
         self.p = Period()
@@ -376,18 +382,20 @@ class TestPeriodResource(NellTestCase):
         self.failUnlessEqual(response.status_code, 200)
 
     def test_read(self):
-        url = "%s?startPeriods=%s&daysPeriods=%d" % (self.rootURL 
-                                                   , self.fdata['start']
-                                                   , 2)
+        url = "%s?startPeriods=%s&daysPeriods=%d" % \
+                            (self.rootURL 
+                           , self.fdata['date'] + '%20' + self.fdata['time'] + ':00'
+                           , 2)
         response = self.client.get(url)
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(response.content[:11], '{"total": 1')
 
     def test_read_keywords(self):
         # use a date range that picks up our one period
-        url = "%s?startPeriods=%s&daysPeriods=%d" % (self.rootURL 
-                                                   , self.fdata['start']
-                                                   , 3)
+        url = "%s?startPeriods=%s&daysPeriods=%d" % \
+                            (self.rootURL 
+                           , self.fdata['date'] + '%20' + self.fdata['time'] + ':00'
+                           , 3)
         response = self.client.get(url)
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(response.content[:11], '{"total": 1')
