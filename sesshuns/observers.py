@@ -24,9 +24,11 @@ def search(request, *args, **kws):
     user = first(User.objects.filter(last_name = "Braatz"))
     search   = request.POST.get('search', '')
     projects = Project.objects.filter(
-        Q(pcode__contains = search) | Q(name__contains = search) | Q(semester__semester__contains = search))
+        Q(pcode__icontains = search) | \
+            Q(name__icontains = search) | \
+            Q(semester__semester__icontains = search))
     users    = User.objects.filter(
-        Q(first_name__contains = search) | Q(last_name__contains = search))
+        Q(first_name__icontains = search) | Q(last_name__icontains = search))
     return render_to_response("sesshuns/search.html"
                             , {'ps' : projects
                              , 'us' : users
