@@ -1,3 +1,4 @@
+from copy               import copy
 from datetime           import datetime, timedelta
 from django.test.client import Client
 from django.http        import QueryDict
@@ -419,7 +420,7 @@ class TestProjectResource(NellTestCase):
         self.fdata = {'semester'   : '09C'
                     , 'type'       : 'science'
                     , 'pcode'      : 'mike'
-                    , 'name'       : 'mike awesome project!'
+                    , 'name'       : 'mikes awesome project!'
                     , 'PSC_time'   : '100.0'
                     , 'total_time' : '100.0'
                     , 'sem_time'   : '50.0'
@@ -564,7 +565,136 @@ class TestGetOptions(NellTestCase):
         self.assertEquals(response.content,
                           '{"session handles": ["Low Frequency With No RFI (GBT09A-001)"]}')
 
-         
+# Testing Observers UI
+
+class TestObservers(NellTestCase):
+
+    def setUp(self):
+        super(TestObservers, self).setUp()
+        self.client = Client()
+        self.u = User(first_name = "Test", last_name = "User")
+        self.u.save()
+        
+        self.p = Project()
+        self.p.init_from_post({'semester'   : '09C'
+                             , 'type'       : 'science'
+                             , 'pcode'      : 'mike'
+                             , 'name'       : 'mikes awesome project!'
+                             , 'PSC_time'   : '100.0'
+                             , 'total_time' : '100.0'
+                             , 'sem_time'   : '50.0'
+                               })
+        self.p.save()
+
+        i = Investigators(project = self.p
+                        , user    = self.u
+                         )
+        i.save()
+
+        fdata2 = copy(fdata)
+        fdata2.update({'source_v' : 1.0
+                     , 'source_h' : 1.0
+                     , 'source'   : 'testing'
+                       })
+        self.s = Sesshun()
+        self.s.init_from_post(fdata2)
+        self.s.project = self.p
+        self.s.save()
+
+    def test_profile(self):
+        response = self.client.get('/profile/%s' % self.u.id)
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_project(self):
+        response = self.client.get('/project/%s' % self.p.pcode)
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_search(self):
+        response = self.client.post('/search', {'search' : 'Test'})
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue("User" in response.content)
+
+    def test_toggle_session(self):
+        response = self.client.post(
+            '/project/%s/session/%s/enable' % (self.p.pcode, self.s.name))
+        self.failUnlessEqual(response.status_code, 302)
+        s = first(Sesshun.objects.filter(id = self.s.id))
+        self.assertEqual(s.status.enabled, True)
+
+    def test_toggle_observer(self):
+        i_id = first(self.p.investigators_set.all()).id
+        response = self.client.post(
+            '/project/%s/investigator/%s/observer' % (self.p.pcode, i_id))
+        self.failUnlessEqual(response.status_code, 302)
+        i = first(Investigators.objects.filter(id = i_id))
+        self.assertEqual(i.observer, True)
+
+    def test_dynamic_contact_form(self):
+        response = self.client.get('/profile/%s/dynamic_contact/form' % self.u.id)
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_dynamic_contact_save(self):
+        data = {'contact_instructions' : "I'll be at Bob's house."}
+        response = self.client.post('/profile/%s/dynamic_contact' % self.u.id, data)
+        self.failUnlessEqual(response.status_code, 302)
+        u = first(User.objects.filter(id = self.u.id))
+        self.assertEqual(u.contact_instructions, data.get('contact_instructions'))
+
+    def create_blackout(self):
+        b             = Blackout(user = self.u)
+        b.start       = datetime(2009, 1, 1)
+        b.end         = datetime(2009, 12, 31)
+        b.tz          = first(TimeZone.objects.all())
+        b.repeat      = first(Repeat.objects.all())
+        b.description = "This is a test blackout."
+        b.save()
+        return b
+        
+    def test_blackout_form(self):
+        response = self.client.get('/profile/%s/blackout/form' % self.u.id)
+        self.failUnlessEqual(response.status_code, 200)
+
+        b = self.create_blackout()
+        data = {'_method' : 'PUT'
+              , 'id'      : b.id
+                }
+        response = self.client.get('/profile/%s/blackout/form' % self.u.id, data)
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue(b.description in response.content)
+
+    def test_blackout(self):
+        b    = self.create_blackout()
+        data = {'start'       : datetime(2009, 1, 1).strftime("%Y-%m-%d %H:%M:%S") 
+              , 'end'         : datetime(2009, 1, 31).strftime("%Y-%m-%d %H:%M:%S") 
+              , 'tz'          : 1
+              , 'repeat'      : 1
+              , 'until'       : datetime(2010, 1, 31).strftime("%Y-%m-%d %H:%M:%S") 
+              , 'description' : "This is a test blackout."
+              , '_method'     : 'PUT'
+              , 'id'          : b.id
+                }
+
+        response = self.client.post(
+            '/profile/%s/blackout' % self.u.id, data)
+        b = first(Blackout.objects.filter(id = b.id))
+        self.assertEqual(b.end.strftime("%Y-%m-%d %H:%M:%S") , data.get('end'))
+        self.failUnlessEqual(response.status_code, 302)
+        
+        response = self.client.get(
+            '/profile/%s/blackout' % self.u.id, {'_method' : 'DELETE'
+                                               , 'id'      : b.id
+                                                 })
+        self.failUnlessEqual(response.status_code, 302)
+
+        data['end'] = datetime(2009, 5, 31).strftime("%Y-%m-%d %H:%M:%S")
+        _ = data.pop('_method')
+        _ = data.pop('id')
+        response    = self.client.post(
+            '/profile/%s/blackout' % self.u.id, data)
+        self.failUnlessEqual(response.status_code, 302)
+        b = first(self.u.blackout_set.all())
+        self.assertEqual(b.end.strftime("%Y-%m-%d %H:%M:%S") , data.get('end'))
+
 # Testing Utilities
 
 class TestDBReporter(NellTestCase):

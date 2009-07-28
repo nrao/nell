@@ -89,13 +89,13 @@ jsonMap = {"authorized"     : "status__authorized"
                }
 
 class User(models.Model):
-    original_id = models.IntegerField()
+    original_id = models.IntegerField(null = True)
     pst_id      = models.IntegerField(null = True)
     username    = models.CharField(max_length = 32, null = True)
-    sanctioned  = models.BooleanField()
+    sanctioned  = models.BooleanField(default = False)
     first_name  = models.CharField(max_length = 32)
     last_name   = models.CharField(max_length = 150)
-    contact_instructions = models.TextField()
+    contact_instructions = models.TextField(null = True)
 
     def __str__(self):
         return "%s, %s" % (self.last_name, self.first_name)
