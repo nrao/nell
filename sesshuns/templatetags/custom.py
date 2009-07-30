@@ -71,3 +71,11 @@ def pretty_none(value):
     if value is None:
         return ""
     return value
+
+@register.filter
+def just_date(value):
+    return value if value == "" or value is None else value.date().strftime("%m/%d/%Y")
+
+@register.filter
+def just_time(value):
+    return value if value is None else value.time().strftime("%H:%M")

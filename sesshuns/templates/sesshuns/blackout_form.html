@@ -1,8 +1,90 @@
 {% extends "sesshuns/base.html" %}
+{% load custom %}
 {% block title %}Blackout{% endblock %}
+{% block scripts %}
+  <link type="text/css" href="http://jqueryui.com/latest/themes/base/ui.all.css" rel="stylesheet" />
+  <script type="text/javascript" src="http://jqueryui.com/latest/jquery-1.3.2.js"></script>
+  <script type="text/javascript" src="http://jqueryui.com/latest/ui/ui.core.js"></script>
+  <script type="text/javascript" src="http://jqueryui.com/latest/ui/ui.datepicker.js"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    $("#id_start").datepicker();
+    $("#id_end").datepicker();
+    $("#id_until").datepicker();
+  });
+  </script>
+
+{% endblock %}
 {% block content %}
+<div type="text" id="datepicker"></div>
 <form action="/profile/{{u.id}}/blackout" method="POST">
-  {{ form.as_p }}
+  <p>
+    <label for="id_start">Start:</label>
+    <input type="text" name="start" id="id_start" value="{{b.start|just_date}}"/>
+    <select name="starttime" id="id_starttime">
+      {% for t in times %}
+      {% ifequal t b.start|just_time %}
+      <option selected="selected">{{t}}</option>
+      {% else %}
+      <option >{{t}}</option>
+      {% endifequal %}
+      {% endfor %}
+    </select>
+  </p>
+  <p>
+    <label for="id_end">End:</label>
+    <input type="text" name="end" id="id_end" value="{{b.end|just_date}}"/>
+    <select name="endtime" id="id_endtime">
+      {% for t in times %}
+      {% ifequal t b.end|just_time %}
+      <option selected="selected">{{t}}</option>
+      {% else %}
+      <option >{{t}}</option>
+      {% endifequal %}
+      {% endfor %}
+    </select>
+  </p>
+  <p>
+    <label for="id_tz">Tz:</label>
+    <select name="tz" id="id_tz">
+      {% for tz in tzs %}
+      {% ifequal tz b.tz %}
+      <option selected="selected">{{tz.timeZone}}</option>
+      {% else %}
+      <option >{{tz.timeZone}}</option>
+      {% endifequal %}
+      {% endfor %}
+    </select>
+  </p>
+  <p>
+    <label for="id_repeat">Repeat:</label> 
+    <select name="repeat" id="id_repeat">
+      {% for r in repeats %}
+      {% ifequal r b.repeat %}
+      <option selected="selected">{{r.repeat}}</option>
+      {% else %}
+      <option >{{r.repeat}}</option>
+      {% endifequal %}
+      {% endfor %}
+    </select>
+  </p>
+  <p>
+    <label for="id_until">Until:</label> 
+    <input type="text" name="until" id="id_until" value="{{b.until|just_date}}"/>
+    <select name="untiltime" id="id_untiltime">
+      {% for t in times %}
+      {% ifequal t b.until|just_time %}
+      <option selected="selected">{{t}}</option>
+      {% else %}
+      <option >{{t}}</option>
+      {% endifequal %}
+      {% endfor %}
+    </select>
+  </p>
+  <p>
+    <label for="id_description">Description:</label> 
+    <input id="id_description" type="text" name="description" maxlength="512" value="{{b.description}}" />
+  </p>
   {% if b %}
   <input type="hidden" name="_method" value="{{method}}" />
   <input type="hidden" name="id" value="{{b.id}}" />

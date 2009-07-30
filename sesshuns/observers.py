@@ -1,3 +1,4 @@
+from datetime                 import datetime, time
 from django.db.models         import Q
 from django.http              import HttpResponse, HttpResponseRedirect
 from django.shortcuts         import render_to_response
@@ -64,28 +65,21 @@ def dynamic_contact_save(request, *args, **kws):
     user.save()
     return HttpResponseRedirect("/profile/%s" % u_id)
 
-from django.forms import ModelForm
-
-class BlackoutForm(ModelForm):
-    class Meta:
-        model = Blackout
-        fields = ('start', 'end', 'tz', 'repeat', 'until', 'description')
-
 def blackout_form(request, *args, **kws):
     method = request.GET.get('_method', '')
     u_id, = args
     user  = first(User.objects.filter(id = u_id))
     b     = first(Blackout.objects.filter(id = int(request.GET.get('id', 0))))
-    if method == "PUT" and b is not None:
-        form = BlackoutForm(instance = b)
-    else:
-        form = BlackoutForm()
-
+    times = [time(h, m).strftime("%H:%M")
+             for h in range(1, 24) for m in range(0, 60, 15)]
     return render_to_response("sesshuns/blackout_form.html"
-                            , {'form'   : form
-                             , 'method' : method
+                            , {'method' : method
                              , 'b'      : b
-                             , 'u'      : user})
+                             , 'u'      : user
+                             , 'tzs'    : TimeZone.objects.all()
+                             , 'repeats': Repeat.objects.all()
+                             , 'times'  : times
+                               })
 
 def blackout(request, *args, **kws):
     u_id, = args
@@ -97,23 +91,22 @@ def blackout(request, *args, **kws):
         b.delete()
         return HttpResponseRedirect("/profile/%s" % u_id)
         
-    form = BlackoutForm(request.POST)
-    if form.is_valid():
-        if request.POST.get('_method', '') == 'PUT':
-            b = first(Blackout.objects.filter(id = request.POST.get('id', '0')))
-        else:
-            b = Blackout(user = user)
-        b.start       = form.cleaned_data['start']
-        b.end         = form.cleaned_data['end']
-        b.tz          = form.cleaned_data['tz']
-        b.repeat      = form.cleaned_data['repeat']
-        b.until       = form.cleaned_data['until']
-        b.description = form.cleaned_data['description']
-        b.save()
-        
-        return HttpResponseRedirect("/profile/%s" % u_id)
+    if request.POST.get('_method', '') == 'PUT':
+        b = first(Blackout.objects.filter(id = request.POST.get('id', '0')))
     else:
-        form = BlackoutForm()
-    return render_to_response("sesshuns/blackout_form.html"
-                            , {'form' : form
-                             , 'u'    : user})
+        b = Blackout(user = user)
+    b.start       = datetime.strptime(
+        "%s %s" % (request.POST['start'], request.POST['starttime'])
+      , "%m/%d/%Y %H:%M")
+    b.end         = datetime.strptime(
+        "%s %s" % (request.POST['end'], request.POST['endtime'])
+      , "%m/%d/%Y %H:%M")
+    b.tz          = first(TimeZone.objects.filter(timeZone = request.POST['tz']))
+    b.repeat      = first(Repeat.objects.filter(repeat = request.POST['repeat']))
+    b.until       = datetime.strptime(
+        "%s %s" % (request.POST['until'], request.POST['untiltime'])
+      , "%m/%d/%Y %H:%M")
+    b.description = request.POST['description']
+    b.save()
+        
+    return HttpResponseRedirect("/profile/%s" % u_id)
