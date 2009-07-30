@@ -237,7 +237,7 @@ class Project(models.Model):
         pi = '; '.join([i.user.name() for i in self.investigators_set.all()
                         if i.principal_investigator])
         co_i = '; '.join([i.user.name() for i in self.investigators_set.all()
-                        if not i.principal_investigator or not i.friend])
+                        if not i.principal_investigator and not i.friend])
 
         return {"id"           : self.id
               , "semester"     : self.semester.semester
