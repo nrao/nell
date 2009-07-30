@@ -88,11 +88,14 @@ class ProjectResource(NellResource):
     
     def read(self, request, *args, **kws):
         sortField = request.GET.get("sortField", "id")
-        sortField = "pcode" if sortField == "null" else sortField
+        sortField = "pcode" if sortField == "null" or \
+                               sortField == "pi" or \
+                               sortField == "co_i" \
+                            else sortField
         order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
         query_set = Project.objects
 
-        filterClp= request.GET.get("filterClp", None)
+        filterClp = request.GET.get("filterClp", None)
         if filterClp is not None:
             query_set = query_set.filter(
                 complete = (filterClp.lower() == "true"))
@@ -103,15 +106,19 @@ class ProjectResource(NellResource):
 
         filterSem = request.GET.get("filterSem", None)
         if filterSem is not None:
-            query_set = query_set.filter(semester__semester__contains = filterSem)
+            query_set = query_set.filter(semester__semester__icontains = filterSem)
 
         filterText = request.GET.get("filterText", None)
         if filterText is not None:
-            query_set = query_set.filter(Q(name__contains=filterText) |\
-                    Q(pcode__contains=filterText) |\
-                    Q(semester__semester__contains=filterText) |
-                    Q(name__contains=filterText) |
-                    Q(project_type__type__contains=filterText))
+            query_set = query_set.filter(
+                    Q(name__icontains=filterText) |\
+                    Q(pcode__icontains=filterText) |\
+                    Q(semester__semester__icontains=filterText) |
+                    Q(name__icontains=filterText) |
+                    Q(project_type__type__icontains=filterText) |
+                    Q(investigators__user__first_name__icontains = filterText) |
+                    Q(investigators__user__last_name__icontains = filterText)
+                    )
         projects = query_set.order_by(order + sortField)
         total    = len(projects)
         offset   = int(request.GET.get("offset", 0))
@@ -134,6 +141,11 @@ class SessionResource(NellResource):
             order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
             query_set = Sesshun.objects
 
+            filterEnb = request.GET.get("filterEnb", None)
+            if filterEnb is not None:
+                query_set = query_set.filter(
+                    status__enabled = (filterEnb.lower() == "true"))
+
             filterClp= request.GET.get("filterClp", None)
             if filterClp is not None:
                 query_set = query_set.filter(
@@ -149,7 +161,11 @@ class SessionResource(NellResource):
 
             filterSem = request.GET.get("filterSem", None)
             if filterSem is not None:
-                query_set = query_set.filter(project__semester__semester__contains = filterSem)
+                query_set = query_set.filter(project__semester__semester__icontains = filterSem)
+
+            filterRcvr = request.GET.get("filterRcvr", None)
+            if filterRcvr is not None:
+                query_set = query_set.filter(receiver_group__receivers__abbreviation = filterRcvr)
 
             filterFreq = request.GET.get("filterFreq", None)
             if filterFreq is not None:
@@ -157,11 +173,11 @@ class SessionResource(NellResource):
 
             filterText = request.GET.get("filterText", None)
             if filterText is not None:
-                query_set = query_set.filter(Q(name__contains=filterText) |\
-                    Q(project__pcode__contains=filterText) |\
-                    Q(project__semester__semester__contains=filterText) |
-                    Q(session_type__type__contains=filterText) |
-                    Q(observing_type__type__contains=filterText))
+                query_set = query_set.filter(Q(name__icontains=filterText) |\
+                    Q(project__pcode__icontains=filterText) |\
+                    Q(project__semester__semester__icontains=filterText) |
+                    Q(session_type__type__icontains=filterText) |
+                    Q(observing_type__type__icontains=filterText))
             sessions = query_set.order_by(order + sortField)
             total  = len(sessions)
             offset = int(request.GET.get("offset", 0))

@@ -75,7 +75,7 @@ jsonMap = {"authorized"     : "status__authorized"
          , "id"             : "id"
          , "name"           : "name"
          , "orig_ID"        : "original_id"
-# TBF         , "receiver"   : "rcvrs"
+         , "receiver"       : "receiver_group__receivers__abbreviation"
          , "PSC_time"       : "allotment__psc_time"
          , "req_max"        : "max_duration"
          , "req_min"        : "min_duration"
@@ -100,6 +100,8 @@ class User(models.Model):
     def __str__(self):
         return "%s, %s" % (self.last_name, self.first_name)
 
+    def name(self):
+        return self.__str__()
     class Meta:
         db_table = "users"
 
@@ -232,6 +234,11 @@ class Project(models.Model):
         max_sems = ', '.join([str(a.max_semester_time) for a in self.allotments.all()])
         grades   = ', '.join([grade_float_2_abc(a.grade) for a in self.allotments.all()])
 
+        pi = '; '.join([i.user.name() for i in self.investigators_set.all()
+                        if i.principal_investigator])
+        co_i = '; '.join([i.user.name() for i in self.investigators_set.all()
+                        if not i.principal_investigator or not i.friend])
+
         return {"id"           : self.id
               , "semester"     : self.semester.semester
               , "type"         : self.project_type.type
@@ -244,6 +251,8 @@ class Project(models.Model):
               , "thesis"       : self.thesis
               , "complete"     : self.complete
               , "ignore_grade" : self.ignore_grade
+              , "pi"           : pi
+              , "co_i"         : co_i
                 }
 
     def principal_contact(self):
