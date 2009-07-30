@@ -25,7 +25,7 @@ def target_horz(value):
     secs = (mins - int(mins)) * 60
     if abs(secs - 60.) < 0.1:
         mins = int(mins) + 1
-        if abs(mins - 60) < 0.1:
+        if abs(mins - 60.) < 0.1:
             mins = 0.0
             horz = int(horz) + 1
         secs = 0.0

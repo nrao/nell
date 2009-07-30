@@ -729,4 +729,3 @@ class TestReceiverCompile(NellTestCase):
             pass
         else:
             self.fail()
-
