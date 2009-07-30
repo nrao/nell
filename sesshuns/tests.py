@@ -1,5 +1,5 @@
 from copy               import copy
-from datetime           import datetime, timedelta
+from datetime           import date, datetime, timedelta
 from django.test.client import Client
 from django.http        import QueryDict
 import simplejson as json
@@ -671,12 +671,18 @@ class TestObservers(NellTestCase):
         self.assertTrue(b.description in response.content)
 
     def test_blackout(self):
-        b    = self.create_blackout()
-        data = {'start'       : datetime(2009, 1, 1).strftime("%Y-%m-%d %H:%M:%S") 
-              , 'end'         : datetime(2009, 1, 31).strftime("%Y-%m-%d %H:%M:%S") 
-              , 'tz'          : 1
-              , 'repeat'      : 1
-              , 'until'       : datetime(2010, 1, 31).strftime("%Y-%m-%d %H:%M:%S") 
+        b     = self.create_blackout()
+        start = datetime(2009, 1, 1)
+        end   = datetime(2009, 1, 31)
+        until = datetime(2010, 1, 31)
+        data = {'start'       : start.date().strftime("%m/%d/%Y")
+              , 'starttime'   : start.time().strftime("%H:%M")
+              , 'end'         : end.date().strftime("%m/%d/%Y")
+              , 'endtime'     : end.time().strftime("%H:%M")
+              , 'tz'          : 'UTC'
+              , 'repeat'      : 'Once'
+              , 'until'       : until.strftime("%m/%d/%Y")
+              , 'untiltime'   : until.strftime("%H:%M")
               , 'description' : "This is a test blackout."
               , '_method'     : 'PUT'
               , 'id'          : b.id
@@ -685,7 +691,7 @@ class TestObservers(NellTestCase):
         response = self.client.post(
             '/profile/%s/blackout' % self.u.id, data)
         b = first(Blackout.objects.filter(id = b.id))
-        self.assertEqual(b.end.strftime("%Y-%m-%d %H:%M:%S") , data.get('end'))
+        self.assertEqual(b.end.date().strftime("%m/%d/%Y") , data.get('end'))
         self.failUnlessEqual(response.status_code, 302)
         
         response = self.client.get(
@@ -694,14 +700,14 @@ class TestObservers(NellTestCase):
                                                  })
         self.failUnlessEqual(response.status_code, 302)
 
-        data['end'] = datetime(2009, 5, 31).strftime("%Y-%m-%d %H:%M:%S")
+        data['end'] = date(2009, 5, 31).strftime("%m/%d/%Y")
         _ = data.pop('_method')
         _ = data.pop('id')
         response    = self.client.post(
             '/profile/%s/blackout' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 302)
         b = first(self.u.blackout_set.all())
-        self.assertEqual(b.end.strftime("%Y-%m-%d %H:%M:%S") , data.get('end'))
+        self.assertEqual(b.end.date().strftime("%m/%d/%Y"), data.get('end'))
 
 # Testing Utilities
 class TestDBReporter(NellTestCase):
