@@ -495,7 +495,8 @@ class TestSessionResource(NellTestCase):
                , 'science': ['pulsar']
                , 'orig_ID': ['0']
                , 'enabled': ['false']
-               , 'receiver': ['1070']
+#               , 'receiver': ['1070']
+               , 'receiver': ['K | Ka | Q']
                , 'backup': ['false']
                  }
 
@@ -720,7 +721,7 @@ class TestObservers(NellTestCase):
 class TestDBReporter(NellTestCase):
 
     def test_DBReporter(self):
-        "Simply make sure that no exceptions are raised."
+        "imply make sure that no exceptions are raised."
         db = DBReporter(quiet=True)
         db.report()
 
