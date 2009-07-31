@@ -708,6 +708,12 @@ class TestObservers(NellTestCase):
         self.failUnlessEqual(response.status_code, 302)
         b = first(self.u.blackout_set.all())
         self.assertEqual(b.end.date().strftime("%m/%d/%Y"), data.get('end'))
+        b.delete()
+
+        data['until'] = ''
+        response    = self.client.post(
+            '/profile/%s/blackout' % self.u.id, data)
+        self.failUnlessEqual(response.status_code, 302)
 
 # Testing Utilities
 """

@@ -95,17 +95,21 @@ def blackout(request, *args, **kws):
         b = first(Blackout.objects.filter(id = request.POST.get('id', '0')))
     else:
         b = Blackout(user = user)
-    b.start       = datetime.strptime(
-        "%s %s" % (request.POST['start'], request.POST['starttime'])
-      , "%m/%d/%Y %H:%M")
-    b.end         = datetime.strptime(
-        "%s %s" % (request.POST['end'], request.POST['endtime'])
-      , "%m/%d/%Y %H:%M")
+
+    if request.POST['start'] != '':
+        b.start       = datetime.strptime(
+            "%s %s" % (request.POST['start'], request.POST['starttime'])
+          , "%m/%d/%Y %H:%M")
+    if request.POST['end'] != '':
+        b.end         = datetime.strptime(
+            "%s %s" % (request.POST['end'], request.POST['endtime'])
+          , "%m/%d/%Y %H:%M")
     b.tz          = first(TimeZone.objects.filter(timeZone = request.POST['tz']))
     b.repeat      = first(Repeat.objects.filter(repeat = request.POST['repeat']))
-    b.until       = datetime.strptime(
-        "%s %s" % (request.POST['until'], request.POST['untiltime'])
-      , "%m/%d/%Y %H:%M")
+    if request.POST['until'] != '':
+        b.until       = datetime.strptime(
+            "%s %s" % (request.POST['until'], request.POST['untiltime'])
+          , "%m/%d/%Y %H:%M")
     b.description = request.POST['description']
     b.save()
         
