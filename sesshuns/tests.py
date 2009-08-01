@@ -495,8 +495,7 @@ class TestSessionResource(NellTestCase):
                , 'science': ['pulsar']
                , 'orig_ID': ['0']
                , 'enabled': ['false']
-#               , 'receiver': ['1070']
-               , 'receiver': ['K | Ka | Q']
+               , 'receiver': ['(K | Ka) | Q']
                , 'backup': ['false']
                  }
 
@@ -743,9 +742,19 @@ class TestReceiverCompile(NellTestCase):
         self.assertEquals(rc.normalize('(L ^ 342) v (K & Ka)'),
                                        [['L', 'K'],   ['L', 'Ka'],
                                         ['342', 'K'], ['342', 'Ka']])
+        self.assertEquals(rc.normalize('K | (Ka | Q)'),
+                                       [['K', 'Ka', 'Q']])
         try:
             self.assertEquals(rc.normalize('J'), [['J']])
         except ValueError:
+            pass
+        else:
+            self.fail()
+        try:
+            self.assertEquals(rc.normalize('K | Ka | Q'),
+                                           [['K', 'Ka', 'Q']])
+            self.assertEquals(rc.normalize('J'), [['J']])
+        except SyntaxError:
             pass
         else:
             self.fail()
