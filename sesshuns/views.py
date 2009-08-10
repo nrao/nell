@@ -92,6 +92,7 @@ class ProjectResource(NellResource):
                                sortField == "pi" or \
                                sortField == "co_i" \
                             else sortField
+        sortField = "semester__semester" if sortField == "semester" else sortField
         order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
         query_set = Project.objects
 
