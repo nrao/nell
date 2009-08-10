@@ -6,6 +6,9 @@
     <link rel="stylesheet" href="/static/css/lib/blueprint/screen.css" type="text/css" media="screen, projection">
     <link rel="stylesheet" href="/static/css/lib/blueprint/print.css" type="text/css" media="print">    
     <!--[if lt IE 8]><link rel="stylesheet" href="/static/css/lib/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->
+    <script type="text/javascript" src="/static/javascript/lib/jquery.js"> </script>
+    <script type="text/javascript" src="http://libraryh3lp.com/presence/jid/nrao-dss/chat.libraryh3lp.com/js"></script>
+    <script type="text/javascript" src="/static/javascript/help.js"></script>
     {% block scripts %}
     {% endblock %}
 </head>
@@ -15,13 +18,30 @@
   <div class="container">
     <div class="banner span-24">
       <img src="/static/images/banner.jpg" />
-    </div>
-    <div style="text-align: right;">
-      <form style="display: inline;" action="/search" method="POST">
-        <input type="text" name="search" />
-        <input type="submit" value="Search" />
-      </form>
-      <a href="/profile/{{u.id}}">Profile</a> | <a href="#">Logout</a>
+    <table>
+      <tr>
+        <td>
+          <span id="help" style="display: none;">
+            <a href="#" onclick="showHelp(); return false;">
+              <img src="/static/images/chat.gif" style="border: 0;" />
+            </a>
+          </span>
+          <span id="offlinehelp" style="display: none;">
+            <a href="#" onclick="showOfflineHelp(); return false;">
+              <img src="/static/images/chat_offline.gif" style="border: 0;" />
+            </a>
+          </span>
+            <form style="display: inline; vertical-align: super;" action="/search" method="POST">
+              <input type="text" name="search" />
+              <input type="submit" value="Search" />
+            </form>
+        </td>
+        <td style="text-align: right;">
+            <a href="mailto:helpdesk-dss@gb.nrao.edu">Helpdesk</a> |
+            <a href="/profile/{{u.id}}">Profile</a> | <a href="#">Logout</a>
+        </td>
+      </tr>
+    </table>
     </div>
   {% block content %}
   {% endblock %}
