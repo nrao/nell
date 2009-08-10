@@ -7,7 +7,7 @@ import simplejson as json
 from models                          import *
 from test_utils.NellTestCase         import NellTestCase
 from tools                           import DBReporter
-#from utilities.database              import DSSPrime2DSS
+from utilities.database              import DSSPrime2DSS
 from utilities.receiver              import ReceiverCompile
 
 # Test field data
@@ -495,8 +495,7 @@ class TestSessionResource(NellTestCase):
                , 'science': ['pulsar']
                , 'orig_ID': ['0']
                , 'enabled': ['false']
-#               , 'receiver': ['1070']
-               , 'receiver': ['K | Ka | Q']
+               , 'receiver': ['(K | Ka) | Q']
                , 'backup': ['false']
                  }
 
@@ -717,7 +716,6 @@ class TestObservers(NellTestCase):
         self.failUnlessEqual(response.status_code, 302)
 
 # Testing Utilities
-"""
 class TestDBReporter(NellTestCase):
 
     def test_DBReporter(self):
@@ -731,7 +729,6 @@ class TestDSSPrime2DSS(NellTestCase):
         t = DSSPrime2DSS()
         t.transfer()
 
-"""
 class TestReceiverCompile(NellTestCase):
 
     def test_normalize(self):
@@ -745,9 +742,19 @@ class TestReceiverCompile(NellTestCase):
         self.assertEquals(rc.normalize('(L ^ 342) v (K & Ka)'),
                                        [['L', 'K'],   ['L', 'Ka'],
                                         ['342', 'K'], ['342', 'Ka']])
+        self.assertEquals(rc.normalize('K | (Ka | Q)'),
+                                       [['K', 'Ka', 'Q']])
         try:
             self.assertEquals(rc.normalize('J'), [['J']])
         except ValueError:
+            pass
+        else:
+            self.fail()
+        try:
+            self.assertEquals(rc.normalize('K | Ka | Q'),
+                                           [['K', 'Ka', 'Q']])
+            self.assertEquals(rc.normalize('J'), [['J']])
+        except SyntaxError:
             pass
         else:
             self.fail()

@@ -31,7 +31,7 @@ class ReceiverCompile:
     def checkAbbreviations(self, rcvr_grps):
         """
         Throws a ValueError if the receiver groups contain a
-        non-abbreviations.
+        non-abbreviation.
         """
         for rg in rcvr_grps:
             for r in rg:
