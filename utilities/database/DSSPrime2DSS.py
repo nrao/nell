@@ -387,6 +387,7 @@ class DSSPrime2DSS(object):
         u.save()
 
         for e in row[4].split(','):
+            e = e.replace('\xad', '')
             # Check to see if the email address already exists.
             email = first(Email.objects.filter(email = e).all())
 
