@@ -21,7 +21,13 @@
     <table>
       <tr>
         <td>
-          <span id="help" style="display: none;">
+            <form style="display: inline; vertical-align: super;" action="/search" method="POST">
+              <input type="text" name="search" />
+              <input type="submit" value="Search" />
+            </form>
+        </td>
+        <td style="text-align: right;">
+          <span id="help" style="display: none; border-right: 10px solid white;">
             <a href="#" onclick="showHelp(); return false;">
               <img src="/static/images/chat.gif" style="border: 0;" />
             </a>
@@ -31,12 +37,6 @@
               <img src="/static/images/chat_offline.gif" style="border: 0;" />
             </a>
           </span>
-            <form style="display: inline; vertical-align: super;" action="/search" method="POST">
-              <input type="text" name="search" />
-              <input type="submit" value="Search" />
-            </form>
-        </td>
-        <td style="text-align: right;">
             <a href="mailto:helpdesk-dss@gb.nrao.edu">Helpdesk</a> |
             <a href="/profile/{{u.id}}">Profile</a> | <a href="#">Logout</a>
         </td>

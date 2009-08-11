@@ -18,12 +18,31 @@
               <th>Name</th>
             </tr>
               {% for i in u.investigators_set.all %}
+                {% if not i.friend %}
                 <tr>
                   <td><a href="/project/{{i.project.pcode}}">{{i.project.pcode}}</a></td>
                   <td>{{i.project.name}}</td>
                 </tr>
+                {% endif %}
               {% endfor %}
           </table>
+          {% if isFriend %}
+          <h4 class="loud">Project Friend On</h4>
+          <table>
+            <tr>
+              <th>PCode</th>
+              <th>Name</th>
+            </tr>
+              {% for i in u.investigators_set.all %}
+                {% if i.friend %}
+                <tr>
+                  <td><a href="/project/{{i.project.pcode}}">{{i.project.pcode}}</a></td>
+                  <td>{{i.project.name}}</td>
+                </tr>
+                {% endif %}
+              {% endfor %}
+          </table>
+          {% endif %}
           <hr />
         </div>
         <div class="span-8 colborder">  
@@ -82,6 +101,9 @@
             {% endfor %}
           </table>
           <a href="/profile/{{u.id}}/blackout/form">add</a>
+          <br/>
+          <br/>
+          <br/>
         </div>
       </div>
       <div class="span-6 last" id="sidebar">

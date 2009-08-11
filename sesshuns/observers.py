@@ -7,8 +7,12 @@ from models                   import *
 def profile(request, *args, **kws):
     u_id, = args
     user = first(User.objects.filter(id = u_id))
+    # Remember [] is False
+    isFriend = ["yep" for p in user.investigators_set.all() if p.friend]
     return render_to_response("sesshuns/profile.html"
-                            , {'u': user})
+                            , {'u': user
+                             , 'isFriend' : isFriend
+                               })
 
 def project(request, *args, **kws):
     # TBF: get the currently logged in user
@@ -71,7 +75,7 @@ def blackout_form(request, *args, **kws):
     user  = first(User.objects.filter(id = u_id))
     b     = first(Blackout.objects.filter(id = int(request.GET.get('id', 0))))
     times = [time(h, m).strftime("%H:%M")
-             for h in range(1, 24) for m in range(0, 60, 15)]
+             for h in range(0, 24) for m in range(0, 60, 15)]
     return render_to_response("sesshuns/blackout_form.html"
                             , {'method' : method
                              , 'b'      : b

@@ -76,10 +76,10 @@
               <th>Email(s)</th>
               <th>PI</th>
               <th>Contact</th>
-              <th>Friend</th>
               <th>Observer?</th>
             </tr>
             {% for i in p.investigators_set.all %}
+              {% if not i.friend %}
             <tr>
               <td><a href="/profile/{{i.user.id}}">{{i.user|display_name}}</a></td>
               <td>
@@ -102,14 +102,6 @@
                   {% endif %}
               </td>
               <td>
-                  {% if i.friend %}
-                  <input type="checkbox" name="friend" disabled="true" checked />
-                  {% else %}
-                  <input type="checkbox" name="friend" disabled="true" />
-                  {% endif %}
-
-              </td>
-              <td>
                 <form action="/project/{{p.pcode}}/investigator/{{i.id}}/observer" method="POST">
                   {% if i.observer %}
                   <input type="checkbox" name="observer" checked onclick="submit();"/>
@@ -119,6 +111,7 @@
                 </form>
               </td>
             </tr>
+              {% endif %}
             {% endfor %}
           </table>
         </div>
@@ -160,6 +153,12 @@
           <h3 class="caps">Information</h3>
           <div class="box">
             <dl>
+            {% for i in p.investigators_set.all %}
+              {% if i.friend %}
+              <dt>Friend</dt>
+              <dd>{{i.user|display_name}}</dd>
+              {% endif %}
+            {% endfor %}
               <dt>Trimester</dt>
               <dd>{{p.semester.semester}}</dd>
               <dt>Thesis?</dt>
