@@ -7,7 +7,7 @@ import simplejson as json
 from models                          import *
 from test_utils.NellTestCase         import NellTestCase
 from tools                           import DBReporter
-#from utilities.database              import DSSPrime2DSS
+from utilities.database              import DSSPrime2DSS
 from utilities.receiver              import ReceiverCompile
 
 # Test field data
@@ -716,7 +716,6 @@ class TestObservers(NellTestCase):
         self.failUnlessEqual(response.status_code, 302)
 
 # Testing Utilities
-"""
 class TestDBReporter(NellTestCase):
 
     def test_DBReporter(self):
@@ -729,7 +728,6 @@ class TestDSSPrime2DSS(NellTestCase):
     def test_DSSPrime2DSS(self):
         t = DSSPrime2DSS()
         t.transfer()
-"""
 
 class TestReceiverCompile(NellTestCase):
 
