@@ -5,6 +5,7 @@ from django.http               import QueryDict
 from utilities.receiver        import ReceiverCompile
 from utilities                 import TimeAgent
 
+import calendar
 import sys
 
 def first(results, default = None):
@@ -114,6 +115,25 @@ class Semester(models.Model):
 
     def __unicode__(self):
         return self.semester
+
+    def start(self):
+        # A starts in February, B in June, C in October
+        start_months = {"A": 2, "B": 6, "C": 10}
+
+        year  = 2000 + int(self.semester[:2])
+        month = start_months[self.semester[-1]]
+
+        return datetime(year, month, 1)
+
+    def end(self):
+        # A ends in May, B in September, C in January
+        end_months = {"A": 5, "B": 9, "C": 1}
+
+        year   = 2000 + int(self.semester[:2])
+        month  = end_months[self.semester[-1]]
+        _, day = calendar.monthrange(year, month)
+
+        return datetime(year, month, day)
 
     class Meta:
         db_table = "semesters"
@@ -284,6 +304,75 @@ class Project(models.Model):
                     rcvrs.append(r)
         return rcvrs            
 
+    def has_schedulable_sessions(self):
+        sessions = [s for s in self.sesshun_set.all() if s.schedulable()]
+        return True if sessions != [] else False
+
+    def get_sanctioned_observers(self):
+        return [i for i in self.investigators_set.all() \
+                if i.observer and i.user.sanctioned]
+
+    def has_sanctioned_observers(self):
+        return True if self.get_sanctioned_observers() != [] else False
+
+    @staticmethod
+    def consolidate_blackouts(conflicts):
+        """
+        Takes a list of datetime tuples of the form (start, end) and
+        reduces it to the smallest list that describes the conflicts.
+        """
+        # If there is only one set of dates, then no need to reduce further.
+        if len(conflicts) == 1:
+            return conflicts
+
+        # Then reduce the list to its most succinct form.
+        blackouts = []
+        for (begin1, end1) in conflicts:
+            begin = begin1
+            end   = end1
+            for (begin2, end2) in conflicts:
+                if (begin1, end1) != (begin2, end2) and \
+                   begin1 < end2 and begin2 < end1:
+                    begin = max([begin, begin1, begin2])
+                    end   = min([end, end1, end2])
+            if (begin, end) not in blackouts:
+                blackouts.append((begin, end))            
+
+        blackouts.sort()
+        return blackouts
+
+    def get_blackouts(self):
+        """
+        A project is 'blacked out' when all of its sanctioned observers
+        are unavailable.  Returns a list of tuples describing the date ranges
+        where the project is 'blacked out'.
+        """
+        blackouts = [o.user.blackout_set.all() \
+                     for o in self.get_sanctioned_observers() \
+                     if len(o.user.blackout_set.all()) != 0]
+
+        if blackouts == []: # No observers or no blackouts.
+            return []
+
+        if len(blackouts) == 1: # One observer runs the show.
+            blackouts = [(b.start, b.end) for b in blackouts[0]]
+            blackouts.sort()
+            return blackouts
+
+        # Determine the blackout schedule with redundancy allowed.
+        conflicts = []
+        for b in blackouts[0]:
+            for set in blackouts[1:]:
+                if any([b.overlaps(s) for s in set]):
+                    conflicts.extend(
+                        [(max([b.start, s.start]), min([b.end, s.end])) \
+                         for s in set if b.overlaps(s)])
+                else:
+                    return [] # Looks like they've coordinated their schedules.
+
+        # Consolidate the blackout schedules - remove redundancy.
+        return Project.consolidate_blackouts(conflicts)
+
     class Meta:
         db_table = "projects"
 
@@ -323,6 +412,16 @@ class Blackout(models.Model):
 
     def __unicode__(self):
         return "Blackout for %s: %s - %s" % (self.user, self.start, self.end)
+
+    def overlaps(self, blackout):
+        """
+        Checks to see if this Blackout overlaps with another.  Returns True
+        if there is an overlap, False otherwise.
+        """
+        if self.start < blackout.end and blackout.start < self.end:
+            return True
+        else:
+            return False
 
     class Meta:
         db_table = "blackouts"
