@@ -498,7 +498,7 @@ class TestProject(NellTestCase):
             (datetime(2009, 1, 2, 12), datetime(2009, 1, 3, 11))
         ]
 
-        r = Project.consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
         self.assertEquals(expected, r)
 
         starts = [
@@ -514,7 +514,7 @@ class TestProject(NellTestCase):
             (datetime(2009, 1, 1, 11), datetime(2009, 1, 3, 11))
         ]
 
-        r = Project.consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
         self.assertEquals(expected, r)
 
         starts = [
@@ -531,10 +531,10 @@ class TestProject(NellTestCase):
           , (datetime(2009, 1, 4, 11), datetime(2009, 1, 5, 11))
         ]
 
-        r = Project.consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
         self.assertEquals(expected, r)
 
-        r = Project.consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
         self.assertEquals(expected, r)
 
         starts = [
@@ -548,11 +548,11 @@ class TestProject(NellTestCase):
             (datetime(2009, 1, 1, 11), datetime(2009, 1, 3, 11))
         ]
 
-        r = Project.consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
         self.assertEquals(expected, r)
 
         # No conflicts.
-        r = Project.consolidate_blackouts([])
+        r = consolidate_blackouts([])
         self.assertEquals([], r)
 
     def test_init_from_post(self):

@@ -64,6 +64,31 @@ def grade_float_2_abc(grade):
             break
     return gradeLetter
 
+def consolidate_blackouts(conflicts):
+    """
+    Takes a list of datetime tuples of the form (start, end) and
+    reduces it to the smallest list that describes the conflicts.
+    """
+    # If there is only one set of dates, then no need to reduce further.
+    if len(conflicts) == 1:
+        return conflicts
+
+    # Then reduce the list to its most succinct form.
+    blackouts = []
+    for (begin1, end1) in conflicts:
+        begin = begin1
+        end   = end1
+        for (begin2, end2) in conflicts:
+            if (begin1, end1) != (begin2, end2) and \
+               begin1 < end2 and begin2 < end1:
+                begin = max([begin, begin1, begin2])
+                end   = min([end, end1, end2])
+        if (begin, end) not in blackouts:
+            blackouts.append((begin, end))            
+
+    blackouts.sort()
+    return blackouts
+
 jsonMap = {"authorized"     : "status__authorized"
          , "between"        : "time_between"
          , "backup"         : "status__backup"
@@ -315,32 +340,6 @@ class Project(models.Model):
     def has_sanctioned_observers(self):
         return True if self.get_sanctioned_observers() != [] else False
 
-    @staticmethod
-    def consolidate_blackouts(conflicts):
-        """
-        Takes a list of datetime tuples of the form (start, end) and
-        reduces it to the smallest list that describes the conflicts.
-        """
-        # If there is only one set of dates, then no need to reduce further.
-        if len(conflicts) == 1:
-            return conflicts
-
-        # Then reduce the list to its most succinct form.
-        blackouts = []
-        for (begin1, end1) in conflicts:
-            begin = begin1
-            end   = end1
-            for (begin2, end2) in conflicts:
-                if (begin1, end1) != (begin2, end2) and \
-                   begin1 < end2 and begin2 < end1:
-                    begin = max([begin, begin1, begin2])
-                    end   = min([end, end1, end2])
-            if (begin, end) not in blackouts:
-                blackouts.append((begin, end))            
-
-        blackouts.sort()
-        return blackouts
-
     def get_blackouts(self):
         """
         A project is 'blacked out' when all of its sanctioned observers
@@ -371,7 +370,7 @@ class Project(models.Model):
                     return [] # Looks like they've coordinated their schedules.
 
         # Consolidate the blackout schedules - remove redundancy.
-        return Project.consolidate_blackouts(conflicts)
+        return consolidate_blackouts(conflicts)
 
     class Meta:
         db_table = "projects"
