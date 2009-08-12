@@ -128,7 +128,7 @@
               <th>Description</th>
             </tr>
             {% for i in p.investigators_set.all %}
-              {% for b in i.user.blackout_set.all %}
+              {% for b in i.projectBlackouts %}
                 <tr>
                   <td>
                     <a href="/profile/{{i.user.id}}">{{i.user|display_name}}</a>

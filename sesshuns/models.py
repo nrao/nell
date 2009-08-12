@@ -102,6 +102,7 @@ class User(models.Model):
 
     def name(self):
         return self.__str__()
+
     class Meta:
         db_table = "users"
 
@@ -363,6 +364,10 @@ class Investigators(models.Model):
             , self.principal_contact
             , self.principal_investigator )
 
+    def projectBlackouts(self):
+        return [b for b in self.user.blackout_set.all()
+                if not self.friend and b.end > datetime.utcnow()]
+    
     class Meta:
         db_table = "investigators"
 
