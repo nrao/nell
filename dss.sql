@@ -23,7 +23,8 @@ CREATE TABLE allotment (
     psc_time double precision NOT NULL,
     total_time double precision NOT NULL,
     max_semester_time double precision NOT NULL,
-    grade double precision NOT NULL
+    grade double precision NOT NULL,
+    ignore_grade boolean NOT NULL
 );
 
 
@@ -337,7 +338,6 @@ CREATE TABLE projects (
     name character varying(150) NOT NULL,
     thesis boolean NOT NULL,
     complete boolean NOT NULL,
-    ignore_grade boolean NOT NULL,
     start_date timestamp without time zone,
     end_date timestamp without time zone
 );
@@ -3261,7 +3261,7 @@ COPY project_types (id, type) FROM stdin;
 -- Data for Name: projects; Type: TABLE DATA; Schema: public; Owner: dss
 --
 
-COPY projects (id, semester_id, project_type_id, pcode, name, thesis, complete, ignore_grade, start_date, end_date) FROM stdin;
+COPY projects (id, semester_id, project_type_id, pcode, name, thesis, complete, start_date, end_date) FROM stdin;
 1	1	1	GBT09A-001		f	f	f	\N	\N
 2	7	1	BB240	RIPL: Radio Interferometric PLanet Search	f	f	f	\N	\N
 3	6	1	BB261	The Megamaser Cosmology Project: Year 2	f	f	f	\N	\N

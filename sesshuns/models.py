@@ -177,6 +177,7 @@ class Allotment(models.Model):
     total_time        = models.FloatField(help_text = "Hours")
     max_semester_time = models.FloatField(help_text = "Hours")
     grade             = models.FloatField(help_text = "0.0 - 4.0")
+    ignore_grade      = models.NullBooleanField(null = True, default = False)
 
     base_url = "/sesshuns/allotment/"
 
@@ -202,7 +203,6 @@ class Project(models.Model):
     name         = models.CharField(max_length = 150)
     thesis       = models.BooleanField()
     complete     = models.BooleanField()
-    ignore_grade = models.BooleanField()
     start_date   = models.DateTimeField(null = True, blank = True)
     end_date     = models.DateTimeField(null = True, blank = True)
 
@@ -232,7 +232,6 @@ class Project(models.Model):
         self.name         = fdata.get("name", "")
         self.thesis       = fdata.get("thesis", "false") == "true"
         self.complete     = fdata.get("complete", "false") == "true"
-        self.ignore_grade = fdata.get("ignore_grade", "false") == "true"
 
         self.save()
 
@@ -295,7 +294,6 @@ class Project(models.Model):
               , "name"         : self.name
               , "thesis"       : self.thesis
               , "complete"     : self.complete
-              , "ignore_grade" : self.ignore_grade
               , "pi"           : pi
               , "co_i"         : co_i
                 }
