@@ -251,19 +251,19 @@ class TestProject(NellTestCase):
                                     , observer = True)
         investigator2.save()
 
-        blackout11 = Blackout(user   = user2
+        blackout21 = Blackout(user   = user2
                             , tz     = first(TimeZone.objects.all())
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 1, 11)
                             , end    = datetime(2009, 1, 3, 11))
-        blackout11.save()
+        blackout21.save()
 
-        blackout12 = Blackout(user   = user2
+        blackout22 = Blackout(user   = user2
                             , tz     = first(TimeZone.objects.all())
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 1, 18)
                             , end    = datetime(2009, 1, 4, 13))
-        blackout12.save()
+        blackout22.save()
 
         # Now we can finally do our test.
         expected = [
@@ -272,6 +272,18 @@ class TestProject(NellTestCase):
 
         r = p.get_blackouts()
         self.assertEquals(expected, r)
+
+        # Clean up
+        blackout22.delete()
+        blackout21.delete()
+        investigator2.delete()
+        user2.delete()
+
+        blackout13.delete()
+        blackout12.delete()
+        blackout11.delete()
+        investigator1.delete()
+        user1.delete()
 
         p.delete()
 
@@ -326,22 +338,34 @@ class TestProject(NellTestCase):
                                     , observer = False) # NOT an observer
         investigator2.save()
 
-        blackout11 = Blackout(user   = user2
+        blackout21 = Blackout(user   = user2
                             , tz     = first(TimeZone.objects.all())
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 1, 11)
                             , end    = datetime(2009, 1, 3, 11))
-        blackout11.save()
+        blackout21.save()
 
-        blackout12 = Blackout(user   = user2
+        blackout22 = Blackout(user   = user2
                             , tz     = first(TimeZone.objects.all())
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 1, 18)
                             , end    = datetime(2009, 1, 4, 13))
-        blackout12.save()
+        blackout22.save()
 
         r = p.get_blackouts()
         self.assertEquals([], r)
+
+        # Clean up
+        blackout22.delete()
+        blackout21.delete()
+        investigator2.delete()
+        user2.delete()
+
+        blackout13.delete()
+        blackout12.delete()
+        blackout11.delete()
+        investigator1.delete()
+        user1.delete()
 
         p.delete()
 
@@ -406,6 +430,15 @@ class TestProject(NellTestCase):
         ]
         self.assertEquals(expected, r)
 
+        # Clean up
+        investigator2.delete()
+        user2.delete()
+
+        blackout13.delete()
+        blackout12.delete()
+        blackout11.delete()
+        investigator1.delete()
+        user1.delete()
         p.delete()
 
     def test_get_blackouts4(self):
@@ -459,101 +492,36 @@ class TestProject(NellTestCase):
                                     , observer = True)
         investigator2.save()
 
-        blackout11 = Blackout(user   = user2
+        blackout21 = Blackout(user   = user2
                             , tz     = first(TimeZone.objects.all())
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 2, 1, 11)
                             , end    = datetime(2009, 2, 3, 11))
-        blackout11.save()
+        blackout21.save()
 
-        blackout12 = Blackout(user   = user2
+        blackout22 = Blackout(user   = user2
                             , tz     = first(TimeZone.objects.all())
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 3, 1, 18)
                             , end    = datetime(2009, 3, 4, 13))
-        blackout12.save()
+        blackout22.save()
 
         r = p.get_blackouts()
         self.assertEquals([], r) # Coordinated blackouts.
 
+        # Clean up
+        blackout22.delete()
+        blackout21.delete()
+        investigator2.delete()
+        user2.delete()
+
+        blackout13.delete()
+        blackout12.delete()
+        blackout11.delete()
+        investigator1.delete()
+        user1.delete()
+
         p.delete()
-
-    def test_consolidate_blackouts(self):
-        starts = [
-            datetime(2009, 1, 1, 11)
-          , datetime(2009, 1, 1, 11)
-          , datetime(2009, 1, 1, 18)
-          , datetime(2009, 1, 2, 11)
-          , datetime(2009, 1, 2, 12)
-        ]
-        ends   = [
-            datetime(2009, 1, 3, 11)
-          , datetime(2009, 1, 3, 11)
-          , datetime(2009, 1, 4, 18)
-          , datetime(2009, 1, 4, 13)
-          , datetime(2009, 1, 4, 20)
-        ]
-        expected = [
-            # begin = b5 start, end = b1 end
-            (datetime(2009, 1, 2, 12), datetime(2009, 1, 3, 11))
-        ]
-
-        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
-        self.assertEquals(expected, r)
-
-        starts = [
-            datetime(2009, 1, 1, 11)
-          , datetime(2009, 1, 1, 11)
-        ]
-        ends   = [
-            datetime(2009, 1, 3, 11)
-          , datetime(2009, 1, 3, 11)
-        ]
-        expected = [
-            # begin = b1 start, end = b1 end
-            (datetime(2009, 1, 1, 11), datetime(2009, 1, 3, 11))
-        ]
-
-        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
-        self.assertEquals(expected, r)
-
-        starts = [
-            datetime(2009, 1, 1, 11)
-          , datetime(2009, 1, 4, 11)
-        ]
-        ends   = [
-            datetime(2009, 1, 3, 11)
-          , datetime(2009, 1, 5, 11)
-        ]
-        expected = [
-            # nothing to reduce
-            (datetime(2009, 1, 1, 11), datetime(2009, 1, 3, 11))
-          , (datetime(2009, 1, 4, 11), datetime(2009, 1, 5, 11))
-        ]
-
-        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
-        self.assertEquals(expected, r)
-
-        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
-        self.assertEquals(expected, r)
-
-        starts = [
-            datetime(2009, 1, 1, 11)
-        ]
-        ends   = [
-            datetime(2009, 1, 3, 11)
-        ]
-        expected = [
-            # one conflict
-            (datetime(2009, 1, 1, 11), datetime(2009, 1, 3, 11))
-        ]
-
-        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
-        self.assertEquals(expected, r)
-
-        # No conflicts.
-        r = consolidate_blackouts([])
-        self.assertEquals([], r)
 
     def test_init_from_post(self):
         p1 = Project()
@@ -1112,3 +1080,82 @@ class TestReceiverCompile(NellTestCase):
             pass
         else:
             self.fail()
+
+class TestConsolidateBlackouts(NellTestCase):
+
+    def test_consolidate_blackouts(self):
+        starts = [
+            datetime(2009, 1, 1, 11)
+          , datetime(2009, 1, 1, 11)
+          , datetime(2009, 1, 1, 18)
+          , datetime(2009, 1, 2, 11)
+          , datetime(2009, 1, 2, 12)
+        ]
+        ends   = [
+            datetime(2009, 1, 3, 11)
+          , datetime(2009, 1, 3, 11)
+          , datetime(2009, 1, 4, 18)
+          , datetime(2009, 1, 4, 13)
+          , datetime(2009, 1, 4, 20)
+        ]
+        expected = [
+            # begin = b5 start, end = b1 end
+            (datetime(2009, 1, 2, 12), datetime(2009, 1, 3, 11))
+        ]
+
+        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        self.assertEquals(expected, r)
+
+        starts = [
+            datetime(2009, 1, 1, 11)
+          , datetime(2009, 1, 1, 11)
+        ]
+        ends   = [
+            datetime(2009, 1, 3, 11)
+          , datetime(2009, 1, 3, 11)
+        ]
+        expected = [
+            # begin = b1 start, end = b1 end
+            (datetime(2009, 1, 1, 11), datetime(2009, 1, 3, 11))
+        ]
+
+        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        self.assertEquals(expected, r)
+
+        starts = [
+            datetime(2009, 1, 1, 11)
+          , datetime(2009, 1, 4, 11)
+        ]
+        ends   = [
+            datetime(2009, 1, 3, 11)
+          , datetime(2009, 1, 5, 11)
+        ]
+        expected = [
+            # nothing to reduce
+            (datetime(2009, 1, 1, 11), datetime(2009, 1, 3, 11))
+          , (datetime(2009, 1, 4, 11), datetime(2009, 1, 5, 11))
+        ]
+
+        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        self.assertEquals(expected, r)
+
+        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        self.assertEquals(expected, r)
+
+        starts = [
+            datetime(2009, 1, 1, 11)
+        ]
+        ends   = [
+            datetime(2009, 1, 3, 11)
+        ]
+        expected = [
+            # one conflict
+            (datetime(2009, 1, 1, 11), datetime(2009, 1, 3, 11))
+        ]
+
+        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        self.assertEquals(expected, r)
+
+        # No conflicts.
+        r = consolidate_blackouts([])
+        self.assertEquals([], r)
