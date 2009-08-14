@@ -12,6 +12,9 @@ alter table periods alter column forecast type timestamp without time zone;
 -- Example project
 INSERT INTO allotment VALUES (DEFAULT, 100.5, 100.5, 100.5, 4.0);
 
+INSERT INTO roles VALUES (DEFAULT, 'Administrator');
+INSERT INTO roles VALUES (DEFAULT, 'Observer');
+
 INSERT INTO repeats VALUES (DEFAULT, 'Once');
 INSERT INTO repeats VALUES (DEFAULT, 'Weekly');
 INSERT INTO repeats VALUES (DEFAULT, 'Monthly');

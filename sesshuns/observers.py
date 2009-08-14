@@ -1,32 +1,54 @@
-from datetime                 import datetime, time
+from datetime                       import datetime, time
+from django.contrib.auth.decorators import login_required
 from django.db.models         import Q
 from django.http              import HttpResponse, HttpResponseRedirect
 from django.shortcuts         import render_to_response
 from models                   import *
 
+@login_required
 def profile(request, *args, **kws):
-    u_id, = args
-    user = first(User.objects.filter(id = u_id))
+    if len(args) > 0:
+        u_id,     = args
+        user      = first(User.objects.filter(id = u_id))
+        projects  = [i.project.pcode for i in user.investigators_set.all()]
+        requestor = first(User.objects.filter(username = request.META.get('USER')))
+        union     = [i.project.pcode for i in requestor.investigators_set.all()
+                        if i.project.pcode in projects]
+        #  If the requestor is not the user profile requested and they are
+        #  not on the same project redirect to the requestor's profile.
+        if union == [] and user != requestor and not requestor.isAdmin():
+            return HttpResponseRedirect("/profile")
+    else:
+        requestor = first(User.objects.filter(username = request.META.get('USER')))
+        user      = requestor
+        
     # Remember [] is False
     isFriend = ["yep" for p in user.investigators_set.all() if p.friend]
     return render_to_response("sesshuns/profile.html"
-                            , {'u': user
-                             , 'isFriend' : isFriend
+                            , {'u'          : user
+                             , 'requestor'  : requestor
+                             , 'authorized' : user == requestor # allowed to edit
+                             , 'isFriend'   : isFriend
                                })
 
+@login_required
 def project(request, *args, **kws):
-    # TBF: get the currently logged in user
-    user = first(User.objects.filter(last_name = "Braatz"))
+    user   = first(User.objects.filter(username = request.META.get('USER')))
     pcode, = args
+    #  If the requestor is not on this project redirect to their profile.
+    if pcode not in [i.project.pcode for i in user.investigators_set.all()] \
+            and not user.isAdmin():
+        return HttpResponseRedirect("/profile")
+        
     project = first(Project.objects.filter(pcode = pcode))
     return render_to_response("sesshuns/project.html"
                             , {'p' : project
                              , 'u' : user
                                })
 
+@login_required
 def search(request, *args, **kws):
-    # TBF: get the currently logged in user
-    user = first(User.objects.filter(last_name = "Braatz"))
+    user   = first(User.objects.filter(username = request.META.get('USER')))
     search   = request.POST.get('search', '')
     projects = Project.objects.filter(
         Q(pcode__icontains = search) | \
@@ -40,6 +62,7 @@ def search(request, *args, **kws):
                              , 'u'  : user
                                })
 
+@login_required
 def toggle_session(request, *args, **kws):
     pcode, sname = args
     s = first(Sesshun.objects.filter(project__pcode = pcode, name = sname))
@@ -48,6 +71,7 @@ def toggle_session(request, *args, **kws):
     
     return HttpResponseRedirect("/project/%s" % pcode)
 
+@login_required
 def toggle_observer(request, *args, **kws):
     pcode, i_id = args
     i = first(Investigators.objects.filter(project__pcode = pcode, id = i_id))
@@ -56,12 +80,20 @@ def toggle_observer(request, *args, **kws):
     
     return HttpResponseRedirect("/project/%s" % pcode)
 
+@login_required
 def dynamic_contact_form(request, *args, **kws):
-    u_id, = args
-    user = first(User.objects.filter(id = u_id))
+    u_id,     = args
+    user      = first(User.objects.filter(id = u_id))
+
+    # TBF Use a decorator
+    requestor = first(User.objects.filter(username = request.META.get('USER')))
+    if user != requestor and not requestor.isAdmin():
+        return HttpResponseRedirect("/profile")
+
     return render_to_response("sesshuns/dynamic_contact_form.html"
                             , {'u': user})
 
+@login_required
 def dynamic_contact_save(request, *args, **kws):
     u_id, = args
     user = first(User.objects.filter(id = u_id))
@@ -69,10 +101,17 @@ def dynamic_contact_save(request, *args, **kws):
     user.save()
     return HttpResponseRedirect("/profile/%s" % u_id)
 
+@login_required
 def blackout_form(request, *args, **kws):
     method = request.GET.get('_method', '')
     u_id, = args
     user  = first(User.objects.filter(id = u_id))
+
+    # TBF Use a decorator
+    requestor = first(User.objects.filter(username = request.META.get('USER')))
+    if user != requestor and not requestor.isAdmin():
+        return HttpResponseRedirect("/profile")
+
     b     = first(Blackout.objects.filter(id = int(request.GET.get('id', 0))))
     times = [time(h, m).strftime("%H:%M")
              for h in range(0, 24) for m in range(0, 60, 15)]
@@ -85,9 +124,15 @@ def blackout_form(request, *args, **kws):
                              , 'times'  : times
                                })
 
+@login_required
 def blackout(request, *args, **kws):
     u_id, = args
     user = first(User.objects.filter(id = u_id))
+
+    # TBF Use a decorator
+    requestor = first(User.objects.filter(username = request.META.get('USER')))
+    if user != requestor and not requestor.isAdmin():
+        return HttpResponseRedirect("/profile")
 
     if request.GET.get('_method', '') == "DELETE":
         b = first(Blackout.objects.filter(

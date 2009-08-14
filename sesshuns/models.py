@@ -88,6 +88,12 @@ jsonMap = {"authorized"     : "status__authorized"
          , "type"           : "session_type__type"
                }
 
+class Role(models.Model):
+    role = models.CharField(max_length = 32)
+
+    class Meta:
+        db_table = "roles"
+
 class User(models.Model):
     original_id = models.IntegerField(null = True)
     pst_id      = models.IntegerField(null = True)
@@ -96,12 +102,16 @@ class User(models.Model):
     first_name  = models.CharField(max_length = 32)
     last_name   = models.CharField(max_length = 150)
     contact_instructions = models.TextField(null = True)
+    role                 = models.ForeignKey(Role)
 
     def __str__(self):
         return "%s, %s" % (self.last_name, self.first_name)
 
     def name(self):
         return self.__str__()
+
+    def isAdmin(self):
+        return self.role.role == "Administrator"
 
     class Meta:
         db_table = "users"

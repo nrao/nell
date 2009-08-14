@@ -48,7 +48,9 @@
         <div class="span-8 colborder">  
           <h4 class="loud">Dynamic Contact</h3>
           <p>{{u.contact_instructions}}</p>
+          {% if authorized or requestor.isAdmin %}
           <a href="/profile/{{u.id}}/dynamic_contact/form">edit</a>
+          {% endif %}
         </div>  
         <div class="span-8 last">  
           <h4 class="prepend-5">Static Contact</h4>  
@@ -93,14 +95,18 @@
               <td>{{b.repeat.repeat}}</td>
               <td>{{b.until|pretty_none}}</td>
               <td>{{b.description}}</td>
+            {% if authorized or requestor.isAdmin %}
               <td>
                 <a href="/profile/{{u.id}}/blackout/form?_method=PUT&id={{b.id}}">edit</a> |
                 <a href="/profile/{{u.id}}/blackout?_method=DELETE&id={{b.id}}">delete</a>
               </td>
+            {% endif %}
             </tr>
             {% endfor %}
           </table>
+          {% if authorized or requestor.isAdmin %}
           <a href="/profile/{{u.id}}/blackout/form">add</a>
+          {% endif %}
           <br/>
           <br/>
           <br/>
