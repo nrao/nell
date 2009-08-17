@@ -1,7 +1,7 @@
 from copy                import copy
 from datetime            import date, datetime, timedelta
 from django.conf         import settings
-from django.contrib.auth import models
+from django.contrib.auth import models as m
 from django.test.client  import Client
 from django.http         import QueryDict
 import simplejson as json
@@ -590,7 +590,7 @@ class TestObservers(NellTestCase):
 
         self.client = Client()
         
-        self.auth_user = models.User.objects.create_user('dss', 'dss@nrao.edu', 'asdf5!')
+        self.auth_user = m.User.objects.create_user('dss', 'dss@nrao.edu', 'asdf5!')
         self.auth_user.is_staff = True
         self.auth_user.save()
 
