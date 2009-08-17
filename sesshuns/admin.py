@@ -45,14 +45,6 @@ mark_as_not_backup.short_description = "Mark selected periods as not being backu
 
 # Actions for Projects
 
-def ignore_grade(modeladmin, request, queryset):
-    queryset.update(ignore_grade = True)
-ignore_grade.short_description = "Ignore grade on selected projects"
-
-def do_not_ignore_grade(modeladmin, request, queryset):
-    queryset.update(ignore_grade = False)
-do_not_ignore_grade.short_description = "Do not ignore grade on selected projects"
-
 def mark_as_not_completed(modeladmin, request, queryset):
     queryset.update(complete = False)
 mark_as_not_completed.short_description = "Mark selected projects as not complete"
@@ -95,10 +87,10 @@ class PeriodAdmin(admin.ModelAdmin):
     date_hierarchy = 'start'
 
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ['pcode', 'name', 'semester', 'project_type', 'principal_contact', 'thesis', 'ignore_grade', 'complete', 'start_date', 'end_date']
-    actions = [mark_as_completed, mark_as_not_completed, ignore_grade, do_not_ignore_grade]
+    list_display = ['pcode', 'name', 'semester', 'project_type', 'principal_contact', 'thesis', 'complete', 'start_date', 'end_date']
+    actions = [mark_as_completed, mark_as_not_completed]
     ordering = ['pcode']
-    list_filter = ['semester', 'project_type', 'complete', 'thesis', 'ignore_grade']
+    list_filter = ['semester', 'project_type', 'complete', 'thesis']
     search_fields = ['pcode']
     date_hierarchy = 'start_date'
     inlines = [SesshunInline]
