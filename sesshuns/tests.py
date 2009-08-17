@@ -1,13 +1,15 @@
-from copy               import copy
-from datetime           import date, datetime, timedelta
-from django.test.client import Client
-from django.http        import QueryDict
+from copy                import copy
+from datetime            import date, datetime, timedelta
+from django.conf         import settings
+from django.contrib.auth import models
+from django.test.client  import Client
+from django.http         import QueryDict
 import simplejson as json
 
 from models                          import *
 from test_utils.NellTestCase         import NellTestCase
 from tools                           import DBReporter
-from utilities.database              import DSSPrime2DSS
+#from utilities.database              import DSSPrime2DSS
 from utilities.receiver              import ReceiverCompile
 
 # Test field data
@@ -579,9 +581,26 @@ class TestObservers(NellTestCase):
 
     def setUp(self):
         super(TestObservers, self).setUp()
+
+        # Don't use CAS for authentication during unit tests
+        if 'django_cas.backends.CASBackend' in settings.AUTHENTICATION_BACKENDS:
+            settings.AUTHENTICATION_BACKENDS = settings.AUTHENTICATION_BACKENDS[:-1]
+        if 'django_cas.middleware.CASMiddleware' in settings.MIDDLEWARE_CLASSES:
+            settings.MIDDLEWARE_CLASSES      = settings.MIDDLEWARE_CLASSES[:-1]
+
         self.client = Client()
-        self.u = User(first_name = "Test", last_name = "User")
+        
+        self.auth_user = models.User.objects.create_user('dss', 'dss@nrao.edu', 'asdf5!')
+        self.auth_user.is_staff = True
+        self.auth_user.save()
+
+        self.u = User(first_name = "Test"
+                    , last_name  = "User"
+                    , role       = first(Role.objects.all())
+                    , username   = self.auth_user.username
+                      )
         self.u.save()
+        self.client.login(username = "dss", password = "asdf5!")
         
         self.p = Project()
         self.p.init_from_post({'semester'   : '09C'
@@ -609,21 +628,36 @@ class TestObservers(NellTestCase):
         self.s.project = self.p
         self.s.save()
 
+    def tearDown(self):
+        super(TestObservers, self).tearDown()
+
+    def get(self, url, data = {}):
+        """
+        Sets the USER extra kwar
+        """
+        return self.client.get(url, data, USER = self.auth_user.username)
+
+    def post(self, url, data = {}):
+        """
+        Sets the USER extra kwar
+        """
+        return self.client.post(url, data, USER = self.auth_user.username)
+
     def test_profile(self):
-        response = self.client.get('/profile/%s' % self.u.id)
+        response = self.get('/profile/%s' % self.u.id)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_project(self):
-        response = self.client.get('/project/%s' % self.p.pcode)
+        response = self.get('/project/%s' % self.p.pcode)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_search(self):
-        response = self.client.post('/search', {'search' : 'Test'})
+        response = self.post('/search', {'search' : 'Test'})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue("User" in response.content)
 
     def test_toggle_session(self):
-        response = self.client.post(
+        response = self.post(
             '/project/%s/session/%s/enable' % (self.p.pcode, self.s.name))
         self.failUnlessEqual(response.status_code, 302)
         s = first(Sesshun.objects.filter(id = self.s.id))
@@ -631,19 +665,19 @@ class TestObservers(NellTestCase):
 
     def test_toggle_observer(self):
         i_id = first(self.p.investigators_set.all()).id
-        response = self.client.post(
+        response = self.post(
             '/project/%s/investigator/%s/observer' % (self.p.pcode, i_id))
         self.failUnlessEqual(response.status_code, 302)
         i = first(Investigators.objects.filter(id = i_id))
         self.assertEqual(i.observer, True)
 
     def test_dynamic_contact_form(self):
-        response = self.client.get('/profile/%s/dynamic_contact/form' % self.u.id)
+        response = self.get('/profile/%s/dynamic_contact/form' % self.u.id)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_dynamic_contact_save(self):
         data = {'contact_instructions' : "I'll be at Bob's house."}
-        response = self.client.post('/profile/%s/dynamic_contact' % self.u.id, data)
+        response = self.post('/profile/%s/dynamic_contact' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 302)
         u = first(User.objects.filter(id = self.u.id))
         self.assertEqual(u.contact_instructions, data.get('contact_instructions'))
@@ -659,14 +693,14 @@ class TestObservers(NellTestCase):
         return b
         
     def test_blackout_form(self):
-        response = self.client.get('/profile/%s/blackout/form' % self.u.id)
+        response = self.get('/profile/%s/blackout/form' % self.u.id)
         self.failUnlessEqual(response.status_code, 200)
 
         b = self.create_blackout()
         data = {'_method' : 'PUT'
               , 'id'      : b.id
                 }
-        response = self.client.get('/profile/%s/blackout/form' % self.u.id, data)
+        response = self.get('/profile/%s/blackout/form' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue(b.description in response.content)
 
@@ -688,22 +722,21 @@ class TestObservers(NellTestCase):
               , 'id'          : b.id
                 }
 
-        response = self.client.post(
+        response = self.post(
             '/profile/%s/blackout' % self.u.id, data)
         b = first(Blackout.objects.filter(id = b.id))
         self.assertEqual(b.end.date().strftime("%m/%d/%Y") , data.get('end'))
         self.failUnlessEqual(response.status_code, 302)
         
-        response = self.client.get(
-            '/profile/%s/blackout' % self.u.id, {'_method' : 'DELETE'
-                                               , 'id'      : b.id
-                                                 })
+        response = self.get(
+            '/profile/%s/blackout' % self.u.id
+          , {'_method' : 'DELETE', 'id' : b.id})
         self.failUnlessEqual(response.status_code, 302)
 
         data['end'] = date(2009, 5, 31).strftime("%m/%d/%Y")
         _ = data.pop('_method')
         _ = data.pop('id')
-        response    = self.client.post(
+        response    = self.post(
             '/profile/%s/blackout' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 302)
         b = first(self.u.blackout_set.all())
@@ -711,11 +744,12 @@ class TestObservers(NellTestCase):
         b.delete()
 
         data['until'] = ''
-        response    = self.client.post(
+        response    = self.post(
             '/profile/%s/blackout' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 302)
 
 # Testing Utilities
+"""
 class TestDBReporter(NellTestCase):
 
     def test_DBReporter(self):
@@ -728,6 +762,7 @@ class TestDSSPrime2DSS(NellTestCase):
     def test_DSSPrime2DSS(self):
         t = DSSPrime2DSS()
         t.transfer()
+"""
 
 class TestReceiverCompile(NellTestCase):
 
