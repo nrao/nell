@@ -215,7 +215,9 @@ class TestProject(NellTestCase):
         p.save()
 
         # Create Investigator1 and his 3 blackouts.
-        user1 = User(sanctioned = True)
+        user1 = User(sanctioned = True
+                   , role       = first(Role.objects.filter(role = "Observer"))
+                     )
         user1.save()
 
         investigator1 = Investigators(project  = p
@@ -245,7 +247,9 @@ class TestProject(NellTestCase):
         blackout13.save()
 
         # Create Investigator2 and her 2 blackouts.
-        user2 = User(sanctioned = True)
+        user2 = User(sanctioned = True
+                   , role       = first(Role.objects.filter(role = "Observer"))
+                     )
         user2.save()
 
         investigator2 = Investigators(project  = p
@@ -302,7 +306,9 @@ class TestProject(NellTestCase):
         p.save()
 
         # Create Investigator1 and his 3 blackouts.
-        user1 = User(sanctioned = True)
+        user1 = User(sanctioned = True
+                   , role       = first(Role.objects.filter(role = "Observer"))
+                     )
         user1.save()
 
         investigator1 = Investigators(project  = p
@@ -332,7 +338,9 @@ class TestProject(NellTestCase):
         blackout13.save()
 
         # Create Investigator2 and her 2 blackouts.
-        user2 = User(sanctioned = True)
+        user2 = User(sanctioned = True
+                   , role       = first(Role.objects.filter(role = "Observer"))
+                     )
         user2.save()
 
         investigator2 = Investigators(project  = p
@@ -384,7 +392,9 @@ class TestProject(NellTestCase):
         p.save()
 
         # Create Investigator1 and his 3 blackouts.
-        user1 = User(sanctioned = True)
+        user1 = User(sanctioned = True
+                   , role       = first(Role.objects.filter(role = "Observer"))
+                     )
         user1.save()
 
         investigator1 = Investigators(project  = p
@@ -414,7 +424,9 @@ class TestProject(NellTestCase):
         blackout13.save()
 
         # Create Investigator2 and her 2 blackouts.
-        user2 = User(sanctioned = True)
+        user2 = User(sanctioned = True
+                   , role       = first(Role.objects.filter(role = "Observer"))
+                     )
         user2.save()
 
         investigator2 = Investigators(project  = p
@@ -456,7 +468,9 @@ class TestProject(NellTestCase):
         p.save()
 
         # Create Investigator1 and his 3 blackouts.
-        user1 = User(sanctioned = True)
+        user1 = User(sanctioned = True
+                   , role       = first(Role.objects.filter(role = "Observer"))
+                     )
         user1.save()
 
         investigator1 = Investigators(project  = p
@@ -486,7 +500,9 @@ class TestProject(NellTestCase):
         blackout13.save()
 
         # Create Investigator2 and her 2 blackouts.
-        user2 = User(sanctioned = True)
+        user2 = User(sanctioned = True
+                   , role       = first(Role.objects.filter(role = "Observer"))
+                     )
         user2.save()
 
         investigator2 = Investigators(project  = p
