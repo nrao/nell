@@ -298,7 +298,6 @@ class DSSPrime2DSS(object):
                       , name         = self.filter_bad_char(row[5])
                       , thesis       = row[6] == 1
                       , complete     = row[7] == 1
-                      , ignore_grade = row[8] == 1
                       , start_date   = row[9]
                       , end_date     = row[10]
                         )
@@ -523,7 +522,6 @@ class DSSPrime2DSS(object):
                   , name         = "Maintenance"
                   , thesis       = False 
                   , complete     = False
-                  , ignore_grade = False
                   , start_date   = semesterStart 
                   , end_date     = semesterEnd
                     )
@@ -685,7 +683,6 @@ class DSSPrime2DSS(object):
                       , name         = "Tests" #self.filter_bad_char(row[5])
                       , thesis       = False 
                       , complete     = False 
-                      , ignore_grade = False
                       , start_date   = None #datetime(2009, 6, 1, 0, 0, 0)
                       , end_date     = None #datetime(2009, 10,1, 0, 0, 0)
                         )

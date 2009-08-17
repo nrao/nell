@@ -36,7 +36,8 @@ CREATE TABLE `allotment` (
     `psc_time` varchar(12) NOT NULL,
     `total_time` varchar(12) NOT NULL,
     `max_semester_time` varchar(12) NOT NULL,
-    `grade` varchar(12) NOT NULL
+    `grade` varchar(12) NOT NULL,
+    `ignore_grade` bool NOT NULL
 )
 ;
 CREATE TABLE `projects` (
@@ -48,7 +49,6 @@ CREATE TABLE `projects` (
     `name` varchar(150) NOT NULL,
     `thesis` bool NOT NULL,
     `complete` bool NOT NULL,
-    `ignore_grade` bool NOT NULL,
     `start_date` datetime NULL,
     `end_date` datetime NULL
 )

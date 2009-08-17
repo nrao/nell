@@ -424,6 +424,18 @@ CREATE TABLE repeats (
 ALTER TABLE public.repeats OWNER TO dss;
 
 --
+-- Name: roles; Type: TABLE; Schema: public; Owner: dss; Tablespace: 
+--
+
+CREATE TABLE roles (
+    id integer NOT NULL,
+    role character varying(32) NOT NULL
+);
+
+
+ALTER TABLE public.roles OWNER TO dss;
+
+--
 -- Name: semesters; Type: TABLE; Schema: public; Owner: dss; Tablespace: 
 --
 
@@ -551,7 +563,8 @@ CREATE TABLE users (
     sanctioned boolean NOT NULL,
     first_name character varying(32) NOT NULL,
     last_name character varying(150) NOT NULL,
-    contact_instructions text
+    contact_instructions text,
+    role_id integer NOT NULL
 );
 
 
@@ -658,7 +671,6 @@ SELECT pg_catalog.setval('auth_group_permissions_id_seq', 1, false);
 --
 
 CREATE SEQUENCE auth_message_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -678,7 +690,7 @@ ALTER SEQUENCE auth_message_id_seq OWNED BY auth_message.id;
 -- Name: auth_message_id_seq; Type: SEQUENCE SET; Schema: public; Owner: dss
 --
 
-SELECT pg_catalog.setval('auth_message_id_seq', 1, false);
+SELECT pg_catalog.setval('auth_message_id_seq', 1, true);
 
 
 --
@@ -705,7 +717,7 @@ ALTER SEQUENCE auth_permission_id_seq OWNED BY auth_permission.id;
 -- Name: auth_permission_id_seq; Type: SEQUENCE SET; Schema: public; Owner: dss
 --
 
-SELECT pg_catalog.setval('auth_permission_id_seq', 102, true);
+SELECT pg_catalog.setval('auth_permission_id_seq', 105, true);
 
 
 --
@@ -871,7 +883,7 @@ ALTER SEQUENCE django_content_type_id_seq OWNED BY django_content_type.id;
 -- Name: django_content_type_id_seq; Type: SEQUENCE SET; Schema: public; Owner: dss
 --
 
-SELECT pg_catalog.setval('django_content_type_id_seq', 34, true);
+SELECT pg_catalog.setval('django_content_type_id_seq', 35, true);
 
 
 --
@@ -1311,6 +1323,33 @@ SELECT pg_catalog.setval('repeats_id_seq', 3, true);
 
 
 --
+-- Name: roles_id_seq; Type: SEQUENCE; Schema: public; Owner: dss
+--
+
+CREATE SEQUENCE roles_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.roles_id_seq OWNER TO dss;
+
+--
+-- Name: roles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dss
+--
+
+ALTER SEQUENCE roles_id_seq OWNED BY roles.id;
+
+
+--
+-- Name: roles_id_seq; Type: SEQUENCE SET; Schema: public; Owner: dss
+--
+
+SELECT pg_catalog.setval('roles_id_seq', 2, true);
+
+
+--
 -- Name: semesters_id_seq; Type: SEQUENCE; Schema: public; Owner: dss
 --
 
@@ -1550,7 +1589,7 @@ ALTER SEQUENCE users_id_seq OWNED BY users.id;
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: dss
 --
 
-SELECT pg_catalog.setval('users_id_seq', 305, true);
+SELECT pg_catalog.setval('users_id_seq', 306, true);
 
 
 --
@@ -1768,6 +1807,13 @@ ALTER TABLE receivers ALTER COLUMN id SET DEFAULT nextval('receivers_id_seq'::re
 --
 
 ALTER TABLE repeats ALTER COLUMN id SET DEFAULT nextval('repeats_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: dss
+--
+
+ALTER TABLE roles ALTER COLUMN id SET DEFAULT nextval('roles_id_seq'::regclass);
 
 
 --
@@ -2215,6 +2261,7 @@ COPY auth_group_permissions (id, group_id, permission_id) FROM stdin;
 --
 
 COPY auth_message (id, user_id, message) FROM stdin;
+1	1	Login succeeded. Welcome, mmccarty.
 \.
 
 
@@ -2244,87 +2291,90 @@ COPY auth_permission (id, name, content_type_id, codename) FROM stdin;
 19	Can add site	7	add_site
 20	Can change site	7	change_site
 21	Can delete site	7	delete_site
-22	Can add user	8	add_user
-23	Can change user	8	change_user
-24	Can delete user	8	delete_user
-25	Can add email	9	add_email
-26	Can change email	9	change_email
-27	Can delete email	9	delete_email
-28	Can add semester	10	add_semester
-29	Can change semester	10	change_semester
-30	Can delete semester	10	delete_semester
-31	Can add project_ type	11	add_project_type
-32	Can change project_ type	11	change_project_type
-33	Can delete project_ type	11	delete_project_type
-34	Can add allotment	12	add_allotment
-35	Can change allotment	12	change_allotment
-36	Can delete allotment	12	delete_allotment
-37	Can add project	13	add_project
-38	Can change project	13	change_project
-39	Can delete project	13	delete_project
-40	Can add project_ allotment	14	add_project_allotment
-41	Can change project_ allotment	14	change_project_allotment
-42	Can delete project_ allotment	14	delete_project_allotment
-43	Can add repeat	15	add_repeat
-44	Can change repeat	15	change_repeat
-45	Can delete repeat	15	delete_repeat
-46	Can add time zone	16	add_timezone
-47	Can change time zone	16	change_timezone
-48	Can delete time zone	16	delete_timezone
-49	Can add blackout	17	add_blackout
-50	Can change blackout	17	change_blackout
-51	Can delete blackout	17	delete_blackout
-52	Can add project_ blackout_09b	18	add_project_blackout_09b
-53	Can change project_ blackout_09b	18	change_project_blackout_09b
-54	Can delete project_ blackout_09b	18	delete_project_blackout_09b
-55	Can add investigators	19	add_investigators
-56	Can change investigators	19	change_investigators
-57	Can delete investigators	19	delete_investigators
-58	Can add session_ type	20	add_session_type
-59	Can change session_ type	20	change_session_type
-60	Can delete session_ type	20	delete_session_type
-61	Can add observing_ type	21	add_observing_type
-62	Can change observing_ type	21	change_observing_type
-63	Can delete observing_ type	21	delete_observing_type
-64	Can add receiver	22	add_receiver
-65	Can change receiver	22	change_receiver
-66	Can delete receiver	22	delete_receiver
-67	Can add receiver_ schedule	23	add_receiver_schedule
-68	Can change receiver_ schedule	23	change_receiver_schedule
-69	Can delete receiver_ schedule	23	delete_receiver_schedule
-70	Can add parameter	24	add_parameter
-71	Can change parameter	24	change_parameter
-72	Can delete parameter	24	delete_parameter
-73	Can add status	25	add_status
-74	Can change status	25	change_status
-75	Can delete status	25	delete_status
-76	Can add sesshun	26	add_sesshun
-77	Can change sesshun	26	change_sesshun
-78	Can delete sesshun	26	delete_sesshun
-79	Can add receiver_ group	27	add_receiver_group
-80	Can change receiver_ group	27	change_receiver_group
-81	Can delete receiver_ group	27	delete_receiver_group
-82	Can add observing_ parameter	28	add_observing_parameter
-83	Can change observing_ parameter	28	change_observing_parameter
-84	Can delete observing_ parameter	28	delete_observing_parameter
-85	Can add window	29	add_window
-86	Can change window	29	change_window
-87	Can delete window	29	delete_window
-88	Can add opportunity	30	add_opportunity
-89	Can change opportunity	30	change_opportunity
-90	Can delete opportunity	30	delete_opportunity
-91	Can add system	31	add_system
-92	Can change system	31	change_system
-93	Can delete system	31	delete_system
-94	Can add target	32	add_target
-95	Can change target	32	change_target
-96	Can delete target	32	delete_target
-97	Can add period	33	add_period
-98	Can change period	33	change_period
-99	Can delete period	33	delete_period
-100	Can add log entry	34	add_logentry
-101	Can change log entry	34	change_logentry
-102	Can delete log entry	34	delete_logentry
+22	Can add role	8	add_role
+23	Can change role	8	change_role
+24	Can delete role	8	delete_role
+25	Can add user	9	add_user
+26	Can change user	9	change_user
+27	Can delete user	9	delete_user
+28	Can add email	10	add_email
+29	Can change email	10	change_email
+30	Can delete email	10	delete_email
+31	Can add semester	11	add_semester
+32	Can change semester	11	change_semester
+33	Can delete semester	11	delete_semester
+34	Can add project_ type	12	add_project_type
+35	Can change project_ type	12	change_project_type
+36	Can delete project_ type	12	delete_project_type
+37	Can add allotment	13	add_allotment
+38	Can change allotment	13	change_allotment
+39	Can delete allotment	13	delete_allotment
+40	Can add project	14	add_project
+41	Can change project	14	change_project
+42	Can delete project	14	delete_project
+43	Can add project_ allotment	15	add_project_allotment
+44	Can change project_ allotment	15	change_project_allotment
+45	Can delete project_ allotment	15	delete_project_allotment
+46	Can add repeat	16	add_repeat
+47	Can change repeat	16	change_repeat
+48	Can delete repeat	16	delete_repeat
+49	Can add time zone	17	add_timezone
+50	Can change time zone	17	change_timezone
+51	Can delete time zone	17	delete_timezone
+52	Can add blackout	18	add_blackout
+53	Can change blackout	18	change_blackout
+54	Can delete blackout	18	delete_blackout
+55	Can add project_ blackout_09b	19	add_project_blackout_09b
+56	Can change project_ blackout_09b	19	change_project_blackout_09b
+57	Can delete project_ blackout_09b	19	delete_project_blackout_09b
+58	Can add investigators	20	add_investigators
+59	Can change investigators	20	change_investigators
+60	Can delete investigators	20	delete_investigators
+61	Can add session_ type	21	add_session_type
+62	Can change session_ type	21	change_session_type
+63	Can delete session_ type	21	delete_session_type
+64	Can add observing_ type	22	add_observing_type
+65	Can change observing_ type	22	change_observing_type
+66	Can delete observing_ type	22	delete_observing_type
+67	Can add receiver	23	add_receiver
+68	Can change receiver	23	change_receiver
+69	Can delete receiver	23	delete_receiver
+70	Can add receiver_ schedule	24	add_receiver_schedule
+71	Can change receiver_ schedule	24	change_receiver_schedule
+72	Can delete receiver_ schedule	24	delete_receiver_schedule
+73	Can add parameter	25	add_parameter
+74	Can change parameter	25	change_parameter
+75	Can delete parameter	25	delete_parameter
+76	Can add status	26	add_status
+77	Can change status	26	change_status
+78	Can delete status	26	delete_status
+79	Can add sesshun	27	add_sesshun
+80	Can change sesshun	27	change_sesshun
+81	Can delete sesshun	27	delete_sesshun
+82	Can add receiver_ group	28	add_receiver_group
+83	Can change receiver_ group	28	change_receiver_group
+84	Can delete receiver_ group	28	delete_receiver_group
+85	Can add observing_ parameter	29	add_observing_parameter
+86	Can change observing_ parameter	29	change_observing_parameter
+87	Can delete observing_ parameter	29	delete_observing_parameter
+88	Can add window	30	add_window
+89	Can change window	30	change_window
+90	Can delete window	30	delete_window
+91	Can add opportunity	31	add_opportunity
+92	Can change opportunity	31	change_opportunity
+93	Can delete opportunity	31	delete_opportunity
+94	Can add system	32	add_system
+95	Can change system	32	change_system
+96	Can delete system	32	delete_system
+97	Can add target	33	add_target
+98	Can change target	33	change_target
+99	Can delete target	33	delete_target
+100	Can add period	34	add_period
+101	Can change period	34	change_period
+102	Can delete period	34	delete_period
+103	Can add log entry	35	add_logentry
+104	Can change log entry	35	change_logentry
+105	Can delete log entry	35	delete_logentry
 \.
 
 
@@ -2333,7 +2383,7 @@ COPY auth_permission (id, name, content_type_id, codename) FROM stdin;
 --
 
 COPY auth_user (id, username, first_name, last_name, email, password, is_staff, is_active, is_superuser, last_login, date_joined) FROM stdin;
-1	dss			dss@nrao.edu	sha1$98295$71a569bf3152a80768596321964697e1d569b326	t	t	t	2009-07-31 17:24:01.902164-04	2009-07-31 17:24:01.902164-04
+1	mmccarty			mmccarty@nrao.edu	sha1$9aad6$9e4e2831cc73157ba079eb43764554145eac59c0	t	t	t	2009-08-17 13:56:50.389665-04	2009-08-17 13:51:56.640404-04
 \.
 
 
@@ -2381,33 +2431,34 @@ COPY django_content_type (id, name, app_label, model) FROM stdin;
 5	content type	contenttypes	contenttype
 6	session	sessions	session
 7	site	sites	site
-8	user	sesshuns	user
-9	email	sesshuns	email
-10	semester	sesshuns	semester
-11	project_ type	sesshuns	project_type
-12	allotment	sesshuns	allotment
-13	project	sesshuns	project
-14	project_ allotment	sesshuns	project_allotment
-15	repeat	sesshuns	repeat
-16	time zone	sesshuns	timezone
-17	blackout	sesshuns	blackout
-18	project_ blackout_09b	sesshuns	project_blackout_09b
-19	investigators	sesshuns	investigators
-20	session_ type	sesshuns	session_type
-21	observing_ type	sesshuns	observing_type
-22	receiver	sesshuns	receiver
-23	receiver_ schedule	sesshuns	receiver_schedule
-24	parameter	sesshuns	parameter
-25	status	sesshuns	status
-26	sesshun	sesshuns	sesshun
-27	receiver_ group	sesshuns	receiver_group
-28	observing_ parameter	sesshuns	observing_parameter
-29	window	sesshuns	window
-30	opportunity	sesshuns	opportunity
-31	system	sesshuns	system
-32	target	sesshuns	target
-33	period	sesshuns	period
-34	log entry	admin	logentry
+8	role	sesshuns	role
+9	user	sesshuns	user
+10	email	sesshuns	email
+11	semester	sesshuns	semester
+12	project_ type	sesshuns	project_type
+13	allotment	sesshuns	allotment
+14	project	sesshuns	project
+15	project_ allotment	sesshuns	project_allotment
+16	repeat	sesshuns	repeat
+17	time zone	sesshuns	timezone
+18	blackout	sesshuns	blackout
+19	project_ blackout_09b	sesshuns	project_blackout_09b
+20	investigators	sesshuns	investigators
+21	session_ type	sesshuns	session_type
+22	observing_ type	sesshuns	observing_type
+23	receiver	sesshuns	receiver
+24	receiver_ schedule	sesshuns	receiver_schedule
+25	parameter	sesshuns	parameter
+26	status	sesshuns	status
+27	sesshun	sesshuns	sesshun
+28	receiver_ group	sesshuns	receiver_group
+29	observing_ parameter	sesshuns	observing_parameter
+30	window	sesshuns	window
+31	opportunity	sesshuns	opportunity
+32	system	sesshuns	system
+33	target	sesshuns	target
+34	period	sesshuns	period
+35	log entry	admin	logentry
 \.
 
 
@@ -2416,6 +2467,7 @@ COPY django_content_type (id, name, app_label, model) FROM stdin;
 --
 
 COPY django_session (session_key, session_data, expire_date) FROM stdin;
+f8276b36183fe7e275556efad7fb78a9	gAJ9cQEoVRJfYXV0aF91c2VyX2JhY2tlbmRxAlUeZGphbmdvX2Nhcy5iYWNrZW5kcy5DQVNCYWNr\nZW5kcQNVDV9hdXRoX3VzZXJfaWRxBEsBdS5hMGRmODYwOTkzNDg2MTE2ZTIyNWQ2NzEwYjNlOWRk\nNg==\n	2009-08-31 13:56:50.400907-04
 \.
 
 
@@ -2433,642 +2485,642 @@ COPY django_site (id, domain, name) FROM stdin;
 --
 
 COPY investigators (id, project_id, user_id, friend, observer, principal_contact, principal_investigator, priority) FROM stdin;
-1	2	1	t	f	f	f	1
-2	3	2	t	f	f	f	1
-3	4	3	t	f	f	f	1
-4	5	1	t	f	f	f	1
-5	6	1	t	f	f	f	1
-6	7	3	t	f	f	f	1
-7	9	4	t	f	f	f	1
-8	10	5	t	f	f	f	1
-9	11	5	t	f	f	f	1
-10	12	6	t	f	f	f	1
-11	13	6	t	f	f	f	1
-12	14	7	t	f	f	f	1
-13	15	2	t	f	f	f	1
-14	16	8	t	f	f	f	1
-15	17	1	t	f	f	f	1
-16	18	1	t	f	f	f	1
-17	19	4	t	f	f	f	1
-18	20	8	t	f	f	f	1
-19	21	2	t	f	f	f	1
-20	22	3	t	f	f	f	1
-21	23	9	t	f	f	f	1
-22	24	10	t	f	f	f	1
-23	25	1	t	f	f	f	1
-24	26	11	t	f	f	f	1
-25	27	6	t	f	f	f	1
-26	28	6	t	f	f	f	1
-27	29	1	t	f	f	f	1
-28	30	6	t	f	f	f	1
-29	31	1	t	f	f	f	1
-30	32	8	t	f	f	f	1
-31	33	8	t	f	f	f	1
-32	34	10	t	f	f	f	1
-33	35	2	t	f	f	f	1
-34	36	8	t	f	f	f	1
-35	37	6	t	f	f	f	1
-36	38	7	t	f	f	f	1
-37	39	6	t	f	f	f	1
-38	40	8	t	f	f	f	1
-39	41	10	t	f	f	f	1
-40	42	5	t	f	f	f	1
-41	43	8	t	f	f	f	1
-42	44	3	t	f	f	f	1
-43	45	2	t	f	f	f	1
-44	46	6	t	f	f	f	1
-45	47	12	t	f	f	f	1
-46	48	2	t	f	f	f	1
-47	49	3	t	f	f	f	1
-48	50	3	t	f	f	f	1
-49	51	8	t	f	f	f	1
-50	52	9	t	f	f	f	1
-51	53	13	t	f	f	f	1
-52	54	8	t	f	f	f	1
-53	55	10	t	f	f	f	1
-54	56	3	t	f	f	f	1
-55	57	8	t	f	f	f	1
-56	58	8	t	f	f	f	1
-57	59	1	t	f	f	f	1
-58	60	2	t	f	f	f	1
-59	61	8	t	f	f	f	1
-60	62	14	t	f	f	f	1
-61	63	14	t	f	f	f	1
-62	64	8	t	f	f	f	1
-63	65	6	t	f	f	f	1
-64	66	5	t	f	f	f	1
-65	67	5	t	f	f	f	1
-66	68	8	t	f	f	f	1
-67	69	6	t	f	f	f	1
-68	70	3	t	f	f	f	1
-69	71	8	t	f	f	f	1
-70	72	8	t	f	f	f	1
-71	73	15	t	f	f	f	1
-72	74	3	t	f	f	f	1
-73	75	6	t	f	f	f	1
-74	76	8	t	f	f	f	1
-75	77	2	t	f	f	f	1
-76	78	8	t	f	f	f	1
-77	79	8	t	f	f	f	1
-78	80	8	t	f	f	f	1
-79	81	8	t	f	f	f	1
-80	82	2	t	f	f	f	1
-81	83	8	t	f	f	f	1
-82	84	8	t	f	f	f	1
-83	85	8	t	f	f	f	1
-84	86	8	t	f	f	f	1
-85	87	13	t	f	f	f	1
-86	88	6	t	f	f	f	1
-87	89	7	t	f	f	f	1
-88	90	7	t	f	f	f	1
-89	91	7	t	f	f	f	1
-90	92	8	t	f	f	f	1
-91	93	12	t	f	f	f	1
-92	94	8	t	f	f	f	1
-93	95	13	t	f	f	f	1
-94	96	8	t	f	f	f	1
-95	97	2	t	f	f	f	1
-96	98	1	t	f	f	f	1
-97	2	16	f	f	t	t	1
-98	2	17	f	f	f	f	1
-99	2	18	f	f	f	f	1
-100	2	19	f	f	f	f	1
-101	3	2	f	f	t	t	1
-102	3	20	f	f	f	f	1
-103	3	21	f	f	f	f	1
-104	3	22	f	f	f	f	1
-105	3	23	f	f	f	f	1
-106	3	24	f	f	f	f	1
-107	3	25	f	f	f	f	1
-108	3	26	f	f	f	f	1
-109	3	27	f	f	f	f	1
-110	3	28	f	f	f	f	1
-111	3	29	f	f	f	f	1
-112	4	30	f	f	t	t	1
-113	4	31	f	f	f	f	1
-114	4	32	f	f	f	f	1
-115	4	33	f	f	f	f	1
-116	5	34	f	f	t	t	1
-117	5	35	f	f	f	f	1
-118	5	36	f	f	f	f	1
-119	5	37	f	f	f	f	1
-120	5	38	f	f	f	f	1
-121	5	39	f	f	f	f	1
-122	5	40	f	f	f	f	1
-123	6	36	f	f	t	t	1
-124	6	41	f	f	f	f	1
-125	6	33	f	f	f	f	1
-126	7	42	f	f	t	t	1
-127	7	43	f	f	f	f	1
-128	7	44	f	f	f	f	1
-129	8	45	f	f	t	t	1
-130	8	46	f	f	f	f	1
-131	8	47	f	f	f	f	1
-132	8	48	f	f	f	f	1
-133	8	49	f	f	f	f	1
-134	8	50	f	f	f	f	1
-135	9	51	f	f	t	t	1
-136	9	52	f	f	f	f	1
-137	9	53	f	f	f	f	1
-138	9	54	f	f	f	f	1
-139	9	55	f	f	f	f	1
-140	9	56	f	f	f	f	1
-141	9	57	f	f	f	f	1
-142	10	58	f	f	t	t	1
-143	10	59	f	f	f	f	1
-144	10	60	f	f	f	f	1
-145	11	61	f	f	t	t	1
-146	11	62	f	f	f	f	1
-147	12	63	f	f	t	t	1
-148	12	64	f	f	f	f	1
-149	12	65	f	f	f	f	1
-150	12	66	f	f	f	f	1
-151	13	63	f	f	t	t	1
-152	13	67	f	f	f	f	1
-153	14	68	f	f	f	t	1
-154	14	15	f	f	t	f	1
-155	14	69	f	f	f	f	1
-156	14	70	f	f	f	f	1
-157	15	71	f	f	t	t	1
-158	15	72	f	f	f	f	1
-159	16	73	f	f	t	t	1
-160	16	74	f	f	f	f	1
-161	16	75	f	f	f	f	1
-162	16	76	f	f	f	f	1
-163	16	77	f	f	f	f	1
-164	16	78	f	f	f	f	1
-165	16	79	f	f	f	f	1
-166	16	8	f	f	f	f	1
-167	16	80	f	f	f	f	1
-168	16	81	f	f	f	f	1
-169	17	63	f	f	t	t	1
-170	17	82	f	f	f	f	1
-171	18	83	f	f	t	t	1
-172	18	84	f	f	f	f	1
-173	18	85	f	f	f	f	1
-174	18	86	f	f	f	f	1
-175	18	87	f	f	f	f	1
-176	19	51	f	f	t	t	1
-177	19	88	f	f	f	f	1
-178	19	52	f	f	f	f	1
-179	19	17	f	f	f	f	1
-180	19	53	f	f	f	f	1
-181	19	4	f	f	f	f	1
-182	20	89	f	f	f	t	1
-183	20	90	f	f	f	f	1
-184	20	91	f	f	t	f	1
-185	20	92	f	f	f	f	1
-186	20	93	f	f	f	f	1
-187	20	94	f	f	f	f	1
-188	21	95	f	f	t	t	1
-189	21	96	f	f	f	f	1
-190	21	97	f	f	f	f	1
-191	21	44	f	f	f	f	1
-192	21	98	f	f	f	f	1
-193	21	99	f	f	f	f	1
-194	22	63	f	f	t	f	1
-195	22	100	f	f	f	t	1
-196	23	101	f	f	t	t	1
-197	23	102	f	f	f	f	1
-198	24	103	f	f	t	t	1
-199	24	104	f	f	f	f	1
-200	24	105	f	f	f	f	1
-201	25	106	f	f	t	t	1
-202	25	107	f	f	f	f	1
-203	25	108	f	f	f	f	1
-204	25	109	f	f	f	f	1
-205	25	110	f	f	f	f	1
-206	26	11	f	f	t	t	1
-207	26	111	f	f	f	f	1
-208	26	112	f	f	f	f	1
-209	26	113	f	f	f	f	1
-210	26	114	f	f	f	f	1
-211	27	6	f	f	t	t	1
-212	27	115	f	f	f	f	1
-213	27	116	f	f	f	f	1
-214	28	6	f	f	t	t	1
-215	28	12	f	f	f	f	1
-216	28	117	f	f	f	f	1
-217	29	118	f	f	t	t	1
-218	29	119	f	f	f	f	1
-219	30	120	f	f	t	t	1
-220	30	6	f	f	f	f	1
-221	31	121	f	f	t	t	1
-222	31	60	f	f	f	f	1
-223	31	122	f	f	f	f	1
-224	31	123	f	f	f	f	1
-225	31	124	f	f	f	f	1
-226	31	125	f	f	f	f	1
-227	31	126	f	f	f	f	1
-228	31	127	f	f	f	f	1
-229	31	128	f	f	f	f	1
-230	31	129	f	f	f	f	1
-231	31	59	f	f	f	f	1
-232	31	58	f	f	f	f	1
-233	31	130	f	f	f	f	1
-234	31	131	f	f	f	f	1
-235	32	132	f	f	t	t	1
-236	32	8	f	f	f	f	1
-237	32	133	f	f	f	f	1
-238	32	134	f	f	f	f	1
-239	33	132	f	f	t	t	1
-240	33	8	f	f	f	f	1
-241	33	135	f	f	f	f	1
-242	33	92	f	f	f	f	1
-243	33	136	f	f	f	f	1
-244	33	137	f	f	f	f	1
-245	33	138	f	f	f	f	1
-246	33	133	f	f	f	f	1
-247	33	139	f	f	f	f	1
-248	34	140	f	f	f	t	1
-249	34	104	f	f	t	f	1
-250	34	10	f	f	f	f	1
-251	35	2	f	f	t	t	1
-252	35	20	f	f	f	f	1
-253	35	21	f	f	f	f	1
-254	35	22	f	f	f	f	1
-255	35	23	f	f	f	f	1
-256	35	24	f	f	f	f	1
-257	35	25	f	f	f	f	1
-258	35	26	f	f	f	f	1
-259	35	27	f	f	f	f	1
-260	35	28	f	f	f	f	1
-261	35	29	f	f	f	f	1
-262	36	141	f	f	t	t	1
-263	36	8	f	f	f	f	1
-264	36	137	f	f	f	f	1
-265	36	77	f	f	f	f	1
-266	37	142	f	f	t	t	1
-267	37	143	f	f	f	f	1
-268	37	144	f	f	f	f	1
-269	37	145	f	f	f	f	1
-270	37	65	f	f	f	f	1
-271	38	146	f	f	f	t	1
-272	38	59	f	f	t	f	1
-273	38	58	f	f	f	f	1
-274	38	147	f	f	f	f	1
-275	38	148	f	f	f	f	1
-276	38	7	f	f	f	f	1
-277	39	59	f	f	t	t	1
-278	39	58	f	f	f	f	1
-279	39	146	f	f	f	f	1
-280	39	147	f	f	f	f	1
-281	40	8	f	f	t	t	1
-282	40	137	f	f	f	f	1
-283	40	77	f	f	f	f	1
-284	40	149	f	f	f	f	1
-285	40	141	f	f	f	f	1
-286	41	150	f	f	f	t	1
-287	41	10	f	f	t	f	1
-288	41	151	f	f	f	f	1
-289	41	152	f	f	f	f	1
-290	41	153	f	f	f	f	1
-291	42	154	f	f	t	t	1
-292	42	155	f	f	f	f	1
-293	42	5	f	f	f	f	1
-294	42	156	f	f	f	f	1
-295	43	137	f	f	t	t	1
-296	43	8	f	f	f	f	1
-297	43	141	f	f	f	f	1
-298	44	157	f	f	t	t	1
-299	44	158	f	f	f	f	1
-300	44	159	f	f	f	f	1
-301	44	160	f	f	f	f	1
-302	45	161	f	f	t	t	1
-303	45	162	f	f	f	f	1
-304	45	163	f	f	f	f	1
-305	45	164	f	f	f	f	1
-306	45	165	f	f	f	f	1
-307	45	166	f	f	f	f	1
-308	46	167	f	f	t	t	1
-309	46	168	f	f	f	f	1
-310	46	169	f	f	f	f	1
-311	46	170	f	f	f	f	1
-312	46	171	f	f	f	f	1
-313	46	172	f	f	f	f	1
-314	46	173	f	f	f	f	1
-315	46	174	f	f	f	f	1
-316	46	175	f	f	f	f	1
-317	46	176	f	f	f	f	1
-318	46	177	f	f	f	f	1
-319	47	12	f	f	t	t	1
-320	47	178	f	f	f	f	1
-321	47	13	f	f	f	f	1
-322	48	179	f	f	t	t	1
-323	48	180	f	f	f	f	1
-324	48	181	f	f	f	f	1
-325	48	182	f	f	f	f	1
-326	48	183	f	f	f	f	1
-327	48	184	f	f	f	f	1
-328	48	185	f	f	f	f	1
-329	48	186	f	f	f	f	1
-330	49	63	f	f	t	t	1
-331	50	187	f	f	t	t	1
-332	50	188	f	f	f	f	1
-333	50	189	f	f	f	f	1
-334	50	190	f	f	f	f	1
-335	50	191	f	f	f	f	1
-336	50	192	f	f	f	f	1
-337	50	193	f	f	f	f	1
-338	51	141	f	f	t	t	1
-339	51	8	f	f	f	f	1
-340	51	77	f	f	f	f	1
-341	51	137	f	f	f	f	1
-342	52	194	f	f	t	t	1
-343	52	121	f	f	f	f	1
-344	52	195	f	f	f	f	1
-345	52	196	f	f	f	f	1
-346	52	197	f	f	f	f	1
-347	52	58	f	f	f	f	1
-348	52	59	f	f	f	f	1
-349	52	198	f	f	f	f	1
-350	52	199	f	f	f	f	1
-351	52	200	f	f	f	f	1
-352	52	201	f	f	f	f	1
-353	53	178	f	f	t	t	1
-354	53	13	f	f	f	f	1
-355	53	202	f	f	f	f	1
-356	54	14	f	f	t	t	1
-357	54	73	f	f	f	f	1
-358	54	203	f	f	f	f	1
-359	55	10	f	f	t	t	1
-360	55	151	f	f	f	f	1
-361	55	204	f	f	f	f	1
-362	55	205	f	f	f	f	1
-363	55	152	f	f	f	f	1
-364	55	150	f	f	f	f	1
-365	55	206	f	f	f	f	1
-366	55	153	f	f	f	f	1
-367	56	207	f	f	f	t	1
-368	56	88	f	f	t	f	1
-369	56	208	f	f	f	f	1
-370	57	14	f	f	t	t	1
-371	57	92	f	f	f	f	1
-372	57	91	f	f	f	f	1
-373	57	209	f	f	f	f	1
-374	58	132	f	f	t	t	1
-375	58	133	f	f	f	f	1
-376	58	8	f	f	f	f	1
-377	58	210	f	f	f	f	1
-378	59	118	f	f	t	t	1
-379	59	119	f	f	f	f	1
-380	59	108	f	f	f	f	1
-381	60	211	f	f	t	t	1
-382	60	212	f	f	f	f	1
-383	60	213	f	f	f	f	1
-384	60	214	f	f	f	f	1
-385	60	215	f	f	f	f	1
-386	60	206	f	f	f	f	1
-387	60	216	f	f	f	f	1
-388	60	217	f	f	f	f	1
-389	60	218	f	f	f	f	1
-390	60	219	f	f	f	f	1
-391	60	220	f	f	f	f	1
-392	61	93	f	f	t	t	1
-393	61	91	f	f	f	f	1
-394	61	92	f	f	f	f	1
-395	62	209	f	f	t	t	1
-396	62	14	f	f	f	f	1
-397	63	209	f	f	t	t	1
-398	63	14	f	f	f	f	1
-399	64	141	f	f	t	t	1
-400	64	8	f	f	f	f	1
-401	64	91	f	f	f	f	1
-402	64	92	f	f	f	f	1
-403	64	77	f	f	f	f	1
-404	64	221	f	f	f	f	1
-405	64	222	f	f	f	f	1
-406	64	223	f	f	f	f	1
-407	64	224	f	f	f	f	1
-408	64	93	f	f	f	f	1
-409	64	225	f	f	f	f	1
-410	64	149	f	f	f	f	1
-411	64	226	f	f	f	f	1
-412	64	135	f	f	f	f	1
-413	64	227	f	f	f	f	1
-414	64	228	f	f	f	f	1
-415	64	229	f	f	f	f	1
-416	65	63	f	f	t	t	1
-417	66	155	f	f	t	t	1
-418	66	5	f	f	f	f	1
-419	66	154	f	f	f	f	1
-420	66	156	f	f	f	f	1
-421	67	154	f	f	t	t	1
-422	67	155	f	f	f	f	1
-423	67	5	f	f	f	f	1
-424	67	156	f	f	f	f	1
-425	68	230	f	f	t	t	1
-426	68	91	f	f	f	f	1
-427	68	92	f	f	f	f	1
-428	68	231	f	f	f	f	1
-429	68	232	f	f	f	f	1
-430	68	233	f	f	f	f	1
-431	68	77	f	f	f	f	1
-432	68	132	f	f	f	f	1
-433	68	234	f	f	f	f	1
-434	68	235	f	f	f	f	1
-435	68	236	f	f	f	f	1
-436	68	237	f	f	f	f	1
-437	69	238	f	f	t	t	1
-438	69	239	f	f	f	f	1
-439	69	6	f	f	f	f	1
-440	69	73	f	f	f	f	1
-441	69	93	f	f	f	f	1
-442	69	240	f	f	f	f	1
-443	70	207	f	f	f	t	1
-444	70	88	f	f	t	f	1
-445	70	208	f	f	f	f	1
-446	71	132	f	f	t	t	1
-447	71	8	f	f	f	f	1
-448	71	241	f	f	f	f	1
-449	71	139	f	f	f	f	1
-450	71	91	f	f	f	f	1
-451	72	242	f	f	t	t	1
-452	72	243	f	f	f	f	1
-453	72	149	f	f	f	f	1
-454	73	15	f	f	t	t	1
-455	73	244	f	f	f	f	1
-456	73	245	f	f	f	f	1
-457	74	246	f	f	t	t	1
-458	74	247	f	f	f	f	1
-459	74	248	f	f	f	f	1
-460	75	170	f	f	t	t	1
-461	75	169	f	f	f	f	1
-462	75	140	f	f	f	f	1
-463	75	249	f	f	f	f	1
-464	75	167	f	f	f	f	1
-465	75	250	f	f	f	f	1
-466	76	89	f	f	t	t	1
-467	76	90	f	f	f	f	1
-468	76	91	f	f	f	f	1
-469	76	92	f	f	f	f	1
-470	76	93	f	f	f	f	1
-471	76	225	f	f	f	f	1
-472	76	94	f	f	f	f	1
-473	77	251	f	f	t	t	1
-474	77	252	f	f	f	f	1
-475	77	253	f	f	f	f	1
-476	77	254	f	f	f	f	1
-477	77	255	f	f	f	f	1
-478	78	229	f	f	t	t	1
-479	78	222	f	f	f	f	1
-480	78	256	f	f	f	f	1
-481	79	229	f	f	t	t	1
-482	79	222	f	f	f	f	1
-483	79	256	f	f	f	f	1
-484	80	139	f	f	t	t	1
-485	80	132	f	f	f	f	1
-486	80	8	f	f	f	f	1
-487	80	135	f	f	f	f	1
-488	81	8	f	f	t	t	1
-489	81	132	f	f	f	f	1
-490	81	139	f	f	f	f	1
-491	81	135	f	f	f	f	1
-492	82	257	f	f	t	t	1
-493	82	258	f	f	f	f	1
-494	82	259	f	f	f	f	1
-495	82	260	f	f	f	f	1
-496	83	73	f	f	t	t	1
-497	83	261	f	f	f	f	1
-498	83	262	f	f	f	f	1
-499	83	263	f	f	f	f	1
-500	84	92	f	f	t	t	1
-501	84	233	f	f	f	f	1
-502	84	232	f	f	f	f	1
-503	84	264	f	f	f	f	1
-504	84	91	f	f	f	f	1
-505	84	265	f	f	f	f	1
-506	85	232	f	f	t	t	1
-507	85	77	f	f	f	f	1
-508	85	92	f	f	f	f	1
-509	85	75	f	f	f	f	1
-510	85	132	f	f	f	f	1
-511	85	233	f	f	f	f	1
-512	85	266	f	f	f	f	1
-513	85	235	f	f	f	f	1
-514	85	236	f	f	f	f	1
-515	85	234	f	f	f	f	1
-516	85	137	f	f	f	f	1
-517	85	267	f	f	f	f	1
-518	86	141	f	f	t	t	1
-519	86	8	f	f	f	f	1
-520	86	91	f	f	f	f	1
-521	86	92	f	f	f	f	1
-522	86	77	f	f	f	f	1
-523	86	221	f	f	f	f	1
-524	86	222	f	f	f	f	1
-525	86	223	f	f	f	f	1
-526	86	224	f	f	f	f	1
-527	86	93	f	f	f	f	1
-528	86	225	f	f	f	f	1
-529	86	149	f	f	f	f	1
-530	86	226	f	f	f	f	1
-531	86	135	f	f	f	f	1
-532	86	227	f	f	f	f	1
-533	86	228	f	f	f	f	1
-534	86	229	f	f	f	f	1
-535	87	178	f	f	t	t	1
-536	87	13	f	f	f	f	1
-537	87	202	f	f	f	f	1
-538	88	63	f	f	t	t	1
-539	88	64	f	f	f	f	1
-540	89	268	f	f	t	t	1
-541	89	172	f	f	f	f	1
-542	89	167	f	f	f	f	1
-543	89	169	f	f	f	f	1
-544	90	269	f	f	t	t	1
-545	90	88	f	f	f	f	1
-546	91	63	f	f	t	t	1
-547	91	169	f	f	f	f	1
-548	91	167	f	f	f	f	1
-549	92	73	f	f	t	t	1
-550	92	78	f	f	f	f	1
-551	92	77	f	f	f	f	1
-552	92	8	f	f	f	f	1
-553	92	75	f	f	f	f	1
-554	92	79	f	f	f	f	1
-555	92	76	f	f	f	f	1
-556	92	270	f	f	f	f	1
-557	93	271	f	f	t	t	1
-558	93	272	f	f	f	f	1
-559	93	12	f	f	f	f	1
-560	93	273	f	f	f	f	1
-561	93	274	f	f	f	f	1
-562	93	275	f	f	f	f	1
-563	94	276	f	f	t	t	1
-564	94	8	f	f	f	f	1
-565	94	77	f	f	f	f	1
-566	94	91	f	f	f	f	1
-567	94	92	f	f	f	f	1
-568	94	221	f	f	f	f	1
-569	94	224	f	f	f	f	1
-570	94	228	f	f	f	f	1
-571	94	277	f	f	f	f	1
-572	95	278	f	f	t	t	1
-573	95	103	f	f	f	f	1
-574	95	279	f	f	f	f	1
-575	95	280	f	f	f	f	1
-576	95	13	f	f	f	f	1
-577	95	76	f	f	f	f	1
-578	96	141	f	f	t	t	1
-579	96	8	f	f	f	f	1
-580	97	281	f	f	t	t	1
-581	97	22	f	f	f	f	1
-582	97	282	f	f	f	f	1
-583	97	2	f	f	f	f	1
-584	97	283	f	f	f	f	1
-585	97	249	f	f	f	f	1
-586	98	284	f	f	t	t	1
-587	98	107	f	f	f	f	1
-588	98	285	f	f	f	f	1
-589	98	284	f	f	t	t	1
-590	99	221	f	f	t	t	1
-591	99	224	f	f	f	f	1
-592	99	286	f	f	f	f	1
-593	100	13	f	f	t	t	1
-594	101	287	f	f	t	t	1
-595	101	288	f	f	f	f	1
-596	101	289	f	f	f	f	1
-597	101	290	f	f	f	f	1
-598	101	291	f	f	f	f	1
-599	101	292	f	f	f	f	1
-600	102	139	f	f	t	t	1
-601	102	132	f	f	f	f	1
-602	102	8	f	f	f	f	1
-603	102	135	f	f	f	f	1
-604	103	210	f	f	t	t	1
-605	103	293	f	f	f	f	1
-606	103	221	f	f	f	f	1
-607	103	135	f	f	f	f	1
-608	103	294	f	f	f	f	1
-609	103	8	f	f	f	f	1
-610	103	295	f	f	f	f	1
-611	104	132	f	f	t	t	1
-612	104	8	f	f	f	f	1
-613	104	135	f	f	f	f	1
-614	104	92	f	f	f	f	1
-615	105	135	f	f	t	t	1
-616	105	92	f	f	f	f	1
-617	105	149	f	f	f	f	1
-618	105	8	f	f	f	f	1
-619	105	139	f	f	f	f	1
-620	105	296	f	f	f	f	1
-621	106	92	f	f	t	t	1
-622	106	297	f	f	f	f	1
-623	106	8	f	f	f	f	1
-624	106	93	f	f	f	f	1
-625	106	298	f	f	f	f	1
-626	106	13	f	f	f	f	1
-627	106	243	f	f	f	f	1
-628	106	91	f	f	f	f	1
-629	106	299	f	f	f	f	1
-630	107	300	f	f	t	t	1
-631	107	301	f	f	f	f	1
-632	107	32	f	f	f	f	1
-633	107	302	f	f	f	f	1
-634	107	303	f	f	f	f	1
-635	107	304	f	f	f	f	1
-636	107	305	f	f	f	f	1
+1	2	2	t	f	f	f	1
+2	3	3	t	f	f	f	1
+3	4	4	t	f	f	f	1
+4	5	2	t	f	f	f	1
+5	6	2	t	f	f	f	1
+6	7	4	t	f	f	f	1
+7	9	5	t	f	f	f	1
+8	10	6	t	f	f	f	1
+9	11	6	t	f	f	f	1
+10	12	7	t	f	f	f	1
+11	13	7	t	f	f	f	1
+12	14	8	t	f	f	f	1
+13	15	3	t	f	f	f	1
+14	16	9	t	f	f	f	1
+15	17	2	t	f	f	f	1
+16	18	2	t	f	f	f	1
+17	19	5	t	f	f	f	1
+18	20	9	t	f	f	f	1
+19	21	3	t	f	f	f	1
+20	22	4	t	f	f	f	1
+21	23	10	t	f	f	f	1
+22	24	11	t	f	f	f	1
+23	25	2	t	f	f	f	1
+24	26	12	t	f	f	f	1
+25	27	7	t	f	f	f	1
+26	28	7	t	f	f	f	1
+27	29	2	t	f	f	f	1
+28	30	7	t	f	f	f	1
+29	31	2	t	f	f	f	1
+30	32	9	t	f	f	f	1
+31	33	9	t	f	f	f	1
+32	34	11	t	f	f	f	1
+33	35	3	t	f	f	f	1
+34	36	9	t	f	f	f	1
+35	37	7	t	f	f	f	1
+36	38	8	t	f	f	f	1
+37	39	7	t	f	f	f	1
+38	40	9	t	f	f	f	1
+39	41	11	t	f	f	f	1
+40	42	6	t	f	f	f	1
+41	43	9	t	f	f	f	1
+42	44	4	t	f	f	f	1
+43	45	3	t	f	f	f	1
+44	46	7	t	f	f	f	1
+45	47	13	t	f	f	f	1
+46	48	3	t	f	f	f	1
+47	49	4	t	f	f	f	1
+48	50	4	t	f	f	f	1
+49	51	9	t	f	f	f	1
+50	52	10	t	f	f	f	1
+51	53	14	t	f	f	f	1
+52	54	9	t	f	f	f	1
+53	55	11	t	f	f	f	1
+54	56	4	t	f	f	f	1
+55	57	9	t	f	f	f	1
+56	58	9	t	f	f	f	1
+57	59	2	t	f	f	f	1
+58	60	3	t	f	f	f	1
+59	61	9	t	f	f	f	1
+60	62	15	t	f	f	f	1
+61	63	15	t	f	f	f	1
+62	64	9	t	f	f	f	1
+63	65	7	t	f	f	f	1
+64	66	6	t	f	f	f	1
+65	67	6	t	f	f	f	1
+66	68	9	t	f	f	f	1
+67	69	7	t	f	f	f	1
+68	70	4	t	f	f	f	1
+69	71	9	t	f	f	f	1
+70	72	9	t	f	f	f	1
+71	73	16	t	f	f	f	1
+72	74	4	t	f	f	f	1
+73	75	7	t	f	f	f	1
+74	76	9	t	f	f	f	1
+75	77	3	t	f	f	f	1
+76	78	9	t	f	f	f	1
+77	79	9	t	f	f	f	1
+78	80	9	t	f	f	f	1
+79	81	9	t	f	f	f	1
+80	82	3	t	f	f	f	1
+81	83	9	t	f	f	f	1
+82	84	9	t	f	f	f	1
+83	85	9	t	f	f	f	1
+84	86	9	t	f	f	f	1
+85	87	14	t	f	f	f	1
+86	88	7	t	f	f	f	1
+87	89	8	t	f	f	f	1
+88	90	8	t	f	f	f	1
+89	91	8	t	f	f	f	1
+90	92	9	t	f	f	f	1
+91	93	13	t	f	f	f	1
+92	94	9	t	f	f	f	1
+93	95	14	t	f	f	f	1
+94	96	9	t	f	f	f	1
+95	97	3	t	f	f	f	1
+96	98	2	t	f	f	f	1
+97	2	17	f	f	t	t	1
+98	2	18	f	f	f	f	1
+99	2	19	f	f	f	f	1
+100	2	20	f	f	f	f	1
+101	3	3	f	f	t	t	1
+102	3	21	f	f	f	f	1
+103	3	22	f	f	f	f	1
+104	3	23	f	f	f	f	1
+105	3	24	f	f	f	f	1
+106	3	25	f	f	f	f	1
+107	3	26	f	f	f	f	1
+108	3	27	f	f	f	f	1
+109	3	28	f	f	f	f	1
+110	3	29	f	f	f	f	1
+111	3	30	f	f	f	f	1
+112	4	31	f	f	t	t	1
+113	4	32	f	f	f	f	1
+114	4	33	f	f	f	f	1
+115	4	34	f	f	f	f	1
+116	5	35	f	f	t	t	1
+117	5	36	f	f	f	f	1
+118	5	37	f	f	f	f	1
+119	5	38	f	f	f	f	1
+120	5	39	f	f	f	f	1
+121	5	40	f	f	f	f	1
+122	5	41	f	f	f	f	1
+123	6	37	f	f	t	t	1
+124	6	42	f	f	f	f	1
+125	6	34	f	f	f	f	1
+126	7	43	f	f	t	t	1
+127	7	44	f	f	f	f	1
+128	7	45	f	f	f	f	1
+129	8	46	f	f	t	t	1
+130	8	47	f	f	f	f	1
+131	8	48	f	f	f	f	1
+132	8	49	f	f	f	f	1
+133	8	50	f	f	f	f	1
+134	8	51	f	f	f	f	1
+135	9	52	f	f	t	t	1
+136	9	53	f	f	f	f	1
+137	9	54	f	f	f	f	1
+138	9	55	f	f	f	f	1
+139	9	56	f	f	f	f	1
+140	9	57	f	f	f	f	1
+141	9	58	f	f	f	f	1
+142	10	59	f	f	t	t	1
+143	10	60	f	f	f	f	1
+144	10	61	f	f	f	f	1
+145	11	62	f	f	t	t	1
+146	11	63	f	f	f	f	1
+147	12	64	f	f	t	t	1
+148	12	65	f	f	f	f	1
+149	12	66	f	f	f	f	1
+150	12	67	f	f	f	f	1
+151	13	64	f	f	t	t	1
+152	13	68	f	f	f	f	1
+153	14	69	f	f	f	t	1
+154	14	16	f	f	t	f	1
+155	14	70	f	f	f	f	1
+156	14	71	f	f	f	f	1
+157	15	72	f	f	t	t	1
+158	15	73	f	f	f	f	1
+159	16	74	f	f	t	t	1
+160	16	75	f	f	f	f	1
+161	16	76	f	f	f	f	1
+162	16	77	f	f	f	f	1
+163	16	78	f	f	f	f	1
+164	16	79	f	f	f	f	1
+165	16	80	f	f	f	f	1
+166	16	9	f	f	f	f	1
+167	16	81	f	f	f	f	1
+168	16	82	f	f	f	f	1
+169	17	64	f	f	t	t	1
+170	17	83	f	f	f	f	1
+171	18	84	f	f	t	t	1
+172	18	85	f	f	f	f	1
+173	18	86	f	f	f	f	1
+174	18	87	f	f	f	f	1
+175	18	88	f	f	f	f	1
+176	19	52	f	f	t	t	1
+177	19	89	f	f	f	f	1
+178	19	53	f	f	f	f	1
+179	19	18	f	f	f	f	1
+180	19	54	f	f	f	f	1
+181	19	5	f	f	f	f	1
+182	20	90	f	f	f	t	1
+183	20	91	f	f	f	f	1
+184	20	92	f	f	t	f	1
+185	20	93	f	f	f	f	1
+186	20	94	f	f	f	f	1
+187	20	95	f	f	f	f	1
+188	21	96	f	f	t	t	1
+189	21	97	f	f	f	f	1
+190	21	98	f	f	f	f	1
+191	21	45	f	f	f	f	1
+192	21	99	f	f	f	f	1
+193	21	100	f	f	f	f	1
+194	22	64	f	f	t	f	1
+195	22	101	f	f	f	t	1
+196	23	102	f	f	t	t	1
+197	23	103	f	f	f	f	1
+198	24	104	f	f	t	t	1
+199	24	105	f	f	f	f	1
+200	24	106	f	f	f	f	1
+201	25	107	f	f	t	t	1
+202	25	108	f	f	f	f	1
+203	25	109	f	f	f	f	1
+204	25	110	f	f	f	f	1
+205	25	111	f	f	f	f	1
+206	26	12	f	f	t	t	1
+207	26	112	f	f	f	f	1
+208	26	113	f	f	f	f	1
+209	26	114	f	f	f	f	1
+210	26	115	f	f	f	f	1
+211	27	7	f	f	t	t	1
+212	27	116	f	f	f	f	1
+213	27	117	f	f	f	f	1
+214	28	7	f	f	t	t	1
+215	28	13	f	f	f	f	1
+216	28	118	f	f	f	f	1
+217	29	119	f	f	t	t	1
+218	29	120	f	f	f	f	1
+219	30	121	f	f	t	t	1
+220	30	7	f	f	f	f	1
+221	31	122	f	f	t	t	1
+222	31	61	f	f	f	f	1
+223	31	123	f	f	f	f	1
+224	31	124	f	f	f	f	1
+225	31	125	f	f	f	f	1
+226	31	126	f	f	f	f	1
+227	31	127	f	f	f	f	1
+228	31	128	f	f	f	f	1
+229	31	129	f	f	f	f	1
+230	31	130	f	f	f	f	1
+231	31	60	f	f	f	f	1
+232	31	59	f	f	f	f	1
+233	31	131	f	f	f	f	1
+234	31	132	f	f	f	f	1
+235	32	133	f	f	t	t	1
+236	32	9	f	f	f	f	1
+237	32	134	f	f	f	f	1
+238	32	135	f	f	f	f	1
+239	33	133	f	f	t	t	1
+240	33	9	f	f	f	f	1
+241	33	136	f	f	f	f	1
+242	33	93	f	f	f	f	1
+243	33	137	f	f	f	f	1
+244	33	138	f	f	f	f	1
+245	33	139	f	f	f	f	1
+246	33	134	f	f	f	f	1
+247	33	140	f	f	f	f	1
+248	34	141	f	f	f	t	1
+249	34	105	f	f	t	f	1
+250	34	11	f	f	f	f	1
+251	35	3	f	f	t	t	1
+252	35	21	f	f	f	f	1
+253	35	22	f	f	f	f	1
+254	35	23	f	f	f	f	1
+255	35	24	f	f	f	f	1
+256	35	25	f	f	f	f	1
+257	35	26	f	f	f	f	1
+258	35	27	f	f	f	f	1
+259	35	28	f	f	f	f	1
+260	35	29	f	f	f	f	1
+261	35	30	f	f	f	f	1
+262	36	142	f	f	t	t	1
+263	36	9	f	f	f	f	1
+264	36	138	f	f	f	f	1
+265	36	78	f	f	f	f	1
+266	37	143	f	f	t	t	1
+267	37	144	f	f	f	f	1
+268	37	145	f	f	f	f	1
+269	37	146	f	f	f	f	1
+270	37	66	f	f	f	f	1
+271	38	147	f	f	f	t	1
+272	38	60	f	f	t	f	1
+273	38	59	f	f	f	f	1
+274	38	148	f	f	f	f	1
+275	38	149	f	f	f	f	1
+276	38	8	f	f	f	f	1
+277	39	60	f	f	t	t	1
+278	39	59	f	f	f	f	1
+279	39	147	f	f	f	f	1
+280	39	148	f	f	f	f	1
+281	40	9	f	f	t	t	1
+282	40	138	f	f	f	f	1
+283	40	78	f	f	f	f	1
+284	40	150	f	f	f	f	1
+285	40	142	f	f	f	f	1
+286	41	151	f	f	f	t	1
+287	41	11	f	f	t	f	1
+288	41	152	f	f	f	f	1
+289	41	153	f	f	f	f	1
+290	41	154	f	f	f	f	1
+291	42	155	f	f	t	t	1
+292	42	156	f	f	f	f	1
+293	42	6	f	f	f	f	1
+294	42	157	f	f	f	f	1
+295	43	138	f	f	t	t	1
+296	43	9	f	f	f	f	1
+297	43	142	f	f	f	f	1
+298	44	158	f	f	t	t	1
+299	44	159	f	f	f	f	1
+300	44	160	f	f	f	f	1
+301	44	161	f	f	f	f	1
+302	45	162	f	f	t	t	1
+303	45	163	f	f	f	f	1
+304	45	164	f	f	f	f	1
+305	45	165	f	f	f	f	1
+306	45	166	f	f	f	f	1
+307	45	167	f	f	f	f	1
+308	46	168	f	f	t	t	1
+309	46	169	f	f	f	f	1
+310	46	170	f	f	f	f	1
+311	46	171	f	f	f	f	1
+312	46	172	f	f	f	f	1
+313	46	173	f	f	f	f	1
+314	46	174	f	f	f	f	1
+315	46	175	f	f	f	f	1
+316	46	176	f	f	f	f	1
+317	46	177	f	f	f	f	1
+318	46	178	f	f	f	f	1
+319	47	13	f	f	t	t	1
+320	47	179	f	f	f	f	1
+321	47	14	f	f	f	f	1
+322	48	180	f	f	t	t	1
+323	48	181	f	f	f	f	1
+324	48	182	f	f	f	f	1
+325	48	183	f	f	f	f	1
+326	48	184	f	f	f	f	1
+327	48	185	f	f	f	f	1
+328	48	186	f	f	f	f	1
+329	48	187	f	f	f	f	1
+330	49	64	f	f	t	t	1
+331	50	188	f	f	t	t	1
+332	50	189	f	f	f	f	1
+333	50	190	f	f	f	f	1
+334	50	191	f	f	f	f	1
+335	50	192	f	f	f	f	1
+336	50	193	f	f	f	f	1
+337	50	194	f	f	f	f	1
+338	51	142	f	f	t	t	1
+339	51	9	f	f	f	f	1
+340	51	78	f	f	f	f	1
+341	51	138	f	f	f	f	1
+342	52	195	f	f	t	t	1
+343	52	122	f	f	f	f	1
+344	52	196	f	f	f	f	1
+345	52	197	f	f	f	f	1
+346	52	198	f	f	f	f	1
+347	52	59	f	f	f	f	1
+348	52	60	f	f	f	f	1
+349	52	199	f	f	f	f	1
+350	52	200	f	f	f	f	1
+351	52	201	f	f	f	f	1
+352	52	202	f	f	f	f	1
+353	53	179	f	f	t	t	1
+354	53	14	f	f	f	f	1
+355	53	203	f	f	f	f	1
+356	54	15	f	f	t	t	1
+357	54	74	f	f	f	f	1
+358	54	204	f	f	f	f	1
+359	55	11	f	f	t	t	1
+360	55	152	f	f	f	f	1
+361	55	205	f	f	f	f	1
+362	55	206	f	f	f	f	1
+363	55	153	f	f	f	f	1
+364	55	151	f	f	f	f	1
+365	55	207	f	f	f	f	1
+366	55	154	f	f	f	f	1
+367	56	208	f	f	f	t	1
+368	56	89	f	f	t	f	1
+369	56	209	f	f	f	f	1
+370	57	15	f	f	t	t	1
+371	57	93	f	f	f	f	1
+372	57	92	f	f	f	f	1
+373	57	210	f	f	f	f	1
+374	58	133	f	f	t	t	1
+375	58	134	f	f	f	f	1
+376	58	9	f	f	f	f	1
+377	58	211	f	f	f	f	1
+378	59	119	f	f	t	t	1
+379	59	120	f	f	f	f	1
+380	59	109	f	f	f	f	1
+381	60	212	f	f	t	t	1
+382	60	213	f	f	f	f	1
+383	60	214	f	f	f	f	1
+384	60	215	f	f	f	f	1
+385	60	216	f	f	f	f	1
+386	60	207	f	f	f	f	1
+387	60	217	f	f	f	f	1
+388	60	218	f	f	f	f	1
+389	60	219	f	f	f	f	1
+390	60	220	f	f	f	f	1
+391	60	221	f	f	f	f	1
+392	61	94	f	f	t	t	1
+393	61	92	f	f	f	f	1
+394	61	93	f	f	f	f	1
+395	62	210	f	f	t	t	1
+396	62	15	f	f	f	f	1
+397	63	210	f	f	t	t	1
+398	63	15	f	f	f	f	1
+399	64	142	f	f	t	t	1
+400	64	9	f	f	f	f	1
+401	64	92	f	f	f	f	1
+402	64	93	f	f	f	f	1
+403	64	78	f	f	f	f	1
+404	64	222	f	f	f	f	1
+405	64	223	f	f	f	f	1
+406	64	224	f	f	f	f	1
+407	64	225	f	f	f	f	1
+408	64	94	f	f	f	f	1
+409	64	226	f	f	f	f	1
+410	64	150	f	f	f	f	1
+411	64	227	f	f	f	f	1
+412	64	136	f	f	f	f	1
+413	64	228	f	f	f	f	1
+414	64	229	f	f	f	f	1
+415	64	230	f	f	f	f	1
+416	65	64	f	f	t	t	1
+417	66	156	f	f	t	t	1
+418	66	6	f	f	f	f	1
+419	66	155	f	f	f	f	1
+420	66	157	f	f	f	f	1
+421	67	155	f	f	t	t	1
+422	67	156	f	f	f	f	1
+423	67	6	f	f	f	f	1
+424	67	157	f	f	f	f	1
+425	68	231	f	f	t	t	1
+426	68	92	f	f	f	f	1
+427	68	93	f	f	f	f	1
+428	68	232	f	f	f	f	1
+429	68	233	f	f	f	f	1
+430	68	234	f	f	f	f	1
+431	68	78	f	f	f	f	1
+432	68	133	f	f	f	f	1
+433	68	235	f	f	f	f	1
+434	68	236	f	f	f	f	1
+435	68	237	f	f	f	f	1
+436	68	238	f	f	f	f	1
+437	69	239	f	f	t	t	1
+438	69	240	f	f	f	f	1
+439	69	7	f	f	f	f	1
+440	69	74	f	f	f	f	1
+441	69	94	f	f	f	f	1
+442	69	241	f	f	f	f	1
+443	70	208	f	f	f	t	1
+444	70	89	f	f	t	f	1
+445	70	209	f	f	f	f	1
+446	71	133	f	f	t	t	1
+447	71	9	f	f	f	f	1
+448	71	242	f	f	f	f	1
+449	71	140	f	f	f	f	1
+450	71	92	f	f	f	f	1
+451	72	243	f	f	t	t	1
+452	72	244	f	f	f	f	1
+453	72	150	f	f	f	f	1
+454	73	16	f	f	t	t	1
+455	73	245	f	f	f	f	1
+456	73	246	f	f	f	f	1
+457	74	247	f	f	t	t	1
+458	74	248	f	f	f	f	1
+459	74	249	f	f	f	f	1
+460	75	171	f	f	t	t	1
+461	75	170	f	f	f	f	1
+462	75	141	f	f	f	f	1
+463	75	250	f	f	f	f	1
+464	75	168	f	f	f	f	1
+465	75	251	f	f	f	f	1
+466	76	90	f	f	t	t	1
+467	76	91	f	f	f	f	1
+468	76	92	f	f	f	f	1
+469	76	93	f	f	f	f	1
+470	76	94	f	f	f	f	1
+471	76	226	f	f	f	f	1
+472	76	95	f	f	f	f	1
+473	77	252	f	f	t	t	1
+474	77	253	f	f	f	f	1
+475	77	254	f	f	f	f	1
+476	77	255	f	f	f	f	1
+477	77	256	f	f	f	f	1
+478	78	230	f	f	t	t	1
+479	78	223	f	f	f	f	1
+480	78	257	f	f	f	f	1
+481	79	230	f	f	t	t	1
+482	79	223	f	f	f	f	1
+483	79	257	f	f	f	f	1
+484	80	140	f	f	t	t	1
+485	80	133	f	f	f	f	1
+486	80	9	f	f	f	f	1
+487	80	136	f	f	f	f	1
+488	81	9	f	f	t	t	1
+489	81	133	f	f	f	f	1
+490	81	140	f	f	f	f	1
+491	81	136	f	f	f	f	1
+492	82	258	f	f	t	t	1
+493	82	259	f	f	f	f	1
+494	82	260	f	f	f	f	1
+495	82	261	f	f	f	f	1
+496	83	74	f	f	t	t	1
+497	83	262	f	f	f	f	1
+498	83	263	f	f	f	f	1
+499	83	264	f	f	f	f	1
+500	84	93	f	f	t	t	1
+501	84	234	f	f	f	f	1
+502	84	233	f	f	f	f	1
+503	84	265	f	f	f	f	1
+504	84	92	f	f	f	f	1
+505	84	266	f	f	f	f	1
+506	85	233	f	f	t	t	1
+507	85	78	f	f	f	f	1
+508	85	93	f	f	f	f	1
+509	85	76	f	f	f	f	1
+510	85	133	f	f	f	f	1
+511	85	234	f	f	f	f	1
+512	85	267	f	f	f	f	1
+513	85	236	f	f	f	f	1
+514	85	237	f	f	f	f	1
+515	85	235	f	f	f	f	1
+516	85	138	f	f	f	f	1
+517	85	268	f	f	f	f	1
+518	86	142	f	f	t	t	1
+519	86	9	f	f	f	f	1
+520	86	92	f	f	f	f	1
+521	86	93	f	f	f	f	1
+522	86	78	f	f	f	f	1
+523	86	222	f	f	f	f	1
+524	86	223	f	f	f	f	1
+525	86	224	f	f	f	f	1
+526	86	225	f	f	f	f	1
+527	86	94	f	f	f	f	1
+528	86	226	f	f	f	f	1
+529	86	150	f	f	f	f	1
+530	86	227	f	f	f	f	1
+531	86	136	f	f	f	f	1
+532	86	228	f	f	f	f	1
+533	86	229	f	f	f	f	1
+534	86	230	f	f	f	f	1
+535	87	179	f	f	t	t	1
+536	87	14	f	f	f	f	1
+537	87	203	f	f	f	f	1
+538	88	64	f	f	t	t	1
+539	88	65	f	f	f	f	1
+540	89	269	f	f	t	t	1
+541	89	173	f	f	f	f	1
+542	89	168	f	f	f	f	1
+543	89	170	f	f	f	f	1
+544	90	270	f	f	t	t	1
+545	90	89	f	f	f	f	1
+546	91	64	f	f	t	t	1
+547	91	170	f	f	f	f	1
+548	91	168	f	f	f	f	1
+549	92	74	f	f	t	t	1
+550	92	79	f	f	f	f	1
+551	92	78	f	f	f	f	1
+552	92	9	f	f	f	f	1
+553	92	76	f	f	f	f	1
+554	92	80	f	f	f	f	1
+555	92	77	f	f	f	f	1
+556	92	271	f	f	f	f	1
+557	93	272	f	f	t	t	1
+558	93	273	f	f	f	f	1
+559	93	13	f	f	f	f	1
+560	93	274	f	f	f	f	1
+561	93	275	f	f	f	f	1
+562	93	276	f	f	f	f	1
+563	94	277	f	f	t	t	1
+564	94	9	f	f	f	f	1
+565	94	78	f	f	f	f	1
+566	94	92	f	f	f	f	1
+567	94	93	f	f	f	f	1
+568	94	222	f	f	f	f	1
+569	94	225	f	f	f	f	1
+570	94	229	f	f	f	f	1
+571	94	278	f	f	f	f	1
+572	95	279	f	f	t	t	1
+573	95	104	f	f	f	f	1
+574	95	280	f	f	f	f	1
+575	95	281	f	f	f	f	1
+576	95	14	f	f	f	f	1
+577	95	77	f	f	f	f	1
+578	96	142	f	f	t	t	1
+579	96	9	f	f	f	f	1
+580	97	282	f	f	t	t	1
+581	97	23	f	f	f	f	1
+582	97	283	f	f	f	f	1
+583	97	3	f	f	f	f	1
+584	97	284	f	f	f	f	1
+585	97	250	f	f	f	f	1
+586	98	285	f	f	t	t	1
+587	98	108	f	f	f	f	1
+588	98	286	f	f	f	f	1
+589	98	285	f	f	t	t	1
+590	99	222	f	f	t	t	1
+591	99	225	f	f	f	f	1
+592	99	287	f	f	f	f	1
+593	100	14	f	f	t	t	1
+594	101	288	f	f	t	t	1
+595	101	289	f	f	f	f	1
+596	101	290	f	f	f	f	1
+597	101	291	f	f	f	f	1
+598	101	292	f	f	f	f	1
+599	101	293	f	f	f	f	1
+600	102	140	f	f	t	t	1
+601	102	133	f	f	f	f	1
+602	102	9	f	f	f	f	1
+603	102	136	f	f	f	f	1
+604	103	211	f	f	t	t	1
+605	103	294	f	f	f	f	1
+606	103	222	f	f	f	f	1
+607	103	136	f	f	f	f	1
+608	103	295	f	f	f	f	1
+609	103	9	f	f	f	f	1
+610	103	296	f	f	f	f	1
+611	104	133	f	f	t	t	1
+612	104	9	f	f	f	f	1
+613	104	136	f	f	f	f	1
+614	104	93	f	f	f	f	1
+615	105	136	f	f	t	t	1
+616	105	93	f	f	f	f	1
+617	105	150	f	f	f	f	1
+618	105	9	f	f	f	f	1
+619	105	140	f	f	f	f	1
+620	105	297	f	f	f	f	1
+621	106	93	f	f	t	t	1
+622	106	298	f	f	f	f	1
+623	106	9	f	f	f	f	1
+624	106	94	f	f	f	f	1
+625	106	299	f	f	f	f	1
+626	106	14	f	f	f	f	1
+627	106	244	f	f	f	f	1
+628	106	92	f	f	f	f	1
+629	106	300	f	f	f	f	1
+630	107	301	f	f	t	t	1
+631	107	302	f	f	f	f	1
+632	107	33	f	f	f	f	1
+633	107	303	f	f	f	f	1
+634	107	304	f	f	f	f	1
+635	107	305	f	f	f	f	1
+636	107	306	f	f	f	f	1
 \.
 
 
@@ -4040,6 +4092,16 @@ COPY repeats (id, repeat) FROM stdin;
 
 
 --
+-- Data for Name: roles; Type: TABLE DATA; Schema: public; Owner: dss
+--
+
+COPY roles (id, role) FROM stdin;
+1	Administrator
+2	Observer
+\.
+
+
+--
 -- Data for Name: semesters; Type: TABLE DATA; Schema: public; Owner: dss
 --
 
@@ -4068,385 +4130,385 @@ COPY semesters (id, semester) FROM stdin;
 --
 
 COPY sesshuns_email (id, user_id, email) FROM stdin;
-1	1	fghigo@nrao.edu
-2	2	jbraatz@nrao.edu
-3	3	jharnett@nrao.edu
-4	4	cbignell@nrao.edu
-5	4	cbignell@gb.nrao.edu
-6	5	dbalser@nrao.edu
-7	6	tminter@nrao.edu
-8	7	rmaddale@nrao.edu
-9	8	sransom@nrao.edu
-10	9	koneil@gb.nrao.edu
-11	9	koneil@nrao.edu
-12	10	bmason@nrao.edu
-13	10	bmason@gb.nrao.edu
-14	11	paul@paulruffle.com
-15	12	jlockman@nrao.edu
-16	13	glangsto@nrao.edu
-17	14	rrosen@nrao.edu
-18	15	aremijan@nrao.edu
-19	16	gbower@astro.berkeley.edu
-20	16	gbower@astron.berkeley.edu
-21	17	bolatto@astro.umd.edu
-22	18	eford@gmail.com
-23	19	kalas@astro.berkeley.edu
-24	20	jcondon@nrao.edu
-25	21	greenhill@cfa.harvard.edu
-26	21	lincoln@play
-27	21	harvard.edu
-28	22	p220hen@mpifr-bonn.mpg.de
-29	23	flo@nrao.edu
-30	24	reid@cfa.harvard.edu
-31	24	mreid@cfa.harvard.edu
-32	25	ck2v@virginia.edu
-33	26	iz6@astro.physics.nyu.edu
-34	27	atilak@cfa.harvard.edu
-35	28	haol@astro.as.utexas.edu
-36	29	plah@mso.anu.edu.au
-37	30	brunthaler@mpifr-bonn.mpg.de
-38	30	brunthal@mpifr-bonn.mpg.de
-39	31	lsjouwer@nrao.edu
-40	31	lsjouwer@aoc.nrao.edu
-41	31	lsjouwerman@aoc.nrao.edu
-42	32	garrett@astron.nl
-43	33	l.loinard@astrosmo.unam.mx
-44	34	jmiller@nrao.edu
-45	35	mrupen@nrao.edu
-46	35	mrupen@aoc.nrao.edu
-47	36	amiodusz@aoc.nrao.edu
-48	36	amiodusz@nrao.edu
-49	37	vdhawan@aoc.nrao.edu
-50	37	vdhawan@nrao.edu
-51	38	elena@physics.ucsb.edu
-52	39	P.Jonker@sron.nl
-53	40	wbrisken@nrao.edu
-54	40	wbrisken@aoc.nrao.edu
-55	41	r.torres@astrosmo.unam.mx
-56	42	william-peterson@uiowa.edu
-57	43	robert-mutel@uiowa.edu
-58	44	mgoss@nrao.edu
-59	44	mgoss@aoc.nrao.edu
-60	45	ubach@mpifr.de
-61	45	ubach@mpifr-bonn.mpg.de
-62	46	p459kri@mpifr-bonn.de
-63	46	tkrichbaum@mpifrbonn.mpg.de
-64	47	middelberg@astro.rub.de
-65	47	enno.middelberg@csiro.au
-66	48	walef@mpifr-bonn.mpg.de
-67	49	awitzel@mpifr-bonn.mpg.de
-68	50	azensus@mpifr-bonn.mpg.de
-69	51	sjc@phys.unsw.edu.au
-70	51	sjc@bat.phys.unsw.edu.au
-71	52	Matthew.Whiting@csiro.au
-72	53	jkw@phys.unsw.edu.au
-73	53	jkw@bat.phys.unsw.edu.au
-74	54	mmurphy@swin.edu.au
-75	55	ylva@unm.edu
-76	56	wiklind@stsci.edu
-77	57	pfrancis@mso.anu.edu.au
-78	58	ajbaker@physics.rutgers.edu
-79	59	harris@astro.umd.edu
-80	60	genzel@mpe.mpg.de
-81	61	jmangum@nrao.edu
-82	62	awootten@nrao.edu
-83	63	nkanekar@nrao.edu
-84	63	nkanekar@aoc.nrao.edu
-85	64	sarae@uvic.ca
-86	65	xavier@ucolick.org
-87	66	briany@uvic.ca
-88	67	yshirley@as.arizona.edu
-89	68	jan.m.hollis@nasa.gov
-90	68	mhollis@milkyway.gsfc.nasa.gov
-91	68	jan.m.hollis@gsfc.nasa.gov
-92	69	pjewell@nrao.edu
-93	70	lovas@nist.gov
-94	70	francis.lovas@nist.gov
-95	71	jbregman@umich.edu
-96	72	jairwin@umich.edu
-97	73	pdemores@nrao.edu
-98	74	bryan.jacoby@gmail.com
-99	75	robert.ferdman@cnrs-orleans.fr
-100	76	dbacker@astro.berkeley.edu
-101	77	istairs@astro.ubc.ca
-102	77	stairs@astro.ubc.ca
-103	78	dnice@brynmawr.edu
-104	78	dnice@princeton.edu
-105	79	alommen@fandm.edu
-106	80	mbailes@astro.swin.edu.au
-107	81	icognard@cnrs-orleans.fr
-108	82	Jayaram.Chengalur@atnf.csiro.au
-109	82	chengalu@ncra.tifr.res.in
-110	82	chengalu@gmrt.ernet.in
-111	83	tbourke@cfa.harvard.edu
-112	84	p.caselli@leeds.ac.uk
-113	85	rfriesen@uvastro.phys.uvic.ca
-114	86	james.difrancesco@nrc-cnrc.gc.ca
-115	86	difrancesco@nrc.ca
-116	87	pmyers@cfa.harvard.edu
-117	88	jdarling@origins.colorado.edu
-118	89	sedel@mix.wvu.edu
-119	90	dludovic@mix.wvu.edu
-120	91	Duncan.Lorimer@mail.wvu.edu
-121	92	maura.mclaughlin@mail.wvu.edu
-122	93	vlad.kondratiev@mail.wvu.edu
-123	94	jridley2@mix.wvu.edu
-124	95	earaya@nrao.edu
-125	95	earaya@nmt.edu
-126	96	phofner@nrao.edu
-127	96	hofner@kestrel.nmt.edu
-128	96	hofner_p@yahoo.com
-129	97	ihoffman@sps.edu
-130	98	linz@mpia-hd.mpg.de
-131	98	linz@tls-tautenburg.de
-132	99	s.kurtz@astrosmo.unam.mx
-133	99	kurtz@astroscu.unam.mx
-134	100	vrmarthi@ncra.tifr.res.in
-135	101	ymaan4@gmail.com
-136	102	avideshi@gmail.com
-137	103	jsg5@st-andrews.ac.uk
-138	104	ahales@nrao.edu
-139	105	brenda.matthews@nrc-cnrc.gc.ca
-140	106	campbellb@si.edu
-141	106	campbellb@nasm.si.edu
-142	107	campbell@astro.cornell.edu
-143	107	campbell@naic.edu
-144	107	campbell@astrosun.tn.cornell.edu
-145	108	carterl@si.edu
-146	108	carterl@nasm.si.edu
-147	109	ghentr@si.edu
-148	110	mnolan@naic.edu
-149	110	nolan@naic.edu
-150	111	naoto@ioa.s.u-tokyo.ac.jp
-151	112	Tom.Millar@qub.ac.uk
-152	113	Masao.Saito@nao.ac.jp
-153	114	ck_yasui@ioa.s.u-tokyo.ac.jp
-154	115	dennison@unca.edu
-155	116	lhdicken@unca.edu
-156	117	benjamir@uww.edu
-157	118	bbutler@nrao.edu
-158	118	bbutler@aoc.nrao.edu
-159	119	ben.bussey@jhuapl.edu
-160	120	mcintogc@morris.umn.edu
-161	121	Ian.Smail@durham.ac.uk
-162	122	rji@roe.ac.uk
-163	123	ljh@astro.umd.edu
-164	123	ljh@astro.caltech.edu
-165	124	awb@astro.caltech.edu
-166	125	linda@mpe.mpg.de
-167	126	bertoldi@astro.uni-bonn.de
-168	127	tgreve@submm.caltech.edu
-169	128	neri@iram.fr
-170	129	schapman@ast.cam.ac.uk
-171	130	cox@iram.fr
-172	131	omont@iap.fr
-173	132	fernando@astro.columbia.edu
-174	133	jules@astro.columbia.edu
-175	134	jreynold@atnf.csiro.au
-176	134	John.Reynolds@csiro.au
-177	135	malloryr@gmail.com
-178	136	zaven.arzoumanian@nasa.gov
-179	136	zaven@milkyway.gsfc.nasa.gov
-180	137	pfreire@naic.edu
-181	138	rwr@astro.stanford.edu
-182	139	Paul.Ray@nrl.navy.mil
-183	139	paulr@xeus.nrl.navy.mil
-184	140	dwilner@cfa.harvard.edu
-185	141	rsl4v@virginia.edu
-186	142	awolfe@kingpin.ucsd.edu
-187	143	regina.jorgenson@physics.ucsd.edu
-188	144	robishaw@physics.usyd.edu.au
-189	145	cheiles@astron.berkeley.edu
-190	145	heiles@astro.berkeley.edu
-191	146	szonak@astro.umd.edu
-192	147	csharon@physics.rutgers.edu
-193	148	pvandenb@nrao.edu
-194	149	hessels@astron.nl
-195	149	J.W.T.Hessels@uva.nl
-196	149	jhessels@science.uva.nl
-197	150	bcotton@nrao.edu
-198	151	simon.dicker@gmail.com
-199	151	sdicker@hep.upenn.edu
-200	152	PhillipKorngut@gmail.com
-201	152	pkorngut@physics.upenn.edu
-202	153	devlin@physics.upenn.edu
-203	154	andersld@bu.edu
-204	155	bania@bu.edu
-205	156	rtr@virginia.edu
-206	157	Neeraj.Gupta@atnf.csiro.au
-207	158	anand@iucaa.ernet.in
-208	159	ppetitje@iap.fr
-209	159	petitjean@iap.fr
-210	160	noterdae@iap.fr
-211	161	sepulcre@arcetri.astro.it
-212	162	cesa@arcetri.astro.it
-213	163	brand@ira.inaf.it
-214	163	brand@ira.bo.cnr.it
-215	164	Francesco.Fontani@unige.ch
-216	165	walmsley@arcetri.astro.it
-217	166	wyrowski@mpifr-bonn.mpg.de
-218	167	ccarilli@nrao.edu
-219	167	ccarilli@aoc.nrao.edu
-220	168	edaddi@cea.fr
-221	169	jwagg@nrao.edu
-222	169	jwagg@aoc.nrao.edu
-223	170	maraven@astro.uni-bonn.de
-224	171	walter@mpia.de
-225	171	walter@mpia-hd.mpg.de
-226	172	dr@astro.caltech.edu
-227	173	dannerb@mpia-hd.mpg.de
-228	174	med@noao.edu
-229	175	delbaz@cea.fr
-230	176	stern@zwolfkinder.jpl.nasa.gov
-231	177	morrison@cfht.hawaii.edu
-232	178	katie.m.chynoweth@vanderbilt.edu
-233	179	cerni@damir.iem.csic.es
-234	179	cerni@astro.iem.csic.es
-235	180	lucie.vincent@obspm.fr
-236	181	nicole.feautrier@obspm.fr
-237	182	Pierre.Valiron@obs.ujf-grenoble.fr
-238	183	afaure@obs.ujf-grenoble.fr
-239	183	Alexandre.Faure@obs.ujf-grenoble.fr
-240	184	annie.spielfiedel@obspm.fr
-241	185	senent@damir.iem.csic.es
-242	186	daniel@damir.iem.csic.es
-243	187	maca@ph1.uni-koeln.de
-244	188	eckart@ph1.uni-koeln.de
-245	189	skoenig@ph1.uni-koeln.de
-246	190	fischer@ph1.uni-koeln.de
-247	191	jzuther@mpe.mpg.de
-248	192	huchtmeier@mpifr-bonn.mpg.de
-249	193	bertram@ph1.uni-koeln.de
-250	194	a.m.swinbank@dur.ac.uk
-251	195	kristen.coppin@durham.ac.uk
-252	196	Alastair.Edge@durham.ac.uk
-253	197	rse@astro.caltech.edu
-254	198	dps@astro.caltech.edu
-255	199	tajones@astro.caltech.edu
-256	200	jeanpaul.kneib@gmail.com
-257	200	kneib@astro.caltech.edu
-258	201	ebeling@ifa.hawaii.edu
-259	202	k.holley@vanderbilt.edu
-260	203	clemens@physics.unc.edu
-261	204	sandor@asiaa.sinica.edu.tw
-262	205	pmkoch@asiaa.sinica.edu.tw
-263	206	jaguirre@nrao.edu
-264	207	stocke@colorado.edu
-265	207	stocke@hyades.Colorado.EDU
-266	208	ting.yan@colorado.edu
-267	209	sheather@nrao.edu
-268	210	eric@astro.columbia.edu
-269	210	evg@astro.columbia.edu
-270	211	nordhaus@astro.as.utexas.edu
-271	212	nje@bubba.as.utexas.edu
-272	212	nje@astro.as.utexas.edu
-273	213	erik.rosolowsky@ubc.ca
-274	214	ccyganow@astro.wisc.edu
-275	215	John.Bally@colorado.edu
-276	215	bally@janos.colorado.edu
-277	216	Meredith.Drosback@casa.colorado.edu
-278	217	jglenn@casa.colorado.edu
-279	217	Jason.Glenn@colorado.edu
-280	218	jpw@ifa.hawaii.edu
-281	219	bradleet@colorado.edu
-282	220	adam.ginsburg@colorado.edu
-283	220	keflavich@gmail.com
-284	221	vkaspi@physics.mcgill.ca
-285	222	cordes@astro.cornell.edu
-286	222	cordes@spacenet.tn.cornell.edu
-287	223	david.champion@csiro.au
-288	224	aarchiba@physics.mcgill.ca
-289	225	jboyles5@mix.wvu.edu
-290	226	mcphee@phas.ubc.ca
-291	227	kasian@physics.ubc.ca
-292	228	leeuwen@astron.nl
-293	228	joeri@astro.berkeley.edu
-294	229	deneva@astro.cornell.edu
-295	230	fcrawfor@fandm.edu
-296	231	afaulkne@jb.man.ac.uk
-297	231	Andrew.Faulkner@manchester.ac.uk
-298	232	mkramer@jb.man.ac.uk
-299	232	Michael.Kramer@manchester.ac.uk
-300	233	agl@jb.man.ac.uk
-301	234	burgay@ca.astro.it
-302	235	possenti@ca.astro.it
-303	236	damico@ca.astro.it
-304	237	cgilpin@fandm.edu
-305	238	cgwinn@physics.ucsb.edu
-306	239	michaeltdh@gmail.com
-307	240	tania@prao.ru
-308	241	S.Chatterjee@physics.usyd.edu.au
-309	242	E.A.RubioHerrera@uva.nl
-310	243	Ben.Stappers@manchester.ac.uk
-311	244	dmeier@nrao.edu
-312	245	zstork@parkland.edu
-313	246	larry@umn.edu
-314	247	farnsworth@astro.umn.edu
-315	248	brown@physics.umn.edu
-316	248	brown@astro.umn.edu
-317	249	kmenten@mpifr-bonn.mpg.de
-318	250	ehumphre@cfa.harvard.edu
-319	250	ehumphreys@cfa.harvard.edu
-320	251	jairo.armijos@estudiante.uam.es
-321	252	jmartin.pintado@iem.cfmac.csic.es
-322	253	requena@damir.iem.csic.es
-323	254	smartin@cfa.harvard.edu
-324	255	arturo@damir.iem.csic.es
-325	256	Joseph.Lazio@nrl.navy.mil
-326	256	lazio@rsd.nrl.navy.mil
-327	257	kudo@a.phys.nagoya-u.ac.jp
-328	258	torii@a.phys.nagoya-u.ac.jp
-329	259	natsukok@xj.commufa.jp
-330	260	morris@astro.ucla.edu
-331	260	morris@osprey.astro.ucla.edu
-332	261	m.walker@mawtech.com.au
-333	262	willem@phys.utb.edu
-334	263	aris.karastergiou@gmail.com
-335	264	j314159@gmail.com
-336	265	evan.keane@gmail.com
-337	266	dick.manchester@csiro.au
-338	266	rmanches@atnf.csiro.au
-339	267	bperera@mix.wvu.edu
-340	268	yugao@pmo.ac.cn
-341	269	benjamin.zeiger@colorado.edu
-342	270	gonzalez@phas.ubc.ca
-343	271	joncas@phy.ulaval.ca
-344	272	jean-francois.robitaille.1@ulaval.ca
-345	273	douglas.marshall.1@ulaval.ca
-346	274	mamd@ias.u-psud.fr
-347	275	pgmartin@cita.utoronto.ca
-348	276	megandecesar@gmail.com
-349	277	miller@astro.umd.edu
-350	278	amss@st-and.ac.uk
-351	279	mmj@st-andrews.ac.uk
-352	280	acc4@st-and.ac.uk
-353	281	violette@nrao.edu
-354	282	aroy@mpifr-bonn.mpg.de
-355	283	sleurini@eso.org
-356	283	sleurini@mpifr-bonn.mpg.de
-357	284	jlm@ess.ucla.edu
-358	285	marty@shannon.jpl.nasa.gov
-359	285	martin.a.slade@jpl.nasa.gov
-360	286	julianhaw@gmail.com
-361	287	yan@physics.ucf.edu
-362	288	alovell@agnesscott.edu
-363	289	campins@physics.ucf.edu
-364	290	mikek@ece.cornell.edu
-365	291	jlicandr@iac.es
-366	292	a.zijlstra@manchester.ac.uk
-367	292	a.zijlstra@umist.ac.uk
-368	293	maggie@hep.physics.mcgill.ca
-369	293	maggie@physics.mcgill.ca
-370	294	frank.marshall.gsfc.nasa.gov
-371	295	
-372	300	zparagi@jive.nl
-373	301	chryssa.kouveliotou@nasa.gov
-374	301	chryssa.kouveliotou@msfc.nasa.gov
-375	302	enrico@ias.edu
-376	303	langevelde@jive.nl
-377	303	huib@jive.nfra.nl
-378	304	szomoru@jive.nl
-379	305	mkargo@jb.man.ac.uk
+1	2	fghigo@nrao.edu
+2	3	jbraatz@nrao.edu
+3	4	jharnett@nrao.edu
+4	5	cbignell@nrao.edu
+5	5	cbignell@gb.nrao.edu
+6	6	dbalser@nrao.edu
+7	7	tminter@nrao.edu
+8	8	rmaddale@nrao.edu
+9	9	sransom@nrao.edu
+10	10	koneil@gb.nrao.edu
+11	10	koneil@nrao.edu
+12	11	bmason@nrao.edu
+13	11	bmason@gb.nrao.edu
+14	12	paul@paulruffle.com
+15	13	jlockman@nrao.edu
+16	14	glangsto@nrao.edu
+17	15	rrosen@nrao.edu
+18	16	aremijan@nrao.edu
+19	17	gbower@astro.berkeley.edu
+20	17	gbower@astron.berkeley.edu
+21	18	bolatto@astro.umd.edu
+22	19	eford@gmail.com
+23	20	kalas@astro.berkeley.edu
+24	21	jcondon@nrao.edu
+25	22	greenhill@cfa.harvard.edu
+26	22	lincoln@play
+27	22	harvard.edu
+28	23	p220hen@mpifr-bonn.mpg.de
+29	24	flo@nrao.edu
+30	25	reid@cfa.harvard.edu
+31	25	mreid@cfa.harvard.edu
+32	26	ck2v@virginia.edu
+33	27	iz6@astro.physics.nyu.edu
+34	28	atilak@cfa.harvard.edu
+35	29	haol@astro.as.utexas.edu
+36	30	plah@mso.anu.edu.au
+37	31	brunthaler@mpifr-bonn.mpg.de
+38	31	brunthal@mpifr-bonn.mpg.de
+39	32	lsjouwer@nrao.edu
+40	32	lsjouwer@aoc.nrao.edu
+41	32	lsjouwerman@aoc.nrao.edu
+42	33	garrett@astron.nl
+43	34	l.loinard@astrosmo.unam.mx
+44	35	jmiller@nrao.edu
+45	36	mrupen@nrao.edu
+46	36	mrupen@aoc.nrao.edu
+47	37	amiodusz@aoc.nrao.edu
+48	37	amiodusz@nrao.edu
+49	38	vdhawan@aoc.nrao.edu
+50	38	vdhawan@nrao.edu
+51	39	elena@physics.ucsb.edu
+52	40	P.Jonker@sron.nl
+53	41	wbrisken@nrao.edu
+54	41	wbrisken@aoc.nrao.edu
+55	42	r.torres@astrosmo.unam.mx
+56	43	william-peterson@uiowa.edu
+57	44	robert-mutel@uiowa.edu
+58	45	mgoss@nrao.edu
+59	45	mgoss@aoc.nrao.edu
+60	46	ubach@mpifr.de
+61	46	ubach@mpifr-bonn.mpg.de
+62	47	p459kri@mpifr-bonn.de
+63	47	tkrichbaum@mpifrbonn.mpg.de
+64	48	middelberg@astro.rub.de
+65	48	enno.middelberg@csiro.au
+66	49	walef@mpifr-bonn.mpg.de
+67	50	awitzel@mpifr-bonn.mpg.de
+68	51	azensus@mpifr-bonn.mpg.de
+69	52	sjc@phys.unsw.edu.au
+70	52	sjc@bat.phys.unsw.edu.au
+71	53	Matthew.Whiting@csiro.au
+72	54	jkw@phys.unsw.edu.au
+73	54	jkw@bat.phys.unsw.edu.au
+74	55	mmurphy@swin.edu.au
+75	56	ylva@unm.edu
+76	57	wiklind@stsci.edu
+77	58	pfrancis@mso.anu.edu.au
+78	59	ajbaker@physics.rutgers.edu
+79	60	harris@astro.umd.edu
+80	61	genzel@mpe.mpg.de
+81	62	jmangum@nrao.edu
+82	63	awootten@nrao.edu
+83	64	nkanekar@nrao.edu
+84	64	nkanekar@aoc.nrao.edu
+85	65	sarae@uvic.ca
+86	66	xavier@ucolick.org
+87	67	briany@uvic.ca
+88	68	yshirley@as.arizona.edu
+89	69	jan.m.hollis@nasa.gov
+90	69	mhollis@milkyway.gsfc.nasa.gov
+91	69	jan.m.hollis@gsfc.nasa.gov
+92	70	pjewell@nrao.edu
+93	71	lovas@nist.gov
+94	71	francis.lovas@nist.gov
+95	72	jbregman@umich.edu
+96	73	jairwin@umich.edu
+97	74	pdemores@nrao.edu
+98	75	bryan.jacoby@gmail.com
+99	76	robert.ferdman@cnrs-orleans.fr
+100	77	dbacker@astro.berkeley.edu
+101	78	istairs@astro.ubc.ca
+102	78	stairs@astro.ubc.ca
+103	79	dnice@brynmawr.edu
+104	79	dnice@princeton.edu
+105	80	alommen@fandm.edu
+106	81	mbailes@astro.swin.edu.au
+107	82	icognard@cnrs-orleans.fr
+108	83	Jayaram.Chengalur@atnf.csiro.au
+109	83	chengalu@ncra.tifr.res.in
+110	83	chengalu@gmrt.ernet.in
+111	84	tbourke@cfa.harvard.edu
+112	85	p.caselli@leeds.ac.uk
+113	86	rfriesen@uvastro.phys.uvic.ca
+114	87	james.difrancesco@nrc-cnrc.gc.ca
+115	87	difrancesco@nrc.ca
+116	88	pmyers@cfa.harvard.edu
+117	89	jdarling@origins.colorado.edu
+118	90	sedel@mix.wvu.edu
+119	91	dludovic@mix.wvu.edu
+120	92	Duncan.Lorimer@mail.wvu.edu
+121	93	maura.mclaughlin@mail.wvu.edu
+122	94	vlad.kondratiev@mail.wvu.edu
+123	95	jridley2@mix.wvu.edu
+124	96	earaya@nrao.edu
+125	96	earaya@nmt.edu
+126	97	phofner@nrao.edu
+127	97	hofner@kestrel.nmt.edu
+128	97	hofner_p@yahoo.com
+129	98	ihoffman@sps.edu
+130	99	linz@mpia-hd.mpg.de
+131	99	linz@tls-tautenburg.de
+132	100	s.kurtz@astrosmo.unam.mx
+133	100	kurtz@astroscu.unam.mx
+134	101	vrmarthi@ncra.tifr.res.in
+135	102	ymaan4@gmail.com
+136	103	avideshi@gmail.com
+137	104	jsg5@st-andrews.ac.uk
+138	105	ahales@nrao.edu
+139	106	brenda.matthews@nrc-cnrc.gc.ca
+140	107	campbellb@si.edu
+141	107	campbellb@nasm.si.edu
+142	108	campbell@astro.cornell.edu
+143	108	campbell@naic.edu
+144	108	campbell@astrosun.tn.cornell.edu
+145	109	carterl@si.edu
+146	109	carterl@nasm.si.edu
+147	110	ghentr@si.edu
+148	111	mnolan@naic.edu
+149	111	nolan@naic.edu
+150	112	naoto@ioa.s.u-tokyo.ac.jp
+151	113	Tom.Millar@qub.ac.uk
+152	114	Masao.Saito@nao.ac.jp
+153	115	ck_yasui@ioa.s.u-tokyo.ac.jp
+154	116	dennison@unca.edu
+155	117	lhdicken@unca.edu
+156	118	benjamir@uww.edu
+157	119	bbutler@nrao.edu
+158	119	bbutler@aoc.nrao.edu
+159	120	ben.bussey@jhuapl.edu
+160	121	mcintogc@morris.umn.edu
+161	122	Ian.Smail@durham.ac.uk
+162	123	rji@roe.ac.uk
+163	124	ljh@astro.umd.edu
+164	124	ljh@astro.caltech.edu
+165	125	awb@astro.caltech.edu
+166	126	linda@mpe.mpg.de
+167	127	bertoldi@astro.uni-bonn.de
+168	128	tgreve@submm.caltech.edu
+169	129	neri@iram.fr
+170	130	schapman@ast.cam.ac.uk
+171	131	cox@iram.fr
+172	132	omont@iap.fr
+173	133	fernando@astro.columbia.edu
+174	134	jules@astro.columbia.edu
+175	135	jreynold@atnf.csiro.au
+176	135	John.Reynolds@csiro.au
+177	136	malloryr@gmail.com
+178	137	zaven.arzoumanian@nasa.gov
+179	137	zaven@milkyway.gsfc.nasa.gov
+180	138	pfreire@naic.edu
+181	139	rwr@astro.stanford.edu
+182	140	Paul.Ray@nrl.navy.mil
+183	140	paulr@xeus.nrl.navy.mil
+184	141	dwilner@cfa.harvard.edu
+185	142	rsl4v@virginia.edu
+186	143	awolfe@kingpin.ucsd.edu
+187	144	regina.jorgenson@physics.ucsd.edu
+188	145	robishaw@physics.usyd.edu.au
+189	146	cheiles@astron.berkeley.edu
+190	146	heiles@astro.berkeley.edu
+191	147	szonak@astro.umd.edu
+192	148	csharon@physics.rutgers.edu
+193	149	pvandenb@nrao.edu
+194	150	hessels@astron.nl
+195	150	J.W.T.Hessels@uva.nl
+196	150	jhessels@science.uva.nl
+197	151	bcotton@nrao.edu
+198	152	simon.dicker@gmail.com
+199	152	sdicker@hep.upenn.edu
+200	153	PhillipKorngut@gmail.com
+201	153	pkorngut@physics.upenn.edu
+202	154	devlin@physics.upenn.edu
+203	155	andersld@bu.edu
+204	156	bania@bu.edu
+205	157	rtr@virginia.edu
+206	158	Neeraj.Gupta@atnf.csiro.au
+207	159	anand@iucaa.ernet.in
+208	160	ppetitje@iap.fr
+209	160	petitjean@iap.fr
+210	161	noterdae@iap.fr
+211	162	sepulcre@arcetri.astro.it
+212	163	cesa@arcetri.astro.it
+213	164	brand@ira.inaf.it
+214	164	brand@ira.bo.cnr.it
+215	165	Francesco.Fontani@unige.ch
+216	166	walmsley@arcetri.astro.it
+217	167	wyrowski@mpifr-bonn.mpg.de
+218	168	ccarilli@nrao.edu
+219	168	ccarilli@aoc.nrao.edu
+220	169	edaddi@cea.fr
+221	170	jwagg@nrao.edu
+222	170	jwagg@aoc.nrao.edu
+223	171	maraven@astro.uni-bonn.de
+224	172	walter@mpia.de
+225	172	walter@mpia-hd.mpg.de
+226	173	dr@astro.caltech.edu
+227	174	dannerb@mpia-hd.mpg.de
+228	175	med@noao.edu
+229	176	delbaz@cea.fr
+230	177	stern@zwolfkinder.jpl.nasa.gov
+231	178	morrison@cfht.hawaii.edu
+232	179	katie.m.chynoweth@vanderbilt.edu
+233	180	cerni@damir.iem.csic.es
+234	180	cerni@astro.iem.csic.es
+235	181	lucie.vincent@obspm.fr
+236	182	nicole.feautrier@obspm.fr
+237	183	Pierre.Valiron@obs.ujf-grenoble.fr
+238	184	afaure@obs.ujf-grenoble.fr
+239	184	Alexandre.Faure@obs.ujf-grenoble.fr
+240	185	annie.spielfiedel@obspm.fr
+241	186	senent@damir.iem.csic.es
+242	187	daniel@damir.iem.csic.es
+243	188	maca@ph1.uni-koeln.de
+244	189	eckart@ph1.uni-koeln.de
+245	190	skoenig@ph1.uni-koeln.de
+246	191	fischer@ph1.uni-koeln.de
+247	192	jzuther@mpe.mpg.de
+248	193	huchtmeier@mpifr-bonn.mpg.de
+249	194	bertram@ph1.uni-koeln.de
+250	195	a.m.swinbank@dur.ac.uk
+251	196	kristen.coppin@durham.ac.uk
+252	197	Alastair.Edge@durham.ac.uk
+253	198	rse@astro.caltech.edu
+254	199	dps@astro.caltech.edu
+255	200	tajones@astro.caltech.edu
+256	201	jeanpaul.kneib@gmail.com
+257	201	kneib@astro.caltech.edu
+258	202	ebeling@ifa.hawaii.edu
+259	203	k.holley@vanderbilt.edu
+260	204	clemens@physics.unc.edu
+261	205	sandor@asiaa.sinica.edu.tw
+262	206	pmkoch@asiaa.sinica.edu.tw
+263	207	jaguirre@nrao.edu
+264	208	stocke@colorado.edu
+265	208	stocke@hyades.Colorado.EDU
+266	209	ting.yan@colorado.edu
+267	210	sheather@nrao.edu
+268	211	eric@astro.columbia.edu
+269	211	evg@astro.columbia.edu
+270	212	nordhaus@astro.as.utexas.edu
+271	213	nje@bubba.as.utexas.edu
+272	213	nje@astro.as.utexas.edu
+273	214	erik.rosolowsky@ubc.ca
+274	215	ccyganow@astro.wisc.edu
+275	216	John.Bally@colorado.edu
+276	216	bally@janos.colorado.edu
+277	217	Meredith.Drosback@casa.colorado.edu
+278	218	jglenn@casa.colorado.edu
+279	218	Jason.Glenn@colorado.edu
+280	219	jpw@ifa.hawaii.edu
+281	220	bradleet@colorado.edu
+282	221	adam.ginsburg@colorado.edu
+283	221	keflavich@gmail.com
+284	222	vkaspi@physics.mcgill.ca
+285	223	cordes@astro.cornell.edu
+286	223	cordes@spacenet.tn.cornell.edu
+287	224	david.champion@csiro.au
+288	225	aarchiba@physics.mcgill.ca
+289	226	jboyles5@mix.wvu.edu
+290	227	mcphee@phas.ubc.ca
+291	228	kasian@physics.ubc.ca
+292	229	leeuwen@astron.nl
+293	229	joeri@astro.berkeley.edu
+294	230	deneva@astro.cornell.edu
+295	231	fcrawfor@fandm.edu
+296	232	afaulkne@jb.man.ac.uk
+297	232	Andrew.Faulkner@manchester.ac.uk
+298	233	mkramer@jb.man.ac.uk
+299	233	Michael.Kramer@manchester.ac.uk
+300	234	agl@jb.man.ac.uk
+301	235	burgay@ca.astro.it
+302	236	possenti@ca.astro.it
+303	237	damico@ca.astro.it
+304	238	cgilpin@fandm.edu
+305	239	cgwinn@physics.ucsb.edu
+306	240	michaeltdh@gmail.com
+307	241	tania@prao.ru
+308	242	S.Chatterjee@physics.usyd.edu.au
+309	243	E.A.RubioHerrera@uva.nl
+310	244	Ben.Stappers@manchester.ac.uk
+311	245	dmeier@nrao.edu
+312	246	zstork@parkland.edu
+313	247	larry@umn.edu
+314	248	farnsworth@astro.umn.edu
+315	249	brown@physics.umn.edu
+316	249	brown@astro.umn.edu
+317	250	kmenten@mpifr-bonn.mpg.de
+318	251	ehumphre@cfa.harvard.edu
+319	251	ehumphreys@cfa.harvard.edu
+320	252	jairo.armijos@estudiante.uam.es
+321	253	jmartin.pintado@iem.cfmac.csic.es
+322	254	requena@damir.iem.csic.es
+323	255	smartin@cfa.harvard.edu
+324	256	arturo@damir.iem.csic.es
+325	257	Joseph.Lazio@nrl.navy.mil
+326	257	lazio@rsd.nrl.navy.mil
+327	258	kudo@a.phys.nagoya-u.ac.jp
+328	259	torii@a.phys.nagoya-u.ac.jp
+329	260	natsukok@xj.commufa.jp
+330	261	morris@astro.ucla.edu
+331	261	morris@osprey.astro.ucla.edu
+332	262	m.walker@mawtech.com.au
+333	263	willem@phys.utb.edu
+334	264	aris.karastergiou@gmail.com
+335	265	j314159@gmail.com
+336	266	evan.keane@gmail.com
+337	267	dick.manchester@csiro.au
+338	267	rmanches@atnf.csiro.au
+339	268	bperera@mix.wvu.edu
+340	269	yugao@pmo.ac.cn
+341	270	benjamin.zeiger@colorado.edu
+342	271	gonzalez@phas.ubc.ca
+343	272	joncas@phy.ulaval.ca
+344	273	jean-francois.robitaille.1@ulaval.ca
+345	274	douglas.marshall.1@ulaval.ca
+346	275	mamd@ias.u-psud.fr
+347	276	pgmartin@cita.utoronto.ca
+348	277	megandecesar@gmail.com
+349	278	miller@astro.umd.edu
+350	279	amss@st-and.ac.uk
+351	280	mmj@st-andrews.ac.uk
+352	281	acc4@st-and.ac.uk
+353	282	violette@nrao.edu
+354	283	aroy@mpifr-bonn.mpg.de
+355	284	sleurini@eso.org
+356	284	sleurini@mpifr-bonn.mpg.de
+357	285	jlm@ess.ucla.edu
+358	286	marty@shannon.jpl.nasa.gov
+359	286	martin.a.slade@jpl.nasa.gov
+360	287	julianhaw@gmail.com
+361	288	yan@physics.ucf.edu
+362	289	alovell@agnesscott.edu
+363	290	campins@physics.ucf.edu
+364	291	mikek@ece.cornell.edu
+365	292	jlicandr@iac.es
+366	293	a.zijlstra@manchester.ac.uk
+367	293	a.zijlstra@umist.ac.uk
+368	294	maggie@hep.physics.mcgill.ca
+369	294	maggie@physics.mcgill.ca
+370	295	frank.marshall.gsfc.nasa.gov
+371	296	
+372	301	zparagi@jive.nl
+373	302	chryssa.kouveliotou@nasa.gov
+374	302	chryssa.kouveliotou@msfc.nasa.gov
+375	303	enrico@ias.edu
+376	304	langevelde@jive.nl
+377	304	huib@jive.nfra.nl
+378	305	szomoru@jive.nl
+379	306	mkargo@jb.man.ac.uk
 \.
 
 
@@ -5265,312 +5327,312 @@ COPY timezones (id, "timeZone") FROM stdin;
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: dss
 --
 
-COPY users (id, original_id, pst_id, username, sanctioned, first_name, last_name, contact_instructions) FROM stdin;
-1	227	\N	\N	f	Frank	Ghigo	\N
-2	3292	\N	\N	f	Jim	Braatz	\N
-3	1373	\N	\N	f	Jules	Harnett	\N
-4	4810	\N	\N	f	Carl	Bignell	\N
-5	2669	\N	\N	f	Dana	Balser	\N
-6	2927	\N	\N	f	Toney	Minter	\N
-7	1339	\N	\N	f	Ron	Maddalena	\N
-8	4789	\N	\N	f	Scott	Ransom	\N
-9	4305	\N	\N	f	Karen	O'Neil	\N
-10	4644	\N	\N	f	Brian	Mason	\N
-11	6150	\N	\N	f	Paul	Ruffle	\N
-12	846	\N	\N	f	Jay	Lockman	\N
-13	915	\N	\N	f	Glen	Langston	\N
-14	5605	\N	\N	f	Rachel	Rosen	\N
-15	5293	\N	\N	f	Tony	Remijan	\N
-16	3628	\N	\N	f	Geoff	Bower	\N
-17	4871	\N	\N	f	Alberto	Bolatto	\N
-18	3403	\N	\N	f	Eric	Ford	\N
-19	5714	\N	\N	f	Paul	Kalas	\N
-20	832	\N	\N	f	Jim	Condon	\N
-21	1503	\N	\N	f	Lincoln	Greenhill	\N
-22	278	\N	\N	f	Chris	Henkel	\N
-23	4852	\N	\N	f	Fred	Lo	\N
-24	516	\N	\N	f	Mark	Reid	\N
-25	5379	\N	\N	f	Cheng-Yu	Kuo	\N
-26	6240	\N	\N	f	Ingyin	Zaw	\N
-27	5064	\N	\N	f	Avanti	Tilak	\N
-28	5902	\N	\N	f	Lei	Hao	\N
-29	6406	\N	\N	f	Philip	Lah	\N
-30	4516	\N	\N	f	Andreas	Brunthaler	\N
-31	2563	\N	\N	f	Lorant	Sjouwerman	\N
-32	2069	\N	\N	f	Mike	Garrett	\N
-33	4963	\N	\N	f	Laurent	Loinard	\N
-34	5403	\N	\N	f	James	Miller-Jones	\N
-35	1522	\N	\N	f	Michael	Rupen	\N
-36	3662	\N	\N	f	Amy	Mioduszewski	\N
-37	903	\N	\N	f	Vivek	Dhawan	\N
-38	5295	\N	\N	f	Elena	Gallo	\N
-39	5081	\N	\N	f	Peter	Jonker	\N
-40	4056	\N	\N	f	Walter	Brisken	\N
-41	5460	\N	\N	f	Rosa	Torres	\N
-42	6189	\N	\N	f	William	Peterson	\N
-43	451	\N	\N	f	Bob	Mutel	\N
-44	838	\N	\N	f	Miller	Goss	\N
-45	5045	\N	\N	f	Uwe	Bach	\N
-46	5528	\N	\N	f	Thomas	Kirchbaum	\N
-47	4776	\N	\N	f	Enno	Middelberg	\N
-48	3	\N	\N	f	Walter	Alef	\N
-49	709	\N	\N	f	Arno	Witzel	\N
-50	1137	\N	\N	f	Tony	Zensus	\N
-51	4847	\N	\N	f	Steve	Curran	\N
-52	4974	\N	\N	f	Matthew	Whiting	\N
-53	2839	\N	\N	f	John	Webb	\N
-54	4849	\N	\N	f	Michael	Murphy	\N
-55	4905	\N	\N	f	Ylva	Pihlstrom	\N
-56	1392	\N	\N	f	Tommy	Wiklind	\N
-57	4975	\N	\N	f	Paul	Francis	\N
-58	3887	\N	\N	f	Andrew	Baker	\N
-59	4342	\N	\N	f	Andy	Harris	\N
-60	226	\N	\N	f	Reinhardt	Genzel	\N
-61	1744	\N	\N	f	Jeff	Mangum	\N
-62	862	\N	\N	f	Al	Wootten	\N
-63	4801	\N	\N	f	Nissim	Kanekar	\N
-64	4824	\N	\N	f	Sara	Ellison	\N
-65	4338	\N	\N	f	Jason	Prochaska	\N
-66	5633	\N	\N	f	Brian	York	\N
-67	4884	\N	\N	f	Yancy	Shirley	\N
-68	298	\N	\N	f	Mike	Hollis	\N
-69	953	\N	\N	f	Phil	Jewell	\N
-70	398	\N	\N	f	Frank	Lovas	\N
-71	1620	\N	\N	f	Joel	Bregman	\N
-72	4558	\N	\N	f	Jimmy	Irwin	\N
-73	5002	\N	\N	f	Paul	Demorest	\N
-74	4799	\N	\N	f	Bryan	Jacoby	\N
-75	4996	\N	\N	f	Robert	Ferdman	\N
-76	23	\N	\N	f	Don	Backer	\N
-77	4796	\N	\N	f	Ingrid	Stairs	\N
-78	2314	\N	\N	f	David	Nice	\N
-79	4800	\N	\N	f	Andrea	Lommen	\N
-80	3616	\N	\N	f	Matthew	Bailes	\N
-81	4833	\N	\N	f	Ismael	Cognard	\N
-82	2196	\N	\N	f	Jayaram	Chengalur	\N
-83	3782	\N	\N	f	Tyler	Bourke	\N
-84	5072	\N	\N	f	Paola	Caselli	\N
-85	5630	\N	\N	f	Rachel	Friesen	\N
-86	3701	\N	\N	f	James	Di Francesco	\N
-87	452	\N	\N	f	Phil	Myers	\N
-88	4772	\N	\N	f	Jeremy	Darling	\N
-89	6212	\N	\N	f	Stanislav	Edel	\N
-90	6213	\N	\N	f	Dominic	Ludovici	\N
-91	4226	\N	\N	f	Dunc	Lorimer	\N
-92	4142	\N	\N	f	Maura	McLaughlin	\N
-93	5561	\N	\N	f	Vlad	Kondratiev	\N
-94	6214	\N	\N	f	Joshua	Ridley	\N
-95	4820	\N	\N	f	Esteban	Araya	\N
-96	2360	\N	\N	f	Peter	Hofner	\N
-97	5061	\N	\N	f	Ian	Hoffman	\N
-98	5117	\N	\N	f	Hendrik	Linz	\N
-99	2309	\N	\N	f	Stan	Kurtz	\N
-100	6225	\N	\N	f	Viswesh	Marthi	\N
-101	6229	\N	\N	f	Yogesh	Maan	\N
-102	4197	\N	\N	f	Avinash	Deshpande	\N
-103	5608	\N	\N	f	Jane	Greaves	\N
-104	6182	\N	\N	f	Antonio	Hales	\N
-105	5104	\N	\N	f	Brenda	Matthews	\N
-106	3542	\N	\N	f	Bruce	Campbell	\N
-107	91	\N	\N	f	Don	Campbell	\N
-108	4790	\N	\N	f	Lynn	Carter	\N
-109	5618	\N	\N	f	Rebecca	Ghent	\N
-110	4816	\N	\N	f	Mike	Nolan	\N
-111	6242	\N	\N	f	Naoto	Kobayashi	\N
-112	4032	\N	\N	f	Tom	Millar	\N
-113	3344	\N	\N	f	Masao	Saito	\N
-114	6243	\N	\N	f	Chikako	Yasui	\N
-115	1534	\N	\N	f	Brian	Dennison	\N
-116	6248	\N	\N	f	Leigha	Dickens	\N
-117	4879	\N	\N	f	Robert	Benjamin	\N
-118	2072	\N	\N	f	Bryan	Butler	\N
-119	6434	\N	\N	f	Ben	Bussey	\N
-120	3543	\N	\N	f	Gordon	McIntosh	\N
-121	4137	\N	\N	f	Ian	Smail	\N
-122	2749	\N	\N	f	Rob	Ivison	\N
-123	5387	\N	\N	f	Laura	Hainline	\N
-124	4893	\N	\N	f	Andrew	Blain	\N
-125	995	\N	\N	f	Linda	Tacconi	\N
-126	1940	\N	\N	f	Frank	Bertoldi	\N
-127	4873	\N	\N	f	Thomas	Greve	\N
-128	5430	\N	\N	f	Roberto	Neri	\N
-129	4894	\N	\N	f	Scott	Chapman	\N
-130	4828	\N	\N	f	Pierre	Cox	\N
-131	1696	\N	\N	f	Alain	Omont	\N
-132	2923	\N	\N	f	Fernando	Camilo	\N
-133	1007	\N	\N	f	Jules	Halpern	\N
-134	2434	\N	\N	f	John	Reynolds	\N
-135	4570	\N	\N	f	Mallory	Roberts	\N
-136	2939	\N	\N	f	Zaven	Arzoumanian	\N
-137	5282	\N	\N	f	Paulo	Freire	\N
-138	1875	\N	\N	f	Roger	Romani	\N
-139	3756	\N	\N	f	Paul	Ray	\N
-140	2036	\N	\N	f	David	Wilner	\N
-141	5971	\N	\N	f	Ryan	Lynch	\N
-142	710	\N	\N	f	Art	Wolfe	\N
-143	5599	\N	\N	f	Regina	Jorgenson	\N
-144	4805	\N	\N	f	Tim	Robishaw	\N
-145	274	\N	\N	f	Carl	Heiles	\N
-146	5900	\N	\N	f	Stephanie	Zonak	\N
-147	6424	\N	\N	f	Chelsea	Sharon	\N
-148	655	\N	\N	f	Paul	VandenBout	\N
-149	4856	\N	\N	f	Jason	Hessels	\N
-150	834	\N	\N	f	Bill	Cotton	\N
-151	4827	\N	\N	f	Simon	Dicker	\N
-152	6217	\N	\N	f	Phil	Korngut	\N
-153	4842	\N	\N	f	Mark	Devlin	\N
-154	6169	\N	\N	f	Loren	Anderson	\N
-155	33	\N	\N	f	Tom	Bania	\N
-156	962	\N	\N	f	Bob	Rood	\N
-157	5875	\N	\N	f	Neeraj	Gupta	\N
-158	4189	\N	\N	f	Raghunathan	Srianand	\N
-159	3918	\N	\N	f	Patrick	Petitjean	\N
-160	5967	\N	\N	f	Pasquier	Noterdaeme	\N
-161	6400	\N	\N	f	Ana	Lopez-Sepulcre	\N
-162	2073	\N	\N	f	Riccardo	Cesaroni	\N
-163	1143	\N	\N	f	Jan	Brand	\N
-164	5181	\N	\N	f	Francesco	Fontani	\N
-165	671	\N	\N	f	Malcolm	Walmsley	\N
-166	3813	\N	\N	f	Friedrich	Wyrowski	\N
-167	1226	\N	\N	f	Chris	Carilli	\N
-168	6013	\N	\N	f	Emanuele	Daddi	\N
-169	4925	\N	\N	f	Jeff	Wagg	\N
-170	6429	\N	\N	f	Manuel	Aravena	\N
-171	3079	\N	\N	f	Fabian	Walter	\N
-172	5559	\N	\N	f	Dominik	Riechers	\N
-173	6438	\N	\N	f	Helmut	Dannerbauer	\N
-174	2512	\N	\N	f	Mark	Dickinson	\N
-175	6439	\N	\N	f	David	Elbaz	\N
-176	4418	\N	\N	f	Daniel	Stern	\N
-177	3282	\N	\N	f	Glenn	Morrison	\N
-178	6251	\N	\N	f	Katie	Chynoweth	\N
-179	2720	\N	\N	f	Jose	Cernicharo	\N
-180	6441	\N	\N	f	Lucie	Vincent	\N
-181	6442	\N	\N	f	Nicole	Feautrier	\N
-182	5397	\N	\N	f	Pierre	Valiron	\N
-183	5396	\N	\N	f	Alexandre	Faure	\N
-184	6443	\N	\N	f	Annie	Spielfiedel	\N
-185	6444	\N	\N	f	Maria Luisa	Senent	\N
-186	6445	\N	\N	f	Fabien	Daniel	\N
-187	6447	\N	\N	f	Macarena	Garcia-Marin	\N
-188	1304	\N	\N	f	Andreas	Eckart	\N
-189	6199	\N	\N	f	Sabine	Koenig	\N
-190	6201	\N	\N	f	Sebastian	Fischer	\N
-191	6448	\N	\N	f	Jens	Zuther	\N
-192	1036	\N	\N	f	Walter	Huchtmeier	\N
-193	6200	\N	\N	f	Thomas	Bertram	\N
-194	5928	\N	\N	f	Mark	Swinbank	\N
-195	6151	\N	\N	f	Kristen	Coppin	\N
-196	3129	\N	\N	f	Alastair	Edge	\N
-197	4538	\N	\N	f	Richard	Ellis	\N
-198	6118	\N	\N	f	Dan	Stark	\N
-199	6411	\N	\N	f	Tucker	Jones	\N
-200	4139	\N	\N	f	Jean-Paul	Kneib	\N
-201	4565	\N	\N	f	Harold	Ebeling	\N
-202	6252	\N	\N	f	Kelly	Holley-Bockelmann	\N
-203	5604	\N	\N	f	Chris	Clemens	\N
-204	6462	\N	\N	f	Sandor	Molnar	\N
-205	6463	\N	\N	f	Patrick	Koch	\N
-206	5866	\N	\N	f	James	Aguirre	\N
-207	612	\N	\N	f	John	Stocke	\N
-208	6465	\N	\N	f	Ting	Yan	\N
-209	5572	\N	\N	f	Sue Ann	Heatherly	\N
-210	3903	\N	\N	f	Eric	Gotthelf	\N
-211	6222	\N	\N	f	Miranda	Nordhaus	\N
-212	4885	\N	\N	f	Neal	Evans II	\N
-213	5307	\N	\N	f	Erik	Rosolowsky	\N
-214	5903	\N	\N	f	Claudia	Cyganowski	\N
-215	30	\N	\N	f	John	Bally	\N
-216	6178	\N	\N	f	Meredith	Drosback	\N
-217	6177	\N	\N	f	Jason	Glenn	\N
-218	2914	\N	\N	f	Jonathan	Williams	\N
-219	6179	\N	\N	f	Eric	Bradley	\N
-220	6180	\N	\N	f	Adam	Ginsburg	\N
-221	3936	\N	\N	f	Vicky	Kaspi	\N
-222	1533	\N	\N	f	Jim	Cordes	\N
-223	5283	\N	\N	f	David	Champion	\N
-224	6236	\N	\N	f	Anne	Archibald	\N
-225	5936	\N	\N	f	Jason	Boyles	\N
-226	6253	\N	\N	f	Christie	McPhee	\N
-227	5593	\N	\N	f	Laura	Kasian	\N
-228	5350	\N	\N	f	Joeri	van Leeuwen	\N
-229	5348	\N	\N	f	Julia	Deneva	\N
-230	3663	\N	\N	f	Fronefield	Crawford	\N
-231	4998	\N	\N	f	Andrew	Faulkner	\N
-232	4227	\N	\N	f	Michael	Kramer	\N
-233	403	\N	\N	f	Andrew	Lyne	\N
-234	5286	\N	\N	f	Marta	Burgay	\N
-235	4999	\N	\N	f	Andrea	Possenti	\N
-236	129	\N	\N	f	Nichi	D'Amico	\N
-237	6488	\N	\N	f	Claire	Gilpin	\N
-238	1568	\N	\N	f	Carl	Gwinn	\N
-239	6490	\N	\N	f	Michael	Johnson	\N
-240	6489	\N	\N	f	Tatiana	Smirnova	\N
-241	4147	\N	\N	f	Shami	Chatterjee	\N
-242	6491	\N	\N	f	Eduardo	Rubio-Herrera	\N
-243	3802	\N	\N	f	Ben	Stappers	\N
-244	432	\N	\N	f	David	Meier	\N
-245	5576	\N	\N	f	Wilmer	Stork	\N
-246	536	\N	\N	f	Larry	Rudnick	\N
-247	6436	\N	\N	f	Damon	Farnsworth	\N
-248	5933	\N	\N	f	Shea	Brown	\N
-249	3946	\N	\N	f	Karl	Menten	\N
-250	5003	\N	\N	f	Liz	Humphreys	\N
-251	6454	\N	\N	f	Jairo	Armijos	\N
-252	1958	\N	\N	f	Jesus	Martin-Pintado	\N
-253	5614	\N	\N	f	Miguel Angel	Requena-Torres	\N
-254	6453	\N	\N	f	Sergio	exception	\N
-255	5054	\N	\N	f	Arturo	Rodriguez-Franco	\N
-256	1426	\N	\N	f	Joe	Lazio	\N
-257	6425	\N	\N	f	Natsuko	Kudo	\N
-258	6427	\N	\N	f	Kazufumi	Torii	\N
-259	211	\N	\N	f	Yasuo	Fukui	\N
-260	446	\N	\N	f	Mark	Morris	\N
-261	3931	\N	\N	f	M.A.	Walker	\N
-262	5284	\N	\N	f	Willem	van Straten	\N
-263	5399	\N	\N	f	Aris	Karasteregiou	\N
-264	6249	\N	\N	f	Joshua	Miller	\N
-265	6516	\N	\N	f	Evan	Keane	\N
-266	411	\N	\N	f	Dick	Manchester	\N
-267	6499	\N	\N	f	Benetge	Perera	\N
-268	3941	\N	\N	f	Yu	Gao	\N
-269	5981	\N	\N	f	Ben	Zeiger	\N
-270	6501	\N	\N	f	Marjorie	Gonzalez	\N
-271	1227	\N	\N	f	Gilles	Joncas	\N
-272	6502	\N	\N	f	Jean-Francois	Robitaille	\N
-273	6503	\N	\N	f	Douglas	Marshall	\N
-274	5001	\N	\N	f	Marc-Antoine	Miville-Deschenes	\N
-275	4647	\N	\N	f	Peter	Martin	\N
-276	6504	\N	\N	f	Megan	DeCesar	\N
-277	6519	\N	\N	f	Cole	Miller	\N
-278	6460	\N	\N	f	Alexis	Smith	\N
-279	5530	\N	\N	f	Moira	Jardine	\N
-280	5937	\N	\N	f	Andrew	Cameron	\N
-281	5258	\N	\N	f	Violette	Impellizzeri	\N
-282	1963	\N	\N	f	Alan	Roy	\N
-283	5184	\N	\N	f	Silvia	Leurini	\N
-284	3541	\N	\N	f	Jean-Luc	Margot	\N
-285	589	\N	\N	f	Martin	Slade	\N
-286	6742	\N	\N	f	Julian	Haw Far Chin	\N
-287	3794	\N	\N	f	Yanga	Fernandez	\N
-288	4960	\N	\N	f	Amy	Lovell	\N
-289	3117	\N	\N	f	L.	Campusano	\N
-290	6273	\N	\N	f	Mike	Kelley	\N
-291	2226	\N	\N	f	Susana	Licazano	\N
-292	3152	\N	\N	f	Albert	Zijlstra	\N
-293	4939	\N	\N	f	Maggie	Livingstone	\N
-294	4089	\N	\N	f	Frank	Marshall	\N
-295	1478	\N	\N	f	John	Middleditch	\N
-296	6671	\N	\N	f	Matthew	Kerr	\N
-297	6672	\N	\N	f	Maxim	Lyutikob	\N
-298	6673	\N	\N	f	Anya	Bilous	\N
-299	6674	\N	\N	f	Mitchell	Mickaliger	\N
-300	3986	\N	\N	f	Zolt	Paragi	\N
-301	2956	\N	\N	f	Chryssa	Kouveliotou	\N
-302	5511	\N	\N	f	Enrico	Ramirez-Ruiz	\N
-303	1704	\N	\N	f	Huib	van Langevelde	\N
-304	1967	\N	\N	f	Arpad	Szomoru	\N
-305	5438	\N	\N	f	Megan	Argo	\N
+COPY users (id, original_id, pst_id, username, sanctioned, first_name, last_name, contact_instructions, role_id) FROM stdin;
+2	227	\N	\N	f	Frank	Ghigo	\N	2
+4	1373	\N	\N	f	Jules	Harnett	\N	2
+5	4810	\N	\N	f	Carl	Bignell	\N	2
+6	2669	\N	\N	f	Dana	Balser	\N	2
+7	2927	\N	\N	f	Toney	Minter	\N	2
+8	1339	\N	\N	f	Ron	Maddalena	\N	2
+9	4789	\N	\N	f	Scott	Ransom	\N	2
+10	4305	\N	\N	f	Karen	O'Neil	\N	2
+11	4644	\N	\N	f	Brian	Mason	\N	2
+12	6150	\N	\N	f	Paul	Ruffle	\N	2
+13	846	\N	\N	f	Jay	Lockman	\N	2
+14	915	\N	\N	f	Glen	Langston	\N	2
+15	5605	\N	\N	f	Rachel	Rosen	\N	2
+16	5293	\N	\N	f	Tony	Remijan	\N	2
+17	3628	\N	\N	f	Geoff	Bower	\N	2
+18	4871	\N	\N	f	Alberto	Bolatto	\N	2
+19	3403	\N	\N	f	Eric	Ford	\N	2
+20	5714	\N	\N	f	Paul	Kalas	\N	2
+21	832	\N	\N	f	Jim	Condon	\N	2
+22	1503	\N	\N	f	Lincoln	Greenhill	\N	2
+23	278	\N	\N	f	Chris	Henkel	\N	2
+24	4852	\N	\N	f	Fred	Lo	\N	2
+25	516	\N	\N	f	Mark	Reid	\N	2
+26	5379	\N	\N	f	Cheng-Yu	Kuo	\N	2
+27	6240	\N	\N	f	Ingyin	Zaw	\N	2
+28	5064	\N	\N	f	Avanti	Tilak	\N	2
+29	5902	\N	\N	f	Lei	Hao	\N	2
+30	6406	\N	\N	f	Philip	Lah	\N	2
+31	4516	\N	\N	f	Andreas	Brunthaler	\N	2
+32	2563	\N	\N	f	Lorant	Sjouwerman	\N	2
+33	2069	\N	\N	f	Mike	Garrett	\N	2
+34	4963	\N	\N	f	Laurent	Loinard	\N	2
+35	5403	\N	\N	f	James	Miller-Jones	\N	2
+36	1522	\N	\N	f	Michael	Rupen	\N	2
+37	3662	\N	\N	f	Amy	Mioduszewski	\N	2
+38	903	\N	\N	f	Vivek	Dhawan	\N	2
+39	5295	\N	\N	f	Elena	Gallo	\N	2
+40	5081	\N	\N	f	Peter	Jonker	\N	2
+41	4056	\N	\N	f	Walter	Brisken	\N	2
+42	5460	\N	\N	f	Rosa	Torres	\N	2
+43	6189	\N	\N	f	William	Peterson	\N	2
+44	451	\N	\N	f	Bob	Mutel	\N	2
+45	838	\N	\N	f	Miller	Goss	\N	2
+46	5045	\N	\N	f	Uwe	Bach	\N	2
+47	5528	\N	\N	f	Thomas	Kirchbaum	\N	2
+48	4776	\N	\N	f	Enno	Middelberg	\N	2
+49	3	\N	\N	f	Walter	Alef	\N	2
+50	709	\N	\N	f	Arno	Witzel	\N	2
+51	1137	\N	\N	f	Tony	Zensus	\N	2
+52	4847	\N	\N	f	Steve	Curran	\N	2
+53	4974	\N	\N	f	Matthew	Whiting	\N	2
+54	2839	\N	\N	f	John	Webb	\N	2
+55	4849	\N	\N	f	Michael	Murphy	\N	2
+56	4905	\N	\N	f	Ylva	Pihlstrom	\N	2
+57	1392	\N	\N	f	Tommy	Wiklind	\N	2
+58	4975	\N	\N	f	Paul	Francis	\N	2
+59	3887	\N	\N	f	Andrew	Baker	\N	2
+60	4342	\N	\N	f	Andy	Harris	\N	2
+61	226	\N	\N	f	Reinhardt	Genzel	\N	2
+62	1744	\N	\N	f	Jeff	Mangum	\N	2
+63	862	\N	\N	f	Al	Wootten	\N	2
+64	4801	\N	\N	f	Nissim	Kanekar	\N	2
+65	4824	\N	\N	f	Sara	Ellison	\N	2
+66	4338	\N	\N	f	Jason	Prochaska	\N	2
+67	5633	\N	\N	f	Brian	York	\N	2
+68	4884	\N	\N	f	Yancy	Shirley	\N	2
+69	298	\N	\N	f	Mike	Hollis	\N	2
+70	953	\N	\N	f	Phil	Jewell	\N	2
+71	398	\N	\N	f	Frank	Lovas	\N	2
+72	1620	\N	\N	f	Joel	Bregman	\N	2
+73	4558	\N	\N	f	Jimmy	Irwin	\N	2
+74	5002	\N	\N	f	Paul	Demorest	\N	2
+75	4799	\N	\N	f	Bryan	Jacoby	\N	2
+76	4996	\N	\N	f	Robert	Ferdman	\N	2
+77	23	\N	\N	f	Don	Backer	\N	2
+78	4796	\N	\N	f	Ingrid	Stairs	\N	2
+79	2314	\N	\N	f	David	Nice	\N	2
+80	4800	\N	\N	f	Andrea	Lommen	\N	2
+81	3616	\N	\N	f	Matthew	Bailes	\N	2
+82	4833	\N	\N	f	Ismael	Cognard	\N	2
+83	2196	\N	\N	f	Jayaram	Chengalur	\N	2
+84	3782	\N	\N	f	Tyler	Bourke	\N	2
+85	5072	\N	\N	f	Paola	Caselli	\N	2
+86	5630	\N	\N	f	Rachel	Friesen	\N	2
+87	3701	\N	\N	f	James	Di Francesco	\N	2
+88	452	\N	\N	f	Phil	Myers	\N	2
+89	4772	\N	\N	f	Jeremy	Darling	\N	2
+90	6212	\N	\N	f	Stanislav	Edel	\N	2
+91	6213	\N	\N	f	Dominic	Ludovici	\N	2
+92	4226	\N	\N	f	Dunc	Lorimer	\N	2
+93	4142	\N	\N	f	Maura	McLaughlin	\N	2
+94	5561	\N	\N	f	Vlad	Kondratiev	\N	2
+95	6214	\N	\N	f	Joshua	Ridley	\N	2
+96	4820	\N	\N	f	Esteban	Araya	\N	2
+97	2360	\N	\N	f	Peter	Hofner	\N	2
+98	5061	\N	\N	f	Ian	Hoffman	\N	2
+99	5117	\N	\N	f	Hendrik	Linz	\N	2
+100	2309	\N	\N	f	Stan	Kurtz	\N	2
+101	6225	\N	\N	f	Viswesh	Marthi	\N	2
+102	6229	\N	\N	f	Yogesh	Maan	\N	2
+103	4197	\N	\N	f	Avinash	Deshpande	\N	2
+104	5608	\N	\N	f	Jane	Greaves	\N	2
+105	6182	\N	\N	f	Antonio	Hales	\N	2
+106	5104	\N	\N	f	Brenda	Matthews	\N	2
+107	3542	\N	\N	f	Bruce	Campbell	\N	2
+108	91	\N	\N	f	Don	Campbell	\N	2
+109	4790	\N	\N	f	Lynn	Carter	\N	2
+110	5618	\N	\N	f	Rebecca	Ghent	\N	2
+111	4816	\N	\N	f	Mike	Nolan	\N	2
+112	6242	\N	\N	f	Naoto	Kobayashi	\N	2
+113	4032	\N	\N	f	Tom	Millar	\N	2
+114	3344	\N	\N	f	Masao	Saito	\N	2
+115	6243	\N	\N	f	Chikako	Yasui	\N	2
+116	1534	\N	\N	f	Brian	Dennison	\N	2
+117	6248	\N	\N	f	Leigha	Dickens	\N	2
+118	4879	\N	\N	f	Robert	Benjamin	\N	2
+119	2072	\N	\N	f	Bryan	Butler	\N	2
+120	6434	\N	\N	f	Ben	Bussey	\N	2
+121	3543	\N	\N	f	Gordon	McIntosh	\N	2
+122	4137	\N	\N	f	Ian	Smail	\N	2
+123	2749	\N	\N	f	Rob	Ivison	\N	2
+124	5387	\N	\N	f	Laura	Hainline	\N	2
+125	4893	\N	\N	f	Andrew	Blain	\N	2
+126	995	\N	\N	f	Linda	Tacconi	\N	2
+127	1940	\N	\N	f	Frank	Bertoldi	\N	2
+128	4873	\N	\N	f	Thomas	Greve	\N	2
+129	5430	\N	\N	f	Roberto	Neri	\N	2
+130	4894	\N	\N	f	Scott	Chapman	\N	2
+131	4828	\N	\N	f	Pierre	Cox	\N	2
+132	1696	\N	\N	f	Alain	Omont	\N	2
+133	2923	\N	\N	f	Fernando	Camilo	\N	2
+134	1007	\N	\N	f	Jules	Halpern	\N	2
+135	2434	\N	\N	f	John	Reynolds	\N	2
+136	4570	\N	\N	f	Mallory	Roberts	\N	2
+137	2939	\N	\N	f	Zaven	Arzoumanian	\N	2
+138	5282	\N	\N	f	Paulo	Freire	\N	2
+139	1875	\N	\N	f	Roger	Romani	\N	2
+140	3756	\N	\N	f	Paul	Ray	\N	2
+141	2036	\N	\N	f	David	Wilner	\N	2
+142	5971	\N	\N	f	Ryan	Lynch	\N	2
+143	710	\N	\N	f	Art	Wolfe	\N	2
+144	5599	\N	\N	f	Regina	Jorgenson	\N	2
+145	4805	\N	\N	f	Tim	Robishaw	\N	2
+146	274	\N	\N	f	Carl	Heiles	\N	2
+147	5900	\N	\N	f	Stephanie	Zonak	\N	2
+148	6424	\N	\N	f	Chelsea	Sharon	\N	2
+149	655	\N	\N	f	Paul	VandenBout	\N	2
+150	4856	\N	\N	f	Jason	Hessels	\N	2
+151	834	\N	\N	f	Bill	Cotton	\N	2
+152	4827	\N	\N	f	Simon	Dicker	\N	2
+153	6217	\N	\N	f	Phil	Korngut	\N	2
+154	4842	\N	\N	f	Mark	Devlin	\N	2
+155	6169	\N	\N	f	Loren	Anderson	\N	2
+156	33	\N	\N	f	Tom	Bania	\N	2
+157	962	\N	\N	f	Bob	Rood	\N	2
+158	5875	\N	\N	f	Neeraj	Gupta	\N	2
+159	4189	\N	\N	f	Raghunathan	Srianand	\N	2
+160	3918	\N	\N	f	Patrick	Petitjean	\N	2
+161	5967	\N	\N	f	Pasquier	Noterdaeme	\N	2
+162	6400	\N	\N	f	Ana	Lopez-Sepulcre	\N	2
+163	2073	\N	\N	f	Riccardo	Cesaroni	\N	2
+164	1143	\N	\N	f	Jan	Brand	\N	2
+165	5181	\N	\N	f	Francesco	Fontani	\N	2
+166	671	\N	\N	f	Malcolm	Walmsley	\N	2
+167	3813	\N	\N	f	Friedrich	Wyrowski	\N	2
+168	1226	\N	\N	f	Chris	Carilli	\N	2
+169	6013	\N	\N	f	Emanuele	Daddi	\N	2
+170	4925	\N	\N	f	Jeff	Wagg	\N	2
+171	6429	\N	\N	f	Manuel	Aravena	\N	2
+172	3079	\N	\N	f	Fabian	Walter	\N	2
+173	5559	\N	\N	f	Dominik	Riechers	\N	2
+174	6438	\N	\N	f	Helmut	Dannerbauer	\N	2
+175	2512	\N	\N	f	Mark	Dickinson	\N	2
+176	6439	\N	\N	f	David	Elbaz	\N	2
+177	4418	\N	\N	f	Daniel	Stern	\N	2
+178	3282	\N	\N	f	Glenn	Morrison	\N	2
+179	6251	\N	\N	f	Katie	Chynoweth	\N	2
+180	2720	\N	\N	f	Jose	Cernicharo	\N	2
+181	6441	\N	\N	f	Lucie	Vincent	\N	2
+182	6442	\N	\N	f	Nicole	Feautrier	\N	2
+183	5397	\N	\N	f	Pierre	Valiron	\N	2
+184	5396	\N	\N	f	Alexandre	Faure	\N	2
+185	6443	\N	\N	f	Annie	Spielfiedel	\N	2
+186	6444	\N	\N	f	Maria Luisa	Senent	\N	2
+187	6445	\N	\N	f	Fabien	Daniel	\N	2
+188	6447	\N	\N	f	Macarena	Garcia-Marin	\N	2
+189	1304	\N	\N	f	Andreas	Eckart	\N	2
+190	6199	\N	\N	f	Sabine	Koenig	\N	2
+191	6201	\N	\N	f	Sebastian	Fischer	\N	2
+192	6448	\N	\N	f	Jens	Zuther	\N	2
+193	1036	\N	\N	f	Walter	Huchtmeier	\N	2
+194	6200	\N	\N	f	Thomas	Bertram	\N	2
+195	5928	\N	\N	f	Mark	Swinbank	\N	2
+196	6151	\N	\N	f	Kristen	Coppin	\N	2
+197	3129	\N	\N	f	Alastair	Edge	\N	2
+198	4538	\N	\N	f	Richard	Ellis	\N	2
+199	6118	\N	\N	f	Dan	Stark	\N	2
+200	6411	\N	\N	f	Tucker	Jones	\N	2
+201	4139	\N	\N	f	Jean-Paul	Kneib	\N	2
+202	4565	\N	\N	f	Harold	Ebeling	\N	2
+203	6252	\N	\N	f	Kelly	Holley-Bockelmann	\N	2
+204	5604	\N	\N	f	Chris	Clemens	\N	2
+205	6462	\N	\N	f	Sandor	Molnar	\N	2
+206	6463	\N	\N	f	Patrick	Koch	\N	2
+207	5866	\N	\N	f	James	Aguirre	\N	2
+208	612	\N	\N	f	John	Stocke	\N	2
+209	6465	\N	\N	f	Ting	Yan	\N	2
+210	5572	\N	\N	f	Sue Ann	Heatherly	\N	2
+211	3903	\N	\N	f	Eric	Gotthelf	\N	2
+212	6222	\N	\N	f	Miranda	Nordhaus	\N	2
+213	4885	\N	\N	f	Neal	Evans II	\N	2
+214	5307	\N	\N	f	Erik	Rosolowsky	\N	2
+215	5903	\N	\N	f	Claudia	Cyganowski	\N	2
+216	30	\N	\N	f	John	Bally	\N	2
+217	6178	\N	\N	f	Meredith	Drosback	\N	2
+218	6177	\N	\N	f	Jason	Glenn	\N	2
+219	2914	\N	\N	f	Jonathan	Williams	\N	2
+220	6179	\N	\N	f	Eric	Bradley	\N	2
+221	6180	\N	\N	f	Adam	Ginsburg	\N	2
+222	3936	\N	\N	f	Vicky	Kaspi	\N	2
+223	1533	\N	\N	f	Jim	Cordes	\N	2
+224	5283	\N	\N	f	David	Champion	\N	2
+225	6236	\N	\N	f	Anne	Archibald	\N	2
+226	5936	\N	\N	f	Jason	Boyles	\N	2
+227	6253	\N	\N	f	Christie	McPhee	\N	2
+228	5593	\N	\N	f	Laura	Kasian	\N	2
+229	5350	\N	\N	f	Joeri	van Leeuwen	\N	2
+230	5348	\N	\N	f	Julia	Deneva	\N	2
+231	3663	\N	\N	f	Fronefield	Crawford	\N	2
+232	4998	\N	\N	f	Andrew	Faulkner	\N	2
+233	4227	\N	\N	f	Michael	Kramer	\N	2
+234	403	\N	\N	f	Andrew	Lyne	\N	2
+235	5286	\N	\N	f	Marta	Burgay	\N	2
+236	4999	\N	\N	f	Andrea	Possenti	\N	2
+237	129	\N	\N	f	Nichi	D'Amico	\N	2
+238	6488	\N	\N	f	Claire	Gilpin	\N	2
+239	1568	\N	\N	f	Carl	Gwinn	\N	2
+240	6490	\N	\N	f	Michael	Johnson	\N	2
+241	6489	\N	\N	f	Tatiana	Smirnova	\N	2
+242	4147	\N	\N	f	Shami	Chatterjee	\N	2
+243	6491	\N	\N	f	Eduardo	Rubio-Herrera	\N	2
+244	3802	\N	\N	f	Ben	Stappers	\N	2
+245	432	\N	\N	f	David	Meier	\N	2
+246	5576	\N	\N	f	Wilmer	Stork	\N	2
+247	536	\N	\N	f	Larry	Rudnick	\N	2
+248	6436	\N	\N	f	Damon	Farnsworth	\N	2
+249	5933	\N	\N	f	Shea	Brown	\N	2
+250	3946	\N	\N	f	Karl	Menten	\N	2
+251	5003	\N	\N	f	Liz	Humphreys	\N	2
+252	6454	\N	\N	f	Jairo	Armijos	\N	2
+253	1958	\N	\N	f	Jesus	Martin-Pintado	\N	2
+254	5614	\N	\N	f	Miguel Angel	Requena-Torres	\N	2
+255	6453	\N	\N	f	Sergio	exception	\N	2
+256	5054	\N	\N	f	Arturo	Rodriguez-Franco	\N	2
+257	1426	\N	\N	f	Joe	Lazio	\N	2
+258	6425	\N	\N	f	Natsuko	Kudo	\N	2
+259	6427	\N	\N	f	Kazufumi	Torii	\N	2
+260	211	\N	\N	f	Yasuo	Fukui	\N	2
+261	446	\N	\N	f	Mark	Morris	\N	2
+262	3931	\N	\N	f	M.A.	Walker	\N	2
+263	5284	\N	\N	f	Willem	van Straten	\N	2
+264	5399	\N	\N	f	Aris	Karasteregiou	\N	2
+265	6249	\N	\N	f	Joshua	Miller	\N	2
+266	6516	\N	\N	f	Evan	Keane	\N	2
+267	411	\N	\N	f	Dick	Manchester	\N	2
+268	6499	\N	\N	f	Benetge	Perera	\N	2
+269	3941	\N	\N	f	Yu	Gao	\N	2
+270	5981	\N	\N	f	Ben	Zeiger	\N	2
+271	6501	\N	\N	f	Marjorie	Gonzalez	\N	2
+272	1227	\N	\N	f	Gilles	Joncas	\N	2
+273	6502	\N	\N	f	Jean-Francois	Robitaille	\N	2
+274	6503	\N	\N	f	Douglas	Marshall	\N	2
+275	5001	\N	\N	f	Marc-Antoine	Miville-Deschenes	\N	2
+276	4647	\N	\N	f	Peter	Martin	\N	2
+277	6504	\N	\N	f	Megan	DeCesar	\N	2
+278	6519	\N	\N	f	Cole	Miller	\N	2
+279	6460	\N	\N	f	Alexis	Smith	\N	2
+280	5530	\N	\N	f	Moira	Jardine	\N	2
+281	5937	\N	\N	f	Andrew	Cameron	\N	2
+282	5258	\N	\N	f	Violette	Impellizzeri	\N	2
+283	1963	\N	\N	f	Alan	Roy	\N	2
+284	5184	\N	\N	f	Silvia	Leurini	\N	2
+285	3541	\N	\N	f	Jean-Luc	Margot	\N	2
+286	589	\N	\N	f	Martin	Slade	\N	2
+287	6742	\N	\N	f	Julian	Haw Far Chin	\N	2
+288	3794	\N	\N	f	Yanga	Fernandez	\N	2
+289	4960	\N	\N	f	Amy	Lovell	\N	2
+290	3117	\N	\N	f	L.	Campusano	\N	2
+291	6273	\N	\N	f	Mike	Kelley	\N	2
+292	2226	\N	\N	f	Susana	Licazano	\N	2
+293	3152	\N	\N	f	Albert	Zijlstra	\N	2
+294	4939	\N	\N	f	Maggie	Livingstone	\N	2
+295	4089	\N	\N	f	Frank	Marshall	\N	2
+296	1478	\N	\N	f	John	Middleditch	\N	2
+297	6671	\N	\N	f	Matthew	Kerr	\N	2
+298	6672	\N	\N	f	Maxim	Lyutikob	\N	2
+299	6673	\N	\N	f	Anya	Bilous	\N	2
+300	6674	\N	\N	f	Mitchell	Mickaliger	\N	2
+301	3986	\N	\N	f	Zolt	Paragi	\N	2
+302	2956	\N	\N	f	Chryssa	Kouveliotou	\N	2
+303	5511	\N	\N	f	Enrico	Ramirez-Ruiz	\N	2
+304	1704	\N	\N	f	Huib	van Langevelde	\N	2
+305	1967	\N	\N	f	Arpad	Szomoru	\N	2
+306	5438	\N	\N	f	Megan	Argo	\N	2
+3	3292	\N	mmccarty	f	Jim	Braatz	\N	2
 \.
 
 
@@ -5879,6 +5941,14 @@ ALTER TABLE ONLY repeats
 
 
 --
+-- Name: roles_pkey; Type: CONSTRAINT; Schema: public; Owner: dss; Tablespace: 
+--
+
+ALTER TABLE ONLY roles
+    ADD CONSTRAINT roles_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: semesters_pkey; Type: CONSTRAINT; Schema: public; Owner: dss; Tablespace: 
 --
 
@@ -6159,6 +6229,13 @@ CREATE INDEX targets_session_id ON targets USING btree (session_id);
 --
 
 CREATE INDEX targets_system_id ON targets USING btree (system_id);
+
+
+--
+-- Name: users_role_id; Type: INDEX; Schema: public; Owner: dss; Tablespace: 
+--
+
+CREATE INDEX users_role_id ON users USING btree (role_id);
 
 
 --
@@ -6462,6 +6539,14 @@ ALTER TABLE ONLY targets
 
 ALTER TABLE ONLY targets
     ADD CONSTRAINT targets_system_id_fkey FOREIGN KEY (system_id) REFERENCES systems(id) DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: users_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: dss
+--
+
+ALTER TABLE ONLY users
+    ADD CONSTRAINT users_role_id_fkey FOREIGN KEY (role_id) REFERENCES roles(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
