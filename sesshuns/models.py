@@ -146,6 +146,9 @@ class Email(models.Model):
     user  = models.ForeignKey(User)
     email = models.CharField(max_length = 255)
 
+    class Meta:
+        db_table = "emails"
+
 class Semester(models.Model):
     semester = models.CharField(max_length = 64)
 
