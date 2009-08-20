@@ -93,6 +93,7 @@ class ProjectResource(NellResource):
                                sortField == "pi" or \
                                sortField == "co_i" \
                             else sortField
+        sortField = "semester__semester" if sortField == "semester" else sortField
         order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
         query_set = Project.objects
 
@@ -112,10 +113,9 @@ class ProjectResource(NellResource):
         filterText = request.GET.get("filterText", None)
         if filterText is not None:
             query_set = query_set.filter(
-                    Q(name__icontains=filterText) |\
-                    Q(pcode__icontains=filterText) |\
-                    Q(semester__semester__icontains=filterText) |
                     Q(name__icontains=filterText) |
+                    Q(pcode__icontains=filterText) |
+                    Q(semester__semester__icontains=filterText) |
                     Q(project_type__type__icontains=filterText) |
                     Q(investigators__user__first_name__icontains = filterText) |
                     Q(investigators__user__last_name__icontains = filterText)
@@ -174,8 +174,9 @@ class SessionResource(NellResource):
 
             filterText = request.GET.get("filterText", None)
             if filterText is not None:
-                query_set = query_set.filter(Q(name__icontains=filterText) |\
-                    Q(project__pcode__icontains=filterText) |\
+                query_set = query_set.filter(
+                    Q(name__icontains=filterText) |
+                    Q(project__pcode__icontains=filterText) |
                     Q(project__semester__semester__icontains=filterText) |
                     Q(session_type__type__icontains=filterText) |
                     Q(observing_type__type__icontains=filterText))

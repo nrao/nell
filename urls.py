@@ -14,6 +14,7 @@ urlpatterns = patterns(''
    , url(r'^profile/(\d+)/dynamic_contact/form$',          dynamic_contact_form)
    , url(r'^profile/(\d+)/dynamic_contact$',               dynamic_contact_save)
    , url(r'^profile/(\d+)$',                               profile)
+   , url(r'^profile',                                      profile)
    , url(r'^project/([^/]+)$',                             project)
    , url(r'^project/([^/]+)/investigator/(\d+)/observer$', toggle_observer)
    , url(r'^project/([^/]+)/session/([^/]+)/enable$',      toggle_session)
@@ -26,6 +27,8 @@ urlpatterns = patterns(''
    , url(r'^periods$',            PeriodResource(permitted_methods=('GET', 'PUT', 'POST')))
    , url(r'^periods/(\d+)$',      PeriodResource(permitted_methods=('PUT', 'GET', 'POST')))
    , (r'^admin/',                 include(admin.site.urls))
+   , (r'^accounts/login/$', 'django_cas.views.login')
+   , (r'^accounts/logout/$', 'django_cas.views.logout')
    , (r'^static/(?P<path>.*)$', 'django.views.static.serve',
         {'document_root': settings.STATIC_DOC_ROOT})
 )

@@ -1,7 +1,9 @@
-from copy               import copy
-from datetime           import date, datetime, timedelta
-from django.test.client import Client
-from django.http        import QueryDict
+from copy                import copy
+from datetime            import date, datetime, timedelta
+from django.conf         import settings
+from django.contrib.auth import models as m
+from django.test.client  import Client
+from django.http         import QueryDict
 import simplejson as json
 
 from models                          import *
@@ -200,6 +202,344 @@ class TestReceiverSchedule(NellTestCase):
         self.assertEqual(expected, response.content)
 
 class TestProject(NellTestCase):
+    def test_get_blackouts1(self):
+        p = Project()
+        pdata = {"semester"   : "09A"
+               , "type"       : "science"
+               , "total_time" : "10.0"
+               , "PSC_time"   : "10.0"
+               , "sem_time"   : "10.0"
+               , "grade"      : "A"
+        }
+        p.update_from_post(pdata)
+        p.save()
+
+        # Create Investigator1 and his 3 blackouts.
+        user1 = User(sanctioned = True
+                   , role       = first(Role.objects.filter(role = "Observer"))
+                     )
+        user1.save()
+
+        investigator1 = Investigators(project  = p
+                                    , user     = user1
+                                    , observer = True)
+        investigator1.save()
+
+        blackout11 = Blackout(user   = user1
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 1, 1, 11)
+                            , end    = datetime(2009, 1, 3, 11))
+        blackout11.save()
+
+        blackout12 = Blackout(user   = user1
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 1, 1, 18)
+                            , end    = datetime(2009, 1, 4, 18))
+        blackout12.save()
+
+        blackout13 = Blackout(user   = user1
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 1, 2, 12)
+                            , end    = datetime(2009, 1, 4, 20))
+        blackout13.save()
+
+        # Create Investigator2 and her 2 blackouts.
+        user2 = User(sanctioned = True
+                   , role       = first(Role.objects.filter(role = "Observer"))
+                     )
+        user2.save()
+
+        investigator2 = Investigators(project  = p
+                                    , user     = user2
+                                    , observer = True)
+        investigator2.save()
+
+        blackout21 = Blackout(user   = user2
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 1, 1, 11)
+                            , end    = datetime(2009, 1, 3, 11))
+        blackout21.save()
+
+        blackout22 = Blackout(user   = user2
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 1, 1, 18)
+                            , end    = datetime(2009, 1, 4, 13))
+        blackout22.save()
+
+        # Now we can finally do our test.
+        expected = [
+            (datetime(2009, 1, 2, 12), datetime(2009, 1, 3, 11))
+        ]
+
+        r = p.get_blackouts()
+        self.assertEquals(expected, r)
+
+        # Clean up
+        blackout22.delete()
+        blackout21.delete()
+        investigator2.delete()
+        user2.delete()
+
+        blackout13.delete()
+        blackout12.delete()
+        blackout11.delete()
+        investigator1.delete()
+        user1.delete()
+
+        p.delete()
+
+    def test_get_blackouts2(self):
+        p = Project()
+        pdata = {"semester"   : "09A"
+               , "type"       : "science"
+               , "total_time" : "10.0"
+               , "PSC_time"   : "10.0"
+               , "sem_time"   : "10.0"
+               , "grade"      : "A"
+        }
+        p.update_from_post(pdata)
+        p.save()
+
+        # Create Investigator1 and his 3 blackouts.
+        user1 = User(sanctioned = True
+                   , role       = first(Role.objects.filter(role = "Observer"))
+                     )
+        user1.save()
+
+        investigator1 = Investigators(project  = p
+                                    , user     = user1
+                                    , observer = False) # NOT an observer
+        investigator1.save()
+
+        blackout11 = Blackout(user   = user1
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 1, 1, 11)
+                            , end    = datetime(2009, 1, 3, 11))
+        blackout11.save()
+
+        blackout12 = Blackout(user   = user1
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 1, 1, 18)
+                            , end    = datetime(2009, 1, 4, 18))
+        blackout12.save()
+
+        blackout13 = Blackout(user   = user1
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 1, 2, 12)
+                            , end    = datetime(2009, 1, 4, 20))
+        blackout13.save()
+
+        # Create Investigator2 and her 2 blackouts.
+        user2 = User(sanctioned = True
+                   , role       = first(Role.objects.filter(role = "Observer"))
+                     )
+        user2.save()
+
+        investigator2 = Investigators(project  = p
+                                    , user     = user2
+                                    , observer = False) # NOT an observer
+        investigator2.save()
+
+        blackout21 = Blackout(user   = user2
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 1, 1, 11)
+                            , end    = datetime(2009, 1, 3, 11))
+        blackout21.save()
+
+        blackout22 = Blackout(user   = user2
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 1, 1, 18)
+                            , end    = datetime(2009, 1, 4, 13))
+        blackout22.save()
+
+        r = p.get_blackouts()
+        self.assertEquals([], r)
+
+        # Clean up
+        blackout22.delete()
+        blackout21.delete()
+        investigator2.delete()
+        user2.delete()
+
+        blackout13.delete()
+        blackout12.delete()
+        blackout11.delete()
+        investigator1.delete()
+        user1.delete()
+
+        p.delete()
+
+    def test_get_blackouts3(self):
+        p = Project()
+        pdata = {"semester"   : "09A"
+               , "type"       : "science"
+               , "total_time" : "10.0"
+               , "PSC_time"   : "10.0"
+               , "sem_time"   : "10.0"
+               , "grade"      : "A"
+        }
+        p.update_from_post(pdata)
+        p.save()
+
+        # Create Investigator1 and his 3 blackouts.
+        user1 = User(sanctioned = True
+                   , role       = first(Role.objects.filter(role = "Observer"))
+                     )
+        user1.save()
+
+        investigator1 = Investigators(project  = p
+                                    , user     = user1
+                                    , observer = True)
+        investigator1.save()
+
+        blackout11 = Blackout(user   = user1
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 1, 1, 11)
+                            , end    = datetime(2009, 1, 3, 11))
+        blackout11.save()
+
+        blackout12 = Blackout(user   = user1
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 1, 1, 18)
+                            , end    = datetime(2009, 1, 4, 18))
+        blackout12.save()
+
+        blackout13 = Blackout(user   = user1
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 1, 2, 12)
+                            , end    = datetime(2009, 1, 4, 20))
+        blackout13.save()
+
+        # Create Investigator2 and her 2 blackouts.
+        user2 = User(sanctioned = True
+                   , role       = first(Role.objects.filter(role = "Observer"))
+                     )
+        user2.save()
+
+        investigator2 = Investigators(project  = p
+                                    , user     = user2
+                                    , observer = True)
+        investigator2.save()
+
+        # She's available all the time.
+
+        r = p.get_blackouts()
+        expected = [
+            (datetime(2009, 1, 1, 11), datetime(2009, 1, 3, 11))
+          , (datetime(2009, 1, 1, 18), datetime(2009, 1, 4, 18))
+          , (datetime(2009, 1, 2, 12), datetime(2009, 1, 4, 20))
+        ]
+        self.assertEquals(expected, r)
+
+        # Clean up
+        investigator2.delete()
+        user2.delete()
+
+        blackout13.delete()
+        blackout12.delete()
+        blackout11.delete()
+        investigator1.delete()
+        user1.delete()
+        p.delete()
+
+    def test_get_blackouts4(self):
+        p = Project()
+        pdata = {"semester"   : "09A"
+               , "type"       : "science"
+               , "total_time" : "10.0"
+               , "PSC_time"   : "10.0"
+               , "sem_time"   : "10.0"
+               , "grade"      : "A"
+        }
+        p.update_from_post(pdata)
+        p.save()
+
+        # Create Investigator1 and his 3 blackouts.
+        user1 = User(sanctioned = True
+                   , role       = first(Role.objects.filter(role = "Observer"))
+                     )
+        user1.save()
+
+        investigator1 = Investigators(project  = p
+                                    , user     = user1
+                                    , observer = True)
+        investigator1.save()
+
+        blackout11 = Blackout(user   = user1
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 1, 1, 11)
+                            , end    = datetime(2009, 1, 3, 11))
+        blackout11.save()
+
+        blackout12 = Blackout(user   = user1
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 1, 1, 18)
+                            , end    = datetime(2009, 1, 4, 18))
+        blackout12.save()
+
+        blackout13 = Blackout(user   = user1
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 1, 2, 12)
+                            , end    = datetime(2009, 1, 4, 20))
+        blackout13.save()
+
+        # Create Investigator2 and her 2 blackouts.
+        user2 = User(sanctioned = True
+                   , role       = first(Role.objects.filter(role = "Observer"))
+                     )
+        user2.save()
+
+        investigator2 = Investigators(project  = p
+                                    , user     = user2
+                                    , observer = True)
+        investigator2.save()
+
+        blackout21 = Blackout(user   = user2
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 2, 1, 11)
+                            , end    = datetime(2009, 2, 3, 11))
+        blackout21.save()
+
+        blackout22 = Blackout(user   = user2
+                            , tz     = first(TimeZone.objects.all())
+                            , repeat = first(Repeat.objects.all())
+                            , start  = datetime(2009, 3, 1, 18)
+                            , end    = datetime(2009, 3, 4, 13))
+        blackout22.save()
+
+        r = p.get_blackouts()
+        self.assertEquals([], r) # Coordinated blackouts.
+
+        # Clean up
+        blackout22.delete()
+        blackout21.delete()
+        investigator2.delete()
+        user2.delete()
+
+        blackout13.delete()
+        blackout12.delete()
+        blackout11.delete()
+        investigator1.delete()
+        user1.delete()
+
+        p.delete()
 
     def test_init_from_post(self):
         p1 = Project()
@@ -579,9 +919,26 @@ class TestObservers(NellTestCase):
 
     def setUp(self):
         super(TestObservers, self).setUp()
+
+        # Don't use CAS for authentication during unit tests
+        if 'django_cas.backends.CASBackend' in settings.AUTHENTICATION_BACKENDS:
+            settings.AUTHENTICATION_BACKENDS = settings.AUTHENTICATION_BACKENDS[:-1]
+        if 'django_cas.middleware.CASMiddleware' in settings.MIDDLEWARE_CLASSES:
+            settings.MIDDLEWARE_CLASSES      = settings.MIDDLEWARE_CLASSES[:-1]
+
         self.client = Client()
-        self.u = User(first_name = "Test", last_name = "User")
+        
+        self.auth_user = m.User.objects.create_user('dss', 'dss@nrao.edu', 'asdf5!')
+        self.auth_user.is_staff = True
+        self.auth_user.save()
+
+        self.u = User(first_name = "Test"
+                    , last_name  = "User"
+                    , role       = first(Role.objects.all())
+                    , username   = self.auth_user.username
+                      )
         self.u.save()
+        self.client.login(username = "dss", password = "asdf5!")
         
         self.p = Project()
         self.p.init_from_post({'semester'   : '09C'
@@ -609,21 +966,36 @@ class TestObservers(NellTestCase):
         self.s.project = self.p
         self.s.save()
 
+    def tearDown(self):
+        super(TestObservers, self).tearDown()
+
+    def get(self, url, data = {}):
+        """
+        Sets the USER extra kwar
+        """
+        return self.client.get(url, data, USER = self.auth_user.username)
+
+    def post(self, url, data = {}):
+        """
+        Sets the USER extra kwar
+        """
+        return self.client.post(url, data, USER = self.auth_user.username)
+
     def test_profile(self):
-        response = self.client.get('/profile/%s' % self.u.id)
+        response = self.get('/profile/%s' % self.u.id)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_project(self):
-        response = self.client.get('/project/%s' % self.p.pcode)
+        response = self.get('/project/%s' % self.p.pcode)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_search(self):
-        response = self.client.post('/search', {'search' : 'Test'})
+        response = self.post('/search', {'search' : 'Test'})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue("User" in response.content)
 
     def test_toggle_session(self):
-        response = self.client.post(
+        response = self.post(
             '/project/%s/session/%s/enable' % (self.p.pcode, self.s.name))
         self.failUnlessEqual(response.status_code, 302)
         s = first(Sesshun.objects.filter(id = self.s.id))
@@ -631,19 +1003,19 @@ class TestObservers(NellTestCase):
 
     def test_toggle_observer(self):
         i_id = first(self.p.investigators_set.all()).id
-        response = self.client.post(
+        response = self.post(
             '/project/%s/investigator/%s/observer' % (self.p.pcode, i_id))
         self.failUnlessEqual(response.status_code, 302)
         i = first(Investigators.objects.filter(id = i_id))
         self.assertEqual(i.observer, True)
 
     def test_dynamic_contact_form(self):
-        response = self.client.get('/profile/%s/dynamic_contact/form' % self.u.id)
+        response = self.get('/profile/%s/dynamic_contact/form' % self.u.id)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_dynamic_contact_save(self):
         data = {'contact_instructions' : "I'll be at Bob's house."}
-        response = self.client.post('/profile/%s/dynamic_contact' % self.u.id, data)
+        response = self.post('/profile/%s/dynamic_contact' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 302)
         u = first(User.objects.filter(id = self.u.id))
         self.assertEqual(u.contact_instructions, data.get('contact_instructions'))
@@ -659,14 +1031,14 @@ class TestObservers(NellTestCase):
         return b
         
     def test_blackout_form(self):
-        response = self.client.get('/profile/%s/blackout/form' % self.u.id)
+        response = self.get('/profile/%s/blackout/form' % self.u.id)
         self.failUnlessEqual(response.status_code, 200)
 
         b = self.create_blackout()
         data = {'_method' : 'PUT'
               , 'id'      : b.id
                 }
-        response = self.client.get('/profile/%s/blackout/form' % self.u.id, data)
+        response = self.get('/profile/%s/blackout/form' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue(b.description in response.content)
 
@@ -688,22 +1060,21 @@ class TestObservers(NellTestCase):
               , 'id'          : b.id
                 }
 
-        response = self.client.post(
+        response = self.post(
             '/profile/%s/blackout' % self.u.id, data)
         b = first(Blackout.objects.filter(id = b.id))
         self.assertEqual(b.end.date().strftime("%m/%d/%Y") , data.get('end'))
         self.failUnlessEqual(response.status_code, 302)
         
-        response = self.client.get(
-            '/profile/%s/blackout' % self.u.id, {'_method' : 'DELETE'
-                                               , 'id'      : b.id
-                                                 })
+        response = self.get(
+            '/profile/%s/blackout' % self.u.id
+          , {'_method' : 'DELETE', 'id' : b.id})
         self.failUnlessEqual(response.status_code, 302)
 
         data['end'] = date(2009, 5, 31).strftime("%m/%d/%Y")
         _ = data.pop('_method')
         _ = data.pop('id')
-        response    = self.client.post(
+        response    = self.post(
             '/profile/%s/blackout' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 302)
         b = first(self.u.blackout_set.all())
@@ -711,7 +1082,7 @@ class TestObservers(NellTestCase):
         b.delete()
 
         data['until'] = ''
-        response    = self.client.post(
+        response    = self.post(
             '/profile/%s/blackout' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 302)
 
@@ -758,3 +1129,82 @@ class TestReceiverCompile(NellTestCase):
             pass
         else:
             self.fail()
+
+class TestConsolidateBlackouts(NellTestCase):
+
+    def test_consolidate_blackouts(self):
+        starts = [
+            datetime(2009, 1, 1, 11)
+          , datetime(2009, 1, 1, 11)
+          , datetime(2009, 1, 1, 18)
+          , datetime(2009, 1, 2, 11)
+          , datetime(2009, 1, 2, 12)
+        ]
+        ends   = [
+            datetime(2009, 1, 3, 11)
+          , datetime(2009, 1, 3, 11)
+          , datetime(2009, 1, 4, 18)
+          , datetime(2009, 1, 4, 13)
+          , datetime(2009, 1, 4, 20)
+        ]
+        expected = [
+            # begin = b5 start, end = b1 end
+            (datetime(2009, 1, 2, 12), datetime(2009, 1, 3, 11))
+        ]
+
+        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        self.assertEquals(expected, r)
+
+        starts = [
+            datetime(2009, 1, 1, 11)
+          , datetime(2009, 1, 1, 11)
+        ]
+        ends   = [
+            datetime(2009, 1, 3, 11)
+          , datetime(2009, 1, 3, 11)
+        ]
+        expected = [
+            # begin = b1 start, end = b1 end
+            (datetime(2009, 1, 1, 11), datetime(2009, 1, 3, 11))
+        ]
+
+        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        self.assertEquals(expected, r)
+
+        starts = [
+            datetime(2009, 1, 1, 11)
+          , datetime(2009, 1, 4, 11)
+        ]
+        ends   = [
+            datetime(2009, 1, 3, 11)
+          , datetime(2009, 1, 5, 11)
+        ]
+        expected = [
+            # nothing to reduce
+            (datetime(2009, 1, 1, 11), datetime(2009, 1, 3, 11))
+          , (datetime(2009, 1, 4, 11), datetime(2009, 1, 5, 11))
+        ]
+
+        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        self.assertEquals(expected, r)
+
+        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        self.assertEquals(expected, r)
+
+        starts = [
+            datetime(2009, 1, 1, 11)
+        ]
+        ends   = [
+            datetime(2009, 1, 3, 11)
+        ]
+        expected = [
+            # one conflict
+            (datetime(2009, 1, 1, 11), datetime(2009, 1, 3, 11))
+        ]
+
+        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        self.assertEquals(expected, r)
+
+        # No conflicts.
+        r = consolidate_blackouts([])
+        self.assertEquals([], r)

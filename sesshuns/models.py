@@ -5,6 +5,7 @@ from django.http               import QueryDict
 from utilities.receiver        import ReceiverCompile
 from utilities                 import TimeAgent
 
+import calendar
 import sys
 
 def first(results, default = None):
@@ -63,6 +64,31 @@ def grade_float_2_abc(grade):
             break
     return gradeLetter
 
+def consolidate_blackouts(conflicts):
+    """
+    Takes a list of datetime tuples of the form (start, end) and
+    reduces it to the smallest list that describes the conflicts.
+    """
+    # If there is only one set of dates, then no need to reduce further.
+    if len(conflicts) == 1:
+        return conflicts
+
+    # Then reduce the list to its most succinct form.
+    blackouts = []
+    for (begin1, end1) in conflicts:
+        begin = begin1
+        end   = end1
+        for (begin2, end2) in conflicts:
+            if (begin1, end1) != (begin2, end2) and \
+               begin1 < end2 and begin2 < end1:
+                begin = max([begin, begin1, begin2])
+                end   = min([end, end1, end2])
+        if (begin, end) not in blackouts:
+            blackouts.append((begin, end))            
+
+    blackouts.sort()
+    return blackouts
+
 jsonMap = {"authorized"     : "status__authorized"
          , "between"        : "time_between"
          , "backup"         : "status__backup"
@@ -88,6 +114,12 @@ jsonMap = {"authorized"     : "status__authorized"
          , "type"           : "session_type__type"
                }
 
+class Role(models.Model):
+    role = models.CharField(max_length = 32)
+
+    class Meta:
+        db_table = "roles"
+
 class User(models.Model):
     original_id = models.IntegerField(null = True)
     pst_id      = models.IntegerField(null = True)
@@ -96,12 +128,17 @@ class User(models.Model):
     first_name  = models.CharField(max_length = 32)
     last_name   = models.CharField(max_length = 150)
     contact_instructions = models.TextField(null = True)
+    role                 = models.ForeignKey(Role)
 
     def __str__(self):
         return "%s, %s" % (self.last_name, self.first_name)
 
     def name(self):
         return self.__str__()
+
+    def isAdmin(self):
+        return self.role.role == "Administrator"
+
     class Meta:
         db_table = "users"
 
@@ -109,11 +146,33 @@ class Email(models.Model):
     user  = models.ForeignKey(User)
     email = models.CharField(max_length = 255)
 
+    class Meta:
+        db_table = "emails"
+
 class Semester(models.Model):
     semester = models.CharField(max_length = 64)
 
     def __unicode__(self):
         return self.semester
+
+    def start(self):
+        # A starts in February, B in June, C in October
+        start_months = {"A": 2, "B": 6, "C": 10}
+
+        year  = 2000 + int(self.semester[:2])
+        month = start_months[self.semester[-1]]
+
+        return datetime(year, month, 1)
+
+    def end(self):
+        # A ends in May, B in September, C in January
+        end_months = {"A": 5, "B": 9, "C": 1}
+
+        year   = 2000 + int(self.semester[:2])
+        month  = end_months[self.semester[-1]]
+        _, day = calendar.monthrange(year, month)
+
+        return datetime(year, month, day)
 
     class Meta:
         db_table = "semesters"
@@ -132,6 +191,7 @@ class Allotment(models.Model):
     total_time        = models.FloatField(help_text = "Hours")
     max_semester_time = models.FloatField(help_text = "Hours")
     grade             = models.FloatField(help_text = "0.0 - 4.0")
+    ignore_grade      = models.NullBooleanField(null = True, default = False)
 
     base_url = "/sesshuns/allotment/"
 
@@ -157,7 +217,6 @@ class Project(models.Model):
     name         = models.CharField(max_length = 150)
     thesis       = models.BooleanField()
     complete     = models.BooleanField()
-    ignore_grade = models.BooleanField()
     start_date   = models.DateTimeField(null = True, blank = True)
     end_date     = models.DateTimeField(null = True, blank = True)
 
@@ -187,7 +246,6 @@ class Project(models.Model):
         self.name         = fdata.get("name", "")
         self.thesis       = fdata.get("thesis", "false") == "true"
         self.complete     = fdata.get("complete", "false") == "true"
-        self.ignore_grade = fdata.get("ignore_grade", "false") == "true"
 
         self.save()
 
@@ -250,7 +308,6 @@ class Project(models.Model):
               , "name"         : self.name
               , "thesis"       : self.thesis
               , "complete"     : self.complete
-              , "ignore_grade" : self.ignore_grade
               , "pi"           : pi
               , "co_i"         : co_i
                 }
@@ -283,6 +340,49 @@ class Project(models.Model):
                 if r not in rcvrs:
                     rcvrs.append(r)
         return rcvrs            
+
+    def has_schedulable_sessions(self):
+        sessions = [s for s in self.sesshun_set.all() if s.schedulable()]
+        return True if sessions != [] else False
+
+    def get_sanctioned_observers(self):
+        return [i for i in self.investigators_set.all() \
+                if i.observer and i.user.sanctioned]
+
+    def has_sanctioned_observers(self):
+        return True if self.get_sanctioned_observers() != [] else False
+
+    def get_blackouts(self):
+        """
+        A project is 'blacked out' when all of its sanctioned observers
+        are unavailable.  Returns a list of tuples describing the date ranges
+        where the project is 'blacked out'.
+        """
+        blackouts = [o.user.blackout_set.all() \
+                     for o in self.get_sanctioned_observers() \
+                     if len(o.user.blackout_set.all()) != 0]
+
+        if blackouts == []: # No observers or no blackouts.
+            return []
+
+        if len(blackouts) == 1: # One observer runs the show.
+            blackouts = [(b.start, b.end) for b in blackouts[0]]
+            blackouts.sort()
+            return blackouts
+
+        # Determine the blackout schedule with redundancy allowed.
+        conflicts = []
+        for b in blackouts[0]:
+            for set in blackouts[1:]:
+                if any([b.overlaps(s) for s in set]):
+                    conflicts.extend(
+                        [(max([b.start, s.start]), min([b.end, s.end])) \
+                         for s in set if b.overlaps(s)])
+                else:
+                    return [] # Looks like they've coordinated their schedules.
+
+        # Consolidate the blackout schedules - remove redundancy.
+        return consolidate_blackouts(conflicts)
 
     class Meta:
         db_table = "projects"
@@ -324,6 +424,16 @@ class Blackout(models.Model):
     def __unicode__(self):
         return "Blackout for %s: %s - %s" % (self.user, self.start, self.end)
 
+    def overlaps(self, blackout):
+        """
+        Checks to see if this Blackout overlaps with another.  Returns True
+        if there is an overlap, False otherwise.
+        """
+        if self.start < blackout.end and blackout.start < self.end:
+            return True
+        else:
+            return False
+
     class Meta:
         db_table = "blackouts"
 
@@ -363,6 +473,10 @@ class Investigators(models.Model):
             , self.principal_contact
             , self.principal_investigator )
 
+    def projectBlackouts(self):
+        return [b for b in self.user.blackout_set.all()
+                if not self.friend and b.end > datetime.utcnow()]
+    
     class Meta:
         db_table = "investigators"
 

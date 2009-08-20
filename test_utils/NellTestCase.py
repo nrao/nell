@@ -31,9 +31,7 @@ class NellTestCase(unittest.TestCase):
         
         # Filter out information not needed
         tables = [i["Name"] for i in r.dictresult()
-                     if 'auth' not in i["Name"] and
-                        'django' not in i["Name"] and
-                        '_id_seq' not in i["Name"]]
+                     if '_id_seq' not in i["Name"]]
 
         #  Commit any outstanding db transactions before truncating tables
         transaction.commit()
@@ -44,12 +42,13 @@ class NellTestCase(unittest.TestCase):
 
         # Resequence ids on all tables
         for tb_name in tables:
-            reseq_cmd = """
-            BEGIN;
-            SELECT setval('"%s_id_seq"', coalesce(max("id"), 1), max("id") IS NOT null) FROM "%s";
-            COMMIT;
-            """ % (tb_name, tb_name)
-            c.query(reseq_cmd)
+            if 'auth' not in tb_name and 'django' not in tb_name:
+                reseq_cmd = """
+                BEGIN;
+                SELECT setval('"%s_id_seq"', coalesce(max("id"), 1), max("id") IS NOT null) FROM "%s";
+                COMMIT;
+                """ % (tb_name, tb_name)
+                c.query(reseq_cmd)
 
         c.close()
         

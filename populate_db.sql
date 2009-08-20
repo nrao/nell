@@ -12,6 +12,9 @@ alter table periods alter column forecast type timestamp without time zone;
 -- Example project
 INSERT INTO allotment VALUES (DEFAULT, 100.5, 100.5, 100.5, 4.0);
 
+INSERT INTO roles VALUES (DEFAULT, 'Administrator');
+INSERT INTO roles VALUES (DEFAULT, 'Observer');
+
 INSERT INTO repeats VALUES (DEFAULT, 'Once');
 INSERT INTO repeats VALUES (DEFAULT, 'Weekly');
 INSERT INTO repeats VALUES (DEFAULT, 'Monthly');
@@ -61,7 +64,7 @@ INSERT INTO semesters VALUES (DEFAULT, '04A');
 INSERT INTO project_types VALUES (DEFAULT, 'science');
 INSERT INTO project_types VALUES (DEFAULT, 'non-science');
 
-INSERT INTO projects VALUES (DEFAULT, 1, 1, 'GBT09A-001', '', false, false, false, NULL, NULL);
+INSERT INTO projects VALUES (DEFAULT, 1, 1, 'GBT09A-001', '', false, false, NULL, NULL);
 
 INSERT INTO session_types VALUES (DEFAULT, 'open');
 INSERT INTO session_types VALUES (DEFAULT, 'fixed');
