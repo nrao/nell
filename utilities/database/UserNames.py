@@ -218,3 +218,30 @@ class UserNames(object):
         if value_tag is not None:
             value = value_tag.text
         return value    
+
+    def setAdminRoles(self):
+        "Simply set the given list of staff as admins."
+
+        # list of last names
+        staff = ["Braatz"  # first astronomers
+               , "Balser"
+               , "O'Neil"
+               , "Minter"
+               , "Harnett"
+               , "Maddalena"
+               , "Ghigo"
+               , "Marganian" # then the real smart people
+               , "Clark"
+               , "Shelton"
+               , "McCarty"
+               , "Sessoms"
+               ]
+
+        admin = first(Role.objects.filter(role = "Administrator"))
+
+        # set them!
+        users = User.objects.all()
+        for u in users:
+            if u.last_name in staff:
+                u.role = admin
+                u.save()
