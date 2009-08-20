@@ -245,3 +245,10 @@ class UserNames(object):
             if u.last_name in staff:
                 u.role = admin
                 u.save()
+
+    def setUserName(self, username, userLastName):
+        "This is for testing only: if username is in PST but not in DSS, the use username for given user"
+        victim = first(User.objects.filter(last_name = userLastName).all())
+        victim.username = username
+        victim.save()
+        print "User %s now has username: %s" % (victim, username)
