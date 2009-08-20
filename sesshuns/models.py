@@ -26,7 +26,7 @@ def str2dt(str):
     return datetime(y, m, d)
 
 def strStr2dt(dstr, tstr):
-    return str2dt(dstr + ' ' + tstr + ':00') if tstr else str2dt(dstr)
+    return str2dt(dstr + ' ' + tstr) if tstr else str2dt(dstr)
         
 def dt2str(dt):
     "datetime object to YYYY-MM-DD hh:mm:ss string"
@@ -891,11 +891,11 @@ class Period(models.Model):
         now           = dt2str(TimeAgent.quarter(datetime.utcnow()))
         date          = fdata.get("date", None)
         time          = fdata.get("time", None)
-        self.start    = TimeAgent.quarter(strStr2dt(date, time)) if time is not None and date is not None else now
+        self.start    = TimeAgent.quarter(strStr2dt(date, time + ':00')) if time is not None and date is not None else now
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
-        self.score    = 0.0 # TBF call to antioch to get score
+        self.score    = 0.0 # TBF how to get score?
         self.forecast = now
-        self.backup   = fdata.get("backup", False)
+        self.backup   = True if fdata.get("backup", None) == 'true' else False
         self.save()
 
     def handle2session(self, h):
