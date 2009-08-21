@@ -7,11 +7,12 @@ from models                   import *
 
 @login_required
 def profile(request, *args, **kws):
+    loginUser = request.user
     if len(args) > 0:
         u_id,     = args
         user      = first(User.objects.filter(id = u_id))
         projects  = [i.project.pcode for i in user.investigators_set.all()]
-        requestor = first(User.objects.filter(username = request.META.get('USER')))
+        requestor = first(User.objects.filter(username = loginUser))
         union     = [i.project.pcode for i in requestor.investigators_set.all()
                         if i.project.pcode in projects]
         #  If the requestor is not the user profile requested and they are
@@ -19,7 +20,7 @@ def profile(request, *args, **kws):
         if union == [] and user != requestor and not requestor.isAdmin():
             return HttpResponseRedirect("/profile")
     else:
-        requestor = first(User.objects.filter(username = request.META.get('USER')))
+        requestor = first(User.objects.filter(username = loginUser))
         user      = requestor
         
     # Remember [] is False
@@ -33,7 +34,8 @@ def profile(request, *args, **kws):
 
 @login_required
 def project(request, *args, **kws):
-    user   = first(User.objects.filter(username = request.META.get('USER')))
+    loginUser = request.user
+    user   = first(User.objects.filter(username = loginUser))
     pcode, = args
     #  If the requestor is not on this project redirect to their profile.
     if pcode not in [i.project.pcode for i in user.investigators_set.all()] \
@@ -48,7 +50,8 @@ def project(request, *args, **kws):
 
 @login_required
 def search(request, *args, **kws):
-    user   = first(User.objects.filter(username = request.META.get('USER')))
+    loginUser = request.user
+    user   = first(User.objects.filter(username = loginUser))
     search   = request.POST.get('search', '')
     projects = Project.objects.filter(
         Q(pcode__icontains = search) | \
@@ -82,11 +85,12 @@ def toggle_observer(request, *args, **kws):
 
 @login_required
 def dynamic_contact_form(request, *args, **kws):
+    loginUser = request.user
     u_id,     = args
     user      = first(User.objects.filter(id = u_id))
 
     # TBF Use a decorator
-    requestor = first(User.objects.filter(username = request.META.get('USER')))
+    requestor = first(User.objects.filter(username = loginUser))
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
 
@@ -103,12 +107,13 @@ def dynamic_contact_save(request, *args, **kws):
 
 @login_required
 def blackout_form(request, *args, **kws):
+    loginUser = request.user
     method = request.GET.get('_method', '')
     u_id, = args
     user  = first(User.objects.filter(id = u_id))
 
     # TBF Use a decorator
-    requestor = first(User.objects.filter(username = request.META.get('USER')))
+    requestor = first(User.objects.filter(username = loginUser))
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
 
@@ -126,11 +131,12 @@ def blackout_form(request, *args, **kws):
 
 @login_required
 def blackout(request, *args, **kws):
+    loginUser = request.user
     u_id, = args
     user = first(User.objects.filter(id = u_id))
 
     # TBF Use a decorator
-    requestor = first(User.objects.filter(username = request.META.get('USER')))
+    requestor = first(User.objects.filter(username = loginUser))
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
 
