@@ -8,14 +8,14 @@ class NellTestCase(unittest.TestCase):
 
     def setUp(self):
         dbname = "test_" + settings.DATABASE_NAME
-        c = pg.connect(user = "dss", passwd = "asdf5!", dbname = dbname)
+        c = pg.connect(host = "trent", user = "dss", passwd = "asdf5!", dbname = dbname)
         sql = open("populate_db.sql").read()
         c.query(sql)
         c.close()
 
     def tearDown(self):
         dbname = "test_" + settings.DATABASE_NAME
-        c = pg.connect(user = "dss", passwd = "asdf5!", dbname = dbname)
+        c = pg.connect(host = "trent", user = "dss", passwd = "asdf5!", dbname = dbname)
 
         # Query to list all table names in the db
         sql = """SELECT c.relname as "Name"
