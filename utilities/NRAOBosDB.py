@@ -28,7 +28,6 @@ class NRAOBosDB:
 
     def parseReservationsXML(self, str):
         "Parses XML returned by reservationsByPerson query."
-
         data = ET.fromstring(str)
         reservations = []
         for i in range(len(data)):
@@ -39,6 +38,17 @@ class NRAOBosDB:
             end   = self.str2dt(dates[1].text)
             reservations.append((start, end))
         return reservations
+
+    def str2dt(self, str):
+        "YYYY-MM-DD -> DateTime"
+        return datetime.strptime(str, "%Y-%m-%d")
+
+    def findTag(self, node, tag):
+        value = None
+        value_tag = node.find(tag)
+        if value_tag is not None:
+            value = value_tag.text
+        return value  
 
     def _testSystem(self):
         "for testing purposes."
@@ -65,14 +75,4 @@ class NRAOBosDB:
                 print data
                 print str
 
-    def str2dt(self, str):
-        "YYYY-MM-DD -> DateTime"
-        return datetime.strptime(str, "%Y-%m-%d")
-
-    def findTag(self, node, tag):
-        value = None
-        value_tag = node.find(tag)
-        if value_tag is not None:
-            value = value_tag.text
-        return value  
 
