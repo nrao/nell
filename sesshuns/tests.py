@@ -5,12 +5,15 @@ from django.contrib.auth import models as m
 from django.test.client  import Client
 from django.http         import QueryDict
 import simplejson as json
+import lxml.etree as et
 
 from models                          import *
 from test_utils.NellTestCase         import NellTestCase
 from tools                           import DBReporter
 from utilities.database              import DSSPrime2DSS
 from utilities.receiver              import ReceiverCompile
+from utilities.UserInfo              import UserInfo
+from utilities.NRAOBosDB             import NRAOBosDB
 
 # Test field data
 fdata = {"total_time": "3"
@@ -943,7 +946,7 @@ class TestObservers(NellTestCase):
         self.p = Project()
         self.p.init_from_post({'semester'   : '09C'
                              , 'type'       : 'science'
-                             , 'pcode'      : 'mike'
+                             , 'pcode'      : 'mike' 
                              , 'name'       : 'mikes awesome project!'
                              , 'PSC_time'   : '100.0'
                              , 'total_time' : '100.0'
@@ -1208,3 +1211,114 @@ class TestConsolidateBlackouts(NellTestCase):
         # No conflicts.
         r = consolidate_blackouts([])
         self.assertEquals([], r)
+
+class TestUserInfo(NellTestCase):
+
+    def setUp(self):
+        super(TestUserInfo, self).setUp()
+
+        self.ui = UserInfo()
+
+        self.xmlStr =  """
+        <nrao:user xmlns:nrao="http://www.nrao.edu/namespaces/nrao" id="823" domestic="true">
+        <nrao:name>
+        <nrao:prefix>Mr</nrao:prefix>
+        <nrao:first-name>Paul</nrao:first-name>
+        <nrao:middle-name>Raffi</nrao:middle-name>
+        <nrao:last-name>Marganian</nrao:last-name>
+        </nrao:name>
+        <nrao:contact-info>
+        <nrao:email-addresses>
+        <nrao:default-email-address addr="pmargani@nrao.edu">
+        <nrao:description>Work</nrao:description>
+        </nrao:default-email-address>
+        <nrao:additional-email-address addr="paghots@hotmail.com">
+        <nrao:description>Other</nrao:description>
+        </nrao:additional-email-address>
+        <nrao:additional-email-address addr="pmargani@gmail.com">
+        <nrao:description>Personal</nrao:description>
+        </nrao:additional-email-address>
+        </nrao:email-addresses>
+        <nrao:postal-addresses>
+        <nrao:additional-postal-address>
+        <nrao:address-type>Office</nrao:address-type>
+        <nrao:streetline>NRAO</nrao:streetline>
+        <nrao:streetline>PO Box 2</nrao:streetline>
+        <nrao:city>Green Bank</nrao:city>
+        <nrao:state>West Virginia</nrao:state>
+        <nrao:country>USA</nrao:country>
+        <nrao:postal-code>24944</nrao:postal-code>
+        </nrao:additional-postal-address>
+        <nrao:additional-postal-address>
+        <nrao:address-type>Other</nrao:address-type>
+        <nrao:streetline>49 columbus Ave.</nrao:streetline>
+        <nrao:city>W. Bridgewater</nrao:city>
+        <nrao:state>Massachusetts</nrao:state>
+        <nrao:country>United States</nrao:country>
+        <nrao:postal-code>02379</nrao:postal-code>
+        </nrao:additional-postal-address>
+        </nrao:postal-addresses>
+        <nrao:phone-numbers>
+        <nrao:default-phone-number number="304-456-2202">
+        <nrao:description>Work</nrao:description>
+        </nrao:default-phone-number>
+        </nrao:phone-numbers>
+        </nrao:contact-info>
+        <nrao:affiliation-info>
+        <nrao:default-affiliation>
+        <nrao:formal-name>Unknown</nrao:formal-name>
+        </nrao:default-affiliation>
+        </nrao:affiliation-info>
+        <nrao:misc-info>
+        <nrao:user-type>NRAO Staff</nrao:user-type>
+        <nrao:web-site>http://www.geocities.com/mangophenomena/</nrao:web-site>
+        </nrao:misc-info>
+        <nrao:account-info>
+        <nrao:account-name>pmargani</nrao:account-name>
+        <nrao:encrypted-password>d59c3e6cc6236139bd94307de0e775cc</nrao:encrypted-password>
+        <nrao:entry-status>Suspect</nrao:entry-status>
+        </nrao:account-info>
+        </nrao:user>
+        """
+        self.xml = et.fromstring(self.xmlStr)
+
+    def test_parseUserXML(self):
+        
+        i = self.ui.parseUserXML(self.xml) 
+        exp = {'contact-info': \
+            {'phone-numbers':   {'default-phone-number': '304-456-2202'}
+           , 'email-addresses': {'default-email-address': 'pmargani@nrao.edu'
+                             , 'additional-email-address': ['paghots@hotmail.com', 'pmargani@gmail.com']}}
+            , 'name': {'prefix': 'Mr'
+                     , 'first-name': 'Paul'
+                     , 'middle-name': 'Raffi'
+                     , 'last-name': 'Marganian'}}
+        #print i
+        self.assertEqual(i, exp)
+
+class TestNRAOBosDB(NellTestCase):
+
+    def setUp(self):
+        super(TestNRAOBosDB, self).setUp()
+
+        self.bos = NRAOBosDB()
+
+        #<?xml version="1.0" encoding="utf-8"?>
+        self.xmlStr =  """
+        <nrao:user domestic="true" id="dbalser" xmlns:nrao="http://www.nrao.edu/namespaces/nrao">
+            <nrao:reservation id="2704">
+                <nrao:startDate>2009-08-25</nrao:startDate>
+                <nrao:endDate>2009-08-28</nrao:endDate>
+            </nrao:reservation>
+        </nrao:user>
+        """
+        self.xml = et.fromstring(self.xmlStr)
+
+    def test_parseReservationsXML(self):
+
+        dates = self.bos.parseReservationsXML(self.xmlStr)
+        exp = [(datetime(2009, 8, 25, 0, 0), datetime(2009, 8, 28, 0, 0))]
+        self.assertEqual(dates, exp)
+
+
+
