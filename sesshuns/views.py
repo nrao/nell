@@ -83,6 +83,7 @@ class ProjectResource(NellResource):
     def __init__(self, *args, **kws):
         super(ProjectResource, self).__init__(Project, *args, **kws)
 
+    # TBF when can we remove this?? 8/19/2009
     def create(self, request, *args, **kws):
         return super(ProjectResource, self).create(request, *args, **kws)
     
@@ -222,5 +223,4 @@ def get_options(request, *args, **kws):
                                         ]})
                           , mimetype = "text/plain")
     else:
-        print "RETURNING NOTHING"
         return HttpResponse("")
