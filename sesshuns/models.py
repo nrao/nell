@@ -6,6 +6,7 @@ from utilities.receiver        import ReceiverCompile
 from utilities                 import TimeAgent
 
 import calendar
+import pg
 from sets                      import Set
 import sys
 
@@ -1073,7 +1074,26 @@ class Period(models.Model):
               , "backup"       : self.backup
                 }
 
-class HourAngleLimit(models.Model):
-    frequency   = models.IntegerField()
-    declination = models.IntegerField()
-    limit       = models.FloatField()
+class HourAngleLimit:
+    def __call__(self, frequency, declination):
+        """
+        Returns the hour angle limit for the specified frequency and
+        declination (both floats).  If the table does not contain the
+        required hour angle limit entry given frequency and declination,
+        None is returned.
+        """
+        frequency   = round(frequency)
+        declination = max(-46, min(90, int(round(declination))))
+
+        # Get limit from database.
+        # TBF: Use settings.py
+        dbname = "weather"
+        c = pg.connect(host = "trent"
+                     , user = "dss"
+                     , passwd = "asdf5!"
+                     , dbname = dbname)
+        sql = "SELECT boundary FROM hour_angle_boundaries WHERE frequency = %i AND declination = %i" % (frequency, declination)
+        r = c.query(sql)
+        c.close()
+
+        return r.getresult()[0][0] if r.getresult() != [] else None
