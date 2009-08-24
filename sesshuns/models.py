@@ -6,6 +6,7 @@ from utilities.receiver        import ReceiverCompile
 from utilities                 import TimeAgent
 
 import calendar
+from sets                      import Set
 import sys
 
 def first(results, default = None):
@@ -86,8 +87,7 @@ def consolidate_blackouts(conflicts):
         if (begin, end) not in blackouts:
             blackouts.append((begin, end))            
 
-    blackouts.sort()
-    return blackouts
+    return sorted(blackouts)
 
 jsonMap = {"authorized"     : "status__authorized"
          , "between"        : "time_between"
@@ -366,9 +366,7 @@ class Project(models.Model):
             return []
 
         if len(blackouts) == 1: # One observer runs the show.
-            blackouts = [(b.start, b.end) for b in blackouts[0]]
-            blackouts.sort()
-            return blackouts
+            return sorted([(b.start, b.end) for b in blackouts[0]])
 
         # Determine the blackout schedule with redundancy allowed.
         conflicts = []
@@ -383,6 +381,42 @@ class Project(models.Model):
 
         # Consolidate the blackout schedules - remove redundancy.
         return consolidate_blackouts(conflicts)
+
+    def get_receiver_blackouts(self, startdate, days):
+        """
+        Returns a list of tuples of the form (start_date, end_date) where
+        start_date and end_date are datetime objects that denote the 
+        beginning and ending of a period where no receivers are available
+        for any session in a project.  If there is a receiver available
+        at all times for any session, an empty list is returned.  If there
+        are no session for a project, an empty list is returned.
+        """
+
+        # Find all the required receiver sets for this project and schedule.
+        # E.g. for one session:
+        #     [[a, b, c], [x, y, z]] = (a OR b OR c) AND (x OR y OR z)
+        required = [s.receiver_group_set.all() for s in self.sesshun_set.all()]
+        if required == []:
+            return [] # No sessions, no problem
+
+        schedule = Receiver_Schedule.extract_schedule(startdate, days)
+
+        # Go through the schedule and determine blackouts.
+        blackouts = []
+        for date, receivers in sorted(schedule.items()):
+            receivers = Set(receivers)
+            if not any([all([Set(g.receivers.all()).intersection(receivers) \
+                        for g in set]) for set in required]):
+                # No session has receivers available. Begin drought.
+                if not blackouts or blackouts[-1][1] is not None:
+                    blackouts.append((date, None))
+            else:
+                # A session has receivers available. End drought, if present.
+                if blackouts and blackouts[-1][1] is None:
+                    start, _ = blackouts.pop(-1)
+                    blackouts.append((start, date))
+
+        return blackouts
 
     class Meta:
         db_table = "projects"
@@ -538,18 +572,24 @@ class Receiver_Schedule(models.Model):
         return jschedule
 
     @staticmethod
-    def extract_schedule(startdate = None, days=None):
-        startdate = startdate or datetime.utcnow()
+    def extract_schedule(startdate = datetime.utcnow(), days = 120):
+        """
+        Returns the entire receiver schedule starting at 'startdate' and
+        ending 'days' after the 'startdate'.  The schedule is of the form:
+        {
+           start_date : [<receivers available>]
+        }
+        where start_date is a datetime object and [<receivers available>] is
+        a list of Receiver objects.
+        """
         startdate = Receiver_Schedule.previousDate(startdate)
-        days = days or 120
-        enddate   = startdate + timedelta(days=days)
-        schedule = dict()
-        for dt_rcvr in [dt_rcvr
-                        for dt_rcvr in Receiver_Schedule.objects.filter(
+        enddate   = startdate + timedelta(days = days)
+        schedule  = dict()
+        for s in Receiver_Schedule.objects.filter(
                                               start_date__gte = startdate
                                                      ).filter(
-                                              start_date__lte = enddate)]:
-            schedule.setdefault(dt_rcvr.start_date, []).append(dt_rcvr.receiver)
+                                              start_date__lte = enddate):
+            schedule.setdefault(s.start_date, []).append(s.receiver)
         return schedule
 
     @staticmethod
@@ -787,8 +827,8 @@ class Sesshun(models.Model):
             return
         target.horizontal = new_dec
         target.save()
-        
-    def get_ignore_ha(self)  :
+
+    def get_ignore_ha(self):
         # TBF:  Need specification of ignore_ha
         return False
         
@@ -1033,3 +1073,7 @@ class Period(models.Model):
               , "backup"       : self.backup
                 }
 
+class HourAngleLimit(models.Model):
+    frequency   = models.IntegerField()
+    declination = models.IntegerField()
+    limit       = models.FloatField()
