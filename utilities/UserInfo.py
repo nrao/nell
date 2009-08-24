@@ -62,6 +62,19 @@ class UserInfo(object):
             values = self.parseSectionList(s, secDetailName, attr)
         return values
 
+    def parsePostals(self, sec):
+        postals = []
+        keys = ['address-type', 'city', 'state', 'country', 'postal-code']
+        s = self.findTag(sec, 'postal-addresses')
+        if s is not None:
+            tags = s.findall(self.ns + 'additional-postal-address')
+            for tag in tags:
+                address = self.parseSectionText(tag, keys)
+                streets = tag.findall(self.ns + 'streetline')
+                address['streetlines'] = [st.text for st in streets]
+                postals.append(address)    
+        return postals
+
     def parseUserXML(self, element):
         "Parses a given Element object representing user info into a dict."
         # TBF: must be a better way of doing this
@@ -85,6 +98,7 @@ class UserInfo(object):
                                                                         , 'phone-numbers'
                                                                         , 'phone-number'
                                                                         , 'number')
+            userInfo['contact-info']['postal-addresses'] = self.parsePostals(ci)                                                                        
             # TBF: postal addresses
         # affiliation-info section
         # misc-info section

@@ -1285,15 +1285,30 @@ class TestUserInfo(NellTestCase):
     def test_parseUserXML(self):
         
         i = self.ui.parseUserXML(self.xml) 
-        exp = {'contact-info': \
+        exp = \
+        {'contact-info': \
             {'phone-numbers':   {'default-phone-number': '304-456-2202'}
            , 'email-addresses': {'default-email-address': 'pmargani@nrao.edu'
-                             , 'additional-email-address': ['paghots@hotmail.com', 'pmargani@gmail.com']}}
+                             , 'additional-email-address': ['paghots@hotmail.com', 'pmargani@gmail.com']}
+           , 'postal-addresses': [{'city': 'Green Bank'
+                                 , 'streetlines': ['NRAO', 'PO Box 2']
+                                 , 'address-type': 'Office'
+                                 , 'state': 'West Virginia'
+                                 , 'country': 'USA'
+                                 , 'postal-code': '24944'}
+                                 , {'city': 'W. Bridgewater'
+                                 , 'streetlines': ['49 columbus Ave.']
+                                 , 'address-type': 'Other'
+                                 , 'state': 'Massachusetts'
+                                 , 'country': 'United States'
+                                 , 'postal-code': '02379'}]                  
+            }
             , 'name': {'prefix': 'Mr'
                      , 'first-name': 'Paul'
                      , 'middle-name': 'Raffi'
-                     , 'last-name': 'Marganian'}}
-        #print i
+                     , 'last-name': 'Marganian'}
+        }
+        print i
         self.assertEqual(i, exp)
 
 class TestNRAOBosDB(NellTestCase):
