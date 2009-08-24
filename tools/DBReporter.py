@@ -159,57 +159,58 @@ class DBReporter:
         info = self.binSesshunNumTargets(sess)
         self.printInfo(info, "Sessions By Num Targets:", "# Targets") 
 
-        info = self.binSesshunNumCadences(sess)
-        self.printInfo(info, "Sessions By Num Cadences:", "# Cadences") 
+        #info = self.binSesshunNumCadences(sess)
+        #self.printInfo(info, "Sessions By Num Cadences:", "# Cadences") 
 
-        info = self.binSesshunNumCadences([s for s in sess 
-            if s.session_type.type == "vlbi"])
-        self.printInfo(info, "VLBI Sessions By Num Cadences:", "# Cadences") 
+        #info = self.binSesshunNumCadences([s for s in sess 
+        #    if s.session_type.type == "vlbi"])
+        #self.printInfo(info, "VLBI Sessions By Num Cadences:", "# Cadences") 
 
-        info = self.binSesshunNumCadences([s for s in sess 
-            if s.session_type.type == "fixed"])
-        self.printInfo(info, "Fixed Sessions By Num Cadences:", "# Cadences") 
+        #info = self.binSesshunNumCadences([s for s in sess 
+        #    if s.session_type.type == "fixed"])
+        #self.printInfo(info, "Fixed Sessions By Num Cadences:", "# Cadences") 
 
-        info = self.binSesshunNumCadences([s for s in sess 
-            if s.session_type.type == "windowed"])
-        self.printInfo(info, "Windowed Sessions By Num Cadences:", "# Cadences") 
-        info = self.binSesshunNumCadences([s for s in sess 
-            if s.session_type.type == "open"])
-        self.printInfo(info, "Open Sessions By Num Cadences:", "# Cadences") 
+        #info = self.binSesshunNumCadences([s for s in sess 
+        #    if s.session_type.type == "windowed"])
+        #self.printInfo(info, "Windowed Sessions By Num Cadences:", "# Cadences") 
+        #info = self.binSesshunNumCadences([s for s in sess 
+        #    if s.session_type.type == "open"])
+        #self.printInfo(info, "Open Sessions By Num Cadences:", "# Cadences") 
+
         # gather stats on windows - how many, how many hrs, etc
         # TBF: what to do with cadence?
-        wins = Window.objects.all()
-        info = self.binWindow(wins, [True, False], "required") 
-        self.printInfo(info, "Windows by Required (Hrs is N/A):", "Required")
+        #wins = Window.objects.all()
+        #info = self.binWindow(wins, [True, False], "required") 
+        #self.printInfo(info, "Windows by Required (Hrs is N/A):", "Required")
 
-        numOpts = {}
-        numOpts['0'] = (len([w for w in wins if w.num_opportunities() == 0]),0)
-        numOpts['1'] = (len([w for w in wins if w.num_opportunities() == 1]),0)
-        numOpts['>1'] = (len([w for w in wins if w.num_opportunities() > 1]),0)
-        self.printInfo(numOpts, "Windows by Num Opportunities (Hrs is N/A):"
-                     , "# Opts")
+        #numOpts = {}
+        #numOpts['0'] = (len([w for w in wins if w.num_opportunities() == 0]),0)
+        #numOpts['1'] = (len([w for w in wins if w.num_opportunities() == 1]),0)
+        #numOpts['>1'] = (len([w for w in wins if w.num_opportunities() > 1]),0)
+        #self.printInfo(numOpts, "Windows by Num Opportunities (Hrs is N/A):"
+        #             , "# Opts")
         
         # more details on cadences ...
-        data = self.cadenceDetails([s for s in sess
-            if s.session_type.type == "open"])
-        self.printCadenceDetails("Open Session Cadence Details: ", data)
-        data = self.cadenceDetails([s for s in sess
-            if s.session_type.type == "fixed"])
-        self.printCadenceDetails("Fixed Session Cadence Details: ", data)
-        data = self.cadenceDetails([s for s in sess
-            if s.session_type.type == "windowed"])
-        self.printCadenceDetails("Windowed Session Cadence Details: ", data)
+        #data = self.cadenceDetails([s for s in sess
+        #    if s.session_type.type == "open"])
+        #self.printCadenceDetails("Open Session Cadence Details: ", data)
+        #data = self.cadenceDetails([s for s in sess
+        #    if s.session_type.type == "fixed"])
+        #self.printCadenceDetails("Fixed Session Cadence Details: ", data)
+        #data = self.cadenceDetails([s for s in sess
+        #    if s.session_type.type == "windowed"])
+        #self.printCadenceDetails("Windowed Session Cadence Details: ", data)
         
         # more details on windows
         # TBF: this might get ugly once we start creating these from 
         # cadences
-        self.add("\n\nDetails on Windows: \n")
-        wins = Window.objects.all()
-        for w in wins:
-            self.add("%s: %s\n" % (w.session.name, w))
-            for o in w.opportunity_set.all():
-                self.add("    %s\n" % o)
-        self.add("\n")        
+        #self.add("\n\nDetails on Windows: \n")
+        #wins = Window.objects.all()
+        #for w in wins:
+        #    self.add("%s: %s\n" % (w.session.name, w))
+        #    for o in w.opportunity_set.all():
+        #        self.add("    %s\n" % o)
+        #self.add("\n")        
 
         # gather stats on periods
 
@@ -302,12 +303,12 @@ class DBReporter:
                     # for each session, print summary
                     sData = [
                              s.name # s.unique_name()
-                           , "%d" % self.getCarlRepeats(s) 
-                           , "%5.2f" % self.getCarlLenHrs(s)
+                           , "NA" #"%d" % self.getCarlRepeats(s) 
+                           , "NA" #"%5.2f" % self.getCarlLenHrs(s)
                            , "TBF" # how to compute LST?
                            , self.getCarlNightTimeFlag(s)
                            , "TBF" # how to compute LST range?
-                           , "%s" % self.getCarlSeperation(s) 
+                           , "NA" #"%s" % self.getCarlSeperation(s) 
                            , "N/A" # TBF: del always zero?
                            , "0" # no history, always zero
                            , "%5.2f" % s.allotment.total_time
@@ -319,7 +320,7 @@ class DBReporter:
                            , "" # no history
                            , self.getCarlRcvrs(s.rcvrs_specified())
                            , "N/A"
-                           , self.getCarlStartDate(s) 
+                           , "NA" #self.getCarlStartDate(s) 
                            , "N/A"
                            , "N/A"]
 
