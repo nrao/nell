@@ -83,6 +83,11 @@ class DSSPrime2DSS(object):
             stype = first(Session_Type.objects.filter(type = row[24]))
             project = first(Project.objects.filter(pcode = row[12]))
 
+            if project is None:
+                print "*********Transfer Sessions Error: no project for pcode: ", row[12]
+                continue
+              
+
             allot = Allotment(psc_time          = float(row[14])
                             , total_time        = float(row[15])
                             , max_semester_time = float(row[16])
@@ -223,6 +228,10 @@ class DSSPrime2DSS(object):
             self.cursor.execute(query)
             pcode = self.cursor.fetchone()[0]
             p     = first(Project.objects.filter(pcode = pcode).all())
+
+            if p is None:
+                print "*****ERROR: project absent for pcode: ", pcode
+                continue
 
             i = Investigators(project = p
                             , user    = u
@@ -882,7 +891,7 @@ class DSSPrime2DSS(object):
                 s.session_type = stype
                 s.save()
 
-    def create_summer_opportunities(self):
+    def create_opportunities(self, start, end):
         """
         We can dump Carl's DB into MySQL tables and use these to suck
         whatever info we need in addition to what is in the DB that
@@ -894,8 +903,8 @@ class DSSPrime2DSS(object):
 
         times = []
 
-        start = "20090601"
-        end   = "20091001"
+        #start = "20090601"
+        #end   = "20091001"
         #end   = "20090603"
 
         query = """
@@ -1012,8 +1021,24 @@ class DSSPrime2DSS(object):
         self.create_summer_rcvr_schedule()
         #self.create_other_fixed_periods()
         self.set_fixed_projects()
-        self.create_summer_opportunities()
+        start = "20090601"
+        end   = "20091001"
+        self.create_opportunities(start, end)
 
     def create_09B_database(self):
         self.transfer()
         self.create_summer_conditions()
+
+    def create_09C_database(self):
+
+        # generic
+        self.transfer()
+
+        # specific to 09C
+        self.create_testing_session()
+        self.create_maintanence_session()
+        self.create_09B_rcvr_schedule()
+        start = "20091001"
+        end   = "20100201"
+        self.create_opportunities(start, end)
+
