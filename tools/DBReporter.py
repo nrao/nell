@@ -266,9 +266,8 @@ class DBReporter:
 
         for sem in semesters:
             self.add("\nTrimester: %s\n\n" % sem.semester)
-            s = Semester.objects.get(semester = sem)
             # get the projects for this semester
-            projs = Project.objects.filter(semester = s).order_by("pcode")
+            projs = Project.objects.filter(semester = sem).order_by("pcode")
             if len(projs) > 0:
                 self.printData(projHeaders, projHeaderCols, True) 
              
