@@ -15,16 +15,29 @@ class UserInfo(object):
         self.baseURL = 'https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
         self.ns = "{http://www.nrao.edu/namespaces/nrao}"
 
-    def getStaticContactInfo(self, username, queryUser, queryPassword):
-        "Get contact info for username, using given credentials for CAS."
+    def getStaticContactInfoByUserName(self, username, queryUser,queryPassword):
+        return self.getStaticContactInfo('userByAccountNameEquals'
+                                       , username
+                                       , queryUser
+                                       , queryPassword)
+
+    def getStaticContactInfoByID(self, id, queryUser,queryPassword):
+        return self.getStaticContactInfo('userById'
+                                       , id
+                                       , queryUser
+                                       , queryPassword)
+
+    def getStaticContactInfo(self, key, value, queryUser, queryPassword):
+        "Get contact info from query service, using given credentials for CAS."
 
         udb = NRAOUserDB.NRAOUserDB( \
             self.baseURL
           , queryUser
           , queryPassword
           , opener=urllib2.build_opener())
-        key = 'userByAccountNameEquals'
-        el = udb.get_data(key, username)
+        #key = 'userByAccountNameEquals'
+        #el = udb.get_data(key, username)
+        el = udb.get_data(key, value)
         return self.parseUserXML(el)
 
     def findTag(self, node, tag):
@@ -81,11 +94,23 @@ class UserInfo(object):
         # TBF: looked into lxml.objectify, but couldn't get it to work properly
         userInfo = {}
         # just do it by hand!
+        # top level attributes
+        id = None
+        items = element.items()
+        for key, value in items:
+            if key == 'id':
+                id = value
+        userInfo['id'] = id        
         # name section
         name = self.findTag(element, "name")
         if name is not None:
             nameKeys = ['prefix', 'first-name', 'middle-name', 'last-name']
             userInfo['name'] = self.parseSectionText(name, nameKeys)
+        # account-info
+        at = self.findTag(element, "account-info")
+        if at is not None:
+            actKeys = ['account-name'] # need anything else?
+            userInfo['account-info'] = self.parseSectionText(at, actKeys)
         # contact-info section
         ci = self.findTag(element, "contact-info")
         if ci is not None:
@@ -105,4 +130,5 @@ class UserInfo(object):
         # account-info section
 
         return userInfo
+
 

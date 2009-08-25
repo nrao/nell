@@ -1250,7 +1250,6 @@ class TestUserInfo(NellTestCase):
         self.xml = et.fromstring(self.xmlStr)
 
     def test_parseUserXML(self):
-        
         i = self.ui.parseUserXML(self.xml) 
         exp = \
         {'contact-info': \
@@ -1274,8 +1273,9 @@ class TestUserInfo(NellTestCase):
                      , 'first-name': 'Paul'
                      , 'middle-name': 'Raffi'
                      , 'last-name': 'Marganian'}
+            , 'account-info': {'account-name': 'pmargani'}         
+            , 'id': '823'
         }
-        print i
         self.assertEqual(i, exp)
 
 class TestNRAOBosDB(NellTestCase):

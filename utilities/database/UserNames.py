@@ -4,6 +4,7 @@ import math
 import MySQLdb as m
 import logging, urllib2
 from utilities import NRAOUserDB
+from utilities.UserInfo import UserInfo
 import lxml.etree as ET
 
 class UserNames(object):
@@ -21,6 +22,39 @@ class UserNames(object):
 #                            )
 #        self.cursor = self.db.cursor()
 
+    def getUserNamesFromIDs(self, queryUser, queryPassword):
+
+        # use query services
+        ui = UserInfo()
+
+        # get all users
+        users = User.objects.all()
+
+        # for each user, get their static contact info
+        for user in users:
+
+            id = user.pst_id
+
+            if id is None:
+                print "skipping user, no pst_id: ", user
+                continue
+
+            # save off the username
+            info = ui.getStaticContactInfoByID(id, queryUser, queryPassword)
+            #print info
+            username = info['account-info']['account-name']
+
+            if user.username is not None:
+                if user.username == username:
+                    #no-op
+                    print "usernames agree for: ", user
+                else:
+                    raise "user.username != username! " + user.username + "!=" + username
+            else:
+                print "saving username: ", user, username
+                user.username = username
+                user.save()
+                
     def getUserNames(self, username, password):
 
         skipping = []
