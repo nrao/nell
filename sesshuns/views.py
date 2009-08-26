@@ -37,5 +37,4 @@ def get_options(request, *args, **kws):
                                         ]})
                           , mimetype = "text/plain")
     else:
-        print "RETURNING NOTHING"
         return HttpResponse("")

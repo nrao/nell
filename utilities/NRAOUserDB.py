@@ -89,16 +89,23 @@ class NRAOUserDB(object):
         if doc_str == '<?xml version="1.0" encoding="UTF-8"?>':
             return None
 
+        #print "****************doc_str: "
+        #print doc_str
+        #print "************* end doc_str"
+        doc_str_unicode = unicode(doc_str, "iso-8859-1")
+        doc_str = doc_str_unicode.encode("UTF-8")
         try:
             user_data = ET.fromstring(doc_str)
 
         except SyntaxError, e: # lxml.etree will generate this
             # Probably the HTML login page
+            print e
             raise TryAuthenticating(login_url, 'received something that was not well formed xml; maybe a login form?')
 
-        user_data_root_tag = user_data.tag
-        if user_data_root_tag != nrao.user:
-            raise TryAuthenticating(login_url, 'received %r; expected %r' % (user_data_root_tag, nrao.user))
+        #TBF only user queries return that tag
+        #user_data_root_tag = user_data.tag
+        #if user_data_root_tag != nrao.user:
+        #    raise TryAuthenticating(login_url, 'received %r; expected %r' % (user_data_root_tag, nrao.user))
 
         return user_data
 
@@ -134,6 +141,36 @@ class NRAOUserDB(object):
         if user_data is not None: # FutureWarning says test for None
             return user_data
 
+    def get_data(self, key, value):
+        '''Try to retrieve user profile information for a user, via key, value'''
+
+        scheme, host, path, params, query, fragment = urlparse(self.url)
+        query = urlencode([(key, value)], True)
+        url = urlunparse((scheme, host, path, params, query, fragment))
+
+        _log.info('Retrieving user profile with key/value: %s/%s', key, value)
+
+        try:
+            user_data = self._get_user_data(url)
+        except TryAuthenticating, e:
+            # TryAuthenticating may be a good idea, better tell an adult!
+            if not e.login_url or not self.username:
+                _log.exception(e)
+                raise
+
+            # This may raise a URLError or CASLoginError.  There's nothing much
+            # to be done about it though, so I'm not handling it.
+            _log.info('Failed: %s', e)
+            # FIXME: It would be good to check that we haven't been redirected
+            # someplace strange before we send off our credentials.  Hopefully
+            # certificate validation will lessen this possibility.
+            login_to_cas_service(e.login_url, self.username, self.password, opener=self.opener)
+
+            # If that worked, then give it another go
+            user_data = self._get_user_data(url)
+
+        if user_data is not None: # FutureWarning says test for None
+            return user_data
 
 def get_user_data(cas_user_name):
     global udb
