@@ -1,6 +1,7 @@
 from django.conf.urls.defaults     import *
 from django.conf                   import settings
 from sesshuns.views                import *
+from sesshuns.resources            import *
 from sesshuns.observers            import *
 
 # Uncomment the next two lines to enable the admin:
@@ -15,6 +16,8 @@ urlpatterns = patterns(''
    , url(r'^profile/(\d+)/dynamic_contact$',               dynamic_contact_save)
    , url(r'^profile/(\d+)$',                               profile)
    , url(r'^profile',                                      profile)
+   , url(r'^$',                                            profile)
+   , url(r'^project/([^/]+)/calendar/(\d+)/(\d+)/(\d+)/$', calendar)
    , url(r'^project/([^/]+)$',                             project)
    , url(r'^project/([^/]+)/investigator/(\d+)/observer$', toggle_observer)
    , url(r'^project/([^/]+)/session/([^/]+)/enable$',      toggle_session)
