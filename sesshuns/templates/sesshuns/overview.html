@@ -1,0 +1,34 @@
+{% extends "sesshuns/base.html" %}
+{% load calendar %}
+{% block title %}Project {{p.pcode}} Calendar {% endblock %}
+{% block scripts %}
+    <link type="text/css" rel="stylesheet" href="/static/css/overview.css" />
+{% endblock %}
+{% block content %}
+  <div>
+    <h3>Project {{p.pcode}} Calendar </h3>
+    <div>
+      <a style="text-align: left;"  href="/project/{{p.pcode}}/calendar/{{today|get_previous}}">Previous</a>
+      <a style="text-align: right;" href="/project/{{p.pcode}}/calendar/{{today|get_next}}">Next</a>
+    </div>
+    <div class="month">
+      <table>
+        {% for w in weeks %}
+          <tbody>
+            <tr>
+              {% for d in days %}
+              <td>
+                <div class="day" style="background-color: {{w|get_bgcolor:d}};">
+                  <div class="label" style="color: {{w|get_color:d}};" >
+                    {{w|get_label:d}}
+                  </div>
+                </div>
+              </td>
+              {% endfor %}
+            </tr>
+          </tbody>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+{% endblock %}

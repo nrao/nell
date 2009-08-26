@@ -1,9 +1,20 @@
-from datetime                       import datetime, time
+from datetime                       import datetime, date, time
 from django.contrib.auth.decorators import login_required
 from django.db.models         import Q
 from django.http              import HttpResponse, HttpResponseRedirect
 from django.shortcuts         import render_to_response
 from models                   import *
+
+def calendar(request, *args, **kws):
+    pcode, year, month, day = args
+    
+    return render_to_response("sesshuns/overview.html"
+                            , {'today' : date(int(year), int(month), int(day))
+                             , 'weeks' : range(6)
+                             , 'days'  : range(7)
+                             , 'p'     : first(Project.objects.filter(pcode = pcode))
+                               }
+                              )
 
 @login_required
 def profile(request, *args, **kws):
