@@ -14,6 +14,7 @@ class UserInfo(object):
 
         self.baseURL = 'https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
         self.ns = "{http://www.nrao.edu/namespaces/nrao}"
+        self.udb = None
 
     def getStaticContactInfoByUserName(self, username, queryUser,queryPassword):
         return self.getStaticContactInfo('userByAccountNameEquals'
@@ -30,14 +31,16 @@ class UserInfo(object):
     def getStaticContactInfo(self, key, value, queryUser, queryPassword):
         "Get contact info from query service, using given credentials for CAS."
 
-        udb = NRAOUserDB.NRAOUserDB( \
-            self.baseURL
-          , queryUser
-          , queryPassword
-          , opener=urllib2.build_opener())
-        #key = 'userByAccountNameEquals'
-        #el = udb.get_data(key, username)
-        el = udb.get_data(key, value)
+        # make sure we only log once
+        if self.udb is None:
+            self.udb = NRAOUserDB.NRAOUserDB( \
+                self.baseURL
+              , queryUser
+              , queryPassword
+              , opener=urllib2.build_opener())
+
+        el = self.udb.get_data(key, value)
+
         return self.parseUserXML(el)
 
     def findTag(self, node, tag):
