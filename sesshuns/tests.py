@@ -1248,10 +1248,7 @@ class TestUserInfo(NellTestCase):
         </nrao:user>
         """
         self.xml = et.fromstring(self.xmlStr)
-
-    def test_parseUserXML(self):
-        i = self.ui.parseUserXML(self.xml) 
-        exp = \
+        self.xmlDict = \
         {'contact-info': \
             {'phone-numbers':   {'default-phone-number': '304-456-2202'}
            , 'email-addresses': {'default-email-address': 'pmargani@nrao.edu'
@@ -1276,7 +1273,25 @@ class TestUserInfo(NellTestCase):
             , 'account-info': {'account-name': 'pmargani'}         
             , 'id': '823'
         }
-        self.assertEqual(i, exp)
+
+    def test_parseUserXML(self):
+        i = self.ui.parseUserXML(self.xml) 
+        self.assertEqual(i, self.xmlDict)
+
+    def test_parseUserDict(self):
+        info = self.ui.parseUserDict(self.xmlDict)
+        # expected values
+        emails = ['pmargani@nrao.edu'
+                , 'paghots@hotmail.com'
+                , 'pmargani@gmail.com']
+        phones = ['304-456-2202']        
+        postals = \
+            ['NRAO, PO Box 2, Green Bank, West Virginia, 24944, USA, (Office)'
+           , '49 columbus Ave., W. Bridgewater, Massachusetts, 02379, United States, (Other)']
+        self.assertEquals(emails, info['emails'])        
+        self.assertEquals(phones, info['phones'])
+        self.assertEquals(postals, info['postals'])
+        self.assertEquals('pmargani', info['username'])
 
 class TestNRAOBosDB(NellTestCase):
 

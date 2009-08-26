@@ -53,14 +53,14 @@
           {% endif %}
         </div>  
         <div class="span-8 last">  
-          <h4 class="prepend-5">Static Contact</h4>  
+          <h4 class="prepend-5">Static Contact for {{username}}</h4>  
           <table>
             <tr>
               <th>Email(s)</th>
             </tr>
-              {% for e in u.email_set.all %}
+              {% for e in emails %}
                 <tr>
-                  <td>{{e.email}}</td>
+                  <td>{{e}}</td>
                 </tr>
               {% endfor %}
           </table>
@@ -68,12 +68,23 @@
             <tr>
               <th>Phone(s)</th>
             </tr>
-              {% for p in u.phone_set.all %}
+              {% for p in phones %}
                 <tr>
-                  <td>{{p.phone}}</td>
+                  <td>{{p}}</td>
                 </tr>
               {% endfor %}
           </table>
+          <table>
+            <tr>
+              <th>Postal Address(es)</th>
+            </tr>
+              {% for pt in postals %}
+                <tr>
+                  <td>{{pt}}</td>
+                </tr>
+              {% endfor %}
+          </table>
+
         </div>
         <hr />
         <div>

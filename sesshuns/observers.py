@@ -4,6 +4,7 @@ from django.db.models         import Q
 from django.http              import HttpResponse, HttpResponseRedirect
 from django.shortcuts         import render_to_response
 from models                   import *
+from utilities.UserInfo       import UserInfo
 
 def calendar(request, *args, **kws):
     pcode, year, month, day = args
@@ -34,6 +35,19 @@ def profile(request, *args, **kws):
         requestor = first(User.objects.filter(username = loginUser))
         user      = requestor
         
+    # get the users' info from the PST
+    ui = UserInfo()
+    try:
+        # TBF: use user's credentials to get past CAS, not Mr. Nubbles!
+        info = ui.getProfileByID(user, 'dss', 'MrNubbles!')
+    except:
+        # we really should only see this during unit tests.
+        print "encountered excpetion w/ UserInfo and user: ", user
+        info = dict(emails = [e.email for e in user.email_set.all()]
+                  , phones = ['Not Available']
+                  , postals = ['Not Available']
+                  , username = user.username)
+
     # Remember [] is False
     isFriend = ["yep" for p in user.investigators_set.all() if p.friend]
     return render_to_response("sesshuns/profile.html"
@@ -41,6 +55,10 @@ def profile(request, *args, **kws):
                              , 'requestor'  : requestor
                              , 'authorized' : user == requestor # allowed to edit
                              , 'isFriend'   : isFriend
+                             , 'emails'     : info['emails']
+                             , 'phones'     : info['phones']
+                             , 'postals'    : info['postals']
+                             , 'username'   : info['username']
                                })
 
 @login_required
