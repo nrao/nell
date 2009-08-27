@@ -141,7 +141,7 @@ class UserNames(object):
                     print "usernames agree for: ", user
                     agree.append(user)
                 else:
-                    raise "user.username != username! " + user.username + "!=" + username
+                    print "user.username != username! " + user.username + "!=" + username
             else:
                 saved.append(user)
                 print "saving username: ", user, username

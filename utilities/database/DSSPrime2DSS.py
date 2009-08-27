@@ -35,7 +35,7 @@ class DSSPrime2DSS(object):
 
         # Carl transferred only Astronomy Windows & Opportunities.
         # set this to false if you are to ignore these and instead want
-        # to use our self.create_summer_opportunities 
+        # to use our self.create_09B_opportunities 
         self.use_transferred_windows = False
 
     def __del__(self):
@@ -411,7 +411,7 @@ class DSSPrime2DSS(object):
         good = bad.replace('\xad', '')
         return good
     
-    def create_summer_rcvr_schedule(self):
+    def create_09B_rcvr_schedule(self):
 
         rcvrChanges = []
 
@@ -506,9 +506,98 @@ class DSSPrime2DSS(object):
                 rs.save()
                 #print rs
 
-    def create_maintanence_session(self):
+    
+    def create_09C_rcvr_schedule(self):
+
+        rcvrChanges = []
+
+        # First week
+        dt = datetime(2009, 10, 1, 16)
+        rcvrs = ['L', 'C', 'X', 'Ku', 'S', 'Ku', 'Hol', 'Q', '1070'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # "prelimonary[sic] receiver schedule for Oct - Jan"
+
+        # Oct 7: C -> K
+        dt = datetime(2009, 10, 7, 16)
+        rcvrs = ['L', 'K', 'X', 'Ku', 'S', 'Ku', 'Hol', 'Q', '1070'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Oct 14: 1070 -> 800
+        dt = datetime(2009, 10, 14, 16)
+        rcvrs = ['L', 'K', 'X', 'Ku', 'S', 'Ku', 'Hol', 'Q', '800'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Oct 26: 800 -> 450
+        dt = datetime(2009, 10, 26, 16)
+        rcvrs = ['L', 'K', 'X', 'Ku', 'S', 'Ku', 'Hol', 'Q', '450'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Nov 2: 450 -> 600
+        dt = datetime(2009, 11, 2, 16)
+        rcvrs = ['L', 'K', 'X', 'Ku', 'S', 'Ku', 'Hol', 'Q', '600'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Nov 4: Ku -> MBA? (Mustang)
+        dt = datetime(2009, 11, 4, 16)
+        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Ku', 'Hol', 'Q', '600'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Nov 11: 600 -> 800
+        dt = datetime(2009, 11, 11, 16)
+        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Ku', 'Hol', 'Q', '800'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Nov 24: 800 -> 342
+        dt = datetime(2009, 11, 24, 16)
+        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Ku', 'Hol', 'Q', '342'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Dec 13: 342 -> 800
+        dt = datetime(2009, 12, 13, 16)
+        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Ku', 'Hol', 'Q', '800'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Dec 27: 800 -> 342
+        dt = datetime(2009, 12, 27, 16)
+        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Ku', 'Hol', 'Q', '342'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Jan 5: 342 -> 800
+        dt = datetime(2010, 1, 5, 16)
+        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Ku', 'Hol', 'Q', '800'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Jan 6 (or Jan 21) Q-band    down, KFPA      up
+        dt = datetime(2010, 1, 6, 16)
+        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Ku', 'Hol', '800'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Jan 21 (or Feb 1) KFPA      down, Q-band    up
+        dt = datetime(2010, 1, 21, 16)
+        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Ku', 'Hol', 'Q', '800'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Jan 24: 800 -> 342
+        dt = datetime(2010, 1, 24, 16)
+        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Ku', 'Hol', 'Q', '342'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Feb 1: 342 -> 1070
+        dt = datetime(2010, 2, 1, 16)
+        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Ku', 'Hol', 'Q', '1070'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        for dt, rcvrs in rcvrChanges:
+            for rcvr in rcvrs:
+                r = first(Receiver.objects.filter(abbreviation = rcvr))
+                rs = Receiver_Schedule(receiver = r, start_date = dt)
+                rs.save()
+                #print rs
+
+    def create_maintenance_session(self, semesterName):
         """
-        Creates the maintanence session, but not the date
+        Creates the maintenance session, but not the date
         """
 
         # clean up!
@@ -518,11 +607,14 @@ class DSSPrime2DSS(object):
         empty = [s.delete() for s in ss]
 
         # first, just set up the project and single session
-        semesterName = "09B" 
-        semesterStart = datetime(2009, 6, 1)
-        semesterEnd = datetime(2009, 9, 30)
+        if semesterName == "09C":
+            semesterStart = datetime(2009, 10, 1)
+            semesterEnd = datetime(2010, 1, 31)
+        else:
+            semesterStart = datetime(2009, 6, 1)
+            semesterEnd = datetime(2009, 9, 30)
 
-        semester = first(Semester.objects.filter(semester = "09B"))
+        semester = first(Semester.objects.filter(semester = semesterName))
         ptype    = first(Project_Type.objects.filter(type = "non-science"))
 
         p = Project(semester     = semester
@@ -544,7 +636,9 @@ class DSSPrime2DSS(object):
                         , grade             = 4.0 
                           )
         allot.save()
-        p.allotments.add(allot)
+        pa = Project_Allotment(project = p, allotment = allot)
+        pa.save()
+        p.project_allotment_set.add(pa)
         status = Status(enabled    = True 
                       , authorized = True
                       , complete   = False 
@@ -572,15 +666,15 @@ class DSSPrime2DSS(object):
         system = first(System.objects.filter(name = "J2000"))
         target = Target(session    = s
                       , system     = system
-                      , source     = "maintanence" 
+                      , source     = "maintenance" 
                       , vertical   = 0.0
                       , horizontal = 0.0
                     )
         target.save()
         
-    def create_maintanence_opts(self):
+    def create_maintenance_opts(self):
         """
-        Create the summer maintanence dates needed for 09B.
+        Create the summer maintenance dates needed for 09B.
         These aren't being transferred by Carl, so we must create them:
         June 1 - Sep. 30: Mon - Thr, starting at 7 AM for 10.5 Hrs
         Holiday Weekends: Mon - Thr, starting at 8 AM for 8.5  Hrs
@@ -594,7 +688,7 @@ class DSSPrime2DSS(object):
         # now create entries in Windows and Opportunities that can be
         # translated into Periods for this fixed session
 
-        # some maintanence days can't be scheduled normaly because of 
+        # some maintenance days can't be scheduled normaly because of 
         # radar runs and the like
         conflicts = [ datetime(2009, 6,  9, 11) ]
                     #, datetime(2009, 6, 16, 11)
@@ -679,11 +773,11 @@ class DSSPrime2DSS(object):
 
 
 
-    def create_testing_session(self):
+    def create_testing_session(self, trimester):
 
         # create the test project w/ associated sessions.
         tooMuch = 10000.0
-        semester = first(Semester.objects.filter(semester = "09B"))
+        semester = first(Semester.objects.filter(semester = trimester))
         ptype    = first(Project_Type.objects.filter(type = "non-science"))
 
         p = Project(semester     = semester
@@ -703,7 +797,9 @@ class DSSPrime2DSS(object):
                     , grade             = 4.0
                       )
         a.save()
-        p.allotments.add(a)
+        pa = Project_Allotment(project = p, allotment = a)
+        pa.save()
+        p.project_allotment_set.add(pa)
         p.save()
            
         otype = first(Observing_Type.objects.filter(type = "testing"))
@@ -900,12 +996,7 @@ class DSSPrime2DSS(object):
         as opportunities so that in the simulations they get translated
         into fixed periods that we pack around.
         """
-
         times = []
-
-        #start = "20090601"
-        #end   = "20091001"
-        #end   = "20090603"
 
         query = """
         SELECT etdate, startet, stopet, lengthet, type, pcode, vpkey
@@ -1015,29 +1106,30 @@ class DSSPrime2DSS(object):
         end2 = start2 + timedelta(seconds = dur2 * 60 * 60)
         return start1 < end2 and start2 < end1
  
-    def create_summer_conditions(self):
-        self.create_testing_session()
-        self.create_maintanence_session()
-        self.create_summer_rcvr_schedule()
+    def create_09B_database(self):
+        self.transfer()
+        self.create_09B_conditions()
+
+    def create_09B_conditions(self):
+        trimester = "09B"
+        self.create_testing_session(trimester)
+        self.create_maintenance_session(trimester)
+        self.create_09B_rcvr_schedule()
         #self.create_other_fixed_periods()
         self.set_fixed_projects()
         start = "20090601"
         end   = "20091001"
         self.create_opportunities(start, end)
 
-    def create_09B_database(self):
-        self.transfer()
-        self.create_summer_conditions()
-
     def create_09C_database(self):
-
-        # generic
         self.transfer()
+        self.create_09C_conditions()
 
-        # specific to 09C
-        self.create_testing_session()
-        self.create_maintanence_session()
-        self.create_09B_rcvr_schedule()
+    def create_09C_conditions(self):
+        trimester = "09C"
+        self.create_testing_session(trimester)
+        self.create_maintenance_session(trimester)
+        self.create_09C_rcvr_schedule()
         start = "20091001"
         end   = "20100201"
         self.create_opportunities(start, end)
