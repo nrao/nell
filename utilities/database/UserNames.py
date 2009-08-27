@@ -71,13 +71,16 @@ class UserNames(object):
 
         # reading from another Postgres DB is a pain, so just read in 
         # a text dump of the sanctioned table
-        filename = "user_table.txt"
+        filename = "utilities/database/user_table.txt"
         f = open(filename, 'r')
         lines = f.readlines()
 
         # keep some records
         matched = []
         mismatched = []
+        missing = []
+
+        observer = first(Role.objects.filter(role = "Observer"))
 
         for line in lines:
             parts = line.split('\t')
@@ -91,7 +94,22 @@ class UserNames(object):
             # use the original id to map
             ourUser = first(User.objects.filter(original_id=original_id).all())
             # does this make sense?
-            if first_name != ourUser.first_name or \
+            if ourUser is None:
+                print "missing user: ", line
+                ourUser = User(
+                    original_id = original_id
+                  , pst_id      = pst_id
+                  , username    = username
+                    #, sanctioned  = models.BooleanField(default = False)
+                  , first_name  = first_name
+                  , last_name   = last_name
+                    #, contact_instructions = models.TextField(null = True)
+                    , role                 = observer
+                               )
+                ourUser.save()
+                missing.append((ourUser, first_name, last_name))   
+                continue
+            elif first_name != ourUser.first_name or \
                last_name != ourUser.last_name:
                 print "mismatch: ", ourUser, first_name, last_name
                 mismatched.append((ourUser, first_name, last_name))   
@@ -104,8 +122,10 @@ class UserNames(object):
             ourUser.save()
     
         print "mismatched: ", mismatched
+        print "missing: ", missing
         print "len(mismatched): ", len(mismatched)
         print "len(matched): ", len(matched)
+        print "len(missing): ", len(missing)
         print "len(ourUsers): ", len(User.objects.all())
 
     def getUserNamesFromIDs(self, queryUser, queryPassword):
