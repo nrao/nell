@@ -19,7 +19,7 @@ def calendar(request, *args, **kws):
 
 @login_required
 def profile(request, *args, **kws):
-    loginUser = request.user
+    loginUser = request.user.username
     if len(args) > 0:
         u_id,     = args
         user      = first(User.objects.filter(id = u_id))
@@ -63,7 +63,7 @@ def profile(request, *args, **kws):
 
 @login_required
 def project(request, *args, **kws):
-    loginUser = request.user
+    loginUser = request.user.username
     user   = first(User.objects.filter(username = loginUser))
     pcode, = args
     #  If the requestor is not on this project redirect to their profile.
@@ -79,7 +79,7 @@ def project(request, *args, **kws):
 
 @login_required
 def search(request, *args, **kws):
-    loginUser = request.user
+    loginUser = request.user.username
     user   = first(User.objects.filter(username = loginUser))
     search   = request.POST.get('search', '')
     projects = Project.objects.filter(
@@ -114,7 +114,7 @@ def toggle_observer(request, *args, **kws):
 
 @login_required
 def dynamic_contact_form(request, *args, **kws):
-    loginUser = request.user
+    loginUser = request.user.username
     u_id,     = args
     user      = first(User.objects.filter(id = u_id))
 
@@ -136,7 +136,7 @@ def dynamic_contact_save(request, *args, **kws):
 
 @login_required
 def blackout_form(request, *args, **kws):
-    loginUser = request.user
+    loginUser = request.user.username
     method = request.GET.get('_method', '')
     u_id, = args
     user  = first(User.objects.filter(id = u_id))
@@ -160,7 +160,7 @@ def blackout_form(request, *args, **kws):
 
 @login_required
 def blackout(request, *args, **kws):
-    loginUser = request.user
+    loginUser = request.user.username
     u_id, = args
     user = first(User.objects.filter(id = u_id))
 
