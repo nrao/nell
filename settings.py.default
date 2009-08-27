@@ -1,6 +1,6 @@
 # Django settings for nell project.
 
-# Look for variables marked with #MODIFY# to adapt to your installation
+# Look for variables marked with #MODIFY# to adapt for a specific installation
 
 STATIC_DOC_ROOT='{path to your sandbox}/nell/sesshuns/static' #MODIFY#
 
@@ -17,15 +17,19 @@ ADMINS = (
 MANAGERS = ADMINS
 
 #DATABASE_ENGINE = 'mysql'
-DATABASE_ENGINE = 'postgresql'     # 'postgresql_psycopg2', 'postgresql', 'mysql',
-                              # 'sqlite3' or 'oracle'.
+# TBF should use engine 'postgresql2' for deployment
+DATABASE_ENGINE = 'postgresql' #MODIFY#
+                               # 'postgresql_psycopg2', 'postgresql', 'mysql',
+                               # 'sqlite3' or 'oracle'.
 DATABASE_NAME = 'dss_prime'   #MODIFY#
                               # Modify to your database name or path to
                               # database file if using sqlite3.
 DATABASE_USER = 'dss'         # Not used with sqlite3.
 DATABASE_PASSWORD = ''  # Not used with sqlite3.
 #DATABASE_PASSWORD = 'asdf5!'  # Not used with sqlite3.
-DATABASE_HOST = ''       # Set to empty string for localhost. Not used
+# TBF needs specific machine for deployment
+DATABASE_HOST = 'trent'       #MODIFY#
+                              # Set to empty string for localhost. Not used
                               # with sqlite3.
 DATABASE_PORT = ''            # Set to empty string for default. Not used with sqlite3.
 

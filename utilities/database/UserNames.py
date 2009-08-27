@@ -49,7 +49,7 @@ class UserNames(object):
                     #no-op
                     print "usernames agree for: ", user
                 else:
-                    raise "user.username != username! " + user.username + "!=" + username
+                    print "user.username != username! " + user.username + "!=" + username
             else:
                 print "saving username: ", user, username
                 user.username = username
