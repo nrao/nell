@@ -4,7 +4,8 @@ from django.db.models         import Q
 from django.http              import HttpResponse, HttpResponseRedirect
 from django.shortcuts         import render_to_response
 from models                   import *
-from utilities.UserInfo       import UserInfo
+from utilities                import UserInfo
+from utilities                import NRAOBosDB
 
 def calendar(request, *args, **kws):
     pcode, year, month, day = args
@@ -47,8 +48,12 @@ def profile(request, *args, **kws):
                   , phones = ['Not Available']
                   , postals = ['Not Available']
                   , username = user.username)
+        
+    # get the reservations information from BOS
+    bos = NRAOBosDB()
+    reservations = bos.getReservationsByUsername(user.username)
 
-    # Remember [] is False
+    # Remember [] is False,  TBF is this needed?
     isFriend = ["yep" for p in user.investigators_set.all() if p.friend]
     return render_to_response("sesshuns/profile.html"
                             , {'u'          : user
@@ -59,10 +64,12 @@ def profile(request, *args, **kws):
                              , 'phones'     : info['phones']
                              , 'postals'    : info['postals']
                              , 'username'   : info['username']
+                             , 'reserves'   : reservations
                                })
 
 @login_required
 def project(request, *args, **kws):
+    bos = NRAOBosDB()
     loginUser = request.user.username
     user   = first(User.objects.filter(username = loginUser))
     pcode, = args
@@ -75,6 +82,7 @@ def project(request, *args, **kws):
     return render_to_response("sesshuns/project.html"
                             , {'p' : project
                              , 'u' : user
+                             , 'r' : bos.reservations(project)
                                })
 
 @login_required

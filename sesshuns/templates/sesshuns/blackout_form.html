@@ -20,10 +20,10 @@
 <form action="/profile/{{u.id}}/blackout" method="POST">
   <p>
     <label for="id_start">Start:</label>
-    <input type="text" name="start" id="id_start" value="{{b.start|just_date}}"/>
+    <input type="text" name="start" id="id_start" value="{{b.start|date:'m/d/Y'}}"/>
     <select name="starttime" id="id_starttime">
       {% for t in times %}
-      {% ifequal t b.start|just_time %}
+      {% ifequal t b.start|date:"H:M" %}
       <option selected="selected">{{t}}</option>
       {% else %}
       <option >{{t}}</option>
@@ -33,10 +33,10 @@
   </p>
   <p>
     <label for="id_end">End:</label>
-    <input type="text" name="end" id="id_end" value="{{b.end|just_date}}"/>
+    <input type="text" name="end" id="id_end" value="{{b.end|date:'m/d/Y'}}"/>
     <select name="endtime" id="id_endtime">
       {% for t in times %}
-      {% ifequal t b.end|just_time %}
+      {% ifequal t b.end|date:"H:M" %}
       <option selected="selected">{{t}}</option>
       {% else %}
       <option >{{t}}</option>
@@ -70,10 +70,10 @@
   </p>
   <p>
     <label for="id_until">Until:</label> 
-    <input type="text" name="until" id="id_until" value="{{b.until|just_date}}"/>
+    <input type="text" name="until" id="id_until" value="{{b.until|date:'m/d/Y'}}"/>
     <select name="untiltime" id="id_untiltime">
       {% for t in times %}
-      {% ifequal t b.until|just_time %}
+      {% ifequal t b.until|date:"H:M" %}
       <option selected="selected">{{t}}</option>
       {% else %}
       <option >{{t}}</option>

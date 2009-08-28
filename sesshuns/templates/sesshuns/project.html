@@ -171,7 +171,16 @@
         <div id="reservation">
           <h3 class="caps">Upcoming Reservations</h3>
           <div class="box">
-            List of reservations this week or month.
+            <dl>
+            {% for user, dates in r.items %}
+              <dt>{{user.last_name}}</dt>
+              <dd>
+              {% for d in dates %}
+                {{ d|date:"D M d, Y" }}<p>
+              {% endfor %}
+              </dd>
+            {% endfor %}
+            </dl>
           </div>
         </div>
       </div>

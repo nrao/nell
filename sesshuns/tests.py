@@ -12,8 +12,8 @@ from test_utils.NellTestCase         import NellTestCase
 from tools                           import DBReporter
 from utilities.database              import DSSPrime2DSS
 from utilities.receiver              import ReceiverCompile
-from utilities.UserInfo              import UserInfo
-from utilities.NRAOBosDB             import NRAOBosDB
+from utilities                       import UserInfo
+from utilities                       import NRAOBosDB
 
 # Test field data
 fdata = {"total_time": "3"

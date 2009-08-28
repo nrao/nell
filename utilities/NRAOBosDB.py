@@ -18,13 +18,28 @@ class NRAOBosDB:
         self.baseUrlByPerson = \
             'https://bos.nrao.edu/resReports/reservationsByPerson/'
 
+    def reservations(self, project):
+        """
+        Constructs a dictionary mapping the project's users to lists of
+        reservations dates.
+        """
+        retval = dict()
+        for i in project.investigators_set.all():
+            if not i.friend:
+                u = i.user
+                rs = self.getReservationsByUsername(u.username)
+                if rs:
+                    retval[u] = rs
+        return retval
+
     def getReservationsByUsername(self, username):
         "Uses BOS query service to return list of reservations for username."
 
         url = self.baseUrlByPerson + username
         fh = self.opener.open(url)
         str = fh.read(0x4000)
-        return self.parseReservationsXML(str)
+        parsed = self.parseReservationsXML(str)
+        return list(parsed[0]) if parsed else []
 
     def parseReservationsXML(self, str):
         "Parses XML returned by reservationsByPerson query."

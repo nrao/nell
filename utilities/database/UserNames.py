@@ -1,10 +1,10 @@
-from sesshuns.models import *
-from datetime        import datetime, timedelta
+from sesshuns.models    import *
+from datetime           import datetime, timedelta
 import math
 import MySQLdb as m
 import logging, urllib2
-from utilities import NRAOUserDB
-from utilities.UserInfo import UserInfo
+from utilities          import NRAOUserDB
+from utilities          import UserInfo
 import lxml.etree as ET
 
 class UserNames(object):
@@ -181,7 +181,7 @@ class UserNames(object):
         skipping = []
 
         # use service to get all users with this last name
-        udb = NRAOUserDB.NRAOUserDB( \
+        udb = NRAOUserDB( \
             'https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
           , username
           , password
@@ -248,7 +248,7 @@ class UserNames(object):
         # use service to get all users with this last name
         #url = "https://mirror.nrao.edu/nrao-2.0/secure/QueryFilter.htm"
         url = "https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm"
-        udb = NRAOUserDB.NRAOUserDB( \
+        udb = NRAOUserDB( \
             url  
           , username
           , password

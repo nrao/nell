@@ -130,5 +130,13 @@
             List of telescope periods.
           </div>
         </div>
+        <div id="reservation">
+          <h3 class="caps">Upcoming Reservations</h3>
+          <div class="box">
+            {% for d in reserves %}
+              {{ d|date:"D M d, Y" }}<p>
+            {% endfor %}
+          </div>
+        </div>
       </div>
 {% endblock %}
