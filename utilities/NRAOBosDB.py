@@ -34,7 +34,9 @@ class NRAOBosDB:
 
     def getReservationsByUsername(self, username):
         "Uses BOS query service to return list of reservations for username."
-
+        if username is None:
+            print "Error: getReservationsByUsername username arg is None"
+            return []
         url = self.baseUrlByPerson + username
         fh = self.opener.open(url)
         str = fh.read(0x4000)

@@ -26,6 +26,7 @@ def profile(request, *args, **kws):
         user      = first(User.objects.filter(id = u_id))
         projects  = [i.project.pcode for i in user.investigators_set.all()]
         requestor = first(User.objects.filter(username = loginUser))
+        assert requestor is not None
         union     = [i.project.pcode for i in requestor.investigators_set.all()
                         if i.project.pcode in projects]
         #  If the requestor is not the user profile requested and they are
@@ -34,6 +35,7 @@ def profile(request, *args, **kws):
             return HttpResponseRedirect("/profile")
     else:
         requestor = first(User.objects.filter(username = loginUser))
+        assert requestor is not None
         user      = requestor
         
     # get the users' info from the PST
@@ -72,6 +74,7 @@ def project(request, *args, **kws):
     bos = NRAOBosDB()
     loginUser = request.user.username
     user   = first(User.objects.filter(username = loginUser))
+    assert user is not None
     pcode, = args
     #  If the requestor is not on this project redirect to their profile.
     if pcode not in [i.project.pcode for i in user.investigators_set.all()] \
@@ -89,6 +92,7 @@ def project(request, *args, **kws):
 def search(request, *args, **kws):
     loginUser = request.user.username
     user   = first(User.objects.filter(username = loginUser))
+    assert user is not None
     search   = request.POST.get('search', '')
     projects = Project.objects.filter(
         Q(pcode__icontains = search) | \
@@ -128,6 +132,7 @@ def dynamic_contact_form(request, *args, **kws):
 
     # TBF Use a decorator
     requestor = first(User.objects.filter(username = loginUser))
+    assert requestor is not None
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
 
@@ -151,6 +156,7 @@ def blackout_form(request, *args, **kws):
 
     # TBF Use a decorator
     requestor = first(User.objects.filter(username = loginUser))
+    assert requestor is not None
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
 
@@ -174,6 +180,7 @@ def blackout(request, *args, **kws):
 
     # TBF Use a decorator
     requestor = first(User.objects.filter(username = loginUser))
+    assert requestor is not None
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
 
