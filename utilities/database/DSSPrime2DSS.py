@@ -42,9 +42,9 @@ class DSSPrime2DSS(object):
         self.cursor.close()
 
     def transfer(self):
-        self.transfer_friends()
         self.transfer_projects()
         self.transfer_authors()
+        self.transfer_friends()
         self.transfer_sessions()
         self.transfer_project_blackouts_09B()
 
@@ -387,10 +387,18 @@ class DSSPrime2DSS(object):
             #print "exception with name: ", row[2]
             lastName = "exception"
 
+        if len(row) > 7:
+            pst_id = int(row[7])
+            if pst_id == 0:
+                pst_id = None
+        else:
+            pst_id = None
+
         u = User(original_id = int(row[3])
                , sanctioned  = False
                , first_name  = firstName #row[1]
                , last_name   = lastName #row[2]
+               , pst_id      = pst_id 
                , role        = first(Role.objects.filter(role = "Observer"))
                  )
         u.save()
