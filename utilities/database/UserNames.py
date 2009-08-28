@@ -24,6 +24,8 @@ class UserNames(object):
         noPstId = []
         matched = []
         mismatched = []
+        badIds = []
+        badUsernames = []
 
         for u in users:
             if u.pst_id is not None:
@@ -37,8 +39,10 @@ class UserNames(object):
                 pstFirstName = info['name']['first-name'].strip()
                 pstLastName  = info['name']['last-name'].strip()
 
-                assert (pstId == u.pst_id)
-                assert (pstUsername == u.username)
+                if (pstId != u.pst_id):
+                    badIds.append(u)
+                if (pstUsername != u.username):
+                    badUsernames.append(u)
                 # just check for names
                 #if pstId != u.pst_id or pstUsername != u.username or \
                 if pstFirstName != u.first_name or \
@@ -58,6 +62,8 @@ class UserNames(object):
         print "len(noPstId): ", len(noPstId)
         print "len(matched): ", len(matched)
         print "len(mismatched): ", len(mismatched)
+        print "len(badIds): ", len(badIds)
+        print "len(badUsernames): ", len(badUsernames)
 
     def transferUserNamesByOriginalID(self):
         """
@@ -151,6 +157,7 @@ class UserNames(object):
                 continue
 
             # save off the username
+            print "getting id for: ", user, id
             info = ui.getStaticContactInfoByID(id, queryUser, queryPassword)
             #print info
             username = info['account-info']['account-name']
@@ -181,8 +188,10 @@ class UserNames(object):
         skipping = []
 
         # use service to get all users with this last name
-        udb = NRAOUserDB( \
-            'https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
+        url = 'https://mirror.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
+        #url = 'https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
+        udb = NRAOUserDB.NRAOUserDB( \
+            url
           , username
           , password
           , opener=urllib2.build_opener())
@@ -193,6 +202,10 @@ class UserNames(object):
 
         #users =  User.objects.all()
         for user in users:
+            if user.pst_id is not None:
+                print "users has pst_id: ", user
+                continue
+
             print user.last_name
 
             if "'" in user.last_name:
