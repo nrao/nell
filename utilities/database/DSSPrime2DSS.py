@@ -1,5 +1,6 @@
 from sesshuns.models import *
 from datetime        import datetime, timedelta
+from utilities.database.UserNames import UserNames
 import math
 import MySQLdb as m
 
@@ -411,6 +412,9 @@ class DSSPrime2DSS(object):
             # Create a new email record if email not found.
             if email is None:
                 new_email = Email(user = u, email = e)
+                #print "created email: ", e
+                #print "for user: ", u
+                #x = raw_input("check: ")
                 new_email.save()
 
         return u
@@ -1129,9 +1133,63 @@ class DSSPrime2DSS(object):
         end   = "20091001"
         self.create_opportunities(start, end)
 
+    def create_admins(self):
+        "Creates users who probably aren't on a GBT proposal in the PST"
+
+        admins = [("Paul", "Marganian", "pmargani", 823)
+                , ("Mark", "Clark", "windyclark", 1063)
+                , ("Amy", "Shelton", "ashelton", 556 )
+                , ("Dan", "Perera", 'dperera', 2705)
+                # who else?
+                 ]
+
+        for first_name, last, user, id in admins:
+            # don't make'm unless you have to
+            u = first(User.objects.filter(username = user)) 
+            if u is not None:
+                continue
+            # you have to
+            u = User(original_id = 0
+               , sanctioned  = True
+               , first_name  = first_name 
+               , last_name   = last 
+               , username    = user
+               , pst_id      = id 
+               , role        = first(Role.objects.filter(role = "Administrator"))
+                 )
+            u.save()
+            
+    def get_user_info(self):
+        """
+        Here's all the hoops you have to jump through to get our User table
+        in sync with the PST.
+        """
+
+        # who's missing that really needs to be in here?
+        self.create_admins()
+
+        # first, what's the status?
+        print "First, check DB vs. PST."
+        print "Are these differences in names acceptable?"
+        un = UserNames()
+        un.confirmUserInfo('dss', 'MrNubbles!')
+
+        x = raw_input("Continue and get missing IDs/usernames? CtrlX if not.")
+
+        un.getUserNamesFromProjects('dss', 'MrNubbles!')
+
+        un.getUserNamesFromIDs('dss', 'MrNubbles!')
+
+        print "Finally, check DB vs. PST one more time: "
+        un.confirmUserInfo('dss', 'MrNubbles!')
+
+        un.setAdminRoles()
+
     def create_09C_database(self):
         self.transfer()
         self.create_09C_conditions()
+        print "09C DB created."
+        self.get_user_info()
 
     def create_09C_conditions(self):
         trimester = "09C"

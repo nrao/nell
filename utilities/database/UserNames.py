@@ -40,9 +40,9 @@ class UserNames(object):
                 pstLastName  = info['name']['last-name'].strip()
 
                 if (pstId != u.pst_id):
-                    badIds.append(u)
+                    badIds.append((u, u.pst_id, pstId))
                 if (pstUsername != u.username):
-                    badUsernames.append(u)
+                    badUsernames.append((u, u.username, pstUsername))
                 # just check for names
                 #if pstId != u.pst_id or pstUsername != u.username or \
                 if pstFirstName != u.first_name or \
@@ -56,6 +56,14 @@ class UserNames(object):
                     matched.append(u)
             else:
                 noPstId.append(u)
+
+        print "badIds: "
+        for b in badIds:
+            print b
+
+        print "badUsernames: "
+        for b in badUsernames:
+            print b
 
         # report
         print "len(users): ", len(users)
@@ -136,6 +144,9 @@ class UserNames(object):
 
     def getUserNamesFromIDs(self, queryUser, queryPassword):
 
+        noUsernames = User.objects.filter(username = None).all()
+        print "num w/ no username  now : ", len(noUsernames)
+
         # use query services
         ui = UserInfo()
 
@@ -157,7 +168,7 @@ class UserNames(object):
                 continue
 
             # save off the username
-            print "getting id for: ", user, id
+            #print "getting id for: ", user, id
             info = ui.getStaticContactInfoByID(id, queryUser, queryPassword)
             #print info
             username = info['account-info']['account-name']
@@ -165,13 +176,13 @@ class UserNames(object):
             if user.username is not None:
                 if user.username == username:
                     #no-op
-                    print "usernames agree for: ", user
+                    #print "usernames agree for: ", user
                     agree.append(user)
                 else:
                     print "user.username != username! " + user.username + "!=" + username
             else:
                 saved.append(user)
-                print "saving username: ", user, username
+                #print "saving username: ", user, username
                 user.username = username
                 user.save()
         
@@ -181,6 +192,9 @@ class UserNames(object):
         print "num agreed: ", len(agree)
         print "num saved: ", len(saved)
         print "num no pst_id: ", len(missing)
+
+        noUsernames = User.objects.filter(username = None).all()
+        print "num w/ no username still : ", len(noUsernames)
 
     def getUserNames(self, username, password):
         "DEPRECATED: but may be useful for testing query services"
@@ -275,6 +289,7 @@ class UserNames(object):
         usersAbsent = []
         usersMultiple = []
         usersFound = []
+        badIds = []
 
         # for each project, try to retrieve author info:
         # NOTE - not all projects are available
@@ -284,15 +299,12 @@ class UserNames(object):
             id = "%s/%s" % (p.pcode[:3], p.pcode[3:])
 
             # use the service!
-            print "id: ", id
             try:
                 el = udb.get_data(key, id)
             except:
                 print "EXCEPTION w/ id: ", id
                 failures.append(p)
                 continue
-            print el
-            print len(el)
             #print ET.tostring(el, pretty_print=True)
 
             numAuthors = len(el)
@@ -308,28 +320,39 @@ class UserNames(object):
                 # get it's info
                 last_name  = self.findTag(a, "last_name")
                 first_name = self.findTag(a, "first_name")
-                unique_id  = self.findTag(a, "unique_id")
+                unique_id  = int(self.findTag(a, "unique_id"))
                 accnt_name = self.findTag(a, "account-name")
-                email      = self.findTag(a, "email")
+                emailStr   = self.findTag(a, "email")
 
                 # find this author in OUR DB
                 users = User.objects.filter(first_name = first_name
                                           , last_name = last_name).all()
                 # if that failed, try email:
                 if len(users) == 0:
-                    email = first(Email.objects.filter(email = email).all())
+                    email = first(Email.objects.filter(email = emailStr).all())
                     if email is not None:
-                        print "Using email %s for user %s, last: %s, first: %s" % (email.email, email.user, last_name, first_name)
+                        #print "Using email %s for user %s, last: %s, first: %s" % (email.email, email.user, last_name, first_name)
                         users = [email.user]
 
+                #print "tried to match: ", first_name, last_name, emailStr
+                #print "users: ", users
+                #x = raw_input("hold on.")
+
                 numUsers = len(users)
-                entry = (first_name, last_name, email, numUsers)
+                entry = (first_name, last_name, emailStr, numUsers)
 
                 # Only save to the DB if we got one unique user                 
                 if numUsers == 1:
                     u = users[0]        
                     if (u, unique_id, accnt_name) not in usersFound:
                             usersFound.append((u, unique_id, accnt_name))
+                    if u.pst_id is not None:
+                        if u.pst_id != unique_id:
+                            badIds.append((u, u.pst_id, unique_id, id))
+                            print "BAD ID!!!!!!!!!!!!!!!!!!!"
+                            print u.pst_id, unique_id, id
+                            x = raw_input("Take Note of this exception.")
+                            continue
                     # save what we've learned to the DB!!!        
                     u.username = accnt_name
                     u.pst_id = unique_id
@@ -371,6 +394,10 @@ class UserNames(object):
         for r in redundantUsers:
             print r
 
+        print "bad ids users: "
+        for r in badIds:
+            print r
+
         # print summary
         print "total # of projects: %d" % len(ps)
         print "total # of projects that were NOT in PST: %d" % len(notInPST)
@@ -379,6 +406,7 @@ class UserNames(object):
         print "total # of users found: %d" % len(usersFound)
         print "total # of users not in our DB: %d" % len(usersAbsent)
         print "total # of users in our DB that share first & last name: %d" % len(usersMultiple)
+        print "total # of bad Ids: %d" % len(badIds)
 
     def findTag(self, node, tag):
         value = None
