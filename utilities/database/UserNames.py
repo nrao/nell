@@ -14,6 +14,49 @@ class UserNames(object):
     issues related to usernames and IDs.
     """
 
+    def findMissingUsers(self):
+        
+        users = User.objects.filter(pst_id = None).all()
+
+        
+        infos = self.loadUserInfoFromDump()
+
+        for user in users:
+            print "looking for user: ", user
+            self.findUser(user.last_name, infos)
+            id = raw_input("What id to use: ")
+            username = raw_input("What username to use: ")
+            user.pst_id = id
+            user.username = username
+            user.save()
+            print ""
+
+
+            
+    def loadUserInfoFromDump(self):
+        "Uses a textual xml dump of PST to assign usernames/ids"
+        users = []
+        ui = UserInfo()
+        f = "nrao.xml"
+        parsed = ET.parse(f)
+        elements = parsed.getroot()
+        for element in elements:
+            users.append(ui.parseUserXML(element))
+        return users
+
+    def findUser(self, last_name, users):
+
+        for user in users:
+           if user['name']['last-name'] == last_name:
+               first_name = user['name']['last-name']
+               last       = user['name']['first-name']
+               username = user['account-info']['account-name']
+               id       = user['id']
+               print "Found user of name: %s %s" % (first_name, last)
+               print "username: %s, ID: %s" % (username, id)
+               print ""
+               
+
     def confirmUserInfo(self, queryUser, queryPassword):
         "Checks contents of User table against info from PST service w/ pst ID."
 
