@@ -1,5 +1,6 @@
 drop table allotment cascade;
 drop table blackouts cascade;
+drop table emails cascade;
 drop table investigators cascade;
 drop table observing_parameters cascade;
 drop table observing_types cascade;

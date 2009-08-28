@@ -109,7 +109,8 @@ class UserInfo(object):
 
         # make sure we only log once
         if self.udb is None:
-            self.udb = NRAOUserDB.NRAOUserDB( \
+        #    self.udb = NRAOUserDB.NRAOUserDB( \
+            self.udb = NRAOUserDB( \
                 self.baseURL
               , queryUser
               , queryPassword
