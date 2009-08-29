@@ -14,8 +14,15 @@ function initListeners() {
     setToggle("#se");
     setToggle("#obs");
     setToggle("#black");
+    setToggle("#cal");
 }
 
 $(document).ready(function() {
     initListeners();
+
+	$('#calendar').fullCalendar({
+        draggable: false,
+        events: "/project/BB261/blackouts"
+	});
+
 });

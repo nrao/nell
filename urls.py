@@ -18,6 +18,7 @@ urlpatterns = patterns(''
    , url(r'^profile',                                      profile)
    , url(r'^$',                                            profile)
    , url(r'^project/([^/]+)/calendar/(\d+)/(\d+)/(\d+)/$', calendar)
+   , url(r'^project/([^/]+)/blackouts$',                   investigator_blackouts)
    , url(r'^project/([^/]+)$',                             project)
    , url(r'^project/([^/]+)/investigator/(\d+)/observer$', toggle_observer)
    , url(r'^project/([^/]+)/session/([^/]+)/enable$',      toggle_session)

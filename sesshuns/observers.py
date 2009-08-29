@@ -4,19 +4,64 @@ from django.db.models         import Q
 from django.http              import HttpResponse, HttpResponseRedirect
 from django.shortcuts         import render_to_response
 from models                   import *
-from utilities                import UserInfo
+from sets                     import Set
+from utilities.UserInfo       import UserInfo
 from utilities                import NRAOBosDB
 
+def investigator_blackouts(request, *args, **kws):
+    pcode     = args[0]
+    project   = first(Project.objects.filter(pcode = pcode).all())
+    blackouts = Set([b for i in project.investigators_set.all() \
+                       for b in i.user.blackout_set.all()])
+    return HttpResponse(json.dumps([b.jsondict() for b in blackouts]))
+
+@login_required
 def calendar(request, *args, **kws):
     pcode, year, month, day = args
-    
-    return render_to_response("sesshuns/overview.html"
-                            , {'today' : date(int(year), int(month), int(day))
-                             , 'weeks' : range(6)
-                             , 'days'  : range(7)
-                             , 'p'     : first(Project.objects.filter(pcode = pcode))
-                               }
-                              )
+
+    today = date(int(year), int(month), int(day))
+    days  = range(7)
+    weeks = range(6)
+    day_props = [[(get_label(w, d, today)
+                 , get_color(w, d, today)
+                 , get_bgcolor(w, d, today))
+                  for d in days]
+                 for w in weeks]
+
+    return render_to_response(
+        "sesshuns/overview.html"
+      , {'today'     : today
+       , 'day_props' : day_props
+       , 'p'         : project
+       }
+      )
+
+def get_day(n, today):
+    'Find the n_th day on the calendar.'
+    start = today - timedelta(today.isoweekday())
+    return start + timedelta(n)
+
+def get_current_month(n, today):
+    day   = get_day(7*(n/7), today)
+    pivot = day if day.day == 1 else day + timedelta(7)
+    return pivot.month
+
+def get_label(w, d, today):
+    'Certain day labels should include month names.'
+    n      = 7 * w + d
+    day    = get_day(n, today)
+    format = '%b %d' if day.day == 1 or n == 0 else '%d'
+    return day.strftime(format)
+
+def get_color(w, d, today):
+    n   = 7 * w + d
+    day = get_day(n, today)
+    return 'black' if day.month == get_current_month(n, today) else '#888888'
+
+def get_bgcolor(w, d, today):
+    day = get_day(7 * w + d, today)
+    return '#EEEEEE' if day == date.today() else '#FFFFFF'
+
 
 @login_required
 def profile(request, *args, **kws):

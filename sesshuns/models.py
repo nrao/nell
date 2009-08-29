@@ -1,5 +1,6 @@
 from datetime                  import datetime, timedelta
 from math                      import asin, acos, cos, sin
+from django.conf               import settings
 from django.db                 import models
 from django.http               import QueryDict
 from utilities.receiver        import ReceiverCompile
@@ -8,6 +9,7 @@ from utilities                 import TimeAgent
 import calendar
 import pg
 from sets                      import Set
+import simplejson as json
 import sys
 
 def first(results, default = None):
@@ -66,29 +68,59 @@ def grade_float_2_abc(grade):
             break
     return gradeLetter
 
-def consolidate_blackouts(conflicts):
+def overlaps(dt1, dt2):
+    start1, end1 = dt1
+    start2, end2 = dt2
+
+    if start1 < end2 and start2 < end1:
+        return True
+    else:
+        return False
+
+def find_intersections(events):
+    """
+    Takes a list of lists of datetime tuples of the form (start, end) 
+    representing sets of events, finds the intersections of all the
+    sets, and returns a list of datetime tuples of the form (start, end)
+    describing the intersections.  All datetime tuples are assumed to be 
+    in the same timezone.
+    """
+    start = 0; end = 1
+    intersections = []
+    for b in events[0]:
+        for set in events[1:]:
+            if any([overlaps(b, s) for s in set]):
+                intersections.extend(
+                    [(max([b[start], s[start]]), min([b[end], s[end]])) \
+                     for s in set if overlaps(b, s)])
+            else:
+                return [] # No intersections for all sets.
+
+    return intersections
+
+def consolidate_events(events):
     """
     Takes a list of datetime tuples of the form (start, end) and
-    reduces it to the smallest list that describes the conflicts.
+    reduces it to the smallest list that fully describes the events.
+    All datetime tuples are assumed to be in the same timezone.
     """
-    # If there is only one set of dates, then no need to reduce further.
-    if len(conflicts) == 1:
-        return conflicts
+    if len(events) == 1:
+        return events
 
     # Then reduce the list to its most succinct form.
-    blackouts = []
-    for (begin1, end1) in conflicts:
+    reduced = []
+    for (begin1, end1) in events:
         begin = begin1
         end   = end1
-        for (begin2, end2) in conflicts:
+        for (begin2, end2) in events:
             if (begin1, end1) != (begin2, end2) and \
                begin1 < end2 and begin2 < end1:
                 begin = max([begin, begin1, begin2])
                 end   = min([end, end1, end2])
-        if (begin, end) not in blackouts:
-            blackouts.append((begin, end))            
+        if (begin, end) not in reduced:
+            reduced.append((begin, end))            
 
-    return sorted(blackouts)
+    return sorted(reduced)
 
 jsonMap = {"authorized"     : "status__authorized"
          , "between"        : "time_between"
@@ -357,7 +389,7 @@ class Project(models.Model):
         """
         A project is 'blacked out' when all of its sanctioned observers
         are unavailable.  Returns a list of tuples describing the date ranges
-        where the project is 'blacked out'.
+        where the project is 'blacked out' in UTC.
         """
         blackouts = [o.user.blackout_set.all() \
                      for o in self.get_sanctioned_observers() \
@@ -366,22 +398,15 @@ class Project(models.Model):
         if blackouts == []: # No observers or no blackouts.
             return []
 
-        if len(blackouts) == 1: # One observer runs the show.
-            return sorted([(b.start, b.end) for b in blackouts[0]])
+        # Change all to UTC.
+        utcBlackouts = [[(b.start - b.utcOffset(), b.end - b.utcOffset())
+                         for b in set]
+                        for set in blackouts]
 
-        # Determine the blackout schedule with redundancy allowed.
-        conflicts = []
-        for b in blackouts[0]:
-            for set in blackouts[1:]:
-                if any([b.overlaps(s) for s in set]):
-                    conflicts.extend(
-                        [(max([b.start, s.start]), min([b.end, s.end])) \
-                         for s in set if b.overlaps(s)])
-                else:
-                    return [] # Looks like they've coordinated their schedules.
+        if len(utcBlackouts) == 1: # One observer runs the show.
+            return sorted(utcBlackouts[0])
 
-        # Consolidate the blackout schedules - remove redundancy.
-        return consolidate_blackouts(conflicts)
+        return consolidate_events(find_intersections(utcBlackouts))
 
     def get_receiver_blackouts(self, startdate, days):
         """
@@ -464,13 +489,85 @@ class Blackout(models.Model):
         Checks to see if this Blackout overlaps with another.  Returns True
         if there is an overlap, False otherwise.
         """
-        if self.start < blackout.end and blackout.start < self.end:
+        offset = self.utcOffset()
+        start  = self.start - offset
+        end    = self.end - offset
+        ostart = blackout.start - offset
+        oend   = blackout.end - offset
+
+        if start < oend and ostart < end:
             return True
         else:
             return False
 
+    def jsondict(self):
+        title  = "%s: %s" % (self.user.name()
+                           , self.description or "no description available")
+
+        offset = self.utcOffset()
+        start  = (self.start - offset).isoformat() if self.start else None
+        end    = (self.end   - offset).isoformat() if self.end   else None
+
+        if not start:
+            return {}
+
+        return {
+            "id"   : self.id
+          , "title": title
+          , "start": start
+          , "end"  : end
+        }
+
+        # TBF: Working on repeats.
+        periodicity = self.repeat.repeat
+        if periodicity == "Once":
+            return [{
+                "id"   : self.id
+              , "title": title
+              , "start": start
+              , "end"  : end
+            }]
+        elif periodicity == "Weekly":
+            pass
+        elif periodicity == "Monthly":
+            pass
+        else:
+            assert "Illegal periodicity for blackout date - %s" % periodicity
+
+    def utcOffset(self):
+        "Returns a timedelta representing the offset from UTC."
+        if self.tz.timeZone != "UTC":
+            offset = int(self.tz.timeZone[4:])
+        else:
+            offset = 0
+
+        return timedelta(hours = offset)
+ 
     class Meta:
         db_table = "blackouts"
+
+# TBF: temporary table/class for scheduling just 09B.  We can safely
+# dispose of this after 09B is complete.  Delete Me!
+class Project_Blackout_09B(models.Model):
+    project      = models.ForeignKey(Project)
+    requester    = models.ForeignKey(User)
+    start_date   = models.DateTimeField(null = True)
+    end_date     = models.DateTimeField(null = True)
+    description  = models.CharField(null = True, max_length = 512)
+
+    def __unicode__(self):
+        return "Blackout for %s: %s - %s" % (self.project.pcode, self.start_date, self.end_date)
+
+        if self.start:
+            jsondict.update({"start": self.start})
+
+        if self.end:
+            jsondict.update({"end": self.end})
+
+        return jsondict
+
+    class Meta:
+        db_table = "project_blackouts_09b"
 
 # TBF: temporary table/class for scheduling just 09B.  We can safely
 # dispose of this after 09B is complete.  Delete Me!
@@ -843,7 +940,18 @@ class Sesshun(models.Model):
             return ands[0]
         else:
             return ' & '.join(['(' + rg + ')' for rg in ands])
-        
+
+    def get_ha_limit_blackouts(self, startdate, days):
+        # TBF: Not complete or even correct yet.
+
+        targets = [(t.horizontal, t.vertical) for t in self.target_set.all()]
+
+        # startdate, days, self.frequency, targets
+        #url       = "?"
+        #blackouts = json.load(urlllib.urlopen(url))['blackouts']
+
+        #return consolidate_events(find_intersections(blackouts))
+
     def jsondict(self):
         target  = first(self.target_set.all())
         rcvrs  = self.get_receiver_req()
@@ -1073,27 +1181,3 @@ class Period(models.Model):
               , "forecast"     : dt2str(self.forecast)
               , "backup"       : self.backup
                 }
-
-class HourAngleLimit:
-    def __call__(self, frequency, declination):
-        """
-        Returns the hour angle limit for the specified frequency and
-        declination (both floats).  If the table does not contain the
-        required hour angle limit entry given frequency and declination,
-        None is returned.
-        """
-        frequency   = round(frequency)
-        declination = max(-46, min(90, int(round(declination))))
-
-        # Get limit from database.
-        # TBF: Use settings.py
-        dbname = "weather"
-        c = pg.connect(host = "trent"
-                     , user = "dss"
-                     , passwd = "asdf5!"
-                     , dbname = dbname)
-        sql = "SELECT boundary FROM hour_angle_boundaries WHERE frequency = %i AND declination = %i" % (frequency, declination)
-        r = c.query(sql)
-        c.close()
-
-        return r.getresult()[0][0] if r.getresult() != [] else None
