@@ -68,6 +68,87 @@ def create_sesshun():
     return s
 
 # Testing models
+class TestUser(NellTestCase):
+    def setUp(self):
+        # TBF: From here down, till noted, is the same code as TestProject
+        super(TestUser, self).setUp()
+
+        self.project = Project()
+        pdata = {"semester"   : "09A"
+               , "type"       : "science"
+               , "total_time" : "10.0"
+               , "PSC_time"   : "10.0"
+               , "sem_time"   : "10.0"
+               , "grade"      : "A"
+        }
+        self.project.update_from_post(pdata)
+        self.project.save()
+
+        # Create Investigator1 and his 3 blackouts.
+        self.user1 = User(sanctioned = True
+                        , role = first(Role.objects.filter(role = "Observer"))
+                     )
+        self.user1.save()
+
+        self.investigator1 = Investigators(project  = self.project
+                                         , user     = self.user1
+                                         , observer = True)
+        self.investigator1.save()
+
+        self.user2 = User(sanctioned = True
+                        , role = first(Role.objects.filter(role = "Observer"))
+                     )
+        self.user2.save()
+
+        self.investigator2 = Investigators(project  = self.project
+                                         , user     = self.user2
+                                         , observer = True)
+        self.investigator2.save()
+
+        self.sesshun = create_sesshun()
+        self.sesshun.project = self.project
+        self.sesshun.save()
+
+        # TBF: end of redundant code, now add periods
+        #period_data = {"session" : self.sesshun
+        #             , "date" 
+        self.period1 = Period(session  = self.sesshun
+                            , start    = datetime(2010, 10, 1, 0, 0, 0)
+                            , duration = 1.0
+                            , backup   = False)
+        self.period1.save()                    
+        self.period2 = Period(session  = self.sesshun
+                            , start    = datetime(2010, 10, 2, 5, 0, 0)
+                            , duration = 3.5
+                            , backup   = False)
+        self.period2.save()                    
+
+    def tearDown(self):
+        self.investigator2.delete()
+        self.user2.delete()
+        self.investigator1.delete()
+        self.user1.delete()
+        self.period1.delete()
+        self.period2.delete()
+        self.project.delete()
+
+    def test_getPeriods(self):
+        
+        # exp values
+        periods = [self.period1, self.period2]
+        sep1 = datetime(2010,  9, 1, 0, 0, 0)
+        oct2 = datetime(2010, 10, 2, 0, 0, 0)
+        dec1 = datetime(2010, 12, 1, 0, 0, 0)
+
+        self.assertEqual(periods, self.user1.getPeriods())
+        self.assertEqual(periods, self.user2.getPeriods())
+        self.assertEqual(periods, self.user1.getUpcomingPeriods(sep1))
+        self.assertEqual(periods, self.user2.getUpcomingPeriods(sep1))
+        self.assertEqual([self.period2]
+                                , self.user2.getUpcomingPeriods(oct2))
+        self.assertEqual([self.period1]
+                                , self.user2.getObservedPeriods(oct2))
+        self.assertEqual([],      self.user2.getUpcomingPeriods(dec1))
 
 class TestPeriod(NellTestCase):
 
@@ -525,6 +606,8 @@ class TestProject(NellTestCase):
         self.gitrdone(p1, p1.update_from_post, p2, p2.update_from_post)
 
     def gitrdone(self, p1, f1, p2, f2):
+        "Mike was here."
+
         p_fdata = {"semester" : "09A"
                  , "type"     : "science"
                  , "total_time" : "10.0"

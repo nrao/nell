@@ -137,7 +137,9 @@
         <div id="periods">
           <h3 class="caps">Upcoming Observations</h3>
           <div class="box">
-            List of telescope periods.
+            {% for pd in u.getUpcomingPeriods %}
+              {{pd.display_name}}<p>
+            {% endfor %}
           </div>
         </div>
         <div id="reservation">

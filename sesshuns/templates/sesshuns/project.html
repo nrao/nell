@@ -139,16 +139,14 @@
               <th>Duration</th>
               <th>Billed Hours</th>
             </tr>
-            {% for s in p.sesshun_set.all %}
-              {% for per in s.period_set.all %}
+              {% for per in p.get_observed_periods %}
                 <tr>
-                  <td>{{s.name}}<td>
-                  <td>{{per.start_time}}</td>
+                  <td>{{per.session.name}}</td>
+                  <td>{{per.start}}</td>
                   <td>{{per.duration}}</td>
                   <td>add billable hours</td>
                 </tr>
               {% endfor %}
-            {% endfor %}
           </table>
         </div>
       </div>
