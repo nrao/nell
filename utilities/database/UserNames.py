@@ -15,19 +15,27 @@ class UserNames(object):
     """
 
     def findMissingUsers(self):
-        
-        users = User.objects.filter(pst_id = None).all()
+        "Interactive method that uses XML dump to find missing users."
 
+        users = User.objects.filter(pst_id = None).all()
+        print "num missing users to find: ", len(users) 
+        print ""
         
         infos = self.loadUserInfoFromDump()
 
         for user in users:
-            print "looking for user: ", user
+            emails = [e.email for e in user.email_set.all()]
+            print "looking for user: ", user, emails
+            print ""
             self.findUser(user.last_name, infos)
             id = raw_input("What id to use: ")
             username = raw_input("What username to use: ")
-            user.pst_id = id
-            user.username = username
+            try:
+                user.pst_id = int(id)
+                user.username = username
+            except:
+                user.pst_id = None
+                user.username = None
             user.save()
             print ""
 
@@ -46,13 +54,16 @@ class UserNames(object):
 
     def findUser(self, last_name, users):
 
+        ui = UserInfo()
         for user in users:
+           userInfo = ui.parseUserDict(user)
            if user['name']['last-name'] == last_name:
                first_name = user['name']['last-name']
                last       = user['name']['first-name']
                username = user['account-info']['account-name']
                id       = user['id']
                print "Found user of name: %s %s" % (first_name, last)
+               print "Emails: ", userInfo['emails']
                print "username: %s, ID: %s" % (username, id)
                print ""
                
