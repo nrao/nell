@@ -34,11 +34,19 @@ class UserInfo(object):
 
     def parseUserDict(self, info, emails2 = [], phones2 = [], postals2 = []):   
         "Convinience method so you don't have to deal with bad info dictionary."
+        # TBF: we wouldn't need this function if the XML parsing didn't
+        # suck so bad.
 
+        # got username?
         username = None
         accntInfo = info.get('account-info', None)
         if accntInfo is not None:
             username = accntInfo.get('account-name', None)
+
+        # got affiliations?
+        afs = info.get('affiliation-info', [])
+        # strip out the flag that tells us which one is default
+        affiliations = [af[0]  for af in afs]
 
         # prepend info w/ what we already have
         emails  = [e for e in emails2]
@@ -87,10 +95,11 @@ class UserInfo(object):
                     str = ', '.join(lines)      
                     postals.append(str)
 
-        return dict(emails = emails
-                  , phones = phones
-                  , postals = postals
-                  , username = username)
+        return dict(emails       = emails
+                  , phones       = phones
+                  , postals      = postals
+                  , affiliations = affiliations
+                  , username     = username)
 
     def getStaticContactInfoByUserName(self, username, queryUser,queryPassword):
         return self.getStaticContactInfo('userByAccountNameEquals'
@@ -210,10 +219,23 @@ class UserInfo(object):
                                                                         , 'phone-number'
                                                                         , 'number')
             userInfo['contact-info']['postal-addresses'] = self.parsePostals(ci)                                                                        
-            # TBF: postal addresses
         # affiliation-info section
+        # TBF: redundant redundant redundant
+        af = self.findTag(element, "affiliation-info")
+        if af is not None:
+            userInfo['affiliation-info'] = []
+            defaultAf = self.findTag(af, "default-affiliation")
+            if defaultAf is not None:
+                afName = self.findTag(defaultAf, "formal-name")
+                if afName is not None:
+                    userInfo['affiliation-info'].append((afName.text, True))   
+            affiliations = af.findall(self.ns + "additional-affiliation")
+            for affiliation in affiliations:
+                afName = self.findTag(affiliation, "formal-name")
+                if afName is not None:
+                    userInfo['affiliation-info'].append((afName.text, False))   
+
         # misc-info section
-        # account-info section
 
         return userInfo
 

@@ -1186,8 +1186,9 @@ class TestUserInfo(NellTestCase):
 
         self.ui = UserInfo()
 
+        #<?xml version="1.0" encoding="UTF-8"?>
         self.xmlStr =  """
-        <nrao:user xmlns:nrao="http://www.nrao.edu/namespaces/nrao" id="823" domestic="true">
+        <nrao:user id="823" domestic="true" xmlns:nrao="http://www.nrao.edu/namespaces/nrao">
         <nrao:name>
         <nrao:prefix>Mr</nrao:prefix>
         <nrao:first-name>Paul</nrao:first-name>
@@ -1232,9 +1233,12 @@ class TestUserInfo(NellTestCase):
         </nrao:phone-numbers>
         </nrao:contact-info>
         <nrao:affiliation-info>
-        <nrao:default-affiliation>
-        <nrao:formal-name>Unknown</nrao:formal-name>
+        <nrao:default-affiliation id="5">
+        <nrao:formal-name>National Radio Astronomy Observatory </nrao:formal-name>
         </nrao:default-affiliation>
+        <nrao:additional-affiliation id="269">
+        <nrao:formal-name>Oregon, University of</nrao:formal-name>
+        </nrao:additional-affiliation>
         </nrao:affiliation-info>
         <nrao:misc-info>
         <nrao:user-type>NRAO Staff</nrao:user-type>
@@ -1272,6 +1276,8 @@ class TestUserInfo(NellTestCase):
                      , 'last-name': 'Marganian'}
             , 'account-info': {'account-name': 'pmargani'}         
             , 'id': '823'
+            , 'affiliation-info': [("National Radio Astronomy Observatory ", True)
+                             , ("Oregon, University of", False)]
         }
 
     def test_parseUserXML(self):
@@ -1288,9 +1294,12 @@ class TestUserInfo(NellTestCase):
         postals = \
             ['NRAO, PO Box 2, Green Bank, West Virginia, 24944, USA, (Office)'
            , '49 columbus Ave., W. Bridgewater, Massachusetts, 02379, United States, (Other)']
+        affiliations = ['National Radio Astronomy Observatory '
+                      , 'Oregon, University of']
         self.assertEquals(emails, info['emails'])        
         self.assertEquals(phones, info['phones'])
         self.assertEquals(postals, info['postals'])
+        self.assertEquals(affiliations, info['affiliations'])
         self.assertEquals('pmargani', info['username'])
 
 class TestNRAOBosDB(NellTestCase):

@@ -49,6 +49,7 @@ def profile(request, *args, **kws):
         info = dict(emails = [e.email for e in user.email_set.all()]
                   , phones = ['Not Available']
                   , postals = ['Not Available']
+                  , affiliations = ['Not Available']
                   , username = user.username)
         
     # get the reservations information from BOS
@@ -58,15 +59,16 @@ def profile(request, *args, **kws):
     # Remember [] is False,  TBF is this needed?
     isFriend = ["yep" for p in user.investigators_set.all() if p.friend]
     return render_to_response("sesshuns/profile.html"
-                            , {'u'          : user
-                             , 'requestor'  : requestor
-                             , 'authorized' : user == requestor # allowed to edit
-                             , 'isFriend'   : isFriend
-                             , 'emails'     : info['emails']
-                             , 'phones'     : info['phones']
-                             , 'postals'    : info['postals']
-                             , 'username'   : info['username']
-                             , 'reserves'   : reservations
+                            , {'u'            : user
+                             , 'requestor'    : requestor
+                             , 'authorized'   : user == requestor # allowed to edit
+                             , 'isFriend'     : isFriend
+                             , 'emails'       : info['emails']
+                             , 'phones'       : info['phones']
+                             , 'postals'      : info['postals']
+                             , 'affiliations' : info['affiliations']
+                             , 'username'     : info['username']
+                             , 'reserves'     : reservations
                                })
 
 @login_required
