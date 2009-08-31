@@ -502,7 +502,7 @@ class Blackout(models.Model):
 
     def jsondict(self):
         title  = "%s: %s" % (self.user.name()
-                           , self.description or "no description available")
+                           , self.description or "blackout")
 
         offset = self.utcOffset()
         start  = (self.start - offset).isoformat() if self.start else None
