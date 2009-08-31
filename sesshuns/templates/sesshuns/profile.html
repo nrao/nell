@@ -6,7 +6,7 @@
         <h1>{{u|display_name}}</h1>
       </div>
       <div id="subheader" class="span-24 last">
-        Add affiliation here.
+        <!-- Add affiliation here. -->
         <hr />
       </div>
       <div class="span-17 colborder" id="content">
@@ -27,7 +27,7 @@
               {% endfor %}
           </table>
           {% if isFriend %}
-          <h4 class="loud">Project Friend On</h4>
+          <h3 class="loud">Project Friend On</h3>
           <table>
             <tr>
               <th>PCode</th>
@@ -46,14 +46,14 @@
           <hr />
         </div>
         <div class="span-8 colborder">  
-          <h4 class="loud">Dynamic Contact</h3>
+          <h3 class="loud">Dynamic Contact Information</h3>
           <p>{{u.contact_instructions}}</p>
           {% if authorized or requestor.isAdmin %}
           <a href="/profile/{{u.id}}/dynamic_contact/form">edit</a>
           {% endif %}
         </div>  
         <div class="span-8 last">  
-          <h4 class="prepend-5">Static Contact for {{username}}</h4>  
+          <h3 class="loud">Static Contact Information</h3>  
           <table>
             <tr>
               <th>Email(s)</th>
