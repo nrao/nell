@@ -2,10 +2,10 @@ function setToggle(bid) {
     $(bid).click(function() {
         $(bid + "_div").toggle("slow");
         var state = $(bid)[0].innerHTML;
-        if (state == "-") {
-            $(bid)[0].innerHTML = "+";
+        if (state == "&nbsp;-&nbsp;") {
+            $(bid)[0].innerHTML = "&nbsp;+&nbsp;";
         } else {
-            $(bid)[0].innerHTML = "-";
+            $(bid)[0].innerHTML = "&nbsp;-&nbsp;";
         }
     });
 }

@@ -500,7 +500,7 @@ class Blackout(models.Model):
         else:
             return False
 
-    def jsondict(self):
+    def jsondict(self, start, end):
         title  = "%s: %s" % (self.user.name()
                            , self.description or "blackout")
 
