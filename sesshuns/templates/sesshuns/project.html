@@ -2,6 +2,8 @@
 {% load custom %}
 {% block title %} {{p.pcode}} {% endblock %}
 {% block scripts %}
+    <script type="text/javascript" src="/static/javascript/lib/jquery.js"></script>
+    <script type="text/javascript" src="/static/javascript/lib/fullcalendar.min.js"></script>
     <script type="text/javascript" src="/static/javascript/project.js"></script>
 {% endblock %}
 {% block content %}
@@ -13,26 +15,10 @@
         <hr />
       </div>
       <div class="span-17 colborder" id="content">
-        <h3 class="loud"><span id = "tp" style = "cursor: pointer;">+</span> Telescope Periods Completed</h3>
-        <div id ="tp_div" style="display: none;">
-          <table>
-            <tr>
-              <th>Session</th>
-              <th>Start Time</th>
-              <th>Duration</th>
-              <th>Billed Hours</th>
-            </tr>
-            {% for s in p.sesshun_set.all %}
-              {% for per in s.period_set.all %}
-                <tr>
-                  <td>{{s.name}}<td>
-                  <td>{{per.start_time}}</td>
-                  <td>{{per.duration}}</td>
-                  <td>add billable hours</td>
-                </tr>
-              {% endfor %}
-            {% endfor %}
-          </table>
+        <h3 class="loud"><span id = "cal" style = "cursor: pointer;">-</span>Project Calendar (UTC)</h3>
+        <div id='cal_div'>
+          <div id='calendar'>
+          </div>
         </div>
         <h3 class="loud"><span id = "se" style = "cursor: pointer;">-</span> Project Sessions</h3>
         <div id = "se_div">
@@ -68,8 +54,8 @@
             {% endfor %}
           </table>
         </div>
-        <h3 class="loud"><span id = "obs" style = "cursor: pointer;">-</span> Observers</h3>
-        <div id = "obs_div">
+        <h3 class="loud"><span id = "obs" style = "cursor: pointer;">+</span> Observers</h3>
+        <div id = "obs_div" style = "display: none;">
           <table>
             <tr>
               <th>Name</th>
@@ -144,8 +130,26 @@
             {% endfor %}
           </table>
         </div>
-        <h3 class="loud">Project Calendar</h3>
-        <div>
+        <h3 class="loud"><span id = "tp" style = "cursor: pointer;">+</span> Telescope Periods Completed</h3>
+        <div id ="tp_div" style="display: none;">
+          <table>
+            <tr>
+              <th>Session</th>
+              <th>Start Time</th>
+              <th>Duration</th>
+              <th>Billed Hours</th>
+            </tr>
+            {% for s in p.sesshun_set.all %}
+              {% for per in s.period_set.all %}
+                <tr>
+                  <td>{{s.name}}<td>
+                  <td>{{per.start_time}}</td>
+                  <td>{{per.duration}}</td>
+                  <td>add billable hours</td>
+                </tr>
+              {% endfor %}
+            {% endfor %}
+          </table>
         </div>
       </div>
       <div class="span-6 last" id="sidebar">
@@ -156,7 +160,7 @@
             {% for i in p.investigators_set.all %}
               {% if i.friend %}
               <dt>Friend</dt>
-              <dd>{{i.user|display_name}}</dd>
+              <dd><a href="mailto:{{i.user|get_email}}">{{i.user|display_name}}</a></dd>
               {% endif %}
             {% endfor %}
               <dt>Trimester</dt>
@@ -165,6 +169,9 @@
               <dd>{% if p.thesis %}Yes{% else %}No{% endif %}</dd>
               <dt>Complete?</dt>
               <dd>{% if p.complete %}Yes{% else %}No{% endif %}</dd>
+              <dt>Scheduling Alerts</dt>
+              <dd style="color:red">{% if not p.has_sanctioned_observers %}No trained observers{% endif %}</dd>
+              <dd style="color:red">{% if not p.has_schedulable_sessions %}No schedulable sessions{% endif %}</dd>
             </dl>
           </div>
         </div>

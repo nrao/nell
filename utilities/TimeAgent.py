@@ -161,4 +161,3 @@ def dt2semester(dt):
     if month == 1:
         year -= 1
     return "%02d%s" % (year, trimesterMonth[month])
-

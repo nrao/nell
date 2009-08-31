@@ -62,6 +62,10 @@ def display_allotments_for_project(project_id):
     }
 
 @register.filter
+def get_email(user):
+    return first(models.Email.objects.filter(user = user).all()).email
+
+@register.filter
 def display_name(user):
     return "%s %s" % (user.first_name, user.last_name)
 

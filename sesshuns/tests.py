@@ -27,7 +27,7 @@ fdata = {"total_time": "3"
        , "PSC_time": "2"
        , "sem_time": 0.0
        , "req_min": "2"
-       , "freq": "6"
+       , "freq": 6.0
        , "type": "open"
        , "source" : "blah"
        , "enabled" : False
@@ -254,21 +254,21 @@ class TestProject(NellTestCase):
     def test_get_blackouts1(self):
         # Create Investigator1's 3 blackouts.
         blackout11 = Blackout(user   = self.user1
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 1, 11)
                             , end    = datetime(2009, 1, 3, 11))
         blackout11.save()
 
         blackout12 = Blackout(user   = self.user1
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 1, 18)
                             , end    = datetime(2009, 1, 4, 18))
         blackout12.save()
 
         blackout13 = Blackout(user   = self.user1
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 2, 12)
                             , end    = datetime(2009, 1, 4, 20))
@@ -276,14 +276,14 @@ class TestProject(NellTestCase):
 
         # Create Investigator2's 2 blackouts.
         blackout21 = Blackout(user   = self.user2
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 1, 11)
                             , end    = datetime(2009, 1, 3, 11))
         blackout21.save()
 
         blackout22 = Blackout(user   = self.user2
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 1, 18)
                             , end    = datetime(2009, 1, 4, 13))
@@ -310,21 +310,21 @@ class TestProject(NellTestCase):
         self.investigator1.save()
 
         blackout11 = Blackout(user   = self.user1
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 1, 11)
                             , end    = datetime(2009, 1, 3, 11))
         blackout11.save()
 
         blackout12 = Blackout(user   = self.user1
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 1, 18)
                             , end    = datetime(2009, 1, 4, 18))
         blackout12.save()
 
         blackout13 = Blackout(user   = self.user1
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 2, 12)
                             , end    = datetime(2009, 1, 4, 20))
@@ -335,14 +335,14 @@ class TestProject(NellTestCase):
         self.investigator2.save()
 
         blackout21 = Blackout(user   = self.user2
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 1, 11)
                             , end    = datetime(2009, 1, 3, 11))
         blackout21.save()
 
         blackout22 = Blackout(user   = self.user2
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 1, 18)
                             , end    = datetime(2009, 1, 4, 13))
@@ -366,21 +366,21 @@ class TestProject(NellTestCase):
     def test_get_blackouts3(self):
         # Create Investigator1's 3 blackouts.
         blackout11 = Blackout(user   = self.user1
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 1, 11)
                             , end    = datetime(2009, 1, 3, 11))
         blackout11.save()
 
         blackout12 = Blackout(user   = self.user1
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 1, 18)
                             , end    = datetime(2009, 1, 4, 18))
         blackout12.save()
 
         blackout13 = Blackout(user   = self.user1
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 2, 12)
                             , end    = datetime(2009, 1, 4, 20))
@@ -404,21 +404,21 @@ class TestProject(NellTestCase):
     def test_get_blackouts4(self):
         # Create Investigator1's 3 blackouts.
         blackout11 = Blackout(user   = self.user1
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 1, 11)
                             , end    = datetime(2009, 1, 3, 11))
         blackout11.save()
 
         blackout12 = Blackout(user   = self.user1
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 1, 18)
                             , end    = datetime(2009, 1, 4, 18))
         blackout12.save()
 
         blackout13 = Blackout(user   = self.user1
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 1, 2, 12)
                             , end    = datetime(2009, 1, 4, 20))
@@ -426,14 +426,14 @@ class TestProject(NellTestCase):
 
         # Create Investigator2's 2 blackouts.
         blackout21 = Blackout(user   = self.user2
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 2, 1, 11)
                             , end    = datetime(2009, 2, 3, 11))
         blackout21.save()
 
         blackout22 = Blackout(user   = self.user2
-                            , tz     = first(TimeZone.objects.all())
+                            , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
                             , repeat = first(Repeat.objects.all())
                             , start  = datetime(2009, 3, 1, 18)
                             , end    = datetime(2009, 3, 4, 13))
@@ -574,6 +574,23 @@ class TestSesshun(NellTestCase):
     def setUp(self):
         super(TestSesshun, self).setUp()
         self.sesshun = create_sesshun()
+
+    def test_get_ha_limit_blackouts(self):
+        # With default target.
+        startdate = datetime.utcnow()
+        days      = 5
+        r = self.sesshun.get_ha_limit_blackouts(startdate, days)
+
+        t = Target(session    = self.sesshun
+                 , system     = first(System.objects.filter(name = "J2000"))
+                 , source     = "test source"
+                 , vertical   = 2.3
+                 , horizontal = 1.0)
+        t.save()
+
+        # TBF: Need to write test.
+
+        t.delete()
 
     def test_create(self):
         expected = first(Sesshun.objects.filter(id = self.sesshun.id))
@@ -1102,7 +1119,7 @@ class TestReceiverCompile(NellTestCase):
 
 class TestConsolidateBlackouts(NellTestCase):
 
-    def test_consolidate_blackouts(self):
+    def test_consolidate_events(self):
         starts = [
             datetime(2009, 1, 1, 11)
           , datetime(2009, 1, 1, 11)
@@ -1122,7 +1139,7 @@ class TestConsolidateBlackouts(NellTestCase):
             (datetime(2009, 1, 2, 12), datetime(2009, 1, 3, 11))
         ]
 
-        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        r = consolidate_events([(s, e) for s, e in zip(starts, ends)])
         self.assertEquals(expected, r)
 
         starts = [
@@ -1138,7 +1155,7 @@ class TestConsolidateBlackouts(NellTestCase):
             (datetime(2009, 1, 1, 11), datetime(2009, 1, 3, 11))
         ]
 
-        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        r = consolidate_events([(s, e) for s, e in zip(starts, ends)])
         self.assertEquals(expected, r)
 
         starts = [
@@ -1155,10 +1172,10 @@ class TestConsolidateBlackouts(NellTestCase):
           , (datetime(2009, 1, 4, 11), datetime(2009, 1, 5, 11))
         ]
 
-        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        r = consolidate_events([(s, e) for s, e in zip(starts, ends)])
         self.assertEquals(expected, r)
 
-        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        r = consolidate_events([(s, e) for s, e in zip(starts, ends)])
         self.assertEquals(expected, r)
 
         starts = [
@@ -1172,11 +1189,11 @@ class TestConsolidateBlackouts(NellTestCase):
             (datetime(2009, 1, 1, 11), datetime(2009, 1, 3, 11))
         ]
 
-        r = consolidate_blackouts([(s, e) for s, e in zip(starts, ends)])
+        r = consolidate_events([(s, e) for s, e in zip(starts, ends)])
         self.assertEquals(expected, r)
 
         # No conflicts.
-        r = consolidate_blackouts([])
+        r = consolidate_events([])
         self.assertEquals([], r)
 
 class TestUserInfo(NellTestCase):
