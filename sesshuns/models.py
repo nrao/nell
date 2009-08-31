@@ -523,51 +523,54 @@ class Blackout(models.Model):
             return False
 
     def jsondict(self, calstart, calend):
-        title  = "%s: %s" % (self.user.name()
-                           , self.description or "blackout")
+        if self.start is None or self.end is None:
+            return [{}] # What does it mean to have None in start or end?
 
-        offset = self.utcOffset()
-        start  = (self.start - offset).isoformat() if self.start else None
-        end    = (self.end   - offset).isoformat() if self.end   else None
-
-        if not start:
-            return {}
-
-        return {
-            "id"   : self.id
-          , "title": title
-          , "start": start
-          , "end"  : end
-        }
-
-        # TBF: Working on repeats.
+        calstart    = datetime.fromtimestamp(float(calstart))
+        calend      = datetime.fromtimestamp(float(calend))
+        start       = self.start
+        end         = self.end
+        until       = min(self.until, calend) if self.until else calend
         periodicity = self.repeat.repeat
+        dates       = []
+
         if periodicity == "Once":
-            return [{
-                "id"   : self.id
-              , "title": title
-              , "start": start
-              , "end"  : end
-            }]
+            dates.append((start, end))
         elif periodicity == "Weekly":
-            start  = self.start
-            end    = self.end
-            dates  = []
-            while start <= self.until:
-                if start >= calend:
+            while start <= until:
+                if start >= calstart:
                     dates.append((start, end))
+
                 start = start + timedelta(days = 7)
                 end   = end   + timedelta(days = 7)
-            return [{
-                "id"   : self.id
-              , "title": title
-              , "start": d[0]
-              , "end"  : d[1]
-            } for d in dates]
         elif periodicity == "Monthly":
-            pass
-        else:
-            assert "Illegal periodicity for blackout date - %s" % periodicity
+            while start <= until:
+                if start >= calstart:
+                    dates.append((start, end))
+
+                if start.month == 12: # Yearly wrap around
+                    start.month = 0; start.year = start.year + 1
+
+                start = datetime(year   = start.year
+                               , month  = start.month + 1
+                               , day    = start.day
+                               , hour   = start.hour
+                               , minute = start.minute)
+                end   = datetime(year   = end.year
+                               , month  = end.month + 1
+                               , day    = end.day
+                               , hour   = end.hour
+                               , minute = end.minute)
+
+        title  = "%s: %s" % (self.user.name()
+                           , self.description or "blackout")
+        offset = self.utcOffset()
+        return [{
+            "id"   : self.id
+          , "title": title
+          , "start": (d[0] - offset).isoformat() if d[0] else None
+          , "end"  : (d[1] - offset).isoformat() if d[1] else None
+        } for d in dates]
 
     def utcOffset(self):
         "Returns a timedelta representing the offset from UTC."
@@ -641,8 +644,7 @@ class Investigators(models.Model):
             , self.principal_investigator )
 
     def projectBlackouts(self):
-        return [b for b in self.user.blackout_set.all()
-                if not self.friend and b.end > datetime.utcnow()]
+        return [b for b in self.user.blackout_set.all() if not self.friend]
     
     class Meta:
         db_table = "investigators"

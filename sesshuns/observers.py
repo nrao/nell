@@ -16,7 +16,12 @@ def investigator_blackouts(request, *args, **kws):
     project   = first(Project.objects.filter(pcode = pcode).all())
     blackouts = Set([b for i in project.investigators_set.all() \
                        for b in i.user.blackout_set.all()])
-    return HttpResponse(json.dumps([b.jsondict(start, end) for b in blackouts]))
+
+    jsondict  = []
+    for b in blackouts:
+        jsondict.extend(b.jsondict(start, end))
+
+    return HttpResponse(json.dumps(jsondict))
 
 def get_day(n, today):
     'Find the n_th day on the calendar.'
@@ -43,7 +48,6 @@ def get_color(w, d, today):
 def get_bgcolor(w, d, today):
     day = get_day(7 * w + d, today)
     return '#EEEEEE' if day == date.today() else '#FFFFFF'
-
 
 @login_required
 def profile(request, *args, **kws):
