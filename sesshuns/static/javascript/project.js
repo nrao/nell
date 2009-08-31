@@ -22,7 +22,7 @@ $(document).ready(function() {
 
 	$('#calendar').fullCalendar({
         draggable: false,
-        events: "/project/BB261/blackouts"
+        events: event_url
 	});
 
 });

@@ -522,7 +522,7 @@ class Blackout(models.Model):
         else:
             return False
 
-    def jsondict(self, start, end):
+    def jsondict(self, calstart, calend):
         title  = "%s: %s" % (self.user.name()
                            , self.description or "blackout")
 
@@ -550,7 +550,20 @@ class Blackout(models.Model):
               , "end"  : end
             }]
         elif periodicity == "Weekly":
-            pass
+            start  = self.start
+            end    = self.end
+            dates  = []
+            while start <= self.until:
+                if start >= calend:
+                    dates.append((start, end))
+                start = start + timedelta(days = 7)
+                end   = end   + timedelta(days = 7)
+            return [{
+                "id"   : self.id
+              , "title": title
+              , "start": d[0]
+              , "end"  : d[1]
+            } for d in dates]
         elif periodicity == "Monthly":
             pass
         else:
