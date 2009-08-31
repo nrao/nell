@@ -8,33 +8,15 @@ from sets                     import Set
 from utilities.UserInfo       import UserInfo
 from utilities                import NRAOBosDB
 
+@login_required
 def investigator_blackouts(request, *args, **kws):
     pcode     = args[0]
+    start     = request.GET.get('start', '')
+    end       = request.GET.get('end', '')
     project   = first(Project.objects.filter(pcode = pcode).all())
     blackouts = Set([b for i in project.investigators_set.all() \
                        for b in i.user.blackout_set.all()])
-    return HttpResponse(json.dumps([b.jsondict() for b in blackouts]))
-
-@login_required
-def calendar(request, *args, **kws):
-    pcode, year, month, day = args
-
-    today = date(int(year), int(month), int(day))
-    days  = range(7)
-    weeks = range(6)
-    day_props = [[(get_label(w, d, today)
-                 , get_color(w, d, today)
-                 , get_bgcolor(w, d, today))
-                  for d in days]
-                 for w in weeks]
-
-    return render_to_response(
-        "sesshuns/overview.html"
-      , {'today'     : today
-       , 'day_props' : day_props
-       , 'p'         : project
-       }
-      )
+    return HttpResponse(json.dumps([b.jsondict(start, end) for b in blackouts]))
 
 def get_day(n, today):
     'Find the n_th day on the calendar.'
