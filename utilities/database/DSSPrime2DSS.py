@@ -369,10 +369,6 @@ class DSSPrime2DSS(object):
         good = bad.replace('\xad', '')
         return good
     
-
-
-    
-
     def create_project_and_session(self, semesterName
                                        , projectName
                                        , projectType
@@ -442,7 +438,6 @@ class DSSPrime2DSS(object):
                   , time_between   = 0.0 #None
                     )
         s.save()
-        print s
 
         # TBF: put in a dummy target so that Antioch can pick it up!
         system = first(System.objects.filter(name = "J2000"))
@@ -456,156 +451,6 @@ class DSSPrime2DSS(object):
 
         # return the project, which links in the session
         return p
-
-    def create_maintenance_session(self, semesterName):
-        """
-        Creates the maintenance session, but not the date
-        """
-
-        # clean up!
-        ps = Project.objects.filter(pcode = "Maintenance")
-        empty = [p.delete() for p in ps]
-        ss = Sesshun.objects.filter(name = "Maintenance")
-        empty = [s.delete() for s in ss]
-
-        # first, just set up the project and single session
-        if semesterName == "09C":
-            semesterStart = datetime(2009, 10, 1)
-            semesterEnd = datetime(2010, 1, 31)
-        else:
-            semesterStart = datetime(2009, 6, 1)
-            semesterEnd = datetime(2009, 9, 30)
-
-        semester = first(Semester.objects.filter(semester = semesterName))
-        ptype    = first(Project_Type.objects.filter(type = "non-science"))
-
-        p = Project(semester     = semester
-                  , project_type = ptype
-                  , pcode        = "Maintenance"
-                  , name         = "Maintenance"
-                  , thesis       = False 
-                  , complete     = False
-                  , start_date   = semesterStart 
-                  , end_date     = semesterEnd
-                    )
-        p.save()
-
-        # max hours should be some generous estimate of the time needed
-        maxHrs = (16 * 10.5)
-        allot = Allotment(psc_time          = maxHrs
-                        , total_time        = maxHrs
-                        , max_semester_time = maxHrs
-                        , grade             = 4.0 
-                          )
-        allot.save()
-        pa = Project_Allotment(project = p, allotment = allot)
-        pa.save()
-        p.project_allotment_set.add(pa)
-        status = Status(enabled    = True 
-                      , authorized = True
-                      , complete   = False 
-                      , backup     = False
-                        )
-        status.save()
-        otype    = first(Observing_Type.objects.filter(type = "maintenance"))
-        stype    = first(Session_Type.objects.filter(type = "fixed"))
-        s = Sesshun(project        = p
-                  , session_type   = stype
-                  , observing_type = otype
-                  , allotment      = allot
-                  , status         = status
-                  , original_id    = 666 # TBF? 
-                  , name           = "Maintenance" 
-                  , frequency      = 0.0 #None
-                  , max_duration   = 12.0 #None
-                  , min_duration   = 0.0 #None
-                  , time_between   = 0.0 #None
-                    )
-        s.save()
-
-        # TBF: put in a dummy target so that Antioch can pick it up!
-        system = first(System.objects.filter(name = "J2000"))
-        target = Target(session    = s
-                      , system     = system
-                      , source     = "maintenance" 
-                      , vertical   = 0.0
-                      , horizontal = 0.0
-                    )
-        target.save()
-        
-
-
-
-    def create_testing_session(self, trimester):
-
-        # create the test project w/ associated sessions.
-        tooMuch = 10000.0
-        semester = first(Semester.objects.filter(semester = trimester))
-        ptype    = first(Project_Type.objects.filter(type = "non-science"))
-
-        p = Project(semester     = semester
-                      , project_type = ptype
-                      , pcode        = "Tests"
-                      , name         = "Tests" #self.filter_bad_char(row[5])
-                      , thesis       = False 
-                      , complete     = False 
-                      , start_date   = None #datetime(2009, 6, 1, 0, 0, 0)
-                      , end_date     = None #datetime(2009, 10,1, 0, 0, 0)
-                        )
-        p.save()
-        a = Allotment(psc_time          = tooMuch
-                    , total_time        = tooMuch
-                    , max_semester_time = tooMuch
-                    , grade             = 4.0
-                      )
-        a.save()
-        pa = Project_Allotment(project = p, allotment = a)
-        pa.save()
-        p.project_allotment_set.add(pa)
-        p.save()
-           
-        otype = first(Observing_Type.objects.filter(type = "testing"))
-        stype = first(Session_Type.objects.filter(type = "fixed"))
-        #project = first(Project.objects.filter(pcode = row[12]))
-
-        allot = Allotment(psc_time          = tooMuch
-                        , total_time        = tooMuch
-                        , max_semester_time = tooMuch
-                        , grade             = 4.0
-                         )
-        allot.save()
-        status = Status(enabled    = True 
-                      , authorized = True
-                      , complete   = False
-                      , backup     = False
-                        )
-        status.save()
-        s = Sesshun(project       = p
-                  , session_type   = stype
-                  , observing_type = otype
-                  , allotment      = allot
-                  , status         = status
-                  , original_id    = 999 
-                  , name           = "testing"
-                  , frequency      = 1.0
-                  , max_duration   = tooMuch 
-                  , min_duration   = 0.0 #tooMuch
-                  , time_between   = 0.0 #tooMuch
-                    )
-        s.save()
-
-        system = first(System.objects.filter(name = "J2000"))
-
-        target = Target(session    = s
-                              , system     = system
-                              , source     = "test source"
-                              , vertical   = 0.0 #float(t[4]) * (math.pi / 180)
-                              , horizontal = 0.0 #float(t[5]) * (math.pi / 12)
-                                )
-        target.save()
-
-            
-
 
     def transfer_fixed_periods(self, trimester):
         """
@@ -626,8 +471,16 @@ class DSSPrime2DSS(object):
 
         # prepare for transfering over fixed periods by creating the
         # necessary projects & session we know we'll need
-        self.create_testing_session(trimester)
-        self.create_maintenance_session(trimester)
+        self.create_project_and_session( trimester 
+                                       , "Maintenance"
+                                       , "non-science"
+                                       , "Maintenance"
+                                       , "maintenance")
+        self.create_project_and_session( trimester 
+                                       , "Tests"
+                                       , "non-science"
+                                       , "Tests"
+                                       , "maintenance")
         self.create_project_and_session( trimester 
                                        , "Shutdown"
                                        , "non-science"
@@ -702,9 +555,9 @@ class DSSPrime2DSS(object):
             # what session to link this to?
             # the vpkey CANNOT be used for Maintenance & Tests
             if type in testingTypes:
-                s = first(Sesshun.objects.filter(name = "testing").all())
+                s = first(Sesshun.objects.filter(name = "Tests").all())
             elif type == "Maintenance":
-                s = first(Sesshun.objects.filter(name = "Fixed Summer Maintenance").all())
+                s = first(Sesshun.objects.filter(name = "Maintenance").all())
             elif type == "Shutdown":
                 s = first(Sesshun.objects.filter(name = "Shutdown").all())
             else: # just type == Astronomoy?
@@ -717,8 +570,8 @@ class DSSPrime2DSS(object):
                     s = p.sesshun_set.all()[0] # TBF: arbitrary!
                 else:
                     # warn the user
-                    print "Could not create session for row: "
-                    print row
+                    #print "Could not create session for row: "
+                    #print row
                     s = None
 
             # don't save stuff that will cause overlaps
@@ -755,6 +608,10 @@ class DSSPrime2DSS(object):
                     # keep track of this added one so we can 
                     # check for subsequent overlaps
                     times.append((s, start, duration))
+            else:
+                # warn the user:
+                print "DSSPrime2DSS: could not find session for row: "
+                print row
 
     def findOverlap(self, start, dur, times):
         for time in times:
