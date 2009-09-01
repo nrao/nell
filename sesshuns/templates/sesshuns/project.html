@@ -181,12 +181,25 @@
           <h3 class="caps">Upcoming Reservations</h3>
           <div class="box">
             <dl>
-            {% for user, dates in r.items %}
-              <dt>{{user.last_name}}</dt>
+            {% for user, reserves in r.items %}
+              <dt> {{user.first_name}} {{user.last_name}}</dt>
               <dd>
-              {% for d in dates %}
-                {{ d|date:"D M d, Y" }}<p>
-              {% endfor %}
+                <table>
+                  <tr>
+                    <th>check-in</th>
+                    <th>check-out</th>
+                  </tr>
+                    {% for r in reserves %}
+                      <tr>
+                        <td title="{{r.0|date:'m/d/Y'}}">
+                          {{ r.0|date:"D, M d" }}
+                        </td>
+                        <td title="{{r.1|date:'m/d/Y'}}">
+                          {{ r.1|date:"D, M d" }}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                </table>
               </dd>
             {% endfor %}
             </dl>

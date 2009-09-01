@@ -145,9 +145,22 @@
         <div id="reservation">
           <h3 class="caps">Upcoming Reservations</h3>
           <div class="box">
-            {% for d in reserves %}
-              {{ d|date:"D M d, Y" }}<p>
-            {% endfor %}
+          <table>
+            <tr>
+              <th>check-in</th>
+              <th>check-out</th>
+            </tr>
+              {% for r in reserves %}
+                <tr>
+                  <td title="{{r.0|date:'m/d/Y'}}">
+                    {{ r.0|date:"D, M d" }}
+                  </td>
+                  <td title="{{r.1|date:'m/d/Y'}}">
+                    {{ r.1|date:"D, M d" }}
+                  </td>
+                </tr>
+              {% endfor %}
+          </table>
           </div>
         </div>
       </div>

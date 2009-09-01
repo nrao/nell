@@ -21,7 +21,8 @@ class NRAOBosDB:
     def reservations(self, project):
         """
         Constructs a dictionary mapping the project's users to lists of
-        reservations dates.
+        reservations, where a reservation is a binary tuple of datetimes
+        representing the check-in and check-out dates.
         """
         retval = dict()
         for i in project.investigators_set.all():
@@ -33,7 +34,11 @@ class NRAOBosDB:
         return retval
 
     def getReservationsByUsername(self, username):
-        "Uses BOS query service to return list of reservations for username."
+        """
+        Uses BOS query service to return list of reservations for
+        username, where a reservation is a binary tuple of datetimes
+        representing the check-in and check-out dates.
+        """
         if username is None:
             print "Error: getReservationsByUsername username arg is None"
             return []
@@ -41,7 +46,7 @@ class NRAOBosDB:
         fh = self.opener.open(url)
         str = fh.read(0x4000)
         parsed = self.parseReservationsXML(str)
-        return list(parsed[0]) if parsed else []
+        return parsed
 
     def parseReservationsXML(self, str):
         "Parses XML returned by reservationsByPerson query."
