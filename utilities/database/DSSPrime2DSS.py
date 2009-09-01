@@ -15,6 +15,7 @@ class DSSPrime2DSS(object):
                      , user = "dss"
                      , passwd = "asdf5!"
                      , database = "dss_prime"
+                     #, database = "dss_prime_backup_310809"
                      , silent   = True
                  ):
         self.db = m.connect(host   = host
@@ -30,7 +31,7 @@ class DSSPrime2DSS(object):
         self.db2 = m.connect(host   = host
                           , user   = user
                           , passwd = passwd
-                          , db     = "dss_rcreager"
+                          , db     = "dss_prime"
                             )
         self.cursor2 = self.db2.cursor()
 
@@ -607,6 +608,90 @@ class DSSPrime2DSS(object):
                 rs.save()
                 #print rs
 
+    def create_project_and_session(self, semesterName
+                                       , projectName
+                                       , projectType
+                                       , sessionName
+                                       , observingType):
+        """
+        Creates a project & single session
+        """
+
+        # clean up!
+        ps = Project.objects.filter(pcode = projectName)
+        empty = [p.delete() for p in ps]
+        ss = Sesshun.objects.filter(name = sessionName)
+        empty = [s.delete() for s in ss]
+
+        # first, just set up the project and single session
+        if semesterName == "09C":
+            semesterStart = datetime(2009, 10, 1)
+            semesterEnd = datetime(2010, 1, 31)
+        else:
+            semesterStart = datetime(2009, 6, 1)
+            semesterEnd = datetime(2009, 9, 30)
+
+        semester = first(Semester.objects.filter(semester = semesterName))
+        ptype    = first(Project_Type.objects.filter(type = projectType))
+
+        p = Project(semester     = semester
+                  , project_type = ptype
+                  , pcode        = projectName 
+                  , name         = projectName
+                  , thesis       = False 
+                  , complete     = False
+                  , start_date   = semesterStart 
+                  , end_date     = semesterEnd
+                    )
+        p.save()
+
+        # max hours should be some generous estimate of the time needed
+        maxHrs = (16 * 10.5)
+        allot = Allotment(psc_time          = maxHrs
+                        , total_time        = maxHrs
+                        , max_semester_time = maxHrs
+                        , grade             = 4.0 
+                          )
+        allot.save()
+        pa = Project_Allotment(project = p, allotment = allot)
+        pa.save()
+        p.project_allotment_set.add(pa)
+        status = Status(enabled    = True 
+                      , authorized = True
+                      , complete   = False 
+                      , backup     = False
+                        )
+        status.save()
+        otype    = first(Observing_Type.objects.filter(type = observingType))
+        stype    = first(Session_Type.objects.filter(type = "fixed"))
+        s = Sesshun(project        = p
+                  , session_type   = stype
+                  , observing_type = otype
+                  , allotment      = allot
+                  , status         = status
+                  , original_id    = 666 # TBF? 
+                  , name           = sessionName 
+                  , frequency      = 0.0 #None
+                  , max_duration   = 12.0 #None
+                  , min_duration   = 0.0 #None
+                  , time_between   = 0.0 #None
+                    )
+        s.save()
+        print s
+
+        # TBF: put in a dummy target so that Antioch can pick it up!
+        system = first(System.objects.filter(name = "J2000"))
+        target = Target(session    = s
+                      , system     = system
+                      , source     = sessionName 
+                      , vertical   = 0.0
+                      , horizontal = 0.0
+                    )
+        target.save()
+
+        # return the project, which links in the session
+        return p
+
     def create_maintenance_session(self, semesterName):
         """
         Creates the maintenance session, but not the date
@@ -1071,12 +1156,16 @@ class DSSPrime2DSS(object):
             start = datetime(year, month, day, hour, minute) + \
                     timedelta(seconds = 4 * 60 * 60)
 
+            testingTypes = ["Tests", "Commissioning", "Calibration"]
+
             # what session to link this to?
             # the vpkey CANNOT be used for Maintenance & Tests
-            if type == "Tests":
+            if type in testingTypes:
                 s = first(Sesshun.objects.filter(name = "testing").all())
             elif type == "Maintenance":
                 s = first(Sesshun.objects.filter(name = "Fixed Summer Maintenance").all())
+            elif type == "Shutdown":
+                s = first(Sesshun.objects.filter(name = "Shutdown").all())
             else: # just type == Astronomoy?
                 # can we use the vpkey?
                 if original_id is not None and original_id != 0:
@@ -1086,6 +1175,9 @@ class DSSPrime2DSS(object):
                     p = first(Project.objects.filter(pcode = pcode).all())
                     s = p.sesshun_set.all()[0] # TBF: arbitrary!
                 else:
+                    # warn the user
+                    print "Could not create session for row: "
+                    print row
                     s = None
 
             # save this as a fixed period to the opts table
@@ -1195,6 +1287,11 @@ class DSSPrime2DSS(object):
         trimester = "09C"
         self.create_testing_session(trimester)
         self.create_maintenance_session(trimester)
+        self.create_project_and_session( trimester 
+                                       , "Shutdown"
+                                       , "non-science"
+                                       , "Shutdown"
+                                       , "maintenance")
         self.create_09C_rcvr_schedule()
         start = "20091001"
         end   = "20100201"
