@@ -32,6 +32,7 @@ class DSSPrime2DSS(object):
                           , user   = user
                           , passwd = passwd
                           , db     = "dss_prime"
+                          #, db = "dss_prime_backup_310809"
                             )
         self.cursor2 = self.db2.cursor()
 
@@ -524,8 +525,9 @@ class DSSPrime2DSS(object):
 
         rcvrChanges = []
 
-        # First week
-        dt = datetime(2009, 10, 1, 16)
+        # First week - start a little early.
+        #dt = datetime(2009, 10, 1, 16)
+        dt = datetime(2009, 10, 1, 0)
         rcvrs = ['L', 'C', 'X', 'Ku', 'S', 'Ku', 'Hol', 'Q', '1070'] 
         rcvrChanges.append((dt, rcvrs))
 
@@ -1084,13 +1086,13 @@ class DSSPrime2DSS(object):
                 s.session_type = stype
                 s.save()
 
-    def create_opportunities(self, start, end):
+    def create_fixed_periods(self, start, end):
         """
         We can dump Carl's DB into MySQL tables and use these to suck
         whatever info we need in addition to what is in the DB that
         Carl dumped to.
         Here we will take all 'scheduled dates' and replicate them
-        as opportunities so that in the simulations they get translated
+        as periods so that in the simulations they get translated
         into fixed periods that we pack around.
         """
         times = []
@@ -1180,23 +1182,40 @@ class DSSPrime2DSS(object):
                     print row
                     s = None
 
-            # save this as a fixed period to the opts table
-            #print s, start, duration
-
             # don't save stuff that will cause overlaps
             causesOverlap = self.findOverlap(start, duration, times)
-            if s is not None and causesOverlap:
-                print "Causes Overlap!: ", s, start, duration
+            if s is not None:
 
-            if s is not None and not causesOverlap:
-                win = Window(session = s, required = True)
-                win.save()
-                op = Opportunity(window = win
-                               , start_time = start
-                               , duration = duration)
-                op.save()
-                #print "op: ", op
-                times.append((s, start, duration))
+                # check for problems
+                # are we assigning fixed periods for open sessions?
+                if s.session_type.type == 'open':
+                    print "Session of type: ", s.session_type.type, s, start, duration
+                    if duration > s.max_duration or duration < s.min_duration:
+                        print "Open Session duration (%f) does not honor min/max: %f/%f"\
+                            % (duration, s.min_duration, s.max_duration)
+                        print s
+
+                if causesOverlap:
+                    print "Causes Overlap!: ", s, start, duration
+                else:
+                    #NOTE: we are no longer using windows
+                    # instead, just saves these off as periods
+                    p = Period(session  = s
+                             , start    = start
+                             , duration = duration
+                             , score    = 0.0
+                             , forecast = datetime.now()
+                             , backup   = False)
+                    p.save()         
+                    #win = Window(session = s, required = True)
+                    #win.save()
+                    #op = Opportunity(window = win
+                    #               , start_time = start
+                    #               , duration = duration)
+                    #op.save()
+                    # keep track of this added one so we can 
+                    # check for subsequent overlaps
+                    times.append((s, start, duration))
 
     def findOverlap(self, start, dur, times):
         for time in times:
@@ -1223,7 +1242,7 @@ class DSSPrime2DSS(object):
         self.set_fixed_projects()
         start = "20090601"
         end   = "20091001"
-        self.create_opportunities(start, end)
+        self.create_fixed_periods(start, end)
 
     def create_admins(self):
         "Creates users who probably aren't on a GBT proposal in the PST"
@@ -1295,5 +1314,5 @@ class DSSPrime2DSS(object):
         self.create_09C_rcvr_schedule()
         start = "20091001"
         end   = "20100201"
-        self.create_opportunities(start, end)
+        self.create_fixed_periods(start, end)
 
