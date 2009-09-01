@@ -25,7 +25,7 @@ class NRAOBosDB:
         representing the check-in and check-out dates.
         """
         retval = dict()
-        for i in project.investigators_set.all():
+        for i in project.investigator_set.all():
             if not i.friend:
                 u = i.user
                 rs = self.getReservationsByUsername(u.username)

@@ -14,7 +14,7 @@ def investigator_blackouts(request, *args, **kws):
     start     = request.GET.get('start', '')
     end       = request.GET.get('end', '')
     project   = first(Project.objects.filter(pcode = pcode).all())
-    blackouts = Set([b for i in project.investigators_set.all() \
+    blackouts = Set([b for i in project.investigator_set.all() \
                        for b in i.user.blackout_set.all()])
 
     jsondict  = []
@@ -55,10 +55,10 @@ def profile(request, *args, **kws):
     if len(args) > 0:
         u_id,     = args
         user      = first(User.objects.filter(id = u_id))
-        projects  = [i.project.pcode for i in user.investigators_set.all()]
+        projects  = [i.project.pcode for i in user.investigator_set.all()]
         requestor = first(User.objects.filter(username = loginUser))
         assert requestor is not None
-        union     = [i.project.pcode for i in requestor.investigators_set.all()
+        union     = [i.project.pcode for i in requestor.investigator_set.all()
                         if i.project.pcode in projects]
         #  If the requestor is not the user profile requested and they are
         #  not on the same project redirect to the requestor's profile.
@@ -88,7 +88,7 @@ def profile(request, *args, **kws):
     reservations = bos.getReservationsByUsername(user.username)
 
     # Remember [] is False,  TBF is this needed?
-    isFriend = ["yep" for p in user.investigators_set.all() if p.friend]
+    isFriend = ["yep" for p in user.investigator_set.all() if p.friend]
     return render_to_response("sesshuns/profile.html"
                             , {'u'            : user
                              , 'requestor'    : requestor
@@ -110,7 +110,7 @@ def project(request, *args, **kws):
     assert user is not None
     pcode, = args
     #  If the requestor is not on this project redirect to their profile.
-    if pcode not in [i.project.pcode for i in user.investigators_set.all()] \
+    if pcode not in [i.project.pcode for i in user.investigator_set.all()] \
             and not user.isAdmin():
         return HttpResponseRedirect("/profile")
         
@@ -118,6 +118,7 @@ def project(request, *args, **kws):
     return render_to_response("sesshuns/project.html"
                             , {'p' : project
                              , 'u' : user
+                             , 'v' : project.investigator_set.order_by('priority').all()
                              , 'r' : bos.reservations(project)
                                })
 
@@ -151,9 +152,33 @@ def toggle_session(request, *args, **kws):
 @login_required
 def toggle_observer(request, *args, **kws):
     pcode, i_id = args
-    i = first(Investigators.objects.filter(project__pcode = pcode, id = i_id))
+    i = first(Investigator.objects.filter(project__pcode = pcode, id = i_id))
     i.observer = not i.observer
     i.save()
+    
+    return HttpResponseRedirect("/project/%s" % pcode)
+
+@login_required
+def modify_priority(request, *args, **kws):
+    pcode, i_id = args
+    project = Project.objects.filter(pcode=pcode)[0]
+    project.normalize_investigators()
+    I = first(project.investigator_set.filter(id = i_id))
+    if request.POST.has_key('down.x'):
+        key = 'priority'
+    else:
+        key = '-priority'
+    t = None
+    for i in project.investigator_set.order_by(key):
+        if i.observer:
+            print i.user.first_name, i.priority
+            if t:
+                t.priority, i.priority = i.priority, t.priority
+                t.save()
+                i.save()
+                break
+            if i == I:
+                t = i
     
     return HttpResponseRedirect("/project/%s" % pcode)
 

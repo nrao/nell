@@ -35,7 +35,7 @@
               <th>Total Time</th>
               <th>Type</th>
               <th style="{width: 80px;}">Science</th>
-              <th>Enabled?</th>
+              <th>Enabled</th>
             {% for s in p.sesshun_set.all %}
             <tr>
               <td>{{s.name}}</td>
@@ -58,19 +58,30 @@
             {% endfor %}
           </table>
         </div>
-        <h3 class="loud"><span id = "obs" style = "border: 1px solid black; cursor: pointer;">&nbsp;+&nbsp;</span> Observers</h3>
+        <h3 class="loud"><span id = "obs" style = "border: 1px solid black; cursor: pointer;">&nbsp;+&nbsp;</span> Team Members</h3>
         <div id = "obs_div" style = "display: none;">
           <table>
             <tr>
+              <th>Call Order</th>
               <th>Name</th>
               <th>Email(s)</th>
               <th>PI</th>
               <th>Contact</th>
-              <th>Observer?</th>
+              <th>Observer(s)</th>
             </tr>
-            {% for i in p.investigators_set.all %}
+            {% for i in v %}
               {% if not i.friend %}
             <tr>
+              <td>
+                {% if i.observer %}
+                  <form action="/project/{{p.pcode}}/investigator/{{i.id}}/priority" method="POST">
+                    <input type="image" src="/static/images/up_arr1.png" alt="up" name="up" />
+                    <input type="image" src="/static/images/dwn_arr1.png" alt="down" name="down" />
+                  </form>
+                {% else %}
+                  &nbsp;
+                {% endif %}
+              </td>
               <td><a href="/profile/{{i.user.id}}">{{i.user|display_name}}</a></td>
               <td>
                 {% for e in i.user.email_set.all %}
@@ -117,7 +128,7 @@
               <th>Until</th>
               <th>Description</th>
             </tr>
-            {% for i in p.investigators_set.all %}
+            {% for i in v %}
               {% for b in i.projectBlackouts %}
                 <tr>
                   <td>
@@ -159,7 +170,7 @@
           <h3 class="caps">Information</h3>
           <div class="box">
             <dl>
-            {% for i in p.investigators_set.all %}
+            {% for i in v %}
               {% if i.friend %}
               <dt>Friend</dt>
               <dd><a href="mailto:{{i.user|get_email}}">{{i.user|display_name}}</a></dd>

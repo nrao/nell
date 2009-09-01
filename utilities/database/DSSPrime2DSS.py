@@ -236,7 +236,7 @@ class DSSPrime2DSS(object):
                 print "*****ERROR: project absent for pcode: ", pcode
                 continue
 
-            i = Investigators(project = p
+            i =  Investigator(project = p
                             , user    = u
                             , principal_contact      = row[6] == 1
                             , principal_investigator = row[5] == 1
@@ -326,7 +326,7 @@ class DSSPrime2DSS(object):
                 self.cursor.execute(query)
 
                 if friend is not None:
-                    i = Investigators(project = p
+                    i =  Investigator(project = p
                                     , user    = friend
                                     , friend  = True
                                       )
