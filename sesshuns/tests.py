@@ -90,7 +90,7 @@ class TestUser(NellTestCase):
                      )
         self.user1.save()
 
-        self.investigator1 = Investigators(project  = self.project
+        self.investigator1 =  Investigator(project  = self.project
                                          , user     = self.user1
                                          , observer = True)
         self.investigator1.save()
@@ -100,7 +100,7 @@ class TestUser(NellTestCase):
                      )
         self.user2.save()
 
-        self.investigator2 = Investigators(project  = self.project
+        self.investigator2 =  Investigator(project  = self.project
                                          , user     = self.user2
                                          , observer = True)
         self.investigator2.save()
@@ -306,7 +306,7 @@ class TestProject(NellTestCase):
                      )
         self.user1.save()
 
-        self.investigator1 = Investigators(project  = self.project
+        self.investigator1 =  Investigator(project  = self.project
                                          , user     = self.user1
                                          , observer = True)
         self.investigator1.save()
@@ -316,7 +316,7 @@ class TestProject(NellTestCase):
                      )
         self.user2.save()
 
-        self.investigator2 = Investigators(project  = self.project
+        self.investigator2 =  Investigator(project  = self.project
                                          , user     = self.user2
                                          , observer = True)
         self.investigator2.save()
@@ -1021,7 +1021,7 @@ class TestObservers(NellTestCase):
                                })
         self.p.save()
 
-        i = Investigators(project = self.p
+        i =  Investigator(project = self.p
                         , user    = self.u
                          )
         i.save()
@@ -1072,11 +1072,11 @@ class TestObservers(NellTestCase):
         self.assertEqual(s.status.enabled, True)
 
     def test_toggle_observer(self):
-        i_id = first(self.p.investigators_set.all()).id
+        i_id = first(self.p.investigator_set.all()).id
         response = self.post(
             '/project/%s/investigator/%s/observer' % (self.p.pcode, i_id))
         self.failUnlessEqual(response.status_code, 302)
-        i = first(Investigators.objects.filter(id = i_id))
+        i = first(Investigator.objects.filter(id = i_id))
         self.assertEqual(i.observer, True)
 
     def test_dynamic_contact_form(self):

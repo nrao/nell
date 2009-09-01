@@ -178,7 +178,7 @@ class User(models.Model):
     def getPeriods(self):
         "What are the periods associated with this user?"
         # What Would Haskell Do?
-        return [p for inv in self.investigators_set.all() \
+        return [p for inv in self.investigator_set.all() \
                       for s in inv.project.sesshun_set.all() \
                           for p in s.period_set.all()]
 
@@ -340,9 +340,9 @@ class Project(models.Model):
         max_sems = ', '.join([str(a.max_semester_time) for a in self.allotments.all()])
         grades   = ', '.join([grade_float_2_abc(a.grade) for a in self.allotments.all()])
 
-        pi = '; '.join([i.user.name() for i in self.investigators_set.all()
+        pi = '; '.join([i.user.name() for i in self.investigator_set.all()
                         if i.principal_investigator])
-        co_i = '; '.join([i.user.name() for i in self.investigators_set.all()
+        co_i = '; '.join([i.user.name() for i in self.investigator_set.all()
                         if not i.principal_investigator and not i.friend])
 
         return {"id"           : self.id
@@ -363,7 +363,7 @@ class Project(models.Model):
     def principal_contact(self):
         "Who is the principal contact for this Project?"
         pc = None
-        for inv in self.investigators_set.all():
+        for inv in self.investigator_set.all():
             # if more then one, it's arbitrary
             if inv.principal_contact:
                 pc = inv.user
@@ -372,11 +372,25 @@ class Project(models.Model):
     def principal_investigator(self):
         "Who is the principal investigator for this Project?"
         pc = None
-        for inv in self.investigators_set.all():
+        for inv in self.investigator_set.all():
             # if more then one, it's arbitrary
             if inv.principal_investigator:
                 pc = inv.user
         return pc    
+
+    def normalize_investigators(self):
+        """
+        Adjusts the priority field of all the project's investigators
+        to a standard form in response to any possible change.
+        """
+        priority = 1
+        for i in self.investigator_set.order_by('priority').all():
+            if i.observer:
+                i.priority = priority
+                priority += 1
+            else:
+                i.priority = 999
+            i.save()
 
     def rcvrs_specified(self):
         "Returns an array of rcvrs for this project, w/ out their relations"
@@ -394,7 +408,7 @@ class Project(models.Model):
         return True if sessions != [] else False
 
     def get_sanctioned_observers(self):
-        return [i for i in self.investigators_set.all() \
+        return [i for i in self.investigator_set.all() \
                 if i.observer and i.user.sanctioned]
 
     def has_sanctioned_observers(self):
@@ -624,7 +638,7 @@ class Project_Blackout_09B(models.Model):
         # problems with postrgreSQL
         db_table = "project_blackouts_09b"
 
-class Investigators(models.Model):
+class Investigator(models.Model):
     project                = models.ForeignKey(Project)
     user                   = models.ForeignKey(User)
     friend                 = models.BooleanField(default = False)
