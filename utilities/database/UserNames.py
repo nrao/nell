@@ -405,7 +405,6 @@ class UserNames(object):
                             badIds.append((u, u.pst_id, unique_id, id))
                             print "BAD ID!!!!!!!!!!!!!!!!!!!"
                             print u.pst_id, unique_id, id
-                            x = raw_input("Take Note of this exception.")
                             continue
                     # save what we've learned to the DB!!!        
                     u.username = accnt_name
