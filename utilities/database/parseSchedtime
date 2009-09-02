@@ -1,0 +1,9 @@
+#!/bin/bash
+# for instructions see:
+# http://wiki.gb.nrao.edu/bin/view/Software/HowToSchedule09B
+echo Parsing schedtime.dbf to DB $1 ...
+# first, drop the schedtime table in the target DB
+mysql -h localhost -u dss -p $1 < drop_schedtime.sql
+# now repopulate it
+/users/monctrl/bin/dbfshow hds schedtime.dbf | /users/monctrl/bin/sql_client -htrent -udss -pasdf5! -d$1
+echo DB $1 now has schedtime table.
