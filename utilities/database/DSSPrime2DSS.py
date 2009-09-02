@@ -50,6 +50,7 @@ class DSSPrime2DSS(object):
         self.transfer_friends()
         self.transfer_sessions()
         self.transfer_project_blackouts_09B()
+        self.normalize_investigators()
 
     def transfer_sessions(self):
         query = """
@@ -216,6 +217,10 @@ class DSSPrime2DSS(object):
                     op.save()
 
         #self.populate_windows()
+
+    def normalize_investigators:
+        for p in Project.objects.all():
+            p.normalize_investigators()
 
     def transfer_authors(self):
 
