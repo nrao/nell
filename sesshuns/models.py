@@ -440,12 +440,11 @@ class Project(models.Model):
         are unavailable.  Returns a list of tuples describing the time ranges
         where the project is 'blacked out' in UTC.
         """
-        blackouts = [o.user.blackout_set.all() \
-                     for o in self.get_sanctioned_observers() \
-                     if len(o.user.blackout_set.all()) != 0]
-
-        if blackouts == []: # No observers or no blackouts.
+        if not self.has_sanctioned_observers():
             return []
+
+        blackouts = [o.user.blackout_set.all() \
+                     for o in self.get_sanctioned_observers()]
 
         # Change all to UTC.
         utcBlackouts = []
