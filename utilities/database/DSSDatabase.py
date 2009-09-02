@@ -29,10 +29,14 @@ class DSSDatabase(object):
         "Method for creating a new DSS database "
         # transfer the stuff that is trimester independent
         self.dss_prime.transfer()
-        # transfer the trimester dependent stuff - schedtime table!
-        self.dss_prime.transfer_fixed_periods(trimester)
         # user the PST query services to fill in all the user info
         self.get_user_info()
+        # transfer the trimester dependent stuff - schedtime table!
+        # order here is important because we need the user info
+        # to be all there first
+        # NOTE: if this fails to find certain users, add them to
+        # UserNames.createMissingUsers and run again.
+        self.dss_prime.transfer_fixed_periods(trimester)
 
             
     def get_user_info(self):
@@ -42,7 +46,7 @@ class DSSDatabase(object):
         """
 
         # who's missing that really needs to be in here?
-        self.create_admins()
+        self.un.createMissingUsers()
         self.un.setAdminRoles()
 
         if self.interactive:
@@ -65,30 +69,4 @@ class DSSDatabase(object):
             self.un.findMissingUsers()
 
 
-    # TBF: perhaps this should be in UserNames?
-    def create_admins(self):
-        "Creates users who probably aren't on a GBT proposal in the PST"
-
-        admins = [("Paul", "Marganian", "pmargani", 823)
-                , ("Mark", "Clark", "windyclark", 1063)
-                , ("Amy", "Shelton", "ashelton", 556 )
-                , ("Dan", "Perera", 'dperera', 2705)
-                # who else?
-                 ]
-
-        for first_name, last, user, id in admins:
-            # don't make'm unless you have to
-            u = first(User.objects.filter(username = user)) 
-            if u is not None:
-                continue
-            # you have to
-            u = User(original_id = 0
-               , sanctioned  = True
-               , first_name  = first_name 
-               , last_name   = last 
-               , username    = user
-               , pst_id      = id 
-               , role        = first(Role.objects.filter(role = "Administrator"))
-                 )
-            u.save()
         
