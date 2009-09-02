@@ -16,12 +16,13 @@ def dates_not_schedulable(request, *args, **kws):
     project   = first(Project.objects.filter(pcode = pcode).all())
     period    = (end - start).days
 
-    dates = []
+    dates = Set([])
     if not project.has_sanctioned_observers() or \
        not project.has_schedulable_sessions():
-        dates = [start + timedelta(days = i) for i in range(period)]
+        dates = dates.union([start + timedelta(days = i) for i in range(period)])
     else:
-        dates = project.get_blackout_dates(start, end)
+        dates = dates.union(project.get_blackout_dates(start, end))
+        dates = dates.union(project.get_receiver_blackout_dates(start, end))
 
     return HttpResponse(json.dumps([{"start": d.isoformat()} for d in dates]))
 
@@ -132,12 +133,25 @@ def project(request, *args, **kws):
         return HttpResponseRedirect("/profile")
         
     project = first(Project.objects.filter(pcode = pcode))
-    return render_to_response("sesshuns/project.html"
-                            , {'p' : project
-                             , 'u' : user
-                             , 'v' : project.investigator_set.order_by('priority').all()
-                             , 'r' : bos.reservations(project)
-                               })
+
+    now          = datetime.utcnow().replace(hour = 0, minute = 0, second = 0)
+    later        = now + timedelta(days = 90)
+    rcvr_blkouts = []
+    for s, e in project.get_receiver_blackout_ranges(now, later):
+        if e is None:
+            rcvr_blkouts.append((s.date(), None))
+        else:
+            rcvr_blkouts.append((s.date(), e.date()))
+
+    return render_to_response(
+        "sesshuns/project.html"
+      , {'p' : project
+       , 'u' : user
+       , 'v' : project.investigator_set.order_by('priority').all()
+       , 'r' : bos.reservations(project)
+       , 'rcvr_blkouts': rcvr_blkouts
+       }
+    )
 
 @login_required
 def search(request, *args, **kws):

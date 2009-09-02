@@ -21,9 +21,10 @@
       <div class="span-17 colborder" id="content">
         <h3 class="loud"><span id = "cal" style = "border: 1px solid black; cursor: pointer;">&nbsp;-&nbsp;</span> Project Calendar (UTC)</h3>
         <div id='cal_div'>
+          <p align="center">** Any days shaded in <span style = "background-color: #999999">gray</span> in the calendar indicate that the project cannot be scheduled on that day. **</p>
           <div id='calendar'>
           </div>
-          <p align="center">** Any days shaded in <span style = "background-color: #999999">gray</span> in the above calendar indicate that the project cannot be scheduled on that day. **</p>
+          <p></p>
         </div>
         <h3 class="loud"><span id = "se" style = "border: 1px solid black; cursor: pointer;">&nbsp;-&nbsp;</span> Project Sessions</h3>
         <div id = "se_div">
@@ -184,11 +185,14 @@
               <dt>Complete?</dt>
               <dd>{% if p.complete %}Yes{% else %}No{% endif %}</dd>
               <dt>Scheduling Alerts</dt>
-              <dd style="color:red">{% if not p.has_sanctioned_observers %}No trained observers{% endif %}</dd>
-              <dd style="color:red">{% if not p.has_schedulable_sessions %}No schedulable sessions{% endif %}</dd>
+              <ul>
+              <dd style="color:red">{% if not p.has_sanctioned_observers %}<li>No trained observers</li>{% endif %}</dd>
+              <dd style="color:red">{% if not p.has_schedulable_sessions %}<li>No schedulable sessions</li>{% endif %}</dd>
+              <dd style="color:red">{% if rcvr_blkouts %}<li>Receivers unavailable:{% endif %}<ul>{% for start, end in rcvr_blkouts %}<li>{% if end %}{{start}} to {{end}}<br/>{% else %}{{start}} onward</li>{% endif %}</li>{% endfor %}</ul></dd>
               {% for s in p.sesshun_set.all %}
-                <dd style="color:red">{% if not s.status.authorized %}{{s.name}} not authorized{% endif %}</dd>
+                <dd style="color:red">{% if not s.status.authorized %}<li>{{s.name}} not authorized</li>{% endif %}</dd>
               {% endfor %}
+              </ul>
             </dl>
           </div>
         </div>

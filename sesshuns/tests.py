@@ -476,12 +476,7 @@ class TestProject(NellTestCase):
         today = datetime(2009, 1, 1)
         later = today + timedelta(days = 30)
         r = self.project.get_blackout_times(today, later)
-        expected = [
-            (datetime(2009, 1, 1, 11), datetime(2009, 1, 3, 11))
-          , (datetime(2009, 1, 1, 18), datetime(2009, 1, 4, 18))
-          , (datetime(2009, 1, 2, 12), datetime(2009, 1, 4, 20))
-        ]
-        self.assertEquals(expected, r)
+        self.assertEquals([], r)
 
         # Clean up
         blackout13.delete()
@@ -538,7 +533,7 @@ class TestProject(NellTestCase):
         blackout12.delete()
         blackout11.delete()
 
-    def test_get_receiver_blackouts(self):
+    def test_get_receiver_blackout_ranges(self):
         # Schedule = 4/01/2009:   450,   600,  800
         #            4/06/2009:   600,   800, 1070
         #            4/11/2009:   800,  1070,  1_2
@@ -548,10 +543,11 @@ class TestProject(NellTestCase):
         #            5/01/2009:   4_6,  8_10, 12_18
         #            5/06/2009:  8_10, 12_18, 18_26
         #            5/11/2009: 12_18, 18_26, 26_40
-        d       = datetime(2009, 4, 1, 0)
+        start   = datetime(2009, 4, 1, 0)
+        end     = datetime(2009, 6, 1, 0)
         rcvr_id = 3
         for i in range(9):
-            start_date = d + timedelta(5*i)
+            start_date = start + timedelta(5*i)
             for j in range(1, 4):
                 rcvr_id = rcvr_id + 1
                 rs = Receiver_Schedule()
@@ -561,7 +557,7 @@ class TestProject(NellTestCase):
             rcvr_id = rcvr_id - 2
 
         # No sessions, no receivers
-        blackouts = self.project.get_receiver_blackouts(d, 60)
+        blackouts = self.project.get_receiver_blackout_ranges(start, end)
         self.assertEquals([], blackouts)
 
         # No available receivers at these times: 
@@ -569,7 +565,7 @@ class TestProject(NellTestCase):
                   , (datetime(2009, 5, 1), None)]
         self.sesshun.save_receivers('L | (X & S)')
 
-        blackouts = self.project.get_receiver_blackouts(d, 60)
+        blackouts = self.project.get_receiver_blackout_ranges(start, end)
         self.assertEquals(expected, blackouts)
         self.sesshun.receiver_group_set.all().delete()
 
@@ -578,7 +574,7 @@ class TestProject(NellTestCase):
                   , (datetime(2009, 5, 1), datetime(2009, 5, 6))]
         self.sesshun.save_receivers('K | (X & S)')
 
-        blackouts = self.project.get_receiver_blackouts(d, 60)
+        blackouts = self.project.get_receiver_blackout_ranges(start, end)
         self.assertEquals(expected, blackouts)
         self.sesshun.receiver_group_set.all().delete()
 
@@ -586,14 +582,14 @@ class TestProject(NellTestCase):
         expected = [(datetime(2009, 4, 11), None)]
         self.sesshun.save_receivers('600')
 
-        blackouts = self.project.get_receiver_blackouts(d, 60)
+        blackouts = self.project.get_receiver_blackout_ranges(start, end)
         self.assertEquals(expected, blackouts)
         self.sesshun.receiver_group_set.all().delete()
 
         # Always an available receiver.
         self.sesshun.save_receivers('(800 | S) | Ku')
 
-        blackouts = self.project.get_receiver_blackouts(d, 60)
+        blackouts = self.project.get_receiver_blackout_ranges(start, end)
         self.assertEquals([], blackouts)
         self.sesshun.receiver_group_set.all().delete()
 

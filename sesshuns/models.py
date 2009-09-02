@@ -459,10 +459,10 @@ class Project(models.Model):
 
         return consolidate_events(find_intersections(utcBlackouts))
 
-    def get_receiver_blackouts(self, startdate, days):
+    def get_receiver_blackout_ranges(self, start, end):
         """
-        Returns a list of tuples of the form (start_date, end_date) where
-        start_date and end_date are datetime objects that denote the 
+        Returns a list of tuples of the form (start, end) where
+        start and end are datetime objects that denote the 
         beginning and ending of a period where no receivers are available
         for any session in a project.  If there is a receiver available
         at all times for any session, an empty list is returned.  If there
@@ -476,23 +476,37 @@ class Project(models.Model):
         if required == []:
             return [] # No sessions, no problem
 
-        schedule = Receiver_Schedule.extract_schedule(startdate, days)
+        schedule = Receiver_Schedule.extract_schedule(start, (end - start).days)
 
-        # Go through the schedule and determine blackouts.
-        blackouts = []
+        if schedule == {}: # No receiver schedule present!
+            return [(start, None)]
+
+        # Go through the schedule and determine blackout ranges.
+        ranges = []
         for date, receivers in sorted(schedule.items()):
             receivers = Set(receivers)
             if not any([all([Set(g.receivers.all()).intersection(receivers) \
                         for g in set]) for set in required]):
                 # No session has receivers available. Begin drought.
-                if not blackouts or blackouts[-1][1] is not None:
-                    blackouts.append((date, None))
+                if not ranges or ranges[-1][1] is not None:
+                    ranges.append((date, None))
             else:
                 # A session has receivers available. End drought, if present.
-                if blackouts and blackouts[-1][1] is None:
-                    start, _ = blackouts.pop(-1)
-                    blackouts.append((start, date))
+                if ranges and ranges[-1][1] is None:
+                    start, _ = ranges.pop(-1)
+                    ranges.append((start, date))
+        return ranges
 
+    def get_receiver_blackout_dates(self, start, end):
+        # Change date ranges into individual days.
+        blackouts = []
+        for r in self.get_receiver_blackout_ranges(start, end):
+            rstart, rend = r
+            counter = rstart
+            while counter < (rend or end):
+                blackouts.append(counter)
+                counter = counter + timedelta(days = 1)
+ 
         return blackouts
 
     def get_observed_periods(self, dt = datetime.now()):

@@ -33,6 +33,40 @@ class WindowInline(admin.TabularInline):
     model = Window
     extra = 1
 
+# Actions for Investigators
+
+def mark_as_contact(modeladmin, request, queryset):
+    queryset.update(principal_contact = True)
+mark_as_contact.short_description = "Set selected as principal contact"
+
+def mark_as_pi(modeladmin, request, queryset):
+    queryset.update(principal_investigator = True)
+mark_as_pi.short_description = "Set selected as principal investigator"
+
+def mark_as_observer(modeladmin, request, queryset):
+    queryset.update(observer = True)
+mark_as_observer.short_description = "Set selected as observer"
+
+def mark_as_friend(modeladmin, request, queryset):
+    queryset.update(friend = True)
+mark_as_friend.short_description = "Set selected as friend"
+
+def mark_as_not_contact(modeladmin, request, queryset):
+    queryset.update(principal_contact = False)
+mark_as_not_contact.short_description = "Unset selected as principal contact"
+
+def mark_as_not_pi(modeladmin, request, queryset):
+    queryset.update(principal_investigator = False)
+mark_as_not_pi.short_description = "Unset selected as principal investigator"
+
+def mark_as_not_observer(modeladmin, request, queryset):
+    queryset.update(observer = False)
+mark_as_not_observer.short_description = "Unset selected as observer"
+
+def mark_as_not_friend(modeladmin, request, queryset):
+    queryset.update(friend = False)
+mark_as_not_friend.short_description = "Unset selected as friend"
+
 # Actions for Periods
 
 def mark_as_backup(modeladmin, request, queryset):
@@ -76,6 +110,8 @@ class AllotmentAdmin(admin.ModelAdmin):
 class InvestigatorAdmin(admin.ModelAdmin):
     list_display = ['project_name', 'name', 'observer', 'priority', 'friend', 'principal_investigator', 'principal_contact']
     list_filter = ['principal_investigator', 'principal_contact']
+    search_fields = ['project__pcode', 'user__last_name', 'user__first_name']
+    actions = [mark_as_contact, mark_as_observer, mark_as_pi, mark_as_friend, mark_as_not_contact, mark_as_not_observer, mark_as_not_pi, mark_as_not_friend]
 
 class Observing_ParameterAdmin(admin.ModelAdmin):
     list_display = ['session', 'parameter', 'value']
