@@ -687,6 +687,12 @@ class Investigator(models.Model):
             , self.principal_contact
             , self.principal_investigator )
 
+    def name(self):
+        return self.user
+
+    def project_name(self):
+        return self.project.pcode
+
     def projectBlackouts(self):
         return [b for b in self.user.blackout_set.all()
                 if not self.friend and b.isActive()]

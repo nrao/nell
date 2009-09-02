@@ -53,6 +53,15 @@ def mark_as_completed(modeladmin, request, queryset):
     queryset.update(complete = True)
 mark_as_completed.short_description = "Mark selected projects as complete"
 
+# Actions for Users
+def mark_as_sanctioned(modeladmin, request, queryset):
+    queryset.update(sanctioned = True)
+mark_as_sanctioned.short_description = "Sanction"
+
+def mark_as_not_sanctioned(modeladmin, request, queryset):
+    queryset.update(sanctioned = False)
+mark_as_not_sanctioned.short_description = "Un-sanction"
+
 # Administrative Interfaces
 
 class AllotmentAdmin(admin.ModelAdmin):
@@ -63,6 +72,10 @@ class AllotmentAdmin(admin.ModelAdmin):
             # Get rid of pop-ups and refresh parent.
             return HttpResponse('<script type="text/javascript">window.opener.location.href = window.opener.location.href; window.close();</script>')
         return admin.ModelAdmin.response_change(self, request, obj)
+
+class InvestigatorAdmin(admin.ModelAdmin):
+    list_display = ['project_name', 'name', 'observer', 'priority', 'friend', 'principal_investigator', 'principal_contact']
+    list_filter = ['principal_investigator', 'principal_contact']
 
 class Observing_ParameterAdmin(admin.ModelAdmin):
     list_display = ['session', 'parameter', 'value']
@@ -125,10 +138,16 @@ class StatusAdmin(admin.ModelAdmin):
 class WindowAdmin(admin.ModelAdmin):
     inlines = [OpportunityInline]
 
+class UserAdmin(admin.ModelAdmin):
+    list_display = ['name', 'username', 'sanctioned', 'pst_id', 'original_id']
+    list_filter = ['sanctioned']
+    actions = [mark_as_sanctioned, mark_as_not_sanctioned]
+
 # Registration of Administrative Interfaces
 
 admin.site.register(Allotment, AllotmentAdmin)
 admin.site.register(Blackout)
+admin.site.register(Investigator, InvestigatorAdmin)
 admin.site.register(Observing_Parameter, Observing_ParameterAdmin)
 admin.site.register(Observing_Type, Observing_TypeAdmin)
 admin.site.register(Opportunity)
@@ -145,4 +164,5 @@ admin.site.register(Session_Type, Session_TypeAdmin)
 #admin.site.register(Status, StatusAdmin)
 admin.site.register(System)
 admin.site.register(Target)
+admin.site.register(User, UserAdmin)
 admin.site.register(Window, WindowAdmin)
