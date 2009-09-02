@@ -139,9 +139,10 @@ class WindowAdmin(admin.ModelAdmin):
     inlines = [OpportunityInline]
 
 class UserAdmin(admin.ModelAdmin):
-    list_display = ['name', 'username', 'sanctioned', 'pst_id', 'original_id']
+    list_display = ['last_name', 'first_name', 'sanctioned', 'pst_id', 'original_id']
     list_filter = ['sanctioned']
     actions = [mark_as_sanctioned, mark_as_not_sanctioned]
+    search_fields = ['last_name','first_name']
 
 # Registration of Administrative Interfaces
 
