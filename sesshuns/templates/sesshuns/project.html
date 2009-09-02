@@ -186,6 +186,9 @@
               <dt>Scheduling Alerts</dt>
               <dd style="color:red">{% if not p.has_sanctioned_observers %}No trained observers{% endif %}</dd>
               <dd style="color:red">{% if not p.has_schedulable_sessions %}No schedulable sessions{% endif %}</dd>
+              {% for s in p.sesshun_set.all %}
+                <dd style="color:red">{% if not s.status.authorized %}{{s.name}} not authorized{% endif %}</dd>
+              {% endfor %}
             </dl>
           </div>
         </div>
