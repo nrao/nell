@@ -416,11 +416,29 @@ class Project(models.Model):
     def has_sanctioned_observers(self):
         return True if self.get_sanctioned_observers() != [] else False
 
-    def get_blackouts(self):
+    def get_blackout_dates(self, start, end):
         """
         A project is 'blacked out' when all of its sanctioned observers
-        are unavailable.  Returns a list of tuples describing the date ranges
-        where the project is 'blacked out' in UTC for the next 30 days.
+        are unavailable.  Returns a list of tuples describing the whole days
+        where the project is 'blacked out' in UTC.
+        """
+        dates = []
+        for dstart, dend in self.get_blackout_times(start, end):
+            if dend - dstart > timedelta(days = 1):
+                cstart = dstart
+                cend   = dstart.replace(hour = 0, minute = 0, second = 0) + timedelta(days = 1)
+                while cstart < dend:
+                    if cend - cstart >= timedelta(days = 1):
+                        dates.append(cstart)
+                    cstart = cend
+                    cend   = cend + timedelta(days = 1)
+        return dates
+
+    def get_blackout_times(self, start, end):
+        """
+        A project is 'blacked out' when all of its sanctioned observers
+        are unavailable.  Returns a list of tuples describing the time ranges
+        where the project is 'blacked out' in UTC.
         """
         blackouts = [o.user.blackout_set.all() \
                      for o in self.get_sanctioned_observers() \
@@ -434,9 +452,7 @@ class Project(models.Model):
         for set in blackouts:
             utc = []
             for b in set:
-                now   = datetime.utcnow()
-                later = now + timedelta(days = 30)
-                utc.extend(b.generateDates(now, later))
+                utc.extend(b.generateDates(start, end))
             utcBlackouts.append(utc)
 
         if len(utcBlackouts) == 1: # One observer runs the show.
