@@ -188,11 +188,12 @@
               <ul>
               <dd style="color:red">{% if not p.has_sanctioned_observers %}<li>No trained observers</li>{% endif %}</dd>
               <dd style="color:red">{% if not p.has_schedulable_sessions %}<li>No schedulable sessions</li>{% endif %}</dd>
-              <dd style="color:red">{% if rcvr_blkouts %}<li>Receivers unavailable:{% endif %}<ul>{% for start, end in rcvr_blkouts %}<li>{% if end %}{{start}} to {{end}}<br/>{% else %}{{start}} onward</li>{% endif %}</li>{% endfor %}</ul></dd>
               {% for s in p.sesshun_set.all %}
                 <dd style="color:red">{% if not s.status.authorized %}<li>{{s.name}} not authorized</li>{% endif %}</dd>
               {% endfor %}
               </ul>
+              <dt>Receiver(s) Unavailable:</dt>
+              <dd><ul>{% for start, end in rcvr_blkouts %}<li>{% if end %}{{start}} to {{end}}<br/>{% else %}{{start}} onward</li>{% endif %}</li>{% endfor %}</ul></dd>
             </dl>
           </div>
         </div>

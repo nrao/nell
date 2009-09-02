@@ -17,8 +17,7 @@ def dates_not_schedulable(request, *args, **kws):
     period    = (end - start).days
 
     dates = Set([])
-    if not project.has_sanctioned_observers() or \
-       not project.has_schedulable_sessions():
+    if not project.has_schedulable_sessions():
         dates = dates.union([start + timedelta(days = i) for i in range(period)])
     else:
         dates = dates.union(project.get_blackout_dates(start, end))
