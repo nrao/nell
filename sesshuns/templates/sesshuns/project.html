@@ -29,21 +29,21 @@
           <table>
             <tr>
               <th style="{width: 100px;}">Name</th>
-              <th>Right Ascension</th>
-              <th>Declination</th>
-              <th>Frequency</th>
-              <th>Total Time</th>
-              <th>Type</th>
-              <th style="{width: 80px;}">Science</th>
-              <th>Enabled</th>
+              <th title="target right ascension J2000">RA</th>
+              <th title="target declination J2000">Dec</th>
+              <th title="target frequency in GHz">Freq</th>
+              <th title="time billed / time total">Outlay</th>
+              <th title="period's requested duration range">Bounds</th>
+              <th title="observing type">Type</th>
+              <th title="available or not for scheduling">Enabled</th>
             {% for s in p.sesshun_set.all %}
             <tr>
               <td>{{s.name}}</td>
               <td>{{s|target_horz}}</td>
               <td>{{s|target_vert}}</td>
               <td>{{s.frequency}}</td>
-              <td>{{s.allotment.total_time}}</td>
-              <td>{{s.session_type.type}}</td>
+              <td>{{s.getObservedTime|hrs2sex}} / {{s.allotment.total_time|hrs2sex}}</td>
+              <td>{{s.min_duration|hrs2sex}} - {{s.max_duration|hrs2sex}}</td>
               <td>{{s.observing_type.type}}</td>
               <td>
                 <form action="/project/{{p.pcode}}/session/{{s.name}}/enable" method="POST">

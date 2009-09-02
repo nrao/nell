@@ -1,6 +1,6 @@
-from django      import template
-from sesshuns    import models
-
+from django              import template
+from sesshuns            import models
+from datetime            import timedelta
 from sesshuns.models     import first
 from utilities.TimeAgent import rad2hr, rad2deg
 

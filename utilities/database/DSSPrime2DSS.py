@@ -218,7 +218,7 @@ class DSSPrime2DSS(object):
 
         #self.populate_windows()
 
-    def normalize_investigators:
+    def normalize_investigators(self):
         for p in Project.objects.all():
             p.normalize_investigators()
 

@@ -1,5 +1,6 @@
 from datetime                  import datetime, timedelta
 from math                      import asin, acos, cos, sin
+from tools                     import TimeAccounting
 from django.conf               import settings
 from django.db                 import models
 from django.http               import QueryDict
@@ -1002,6 +1003,9 @@ class Sesshun(models.Model):
         #blackouts = json.load(urlllib.urlopen(url))['blackouts']
 
         #return consolidate_events(find_intersections(blackouts))
+
+    def getObservedTime(self):
+        return TimeAccounting().getObservedTime(self)
 
     def jsondict(self):
         target  = first(self.target_set.all())
