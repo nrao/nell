@@ -9,6 +9,9 @@
     <script type="text/javascript" src="/static/javascript/lib/jquery.js"></script>
     <script type="text/javascript" src="/static/javascript/lib/fullcalendar.js"></script>
     <script type="text/javascript" src="/static/javascript/project.js"></script>
+    <style type="text/css">
+      .grey_highlight {background-color:#EEEEEE; width:100%}
+    </style>
 {% endblock %}
 {% block content %}
       <div id="header" class="span-24 last">
@@ -19,15 +22,12 @@
         <hr />
       </div>
       <div class="span-17 colborder" id="content">
-        <h3 class="loud"><span id = "cal" style = "border: 1px solid black; cursor: pointer;">&nbsp;-&nbsp;</span> Project Calendar (UTC)</h3>
-        <div id='cal_div'>
+        <h3 class="grey_highlight loud">Project Calendar (UTC)</h3>
           <p align="center">** Any days shaded in <span style = "background-color: #999999">gray</span> in the calendar indicate that the project cannot be scheduled on that day. **</p>
           <div id='calendar'>
           </div>
           <p></p>
-        </div>
-        <h3 class="loud"><span id = "se" style = "border: 1px solid black; cursor: pointer;">&nbsp;-&nbsp;</span> Project Sessions</h3>
-        <div id = "se_div">
+        <h3 class="grey_highlight loud">Project Sessions</h3>
           <table>
             <tr>
               <th style="{width: 100px;}">Name</th>
@@ -59,9 +59,7 @@
             <tr>
             {% endfor %}
           </table>
-        </div>
-        <h3 class="loud"><span id = "obs" style = "border: 1px solid black; cursor: pointer;">&nbsp;+&nbsp;</span> Team Members</h3>
-        <div id = "obs_div" style = "display: none;">
+        <h3 class="grey_highlight loud">Team Members</h3>
           <table>
             <tr>
               <th>Call Order</th>
@@ -117,9 +115,7 @@
               {% endif %}
             {% endfor %}
           </table>
-        </div>
-        <h3 class="loud"><span id = "black" style = "border: 1px solid black; cursor: pointer;">&nbsp;+&nbsp;</span> Observer Blackouts</h3>
-        <div id = "black_div" style = "display: none;">
+        <h3 class="grey_highlight loud">Observer Blackouts</h3>
           <table>
             <tr>
               <th>Observer</th>
@@ -146,9 +142,7 @@
               {% endfor %}
             {% endfor %}
           </table>
-        </div>
-        <h3 class="loud"><span id = "tp" style = "border: 1px solid black; cursor: pointer;">&nbsp;+&nbsp;</span> Telescope Periods Completed</h3>
-        <div id ="tp_div" style="display: none;">
+        <h3 class="grey_highlight loud">Telescope Periods Completed</h3>
           <table>
             <tr>
               <th>Session</th>
@@ -165,7 +159,6 @@
                 </tr>
               {% endfor %}
           </table>
-        </div>
       </div>
       <div class="span-6 last" id="sidebar">
         <div id="observer_info">
