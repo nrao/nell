@@ -75,6 +75,10 @@
 	background: #FFFFCC;
 	}
 	
+.full-calendar-month td.unavailable {
+	background: #999999;
+	}
+
 .full-calendar-month .day-number {
 	text-align: right;
 	padding: 0 2px;
