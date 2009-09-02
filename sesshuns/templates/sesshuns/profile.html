@@ -138,7 +138,9 @@
           <h3 class="caps">Upcoming Observations</h3>
           <div class="box">
             {% for pd in u.getUpcomingPeriods %}
-              {{pd.display_name}}<p>
+              <p title="{{pd.session.name}}: {{pd.start|date:'Y-m-d H:i'}} UTC for {{pd.duration|hrs2sex}} hrs">
+                {{pd.session.name}}: {{pd.start|date:"D, M d H:i"}} UTC for {{pd.duration|hrs2sex}} hrs
+              </p>
             {% endfor %}
           </div>
         </div>
