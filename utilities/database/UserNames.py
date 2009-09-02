@@ -198,6 +198,9 @@ class UserNames(object):
 
     def getUserNamesFromIDs(self, queryUser, queryPassword):
 
+        # get rid of this banner once other print statements are gone
+        print "********** Retrieving usernames using PST IDs. *********"
+
         noUsernames = User.objects.filter(username = None).all()
         print "num w/ no username  now : ", len(noUsernames)
 
@@ -323,6 +326,9 @@ class UserNames(object):
         author information from the proposal web services.
         """
 
+        # get rid of this banner once other print statements are gone
+        print "********** Retrieving usernames from project authors. *********"
+
         # get all projects
         ps = Project.objects.all()
 
@@ -405,7 +411,6 @@ class UserNames(object):
                             badIds.append((u, u.pst_id, unique_id, id))
                             print "BAD ID!!!!!!!!!!!!!!!!!!!"
                             print u.pst_id, unique_id, id
-                            x = raw_input("Take Note of this exception.")
                             continue
                     # save what we've learned to the DB!!!        
                     u.username = accnt_name
@@ -468,6 +473,42 @@ class UserNames(object):
         if value_tag is not None:
             value = value_tag.text
         return value    
+
+    def createMissingUsers(self):
+        "Creates users who probably aren't on a GBT proposal in the PST"
+
+        # add this to the list whenever you come across users who aren't
+        # in the DB, but you know they should be
+        # first, last name, username, pst_id
+        admins = [("Paul", "Marganian", "pmargani",   823)
+                , ("Mark", "Clark",     "windyclark", 1063)
+                , ("Amy",  "Shelton",   "ashelton",   556 )
+                , ("Dan",  "Perera",    'dperera',    2705)
+                , ("Todd", "Hunter",    'trhunter',   495)
+                , ("Glen", "Langston",  'glangsto',   45)
+                # TBF: these folks in the schedtime table, so WTF?
+                , ("Steve", "White",     None,        None) 
+                , ("Galen", "Watts",     None,        None) 
+                # who else?
+                 ]
+
+        for first_name, last, user, id in admins:
+            # don't make'm unless you have to
+            u = first(User.objects.filter(first_name = first_name
+                                        , last_name  = last)) 
+            if u is not None:
+                continue
+            # you have to
+            u = User(original_id = 0
+               , sanctioned  = True
+               , first_name  = first_name 
+               , last_name   = last 
+               , username    = user
+               , pst_id      = id 
+               #, role        = first(Role.objects.filter(role = "Administrator"))
+               , role        = first(Role.objects.filter(role = "Observer"))
+                 )
+            u.save()
 
     def setAdminRoles(self):
         "Simply set the given list of staff as admins."
