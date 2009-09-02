@@ -30,21 +30,21 @@
           <table>
             <tr>
               <th style="{width: 100px;}">Name</th>
-              <th title="target right ascension J2000">RA</th>
-              <th title="target declination J2000">Dec</th>
-              <th title="target frequency in GHz">Freq</th>
-              <th title="time billed / time total">Outlay</th>
-              <th title="period's requested duration range">Bounds</th>
-              <th title="observing type">Type</th>
-              <th title="available or not for scheduling">Enabled</th>
+              <th title="The target right ascension in J2000.">RA</th>
+              <th title="The target declination in J2000.">Dec</th>
+              <th title="The target frequency in GHz.">Freq</th>
+              <th title="The billed and the allotted time.">Time billed</th>
+              <th title="The Observer's preferred duration for each scheduled telescope period.">Duration</th>
+              <th title="The classified observing type.">Type</th>
+              <th title="Select this box to enable the session.">Enabled</th>
             {% for s in p.sesshun_set.all %}
             <tr>
               <td>{{s.name}}</td>
               <td>{{s|target_horz}}</td>
               <td>{{s|target_vert}}</td>
               <td>{{s.frequency}}</td>
-              <td>{{s.getObservedTime|hrs2sex}} / {{s.allotment.total_time|hrs2sex}}</td>
-              <td>{{s.min_duration|hrs2sex}} - {{s.max_duration|hrs2sex}}</td>
+              <td>{{s.getObservedTime}} / {{s.allotment.total_time}}</td>
+              <td>{{s.min_duration}} - {{s.max_duration}}</td>
               <td>{{s.observing_type.type}}</td>
               <td>
                 <form action="/project/{{p.pcode}}/session/{{s.name}}/enable" method="POST">
