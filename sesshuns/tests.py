@@ -332,7 +332,7 @@ class TestProject(NellTestCase):
         self.user1.delete()
         self.project.delete()
 
-    def test_get_blackouts1(self):
+    def test_get_blackout_times1(self):
         # Create Investigator1's 3 blackouts.
         blackout11 = Blackout(user   = self.user1
                             , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
@@ -375,7 +375,9 @@ class TestProject(NellTestCase):
             (datetime(2009, 1, 2, 12), datetime(2009, 1, 3, 11))
         ]
 
-        r = self.project.get_blackouts()
+        today = datetime(2009, 1, 1)
+        later = today + timedelta(days = 30)
+        r = self.project.get_blackout_times(today, later)
         self.assertEquals(expected, r)
 
         # Clean up
@@ -385,7 +387,7 @@ class TestProject(NellTestCase):
         blackout12.delete()
         blackout11.delete()
 
-    def test_get_blackouts2(self):
+    def test_get_blackout_times2(self):
         # Create Investigator1's 3 blackouts.
         self.investigator1.observer = False
         self.investigator1.save()
@@ -429,7 +431,9 @@ class TestProject(NellTestCase):
                             , end    = datetime(2009, 1, 4, 13))
         blackout22.save()
 
-        r = self.project.get_blackouts()
+        today = datetime(2009, 1, 1)
+        later = today + timedelta(days = 30)
+        r = self.project.get_blackout_times(today, later)
         self.assertEquals([], r)
 
         # Clean up
@@ -444,7 +448,7 @@ class TestProject(NellTestCase):
         self.investigator1.observer = True
         self.investigator1.save()
 
-    def test_get_blackouts3(self):
+    def test_get_blackout_times3(self):
         # Create Investigator1's 3 blackouts.
         blackout11 = Blackout(user   = self.user1
                             , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
@@ -469,7 +473,9 @@ class TestProject(NellTestCase):
 
         # Investigator 2 has no blackouts - She's available all the time.
 
-        r = self.project.get_blackouts()
+        today = datetime(2009, 1, 1)
+        later = today + timedelta(days = 30)
+        r = self.project.get_blackout_times(today, later)
         expected = [
             (datetime(2009, 1, 1, 11), datetime(2009, 1, 3, 11))
           , (datetime(2009, 1, 1, 18), datetime(2009, 1, 4, 18))
@@ -482,7 +488,7 @@ class TestProject(NellTestCase):
         blackout12.delete()
         blackout11.delete()
 
-    def test_get_blackouts4(self):
+    def test_get_blackout_times4(self):
         # Create Investigator1's 3 blackouts.
         blackout11 = Blackout(user   = self.user1
                             , tz     = first(TimeZone.objects.filter(timeZone="UTC"))
@@ -520,7 +526,9 @@ class TestProject(NellTestCase):
                             , end    = datetime(2009, 3, 4, 13))
         blackout22.save()
 
-        r = self.project.get_blackouts()
+        today = datetime(2009, 1, 1)
+        later = today + timedelta(days = 30)
+        r = self.project.get_blackout_times(today, later)
         self.assertEquals([], r) # Coordinated blackouts.
 
         # Clean up

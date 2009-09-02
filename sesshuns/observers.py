@@ -20,6 +20,8 @@ def dates_not_schedulable(request, *args, **kws):
     if not project.has_sanctioned_observers() or \
        not project.has_schedulable_sessions():
         dates = [start + timedelta(days = i) for i in range(period)]
+    else:
+        dates = project.get_blackout_dates(start, end)
 
     return HttpResponse(json.dumps([{"start": d.isoformat()} for d in dates]))
 
