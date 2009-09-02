@@ -1,4 +1,4 @@
-#from sesshuns.models import *
+from datetime import datetime, timedelta
 
 class TimeAccounting:
 
@@ -19,8 +19,9 @@ class TimeAccounting:
         return sum([self.getObservedTime(s) for s in ss])
 
     def getObservedTime(self, sess):
+        now = datetime.utcnow()
         ps = sess.period_set.all()
-        return sum([p.duration for p in ps])
+        return sum([p.duration for p in ps if (p.start + timedelta(hours=p.duration)) < now])
         
     def getTimeLeft(self, sess):
         obs = self.getObservedTime(sess)
