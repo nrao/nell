@@ -58,9 +58,9 @@ class DSSDatabase(object):
             self.un.confirmUserInfo('dss', 'MrNubbles!')
             x = raw_input("Continue and get missing IDs/usernames? CtrlX if not.")
 
-        #self.un.getUserNamesFromProjects('dss', 'MrNubbles!')
+        self.un.getUserNamesFromProjects('dss', 'MrNubbles!')
 
-        #self.un.getUserNamesFromIDs('dss', 'MrNubbles!')
+        self.un.getUserNamesFromIDs('dss', 'MrNubbles!')
 
         if self.interactive:
             print "Finally, check DB vs. PST one more time: "
