@@ -4,9 +4,10 @@
 {% block scripts %}
     <script type="text/javascript">
       var event_url = "/project/{{p.pcode}}/blackouts"; // For calendar
+      var unavailable_url = "/project/{{p.pcode}}/unavailable"; // For calendar
     </script>
     <script type="text/javascript" src="/static/javascript/lib/jquery.js"></script>
-    <script type="text/javascript" src="/static/javascript/lib/fullcalendar.min.js"></script>
+    <script type="text/javascript" src="/static/javascript/lib/fullcalendar.js"></script>
     <script type="text/javascript" src="/static/javascript/project.js"></script>
 {% endblock %}
 {% block content %}
@@ -22,7 +23,7 @@
         <div id='cal_div'>
           <div id='calendar'>
           </div>
-          <p></p>
+          <p align="center">** Any days shaded in <span style = "background-color: #999999">gray</span> in the above calendar indicate that the project cannot be scheduled on that day. **</p>
         </div>
         <h3 class="loud"><span id = "se" style = "border: 1px solid black; cursor: pointer;">&nbsp;-&nbsp;</span> Project Sessions</h3>
         <div id = "se_div">

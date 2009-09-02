@@ -9,6 +9,21 @@ from utilities.UserInfo       import UserInfo
 from utilities                import NRAOBosDB
 
 @login_required
+def dates_not_schedulable(request, *args, **kws):
+    pcode     = args[0]
+    start     = datetime.fromtimestamp(float(request.GET.get('start', '')))
+    end       = datetime.fromtimestamp(float(request.GET.get('end', '')))
+    project   = first(Project.objects.filter(pcode = pcode).all())
+    period    = (end - start).days
+
+    dates = []
+    if not project.has_sanctioned_observers() or \
+       not project.has_schedulable_sessions():
+        dates = [start + timedelta(days = i) for i in range(period)]
+
+    return HttpResponse(json.dumps([{"start": d.isoformat()} for d in dates]))
+
+@login_required
 def investigator_blackouts(request, *args, **kws):
     pcode     = args[0]
     start     = request.GET.get('start', '')
@@ -17,11 +32,11 @@ def investigator_blackouts(request, *args, **kws):
     blackouts = Set([b for i in project.investigator_set.all() \
                        for b in i.user.blackout_set.all()])
 
-    jsondict  = []
+    jsondictlist  = []
     for b in blackouts:
-        jsondict.extend(b.jsondict(start, end))
+        jsondictlist.extend(b.jsondict(start, end))
 
-    return HttpResponse(json.dumps(jsondict))
+    return HttpResponse(json.dumps(jsondictlist))
 
 def get_day(n, today):
     'Find the n_th day on the calendar.'

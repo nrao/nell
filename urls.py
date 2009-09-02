@@ -19,6 +19,7 @@ urlpatterns = patterns(''
    , url(r'^$',                                            profile)
    , url(r'^project/([^/]+)/calendar/(\d+)/(\d+)/(\d+)/$', calendar)
    , url(r'^project/([^/]+)/blackouts$',                   investigator_blackouts)
+   , url(r'^project/([^/]+)/unavailable$',                 dates_not_schedulable)
    , url(r'^project/([^/]+)$',                             project)
    , url(r'^project/([^/]+)/investigator/(\d+)/observer$', toggle_observer)
    , url(r'^project/([^/]+)/investigator/(\d+)/priority$', modify_priority)

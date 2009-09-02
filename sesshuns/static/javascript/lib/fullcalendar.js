@@ -77,7 +77,7 @@
 			//
 			// Instance variables
 			//
-			
+
 			var date = options.year ? // holds the year & month of current month
 				new Date(options.year, options.month || 0, 1) :
 				new Date();
@@ -85,10 +85,14 @@
 			var today;
 			var numWeeks;
 			var ignoreResizes = false;
-			
+
 			var events = [];
 			var eventSources = options.eventSources || [];
 			if (options.events) eventSources.push(options.events);
+			
+			var unavailable = [];
+			var unavailableSources = options.unavailableSources || [];
+			if (options.unavailable) unavailableSources.push(options.unavailable);
 			
 			
 			
@@ -342,6 +346,42 @@
 			
 			var thead, tbody, glass;
 			
+	        function isUnavailable(sometime) {
+                var flag = false;
+                for (var k=0; k<unavailable.length; k++) {
+                    if (unavailable[k].start.getTime() == sometime.getTime()) {
+                        flag = true;
+                    }
+                }
+                return flag;
+            }
+
+			function renderUnavailable() {
+				ignoreResizes = true;
+                
+				date.setDate(1);
+				clearTime(date);
+				start = cloneDate(date);
+				addDays(start, -((start.getDay() - weekStart + 7) % 7));
+				
+				// re-label and re-class existing cells
+				var d = cloneDate(start);
+				tbody.find('tr').each(function() {
+					for (var i=0; i<7; i++) {
+						var td = this.childNodes[i * dis + dit];
+						if (isUnavailable(d)) {
+							$(td).addClass('unavailable');
+						}else{
+							$(td).removeClass('unavailable');
+						}
+						$(td.childNodes[0]).text(d.getDate());
+						addDays(d, 1);
+					}
+				});
+
+				ignoreResizes = false;
+            }
+
 			function render() {
 		
 				ignoreResizes = true;
@@ -376,6 +416,7 @@
 				var dayNames = $.fullCalendar.dayNames;
 				var dayAbbrevs = $.fullCalendar.dayAbbrevs;
 			
+
 				if (!tbody) {
 				
 					// first time, build all cells from scratch
@@ -395,6 +436,7 @@
 					
 					tbody = "<tbody>";
 					var d = cloneDate(start);
+
 					for (var i=0; i<numWeeks; i++) {
 						tbody += "<tr class='week"+(i+1)+"'>";
 						var tds = "";
@@ -404,6 +446,7 @@
 								(j==dit ? ' first' : '') +
 								(d.getMonth() == month ? '' : ' other-month') +
 								(d.getTime() == today.getTime() ? ' today' : '') +
+								(isUnavailable(d) ? ' unavailable' : '') +
 								"'><div class='day-number'>" + d.getDate() + "</div>" +
 								"<div class='day-content'><div/></div></td>";
 							if (r2l) tds = s + tds;
@@ -468,6 +511,11 @@
 							}else{
 								$(td).removeClass('today');
 							}
+							if (isUnavailable(d)) {
+								$(td).addClass('unavailable');
+							}else{
+								$(td).removeClass('unavailable');
+							}
 							$(td.childNodes[0]).text(d.getDate());
 							addDays(d, 1);
 						}
@@ -491,6 +539,7 @@
 				}
 				
 				fetchEvents(renderEvents);
+				fetchUnavailable(renderUnavailable);
 				
 				ignoreResizes = false;
 			
@@ -516,8 +565,6 @@
 				glass.height(monthElement.height());
 				monthElementWidth = monthElement.width();
 			}
-			
-			
 			
 			
 			
@@ -764,7 +811,6 @@
 		
 		
 		
-		
 			/*******************************************************************/
 			//
 			//		Drag & Drop		(and cell-coordinate stuff)
@@ -972,9 +1018,9 @@
 					var sourceDone = function() {
 						if (--queued == 0) {
 							popLoading();
-							if (callback) {
-								callback(events);
-							}
+						    if (callback) {
+						    	callback(events);
+						   	}
 						}
 					};
 					pushLoading();
@@ -1019,7 +1065,62 @@
 				}
 			}
 			
-			
+			//
+			// Fetch from ALL sources. Clear 'unavailable' array and populate
+			//
+			function fetchUnavailable(callback) {
+				unavailable = [];
+				if (unavailableSources.length > 0) {
+					var queued = unavailableSources.length;
+					var sourceDone = function() {
+						if (--queued == 0) {
+							popLoading();
+						    if (callback) {
+						    	callback(unavailable);
+						   	}
+						}
+					};
+					pushLoading();
+					for (var i=0; i<unavailableSources.length; i++) {
+						fetchUnavailableSource(unavailableSources[i], sourceDone);
+					}
+				}
+			}
+
+            //
+            // Fetch from a particular source. Append to the 'unavailable' array
+            //
+
+            function fetchUnavailableSource(src, callback) {
+                var y = date.getFullYear();
+                var m = date.getMonth();
+                var reportUnavailable = function(a) {
+                    if (date.getFullYear() == y && date.getMonth() == m) {
+                        for (var i=0; i<a.length; i++) {
+                            normalizeEvent(a[i]);
+                            a[i].source = src;
+                        }
+                        unavailable = unavailable.concat(a);
+                    }
+					if (callback) {
+						callback(a);
+					}
+                };
+                if (typeof src == 'string') {
+                    var params = {};
+                    params[options.startParam || 'start'] = Math.round(start.getTime() / 1000);
+                    params[options.endParam || 'end'] = Math.round(end.getTime() / 1000);
+                    params[options.cacheParam || '_'] = (new Date()).getTime();
+                    $.getJSON(src, params, reportUnavailable);
+                }
+                else if ($.isFunction(src)) {
+                    src(start, end, reportUnavailable);
+                }
+                else {
+                    reportUnavailable(src);
+                }
+            }
+
 			//
 			// methods for reporting loading state
 			//
@@ -1076,9 +1177,6 @@
 			if (e.css('display') != 'none') {
 				render();
 			}
-			
-			
-			
 			
 		});
 		
