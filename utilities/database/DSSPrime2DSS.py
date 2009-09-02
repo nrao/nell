@@ -637,7 +637,7 @@ class DSSPrime2DSS(object):
                     # set additional info
                     # assign observers
                     for priority, o in enumerate(observers):
-                        i = Investigators(project  = proj
+                        i = Investigator( project  = proj
                                         , user     = o
                                         , friend   = False
                                         , observer = True
@@ -695,7 +695,7 @@ class DSSPrime2DSS(object):
                 # check for problems
                 # are we assigning fixed periods for open sessions?
                 if s.session_type.type == 'open':
-                    print "Session of type: ", s.session_type.type, s, start, duration
+                    print "Period fixed for Session of type: ", s.session_type.type, s, start, duration
                     if duration > s.max_duration or duration < s.min_duration:
                         print "Open Session duration (%f) does not honor min/max: %f/%f"\
                             % (duration, s.min_duration, s.max_duration)
