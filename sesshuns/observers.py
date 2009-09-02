@@ -155,6 +155,9 @@ def toggle_observer(request, *args, **kws):
     i = first(Investigator.objects.filter(project__pcode = pcode, id = i_id))
     i.observer = not i.observer
     i.save()
+
+    project = Project.objects.filter(pcode=pcode)[0]
+    project.normalize_investigators()
     
     return HttpResponseRedirect("/project/%s" % pcode)
 
