@@ -1,6 +1,7 @@
-from utilities.database.DSSPrime2DSS import DSSPrime2DSS
-from utilities.database.UserNames    import UserNames
-from sesshuns.models import *
+from utilities.database.DSSPrime2DSS  import DSSPrime2DSS
+from utilities.database.Schedtime2DSS import Schedtime2DSS
+from utilities.database.UserNames     import UserNames
+from sesshuns.models                  import *
 
 class DSSDatabase(object):
     
@@ -21,6 +22,7 @@ class DSSDatabase(object):
 
         # responsible for data transfers
         self.dss_prime = DSSPrime2DSS(database = database)
+        self.schedtime = Schedtime2DSS(database = database)
 
         # responsible for filling in info on users using the PST
         self.un = UserNames()
@@ -36,7 +38,7 @@ class DSSDatabase(object):
         # to be all there first
         # NOTE: if this fails to find certain users, add them to
         # UserNames.createMissingUsers and run again.
-        self.dss_prime.transfer_fixed_periods(trimester)
+        self.schedtime.transfer_fixed_periods(trimester)
 
             
     def get_user_info(self):
@@ -56,9 +58,9 @@ class DSSDatabase(object):
             self.un.confirmUserInfo('dss', 'MrNubbles!')
             x = raw_input("Continue and get missing IDs/usernames? CtrlX if not.")
 
-        self.un.getUserNamesFromProjects('dss', 'MrNubbles!')
+        #self.un.getUserNamesFromProjects('dss', 'MrNubbles!')
 
-        self.un.getUserNamesFromIDs('dss', 'MrNubbles!')
+        #self.un.getUserNamesFromIDs('dss', 'MrNubbles!')
 
         if self.interactive:
             print "Finally, check DB vs. PST one more time: "
