@@ -277,8 +277,8 @@ class Schedtime2DSS(object):
                                 , friend   = False
                                 , observer = True
                                 , priority = priority
-                                , principal_contact = (priority==1)
-                                , principal_investigator = (priority==1)
+                                , principal_contact = (priority==0)
+                                , principal_investigator = (priority==0)
                             )
                 i.save()                
             # assign session rcvrs, allotetd time ...                
