@@ -180,6 +180,10 @@ class UserAdmin(admin.ModelAdmin):
     actions = [mark_as_sanctioned, mark_as_not_sanctioned]
     search_fields = ['last_name','first_name']
 
+class Receiver_ScheduleAdmin(admin.ModelAdmin):
+    search_fields = ['receiver__abbreviation','receiver__name']
+    date_hierarchy = 'start_date'
+
 # Registration of Administrative Interfaces
 
 admin.site.register(Allotment, AllotmentAdmin)
@@ -194,7 +198,7 @@ admin.site.register(Project, ProjectAdmin)
 admin.site.register(Project_Type, Project_TypeAdmin)
 admin.site.register(Receiver, ReceiverAdmin)
 #admin.site.register(Receiver_Group)
-admin.site.register(Receiver_Schedule)
+admin.site.register(Receiver_Schedule, Receiver_ScheduleAdmin)
 admin.site.register(Semester, SemesterAdmin)
 admin.site.register(Sesshun, SesshunAdmin)
 admin.site.register(Session_Type, Session_TypeAdmin)
