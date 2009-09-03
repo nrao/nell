@@ -36,5 +36,9 @@ urlpatterns = patterns(''
    , (r'^admin/',                 include(admin.site.urls))
    , (r'^accounts/login/$', 'django_cas.views.login')
    , (r'^accounts/logout/$', 'django_cas.views.logout')
+   , (r'^robots.txt$', 'django.views.static.serve',
+        { 'path'         : "txt/robots.txt"
+        , 'document_root': settings.STATIC_DOC_ROOT
+        , 'show_indexes' : False})
    , (r'^static/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.STATIC_DOC_ROOT})
 )

@@ -326,7 +326,7 @@ class Schedtime2DSS(object):
     def get_schedtime_dates(self, trimester):
         "Schedtime table has a peculiar datetime system."
         if trimester == "09C":
-            start = "20091001"
+            start = "20091002" # NOT Oct 1!!!!
             end   = "20100201"
         else:
             raise "what trimester is that?"
@@ -370,7 +370,13 @@ class Schedtime2DSS(object):
             return None 
         elif len(users) > 1:
             print "SHIT: too many last_names: ", users
-            return users[0]
+            # TBF, WTF: handle this case by case:
+            # we could look at their PST affiliation to figure this out?
+            if last_name == "Ford":
+                return first(User.objects.filter(last_name = last_name
+                                               , first_name = first_name).all())
+            else:                              
+                return users[0]
         else:    
             return users[0]
 
