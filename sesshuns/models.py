@@ -178,10 +178,9 @@ class User(models.Model):
 
     def getPeriods(self):
         "What are the periods associated with this user?"
-        # What Would Haskell Do?
-        return [p for inv in self.investigator_set.all() \
-                      for s in inv.project.sesshun_set.all() \
-                          for p in s.period_set.all()]
+        return [p for i in self.investigator_set.all() \
+                  for s in i.project.sesshun_set.all() \
+                  for p in s.period_set.all()]
 
     def getUpcomingPeriods(self, dt = datetime.now()):
         "What periods might this observer have to observe soon?"
@@ -404,6 +403,10 @@ class Project(models.Model):
                 if r not in rcvrs:
                     rcvrs.append(r)
         return rcvrs            
+
+    def getPeriods(self):
+        "What are the periods associated with this project?"
+        return [p for s in self.sesshun_set.all() for p in s.period_set.all()]
 
     def has_schedulable_sessions(self):
         sessions = [s for s in self.sesshun_set.all() if s.schedulable()]
@@ -641,7 +644,7 @@ class Blackout(models.Model):
                                , minute = end.minute)
         return dates
 
-    def jsondict(self, calstart, calend, id = None):
+    def eventjson(self, calstart, calend, id = None):
         calstart = datetime.fromtimestamp(float(calstart))
         calend   = datetime.fromtimestamp(float(calend))
         dates    = self.generateDates(calstart, calend)
@@ -1302,6 +1305,16 @@ class Period(models.Model):
 
     def toHandle(self):
         return "%s (%s)" % (self.session.name, self.session.project.pcode)
+
+    def eventjson(self, id):
+        end = self.start + timedelta(hours = self.duration)
+
+        return {
+                "id"   : id
+              , "title": "".join(["Observing ", self.session.name])
+              , "start": self.start.isoformat()
+              , "end"  : end.isoformat()
+        }
 
     def jsondict(self):
         return {"id"           : self.id

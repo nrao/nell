@@ -33,21 +33,26 @@ def events(request, *args, **kws):
     project   = first(Project.objects.filter(pcode = pcode).all())
 
     # Each event needs a unique id.  Let's start with 1.
-    id            = 1
-    jsondictlist  = []
+    id          = 1
+    jsonobjlist = []
 
     # Investigator blackout events
     blackouts = Set([b for i in project.investigator_set.all() \
                        for b in i.user.blackout_set.all()])
     for b in blackouts:
-        jsondictlist.extend(b.jsondict(start, end, id))
+        jsonobjlist.extend(b.eventjson(start, end, id))
         id = id + 1
 
     # Investigator reservations
-    reservations, id = NRAOBosDB().jsondict(project, id)
-    jsondictlist.extend(reservations)
+    reservations, id = NRAOBosDB().eventjson(project, id)
+    jsonobjlist.extend(reservations)
 
-    return HttpResponse(json.dumps(jsondictlist))
+    # Scheduled telescope periods
+    for p in project.getPeriods():
+        jsonobjlist.append(p.eventjson(id))
+        id = id + 1
+
+    return HttpResponse(json.dumps(jsonobjlist))
 
 def get_day(n, today):
     'Find the n_th day on the calendar.'

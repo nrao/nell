@@ -33,7 +33,7 @@ class NRAOBosDB:
                     retval[u] = rs
         return retval
 
-    def jsondict(self, project, id):
+    def eventjson(self, project, id):
         """
         Take a Project and a starting id and returns a list of json
         dictionaries representing each reservation.  The keys of the json
@@ -44,7 +44,7 @@ class NRAOBosDB:
             for start, end in reservations:
                 jsonobjlist.append({
                     "id"   : id
-                  , "title": user.name() + " in Green Bank"
+                  , "title": "".join([user.name(), " in Green Bank"])
                   , "start": start.isoformat()
                   , "end"  : end.isoformat()
                 })
