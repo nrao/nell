@@ -48,6 +48,7 @@ class NRAOBosDB:
                   , "start": start
                   , "end"  : end
                 })
+                id = id + 1
         return jsonobjlist, id
  
     def getReservationsByUsername(self, username):
