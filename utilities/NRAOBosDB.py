@@ -33,6 +33,23 @@ class NRAOBosDB:
                     retval[u] = rs
         return retval
 
+    def jsondict(self, project, id):
+        """
+        Take a Project and a starting id and returns a list of json
+        dictionaries representing each reservation.  The keys of the json
+        dictionary are: id, title, start, end.
+        """
+        jsonobjlist = []
+        for user, reservations in self.reservations(project):
+            for start, end in reservations:
+                jsonobjlist.extend({
+                    "id"   : id
+                  , "title": user.name + ": reservation"
+                  , "start": start
+                  , "end"  : end
+                })
+        return jsonobjlist, id
+ 
     def getReservationsByUsername(self, username):
         """
         Uses BOS query service to return list of reservations for

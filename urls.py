@@ -17,7 +17,7 @@ urlpatterns = patterns(''
    , url(r'^profile/(\d+)$',                               profile)
    , url(r'^profile',                                      profile)
    , url(r'^$',                                            profile)
-   , url(r'^project/([^/]+)/blackouts$',                   investigator_blackouts)
+   , url(r'^project/([^/]+)/events$',                      events)
    , url(r'^project/([^/]+)/unavailable$',                 dates_not_schedulable)
    , url(r'^project/([^/]+)$',                             project)
    , url(r'^project/([^/]+)/investigator/(\d+)/observer$', toggle_observer)

@@ -14,8 +14,8 @@
         <div>
           <table>
             <tr>
-              <th>PCode</th>
-              <th>Name</th>
+              <th>Project ID</th>
+              <th>Title</th>
             </tr>
               {% for i in u.investigator_set.all %}
                 {% if not i.friend %}
@@ -30,8 +30,8 @@
           <h3 class="loud">Project Friend On</h3>
           <table>
             <tr>
-              <th>PCode</th>
-              <th>Name</th>
+              <th>Project ID</th>
+              <th>Title</th>
             </tr>
               {% for i in u.investigator_set.all %}
                 {% if i.friend %}

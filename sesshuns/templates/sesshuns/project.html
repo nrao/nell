@@ -3,7 +3,7 @@
 {% block title %} {{p.pcode}} {% endblock %}
 {% block scripts %}
     <script type="text/javascript">
-      var event_url = "/project/{{p.pcode}}/blackouts"; // For calendar
+      var event_url = "/project/{{p.pcode}}/events"; // For calendar
       var unavailable_url = "/project/{{p.pcode}}/unavailable"; // For calendar
     </script>
     <script type="text/javascript" src="/static/javascript/lib/jquery.js"></script>

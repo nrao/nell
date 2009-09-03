@@ -26,17 +26,26 @@ def dates_not_schedulable(request, *args, **kws):
     return HttpResponse(json.dumps([{"start": d.isoformat()} for d in dates]))
 
 @login_required
-def investigator_blackouts(request, *args, **kws):
+def events(request, *args, **kws):
     pcode     = args[0]
     start     = request.GET.get('start', '')
     end       = request.GET.get('end', '')
     project   = first(Project.objects.filter(pcode = pcode).all())
+
+    # Each event needs a unique id.  Let's start with 1.
+    id            = 1
+    jsondictlist  = []
+
+    # Investigator blackout events
     blackouts = Set([b for i in project.investigator_set.all() \
                        for b in i.user.blackout_set.all()])
-
-    jsondictlist  = []
     for b in blackouts:
-        jsondictlist.extend(b.jsondict(start, end))
+        jsondictlist.extend(b.jsondict(start, end, id))
+        id = id + 1
+
+    # Investigator reservations
+    reservations, id = NRAOBosDB().jsondict(project, id)
+    jsondictlist.extend(reservations)
 
     return HttpResponse(json.dumps(jsondictlist))
 

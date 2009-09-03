@@ -570,7 +570,7 @@ class Blackout(models.Model):
         else:
             offset = 0
 
-        return timedelta(hours = offset)
+        return timedelta(hours = -offset)
  
     def isActive(self, date = datetime.utcnow()):
         """
@@ -641,7 +641,7 @@ class Blackout(models.Model):
                                , minute = end.minute)
         return dates
 
-    def jsondict(self, calstart, calend):
+    def jsondict(self, calstart, calend, id = None):
         calstart = datetime.fromtimestamp(float(calstart))
         calend   = datetime.fromtimestamp(float(calend))
         dates    = self.generateDates(calstart, calend)
