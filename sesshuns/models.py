@@ -502,7 +502,7 @@ class Project(models.Model):
         blackouts = []
         for r in self.get_receiver_blackout_ranges(start, end):
             rstart, rend = r
-            counter = rstart
+            counter = min(rstart, start)
             while counter < (rend or end):
                 blackouts.append(counter)
                 counter = counter + timedelta(days = 1)
@@ -787,7 +787,7 @@ class Receiver_Schedule(models.Model):
         return jschedule
 
     @staticmethod
-    def extract_schedule(startdate = datetime.utcnow(), days = 120):
+    def extract_schedule(startdate = datetime.utcnow().date(), days = 120):
         """
         Returns the entire receiver schedule starting at 'startdate' and
         ending 'days' after the 'startdate'.  The schedule is of the form:
@@ -797,9 +797,15 @@ class Receiver_Schedule(models.Model):
         where start_date is a datetime object and [<receivers available>] is
         a list of Receiver objects.
         """
-        startdate = Receiver_Schedule.previousDate(startdate)
-        enddate   = startdate + timedelta(days = days)
-        schedule  = dict()
+        schedule = dict()
+
+        prev = Receiver_Schedule.previousDate(startdate)
+        if prev is None:
+            schedule[startdate] = [] # Empty schedule on/before this date
+        else:
+            startdate = prev
+
+        enddate = startdate + timedelta(days = days)
         for s in Receiver_Schedule.objects.filter(
                                               start_date__gte = startdate
                                                      ).filter(
@@ -809,11 +815,11 @@ class Receiver_Schedule(models.Model):
 
     @staticmethod
     def previousDate(date):
-        prev = date
         try:
             prev = Receiver_Schedule.objects.filter(start_date__lte = date).order_by('-start_date')[0].start_date
         except IndexError:
-            pass
+            prev = None
+
         return prev
 
 class Parameter(models.Model):
