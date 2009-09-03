@@ -489,6 +489,7 @@ class UserNames(object):
                 # TBF: these folks in the schedtime table, so WTF?
                 , ("Steve", "White",     None,        None) 
                 , ("Galen", "Watts",     None,        None) 
+                , ("John",  "Ford",      None,        None) 
                 # who else?
                  ]
 
