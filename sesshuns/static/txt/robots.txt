@@ -1,0 +1,4 @@
+# This file politely asks web robots to cooperate.
+#
+User-agent: *
+Disallow: /
