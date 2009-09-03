@@ -26,7 +26,7 @@ class NRAOBosDB:
         """
         retval = dict()
         for i in project.investigator_set.all():
-            if not i.friend:
+            if not i.friend or i.observer:
                 u = i.user
                 rs = self.getReservationsByUsername(u.username)
                 if rs:
@@ -40,13 +40,13 @@ class NRAOBosDB:
         dictionary are: id, title, start, end.
         """
         jsonobjlist = []
-        for user, reservations in self.reservations(project):
+        for user, reservations in self.reservations(project).items():
             for start, end in reservations:
-                jsonobjlist.extend({
+                jsonobjlist.append({
                     "id"   : id
-                  , "title": user.name + ": reservation"
-                  , "start": start
-                  , "end"  : end
+                  , "title": user.name() + " in Green Bank"
+                  , "start": start.isoformat()
+                  , "end"  : end.isoformat()
                 })
                 id = id + 1
         return jsonobjlist, id

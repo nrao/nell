@@ -102,7 +102,7 @@ def profile(request, *args, **kws):
         info = ui.getProfileByID(user, 'dss', 'MrNubbles!')
     except:
         # we really should only see this during unit tests.
-        print "encountered excpetion w/ UserInfo and user: ", user
+        print "encountered exception w/ UserInfo and user: ", user
         info = dict(emails = [e.email for e in user.email_set.all()]
                   , phones = ['Not Available']
                   , postals = ['Not Available']
@@ -213,7 +213,6 @@ def modify_priority(request, *args, **kws):
     t = None
     for i in project.investigator_set.order_by(key):
         if i.observer:
-            print i.user.first_name, i.priority
             if t:
                 t.priority, i.priority = i.priority, t.priority
                 t.save()
