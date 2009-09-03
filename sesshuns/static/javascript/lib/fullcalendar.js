@@ -333,7 +333,7 @@
 			}
 			
 			if (options.title !== false) {
-				titleElement = $("<h2 class='full-calendar-title'/>").appendTo(header);
+				titleElement = $("<h3 class='full-calendar-title'/>").appendTo(header);
 			}
 		
 			monthElement = $("<div class='full-calendar-month' style='position:relative'/>")
