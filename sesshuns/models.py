@@ -177,10 +177,14 @@ class User(models.Model):
         db_table = "users"
 
     def getPeriods(self):
-        "What are the periods associated with this user?"
-        return [p for i in self.investigator_set.all() \
-                  for s in i.project.sesshun_set.all() \
-                  for p in s.period_set.all()]
+        """
+        Returns a list of periods associated with this
+        user sorted by start date.
+        """
+        periods = sorted([p for i in self.investigator_set.all() \
+                            for s in i.project.sesshun_set.all() \
+                            for p in s.period_set.all()])
+        return list(Set(periods))
 
     def getUpcomingPeriods(self, dt = datetime.now()):
         "What periods might this observer have to observe soon?"
@@ -1268,6 +1272,9 @@ class Period(models.Model):
     def __str__(self):
         return "%s: %s for %5.2f Hrs" % \
             (self.session.name, self.start, self.duration)
+
+    def __cmp__(self, other):
+	return cmp(self.start, other.start)
 
     def display_name(self):
         return self.__str__()
