@@ -103,18 +103,20 @@
             <tr>
               <th>Begin</th>
               <th>End</th>
-              <th>Time Zone</th>
               <th>Repeat</th>
               <th>Until</th>
               <th>Description</th>
             </tr>
             {% for b in u.blackout_set.all %}
             <tr>
-              <td>{{b.start}}</td>
-              <td>{{b.end}}</td>
-              <td>{{b.tz.timeZone}}</td>
+              <td>{{b.start|date:'j M Y H:i'}}</td>
+              <td>{{b.end|date:'j M Y H:i'}}</td>
               <td>{{b.repeat.repeat}}</td>
+              {% if b.until %}
+              <td>{{b.until|date:'j M Y H:i'}}</td>
+              {% else %}
               <td>{{b.until|pretty_none}}</td>
+              {% endif %}
               <td>{{b.description}}</td>
             {% if authorized or requestor.isAdmin %}
               <td>
@@ -137,11 +139,13 @@
         <div id="periods">
           <h3 class="caps">Upcoming Observations</h3>
           <div class="box">
+            <ul>
             {% for pd in u.getUpcomingPeriods %}
-              <p title="{{pd.session.name}}: {{pd.start|date:'Y-m-d H:i'}} UTC for {{pd.duration|hrs2sex}} hrs">
+              <li title="{{pd.session.name}}: {{pd.start|date:'Y-m-d H:i'}} UTC for {{pd.duration|hrs2sex}} hrs">
                 {{pd.session.name}}: {{pd.start|date:"D, M d H:i"}} UTC for {{pd.duration|hrs2sex}} hrs
-              </p>
+              </li>
             {% endfor %}
+            </ul>
           </div>
         </div>
         <div id="reservation">
