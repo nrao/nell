@@ -173,14 +173,18 @@ def search(request, *args, **kws):
     user   = first(User.objects.filter(username = loginUser))
     assert user is not None
     search   = request.POST.get('search', '')
+
     projects = Project.objects.filter(
         Q(pcode__icontains = search) | \
             Q(name__icontains = search) | \
             Q(semester__semester__icontains = search))
+    projects = [p for p in projects]
     projects.extend([p for p in Project.objects.all() \
                      if p.pcode.replace("0", "").replace("-", "").replace("GBT", "") == search])
-    users    = User.objects.filter(
+
+    users = User.objects.filter(
         Q(first_name__icontains = search) | Q(last_name__icontains = search))
+
     return render_to_response("sesshuns/search.html"
                             , {'ps' : projects
                              , 'us' : users

@@ -118,7 +118,6 @@
               <th>Observer</th>
               <th>Begin</th>
               <th>End</th>
-              <th>Time Zone</th>
               <th>Repeat</th>
               <th>Until</th>
               <th>Description</th>
@@ -129,11 +128,14 @@
                   <td>
                     <a href="/profile/{{i.user.id}}">{{i.user|display_name}}</a>
                   </td>
-                  <td>{{b.start}}</td>
-                  <td>{{b.end}}</td>
-                  <td>{{b.tz.timeZone}}</td>
+                  <td>{{b.start.strftime|date:'j M Y H:i'}}</td>
+                  <td>{{b.end.strftime|date:'j M Y H:i'}}</td>
                   <td>{{b.repeat.repeat}}</td>
+                  {% if b.until %}
+                  <td>{{b.until.strftime|date:'j M Y H:i'}}</td>
+                  {% else %}
                   <td>{{b.until|pretty_none}}</td>
+                  {% endif %}
                   <td>{{b.description}}</td>
                 </tr>
               {% endfor %}
