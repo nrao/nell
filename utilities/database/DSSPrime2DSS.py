@@ -35,9 +35,9 @@ class DSSPrime2DSS(object):
         self.cursor.close()
 
     def transfer(self):
+        self.transfer_friends()
         self.transfer_projects()
         self.transfer_authors()
-        self.transfer_friends()
         self.transfer_sessions()
         self.normalize_investigators()
             
@@ -230,11 +230,16 @@ class DSSPrime2DSS(object):
                 print "*****ERROR: project absent for pcode: ", pcode
                 continue
 
-            i =  Investigator(project = p
-                            , user    = u
-                            , principal_contact      = row[6] == 1
-                            , principal_investigator = row[5] == 1
-                              )
+            i = first(Investigator.objects.filter(project=p, user=u))
+            if i:
+                i.principal_contact      = row[6] == 1
+                i.principal_investigator = row[5] == 1
+            else:
+                i =  Investigator(project = p
+                                , user    = u
+                                , principal_contact      = row[6] == 1
+                                , principal_investigator = row[5] == 1
+                                  )
             i.save()
 
     def transfer_projects(self):
@@ -272,9 +277,6 @@ class DSSPrime2DSS(object):
                 # original_id from DSS users table
                 o_id   = int(self.cursor.fetchone()[0])
                 friend = first(User.objects.filter(original_id = o_id))
-                print "new user from friends", friend
-                #query = "select * from friends where id = %s" % f_id
-                #self.cursor.execute(query)
 
                 if friend is not None:
                     i =  Investigator(project = p
