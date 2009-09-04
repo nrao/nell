@@ -1,0 +1,55 @@
+{% load custom %}
+{% block content %}
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <title>{% block title %}GBT Schedule{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/lib/blueprint/screen.css" type="text/css" media="screen, projection">
+    <link rel="stylesheet" href="/static/css/lib/blueprint/print.css" type="text/css" media="print">    
+    <link rel="stylesheet" href="/static/css/lib/fullcalendar/fullcalendar.css" type="text/css">
+    <style type="text/css">
+      .top_menu {font-size:120%}
+    </style>
+    <!--[if lt IE 8]><link rel="stylesheet" href="/static/css/lib/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->
+    <script type="text/javascript" src="/static/javascript/lib/jquery.js"> </script>
+    <script type="text/javascript" src="http://libraryh3lp.com/presence/jid/nrao-dss/chat.libraryh3lp.com/js"></script>
+    <script type="text/javascript" src="/static/javascript/help.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="banner span-24">
+      <img src="/static/images/banner.jpg" />
+    </div>
+  </div>
+  <h3 class="loud"><center>GBT Schedule</center></h3>
+  <table>
+    <tr>
+      <th>Start (UTC)</th>
+      <th>End (UTC)</th>
+      <th>Type</th>
+      <th>Project ID</th>
+      <th>Project Title</th>
+      <th>PI</th>
+      <th>Friend</th>
+      <th>Rcvrs</th>
+    </tr>
+    {% for p in periods %}
+    <tr>
+      <td>{{p.start}}</td>
+      <td>{{p.end}}</td>
+      <td>{{p.session.project.project_type.type}}</td>
+      <td><a href="/project/{{p.session.project.pcode}}">{{p.session.project.pcode}}</a></td>
+      <td>{{p.session.project.name}}</td>
+      {% if p.session.project.principal_investigator %}
+      <td>{{p.session.project.principal_investigator|display_name}}</td>
+      {% else %}
+      <td>None</td>
+      {% endif %}
+      <td>{{p.session.project.friend}}</td>
+      <td>{{p.session.receiver_list}}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>  
+
+
+{% endblock %}

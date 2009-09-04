@@ -8,6 +8,13 @@ from sets                     import Set
 from utilities.UserInfo       import UserInfo
 from utilities                import NRAOBosDB
 
+def schedule(request, *args, **kws):
+    # serve up the GBT schedule
+    # TBF: make this date and range dependent
+    ps = Period.objects.all()
+    return render_to_response("sesshuns/schedule.html"
+                            , {'periods'            : ps })
+
 @login_required
 def dates_not_schedulable(request, *args, **kws):
     pcode     = args[0]

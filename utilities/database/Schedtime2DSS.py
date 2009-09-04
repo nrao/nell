@@ -373,8 +373,9 @@ class Schedtime2DSS(object):
             # TBF, WTF: handle this case by case:
             # we could look at their PST affiliation to figure this out?
             if last_name == "Ford":
+                print "SHIT: using John Ford for: ", users
                 return first(User.objects.filter(last_name = last_name
-                                               , first_name = first_name).all())
+                                               , first_name = "John").all())
             else:                              
                 return users[0]
         else:    
