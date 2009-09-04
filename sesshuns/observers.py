@@ -192,9 +192,15 @@ def search(request, *args, **kws):
             Q(name__icontains = search) | \
             Q(semester__semester__icontains = search.upper()))
     projects = [p for p in projects]
-    projects.extend([p for p in Project.objects.all() \
-                     if p.pcode.replace("0", "").replace("-", "").replace("GBT", "") == search.upper()])
 
+    # Search for project by short code.
+    for p in Project.objects.all():
+        code = p.pcode.replace("GBT", "")
+        code = code.replace("-0", "")
+        code = code[1:] if code[0] == "0" else code
+        if code == search.upper():
+            projects.append(p)
+        
     users = User.objects.filter(
         Q(first_name__icontains = search) | Q(last_name__icontains = search))
 
