@@ -68,6 +68,7 @@
               <th>Email(s)</th>
               <th>PI</th>
               <th>Contact</th>
+              <th title="Trained for remote observing">Remote</th>
               <th>Observer(s)</th>
             </tr>
             {% for i in v %}
@@ -90,18 +91,13 @@
                 {% endfor %}
               </td>
               <td>
-                  {% if i.principal_investigator %}
-                  <input type="checkbox" name="pi" disabled="true" checked />
-                  {% else %}
-                  <input type="checkbox" name="pi" disabled="true" />
-                  {% endif %}
+                  {% if i.principal_investigator %}X{% endif %}
               </td>
               <td>
-                  {% if i.principal_contact %}
-                  <input type="checkbox" name="contact" disabled="true" checked />
-                  {% else %}
-                  <input type="checkbox" name="contact" disabled="true" />
-                  {% endif %}
+                  {% if i.principal_contact %}X{% endif %}
+              </td>
+              <td>
+                  {% if i.user.sanctioned %}X{% endif %}
               </td>
               <td>
                 <form action="/project/{{p.pcode}}/investigator/{{i.id}}/observer" method="POST">
@@ -116,13 +112,12 @@
               {% endif %}
             {% endfor %}
           </table>
-        <h3 class="grey_highlight loud">Observer Blackouts</h3>
+        <h3 class="grey_highlight loud">Observer Blackouts (UTC)</h3>
           <table>
             <tr>
               <th>Observer</th>
               <th>Begin</th>
               <th>End</th>
-              <th>Time Zone</th>
               <th>Repeat</th>
               <th>Until</th>
               <th>Description</th>
@@ -133,11 +128,14 @@
                   <td>
                     <a href="/profile/{{i.user.id}}">{{i.user|display_name}}</a>
                   </td>
-                  <td>{{b.start}}</td>
-                  <td>{{b.end}}</td>
-                  <td>{{b.tz.timeZone}}</td>
+                  <td>{{b.start|date:'j M Y H:i'}}</td>
+                  <td>{{b.end|date:'j M Y H:i'}}</td>
                   <td>{{b.repeat.repeat}}</td>
+                  {% if b.until %}
+                  <td>{{b.until|date:'j M Y H:i'}}</td>
+                  {% else %}
                   <td>{{b.until|pretty_none}}</td>
+                  {% endif %}
                   <td>{{b.description}}</td>
                 </tr>
               {% endfor %}

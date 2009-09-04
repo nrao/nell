@@ -29,6 +29,7 @@ def dates_not_schedulable(request, *args, **kws):
     else:
         dates = dates.union(project.get_blackout_dates(start, end))
         dates = dates.union(project.get_receiver_blackout_dates(start, end))
+        dates = dates.union(project.get_prescheduled_days(start, end))
 
     return HttpResponse(json.dumps([{"start": d.isoformat()} for d in dates]))
 
@@ -179,12 +180,18 @@ def search(request, *args, **kws):
     user   = first(User.objects.filter(username = loginUser))
     assert user is not None
     search   = request.POST.get('search', '')
+
     projects = Project.objects.filter(
         Q(pcode__icontains = search) | \
             Q(name__icontains = search) | \
             Q(semester__semester__icontains = search))
-    users    = User.objects.filter(
+    projects = [p for p in projects]
+    projects.extend([p for p in Project.objects.all() \
+                     if p.pcode.replace("0", "").replace("-", "").replace("GBT", "").upper() == search])
+
+    users = User.objects.filter(
         Q(first_name__icontains = search) | Q(last_name__icontains = search))
+
     return render_to_response("sesshuns/search.html"
                             , {'ps' : projects
                              , 'us' : users
@@ -237,11 +244,11 @@ def modify_priority(request, *args, **kws):
 
 @login_required
 def dynamic_contact_form(request, *args, **kws):
-    loginUser = request.user.username
     u_id,     = args
     user      = first(User.objects.filter(id = u_id))
 
     # TBF Use a decorator
+    loginUser = request.user.username
     requestor = first(User.objects.filter(username = loginUser))
     assert requestor is not None
     if user != requestor and not requestor.isAdmin():
@@ -253,9 +260,19 @@ def dynamic_contact_form(request, *args, **kws):
 @login_required
 def dynamic_contact_save(request, *args, **kws):
     u_id, = args
+    user  = first(User.objects.filter(id = u_id))
+
+    # TBF Use a decorator
+    loginUser = request.user.username
+    requestor = first(User.objects.filter(username = loginUser))
+    assert requestor is not None
+    if user != requestor and not requestor.isAdmin():
+        return HttpResponseRedirect("/profile")
+
     user = first(User.objects.filter(id = u_id))
     user.contact_instructions = request.POST.get("contact_instructions", "")
     user.save()
+
     return HttpResponseRedirect("/profile/%s" % u_id)
 
 @login_required
@@ -274,6 +291,7 @@ def blackout_form(request, *args, **kws):
     b     = first(Blackout.objects.filter(id = int(request.GET.get('id', 0))))
     times = [time(h, m).strftime("%H:%M")
              for h in range(0, 24) for m in range(0, 60, 15)]
+
     return render_to_response("sesshuns/blackout_form.html"
                             , {'method' : method
                              , 'b'      : b
@@ -285,11 +303,11 @@ def blackout_form(request, *args, **kws):
 
 @login_required
 def blackout(request, *args, **kws):
-    loginUser = request.user.username
     u_id, = args
     user = first(User.objects.filter(id = u_id))
 
     # TBF Use a decorator
+    loginUser = request.user.username
     requestor = first(User.objects.filter(username = loginUser))
     assert requestor is not None
     if user != requestor and not requestor.isAdmin():
@@ -306,20 +324,22 @@ def blackout(request, *args, **kws):
     else:
         b = Blackout(user = user)
 
+    # Convert blackout to UTC.
+    utcOffset = first(TimeZone.objects.filter(timeZone = request.POST['tz'])).utcOffset()
     if request.POST['start'] != '':
-        b.start       = datetime.strptime(
+        b.start = datetime.strptime(
             "%s %s" % (request.POST['start'], request.POST['starttime'])
-          , "%m/%d/%Y %H:%M")
+          , "%m/%d/%Y %H:%M") + utcOffset
     if request.POST['end'] != '':
-        b.end         = datetime.strptime(
+        b.end = datetime.strptime(
             "%s %s" % (request.POST['end'], request.POST['endtime'])
-          , "%m/%d/%Y %H:%M")
-    b.tz          = first(TimeZone.objects.filter(timeZone = request.POST['tz']))
-    b.repeat      = first(Repeat.objects.filter(repeat = request.POST['repeat']))
+          , "%m/%d/%Y %H:%M") + utcOffset
     if request.POST['until'] != '':
-        b.until       = datetime.strptime(
+        until = datetime.strptime(
             "%s %s" % (request.POST['until'], request.POST['untiltime'])
-          , "%m/%d/%Y %H:%M")
+          , "%m/%d/%Y %H:%M") + utcOffset
+
+    b.repeat      = first(Repeat.objects.filter(repeat = request.POST['repeat']))
     b.description = request.POST['description']
     b.save()
         
