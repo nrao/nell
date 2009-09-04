@@ -34,13 +34,17 @@
     </tr>
     {% for p in periods %}
     <tr>
-      <td>{{p.start}}</td>
-      <td>{{p.end}}</td>
+      <td>{{p.start|date:"Y-m-d H:i"}}</td>
+      <td>{{p.end|date:"Y-m-d H:i"}}</td>
       <td>{{p.session.project.project_type.type}}</td>
       <td><a href="/project/{{p.session.project.pcode}}">{{p.session.project.pcode}}</a></td>
+      {% ifequal p.session.project.project_type.type "science" %}
       <td>{{p.session.project.name}}</td>
+      {% else %}
+      <td>{{p.session.name}}</td>
+      {% endifequal %}
       {% if p.session.project.principal_investigator %}
-      <td>{{p.session.project.principal_investigator|display_name}}</td>
+      <td><a href="/profile/{{p.session.project.principal_investigator.id}}">{{p.session.project.principal_investigator|display_name}}</td>
       {% else %}
       <td>None</td>
       {% endif %}
