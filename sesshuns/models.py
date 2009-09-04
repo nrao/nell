@@ -370,6 +370,15 @@ class Project(models.Model):
                 pc = inv.user
         return pc        
 
+    def friend(self):
+        "Who is the friend for this Project?"
+        fr = None
+        for inv in self.investigator_set.all():
+            # if more then one, it's arbitrary
+            if inv.friend:
+                fr = inv.user
+        return fr     
+
     def principal_investigator(self):
         "Who is the principal investigator for this Project?"
         pc = None
@@ -1257,6 +1266,10 @@ class Period(models.Model):
     score      = models.FloatField(null = True, editable=False)
     forecast   = models.DateTimeField(null = True, editable=False)
     backup     = models.BooleanField()
+
+    def end(self):
+        "The period ends at start + duration"
+        return self.start + timedelta(hours = self.duration)
 
     def __unicode__(self):
         return "Period for Session (%d): %s for %5.2f Hrs" % \
