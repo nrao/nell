@@ -190,22 +190,42 @@ class User(models.Model):
         db_table = "users"
 
     def getPeriods(self):
+        retval = []
+        for i in self.investigator_set.all():
+            retval.extend(i.project.getPeriods())
+        return sorted(list(Set(retval)))
+
+    def getPeriodsByProject(self):
         """
-        Returns a list of periods associated with this
+        Returns a dictionary of project: [periods] associated with this
         user sorted by start date.
         """
-        periods = sorted([p for i in self.investigator_set.all() \
-                            for s in i.project.sesshun_set.all() \
-                            for p in s.period_set.all()])
-        return list(Set(periods))
+        retval = {}
+        for i in self.investigator_set.all():
+            retval[i.project] = i.project.getPeriods()
+        return retval
 
     def getUpcomingPeriods(self, dt = datetime.now()):
         "What periods might this observer have to observe soon?"
-        return [p for p in self.getPeriods() if p.start > dt]
+        return [p for p in self.getPeriods() if p.start >= dt]
+
+    def getUpcomingPeriodsByProject(self, dt = datetime.now()):
+        "What periods might this observer have to observe soon?"
+        retval = {}
+        for project, period in self.getPeriodsByProject().items():
+            retval[project] = [p for p in period if p.start >= dt]
+        return retval
 
     def getObservedPeriods(self, dt = datetime.now()):
         "What periods associated w/ this observer have been observed?"
         return [p for p in self.getPeriods() if p.start < dt]
+
+    def getObservedPeriodsByProject(self, dt = datetime.now()):
+        "What periods associated w/ this observer have been observed?"
+        retval = {}
+        for project, period in self.getPeriodsByProject().items():
+            retval[project] = [p for p in period if p.start < dt]
+        return retval
 
 class Email(models.Model):
     user  = models.ForeignKey(User)
@@ -432,7 +452,8 @@ class Project(models.Model):
 
     def getPeriods(self):
         "What are the periods associated with this project?"
-        return [p for s in self.sesshun_set.all() for p in s.period_set.all()]
+        return sorted([p for s in self.sesshun_set.all()
+                         for p in s.period_set.all()])
 
     def has_schedulable_sessions(self):
         sessions = [s for s in self.sesshun_set.all() if s.schedulable()]
