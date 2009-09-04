@@ -43,7 +43,7 @@
               <td>{{s.getObservedTime}} / {{s.allotment.total_time}}</td>
               <td>{{s.min_duration}} - {{s.max_duration}}</td>
               <td>{{s.observing_type.type}}</td>
-              <td>{% if s.status.authorized %}X{% endif %}</td>
+              <td>{% if s.status.authorized %}Yes{% endif %}</td>
               <td>
                 <form action="/project/{{p.pcode}}/session/{{s.name}}/enable" method="POST">
                   {% if s.status.enabled %}
@@ -93,13 +93,13 @@
                 {% endfor %}
               </td>
               <td>
-                  {% if i.principal_investigator %}X{% endif %}
+                  {% if i.principal_investigator %}Yes{% endif %}
               </td>
               <td>
-                  {% if i.principal_contact %}X{% endif %}
+                  {% if i.principal_contact %}Yes{% endif %}
               </td>
               <td>
-                  {% if i.user.sanctioned %}X{% endif %}
+                  {% if i.user.sanctioned %}Yes{% endif %}
               </td>
               <td>
                 <form action="/project/{{p.pcode}}/investigator/{{i.id}}/observer" method="POST">
