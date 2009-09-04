@@ -69,6 +69,19 @@ def grade_float_2_abc(grade):
             break
     return gradeLetter
 
+def range_to_days(ranges):
+    dates = []
+    for rstart, rend in ranges:
+        if rend - rstart > timedelta(days = 1):
+            start = rstart
+            end   = rstart.replace(hour = 0, minute = 0, second = 0) + timedelta(days = 1)
+            while start < rend:
+                if end - start >= timedelta(days = 1):
+                    dates.append(start)
+                start = end
+                end   = end + timedelta(days = 1)
+    return dates
+
 def overlaps(dt1, dt2):
     start1, end1 = dt1
     start2, end2 = dt2
@@ -423,23 +436,35 @@ class Project(models.Model):
     def has_sanctioned_observers(self):
         return True if self.get_sanctioned_observers() != [] else False
 
+    def get_prescheduled_days(self, start, end):
+        """
+        Returns a list of binary tuples of the form (start, end) that
+        describe the whole days when this project cannot observe 
+        because other projects already have scheduled telescope periods
+        during the time range specified by the start and end arguments.
+        """
+        return range_to_days(self.get_prescheduled_times(start, end))
+
+    def get_prescheduled_times(self, start, end):
+        """
+        Returns a list of binary tuples of the form (start, end) that
+        describe when this project cannot observe because other 
+        projects already have scheduled telescope periods during
+        the time range specified by the start and end arguments.
+        """
+        times = [(d.start, d.start + timedelta(hours = p.duration)) \
+                 for d in p.getPeriods() \
+                 for p in Project.objects.all() \
+                 if p != self and d.start >= start and d.start <= end]
+        return consolidate_events(times)
+
     def get_blackout_dates(self, start, end):
         """
         A project is 'blacked out' when all of its sanctioned observers
         are unavailable.  Returns a list of tuples describing the whole days
         where the project is 'blacked out' in UTC.
         """
-        dates = []
-        for dstart, dend in self.get_blackout_times(start, end):
-            if dend - dstart > timedelta(days = 1):
-                cstart = dstart
-                cend   = dstart.replace(hour = 0, minute = 0, second = 0) + timedelta(days = 1)
-                while cstart < dend:
-                    if cend - cstart >= timedelta(days = 1):
-                        dates.append(cstart)
-                    cstart = cend
-                    cend   = cend + timedelta(days = 1)
-        return dates
+        return range_to_days(self.get_blackout_times(start, end))
 
     def get_blackout_times(self, start, end):
         """
@@ -548,6 +573,11 @@ class TimeZone(models.Model):
     def __str__(self):
         return self.timeZone
         
+    def utcOffset(self):
+        "Returns a timedelta representing the offset from UTC."
+        offset = int(self.timeZone[4:]) if self.timeZone != "UTC" else 0
+        return timedelta(hours = offset)
+ 
     class Meta:
         db_table = "timezones"
         
@@ -555,52 +585,34 @@ class Blackout(models.Model):
     user         = models.ForeignKey(User)
     start        = models.DateTimeField(null = True)
     end          = models.DateTimeField(null = True)
-    tz           = models.ForeignKey(TimeZone)
     repeat       = models.ForeignKey(Repeat)
     until        = models.DateTimeField(null = True)
     description  = models.CharField(null = True, max_length = 512)
 
     def __unicode__(self):
-        return "%s Blackout for %s: %s - %s" % (self.repeat.repeat, self.user, self.start, self.end)
+        return "%s Blackout for %s: %s - %s" % \
+               (self.repeat.repeat, self.user, self.start, self.end)
 
-    def getUTC(self):
-        offset = self.utcOffset()
-        start  = self.start - offset if self.start else None
-        end    = self.end   - offset if self.end   else None
-        until  = self.until - offset if self.until else None
-        return (start, end, until)
-
-    def utcOffset(self):
-        "Returns a timedelta representing the offset from UTC."
-        if self.tz.timeZone != "UTC":
-            offset = int(self.tz.timeZone[4:])
-        else:
-            offset = 0
-
-        return timedelta(hours = -offset)
- 
     def isActive(self, date = datetime.utcnow()):
         """
         Takes a UTC datetime object and returns a Boolean indicating whether
         this blackout's effective date range is effective on this date.
         """
 
-        start, end, until = self.getUTC()
-
-        if start is None:
+        if self.start is None:
             return False # Never started, not active
         
-        if not end and start <= date:
+        if not self.end and self.start <= date:
             return True # Started on/before date, never ends
 
-        if start <= date and end and end >= date:
+        if self.start <= date and self.end and self.end >= date:
             return True # Starts on/before date, ends on/after date
 
         if self.repeat.repeat != "Once":
-            if not until and start <= date:
+            if not self.until and self.start <= date:
                 return True # Started on/before date, repeats forever
 
-            if until and until >= date and start <= date:
+            if self.until and self.until >= date and self.start <= date:
                 return True # Started on/before date, repeats on/after date
 
         return False
@@ -611,11 +623,12 @@ class Blackout(models.Model):
         Returns a list of (datetime, datetime) tuples representing all the
         events generated by this blackout in that period.
         """
-        start, end, until = self.getUTC()
-        if start is None or end is None:
+        if self.start is None or self.end is None:
             return [] # What does it mean to have None in start or end?
 
-        until       = min(until, calend) if until else calend
+        start       = self.start
+        end         = self.end
+        until       = min(self.until, calend) if self.until else calend
         periodicity = self.repeat.repeat
         dates       = []
 

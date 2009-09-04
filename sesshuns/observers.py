@@ -22,6 +22,7 @@ def dates_not_schedulable(request, *args, **kws):
     else:
         dates = dates.union(project.get_blackout_dates(start, end))
         dates = dates.union(project.get_receiver_blackout_dates(start, end))
+        dates = dates.union(project.get_prescheduled_days(start, end))
 
     return HttpResponse(json.dumps([{"start": d.isoformat()} for d in dates]))
 
@@ -299,20 +300,22 @@ def blackout(request, *args, **kws):
     else:
         b = Blackout(user = user)
 
+    # Convert blackout to UTC.
+    utcOffset = first(TimeZone.objects.filter(timeZone = request.POST['tz'])).utcOffset()
     if request.POST['start'] != '':
-        b.start       = datetime.strptime(
+        b.start = datetime.strptime(
             "%s %s" % (request.POST['start'], request.POST['starttime'])
-          , "%m/%d/%Y %H:%M")
+          , "%m/%d/%Y %H:%M") + utcOffset
     if request.POST['end'] != '':
-        b.end         = datetime.strptime(
+        b.end = datetime.strptime(
             "%s %s" % (request.POST['end'], request.POST['endtime'])
-          , "%m/%d/%Y %H:%M")
-    b.tz          = first(TimeZone.objects.filter(timeZone = request.POST['tz']))
-    b.repeat      = first(Repeat.objects.filter(repeat = request.POST['repeat']))
+          , "%m/%d/%Y %H:%M") + utcOffset
     if request.POST['until'] != '':
-        b.until       = datetime.strptime(
+        until = datetime.strptime(
             "%s %s" % (request.POST['until'], request.POST['untiltime'])
-          , "%m/%d/%Y %H:%M")
+          , "%m/%d/%Y %H:%M") + utcOffset
+
+    b.repeat      = first(Repeat.objects.filter(repeat = request.POST['repeat']))
     b.description = request.POST['description']
     b.save()
         
