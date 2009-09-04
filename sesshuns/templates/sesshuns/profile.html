@@ -109,11 +109,11 @@
             </tr>
             {% for b in u.blackout_set.all %}
             <tr>
-              <td>{{b.start.strftime|date:'j M Y H:i'}}</td>
-              <td>{{b.end.strftime|date:'j M Y H:i'}}</td>
+              <td>{{b.start|date:'j M Y H:i'}}</td>
+              <td>{{b.end|date:'j M Y H:i'}}</td>
               <td>{{b.repeat.repeat}}</td>
               {% if b.until %}
-              <td>{{b.until.strftime|date:'j M Y H:i'}}</td>
+              <td>{{b.until|date:'j M Y H:i'}}</td>
               {% else %}
               <td>{{b.until|pretty_none}}</td>
               {% endif %}

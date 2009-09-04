@@ -5,6 +5,6 @@
   <textarea name="contact_instructions">{{u.contact_instructions}}</textarea>
   <br/>
   <input type="submit" name="button" value="Save"/>&nbsp;&nbsp;
-  <input type="submit" name="button" value="Cancel"/>
+  <input type="submit" value="Cancel" onclick="window.location.href = '/profile/{{u.id}}'; return false"/>
 </form>
 {% endblock %}

@@ -180,7 +180,7 @@ def search(request, *args, **kws):
             Q(semester__semester__icontains = search))
     projects = [p for p in projects]
     projects.extend([p for p in Project.objects.all() \
-                     if p.pcode.replace("0", "").replace("-", "").replace("GBT", "") == search])
+                     if p.pcode.replace("0", "").replace("-", "").replace("GBT", "").upper() == search])
 
     users = User.objects.filter(
         Q(first_name__icontains = search) | Q(last_name__icontains = search))
@@ -262,9 +262,6 @@ def dynamic_contact_save(request, *args, **kws):
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
 
-    if request.GET.get('button', '') == "Cancel":
-        return HttpResponseRedirect("/profile/%s" % u_id)
-
     user = first(User.objects.filter(id = u_id))
     user.contact_instructions = request.POST.get("contact_instructions", "")
     user.save()
@@ -308,9 +305,6 @@ def blackout(request, *args, **kws):
     assert requestor is not None
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
-
-    if request.GET.get('button', '') == "Cancel":
-	return HttpResponseRedirect("/profile/%s" % u_id)
 
     if request.GET.get('_method', '') == "DELETE":
         b = first(Blackout.objects.filter(

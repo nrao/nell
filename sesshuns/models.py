@@ -452,9 +452,9 @@ class Project(models.Model):
         projects already have scheduled telescope periods during
         the time range specified by the start and end arguments.
         """
-        times = [(d.start, d.start + timedelta(hours = p.duration)) \
-                 for d in p.getPeriods() \
+        times = [(d.start, d.start + timedelta(hours = d.duration)) \
                  for p in Project.objects.all() \
+                 for d in p.getPeriods() \
                  if p != self and d.start >= start and d.start <= end]
         return consolidate_events(times)
 
@@ -602,10 +602,13 @@ class Blackout(models.Model):
         if self.start is None:
             return False # Never started, not active
         
+        if self.start >= date:
+            return True # Happens in the future
+
         if not self.end and self.start <= date:
             return True # Started on/before date, never ends
 
-        if self.start <= date and self.end and self.end >= date:
+        if self.start <= date and self.end >= date:
             return True # Starts on/before date, ends on/after date
 
         if self.repeat.repeat != "Once":
@@ -743,8 +746,8 @@ class Investigator(models.Model):
         return self.project.pcode
 
     def projectBlackouts(self):
-        return [b for b in self.user.blackout_set.all()
-                if not self.friend and b.isActive()]
+        return sorted([b for b in self.user.blackout_set.all()
+                       if not self.friend and b.isActive()])
     
     class Meta:
         db_table = "investigators"
@@ -1287,7 +1290,7 @@ class Period(models.Model):
             (self.session.name, self.start, self.duration)
 
     def __cmp__(self, other):
-	return cmp(self.start, other.start)
+        return cmp(self.start, other.start)
 
     def display_name(self):
         return self.__str__()
