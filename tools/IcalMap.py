@@ -47,4 +47,7 @@ class IcalMap:
         f.write(self.cal.as_string())
         f.close()
 
+    def getSchedule(self):
+        return self.cal.as_string()
+
 #${item.allocation.project.get_title()}. This telescope period has a duration of ${item.duration / 60.0} hours.\nThe observer listed as first contact is ${item.allocation.project.getProjectFirstContact().lastName}.\nThe receiver in use for this telescope period is ${item.allocation.getReceiverNames()}.\nTo see the cover page for all project details, click ${"http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode=" + item.allocation.project.name}

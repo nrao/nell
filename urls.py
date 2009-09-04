@@ -28,13 +28,14 @@ urlpatterns = patterns(''
    , url(r'^project/([^/]+)/session/([^/]+)/enable$',      toggle_session)
    , url(r'^projects$',           ProjectResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^projects/(\d+)$',     ProjectResource(permitted_methods=('PUT', 'GET', 'POST'))) #
+   , url(r'^projects/ical$',      get_ical)
    , url(r'^sessions/options$',   get_options) #
    , url(r'^sessions$',           SessionResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^sessions/(\d+)$',     SessionResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^receivers/schedule$', receivers_schedule) #
    , url(r'^periods$',            PeriodResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^periods/(\d+)$',      PeriodResource(permitted_methods=('PUT', 'GET', 'POST'))) #
-   , (r'^admin/',                 include(admin.site.urls))
+   , (r'^admin/',                 include(admin.site.urls)) #
    , (r'^accounts/login/$', 'django_cas.views.login')
    , (r'^accounts/logout/$', 'django_cas.views.logout')
    , (r'^robots.txt$', 'django.views.static.serve',

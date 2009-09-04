@@ -1,6 +1,7 @@
 from datetime                 import date, datetime, timedelta
 from django.http              import HttpResponse
 from models                   import Project, Receiver_Schedule, Sesshun
+from tools                    import IcalMap
 from settings                 import PROXY_PORT
 
 import simplejson as json
@@ -38,3 +39,6 @@ def get_options(request, *args, **kws):
                           , mimetype = "text/plain")
     else:
         return HttpResponse("")
+
+def get_ical(request, *args, **kws):
+    return HttpResponse(IcalMap().getSchedule())

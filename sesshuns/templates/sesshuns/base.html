@@ -25,10 +25,13 @@
     <table>
       <tr>
         <td>
-            <form style="display: inline; vertical-align: super;" action="/search" method="POST">
-              <input type="text" name="search" title="Search user name, project ID, and project title" />
-              <input type="submit" value="Search" />
-            </form>
+          <form style="display: inline; vertical-align: super;" action="/search" method="POST" title="Search user name, project ID, and project title" >
+            <input type="text" name="search" />
+            <input type="submit" value="Search" />
+          </form>
+          <a href="/projects/ical" title="Left click to view an ICAL-file (.ics) representation of the entire schedule.  Right click to save as file (Save Link As ...) or copy the URL (Copy Link Location)">
+            <img src="/static/images/ical.gif" style="border: 0;" />
+          </a>
         </td>
         <td style="text-align: right;">
           <span id="help" style="display: none; border-right: 10px solid white;">
@@ -41,9 +44,9 @@
               <img src="/static/images/chat_offline.gif" style="border: 0;" />
             </a>
           </span>
-            <a href="mailto:helpdesk-dss@gb.nrao.edu" class="top_menu" title="Click here to offer suggestions or report bugs">Helpdesk</a> |
-            <a href="/profile" class="top_menu" title="Click here to return to your home profile page">My Home</a> |
-            <a href="/accounts/logout/" class="top_menu" title="Click here to safely leave the current DSS login session">Logout</a>
+          <a href="mailto:helpdesk-dss@gb.nrao.edu" class="top_menu" title="Click here to offer suggestions or report bugs">Helpdesk</a> |
+          <a href="/profile" class="top_menu" title="Click here to return to your home profile page">My Home</a> |
+          <a href="/accounts/logout/" class="top_menu" title="Click here to safely leave the current DSS login session">Logout</a>
         </td>
       </tr>
     </table>
