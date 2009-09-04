@@ -26,11 +26,10 @@ class NRAOBosDB:
         """
         retval = dict()
         for i in project.investigator_set.all():
-            if not i.friend or i.observer:
-                u = i.user
-                rs = self.getReservationsByUsername(u.username)
-                if rs:
-                    retval[u] = rs
+            u = i.user
+            rs = self.getReservationsByUsername(u.username)
+            if rs:
+                retval[u] = rs
         return retval
 
     def eventjson(self, project, id):
