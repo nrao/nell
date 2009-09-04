@@ -231,11 +231,11 @@ def modify_priority(request, *args, **kws):
 
 @login_required
 def dynamic_contact_form(request, *args, **kws):
-    loginUser = request.user.username
     u_id,     = args
     user      = first(User.objects.filter(id = u_id))
 
     # TBF Use a decorator
+    loginUser = request.user.username
     requestor = first(User.objects.filter(username = loginUser))
     assert requestor is not None
     if user != requestor and not requestor.isAdmin():
@@ -247,9 +247,22 @@ def dynamic_contact_form(request, *args, **kws):
 @login_required
 def dynamic_contact_save(request, *args, **kws):
     u_id, = args
+    user  = first(User.objects.filter(id = u_id))
+
+    # TBF Use a decorator
+    loginUser = request.user.username
+    requestor = first(User.objects.filter(username = loginUser))
+    assert requestor is not None
+    if user != requestor and not requestor.isAdmin():
+        return HttpResponseRedirect("/profile")
+
+    if request.GET.get('button', '') == "Cancel":
+        return HttpResponseRedirect("/profile/%s" % u_id)
+
     user = first(User.objects.filter(id = u_id))
     user.contact_instructions = request.POST.get("contact_instructions", "")
     user.save()
+
     return HttpResponseRedirect("/profile/%s" % u_id)
 
 @login_required
@@ -268,6 +281,7 @@ def blackout_form(request, *args, **kws):
     b     = first(Blackout.objects.filter(id = int(request.GET.get('id', 0))))
     times = [time(h, m).strftime("%H:%M")
              for h in range(0, 24) for m in range(0, 60, 15)]
+
     return render_to_response("sesshuns/blackout_form.html"
                             , {'method' : method
                              , 'b'      : b
@@ -279,15 +293,18 @@ def blackout_form(request, *args, **kws):
 
 @login_required
 def blackout(request, *args, **kws):
-    loginUser = request.user.username
     u_id, = args
     user = first(User.objects.filter(id = u_id))
 
     # TBF Use a decorator
+    loginUser = request.user.username
     requestor = first(User.objects.filter(username = loginUser))
     assert requestor is not None
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
+
+    if request.GET.get('button', '') == "Cancel":
+	return HttpResponseRedirect("/profile/%s" % u_id)
 
     if request.GET.get('_method', '') == "DELETE":
         b = first(Blackout.objects.filter(
