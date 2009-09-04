@@ -263,13 +263,13 @@ class Semester(models.Model):
         return {
             "id"   : id
           , "title": "".join(["Start of ", self.semester])
-          , "start": self.start.isoformat()
+          , "start": self.start().isoformat()
         }
 
     @staticmethod
-    def getCurrentSemesters(date):
+    def getFutureSemesters(date):
         "Returns a list of Semesters that start on or before the given date."
-        return [s for s in Semester.objects.all() if s.start >= date]
+        return [s for s in Semester.objects.all() if s.start() >= date]
 
     class Meta:
         db_table = "semesters"

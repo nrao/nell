@@ -60,11 +60,11 @@ def events(request, *args, **kws):
         jsonobjlist.append(p.eventjson(id))
         id = id + 1
 
-    # Semester starts
-    #for s in Semester.getCurrentSemesters(start):
-    #    print "semester =", s
-    #    jsonobjlist.append(s.eventjson(id))
-    #    id = id + 1
+    # Semester start dates
+    date = datetime.fromtimestamp(float(start))
+    for s in Semester.getFutureSemesters(date):
+        jsonobjlist.append(s.eventjson(id))
+        id = id + 1
 
     return HttpResponse(json.dumps(jsonobjlist))
 
