@@ -259,6 +259,18 @@ class Semester(models.Model):
 
         return datetime(year, month, day)
 
+    def eventjson(self, id):
+        return {
+            "id"   : id
+          , "title": "".join(["Start of ", self.semester])
+          , "start": self.start.isoformat()
+        }
+
+    @staticmethod
+    def getCurrentSemesters(date):
+        "Returns a list of Semesters that start on or before the given date."
+        return [s for s in Semester.objects.all() if s.start >= date]
+
     class Meta:
         db_table = "semesters"
 

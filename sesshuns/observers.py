@@ -60,6 +60,12 @@ def events(request, *args, **kws):
         jsonobjlist.append(p.eventjson(id))
         id = id + 1
 
+    # Semester starts
+    #for s in Semester.getCurrentSemesters(start):
+    #    print "semester =", s
+    #    jsonobjlist.append(s.eventjson(id))
+    #    id = id + 1
+
     return HttpResponse(json.dumps(jsonobjlist))
 
 def get_day(n, today):
@@ -184,10 +190,10 @@ def search(request, *args, **kws):
     projects = Project.objects.filter(
         Q(pcode__icontains = search) | \
             Q(name__icontains = search) | \
-            Q(semester__semester__icontains = search))
+            Q(semester__semester__icontains = search.upper()))
     projects = [p for p in projects]
     projects.extend([p for p in Project.objects.all() \
-                     if p.pcode.replace("0", "").replace("-", "").replace("GBT", "").upper() == search])
+                     if p.pcode.replace("0", "").replace("-", "").replace("GBT", "") == search.upper()])
 
     users = User.objects.filter(
         Q(first_name__icontains = search) | Q(last_name__icontains = search))
