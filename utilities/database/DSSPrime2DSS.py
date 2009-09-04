@@ -263,15 +263,18 @@ class DSSPrime2DSS(object):
                         )
             p.save()
 
+            # friend_id from DSS' projects table
             f_id = row[3]
             if f_id != 0:
                 query = "select peoplekey from friends where id = %s" % f_id
                 self.cursor.execute(query)
 
+                # original_id from DSS users table
                 o_id   = int(self.cursor.fetchone()[0])
                 friend = first(User.objects.filter(original_id = o_id))
-                query = "select * from friends where id = %s" % f_id
-                self.cursor.execute(query)
+                print "new user from friends", friend
+                #query = "select * from friends where id = %s" % f_id
+                #self.cursor.execute(query)
 
                 if friend is not None:
                     i =  Investigator(project = p
