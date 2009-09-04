@@ -6,7 +6,7 @@
       var event_url = "/project/{{p.pcode}}/events"; // For calendar
       var unavailable_url = "/project/{{p.pcode}}/unavailable"; // For calendar
     </script>
-    <script type="text/javascript" src="/static/javascript/lib/jquery.js"></script>
+    <!-- <script type="text/javascript" src="/static/javascript/lib/jquery.js"></script> -->
     <script type="text/javascript" src="/static/javascript/lib/fullcalendar.js"></script>
     <script type="text/javascript" src="/static/javascript/project.js"></script>
     <style type="text/css">
@@ -32,6 +32,7 @@
               <th title="The billed and the allotted time in hours.">Time billed</th>
               <th title="The Observer's preferred duration in hours for each scheduled telescope period.">Duration</th>
               <th title="The classified observing type.">Type</th>
+              <th title="Session is authorized to observe by GBT staff.">Authorized</th>
               <th title="Select this box to enable the session.">Enabled</th>
             {% for s in p.sesshun_set.all %}
             <tr>
@@ -42,6 +43,7 @@
               <td>{{s.getObservedTime}} / {{s.allotment.total_time}}</td>
               <td>{{s.min_duration}} - {{s.max_duration}}</td>
               <td>{{s.observing_type.type}}</td>
+              <td>{% if s.status.authorized %}Yes{% endif %}</td>
               <td>
                 <form action="/project/{{p.pcode}}/session/{{s.name}}/enable" method="POST">
                   {% if s.status.enabled %}
@@ -91,13 +93,13 @@
                 {% endfor %}
               </td>
               <td>
-                  {% if i.principal_investigator %}X{% endif %}
+                  {% if i.principal_investigator %}Yes{% endif %}
               </td>
               <td>
-                  {% if i.principal_contact %}X{% endif %}
+                  {% if i.principal_contact %}Yes{% endif %}
               </td>
               <td>
-                  {% if i.user.sanctioned %}X{% endif %}
+                  {% if i.user.sanctioned %}Yes{% endif %}
               </td>
               <td>
                 <form action="/project/{{p.pcode}}/investigator/{{i.id}}/observer" method="POST">

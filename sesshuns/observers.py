@@ -8,6 +8,10 @@ from sets                     import Set
 from utilities.UserInfo       import UserInfo
 from utilities                import NRAOBosDB
 
+# persist this object to avoid having to authenticate every time
+# we want PST services
+ui = UserInfo()
+
 def schedule(request, *args, **kws):
     # serve up the GBT schedule
     # TBF: make this date and range dependent
@@ -60,11 +64,11 @@ def events(request, *args, **kws):
         jsonobjlist.append(p.eventjson(id))
         id = id + 1
 
-    # Semester starts
-    #for s in Semester.getCurrentSemesters(start):
-    #    print "semester =", s
-    #    jsonobjlist.append(s.eventjson(id))
-    #    id = id + 1
+    # Semester start dates
+    date = datetime.fromtimestamp(float(start))
+    for s in Semester.getFutureSemesters(date):
+        jsonobjlist.append(s.eventjson(id))
+        id = id + 1
 
     return HttpResponse(json.dumps(jsonobjlist))
 
@@ -115,13 +119,12 @@ def profile(request, *args, **kws):
         user      = requestor
         
     # get the users' info from the PST
-    ui = UserInfo()
     try:
         # TBF: use user's credentials to get past CAS, not Mr. Nubbles!
         info = ui.getProfileByID(user, 'dss', 'MrNubbles!')
     except:
-        # we really should only see this during unit tests.
-        print "encountered exception w/ UserInfo and user: ", user
+        #  we really should only see this during unit tests.
+        #print "encountered exception w/ UserInfo and user: ", user
         info = dict(emails = [e.email for e in user.email_set.all()]
                   , phones = ['Not Available']
                   , postals = ['Not Available']
@@ -192,9 +195,15 @@ def search(request, *args, **kws):
             Q(name__icontains = search) | \
             Q(semester__semester__icontains = search.upper()))
     projects = [p for p in projects]
-    projects.extend([p for p in Project.objects.all() \
-                     if p.pcode.replace("0", "").replace("-", "").replace("GBT", "") == search.upper()])
 
+    # Search for project by short code.
+    for p in Project.objects.all():
+        code = p.pcode.replace("GBT", "")
+        code = code.replace("-0", "")
+        code = code[1:] if code[0] == "0" else code
+        if code == search.upper():
+            projects.append(p)
+        
     users = User.objects.filter(
         Q(first_name__icontains = search) | Q(last_name__icontains = search))
 
