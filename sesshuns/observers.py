@@ -8,6 +8,10 @@ from sets                     import Set
 from utilities.UserInfo       import UserInfo
 from utilities                import NRAOBosDB
 
+# persist this object to avoid having to authenticate every time
+# we want PST services
+ui = UserInfo()
+
 def schedule(request, *args, **kws):
     # serve up the GBT schedule
     # TBF: make this date and range dependent
@@ -109,13 +113,12 @@ def profile(request, *args, **kws):
         user      = requestor
         
     # get the users' info from the PST
-    ui = UserInfo()
     try:
         # TBF: use user's credentials to get past CAS, not Mr. Nubbles!
         info = ui.getProfileByID(user, 'dss', 'MrNubbles!')
     except:
-        # we really should only see this during unit tests.
-        print "encountered exception w/ UserInfo and user: ", user
+        #  we really should only see this during unit tests.
+        #print "encountered exception w/ UserInfo and user: ", user
         info = dict(emails = [e.email for e in user.email_set.all()]
                   , phones = ['Not Available']
                   , postals = ['Not Available']
