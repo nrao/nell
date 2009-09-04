@@ -32,6 +32,7 @@
               <th title="The billed and the allotted time in hours.">Time billed</th>
               <th title="The Observer's preferred duration in hours for each scheduled telescope period.">Duration</th>
               <th title="The classified observing type.">Type</th>
+              <th title="Session is authorized to observe by GBT staff.">Authorized</th>
               <th title="Select this box to enable the session.">Enabled</th>
             {% for s in p.sesshun_set.all %}
             <tr>
@@ -42,6 +43,7 @@
               <td>{{s.getObservedTime}} / {{s.allotment.total_time}}</td>
               <td>{{s.min_duration}} - {{s.max_duration}}</td>
               <td>{{s.observing_type.type}}</td>
+              <td>{% if s.status.authorized %}X{% endif %}</td>
               <td>
                 <form action="/project/{{p.pcode}}/session/{{s.name}}/enable" method="POST">
                   {% if s.status.enabled %}
