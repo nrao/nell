@@ -40,7 +40,35 @@ class DSSPrime2DSS(object):
         self.transfer_authors()
         self.transfer_sessions()
         self.normalize_investigators()
+        self.set_sanctioned_flags()
             
+    def set_sanctioned_flags(self):
+        # Get the list of sanctioned users from 09B
+        f = open("/home/dss/data/sanctioned_users.txt", "r")
+        sanctioned = []
+        for line in f:
+            first, x = line.split(',')
+            last = x.rstrip('\n')
+            sanctioned.append((first, last))
+
+        # Set sanctioned flag in the database if both last names match
+        for s in sanctioned:
+            users = User.objects.all()
+            succeed = False
+            for u in users:
+                if s[1] == u.last_name:
+                    if s[0] == u.first_name:
+                        u.sanctioned = True
+                        u.save()
+                        succeed = True
+                        break
+            # Print differences if last name matches, but not first
+            if not succeed:
+                for u in users:
+                    if s[1] == u.last_name:
+                        if s[0] != u.first_name:
+                            print "Is 08B sanctioned user %s %s possibly the same as 09C user %s %s?" % (s[0], s[1], u.first_name, u.last_name) 
+
     def transfer_sessions(self):
         query = """
                 SELECT sessions.*
