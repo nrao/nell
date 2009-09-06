@@ -9,7 +9,8 @@ from urllib2 import URLError
 try:
     import lxml.etree as ET
 except:
-    print "can't import lxml!"
+    #print "can't import lxml!"
+    pass
 
 from caslib import login_to_cas_service, CASLoginError
 from caslib.validating_https import ValidatingHTTPSConnection
@@ -99,7 +100,7 @@ class NRAOUserDB(object):
 
         except SyntaxError, e: # lxml.etree will generate this
             # Probably the HTML login page
-            print e
+            #print e
             raise TryAuthenticating(login_url, 'received something that was not well formed xml; maybe a login form?')
 
         #TBF only user queries return that tag
