@@ -47,7 +47,7 @@
               <td>
                 <form action="/project/{{p.pcode}}/session/{{s.name}}/enable" method="POST">
                   {% if s.status.enabled %}
-                  <input type="checkbox" name="enabled" checked onclick="submit();"/>
+                  <input type="checkbox" name="enabled" checked="checked" onclick="submit();"/>
                   {% else %}
                   <input type="checkbox" name="enabled" onclick="submit();"/>
                   {% endif %}
@@ -104,7 +104,7 @@
               <td>
                 <form action="/project/{{p.pcode}}/investigator/{{i.id}}/observer" method="POST">
                   {% if i.observer %}
-                  <input type="checkbox" name="observer" checked onclick="submit();"/>
+                  <input type="checkbox" name="observer" checked="checked" onclick="submit();"/>
                   {% else %}
                   <input type="checkbox" name="observer" onclick="submit();"/>
                   {% endif %}
