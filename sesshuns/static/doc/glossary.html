@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xml:lang="en" lang="en"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="faq.html" />
+  <head>
+    <title>Glossary</title>
+  </head>
+  <body>
+    <div class="banner span-24">
+      <img src="/static/images/banner.jpg" />
+    </div>
+      <h1>Dynamic Scheduling System Glossary</h1>
+      <em>Please forward any comments or corrections to the <a href="mailto:helpdesk-dss@gb.nrao.edu">helpdesk</a>.</em>
+
+    <hr>
+
+    <ul>
+
+<!--
+<li><a name=""><b>Allotted Hours</b></a> 
+</li><p>
+-->
+
+<li><a name="AdministrativeConstraint"><b>Administrative Constraints</b></a>
+: Most factors used by the scheduling process are fixed by weather and
+observing needs, but a few are more pragmatic in nature and are the
+result of decisions made by the observatory or observers.  These include:
+<ol>
+<li>Observer <a href="#ObsBlackOut">Blackout Dates</a>
+<li>Observer <a href="#SessionEnabled">Session enabled</a>
+<li>Observatory <a href="#SessionAuth">Session Authorized</a>
+</ol><p>
+
+<li><a name="ObsBlackOut"><b>Blackout Dates </b></a> : Dates specified
+by each observer indicating when they will <b>not</b> be available for observing.  These dates can
+be specified as a one time occurrence or as repeating dates.</li><p>
+
+      <li><a name="SessionBackup"><b>Backup Session</b></a> : A backup session is one which the observer and his
+project friend have agreed can be run when a scheduled <a href="#Session">Session</a>
+must be canceled.  There are two types of backup Sessions, 'operator-run'
+sessions and 'observer-run' sessions. Operator-run sessions are those that
+can be run by the telescope operator without the need for observer
+interaction and observer-run sessions are those for which the PI or their
+designated contact has agreed to be called for observations at short-notice.
+In order to obtain operator-run status sessions must fulfill several
+criteria which are described in full in the DSS <a href="/static/html/dss_user_intro.pdf">Observers Introduction</a>. If a
+PI feels that one or more of their project's sessions are appropriate for
+either type of backup then they should contact their project's 'friend'.</li><p>
+      
+<li><a name="ContactInfo"><b>Contact Information </b></a>The NRAO
+ (<a href="http://my.nrao.edu">Interactive Services System</a>)
+manages contact information (among other
+things).  The DSS uses the Interactive Services database to maintain user accounts and
+static contact information (phone numbers, emails, postal addresses).
+The DSS also provides an entry box on the DSS web site where observers should provide "dynamic" contact information, such as home or cell phone numbers or other contact information needed during the time of an observing run.</li><p>
+
+      <li><a name="FixedSession"><b>Fixed Session</b></a> : A fixed session must be executed at a certain time and date and cannot be dynamically scheduled. Examples of fixed time sessions include VLBI and radar runs.
+      </li><p>
+
+<li><a name="BOSRes"><b>Green Bank Reservations</b></a> Dates when an
+observer for this project is on-site.  The DSS includes a factor to
+increase the score when and observer is on-site (see DSS <a
+href="/static/html/dspn5.2.pdf">Project Note 5</a>.  This information is also
+provided on the <a href="#ProjCal">Project Calendar</a>.  Login to the
+<a href="https://bos.nrao.edu">BOS</a> directly to create a
+reservation or modify existing reservations.</li><p>
+
+<li><a name="Investigator"><b>Investigator</b></a> : This term refers to any person associated with a <a href="#Project">Project</a> who is listed on the project page.  Investigators are not necessarily <a href="#Observer">Observers</a>.</li><p>
+
+<li><a name="ProjMaxTri"><b>Max Trimester Hours </b></a> Maximum allotted time for a project in the current
+trimester. This factor may be applicable in the case of NRAO Large projects where
+the proposal selection committee may limit the amount of time allowed in a
+given trimester.</li><p>
+
+<li><a name="SessMinBtwn"><b>Minimum Time Between Sessions </b></a> : This parameter sets the length of time which must pass before the <a href="#Session">Session</a> can be rescheduled on the telescope. This factor helps to ensure that sessions are not scheduled back to back without an observers consent. Taking a break between scheduled telescope periods would be useful in the case where, e.g. someone might wish to have at least a week between making maps on an object in order to properly process the maps. This parameter defines the time from the beginning of a session to the beginning of the next session in both <a href="#OpenSession">Open</a> and <a href="#WindowedSession">Windowed</a> Sessions.
+
+The default for this parameter is zero. Using this default means that even if a session is scheduled and run as a <a href="#TP">Telescope Period</a>, another session from the same project could begin as soon as that Period ends.  <b>Please Note!</b> The minimum time between sessions can only currently be set for an individual session. The possibility exists that an observer has multiple sessions (session1, session2, etc.) each of which has a minimum time between sessions of 10 hours. However, this parameter only applies individually to session1 or session2 so that an observer may find that, although two circumstances of session1 will never be scheduled closer together than 10 hours, session2 could end up being scheduled immediately after session1. The only way to avoid this at the present time is to <a name="SessionEnabled">disable</a>  sessions. This will prevent them from being scheduled.
+      </li><p>
+      
+<li><a name="MinObsConds"><b>Minimum Observing Conditions:</b></a> This determines whether a Session is runnable given the current observing conditions.  This parameter can be used to help determine if a scheduled Telescope Period should continue to be observered, or whether a backup up project should be put in its place.</li><p>
+      
+<li><a name="Observer"><b>Observer</b></a> : Any <a href="#Investigator">Investigator</a> who will be available for observing for a given <a href="#Project">Project</a> is an 'Observer'.  Not all Investigators on a Project need to be Observers.  Also, a person can be an Observer on one Project, but only an Investigator on another.  An Investigator's status as Observer can be changed on the project page.<p>
+      
+      <li><a name="OpenSession"><b>Open Session</b></a> : An Open Session, unlike a <a href="#WindowedSession">Windowed</a> or <a href="#FixedSession">Fixed</a> Session, can be scheduled at any time.  What determines when an Open Session is scheduled (i.e. when it becomes a <a href="#TP">Telescope Period</a>) is its <a href="#SessionScore">score</a> under certain conditions (i.e. the weather).</li><p>
+
+      <li><a name="Project"><b>Project</b></a> : The scientific proposal, with its associated metadata, which is submitted through the PST.
+      </li><p>
+      
+<li><a name="ProjCal"><b>Project Calendar:</b></a> Information on a project's telescope periods, its observers blackout dates and
+reservation information, in the <a href="http://en.wikipedia.org/wiki/ICalendar">ical</a> format.</li><p>
+
+<li><a name="ProjGrade"><b>Project Science Grade:</b></a> The grade
+given by the proposal selection committee based on scientific merit
+(see <a href="http://www.gb.nrao.edu/gbtprops/generalproposalinfo.shtml#PEP">General
+Proposal Information</a>). Note that a given project may have more
+than one grade (e.g., 40 hours for grade A and 10 hours for grade B).
+<i> (Specified as "Grade" in <a href="/static/html/tutorial.html#ProjDetails" target="_blank">Project
+Details Table</a>)</i></li><p>
+
+<li><a name="ProjTotal"><b>Project Total Hours:</b></a> Total time
+allotted for a project.  <i>(Specified as "Total" in <a
+href="/static/html/tutorial.html#ProjSummary" target="_blank">Project
+Summary Table</a>)</i></a></li><p>
+
+<li><a name="PSCHours"><b>PSC Hours</b></a> : The total amount of time awarded for the project by the
+GBT Proposal Selection Committee (PSC). On rare occasions this may differ
+from the Project's currently <a href="#ProjTotal">allotted hours</a> as a result of communications
+between the project team and the GBT telescope scheduler.  <i>(located in 
+<a href="/static/html/tutorial.html#TimeAccounting" target="_blank">Time Accounting Tab</a>)</i></li><p>
+
+<li><a name="ObsRemote"><b>Qualified for Remote Observing :</b></a>
+Observers must be trained on site before they are allowed to observe
+remotely.  Note that if there is no one on your project who is qualified
+to observer remotely, and there is no one on your project in Green Bank, 
+then your Project's <a href="#Session" target="_blank">
+Sessions</a> will not be scheduled. (see 
+<a href="http://www.gb.nrao.edu/gbt/remoteobserving.shtml">Remote
+Observing</a> and the <a href="/static/html/dss_user_intro.pdf">Observer's Introduction</a> for more information).  <i>(located in 
+<a href="/static/html/tutorial.html#Investigators" target="_blank">Investigators Tab</a>)</i></li><p>
+
+<li><a name="Session"><b>Session</b></a> : Projects are divided into sessions, where each session is uniquely defined by its observing requirements (e.g. Frequency band, LST/UT, hardware). A session is the unit by which the DSS schedules a project, i.e. the DSS looks for valid sessions to schedule, not projects. </li><p>
+      
+<li><a name="SessionAuth"><b>Session Authorized</b></a> : This attribute of a session ensures that a member of NRAO staff has given the go-ahead for a session to be scheduled. No session can be run without this box being checked by a NRAO staff member.</li><p>
+
+      <li><a name="SessionEnabled"><b>Session Enabled</b></a> : This attribute of a session ensures that the PI for a project has given the go-ahead for a session to be scheduled. No session can be run without this box being checked.  By unenabling sessions, team members can pause their observing program.</li><p>
+      
+<li><a name="SessFreq"><b>Session Frequency</b></a>  : This is the canonical frequency, in GHz, used to <a href="#SessionScore">score</a> the <a href="#Session">Session</a>.  This frequency should be chosen to represent the poorest potential efficiency of your observations, usually (but not always) the highest frequency. For example, if you wish to observe several frequencies in the X-band (8-10 GHz) ranging from 8.1 GHz to 9.8 GHz you should enter 9.8 GHz as your canonical frequency, in the same way that your least efficient frequency should be used when making time estimates. Note that in certain circumstances (RFI, atmospheric effects, etc.) the highest frequency is not the least efficient, for example, K-band (18-26 GHz) observations are least efficient near an atmospheric water line at ~22 GHz. More information can be found on the scoring system and observing efficiencies and how they are calculated in the DSS <a href="/static/html/dspn5.2.pdf">Project Note 5.</a> This document also describes the observing efficiency of the GBT as a function of frequency.</li><p>
+
+<li><a name="SessMinMax"><b>Session Min and Max Durations</b></a> :  These define limits to the length of a <a href="#TP">Telescope Period</a> to be scheduled from this <a href="#Session">Session</a>: the Telescope Period cannot be longer then the max duration, nor shorter then the min duration.</li><p>
+
+      <li><a name="SessRaDec"><b>Session RA & Dec</b></a> : This is the
+canonical RA & Dec used to determine when a session can be
+observed due to its overall efficiency <a href="#SessionScore">score</a>.  If a <a href="#Session">Session</a> has only one
+source, this would typically be equal to the RA and Dec of that source.  If,
+though, a session has more than one source the canonical RA and Dec should
+be chosen to represent which coordinates an observer feel is the most
+important within that session.<p>
+If a project has a large number of sources spread across the sky, that
+project should have multiple sessions to represent the different sky areas
+within thier sources.  More information can be found on the scoring system
+and observing
+efficiencies and how they are calculated in the <a href="/static/html/dspn5.2.pdf">DSS Project Note 5</a>. <p>
+At present these coordinates must be entered
+as RA and Dec in J2000.</li><p>
+
+      
+      <li><a name="SessRcvr"><b>Session Requested Receiver </b></a>  : This shows the Receiver(s) requested to be used during <a href="#TP">Telescope Periods</a> of this <a href="#Session">Session</a>.  This is used to determine if the necessary hardware is available for the session to be scheduled.</li><p>
+      
+<li><a name="SessRem"><b>Session Remaining Hours</b></a> : This is the number of hours remaining for a session, equal to the difference between the <a href="#SessAllot">Session Allotted Hours</a> and the sum of all <a href="#TP">Telescope Periods</a> <a href="TPStatus">completed</a> for this Session.</li><p>
+
+      <li><a name="SessionScore"><b>Session Score</b></a> : The heart of the Dynamic Scheduling System (DSS) is the algorithm that chooses which <a href="#Session">Sessions</a> to schedule by scoring (or 'ranking') all Sessions according to a set of factors. This is described in complete detail in the DSS <a href="/static/html/dspn5.2.pdf">Project Note 5</a>
+      </li><p>
+
+      <li><a name="SessTarget"><b>Session Target</b></a> : A list of source names that the Session may use.  This is not used by the DSS to schedule the Session and is only for the observers use.      </li><p>
+
+<li><a name="SessAllot"><b>Session Total Allotted Hours</b></a> : The total number of hours allotted to this <a href="#Session">Session</a>.
+This is the total time the session will be scheduled.</li><p>
+
+      <li><a name="TP"><b>Telescope Period</b></a> : A period of time in which a <a href="#Session">Session</a> is scheduled and observed on the Telescope. When part of a <a href="#Session">Session</a> is scheduled to observe, that segment of time becomes a Telescope Period.
+ If the observations are successful, then this period of time is billed to the project. </li><p>
+      
+<li><a name="ProjRemTri"><b>Time Remaining for Trimester</b></a> Time remaining for a project in the current
+trimester.  This is mainly applicable to NRAO Large projects where
+the amount of time allowed in a given trimester was limited.</li><p>
+
+      <li><a name="Trimester"><b>Trimester</b></a> Currently, a four month block of observing time. A call for proposals is made for each Trimester.
+      </li><p>
+    </ul>  
+  </body>
+</html>
+
