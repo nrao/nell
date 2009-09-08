@@ -24,7 +24,7 @@ urlpatterns = patterns(''
    , url(r'^project/([^/]+)/unavailable$',                 dates_not_schedulable)
    , url(r'^project/([^/]+)$',                             project)
    , url(r'^project/([^/]+)/investigator/(\d+)/observer$', toggle_observer)
-   , url(r'^project/([^/]+)/investigator/(\d+)/priority$', modify_priority)
+   , url(r'^project/([^/]+)/investigator/(\d+)/priority/([^/]+)$', modify_priority)
    , url(r'^project/([^/]+)/session/([^/]+)/enable$',      toggle_session)
    , url(r'^projects$',           ProjectResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^projects/(\d+)$',     ProjectResource(permitted_methods=('PUT', 'GET', 'POST'))) #

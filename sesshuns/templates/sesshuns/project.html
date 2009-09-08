@@ -45,13 +45,11 @@
               <td>{{s.observing_type.type}}</td>
               <td>{% if s.status.authorized %}Yes{% endif %}</td>
               <td>
-                <form action="/project/{{p.pcode}}/session/{{s.name}}/enable" method="POST">
                   {% if s.status.enabled %}
-                  <input type="checkbox" name="enabled" checked="checked" onclick="submit();"/>
+                  <a href="/project/{{p.pcode}}/session/{{s.name}}/enable"><img src="/static/images/checked.png" /></a>
                   {% else %}
-                  <input type="checkbox" name="enabled" onclick="submit();"/>
+                  <a href="/project/{{p.pcode}}/session/{{s.name}}/enable"><img src="/static/images/unchecked.png" /></a>
                   {% endif %}
-                </form>
               </td>
             <tr>
             {% endfor %}
@@ -78,10 +76,8 @@
             <tr>
               <td>
                 {% if i.observer %}
-                  <form action="/project/{{p.pcode}}/investigator/{{i.id}}/priority" method="POST">
-                    <input type="image" src="/static/images/up_arr.png" alt="up" name="up" />
-                    <input type="image" src="/static/images/dwn_arr.png" alt="down" name="down" />
-                  </form>
+                  <a href="/project/{{p.pcode}}/investigator/{{i.id}}/priority/up"><img src="/static/images/up_arr.png" /></a>
+                  <a href="/project/{{p.pcode}}/investigator/{{i.id}}/priority/down"><img src="/static/images/dwn_arr.png" /></a>
                 {% else %}
                   &nbsp;
                 {% endif %}
@@ -102,13 +98,11 @@
                   {% if i.user.sanctioned %}Yes{% endif %}
               </td>
               <td>
-                <form action="/project/{{p.pcode}}/investigator/{{i.id}}/observer" method="POST">
                   {% if i.observer %}
-                  <input type="checkbox" name="observer" checked="checked" onclick="submit();"/>
+                  <a href="/project/{{p.pcode}}/investigator/{{i.id}}/observer"><img src="/static/images/checked.png" /></a>
                   {% else %}
-                  <input type="checkbox" name="observer" onclick="submit();"/>
+                  <a href="/project/{{p.pcode}}/investigator/{{i.id}}/observer"><img src="/static/images/unchecked.png" /></a>
                   {% endif %}
-                </form>
               </td>
             </tr>
               {% endif %}

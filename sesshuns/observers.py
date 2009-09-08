@@ -236,14 +236,11 @@ def toggle_observer(request, *args, **kws):
 
 @login_required
 def modify_priority(request, *args, **kws):
-    pcode, i_id = args
+    pcode, i_id, dir = args
     project = Project.objects.filter(pcode=pcode)[0]
     project.normalize_investigators()
     I = first(project.investigator_set.filter(id = i_id))
-    if request.POST.has_key('down.x'):
-        key = 'priority'
-    else:
-        key = '-priority'
+    key = 'priority' if dir == "down" else '-priority'
     t = None
     for i in project.investigator_set.order_by(key):
         if i.observer:
