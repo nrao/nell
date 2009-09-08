@@ -57,7 +57,7 @@ class NRAOBosDB:
         representing the check-in and check-out dates.
         """
         if username is None:
-            print "Error: getReservationsByUsername username arg is None"
+            #print "Error: getReservationsByUsername username arg is None"
             return []
         url = self.baseUrlByPerson + username
         fh = self.opener.open(url)
