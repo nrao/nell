@@ -544,3 +544,18 @@ class UserNames(object):
         victim.username = username
         victim.save()
         print "User %s now has username: %s" % (victim, username)
+
+    def save_project_observers(self):
+
+        f = open('observers.txt', 'w')
+        lines = []
+        ps = Project.objects.order_by('pcode').all()
+        for p in ps:
+            users = [inv.user for inv in p.investigator_set.all() if not inv.friend]
+            names = [u.last_name for u in users]
+            names.sort()
+            nameStr = ','.join(names)
+            line = "%s:%s\n" % (p.pcode, nameStr)
+            lines.append(line)
+        f.writelines(lines)    
+        f.close()
