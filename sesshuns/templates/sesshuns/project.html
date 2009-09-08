@@ -68,11 +68,11 @@
               <th>Email(s)</th>
               <th>PI</th>
               <th>Contact</th>
+              <th>Friend</th>
               <th title="Trained for remote observing">Remote</th>
               <th>Observer(s)</th>
             </tr>
             {% for i in v %}
-              {% if not i.friend %}
             <tr>
               <td>
                 {% if i.observer %}
@@ -95,6 +95,9 @@
                   {% if i.principal_contact %}Yes{% endif %}
               </td>
               <td>
+                  {% if i.friend %}Yes{% endif %}
+              </td>
+              <td>
                   {% if i.user.sanctioned %}Yes{% endif %}
               </td>
               <td>
@@ -105,7 +108,6 @@
                   {% endif %}
               </td>
             </tr>
-              {% endif %}
             {% endfor %}
           </table>
         <h3 class="grey_highlight loud">Observer Blackouts (UTC)</h3>
