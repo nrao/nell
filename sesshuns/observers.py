@@ -347,7 +347,7 @@ def blackout(request, *args, **kws):
             "%s %s" % (request.POST['end'], request.POST['endtime'])
           , "%m/%d/%Y %H:%M") + utcOffset
     if request.POST['until'] != '':
-        until = datetime.strptime(
+        b.until = datetime.strptime(
             "%s %s" % (request.POST['until'], request.POST['untiltime'])
           , "%m/%d/%Y %H:%M") + utcOffset
 
