@@ -1119,6 +1119,7 @@ class TestObservers(NellTestCase):
             '/profile/%s/blackout' % self.u.id, data)
         b = first(Blackout.objects.filter(id = b.id))
         self.assertEqual(b.end.date().strftime("%m/%d/%Y") , data.get('end'))
+        self.assertEqual(b.until.date().strftime("%m/%d/%Y") , data.get('until'))
         self.failUnlessEqual(response.status_code, 302)
         
         response = self.get(
