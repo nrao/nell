@@ -20,6 +20,15 @@
 
 {% endblock %}
 {% block content %}
+<div >
+  <h3 class="loud">Blackout Date for {{u|display_name}}</h3>
+</div>
+<div  >
+  {% for e in errors %}
+    <p class="error">{{e}}</p>
+  {% endfor %}
+</div>
+
 <div type="text" id="datepicker"></div>
 <form action="/profile/{{u.id}}/blackout" method="POST">
   <p>
