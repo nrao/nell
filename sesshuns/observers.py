@@ -7,6 +7,11 @@ from models                   import *
 from sets                     import Set
 from utilities.UserInfo       import UserInfo
 from utilities                import NRAOBosDB
+from django                   import forms
+
+class DateRangeForm(forms.Form):
+    start = forms.DateField()
+    weeks = forms.IntegerField()
 
 # persist this object to avoid having to authenticate every time
 # we want PST services
@@ -14,10 +19,25 @@ ui = UserInfo()
 
 def schedule(request, *args, **kws):
     # serve up the GBT schedule
-    # TBF: make this date and range dependent
-    ps = Period.objects.all()
+    # TBF: error handling
+    # TBF: use the graphical date time picker
+    if request.method == 'POST': # If the form has been submitted...
+        form = DateRangeForm(request.POST) # A form bound to the POST data
+        if form.is_valid(): # All validation rules pass
+            print "valid data"
+            start = form.cleaned_data['start']
+            weeks = form.cleaned_data['weeks']
+    else:
+        form = DateRangeForm() # An unbound form
+        start = datetime.now()
+        weeks = 1
+    # get only the periods in that time range
+    end = start + timedelta(days = (weeks * 7))
+    ps = Period.objects.filter(start__gt = start, start__lt = end )
     return render_to_response("sesshuns/schedule.html"
-                            , {'periods'            : ps })
+                            , {'periods' : ps
+                             , 'form'    : form}
+                             )
 
 @login_required
 def dates_not_schedulable(request, *args, **kws):

@@ -22,6 +22,13 @@
     </div>
   </div>
   <h3 class="loud"><center>GBT Schedule</center></h3>
+  <center>
+  <form action="/schedule" method="POST">
+  {{ form.as_p }}
+  <input type="submit" value="Submit" />
+  </form>
+  </center>
+  <hr />
   <table>
     <tr>
       <th>Start (UTC)</th>
