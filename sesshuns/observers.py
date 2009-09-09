@@ -294,65 +294,102 @@ def blackout_form(request, *args, **kws):
     u_id, = args
     user  = first(User.objects.filter(id = u_id))
 
-    # TBF Use a decorator
+    # TBF Use a decorator to see if user is allowed here
     requestor = first(User.objects.filter(username = loginUser))
     assert requestor is not None
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
 
     b     = first(Blackout.objects.filter(id = int(request.GET.get('id', 0))))
+    return render_to_response("sesshuns/blackout_form.html"
+                           , get_blackout_form_context(method, b, user, []))
+
+def get_blackout_form_context(method, blackout, user, errors):
+    "Returns dictionary for populating blackout form"
     times = [time(h, m).strftime("%H:%M")
              for h in range(0, 24) for m in range(0, 60, 15)]
+    return {'method' : method
+          , 'b'      : blackout
+          , 'u'      : user
+          , 'tzs'    : TimeZone.objects.all()
+          , 'repeats': Repeat.objects.all()
+          , 'times'  : times
+          , 'errors' : errors
+    }
 
-    return render_to_response("sesshuns/blackout_form.html"
-                            , {'method' : method
-                             , 'b'      : b
-                             , 'u'      : user
-                             , 'tzs'    : TimeZone.objects.all()
-                             , 'repeats': Repeat.objects.all()
-                             , 'times'  : times
-                               })
-
+def parse_datetime(request, dateName, timeName, utcOffset):
+    "Extract the date & time from the form values to make a datetime obj"
+    dt = None
+    error = None
+    try:
+        if request.POST[dateName] != '':
+            dt = datetime.strptime(
+                "%s %s" % (request.POST[dateName], request.POST[timeName])
+              , "%m/%d/%Y %H:%M") + utcOffset
+    except:
+        error = "ERROR: malformed %s date" % dateName
+    return (dt, error)    
+    
 @login_required
 def blackout(request, *args, **kws):
     u_id, = args
     user = first(User.objects.filter(id = u_id))
 
-    # TBF Use a decorator
+    # TBF Use a decorator to see if user can view this page
     loginUser = request.user.username
     requestor = first(User.objects.filter(username = loginUser))
     assert requestor is not None
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
 
+    # if we're deleting this black out, get it over with
     if request.GET.get('_method', '') == "DELETE":
         b = first(Blackout.objects.filter(
                 id = int(request.GET.get('id', '0'))))
         b.delete()
         return HttpResponseRedirect("/profile/%s" % u_id)
         
+    # TBF: is this error checking so ugly because we aren't using
+    # a Django form object?
+    # Now see if the data to be saved is valid    
+    # Convert blackout to UTC.
+    utcOffset = first(TimeZone.objects.filter(timeZone = request.POST['tz'])).utcOffset()
+    # watch for malformed dates
+    start, stError = parse_datetime(request, 'start', 'starttime', utcOffset)
+    end,   edError = parse_datetime(request,   'end',   'endtime', utcOffset)
+    until, utError = parse_datetime(request, 'until', 'untiltime', utcOffset)
+    repeat      = first(Repeat.objects.filter(repeat = request.POST['repeat']))
+    description = request.POST['description']
+    errors = [e for e in [stError, edError, utError] if e is not None]
+
+    # more error checking!
+    if end is not None and start is not None and end < start:
+        errors.append("ERROR: End must be after Start")
+    if end is not None and until is not None and until < end:
+        errors.append("ERROR: Until must be after End")
+
+    # do we need to redirect back to the form because of errors?
+    if len(errors) != 0:
+         if request.POST.get('_method', '') == 'PUT':
+            # go back to editing this pre-existing blackout date
+            b = first(Blackout.objects.filter(id = int(request.POST.get('id', 0))))
+            return render_to_response("sesshuns/blackout_form.html"
+                 , get_blackout_form_context('PUT', b, user, errors))
+         else:
+            # go back to creating a new one
+            return render_to_response("sesshuns/blackout_form.html"
+                 , get_blackout_form_context('', None, user, errors))
+         
+    # no errors - retrieve obj, or create new one
     if request.POST.get('_method', '') == 'PUT':
         b = first(Blackout.objects.filter(id = request.POST.get('id', '0')))
     else:
         b = Blackout(user = user)
-
-    # Convert blackout to UTC.
-    utcOffset = first(TimeZone.objects.filter(timeZone = request.POST['tz'])).utcOffset()
-    if request.POST['start'] != '':
-        b.start = datetime.strptime(
-            "%s %s" % (request.POST['start'], request.POST['starttime'])
-          , "%m/%d/%Y %H:%M") + utcOffset
-    if request.POST['end'] != '':
-        b.end = datetime.strptime(
-            "%s %s" % (request.POST['end'], request.POST['endtime'])
-          , "%m/%d/%Y %H:%M") + utcOffset
-    if request.POST['until'] != '':
-        b.until = datetime.strptime(
-            "%s %s" % (request.POST['until'], request.POST['untiltime'])
-          , "%m/%d/%Y %H:%M") + utcOffset
-
-    b.repeat      = first(Repeat.objects.filter(repeat = request.POST['repeat']))
-    b.description = request.POST['description']
+    b.start = start
+    b.end   = end
+    b.until = until
+    b.repeat = repeat
+    b.description = description
     b.save()
         
     return HttpResponseRedirect("/profile/%s" % u_id)
