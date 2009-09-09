@@ -559,3 +559,14 @@ class UserNames(object):
             lines.append(line)
         f.writelines(lines)    
         f.close()
+
+    def create_dss_user(self):
+
+        role = first(Role.objects.filter(role = "Administrator"))
+        u = User(first_name = 'dss'
+               , last_name  = 'account'
+               , username   = 'dss'
+               , pst_id     = 3259
+               , role       = role
+               )
+        u.save()       
