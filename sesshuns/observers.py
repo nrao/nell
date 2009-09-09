@@ -101,23 +101,33 @@ def get_bgcolor(w, d, today):
 @login_required
 def profile(request, *args, **kws):
     loginUser = request.user.username
+    requestor = first(User.objects.filter(username = loginUser))
+
+    # If the DSS doesn't know about the user, but the User Portal does,
+    # then add them to our database so they can at least see their profile.
+    if requestor is None:
+        # TBF: use user's credentials to get past CAS, not Mr. Nubbles!
+        info = ui.getStaticContactInfoByUserName(loginUser, 'dss', 'MrNubbles!')
+        requestor = User(pst_id     = info['id']
+                       , username   = loginUser
+                       , first_name = info['name']['first-name']
+                       , last_name  = info['name']['last-name']
+                       , role       = first(Role.objects.filter(role = "Observer")))
+        requestor.save()
+
     if len(args) > 0:
         u_id,     = args
         user      = first(User.objects.filter(id = u_id))
-        projects  = [i.project.pcode for i in user.investigator_set.all()]
-        requestor = first(User.objects.filter(username = loginUser))
-        assert requestor is not None
-        union     = [i.project.pcode for i in requestor.investigator_set.all()
-                        if i.project.pcode in projects]
+        uprojects = [i.project.pcode for i in user.investigator_set.all()]
+        rprojects = [i.project.pcode for i in requestor.investigator_set.all()
+                        if i.project.pcode in uprojects]
         #  If the requestor is not the user profile requested and they are
         #  not on the same project redirect to the requestor's profile.
-        if union == [] and user != requestor and not requestor.isAdmin():
+        if user != requestor and rprojects == [] and not requestor.isAdmin():
             return HttpResponseRedirect("/profile")
     else:
-        requestor = first(User.objects.filter(username = loginUser))
-        assert requestor is not None
-        user      = requestor
-        
+        user = requestor
+
     # get the users' info from the PST
     try:
         # TBF: use user's credentials to get past CAS, not Mr. Nubbles!
