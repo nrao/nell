@@ -42,6 +42,7 @@ def get_options(request, *args, **kws):
 
 def get_ical(request, *args, **kws):
     response = HttpResponse(IcalMap().getSchedule())
+    response['Content-Type'] = 'text/calendar'
     response['Content-Disposition'] = 'attachment; filename=GBTschedule.ics'
     return response
 
