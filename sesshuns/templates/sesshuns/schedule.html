@@ -77,7 +77,7 @@
       <td>{{p.session.project.project_type.type}}</td>
       <td><a href="/project/{{p.session.project.pcode}}">{{p.session.project.pcode}}</a></td>
       {% ifequal p.session.project.project_type.type "science" %}
-      <td>{{p.session.project.name}}</td>
+      <td><a href="http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}">{{p.session.project.name}}</a></td>
       {% else %}
       <td>{{p.session.name}}</td>
       {% endifequal %}
