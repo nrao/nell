@@ -470,6 +470,11 @@ class Project(models.Model):
         return sorted([p for s in self.sesshun_set.all()
                          for p in s.period_set.all()])
 
+    def getUpcomingPeriods(self, dt = datetime.now()):
+        "What periods are associated with this project in the future?"
+        return [p for p in self.getPeriods() if p.start > dt] 
+
+
     def has_schedulable_sessions(self):
         sessions = [s for s in self.sesshun_set.all() if s.schedulable()]
         return True if sessions != [] else False
