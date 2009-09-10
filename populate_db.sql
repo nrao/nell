@@ -9,18 +9,6 @@ alter table opportunities alter column start_time type timestamp without time zo
 alter table periods alter column start type timestamp without time zone;
 alter table periods alter column forecast type timestamp without time zone;
 
--- Privileges for admin interface
-
-INSERT INTO auth_user VALUES (DEFAULT, 'ashelton', '', '', '', '!', 't', 't', 't', '2009-09-08 17:04:40-04', '2009-09-08 17:04:40-04');
-INSERT INTO auth_user VALUES (DEFAULT, 'dbalser', '', '', '', '!', 't', 't', 't', '2009-09-08 17:04:40-04', '2009-09-08 17:04:40-04');
-INSERT INTO auth_user VALUES (DEFAULT, 'dperera', '', '', '', '!', 't', 't', 't', '2009-09-08 17:04:40-04', '2009-09-08 17:04:40-04');
-INSERT INTO auth_user VALUES (DEFAULT, 'jbraatz', '', '', '', '!', 't', 't', 't', '2009-09-08 17:04:40-04', '2009-09-08 17:04:40-04');
-INSERT INTO auth_user VALUES (DEFAULT, 'jharnett', '', '', '', '!', 't', 't', 't', '2009-09-08 17:04:40-04', '2009-09-08 17:04:40-04');
-INSERT INTO auth_user VALUES (DEFAULT, 'koneil', '', '', '', '!', 't', 't', 't', '2009-09-08 17:04:40-04', '2009-09-08 17:04:40-04');
-INSERT INTO auth_user VALUES (DEFAULT, 'mclark', '', '', '', '!', 't', 't', 't', '2009-09-08 17:04:40-04', '2009-09-08 17:04:40-04');
-INSERT INTO auth_user VALUES (DEFAULT, 'pmargani', '', '', '', '!', 't', 't', 't', '2009-09-08 17:04:40-04', '2009-09-08 17:04:40-04');
-INSERT INTO auth_user VALUES (DEFAULT, 'tminter', '', '', '', '!', 't', 't', 't', '2009-09-08 17:04:40-04', '2009-09-08 17:04:40-04');
-
 -- Example project
 INSERT INTO allotment VALUES (DEFAULT, 100.5, 100.5, 100.5, 4.0);
 

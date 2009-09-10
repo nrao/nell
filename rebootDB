@@ -10,5 +10,6 @@ createdb -U dss $1
 #psql -U dss -d $1 < drop_model_tables.sql 
 python manage.py syncdb
 psql -U dss -d $1 < populate_db.sql
+psql -U dss -d $1 < populate_auth_user.sql
 
 echo DB $1 Rebooted.
