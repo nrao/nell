@@ -325,6 +325,9 @@ class Project(models.Model):
     def __str__(self):
         return self.pcode
 
+    def is_maintenance(self):
+        return self.name == 'Maintenance' 
+
     def get_allotments_display(self):
         return self.allotments.all()
 

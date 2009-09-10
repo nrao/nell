@@ -15,16 +15,15 @@ ui = UserInfo()
 def schedule(request, *args, **kws):
     # serve up the GBT schedule
     # TBF: error handling
-    # TBF: clean theis up
     if request.method == 'POST': 
-        #start = request.POST.get("start", None) 
-        if request.POST['start'] != '':
-            start = datetime.strptime(
-                request.POST['start']
-              , "%m/%d/%Y")         
-        if request.POST['days'] != '':
-            days = int(request.POST['days'])            
+        startDate = request.POST.get("start", None) 
+        if startDate is not None:
+            start = datetime.strptime(startDate, "%m/%d/%Y")         
+        else:
+            start = datetime.now()
+        days = int(request.POST.get("days", 1))    
     else:
+        # default time range
         start = datetime.now()
         days = 1
     # get only the periods in that time range
@@ -40,7 +39,6 @@ def schedule(request, *args, **kws):
     # now make sure the template can handle this easy
     calendar = cal.items()
     calendar.sort()
-
     return render_to_response("sesshuns/schedule.html"
                             , {'calendar' : calendar
                               ,'day_list': range(1, 15)

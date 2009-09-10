@@ -74,3 +74,15 @@ def pretty_none(value):
     if value is None:
         return ""
     return value
+
+@register.filter
+def project_type(project):
+    # types: 'A', 'M', 'T'
+    if project.project_type.type == 'science':
+        type = 'A'
+    else:
+        if project.name == 'Maintenance':
+            type = 'M'
+        else:
+            type = 'T'
+    return type            
