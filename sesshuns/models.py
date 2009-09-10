@@ -1327,6 +1327,11 @@ class Period(models.Model):
         "The period ends at start + duration"
         return self.start + timedelta(hours = self.duration)
 
+    def on_day(self, day):
+        "Does this period start on the specified day (a datetime)?"
+        next_day = day + timedelta(days = 1)
+        return self.start >= day and self.start < next_day
+
     def __unicode__(self):
         return "Period for Session (%d): %s for %5.2f Hrs" % \
             (self.session.id, self.start, self.duration)

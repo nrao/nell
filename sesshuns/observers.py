@@ -7,11 +7,6 @@ from models                   import *
 from sets                     import Set
 from utilities.UserInfo       import UserInfo
 from utilities                import NRAOBosDB
-from django                   import forms
-
-class DateRangeForm(forms.Form):
-    start = forms.DateField()
-    weeks = forms.IntegerField()
 
 # persist this object to avoid having to authenticate every time
 # we want PST services
@@ -20,24 +15,37 @@ ui = UserInfo()
 def schedule(request, *args, **kws):
     # serve up the GBT schedule
     # TBF: error handling
-    # TBF: use the graphical date time picker
-    if request.method == 'POST': # If the form has been submitted...
-        form = DateRangeForm(request.POST) # A form bound to the POST data
-        if form.is_valid(): # All validation rules pass
-            print "valid data"
-            start = form.cleaned_data['start']
-            weeks = form.cleaned_data['weeks']
+    # TBF: clean theis up
+    if request.method == 'POST': 
+        #start = request.POST.get("start", None) 
+        if request.POST['start'] != '':
+            start = datetime.strptime(
+                request.POST['start']
+              , "%m/%d/%Y")         
+        if request.POST['days'] != '':
+            days = int(request.POST['days'])            
     else:
-        form = DateRangeForm() # An unbound form
         start = datetime.now()
-        weeks = 1
+        days = 1
     # get only the periods in that time range
-    end = start + timedelta(days = (weeks * 7))
-    ps = Period.objects.filter(start__gt = start, start__lt = end )
+    end = start + timedelta(days = days)
+    ps = Period.objects.filter(start__gt = start
+                             , start__lt = end).order_by('start')
+    # TBF: why doesn't ps.query.group_by = ['start'] work?
+    # construct the calendar
+    cal = {}
+    for i in range(days):
+        day = start + timedelta(days = i)
+        cal[day] = [p for p in ps if p.on_day(day)]
+    # now make sure the template can handle this easy
+    calendar = cal.items()
+    calendar.sort()
+
     return render_to_response("sesshuns/schedule.html"
-                            , {'periods' : ps
-                             , 'form'    : form}
-                             )
+                            , {'calendar' : calendar
+                              ,'day_list': range(1, 15)
+                              ,'start'   : start
+                              ,'days'    : days})
 
 @login_required
 def dates_not_schedulable(request, *args, **kws):
