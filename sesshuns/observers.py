@@ -14,10 +14,36 @@ ui = UserInfo()
 
 def schedule(request, *args, **kws):
     # serve up the GBT schedule
-    # TBF: make this date and range dependent
-    ps = Period.objects.all()
+    # TBF: error handling
+    if request.method == 'POST': 
+        startDate = request.POST.get("start", None) 
+        if startDate is not None:
+            start = datetime.strptime(startDate, "%m/%d/%Y")         
+        else:
+            start = datetime.now()
+        days = int(request.POST.get("days", 5))    
+    else:
+        # default time range
+        start = datetime.now()
+        days = 5
+    # get only the periods in that time range
+    end = start + timedelta(days = days)
+    ps = Period.objects.filter(start__gt = start
+                             , start__lt = end).order_by('start')
+    # TBF: why doesn't ps.query.group_by = ['start'] work?
+    # construct the calendar
+    cal = {}
+    for i in range(days):
+        day = start + timedelta(days = i)
+        cal[day] = [p for p in ps if p.on_day(day)]
+    # now make sure the template can handle this easy
+    calendar = cal.items()
+    calendar.sort()
     return render_to_response("sesshuns/schedule.html"
-                            , {'periods'            : ps })
+                            , {'calendar' : calendar
+                              ,'day_list': range(1, 15)
+                              ,'start'   : start
+                              ,'days'    : days})
 
 @login_required
 def dates_not_schedulable(request, *args, **kws):
@@ -101,23 +127,33 @@ def get_bgcolor(w, d, today):
 @login_required
 def profile(request, *args, **kws):
     loginUser = request.user.username
+    requestor = first(User.objects.filter(username = loginUser))
+
+    # If the DSS doesn't know about the user, but the User Portal does,
+    # then add them to our database so they can at least see their profile.
+    if requestor is None:
+        # TBF: use user's credentials to get past CAS, not Mr. Nubbles!
+        info = ui.getStaticContactInfoByUserName(loginUser, 'dss', 'MrNubbles!')
+        requestor = User(pst_id     = info['id']
+                       , username   = loginUser
+                       , first_name = info['name']['first-name']
+                       , last_name  = info['name']['last-name']
+                       , role       = first(Role.objects.filter(role = "Observer")))
+        requestor.save()
+
     if len(args) > 0:
         u_id,     = args
         user      = first(User.objects.filter(id = u_id))
-        projects  = [i.project.pcode for i in user.investigator_set.all()]
-        requestor = first(User.objects.filter(username = loginUser))
-        assert requestor is not None
-        union     = [i.project.pcode for i in requestor.investigator_set.all()
-                        if i.project.pcode in projects]
+        uprojects = [i.project.pcode for i in user.investigator_set.all()]
+        rprojects = [i.project.pcode for i in requestor.investigator_set.all()
+                        if i.project.pcode in uprojects]
         #  If the requestor is not the user profile requested and they are
         #  not on the same project redirect to the requestor's profile.
-        if union == [] and user != requestor and not requestor.isAdmin():
+        if user != requestor and rprojects == [] and not requestor.isAdmin():
             return HttpResponseRedirect("/profile")
     else:
-        requestor = first(User.objects.filter(username = loginUser))
-        assert requestor is not None
-        user      = requestor
-        
+        user = requestor
+
     # get the users' info from the PST
     try:
         # TBF: use user's credentials to get past CAS, not Mr. Nubbles!
@@ -294,65 +330,102 @@ def blackout_form(request, *args, **kws):
     u_id, = args
     user  = first(User.objects.filter(id = u_id))
 
-    # TBF Use a decorator
+    # TBF Use a decorator to see if user is allowed here
     requestor = first(User.objects.filter(username = loginUser))
     assert requestor is not None
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
 
     b     = first(Blackout.objects.filter(id = int(request.GET.get('id', 0))))
+    return render_to_response("sesshuns/blackout_form.html"
+                           , get_blackout_form_context(method, b, user, []))
+
+def get_blackout_form_context(method, blackout, user, errors):
+    "Returns dictionary for populating blackout form"
     times = [time(h, m).strftime("%H:%M")
              for h in range(0, 24) for m in range(0, 60, 15)]
+    return {'method' : method
+          , 'b'      : blackout
+          , 'u'      : user
+          , 'tzs'    : TimeZone.objects.all()
+          , 'repeats': Repeat.objects.all()
+          , 'times'  : times
+          , 'errors' : errors
+    }
 
-    return render_to_response("sesshuns/blackout_form.html"
-                            , {'method' : method
-                             , 'b'      : b
-                             , 'u'      : user
-                             , 'tzs'    : TimeZone.objects.all()
-                             , 'repeats': Repeat.objects.all()
-                             , 'times'  : times
-                               })
-
+def parse_datetime(request, dateName, timeName, utcOffset):
+    "Extract the date & time from the form values to make a datetime obj"
+    dt = None
+    error = None
+    try:
+        if request.POST[dateName] != '':
+            dt = datetime.strptime(
+                "%s %s" % (request.POST[dateName], request.POST[timeName])
+              , "%m/%d/%Y %H:%M") + utcOffset
+    except:
+        error = "ERROR: malformed %s date" % dateName
+    return (dt, error)    
+    
 @login_required
 def blackout(request, *args, **kws):
     u_id, = args
     user = first(User.objects.filter(id = u_id))
 
-    # TBF Use a decorator
+    # TBF Use a decorator to see if user can view this page
     loginUser = request.user.username
     requestor = first(User.objects.filter(username = loginUser))
     assert requestor is not None
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
 
+    # if we're deleting this black out, get it over with
     if request.GET.get('_method', '') == "DELETE":
         b = first(Blackout.objects.filter(
                 id = int(request.GET.get('id', '0'))))
         b.delete()
         return HttpResponseRedirect("/profile/%s" % u_id)
         
+    # TBF: is this error checking so ugly because we aren't using
+    # a Django form object?
+    # Now see if the data to be saved is valid    
+    # Convert blackout to UTC.
+    utcOffset = first(TimeZone.objects.filter(timeZone = request.POST['tz'])).utcOffset()
+    # watch for malformed dates
+    start, stError = parse_datetime(request, 'start', 'starttime', utcOffset)
+    end,   edError = parse_datetime(request,   'end',   'endtime', utcOffset)
+    until, utError = parse_datetime(request, 'until', 'untiltime', utcOffset)
+    repeat      = first(Repeat.objects.filter(repeat = request.POST['repeat']))
+    description = request.POST['description']
+    errors = [e for e in [stError, edError, utError] if e is not None]
+
+    # more error checking!
+    if end is not None and start is not None and end < start:
+        errors.append("ERROR: End must be after Start")
+    if end is not None and until is not None and until < end:
+        errors.append("ERROR: Until must be after End")
+
+    # do we need to redirect back to the form because of errors?
+    if len(errors) != 0:
+         if request.POST.get('_method', '') == 'PUT':
+            # go back to editing this pre-existing blackout date
+            b = first(Blackout.objects.filter(id = int(request.POST.get('id', 0))))
+            return render_to_response("sesshuns/blackout_form.html"
+                 , get_blackout_form_context('PUT', b, user, errors))
+         else:
+            # go back to creating a new one
+            return render_to_response("sesshuns/blackout_form.html"
+                 , get_blackout_form_context('', None, user, errors))
+         
+    # no errors - retrieve obj, or create new one
     if request.POST.get('_method', '') == 'PUT':
         b = first(Blackout.objects.filter(id = request.POST.get('id', '0')))
     else:
         b = Blackout(user = user)
-
-    # Convert blackout to UTC.
-    utcOffset = first(TimeZone.objects.filter(timeZone = request.POST['tz'])).utcOffset()
-    if request.POST['start'] != '':
-        b.start = datetime.strptime(
-            "%s %s" % (request.POST['start'], request.POST['starttime'])
-          , "%m/%d/%Y %H:%M") + utcOffset
-    if request.POST['end'] != '':
-        b.end = datetime.strptime(
-            "%s %s" % (request.POST['end'], request.POST['endtime'])
-          , "%m/%d/%Y %H:%M") + utcOffset
-    if request.POST['until'] != '':
-        until = datetime.strptime(
-            "%s %s" % (request.POST['until'], request.POST['untiltime'])
-          , "%m/%d/%Y %H:%M") + utcOffset
-
-    b.repeat      = first(Repeat.objects.filter(repeat = request.POST['repeat']))
-    b.description = request.POST['description']
+    b.start = start
+    b.end   = end
+    b.until = until
+    b.repeat = repeat
+    b.description = description
     b.save()
         
     return HttpResponseRedirect("/profile/%s" % u_id)

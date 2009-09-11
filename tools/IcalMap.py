@@ -14,26 +14,30 @@ class IcalMap:
         self.cal = Calendar()
         self.cal.add('prodid', '-//My calendar product//mxm.dk//')
         self.cal.add('version', '2.0')
+        self.cal.add('x-wr-calname;value=text', 'GBT Schedule')
+        self.cal.add('summary', 'GBT Schedule')
+        self.cal.add('calscale', 'GREGORIAN')
 
         periods = Period.objects.all()
+        now = datetime.utcnow()
         for p in periods:
             event = Event()
-            event['uid'] = str(p.id)
+            event['uid'] = str(p.id) + "periodofgbtdss"
             start = datetime(p.start.year, p.start.month, p.start.day,
                              p.start.hour, p.start.minute, p.start.second,
                              tzinfo = UTC)
             event.add('dtstart', start)
             event.add('dtend', start + timedelta(hours = p.duration))
-            event.add('dtstamp', start)
-            event.add('summary', "%s in %s (%s) %.3f GHz" %
-                                 (p.session.name
-                                , p.session.project.name
-                                , p.session.project.pcode
+            event.add('dtstamp', now)
+            name = p.session.project.pcode in p.session.name and p.session.name or (p.session.name + ' of ' + p.session.project.pcode)
+            event.add('summary', "%s at %.3f GHz (%s UTC)" %
+                                 (name
                                 , p.session.frequency
+                                , start.strftime("%Y/%m/%d %H:%M")
                                  )
                      )
-            event.add('description', "%s:  This telescope period has a duration of %.2f hours. The receiver requirements for this telescope period are %s. The cover page containing all project details is at http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode=%s" %
-                                      (p.session.name
+            event.add('description', "%s. This telescope period has a duration of %.2f hours. The receiver requirements for this telescope period are %s. The cover page containing all project details is at http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode=%s" %
+                                      (p.session.project.name
                                      , p.duration
                                      , p.session.receiver_list()
                                      , p.session.project.pcode
@@ -49,5 +53,3 @@ class IcalMap:
 
     def getSchedule(self):
         return self.cal.as_string()
-
-#${item.allocation.project.get_title()}. This telescope period has a duration of ${item.duration / 60.0} hours.\nThe observer listed as first contact is ${item.allocation.project.getProjectFirstContact().lastName}.\nThe receiver in use for this telescope period is ${item.allocation.getReceiverNames()}.\nTo see the cover page for all project details, click ${"http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode=" + item.allocation.project.name}

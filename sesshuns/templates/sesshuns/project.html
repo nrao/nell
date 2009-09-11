@@ -63,7 +63,7 @@
         <h3 class="grey_highlight loud">Team Members</h3>
           <table>
             <tr>
-              <th>Call Order</th>
+              <th title="Order in which observers will be contacted by GBT operations">Call Order</th>
               <th>Name</th>
               <th>Email(s)</th>
               <th>PI</th>
@@ -215,5 +215,19 @@
             </dl>
           </div>
         </div>
+
+        <div id="observation">
+          <h3 class="caps">Upcoming Observations</h3>
+          <div class="box">
+            <ul>
+            {% for pd in p.getUpcomingPeriods %}
+              <li title="{{pd.session.name}}: {{pd.start|date:'Y-m-d H:i'}} UTC for {{pd.duration|hrs2sex}} hrs">
+                    {{pd.session.name}}: {{pd.start|date:"D, M d H:i"}} UTC for {{pd.duration|hrs2sex}} hrs
+                    </li>
+            {% endfor %}
+            </ul>
+          </div>
+        </div>
+      
       </div>
 {% endblock %}

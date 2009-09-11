@@ -1,8 +1,8 @@
-{% load custom %}
-{% block content %}
+
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
     <title>{% block title %}GBT Schedule{% endblock %}</title>
+    <!-- load css before javascript! -->
     <link rel="stylesheet" href="/static/css/lib/blueprint/screen.css" type="text/css" media="screen, projection">
     <link rel="stylesheet" href="/static/css/lib/blueprint/print.css" type="text/css" media="print">    
     <link rel="stylesheet" href="/static/css/lib/fullcalendar/fullcalendar.css" type="text/css">
@@ -14,44 +14,100 @@
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"> </script>
     <script type="text/javascript" src="http://libraryh3lp.com/presence/jid/nrao-dss/chat.libraryh3lp.com/js"></script>
     <script type="text/javascript" src="/static/javascript/help.js"></script>
+
+
+{% block scripts %}
+  <link type="text/css" href="/static/css/lib/themes/base/ui.all.css" rel="stylesheet" />
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"></script>
+
+
+  <script type="text/javascript">
+  $(document).ready(function(){
+    $("#id_start").datepicker();
+  });
+  </script>
+    <style type="text/css">
+      .day_header {bgcolor:"#c3d9ff"}
+      .project_type {width:1%; text-align:center}
+      .type_test {background-color:#87CEFA} 
+      .type_astronomy {background-color:#EEEEEE}
+      .type_maintenance {background-color:#98FB98}
+    </style>
 </head>
-<body>
+{% load custom %}
+
+{% endblock %}
+{% block content %}
+
   <div class="container">
     <div class="banner span-24">
       <img src="/static/images/banner.jpg" />
     </div>
   </div>
-  <h3 class="loud"><center>GBT Schedule</center></h3>
+  <h1 class="loud"><center>GBT Schedule</center></h1>
+  <center>
+
+  <form action="/schedule" method="POST">
+  <p>
+    <label for="id_start">Start:</label>
+    <input type="text" name="start" id="id_start" title="Click once for calendar, click twice for previous entries" value="{{start|date:'m/d/Y'}}"/>
+    <label for="id_days">Days:</label>
+    <select name="days" id="id_days">
+      {% for d in day_list %}
+      {% ifequal d days %}
+      <option selected="selected">{{d}}</option>
+      {% else %}
+      <option>{{d}}</option>
+      {% endifequal %}
+      {% endfor %}
+    </select> &nbsp; 
+    <input type="submit" value="View Schedule"/>
+  </p>
+  </form>
+  </center>
+  <hr />
   <table>
-    <tr>
-      <th>Start (UTC)</th>
-      <th>End (UTC)</th>
-      <th>Type</th>
+    {% for day, ps in calendar %}
+    <tr bgcolor="#c3d9ff"> 
+      <th title="Start and End times for the start day (UTC)">{{day|date:"Y-m-d"}} (UTC)</th>
+      <th title="Project Type: 'A' : Astronomy, 'T' : Test, 'M' : Maintenance">Type</th>
       <th>Project ID</th>
       <th>Project Title</th>
-      <th>PI</th>
+      <th title="Primary Investigator.  To list the observers for this project, click on the Project ID">PI</th>
       <th>Friend</th>
       <th>Rcvrs</th>
     </tr>
-    {% for p in periods %}
+    {% for p in ps %}
     <tr>
-      <td>{{p.start|date:"Y-m-d H:i"}}</td>
-      <td>{{p.end|date:"Y-m-d H:i"}}</td>
-      <td>{{p.session.project.project_type.type}}</td>
+      <td>{{p.start|date:"H:i"}} - {{p.end|date:"H:i"}}</td>
+      {% ifequal p.session.project.project_type.type "non-science" %}
+        {% if p.session.project.is_maintenance %}
+          <td class="project_type type_maintenance" >{{p.session.project|project_type}}</td>
+        {% else %}
+          <td class="project_type type_test" >{{p.session.project|project_type}}</td>
+        {% endif %}
+      {% else %}
+          <td class="project_type type_astronomy">{{p.session.project|project_type}}</td>
+      {% endifequal %}
       <td><a href="/project/{{p.session.project.pcode}}">{{p.session.project.pcode}}</a></td>
       {% ifequal p.session.project.project_type.type "science" %}
-      <td>{{p.session.project.name}}</td>
+      <td><a href="http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}">{{p.session.project.name}}</a></td>
       {% else %}
       <td>{{p.session.name}}</td>
       {% endifequal %}
       {% if p.session.project.principal_investigator %}
-      <td><a href="/profile/{{p.session.project.principal_investigator.id}}">{{p.session.project.principal_investigator|display_name}}</td>
+      <td><a href="/profile/{{p.session.project.principal_investigator.id}}">{{p.session.project.principal_investigator.last_name}}</a></td>
       {% else %}
       <td>None</td>
       {% endif %}
-      <td>{{p.session.project.friend}}</td>
-      <td>{{p.session.receiver_list}}</td>
+      {% if p.session.project.friend %}
+      <td><a href="/profile/{{p.session.project.friend.id}}">{{p.session.project.friend.last_name}}</a></td>
+      {% else %}
+      <td>None</td>
+      {% endif %}
+      <td>{{p.session.receiver_list_simple}}</td>
     </tr>
+    {% endfor %}
     {% endfor %}
   </table>
 </body>  

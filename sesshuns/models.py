@@ -326,6 +326,9 @@ class Project(models.Model):
     def __str__(self):
         return self.pcode
 
+    def is_maintenance(self):
+        return self.name == 'Maintenance' 
+
     def get_allotments_display(self):
         return self.allotments.all()
 
@@ -467,6 +470,11 @@ class Project(models.Model):
         "What are the periods associated with this project?"
         return sorted([p for s in self.sesshun_set.all()
                          for p in s.period_set.all()])
+
+    def getUpcomingPeriods(self, dt = datetime.now()):
+        "What periods are associated with this project in the future?"
+        return [p for p in self.getPeriods() if p.start > dt] 
+
 
     def has_schedulable_sessions(self):
         sessions = [s for s in self.sesshun_set.all() if s.schedulable()]
@@ -946,6 +954,18 @@ class Sesshun(models.Model):
         "Returns a string representation of the rcvr logic."
         return " AND ".join([rg.__str__() for rg in self.receiver_group_set.all()])
 
+    def receiver_list_simple(self):
+        "Returns a string representation of the rcvr logic, simplified"
+        # ignore rcvr groups that have no rcvrs!  TBF: shouldn't happen!
+        rgs = [ rg for rg in self.receiver_group_set.all() if len(rg.receivers.all()) != 0]
+        if len(rgs) == 1:
+            # no parens needed
+            ls = " OR ".join([r.abbreviation for r in rgs[0].receivers.all()])
+        else:
+            # we can't simplify this anymore
+            ls = self.receiver_list()
+        return ls
+
     def rcvrs_specified(self):
         "Returns an array of rcvrs for this sesshun, w/ out their relations"
         # For use in recreating Carl's reports
@@ -1327,6 +1347,11 @@ class Period(models.Model):
     def end(self):
         "The period ends at start + duration"
         return self.start + timedelta(hours = self.duration)
+
+    def on_day(self, day):
+        "Does this period start on the specified day (a datetime)?"
+        next_day = day + timedelta(days = 1)
+        return self.start >= day and self.start < next_day
 
     def __unicode__(self):
         return "Period for Session (%d): %s for %5.2f Hrs" % \
