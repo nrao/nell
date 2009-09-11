@@ -12,6 +12,29 @@ from utilities                import NRAOBosDB
 # we want PST services
 ui = UserInfo()
 
+def get_day_time(day, period, first_day, last_day):
+    "Returns a tuple of : start, end, cutoffs, period, for used in template"
+    print day, first_day, last_day
+    next_day = day + timedelta(days = 1)
+    # start with default values - as if there was no overlap
+    start = period.start
+    end = period.end()
+    start_cutoff = end_cutoff = False
+    # but does this period overlap the given day?
+    if period.start < day or period.end() >= next_day:
+        # oh, crap, overlap - cut off the dates 
+        if period.start < day:
+            start = day
+            # will the beginning of this period not be displayed?    
+            if day == first_day:
+                start_cutoff = True
+        if period.end() >= next_day:
+            end = next_day
+            # will the end of this period not be displayed?    
+            if day == last_day:
+                end_cutoff = True
+    return (start, end, start_cutoff, end_cutoff, period)
+
 def schedule(request, *args, **kws):
     # serve up the GBT schedule
     # TBF: error handling
@@ -27,18 +50,30 @@ def schedule(request, *args, **kws):
         start = datetime.now()
         days = 5
     # get only the periods in that time range
+    # the tricky part is getting any that start the day before, but overlap
+    # into the first day
+    day_before = start - timedelta(days = 1)
     end = start + timedelta(days = days)
-    ps = Period.objects.filter(start__gt = start
+    last_day = end - timedelta(days = 1)
+    ps = Period.objects.filter(start__gt = day_before
                              , start__lt = end).order_by('start')
+    print "periods: ", day_before, end                         
+    for p in ps:
+        print p
     # TBF: why doesn't ps.query.group_by = ['start'] work?
     # construct the calendar
     cal = {}
     for i in range(days):
         day = start + timedelta(days = i)
-        cal[day] = [p for p in ps if p.on_day(day)]
+        cal[day] = [get_day_time(day, p, start, last_day) \
+                        for p in ps if p.on_day(day)]
+
     # now make sure the template can handle this easy
     calendar = cal.items()
     calendar.sort()
+    for dt, pds in calendar:
+        print dt
+        print pds
     return render_to_response("sesshuns/schedule.html"
                             , {'calendar' : calendar
                               ,'day_list': range(1, 15)

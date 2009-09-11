@@ -66,6 +66,7 @@
   </form>
   </center>
   <hr />
+  <p align="center">** Most links in the below schedule will bring the user to the appropriate page in the <a href="http://www.gb.nrao.edu/dss/">DSS</a> (login required)**</p>
   <table>
     {% for day, ps in calendar %}
     <tr bgcolor="#c3d9ff"> 
@@ -77,9 +78,17 @@
       <th>Friend</th>
       <th>Rcvrs</th>
     </tr>
-    {% for p in ps %}
+    {% for start, end,start_cutoff, end_cutoff, p in ps %}
     <tr>
-      <td>{{p.start|date:"H:i"}} - {{p.end|date:"H:i"}}</td>
+      {% if start_cutoff or end_cutoff %}
+        {%if start_cutoff %}
+          <td>(..){{start|date:"H:i"}} - {{end|date:"H:i"}}</td>
+        {% else %}
+          <td>{{start|date:"H:i"}} - {{end|date:"H:i"}}(..)</td>
+        {% endif %}
+      {% else %}    
+          <td>{{start|date:"H:i"}} - {{end|date:"H:i"}}</td>
+      {% endif %}    
       {% ifequal p.session.project.project_type.type "non-science" %}
         {% if p.session.project.is_maintenance %}
           <td class="project_type type_maintenance" >{{p.session.project|project_type}}</td>
