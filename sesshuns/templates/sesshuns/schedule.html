@@ -26,7 +26,13 @@
     $("#id_start").datepicker();
   });
   </script>
-
+    <style type="text/css">
+      .day_header {bgcolor:"#c3d9ff"}
+      .project_type {width:1%; text-align:center}
+      .type_test {background-color:#87CEFA} 
+      .type_astronomy {background-color:#EEEEEE}
+      .type_maintenance {background-color:#98FB98}
+    </style>
 </head>
 {% load custom %}
 
@@ -62,12 +68,12 @@
   <hr />
   <table>
     {% for day, ps in calendar %}
-    <tr  bgcolor="#c3d9ff">
-      <th title = "Start and End times for the start day (UTC)">{{day|date:"Y-m-d"}} (UTC)</th>
-      <th title = "Project Type: 'A' : Astronomy, 'T' : Test, 'M' : Maintenance">Type</th>
+    <tr bgcolor="#c3d9ff"> 
+      <th title="Start and End times for the start day (UTC)">{{day|date:"Y-m-d"}} (UTC)</th>
+      <th title="Project Type: 'A' : Astronomy, 'T' : Test, 'M' : Maintenance">Type</th>
       <th>Project ID</th>
       <th>Project Title</th>
-      <th>PI</th>
+      <th title="Primary Investigator.  To list the observers for this project, click on the Project ID">PI</th>
       <th>Friend</th>
       <th>Rcvrs</th>
     </tr>
@@ -76,12 +82,12 @@
       <td>{{p.start|date:"H:i"}} - {{p.end|date:"H:i"}}</td>
       {% ifequal p.session.project.project_type.type "non-science" %}
         {% if p.session.project.is_maintenance %}
-          <td bgcolor="blue"><center>{{p.session.project|project_type}}</center></td>
+          <td class="project_type type_maintenance" >{{p.session.project|project_type}}</td>
         {% else %}
-          <td bgcolor="green"><center>{{p.session.project|project_type}}</center></td>
+          <td class="project_type type_test" >{{p.session.project|project_type}}</td>
         {% endif %}
       {% else %}
-          <td><center>{{p.session.project|project_type}}</center></td>
+          <td class="project_type type_astronomy">{{p.session.project|project_type}}</td>
       {% endifequal %}
       <td><a href="/project/{{p.session.project.pcode}}">{{p.session.project.pcode}}</a></td>
       {% ifequal p.session.project.project_type.type "science" %}
@@ -99,7 +105,7 @@
       {% else %}
       <td>None</td>
       {% endif %}
-      <td>{{p.session.receiver_list}}</td>
+      <td>{{p.session.receiver_list_simple}}</td>
     </tr>
     {% endfor %}
     {% endfor %}

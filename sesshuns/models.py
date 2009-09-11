@@ -953,6 +953,18 @@ class Sesshun(models.Model):
         "Returns a string representation of the rcvr logic."
         return " AND ".join([rg.__str__() for rg in self.receiver_group_set.all()])
 
+    def receiver_list_simple(self):
+        "Returns a string representation of the rcvr logic, simplified"
+        # ignore rcvr groups that have no rcvrs!  TBF: shouldn't happen!
+        rgs = [ rg for rg in self.receiver_group_set.all() if len(rg.receivers.all()) != 0]
+        if len(rgs) == 1:
+            # no parens needed
+            ls = " OR ".join([r.abbreviation for r in rgs[0].receivers.all()])
+        else:
+            # we can't simplify this anymore
+            ls = self.receiver_list()
+        return ls
+
     def rcvrs_specified(self):
         "Returns an array of rcvrs for this sesshun, w/ out their relations"
         # For use in recreating Carl's reports
