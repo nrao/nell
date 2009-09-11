@@ -21,11 +21,11 @@ def schedule(request, *args, **kws):
             start = datetime.strptime(startDate, "%m/%d/%Y")         
         else:
             start = datetime.now()
-        days = int(request.POST.get("days", 1))    
+        days = int(request.POST.get("days", 5))    
     else:
         # default time range
         start = datetime.now()
-        days = 1
+        days = 5
     # get only the periods in that time range
     end = start + timedelta(days = days)
     ps = Period.objects.filter(start__gt = start
