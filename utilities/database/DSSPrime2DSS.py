@@ -34,6 +34,30 @@ class DSSPrime2DSS(object):
     def __del__(self):
         self.cursor.close()
 
+    def check_db(self):
+        "Assorted checks on dss_prime to look for problems"
+
+        # look for redundant pcodes
+        query = "SELECT pcode FROM projects"
+        self.cursor.execute(query)
+        rows = self.cursor.fetchall()
+        pcodes = []
+        redundants = []
+        for r in rows:
+            pcode = r[0]
+            if pcode not in pcodes:
+                pcodes.append(pcode)
+            else:
+                redundants.append(pcode)
+        if len(redundants) != 0:
+            print "ERROR: Redundant project codes!!!"
+            print "    pcodes: ", len(pcodes)
+            print "    redundants: "
+            for p in redundants:
+                print "    ", p
+
+        # what else?
+
     def transfer(self):
         self.transfer_friends()
         self.transfer_projects()
