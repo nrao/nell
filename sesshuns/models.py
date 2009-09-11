@@ -316,6 +316,7 @@ class Project(models.Model):
     complete     = models.BooleanField()
     start_date   = models.DateTimeField(null = True, blank = True)
     end_date     = models.DateTimeField(null = True, blank = True)
+    #friend_id    = models.ForeignKey(User)
 
     base_url = "/sesshuns/project/"
 
@@ -1358,8 +1359,8 @@ class Period(models.Model):
             self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
         now           = dt2str(TimeAgent.quarter(datetime.utcnow()))
         date          = fdata.get("date", None)
-        time          = fdata.get("time", None)
-        self.start    = TimeAgent.quarter(strStr2dt(date, time + ':00')) if time is not None and date is not None else now
+        time          = fdata.get("time", "00:00")
+        self.start    = TimeAgent.quarter(strStr2dt(date, time + ':00')) if date is not None else now
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
         self.score    = 0.0 # TBF how to get score?
         self.forecast = now
@@ -1369,11 +1370,13 @@ class Period(models.Model):
     def handle2session(self, h):
         n, p = h.rsplit('(', 1)
         name = n.strip()
-        pcode = p[:-1]
+        pcode, _ = p.split(')', 1)
         return Sesshun.objects.filter(project__pcode__exact=pcode).get(name=name)
 
     def toHandle(self):
-        return "%s (%s)" % (self.session.name, self.session.project.pcode)
+        return "%s (%s) %d" % (self.session.name
+                             , self.session.project.pcode
+                             , self.session.original_id)
 
     def eventjson(self, id):
         end = self.start + timedelta(hours = self.duration)

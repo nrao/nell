@@ -142,6 +142,8 @@ class Schedtime2DSS(object):
                 print "duration changed from %f to %f" % (durationHrs, duration)
                 print "for row: ", row
 
+            # TBF this is WRONG WRONG WRONG, use pytz or find out
+            # dates for time changes.
             # create the starttime - translate from ET to UT
             start = datetime(year, month, day, hour, minute) + \
                     timedelta(seconds = 4 * 60 * 60)
