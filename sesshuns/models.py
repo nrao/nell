@@ -1382,7 +1382,7 @@ class Period(models.Model):
             self.session = self.handle2session(handle)
         else:
             # TBF 268 is the Maintenance session in 09C, should generalize
-            self.session  = Sesshun.objects.get(id=fdata.get("session", 268))
+            self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
         now           = dt2str(TimeAgent.quarter(datetime.utcnow()))
         date          = fdata.get("date", None)
         time          = fdata.get("time", "00:00")
