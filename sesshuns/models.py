@@ -316,7 +316,7 @@ class Project(models.Model):
     complete     = models.BooleanField()
     start_date   = models.DateTimeField(null = True, blank = True)
     end_date     = models.DateTimeField(null = True, blank = True)
-    #friend_id    = models.ForeignKey(User)
+    #friend       = models.ForeignKey(User, null = True)
 
     base_url = "/sesshuns/project/"
 
