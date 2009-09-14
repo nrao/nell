@@ -32,11 +32,11 @@
 <div type="text" id="datepicker"></div>
 <form action="/profile/{{u.id}}/blackout" method="POST">
   <p>
-    <label for="id_start">Start:</label>
+    <label for="id_start">{{b.start|date:"H:i"}}</label>
     <input type="text" name="start" id="id_start" title="Click once for calendar, click twice for previous entries" value="{{b.start|date:'m/d/Y'}}"/>
     <select name="starttime" id="id_starttime">
       {% for t in times %}
-      {% ifequal t b.start|date:"H:M" %}
+      {% ifequal t b.start|date:"H:i" %}
       <option selected="selected">{{t}}</option>
       {% else %}
       <option >{{t}}</option>
@@ -49,7 +49,7 @@
     <input type="text" name="end" id="id_end" title="Click once for calendar, click twice for previous entries" value="{{b.end|date:'m/d/Y'}}"/>
     <select name="endtime" id="id_endtime">
       {% for t in times %}
-      {% ifequal t b.end|date:"H:M" %}
+      {% ifequal t b.end|date:"H:i" %}
       <option selected="selected">{{t}}</option>
       {% else %}
       <option >{{t}}</option>
