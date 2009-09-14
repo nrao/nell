@@ -183,14 +183,19 @@ class UserInfo(object):
                 postals.append(address)    
         return postals
 
-    def parseUserXML(self, element):
+    def parseUserXML(self, el):
         "Parses a given Element object representing user info into a dict."
         # TBF: must be a better way of doing this
         # TBF: looked into lxml.objectify, but couldn't get it to work properly
         userInfo = {}
         # just do it by hand!
-        # top level attributes
+        # get all the users
+        users = el.getchildren()
+        # TBF: assume just one user
+        assert len(users) == 1
+        element = users[0]
         id = None
+        # get top level attributes
         items = element.items()
         for key, value in items:
             if key == 'id':

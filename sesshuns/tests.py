@@ -1274,6 +1274,7 @@ class TestUserInfo(NellTestCase):
 
         #<?xml version="1.0" encoding="UTF-8"?>
         self.xmlStr =  """
+        <nrao:query-result xmlns:nrao="http://www.nrao.edu/namespaces/nrao" >
         <nrao:user id="823" domestic="true" xmlns:nrao="http://www.nrao.edu/namespaces/nrao">
         <nrao:name>
         <nrao:prefix>Mr</nrao:prefix>
@@ -1336,6 +1337,7 @@ class TestUserInfo(NellTestCase):
         <nrao:entry-status>Suspect</nrao:entry-status>
         </nrao:account-info>
         </nrao:user>
+        </nrao:query-result>
         """
         self.xml = et.fromstring(self.xmlStr)
         self.xmlDict = \
