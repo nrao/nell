@@ -1102,6 +1102,24 @@ class Sesshun(models.Model):
         self.status.save()
         self.save()
 
+        new_transit = self.get_field(fdata, "transit", False, bool)
+        old_transit = self.transit()
+        tp = Parameter.objects.filter(name='Transit')[0]
+        if old_transit is None:
+            if new_transit:
+                obs_param =  Observing_Parameter(session = self
+                                               , parameter = tp
+                                               , boolean_value = True
+                                                )
+                obs_param.save()
+        else:
+            obs_param = self.observing_parameter_set.filter(parameter=tp)[0]
+            if new_transit:
+                obs_param.boolean_value = True
+                obs_param.save()
+            else:
+                obs_param.delete()
+
         proposition = fdata.get("receiver", None)
         if proposition is not None:
             self.receiver_group_set.all().delete()
@@ -1186,7 +1204,13 @@ class Sesshun(models.Model):
            , "authorized" : self.status.authorized
            , "complete"   : self.status.complete
            , "backup"     : self.status.backup
-               }
+            }
+
+        trnst = self.transit()
+        if trnst is not None:
+            d.update({"transit"    : trnst})
+        else:
+            d.update({"transit"    : False})
 
         if rcvrs is not None:
             d.update({"receiver"   : rcvrs})
@@ -1204,6 +1228,15 @@ class Sesshun(models.Model):
                 _ = d.pop(k)
 
         return d
+
+    def transit(self):
+        """
+        Returns True or False if has 'Transit' observing parameter,
+        else None if not.
+        """
+        tp = Parameter.objects.filter(name='Transit')[0]
+        top = self.observing_parameter_set.filter(parameter=tp)
+        return top[0].boolean_value if top else None
 
     class Meta:
         db_table = "sessions"
