@@ -379,13 +379,14 @@ def get_blackout_form_context(method, blackout, user, errors):
     "Returns dictionary for populating blackout form"
     times = [time(h, m).strftime("%H:%M")
              for h in range(0, 24) for m in range(0, 60, 15)]
-    return {'method' : method
-          , 'b'      : blackout
-          , 'u'      : user
-          , 'tzs'    : TimeZone.objects.all()
-          , 'repeats': Repeat.objects.all()
-          , 'times'  : times
-          , 'errors' : errors
+    return {'method'   : method
+          , 'b'        : blackout # b's dates in DB are UTC
+          , 'u'        : user
+          , 'tzs'      : TimeZone.objects.all()
+          , 'timezone' : 'UTC' # form always starts at UTC
+          , 'repeats'  : Repeat.objects.all()
+          , 'times'    : times
+          , 'errors'   : errors
     }
 
 def parse_datetime(request, dateName, timeName, utcOffset):

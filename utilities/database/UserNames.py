@@ -367,7 +367,9 @@ class UserNames(object):
                 continue
             #print ET.tostring(el, pretty_print=True)
 
-            numAuthors = len(el)
+            subel = el.getchildren()
+            authors = subel[0].getchildren()
+            numAuthors = len(authors)
 
             # a bunch of our proposals aren't in the PST
             if numAuthors == 0:
@@ -376,7 +378,7 @@ class UserNames(object):
             # for each author, try to use the info we got
             for i in range(numAuthors):
                 # get an author
-                a = el[i]
+                a = authors[i]
                 # get it's info
                 last_name  = self.findTag(a, "last_name")
                 first_name = self.findTag(a, "first_name")

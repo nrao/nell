@@ -61,7 +61,7 @@
     <label for="id_tz">Tz:</label>
     <select name="tz" id="id_tz">
       {% for tz in tzs %}
-      {% ifequal tz b.tz %}
+      {% ifequal tz.timeZone timezone %}
       <option selected="selected">{{tz.timeZone}}</option>
       {% else %}
       <option >{{tz.timeZone}}</option>

@@ -798,7 +798,7 @@ class Investigator(models.Model):
 
     def projectBlackouts(self):
         return sorted([b for b in self.user.blackout_set.all()
-                       if not self.friend and b.isActive()])
+                       if b.isActive()])
     
     class Meta:
         db_table = "investigators"
