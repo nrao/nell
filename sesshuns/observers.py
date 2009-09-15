@@ -53,7 +53,7 @@ def schedule(request, *args, **kws):
         start = TimeAgent.truncateDt(start)     
     else:
         # default time range
-        timezone = 'UTC' #'EST'
+        timezone = 'EST'
         start = TimeAgent.truncateDt(datetime.now())
         days = 5
 
