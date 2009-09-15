@@ -1142,6 +1142,92 @@ class TestObservers(NellTestCase):
             '/profile/%s/blackout' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 302)
 
+    def test_get_day_time(self):
+
+        # create a period
+        s = create_sesshun()
+        p = Period(session = s
+                 , start = datetime(2009, 9, 9, 12)
+                 , duration = 1.0)
+        p.save()         
+        day = datetime(2009, 9, 9)
+        
+        # make sure it comes back in the correct day for UTC
+        data = { 'start' : day.strftime("%m/%d/%Y")
+               , 'days' : 3
+               , 'tz' : 'UTC' }
+        response = self.post('/schedule', data)
+        calendar = response.context['calendar']
+        exp = [(u'2009-09-09 (UTC)', [('12:00', '13:00', False, False, p)])
+             , (u'2009-09-10 (UTC)', [])
+             , (u'2009-09-11 (UTC)', [])
+             ]
+        self.assertEqual(exp, calendar)     
+
+        # make sure it comes back in the correct day for EST
+        data = { 'start' : day.strftime("%m/%d/%Y")
+               , 'days' : 3
+               , 'tz' : 'EST' }
+        response = self.post('/schedule', data)
+        calendar = response.context['calendar']
+        exp = [(u'2009-09-09 (EST)', [('08:00', '09:00', False, False, p)])
+             , (u'2009-09-10 (EST)', [])
+             , (u'2009-09-11 (EST)', [])
+             ]
+        self.assertEqual(exp, calendar)     
+
+        # clean up
+        p.delete()
+        s.delete()
+
+    def test_get_day_time2(self):
+
+        # create a period
+        s = create_sesshun()
+        p = Period(session = s
+                 , start = datetime(2009, 9, 2, 1)
+                 , duration = 6.0)
+        p.save()         
+        day = datetime(2009, 9, 1)
+
+        # make sure it comes back in the correct day for UTC
+        data = { 'start' : day.strftime("%m/%d/%Y")
+               , 'days' : 3
+               , 'tz' : 'UTC' }
+        response = self.post('/schedule', data)
+        calendar = response.context['calendar']
+        exp = [(u'2009-09-01 (UTC)', [])
+             , (u'2009-09-02 (UTC)', [('01:00', '07:00', False, False, p)])
+             , (u'2009-09-03 (UTC)', [])
+             ]
+        self.assertEqual(exp, calendar)     
+
+        # make sure it comes back in the correct day for EST
+        data = { 'start' : day.strftime("%m/%d/%Y")
+               , 'days' : 3
+               , 'tz' : 'EST' }
+        response = self.post('/schedule', data)
+        calendar = response.context['calendar']
+        exp = [(u'2009-09-01 (EST)', [('21:00', '00:00', False, False, p)])
+             , (u'2009-09-02 (EST)', [('00:00', '03:00', False, False, p)])
+             , (u'2009-09-03 (EST)', [])
+             ]
+        self.assertEqual(exp, calendar)     
+
+        # show the cutoff: '(..)'
+        data = { 'start' : day.strftime("%m/%d/%Y")
+               , 'days' : 1
+               , 'tz' : 'EST' }
+        response = self.post('/schedule', data)
+        calendar = response.context['calendar']
+        exp = [(u'2009-09-01 (EST)', [('21:00', '00:00', False, True, p)])
+             ]
+        self.assertEqual(exp, calendar)  
+
+        # clean up
+        p.delete()
+        s.delete()
+
 # Testing Utilities
 class TestDBReporter(NellTestCase):
 

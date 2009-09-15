@@ -54,13 +54,23 @@
     <label for="id_days">Days:</label>
     <select name="days" id="id_days">
       {% for d in day_list %}
-      {% ifequal d days %}
-      <option selected="selected">{{d}}</option>
-      {% else %}
-      <option>{{d}}</option>
-      {% endifequal %}
+        {% ifequal d days %}
+          <option selected="selected">{{d}}</option>
+        {% else %}
+          <option>{{d}}</option>
+        {% endifequal %}
       {% endfor %}
     </select> &nbsp; 
+    <label for="id_tz">Time Zone:</label>
+    <select name="tz" id="id_tz">
+      {% for tz in tz_list %}
+        {% ifequal tz timezone %}
+          <option selected="selected">{{tz}}</option>
+        {% else %}
+          <option>{{tz}}</option>
+        {% endifequal %}
+      {% endfor %}  
+    </select>&nbsp;
     <input type="submit" value="View Schedule"/>
   </p>
   </form>
@@ -70,7 +80,10 @@
   <table>
     {% for day, ps in calendar %}
     <tr bgcolor="#c3d9ff"> 
+    <!--
       <th title="Start and End times for the start day (UTC)">{{day|date:"Y-m-d"}} (UTC)</th>
+    -->  
+      <th title="Start and End times for the start day (UTC)">{{day}}</th>
       <th title="Project Type: 'A' : Astronomy, 'T' : Test, 'M' : Maintenance">Type</th>
       <th>Project ID</th>
       <th>Project Title</th>
@@ -82,12 +95,12 @@
     <tr>
       {% if start_cutoff or end_cutoff %}
         {%if start_cutoff %}
-          <td>(..){{start|date:"H:i"}} - {{end|date:"H:i"}}</td>
+          <td>(..){{start}} - {{end}}</td>
         {% else %}
-          <td>{{start|date:"H:i"}} - {{end|date:"H:i"}}(..)</td>
+          <td>{{start}} - {{end}}(..)</td>
         {% endif %}
       {% else %}    
-          <td>{{start|date:"H:i"}} - {{end|date:"H:i"}}</td>
+          <td>{{start}} - {{end}}</td>
       {% endif %}    
       {% ifequal p.session.project.project_type.type "non-science" %}
         {% if p.session.project.is_maintenance %}
