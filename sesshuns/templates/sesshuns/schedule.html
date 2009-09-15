@@ -83,7 +83,7 @@
     <!--
       <th title="Start and End times for the start day (UTC)">{{day|date:"Y-m-d"}} (UTC)</th>
     -->  
-      <th title="Start and End times for the start day (UTC)">{{day}}</th>
+      <th title="Start and End times for the start day (UTC)">{{day}} ({{timezone}})</th>
       <th title="Project Type: 'A' : Astronomy, 'T' : Test, 'M' : Maintenance">Type</th>
       <th>Project ID</th>
       <th>Project Title</th>
@@ -113,9 +113,13 @@
       {% endifequal %}
       <td><a href="/project/{{p.session.project.pcode}}">{{p.session.project.pcode}}</a></td>
       {% ifequal p.session.project.project_type.type "science" %}
-      <td><a href="http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}">{{p.session.project.name}}</a></td>
+        <td><a href="http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}">{{p.session.project.name}}</a></td>
       {% else %}
-      <td>{{p.session.name}}</td>
+        {% if p.session.project.is_maintenance %}
+          <td><a href="http://gbrescal.gb.nrao.edu/webcal/webcal.dbw?view=day&date={{day}}">{{p.session.project.name}}</a></td>
+        {% else %}
+          <td>{{p.session.name}}</td>
+        {% endif %}
       {% endifequal %}
       {% if p.session.project.principal_investigator %}
       <td><a href="/profile/{{p.session.project.principal_investigator.id}}">{{p.session.project.principal_investigator.last_name}}</a></td>
