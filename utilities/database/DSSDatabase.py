@@ -95,6 +95,6 @@ class DSSDatabase(object):
         # TBF: now make sure that receiver changes happen on maintenance days
         # cast a wide enough net to make this trimester agnostic
         #start = date(
-        rs = Receiver_Schedule(start, 
+        #rs = Receiver_Schedule(start, 
 
 
