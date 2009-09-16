@@ -316,7 +316,7 @@ class Project(models.Model):
     complete     = models.BooleanField()
     start_date   = models.DateTimeField(null = True, blank = True)
     end_date     = models.DateTimeField(null = True, blank = True)
-    #friend       = models.ForeignKey(User, null = True)
+    friend       = models.ForeignKey(User, null = True, blank = True)
 
     base_url = "/sesshuns/project/"
 
@@ -396,7 +396,7 @@ class Project(models.Model):
         pi = '; '.join([i.user.name() for i in self.investigator_set.all()
                         if i.principal_investigator])
         co_i = '; '.join([i.user.name() for i in self.investigator_set.all()
-                        if not i.principal_investigator and not i.friend])
+                        if not i.principal_investigator])
 
         return {"id"           : self.id
               , "semester"     : self.semester.semester
@@ -421,15 +421,6 @@ class Project(models.Model):
             if inv.principal_contact:
                 pc = inv.user
         return pc        
-
-    def friend(self):
-        "Who is the friend for this Project?"
-        fr = None
-        for inv in self.investigator_set.all():
-            # if more then one, it's arbitrary
-            if inv.friend:
-                fr = inv.user
-        return fr     
 
     def principal_investigator(self):
         "Who is the principal investigator for this Project?"
@@ -774,18 +765,16 @@ class Project_Blackout_09B(models.Model):
 class Investigator(models.Model):
     project                = models.ForeignKey(Project)
     user                   = models.ForeignKey(User)
-    friend                 = models.BooleanField(default = False)
     observer               = models.BooleanField(default = False)
     principal_contact      = models.BooleanField(default = False)
     principal_investigator = models.BooleanField(default = False)
     priority               = models.IntegerField(default = 1)
 
     def __unicode__(self):
-        return "%s (%d) for %s; fr : %s, obs : %s, PC : %s, PI : %s" % \
+        return "%s (%d) for %s; obs : %s, PC : %s, PI : %s" % \
             ( self.user
             , self.user.id
             , self.project.pcode
-            , self.friend
             , self.observer
             , self.principal_contact
             , self.principal_investigator )

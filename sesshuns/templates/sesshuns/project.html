@@ -68,7 +68,6 @@
               <th>Email(s)</th>
               <th>PI</th>
               <th>Contact</th>
-              <th>Friend</th>
               <th title="Trained for remote observing">Remote</th>
               <th>Observer(s)</th>
             </tr>
@@ -93,9 +92,6 @@
               </td>
               <td>
                   {% if i.principal_contact %}Yes{% endif %}
-              </td>
-              <td>
-                  {% if i.friend %}Yes{% endif %}
               </td>
               <td>
                   {% if i.user.sanctioned %}Yes{% endif %}
@@ -162,12 +158,10 @@
           <h3 class="caps">Information</h3>
           <div class="box">
             <dl>
-            {% for i in v %}
-              {% if i.friend %}
-              <dt>Friend</dt>
-              <dd><a href="mailto:{{i.user|get_email}}">{{i.user|display_name}}</a></dd>
+              {% if p.friend %}
+                <dt>Friend</dt>
+                <dd><a href="mailto:{{p.friend|get_email}}">{{p.friend|display_name}}</a></dd>
               {% endif %}
-            {% endfor %}
               <dt>Trimester</dt>
               <dd>{{p.semester.semester}}</dd>
               <dt>Thesis?</dt>

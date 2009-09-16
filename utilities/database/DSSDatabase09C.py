@@ -95,8 +95,10 @@ class DSSDatabase09C(DSSDatabase):
         rcvrChanges.append((dt, rcvrs))
 
         for dt, rcvrs in rcvrChanges:
+            print dt, rcvrs
             for rcvr in rcvrs:
                 r = first(Receiver.objects.filter(abbreviation = rcvr))
+                print "    ", r
                 rs = Receiver_Schedule(receiver = r, start_date = dt)
                 rs.save()
                 #print rs

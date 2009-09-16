@@ -276,7 +276,6 @@ class Schedtime2DSS(object):
             for priority, o in enumerate(observers):
                 i = Investigator( project  = proj
                                 , user     = o
-                                , friend   = False
                                 , observer = True
                                 , priority = priority
                                 , principal_contact = (priority==0)

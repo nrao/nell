@@ -553,7 +553,7 @@ class UserNames(object):
         lines = []
         ps = Project.objects.order_by('pcode').all()
         for p in ps:
-            users = [inv.user for inv in p.investigator_set.all() if not inv.friend]
+            users = [inv.user for inv in p.investigator_set.all()]
             names = [u.last_name for u in users]
             names.sort()
             nameStr = ','.join(names)

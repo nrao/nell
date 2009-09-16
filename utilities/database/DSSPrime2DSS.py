@@ -309,17 +309,6 @@ class DSSPrime2DSS(object):
             semester = first(Semester.objects.filter(semester = row[12]))
             ptype    = first(Project_Type.objects.filter(type = row[14]))
 
-            p = Project(semester     = semester
-                      , project_type = ptype
-                      , pcode        = row[4]
-                      , name         = self.filter_bad_char(row[5])
-                      , thesis       = row[6] == 1
-                      , complete     = row[7] == 1
-                      , start_date   = row[9]
-                      , end_date     = row[10]
-                        )
-            p.save()
-
             # friend_id from DSS' projects table
             f_id = row[3]
             if f_id != 0:
@@ -330,12 +319,26 @@ class DSSPrime2DSS(object):
                 o_id   = int(self.cursor.fetchone()[0])
                 friend = first(User.objects.filter(original_id = o_id))
 
-                if friend is not None:
-                    i =  Investigator(project = p
-                                    , user    = friend
-                                    , friend  = True
-                                      )
-                    i.save()
+                #if friend is not None:
+                #    p.friend = friend
+                #    p.save()
+                    #i =  Investigator(project = p
+                    #                , user    = friend
+                    #                , friend  = True
+                    #                  )
+                    #i.save()
+
+            p = Project(semester     = semester
+                      , project_type = ptype
+                      , pcode        = row[4]
+                      , name         = self.filter_bad_char(row[5])
+                      , thesis       = row[6] == 1
+                      , complete     = row[7] == 1
+                      , start_date   = row[9]
+                      , end_date     = row[10]
+                      , friend       = friend
+                        )
+            p.save()
 
             query = """
                     SELECT projects.pcode, allotment.*

@@ -47,10 +47,6 @@ def mark_as_observer(modeladmin, request, queryset):
     queryset.update(observer = True)
 mark_as_observer.short_description = "Set selected as observer"
 
-def mark_as_friend(modeladmin, request, queryset):
-    queryset.update(friend = True)
-mark_as_friend.short_description = "Set selected as friend"
-
 def mark_as_not_contact(modeladmin, request, queryset):
     queryset.update(principal_contact = False)
 mark_as_not_contact.short_description = "Unset selected as principal contact"
@@ -62,10 +58,6 @@ mark_as_not_pi.short_description = "Unset selected as principal investigator"
 def mark_as_not_observer(modeladmin, request, queryset):
     queryset.update(observer = False)
 mark_as_not_observer.short_description = "Unset selected as observer"
-
-def mark_as_not_friend(modeladmin, request, queryset):
-    queryset.update(friend = False)
-mark_as_not_friend.short_description = "Unset selected as friend"
 
 # Actions for Periods
 
@@ -108,10 +100,10 @@ class AllotmentAdmin(admin.ModelAdmin):
         return admin.ModelAdmin.response_change(self, request, obj)
 
 class InvestigatorAdmin(admin.ModelAdmin):
-    list_display = ['project_name', 'name', 'observer', 'priority', 'friend', 'principal_investigator', 'principal_contact']
+    list_display = ['project_name', 'name', 'observer', 'priority', 'principal_investigator', 'principal_contact']
     list_filter = ['principal_investigator', 'principal_contact']
     search_fields = ['project__pcode', 'user__last_name', 'user__first_name']
-    actions = [mark_as_contact, mark_as_observer, mark_as_pi, mark_as_friend, mark_as_not_contact, mark_as_not_observer, mark_as_not_pi, mark_as_not_friend]
+    actions = [mark_as_contact, mark_as_observer, mark_as_pi, mark_as_not_contact, mark_as_not_observer, mark_as_not_pi]
 
 class Observing_ParameterAdmin(admin.ModelAdmin):
     list_display = ['session', 'parameter', 'value']
@@ -136,10 +128,10 @@ class PeriodAdmin(admin.ModelAdmin):
     date_hierarchy = 'start'
 
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ['pcode', 'name', 'semester', 'project_type', 'principal_contact', 'thesis', 'complete', 'start_date', 'end_date']
+    list_display = ['pcode', 'name', 'semester', 'project_type', 'principal_contact', 'thesis', 'complete', 'start_date', 'end_date', 'friend']
     actions = [mark_as_completed, mark_as_not_completed]
     ordering = ['pcode']
-    list_filter = ['semester', 'project_type', 'complete', 'thesis']
+    list_filter = ['semester', 'project_type', 'complete', 'thesis', 'friend']
     search_fields = ['pcode']
     date_hierarchy = 'start_date'
     inlines = [SesshunInline]

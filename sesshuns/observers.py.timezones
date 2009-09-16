@@ -114,10 +114,17 @@ def schedule(request, *args, **kws):
     return render_to_response("sesshuns/schedule.html"
                             , {'calendar' : calendar
                               ,'day_list' : range(1, 15)
+<<<<<<< local
+=======
                               ,'tz_list'  : ['EST', 'UTC']
+>>>>>>> other
                               ,'start'    : start
+<<<<<<< local
+                              ,'days'     : days})
+=======
                               ,'days'     : days
                               ,'timezone' : timezone})
+>>>>>>> other
 
 @login_required
 def dates_not_schedulable(request, *args, **kws):
@@ -245,13 +252,13 @@ def profile(request, *args, **kws):
     bos = NRAOBosDB()
     reservations = bos.getReservationsByUsername(user.username)
 
-    # Remember [] is False,  TBF is this needed?
-    isFriend = ["yep" for p in user.investigator_set.all() if p.friend]
+    # 
+
     return render_to_response("sesshuns/profile.html"
                             , {'u'            : user
                              , 'requestor'    : requestor
                              , 'authorized'   : user == requestor # allowed to edit
-                             , 'isFriend'     : isFriend
+                             #, 'clients'      : Project.objects.filter(friend=user)
                              , 'emails'       : info['emails']
                              , 'phones'       : info['phones']
                              , 'postals'      : info['postals']

@@ -231,13 +231,13 @@ def profile(request, *args, **kws):
     bos = NRAOBosDB()
     reservations = bos.getReservationsByUsername(user.username)
 
-    # Remember [] is False,  TBF is this needed?
-    isFriend = ["yep" for p in user.investigator_set.all() if p.friend]
+    # 
+
     return render_to_response("sesshuns/profile.html"
                             , {'u'            : user
                              , 'requestor'    : requestor
                              , 'authorized'   : user == requestor # allowed to edit
-                             , 'isFriend'     : isFriend
+                             #, 'clients'      : Project.objects.filter(friend=user)
                              , 'emails'       : info['emails']
                              , 'phones'       : info['phones']
                              , 'postals'      : info['postals']
