@@ -12,13 +12,17 @@ from utilities                import NRAOBosDB
 # we want PST services
 ui = UserInfo()
 
-def get_day_time(day, period, first_day, last_day, timezone):
+# constants
+ET = 'ET'
+UTC = 'UTC'
+
+def get_period_day_time(day, period, first_day, last_day, timezone):
     "Returns a tuple of : start, end, cutoffs, period, for used in template"
     next_day = day + timedelta(days = 1)
     # start with default values - as if there was no overlap
     start = period.start
     end = period.end()
-    if timezone == 'EST':
+    if timezone == ET:
         start = TimeAgent.utc2est(start)
         end = TimeAgent.utc2est(end)
     start_cutoff = end_cutoff = False
@@ -39,12 +43,15 @@ def get_day_time(day, period, first_day, last_day, timezone):
     endStr = end.strftime("%H:%M")                
     return (startStr, endStr, start_cutoff, end_cutoff, period)
 
-def schedule(request, *args, **kws):
+def gbt_schedule(request, *args, **kws):
+
     # serve up the GBT schedule
+    timezones = [ET, UTC]
+
     # TBF: error handling
     if request.method == 'POST': 
         days = int(request.POST.get("days", 5))    
-        timezone  = request.POST.get("tz", 'EST')
+        timezone  = request.POST.get("tz", ET)
         startDate = request.POST.get("start", None) 
         if startDate is not None:
             start = datetime.strptime(startDate, "%m/%d/%Y")         
@@ -53,7 +60,7 @@ def schedule(request, *args, **kws):
         start = TimeAgent.truncateDt(start)     
     else:
         # default time range
-        timezone = 'EST'
+        timezone = ET
         start = TimeAgent.truncateDt(datetime.now())
         days = 5
 
@@ -67,7 +74,7 @@ def schedule(request, *args, **kws):
     # the DB is in UTC, so if request is in ETC, must perform the query
     # using converted datetimes
     # TBF: why doesn't ps.query.group_by = ['start'] work?
-    if timezone == 'EST':
+    if timezone == ET:
         day_before = TimeAgent.est2utc(day_before)
         end        = TimeAgent.est2utc(end)
     ps = Period.objects.filter(start__gt = day_before
@@ -78,12 +85,12 @@ def schedule(request, *args, **kws):
     cal = {}
     for i in range(days):
         day = day_tz = start + timedelta(days = i)
-        if timezone == 'EST':
+        if timezone == ET:
             # we need to make sure that the right periods get passed to
             # get_day_time
             day_tz = TimeAgent.est2utc(day_tz)
         dayStr = "%s (%s)" % (day.strftime("%Y-%m-%d"), timezone)
-        cal[dayStr] = [get_day_time(day, p, start, last_day, timezone) \
+        cal[dayStr] = [get_period_day_time(day, p, start, last_day, timezone) \
                         for p in ps if p.on_day(day_tz)]
 
     # now make sure the template can handle this easy
@@ -93,7 +100,7 @@ def schedule(request, *args, **kws):
     return render_to_response("sesshuns/schedule.html"
                             , {'calendar' : calendar
                               ,'day_list' : range(1, 15)
-                              ,'tz_list'  : ['EST', 'UTC']
+                              ,'tz_list'  : ['ET', 'UTC']
                               ,'start'    : start
                               ,'days'     : days
                               ,'timezone' : timezone})

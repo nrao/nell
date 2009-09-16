@@ -11,7 +11,7 @@ admin.autodiscover()
 # Note a blank comment attached to the url denotes local access only
 
 urlpatterns = patterns(''
-   , url(r'^schedule$',                                    schedule)
+   , url(r'^schedule$',                                    gbt_schedule)
    , url(r'^search$',                                      search)
    , url(r'^profile/(\d+)/blackout$',                      blackout)
    , url(r'^profile/(\d+)/blackout/form$',                 blackout_form)

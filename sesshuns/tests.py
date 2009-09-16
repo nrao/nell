@@ -1142,7 +1142,7 @@ class TestObservers(NellTestCase):
             '/profile/%s/blackout' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 302)
 
-    def test_get_day_time(self):
+    def test_get_period_day_time(self):
 
         # create a period
         s = create_sesshun()
@@ -1167,12 +1167,12 @@ class TestObservers(NellTestCase):
         # make sure it comes back in the correct day for EST
         data = { 'start' : day.strftime("%m/%d/%Y")
                , 'days' : 3
-               , 'tz' : 'EST' }
+               , 'tz' : 'ET' }
         response = self.post('/schedule', data)
         calendar = response.context['calendar']
-        exp = [(u'2009-09-09 (EST)', [('08:00', '09:00', False, False, p)])
-             , (u'2009-09-10 (EST)', [])
-             , (u'2009-09-11 (EST)', [])
+        exp = [(u'2009-09-09 (ET)', [('08:00', '09:00', False, False, p)])
+             , (u'2009-09-10 (ET)', [])
+             , (u'2009-09-11 (ET)', [])
              ]
         self.assertEqual(exp, calendar)     
 
@@ -1180,7 +1180,7 @@ class TestObservers(NellTestCase):
         p.delete()
         s.delete()
 
-    def test_get_day_time2(self):
+    def test_get_period_day_time2(self):
 
         # create a period
         s = create_sesshun()
@@ -1205,22 +1205,22 @@ class TestObservers(NellTestCase):
         # make sure it comes back in the correct day for EST
         data = { 'start' : day.strftime("%m/%d/%Y")
                , 'days' : 3
-               , 'tz' : 'EST' }
+               , 'tz' : 'ET' }
         response = self.post('/schedule', data)
         calendar = response.context['calendar']
-        exp = [(u'2009-09-01 (EST)', [('21:00', '00:00', False, False, p)])
-             , (u'2009-09-02 (EST)', [('00:00', '03:00', False, False, p)])
-             , (u'2009-09-03 (EST)', [])
+        exp = [(u'2009-09-01 (ET)', [('21:00', '00:00', False, False, p)])
+             , (u'2009-09-02 (ET)', [('00:00', '03:00', False, False, p)])
+             , (u'2009-09-03 (ET)', [])
              ]
         self.assertEqual(exp, calendar)     
 
         # show the cutoff: '(..)'
         data = { 'start' : day.strftime("%m/%d/%Y")
                , 'days' : 1
-               , 'tz' : 'EST' }
+               , 'tz' : 'ET' }
         response = self.post('/schedule', data)
         calendar = response.context['calendar']
-        exp = [(u'2009-09-01 (EST)', [('21:00', '00:00', False, True, p)])
+        exp = [(u'2009-09-01 (ET)', [('21:00', '00:00', False, True, p)])
              ]
         self.assertEqual(exp, calendar)  
 
