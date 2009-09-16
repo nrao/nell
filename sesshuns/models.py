@@ -1458,3 +1458,29 @@ class Period(models.Model):
               , "forecast"     : dt2str(self.forecast)
               , "backup"       : self.backup
                 }
+
+    def has_required_receivers(self):
+
+        # Find all the required receiver sets for this period and schedule.
+        # E.g. for one session:
+        #     [[a, b, c], [x, y, z]] = (a OR b OR c) AND (x OR y OR z)
+        required = [self.session.receiver_group_set.all()]
+        if required == []:
+            return False # No receivers, problem!
+
+        schedule = Receiver_Schedule.extract_schedule(self.start, 0)
+        if schedule == {}:
+            return False # no schedule, no required rcvrs!
+        # should return a single date w/ rcvr list
+        items = schedule.items()
+        assert len(items) == 1
+        dt, receivers = items[0]
+
+        receivers = Set(receivers)
+        if not any([all([Set(g.receivers.all()).intersection(receivers) \
+                        for g in set]) for set in required]):
+            # No receivers available. 
+            return False
+        else:
+            return True
+                
