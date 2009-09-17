@@ -1,6 +1,7 @@
-from sesshuns.models import *
-from datetime        import datetime, timedelta
+from sesshuns.models              import *
+from datetime                     import datetime, timedelta
 from utilities.database.UserNames import UserNames
+from utilities                    import TimeAgent
 import math
 import MySQLdb as m
 
@@ -142,11 +143,8 @@ class Schedtime2DSS(object):
                 print "duration changed from %f to %f" % (durationHrs, duration)
                 print "for row: ", row
 
-            # TBF this is WRONG WRONG WRONG, use pytz or find out
-            # dates for time changes.
             # create the starttime - translate from ET to UT
-            start = datetime(year, month, day, hour, minute) + \
-                    timedelta(seconds = 4 * 60 * 60)
+            start = TimeAgent.est2utc(datetime(year, month, day, hour, minute))
 
             # get other row values that we'll always need
             type = row[4].strip()
