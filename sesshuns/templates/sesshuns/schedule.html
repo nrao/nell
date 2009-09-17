@@ -107,7 +107,7 @@
     <!--
       <th title="Start and End times for the start day (UTC)">{{day|date:"Y-m-d"}} (UTC)</th>
     -->  
-      <th title="Start and End times for the start day (timezone). '+' indicates that the period continues on in an undisplayed date.">{{day}}</th>
+      <th title="Start and End times for the start day (timezone). '+' indicates that the period continues on in an undisplayed date.">{{day}} ({{timezone}})</th>
       <th title="Project Type: 'A' : Astronomy, 'T' : Test, 'M' : Maintenance">Type</th>
       <th>Project ID</th>
       <th>Project Title</th>
@@ -137,13 +137,13 @@
       {% endifequal %}
       <td><a href="/project/{{p.session.project.pcode}}">{{p.session.project.pcode}}</a></td>
       {% ifequal p.session.project.project_type.type "science" %}
-      <td><a href="http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}">{{p.session.project.name}}</a></td>
+        <td><a href="http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}">{{p.session.project.name}}</a></td>
       {% else %}
-        {% ifequal p.session.name "Maintenance" %}
+        {% if p.session.project.is_maintenance %}
           <td><a href="http://gbrescal.gb.nrao.edu/webcal/webcal.dbw?view=day&date={{p.start|date:"Y-m-d"}}">{{p.session.name}}</a></td>
         {% else %}
           <td>{{p.session.name}}</td>
-        {% endifequal %}
+        {% endif %}
       {% endifequal %}
       <td>{{p.session.project.principal_investigator.last_name|pretty_none}}</td>
       <td>{{p.session.project.friend.last_name|pretty_none}}</a></td>
