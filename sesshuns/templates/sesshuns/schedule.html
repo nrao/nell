@@ -139,7 +139,11 @@
       {% ifequal p.session.project.project_type.type "science" %}
       <td><a href="http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}">{{p.session.project.name}}</a></td>
       {% else %}
-      <td>{{p.session.name}}</td>
+        {% ifequal p.session.name "Maintenance" %}
+          <td><a href="http://gbrescal.gb.nrao.edu/webcal/webcal.dbw?view=day&date={{p.start|date:"Y-m-d"}}">{{p.session.name}}</a></td>
+        {% else %}
+          <td>{{p.session.name}}</td>
+        {% endifequal %}
       {% endifequal %}
       <td>{{p.session.project.principal_investigator.last_name|pretty_none}}</td>
       <td>{{p.session.project.friend.last_name|pretty_none}}</a></td>

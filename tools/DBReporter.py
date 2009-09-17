@@ -122,6 +122,10 @@ class DBReporter:
 
             
 
+        # point out bad projects
+        bads = ['BB240', 'BB277', 'BB261', 'BB278']
+        self.reportProjectDetails(projs, bads)
+
         # gather stats on sessions - how many, how many of what type, total hrs ..
         sess = Sesshun.objects.all()
         numSess = len(sess)
@@ -597,3 +601,26 @@ class DBReporter:
             return sess.allotment.total_time/repeats
         else:
             return 0
+
+    def reportProjectDetails(self, projects, pcodes):
+
+        self.add("Project Details for projects: %s\n" % (", ".join(pcodes)))
+
+        projs = [p for p in projects if p.pcode in pcodes]
+
+        for proj in projs:
+            self.projectDetails(proj)
+
+    def projectDetails(self, project):
+        
+        self.add("Project %s:\n" % project.pcode)
+        for a in project.allotments.all():
+            self.add("Allotment: %s\n" % a)
+        for s in project.sesshun_set.all():
+            self.add("  Session name : %s, vpkey : %d, hrs : %5.2f\n" % \
+                (s.name, s.original_id, s.allotment.total_time))
+            for p in s.period_set.all():
+                self.add("    Period %s for %5.2f Hrs\n" % (p.start, p.duration))
+
+        
+

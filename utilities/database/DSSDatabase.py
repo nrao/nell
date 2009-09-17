@@ -72,6 +72,11 @@ class DSSDatabase(object):
 
 
     def validate_receiver_schedule(self):
+        "makes sure the rcvr schedule is consistent with other factors."
+        self.check_periods_and_rcvr_schedule()
+        self.check_maintenance_and_rcvr_schedule()
+
+    def check_periods_and_rcvr_schedule(self):
         "compares the periods brought over by schedtime w/ the rcvr schedule."
 
         # make sure we don't have periods scheduled at times where
@@ -92,9 +97,18 @@ class DSSDatabase(object):
                , b.session.receiver_list_simple())
         print "number of periods w/ out required receivers: ", len(p)
 
+    def check_maintenance_and_rcvr_schedule(self):
+        pass
         # TBF: now make sure that receiver changes happen on maintenance days
         # cast a wide enough net to make this trimester agnostic
-        #start = date(
-        #rs = Receiver_Schedule(start, 
+        #start = date(2000, 1, 1)
+        # days = 365 * 10
+        #rs = Receiver_Schedule(start, days)
 
+        # for dt, rcvrs in rs.items():
+        #    # make sure there's a maintanence day scheduled for that day
+        #    # dt_start = dt.replace(hour = 0
+        #                          , minute = 0
+        #                          , second = 0
+        #                          , microsecond = 0)
 

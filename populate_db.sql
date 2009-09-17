@@ -101,7 +101,7 @@ INSERT INTO receivers VALUES (DEFAULT, 'Rcvr40_52',     'Q',   38.200,  49.800);
 INSERT INTO receivers VALUES (DEFAULT, 'Rcvr_PAR',      'MBA', 80.000, 100.000); -- M
 INSERT INTO receivers VALUES (DEFAULT, 'Zpectrometer',  'Z',    0.000,   0.000); -- 
 INSERT INTO receivers VALUES (DEFAULT, 'Holography',    'Hol', 11.700,  12.200); -- H
--- INSERT INTO receivers VALUES (DEFAULT, 'RcvrArray18_26','KFPA',17.000,  27.500); -- F
+INSERT INTO receivers VALUES (DEFAULT, 'RcvrArray18_26','KFPA',17.000,  27.500); -- F
 
 INSERT INTO systems VALUES (DEFAULT, 'J2000',         'ra',  'dec');
 INSERT INTO systems VALUES (DEFAULT, 'B1950',         'ra',  'dec');
