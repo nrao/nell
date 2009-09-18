@@ -42,32 +42,32 @@
   <div class="container">
     <div class="banner span-24">
       <img src="/static/images/banner.jpg" />
+      <table>
+        <tr>
+          <td style="text-align: left;">
+              <a href="/projects/ical" title="This link provides access to DSS events in the 'iCalendar' format.  To use this feature, right-click the 'ICAL' icon and select 'Copy Link Location'.  Then paste the link into your favorite iCalendar application.">
+              <img src="/static/images/ical.gif" style="border: 0;" />
+            </a>
+          </td>
+          <td style="text-align: right;">
+            <span id="help" style="display: none; border-right: 10px solid white;">
+              <a href="#" onclick="showHelp(); return false;" title="Click here to connect to a DSS team member in live chat">
+                <img src="/static/images/chat.gif" style="border: 0;" />
+              </a>
+            </span>
+            <span id="offlinehelp" style="display: none;">
+              <a href="#" onclick="showOfflineHelp(); return false;">
+                <img src="/static/images/chat_offline.gif" style="border: 0;" />
+              </a>
+            </span>
+            <a href="mailto:helpdesk-dss@gb.nrao.edu" class="top_menu" title="Click here to offer suggestions or report bugs">Helpdesk</a> |
+            <a href="/static/html/main.html" class="top_menu" title="GBT Dynamic Scheduling System documentation">Docs</a> |
+            <a href="/profile" class="top_menu" title="Click here login to the DSS">DSS Login</a> 
+          </td>  
+        </tr>
+      </table>
     </div>
   </div>
-    <table>
-      <tr>
-        <td style="text-align: left;">
-              <a href="/projects/ical" title="This link provides access to DSS events in the 'iCalendar' format.  To use this feature, right-click the 'ICAL' icon and select 'Copy Link Location'.  Then paste the link into your favorite iCalendar application.">
-            <img src="/static/images/ical.gif" style="border: 0;" />
-          </a>
-        </td>
-        <td style="text-align: right;">
-          <span id="help" style="display: none; border-right: 10px solid white;">
-            <a href="#" onclick="showHelp(); return false;" title="Click here to connect to a DSS team member in live chat">
-              <img src="/static/images/chat.gif" style="border: 0;" />
-            </a>
-          </span>
-          <span id="offlinehelp" style="display: none;">
-            <a href="#" onclick="showOfflineHelp(); return false;">
-              <img src="/static/images/chat_offline.gif" style="border: 0;" />
-            </a>
-          </span>
-          <a href="mailto:helpdesk-dss@gb.nrao.edu" class="top_menu" title="Click here to offer suggestions or report bugs">Helpdesk</a> |
-          <a href="/static/html/main.html" class="top_menu" title="GBT Dynamic Scheduling System documentation">Docs</a> |
-          <a href="/profile" class="top_menu" title="Click here login to the DSS">DSS Login</a> 
-        </td>  
-      </tr>
-    </table>
   <h1 class="loud"><center>GBT Schedule</center></h1>
   <center>
 
@@ -107,7 +107,7 @@
     <!--
       <th title="Start and End times for the start day (UTC)">{{day|date:"Y-m-d"}} (UTC)</th>
     -->  
-      <th title="Start and End times for the start day (timezone). '+' indicates that the period continues on in an undisplayed date.">{{day}} ({{timezone}})</th>
+      <th title="Start and End times for the start day (timezone). '+' indicates that the period continues on in an undisplayed date.">{{day|date:"Y-m-d"}} ({{timezone}})</th>
       <th title="Project Type: 'A' : Astronomy, 'T' : Test, 'M' : Maintenance">Type</th>
       <th>Project ID</th>
       <th>Project Title</th>
@@ -140,14 +140,23 @@
         <td><a href="http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}">{{p.session.project.name}}</a></td>
       {% else %}
         {% if p.session.project.is_maintenance %}
-          <td><a href="http://gbrescal.gb.nrao.edu/webcal/webcal.dbw?view=day&date={{p.start|date:"Y-m-d"}}">{{p.session.name}}</a></td>
+          <td>
+            <a href="http://gbrescal.gb.nrao.edu/webcal/webcal.dbw?view=day&date={{p.start|date:"Y-m-d"}}">{{p.session.name}}</a>
+            {{rschedule|get_receiver_change:day}}
+          </td>
         {% else %}
           <td>{{p.session.name}}</td>
         {% endif %}
       {% endifequal %}
       <td>{{p.session.project.principal_investigator.last_name|pretty_none}}</td>
       <td>{{p.session.project.friend.last_name|pretty_none}}</a></td>
-      <td>{{p.session.receiver_list_simple}}</td>
+      <td>
+        {% if p.session.project.is_maintenance %}
+          {{rschedule|get_receivers:day}}
+        {% else %}
+          {{p.session.receiver_list_simple}}
+        {% endif %}
+      </td>
     </tr>
     {% endfor %}
     {% endfor %}
