@@ -1366,6 +1366,9 @@ class Period(models.Model):
     forecast   = models.DateTimeField(null = True, editable=False)
     backup     = models.BooleanField()
 
+    class Meta:
+        db_table = "periods"
+    
     def end(self):
         "The period ends at start + duration"
         return self.start + timedelta(hours = self.duration)
@@ -1389,9 +1392,6 @@ class Period(models.Model):
     def display_name(self):
         return self.__str__()
 
-    class Meta:
-        db_table = "periods"
-    
     def init_from_post(self, fdata):
         self.from_post(fdata)
 
@@ -1472,4 +1472,14 @@ class Period(models.Model):
             return False
         else:
             return True
-                
+
+    @staticmethod
+    def in_time_range(begin, end):
+        """
+        Returns all periods in a time range, taking into account that periods
+        can overlap into the first day.
+        """
+        # TBF: why doesn't ps.query.group_by = ['start'] work?
+        day_before = begin - timedelta(days = 1)
+        return Period.objects.filter(start__gt = day_before
+                                   , start__lt = end).order_by('start')

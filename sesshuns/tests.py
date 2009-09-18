@@ -1153,10 +1153,10 @@ class TestObservers(NellTestCase):
         day = datetime(2009, 9, 9)
         
         # make sure it comes back in the correct day for UTC
-        data = { 'start' : day.strftime("%m/%d/%Y")
+        data = { 'start' : day#.strftime("%m/%d/%Y")
                , 'days' : 3
                , 'tz' : 'UTC' }
-        response = self.post('/schedule', data)
+        response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
         exp = [(u'2009-09-09 (UTC)', [('12:00', '13:00', False, False, p)])
              , (u'2009-09-10 (UTC)', [])
@@ -1165,10 +1165,10 @@ class TestObservers(NellTestCase):
         self.assertEqual(exp, calendar)     
 
         # make sure it comes back in the correct day for EST
-        data = { 'start' : day.strftime("%m/%d/%Y")
+        data = { 'start' : day#.strftime("%m/%d/%Y")
                , 'days' : 3
                , 'tz' : 'ET' }
-        response = self.post('/schedule', data)
+        response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
         exp = [(u'2009-09-09 (ET)', [('08:00', '09:00', False, False, p)])
              , (u'2009-09-10 (ET)', [])
@@ -1191,7 +1191,7 @@ class TestObservers(NellTestCase):
         day = datetime(2009, 9, 1)
 
         # make sure it comes back in the correct day for UTC
-        data = { 'start' : day.strftime("%m/%d/%Y")
+        data = { 'start' : day#.strftime("%m/%d/%Y")
                , 'days' : 3
                , 'tz' : 'UTC' }
         response = self.post('/schedule', data)
@@ -1203,7 +1203,7 @@ class TestObservers(NellTestCase):
         self.assertEqual(exp, calendar)     
 
         # make sure it comes back in the correct day for EST
-        data = { 'start' : day.strftime("%m/%d/%Y")
+        data = { 'start' : day#.strftime("%m/%d/%Y")
                , 'days' : 3
                , 'tz' : 'ET' }
         response = self.post('/schedule', data)
@@ -1215,7 +1215,7 @@ class TestObservers(NellTestCase):
         self.assertEqual(exp, calendar)     
 
         # show the cutoff: '(..)'
-        data = { 'start' : day.strftime("%m/%d/%Y")
+        data = { 'start' : day#.strftime("%m/%d/%Y")
                , 'days' : 1
                , 'tz' : 'ET' }
         response = self.post('/schedule', data)

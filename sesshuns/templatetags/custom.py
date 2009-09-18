@@ -1,9 +1,9 @@
 from django              import template
 from sesshuns            import models
-from datetime            import timedelta
+from datetime            import datetime, timedelta
 from sesshuns.models     import first
 from sets                import Set
-from utilities.TimeAgent import rad2hr, rad2deg
+from utilities.TimeAgent import rad2hr, rad2deg, est2utc
 
 register = template.Library()
 
@@ -111,3 +111,11 @@ def get_receivers(schedule, day):
     date = [d for d in sorted(schedule.keys()) if d.date() <= day.date()][-1]
     rcvrs = schedule[date] if date else []
     return ", ".join([r.abbreviation for r in rcvrs])
+
+@register.filter
+def to_utc(date):
+    return est2utc(date)
+
+@register.filter
+def get_date(format):
+    return datetime.today().strftime(str(format))
