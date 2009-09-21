@@ -52,30 +52,30 @@
   </form>
   <strong>
   Support Links:
-  <a href="http://wiki.gb.nrao.edu/bin/view/Observing/GbtFriends{{'%Y%m'|get_date}}">
+  <a href="#" onClick="window.open('http://wiki.gb.nrao.edu/bin/view/Observing/GbtFriends{{'%Y%m'|get_date}}', 'On-Duty Support Scientist', 'width=1000, height=700, scrollbars=yes');return true;">
     On-Duty Support Scientist
   </a>
   |
-  <a href="https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar">
+  <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar', 'Support Staff Absences & Contact Info', 'width=1000, height=700, scrollbars=yes');return true;">
     Support Staff Absences & Contact Info
   </a>
   |
-  <a href="https://staff.nrao.edu/wiki/bin/view/GB/TeamSchedule2009">
+  <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/TeamSchedule2009', 'DSS Team Absences & Contact Info', 'width=1000, height=700, scrollbars=yes');return true;">
     DSS Team Absences & Contact Info
   </a>
   <br/> 
   Helpful Links:
-  <a href="" onClick="window.open('/receivers', 'Receiver Schedule', 'width=1000, height=700, scrollbars=yes');return true;">Receiver Schedule</a>|
+  <a href="#" onClick="window.open('/receivers', 'Receiver Schedule', 'width=1000, height=700, scrollbars=yes');return true;">Receiver Schedule</a>|
   |
-  <a href="http://www.gb.nrao.edu/~rmaddale/Weather/">
+  <a href="#", onClick="window.open('http://www.gb.nrao.edu/~rmaddale/Weather/', 'High Frequency Forecasts', 'width=1000, height=700, scrollbars=yes');return true;">
     High Frequency Forecasts
   </a>
   |
-  <a href="http://www.gb.nrao.edu/~rmaddale/WeatherETA/ground.html">
+  <a href="#", onClick="window.open('http://www.gb.nrao.edu/~rmaddale/WeatherETA/ground.html', 'Ground Weather Forecasts', 'width=1000, height=700, scrollbars=yes');return true;">
     Ground Weather Forecasts
   </a>
   |
-  <a href="" onClick="window.open('https://bos.nrao.edu/resReports/roomChart?Start+Date={{calendar|get_cal_start|date:'m/d/Y'}}&End+Date={{calendar|get_cal_end|date:'m/d/Y'}}&Site=1', 'Reservation Chart', 'width=1000, height=800, scrollbars=yes');return true;">
+  <a href="#" onClick="window.open('https://bos.nrao.edu/resReports/roomChart?Start+Date={{calendar|get_cal_start|date:'m/d/Y'}}&End+Date={{calendar|get_cal_end|date:'m/d/Y'}}&Site=1', 'Reservation Chart', 'width=1000, height=800, scrollbars=yes');return true;">
     Reservation Chart
   </a>
   </strong>
@@ -118,7 +118,7 @@
       {% endifequal %}
       <td><a href="/project/{{p.session.project.pcode}}">{{p.session.project.pcode}}</a></td>
       {% ifequal p.session.project.project_type.type "science" %}
-        <td><a href="http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}">{{p.session.project.name}}</a></td>
+        <td><a href="#" onClick="window.open('http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}', 'Proposal Cover Page', 'width=1000, height=700, scrollbars=yes');return true;">{{p.session.project.name}}</a></td>
       {% else %}
         {% if p.session.project.is_maintenance %}
           <td>
