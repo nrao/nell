@@ -186,6 +186,9 @@ class User(models.Model):
     def isAdmin(self):
         return self.role.role == "Administrator"
 
+    def isOperator(self):
+        return self.role.role == "Operator"
+
     class Meta:
         db_table = "users"
 

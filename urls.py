@@ -12,9 +12,6 @@ admin.autodiscover()
 # Note a blank comment attached to the url denotes local access only
 
 urlpatterns = patterns(''
-   , url(r'^schedule/public$',                             public_schedule)
-   , url(r'^schedule/$',                                   gbt_schedule)
-   , url(r'^search$',                                      search)
    , url(r'^profile/(\d+)/blackout$',                      blackout)
    , url(r'^profile/(\d+)/blackout/form$',                 blackout_form)
    , url(r'^profile/(\d+)/dynamic_contact/form$',          dynamic_contact_form)
@@ -31,9 +28,13 @@ urlpatterns = patterns(''
    , url(r'^projects$',           ProjectResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^projects/(\d+)$',     ProjectResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^projects/ical$',      get_ical)
+   , url(r'^schedule/$',                                   gbt_schedule)
+   , url(r'^schedule/public$',                             public_schedule)
+   , url(r'^search$',                                      search)
    , url(r'^sessions/options$',   get_options) #
    , url(r'^sessions$',           SessionResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^sessions/(\d+)$',     SessionResource(permitted_methods=('PUT', 'GET', 'POST'))) #
+   , url(r'^receivers$',          rcvr_schedule) #
    , url(r'^receivers/schedule$', receivers_schedule) #
    , url(r'^periods/(UTC)$',      PeriodResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^periods/(ET)$',       PeriodResource(permitted_methods=('GET', 'PUT', 'POST'))) #

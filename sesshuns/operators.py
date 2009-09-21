@@ -1,5 +1,6 @@
 from datetime                       import datetime, timedelta
 from django.contrib.auth.decorators import login_required
+from django.http              import HttpResponse, HttpResponseRedirect
 from django.shortcuts         import render_to_response
 from models                   import *
 from sets                     import Set
@@ -11,6 +12,11 @@ ui = UserInfo()
 
 @login_required
 def gbt_schedule(request, *args, **kws):
+    loginUser = request.user.username
+    requestor = first(User.objects.filter(username = loginUser))
+    if not requestor.isOperator() and not requestor.isAdmin():
+        return HttpResponseRedirect("/schedule/public")
+
     # serve up the GBT schedule
     timezones = ['ET', 'UTC']
 
@@ -46,3 +52,14 @@ def gbt_schedule(request, *args, **kws):
               , 'days'     : days
               , 'rschedule': Receiver_Schedule.extract_schedule(start, days)
               , 'timezone' : timezone})
+
+def rcvr_schedule(request, *args, **kwds):
+    receivers = [r for r in Receiver.objects.all() if r.abbreviation != 'NS']
+    schedule  = {}
+    for day, rcvrs in Receiver_Schedule.extract_schedule(datetime.utcnow(), 90).items():
+        schedule[day] = [r in rcvrs for r in receivers]
+
+    return render_to_response(
+               'sesshuns/receivers.html'
+             , {'receivers': receivers
+              , 'schedule' : sorted(schedule.items())})
