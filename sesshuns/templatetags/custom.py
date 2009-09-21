@@ -2,6 +2,7 @@ from django              import template
 from sesshuns            import models
 from datetime            import timedelta
 from sesshuns.models     import first
+from sets                import Set
 from utilities.TimeAgent import rad2hr, rad2deg
 
 register = template.Library()
@@ -86,3 +87,27 @@ def project_type(project):
         else:
             type = 'T'
     return type            
+
+@register.filter
+def get_receiver_change(schedule, day):
+    if day.date() not in [d.date() for d in schedule.keys()]:
+        return "- No receiver changes" # No receiver change today
+
+    date     = [d for d in schedule.keys() if d.date() == day.date()][0]
+    prevdate = [d for d in sorted(schedule.keys()) if d < date][-1]
+    added    = [r.abbreviation
+                for r in (Set(schedule[date]) - Set(schedule[prevdate]))]
+    removed  = [r.abbreviation
+                for r in (Set(schedule[prevdate]) - Set(schedule[date]))]
+
+    string  = "Add: " + ", ".join(added) + " " if added else ""
+    string += ", " if string else ""
+    string += "Remove: " + ", ".join(removed) if removed else ""
+
+    return "- " + string if string else "- No receiver changes"
+
+@register.filter
+def get_receivers(schedule, day):
+    date = [d for d in sorted(schedule.keys()) if d.date() <= day.date()][-1]
+    rcvrs = schedule[date] if date else []
+    return ", ".join([r.abbreviation for r in rcvrs])

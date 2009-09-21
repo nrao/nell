@@ -89,21 +89,20 @@ def gbt_schedule(request, *args, **kws):
             # we need to make sure that the right periods get passed to
             # get_day_time
             day_tz = TimeAgent.est2utc(day_tz)
-        dayStr = "%s (%s)" % (day.strftime("%Y-%m-%d"), timezone)
-        cal[dayStr] = [get_period_day_time(day, p, start, last_day, timezone) \
-                        for p in ps if p.on_day(day_tz)]
+        cal[day] = \
+            [get_period_day_time(day, p, start, last_day, timezone) \
+             for p in ps if p.on_day(day_tz)]
 
-    # now make sure the template can handle this easy
-    calendar = cal.items()
-    calendar.sort()
-
-    return render_to_response("sesshuns/schedule.html"
-                            , {'calendar' : calendar
-                              ,'day_list' : range(1, 15)
-                              ,'tz_list'  : ['ET', 'UTC']
-                              ,'start'    : start
-                              ,'days'     : days
-                              ,'timezone' : timezone})
+    return render_to_response(
+               "sesshuns/schedule.html"
+             , {'calendar' : sorted(cal.items())
+              , 'day_list' : range(1, 15)
+              , 'tz_list'  : ['ET', 'UTC']
+              , 'timezone' : timezone
+              , 'start'    : start
+              , 'days'     : days
+              , 'rschedule': Receiver_Schedule.extract_schedule(start, days)
+              , 'timezone' : timezone})
 
 @login_required
 def dates_not_schedulable(request, *args, **kws):
