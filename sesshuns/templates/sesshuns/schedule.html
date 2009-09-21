@@ -115,7 +115,9 @@
       {% endifequal %}
       <td>
         {% for o in p.session.project.get_sanctioned_observers %}
-          {{forloop.counter}}) <a href="/profile/{{o.user.id}}">{{o.user.last_name|pretty_none}}</a> 
+          <span title="{{o.user|get_phones}}, Dynamic: {{o.user.contact_instructions}}, Reservations: {{o.user|get_reservations}}">
+            {{forloop.counter}}) <a href="/profile/{{o.user.id}}">{{o.user.last_name|pretty_none}}</a> 
+          </span>
         {% endfor %}
       </td>
       <td>
