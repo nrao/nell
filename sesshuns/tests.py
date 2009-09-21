@@ -164,7 +164,7 @@ class TestPeriod(NellTestCase):
 
     def test_update_from_post(self):
         p = Period()
-        p.init_from_post(self.fdata)
+        p.init_from_post(self.fdata, 'UTC')
         
         self.assertEqual(p.session, self.sesshun)
         self.assertEqual(p.start, datetime(2009, 6, 1, 12, 15))
@@ -184,7 +184,7 @@ class TestPeriod(NellTestCase):
 
         p.save()
 
-        jd = p.jsondict()
+        jd = p.jsondict('UTC')
 
         self.assertEqual(jd["duration"], dur)
         self.assertEqual(jd["date"], "2009-06-01")
@@ -767,20 +767,21 @@ class TestPeriodResource(NellTestCase):
                     , 'duration' : 1.0
                     , 'backup'   : True}
         self.p = Period()
-        self.p.init_from_post(self.fdata)
+        self.p.init_from_post(self.fdata, 'UTC')
         self.p.save()
 
     def test_create(self):
-        response = self.client.post(self.rootURL, self.fdata)
+        response = self.client.post(self.rootURL + '/UTC', self.fdata)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_create_empty(self):
-        response = self.client.post(self.rootURL)
+        response = self.client.post(self.rootURL + '/ET')
         self.failUnlessEqual(response.status_code, 200)
 
     def test_read(self):
-        url = "%s?startPeriods=%s&daysPeriods=%d" % \
+        url = "%s/%s?startPeriods=%s&daysPeriods=%d" % \
                             (self.rootURL 
+                           , 'UTC'
                            , self.fdata['date'] + '%20' + self.fdata['time'] + ':00'
                            , 2)
         response = self.client.get(url)
@@ -789,15 +790,18 @@ class TestPeriodResource(NellTestCase):
 
     def test_read_keywords(self):
         # use a date range that picks up our one period
-        url = "%s?startPeriods=%s&daysPeriods=%d" % \
+        url = "%s/%s?startPeriods=%s&daysPeriods=%d" % \
                             (self.rootURL 
+                           , 'UTC'
                            , self.fdata['date'] + '%20' + self.fdata['time'] + ':00'
                            , 3)
         response = self.client.get(url)
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(response.content[:11], '{"total": 1')
         # now use a date range that doesn't
-        url = "%s?startPeriods=%s&daysPeriods=%d" % (self.rootURL 
+        url = "%s/%s?startPeriods=%s&daysPeriods=%d" % (
+                                                     self.rootURL 
+                                                   , 'UTC'
                                                    , '2009-06-02 00:00:00' 
                                                    , 3)
         response = self.client.get(url)
@@ -808,11 +812,15 @@ class TestPeriodResource(NellTestCase):
     def test_update(self):
         fdata = self.fdata
         fdata.update({"_method" : "put"})
-        response = self.client.post('%s/%s' % (self.rootURL, self.p.id), fdata)
+        response = self.client.post('%s/%s/%s' % (self.rootURL
+                                                 ,'ET'
+                                                 , self.p.id), fdata)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_delete(self):
-        response = self.client.post('%s/%s' % (self.rootURL, self.p.id)
+        response = self.client.post('%s/%s/%s' % (self.rootURL
+                                                , 'ET'
+                                                , self.p.id)
                                   , {"_method" : "delete"})
         self.failUnlessEqual(response.status_code, 200)
 

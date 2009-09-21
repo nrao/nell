@@ -1392,13 +1392,13 @@ class Period(models.Model):
     class Meta:
         db_table = "periods"
     
-    def init_from_post(self, fdata):
-        self.from_post(fdata)
+    def init_from_post(self, fdata, tz):
+        self.from_post(fdata, tz)
 
-    def update_from_post(self, fdata):
-        self.from_post(fdata)
+    def update_from_post(self, fdata, tz):
+        self.from_post(fdata, tz)
 
-    def from_post(self, fdata):
+    def from_post(self, fdata, tz):
         handle = fdata.get("handle", "")
         if handle:
             self.session = self.handle2session(handle)
@@ -1408,7 +1408,12 @@ class Period(models.Model):
         now           = dt2str(TimeAgent.quarter(datetime.utcnow()))
         date          = fdata.get("date", None)
         time          = fdata.get("time", "00:00")
-        self.start    = TimeAgent.quarter(strStr2dt(date, time + ':00')) if date is not None else now
+        if date is None:
+            self.start = now
+        else:
+            self.start = TimeAgent.quarter(strStr2dt(date, time + ':00'))
+            if tz == 'ET':
+                self.start = TimeAgent.est2utc(self.start)
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
         self.score    = 0.0 # TBF how to get score?
         self.forecast = now
@@ -1436,12 +1441,13 @@ class Period(models.Model):
               , "end"  : end.isoformat()
         }
 
-    def jsondict(self):
+    def jsondict(self, tz):
+        start = self.start if tz == 'UTC' else TimeAgent.utc2est(self.start)
         return {"id"           : self.id
               , "session"      : self.session.jsondict()
               , "handle"       : self.toHandle()
-              , "date"         : d2str(self.start)
-              , "time"         : t2str(self.start)
+              , "date"         : d2str(start)
+              , "time"         : t2str(start)
               , "duration"     : self.duration
               , "score"        : self.score
               , "forecast"     : dt2str(self.forecast)
