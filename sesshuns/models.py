@@ -1403,8 +1403,11 @@ class Period(models.Model):
         if handle:
             self.session = self.handle2session(handle)
         else:
-            # TBF 268 is the Maintenance session in 09C, should generalize
-            self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
+            try:
+                maintenance = first(Project.objects.filter(pcode='Maintenance'))
+                self.session = first(Sesshun.objects.filter(project=maintenance))
+            except:
+                self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
         now           = dt2str(TimeAgent.quarter(datetime.utcnow()))
         date          = fdata.get("date", None)
         time          = fdata.get("time", "00:00")
