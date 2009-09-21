@@ -1,11 +1,16 @@
 from django              import template
 from sesshuns            import models
-from datetime            import timedelta
+from datetime            import datetime, timedelta
 from sesshuns.models     import first
 from sets                import Set
-from utilities.TimeAgent import rad2hr, rad2deg
+from utilities.TimeAgent import rad2hr, rad2deg, est2utc
+from utilities           import UserInfo
 
 register = template.Library()
+
+# persist this object to avoid having to authenticate every time
+# we want PST services
+ui = UserInfo()
 
 @register.filter
 def hrs2sex(value):
@@ -111,3 +116,27 @@ def get_receivers(schedule, day):
     date = [d for d in sorted(schedule.keys()) if d.date() <= day.date()][-1]
     rcvrs = schedule[date] if date else []
     return ", ".join([r.abbreviation for r in rcvrs])
+
+@register.filter
+def to_utc(date):
+    return est2utc(date)
+
+@register.filter
+def get_date(format):
+    return datetime.today().strftime(str(format))
+
+@register.filter
+def get_phones(user):
+    # TBF: use user's credentials to get past CAS, not Mr. Nubbles!
+    return "stuff"
+    phones = ui.getProfileByID(user, 'dss', 'MrNubbles!')['phones']
+    return ", ".join(phones)
+
+@register.filter
+def get_reservations(user):
+    # TBF: use user's credentials to get past CAS, not Mr. Nubbles!
+    return "stuff"
+    reserves = ui.getProfileByID(user, 'dss', 'MrNubbles!')['reserves']
+    reserves = [(i.strftime('%m/%d/%Y'), o.strftime('%m/%d/%Y')) for i, o in reserves]
+    reserves = [i + " to " + o for i, o in reserves]
+    return ", ".join(reserves)

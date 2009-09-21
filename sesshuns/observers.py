@@ -1,103 +1,47 @@
-from datetime                       import datetime, date, time
+from datetime                       import datetime, time, timedelta
 from django.contrib.auth.decorators import login_required
 from django.db.models         import Q
 from django.http              import HttpResponse, HttpResponseRedirect
 from django.shortcuts         import render_to_response
 from models                   import *
 from sets                     import Set
-from utilities.UserInfo       import UserInfo
-from utilities                import NRAOBosDB
+from utilities                import gen_gbt_schedule, UserInfo, NRAOBosDB
 
 # persist this object to avoid having to authenticate every time
 # we want PST services
 ui = UserInfo()
 
-# constants
-ET = 'ET'
-UTC = 'UTC'
-
-def get_period_day_time(day, period, first_day, last_day, timezone):
-    "Returns a tuple of : start, end, cutoffs, period, for used in template"
-    next_day = day + timedelta(days = 1)
-    # start with default values - as if there was no overlap
-    start = period.start
-    end = period.end()
-    if timezone == ET:
-        start = TimeAgent.utc2est(start)
-        end = TimeAgent.utc2est(end)
-    start_cutoff = end_cutoff = False
-    # but does this period overlap the given day?
-    if start < day or end >= next_day:
-        # oh, crap, overlap - cut off the dates 
-        if start < day:
-            start = day
-            # will the beginning of this period not be displayed?    
-            if day == first_day:
-                start_cutoff = True
-        if end >= next_day:
-            end = next_day
-            # will the end of this period not be displayed?    
-            if day == last_day:
-                end_cutoff = True
-    startStr = start.strftime("%H:%M")            
-    endStr = end.strftime("%H:%M")                
-    return (startStr, endStr, start_cutoff, end_cutoff, period)
-
-def gbt_schedule(request, *args, **kws):
-
+def public_schedule(request, *args, **kws):
     # serve up the GBT schedule
-    timezones = [ET, UTC]
+    timezones = ['ET', 'UTC']
 
     # TBF: error handling
     if request.method == 'POST': 
-        days = int(request.POST.get("days", 5))    
-        timezone  = request.POST.get("tz", ET)
-        startDate = request.POST.get("start", None) 
-        if startDate is not None:
-            start = datetime.strptime(startDate, "%m/%d/%Y")         
-        else:
-            start = datetime.now()
-        start = TimeAgent.truncateDt(start)     
+        timezone  = request.POST.get('tz', 'ET')
+        days      = int(request.POST.get('days', 5))    
+        startDate = request.POST.get('start', None) 
+        startDate = datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now() 
     else:
         # default time range
-        timezone = ET
-        start = TimeAgent.truncateDt(datetime.now())
-        days = 5
+        timezone  = 'ET'
+        days      = 5
+        startDate = datetime.now()
 
-    # get only the periods in that time range
-    # the tricky part is getting any that start the day before, but overlap
-    # into the first day
-    day_before = start - timedelta(days = 1)
-    end = start + timedelta(days = days)
-    last_day = end - timedelta(days = 1)
+    start = TimeAgent.truncateDt(startDate)
+    end   = start + timedelta(days = days)
 
-    # the DB is in UTC, so if request is in ETC, must perform the query
-    # using converted datetimes
-    # TBF: why doesn't ps.query.group_by = ['start'] work?
-    if timezone == ET:
-        day_before = TimeAgent.est2utc(day_before)
-        end        = TimeAgent.est2utc(end)
-    ps = Period.objects.filter(start__gt = day_before
-                             , start__lt = end).order_by('start')
+    # View is in ET or UTC, database is in UTC.
+    pstart  = TimeAgent.est2utc(start) if timezone == 'ET' else start
+    pend    = TimeAgent.est2utc(end) if timezone == 'ET' else end
+    periods = Period.in_time_range(pstart, pend)
 
-    # construct the calendar - we are getting a little bit into presentation
-    # detail here, but that's mostly because the timezone business sucks.
-    cal = {}
-    for i in range(days):
-        day = day_tz = start + timedelta(days = i)
-        if timezone == ET:
-            # we need to make sure that the right periods get passed to
-            # get_day_time
-            day_tz = TimeAgent.est2utc(day_tz)
-        cal[day] = \
-            [get_period_day_time(day, p, start, last_day, timezone) \
-             for p in ps if p.on_day(day_tz)]
+    calendar = gen_gbt_schedule(start, end, days, timezone, periods)
 
     return render_to_response(
-               "sesshuns/schedule.html"
-             , {'calendar' : sorted(cal.items())
+               'sesshuns/public_schedule.html'
+             , {'calendar' : sorted(calendar.items())
               , 'day_list' : range(1, 15)
-              , 'tz_list'  : ['ET', 'UTC']
+              , 'tz_list'  : timezones
               , 'timezone' : timezone
               , 'start'    : start
               , 'days'     : days

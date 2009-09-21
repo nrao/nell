@@ -3,6 +3,7 @@ from django.conf                   import settings
 from sesshuns.views                import *
 from sesshuns.resources            import *
 from sesshuns.observers            import *
+from sesshuns.operators            import *
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
@@ -11,7 +12,8 @@ admin.autodiscover()
 # Note a blank comment attached to the url denotes local access only
 
 urlpatterns = patterns(''
-   , url(r'^schedule$',                                    gbt_schedule)
+   , url(r'^schedule/public$',                             public_schedule)
+   , url(r'^schedule/$',                                   gbt_schedule)
    , url(r'^search$',                                      search)
    , url(r'^profile/(\d+)/blackout$',                      blackout)
    , url(r'^profile/(\d+)/blackout/form$',                 blackout_form)

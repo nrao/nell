@@ -1161,27 +1161,26 @@ class TestObservers(NellTestCase):
         day = datetime(2009, 9, 9)
         
         # make sure it comes back in the correct day for UTC
-        data = { 'start' : day.strftime("%m/%d/%Y")
+        data = { 'start': day.strftime("%m/%d/%Y")
                , 'days' : 3
-               , 'tz' : 'UTC' }
-        response = self.post('/schedule', data)
+               , 'tz'   : 'UTC' }
+        response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(u'2009-09-09 (UTC)', [('12:00', '13:00', False, False, p)])
-             , (u'2009-09-10 (UTC)', [])
-             , (u'2009-09-11 (UTC)', [])
-             ]
+        exp = [(datetime(2009, 9, 9), [(datetime(2009, 9, 9, 12), datetime(2009, 9, 9, 13), False, False, p)])
+             , (datetime(2009, 9, 10), [])
+             , (datetime(2009, 9, 11), [])]
+
         self.assertEqual(exp, calendar)     
 
         # make sure it comes back in the correct day for EST
-        data = { 'start' : day.strftime("%m/%d/%Y")
+        data = { 'start': day.strftime("%m/%d/%Y")
                , 'days' : 3
-               , 'tz' : 'ET' }
-        response = self.post('/schedule', data)
+               , 'tz'   : 'ET' }
+        response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(u'2009-09-09 (ET)', [('08:00', '09:00', False, False, p)])
-             , (u'2009-09-10 (ET)', [])
-             , (u'2009-09-11 (ET)', [])
-             ]
+        exp = [(datetime(2009, 9, 9), [(datetime(2009, 9, 9, 8), datetime(2009, 9, 9, 9), False, False, p)])
+             , (datetime(2009, 9, 10), [])
+             , (datetime(2009, 9, 11), [])]
         self.assertEqual(exp, calendar)     
 
         # clean up
@@ -1202,34 +1201,31 @@ class TestObservers(NellTestCase):
         data = { 'start' : day.strftime("%m/%d/%Y")
                , 'days' : 3
                , 'tz' : 'UTC' }
-        response = self.post('/schedule', data)
+        response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(u'2009-09-01 (UTC)', [])
-             , (u'2009-09-02 (UTC)', [('01:00', '07:00', False, False, p)])
-             , (u'2009-09-03 (UTC)', [])
-             ]
+        exp = [(datetime(2009, 9, 1), [])
+             , (datetime(2009, 9, 2), [(datetime(2009, 9, 2, 1), datetime(2009, 9, 2, 7), False, False, p)])
+             , (datetime(2009, 9, 3), [])]
         self.assertEqual(exp, calendar)     
 
         # make sure it comes back in the correct day for EST
         data = { 'start' : day.strftime("%m/%d/%Y")
                , 'days' : 3
                , 'tz' : 'ET' }
-        response = self.post('/schedule', data)
+        response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(u'2009-09-01 (ET)', [('21:00', '00:00', False, False, p)])
-             , (u'2009-09-02 (ET)', [('00:00', '03:00', False, False, p)])
-             , (u'2009-09-03 (ET)', [])
-             ]
+        exp = [(datetime(2009, 9, 1), [(datetime(2009, 9, 1, 21), datetime(2009, 9, 2), False, False, p)])
+             , (datetime(2009, 9, 2), [(datetime(2009, 9, 2), datetime(2009, 9, 2, 3), False, False, p)])
+             , (datetime(2009, 9, 3), [])]
         self.assertEqual(exp, calendar)     
 
         # show the cutoff: '(..)'
         data = { 'start' : day.strftime("%m/%d/%Y")
                , 'days' : 1
                , 'tz' : 'ET' }
-        response = self.post('/schedule', data)
+        response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(u'2009-09-01 (ET)', [('21:00', '00:00', False, True, p)])
-             ]
+        exp = [(datetime(2009, 9, 1), [(datetime(2009, 9, 1, 21), datetime(2009, 9, 2), False, True, p)])]
         self.assertEqual(exp, calendar)  
 
         # clean up
