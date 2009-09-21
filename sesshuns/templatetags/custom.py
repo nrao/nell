@@ -126,6 +126,14 @@ def get_date(format):
     return datetime.today().strftime(str(format))
 
 @register.filter
+def get_cal_start(calendar):
+    return calendar[0][0]
+
+@register.filter
+def get_cal_end(calendar):
+    return calendar[-1][0]
+
+@register.filter
 def get_phones(user):
     # TBF: use user's credentials to get past CAS, not Mr. Nubbles!
     return "stuff"

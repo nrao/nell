@@ -24,7 +24,7 @@
     $("#id_start").datepicker();
     $("#id_end").datepicker();
     $("#id_until").datepicker();
-    setTimeout('document.getCalendar.submit()', 1000*60*2);
+    setTimeout('document.getCalendar.submit()', 1000*60*5);
   });
   </script>
 {% endblock %}
@@ -50,8 +50,8 @@
     <input type="submit" value="View Schedule"/>
   </p>
   </form>
-  <strong>Helpful Links: 
-  <a href="" onClick="window.open('/receivers', 'Receiver Schedule', 'width=1000, height=700');return true;">Receiver Schedule</a>|
+  <strong>
+  Support Links:
   <a href="http://wiki.gb.nrao.edu/bin/view/Observing/GbtFriends{{'%Y%m'|get_date}}">
     On-Duty Support Scientist
   </a>
@@ -62,6 +62,21 @@
   |
   <a href="https://staff.nrao.edu/wiki/bin/view/GB/TeamSchedule2009">
     DSS Team Absences & Contact Info
+  </a>
+  <br/> 
+  Helpful Links:
+  <a href="" onClick="window.open('/receivers', 'Receiver Schedule', 'width=1000, height=700, scrollbars=yes');return true;">Receiver Schedule</a>|
+  |
+  <a href="http://www.gb.nrao.edu/~rmaddale/Weather/">
+    High Frequency Forecasts
+  </a>
+  |
+  <a href="http://www.gb.nrao.edu/~rmaddale/WeatherETA/ground.html">
+    Ground Weather Forecasts
+  </a>
+  |
+  <a href="" onClick="window.open('https://bos.nrao.edu/resReports/roomChart?Start+Date={{calendar|get_cal_start|date:'m/d/Y'}}&End+Date={{calendar|get_cal_end|date:'m/d/Y'}}&Site=1', 'Reservation Chart', 'width=1000, height=800, scrollbars=yes');return true;">
+    Reservation Chart
   </a>
   </strong>
   </center>
