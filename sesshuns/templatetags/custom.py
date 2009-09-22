@@ -4,13 +4,8 @@ from datetime            import datetime, timedelta
 from sesshuns.models     import first
 from sets                import Set
 from utilities.TimeAgent import rad2hr, rad2deg, est2utc
-from utilities           import UserInfo
 
 register = template.Library()
-
-# persist this object to avoid having to authenticate every time
-# we want PST services
-ui = UserInfo()
 
 @register.filter
 def hrs2sex(value):
@@ -118,6 +113,11 @@ def get_receivers(schedule, day):
     return ", ".join([r.abbreviation for r in rcvrs])
 
 @register.filter
+def get_utc_offset(date):
+    o = date.utcoffset()
+    return -1 * (o.days * 24 * 3600 + o.seconds) / 3600
+
+@register.filter
 def to_utc(date):
     return est2utc(date)
 
@@ -136,10 +136,8 @@ def get_cal_end(calendar):
 @register.filter
 def format_list(aList):
     "Makes a list a string"
-    return ", ".join(aList)
+    return ", ".join(aList) if aList else "None"
 
 @register.filter
-def format_reservations(reserves):
-    reserves = [(i.strftime('%m/%d/%Y'), o.strftime('%m/%d/%Y')) for i, o in reserves]
-    reserves = [i + " to " + o for i, o in reserves]
-    return ", ".join(reserves)
+def format_reservations(reservations):
+    return ", ".join([a + " to " + b for a, b in [(x.strftime('%m-%d-%Y'), y.strftime('%m-%d-%Y')) for x, y in reservations]]) if reservations else "None"

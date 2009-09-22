@@ -97,32 +97,6 @@ def events(request, *args, **kws):
 
     return HttpResponse(json.dumps(jsonobjlist))
 
-def get_day(n, today):
-    'Find the n_th day on the calendar.'
-    start = today - timedelta(today.isoweekday())
-    return start + timedelta(n)
-
-def get_current_month(n, today):
-    day   = get_day(7*(n/7), today)
-    pivot = day if day.day == 1 else day + timedelta(7)
-    return pivot.month
-
-def get_label(w, d, today):
-    'Certain day labels should include month names.'
-    n      = 7 * w + d
-    day    = get_day(n, today)
-    format = '%b %d' if day.day == 1 or n == 0 else '%d'
-    return day.strftime(format)
-
-def get_color(w, d, today):
-    n   = 7 * w + d
-    day = get_day(n, today)
-    return 'black' if day.month == get_current_month(n, today) else '#888888'
-
-def get_bgcolor(w, d, today):
-    day = get_day(7 * w + d, today)
-    return '#EEEEEE' if day == date.today() else '#FFFFFF'
-
 @login_required
 def profile(request, *args, **kws):
     loginUser = request.user.username
@@ -166,7 +140,7 @@ def profile(request, *args, **kws):
                              , 'affiliations' : static_info['affiliations']
                              , 'username'     : static_info['username']
                              , 'reserves'     : reservations
-                               })
+                             , 'isOps'        : requestor.isOperator()})
 
 @login_required
 def project(request, *args, **kws):
@@ -192,10 +166,11 @@ def project(request, *args, **kws):
 
     return render_to_response(
         "sesshuns/project.html"
-      , {'p' : project
-       , 'u' : user
-       , 'v' : project.investigator_set.order_by('priority').all()
-       , 'r' : NRAOBosDB().reservations(project)
+      , {'p'           : project
+       , 'u'           : user
+       , 'requestor'   : user
+       , 'v'           : project.investigator_set.order_by('priority').all()
+       , 'r'           : NRAOBosDB().reservations(project)
        , 'rcvr_blkouts': rcvr_blkouts
        }
     )
@@ -203,9 +178,10 @@ def project(request, *args, **kws):
 @login_required
 def search(request, *args, **kws):
     loginUser = request.user.username
-    user   = first(User.objects.filter(username = loginUser))
+    user      = first(User.objects.filter(username = loginUser))
     assert user is not None
-    search   = request.POST.get('search', '')
+
+    search = request.POST.get('search', '')
 
     projects = Project.objects.filter(
         Q(pcode__icontains = search) | \
@@ -225,9 +201,10 @@ def search(request, *args, **kws):
         Q(first_name__icontains = search) | Q(last_name__icontains = search))
 
     return render_to_response("sesshuns/search.html"
-                            , {'ps' : projects
-                             , 'us' : users
-                             , 'u'  : user
+                            , {'ps'       : projects
+                             , 'us'       : users
+                             , 'u'        : user
+                             , 'requestor': user
                                })
 
 @login_required
@@ -284,7 +261,8 @@ def dynamic_contact_form(request, *args, **kws):
         return HttpResponseRedirect("/profile")
 
     return render_to_response("sesshuns/dynamic_contact_form.html"
-                            , {'u': user})
+                            , {'u'        : user
+                             , 'requestor': requestor})
 
 @login_required
 def dynamic_contact_save(request, *args, **kws):
@@ -306,38 +284,42 @@ def dynamic_contact_save(request, *args, **kws):
 
 @login_required
 def blackout_form(request, *args, **kws):
+    u_id,     = args
     loginUser = request.user.username
-    method = request.GET.get('_method', '')
-    u_id, = args
-    user  = first(User.objects.filter(id = u_id))
+    user      = first(User.objects.filter(id = u_id))
+    requestor = first(User.objects.filter(username = loginUser))
 
     # TBF Use a decorator to see if user is allowed here
-    requestor = first(User.objects.filter(username = loginUser))
     assert requestor is not None
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
 
-    b     = first(Blackout.objects.filter(id = int(request.GET.get('id', 0))))
-    return render_to_response("sesshuns/blackout_form.html"
-                           , get_blackout_form_context(method, b, user, []))
+    method = request.GET.get('_method', '')
+    b = first(Blackout.objects.filter(id = int(request.GET.get('id', 0))))
 
-def get_blackout_form_context(method, blackout, user, errors):
+    return render_to_response(
+        "sesshuns/blackout_form.html"
+      , get_blackout_form_context(method, b, user, requestor, [])
+    )
+
+def get_blackout_form_context(method, blackout, user, requestor, errors):
     "Returns dictionary for populating blackout form"
-    times = [time(h, m).strftime("%H:%M")
-             for h in range(0, 24) for m in range(0, 60, 15)]
-    return {'method'   : method
-          , 'b'        : blackout # b's dates in DB are UTC
-          , 'u'        : user
-          , 'tzs'      : TimeZone.objects.all()
-          , 'timezone' : 'UTC' # form always starts at UTC
-          , 'repeats'  : Repeat.objects.all()
-          , 'times'    : times
-          , 'errors'   : errors
+    return {
+        'u'        : user
+      , 'requestor': requestor
+      , 'method'   : method
+      , 'b'        : blackout # b's dates in DB are UTC
+      , 'tzs'      : TimeZone.objects.all()
+      , 'timezone' : 'UTC' # form always starts at UTC
+      , 'repeats'  : Repeat.objects.all()
+      , 'times'    : [time(h, m).strftime("%H:%M") \
+                      for h in range(0, 24) for m in range(0, 60, 15)]
+      , 'errors'   : errors
     }
 
 def parse_datetime(request, dateName, timeName, utcOffset):
     "Extract the date & time from the form values to make a datetime obj"
-    dt = None
+    dt    = None
     error = None
     try:
         if request.POST[dateName] != '':
@@ -347,7 +329,7 @@ def parse_datetime(request, dateName, timeName, utcOffset):
     except:
         error = "ERROR: malformed %s date" % dateName
     return (dt, error)    
-    
+ 
 @login_required
 def blackout(request, *args, **kws):
     u_id, = args
@@ -392,11 +374,11 @@ def blackout(request, *args, **kws):
             # go back to editing this pre-existing blackout date
             b = first(Blackout.objects.filter(id = int(request.POST.get('id', 0))))
             return render_to_response("sesshuns/blackout_form.html"
-                 , get_blackout_form_context('PUT', b, user, errors))
+                 , get_blackout_form_context('PUT', b, user, requestor, errors))
          else:
             # go back to creating a new one
             return render_to_response("sesshuns/blackout_form.html"
-                 , get_blackout_form_context('', None, user, errors))
+                 , get_blackout_form_context('', None, user, requestor, errors))
          
     # no errors - retrieve obj, or create new one
     if request.POST.get('_method', '') == 'PUT':

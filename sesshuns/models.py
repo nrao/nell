@@ -5,7 +5,7 @@ from django.conf               import settings
 from django.db                 import models
 from django.http               import QueryDict
 from utilities.receiver        import ReceiverCompile
-from utilities                 import TimeAgent, UserInfo
+from utilities                 import TimeAgent, UserInfo, NRAOBosDB
 
 import calendar
 import pg
@@ -194,6 +194,9 @@ class User(models.Model):
 
     def getStaticContactInfo(self):
         return UserInfo().getProfileByID(self)
+
+    def getReservations(self):
+        return NRAOBosDB().getReservationsByUsername(self.username)
 
     def getPeriods(self):
         retval = []

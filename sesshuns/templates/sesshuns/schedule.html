@@ -1,4 +1,5 @@
-{% extends "sesshuns/operator_base.html" %}
+{% extends "sesshuns/base_wide.html" %}
+
 {% load custom %}
 
 {% block title %}GBT Schedule{% endblock %}
@@ -81,13 +82,17 @@
   </strong>
   </center>
 
+  <strong>
+  (UTC Offset = ET - {{today|get_utc_offset}} hours)
+  </strong>
   <table>
     {% for day, ps in calendar %}
     <tr class="day_header"> 
-      <th title="Start and End times for the start day (timezone). '+' indicates that the period continues on in an undisplayed date.">{{day|date:"Y-m-d"}}</th>
+      <th title="Start and End times for the start day (timezone). '+' indicates that the period continues on in an undisplayed date.">{{day|date:"Y-m-d"}} (ET)</th>
       <th title="Project Type: 'A' : Astronomy, 'T' : Test, 'M' : Maintenance">Type</th>
       <th>Project ID</th>
       <th>Project Title</th>
+      <th>PI</th>
       <th title="Ordered list of observers to contact for this project">Observers</th>
       <th>Friend</th>
       <th>Rcvrs</th>
@@ -126,8 +131,13 @@
         {% endif %}
       {% endifequal %}
       <td>
+        <a href="/profile/{{p.session.project.principle_investigator.user.id}}">
+          {{p.session.project.principal_investigator.last_name|pretty_none}}
+        </a>
+      </td>
+      <td>
         {% for o in p.session.project.get_sanctioned_observers %}
-          <span title="Phones: {{o.user.getStaticContactInfo.phones|format_list}}, Dynamic: {{o.user.contact_instructions}}, Reservations:">
+          <span title="Phones: {{o.user.getStaticContactInfo.phones|format_list}}, Dynamic: {{o.user.contact_instructions}}, Reservations: {{o.user.getReservations|format_reservations}}">
             {{forloop.counter}}) <a href="/profile/{{o.user.id}}">{{o.user.last_name|pretty_none}}</a> 
           </span>
         {% endfor %}
