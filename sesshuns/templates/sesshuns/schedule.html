@@ -1,4 +1,4 @@
-{% extends "sesshuns/base_wide.html" %}
+{% extends "sesshuns/operator_base.html" %}
 {% load custom %}
 
 {% block title %}GBT Schedule{% endblock %}
@@ -85,7 +85,6 @@
     {% for day, ps in calendar %}
     <tr class="day_header"> 
       <th title="Start and End times for the start day (timezone). '+' indicates that the period continues on in an undisplayed date.">{{day|date:"Y-m-d"}}</th>
-      <th></th>
       <th title="Project Type: 'A' : Astronomy, 'T' : Test, 'M' : Maintenance">Type</th>
       <th>Project ID</th>
       <th>Project Title</th>
@@ -98,14 +97,11 @@
       {% if start_cutoff or end_cutoff %}
         {%if start_cutoff %}
           <td>+{{start|date:"H:m"}} - {{end|date:"H:m"}}</td>
-          <td>(+{{start|to_utc|date:"H:m"}} - {{end|to_utc|date:"H:m"}})</td>
         {% else %}
           <td>{{start|date:"H:m"}} - {{end|date:"H:m"}}+</td>
-          <td>({{start|to_utc|date:"H:m"}} - {{end|to_utc|date:"H:m"}}+)</td>
         {% endif %}
       {% else %}    
           <td>{{start|date:"H:m"}} - {{end|date:"H:m"}}</td>
-          <td>({{start|to_utc|date:"H:m"}} - {{end|to_utc|date:"H:m"}})</td>
       {% endif %}    
       {% ifequal p.session.project.project_type.type "non-science" %}
         {% if p.session.project.is_maintenance %}
@@ -131,7 +127,7 @@
       {% endifequal %}
       <td>
         {% for o in p.session.project.get_sanctioned_observers %}
-          <span title="{{o.user|get_phones}}, Dynamic: {{o.user.contact_instructions}}, Reservations: {{o.user|get_reservations}}">
+          <span title="Phones: {{o.user.getStaticContactInfo.phones|format_list}}, Dynamic: {{o.user.contact_instructions}}, Reservations:">
             {{forloop.counter}}) <a href="/profile/{{o.user.id}}">{{o.user.last_name|pretty_none}}</a> 
           </span>
         {% endfor %}

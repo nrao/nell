@@ -134,17 +134,12 @@ def get_cal_end(calendar):
     return calendar[-1][0]
 
 @register.filter
-def get_phones(user):
-    # TBF: use user's credentials to get past CAS, not Mr. Nubbles!
-    return "stuff"
-    phones = ui.getProfileByID(user, 'dss', 'MrNubbles!')['phones']
-    return ", ".join(phones)
+def format_list(aList):
+    "Makes a list a string"
+    return ", ".join(aList)
 
 @register.filter
-def get_reservations(user):
-    # TBF: use user's credentials to get past CAS, not Mr. Nubbles!
-    return "stuff"
-    reserves = ui.getProfileByID(user, 'dss', 'MrNubbles!')['reserves']
+def format_reservations(reserves):
     reserves = [(i.strftime('%m/%d/%Y'), o.strftime('%m/%d/%Y')) for i, o in reserves]
     reserves = [i + " to " + o for i, o in reserves]
     return ", ".join(reserves)

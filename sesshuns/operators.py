@@ -4,11 +4,7 @@ from django.http              import HttpResponse, HttpResponseRedirect
 from django.shortcuts         import render_to_response
 from models                   import *
 from sets                     import Set
-from utilities                import gen_gbt_schedule, UserInfo
-
-# persist this object to avoid having to authenticate every time
-# we want PST services
-ui = UserInfo()
+from utilities                import gen_gbt_schedule
 
 @login_required
 def gbt_schedule(request, *args, **kws):

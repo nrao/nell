@@ -7,10 +7,6 @@ from models                   import *
 from sets                     import Set
 from utilities                import gen_gbt_schedule, UserInfo, NRAOBosDB
 
-# persist this object to avoid having to authenticate every time
-# we want PST services
-ui = UserInfo()
-
 def public_schedule(request, *args, **kws):
     # serve up the GBT schedule
     timezones = ['ET', 'UTC']
@@ -135,8 +131,7 @@ def profile(request, *args, **kws):
     # If the DSS doesn't know about the user, but the User Portal does,
     # then add them to our database so they can at least see their profile.
     if requestor is None:
-        # TBF: use user's credentials to get past CAS, not Mr. Nubbles!
-        info = ui.getStaticContactInfoByUserName(loginUser, 'dss', 'MrNubbles!')
+        info = UserInfo().getStaticContactInfoByUserName(loginUser)
         requestor = User(pst_id     = info['id']
                        , username   = loginUser
                        , first_name = info['name']['first-name']
@@ -157,45 +152,28 @@ def profile(request, *args, **kws):
     else:
         user = requestor
 
-    # get the users' info from the PST
-    try:
-        # TBF: use user's credentials to get past CAS, not Mr. Nubbles!
-        info = ui.getProfileByID(user, 'dss', 'MrNubbles!')
-    except:
-        #  we really should only see this during unit tests.
-        #print "encountered exception w/ UserInfo and user: ", user
-        info = dict(emails = [e.email for e in user.email_set.all()]
-                  , phones = ['Not Available']
-                  , postals = ['Not Available']
-                  , affiliations = ['Not Available']
-                  , username = user.username)
-        
-    # get the reservations information from BOS
-    bos = NRAOBosDB()
-    reservations = bos.getReservationsByUsername(user.username)
-
-    # 
+    static_info  = user.getStaticContactInfo()
+    reservations = NRAOBosDB().getReservationsByUsername(user.username)
 
     return render_to_response("sesshuns/profile.html"
                             , {'u'            : user
                              , 'requestor'    : requestor
                              , 'authorized'   : user == requestor # allowed to edit
                              #, 'clients'      : Project.objects.filter(friend=user)
-                             , 'emails'       : info['emails']
-                             , 'phones'       : info['phones']
-                             , 'postals'      : info['postals']
-                             , 'affiliations' : info['affiliations']
-                             , 'username'     : info['username']
+                             , 'emails'       : static_info['emails']
+                             , 'phones'       : static_info['phones']
+                             , 'postals'      : static_info['postals']
+                             , 'affiliations' : static_info['affiliations']
+                             , 'username'     : static_info['username']
                              , 'reserves'     : reservations
                                })
 
 @login_required
 def project(request, *args, **kws):
-    bos = NRAOBosDB()
     loginUser = request.user.username
-    user   = first(User.objects.filter(username = loginUser))
+    user      = first(User.objects.filter(username = loginUser))
     assert user is not None
-    pcode, = args
+    pcode,    = args
     #  If the requestor is not on this project redirect to their profile.
     if pcode not in [i.project.pcode for i in user.investigator_set.all()] \
             and not user.isAdmin():
@@ -217,7 +195,7 @@ def project(request, *args, **kws):
       , {'p' : project
        , 'u' : user
        , 'v' : project.investigator_set.order_by('priority').all()
-       , 'r' : bos.reservations(project)
+       , 'r' : NRAOBosDB().reservations(project)
        , 'rcvr_blkouts': rcvr_blkouts
        }
     )

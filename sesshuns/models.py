@@ -5,7 +5,7 @@ from django.conf               import settings
 from django.db                 import models
 from django.http               import QueryDict
 from utilities.receiver        import ReceiverCompile
-from utilities                 import TimeAgent
+from utilities                 import TimeAgent, UserInfo
 
 import calendar
 import pg
@@ -177,6 +177,9 @@ class User(models.Model):
     contact_instructions = models.TextField(null = True)
     role                 = models.ForeignKey(Role)
 
+    class Meta:
+        db_table = "users"
+
     def __str__(self):
         return "%s, %s" % (self.last_name, self.first_name)
 
@@ -189,8 +192,8 @@ class User(models.Model):
     def isOperator(self):
         return self.role.role == "Operator"
 
-    class Meta:
-        db_table = "users"
+    def getStaticContactInfo(self):
+        return UserInfo().getProfileByID(self)
 
     def getPeriods(self):
         retval = []
