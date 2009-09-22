@@ -10,6 +10,7 @@ import lxml.etree as et
 from models                          import *
 from test_utils.NellTestCase         import NellTestCase
 from tools                           import DBReporter
+from tools                           import TimeAccounting
 from utilities.database              import DSSPrime2DSS
 from utilities.receiver              import ReceiverCompile
 from utilities                       import UserInfo
@@ -191,6 +192,66 @@ class TestPeriod(NellTestCase):
         self.assertEqual(jd["time"], "12:15")
 
         p.delete()
+
+    def test_get_periods(self):
+
+        # setup some periods
+        times = [(datetime(2000, 1, 1, 0), 5.0)
+               , (datetime(2000, 1, 1, 5), 3.0)
+               , (datetime(2000, 1, 1, 8), 4.0)
+               ]
+        ps = []
+        for start, dur in times:
+            pa = Period_Accounting(scheduled = dur)
+            pa.save()
+            p = Period( session    = self.sesshun
+                      , start      = start
+                      , duration   = dur
+                      , accounting = pa
+                      )
+            p.save()          
+            ps.append(p)
+
+        # now try and retrieve them from the DB:
+        # get them all
+        dt1 = datetime(2000, 1, 1, 0)
+        dur = 12 * 60
+        ps1 = Period.get_periods(dt1, dur)
+        self.assertEquals(ps1, ps)
+
+        # get them all because the first overlaps
+        dt1 = datetime(2000, 1, 1, 1)
+        dur = 12 * 60
+        ps1 = Period.get_periods(dt1, dur)
+        self.assertEquals(ps1, ps)
+
+        # now leave out the first
+        dt1 = datetime(2000, 1, 1, 5)
+        dur = 12 * 60
+        ps1 = Period.get_periods(dt1, dur)
+        self.assertEquals(ps1, ps[1:])
+
+        # keep getting the last one too
+        dt1 = datetime(2000, 1, 1, 5)
+        dur = 6 * 60
+        ps1 = Period.get_periods(dt1, dur)
+        self.assertEquals(ps1, ps[1:])
+
+        # now just get the middle one
+        dt1 = datetime(2000, 1, 1, 5)
+        dur = 3 * 60
+        ps1 = Period.get_periods(dt1, dur)
+        self.assertEquals(ps1, [ps[1]])
+
+        # again, just the middle one
+        dt1 = datetime(2000, 1, 1, 6)
+        dur = 2 * 60
+        ps1 = Period.get_periods(dt1, dur)
+        self.assertEquals(ps1, [ps[1]])
+
+        # cleanup
+        for p in ps:
+            p.delete()
 
 class TestReceiver(NellTestCase):
 
@@ -977,6 +1038,15 @@ class TestGetOptions(NellTestCase):
         self.assertEquals(response.content,
                           '{"session handles": ["Low Frequency With No RFI (GBT09A-001)"]}')
 
+class TestChangeSchedule(NellTestCase):
+    def test_change_schedule(self):
+        create_sesshun()
+        c = Client()
+        response = c.post('/schedule/change_schedule'
+                        , dict(duration = "60"
+                             , start    = "2009-10-11 04:00:00"))
+        print response
+
 # Testing Observers UI
 
 class TestObservers(NellTestCase):
@@ -1504,5 +1574,197 @@ class TestNRAOBosDB(NellTestCase):
         exp = [(datetime(2009, 8, 25, 0, 0), datetime(2009, 8, 28, 0, 0))]
         self.assertEqual(dates, exp)
 
+class TestTimeAccounting(NellTestCase):
+
+    def setUp(self):
+        super(TestTimeAccounting, self).setUp()
+
+        # setup some periods
+        self.start = datetime(2000, 1, 1, 0)
+        self.end   = self.start + timedelta(hours = 12)
+        times = [(datetime(2000, 1, 1, 0), 5.0, "one")
+               , (datetime(2000, 1, 1, 5), 3.0, "two")
+               , (datetime(2000, 1, 1, 8), 4.0, "three")
+               ]
+        self.ps = []
+        for start, dur, name in times:
+            s = create_sesshun()
+            s.name = name
+            s.save()
+            pa = Period_Accounting(scheduled = dur)
+            pa.save()
+            p = Period( session    = s
+                      , start      = start
+                      , duration   = dur
+                      , accounting = pa
+                      )
+            p.save()          
+            self.ps.append(p)
+
+        self.backup = create_sesshun()
+        self.backup.name = "backup"
+        self.backup.status.backup = True
+        self.backup.save()
+
+    def tearDown(self):
+        super(TestTimeAccounting, self).tearDown()
+
+        for p in self.ps:
+            p.session.delete()
+            p.delete()
+
+
+    def test_changeSchedule1(self):
+
+        # check accounting before changing schedule
+        scheduled = [5.0, 3.0, 4.0]
+        for i, p in enumerate(self.ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(scheduled[i], p.accounting.observed())
+
+        # try to mirror examples from Memo 11.2
+        # Example 2 (Ex. 1 is a no op)
+        change_start = self.ps[0].start + timedelta(hours = 2)
+        TimeAccounting().changeSchedule(change_start 
+                                    , 3.0 * 60.0
+                                    , self.backup
+                                    , "other_session_other"
+                                    , "SP broke.")
+        
+        # get the periods from the DB again for updated values
+        ps = Period.get_periods(self.start, 12.0*60.0)
+        # check accounting after changing schedule
+        scheduled = [5.0, 3.0, 3.0, 4.0]
+        observed  = [2.0, 3.0, 3.0, 4.0]
+        for i, p in enumerate(ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(observed[i] , p.accounting.observed())
+        # check affected periods
+        canceled = ps[0]
+        backup   = ps[1]
+        self.assertEquals(self.start, canceled.start)
+        self.assertEquals(2.0, canceled.duration)
+        self.assertEquals(3.0, canceled.accounting.other_session_other)
+        self.assertEquals("SP broke.", canceled.accounting.description)
+        self.assertEquals(3.0, backup.accounting.short_notice)
+        self.assertEquals("SP broke.", backup.accounting.description)
+
+    def test_changeSchedule2(self):
+
+        # check accounting before changing schedule
+        scheduled = [5.0, 3.0, 4.0]
+        for i, p in enumerate(self.ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(scheduled[i], p.accounting.observed())
+
+        # try to mirror examples from Memo 11.2
+        # Example 3 - last 3 hrs of first period replaced w/ nothing 
+        change_start = self.ps[0].start + timedelta(hours = 2)
+        desc = "SP croaked."
+        TimeAccounting().changeSchedule(change_start 
+                                    , 3.0 * 60.0
+                                    , None
+                                    , "lost_time_other"
+                                    , desc)
+        
+        # get the periods from the DB again for updated values
+        ps = Period.get_periods(self.start, 12.0*60.0)
+        # check accounting after changing schedule
+        scheduled = [5.0, 3.0, 4.0]
+        observed  = [2.0, 3.0, 4.0]
+        times = [p.start for p in self.ps]
+        for i, p in enumerate(ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(observed[i] , p.accounting.observed())
+            self.assertEquals(times[i] , p.start)
+        # check affected periods
+        canceled = ps[0]
+        self.assertEquals(self.start, canceled.start)
+        self.assertEquals(2.0, canceled.duration)
+        self.assertEquals(3.0, canceled.accounting.lost_time_other)
+        self.assertEquals(desc, canceled.accounting.description)
+
+    def test_changeSchedule3(self):
+
+        # check accounting before changing schedule
+        scheduled = [5.0, 3.0, 4.0]
+        for i, p in enumerate(self.ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(scheduled[i], p.accounting.observed())
+
+        # try to mirror examples from Memo 11.2
+        # Example 4 (Second Period start early at expense of first)
+        change_start = self.ps[1].start - timedelta(hours = 1)
+        backup = self.ps[1].session
+        desc = "Session Two starting hour early; not billed time for Two."
+        TimeAccounting().changeSchedule(change_start 
+                                    , 1.0 * 60.0
+                                    , backup
+                                    , "other_session_weather"
+                                    , desc)
+        
+        # get the periods from the DB again for updated values
+        ps = Period.get_periods(self.start, 12.0*60.0)
+        # check accounting after changing schedule
+        scheduled = [5.0, 1.0, 3.0, 4.0]
+        observed  = [4.0, 1.0, 3.0, 4.0]
+        for i, p in enumerate(ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(observed[i] , p.accounting.observed())
+        # check affected periods
+        canceled = ps[0]
+        backup   = ps[1]
+        self.assertEquals(self.start, canceled.start)
+        self.assertEquals(4.0, canceled.duration)
+        self.assertEquals(1.0, canceled.accounting.other_session_weather)
+        self.assertEquals(desc, canceled.accounting.description)
+        self.assertEquals(1.0, backup.accounting.short_notice)
+        self.assertEquals(desc, backup.accounting.description)                        
+        # now, don't bill this new period the hour
+        self.assertEquals(1.0, backup.accounting.observed())
+        self.assertEquals(1.0, backup.accounting.time_billed())
+        backup.accounting.not_billable = 1.0
+        backup.accounting.save()
+        self.assertEquals(1.0, backup.accounting.observed())
+        self.assertEquals(0.0, backup.accounting.time_billed())
+
+    def test_changeSchedule4(self):
+
+        # check accounting before changing schedule
+        scheduled = [5.0, 3.0, 4.0]
+        for i, p in enumerate(self.ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(scheduled[i], p.accounting.observed())
+
+        # try to mirror examples from Memo 11.2
+        # Example 5 (scheduled first period replaced w/ backup)
+        change_start = self.ps[0].start 
+        desc = "Hurricane Georges"
+        TimeAccounting().changeSchedule(change_start 
+                                    , 5.0*60.0
+                                    , self.backup
+                                    , "other_session_weather"
+                                    , desc)
+        
+        # get the periods from the DB again for updated values
+        ps = Period.get_periods(self.start, 12.0*60.0)
+        # TBF: how to handle these Periods that r compleletly replaced?
+        canceled_ps = [p for p in ps if p.duration == 0.0]
+        ps = [p for p in ps if p.duration != 0.0]
+        # check accounting after changing schedule
+        scheduled = [5.0, 3.0, 4.0]
+        observed  = [5.0, 3.0, 4.0]
+        for i, p in enumerate(ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(observed[i] , p.accounting.observed())
+        # check affected periods
+        canceled = first(Period.objects.filter(duration = 0.0))
+        backup   = ps[0]
+        self.assertEquals(self.start, canceled.start)
+        self.assertEquals(0.0, canceled.duration)
+        self.assertEquals(5.0, canceled.accounting.other_session_weather)
+        self.assertEquals(desc, canceled.accounting.description)
+        self.assertEquals(5.0, backup.accounting.short_notice)
+        self.assertEquals(desc, backup.accounting.description)
 
 
