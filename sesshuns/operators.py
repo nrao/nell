@@ -4,11 +4,8 @@ from django.http              import HttpResponse, HttpResponseRedirect
 from django.shortcuts         import render_to_response
 from models                   import *
 from sets                     import Set
-from utilities                import gen_gbt_schedule, UserInfo
-
-# persist this object to avoid having to authenticate every time
-# we want PST services
-ui = UserInfo()
+from utilities                import gen_gbt_schedule
+from utilities.TimeAgent      import EST
 
 @login_required
 def gbt_schedule(request, *args, **kws):
@@ -48,10 +45,12 @@ def gbt_schedule(request, *args, **kws):
               , 'day_list' : range(1, 15)
               , 'tz_list'  : timezones
               , 'timezone' : timezone
+              , 'today'    : datetime.now(EST)
               , 'start'    : start
               , 'days'     : days
               , 'rschedule': Receiver_Schedule.extract_schedule(start, days)
-              , 'timezone' : timezone})
+              , 'timezone' : timezone
+              , 'requestor': requestor})
 
 def rcvr_schedule(request, *args, **kwds):
     receivers = [r for r in Receiver.objects.all() if r.abbreviation != 'NS']

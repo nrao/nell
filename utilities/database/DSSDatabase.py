@@ -56,16 +56,16 @@ class DSSDatabase(object):
             # first, what's the status?
             print "First, check DB vs. PST."
             print "Are these differences in names acceptable?"
-            self.un.confirmUserInfo('dss', 'MrNubbles!')
+            self.un.confirmUserInfo()
             x = raw_input("Continue and get missing IDs/usernames? CtrlX if not.")
 
-        self.un.getUserNamesFromProjects('dss', 'MrNubbles!')
+        self.un.getUserNamesFromProjects()
 
-        self.un.getUserNamesFromIDs('dss', 'MrNubbles!')
+        self.un.getUserNamesFromIDs()
 
         if self.interactive:
             print "Finally, check DB vs. PST one more time: "
-            self.un.confirmUserInfo('dss', 'MrNubbles!')
+            self.un.confirmUserInfo()
 
             print "Fix the rest."
             print ""

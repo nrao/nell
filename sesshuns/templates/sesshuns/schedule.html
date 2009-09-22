@@ -1,4 +1,5 @@
 {% extends "sesshuns/base_wide.html" %}
+
 {% load custom %}
 
 {% block title %}GBT Schedule{% endblock %}
@@ -24,7 +25,7 @@
     $("#id_start").datepicker();
     $("#id_end").datepicker();
     $("#id_until").datepicker();
-    setTimeout('document.getCalendar.submit()', 1000*60*2);
+    setTimeout('document.getCalendar.submit()', 1000*60*5);
   });
   </script>
 {% endblock %}
@@ -50,30 +51,48 @@
     <input type="submit" value="View Schedule"/>
   </p>
   </form>
-  <strong>Helpful Links: 
-  <a href="" onClick="window.open('/receivers', 'Receiver Schedule', 'width=1000, height=700');return true;">Receiver Schedule</a>|
-  <a href="http://wiki.gb.nrao.edu/bin/view/Observing/GbtFriends{{'%Y%m'|get_date}}">
+  <strong>
+  Support Links:
+  <a href="#" onClick="window.open('http://wiki.gb.nrao.edu/bin/view/Observing/GbtFriends{{'%Y%m'|get_date}}', 'On-Duty Support Scientist', 'width=1000, height=700, scrollbars=yes');return true;">
     On-Duty Support Scientist
   </a>
   |
-  <a href="https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar">
+  <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar', 'Support Staff Absences & Contact Info', 'width=1000, height=700, scrollbars=yes');return true;">
     Support Staff Absences & Contact Info
   </a>
   |
-  <a href="https://staff.nrao.edu/wiki/bin/view/GB/TeamSchedule2009">
+  <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/TeamSchedule2009', 'DSS Team Absences & Contact Info', 'width=1000, height=700, scrollbars=yes');return true;">
     DSS Team Absences & Contact Info
+  </a>
+  <br/> 
+  Helpful Links:
+  <a href="#" onClick="window.open('/receivers', 'Receiver Schedule', 'width=1000, height=700, scrollbars=yes');return true;">Receiver Schedule</a>|
+  |
+  <a href="#", onClick="window.open('http://www.gb.nrao.edu/~rmaddale/Weather/', 'High Frequency Forecasts', 'width=1000, height=700, scrollbars=yes');return true;">
+    High Frequency Forecasts
+  </a>
+  |
+  <a href="#", onClick="window.open('http://www.gb.nrao.edu/~rmaddale/WeatherETA/ground.html', 'Ground Weather Forecasts', 'width=1000, height=700, scrollbars=yes');return true;">
+    Ground Weather Forecasts
+  </a>
+  |
+  <a href="#" onClick="window.open('https://bos.nrao.edu/resReports/roomChart?Start+Date={{calendar|get_cal_start|date:'m/d/Y'}}&End+Date={{calendar|get_cal_end|date:'m/d/Y'}}&Site=1', 'Reservation Chart', 'width=1000, height=800, scrollbars=yes');return true;">
+    Reservation Chart
   </a>
   </strong>
   </center>
 
+  <strong>
+  (UTC Offset = ET - {{today|get_utc_offset}} hours)
+  </strong>
   <table>
     {% for day, ps in calendar %}
     <tr class="day_header"> 
-      <th title="Start and End times for the start day (timezone). '+' indicates that the period continues on in an undisplayed date.">{{day|date:"Y-m-d"}}</th>
-      <th></th>
+      <th title="Start and End times for the start day (timezone). '+' indicates that the period continues on in an undisplayed date.">{{day|date:"Y-m-d"}} (ET)</th>
       <th title="Project Type: 'A' : Astronomy, 'T' : Test, 'M' : Maintenance">Type</th>
       <th>Project ID</th>
       <th>Project Title</th>
+      <th>PI</th>
       <th title="Ordered list of observers to contact for this project">Observers</th>
       <th>Friend</th>
       <th>Rcvrs</th>
@@ -83,14 +102,11 @@
       {% if start_cutoff or end_cutoff %}
         {%if start_cutoff %}
           <td>+{{start|date:"H:m"}} - {{end|date:"H:m"}}</td>
-          <td>(+{{start|to_utc|date:"H:m"}} - {{end|to_utc|date:"H:m"}})</td>
         {% else %}
           <td>{{start|date:"H:m"}} - {{end|date:"H:m"}}+</td>
-          <td>({{start|to_utc|date:"H:m"}} - {{end|to_utc|date:"H:m"}}+)</td>
         {% endif %}
       {% else %}    
           <td>{{start|date:"H:m"}} - {{end|date:"H:m"}}</td>
-          <td>({{start|to_utc|date:"H:m"}} - {{end|to_utc|date:"H:m"}})</td>
       {% endif %}    
       {% ifequal p.session.project.project_type.type "non-science" %}
         {% if p.session.project.is_maintenance %}
@@ -103,7 +119,7 @@
       {% endifequal %}
       <td><a href="/project/{{p.session.project.pcode}}">{{p.session.project.pcode}}</a></td>
       {% ifequal p.session.project.project_type.type "science" %}
-        <td><a href="http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}">{{p.session.project.name}}</a></td>
+        <td><a href="#" onClick="window.open('http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}', 'Proposal Cover Page', 'width=1000, height=700, scrollbars=yes');return true;">{{p.session.project.name}}</a></td>
       {% else %}
         {% if p.session.project.is_maintenance %}
           <td>
@@ -115,8 +131,13 @@
         {% endif %}
       {% endifequal %}
       <td>
+        <a href="/profile/{{p.session.project.principle_investigator.user.id}}">
+          {{p.session.project.principal_investigator.last_name|pretty_none}}
+        </a>
+      </td>
+      <td>
         {% for o in p.session.project.get_sanctioned_observers %}
-          <span title="{{o.user|get_phones}}, Dynamic: {{o.user.contact_instructions}}, Reservations: {{o.user|get_reservations}}">
+          <span title="Phones: {{o.user.getStaticContactInfo.phones|format_list}}, Dynamic: {{o.user.contact_instructions}}, Reservations: {{o.user.getReservations|format_reservations}}">
             {{forloop.counter}}) <a href="/profile/{{o.user.id}}">{{o.user.last_name|pretty_none}}</a> 
           </span>
         {% endfor %}
