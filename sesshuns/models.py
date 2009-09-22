@@ -478,7 +478,7 @@ class Project(models.Model):
         return True if sessions != [] else False
 
     def get_sanctioned_observers(self):
-        return [i for i in self.investigator_set.all() \
+        return [i for i in self.investigator_set.order_by('priority').all() \
                 if i.observer and i.user.sanctioned]
 
     def has_sanctioned_observers(self):
