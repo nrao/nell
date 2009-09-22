@@ -121,7 +121,8 @@ def profile(request, *args, **kws):
                         if i.project.pcode in uprojects]
         #  If the requestor is not the user profile requested and they are
         #  not on the same project redirect to the requestor's profile.
-        if user != requestor and rprojects == [] and not requestor.isAdmin():
+        if user != requestor and rprojects == [] \
+           and not requestor.isAdmin() and not requestor.isOperator():
             return HttpResponseRedirect("/profile")
     else:
         user = requestor
@@ -150,7 +151,7 @@ def project(request, *args, **kws):
     pcode,    = args
     #  If the requestor is not on this project redirect to their profile.
     if pcode not in [i.project.pcode for i in user.investigator_set.all()] \
-            and not user.isAdmin():
+       and not user.isAdmin() and not user.isOperator():
         return HttpResponseRedirect("/profile")
         
     project = first(Project.objects.filter(pcode = pcode))
