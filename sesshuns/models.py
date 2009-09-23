@@ -4,12 +4,14 @@ from tools                     import TimeAccounting
 from django.conf               import settings
 from django.db                 import models
 from django.http               import QueryDict
+from settings                  import ANTIOCH_SERVER_URL
 from utilities.receiver        import ReceiverCompile
 from utilities                 import TimeAgent, UserInfo, NRAOBosDB
 
 import calendar
 import pg
 from sets                      import Set
+import urllib2
 import simplejson as json
 import sys
 
@@ -1401,9 +1403,6 @@ class Period(models.Model):
     def display_name(self):
         return self.__str__()
 
-    class Meta:
-        db_table = "periods"
-    
     def init_from_post(self, fdata, tz):
         self.from_post(fdata, tz)
 
@@ -1468,6 +1467,21 @@ class Period(models.Model):
               , "forecast"     : dt2str(self.forecast)
               , "backup"       : self.backup
                 }
+
+    def get_moc(self):
+        "Returns a Boolean indicated if MOC are met or not."
+        url = ANTIOCH_SERVER_URL + \
+              "/moc?session_id=" + \
+              `self.session.id` + \
+              "&start=" + \
+              self.start.isoformat().replace("T", "+").replace(":", "%3A")
+        try:
+            antioch_cnn = urllib2.build_opener().open(url)
+            moc = json.loads(antioch_cnn.read(0x4000))['moc']
+        except:
+            moc = True
+
+        return moc
 
     def has_required_receivers(self):
 
