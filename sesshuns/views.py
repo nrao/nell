@@ -2,7 +2,7 @@ from datetime                 import date, datetime, timedelta
 from django.http              import HttpResponse
 from models                   import Project, Sesshun, Period
 from models                   import Receiver_Schedule, first
-from tools                    import IcalMap, TimeAccounting
+from tools                    import IcalMap, ScheduleTools
 from settings                 import PROXY_PORT
 
 import simplejson as json
@@ -88,9 +88,9 @@ def change_schedule(request, *args, **kws):
     s = first(Sesshun.objects.filter(name = sess_name))
     reason = request.POST.get("reason", "other_session_other")
     desc = request.POST.get("description", "") 
-    # Time Accounting handles the heavy lifting
-    ta = TimeAccounting()
-    ta.changeSchedule(startdate, duration, s, reason, desc)
+    # this method handles the heavy lifting
+    st = ScheduleTools()
+    st.changeSchedule(startdate, duration, s, reason, desc)
     return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
     
     

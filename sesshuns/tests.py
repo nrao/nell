@@ -10,7 +10,7 @@ import lxml.etree as et
 from models                          import *
 from test_utils.NellTestCase         import NellTestCase
 from tools                           import DBReporter
-from tools                           import TimeAccounting
+from tools                           import ScheduleTools
 from utilities.database              import DSSPrime2DSS
 from utilities.receiver              import ReceiverCompile
 from utilities                       import UserInfo
@@ -1045,7 +1045,6 @@ class TestChangeSchedule(NellTestCase):
         response = c.post('/schedule/change_schedule'
                         , dict(duration = "60"
                              , start    = "2009-10-11 04:00:00"))
-        print response
 
 # Testing Observers UI
 
@@ -1574,10 +1573,10 @@ class TestNRAOBosDB(NellTestCase):
         exp = [(datetime(2009, 8, 25, 0, 0), datetime(2009, 8, 28, 0, 0))]
         self.assertEqual(dates, exp)
 
-class TestTimeAccounting(NellTestCase):
+class TestScheduleTools(NellTestCase):
 
     def setUp(self):
-        super(TestTimeAccounting, self).setUp()
+        super(TestScheduleTools, self).setUp()
 
         # setup some periods
         self.start = datetime(2000, 1, 1, 0)
@@ -1607,7 +1606,7 @@ class TestTimeAccounting(NellTestCase):
         self.backup.save()
 
     def tearDown(self):
-        super(TestTimeAccounting, self).tearDown()
+        super(TestScheduleTools, self).tearDown()
 
         for p in self.ps:
             p.session.delete()
@@ -1625,7 +1624,7 @@ class TestTimeAccounting(NellTestCase):
         # try to mirror examples from Memo 11.2
         # Example 2 (Ex. 1 is a no op)
         change_start = self.ps[0].start + timedelta(hours = 2)
-        TimeAccounting().changeSchedule(change_start 
+        ScheduleTools().changeSchedule(change_start 
                                     , 3.0 * 60.0
                                     , self.backup
                                     , "other_session_other"
@@ -1661,7 +1660,7 @@ class TestTimeAccounting(NellTestCase):
         # Example 3 - last 3 hrs of first period replaced w/ nothing 
         change_start = self.ps[0].start + timedelta(hours = 2)
         desc = "SP croaked."
-        TimeAccounting().changeSchedule(change_start 
+        ScheduleTools().changeSchedule(change_start 
                                     , 3.0 * 60.0
                                     , None
                                     , "lost_time_other"
@@ -1697,7 +1696,7 @@ class TestTimeAccounting(NellTestCase):
         change_start = self.ps[1].start - timedelta(hours = 1)
         backup = self.ps[1].session
         desc = "Session Two starting hour early; not billed time for Two."
-        TimeAccounting().changeSchedule(change_start 
+        ScheduleTools().changeSchedule(change_start 
                                     , 1.0 * 60.0
                                     , backup
                                     , "other_session_weather"
@@ -1740,7 +1739,7 @@ class TestTimeAccounting(NellTestCase):
         # Example 5 (scheduled first period replaced w/ backup)
         change_start = self.ps[0].start 
         desc = "Hurricane Georges"
-        TimeAccounting().changeSchedule(change_start 
+        ScheduleTools().changeSchedule(change_start 
                                     , 5.0*60.0
                                     , self.backup
                                     , "other_session_weather"

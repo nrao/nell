@@ -1,6 +1,6 @@
 from datetime                  import datetime, timedelta
 from math                      import asin, acos, cos, sin
-#from tools                     import TimeAccounting
+from tools                     import TimeAccounting
 from django.conf               import settings
 from django.db                 import models
 from django.http               import QueryDict
@@ -1177,8 +1177,8 @@ class Sesshun(models.Model):
 
         #return consolidate_events(find_intersections(blackouts))
 
-    #def getObservedTime(self):
-    #    return TimeAccounting().getObservedTime(self)
+    def getObservedTime(self):
+        return TimeAccounting().getObservedTime(self)
 
     def jsondict(self):
         target  = first(self.target_set.all())
@@ -1581,6 +1581,7 @@ class Period(models.Model):
         return ps
           
         
+    @staticmethod    
     def in_time_range(begin, end):
         """
         Returns all periods in a time range, taking into account that periods
