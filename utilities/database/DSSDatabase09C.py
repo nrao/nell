@@ -55,7 +55,7 @@ class DSSDatabase09C(DSSDatabase):
         rcvrChanges.append((dt, rcvrs))
 
         # Nov 18: Ku -> Ka 
-        dt = datetime(2009, 11, 12, 16)
+        dt = datetime(2009, 11, 18, 16)
         rcvrs = ['L', 'K', 'X', 'Ka', 'MBA', 'S', 'Hol', 'Q', 'Ka', '800'] 
         rcvrChanges.append((dt, rcvrs))
 
