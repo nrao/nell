@@ -29,34 +29,34 @@ class DSSDatabase09C(DSSDatabase):
 
         # "versoin 2.0[sick] receiver schedule for Oct - Jan"
 
-        # Oct 7: C -> K
+        # Oct 7: K goes up
         dt = datetime(2009, 10, 7, 16)
-        rcvrs = ['L', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '1070'] 
+        rcvrs = ['L', 'C', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '1070'] 
         rcvrChanges.append((dt, rcvrs))
 
         # Oct 13: 1070 -> 800
         dt = datetime(2009, 10, 13, 16)
-        rcvrs = ['L', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '800'] 
+        rcvrs = ['L', 'C', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '800'] 
         rcvrChanges.append((dt, rcvrs))
 
         # Oct 28: 800 -> 450
         dt = datetime(2009, 10, 28, 16)
-        rcvrs = ['L', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '450'] 
+        rcvrs = ['L', 'C', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '450'] 
         rcvrChanges.append((dt, rcvrs))
 
-        # Nov 4: Ku -> MBA, 450 -> 600
+        # Nov 4: C -> MBA, 450 -> 600
         dt = datetime(2009, 11, 4, 16)
-        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Hol', 'Q', '600'] 
+        rcvrs = ['L', 'K', 'X', 'Ku', 'MBA', 'S', 'Hol', 'Q', '600'] 
         rcvrChanges.append((dt, rcvrs))
 
         # Nov 12: 600 -> 800
         dt = datetime(2009, 11, 12, 16)
-        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Hol', 'Q', '800'] 
+        rcvrs = ['L', 'K', 'X', 'Ku', 'MBA', 'S', 'Hol', 'Q', '800'] 
         rcvrChanges.append((dt, rcvrs))
 
-        # Nov 18: Ka goes up (apparently there's always been space for it)
+        # Nov 18: Ku -> Ka 
         dt = datetime(2009, 11, 12, 16)
-        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Hol', 'Q', 'Ka', '800'] 
+        rcvrs = ['L', 'K', 'X', 'Ka', 'MBA', 'S', 'Hol', 'Q', 'Ka', '800'] 
         rcvrChanges.append((dt, rcvrs))
 
         # Nov 23: 800 -> 342
@@ -89,8 +89,8 @@ class DSSDatabase09C(DSSDatabase):
         rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Hol', 'Q', '342'] 
         rcvrChanges.append((dt, rcvrs))
 
-        # Feb 3: 342 -> 1070
-        dt = datetime(2010, 2, 3, 16)
+        # Feb 2: 342 -> 1070
+        dt = datetime(2010, 2, 2, 16)
         rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Hol', 'Q', '1070'] 
         rcvrChanges.append((dt, rcvrs))
 

@@ -318,16 +318,17 @@ class Allotment(models.Model):
         db_table = "allotment"
         
 class Project(models.Model):
-    semester     = models.ForeignKey(Semester)
-    project_type = models.ForeignKey(Project_Type)
-    allotments   = models.ManyToManyField(Allotment, through = "Project_Allotment")
-    pcode        = models.CharField(max_length = 32)
-    name         = models.CharField(max_length = 150)
-    thesis       = models.BooleanField()
-    complete     = models.BooleanField()
-    start_date   = models.DateTimeField(null = True, blank = True)
-    end_date     = models.DateTimeField(null = True, blank = True)
-    friend       = models.ForeignKey(User, null = True, blank = True)
+    semester         = models.ForeignKey(Semester)
+    project_type     = models.ForeignKey(Project_Type)
+    allotments       = models.ManyToManyField(Allotment, through = "Project_Allotment")
+    pcode            = models.CharField(max_length = 32)
+    name             = models.CharField(max_length = 150)
+    thesis           = models.BooleanField()
+    complete         = models.BooleanField()
+    start_date       = models.DateTimeField(null = True, blank = True)
+    end_date         = models.DateTimeField(null = True, blank = True)
+    friend           = models.ForeignKey(User, null = True, blank = True)
+    accounting_notes = models.CharField(null = True, max_length = 1024)
 
     base_url = "/sesshuns/project/"
 
@@ -640,7 +641,7 @@ class Blackout(models.Model):
     end          = models.DateTimeField(null = True)
     repeat       = models.ForeignKey(Repeat)
     until        = models.DateTimeField(null = True)
-    description  = models.CharField(null = True, max_length = 512)
+    description  = models.CharField(null = True, max_length = 1024)
 
     def __unicode__(self):
         return "%s Blackout for %s: %s - %s" % \
@@ -933,6 +934,8 @@ class Sesshun(models.Model):
     max_duration       = models.FloatField(null = True, help_text = "Hours")
     min_duration       = models.FloatField(null = True, help_text = "Hours")
     time_between       = models.FloatField(null = True, help_text = "Hours", blank = True)
+    accounting_notes   = models.CharField(null = True, max_length = 1024)
+    notes              = models.CharField(null = True, max_length = 1024)
 
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
@@ -1369,8 +1372,89 @@ class Target(models.Model):
     class Meta:
         db_table = "targets"
 
+class Period_Accounting(models.Model):
+
+    # XX notation is from Memo 11.2
+    scheduled             = models.FloatField(help_text = "Hours") # SC
+    not_billable          = models.FloatField(help_text = "Hours"  # NB
+                                       , default = 0.0) 
+    other_session_weather = models.FloatField(help_text = "Hours"  # OS1
+                                       , default = 0.0) 
+    other_session_rfi     = models.FloatField(help_text = "Hours"  # OS2
+                                       , default = 0.0) 
+    other_session_other   = models.FloatField(help_text = "Hours"  # OS3
+                                       , default = 0.0) 
+    lost_time_weather     = models.FloatField(help_text = "Hours"  # LT1
+                                       , default = 0.0) 
+    lost_time_rfi         = models.FloatField(help_text = "Hours"  # LT2
+                                       , default = 0.0) 
+    lost_time_other       = models.FloatField(help_text = "Hours"  # LT3
+                                       , default = 0.0) 
+    short_notice          = models.FloatField(help_text = "Hours"  # SN
+                                       , default = 0.0) 
+    description           = models.CharField(null = True, max_length = 512)
+
+    class Meta:
+        db_table = "periods_accounting"
+
+    def __unicode__(self):
+        return "Id (%d); SC:%5.2f OT:%5.2f NB:%5.2f OS:%5.2f LT:%5.2f SN:%5.2f" % \
+            (self.id
+           , self.scheduled
+           , self.observed()
+           , self.not_billable
+           , self.other_session()
+           , self.lost_time()
+           , self.short_notice)
+
+    def observed(self):
+        "OT = SC - OS -LT"
+        return self.scheduled - self.other_session() - self.lost_time()
+
+    def other_session(self):
+        "OS = OS1 + OS2 + OS3"
+        return self.other_session_weather + \
+               self.other_session_rfi + \
+               self.other_session_other
+
+    def lost_time(self):
+        "LT = LT1 + LT2 + LT3"
+        return self.lost_time_weather + \
+               self.lost_time_rfi + \
+               self.lost_time_other
+
+    def time_billed(self):
+        "TB = OT - NB"
+        return self.observed() - self.not_billable
+
+    def unaccounted_time(self):
+        "UT=SC-OT-OS-LT; should always be zero."
+        return self.scheduled - self.observed()
+
+    def set_changed_time(self, reason, time):
+        "Determines which field to assign the time to."
+        self.__setattr__(reason, time)
+
+    def jsondict(self):
+        return {"id"                    : self.id
+              , "scheduled"             : self.scheduled
+              , "observed"              : self.observed()
+              , "not_billable"          : self.not_billable
+              , "other_session"         : self.other_session()
+              , "other_session_weather" : self.other_session_weather
+              , "other_session_rfi"     : self.other_session_rfi
+              , "other_session_other"   : self.other_session_other
+              , "lost_time"             : self.lost_time()
+              , "lost_time_weather"     : self.lost_time_weather
+              , "lost_time_rfi"         : self.lost_time_rfi
+              , "lost_time_other"       : self.lost_time_other
+              , "unaccounted_time"      : self.unaccounted_time()
+              , "short_notice"          : self.short_notice
+              , "description"           : self.description}
+
 class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
+    accounting = models.ForeignKey(Period_Accounting, null=True)
     start      = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm:ss")
     duration   = models.FloatField(help_text = "Hours")
     score      = models.FloatField(null = True, editable=False)
@@ -1432,6 +1516,15 @@ class Period(models.Model):
         self.score    = 0.0 # TBF how to get score?
         self.forecast = now
         self.backup   = True if fdata.get("backup", None) == 'true' else False
+
+        # time accounting
+        #pa = Period_Accounting(scheduled = self.duration)
+        #pa.save()
+        #self.accounting = pa
+        #if self.accounting is None:
+        #    self.accounting = Period_Accounting()
+
+        
         self.save()
 
     def handle2session(self, h):
@@ -1457,7 +1550,7 @@ class Period(models.Model):
 
     def jsondict(self, tz):
         start = self.start if tz == 'UTC' else TimeAgent.utc2est(self.start)
-        return {"id"           : self.id
+        js =   {"id"           : self.id
               , "session"      : self.session.jsondict()
               , "handle"       : self.toHandle()
               , "date"         : d2str(start)
@@ -1467,6 +1560,14 @@ class Period(models.Model):
               , "forecast"     : dt2str(self.forecast)
               , "backup"       : self.backup
                 }
+        # include the accounting but keep the dict flat
+        if self.accounting is not None:
+            accounting_js = self.accounting.jsondict()
+            # make sure the final jsondict has only one 'id'
+            accounting_id = accounting_js.pop('id')
+            accounting_js.update({'accounting_id' : accounting_id})
+            js.update(accounting_js)
+        return js
 
     def get_moc(self):
         "Returns a Boolean indicated if MOC are met or not."
@@ -1509,6 +1610,23 @@ class Period(models.Model):
             return True
 
     @staticmethod
+    def get_periods(start, duration):
+        "Returns all periods that overlap given time interval (start, minutes)"
+        end = start + timedelta(minutes = duration)
+        # there is no Period.end in the database, so, first cast a wide net.
+        # we can do this because periods won't last more then 16 hours ...
+        beforeStart = start - timedelta(days = 1)
+        afterEnd    = end   + timedelta(days = 1)
+        some = Period.objects.filter(start__gt = beforeStart
+                                   , start__lt = afterEnd).order_by('start')
+        # now widdle this down to just the periods that overlap  
+        ps = [p for p in some if (p.start >= start and p.end() <= end) \
+                              or (p.start <= start and p.end() > start) \
+                              or (p.start < end    and p.end() >= end)]
+        return ps
+          
+        
+    @staticmethod    
     def in_time_range(begin, end):
         """
         Returns all periods in a time range, taking into account that periods

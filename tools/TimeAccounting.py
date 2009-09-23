@@ -1,10 +1,10 @@
-from datetime import datetime, timedelta
+from datetime        import datetime, timedelta
 
 class TimeAccounting:
 
     """
-    This class is responsible for calculating the equations specified in
-    Memo 10.2.
+    This class is responsible for calculating some of the equations specified in
+    Memo 11.2.
     """
 
     def getProjectTotalTime(self, proj):
@@ -21,8 +21,10 @@ class TimeAccounting:
     def getObservedTime(self, sess):
         now = datetime.utcnow()
         ps = sess.period_set.all()
-        return sum([p.duration for p in ps if (p.start + timedelta(hours=p.duration)) < now])
+        return sum([p.accounting.observed() for p in ps if p.end() < now])
         
     def getTimeLeft(self, sess):
         obs = self.getObservedTime(sess)
         return sess.allotment.total_time - obs
+
+

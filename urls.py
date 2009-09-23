@@ -32,6 +32,7 @@ urlpatterns = patterns(''
    , url(r'^schedule/public$',                             public_schedule)
    , url(r'^search$',                                      search)
    , url(r'^sessions/options$',   get_options) #
+   , url(r'^schedule/change_schedule$', change_schedule) #
    , url(r'^sessions$',           SessionResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^sessions/(\d+)$',     SessionResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^receivers$',          rcvr_schedule) #
