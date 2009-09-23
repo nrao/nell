@@ -316,16 +316,17 @@ class Allotment(models.Model):
         db_table = "allotment"
         
 class Project(models.Model):
-    semester     = models.ForeignKey(Semester)
-    project_type = models.ForeignKey(Project_Type)
-    allotments   = models.ManyToManyField(Allotment, through = "Project_Allotment")
-    pcode        = models.CharField(max_length = 32)
-    name         = models.CharField(max_length = 150)
-    thesis       = models.BooleanField()
-    complete     = models.BooleanField()
-    start_date   = models.DateTimeField(null = True, blank = True)
-    end_date     = models.DateTimeField(null = True, blank = True)
-    friend       = models.ForeignKey(User, null = True, blank = True)
+    semester         = models.ForeignKey(Semester)
+    project_type     = models.ForeignKey(Project_Type)
+    allotments       = models.ManyToManyField(Allotment, through = "Project_Allotment")
+    pcode            = models.CharField(max_length = 32)
+    name             = models.CharField(max_length = 150)
+    thesis           = models.BooleanField()
+    complete         = models.BooleanField()
+    start_date       = models.DateTimeField(null = True, blank = True)
+    end_date         = models.DateTimeField(null = True, blank = True)
+    friend           = models.ForeignKey(User, null = True, blank = True)
+    accounting_notes = models.CharField(null = True, max_length = 1024)
 
     base_url = "/sesshuns/project/"
 
@@ -638,7 +639,7 @@ class Blackout(models.Model):
     end          = models.DateTimeField(null = True)
     repeat       = models.ForeignKey(Repeat)
     until        = models.DateTimeField(null = True)
-    description  = models.CharField(null = True, max_length = 512)
+    description  = models.CharField(null = True, max_length = 1024)
 
     def __unicode__(self):
         return "%s Blackout for %s: %s - %s" % \
@@ -931,6 +932,8 @@ class Sesshun(models.Model):
     max_duration       = models.FloatField(null = True, help_text = "Hours")
     min_duration       = models.FloatField(null = True, help_text = "Hours")
     time_between       = models.FloatField(null = True, help_text = "Hours", blank = True)
+    accounting_notes   = models.CharField(null = True, max_length = 1024)
+    notes              = models.CharField(null = True, max_length = 1024)
 
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
@@ -1422,13 +1425,30 @@ class Period_Accounting(models.Model):
         "TB = OT - NB"
         return self.observed() - self.not_billable
 
-    #def time_unaccounted(self):
-    #    "UT =  TB"
-    #    return 
+    def unaccounted_time(self):
+        "UT=SC-OT-OS-LT; should always be zero."
+        return self.scheduled - self.observed()
 
     def set_changed_time(self, reason, time):
         "Determines which field to assign the time to."
         self.__setattr__(reason, time)
+
+    def jsondict(self):
+        return {"id"                    : self.id
+              , "scheduled"             : self.scheduled
+              , "observed"              : self.observed()
+              , "not_billable"          : self.not_billable
+              , "other_session"         : self.other_session()
+              , "other_session_weather" : self.other_session_weather
+              , "other_session_rfi"     : self.other_session_rfi
+              , "other_session_other"   : self.other_session_other
+              , "lost_time"             : self.lost_time()
+              , "lost_time_weather"     : self.lost_time_weather
+              , "lost_time_rfi"         : self.lost_time_rfi
+              , "lost_time_other"       : self.lost_time_other
+              , "unaccounted_time"      : self.unaccounted_time()
+              , "short_notice"          : self.short_notice
+              , "description"           : self.description}
 
 class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
@@ -1499,10 +1519,13 @@ class Period(models.Model):
         self.backup   = True if fdata.get("backup", None) == 'true' else False
 
         # time accounting
-        pa = Period_Accounting(scheduled = self.duration)
-        pa.save()
-        self.accounting = pa
+        #pa = Period_Accounting(scheduled = self.duration)
+        #pa.save()
+        #self.accounting = pa
+        #if self.accounting is None:
+        #    self.accounting = Period_Accounting()
 
+        
         self.save()
 
     def handle2session(self, h):
@@ -1528,7 +1551,7 @@ class Period(models.Model):
 
     def jsondict(self, tz):
         start = self.start if tz == 'UTC' else TimeAgent.utc2est(self.start)
-        return {"id"           : self.id
+        js =   {"id"           : self.id
               , "session"      : self.session.jsondict()
               , "handle"       : self.toHandle()
               , "date"         : d2str(start)
@@ -1538,6 +1561,14 @@ class Period(models.Model):
               , "forecast"     : dt2str(self.forecast)
               , "backup"       : self.backup
                 }
+        # include the accounting but keep the dict flat
+        if self.accounting is not None:
+            accounting_js = self.accounting.jsondict()
+            # make sure the final jsondict has only one 'id'
+            accounting_id = accounting_js.pop('id')
+            accounting_js.update({'accounting_id' : accounting_id})
+            js.update(accounting_js)
+        return js
 
     def has_required_receivers(self):
 
