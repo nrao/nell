@@ -1433,6 +1433,20 @@ class Period_Accounting(models.Model):
         "Determines which field to assign the time to."
         self.__setattr__(reason, time)
 
+    def update_from_post(self, fdata):    
+        fields = ['not_billable'
+                , 'other_session_weather'
+                , 'other_session_rfi'
+                , 'other_session_other'
+                , 'lost_time_weather'
+                , 'lost_time_rfi'
+                , 'lost_time_other'
+                ]
+        for field in fields:        
+            self.set_changed_time(field
+                                , float(fdata.get(field, "0.0")))    
+        self.save()
+
     def jsondict(self):
         return {"id"                    : self.id
               , "scheduled"             : self.scheduled
@@ -1491,8 +1505,16 @@ class Period(models.Model):
     def init_from_post(self, fdata, tz):
         self.from_post(fdata, tz)
 
+        # time accounting:
+        # TBF: how to initialize scheduled time?  Do Periods need state?
+
     def update_from_post(self, fdata, tz):
+        print "update from post!"
         self.from_post(fdata, tz)
+        # TBF: should we do this?
+        if self.accounting is not None:
+            self.accounting.update_from_post(fdata)
+        
 
     def from_post(self, fdata, tz):
         handle = fdata.get("handle", "")
@@ -1517,15 +1539,6 @@ class Period(models.Model):
         self.score    = 0.0 # TBF how to get score?
         self.forecast = now
         self.backup   = True if fdata.get("backup", None) == 'true' else False
-
-        # time accounting
-        #pa = Period_Accounting(scheduled = self.duration)
-        #pa.save()
-        #self.accounting = pa
-        #if self.accounting is None:
-        #    self.accounting = Period_Accounting()
-
-        
         self.save()
 
     def handle2session(self, h):
