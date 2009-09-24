@@ -122,8 +122,10 @@ def consolidate_events(events):
     """
     if len(events) == 1:
         return events
+    else:
+        return combine_events(consolidate_overlaps(events))
 
-    # Then reduce the list to its most succinct form.
+def consolidate_overlaps(events):
     reduced = []
     for (begin1, end1) in events:
         begin = begin1
@@ -135,8 +137,21 @@ def consolidate_events(events):
                 end   = min([end, end1, end2])
         if (begin, end) not in reduced:
             reduced.append((begin, end))            
+    return reduced
 
-    return sorted(reduced)
+def combine_events(events):
+    if len(events) in (0, 1):
+        return events 
+
+    events = sorted(events)
+    combined = [events[0]]
+    for (begin2, end2) in events[1:]:
+        begin1, end1 = combined[-1]
+        if begin2 == end1:
+            combined[-1] = (begin1, end2)
+        else:
+            combined.append((begin2, end2))
+    return combined
 
 jsonMap = {"authorized"     : "status__authorized"
          , "between"        : "time_between"
