@@ -141,3 +141,31 @@ def format_list(aList):
 @register.filter
 def format_reservations(reservations):
     return ", ".join([a + " to " + b for a, b in [(x.strftime('%m-%d-%Y'), y.strftime('%m-%d-%Y')) for x, y in reservations]]) if reservations else "None"
+
+@register.filter
+def moc_class(period):
+    if moc_warning(period):
+        return "moc_warning"
+    elif moc_failure(period):
+        return "moc_failure"
+    else:
+        return ""
+
+def moc_warning(period):
+    "Warnings are issued when 12 hours <= start < 30 minutes if moc is False."
+    diff = period.start - datetime.utcnow()
+    if diff >  timedelta(seconds = 0) and \
+       diff <= timedelta(hours = 12) and \
+       diff >  timedelta(minutes = 30):
+        return not period.get_moc()
+    else:
+        return False
+
+def moc_failure(period):
+    "Failures are issued when start <= 30 minutes if moc is False."
+    diff = datetime.utcnow() - period.start
+    if diff >  timedelta(seconds = 0) and \
+       diff <= timedelta(minutes = 30):
+        return not period.get_moc()
+    else:
+        return False

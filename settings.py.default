@@ -87,6 +87,7 @@ AUTHENTICATION_BACKENDS = (
 )
 
 CAS_SERVER_URL="https://my.nrao.edu/cas/login"
+ANTIOCH_SERVER_URL = "http://trent.gb.nrao.edu:9099"  #MODIFY#
 
 ROOT_URLCONF = 'nell.urls'
 

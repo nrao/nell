@@ -12,6 +12,8 @@
     .type_test {background-color:#87CEFA} 
     .type_astronomy {background-color:#EEEEEE}
     .type_maintenance {background-color:#98FB98}
+    .moc_warning {background-color:#FFFF00}
+    .moc_failure {background-color:#FF0000}
   </style>
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"></script>
 <!--  
@@ -98,7 +100,7 @@
       <th>Rcvrs</th>
     </tr>
     {% for start, end,start_cutoff, end_cutoff, p in ps %}
-    <tr>
+      <tr class="{{p|moc_class}}">
       {% if start_cutoff or end_cutoff %}
         {%if start_cutoff %}
           <td>+{{start|date:"H:m"}} - {{end|date:"H:m"}}</td>
