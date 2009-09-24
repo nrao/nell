@@ -12,7 +12,6 @@
     .type_test {background-color:#87CEFA} 
     .type_astronomy {background-color:#EEEEEE}
     .type_maintenance {background-color:#98FB98}
-    .moc_warning {background-color:#FFFF00}
     .moc_failure {background-color:#FF0000}
   </style>
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"></script>
@@ -85,7 +84,7 @@
   </center>
 
   <strong>
-  (UTC Offset = ET - {{today|get_utc_offset}} hours)
+  (UTC = ET + {{today|get_utc_offset}} hours)
   </strong>
   <table>
     {% for day, ps in calendar %}
@@ -100,6 +99,16 @@
       <th>Rcvrs</th>
     </tr>
     {% for start, end,start_cutoff, end_cutoff, p in ps %}
+      {% if p|moc_reschedule %}
+        <script type="text/javascript">
+          window.open("/period/{{p.id}}/moc_reschedule", "MOC Failure", "width=1000,height=300");
+        </script>
+      {% endif %}
+      {% if p|moc_degraded %}
+        <script type="text/javascript">
+          window.open("/period/{{p.id}}/moc_degraded", "MOC Degraded", "width=1000,height=300");
+        </script>
+      {% endif %}
       <tr class="{{p|moc_class}}">
       {% if start_cutoff or end_cutoff %}
         {%if start_cutoff %}
@@ -119,7 +128,15 @@
       {% else %}
           <td class="project_type type_astronomy">{{p.session.project|project_type}}</td>
       {% endifequal %}
-      <td><a href="/project/{{p.session.project.pcode}}">{{p.session.project.pcode}}</a></td>
+      <td>
+      {% if not p.moc_met %}
+        <blink>
+      {% endif %}
+        <a href="/project/{{p.session.project.pcode}}">{{p.session.project.pcode}}</a>
+      {% if not p.moc_met %}
+        </blink>
+      {% endif %}
+      </td>
       {% ifequal p.session.project.project_type.type "science" %}
         <td><a href="#" onClick="window.open('http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}', 'Proposal Cover Page', 'width=1000, height=700, scrollbars=yes');return true;">{{p.session.project.name}}</a></td>
       {% else %}

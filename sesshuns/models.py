@@ -1475,6 +1475,7 @@ class Period(models.Model):
     score      = models.FloatField(null = True, editable=False)
     forecast   = models.DateTimeField(null = True, editable=False)
     backup     = models.BooleanField()
+    moc_ack    = models.BooleanField(default = False)
 
     class Meta:
         db_table = "periods"
@@ -1584,8 +1585,12 @@ class Period(models.Model):
             js.update(accounting_js)
         return js
 
-    def get_moc(self):
-        "Returns a Boolean indicated if MOC are met or not."
+    def moc_met(self):
+        "Returns a Boolean indicated if MOC are met (True) or not (False)."
+        # Only check periods for open sessions.
+        if self.session.session_type.type not in ("open", "windowed"):
+            return True
+
         url = ANTIOCH_SERVER_URL + \
               "/moc?session_id=" + \
               `self.session.id` + \

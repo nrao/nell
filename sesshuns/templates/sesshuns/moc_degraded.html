@@ -1,0 +1,17 @@
+{% extends "sesshuns/simple.html" %}
+{% load custom %}
+{% block title %}MOC Degraded{% endblock %}
+{% block content %}
+  <EMBED SRC="/static/audio/alarm.wav" AUTOSTART=True LOOP=True HIDDEN=True />
+  <center>
+  <h1>MOC Have Degraded</h1>
+  <h2>
+    Minimum operating conditions for {{p.session.project.pcode}} have degraded!<br/>
+    Please ask the observer to check the data quality to determine whether <br/>
+    he/she wishes to continue observing.
+  </h2>
+  <form method="POST">
+    <input type="button" value="Close" onclick="window.close();">
+  </form>
+  </center>
+{% endblock %}

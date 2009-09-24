@@ -144,28 +144,27 @@ def format_reservations(reservations):
 
 @register.filter
 def moc_class(period):
-    if moc_warning(period):
-        return "moc_warning"
-    elif moc_failure(period):
-        return "moc_failure"
-    else:
-        return ""
+    return "" if period.moc_met() else "moc_failure"
 
-def moc_warning(period):
-    "Warnings are issued when 12 hours <= start < 30 minutes if moc is False."
-    diff = period.start - datetime.utcnow()
-    if diff >  timedelta(seconds = 0) and \
-       diff <= timedelta(hours = 12) and \
-       diff >  timedelta(minutes = 30):
-        return not period.get_moc()
+@register.filter
+def moc_reschedule(period):
+    "Popups are issued when start <= 30 minutes if moc is False."
+    diff = datetime.utcnow() - period.start
+    if not period.moc_ack and \
+       diff >  timedelta(seconds = 0) and \
+       diff <= timedelta(minutes = 30):
+        return True
+        return not period.moc_met()
     else:
         return False
 
-def moc_failure(period):
-    "Failures are issued when start <= 30 minutes if moc is False."
-    diff = datetime.utcnow() - period.start
-    if diff >  timedelta(seconds = 0) and \
-       diff <= timedelta(minutes = 30):
-        return not period.get_moc()
+@register.filter
+def moc_degraded(period):
+    "Popups are issued when a period has started and if moc is False."
+    now = datetime.utcnow()
+    if not period.moc_ack and \
+       now > period.start and now < period.end():
+        return True
+        return not period.moc_met()
     else:
         return False
