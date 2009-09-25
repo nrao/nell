@@ -1,9 +1,9 @@
 from django              import template
 from sesshuns            import models
-from datetime            import timedelta
+from datetime            import datetime, timedelta
 from sesshuns.models     import first
 from sets                import Set
-from utilities.TimeAgent import rad2hr, rad2deg
+from utilities.TimeAgent import rad2hr, rad2deg, est2utc
 
 register = template.Library()
 
@@ -111,3 +111,33 @@ def get_receivers(schedule, day):
     date = [d for d in sorted(schedule.keys()) if d.date() <= day.date()][-1]
     rcvrs = schedule[date] if date else []
     return ", ".join([r.abbreviation for r in rcvrs])
+
+@register.filter
+def get_utc_offset(date):
+    o = date.utcoffset()
+    return -1 * (o.days * 24 * 3600 + o.seconds) / 3600
+
+@register.filter
+def to_utc(date):
+    return est2utc(date)
+
+@register.filter
+def get_date(format):
+    return datetime.today().strftime(str(format))
+
+@register.filter
+def get_cal_start(calendar):
+    return calendar[0][0]
+
+@register.filter
+def get_cal_end(calendar):
+    return calendar[-1][0]
+
+@register.filter
+def format_list(aList):
+    "Makes a list a string"
+    return ", ".join(aList) if aList else "None"
+
+@register.filter
+def format_reservations(reservations):
+    return ", ".join([a + " to " + b for a, b in [(x.strftime('%m-%d-%Y'), y.strftime('%m-%d-%Y')) for x, y in reservations]]) if reservations else "None"

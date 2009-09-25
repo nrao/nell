@@ -12,25 +12,28 @@ class UserInfo(object):
     NRAOUserDB to get around their CAS authentication.
     """
 
+    # Log in only once to minimize authentication overhead.
+    __userDB = NRAOUserDB( \
+                'https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
+              , 'dss'
+              , 'MrNubbles!'
+              , opener = urllib2.build_opener())
+
     def __init__(self):
-
-        self.baseURL = 'https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
         self.ns = "{http://www.nrao.edu/namespaces/nrao}"
-        self.udb = None
 
-    def getProfileByID(self
-                     , user
-                     , queryUser
-                     , queryPassword):
-
-        info = self.getStaticContactInfoByID(user.pst_id
-                                           , queryUser
-                                           , queryPassword)
-
-        # what profile info do we already have?
+    def getProfileByID(self, user):
         emails = [e.email for e in user.email_set.all()]
-
-        return self.parseUserDict(info, emails, [], [])
+        try:
+            info = self.getStaticContactInfoByID(user.pst_id)
+        except:
+            return dict(emails       = emails
+                      , phones       = ['Not Available']
+                      , postals      = ['Not Available']
+                      , affiliations = ['Not Available']
+                      , username     = user.username)
+        else:
+            return self.parseUserDict(info, emails, [], [])
 
     def parseUserDict(self, info, emails2 = [], phones2 = [], postals2 = []):   
         "Convinience method so you don't have to deal with bad info dictionary."
@@ -101,32 +104,15 @@ class UserInfo(object):
                   , affiliations = affiliations
                   , username     = username)
 
-    def getStaticContactInfoByUserName(self, username, queryUser,queryPassword):
-        return self.getStaticContactInfo('userByAccountNameEquals'
-                                       , username
-                                       , queryUser
-                                       , queryPassword)
+    def getStaticContactInfoByUserName(self, username):
+        return self.getStaticContactInfo('userByAccountNameEquals', username)
 
-    def getStaticContactInfoByID(self, id, queryUser,queryPassword):
-        return self.getStaticContactInfo('userById'
-                                       , id
-                                       , queryUser
-                                       , queryPassword)
+    def getStaticContactInfoByID(self, id):
+        return self.getStaticContactInfo('userById', id)
 
-    def getStaticContactInfo(self, key, value, queryUser, queryPassword):
+    def getStaticContactInfo(self, key, value):
         "Get contact info from query service, using given credentials for CAS."
-
-        # make sure we only log once
-        if self.udb is None:
-            self.udb = NRAOUserDB( \
-                self.baseURL
-              , queryUser
-              , queryPassword
-              , opener=urllib2.build_opener())
-
-        el = self.udb.get_data(key, value)
-
-        return self.parseUserXML(el)
+        return self.parseUserXML(UserInfo.__userDB.get_data(key, value))
 
     def findTag(self, node, tag):
         # TBF: why do all the XML tags have the namepace attatched?

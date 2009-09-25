@@ -1,103 +1,43 @@
-from datetime                       import datetime, date, time
+from datetime                       import datetime, time, timedelta
 from django.contrib.auth.decorators import login_required
 from django.db.models         import Q
 from django.http              import HttpResponse, HttpResponseRedirect
 from django.shortcuts         import render_to_response
 from models                   import *
 from sets                     import Set
-from utilities.UserInfo       import UserInfo
-from utilities                import NRAOBosDB
+from utilities                import gen_gbt_schedule, UserInfo, NRAOBosDB
 
-# persist this object to avoid having to authenticate every time
-# we want PST services
-ui = UserInfo()
-
-# constants
-ET = 'ET'
-UTC = 'UTC'
-
-def get_period_day_time(day, period, first_day, last_day, timezone):
-    "Returns a tuple of : start, end, cutoffs, period, for used in template"
-    next_day = day + timedelta(days = 1)
-    # start with default values - as if there was no overlap
-    start = period.start
-    end = period.end()
-    if timezone == ET:
-        start = TimeAgent.utc2est(start)
-        end = TimeAgent.utc2est(end)
-    start_cutoff = end_cutoff = False
-    # but does this period overlap the given day?
-    if start < day or end >= next_day:
-        # oh, crap, overlap - cut off the dates 
-        if start < day:
-            start = day
-            # will the beginning of this period not be displayed?    
-            if day == first_day:
-                start_cutoff = True
-        if end >= next_day:
-            end = next_day
-            # will the end of this period not be displayed?    
-            if day == last_day:
-                end_cutoff = True
-    startStr = start.strftime("%H:%M")            
-    endStr = end.strftime("%H:%M")                
-    return (startStr, endStr, start_cutoff, end_cutoff, period)
-
-def gbt_schedule(request, *args, **kws):
-
+def public_schedule(request, *args, **kws):
     # serve up the GBT schedule
-    timezones = [ET, UTC]
+    timezones = ['ET', 'UTC']
 
     # TBF: error handling
     if request.method == 'POST': 
-        days = int(request.POST.get("days", 5))    
-        timezone  = request.POST.get("tz", ET)
-        startDate = request.POST.get("start", None) 
-        if startDate is not None:
-            start = datetime.strptime(startDate, "%m/%d/%Y")         
-        else:
-            start = datetime.now()
-        start = TimeAgent.truncateDt(start)     
+        timezone  = request.POST.get('tz', 'ET')
+        days      = int(request.POST.get('days', 5))    
+        startDate = request.POST.get('start', None) 
+        startDate = datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now() 
     else:
         # default time range
-        timezone = ET
-        start = TimeAgent.truncateDt(datetime.now())
-        days = 5
+        timezone  = 'ET'
+        days      = 5
+        startDate = datetime.now()
 
-    # get only the periods in that time range
-    # the tricky part is getting any that start the day before, but overlap
-    # into the first day
-    day_before = start - timedelta(days = 1)
-    end = start + timedelta(days = days)
-    last_day = end - timedelta(days = 1)
+    start = TimeAgent.truncateDt(startDate)
+    end   = start + timedelta(days = days)
 
-    # the DB is in UTC, so if request is in ETC, must perform the query
-    # using converted datetimes
-    # TBF: why doesn't ps.query.group_by = ['start'] work?
-    if timezone == ET:
-        day_before = TimeAgent.est2utc(day_before)
-        end        = TimeAgent.est2utc(end)
-    ps = Period.objects.filter(start__gt = day_before
-                             , start__lt = end).order_by('start')
+    # View is in ET or UTC, database is in UTC.
+    pstart  = TimeAgent.est2utc(start) if timezone == 'ET' else start
+    pend    = TimeAgent.est2utc(end) if timezone == 'ET' else end
+    periods = Period.in_time_range(pstart, pend)
 
-    # construct the calendar - we are getting a little bit into presentation
-    # detail here, but that's mostly because the timezone business sucks.
-    cal = {}
-    for i in range(days):
-        day = day_tz = start + timedelta(days = i)
-        if timezone == ET:
-            # we need to make sure that the right periods get passed to
-            # get_day_time
-            day_tz = TimeAgent.est2utc(day_tz)
-        cal[day] = \
-            [get_period_day_time(day, p, start, last_day, timezone) \
-             for p in ps if p.on_day(day_tz)]
+    calendar = gen_gbt_schedule(start, end, days, timezone, periods)
 
     return render_to_response(
-               "sesshuns/schedule.html"
-             , {'calendar' : sorted(cal.items())
+               'sesshuns/public_schedule.html'
+             , {'calendar' : sorted(calendar.items())
               , 'day_list' : range(1, 15)
-              , 'tz_list'  : ['ET', 'UTC']
+              , 'tz_list'  : timezones
               , 'timezone' : timezone
               , 'start'    : start
               , 'days'     : days
@@ -157,32 +97,6 @@ def events(request, *args, **kws):
 
     return HttpResponse(json.dumps(jsonobjlist))
 
-def get_day(n, today):
-    'Find the n_th day on the calendar.'
-    start = today - timedelta(today.isoweekday())
-    return start + timedelta(n)
-
-def get_current_month(n, today):
-    day   = get_day(7*(n/7), today)
-    pivot = day if day.day == 1 else day + timedelta(7)
-    return pivot.month
-
-def get_label(w, d, today):
-    'Certain day labels should include month names.'
-    n      = 7 * w + d
-    day    = get_day(n, today)
-    format = '%b %d' if day.day == 1 or n == 0 else '%d'
-    return day.strftime(format)
-
-def get_color(w, d, today):
-    n   = 7 * w + d
-    day = get_day(n, today)
-    return 'black' if day.month == get_current_month(n, today) else '#888888'
-
-def get_bgcolor(w, d, today):
-    day = get_day(7 * w + d, today)
-    return '#EEEEEE' if day == date.today() else '#FFFFFF'
-
 @login_required
 def profile(request, *args, **kws):
     loginUser = request.user.username
@@ -191,8 +105,7 @@ def profile(request, *args, **kws):
     # If the DSS doesn't know about the user, but the User Portal does,
     # then add them to our database so they can at least see their profile.
     if requestor is None:
-        # TBF: use user's credentials to get past CAS, not Mr. Nubbles!
-        info = ui.getStaticContactInfoByUserName(loginUser, 'dss', 'MrNubbles!')
+        info = UserInfo().getStaticContactInfoByUserName(loginUser)
         requestor = User(pst_id     = info['id']
                        , username   = loginUser
                        , first_name = info['name']['first-name']
@@ -208,53 +121,37 @@ def profile(request, *args, **kws):
                         if i.project.pcode in uprojects]
         #  If the requestor is not the user profile requested and they are
         #  not on the same project redirect to the requestor's profile.
-        if user != requestor and rprojects == [] and not requestor.isAdmin():
+        if user != requestor and rprojects == [] \
+           and not requestor.isAdmin() and not requestor.isOperator():
             return HttpResponseRedirect("/profile")
     else:
         user = requestor
 
-    # get the users' info from the PST
-    try:
-        # TBF: use user's credentials to get past CAS, not Mr. Nubbles!
-        info = ui.getProfileByID(user, 'dss', 'MrNubbles!')
-    except:
-        #  we really should only see this during unit tests.
-        #print "encountered exception w/ UserInfo and user: ", user
-        info = dict(emails = [e.email for e in user.email_set.all()]
-                  , phones = ['Not Available']
-                  , postals = ['Not Available']
-                  , affiliations = ['Not Available']
-                  , username = user.username)
-        
-    # get the reservations information from BOS
-    bos = NRAOBosDB()
-    reservations = bos.getReservationsByUsername(user.username)
-
-    # 
+    static_info  = user.getStaticContactInfo()
+    reservations = NRAOBosDB().getReservationsByUsername(user.username)
 
     return render_to_response("sesshuns/profile.html"
                             , {'u'            : user
                              , 'requestor'    : requestor
                              , 'authorized'   : user == requestor # allowed to edit
                              #, 'clients'      : Project.objects.filter(friend=user)
-                             , 'emails'       : info['emails']
-                             , 'phones'       : info['phones']
-                             , 'postals'      : info['postals']
-                             , 'affiliations' : info['affiliations']
-                             , 'username'     : info['username']
+                             , 'emails'       : static_info['emails']
+                             , 'phones'       : static_info['phones']
+                             , 'postals'      : static_info['postals']
+                             , 'affiliations' : static_info['affiliations']
+                             , 'username'     : static_info['username']
                              , 'reserves'     : reservations
-                               })
+                             , 'isOps'        : requestor.isOperator()})
 
 @login_required
 def project(request, *args, **kws):
-    bos = NRAOBosDB()
     loginUser = request.user.username
-    user   = first(User.objects.filter(username = loginUser))
+    user      = first(User.objects.filter(username = loginUser))
     assert user is not None
-    pcode, = args
+    pcode,    = args
     #  If the requestor is not on this project redirect to their profile.
     if pcode not in [i.project.pcode for i in user.investigator_set.all()] \
-            and not user.isAdmin():
+       and not user.isAdmin() and not user.isOperator():
         return HttpResponseRedirect("/profile")
         
     project = first(Project.objects.filter(pcode = pcode))
@@ -270,10 +167,11 @@ def project(request, *args, **kws):
 
     return render_to_response(
         "sesshuns/project.html"
-      , {'p' : project
-       , 'u' : user
-       , 'v' : project.investigator_set.order_by('priority').all()
-       , 'r' : bos.reservations(project)
+      , {'p'           : project
+       , 'u'           : user
+       , 'requestor'   : user
+       , 'v'           : project.investigator_set.order_by('priority').all()
+       , 'r'           : NRAOBosDB().reservations(project)
        , 'rcvr_blkouts': rcvr_blkouts
        }
     )
@@ -281,9 +179,10 @@ def project(request, *args, **kws):
 @login_required
 def search(request, *args, **kws):
     loginUser = request.user.username
-    user   = first(User.objects.filter(username = loginUser))
+    user      = first(User.objects.filter(username = loginUser))
     assert user is not None
-    search   = request.POST.get('search', '')
+
+    search = request.POST.get('search', '')
 
     projects = Project.objects.filter(
         Q(pcode__icontains = search) | \
@@ -303,9 +202,10 @@ def search(request, *args, **kws):
         Q(first_name__icontains = search) | Q(last_name__icontains = search))
 
     return render_to_response("sesshuns/search.html"
-                            , {'ps' : projects
-                             , 'us' : users
-                             , 'u'  : user
+                            , {'ps'       : projects
+                             , 'us'       : users
+                             , 'u'        : user
+                             , 'requestor': user
                                })
 
 @login_required
@@ -362,7 +262,8 @@ def dynamic_contact_form(request, *args, **kws):
         return HttpResponseRedirect("/profile")
 
     return render_to_response("sesshuns/dynamic_contact_form.html"
-                            , {'u': user})
+                            , {'u'        : user
+                             , 'requestor': requestor})
 
 @login_required
 def dynamic_contact_save(request, *args, **kws):
@@ -384,38 +285,42 @@ def dynamic_contact_save(request, *args, **kws):
 
 @login_required
 def blackout_form(request, *args, **kws):
+    u_id,     = args
     loginUser = request.user.username
-    method = request.GET.get('_method', '')
-    u_id, = args
-    user  = first(User.objects.filter(id = u_id))
+    user      = first(User.objects.filter(id = u_id))
+    requestor = first(User.objects.filter(username = loginUser))
 
     # TBF Use a decorator to see if user is allowed here
-    requestor = first(User.objects.filter(username = loginUser))
     assert requestor is not None
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
 
-    b     = first(Blackout.objects.filter(id = int(request.GET.get('id', 0))))
-    return render_to_response("sesshuns/blackout_form.html"
-                           , get_blackout_form_context(method, b, user, []))
+    method = request.GET.get('_method', '')
+    b = first(Blackout.objects.filter(id = int(request.GET.get('id', 0))))
 
-def get_blackout_form_context(method, blackout, user, errors):
+    return render_to_response(
+        "sesshuns/blackout_form.html"
+      , get_blackout_form_context(method, b, user, requestor, [])
+    )
+
+def get_blackout_form_context(method, blackout, user, requestor, errors):
     "Returns dictionary for populating blackout form"
-    times = [time(h, m).strftime("%H:%M")
-             for h in range(0, 24) for m in range(0, 60, 15)]
-    return {'method'   : method
-          , 'b'        : blackout # b's dates in DB are UTC
-          , 'u'        : user
-          , 'tzs'      : TimeZone.objects.all()
-          , 'timezone' : 'UTC' # form always starts at UTC
-          , 'repeats'  : Repeat.objects.all()
-          , 'times'    : times
-          , 'errors'   : errors
+    return {
+        'u'        : user
+      , 'requestor': requestor
+      , 'method'   : method
+      , 'b'        : blackout # b's dates in DB are UTC
+      , 'tzs'      : TimeZone.objects.all()
+      , 'timezone' : 'UTC' # form always starts at UTC
+      , 'repeats'  : Repeat.objects.all()
+      , 'times'    : [time(h, m).strftime("%H:%M") \
+                      for h in range(0, 24) for m in range(0, 60, 15)]
+      , 'errors'   : errors
     }
 
 def parse_datetime(request, dateName, timeName, utcOffset):
     "Extract the date & time from the form values to make a datetime obj"
-    dt = None
+    dt    = None
     error = None
     try:
         if request.POST[dateName] != '':
@@ -425,7 +330,7 @@ def parse_datetime(request, dateName, timeName, utcOffset):
     except:
         error = "ERROR: malformed %s date" % dateName
     return (dt, error)    
-    
+ 
 @login_required
 def blackout(request, *args, **kws):
     u_id, = args
@@ -470,11 +375,11 @@ def blackout(request, *args, **kws):
             # go back to editing this pre-existing blackout date
             b = first(Blackout.objects.filter(id = int(request.POST.get('id', 0))))
             return render_to_response("sesshuns/blackout_form.html"
-                 , get_blackout_form_context('PUT', b, user, errors))
+                 , get_blackout_form_context('PUT', b, user, requestor, errors))
          else:
             # go back to creating a new one
             return render_to_response("sesshuns/blackout_form.html"
-                 , get_blackout_form_context('', None, user, errors))
+                 , get_blackout_form_context('', None, user, requestor, errors))
          
     # no errors - retrieve obj, or create new one
     if request.POST.get('_method', '') == 'PUT':

@@ -44,19 +44,17 @@ class UserNames(object):
     def loadUserInfoFromDump(self):
         "Uses a textual xml dump of PST to assign usernames/ids"
         users = []
-        ui = UserInfo()
         f = "nrao.xml"
         parsed = ET.parse(f)
         elements = parsed.getroot()
         for element in elements:
-            users.append(ui.parseUserXML(element))
+            users.append(UserInfo().parseUserXML(element))
         return users
 
     def findUser(self, last_name, users):
 
-        ui = UserInfo()
         for user in users:
-           userInfo = ui.parseUserDict(user)
+           userInfo = UserInfo().parseUserDict(user)
            if user['name']['last-name'] == last_name:
                first_name = user['name']['last-name']
                last       = user['name']['first-name']
@@ -68,11 +66,10 @@ class UserNames(object):
                print ""
                
 
-    def confirmUserInfo(self, queryUser, queryPassword):
+    def confirmUserInfo(self):
         "Checks contents of User table against info from PST service w/ pst ID."
 
         users = User.objects.all()
-        ui = UserInfo()
 
         # keep records
         noPstId = []
@@ -83,9 +80,7 @@ class UserNames(object):
 
         for u in users:
             if u.pst_id is not None:
-                info = ui.getStaticContactInfoByID(u.pst_id
-                                                 , queryUser
-                                                 , queryPassword)
+                info = UserInfo().getStaticContactInfoByID(u.pst_id)
             
                 # extract what the PST thinks about this user
                 pstId        = int(info['id'])
@@ -196,16 +191,13 @@ class UserNames(object):
         print "len(missing): ", len(missing)
         print "len(ourUsers): ", len(User.objects.all())
 
-    def getUserNamesFromIDs(self, queryUser, queryPassword):
+    def getUserNamesFromIDs(self):
 
         # get rid of this banner once other print statements are gone
         print "********** Retrieving usernames using PST IDs. *********"
 
         noUsernames = User.objects.filter(username = None).all()
         print "num w/ no username  now : ", len(noUsernames)
-
-        # use query services
-        ui = UserInfo()
 
         # get all users
         users = User.objects.all()
@@ -226,7 +218,7 @@ class UserNames(object):
 
             # save off the username
             #print "getting id for: ", user, id
-            info = ui.getStaticContactInfoByID(id, queryUser, queryPassword)
+            info = UserInfo().getStaticContactInfoByID(id)
             #print info
             username = info['account-info']['account-name']
 

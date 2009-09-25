@@ -14,9 +14,12 @@ class NRAOBosDB:
 
         self.opener = urllib2.build_opener()
 
+        # we must use bostest.cv.nrao.edu because bos.nrao.edu
+        # knows nothing about PST users
         #baseUrl ='https://bostest.cv.nrao.edu/resReports/reservationsByPerson/'
         self.baseUrlByPerson = \
-            'https://bos.nrao.edu/resReports/reservationsByPerson/'
+            'https://bostest.cv.nrao.edu/resReports/reservationsByPerson/'
+        #    'https://bos.nrao.edu/resReports/reservationsByPerson/'
 
     def reservations(self, project):
         """

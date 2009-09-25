@@ -17,6 +17,8 @@
     <script type="text/javascript" src="/static/javascript/help.js"></script>
     {% block scripts %}
     {% endblock %}
+    {% block metatags %}
+    {% endblock %}
 </head>
 {% load custom %}
 
@@ -35,7 +37,6 @@
           <a href="/projects/ical" title="This link provides access to DSS events in the 'iCalendar' format.  To use this feature, right-click the 'ICAL' icon and select 'Copy Link Location'.  Then paste the link into your favorite iCalendar application.">
             <img src="/static/images/ical.gif" style="border: 0;" />
           </a>
-          <a href="/schedule/public" title="This link provides access to the public GBT schedule.">GBT Schedule</a>
           {% endif %}
         </td>
         <td style="text-align: right;">
@@ -61,9 +62,9 @@
       </tr>
     </table>
     </div>
+  </div>
   {% block content %}
   {% endblock %}
-  </div>
   <script type="text/javascript">
     var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
     document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
