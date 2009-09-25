@@ -2,7 +2,7 @@ from datetime                 import date, datetime, timedelta
 from django.http              import HttpResponse
 from models                   import Project, Sesshun, Period
 from models                   import Receiver_Schedule, first
-from tools                    import IcalMap, ScheduleTools
+from tools                    import IcalMap, ScheduleTools, TimeAccounting
 from settings                 import PROXY_PORT
 
 import simplejson as json
@@ -93,4 +93,10 @@ def change_schedule(request, *args, **kws):
     st.changeSchedule(startdate, duration, s, reason, desc)
     return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
     
+def time_accounting(request, *args, **kws):
+    ta = TimeAccounting()
+    pcode = args[0]
+    project = first(Project.objects.filter(pcode = pcode))
+    js = ta.jsondict(project)
+    return HttpResponse(json.dumps(js), mimetype = "text/plain")
     

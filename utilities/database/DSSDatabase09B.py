@@ -1,3 +1,7 @@
+from utilities.database.DSSDatabase import DSSDatabase
+from datetime                       import datetime
+from sesshuns.models                import *
+
 class DSSDatabase09B(DSSDatabase):
     """
     This class is responsible for adding any additional items to the database
@@ -7,21 +11,17 @@ class DSSDatabase09B(DSSDatabase):
     expect this code to work.
     """
 
-    def create_09B_database(self):
-        self.transfer()
+    def create(self):
+        DSSDatabase.create(self, "09B")
         self.create_09B_conditions()
+        print "09B DB created."
 
     def create_09B_conditions(self):
         trimester = "09B"
-        self.create_testing_session(trimester)
-        self.create_maintenance_session(trimester)
         self.create_09B_rcvr_schedule()
-        #self.create_other_fixed_periods()
-        self.set_fixed_projects()
+        #self.set_fixed_projects()
         start = "20090601"
         end   = "20091001"
-        self.create_fixed_periods(start, end)
- 
  
     def create_09B_rcvr_schedule(self):
 
@@ -345,13 +345,13 @@ class DSSDatabase09B(DSSDatabase):
 
         stype    = first(Session_Type.objects.filter(type = "fixed"))
         pcodes = ["GBT09A-092"
-            , "GBT09A-093"
-            , "GBT09A-094"
-            , "GBT09A-096"
-            , "GBT07C-013"
-            , "GBT09B-006"
-            , "GBT09B-031"
-            , "GBT09B-029"]            
+                , "GBT09A-093"
+                , "GBT09A-094"
+                , "GBT09A-096"
+                , "GBT07C-013"
+                , "GBT09B-006"
+                , "GBT09B-031"
+                , "GBT09B-029"]            
         for pcode in pcodes:
             p = first(Project.objects.filter(pcode = pcode).all())
             print p
@@ -360,8 +360,9 @@ class DSSDatabase09B(DSSDatabase):
                 s.session_type = stype
                 s.save()
 
-   # TBF: this was really part of DSSPrime2DSS and won't work here ...          
-   def transfer_project_blackouts_09B(self):
+    # TBF: this was really part of DSSPrime2DSS and won't work here ...
+
+    def transfer_project_blackouts_09B(self):
         "Only needed for scheduling 09B: project blackouts will then go away."
 
         query = "SELECT * from blackouts"

@@ -47,7 +47,12 @@ class Schedtime2DSS(object):
                        , 'Q' : 'Q'
                        , 'M' : 'MBA'
                        , 'H' : 'Hol' 
-                       , 'PF2' : '1070' # TBF, WTF, make up your minds!
+                       , 'PF2'   : '1070' # TBF, WTF, make up your minds!
+                       , 'PF1*3' : '342'
+                       , 'PF1*4' : '450'
+                       , 'PF1*6' : '600'
+                       , 'PF1*8' : '800'
+                       , 'RRI'   : 'RRI'
                        }
 
         # for keeping track of period times (checking for overlaps)
@@ -202,12 +207,15 @@ class Schedtime2DSS(object):
                 else:
                     #NOTE: we are no longer using windows
                     # instead, just saves these off as periods
-                    p = Period(session  = s
-                             , start    = start
-                             , duration = duration
-                             , score    = 0.0
-                             , forecast = datetime.now()
-                             , backup   = False)
+                    pa = Period_Accounting(scheduled = duration)
+                    pa.save()
+                    p = Period(session    = s
+                             , start      = start
+                             , duration   = duration
+                             , score      = 0.0
+                             , forecast   = datetime.now()
+                             , backup     = False
+                             , accounting = pa)
                     p.save()         
                     # keep track of this added one so we can 
                     # check for subsequent overlaps
@@ -327,6 +335,9 @@ class Schedtime2DSS(object):
         if trimester == "09C":
             start = "20091002" # NOT Oct 1!!!!
             end   = "20100201"
+        elif trimester == "09B":
+            start = "20090601" # NOT Oct 1!!!!
+            end   = "20091001"
         else:
             raise "what trimester is that?"
         return (start, end)
@@ -337,12 +348,13 @@ class Schedtime2DSS(object):
     def get_schedtime_rcvrs(self, bands):
         "Maps entries in schedtime.bands to our receiver objects"
          # TBF, WTF, please be consistent!
-        if bands == 'PF2':
-            return [first(Receiver.objects.filter(abbreviation = \
-                                                  self.rcvrMap[bands]))]
+        print "bands", bands
+        if bands in ['RRI', 'PF1*3', 'PF1*4', 'PF1*6', 'PF1*8', 'PF2']:
+            return [first(Receiver.objects.filter(
+                                abbreviation = self.rcvrMap[bands]))]
         else:                                          
-            return [first(Receiver.objects.filter( \
-                abbreviation = self.rcvrMap[b])) for b in bands]
+            return [first(Receiver.objects.filter(
+                                abbreviation = self.rcvrMap[b])) for b in bands]
 
     def get_schedtime_observers(self, names):
         "Maps entries in schedtime.observers to our user objects"

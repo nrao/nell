@@ -127,6 +127,9 @@ class PeriodAdmin(admin.ModelAdmin):
     search_fields = ['start','session']
     date_hierarchy = 'start'
 
+class Period_AccountingAdmin(admin.ModelAdmin):
+    list_display = ['scheduled', 'not_billable', 'short_notice'] 
+
 class ProjectAdmin(admin.ModelAdmin):
     list_display = ['pcode', 'name', 'semester', 'project_type', 'principal_contact', 'thesis', 'complete', 'start_date', 'end_date', 'friend']
     actions = [mark_as_completed, mark_as_not_completed]
@@ -186,6 +189,7 @@ admin.site.register(Observing_Type, Observing_TypeAdmin)
 admin.site.register(Opportunity)
 admin.site.register(Parameter, ParameterAdmin)
 admin.site.register(Period, PeriodAdmin)
+admin.site.register(Period_Accounting, Period_AccountingAdmin)
 admin.site.register(Project, ProjectAdmin)
 admin.site.register(Project_Type, Project_TypeAdmin)
 admin.site.register(Receiver, ReceiverAdmin)
