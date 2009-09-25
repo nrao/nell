@@ -77,8 +77,8 @@
     Ground Weather Forecasts
   </a>
   |
-  <a href="#" onClick="window.open('https://bos.nrao.edu/resReports/roomChart?Start+Date={{calendar|get_cal_start|date:'m/d/Y'}}&End+Date={{calendar|get_cal_end|date:'m/d/Y'}}&Site=1', 'Reservation Chart', 'width=1000, height=800, scrollbars=yes');return true;">
-    Reservation Chart
+  <a href="#" onClick="window.open('https://bos.nrao.edu/resReports/roomChart?Start+Date={{calendar|get_cal_start|date:'m/d/Y'}}&End+Date={{calendar|get_cal_end|date:'m/d/Y'}}&Site=1', 'Room Reservations', 'width=1000, height=800, scrollbars=yes');return true;">
+    Room Reservations
   </a>
   </strong>
   </center>
@@ -163,8 +163,8 @@
       </td>
       <td>
         {% if p.session.project.friend %}
-        <a href="/profile/{{p.session.project.friend.id}}">
-          {{p.session.project.friend.last_name|pretty_none}}
+        <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar', 'Support Staff Absences & Contact Info', 'width=1000, height=700, scrollbars=yes');return true;">
+          {{p.session.project.friend.last_name}}
         </a>
         {% else %}
           {{p.session.project.friend.last_name|pretty_none}}
