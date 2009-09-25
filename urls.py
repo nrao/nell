@@ -28,6 +28,7 @@ urlpatterns = patterns(''
    , url(r'^projects$',           ProjectResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^projects/(\d+)$',     ProjectResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^projects/ical$',      get_ical)
+   , url(r'^projects/time_accounting/([^/]+)$',              time_accounting)
    , url(r'^schedule/$',                                   gbt_schedule)
    , url(r'^schedule/public$',                             public_schedule)
    , url(r'^search$',                                      search)

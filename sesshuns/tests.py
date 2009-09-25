@@ -11,6 +11,7 @@ from models                          import *
 from test_utils.NellTestCase         import NellTestCase
 from tools                           import DBReporter
 from tools                           import ScheduleTools
+from tools                           import TimeAccounting
 from utilities.database              import DSSPrime2DSS
 from utilities.receiver              import ReceiverCompile
 from utilities                       import UserInfo
@@ -1766,4 +1767,87 @@ class TestScheduleTools(NellTestCase):
         self.assertEquals(5.0, backup.accounting.short_notice)
         self.assertEquals(desc, backup.accounting.description)
 
+class TestTimeAccounting(NellTestCase):
 
+    def setUp(self):
+        super(TestTimeAccounting, self).setUp()
+
+        # setup some periods
+        self.start = datetime(2000, 1, 1, 0)
+        self.end   = self.start + timedelta(hours = 12)
+        times = [(datetime(2000, 1, 1, 0), 5.0, "one")
+               , (datetime(2000, 1, 1, 5), 3.0, "two")
+               , (datetime(2000, 1, 1, 8), 4.0, "three")
+               ]
+        self.ps = []
+        for start, dur, name in times:
+            s = create_sesshun()
+            s.name = name
+            s.save()
+            pa = Period_Accounting(scheduled = dur)
+            pa.save()
+            p = Period( session    = s
+                      , start      = start
+                      , duration   = dur
+                      , accounting = pa
+                      )
+            p.save()          
+            self.ps.append(p)
+
+    def tearDown(self):
+        super(TestTimeAccounting, self).tearDown()
+
+        for p in self.ps:
+            p.session.delete()
+            p.delete()
+
+    def test_getTime(self):
+
+        project = Project.objects.order_by('pcode').all()[0]
+        ta = TimeAccounting()
+
+        pScheduled = ta.getProjTime('scheduled', project)
+        self.assertEqual(pScheduled, 12.0)
+
+        pNotBillable = ta.getProjTime('not_billable', project)
+        self.assertEqual(pNotBillable, 0.0)
+
+        # now change something and watch it bubble up
+        self.ps[0].accounting.not_billable = 1.0
+        self.ps[0].accounting.save()
+        project = Project.objects.order_by('pcode').all()[0]
+
+        pNotBillable = ta.getTime('not_billable', self.ps[0].session)
+        self.assertEqual(pNotBillable, 1.0)
+
+        pNotBillable = ta.getProjTime('not_billable', project)
+        self.assertEqual(pNotBillable, 1.0)
+
+
+
+    def test_jsondict(self):
+
+        project = Project.objects.order_by('pcode').all()[0]
+        ta = TimeAccounting()
+
+        dct = ta.jsondict(project)
+        self.assertEqual(3, len(dct['sessions']))
+        self.assertEqual(1, len(dct['sessions'][0]['periods']))
+
+        # test identity
+        ta.update_from_post(project, dct)
+        # get it fressh from the DB
+        project = Project.objects.order_by('pcode').all()[0]
+        dct2 = ta.jsondict(project)
+        self.assertEqual(dct, dct2)
+
+        # now change something
+        dct['sessions'][0]['periods'][0]['not_billable'] = 1.0
+        ta.update_from_post(project, dct)
+        # get it fressh from the DB
+        project = Project.objects.order_by('pcode').all()[0]
+        dct2 = ta.jsondict(project)
+        # they're different becuase not_billable bubbles up
+        self.assertNotEqual(dct, dct2)
+        b = dct2['not_billable'] 
+        self.assertEqual(b, 1.0)
