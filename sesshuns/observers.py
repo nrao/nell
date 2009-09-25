@@ -101,7 +101,7 @@ def events(request, *args, **kws):
 def home(request, *args, **kwds):
     loginUser = request.user.username
     requestor = first(User.objects.filter(username = loginUser))
-    if requestor and request.isOperator():
+    if requestor and requestor.isOperator():
         return HttpResponseRedirect("/schedule/")
     else:
         return HttpResponseRedirect("/profile")
