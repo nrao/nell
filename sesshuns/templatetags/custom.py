@@ -149,7 +149,7 @@ def moc_class(period):
 @register.filter
 def moc_reschedule(period):
     "Popups are issued when start <= 30 minutes if moc is False."
-    diff = datetime.utcnow() - period.start
+    diff = period.start - datetime.utcnow()
     if not period.moc_ack and \
        diff >  timedelta(seconds = 0) and \
        diff <= timedelta(minutes = 30):
