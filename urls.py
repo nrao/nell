@@ -18,7 +18,7 @@ urlpatterns = patterns(''
    , url(r'^profile/(\d+)/dynamic_contact$',               dynamic_contact_save)
    , url(r'^profile/(\d+)$',                               profile)
    , url(r'^profile',                                      profile)
-   , url(r'^$',                                            profile)
+   , url(r'^$',                                            home)
    , url(r'^project/([^/]+)/events$',                      events)
    , url(r'^project/([^/]+)/unavailable$',                 dates_not_schedulable)
    , url(r'^project/([^/]+)$',                             project)
