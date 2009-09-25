@@ -207,12 +207,15 @@ class Schedtime2DSS(object):
                 else:
                     #NOTE: we are no longer using windows
                     # instead, just saves these off as periods
-                    p = Period(session  = s
-                             , start    = start
-                             , duration = duration
-                             , score    = 0.0
-                             , forecast = datetime.now()
-                             , backup   = False)
+                    pa = Period_Accounting(scheduled = duration)
+                    pa.save()
+                    p = Period(session    = s
+                             , start      = start
+                             , duration   = duration
+                             , score      = 0.0
+                             , forecast   = datetime.now()
+                             , backup     = False
+                             , accounting = pa)
                     p.save()         
                     # keep track of this added one so we can 
                     # check for subsequent overlaps
