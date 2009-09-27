@@ -1547,8 +1547,8 @@ class Period(models.Model):
             if tz == 'ET':
                 self.start = TimeAgent.est2utc(self.start)
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
-        self.score    = 0.0 # TBF how to get score?
-        self.forecast = now # TBF to nearest hour?
+        self.score    = fdata.get("score", 0.0)
+        self.forecast = TimeAgent.hour(now) # TBF or what??
         self.backup   = True if fdata.get("backup", None) == 'true' else False
         # TBF: how to initialize scheduled time?  Do Periods need state?
         pa = Period_Accounting(scheduled = self.duration)
