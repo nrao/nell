@@ -1520,11 +1520,7 @@ class Period(models.Model):
     def init_from_post(self, fdata, tz):
         self.from_post(fdata, tz)
 
-        # time accounting:
-        # TBF: how to initialize scheduled time?  Do Periods need state?
-
     def update_from_post(self, fdata, tz):
-        print "update from post!"
         self.from_post(fdata, tz)
         # TBF: should we do this?
         if self.accounting is not None:
@@ -1552,8 +1548,12 @@ class Period(models.Model):
                 self.start = TimeAgent.est2utc(self.start)
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
         self.score    = 0.0 # TBF how to get score?
-        self.forecast = now
+        self.forecast = now # TBF to nearest hour?
         self.backup   = True if fdata.get("backup", None) == 'true' else False
+        # TBF: how to initialize scheduled time?  Do Periods need state?
+        pa = Period_Accounting(scheduled = self.duration)
+        pa.save()
+        self.accounting = pa
         self.save()
 
     def handle2session(self, h):
