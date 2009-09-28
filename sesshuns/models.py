@@ -660,7 +660,7 @@ class Blackout(models.Model):
 
     def __unicode__(self):
         return "%s Blackout for %s: %s - %s" % \
-               (self.repeat.repeat, self.user, self.start, self.end)
+               (self.repeat.repeat, self.user, self.start_date, self.end_date)
 
     def isActive(self, date = datetime.utcnow()):
         """
