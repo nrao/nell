@@ -396,35 +396,35 @@ class TestProject(NellTestCase):
 
     def test_get_blackout_times1(self):
         # Create Investigator1's 3 blackouts.
-        blackout11 = Blackout(user   = self.user1
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 1, 1, 11)
-                            , end    = datetime(2009, 1, 3, 11))
+        blackout11 = Blackout(user       = self.user1
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 1, 11)
+                            , end_date   = datetime(2009, 1, 3, 11))
         blackout11.save()
 
-        blackout12 = Blackout(user   = self.user1
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 1, 1, 18)
-                            , end    = datetime(2009, 1, 4, 18))
+        blackout12 = Blackout(user       = self.user1
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 1, 18)
+                            , end_date   = datetime(2009, 1, 4, 18))
         blackout12.save()
 
-        blackout13 = Blackout(user   = self.user1
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 1, 2, 12)
-                            , end    = datetime(2009, 1, 4, 20))
+        blackout13 = Blackout(user       = self.user1
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 2, 12)
+                            , end_date   = datetime(2009, 1, 4, 20))
         blackout13.save()
 
         # Create Investigator2's 2 blackouts.
-        blackout21 = Blackout(user   = self.user2
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 1, 1, 11)
-                            , end    = datetime(2009, 1, 3, 11))
+        blackout21 = Blackout(user       = self.user2
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 1, 11)
+                            , end_date   = datetime(2009, 1, 3, 11))
         blackout21.save()
 
-        blackout22 = Blackout(user   = self.user2
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 1, 1, 18)
-                            , end    = datetime(2009, 1, 4, 13))
+        blackout22 = Blackout(user       = self.user2
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 1, 18)
+                            , end_date   = datetime(2009, 1, 4, 13))
         blackout22.save()
 
         # Now we can finally do our test.
@@ -449,38 +449,38 @@ class TestProject(NellTestCase):
         self.investigator1.observer = False
         self.investigator1.save()
 
-        blackout11 = Blackout(user   = self.user1
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 1, 1, 11)
-                            , end    = datetime(2009, 1, 3, 11))
+        blackout11 = Blackout(user       = self.user1
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 1, 11)
+                            , end_date   = datetime(2009, 1, 3, 11))
         blackout11.save()
 
-        blackout12 = Blackout(user   = self.user1
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 1, 1, 18)
-                            , end    = datetime(2009, 1, 4, 18))
+        blackout12 = Blackout(user       = self.user1
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 1, 18)
+                            , end_date   = datetime(2009, 1, 4, 18))
         blackout12.save()
 
-        blackout13 = Blackout(user   = self.user1
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 1, 2, 12)
-                            , end    = datetime(2009, 1, 4, 20))
+        blackout13 = Blackout(user       = self.user1
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 2, 12)
+                            , end_date   = datetime(2009, 1, 4, 20))
         blackout13.save()
 
         # Create Investigator2's 2 blackouts.
         self.investigator2.observer = False
         self.investigator2.save()
 
-        blackout21 = Blackout(user   = self.user2
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 1, 1, 11)
-                            , end    = datetime(2009, 1, 3, 11))
+        blackout21 = Blackout(user       = self.user2
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 1, 11)
+                            , end_date   = datetime(2009, 1, 3, 11))
         blackout21.save()
 
-        blackout22 = Blackout(user   = self.user2
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 1, 1, 18)
-                            , end    = datetime(2009, 1, 4, 13))
+        blackout22 = Blackout(user       = self.user2
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 1, 18)
+                            , end_date   = datetime(2009, 1, 4, 13))
         blackout22.save()
 
         today = datetime(2009, 1, 1)
@@ -502,22 +502,22 @@ class TestProject(NellTestCase):
 
     def test_get_blackout_times3(self):
         # Create Investigator1's 3 blackouts.
-        blackout11 = Blackout(user   = self.user1
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 1, 1, 11)
-                            , end    = datetime(2009, 1, 3, 11))
+        blackout11 = Blackout(user       = self.user1
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 1, 11)
+                            , end_date   = datetime(2009, 1, 3, 11))
         blackout11.save()
 
-        blackout12 = Blackout(user   = self.user1
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 1, 1, 18)
-                            , end    = datetime(2009, 1, 4, 18))
+        blackout12 = Blackout(user       = self.user1
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 1, 18)
+                            , end_date   = datetime(2009, 1, 4, 18))
         blackout12.save()
 
-        blackout13 = Blackout(user   = self.user1
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 1, 2, 12)
-                            , end    = datetime(2009, 1, 4, 20))
+        blackout13 = Blackout(user       = self.user1
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 2, 12)
+                            , end_date   = datetime(2009, 1, 4, 20))
         blackout13.save()
 
         # Investigator 2 has no blackouts - She's available all the time.
@@ -534,35 +534,35 @@ class TestProject(NellTestCase):
 
     def test_get_blackout_times4(self):
         # Create Investigator1's 3 blackouts.
-        blackout11 = Blackout(user   = self.user1
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 1, 1, 11)
-                            , end    = datetime(2009, 1, 3, 11))
+        blackout11 = Blackout(user       = self.user1
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 1, 11)
+                            , end_date   = datetime(2009, 1, 3, 11))
         blackout11.save()
 
-        blackout12 = Blackout(user   = self.user1
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 1, 1, 18)
-                            , end    = datetime(2009, 1, 4, 18))
+        blackout12 = Blackout(user       = self.user1
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 1, 18)
+                            , end_date   = datetime(2009, 1, 4, 18))
         blackout12.save()
 
-        blackout13 = Blackout(user   = self.user1
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 1, 2, 12)
-                            , end    = datetime(2009, 1, 4, 20))
+        blackout13 = Blackout(user       = self.user1
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 2, 12)
+                            , end_date   = datetime(2009, 1, 4, 20))
         blackout13.save()
 
         # Create Investigator2's 2 blackouts.
-        blackout21 = Blackout(user   = self.user2
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 2, 1, 11)
-                            , end    = datetime(2009, 2, 3, 11))
+        blackout21 = Blackout(user       = self.user2
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 2, 1, 11)
+                            , end_date   = datetime(2009, 2, 3, 11))
         blackout21.save()
 
-        blackout22 = Blackout(user   = self.user2
-                            , repeat = first(Repeat.objects.all())
-                            , start  = datetime(2009, 3, 1, 18)
-                            , end    = datetime(2009, 3, 4, 13))
+        blackout22 = Blackout(user       = self.user2
+                            , repeat     = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 3, 1, 18)
+                            , end_date   = datetime(2009, 3, 4, 13))
         blackout22.save()
 
         today = datetime(2009, 1, 1)
@@ -1196,7 +1196,7 @@ class TestObservers(NellTestCase):
         response = self.post(
             '/profile/%s/blackout' % self.u.id, data)
         b = first(Blackout.objects.filter(id = b.id))
-        self.assertEqual(b.end.date().strftime("%m/%d/%Y") , data.get('end'))
+        self.assertEqual(b.end_date.date().strftime("%m/%d/%Y") , data.get('end'))
         self.assertEqual(b.until.date().strftime("%m/%d/%Y") , data.get('until'))
         self.failUnlessEqual(response.status_code, 302)
         
@@ -1212,7 +1212,7 @@ class TestObservers(NellTestCase):
             '/profile/%s/blackout' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 302)
         b = first(self.u.blackout_set.all())
-        self.assertEqual(b.end.date().strftime("%m/%d/%Y"), data.get('end'))
+        self.assertEqual(b.end_date.date().strftime("%m/%d/%Y"), data.get('end'))
         b.delete()
 
         data['until'] = ''
