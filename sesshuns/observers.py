@@ -386,10 +386,10 @@ def blackout(request, *args, **kws):
         b = first(Blackout.objects.filter(id = request.POST.get('id', '0')))
     else:
         b = Blackout(user = user)
-    b.start = start
-    b.end   = end
-    b.until = until
-    b.repeat = repeat
+    b.start_date  = start
+    b.end_date    = end
+    b.until       = until
+    b.repeat      = repeat
     b.description = description
     b.save()
         
