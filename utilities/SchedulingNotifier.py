@@ -114,7 +114,7 @@ Happy Observing!
               , p.start.strftime('%b %d %H:%M')
               , TimeAgent.dt2tlst(p.start).strftime('%H:%M')
               , "%2.2f" % (p.duration / 60.0)
-              , p.session.project.get_sanctioned_observers()[0].user.last_name[:9]
+              , p.session.project.get_sanctioned_observers()[0].user.last_name[:9] if p.session.project.get_sanctioned_observers() else "Unknown"
               , p.session.receiver_list_simple()[:9]
               , p.session.name
             )

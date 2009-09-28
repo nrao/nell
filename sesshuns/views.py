@@ -4,6 +4,7 @@ from models                   import Project, Sesshun, Period
 from models                   import Receiver_Schedule, first
 from tools                    import IcalMap, ScheduleTools, TimeAccounting
 from settings                 import PROXY_PORT
+from utilities.SchedulingNotifier import SchedulingNotifier
 
 import simplejson as json
 
@@ -100,27 +101,33 @@ def time_accounting(request, *args, **kws):
     js = ta.jsondict(project)
     return HttpResponse(json.dumps(js), mimetype = "text/plain")
 
-def generate_sched_email(request, *args, **kwds):
-    start    = request.POST.get("start", None)
-    end      = request.POST.get("end", None)
-    periods  = Period.objects.filter(start__gt = start, start__lt = end)
-    notifier = SchedulingNotifier(periods)
+def scheduling_email(request, *args, **kwds):
+    if request.method == 'GET':
+        start    = datetime.strptime(request.GET.get("start", None)
+                               , "%Y-%m-%dT%H:%M:%S")
+        end      = datetime.strptime(request.GET.get("end", None)
+                               , "%Y-%m-%dT%H:%M:%S")
+        periods  = Period.objects.filter(start__gt = start, start__lt = end)
+        notifier = SchedulingNotifier([p for p in periods.all()])
 
-    return HttpResponse(
-        json.dumps({
-            'emails' : notifier.getAddresses()
-          , 'subject': notifier.getSubject()
-          , 'body'   : notifier.getBody()
-        })
-      , mimetype = "text/plain")
+        return HttpResponse(
+            json.dumps({
+                'emails' : notifier.getAddresses()
+              , 'subject': notifier.getSubject()
+              , 'body'   : notifier.getBody()
+            })
+          , mimetype = "text/plain")
+    elif request.method == 'POST':
+        notifier = SchedulingNotifier([])
 
-def send_sched_email(request, *args, **kwds):
-    notifier = SchedulingNotifier([])
+        notifier.SetAddresses(request.POST.get("addresses", []))
+        notifier.SetSubject(request.POST.get("subject", ""))
+        notifier.SetBody(request.POST.get("body", ""))
 
-    notifier.SetAddresses(request.POST.get("addresses", []))
-    notifier.SetSubject(request.POST.get("subject", ""))
-    notifier.SetBody(request.POST.get("body", ""))
+        notifier.notify()
 
-    notifier.notify()
-
-    return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
+        return HttpResponse(json.dumps({'success':'ok'})
+                          , mimetype = "text/plain")
+    else:
+        return HttpResponse(json.dumps({'success':'error'})
+                          , mimetype = "text/plain")
