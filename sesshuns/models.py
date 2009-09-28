@@ -954,7 +954,7 @@ class Sesshun(models.Model):
                 if r not in rcvrs:
                     rcvrs.append(r)
         return rcvrs        
-        
+
     def letter_grade(self):
         return grade_float_2_abc(self.allotment.grade)
 

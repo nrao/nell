@@ -99,4 +99,28 @@ def time_accounting(request, *args, **kws):
     project = first(Project.objects.filter(pcode = pcode))
     js = ta.jsondict(project)
     return HttpResponse(json.dumps(js), mimetype = "text/plain")
-    
+
+def generate_sched_email(request, *args, **kwds):
+    start    = request.POST.get("start", None)
+    end      = request.POST.get("end", None)
+    periods  = Period.objects.filter(start__gt = start, start__lt = end)
+    notifier = SchedulingNotifier(periods)
+
+    return HttpResponse(
+        json.dumps({
+            'emails' : notifier.getAddresses()
+          , 'subject': notifier.getSubject()
+          , 'body'   : notifier.getBody()
+        })
+      , mimetype = "text/plain")
+
+def send_sched_email(request, *args, **kwds):
+    notifier = SchedulingNotifier([])
+
+    notifier.SetAddresses(request.POST.get("addresses", []))
+    notifier.SetSubject(request.POST.get("subject", ""))
+    notifier.SetBody(request.POST.get("body", ""))
+
+    notifier.notify()
+
+    return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
