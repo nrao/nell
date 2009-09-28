@@ -18,7 +18,7 @@ urlpatterns = patterns(''
    , url(r'^profile/(\d+)/dynamic_contact$',               dynamic_contact_save)
    , url(r'^profile/(\d+)$',                               profile)
    , url(r'^profile',                                      profile)
-   , url(r'^$',                                            profile)
+   , url(r'^$',                                            home)
    , url(r'^project/([^/]+)/events$',                      events)
    , url(r'^project/([^/]+)/unavailable$',                 dates_not_schedulable)
    , url(r'^project/([^/]+)$',                             project)
@@ -38,6 +38,8 @@ urlpatterns = patterns(''
    , url(r'^sessions/(\d+)$',     SessionResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^receivers$',          rcvr_schedule) #
    , url(r'^receivers/schedule$', receivers_schedule) #
+   , url(r'^period/([^/]+)/moc_reschedule$', moc_reschedule)
+   , url(r'^period/([^/]+)/moc_degraded$', moc_degraded)
    , url(r'^periods/(UTC)$',      PeriodResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^periods/(ET)$',       PeriodResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^periods/(UTC)/(\d+)$',PeriodResource(permitted_methods=('PUT', 'GET', 'POST'))) #

@@ -4,12 +4,14 @@ from tools                     import TimeAccounting
 from django.conf               import settings
 from django.db                 import models
 from django.http               import QueryDict
+from settings                  import ANTIOCH_SERVER_URL
 from utilities.receiver        import ReceiverCompile
 from utilities                 import TimeAgent, UserInfo, NRAOBosDB
 
 import calendar
 import pg
 from sets                      import Set
+import urllib2
 import simplejson as json
 import sys
 
@@ -1447,6 +1449,7 @@ class Period(models.Model):
     score      = models.FloatField(null = True, editable=False)
     forecast   = models.DateTimeField(null = True, editable=False)
     backup     = models.BooleanField()
+    moc_ack    = models.BooleanField(default = False)
 
     class Meta:
         db_table = "periods"
@@ -1474,17 +1477,10 @@ class Period(models.Model):
     def display_name(self):
         return self.__str__()
 
-    class Meta:
-        db_table = "periods"
-    
     def init_from_post(self, fdata, tz):
         self.from_post(fdata, tz)
 
-        # time accounting:
-        # TBF: how to initialize scheduled time?  Do Periods need state?
-
     def update_from_post(self, fdata, tz):
-        print "update from post!"
         self.from_post(fdata, tz)
         # TBF: should we do this?
         if self.accounting is not None:
@@ -1512,8 +1508,12 @@ class Period(models.Model):
                 self.start = TimeAgent.est2utc(self.start)
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
         self.score    = 0.0 # TBF how to get score?
-        self.forecast = now
+        self.forecast = now # TBF to nearest hour?
         self.backup   = True if fdata.get("backup", None) == 'true' else False
+        # TBF: how to initialize scheduled time?  Do Periods need state?
+        pa = Period_Accounting(scheduled = self.duration)
+        pa.save()
+        self.accounting = pa
         self.save()
 
     def handle2session(self, h):
@@ -1557,6 +1557,25 @@ class Period(models.Model):
             accounting_js.update({'accounting_id' : accounting_id})
             js.update(accounting_js)
         return js
+
+    def moc_met(self):
+        "Returns a Boolean indicated if MOC are met (True) or not (False)."
+        # Only check periods for open sessions.
+        if self.session.session_type.type not in ("open", "windowed"):
+            return True
+
+        url = ANTIOCH_SERVER_URL + \
+              "/moc?session_id=" + \
+              `self.session.id` + \
+              "&start=" + \
+              self.start.isoformat().replace("T", "+").replace(":", "%3A")
+        try:
+            antioch_cnn = urllib2.build_opener().open(url)
+            moc = json.loads(antioch_cnn.read(0x4000))['moc']
+        except:
+            moc = True
+
+        return moc
 
     def has_required_receivers(self):
 

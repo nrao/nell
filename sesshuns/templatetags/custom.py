@@ -141,3 +141,28 @@ def format_list(aList):
 @register.filter
 def format_reservations(reservations):
     return ", ".join([a + " to " + b for a, b in [(x.strftime('%m-%d-%Y'), y.strftime('%m-%d-%Y')) for x, y in reservations]]) if reservations else "None"
+
+@register.filter
+def moc_class(period):
+    return "" if period.moc_met() else "moc_failure"
+
+@register.filter
+def moc_reschedule(period):
+    "Popups are issued when start <= 30 minutes if moc is False."
+    diff = period.start - datetime.utcnow()
+    if not period.moc_ack and \
+       diff >  timedelta(seconds = 0) and \
+       diff <= timedelta(minutes = 30):
+        return not period.moc_met()
+    else:
+        return False
+
+@register.filter
+def moc_degraded(period):
+    "Popups are issued when a period has started and if moc is False."
+    now = datetime.utcnow()
+    if not period.moc_ack and \
+       now > period.start and now < period.end():
+        return not period.moc_met()
+    else:
+        return False

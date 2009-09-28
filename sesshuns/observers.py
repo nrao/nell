@@ -98,6 +98,15 @@ def events(request, *args, **kws):
     return HttpResponse(json.dumps(jsonobjlist))
 
 @login_required
+def home(request, *args, **kwds):
+    loginUser = request.user.username
+    requestor = first(User.objects.filter(username = loginUser))
+    if requestor and requestor.isOperator():
+        return HttpResponseRedirect("/schedule/")
+    else:
+        return HttpResponseRedirect("/profile")
+
+@login_required
 def profile(request, *args, **kws):
     loginUser = request.user.username
     requestor = first(User.objects.filter(username = loginUser))

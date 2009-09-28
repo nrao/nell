@@ -17,6 +17,7 @@ INSERT INTO allotment VALUES (DEFAULT, 100.5, 100.5, 100.5, 4.0);
 
 INSERT INTO roles VALUES (DEFAULT, 'Administrator');
 INSERT INTO roles VALUES (DEFAULT, 'Observer');
+INSERT INTO roles VALUES (DEFAULT, 'Operator');
 
 INSERT INTO repeats VALUES (DEFAULT, 'Once');
 INSERT INTO repeats VALUES (DEFAULT, 'Weekly');
