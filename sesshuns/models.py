@@ -1560,8 +1560,9 @@ class Period(models.Model):
 
     def moc_met(self):
         "Returns a Boolean indicated if MOC are met (True) or not (False)."
-        # Only check periods for open sessions.
-        if self.session.session_type.type not in ("open", "windowed"):
+        # TBF: When windows are working correctly, replace with line below.
+        if self.session.session_type.type not in ("open",):
+        #if self.session.session_type.type not in ("open", "windowed"):
             return True
 
         url = ANTIOCH_SERVER_URL + \
