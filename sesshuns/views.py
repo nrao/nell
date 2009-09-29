@@ -82,7 +82,7 @@ def change_schedule(request, *args, **kws):
         startdate = datetime(y, m, d, h, mm, ss)
     duration = request.POST.get("duration", None)
     if duration is not None: 
-        duration = int(duration)
+        duration = float(duration) # hours!
     sess_handle = request.POST.get("session", "")
     sess_name = sess_handle.split("(")[0].strip()
     s = first(Sesshun.objects.filter(name = sess_name))

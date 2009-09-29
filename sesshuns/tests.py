@@ -1044,7 +1044,7 @@ class TestChangeSchedule(NellTestCase):
         create_sesshun()
         c = Client()
         response = c.post('/schedule/change_schedule'
-                        , dict(duration = "60"
+                        , dict(duration = "1.0"
                              , start    = "2009-10-11 04:00:00"))
 
 # Testing Observers UI
@@ -1626,7 +1626,7 @@ class TestScheduleTools(NellTestCase):
         # Example 2 (Ex. 1 is a no op)
         change_start = self.ps[0].start + timedelta(hours = 2)
         ScheduleTools().changeSchedule(change_start 
-                                    , 3.0 * 60.0
+                                    , 3.0 
                                     , self.backup
                                     , "other_session_other"
                                     , "SP broke.")
@@ -1662,7 +1662,7 @@ class TestScheduleTools(NellTestCase):
         change_start = self.ps[0].start + timedelta(hours = 2)
         desc = "SP croaked."
         ScheduleTools().changeSchedule(change_start 
-                                    , 3.0 * 60.0
+                                    , 3.0 
                                     , None
                                     , "lost_time_other"
                                     , desc)
@@ -1698,7 +1698,7 @@ class TestScheduleTools(NellTestCase):
         backup = self.ps[1].session
         desc = "Session Two starting hour early; not billed time for Two."
         ScheduleTools().changeSchedule(change_start 
-                                    , 1.0 * 60.0
+                                    , 1.0 
                                     , backup
                                     , "other_session_weather"
                                     , desc)
@@ -1741,7 +1741,7 @@ class TestScheduleTools(NellTestCase):
         change_start = self.ps[0].start 
         desc = "Hurricane Georges"
         ScheduleTools().changeSchedule(change_start 
-                                    , 5.0*60.0
+                                    , 5.0 
                                     , self.backup
                                     , "other_session_weather"
                                     , desc)
