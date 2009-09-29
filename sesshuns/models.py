@@ -601,9 +601,8 @@ class Project(models.Model):
     def get_receiver_blackout_dates(self, start, end):
         # Change date ranges into individual days.
         blackouts = []
-        for r in self.get_receiver_blackout_ranges(start, end):
-            rstart, rend = r
-            counter = min(rstart, start)
+        for rstart, rend in self.get_receiver_blackout_ranges(start, end):
+            counter = rstart.replace(hour = 0)
             while counter < (rend or end):
                 blackouts.append(counter)
                 counter = counter + timedelta(days = 1)
