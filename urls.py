@@ -31,6 +31,7 @@ urlpatterns = patterns(''
    , url(r'^projects/time_accounting/([^/]+)$',              time_accounting)
    , url(r'^schedule/$',                                   gbt_schedule)
    , url(r'^schedule/public$',                             public_schedule)
+   , url(r'^schedule/email$',                              scheduling_email)
    , url(r'^search$',                                      search)
    , url(r'^sessions/options$',   get_options) #
    , url(r'^schedule/change_schedule$', change_schedule) #

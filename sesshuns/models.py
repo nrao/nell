@@ -601,9 +601,8 @@ class Project(models.Model):
     def get_receiver_blackout_dates(self, start, end):
         # Change date ranges into individual days.
         blackouts = []
-        for r in self.get_receiver_blackout_ranges(start, end):
-            rstart, rend = r
-            counter = min(rstart, start)
+        for rstart, rend in self.get_receiver_blackout_ranges(start, end):
+            counter = rstart.replace(hour = 0)
             while counter < (rend or end):
                 blackouts.append(counter)
                 counter = counter + timedelta(days = 1)
@@ -954,7 +953,7 @@ class Sesshun(models.Model):
                 if r not in rcvrs:
                     rcvrs.append(r)
         return rcvrs        
-        
+
     def letter_grade(self):
         return grade_float_2_abc(self.allotment.grade)
 
@@ -1560,8 +1559,9 @@ class Period(models.Model):
 
     def moc_met(self):
         "Returns a Boolean indicated if MOC are met (True) or not (False)."
-        # Only check periods for open sessions.
-        if self.session.session_type.type not in ("open", "windowed"):
+        # TBF: When windows are working correctly, replace with line below.
+        if self.session.session_type.type not in ("open",):
+        #if self.session.session_type.type not in ("open", "windowed"):
             return True
 
         url = ANTIOCH_SERVER_URL + \
