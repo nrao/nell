@@ -1424,6 +1424,7 @@ class Period_Accounting(models.Model):
         self.save()
 
     def jsondict(self):
+        description = self.description if self.description is not None else ""
         return {"id"                    : self.id
               , "scheduled"             : self.scheduled
               , "observed"              : self.observed()
@@ -1438,7 +1439,7 @@ class Period_Accounting(models.Model):
               , "lost_time_other"       : self.lost_time_other
               , "unaccounted_time"      : self.unaccounted_time()
               , "short_notice"          : self.short_notice
-              , "description"           : self.description}
+              , "description"           : description}
 
 class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
