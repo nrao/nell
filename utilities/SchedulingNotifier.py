@@ -58,33 +58,33 @@ class SchedulingNotifier(Notifier):
         self.logMessage("Staff To: %s\n" % self.getAddresses())
 
     def createAddresses(self):
-        addresses = []
+        # Make sure we get succinct list of observers because we need to
+        # query the user db and we should minimize the number of calls.
+        observers = []
         for p in self.periods:
             for o in p.session.project.get_sanctioned_observers():
-                addresses.extend(o.user.email_set.all())
+                if o not in observers:
+                    observers.append(o)
 
-        filteredAddresses = []
-        for a in addresses:
-           if a not in filteredAddresses:
-               filteredAddresses.append(a)
+        addresses = []
+        for o in observers:
+            addresses.extend(o.user.getStaticContactInfo()['emails'])
 
-        self.setAddresses(filteredAddresses)
+        self.setAddresses(addresses)
 
-        self.logMessage("To: %s\n" % filteredAddresses)
+        self.logMessage("To: %s\n" % self.getAddresses())
 
     def createStaffSubject(self):
-        self.setSubject("GBT schedule for %s-%s %s" % \
+        self.setSubject("GBT schedule for %s-%s" % \
                         (TimeAgent.utc2est(self.startdate).strftime('%b %d')
-                       , TimeAgent.utc2est(self.enddate).strftime('%d')
-                       , TimeAgent.utc2est(self.enddate).strftime('%Y')))
+                       , TimeAgent.utc2est(self.enddate).strftime('%b %d')))
 
         self.logMessage("Staff Subject: %s\n" % self.getSubject())
 
     def createSubject(self):
-        self.setSubject("Your GBT project has been scheduled (%s-%s %s)" % \
+        self.setSubject("Your GBT project has been scheduled (%s-%s)" % \
                         (TimeAgent.utc2est(self.startdate).strftime('%b %d')
-                       , TimeAgent.utc2est(self.enddate).strftime('%d')
-                       , TimeAgent.utc2est(self.enddate).strftime('%Y')))
+                       , TimeAgent.utc2est(self.enddate).strftime('%b %d')))
 
         self.logMessage("Subject: %s\n" % self.getSubject())
 
@@ -109,12 +109,17 @@ Happy Observing!
         table  = "Start (ET)   |      UT      |  LST  |  (hr) | Observer  | Rx        | Session\n"
         table += "------------------------------------------------------------------------------\n"
         for p in self.periods:
+            if p.session.project.pcode == "Maintenance":
+                observer = ""
+            else:
+                observer = p.session.project.get_sanctioned_observers()[0].user.last_name[:9] if p.session.project.get_sanctioned_observers() else "Unknown"
+
             table += "%s | %s | %s | %5s | %-9s | %-9s | %s\n" % (
                 TimeAgent.utc2est(p.start).strftime('%b %d %H:%M')
               , p.start.strftime('%b %d %H:%M')
-              , TimeAgent.dt2tlst(p.start).strftime('%H:%M')
-              , "%2.2f" % (p.duration / 60.0)
-              , p.session.project.get_sanctioned_observers()[0].user.last_name[:9] if p.session.project.get_sanctioned_observers() else "Unknown"
+              , TimeAgent.dt2tlst(TimeAgent.utc2est(p.start)).strftime('%H:%M')
+              , "%2.2f" % p.duration
+              , observer
               , p.session.receiver_list_simple()[:9]
               , p.session.name
             )

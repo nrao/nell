@@ -117,14 +117,12 @@ class emailNotifier:
         self.text =  'From: %s\r\nTo: %s\r\nDate: %s\r\nSubject: %s\r\n\r\n%s\r\n' \
     % (self.frm, to, self.date, self.subject, self.msg)
 
-        print self.frm
-        print self.to
-        print self.text
         for address in self.to:
             # This loop is necessary due to a bug in smtplib.  It only
             # emails the first person in the "to" list.  So, we need to
             # send an email for each person in the "to" list.
             #self.failed = self.server.sendmail(self.frm, address, self.text)
+            #self.failed = self.server.sendmail(self.frm, "ashelton@nrao.edu", self.text)
             pass
 
         if len(self.failed) > 0:
