@@ -144,7 +144,6 @@ GBTLONG = DateTime.DateTimeDeltaFrom(GBT_LOCATION[0]).hours
 def Absolute2RelativeLST(absolute):
     "Returns LST as hours given UTC as a datetime."
     absolute = dt2mxDT(absolute)
-    stuff = mjd2gmst(absolute.mjd)
     gmst = (180.0/math.pi) * mjd2gmst(absolute.mjd)
     gbls = (gmst + GBTLONG)/15.0
     if gbls < 0:

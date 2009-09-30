@@ -54,7 +54,7 @@ class SchedulingNotifier(Notifier):
         Notifier.notify(self)
 
     def createStaffAddresses(self):
-        self.setAddresses(["gbtops@gb.nrao.edu", "gbtlocal@gb.nrao.edu"])
+        self.setAddresses(["gbtops@gb.nrao.edu", "gbtlocal@gb.nrao.edu", "gbtime@gb.nrao.edu"])
         self.logMessage("Staff To: %s\n" % self.getAddresses())
 
     def createAddresses(self):
@@ -92,9 +92,13 @@ class SchedulingNotifier(Notifier):
         self.setBody("""
 Dear Colleagues,
 
-The schedule for the period %s ET through %s ET is now available.
+The schedule for the period %s ET through %s ET is fixed and available.
 
 %s
+
+Please log into https://dss.gb.nrao.edu to view your observation
+related information.
+
 Any requests or problems with the schedule should be directed
 to helpdesk-dss@gb.nrao.edu.
 
@@ -117,7 +121,7 @@ Happy Observing!
             table += "%s | %s | %s | %5s | %-9s | %-9s | %s\n" % (
                 TimeAgent.utc2est(p.start).strftime('%b %d %H:%M')
               , p.start.strftime('%b %d %H:%M')
-              , TimeAgent.dt2tlst(TimeAgent.utc2est(p.start)).strftime('%H:%M')
+              , TimeAgent.dt2tlst(p.start).strftime('%H:%M')
               , "%2.2f" % p.duration
               , observer
               , p.session.receiver_list_simple()[:9]

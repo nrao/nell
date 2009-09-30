@@ -103,8 +103,7 @@ def time_accounting(request, *args, **kws):
 
 def scheduling_email(request, *args, **kwds):
     if request.method == 'GET':
-        #start    = datetime.utcnow()
-        start    = datetime(2009, 10, 12)
+        start    = datetime.utcnow()
         end      = start + timedelta(days = 2)
         periods  = Period.objects.filter(start__gt = start, start__lt = end)
         notifier = SchedulingNotifier([p for p in periods.all()])
