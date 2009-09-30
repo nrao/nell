@@ -121,9 +121,7 @@ class emailNotifier:
             # This loop is necessary due to a bug in smtplib.  It only
             # emails the first person in the "to" list.  So, we need to
             # send an email for each person in the "to" list.
-            #self.failed = self.server.sendmail(self.frm, address, self.text)
-            #self.failed = self.server.sendmail(self.frm, "ashelton@nrao.edu", self.text)
-            pass
+            self.failed = self.server.sendmail(self.frm, address, self.text)
 
         if len(self.failed) > 0:
             raise 'failure in notification:', self.failed

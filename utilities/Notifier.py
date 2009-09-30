@@ -90,7 +90,6 @@ class Notifier(object):
 
         try:
             emailer = emailNotifier(smtp = "smtp.gb.nrao.edu"
-                                  # TBF: Keep for when doing for real
                                   , frm  = "helpdesk-dss@gb.nrao.edu")
             emailer.SetTo(self.getAddresses())
             emailer.SetSubject(self.getSubject())
