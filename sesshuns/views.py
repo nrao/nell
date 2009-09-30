@@ -103,10 +103,8 @@ def time_accounting(request, *args, **kws):
 
 def scheduling_email(request, *args, **kwds):
     if request.method == 'GET':
-        start    = datetime.strptime(request.GET.get("start", None)
-                               , "%Y-%m-%dT%H:%M:%S")
-        end      = datetime.strptime(request.GET.get("end", None)
-                               , "%Y-%m-%dT%H:%M:%S")
+        start    = datetime.utcnow()
+        end      = start + timedelta(days = 2)
         periods  = Period.objects.filter(start__gt = start, start__lt = end)
         notifier = SchedulingNotifier([p for p in periods.all()])
 
@@ -120,9 +118,9 @@ def scheduling_email(request, *args, **kwds):
     elif request.method == 'POST':
         notifier = SchedulingNotifier([])
 
-        notifier.SetAddresses(request.POST.get("addresses", []))
-        notifier.SetSubject(request.POST.get("subject", ""))
-        notifier.SetBody(request.POST.get("body", ""))
+        notifier.setAddresses(str(request.POST.get("emails", "")).replace(" ", "").split(","))
+        notifier.setSubject(request.POST.get("subject", ""))
+        notifier.setBody(request.POST.get("body", ""))
 
         notifier.notify()
 
