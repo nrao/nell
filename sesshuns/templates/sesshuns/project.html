@@ -122,8 +122,8 @@
                   <td>
                     <a href="/profile/{{i.user.id}}">{{i.user|display_name}}</a>
                   </td>
-                  <td>{{b.start|date:'j M Y H:i'}}</td>
-                  <td>{{b.end|date:'j M Y H:i'}}</td>
+                  <td>{{b.start_date|date:'j M Y H:i'}}</td>
+                  <td>{{b.end_date|date:'j M Y H:i'}}</td>
                   <td>{{b.repeat.repeat}}</td>
                   {% if b.until %}
                   <td>{{b.until|date:'j M Y H:i'}}</td>

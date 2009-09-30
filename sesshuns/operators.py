@@ -8,6 +8,41 @@ from utilities                import gen_gbt_schedule
 from utilities.TimeAgent      import EST
 
 @login_required
+def moc_reschedule(request, *args, **kws):
+    loginUser = request.user.username
+    requestor = first(User.objects.filter(username = loginUser))
+    p_id,     = args
+    period    = first(Period.objects.filter(id = p_id))
+
+    if requestor.isOperator(): # Only operators can acknowledge MOC failures.
+        period.moc_ack = True 
+        period.save()
+
+    return render_to_response(
+        'sesshuns/moc_reschedule.html'
+      , {'requestor': requestor
+       , 'p'        : period}
+    )
+
+@login_required
+def moc_degraded(request, *args, **kws):
+    loginUser = request.user.username
+    requestor = first(User.objects.filter(username = loginUser))
+    p_id,     = args
+    period    = first(Period.objects.filter(id = p_id))
+
+    period.ack_moc_failure = True 
+    if requestor.isOperator(): # Only operators can acknowledge MOC failures.
+        period.moc_ack = True 
+        period.save()
+
+    return render_to_response(
+        'sesshuns/moc_degraded.html'
+      , {'requestor': requestor
+       , 'p'        : period}
+    )
+
+@login_required
 def gbt_schedule(request, *args, **kws):
     loginUser = request.user.username
     requestor = first(User.objects.filter(username = loginUser))

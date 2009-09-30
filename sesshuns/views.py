@@ -4,6 +4,7 @@ from models                   import Project, Sesshun, Period
 from models                   import Receiver_Schedule, first
 from tools                    import IcalMap, ScheduleTools, TimeAccounting
 from settings                 import PROXY_PORT
+from utilities.SchedulingNotifier import SchedulingNotifier
 
 import simplejson as json
 
@@ -82,7 +83,7 @@ def change_schedule(request, *args, **kws):
         startdate = datetime(y, m, d, h, mm, ss)
     duration = request.POST.get("duration", None)
     if duration is not None: 
-        duration = int(duration)
+        duration = float(duration) # hours!
     sess_handle = request.POST.get("session", "")
     sess_name = sess_handle.split("(")[0].strip()
     s = first(Sesshun.objects.filter(name = sess_name))
@@ -99,4 +100,32 @@ def time_accounting(request, *args, **kws):
     project = first(Project.objects.filter(pcode = pcode))
     js = ta.jsondict(project)
     return HttpResponse(json.dumps(js), mimetype = "text/plain")
-    
+
+def scheduling_email(request, *args, **kwds):
+    if request.method == 'GET':
+        start    = datetime.utcnow()
+        end      = start + timedelta(days = 2)
+        periods  = Period.objects.filter(start__gt = start, start__lt = end)
+        notifier = SchedulingNotifier([p for p in periods.all()])
+
+        return HttpResponse(
+            json.dumps({
+                'emails' : notifier.getAddresses()
+              , 'subject': notifier.getSubject()
+              , 'body'   : notifier.getBody()
+            })
+          , mimetype = "text/plain")
+    elif request.method == 'POST':
+        notifier = SchedulingNotifier([])
+
+        notifier.setAddresses(str(request.POST.get("emails", "")).replace(" ", "").split(","))
+        notifier.setSubject(request.POST.get("subject", ""))
+        notifier.setBody(request.POST.get("body", ""))
+
+        notifier.notify()
+
+        return HttpResponse(json.dumps({'success':'ok'})
+                          , mimetype = "text/plain")
+    else:
+        return HttpResponse(json.dumps({'success':'error'})
+                          , mimetype = "text/plain")

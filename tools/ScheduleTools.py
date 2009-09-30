@@ -16,13 +16,13 @@ class ScheduleTools(object):
             time to other session due to rfi
             time to other session due to other reason
         """
-        duration_hrs = duration/60.0
 
         # what periods are we affecting?
-        ps = Period.get_periods(start, duration)
+        duration_mins = duration * 60.0
+        ps = Period.get_periods(start, duration_mins)
 
         # first, adjust each of the affected periods - including time accnting
-        end = start + timedelta(minutes = duration)
+        end = start + timedelta(hours = duration)
         for p in ps:
             if p.start >= start and p.end() <= end:
                 # this entire period is being replaced
@@ -55,7 +55,7 @@ class ScheduleTools(object):
                 raise "not covered"
             # now change this periods time accounting
             if p is not None:
-                p.accounting.set_changed_time(reason, duration_hrs)
+                p.accounting.set_changed_time(reason, duration)
                 p.accounting.description = description
                 p.accounting.save()
                 p.save()
@@ -63,13 +63,13 @@ class ScheduleTools(object):
         # finally, anything to replace it with?
         if sesshun is not None:
             # create a period for this
-            pa = Period_Accounting(scheduled    = duration_hrs
-                                 , short_notice = duration_hrs
+            pa = Period_Accounting(scheduled    = duration
+                                 , short_notice = duration
                                  , description  = description)
             pa.save()                     
             p = Period(session    = sesshun
                      , start      = start
-                     , duration   = duration_hrs
+                     , duration   = duration
                      , score      = 0.0
                      , forecast   = start
                      , accounting = pa)

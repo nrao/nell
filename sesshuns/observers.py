@@ -98,6 +98,15 @@ def events(request, *args, **kws):
     return HttpResponse(json.dumps(jsonobjlist))
 
 @login_required
+def home(request, *args, **kwds):
+    loginUser = request.user.username
+    requestor = first(User.objects.filter(username = loginUser))
+    if requestor and requestor.isOperator():
+        return HttpResponseRedirect("/schedule/")
+    else:
+        return HttpResponseRedirect("/profile")
+
+@login_required
 def profile(request, *args, **kws):
     loginUser = request.user.username
     requestor = first(User.objects.filter(username = loginUser))
@@ -386,10 +395,10 @@ def blackout(request, *args, **kws):
         b = first(Blackout.objects.filter(id = request.POST.get('id', '0')))
     else:
         b = Blackout(user = user)
-    b.start = start
-    b.end   = end
-    b.until = until
-    b.repeat = repeat
+    b.start_date  = start
+    b.end_date    = end
+    b.until       = until
+    b.repeat      = repeat
     b.description = description
     b.save()
         

@@ -80,16 +80,22 @@ class TimeAccounting:
         "Contains all levels of time accounting info"
         
         # project level
+        notes = proj.accounting_notes
+        if notes is None:
+            notes = ""
         dct = dict(pcode    = proj.pcode
-                 , notes    = proj.accounting_notes
+                 , notes    = notes
                  , sessions = [])
         for field in self.fields:
             dct.update({field : self.getProjTime(field, proj)})
         
         # session level
         for s in proj.sesshun_set.all():
+            notes = s.accounting_notes
+            if notes is None:
+                notes = ""
             sdct = dict(name    = s.name
-                      , notes   = s.accounting_notes
+                      , notes   = notes
                       , periods = [])
             for field in self.fields:
                 sdct.update({field : self.getTime(field, s)})

@@ -116,12 +116,12 @@
     <tr>
       {% if start_cutoff or end_cutoff %}
         {%if start_cutoff %}
-          <td>+{{start|date:"H:m"}} - {{end|date:"H:m"}}</td>
+          <td>+{{start|date:"H:i"}} - {{end|date:"H:i"}}</td>
         {% else %}
-          <td>{{start|date:"H:m"}} - {{end|date:"H:m"}}+</td>
+          <td>{{start|date:"H:i"}} - {{end|date:"H:i"}}+</td>
         {% endif %}
       {% else %}    
-          <td>{{start|date:"H:m"}} - {{end|date:"H:m"}}</td>
+          <td>{{start|date:"H:i"}} - {{end|date:"H:i"}}</td>
       {% endif %}    
       {% ifequal p.session.project.project_type.type "non-science" %}
         {% if p.session.project.is_maintenance %}

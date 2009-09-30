@@ -138,6 +138,33 @@ def quarter(dt):
     minutes = int(round(dt.minute/15.0))*15
     return dt.replace(minute=0, second=0, microsecond=0) + datetime.timedelta(minutes=minutes)
 
+GBTLAT  = deg2rad(DateTime.DateTimeDeltaFrom(GBT_LOCATION[1]).hours)
+GBTLONG = DateTime.DateTimeDeltaFrom(GBT_LOCATION[0]).hours
+
+def Absolute2RelativeLST(absolute):
+    "Returns LST as hours given UTC as a datetime."
+    absolute = dt2mxDT(absolute)
+    gmst = (180.0/math.pi) * mjd2gmst(absolute.mjd)
+    gbls = (gmst + GBTLONG)/15.0
+    if gbls < 0:
+        gbls = 24 + gbls
+    return gbls
+
+def mjd2gmst(mjd):
+    """
+    Greenwich Mean Sidereal Time
+    See http://www.cv.nrao.edu/~rfisher/Ephemerides/times.html#GMST
+    for equation.
+    """
+    T    = ((mjd - 51545.0) / 36525)
+    GMST = 24110.54841 + \
+           (8640184.812866 * T) + \
+           (0.093104 * T * T) - \
+           (0.0000062 * T * T * T)
+    angle = (mjd * 2 * math.pi + GMST * 0.00007272205216643039903848711535369) \
+            % (2 * math.pi)
+    return angle if angle >= 0 else angle + 2 * math.pi
+
 def TimeStamp2DateTime(mjd, secs):
     "Translates MJD integer and double seconds since midnight into a datetime."
     mxDT = DateTime.DateTimeFromMJD(mjd + secs/86400)
