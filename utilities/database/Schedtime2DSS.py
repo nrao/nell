@@ -348,7 +348,7 @@ class Schedtime2DSS(object):
     def get_schedtime_rcvrs(self, bands):
         "Maps entries in schedtime.bands to our receiver objects"
          # TBF, WTF, please be consistent!
-        print "bands", bands
+        #print "bands", bands
         if bands in ['RRI', 'PF1*3', 'PF1*4', 'PF1*6', 'PF1*8', 'PF2']:
             return [first(Receiver.objects.filter(
                                 abbreviation = self.rcvrMap[bands]))]
