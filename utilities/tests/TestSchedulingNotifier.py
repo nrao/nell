@@ -45,6 +45,7 @@ class DummySession:
 class DummyProject:
     def __init__(self):
         self.observers = [DummyObserver()]
+        self.pcode = "GBT09C-001"
 
     def get_sanctioned_observers(self):
         return self.observers
@@ -55,12 +56,10 @@ class DummyObserver:
 
 class DummyUser:
     def __init__(self):
-        self.email_set = DummyEmailSet()
         self.last_name = "Shelton"
 
-class DummyEmailSet:
-    def all(self):
-        return ['ashelton@nrao.edu']
+    def getStaticContactInfo(self):
+        return {"emails": ["ashelton@nrao.edu"]}
 
 class TestSchedulingNotifier(unittest.TestCase):
   
@@ -103,7 +102,7 @@ class TestSchedulingNotifier(unittest.TestCase):
 
         for p in self.periods:
             self.assertTrue(p.start.strftime('%b %d %H:%M') in info)
-            self.assertTrue(str(p.duration / 60.0) in info)
+            self.assertTrue(str(p.duration) in info)
             self.assertTrue(p.session.project.get_sanctioned_observers()[0].user.last_name[:9] in info)
             self.assertTrue(p.session.receiver_list_simple()[:9] in info)
             self.assertTrue(p.session.name in info)
