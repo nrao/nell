@@ -41,7 +41,7 @@ class DBReporter:
 
         # *** General Info ***
         # gather stats on projects - how many, how many of what type, total hrs ..
-        projs = Project.objects.all()
+        projs = Project.objects.order_by("pcode").all()
         numProjs = len(projs)
         totalProjHrs = sum([self.ta.getProjectTotalTime(p) for p in projs])
         self.add("\n*** Projects ***\n")
@@ -70,6 +70,7 @@ class DBReporter:
             ss = p.sesshun_set.all()
             hrs = self.ta.getProjSessionsTotalTime(p)
             ssIds = ["%d" % s.original_id for s in ss]
+            ssIds.sort()
             ssIdStrs = " ".join(ssIds)
             data = [p.pcode, str(len(ss)), "%5.2f" % hrs, ssIdStrs]
             self.printData(data, cols)
