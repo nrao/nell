@@ -27,7 +27,7 @@ class DSSDatabase09C(DSSDatabase):
         rcvrs = ['L', 'C', 'X', 'Ku', 'S', 'Hol', 'Q', '1070'] 
         rcvrChanges.append((dt, rcvrs))
 
-        # "versoin 2.0[sick] receiver schedule for Oct - Jan"
+        # "versoin 3.0[sick] receiver schedule for Oct - Jan"
 
         # Oct 7: K goes up
         dt = datetime(2009, 10, 7, 16)
@@ -39,8 +39,13 @@ class DSSDatabase09C(DSSDatabase):
         rcvrs = ['L', 'C', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '800'] 
         rcvrChanges.append((dt, rcvrs))
 
-        # Oct 28: 800 -> 450
-        dt = datetime(2009, 10, 28, 16)
+        # Oct 19 800 -> 300
+        dt = datetime(2009, 10, 19, 16)
+        rcvrs = ['L', 'C', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '342'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Oct 30: 342 -> 450
+        dt = datetime(2009, 10, 30, 16)
         rcvrs = ['L', 'C', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '450'] 
         rcvrChanges.append((dt, rcvrs))
 

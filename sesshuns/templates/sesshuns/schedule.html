@@ -67,33 +67,35 @@
   </a>
   <br/> 
   Helpful Links:
-  <a href="#" onClick="window.open('/receivers', 'Receiver Schedule', 'width=1000, height=700, scrollbars=yes');return true;">Receiver Schedule</a>|
+  <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/BackupProjects', 'Backup Projects', 'width=1000, height=700, scrollbars=yes');return true;">Backup Projects</a>
+  |
+  <a href="#" onClick="window.open('/receivers', 'Receiver Schedule', 'width=1000, height=700, scrollbars=yes');return true;">Receiver Schedule</a>
   |
   <a href="#", onClick="window.open('http://www.gb.nrao.edu/~rmaddale/Weather/', 'High Frequency Forecasts', 'width=1000, height=700, scrollbars=yes');return true;">
     High Frequency Forecasts
   </a>
   | Ground Weather Forecasts (
   <a href="#", onClick="window.open('http://www.gb.nrao.edu/~rmaddale/WeatherNAM/ground.html', 'Ground Weather Forecasts (3.5 day)', 'width=1000, height=700, scrollbars=yes');return true;">
-    3.5 day
-  </a>
+    3.5 day</a>
   ) (
   <a href="#", onClick="window.open('http://www.gb.nrao.edu/~rmaddale/WeatherGFS3/ground.html', 'Ground Weather Forecasts (7.5 day)', 'width=1000, height=700, scrollbars=yes');return true;">
-    7.5 day
-  </a>
+    7.5 day</a>
   ) |
   <a href="#" onClick="window.open('https://bos.nrao.edu/resReports/roomChart?Start+Date={{calendar|get_cal_start|date:'m/d/Y'}}&End+Date={{calendar|get_cal_end|date:'m/d/Y'}}&Site=1', 'Room Reservations', 'width=1000, height=800, scrollbars=yes');return true;">
     Room Reservations
   </a>
   </strong>
-  </center>
-
+  <br />
   <strong>
-  (UTC = ET + {{today|get_utc_offset}} hours)
+  <em>
+  (All times in ET.  UTC = ET + {{today|get_utc_offset}} hours)
+  </em>
   </strong>
+  </center>
   <table>
     {% for day, ps in calendar %}
     <tr class="day_header"> 
-      <th title="Start and End times for the start day (timezone). '+' indicates that the period continues on in an undisplayed date.">{{day|date:"Y-m-d"}} (ET)</th>
+      <th title="Start and End times for the start day (timezone). '+' indicates that the period continues on in an undisplayed date.">{{day|date:"D Y-m-d"}}</th>
       <th title="Project Type: 'A' : Astronomy, 'T' : Test, 'M' : Maintenance">Type</th>
       <th>Project ID</th>
       <th>Project Title</th>
