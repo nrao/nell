@@ -18,7 +18,7 @@ def dt2sex(value):
 @register.filter
 def target_horz(value):
     t = first(value.target_set.all())
-    if t is None:
+    if t is None or t.horizontal is None:
         return ""
     horz = rad2hr(t.horizontal)
     mins = (horz - int(horz)) * 60
@@ -45,7 +45,7 @@ def edit_allotment(sesshun_id):
 @register.filter
 def target_vert(value):
     t = first(value.target_set.all())
-    if t is None:
+    if t is None or t.vertical is None:
         return ""
     return "%.3f" % rad2deg(t.vertical)
 
