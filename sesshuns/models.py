@@ -1512,10 +1512,10 @@ class Period(models.Model):
         #self.score    = fdata.get("score", 0.0)
         #forecast      = fdata.get("forecast", None)
         # No forecast or maybe 0 indicates new score
-        if forecast is None:
-            self.forecast = forecast
-        else:
-            self.forecast = TimeAgent.hour(now) # TBF: or what??
+        #if forecast is None:
+        #    self.forecast = forecast
+        #else:
+        #    self.forecast = TimeAgent.hour(now) # TBF: or what??
         self.backup   = True if fdata.get("backup", None) == 'true' else False
         # TBF: how to initialize scheduled time?  Do Periods need state?
         pa = Period_Accounting(scheduled = self.duration)
@@ -1567,7 +1567,6 @@ class Period(models.Model):
 
     def moc_met(self):
         "Returns a Boolean indicated if MOC are met (True) or not (False)."
-        return True # TBF: Remove when weather working properly.
         # TBF: When windows are working correctly, replace with line below.
         if self.session.session_type.type not in ("open",):
         #if self.session.session_type.type not in ("open", "windowed"):
