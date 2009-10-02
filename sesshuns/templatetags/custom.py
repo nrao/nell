@@ -64,7 +64,8 @@ def display_allotments_for_project(project_id):
 
 @register.filter
 def get_email(user):
-    return first(models.Email.objects.filter(user = user).all()).email
+    emails = user.getStaticContactInfo()['emails']
+    return emails[0] if emails else ""
 
 @register.filter
 def display_name(user):
