@@ -1508,7 +1508,7 @@ class Period(models.Model):
                 self.start = TimeAgent.est2utc(self.start)
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
         self.score    = 0.0
-        forecast      = now
+        self.forecast = now
         #self.score    = fdata.get("score", 0.0)
         #forecast      = fdata.get("forecast", None)
         # No forecast or maybe 0 indicates new score
@@ -1530,9 +1530,13 @@ class Period(models.Model):
         return Sesshun.objects.filter(project__pcode__exact=pcode).get(name=name)
 
     def toHandle(self):
-        return "%s (%s) %d" % (self.session.name
+        if self.session.original_id is None:
+            original_id = ""
+        else:
+            original_id = str(self.session.original_id)
+        return "%s (%s) %s" % (self.session.name
                              , self.session.project.pcode
-                             , self.session.original_id)
+                             , original_id)
 
     def eventjson(self, id):
         end = self.start + timedelta(hours = self.duration)
