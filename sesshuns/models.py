@@ -1571,6 +1571,7 @@ class Period(models.Model):
 
     def moc_met(self):
         "Returns a Boolean indicated if MOC are met (True) or not (False)."
+        return True    # until fixed
         # TBF: When windows are working correctly, replace with line below.
         if self.session.session_type.type not in ("open",):
         #if self.session.session_type.type not in ("open", "windowed"):
