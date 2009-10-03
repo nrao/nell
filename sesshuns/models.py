@@ -989,8 +989,8 @@ class Sesshun(models.Model):
             self.get_field(fdata, "orig_ID", None, self.cast_int)
         self.name             = fdata.get("name", None)
         self.frequency        = fdata.get("freq", None)
-        self.max_duration     = fdata.get("req_max", 12.0)
-        self.min_duration     = fdata.get("req_min",  3.0)
+        self.max_duration     = TimeAgent.rndHr2Qtr(float(fdata.get("req_max", 12.0)))
+        self.min_duration     = TimeAgent.rndHr2Qtr(float(fdata.get("req_min",  3.0)))
         self.time_between     = fdata.get("between", None)
 
     def cast_int(self, strValue):
