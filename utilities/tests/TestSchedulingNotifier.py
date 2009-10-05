@@ -50,6 +50,9 @@ class DummyProject:
     def get_sanctioned_observers(self):
         return self.observers
         
+    def get_observers(self):
+        return self.observers
+        
 class DummyObserver:
     def __init__(self):
         self.user = DummyUser()
@@ -103,7 +106,7 @@ class TestSchedulingNotifier(unittest.TestCase):
         for p in self.periods:
             self.assertTrue(p.start.strftime('%b %d %H:%M') in info)
             self.assertTrue(str(p.duration) in info)
-            self.assertTrue(p.session.project.get_sanctioned_observers()[0].user.last_name[:9] in info)
+            self.assertTrue(p.session.project.get_observers()[0].user.last_name[:9] in info)
             self.assertTrue(p.session.receiver_list_simple()[:9] in info)
             self.assertTrue(p.session.name in info)
 
