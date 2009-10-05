@@ -204,7 +204,7 @@ def search(request, *args, **kws):
         code = p.pcode.replace("GBT", "")
         code = code.replace("-0", "")
         code = code[1:] if code[0] == "0" else code
-        if code == search.upper():
+        if code == search.upper() and p not in projects:
             projects.append(p)
         
     users = User.objects.filter(
