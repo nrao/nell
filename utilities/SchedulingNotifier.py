@@ -22,7 +22,6 @@
 
 from   Notifier import Notifier
 from   datetime import datetime, timedelta
-#import SLATimeAgent
 import TimeAgent
 
 class SchedulingNotifier(Notifier):
@@ -111,8 +110,7 @@ Happy Observing!
         self.logMessage("Body: %s\n" % self.getBody())
 
     def getSessionTable(self):
-        #table  = "Start (ET)   |      UT      |  LST  |  (hr) | Observer  | Rx        | Session\n"
-        table  = "Start (ET)   |      UT      |  (hr) | Observer  | Rx        | Session\n"
+        table  = "Start (ET)   |      UT      |  LST  |  (hr) | Observer  | Rx        | Session\n"
         table += "------------------------------------------------------------------------------\n"
         for p in self.periods:
             if p.session.project.pcode == "Maintenance":
@@ -120,11 +118,10 @@ Happy Observing!
             else:
                 observer = p.session.project.get_observers()[0].user.last_name[:9] if p.session.project.get_observers() else "Unknown"
 
-            #table += "%s | %s | %s | %5s | %-9s | %-9s | %s\n" % (
-            table += "%s | %s | %5s | %-9s | %-9s | %s\n" % (
+            table += "%s | %s | %s | %5s | %-9s | %-9s | %s\n" % (
                 TimeAgent.utc2est(p.start).strftime('%b %d %H:%M')
               , p.start.strftime('%b %d %H:%M')
-              #, SLATimeAgent.dt2tlst(p.start).strftime('%H:%M')
+              , TimeAgent.dt2tlst(p.start).strftime('%H:%M')
               , "%2.2f" % p.duration
               , observer
               , p.session.receiver_list_simple()[:9]

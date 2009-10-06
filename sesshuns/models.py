@@ -6,7 +6,6 @@ from django.db                 import models
 from django.http               import QueryDict
 from settings                  import ANTIOCH_SERVER_URL
 from utilities.receiver        import ReceiverCompile
-#from utilities                 import SLATimeAgent, TimeAgent, UserInfo, NRAOBosDB
 from utilities                 import TimeAgent, UserInfo, NRAOBosDB
 
 import calendar
@@ -1561,7 +1560,7 @@ class Period(models.Model):
               , "stype"        : self.session.session_type.type[0].swapcase()
               , "date"         : d2str(start)
               , "time"         : t2str(start)
-              # , "lst"          : str(SLATimeAgent.dt2tlst(self.start))
+               , "lst"          : str(TimeAgent.dt2tlst(self.start))
               , "duration"     : self.duration
               , "score"        : self.score
               , "forecast"     : dt2str(self.forecast)

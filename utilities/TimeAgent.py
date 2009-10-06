@@ -131,6 +131,16 @@ def quarter(dt):
 GBTLAT  = deg2rad(DateTime.DateTimeDeltaFrom(GBT_LOCATION[1]).hours)
 GBTLONG = DateTime.DateTimeDeltaFrom(GBT_LOCATION[0]).hours
 
+def dt2tlst(dt):
+    "Translates from UT datetime to LST time."
+    relative_hours = Absolute2RelativeLST(dt)
+    lst_hours = int(relative_hours)
+    fractional_minutes = (relative_hours - lst_hours)*60.0
+    lst_minutes = int(fractional_minutes)
+    fractional_seconds =(fractional_minutes - lst_minutes)*60.0
+    lst_seconds = int(round(fractional_seconds)) % 60
+    return datetime.time(lst_hours, lst_minutes, lst_seconds)
+
 def Absolute2RelativeLST(absolute):
     "Returns LST as hours given UTC as a datetime."
     absolute = dt2mxDT(absolute)
