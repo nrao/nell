@@ -62,7 +62,7 @@ class SchedulingNotifier(Notifier):
         # query the user db and we should minimize the number of calls.
         observers = []
         for p in self.periods:
-            for o in p.session.project.get_sanctioned_observers():
+            for o in p.session.project.get_observers():
                 if o not in observers:
                     observers.append(o)
 
@@ -116,7 +116,7 @@ Happy Observing!
             if p.session.project.pcode == "Maintenance":
                 observer = ""
             else:
-                observer = p.session.project.get_sanctioned_observers()[0].user.last_name[:9] if p.session.project.get_sanctioned_observers() else "Unknown"
+                observer = p.session.project.get_observers()[0].user.last_name[:9] if p.session.project.get_observers() else "Unknown"
 
             table += "%s | %s | %s | %5s | %-9s | %-9s | %s\n" % (
                 TimeAgent.utc2est(p.start).strftime('%b %d %H:%M')
