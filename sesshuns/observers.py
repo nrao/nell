@@ -50,7 +50,7 @@ def home(request, *args, **kwds):
     requestor = first(User.objects.filter(username = loginUser))
 
     if requestor is None:
-        create_user(loginUser)
+        requestor = create_user(loginUser)
 
     if requestor.isOperator():
         return HttpResponseRedirect("/schedule/")
@@ -62,7 +62,7 @@ def create_user(username):
     # then add them to our database so they can at least see their profile.
     info = UserInfo().getStaticContactInfoByUserName(username)
     user = User(pst_id     = info['id']
-              , username   = loginUser
+              , username   = username
               , first_name = info['name']['first-name']
               , last_name  = info['name']['last-name']
               , role       = first(Role.objects.filter(role = "Observer")))
@@ -128,7 +128,7 @@ def profile(request, *args, **kws):
     requestor = first(User.objects.filter(username = loginUser))
 
     if requestor is None:
-        create_user(loginUser)
+        requestor = create_user(loginUser)
 
     if len(args) > 0:
         u_id,     = args
@@ -166,7 +166,7 @@ def project(request, *args, **kws):
     user      = first(User.objects.filter(username = loginUser))
 
     if user is None:
-        create_user(loginUser)
+        user = create_user(loginUser)
 
     pcode,    = args
     #  If the requestor is not on this project redirect to their profile.
@@ -202,7 +202,7 @@ def search(request, *args, **kws):
     user      = first(User.objects.filter(username = loginUser))
 
     if user is None:
-        create_user(loginUser)
+        user = create_user(loginUser)
 
     search = request.POST.get('search', '')
 
@@ -281,7 +281,7 @@ def dynamic_contact_form(request, *args, **kws):
     requestor = first(User.objects.filter(username = loginUser))
 
     if requestor is None:
-        create_user(loginUser)
+        requestor = create_user(loginUser)
 
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
@@ -300,7 +300,7 @@ def dynamic_contact_save(request, *args, **kws):
     requestor = first(User.objects.filter(username = loginUser))
 
     if requestor is None:
-        create_user(loginUser)
+        requestor = create_user(loginUser)
 
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
@@ -320,7 +320,7 @@ def blackout_form(request, *args, **kws):
 
     # TBF Use a decorator to see if user is allowed here
     if requestor is None:
-        create_user(loginUser)
+        requestor = create_user(loginUser)
 
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
@@ -371,7 +371,7 @@ def blackout(request, *args, **kws):
     requestor = first(User.objects.filter(username = loginUser))
 
     if requestor is None:
-        create_user(loginUser)
+        requestor = create_user(loginUser)
 
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")

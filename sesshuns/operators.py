@@ -15,7 +15,7 @@ def moc_reschedule(request, *args, **kws):
     period    = first(Period.objects.filter(id = p_id))
 
     if requestor is None:
-        create_user(loginUser)
+        requestor = create_user(loginUser)
 
     if requestor.isOperator():
         # Only operators can acknowledge MOC failures.
@@ -36,7 +36,7 @@ def moc_degraded(request, *args, **kws):
     period    = first(Period.objects.filter(id = p_id))
 
     if requestor is None:
-        create_user(loginUser)
+        requestor = create_user(loginUser)
 
     if requestor.isOperator():
         # Only operators can acknowledge MOC failures.
@@ -55,7 +55,7 @@ def gbt_schedule(request, *args, **kws):
     requestor = first(User.objects.filter(username = loginUser))
 
     if requestor is None:
-        create_user(loginUser)
+        requestor = create_user(loginUser)
 
     if not requestor.isOperator() and not requestor.isAdmin():
         return HttpResponseRedirect("/schedule/public")
