@@ -60,7 +60,7 @@ def home(request, *args, **kwds):
 def create_user(username):
     # If the DSS doesn't know about the user, but the User Portal does,
     # then add them to our database so they can at least see their profile.
-    info = UserInfo().getStaticContactInfoByUserName(loginUser)
+    info = UserInfo().getStaticContactInfoByUserName(username)
     user = User(pst_id     = info['id']
               , username   = loginUser
               , first_name = info['name']['first-name']
