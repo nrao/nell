@@ -24,7 +24,7 @@ if __name__ == "__main__":
     import sys
     sys.path[1:1] = [".."]
 
-from   TimeAgent import *
+from   SLATimeAgent import *
 import datetime
 import os
 import unittest

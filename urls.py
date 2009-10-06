@@ -46,7 +46,7 @@ urlpatterns = patterns(''
    , url(r'^periods/(UTC)/(\d+)$',PeriodResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^periods/(ET)/(\d+)$', PeriodResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , (r'^admin/',                 include(admin.site.urls)) #
-   , (r'^accounts/login/$', 'django_cas.views.login')
+   , (r'^accounts/login/$', 'django_cas.views.login') #
    , (r'^accounts/logout/$', 'django_cas.views.logout')
    , (r'^robots.txt$', 'django.views.static.serve',
         { 'path'         : "txt/robots.txt"
