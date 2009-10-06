@@ -22,6 +22,7 @@
 
 from   Notifier import Notifier
 from   datetime import datetime, timedelta
+import SLATimeAgent
 import TimeAgent
 
 class SchedulingNotifier(Notifier):
@@ -121,7 +122,7 @@ Happy Observing!
             table += "%s | %s | %s | %5s | %-9s | %-9s | %s\n" % (
                 TimeAgent.utc2est(p.start).strftime('%b %d %H:%M')
               , p.start.strftime('%b %d %H:%M')
-              , TimeAgent.dt2tlst(p.start).strftime('%H:%M')
+              , SLATimeAgent.dt2tlst(p.start).strftime('%H:%M')
               , "%2.2f" % p.duration
               , observer
               , p.session.receiver_list_simple()[:9]
