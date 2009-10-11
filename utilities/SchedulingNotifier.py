@@ -61,14 +61,14 @@ class SchedulingNotifier(Notifier):
     def createAddresses(self):
         # Make sure we get succinct list of observers because we need to
         # query the user db and we should minimize the number of calls.
-        observers = [o for p in self.periods \
-                       for o in p.session.project.get_observers()]
+        observers = [o.user for p in self.periods \
+                            for o in p.session.project.get_observers()]
         observers.extend([p.session.project.principal_contact() \
                           for p in self.periods])
         observers = Set(observers)
 
         addresses = Set([e for o in observers \
-                           for e in o.user.getStaticContactInfo()['emails']])
+                           for e in o.getStaticContactInfo()['emails']])
 
         self.setAddresses(list(addresses))
 

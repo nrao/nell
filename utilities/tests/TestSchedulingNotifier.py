@@ -54,7 +54,7 @@ class DummyProject:
         return self.observers
 
     def principal_contact(self):
-        return DummyObserver(DummyUser("Marganian", ["pmargani@nrao.edu"]))
+        return DummyUser("Marganian", ["pmargani@nrao.edu"])
 
 class DummyObserver:
     def __init__(self, user = None):
