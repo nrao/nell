@@ -1576,11 +1576,16 @@ class Period(models.Model):
         return js
 
     def moc_met(self):
-        "Returns a Boolean indicated if MOC are met (True) or not (False)."
-        return True    # until fixed
+        """
+        Returns a Boolean indicated if MOC are met (True) or not (False).
+        Only bothers to calculate MOC for open sessions whose end time
+        is not already past.
+        """
+        return True   # until fixed
         # TBF: When windows are working correctly, replace with line below.
-        if self.session.session_type.type not in ("open",):
-        #if self.session.session_type.type not in ("open", "windowed"):
+        #if self.session.session_type.type not in ("open", "windowed") or \
+        if self.session.session_type.type not in ("open",) or \
+           self.end() < datetime.utcnow():
             return True
 
         url = ANTIOCH_SERVER_URL + \

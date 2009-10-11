@@ -105,12 +105,12 @@
       <th>Rcvrs</th>
     </tr>
     {% for start, end,start_cutoff, end_cutoff, p in ps %}
-      {% if p|moc_reschedule %}
+      {% if requestor.isOperator and p|moc_reschedule %}
         <script type="text/javascript">
           window.open("/period/{{p.id}}/moc_reschedule", "MOC Failure", "width=1000,height=300");
         </script>
       {% endif %}
-      {% if p|moc_degraded %}
+      {% if requestor.isOperator and p|moc_degraded %}
         <script type="text/javascript">
           window.open("/period/{{p.id}}/moc_degraded", "MOC Degraded", "width=1000,height=300");
         </script>

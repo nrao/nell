@@ -20,8 +20,9 @@
 #     P. O. Box 2
 #     Green Bank, WV 24944-0002 USA
 
-from   Notifier import Notifier
-from   datetime import datetime, timedelta
+from   Notifier  import Notifier
+from   datetime  import datetime, timedelta
+from   sets      import Set
 import TimeAgent
 
 class SchedulingNotifier(Notifier):
@@ -60,17 +61,16 @@ class SchedulingNotifier(Notifier):
     def createAddresses(self):
         # Make sure we get succinct list of observers because we need to
         # query the user db and we should minimize the number of calls.
-        observers = []
-        for p in self.periods:
-            for o in p.session.project.get_observers():
-                if o not in observers:
-                    observers.append(o)
+        observers = [o for p in self.periods \
+                       for o in p.session.project.get_observers()]
+        observers.extend([p.session.project.principal_contact() \
+                          for p in self.periods])
+        observers = Set(observers)
 
-        addresses = []
-        for o in observers:
-            addresses.extend(o.user.getStaticContactInfo()['emails'])
+        addresses = Set([e for o in observers \
+                           for e in o.user.getStaticContactInfo()['emails']])
 
-        self.setAddresses(addresses)
+        self.setAddresses(list(addresses))
 
         self.logMessage("To: %s\n" % self.getAddresses())
 

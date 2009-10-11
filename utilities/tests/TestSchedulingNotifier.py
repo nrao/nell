@@ -52,17 +52,21 @@ class DummyProject:
         
     def get_observers(self):
         return self.observers
-        
+
+    def principal_contact(self):
+        return DummyObserver(DummyUser("Marganian", ["pmargani@nrao.edu"]))
+
 class DummyObserver:
-    def __init__(self):
-        self.user = DummyUser()
+    def __init__(self, user = None):
+        self.user = user or DummyUser("Shelton", ["ashelton@nrao.edu"])
 
 class DummyUser:
-    def __init__(self):
-        self.last_name = "Shelton"
+    def __init__(self, name, emails):
+        self.last_name = name
+        self.emails    = emails
 
     def getStaticContactInfo(self):
-        return {"emails": ["ashelton@nrao.edu"]}
+        return {"emails": self.emails}
 
 class TestSchedulingNotifier(unittest.TestCase):
   
@@ -84,12 +88,14 @@ class TestSchedulingNotifier(unittest.TestCase):
     def test_createAddresses(self):
         addresses = self.notifier.getAddresses()
         self.assertTrue('ashelton@nrao.edu' in addresses)
+        self.assertTrue('pmargani@nrao.edu' in addresses)
 
     def test_createStaffAddresses(self):
         self.notifier.createStaffAddresses()
         addresses = self.notifier.getAddresses()
         self.assertTrue('gbtlocal@gb.nrao.edu' in addresses)
         self.assertTrue('gbtops@gb.nrao.edu' in addresses)
+        self.assertTrue('gbtime@gb.nrao.edu' in addresses)
 
     def test_createBody(self):
         body = self.notifier.getBody()
