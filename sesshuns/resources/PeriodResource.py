@@ -23,11 +23,8 @@ class PeriodResource(NellResource):
             daysPeriods  = request.GET.get("daysPeriods", "1")
             dt = str2dt(startPeriods)
             start = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
-            days = int(daysPeriods)
-            end = start + timedelta(days = days)
-            periods = Period.objects.filter(
-                                start__gte=start
-                              , start__lte=end).order_by(order + sortField)
+            duration = int(daysPeriods) * 24 * 60
+            periods = Period.get_periods(start, duration)
             return HttpResponse(
                         json.dumps(dict(total = len(periods)
                                       , periods = [p.jsondict(tz) for p in periods]))
