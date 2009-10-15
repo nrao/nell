@@ -133,13 +133,9 @@ def profile(request, *args, **kws):
     if len(args) > 0:
         u_id,     = args
         user      = first(User.objects.filter(id = u_id))
-        uprojects = [i.project.pcode for i in user.investigator_set.all()]
-        rprojects = [i.project.pcode for i in requestor.investigator_set.all()
-                        if i.project.pcode in uprojects]
         #  If the requestor is not the user profile requested and they are
         #  not on the same project redirect to the requestor's profile.
-        if user != requestor and rprojects == [] \
-           and not requestor.isAdmin() and not requestor.isOperator():
+        if not requestor.canViewUser(user):
             return HttpResponseRedirect("/profile")
     else:
         user = requestor
@@ -169,9 +165,8 @@ def project(request, *args, **kws):
         user = create_user(loginUser)
 
     pcode,    = args
-    #  If the requestor is not on this project redirect to their profile.
-    if pcode not in [i.project.pcode for i in user.investigator_set.all()] \
-       and not user.isAdmin() and not user.isOperator():
+    #  If the requestor doesn't have access to this, redirect to their profile.
+    if not user.canViewProject(pcode):
         return HttpResponseRedirect("/profile")
         
     project = first(Project.objects.filter(pcode = pcode))

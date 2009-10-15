@@ -86,10 +86,10 @@ class TestUser(NellTestCase):
         self.project.update_from_post(pdata)
         self.project.save()
 
+        obsRole = first(Role.objects.filter(role = "Observer"))
+
         # Create Investigator1 and his 3 blackouts.
-        self.user1 = User(sanctioned = True
-                        , role = first(Role.objects.filter(role = "Observer"))
-                     )
+        self.user1 = User(sanctioned = True, role = obsRole)
         self.user1.save()
 
         self.investigator1 =  Investigator(project  = self.project
@@ -97,9 +97,7 @@ class TestUser(NellTestCase):
                                          , observer = True)
         self.investigator1.save()
 
-        self.user2 = User(sanctioned = True
-                        , role = first(Role.objects.filter(role = "Observer"))
-                     )
+        self.user2 = User(sanctioned = True, role = obsRole)
         self.user2.save()
 
         self.investigator2 =  Investigator(project  = self.project
@@ -125,6 +123,16 @@ class TestUser(NellTestCase):
                             , backup   = False)
         self.period2.save()                    
 
+        # add the project friend
+        self.user3 = User(sanctioned = True, role = obsRole)
+        self.user3.save()
+        self.project.friend = self.user3
+        self.project.save()
+
+        # add an unrelated user
+        self.user4 = User(sanctioned = True, role = obsRole)
+        self.user4.save()
+
     def tearDown(self):
         self.investigator2.delete()
         self.user2.delete()
@@ -133,6 +141,28 @@ class TestUser(NellTestCase):
         self.period1.delete()
         self.period2.delete()
         self.project.delete()
+        self.user3.delete()
+        self.user4.delete()
+
+    def test_canViewProject(self):
+
+        pcode = self.project.pcode
+        self.assertEqual(True, self.user1.canViewProject(pcode))
+        self.assertEqual(True, self.user2.canViewProject(pcode))
+        self.assertEqual(True, self.user3.canViewProject(pcode))
+        self.assertEqual(False, self.user4.canViewProject(pcode))
+
+    def test_canViewUser(self):
+
+        self.assertEqual(True, self.user1.canViewUser(self.user2))
+        self.assertEqual(True, self.user2.canViewUser(self.user1))
+        self.assertEqual(True, self.user3.canViewUser(self.user1))
+        self.assertEqual(True, self.user3.canViewUser(self.user2))
+        self.assertEqual(False, self.user1.canViewUser(self.user3))
+        self.assertEqual(False, self.user2.canViewUser(self.user3))
+        self.assertEqual(False, self.user4.canViewUser(self.user1))
+        self.assertEqual(False, self.user4.canViewUser(self.user2))
+        self.assertEqual(False, self.user4.canViewUser(self.user3))
 
     def test_getPeriods(self):
         

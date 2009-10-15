@@ -184,6 +184,9 @@ class Role(models.Model):
     class Meta:
         db_table = "roles"
 
+    def __unicode__(self):
+        return self.role
+
 class User(models.Model):
     original_id = models.IntegerField(null = True)
     pst_id      = models.IntegerField(null = True)
@@ -253,6 +256,30 @@ class User(models.Model):
             retval[project] = [p for p in period if p.start < dt]
         return retval
 
+    def isInvestigator(self, pcode):
+        "Is this user an investigator on the given project?"
+        return pcode in [i.project.pcode for i in self.investigator_set.all()]
+
+    def isFriend(self, pcode):
+        "Is this user a friend for the given project?"
+        return pcode in [p.pcode for p in self.project_set.all()]
+
+    def canViewProject(self, pcode):
+        "A user can view project info if he's an inv, friend, admin, or op."
+        return self.isInvestigator(pcode) \
+            or self.isFriend(pcode) \
+            or self.isAdmin() \
+            or self.isOperator()
+
+    def canViewUser(self, user):
+        """
+        A user can view another user if they share the same project (by being
+        an investigator or friend), or if they are admin or op.
+        """
+        upcodes = [i.project.pcode for i in user.investigator_set.all()]
+        shared_projects = [p for p in upcodes if self.isFriend(p) \
+                                              or self.isInvestigator(p)]
+        return shared_projects != [] or self.isAdmin() or self.isOperator()                                      
 class Email(models.Model):
     user  = models.ForeignKey(User)
     email = models.CharField(max_length = 255)
