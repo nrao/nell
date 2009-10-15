@@ -1608,7 +1608,6 @@ class Period(models.Model):
         Only bothers to calculate MOC for open sessions whose end time
         is not already past.
         """
-        return True   # until fixed
         # TBF: When windows are working correctly, replace with line below.
         #if self.session.session_type.type not in ("open", "windowed") or \
         if self.session.session_type.type not in ("open",) or \
