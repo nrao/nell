@@ -34,13 +34,18 @@ class DSSDatabase09C(DSSDatabase):
         rcvrs = ['L', 'C', 'X', 'Ku', 'S', 'Q', '1070'] 
         rcvrChanges.append((dt, rcvrs))
 
-        # Oct 13: 1070 -> 800, K goes up, Hol goes up
+        # Oct 13: 1070 -> 800, Hol goes up
         dt = datetime(2009, 10, 13, 16)
-        rcvrs = ['L', 'C', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '800'] 
+        rcvrs = ['L', 'C', 'X', 'Ku', 'S', 'Hol', 'Q', '800'] 
         rcvrChanges.append((dt, rcvrs))
 
         # Oct 19 800 -> 300
         dt = datetime(2009, 10, 19, 16)
+        rcvrs = ['L', 'C', 'X', 'Ku', 'S', 'Hol', 'Q', '342'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Oct 22: K goes up
+        dt = datetime(2009, 10, 22, 16)
         rcvrs = ['L', 'C', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '342'] 
         rcvrChanges.append((dt, rcvrs))
 
