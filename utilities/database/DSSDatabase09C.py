@@ -27,7 +27,7 @@ class DSSDatabase09C(DSSDatabase):
         rcvrs = ['L', 'C', 'X', 'Ku', 'S', 'Hol', 'Q', '1070'] 
         rcvrChanges.append((dt, rcvrs))
 
-        # "versoin 3.0[sick] receiver schedule for Oct - Jan"
+        # "versoin 4.0[sick] receiver schedule for Oct - Jan"
 
         # Oct 8: Hol comes down
         dt = datetime(2009, 10, 8, 16)
