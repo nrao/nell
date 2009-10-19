@@ -1560,7 +1560,7 @@ class Period(models.Model):
               , "stype"        : self.session.session_type.type[0].swapcase()
               , "date"         : d2str(start)
               , "time"         : t2str(start)
-               , "lst"          : str(TimeAgent.dt2tlst(self.start))
+              , "lst"          : str(TimeAgent.dt2tlst(self.start))
               , "duration"     : self.duration
               , "score"        : self.score
               , "forecast"     : dt2str(self.forecast)
