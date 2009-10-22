@@ -1440,6 +1440,13 @@ class Period_Accounting(models.Model):
         "Determines which field to assign the time to."
         self.__setattr__(reason, time)
 
+    def get_time(self, name):
+        # method or attribute?  TBF: how to REALLY do this?
+        if self.__dict__.has_key(name):
+            return self.__getattribute__(name)
+        else:
+            return self.__getattribute__(name)()
+
     def update_from_post(self, fdata):    
         fields = ['not_billable'
                 , 'other_session_weather'
@@ -1460,6 +1467,7 @@ class Period_Accounting(models.Model):
               , "scheduled"             : self.scheduled
               , "observed"              : self.observed()
               , "not_billable"          : self.not_billable
+              , "time_billed"           : self.time_billed()
               , "other_session"         : self.other_session()
               , "other_session_weather" : self.other_session_weather
               , "other_session_rfi"     : self.other_session_rfi

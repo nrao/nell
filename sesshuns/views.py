@@ -95,9 +95,37 @@ def change_schedule(request, *args, **kws):
     return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
     
 def time_accounting(request, *args, **kws):
+    "Serves up json for time accounting from periods up to the project"
     ta = TimeAccounting()
     pcode = args[0]
     project = first(Project.objects.filter(pcode = pcode))
+    js = ta.jsondict(project)
+    return HttpResponse(json.dumps(js), mimetype = "text/plain")
+
+def period_time_accounting(request, *args, **kws):
+    "Sets some time accounting variables for given period"
+    id = args[0]
+    period = first(Period.objects.filter(id = id))
+    a = period.accounting
+    fields = ["scheduled"
+            , "not_billable"
+            , "short_notice"
+            , "lost_time_weather"
+            , "lost_time_rfi"
+            , "lost_time_other"
+            , "other_session_weather"
+            , "other_session_rfi"
+            , "other_session_other"
+            ]
+    for field in fields:
+        value = float(request.POST.get(field, None))
+        a.set_changed_time(field, value) #request.POST.get(field, None))
+    a.description = request.POST.get("description", None)
+    a.save()
+    # now return the consequences this may have to the rest of the
+    # project time accounting
+    project = period.session.project
+    ta = TimeAccounting()
     js = ta.jsondict(project)
     return HttpResponse(json.dumps(js), mimetype = "text/plain")
 

@@ -11,19 +11,21 @@ class TimeAccounting:
 
          # if these match up to the Period_Accounting fields, they work
         self.fields = ['scheduled'
-                    # , 'observed'
+                     , 'observed'
+                     , 'time_billed'
+                     , 'unaccounted_time'
                      , 'short_notice'
                      , 'not_billable'
-                    # , 'lost_time'
+                     , 'lost_time'
                      , 'lost_time_weather'
                      , 'lost_time_rfi'
                      , 'lost_time_other'
-                    # , 'other_session'
+                     , 'other_session'
                      , 'other_session_weather'
                      , 'other_session_rfi'
                      , 'other_session_other'
                      ]
-
+       
     # Project leve time accounting
     def getProjectTotalTime(self, proj):
         return sum([a.total_time for a in proj.allotments.all()])
@@ -74,7 +76,7 @@ class TimeAccounting:
     def getTime(self, type, sess):
         "Generic method for bubbling up all period accting up to the session"
         ps = sess.period_set.all()
-        return sum([p.accounting.__getattribute__(type) for p in ps])
+        return sum([p.accounting.get_time(type) for p in ps])
 
     def jsondict(self, proj):
         "Contains all levels of time accounting info"
@@ -104,7 +106,7 @@ class TimeAccounting:
             for p in s.period_set.all():
                 pdct = dict(id = p.id)
                 for field in self.fields:
-                    pdct.update({field : p.accounting.__getattribute__(field)})
+                    pdct.update({field : p.accounting.get_time(field)})
                 sdct['periods'].append(pdct)    
 
             dct['sessions'].append(sdct)    
