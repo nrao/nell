@@ -4,8 +4,9 @@
 
 STATIC_DOC_ROOT='{path to your sandbox}/nell/sesshuns/static' #MODIFY#
 
-DEBUG = True
+DEBUG = True # Set to False for production
 SERVER_EMAIL = 'dss@gb.nrao.edu'
+SEND_BROKEN_LINK_EMAILS = False # Set to True for production
 
 TEMPLATE_DEBUG = DEBUG
 
