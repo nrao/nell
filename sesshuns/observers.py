@@ -1,7 +1,7 @@
 from datetime                       import datetime, time, timedelta
 from django.contrib.auth.decorators import login_required
 from django.db.models         import Q
-from django.http              import HttpResponse, HttpResponseRedirect
+from django.http              import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts         import render_to_response
 from models                   import *
 from sets                     import Set
@@ -170,6 +170,8 @@ def project(request, *args, **kws):
         return HttpResponseRedirect("/profile")
         
     project = first(Project.objects.filter(pcode = pcode))
+    if project is None:
+        raise Http404 # Bum pcode
 
     now          = datetime.utcnow().replace(hour = 0, minute = 0, second = 0)
     later        = now + timedelta(days = 90)
