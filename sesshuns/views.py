@@ -116,8 +116,24 @@ def time_accounting(request, *args, **kws):
     js = ta.jsondict(project)
     return HttpResponse(json.dumps(js), mimetype = "text/plain")
 
+def session_time_accounting(request, *args, **kws):
+    "Sets some time accounting variables for given period"
+
+    name = args[0]
+    s = first(Sesshun.objects.filter(name = name))
+    s.allotment.total_time = request.POST.get("total_time", None)
+    s.allotment.save()
+    s.accounting_notes = request.POST.get("description", None)
+    s.save()
+    # now return the consequences this may have to the rest of the
+    # project time accounting
+    ta = TimeAccounting()
+    js = ta.jsondict(s.project)
+    return HttpResponse(json.dumps(js), mimetype = "text/plain")
+
 def period_time_accounting(request, *args, **kws):
     "Sets some time accounting variables for given period"
+    
     id = args[0]
     period = first(Period.objects.filter(id = id))
     a = period.accounting

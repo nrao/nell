@@ -113,11 +113,12 @@ class TimeAccounting:
         # session level
         for s in proj.sesshun_set.all():
             notes = s.accounting_notes
-            if notes is None:
-                notes = ""
-            sdct = dict(name    = s.name
-                      , notes   = notes
-                      , periods = [])
+            sdct = dict(name       = s.name
+                      , grade      = s.allotment.grade
+                      , total_time = s.allotment.total_time
+                      , notes      = notes if notes is not None else ""
+                      , periods    = []
+                      )
             for field in self.fields:
                 sdct.update({field : self.getTime(field, s)})
 

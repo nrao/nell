@@ -34,6 +34,7 @@ urlpatterns = patterns(''
    , url(r'^schedule/email$',                              scheduling_email)
    , url(r'^search$',                                      search)
    , url(r'^sessions/options$',   get_options) #
+   , url(r'^sessions/time_accounting/([^/]+)$',   session_time_accounting) #
    , url(r'^schedule/change_schedule$', change_schedule) #
    , url(r'^sessions$',           SessionResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^sessions/(\d+)$',     SessionResource(permitted_methods=('PUT', 'GET', 'POST'))) #
