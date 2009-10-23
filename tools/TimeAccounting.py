@@ -30,6 +30,19 @@ class TimeAccounting:
     def getProjectTotalTime(self, proj):
         return sum([a.total_time for a in proj.allotments.all()])
 
+    def getProjectTimes(self, proj):
+        "Returns dict. of times organized by grade"
+        times = []
+        for a in proj.allotments.all():
+            t = dict(psc_time          = a.psc_time
+                   , total_time        = a.total_time
+                   , max_semester_time = a.max_semester_time
+                   , grade             = a.grade
+                   , sess_total_time   = self.getSessTotalByGrade(proj, a.grade)
+                     )
+            times.append(t)
+        return times
+
     def getProjSessionsTotalTime(self, proj):
         ss = proj.sesshun_set.all()
         return sum([s.allotment.total_time for s in ss])
@@ -51,6 +64,11 @@ class TimeAccounting:
         ss = proj.sesshun_set.all()
         return sum([self.getTime(type, s) for s in ss])
 
+    def getSessTotalByGrade(self, proj, grade):
+        "Sums session alloted times that have matching grade."
+        return sum([s.allotment.total_time for s in proj.sesshun_set.all() \
+            if s.allotment.grade == grade])
+            
     # Session level time accounting
     def getObservedTime(self, sess):
         now = datetime.utcnow()
@@ -82,12 +100,13 @@ class TimeAccounting:
         "Contains all levels of time accounting info"
         
         # project level
-        notes = proj.accounting_notes
-        if notes is None:
-            notes = ""
-        dct = dict(pcode    = proj.pcode
-                 , notes    = notes
-                 , sessions = [])
+        
+        notes = proj.accounting_notes 
+        dct = dict(pcode        = proj.pcode
+                 , notes        = notes if notes is not None else ""
+                 , times        = self.getProjectTimes(proj) 
+                 , sessions     = []
+                 )
         for field in self.fields:
             dct.update({field : self.getProjTime(field, proj)})
         

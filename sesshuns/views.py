@@ -95,10 +95,27 @@ def change_schedule(request, *args, **kws):
     return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
     
 def time_accounting(request, *args, **kws):
-    "Serves up json for time accounting from periods up to the project"
+    """
+    POST: Sets Project time accounting.
+    GET: Serves up json for time accounting from periods up to the project"
+    """
     ta = TimeAccounting()
     pcode = args[0]
     project = first(Project.objects.filter(pcode = pcode))
+    if request.method == 'POST':
+        print "POST for time_accounting: ", project, request.POST
+        # set some project level time accounting info first
+        # before returning the time accounting
+        desc = request.POST.get("description", None)
+        project.accounting_notes = desc
+        # next: what grade is this for?
+        grade = float(request.POST.get("grade", None))
+        a = project.get_allotment(grade)
+        print "found allotment: ", a
+        a.total_time = float(request.POST.get("total_time", None))
+        a.save()
+        project.save()
+        print "saved off time stuff!"
     js = ta.jsondict(project)
     return HttpResponse(json.dumps(js), mimetype = "text/plain")
 

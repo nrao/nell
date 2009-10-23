@@ -647,6 +647,16 @@ class Project(models.Model):
                     for p in s.period_set.all() \
                         if p.start < dt]
 
+    def get_allotment(self, grade):
+        "Returns the allotment that matches the specified grade"
+        # watch out - this is a float!
+        epsilon = 1e-3
+        for a in self.allotments.all():
+            diff = abs(a.grade - grade)
+            if diff < epsilon:
+                return a
+        return None # uh-oh
+
     class Meta:
         db_table = "projects"
 
