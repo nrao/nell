@@ -27,7 +27,8 @@ class TimeAccounting:
                      ]
     
         # for reports
-        self.lines = []
+        self.reportLines = []
+        self.quietReport = False
 
     # Project leve time accounting
     def getProjectTotalTime(self, proj):
@@ -169,6 +170,9 @@ class TimeAccounting:
     def report(self, project, filename = None):
         "Prints out the json of a project's time accounting"
 
+        # init report
+        self.reportLines = []
+
         # map from field names to their Memo 11 abbreviations
         headers =     {'scheduled' : 'SC'
                      , 'observed'  : 'OB'
@@ -219,21 +223,25 @@ class TimeAccounting:
                 data = [desc, "", ""]
                 self.printFields(data, p, cols)
 
+        # save it to a file?
         if filename is not None:
             f = open(filename, 'w')
-            f.writelines(self.lines)
+            f.writelines(self.reportLines)
 
     def printFields(self, data, dct, cols):
+        "For use with printing reports"
         for field in self.fields:
             data.append("%5.2f" % dct[field])
         self.printData(data, cols)
 
     def add(self, lines):
-        #if not self.quiet:
-        print lines
-        self.lines += lines
+        "For use with printing reports"
+        if not self.quietReport:
+            print lines
+        self.reportLines += lines
 
     def printData(self, data, cols, header = False):
+        "For use with printing reports."
         self.add(" ".join([h[0:c].rjust(c) for h, c in zip(data, cols)]) + "\n")
         if header:
             self.add(("-" * (sum(cols) + len(cols))) + "\n")

@@ -1881,3 +1881,12 @@ class TestTimeAccounting(NellTestCase):
         self.assertNotEqual(dct, dct2)
         b = dct2['not_billable'] 
         self.assertEqual(b, 1.0)
+
+    def test_report(self):
+
+        # just make sure it doesn't blow up
+        project = Project.objects.order_by('pcode').all()[0]
+        ta = TimeAccounting()
+        ta.quietReport = True
+        ta.report(project)
+        
