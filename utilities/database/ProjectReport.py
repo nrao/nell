@@ -79,7 +79,7 @@ def GenerateProjectReport():
                            , lambda x, y: cmp(x.pcode, y.pcode))
     for p in sorted_projects:
         for typ in get_type(p):
-            if count % 10 == 0:
+            if count % 5 == 0:
                 outfile.write("-------------------------------------------------------------------------------------------------------------------------------------------\n")
             count += 1
 
@@ -95,9 +95,8 @@ def GenerateProjectReport():
                , str(len(get_sessions(p, typ))).center(10)
                , str(get_obs_hours(p,typ)).center(7)
                , str(get_rem_hours(p,typ)).center(7)
-               , str(any([len(o.user.blackout_set.all()) == 0 \
-                          for o in p.get_observers()])).center(8)
-               , str(any([s.status.backup for s in p.sesshun_set.all()])).center(6)
+               , "Yes".center(8) if any([len(o.user.blackout_set.all()) == 0 for o in p.get_observers()]) else "        "
+               , "Yes".center(6) if any([s.status.backup for s in p.sesshun_set.all()]) else "      "
                , get_rcvrs(p, typ)
                 )
             )
