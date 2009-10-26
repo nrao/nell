@@ -25,7 +25,10 @@ class TimeAccounting:
                      , 'other_session_rfi'
                      , 'other_session_other'
                      ]
-       
+    
+        # for reports
+        self.lines = []
+
     # Project leve time accounting
     def getProjectTotalTime(self, proj):
         return sum([a.total_time for a in proj.allotments.all()])
@@ -124,7 +127,9 @@ class TimeAccounting:
 
              # period level
             for p in s.period_set.all():
-                pdct = dict(id = p.id)
+                pdct = dict(id = p.id
+                          , start = p.start
+                          , duration = p.duration)
                 for field in self.fields:
                     pdct.update({field : p.accounting.get_time(field)})
                 sdct['periods'].append(pdct)    
@@ -161,3 +166,76 @@ class TimeAccounting:
                     p.accounting.set_changed_time(field, value)
                     p.accounting.save()
             
+    def report(self, project, filename = None):
+        "Prints out the json of a project's time accounting"
+
+        # map from field names to their Memo 11 abbreviations
+        headers =     {'scheduled' : 'SC'
+                     , 'observed'  : 'OB'
+                     , 'time_billed' : 'TB'
+                     , 'unaccounted_time' : 'UT'
+                     , 'short_notice' : 'SC'
+                     , 'not_billable' : 'NB'
+                     , 'lost_time' : 'LT'
+                     , 'lost_time_weather' : 'LTW'
+                     , 'lost_time_rfi' : 'LTR'
+                     , 'lost_time_other' : 'LTO'
+                     , 'other_session' : 'OS'
+                     , 'other_session_weather' : 'OSW'
+                     , 'other_session_rfi' : 'OSR'
+                     , 'other_session_other' : 'OSO'
+                     }
+
+        json = self.jsondict(project)
+
+        numberWidth = 7
+        cols = [35, numberWidth, numberWidth]
+        header = ["Description", "Proj Hrs", "Sess Hrs"]
+        for field in self.fields:
+            cols.append(numberWidth)
+            header.append(headers[field])
+        self.printData(header, cols, True)
+
+        # project level
+        desc = "Project: %s" % project.pcode
+        total_time = "%5.2f" % self.getProjectTotalTime(project)
+        sess_total_time = "%5.2f" % self.getProjSessionsTotalTime(project)
+        data = [desc, total_time, sess_total_time]
+        self.printFields(data, json, cols)
+
+        # session level
+        sds = json['sessions']
+        for sd in sds:
+            desc = "Session: %s" % sd['name']
+            total_time = "%5.2f" % sd['total_time']
+            data = [desc, "", total_time]
+            data = self.printFields(data, sd, cols)
+
+            # period level
+            periods = sd['periods']
+            for p in periods:
+                desc = "Period: %s for %3.2f" % \
+                    (p['start'].strftime('%Y-%m-%d %H:%M'), p['duration'])
+                data = [desc, "", ""]
+                self.printFields(data, p, cols)
+
+        if filename is not None:
+            f = open(filename, 'w')
+            f.writelines(self.lines)
+
+    def printFields(self, data, dct, cols):
+        for field in self.fields:
+            data.append("%5.2f" % dct[field])
+        self.printData(data, cols)
+
+    def add(self, lines):
+        #if not self.quiet:
+        print lines
+        self.lines += lines
+
+    def printData(self, data, cols, header = False):
+        self.add(" ".join([h[0:c].rjust(c) for h, c in zip(data, cols)]) + "\n")
+        if header:
+            self.add(("-" * (sum(cols) + len(cols))) + "\n")
+
+
