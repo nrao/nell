@@ -1444,7 +1444,8 @@ class Period_Accounting(models.Model):
 
     def unaccounted_time(self):
         "UT=SC-OT-OS-LT; should always be zero."
-        return self.scheduled - self.observed()
+        return self.scheduled - self.observed() - self.other_session() \
+            - self.lost_time()
 
     def set_changed_time(self, reason, time):
         "Determines which field to assign the time to."
