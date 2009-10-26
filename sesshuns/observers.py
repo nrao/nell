@@ -211,12 +211,18 @@ def search(request, *args, **kws):
 
     # Search for project by short code.
     for p in Project.objects.all():
-        code = p.pcode.replace("GBT", "")
+        code = p.pcode.replace("TGBT", "")
+        code = code.replace("GBT", "")
+        code = code.replace("_0", "")
         code = code.replace("-0", "")
-        code = code[1:] if code[0] == "0" else code
+        code = code.replace("_", "")
+        code = code.replace("-", "")
+
+        code = code[1:] if len(code) > 2 and code[0] == "0" else code
+
         if code == search.upper() and p not in projects:
             projects.append(p)
-        
+
     users = User.objects.filter(
         Q(first_name__icontains = search) | Q(last_name__icontains = search))
 

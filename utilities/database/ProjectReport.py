@@ -38,8 +38,8 @@ def get_rcvrs(project, typ):
       , "KFPA": "P"
     }
 
-    return " | ".join(Set([
-        "(%s)" % " & ".join([
+    return ", ".join(Set([
+        "(%s)" % ", ".join([
             rcvr_dict[r.abbreviation] \
             for rg in s.receiver_group_set.all() \
             for r in rg.receivers.all()
