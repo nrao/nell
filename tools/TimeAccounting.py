@@ -129,7 +129,7 @@ class TimeAccounting:
              # period level
             for p in s.period_set.all():
                 pdct = dict(id = p.id
-                          , start = p.start
+                          , start = p.start.strftime('%Y-%m-%d %H:%M')
                           , duration = p.duration)
                 for field in self.fields:
                     pdct.update({field : p.accounting.get_time(field)})
@@ -219,7 +219,7 @@ class TimeAccounting:
             periods = sd['periods']
             for p in periods:
                 desc = "Period: %s for %3.2f" % \
-                    (p['start'].strftime('%Y-%m-%d %H:%M'), p['duration'])
+                    (p['start'], p['duration'])
                 data = [desc, "", ""]
                 self.printFields(data, p, cols)
 

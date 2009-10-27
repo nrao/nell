@@ -11,6 +11,8 @@ alter table periods alter column forecast type timestamp without time zone;
 alter table blackouts alter column start_date type timestamp without time zone;
 alter table blackouts alter column end_date type timestamp without time zone;
 alter table blackouts alter column until type timestamp without time zone;
+alter table reservations alter column start_date type timestamp without time zone;
+alter table reservations alter column end_date type timestamp without time zone;
 
 -- Example project
 INSERT INTO allotment VALUES (DEFAULT, 100.5, 100.5, 100.5, 4.0);

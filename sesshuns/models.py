@@ -1444,7 +1444,8 @@ class Period_Accounting(models.Model):
 
     def unaccounted_time(self):
         "UT=SC-OT-OS-LT; should always be zero."
-        return self.scheduled - self.observed()
+        return self.scheduled - self.observed() - self.other_session() \
+            - self.lost_time()
 
     def set_changed_time(self, reason, time):
         "Determines which field to assign the time to."
@@ -1715,12 +1716,11 @@ class Project_Blackout_09B(models.Model):
         # problems with postrgreSQL
         db_table = "project_blackouts_09b"
 
-# TBF: might need this in order to get around Haskell not working w/ BOS
-#class Reservation(models.Model):
-#    user       = models.ForeignKey(User)
-#    start_date = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm:ss")
-#    end_date   = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm:ss")
-#
-#    class Meta:
-#        db_table = "reservations"
+class Reservation(models.Model):
+    user       = models.ForeignKey(User)
+    start_date = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm:ss")
+    end_date   = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm:ss")
+
+    class Meta:
+        db_table = "reservations"
     
