@@ -43,8 +43,8 @@ class ProjectResource(NellResource):
                     Q(pcode__icontains=filterText) |
                     Q(semester__semester__icontains=filterText) |
                     Q(project_type__type__icontains=filterText) |
-                    Q(investigators__user__first_name__icontains = filterText) |
-                    Q(investigators__user__last_name__icontains = filterText)
+                    Q(investigator__user__first_name__icontains = filterText) |
+                    Q(investigator__user__last_name__icontains = filterText)
                     )
         projects = query_set.order_by(order + sortField)
         total    = len(projects)

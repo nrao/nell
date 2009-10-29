@@ -944,6 +944,14 @@ class TestProjectResource(NellTestCase):
     def test_read(self):
         response = self.client.get('/projects')
         self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue('"total": 2' in response.content)
+
+    def test_read_with_filter(self):
+        response = self.client.get('/projects?filterText=09C')
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue('"total": 1' in response.content)
+        self.assertTrue('09C' in response.content)
+        self.assertTrue('09A' not in response.content)
 
     def test_update(self):
         fdata = self.fdata
