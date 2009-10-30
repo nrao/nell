@@ -6,15 +6,15 @@ class ScheduleTools(object):
         """
         Change the schedule, and take care of all the time accounting.
         This is meant for use in such cases as examplified in Memo 11.2.
+        Right now, this only handles substituting one session for one
+        or more sessions, where the time taken is accounted to one of these
         Reasons:
-          Sesshun is None:
-            lost time due to weather
-            lost time due to rfi
-            lost time due to other reason
-          Sesshun is not None:
             time to other session due to weather
             time to other session due to rfi
             time to other session due to other reason
+        and the time given to the new session is marked as short notice.
+        Note that the times are not *assigned*, but instead times and descs.
+        are incremented, so as not to overwrite previous changes.
         """
 
         # what periods are we affecting?
@@ -27,6 +27,7 @@ class ScheduleTools(object):
             if p.start >= start and p.end() <= end:
                 # this entire period is being replaced
                 # TBF: can't do this p.delete()
+                # TBF: use state!
                 p.duration = 0
                 #p.delete()
                 #p = None
@@ -35,7 +36,8 @@ class ScheduleTools(object):
                 p.duration = (start - p.start).seconds / 3600.0
             elif p.start >= start and p.end() > end:
                 # we're chopping off the beginning of this period
-                p.start = start
+                p.duration = (p.end() - end).seconds / 3600.0
+                p.start = end
             elif p.start < start and p.end() > end:
                 # TBF
                 raise "Not implemented yet."
@@ -55,8 +57,14 @@ class ScheduleTools(object):
                 raise "not covered"
             # now change this periods time accounting
             if p is not None:
-                p.accounting.set_changed_time(reason, duration)
-                p.accounting.description = description
+                # increment values: don't overwrite them!
+                value = p.accounting.get_time(reason)
+                p.accounting.set_changed_time(reason, value + duration)
+                desc = p.accounting.description \
+                    if p.accounting.description is not None else ""
+                nowStr = datetime.now().strftime("%Y-%m-%d %H:%M")    
+                desc += " [Schedule Change (%s)]: " % nowStr
+                p.accounting.description = desc + description
                 p.accounting.save()
                 p.save()
 

@@ -1683,9 +1683,9 @@ class TestScheduleTools(NellTestCase):
         self.assertEquals(self.start, canceled.start)
         self.assertEquals(2.0, canceled.duration)
         self.assertEquals(3.0, canceled.accounting.other_session_other)
-        self.assertEquals("SP broke.", canceled.accounting.description)
+        self.assertTrue("SP broke." in canceled.accounting.description)
         self.assertEquals(3.0, backup.accounting.short_notice)
-        self.assertEquals("SP broke.", backup.accounting.description)
+        self.assertTrue("SP broke." in backup.accounting.description)
 
     def test_changeSchedule2(self):
 
@@ -1720,7 +1720,7 @@ class TestScheduleTools(NellTestCase):
         self.assertEquals(self.start, canceled.start)
         self.assertEquals(2.0, canceled.duration)
         self.assertEquals(3.0, canceled.accounting.lost_time_other)
-        self.assertEquals(desc, canceled.accounting.description)
+        self.assertTrue(desc in canceled.accounting.description)
 
     def test_changeSchedule3(self):
 
@@ -1755,9 +1755,9 @@ class TestScheduleTools(NellTestCase):
         self.assertEquals(self.start, canceled.start)
         self.assertEquals(4.0, canceled.duration)
         self.assertEquals(1.0, canceled.accounting.other_session_weather)
-        self.assertEquals(desc, canceled.accounting.description)
+        self.assertTrue(desc in canceled.accounting.description)
         self.assertEquals(1.0, backup.accounting.short_notice)
-        self.assertEquals(desc, backup.accounting.description)                        
+        self.assertTrue(desc in backup.accounting.description)                        
         # now, don't bill this new period the hour
         self.assertEquals(1.0, backup.accounting.observed())
         self.assertEquals(1.0, backup.accounting.time_billed())
@@ -1801,9 +1801,9 @@ class TestScheduleTools(NellTestCase):
         self.assertEquals(self.start, canceled.start)
         self.assertEquals(0.0, canceled.duration)
         self.assertEquals(5.0, canceled.accounting.other_session_weather)
-        self.assertEquals(desc, canceled.accounting.description)
+        self.assertTrue(desc in canceled.accounting.description)
         self.assertEquals(5.0, backup.accounting.short_notice)
-        self.assertEquals(desc, backup.accounting.description)
+        self.assertTrue(desc in backup.accounting.description)
 
 class TestTimeAccounting(NellTestCase):
 
