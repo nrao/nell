@@ -1027,16 +1027,12 @@ class Sesshun(models.Model):
         self.session_type     = st
         self.observing_type   = ot
         self.original_id      = \
-            self.get_field(fdata, "orig_ID", None, self.cast_int)
+            self.get_field(fdata, "orig_ID", None, lambda x: int(float(x)))
         self.name             = fdata.get("name", None)
         self.frequency        = fdata.get("freq", None)
         self.max_duration     = TimeAgent.rndHr2Qtr(float(fdata.get("req_max", 12.0)))
         self.min_duration     = TimeAgent.rndHr2Qtr(float(fdata.get("req_min",  3.0)))
         self.time_between     = fdata.get("between", None)
-
-    def cast_int(self, strValue):
-        "Handles casting of strings where int is displayed as float. ex: 1.0"
-        return int(float(strValue))
 
     def get_field(self, fdata, key, defaultValue, cast):
         "Some values from the JSON dict we know we need to type cast"
@@ -1176,15 +1172,14 @@ class Sesshun(models.Model):
         return False
         
     def get_receiver_req(self):
-        rgs = self.receiver_group_set.all()
-        ands = []
-        for rg in rgs:
-            rs = rg.receivers.all()
-            ands.append(' | '.join([r.abbreviation for r in rs]))
-        if len(ands) == 1:
-            return ands[0]
+        grps = [' | '.join([r.abbreviation \
+                            for r in rg.receivers.all()]) \
+                for rg in self.receiver_group_set.all()]
+
+        if grps and len(grps) == 1:
+            return grps[0]
         else:
-            return ' & '.join(['(' + rg + ')' for rg in ands])
+            return ' & '.join(['(%s)' % g for g in grps])
 
     def get_ha_limit_blackouts(self, startdate, days):
         # TBF: Not complete or even correct yet.
@@ -1201,9 +1196,6 @@ class Sesshun(models.Model):
         return TimeAccounting().getObservedTime(self)
 
     def jsondict(self):
-        target  = first(self.target_set.all())
-        rcvrs  = self.get_receiver_req()
-
         d = {"id"         : self.id
            , "pcode"      : self.project.pcode
            , "type"       : self.session_type.type
@@ -1222,17 +1214,11 @@ class Sesshun(models.Model):
            , "authorized" : self.status.authorized
            , "complete"   : self.status.complete
            , "backup"     : self.status.backup
+           , "transit"    : self.transit() or False
+           , "receiver"   : self.get_receiver_req()
             }
 
-        trnst = self.transit()
-        if trnst is not None:
-            d.update({"transit"    : trnst})
-        else:
-            d.update({"transit"    : False})
-
-        if rcvrs is not None:
-            d.update({"receiver"   : rcvrs})
-            
+        target = first(self.target_set.all())
         if target is not None:
             d.update({"source"     : target.source
                     , "coord_mode" : target.system.name

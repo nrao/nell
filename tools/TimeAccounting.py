@@ -59,7 +59,7 @@ class TimeAccounting:
         ss = proj.sesshun_set.all()
         return sum([self.getTimeLost(s) for s in ss])
 
-    def getProjTimeToOtherSession(self, sess):
+    def getProjTimeToOtherSession(self, proj):
         ss = proj.sesshun_set.all()
         return sum([self.getTimeToOtherSession(s) for s in ss])
 
@@ -71,7 +71,7 @@ class TimeAccounting:
     def getSessTotalByGrade(self, proj, grade):
         "Sums session alloted times that have matching grade."
         return sum([s.allotment.total_time for s in proj.sesshun_set.all() \
-            if s.allotment.grade == grade])
+                    if s.allotment.grade == grade])
             
     # Session level time accounting
     def getObservedTime(self, sess):
@@ -141,8 +141,7 @@ class TimeAccounting:
 
     def update_from_post(self, proj, dct):
         "Sets all appropriate time accounting fields in tiered objects"
-        
-       
+
         assert proj.pcode == dct.get('pcode', None)
         
         # assign project level info
@@ -245,5 +244,3 @@ class TimeAccounting:
         self.add(" ".join([h[0:c].rjust(c) for h, c in zip(data, cols)]) + "\n")
         if header:
             self.add(("-" * (sum(cols) + len(cols))) + "\n")
-
-

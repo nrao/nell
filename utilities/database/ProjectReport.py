@@ -4,8 +4,13 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from sesshuns.models import *
-from sets            import Set
+from sesshuns.models      import *
+from tools.TimeAccounting import TimeAccounting
+from sets                 import Set
+
+# days in a trimester * hours
+# (And, yes, I'm ignoring leap years. Get off my back!)
+TRIMESTER_HOURS = (365. / 3.) * 24.
 
 def get_type(project):
     return Set([s.session_type.type for s in project.sesshun_set.all()])
@@ -43,13 +48,14 @@ def get_rcvrs(project, typ):
       , "KFPA": "P"
     }
 
-    return ", ".join(Set([
-        "(%s)" % ", ".join([
-            rcvr_dict[r.abbreviation] \
-            for rg in s.receiver_group_set.all() \
-            for r in rg.receivers.all()
-        ]) for s in get_sessions(project, typ)
-    ]))
+    grps = list(Set([", ".join([rcvr_dict[r.abbreviation] \
+                                for rg in s.receiver_group_set.all()
+                                for r in rg.receivers.all()])
+                     for s in get_sessions(project, typ)]))
+    if grps and len(grps) == 1:
+        return grps[0]
+    else:
+        return ", ".join(["(%s)" % g for g in grps])
 
 def get_allotment_hours(project, typ):
     return sum([s.allotment.total_time for s in get_sessions(project, typ)])
@@ -69,16 +75,35 @@ def get_obs_hours(project, typ):
 def get_rem_hours(project,typ):
     return get_allotment_hours(project, typ) - get_obs_hours(project, typ)
 
+def get_rem_schedulable_hours(project, type):
+    ta    = TimeAccounting()
+    hours = 0
+    for s in get_sessions(project, typ):
+        # Need to take receivers and blackouts into account.
+        if s.schedulable() and s.has_sanctioned_observers():
+            hours += ta.getTimeLeft(s)
+
+    return hours
+
 def GenerateProjectReport():
     outfile = open("./DssProjectReport.txt", 'w')
 
-    outfile.write("  Project   |   Type   | Sessions | Not Enabled | Observers | Complete | Incomplete | Obs Hrs | Rem Hrs | Blackout | Backup | Receivers\n")
+    outfile.write("  Project   |   Type   | Sessions | Not Enabled | Observers | Complete | Incomplete | Obs Hrs | Avail Hrs (Total) | Blackout | Backup | Receivers\n")
 
     count           = 0
     sorted_projects = sorted(Project.objects.filter(complete = False)
                            , lambda x, y: cmp(x.pcode, y.pcode))
+    observed_hours  = 0
+    remaining_hours = 0
+
     for p in sorted_projects:
         for typ in get_type(p):
+            ohours = get_obs_hours(p,typ)
+            rhours = get_rem_hours(p,typ)
+
+            observed_hours  += ohours
+            remaining_hours += rhours
+
             if count % 5 == 0:
                 outfile.write("-------------------------------------------------------------------------------------------------------------------------------------------\n")
             count += 1
@@ -93,13 +118,22 @@ def GenerateProjectReport():
                , str(len([s for s in p.sesshun_set.all() \
                             if s.status.complete == True])).center(8)
                , str(len(get_sessions(p, typ))).center(10)
-               , str(get_obs_hours(p,typ)).center(7)
-               , str(get_rem_hours(p,typ)).center(7)
+               , str(ohours).center(7)
+               , str(rhours).center(7)
                , "Yes".center(8) if any([len(o.user.blackout_set.all()) == 0 for o in p.get_observers()]) else "        "
                , "Yes".center(6) if any([s.status.backup for s in p.sesshun_set.all()]) else "      "
                , get_rcvrs(p, typ)
                 )
             )
+
+    outfile.write("\nAllotment hours / Available Trimester Hours = %.1f%%\n" % 
+                  ((observed_hours + remaining_hours) / TRIMESTER_HOURS * 100.))
+
+    outfile.write("\nObserved hours  / Available Trimester Hours = %.1f%%\n" % 
+                  (observed_hours / TRIMESTER_HOURS * 100.))
+
+    outfile.write("\nRemaining hours / Available Trimester Hours = %.1f%%\n" % 
+                  (remaining_hours / TRIMESTER_HOURS * 100.))
 
     outfile.close()
 
