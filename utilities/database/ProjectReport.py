@@ -61,34 +61,22 @@ def get_allotment_hours(project, typ):
     return sum([s.allotment.total_time for s in get_sessions(project, typ)])
 
 def get_obs_hours(project, typ):
-    return sum([
-        p.accounting.scheduled - \
-        p.accounting.not_billable - \
-        p.accounting.other_session_weather - \
-        p.accounting.other_session_rfi - \
-        p.accounting.other_session_other - \
-        p.accounting.lost_time_weather - \
-        p.accounting.lost_time_rfi - \
-        p.accounting.lost_time_other
-    for s in get_sessions(project, typ) for p in s.period_set.all()])
+    ta = TimeAccounting()
+    return sum([ta.getObservedTime(s) for s in get_sessions(project, typ)])
 
-def get_rem_hours(project,typ):
-    return get_allotment_hours(project, typ) - get_obs_hours(project, typ)
+def get_rem_hours(project, typ):
+    ta = TimeAccounting()
+    return sum([ta.getTimeLeft(s) for s in get_sessions(project, typ)])
 
-def get_rem_schedulable_hours(project, type):
-    ta    = TimeAccounting()
-    hours = 0
-    for s in get_sessions(project, typ):
-        # Need to take receivers and blackouts into account.
-        if s.schedulable() and s.has_sanctioned_observers():
-            hours += ta.getTimeLeft(s)
-
-    return hours
+def get_rem_schedulable_hours(project, typ):
+    ta = TimeAccounting()
+    return sum([ta.getTimeLeft(s) for s in get_sessions(project, typ) \
+                if s.schedulable() and project.has_sanctioned_observers()])
 
 def GenerateProjectReport():
     outfile = open("./DssProjectReport.txt", 'w')
 
-    outfile.write("  Project   |   Type   | Sessions | Not Enabled | Observers | Complete | Incomplete | Obs Hrs | Avail Hrs (Total) | Blackout | Backup | Receivers\n")
+    outfile.write("Project     |   Type   | Sessions | Not Enabled | Observers | Complete | Incomplete |  Avail / Rem Hrs | Obs Hrs | Blackout | Backup | Receivers\n")
 
     count           = 0
     sorted_projects = sorted(Project.objects.filter(complete = False)
@@ -118,8 +106,8 @@ def GenerateProjectReport():
                , str(len([s for s in p.sesshun_set.all() \
                             if s.status.complete == True])).center(8)
                , str(len(get_sessions(p, typ))).center(10)
+               , "".join([str(get_rem_schedulable_hours(p, typ)), " / ", str(rhours)]).rjust(16)
                , str(ohours).center(7)
-               , str(rhours).center(7)
                , "Yes".center(8) if any([len(o.user.blackout_set.all()) == 0 for o in p.get_observers()]) else "        "
                , "Yes".center(6) if any([s.status.backup for s in p.sesshun_set.all()]) else "      "
                , get_rcvrs(p, typ)
