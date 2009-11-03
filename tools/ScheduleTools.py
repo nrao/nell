@@ -28,12 +28,16 @@ class ScheduleTools(object):
         # what periods are we affecting?
         duration_mins = duration * 60.0
         ps = Period.get_periods(start, duration_mins)
+        if debug:
+            print "len(ps): ", len(ps)
 
         # first, adjust each of the affected periods - including time accnting
         end = start + timedelta(hours = duration)
         for p in ps:
             if debug:
                 print "changing period: ", p
+                print "comparing period: ", p.start, p.end()
+                print "w/:               ", start, end 
             if p.start >= start and p.end() <= end:
                 if debug:
                     print "delete period!"
@@ -44,13 +48,6 @@ class ScheduleTools(object):
                 p.duration = 0
                 #p.delete()
                 #p = None
-            elif p.start < start and p.end() > start:
-                if debug:
-                    print "shorten period"
-                # we're chopping off the end of this period
-                new_duration = (start - p.start).seconds / 3600.0
-                other_sess_time = p.duration - new_duration
-                p.duration = new_duration
             elif p.start >= start and p.end() > end:
                 if debug:
                     print "start period later"
@@ -62,20 +59,37 @@ class ScheduleTools(object):
             elif p.start < start and p.end() > end:
                 if debug:
                     print "bi-secting period"
-                # TBF
-                raise "Not implemented yet."
                 # we're chopping out the middle of a period: we fix this
                 # by adjusting the period, then creating a new one
                 original_duration = p.duration
                 original_end      = p.end()
-                p.duration = (start - p.start).seconds / 36000.0
+                p.duration = (start - p.start).seconds / 3600.0
                 # the new one
-                #new_dur = (original_end - end).minutes
-                #new_p = Period(session  = p.session
-                #         , start    = end
-                #         , duration = new_dur
-                #         , accounting = Period_Accounting(scheduled = new_dur)
-                #         )
+                new_dur = (original_end - end).seconds / 3600.0
+                accounting = Period_Accounting(scheduled = new_dur
+                                             , short_notice = new_dur
+                                             , description = description
+                                               )
+                accounting.save()                             
+                period_2cd_half = Period(session  = p.session
+                                       , start    = end
+                                       , duration = new_dur
+                                       , score    = 0.0
+                                       , forecast = end
+                                       , accounting = accounting 
+                                         )
+                period_2cd_half.save()                         
+                # the original period is really giving up time to the 
+                # bi-secting new period, and the new second half!
+                other_sess_time = duration + new_dur
+            elif p.start < start and p.end() > start:
+                if debug:
+                    print "shorten period"
+                # we're chopping off the end of this period
+                new_duration = (start - p.start).seconds / 3600.0
+                other_sess_time = p.duration - new_duration
+                p.duration = new_duration
+                         
             else:
                 raise "not covered"
             # now change this periods time accounting

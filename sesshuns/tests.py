@@ -1881,16 +1881,39 @@ class TestScheduleTools(NellTestCase):
         canceled = first(Period.objects.filter(duration = 0.0))
         self.assertEquals(canceled.start, self.ps[1].start)
         
-#    def test_changeSchedule_bisect(self):
-#
-#        # check accounting before changing schedule
-#        scheduled = [5.0, 3.0, 4.0]
-#        for i, p in enumerate(self.ps):
-#            self.assertEquals(scheduled[i], p.accounting.scheduled)
-#            self.assertEquals(scheduled[i], p.accounting.observed())
-#
-#        # make sure we can handle bi-secting a pre-existing period
+    def test_changeSchedule_bisect(self):
 
+        # check accounting before changing schedule
+        scheduled = [5.0, 3.0, 4.0]
+        for i, p in enumerate(self.ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(scheduled[i], p.accounting.observed())
+
+        # make sure we can handle bi-secting a pre-existing period
+        change_start = self.ps[0].start + timedelta(hours = 1.0)
+        desc = "bisect!"
+        ScheduleTools().changeSchedule(change_start 
+                                    , 2.0 
+                                    , self.backup
+                                    , "other_session_other"
+                                    , desc)
+        
+        # get the periods from the DB again for updated values
+        ps = Period.get_periods(self.start, 12.0*60.0)
+        for p in ps:
+            print p, p.accounting
+        self.assertEquals(5, len(ps))
+        # check accounting after changing schedule
+        #scheduled = [5.0, 8.0, 4.0]
+        observed  = [1.0, 2.0, 2.0, 3.0, 4.0]
+        #oso       = [3.0, 0.0, 2.0]
+        #sn        = [0.0, 8.0, 0.0]
+        for i, p in enumerate(ps):
+            #self.assertEquals(scheduled[i], p.accounting.scheduled)
+            #self.assertEquals(sn[i],        p.accounting.short_notice)
+            #self.assertEquals(oso[i],       p.accounting.other_session())
+            self.assertEquals(observed[i],  p.accounting.observed())
+        
 class TestTimeAccounting(NellTestCase):
 
     def setUp(self):
