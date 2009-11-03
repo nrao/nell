@@ -17,6 +17,14 @@ class ScheduleTools(object):
         are incremented, so as not to overwrite previous changes.
         """
 
+        # get rid of this once develompent has stablized.
+        debug = False
+
+        # tag the descriptoin
+        nowStr = datetime.now().strftime("%Y-%m-%d %H:%M")    
+        tag = " [Schedule Change (%s)]: " % nowStr 
+        description = tag + description
+
         # what periods are we affecting?
         duration_mins = duration * 60.0
         ps = Period.get_periods(start, duration_mins)
@@ -24,21 +32,36 @@ class ScheduleTools(object):
         # first, adjust each of the affected periods - including time accnting
         end = start + timedelta(hours = duration)
         for p in ps:
+            if debug:
+                print "changing period: ", p
             if p.start >= start and p.end() <= end:
+                if debug:
+                    print "delete period!"
                 # this entire period is being replaced
                 # TBF: can't do this p.delete()
                 # TBF: use state!
+                other_sess_time = p.duration
                 p.duration = 0
                 #p.delete()
                 #p = None
             elif p.start < start and p.end() > start:
+                if debug:
+                    print "shorten period"
                 # we're chopping off the end of this period
-                p.duration = (start - p.start).seconds / 3600.0
+                new_duration = (start - p.start).seconds / 3600.0
+                other_sess_time = p.duration - new_duration
+                p.duration = new_duration
             elif p.start >= start and p.end() > end:
+                if debug:
+                    print "start period later"
                 # we're chopping off the beginning of this period
-                p.duration = (p.end() - end).seconds / 3600.0
+                new_duration = (p.end() - end).seconds / 3600.0
+                other_sess_time = p.duration - new_duration
+                p.duration = new_duration
                 p.start = end
             elif p.start < start and p.end() > end:
+                if debug:
+                    print "bi-secting period"
                 # TBF
                 raise "Not implemented yet."
                 # we're chopping out the middle of a period: we fix this
@@ -57,13 +80,13 @@ class ScheduleTools(object):
                 raise "not covered"
             # now change this periods time accounting
             if p is not None:
+                if debug:
+                    print "changes: ", p
                 # increment values: don't overwrite them!
                 value = p.accounting.get_time(reason)
-                p.accounting.set_changed_time(reason, value + duration)
+                p.accounting.set_changed_time(reason, value + other_sess_time)
                 desc = p.accounting.description \
                     if p.accounting.description is not None else ""
-                nowStr = datetime.now().strftime("%Y-%m-%d %H:%M")    
-                desc += " [Schedule Change (%s)]: " % nowStr
                 p.accounting.description = desc + description
                 p.accounting.save()
                 p.save()

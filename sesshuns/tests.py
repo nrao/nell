@@ -1805,6 +1805,92 @@ class TestScheduleTools(NellTestCase):
         self.assertEquals(5.0, backup.accounting.short_notice)
         self.assertTrue(desc in backup.accounting.description)
 
+    def test_changeSchedule_end_early(self):
+
+        # check accounting before changing schedule
+        scheduled = [5.0, 3.0, 4.0]
+        for i, p in enumerate(self.ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(scheduled[i], p.accounting.observed())
+
+        # have a new session override the last one, and make the middle
+        # one end early
+        change_start = self.ps[1].start + timedelta(hours = 2.0)
+        desc = "fix this bug"
+        ScheduleTools().changeSchedule(change_start 
+                                    , 5.0 
+                                    , self.backup
+                                    , "other_session_other"
+                                    , desc)
+        
+        # get the periods from the DB again for updated values
+        ps = Period.get_periods(self.start, 12.0*60.0)
+        # make sure we don't get deleted period
+        ps = [p for p in ps if p.duration != 0.0]
+        self.assertEquals(3, len(ps))
+
+        # check accounting after changing schedule
+        scheduled = [5.0, 3.0, 5.0]
+        observed  = [5.0, 2.0, 5.0]
+        oso       = [0.0, 1.0, 0.0]
+        for i, p in enumerate(ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(oso[i] , p.accounting.other_session())
+            self.assertEquals(observed[i] , p.accounting.observed())
+        # check affected periods
+        canceled = first(Period.objects.filter(duration = 0.0))
+        self.assertEquals(canceled.start, self.ps[2].start)
+        
+    def test_changeSchedule_ultimate_chaos(self):
+        "gitrdone!"
+
+        # check accounting before changing schedule
+        scheduled = [5.0, 3.0, 4.0]
+        for i, p in enumerate(self.ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(scheduled[i], p.accounting.observed())
+
+        # have a new session start before the first ends, and go all
+        # the way to near the end of the last
+        # one end early
+        change_start = self.ps[0].start + timedelta(hours = 2.0)
+        desc = "chaos!"
+        ScheduleTools().changeSchedule(change_start 
+                                    , 8.0 
+                                    , self.backup
+                                    , "other_session_other"
+                                    , desc)
+        
+        # get the periods from the DB again for updated values
+        ps = Period.get_periods(self.start, 12.0*60.0)
+        # make sure we don't get deleted period
+        ps = [p for p in ps if p.duration != 0.0]
+        self.assertEquals(3, len(ps))
+
+        # check accounting after changing schedule
+        scheduled = [5.0, 8.0, 4.0]
+        observed  = [2.0, 8.0, 2.0]
+        oso       = [3.0, 0.0, 2.0]
+        sn        = [0.0, 8.0, 0.0]
+        for i, p in enumerate(ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(sn[i],        p.accounting.short_notice)
+            self.assertEquals(oso[i],       p.accounting.other_session())
+            self.assertEquals(observed[i],  p.accounting.observed())
+        # check affected periods
+        canceled = first(Period.objects.filter(duration = 0.0))
+        self.assertEquals(canceled.start, self.ps[1].start)
+        
+#    def test_changeSchedule_bisect(self):
+#
+#        # check accounting before changing schedule
+#        scheduled = [5.0, 3.0, 4.0]
+#        for i, p in enumerate(self.ps):
+#            self.assertEquals(scheduled[i], p.accounting.scheduled)
+#            self.assertEquals(scheduled[i], p.accounting.observed())
+#
+#        # make sure we can handle bi-secting a pre-existing period
+
 class TestTimeAccounting(NellTestCase):
 
     def setUp(self):
