@@ -15,8 +15,8 @@ class UserInfo(object):
     # Log in only once to minimize authentication overhead.
     __userDB = NRAOUserDB( \
                 'https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
-              , 'dss'
-              , 'MrNubbles!'
+              , 'QueryAgent'
+              , 'iBlertFoo'
               , opener = urllib2.build_opener())
 
     def __init__(self):
