@@ -93,6 +93,36 @@ def change_schedule(request, *args, **kws):
     st = ScheduleTools()
     st.changeSchedule(startdate, duration, s, reason, desc)
     return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
+
+def shift_period_boundaries(request, *args, **kws):
+    "moves boundray between two or more periods, handling time accounting."
+    # just have a lot of params to process
+    time = request.POST.get("time", None)
+    if time is not None:
+        d, t      = time.split(' ')
+        y, m, d   = map(int, d.split('-'))
+        h, mm, ss = map(int, map(float, t.split(':')))
+        time      = datetime(y, m, d, h, mm, ss)
+    period_id = int(request.POST.get("period_id", None))
+    period = first(Period.objects.filter(id = period_id))
+    start_boundary = bool(int(request.POST.get("start_boundary", 1)))
+    desc = request.POST.get("description", "")
+    # now, what is the neighbor to this boundary?
+    original_time = period.start if start_boundary else period.end()
+    # many ways to do this. one way is to find all periods w/ in 15 mins
+    # of the original boundary time: this will always give our specified period
+    # plus any neighbor to it.
+    ps = Period.get_periods(original_time - timedelta(minutes = 1)
+                          , 15.0)
+    neighbors = [p for p in ps if p.id != period_id]                      
+    if len(neighbors) == 0:
+        neighbor = None
+    else:
+        neighbor = neighbors[0]
+    # this method handles the heavy lifting
+    st = ScheduleTools()
+    st.shiftPeriodBoundaries(period, start_boundary, time, neighbor, desc)
+    return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
     
 def time_accounting(request, *args, **kws):
     """
