@@ -36,6 +36,7 @@ urlpatterns = patterns(''
    , url(r'^sessions/options$',   get_options) #
    , url(r'^sessions/time_accounting/([^/]+)$',   session_time_accounting) #
    , url(r'^schedule/change_schedule$', change_schedule) #
+   , url(r'^schedule/shift_period_boundaries$', shift_period_boundaries) #
    , url(r'^sessions$',           SessionResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^sessions/(\d+)$',     SessionResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^receivers$',          rcvr_schedule) #

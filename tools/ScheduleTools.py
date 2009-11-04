@@ -121,3 +121,132 @@ class ScheduleTools(object):
             p.save()    
 
       # TBF: now we have to rescore all the affected periods!
+
+    def shiftPeriodBoundaries(self, period, start_boundary, time, neighbor, desc):
+        """
+        Shifts the boundary between a given period and it's neighbors:
+           * period_id - the period obj. whose boundary we first adjust
+           * start_boundary - boolean, true for start, false for end
+           * time - new time for that boundary
+           * neighbors - periods affected
+        After periods are adjusted, time accounting is adjusted appropriately
+        """
+
+        # TBF, HACK, DEBUG, WTF: this code sucks, the four cases covered
+        # by the 'if' conditionals have lots of redundant code and must
+        # be refacatored.
+
+        # create the tag used for all descriptions in time accounting
+        nowStr = datetime.now().strftime("%Y-%m-%d %H:%M")    
+        tag = " [Shift Period Bnd. (%s)]: " % nowStr 
+
+        # get the time range affected
+        original_time = period.start if start_boundary else period.end()
+
+        # check for the no-op
+        if original_time == time:
+            return
+
+        if start_boundary:
+            # changing when the period starts: don't start it after
+            # this period ends
+            assert time < period.end()
+            period.start = time
+            if original_time > time:
+                # starting the period early!
+                diff_hrs = ((original_time - time).seconds) / (60.0*60.0)
+                period.accounting.short_notice = diff_hrs
+                period.accounting.scheduled += diff_hrs
+                period.start = time
+                period.duration += diff_hrs
+                # take away from the neighbors - who are?
+
+                ps = Period.get_periods(time, diff_hrs * 60.0)
+                for p in ps:
+                    # ignore the original period
+                    if p.id == period.id:
+                        continue
+                    # if the period is completely overridden by new boundary
+                    # remove it
+                    if p.start >= time:
+                        p.accounting.other_session_other = p.duration
+                        p.accounting.description = tag + desc
+                        p.accounting.save()
+                        p.duration = 0.0 # TBF: state!
+                        p.save()
+                    else:
+                        p.accounting.other_session_other = diff_hrs 
+                        p.accounting.description = tag + desc
+                        p.accounting.save()
+                        p.duration = (time - p.start).seconds / (60.0*60.0)
+                        p.save()
+            else:            
+                # starting the period later!            
+                diff_hrs = ((time - original_time).seconds) / (60.0*60.0)
+                period.accounting.other_session_other = diff_hrs
+                period.accounting.description = tag + desc
+                period.start = time
+                period.duration -= diff_hrs
+                # giving to the neighbor: just the period that started
+                # before:
+                neighbor.accounting.short_notice = diff_hrs
+                neighbor.accounting.scheduled += diff_hrs
+                neighbor.accounting.description = tag + desc
+                neighbor.accounting.save()
+                neighbor.duration += diff_hrs
+                neighbor.save()
+        else:
+            # changing when the period ends. 
+            # this period ends
+            assert time > period.start
+            if original_time > time:
+                # shrinking the period! 
+                diff_hrs = ((original_time - time).seconds) / (60.0*60.0)
+                period.accounting.other_session_other = diff_hrs
+                period.accounting.description = tag + desc
+                period.accounting.save()
+                period.duration = ((time - period.start).seconds) / (60.0*60.0) 
+                # giving to the neighbors - who are?
+                neighbor.accounting.short_notice = diff_hrs
+                neighbor.accounting.scheduled += diff_hrs
+                neighbor.accounting.description = tag + desc
+                neighbor.accounting.save()
+                neighbor.start = time
+                neighbor.duration += diff_hrs
+                neighbor.save()
+            else:
+                # period is growing! at whose expense?
+                diff_hrs = ((time - original_time).seconds) / (60.0*60.0)
+                period.accounting.scheduled += diff_hrs
+                period.accounting.short_notice = diff_hrs
+                period.accounting.description = tag + desc
+                period.accounting.save()
+                period.duration = ((time - period.start).seconds) / (60.0*60.0)
+                ps = Period.get_periods(time, diff_hrs * 60.0)
+                for p in ps:
+                    # ignore the original period
+                    if p.id == period.id:
+                        continue
+                    # if the period is completely overridden by new boundary
+                    # remove it
+                    if p.end() <= time:
+                        p.accounting.other_session_other = p.duration
+                        p.accounting.description = tag + desc
+                        p.accounting.save()
+                        p.duration = 0.0 # TBF: state!
+                        p.save()
+                    else:
+                        p.accounting.other_session_other = diff_hrs 
+                        p.accounting.description = tag + desc
+                        p.accounting.save()
+                        p.start = time
+                        p.duration -= diff_hrs 
+                        p.save()
+
+        period.accounting.save()
+        period.save()
+
+                        
+
+                
+
