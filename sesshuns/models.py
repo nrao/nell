@@ -827,7 +827,7 @@ class Session_Type(models.Model):
 
     def __unicode__(self):
         return self.type
-
+    
     class Meta:
         db_table = "session_types"
 
@@ -933,8 +933,8 @@ class Status(models.Model):
 
     def __unicode__(self):
         return "(%d) e: %s; a: %s; c: %s; b: %s" % \
-            (self.id, self.enabled, self.authorized, self.complete, self.backup)
-
+            (self.id, self.enabled, self.authorized, self.complete, self.backup) 
+   
     class Meta:
         db_table = "status"
     
@@ -960,13 +960,14 @@ class Sesshun(models.Model):
     base_url = "/sesshuns/sesshun/"
 
     def __unicode__(self):
-        return "(%d) %s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s" % (
+        return "(%d) %s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s, status: %s" % (
                   self.id
                 , self.name if self.name is not None else ""
                 , self.frequency if self.frequency is not None else 0
                 , self.allotment.total_time
                       if self.allotment.total_time is not None else 0
-                , self.receiver_list())
+                , self.receiver_list()
+                , self.status)
 
     def get_absolute_url(self):
         return "/sesshuns/sesshun/%i/" % self.id
@@ -1705,6 +1706,7 @@ class Project_Blackout_09B(models.Model):
         # problems with postrgreSQL
         db_table = "project_blackouts_09b"
 
+
 class Reservation(models.Model):
     user       = models.ForeignKey(User)
     start_date = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm:ss")
@@ -1712,4 +1714,4 @@ class Reservation(models.Model):
 
     class Meta:
         db_table = "reservations"
-    
+
