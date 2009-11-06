@@ -880,7 +880,7 @@ class Receiver_Schedule(models.Model):
         return jschedule
 
     @staticmethod
-    def extract_schedule(startdate = datetime.utcnow().date(), days = 120):
+    def extract_schedule(startdate = None, days = None):
         """
         Returns the entire receiver schedule starting at 'startdate' and
         ending 'days' after the 'startdate'.  The schedule is of the form:
@@ -890,20 +890,27 @@ class Receiver_Schedule(models.Model):
         where start_date is a datetime object and [<receivers available>] is
         a list of Receiver objects.
         """
-        schedule = dict()
+        startdate = startdate or datetime(2009, 10, 1).date()
+        schedule  = dict()
+        prev      = Receiver_Schedule.previousDate(startdate)
 
-        prev = Receiver_Schedule.previousDate(startdate)
         if prev is None:
             schedule[startdate] = [] # Empty schedule on/before this date
         else:
             startdate = prev
 
-        enddate = startdate + timedelta(days = days)
-        for s in Receiver_Schedule.objects.filter(
-                                              start_date__gte = startdate
-                                                     ).filter(
-                                              start_date__lte = enddate):
+        if days is not None:
+            enddate = startdate + timedelta(days = days)
+            rs = Receiver_Schedule.objects.filter(
+                                          start_date__gte = startdate
+                                                 ).filter(
+                                          start_date__lte = enddate)
+        else:
+            rs = Receiver_Schedule.objects.filter(start_date__gte = startdate)
+
+        for s in rs:
             schedule.setdefault(s.start_date, []).append(s.receiver)
+
         return schedule
 
     @staticmethod
