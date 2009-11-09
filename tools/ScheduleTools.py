@@ -123,19 +123,24 @@ class ScheduleTools(object):
 
       # TBF: now we have to rescore all the affected periods!
 
-    def shiftPeriodBoundaries(self, period, start_boundary, time, neighbor, desc):
+    def shiftPeriodBoundaries(self
+                            , period
+                            , start_boundary
+                            , time
+                            , neighbor
+                            , reason
+                            , desc):
         """
         Shifts the boundary between a given period and it's neighbors:
            * period_id - the period obj. whose boundary we first adjust
            * start_boundary - boolean, true for start, false for end
            * time - new time for that boundary
-           * neighbors - periods affected
+           * neighbor - period affected (can't be None)
+           * reason - other_session_weather, *_rfi, or *_other
+           * desc - the description to put into time accounting
         After periods are adjusted, time accounting is adjusted appropriately
         """
        
-        # TBF: capture this from user
-        reason = "other_session_other"
-
         # if there isn't a neibhbor, then this change should be done by hand
         if neighbor is None:
             return (False, "Cannot shift period boundary if there is a neighboring gap in the schedule.")

@@ -106,6 +106,7 @@ def shift_period_boundaries(request, *args, **kws):
     period_id = int(request.POST.get("period_id", None))
     period = first(Period.objects.filter(id = period_id))
     start_boundary = bool(int(request.POST.get("start_boundary", 1)))
+    reason = request.POST.get("reason", "other_session_other")
     desc = request.POST.get("description", "")
     # now, what is the neighbor to this boundary?
     original_time = period.start if start_boundary else period.end()
@@ -121,7 +122,7 @@ def shift_period_boundaries(request, *args, **kws):
         neighbor = neighbors[0]
     # this method handles the heavy lifting
     st = ScheduleTools()
-    success, msg = st.shiftPeriodBoundaries(period, start_boundary, time, neighbor, desc)
+    success, msg = st.shiftPeriodBoundaries(period, start_boundary, time, neighbor, reason, desc)
     if success:
         return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
     else:

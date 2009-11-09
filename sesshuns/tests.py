@@ -1980,6 +1980,7 @@ class TestScheduleTools(NellTestCase):
                                      , True # start boundary
                                      , new_start 
                                      , self.ps[0]
+                                     , "other_session_other"
                                      , desc)
         # get the periods from the DB again for updated values
         ps = Period.get_periods(self.start, 12.0*60.0)
@@ -2017,6 +2018,7 @@ class TestScheduleTools(NellTestCase):
                                      , True # start boundary
                                      , new_start 
                                      , self.ps[0]
+                                     , "other_session_other"
                                      , desc)
         # get the periods from the DB again for updated values
         ps = Period.get_periods(self.start, 12.0*60.0)
@@ -2054,6 +2056,7 @@ class TestScheduleTools(NellTestCase):
                                      , False # end boundary
                                      , new_end 
                                      , self.ps[2]
+                                     , "other_session_other"
                                      , desc)
         # get the periods from the DB again for updated values
         ps = Period.get_periods(self.start, 12.0*60.0)
@@ -2091,6 +2094,7 @@ class TestScheduleTools(NellTestCase):
                                      , False # end boundary
                                      , new_end 
                                      , self.ps[2]
+                                     , "other_session_other"
                                      , desc)
         # get the periods from the DB again for updated values
         ps = Period.get_periods(self.start, 12.0*60.0)
@@ -2128,6 +2132,7 @@ class TestScheduleTools(NellTestCase):
                                      , True # start boundary
                                      , new_start 
                                      , self.ps[1]
+                                     , "other_session_other"
                                      , desc)
         # get the periods from the DB again for updated values
         ps = Period.get_periods(self.start, 12.0*60.0)
@@ -2165,6 +2170,7 @@ class TestScheduleTools(NellTestCase):
                                      , False # end boundary
                                      , new_end 
                                      , self.ps[1]
+                                     , "other_session_other"
                                      , desc)
         # get the periods from the DB again for updated values
         ps = Period.get_periods(self.start, 12.0*60.0)
