@@ -135,7 +135,7 @@ def profile(request, *args, **kws):
         user      = first(User.objects.filter(id = u_id))
         #  If the requestor is not the user profile requested and they are
         #  not on the same project redirect to the requestor's profile.
-        if not requestor.canViewUser(user):
+        if user is None or not requestor.canViewUser(user):
             return HttpResponseRedirect("/profile")
     else:
         user = requestor
