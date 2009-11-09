@@ -116,6 +116,12 @@ def GenerateReport():
     values = [p.session.name for p in periods if not p.has_required_receivers()]
     print_values(outfile, values)
 
+    outfile.write("\n\nSessions with non-unique names:")
+    values  = [s.name for s in sessions]
+    for v in Set(values):
+        values.remove(v)
+    print_values(outfile, values)
+
     outfile.write("\n\nPeriods Scheduled on blackout dates:")
     values = []
     for s in sessions:
@@ -136,6 +142,10 @@ def GenerateReport():
                 if overlaps((start1, end1), (start2, end2)):
                     values.append("%s and %s" % (str(p1), str(p2)))
                     overlap.extend([p1, p2])
+    print_values(outfile, values)
+
+    outfile.write("\n\nPeriods with non-positive durations:")
+    values  = [p.session.name for p in periods if p.duration <= 0.]
     print_values(outfile, values)
 
 if __name__ == '__main__':
