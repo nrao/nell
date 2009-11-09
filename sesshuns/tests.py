@@ -2229,15 +2229,31 @@ class TestTimeAccounting(NellTestCase):
             p.session.delete()
             p.delete()
 
+    def test_getTimeLeft(self):
+        project = Project.objects.order_by('pcode').all()[0]
+        ta = TimeAccounting()
+
+        timeLeft = ta.getTimeLeft(project)
+        self.assertEqual(-3.0, timeLeft)
+
+        names = ["three", "two", "one"]
+        times = [-1.0, 0.0, -2.0]
+
+        for i, s in enumerate(project.sesshun_set.all()):
+            timeLeft = ta.getTimeLeft(s)
+            self.assertEqual(names[i], s.name)
+            self.assertEqual(times[i], timeLeft)
+
+
     def test_getTime(self):
 
         project = Project.objects.order_by('pcode').all()[0]
         ta = TimeAccounting()
 
-        pScheduled = ta.getProjTime('scheduled', project)
+        pScheduled = ta.getTime('scheduled', project)
         self.assertEqual(pScheduled, 12.0)
 
-        pNotBillable = ta.getProjTime('not_billable', project)
+        pNotBillable = ta.getTime('not_billable', project)
         self.assertEqual(pNotBillable, 0.0)
 
         # now change something and watch it bubble up
@@ -2248,7 +2264,7 @@ class TestTimeAccounting(NellTestCase):
         pNotBillable = ta.getTime('not_billable', self.ps[0].session)
         self.assertEqual(pNotBillable, 1.0)
 
-        pNotBillable = ta.getProjTime('not_billable', project)
+        pNotBillable = ta.getTime('not_billable', project)
         self.assertEqual(pNotBillable, 1.0)
 
 

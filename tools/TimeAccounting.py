@@ -30,7 +30,8 @@ class TimeAccounting:
         self.reportLines = []
         self.quietReport = False
 
-    # Project leve time accounting
+    # *** Project leve time accounting ***
+
     def getProjectTotalTime(self, proj):
         return sum([a.total_time for a in proj.allotments.all()])
 
@@ -51,54 +52,36 @@ class TimeAccounting:
         ss = proj.sesshun_set.all()
         return sum([s.allotment.total_time for s in ss])
 
-    def getObservedProjTime(self, proj):
-        ss = proj.sesshun_set.all()
-        return sum([self.getObservedTime(s) for s in ss])
-
-    def getProjTimeLost(self, proj):
-        ss = proj.sesshun_set.all()
-        return sum([self.getTimeLost(s) for s in ss])
-
-    def getProjTimeToOtherSession(self, proj):
-        ss = proj.sesshun_set.all()
-        return sum([self.getTimeToOtherSession(s) for s in ss])
-
-    def getProjTime(self, type, proj):
-        "Generic method for bubbling up all period accting up to the project"
-        ss = proj.sesshun_set.all()
-        return sum([self.getTime(type, s) for s in ss])
+    # *** Session level time accounting ***
 
     def getSessTotalByGrade(self, proj, grade):
         "Sums session alloted times that have matching grade."
         return sum([s.allotment.total_time for s in proj.sesshun_set.all() \
                     if s.allotment.grade == grade])
-            
-    # Session level time accounting
-    def getObservedTime(self, sess):
-        now = datetime.utcnow()
-        ps = sess.period_set.all()
-        return sum([p.accounting.observed() for p in ps if p.end() < now])
-        
-    def getTimeLeft(self, sess):
-        obs = self.getObservedTime(sess)
-        return sess.allotment.total_time - obs
+    
+    # *** Object independent methods ***
 
-    def getTimeLost(self, sess):
-        ps = sess.period_set.all()
-        return sum([p.accounting.lost_time() for p in ps])
+    def getTimeLeft(self, obj):
+        "Compares alloted time to observed time for projects or sessions"
+        # ignores grade!
+        if obj.__class__.__name__ == "Project":
+            ss = obj.sesshun_set.all()
+            obs = sum([self.getTime("observed", s) for s in ss])
+            total = self.getProjSessionsTotalTime(obj)
+            return total - obs
+        else: 
+            obs = self.getTime("observed", obj)
+            return obj.allotment.total_time - obs
 
-    def getTimeToOtherSession(self, sess):
-        ps = sess.period_set.all()
-        return sum([p.accounting.other_session() for p in ps])
-
-    def getTimeNotBillable(self, sess):
-        ps = sess.period_set.all()
-        return sum([p.accounting.not_billable for p in ps])
-
-    def getTime(self, type, sess):
-        "Generic method for bubbling up all period accting up to the session"
-        ps = sess.period_set.all()
-        return sum([p.accounting.get_time(type) for p in ps])
+    def getTime(self, type, obj):
+        "Generic method for bubbling up all period accting up to the sess/proj"
+        assert type in self.fields
+        if obj.__class__.__name__ == "Project":
+            ss = obj.sesshun_set.all()
+            return sum([self.getTime(type, s) for s in ss])
+        else:
+            ps = obj.period_set.all()
+            return sum([p.accounting.get_time(type) for p in ps])
 
     def jsondict(self, proj):
         "Contains all levels of time accounting info"
@@ -112,7 +95,7 @@ class TimeAccounting:
                  , sessions     = []
                  )
         for field in self.fields:
-            dct.update({field : self.getProjTime(field, proj)})
+            dct.update({field : self.getTime(field, proj)})
         
         # session level
         for s in proj.sesshun_set.all():

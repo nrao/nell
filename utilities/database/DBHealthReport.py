@@ -14,7 +14,7 @@ def get_allotment_hours(sessions, typ):
 
 def get_obs_hours(sessions, typ):
     ta = TimeAccounting()
-    return sum([ta.getObservedTime(s) for s in get_sessions(session, typ)])
+    return sum([ta.getTime("observed", s) for s in get_sessions(session, typ)])
 
 def missing_observer_parameter_pairs(sessions):
     pairs = [

@@ -62,7 +62,7 @@ def get_allotment_hours(project, typ):
 
 def get_obs_hours(project, typ):
     ta = TimeAccounting()
-    return sum([ta.getObservedTime(s) for s in get_sessions(project, typ)])
+    return sum([ta.getTime("observed", s) for s in get_sessions(project, typ)])
 
 def get_rem_hours(project, typ):
     ta = TimeAccounting()

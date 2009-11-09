@@ -87,7 +87,7 @@ class DBReporter:
             rcvrs = "".join(p.rcvrs_specified())
             total = self.ta.getProjectTotalTime(p)
             sTotal = self.ta.getProjSessionsTotalTime(p)
-            observed = self.ta.getObservedProjTime(p)
+            observed = self.ta.getTime("observed", p)
             remaining = total - observed
             sRemaining = sTotal - observed
             ss = p.sesshun_set.all()
