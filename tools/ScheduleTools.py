@@ -153,7 +153,6 @@ class ScheduleTools(object):
         tag = " [Shift Period Bnd. (%s)]: " % nowStr 
         description = tag + desc
 
-
         # figure out the stuff that depends on which boundary we're moving
         if start_boundary:
             if time >= period.end():
@@ -163,7 +162,6 @@ class ScheduleTools(object):
             if time <= period.start:
                 return (False, "Cannot shrink period past its start time.")
             period_growing = True if time > original_time else False
-
 
         if period_growing:
             # what to do with the period?
@@ -176,13 +174,15 @@ class ScheduleTools(object):
             # what to do w/ the other periods    
             # what are the other periods affected (can be many when growing) 
             # (ignore original period causing affect) 
+            range_time = time if start_boundary else original_time
             affected_periods = [p for p in \
-                Period.get_periods(time, diff_hrs * 60.0) if p.id != period.id]
+                Period.get_periods(range_time, diff_hrs * 60.0) \
+                    if p.id != period.id]
             for p in affected_periods:
                 if p.start >= period.start and p.end() <= period.end():
                     # remove this period; TBF: state -> deleted!
                     value = p.accounting.get_time(reason)
-                    p.acconting.set_changed_time(reason, value + p.duration)
+                    p.accounting.set_changed_time(reason, value + p.duration)
                     p.duration = 0.0 # TBF: state!
                 else:
                     # give part of this periods time to the affecting period
