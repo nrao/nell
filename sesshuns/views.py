@@ -121,8 +121,11 @@ def shift_period_boundaries(request, *args, **kws):
         neighbor = neighbors[0]
     # this method handles the heavy lifting
     st = ScheduleTools()
-    st.shiftPeriodBoundaries(period, start_boundary, time, neighbor, desc)
-    return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
+    success, msg = st.shiftPeriodBoundaries(period, start_boundary, time, neighbor, desc)
+    if success:
+        return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
+    else:
+        return HttpResponse(json.dumps({'error':'Error Shifting Period Boundary', 'message':msg}), mimetype = "text/plain")
     
 def time_accounting(request, *args, **kws):
     """

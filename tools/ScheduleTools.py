@@ -1,4 +1,5 @@
 from sesshuns.models import *
+from utilities.TimeAgent import dtDiffHrs
 
 class ScheduleTools(object):
 
@@ -131,122 +132,102 @@ class ScheduleTools(object):
            * neighbors - periods affected
         After periods are adjusted, time accounting is adjusted appropriately
         """
+       
+        # TBF: capture this from user
+        reason = "other_session_other"
 
-        # TBF, HACK, DEBUG, WTF: this code sucks, the four cases covered
-        # by the 'if' conditionals have lots of redundant code and must
-        # be refacatored.
+        # if there isn't a neibhbor, then this change should be done by hand
+        if neighbor is None:
+            return (False, "Cannot shift period boundary if there is a neighboring gap in the schedule.")
+
+        # get the time range affected
+        original_time = period.start if start_boundary else period.end()
+        diff_hrs = dtDiffHrs(original_time, time) #self.get_time_diff_hours(original_time, time)
+
+        # check for the no-op
+        if original_time == time:
+            return (False, "Time given did not change Periods duration")
 
         # create the tag used for all descriptions in time accounting
         nowStr = datetime.now().strftime("%Y-%m-%d %H:%M")    
         tag = " [Shift Period Bnd. (%s)]: " % nowStr 
+        description = tag + desc
 
-        # get the time range affected
-        original_time = period.start if start_boundary else period.end()
 
-        # check for the no-op
-        if original_time == time:
-            return
-
+        # figure out the stuff that depends on which boundary we're moving
         if start_boundary:
-            # changing when the period starts: don't start it after
-            # this period ends
-            assert time < period.end()
-            period.start = time
-            if original_time > time:
-                # starting the period early!
-                diff_hrs = ((original_time - time).seconds) / (60.0*60.0)
-                period.accounting.short_notice = diff_hrs
-                period.accounting.scheduled += diff_hrs
-                period.start = time
-                period.duration += diff_hrs
-                # take away from the neighbors - who are?
-
-                ps = Period.get_periods(time, diff_hrs * 60.0)
-                for p in ps:
-                    # ignore the original period
-                    if p.id == period.id:
-                        continue
-                    # if the period is completely overridden by new boundary
-                    # remove it
-                    if p.start >= time:
-                        p.accounting.other_session_other = p.duration
-                        p.accounting.description = tag + desc
-                        p.accounting.save()
-                        p.duration = 0.0 # TBF: state!
-                        p.save()
-                    else:
-                        p.accounting.other_session_other = diff_hrs 
-                        p.accounting.description = tag + desc
-                        p.accounting.save()
-                        p.duration = (time - p.start).seconds / (60.0*60.0)
-                        p.save()
-            else:            
-                # starting the period later!            
-                diff_hrs = ((time - original_time).seconds) / (60.0*60.0)
-                period.accounting.other_session_other = diff_hrs
-                period.accounting.description = tag + desc
-                period.start = time
-                period.duration -= diff_hrs
-                # giving to the neighbor: just the period that started
-                # before:
-                neighbor.accounting.short_notice = diff_hrs
-                neighbor.accounting.scheduled += diff_hrs
-                neighbor.accounting.description = tag + desc
-                neighbor.accounting.save()
-                neighbor.duration += diff_hrs
-                neighbor.save()
+            if time >= period.end():
+                return (False, "Cannot start this period after it ends.")
+            period_growing = True if time < original_time else False
         else:
-            # changing when the period ends. 
-            # this period ends
-            assert time > period.start
-            if original_time > time:
-                # shrinking the period! 
-                diff_hrs = ((original_time - time).seconds) / (60.0*60.0)
-                period.accounting.other_session_other = diff_hrs
-                period.accounting.description = tag + desc
-                period.accounting.save()
-                period.duration = ((time - period.start).seconds) / (60.0*60.0) 
-                # giving to the neighbors - who are?
-                neighbor.accounting.short_notice = diff_hrs
-                neighbor.accounting.scheduled += diff_hrs
-                neighbor.accounting.description = tag + desc
-                neighbor.accounting.save()
-                neighbor.start = time
-                neighbor.duration += diff_hrs
-                neighbor.save()
-            else:
-                # period is growing! at whose expense?
-                diff_hrs = ((time - original_time).seconds) / (60.0*60.0)
-                period.accounting.scheduled += diff_hrs
-                period.accounting.short_notice = diff_hrs
-                period.accounting.description = tag + desc
-                period.accounting.save()
-                period.duration = ((time - period.start).seconds) / (60.0*60.0)
-                ps = Period.get_periods(time, diff_hrs * 60.0)
-                for p in ps:
-                    # ignore the original period
-                    if p.id == period.id:
-                        continue
-                    # if the period is completely overridden by new boundary
-                    # remove it
-                    if p.end() <= time:
-                        p.accounting.other_session_other = p.duration
-                        p.accounting.description = tag + desc
-                        p.accounting.save()
-                        p.duration = 0.0 # TBF: state!
-                        p.save()
-                    else:
-                        p.accounting.other_session_other = diff_hrs 
-                        p.accounting.description = tag + desc
-                        p.accounting.save()
-                        p.start = time
-                        p.duration -= diff_hrs 
-                        p.save()
+            if time <= period.start:
+                return (False, "Cannot shrink period past its start time.")
+            period_growing = True if time > original_time else False
 
+
+        if period_growing:
+            # what to do with the period?
+            # give time!
+            period.accounting.short_notice += diff_hrs
+            period.accounting.scheduled += diff_hrs
+            period.duration += diff_hrs
+            if start_boundary:
+                period.start = time
+            # what to do w/ the other periods    
+            # what are the other periods affected (can be many when growing) 
+            # (ignore original period causing affect) 
+            affected_periods = [p for p in \
+                Period.get_periods(time, diff_hrs * 60.0) if p.id != period.id]
+            for p in affected_periods:
+                if p.start >= period.start and p.end() <= period.end():
+                    # remove this period; TBF: state -> deleted!
+                    value = p.accounting.get_time(reason)
+                    p.acconting.set_changed_time(reason, value + p.duration)
+                    p.duration = 0.0 # TBF: state!
+                else:
+                    # give part of this periods time to the affecting period
+                    other_time_point = p.end() if start_boundary else p.start
+                    #other_time = self.get_time_diff_hours(other_time_point
+                    #                                    , time)
+                    other_time = dtDiffHrs(other_time_point, time)
+                    value = p.accounting.get_time(reason)
+                    p.accounting.set_changed_time(reason, value + other_time)
+                    p.duration -= other_time 
+                    if not start_boundary:
+                        p.start = time
+                p.accounting.description = description    
+                p.accounting.save()
+                p.save()
+        else: 
+            # period is shrinking
+            # what to do w/ the period?
+            # take time!
+            value = period.accounting.get_time(reason)
+            period.accounting.set_changed_time(reason, value + diff_hrs)
+            period.duration -= diff_hrs
+            if start_boundary:
+                period.start = time
+            # what to do w/ the other affected period (just one!)?
+            # give it time!
+            #value = neighbor.accounting.get_time(reason)
+            #neighbor.accounting.set_changed_time(reason, value + diff_hrs)
+            neighbor.accounting.short_notice += diff_hrs
+            neighbor.accounting.scheduled += diff_hrs
+            neighbor.accounting.description = description
+            neighbor.accounting.save()
+            neighbor.duration += diff_hrs
+            if not start_boundary:
+                neighbor.start = time
+            neighbor.save()    
+        
+        # in all cases:
+        period.accounting.description = description
         period.accounting.save()
         period.save()
 
-                        
+        # TBF: now we have to rescore all the affected periods!
 
-                
+        return (True, None)
+
+               
 
