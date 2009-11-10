@@ -43,12 +43,8 @@ class ScheduleTools(object):
                 if debug:
                     print "delete period!"
                 # this entire period is being replaced
-                # TBF: can't do this p.delete()
-                # TBF: use state!
                 other_sess_time = p.duration
-                p.duration = 0
-                #p.delete()
-                #p = None
+                p.delete() # the Deleted State!
             elif p.start >= start and p.end() > end:
                 if debug:
                     print "start period later"
@@ -72,9 +68,11 @@ class ScheduleTools(object):
                                              , description = description
                                                )
                 accounting.save()                             
+                pending = first(Period_State.objects.filter(abbreviation = 'P'))
                 period_2cd_half = Period(session  = p.session
                                        , start    = end
                                        , duration = new_dur
+                                       , state    = pending
                                        , score    = 0.0
                                        , forecast = end
                                        , accounting = accounting 
@@ -112,11 +110,13 @@ class ScheduleTools(object):
             pa = Period_Accounting(scheduled    = duration
                                  , short_notice = duration
                                  , description  = description)
-            pa.save()                     
+            pa.save()   
+            pending = first(Period_State.objects.filter(abbreviation = 'P'))
             p = Period(session    = sesshun
                      , start      = start
                      , duration   = duration
                      , score      = 0.0
+                     , state      = pending
                      , forecast   = start
                      , accounting = pa)
             p.save()    
@@ -188,7 +188,7 @@ class ScheduleTools(object):
                     # remove this period; TBF: state -> deleted!
                     value = p.accounting.get_time(reason)
                     p.accounting.set_changed_time(reason, value + p.duration)
-                    p.duration = 0.0 # TBF: state!
+                    p.delete() # The Deleted state!
                 else:
                     # give part of this periods time to the affecting period
                     other_time_point = p.end() if start_boundary else p.start

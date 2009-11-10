@@ -112,14 +112,17 @@ class TestUser(NellTestCase):
         # TBF: end of redundant code, now add periods
         #period_data = {"session" : self.sesshun
         #             , "date" 
+        state = first(Period_State.objects.filter(abbreviation = 'S'))
         self.period1 = Period(session  = self.sesshun
                             , start    = datetime(2010, 10, 1, 0, 0, 0)
                             , duration = 1.0
+                            , state    = state
                             , backup   = False)
         self.period1.save()                    
         self.period2 = Period(session  = self.sesshun
                             , start    = datetime(2010, 10, 2, 5, 0, 0)
                             , duration = 3.5
+                            , state    = state
                             , backup   = False)
         self.period2.save()                    
 
@@ -138,8 +141,8 @@ class TestUser(NellTestCase):
         self.user2.delete()
         self.investigator1.delete()
         self.user1.delete()
-        self.period1.delete()
-        self.period2.delete()
+        self.period1.remove() #delete()
+        self.period2.remove() #delete()
         self.project.delete()
         self.user3.delete()
         self.user4.delete()
@@ -213,6 +216,7 @@ class TestPeriod(NellTestCase):
         p.duration = dur
         p.session = self.sesshun
         p.backup = True
+        p.state = first(Period_State.objects.filter(abbreviation = 'P'))
 
         p.save()
 
@@ -221,6 +225,7 @@ class TestPeriod(NellTestCase):
         self.assertEqual(jd["duration"], dur)
         self.assertEqual(jd["date"], "2009-06-01")
         self.assertEqual(jd["time"], "12:15")
+        self.assertEqual(jd["state"], "P")
 
         p.delete()
 
@@ -232,12 +237,14 @@ class TestPeriod(NellTestCase):
                , (datetime(2000, 1, 1, 8), 4.0)
                ]
         ps = []
+        state = first(Period_State.objects.filter(abbreviation = 'P'))
         for start, dur in times:
             pa = Period_Accounting(scheduled = dur)
             pa.save()
             p = Period( session    = self.sesshun
                       , start      = start
                       , duration   = dur
+                      , state      = state
                       , accounting = pa
                       )
             p.save()          
@@ -1104,9 +1111,11 @@ class TestShiftPeriodBoundaries(NellTestCase):
             s.save()
             pa = Period_Accounting(scheduled = dur)
             pa.save()
+            state = first(Period_State.objects.filter(abbreviation = 'S'))
             p = Period( session    = s
                       , start      = start
                       , duration   = dur
+                      , state      = state
                       , accounting = pa
                       )
             p.save()          
@@ -1122,7 +1131,7 @@ class TestShiftPeriodBoundaries(NellTestCase):
 
         for p in self.ps:
             p.session.delete()
-            p.delete()
+            p.remove() #delete()
 
     def test_shift_period_boundaries(self):
         create_sesshun()
@@ -1316,9 +1325,11 @@ class TestObservers(NellTestCase):
 
         # create a period
         s = create_sesshun()
+        state = first(Period_State.objects.filter(abbreviation = 'P'))
         p = Period(session = s
                  , start = datetime(2009, 9, 9, 12)
-                 , duration = 1.0)
+                 , duration = 1.0
+                 , state = state)
         p.save()         
         day = datetime(2009, 9, 9)
         
@@ -1353,9 +1364,11 @@ class TestObservers(NellTestCase):
 
         # create a period
         s = create_sesshun()
+        state = first(Period_State.objects.filter(abbreviation = 'P'))
         p = Period(session = s
                  , start = datetime(2009, 9, 2, 1)
-                 , duration = 6.0)
+                 , duration = 6.0
+                 , state = state)
         p.save()         
         day = datetime(2009, 9, 1)
 
@@ -1679,6 +1692,8 @@ class TestScheduleTools(NellTestCase):
                , (datetime(2000, 1, 1, 8), 4.0, "three")
                ]
         self.ps = []
+        # init them as Scheduled, so that 'deleting' them just changes state
+        state = first(Period_State.objects.filter(abbreviation = 'S'))        
         for start, dur, name in times:
             s = create_sesshun()
             s.name = name
@@ -1688,6 +1703,7 @@ class TestScheduleTools(NellTestCase):
             p = Period( session    = s
                       , start      = start
                       , duration   = dur
+                      , state      = state
                       , accounting = pa
                       )
             p.save()          
@@ -1703,7 +1719,7 @@ class TestScheduleTools(NellTestCase):
 
         for p in self.ps:
             p.session.delete()
-            p.delete()
+            p.remove() #delete()
 
 
     def test_changeSchedule1(self):
@@ -1839,10 +1855,10 @@ class TestScheduleTools(NellTestCase):
                                     , desc)
         
         # get the periods from the DB again for updated values
-        ps = Period.get_periods(self.start, 12.0*60.0)
+        ps = Period.get_periods(self.start, 12.0*60.0, ignore_deleted = False)
         # TBF: how to handle these Periods that r compleletly replaced?
-        canceled_ps = [p for p in ps if p.duration == 0.0]
-        ps = [p for p in ps if p.duration != 0.0]
+        canceled_ps = [p for p in ps if p.state.abbreviation == 'D']
+        ps = [p for p in ps if p.state.abbreviation != 'D']
         # check accounting after changing schedule
         scheduled = [5.0, 3.0, 4.0]
         observed  = [5.0, 3.0, 4.0]
@@ -1850,10 +1866,10 @@ class TestScheduleTools(NellTestCase):
             self.assertEquals(scheduled[i], p.accounting.scheduled)
             self.assertEquals(observed[i] , p.accounting.observed())
         # check affected periods
-        canceled = first(Period.objects.filter(duration = 0.0))
+        canceled = first(Period.objects.filter(state__abbreviation = 'D'))
         backup   = ps[0]
         self.assertEquals(self.start, canceled.start)
-        self.assertEquals(0.0, canceled.duration)
+        self.assertEquals(5.0, canceled.duration)
         self.assertEquals(5.0, canceled.accounting.other_session_weather)
         self.assertTrue(desc in canceled.accounting.description)
         self.assertEquals(5.0, backup.accounting.short_notice)
@@ -1878,9 +1894,9 @@ class TestScheduleTools(NellTestCase):
                                     , desc)
         
         # get the periods from the DB again for updated values
-        ps = Period.get_periods(self.start, 12.0*60.0)
+        ps = Period.get_periods(self.start, 12.0*60.0, ignore_deleted = False)
         # make sure we don't get deleted period
-        ps = [p for p in ps if p.duration != 0.0]
+        ps = [p for p in ps if p.state.abbreviation != 'D']
         self.assertEquals(3, len(ps))
 
         # check accounting after changing schedule
@@ -1892,7 +1908,7 @@ class TestScheduleTools(NellTestCase):
             self.assertEquals(oso[i] , p.accounting.other_session())
             self.assertEquals(observed[i] , p.accounting.observed())
         # check affected periods
-        canceled = first(Period.objects.filter(duration = 0.0))
+        canceled = first(Period.objects.filter(state__abbreviation = 'D'))
         self.assertEquals(canceled.start, self.ps[2].start)
         
     def test_changeSchedule_ultimate_chaos(self):
@@ -1916,9 +1932,9 @@ class TestScheduleTools(NellTestCase):
                                     , desc)
         
         # get the periods from the DB again for updated values
-        ps = Period.get_periods(self.start, 12.0*60.0)
+        ps = Period.get_periods(self.start, 12.0*60.0, ignore_deleted = False)
         # make sure we don't get deleted period
-        ps = [p for p in ps if p.duration != 0.0]
+        ps = [p for p in ps if p.state.abbreviation != 'D']
         self.assertEquals(3, len(ps))
 
         # check accounting after changing schedule
@@ -1932,7 +1948,7 @@ class TestScheduleTools(NellTestCase):
             self.assertEquals(oso[i],       p.accounting.other_session())
             self.assertEquals(observed[i],  p.accounting.observed())
         # check affected periods
-        canceled = first(Period.objects.filter(duration = 0.0))
+        canceled = first(Period.objects.filter(state__abbreviation = 'D'))
         self.assertEquals(canceled.start, self.ps[1].start)
         
     def test_changeSchedule_bisect(self):
@@ -2135,14 +2151,15 @@ class TestScheduleTools(NellTestCase):
                                      , "other_session_other"
                                      , desc)
         # get the periods from the DB again for updated values
-        ps = Period.get_periods(self.start, 12.0*60.0)
+        ps = Period.get_periods(self.start, 12.0*60.0, ignore_deleted = False)
         # check accounting after changing schedule
         names     = ["one", "three", "two"]
         scheduled = [5.0, 8.0, 3.0]
         observed  = [4.0, 8.0, 0.0]
         oso       = [1.0, 0.0, 3.0]
         sn        = [0.0, 4.0, 0.0]
-        dur       = [4.0, 8.0, 0.0]
+        dur       = [4.0, 8.0, 3.0]
+        states    = ['S', 'S', 'D']
         starts    = [self.ps[0].start
                    , new_start
                    , self.ps[1].start]
@@ -2154,6 +2171,7 @@ class TestScheduleTools(NellTestCase):
             self.assertEquals(observed[i],  p.accounting.observed())
             self.assertEquals(dur[i],       p.duration)
             self.assertEquals(starts[i],    p.start)
+            self.assertEquals(states[i],    p.state.abbreviation)
             self.assertTrue(desc in p.accounting.description)
 
     def test_shiftPeriodBoundaries_end_way_latter(self):
@@ -2173,13 +2191,14 @@ class TestScheduleTools(NellTestCase):
                                      , "other_session_other"
                                      , desc)
         # get the periods from the DB again for updated values
-        ps = Period.get_periods(self.start, 12.0*60.0)
+        ps = Period.get_periods(self.start, 12.0*60.0, ignore_deleted = False)
         # check accounting after changing schedule
         scheduled = [9.0, 3.0, 4.0]
         observed  = [9.0, 0.0, 3.0]
         oso       = [0.0, 3.0, 1.0]
         sn        = [4.0, 0.0, 0.0]
-        dur       = [9.0, 0.0, 3.0]
+        dur       = [9.0, 3.0, 3.0]
+        states    = ['S', 'D', 'S']
         starts    = [self.ps[0].start
                    , self.ps[1].start
                    , new_end]
@@ -2190,10 +2209,8 @@ class TestScheduleTools(NellTestCase):
             self.assertEquals(observed[i],  p.accounting.observed())
             self.assertEquals(dur[i],       p.duration)
             self.assertEquals(starts[i],    p.start)
+            self.assertEquals(states[i],    p.state.abbreviation)
             self.assertTrue(desc in p.accounting.description)
-
-        #self.assertTrue(desc in ps[1].accounting.description)
-        #self.assertTrue(desc in ps[2].accounting.description)
 
 class TestTimeAccounting(NellTestCase):
 
@@ -2208,6 +2225,7 @@ class TestTimeAccounting(NellTestCase):
                , (datetime(2000, 1, 1, 8), 4.0, "three")
                ]
         self.ps = []
+        state = first(Period_State.objects.filter(abbreviation = 'P'))        
         for start, dur, name in times:
             s = create_sesshun()
             s.name = name
@@ -2217,6 +2235,7 @@ class TestTimeAccounting(NellTestCase):
             p = Period( session    = s
                       , start      = start
                       , duration   = dur
+                      , state      = state
                       , accounting = pa
                       )
             p.save()          

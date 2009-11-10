@@ -88,6 +88,11 @@ INSERT INTO observing_types VALUES (DEFAULT, 'maintenance');
 INSERT INTO observing_types VALUES (DEFAULT, 'calibration');
 INSERT INTO observing_types VALUES (DEFAULT, 'testing');
 
+INSERT INTO period_states VALUES (DEFAULT, 'Pending',   'P');
+INSERT INTO period_states VALUES (DEFAULT, 'Scheduled', 'S');
+INSERT INTO period_states VALUES (DEFAULT, 'Deleted',   'D');
+INSERT INTO period_states VALUES (DEFAULT, 'Complete',  'C');
+
 --                                                                                Carl's
 INSERT INTO receivers VALUES (DEFAULT, 'NoiseSource',   'NS',   0.000,   0.000); -- 
 INSERT INTO receivers VALUES (DEFAULT, 'Rcvr_RRI',      'RRI',  0.100,   1.600); -- R

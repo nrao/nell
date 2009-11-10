@@ -512,9 +512,10 @@ class Project(models.Model):
         return rcvrs            
 
     def getPeriods(self):
-        "What are the periods associated with this project?"
+        "What are the periods associated with this project, vis. to observer?"
         return sorted([p for s in self.sesshun_set.all()
-                         for p in s.period_set.all()])
+                         for p in s.period_set.all()
+                         if p.state.abbreviation not in ['P','D']])
 
     def getUpcomingPeriods(self, dt = datetime.now()):
         "What periods are associated with this project in the future?"
@@ -1488,9 +1489,31 @@ class Period_Accounting(models.Model):
               , "short_notice"          : self.short_notice
               , "description"           : description}
 
+class Period_State(models.Model):
+    name         = models.CharField(max_length = 32)
+    abbreviation = models.CharField(max_length = 32)
+
+    def __unicode__(self):
+        return self.name
+
+    class Meta:
+        db_table = "period_states"
+
+    def jsondict(self):
+        return self.abbreviation
+
+    @staticmethod
+    def get_abbreviations():
+        return [s.abbreviation for s in Period_State.objects.all()]
+
+    @staticmethod
+    def get_names():
+        return [s.name for s in Period_State.objects.all()]
+
 class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
     accounting = models.ForeignKey(Period_Accounting, null=True)
+    state      = models.ForeignKey(Period_State, null=True)
     start      = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm:ss")
     duration   = models.FloatField(help_text = "Hours")
     score      = models.FloatField(null = True, editable=False)
@@ -1511,8 +1534,8 @@ class Period(models.Model):
         return (self.end() > day) and (self.start < next_day)
 
     def __unicode__(self):
-        return "Period for Session (%d): %s for %5.2f Hrs" % \
-            (self.session.id, self.start, self.duration)
+        return "Period for Session (%d): %s for %5.2f Hrs (%s)" % \
+            (self.session.id, self.start, self.duration, self.state.abbreviation)
 
     def __str__(self):
         return "%s: %s for %5.2f Hrs" % \
@@ -1564,10 +1587,14 @@ class Period(models.Model):
         #else:
         #    self.forecast = TimeAgent.hour(now) # TBF: or what??
         self.backup   = True if fdata.get("backup", None) == 'true' else False
-        # TBF: how to initialize scheduled time?  Do Periods need state?
-        pa = Period_Accounting(scheduled = self.duration)
-        pa.save()
-        self.accounting = pa
+        stateAbbr = fdata.get("state", "P")
+        self.state = first(Period_State.objects.filter(abbreviation=stateAbbr))
+        # how to initialize scheduled time? when they get published!
+        # so, only create an accounting object if it needs it.
+        if self.accounting is None:
+            pa = Period_Accounting(scheduled = 0.0)
+            pa.save()
+            self.accounting = pa
         self.save()
 
     def handle2session(self, h):
@@ -1608,6 +1635,7 @@ class Period(models.Model):
               , "score"        : self.score
               , "forecast"     : dt2str(self.forecast)
               , "backup"       : self.backup
+              , "state"        : self.state.abbreviation
                 }
         # include the accounting but keep the dict flat
         if self.accounting is not None:
@@ -1668,8 +1696,25 @@ class Period(models.Model):
         else:
             return True
 
+    def publish(self):
+        "pending state -> scheduled state: and init the time accounting"
+        if self.state.abbreviation == 'P':
+            self.state = first(Period_State.objects.filter(abbreviation = 'S'))
+            self.accounting.scheduled = self.duration
+
+    def delete(self):
+        "Keep non-pending periods from being deleted."
+        if self.state.abbreviation != 'P':
+            self.state = first(Period_State.objects.filter(abbreviation = 'D'))
+        else:
+            models.Model.delete(self)  # pending can really get removed!
+
+    def remove(self):
+        "A backdoor method for really deleting!"
+        models.Model.delete(self)
+
     @staticmethod
-    def get_periods(start, duration):
+    def get_periods(start, duration, ignore_deleted = True):
         "Returns all periods that overlap given time interval (start, minutes)"
         end = start + timedelta(minutes = duration)
         # there is no Period.end in the database, so, first cast a wide net.
@@ -1682,19 +1727,24 @@ class Period(models.Model):
         ps = [p for p in some if (p.start >= start and p.end() <= end) \
                               or (p.start <= start and p.end() > start) \
                               or (p.start < end    and p.end() >= end)]
+        if ignore_deleted:                      
+            ps = [p for p in ps if p.state.abbreviation != 'D']
         return ps
           
         
     @staticmethod    
-    def in_time_range(begin, end):
+    def in_time_range(begin, end, ignore_deleted = True):
         """
         Returns all periods in a time range, taking into account that periods
         can overlap into the first day.
         """
         # TBF: why doesn't ps.query.group_by = ['start'] work?
         day_before = begin - timedelta(days = 1)
-        return Period.objects.filter(start__gt = day_before
-                                   , start__lt = end).order_by('start')
+        ps = Period.objects.filter(start__gt = day_before
+                                 , start__lt = end).order_by('start')
+        if ignore_deleted:                      
+            ps = [p for p in ps if p.state.abbreviation != 'D']
+        return ps
 
 # TBF: temporary table/class for scheduling just 09B.  We can safely
 # dispose of this after 09B is complete.  Delete Me!
