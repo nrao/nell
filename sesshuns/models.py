@@ -307,6 +307,8 @@ class Semester(models.Model):
         end_months = {"A": 5, "B": 9, "C": 1}
 
         year   = 2000 + int(self.semester[:2])
+        if self.semester[-1] == "C":
+            year += 1
         month  = end_months[self.semester[-1]]
         _, day = calendar.monthrange(year, month)
 
