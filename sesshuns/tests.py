@@ -2255,10 +2255,10 @@ class TestTimeAccounting(NellTestCase):
         timeLeft = ta.getTimeLeft(project)
         self.assertEqual(-3.0, timeLeft)
 
-        names = ["three", "two", "one"]
-        times = [-1.0, 0.0, -2.0]
+        names = ["one", "three", "two"]
+        times = [-2.0, -1.0, 0.0]
 
-        for i, s in enumerate(project.sesshun_set.all()):
+        for i, s in enumerate(project.sesshun_set.order_by("name").all()):
             timeLeft = ta.getTimeLeft(s)
             self.assertEqual(names[i], s.name)
             self.assertEqual(times[i], timeLeft)

@@ -1706,6 +1706,7 @@ class Period(models.Model):
         "Keep non-pending periods from being deleted."
         if self.state.abbreviation != 'P':
             self.state = first(Period_State.objects.filter(abbreviation = 'D'))
+            self.save()
         else:
             models.Model.delete(self)  # pending can really get removed!
 

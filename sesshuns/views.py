@@ -1,7 +1,7 @@
 from datetime                 import date, datetime, timedelta
 from django.http              import HttpResponse
 from models                   import Project, Sesshun, Period
-from models                   import Receiver_Schedule, first
+from models                   import Receiver_Schedule, first, str2dt
 from tools                    import IcalMap, ScheduleTools, TimeAccounting
 from settings                 import PROXY_PORT
 from utilities.SchedulingNotifier import SchedulingNotifier
@@ -192,6 +192,49 @@ def period_time_accounting(request, *args, **kws):
     ta = TimeAccounting()
     js = ta.jsondict(project)
     return HttpResponse(json.dumps(js), mimetype = "text/plain")
+
+def publish_periods(request, *args, **kwds):
+
+    # from the time range passed in, get the periods to publish
+    startPeriods = request.POST.get("start"
+                                 , datetime.now().strftime("%Y-%m-%d"))
+    daysPeriods  = request.POST.get("duration", "1")
+    tz           = request.POST.get("tz", "UTC")
+    dt = str2dt(startPeriods)
+    start = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
+    duration = int(daysPeriods) * 24 * 60
+    periods = Period.get_periods(start, duration)
+
+    # publishing moves any period whose state is Pending to Scheduled,
+    # and initializes time accounting (scheduled == period duration).
+    for p in periods:
+        p.publish()
+        p.save()
+
+    return HttpResponse(json.dumps({'success':'ok'})
+                      , mimetype = "text/plain")
+
+def delete_pending(request, *args, **kwds):
+
+    # from the time range passed in, get the pending periods to delete
+    startPeriods = request.POST.get("start"
+                                 , datetime.now().strftime("%Y-%m-%d"))
+    daysPeriods  = request.POST.get("duration", "1")
+    tz           = request.POST.get("tz", "UTC")
+    dt = str2dt(startPeriods)
+    start = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
+    duration = int(daysPeriods) * 24 * 60
+    periods = Period.get_periods(start, duration)
+    for p in periods:
+        if p.state.abbreviation == 'P':
+            print "deleting period: ", p
+            p.delete()
+            # don't save here, because the state has NOT been changed,
+            # it's really been removed since it was in the Pending state
+            #p.save()
+
+    return HttpResponse(json.dumps({'success':'ok'})
+                      , mimetype = "text/plain")
 
 def scheduling_email(request, *args, **kwds):
     if request.method == 'GET':

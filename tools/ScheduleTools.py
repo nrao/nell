@@ -145,6 +145,9 @@ class ScheduleTools(object):
         if neighbor is None:
             return (False, "Cannot shift period boundary if there is a neighboring gap in the schedule.")
 
+        if period.state.abbreviation != 'S' or \
+           neighbor.state.abbreviation != 'S':
+            return (False, "Affected Periods should be in the Scheduled State")   
         # get the time range affected
         original_time = period.start if start_boundary else period.end()
         diff_hrs = dtDiffHrs(original_time, time) #self.get_time_diff_hours(original_time, time)
