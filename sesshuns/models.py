@@ -512,9 +512,10 @@ class Project(models.Model):
         return rcvrs            
 
     def getPeriods(self):
-        "What are the periods associated with this project?"
+        "What are the periods associated with this project, vis. to observer?"
         return sorted([p for s in self.sesshun_set.all()
-                         for p in s.period_set.all()])
+                         for p in s.period_set.all()
+                         if p.state.abbreviation not in ['P','D']])
 
     def getUpcomingPeriods(self, dt = datetime.now()):
         "What periods are associated with this project in the future?"
@@ -647,6 +648,16 @@ class Project(models.Model):
                     for p in s.period_set.all() \
                         if p.start < dt]
 
+    def get_allotment(self, grade):
+        "Returns the allotment that matches the specified grade"
+        # watch out - this is a float!
+        epsilon = 1e-3
+        for a in self.allotments.all():
+            diff = abs(a.grade - grade)
+            if diff < epsilon:
+                return a
+        return None # uh-oh
+
     class Meta:
         db_table = "projects"
 
@@ -727,6 +738,9 @@ class Blackout(models.Model):
         """
         if self.start_date is None or self.end_date is None:
             return [] # What does it mean to have None in start or end?
+
+        if self.end_date < calstart or self.start_date > calend:
+            return [] # Outside this time period
 
         start       = self.start_date
         end         = self.end_date
@@ -814,7 +828,7 @@ class Session_Type(models.Model):
 
     def __unicode__(self):
         return self.type
-
+    
     class Meta:
         db_table = "session_types"
 
@@ -867,7 +881,7 @@ class Receiver_Schedule(models.Model):
         return jschedule
 
     @staticmethod
-    def extract_schedule(startdate = datetime.utcnow().date(), days = 120):
+    def extract_schedule(startdate = None, days = None):
         """
         Returns the entire receiver schedule starting at 'startdate' and
         ending 'days' after the 'startdate'.  The schedule is of the form:
@@ -877,20 +891,27 @@ class Receiver_Schedule(models.Model):
         where start_date is a datetime object and [<receivers available>] is
         a list of Receiver objects.
         """
-        schedule = dict()
+        startdate = startdate or datetime(2009, 10, 1).date()
+        schedule  = dict()
+        prev      = Receiver_Schedule.previousDate(startdate)
 
-        prev = Receiver_Schedule.previousDate(startdate)
         if prev is None:
             schedule[startdate] = [] # Empty schedule on/before this date
         else:
             startdate = prev
 
-        enddate = startdate + timedelta(days = days)
-        for s in Receiver_Schedule.objects.filter(
-                                              start_date__gte = startdate
-                                                     ).filter(
-                                              start_date__lte = enddate):
+        if days is not None:
+            enddate = startdate + timedelta(days = days)
+            rs = Receiver_Schedule.objects.filter(
+                                          start_date__gte = startdate
+                                                 ).filter(
+                                          start_date__lte = enddate)
+        else:
+            rs = Receiver_Schedule.objects.filter(start_date__gte = startdate)
+
+        for s in rs:
             schedule.setdefault(s.start_date, []).append(s.receiver)
+
         return schedule
 
     @staticmethod
@@ -920,8 +941,8 @@ class Status(models.Model):
 
     def __unicode__(self):
         return "(%d) e: %s; a: %s; c: %s; b: %s" % \
-            (self.id, self.enabled, self.authorized, self.complete, self.backup)
-
+            (self.id, self.enabled, self.authorized, self.complete, self.backup) 
+   
     class Meta:
         db_table = "status"
     
@@ -947,13 +968,14 @@ class Sesshun(models.Model):
     base_url = "/sesshuns/sesshun/"
 
     def __unicode__(self):
-        return "(%d) %s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s" % (
+        return "(%d) %s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s, status: %s" % (
                   self.id
                 , self.name if self.name is not None else ""
                 , self.frequency if self.frequency is not None else 0
                 , self.allotment.total_time
                       if self.allotment.total_time is not None else 0
-                , self.receiver_list())
+                , self.receiver_list()
+                , self.status)
 
     def get_absolute_url(self):
         return "/sesshuns/sesshun/%i/" % self.id
@@ -1017,16 +1039,12 @@ class Sesshun(models.Model):
         self.session_type     = st
         self.observing_type   = ot
         self.original_id      = \
-            self.get_field(fdata, "orig_ID", None, self.cast_int)
+            self.get_field(fdata, "orig_ID", None, lambda x: int(float(x)))
         self.name             = fdata.get("name", None)
         self.frequency        = fdata.get("freq", None)
         self.max_duration     = TimeAgent.rndHr2Qtr(float(fdata.get("req_max", 12.0)))
         self.min_duration     = TimeAgent.rndHr2Qtr(float(fdata.get("req_min",  3.0)))
         self.time_between     = fdata.get("between", None)
-
-    def cast_int(self, strValue):
-        "Handles casting of strings where int is displayed as float. ex: 1.0"
-        return int(float(strValue))
 
     def get_field(self, fdata, key, defaultValue, cast):
         "Some values from the JSON dict we know we need to type cast"
@@ -1166,15 +1184,14 @@ class Sesshun(models.Model):
         return False
         
     def get_receiver_req(self):
-        rgs = self.receiver_group_set.all()
-        ands = []
-        for rg in rgs:
-            rs = rg.receivers.all()
-            ands.append(' | '.join([r.abbreviation for r in rs]))
-        if len(ands) == 1:
-            return ands[0]
+        grps = [' | '.join([r.abbreviation \
+                            for r in rg.receivers.all()]) \
+                for rg in self.receiver_group_set.all()]
+
+        if grps and len(grps) == 1:
+            return grps[0]
         else:
-            return ' & '.join(['(' + rg + ')' for rg in ands])
+            return ' & '.join(['(%s)' % g for g in grps])
 
     def get_ha_limit_blackouts(self, startdate, days):
         # TBF: Not complete or even correct yet.
@@ -1191,9 +1208,6 @@ class Sesshun(models.Model):
         return TimeAccounting().getObservedTime(self)
 
     def jsondict(self):
-        target  = first(self.target_set.all())
-        rcvrs  = self.get_receiver_req()
-
         d = {"id"         : self.id
            , "pcode"      : self.project.pcode
            , "type"       : self.session_type.type
@@ -1212,17 +1226,11 @@ class Sesshun(models.Model):
            , "authorized" : self.status.authorized
            , "complete"   : self.status.complete
            , "backup"     : self.status.backup
+           , "transit"    : self.transit() or False
+           , "receiver"   : self.get_receiver_req()
             }
 
-        trnst = self.transit()
-        if trnst is not None:
-            d.update({"transit"    : trnst})
-        else:
-            d.update({"transit"    : False})
-
-        if rcvrs is not None:
-            d.update({"receiver"   : rcvrs})
-            
+        target = first(self.target_set.all())
         if target is not None:
             d.update({"source"     : target.source
                     , "coord_mode" : target.system.name
@@ -1434,11 +1442,19 @@ class Period_Accounting(models.Model):
 
     def unaccounted_time(self):
         "UT=SC-OT-OS-LT; should always be zero."
-        return self.scheduled - self.observed()
+        return self.scheduled - self.observed() - self.other_session() \
+            - self.lost_time()
 
     def set_changed_time(self, reason, time):
         "Determines which field to assign the time to."
         self.__setattr__(reason, time)
+
+    def get_time(self, name):
+        # method or attribute?  TBF: how to REALLY do this?
+        if self.__dict__.has_key(name):
+            return self.__getattribute__(name)
+        else:
+            return self.__getattribute__(name)()
 
     def update_from_post(self, fdata):    
         fields = ['not_billable'
@@ -1460,6 +1476,7 @@ class Period_Accounting(models.Model):
               , "scheduled"             : self.scheduled
               , "observed"              : self.observed()
               , "not_billable"          : self.not_billable
+              , "time_billed"           : self.time_billed()
               , "other_session"         : self.other_session()
               , "other_session_weather" : self.other_session_weather
               , "other_session_rfi"     : self.other_session_rfi
@@ -1472,9 +1489,31 @@ class Period_Accounting(models.Model):
               , "short_notice"          : self.short_notice
               , "description"           : description}
 
+class Period_State(models.Model):
+    name         = models.CharField(max_length = 32)
+    abbreviation = models.CharField(max_length = 32)
+
+    def __unicode__(self):
+        return self.name
+
+    class Meta:
+        db_table = "period_states"
+
+    def jsondict(self):
+        return self.abbreviation
+
+    @staticmethod
+    def get_abbreviations():
+        return [s.abbreviation for s in Period_State.objects.all()]
+
+    @staticmethod
+    def get_names():
+        return [s.name for s in Period_State.objects.all()]
+
 class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
     accounting = models.ForeignKey(Period_Accounting, null=True)
+    state      = models.ForeignKey(Period_State, null=True)
     start      = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm:ss")
     duration   = models.FloatField(help_text = "Hours")
     score      = models.FloatField(null = True, editable=False)
@@ -1495,8 +1534,8 @@ class Period(models.Model):
         return (self.end() > day) and (self.start < next_day)
 
     def __unicode__(self):
-        return "Period for Session (%d): %s for %5.2f Hrs" % \
-            (self.session.id, self.start, self.duration)
+        return "Period for Session (%d): %s for %5.2f Hrs (%s)" % \
+            (self.session.id, self.start, self.duration, self.state.abbreviation)
 
     def __str__(self):
         return "%s: %s for %5.2f Hrs" % \
@@ -1548,10 +1587,14 @@ class Period(models.Model):
         #else:
         #    self.forecast = TimeAgent.hour(now) # TBF: or what??
         self.backup   = True if fdata.get("backup", None) == 'true' else False
-        # TBF: how to initialize scheduled time?  Do Periods need state?
-        pa = Period_Accounting(scheduled = self.duration)
-        pa.save()
-        self.accounting = pa
+        stateAbbr = fdata.get("state", "P")
+        self.state = first(Period_State.objects.filter(abbreviation=stateAbbr))
+        # how to initialize scheduled time? when they get published!
+        # so, only create an accounting object if it needs it.
+        if self.accounting is None:
+            pa = Period_Accounting(scheduled = 0.0)
+            pa.save()
+            self.accounting = pa
         self.save()
 
     def handle2session(self, h):
@@ -1592,6 +1635,7 @@ class Period(models.Model):
               , "score"        : self.score
               , "forecast"     : dt2str(self.forecast)
               , "backup"       : self.backup
+              , "state"        : self.state.abbreviation
                 }
         # include the accounting but keep the dict flat
         if self.accounting is not None:
@@ -1652,8 +1696,26 @@ class Period(models.Model):
         else:
             return True
 
+    def publish(self):
+        "pending state -> scheduled state: and init the time accounting"
+        if self.state.abbreviation == 'P':
+            self.state = first(Period_State.objects.filter(abbreviation = 'S'))
+            self.accounting.scheduled = self.duration
+
+    def delete(self):
+        "Keep non-pending periods from being deleted."
+        if self.state.abbreviation != 'P':
+            self.state = first(Period_State.objects.filter(abbreviation = 'D'))
+            self.save()
+        else:
+            models.Model.delete(self)  # pending can really get removed!
+
+    def remove(self):
+        "A backdoor method for really deleting!"
+        models.Model.delete(self)
+
     @staticmethod
-    def get_periods(start, duration):
+    def get_periods(start, duration, ignore_deleted = True):
         "Returns all periods that overlap given time interval (start, minutes)"
         end = start + timedelta(minutes = duration)
         # there is no Period.end in the database, so, first cast a wide net.
@@ -1666,19 +1728,24 @@ class Period(models.Model):
         ps = [p for p in some if (p.start >= start and p.end() <= end) \
                               or (p.start <= start and p.end() > start) \
                               or (p.start < end    and p.end() >= end)]
+        if ignore_deleted:                      
+            ps = [p for p in ps if p.state.abbreviation != 'D']
         return ps
           
         
     @staticmethod    
-    def in_time_range(begin, end):
+    def in_time_range(begin, end, ignore_deleted = True):
         """
         Returns all periods in a time range, taking into account that periods
         can overlap into the first day.
         """
         # TBF: why doesn't ps.query.group_by = ['start'] work?
         day_before = begin - timedelta(days = 1)
-        return Period.objects.filter(start__gt = day_before
-                                   , start__lt = end).order_by('start')
+        ps = Period.objects.filter(start__gt = day_before
+                                 , start__lt = end).order_by('start')
+        if ignore_deleted:                      
+            ps = [p for p in ps if p.state.abbreviation != 'D']
+        return ps
 
 # TBF: temporary table/class for scheduling just 09B.  We can safely
 # dispose of this after 09B is complete.  Delete Me!
@@ -1697,12 +1764,12 @@ class Project_Blackout_09B(models.Model):
         # problems with postrgreSQL
         db_table = "project_blackouts_09b"
 
-# TBF: might need this in order to get around Haskell not working w/ BOS
-#class Reservation(models.Model):
-#    user       = models.ForeignKey(User)
-#    start_date = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm:ss")
-#    end_date   = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm:ss")
-#
-#    class Meta:
-#        db_table = "reservations"
-    
+
+class Reservation(models.Model):
+    user       = models.ForeignKey(User)
+    start_date = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm:ss")
+    end_date   = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm:ss")
+
+    class Meta:
+        db_table = "reservations"
+

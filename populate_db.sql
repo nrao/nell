@@ -11,6 +11,8 @@ alter table periods alter column forecast type timestamp without time zone;
 alter table blackouts alter column start_date type timestamp without time zone;
 alter table blackouts alter column end_date type timestamp without time zone;
 alter table blackouts alter column until type timestamp without time zone;
+alter table reservations alter column start_date type timestamp without time zone;
+alter table reservations alter column end_date type timestamp without time zone;
 
 -- Example project
 INSERT INTO allotment VALUES (DEFAULT, 100.5, 100.5, 100.5, 4.0);
@@ -85,6 +87,11 @@ INSERT INTO observing_types VALUES (DEFAULT, 'spectral line');
 INSERT INTO observing_types VALUES (DEFAULT, 'maintenance');
 INSERT INTO observing_types VALUES (DEFAULT, 'calibration');
 INSERT INTO observing_types VALUES (DEFAULT, 'testing');
+
+INSERT INTO period_states VALUES (DEFAULT, 'Pending',   'P');
+INSERT INTO period_states VALUES (DEFAULT, 'Scheduled', 'S');
+INSERT INTO period_states VALUES (DEFAULT, 'Deleted',   'D');
+INSERT INTO period_states VALUES (DEFAULT, 'Complete',  'C');
 
 --                                                                                Carl's
 INSERT INTO receivers VALUES (DEFAULT, 'NoiseSource',   'NS',   0.000,   0.000); -- 

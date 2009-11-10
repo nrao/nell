@@ -59,7 +59,7 @@ class DSSDatabase(object):
             self.un.confirmUserInfo()
             x = raw_input("Continue and get missing IDs/usernames? CtrlX if not.")
 
-        self.un.getUserNamesFromProjects('dss', 'MrNubbles!')
+        self.un.getUserNamesFromProjects('QueryAgent', 'iBlertFoo')
 
         self.un.getUserNamesFromIDs()
 

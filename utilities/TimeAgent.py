@@ -188,3 +188,12 @@ def dt2semester(dt):
     if month == 1:
         year -= 1
     return "%02d%s" % (year, trimesterMonth[month])
+
+def dtDiffHrs(time1, time2):
+    "Gives absolute difference between two times in hours."
+    if time1 > time2:
+        diff = (time1 - time2).seconds 
+    else:    
+        diff = (time2 - time1).seconds 
+    return diff / (60.0 * 60.0)    
+

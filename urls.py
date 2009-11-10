@@ -34,13 +34,19 @@ urlpatterns = patterns(''
    , url(r'^schedule/email$',                              scheduling_email)
    , url(r'^search$',                                      search)
    , url(r'^sessions/options$',   get_options) #
+   , url(r'^sessions/time_accounting/([^/]+)$',   session_time_accounting) #
    , url(r'^schedule/change_schedule$', change_schedule) #
+   , url(r'^schedule/shift_period_boundaries$', shift_period_boundaries) #
    , url(r'^sessions$',           SessionResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^sessions/(\d+)$',     SessionResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^receivers$',          rcvr_schedule) #
    , url(r'^receivers/schedule$', receivers_schedule) #
    , url(r'^period/([^/]+)/moc_reschedule$', moc_reschedule)
    , url(r'^period/([^/]+)/moc_degraded$', moc_degraded)
+   , url(r'^period/([^/]+)/time_accounting$', period_time_accounting) #
+   , url(r'^periods/publish',     publish_periods) #
+   , url(r'^periods/delete_pending', delete_pending) #
+ 
    , url(r'^periods/(UTC)$',      PeriodResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^periods/(ET)$',       PeriodResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^periods/(UTC)/(\d+)$',PeriodResource(permitted_methods=('PUT', 'GET', 'POST'))) #

@@ -49,14 +49,24 @@ class DSSDatabase09C(DSSDatabase):
         rcvrs = ['L', 'C', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '342'] 
         rcvrChanges.append((dt, rcvrs))
 
-        # Oct 30: 342 -> 450
-        dt = datetime(2009, 10, 30, 16)
+        # Oct 27: 342 -> 450
+        dt = datetime(2009, 10, 27, 16)
         rcvrs = ['L', 'C', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '450'] 
         rcvrChanges.append((dt, rcvrs))
 
-        # Nov 4: C -> MBA, 450 -> 600
-        dt = datetime(2009, 11, 4, 16)
-        rcvrs = ['L', 'K', 'X', 'Ku', 'MBA', 'S', 'Hol', 'Q', '600'] 
+        # Oct 30: 450 -> 600
+        dt = datetime(2009, 10, 30, 16)
+        rcvrs = ['L', 'C', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '600'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Nov 3: 600 -> 342, Remove C
+        dt = datetime(2009, 11, 3, 16)
+        rcvrs = ['L', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '342'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Nov 6: Add MBA
+        dt = datetime(2009, 11, 6, 16)
+        rcvrs = ['L', 'K', 'X', 'Ku', 'MBA', 'S', 'Hol', 'Q', '342'] 
         rcvrChanges.append((dt, rcvrs))
 
         # Nov 12: 600 -> 800
