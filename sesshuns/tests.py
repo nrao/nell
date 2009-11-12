@@ -1325,7 +1325,7 @@ class TestObservers(NellTestCase):
 
         # create a period
         s = create_sesshun()
-        state = first(Period_State.objects.filter(abbreviation = 'P'))
+        state = first(Period_State.objects.filter(abbreviation = 'S'))
         p = Period(session = s
                  , start = datetime(2009, 9, 9, 12)
                  , duration = 1.0
@@ -1357,14 +1357,14 @@ class TestObservers(NellTestCase):
         self.assertEqual(exp, calendar)     
 
         # clean up
-        p.delete()
+        p.remove() #delete()
         s.delete()
 
     def test_get_period_day_time2(self):
 
         # create a period
         s = create_sesshun()
-        state = first(Period_State.objects.filter(abbreviation = 'P'))
+        state = first(Period_State.objects.filter(abbreviation = 'S'))
         p = Period(session = s
                  , start = datetime(2009, 9, 2, 1)
                  , duration = 6.0
@@ -1404,7 +1404,7 @@ class TestObservers(NellTestCase):
         self.assertEqual(exp, calendar)  
 
         # clean up
-        p.delete()
+        p.remove() #delete()
         s.delete()
 
 # Testing Utilities
