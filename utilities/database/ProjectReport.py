@@ -127,24 +127,37 @@ def GenerateProjectReport():
                 )
             )
 
-    outfile.write("\nAllotment hours / Available Trimester Hours = %.1f%%\n" % 
+    outfile.write("\nTotal hours in a trimester = %.1f\n"% TRIMESTER_HOURS)
+
+    outfile.write("\nAllotment hours / Trimester Hours = %.1f%%\n" % 
                   ((observed_hours + remaining_hours) / TRIMESTER_HOURS * 100.))
 
-    outfile.write("\nObserved hours  / Available Trimester Hours = %.1f%%\n" % 
+    outfile.write("\nObserved hours  / Trimester Hours = %.1f%%\n" % 
                   (observed_hours / TRIMESTER_HOURS * 100.))
 
-    outfile.write("\nRemaining hours / Available Trimester Hours = %.1f%%\n" % 
+    outfile.write("\nRemaining hours / Trimester Hours = %.1f%%\n" % 
                   (remaining_hours / TRIMESTER_HOURS * 100.))
-    outfile.write("\nTotal hours in a semester = %.1f\n"% TRIMESTER_HOURS)
-    S=sorted([s for s in Semester.objects.all() if s.start()<=datetime.today() and s.end()>datetime.today()],lambda x,y:cmp(x.start(),y.start()))[0]
-    Trimester_hours_left=(S.end()-datetime.today()).days*24
-    outfile.write("\nTotal hours left in a semester = %.1f\n"%Trimester_hours_left)
-    outfile.write("\nSum of all sessions allotment time = %.1f\n"%allotment_hours)
-    outfile.write("\nSum of all sessions remaining time = %.1f\n"%remaining_hours)
-    outfile.write("\nSum of all session allotment time/Total hours in a semester = %.1f\n"%(allotment_hours/TRIMESTER_HOURS))
-    outfile.write("\nSum of all session remaining time/Total hours left in  a semester = %.1f\n"%float(remaining_hours/Trimester_hours_left))
-    outfile.write("\nSum of all schedulable sessions Total time = %.1f\n"%scheduled_hours)
-    outfile.write("\nSum of all schedulable sessions Total time/Total hours in a semester = %.1f\n"%(scheduled_hours/TRIMESTER_HOURS))  
+
+    trimester = Semester.getCurrentSemester()
+    trimester_hrs_left=(trimester.end()-datetime.today()).days*24
+
+    outfile.write("\nTotal hours left in a trimester = %.1f\n" % \
+                  trimester_hrs_left)
+
+    outfile.write("\nSum of all sessions allotment time = %.1f\n" % \
+                  allotment_hours)
+
+    outfile.write("\nSum of all sessions remaining time = %.1f\n" % \
+                  remaining_hours)
+
+    outfile.write("\nSum of all session allotments' time/total hours in a trimester = %.1f\n" % (allotment_hours / TRIMESTER_HOURS))
+
+    outfile.write("\nSum of all session remaining time/total hours left in  a trimester = %.1f\n" % float(remaining_hours / trimester_hrs_left))
+
+    outfile.write("\nSum of all schedulable sessions' total time = %.1f\n" % \
+                  scheduled_hours)
+
+    outfile.write("\nSum of all schedulable sessions' total time/total hours in a trimester = %.1f\n" % (scheduled_hours / TRIMESTER_HOURS))  
 
     outfile.close()
 
