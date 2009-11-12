@@ -1082,7 +1082,7 @@ class TestGetOptions(NellTestCase):
                           '{"project codes": ["GBT09A-001"]}')
         response = c.get('/sessions/options', dict(mode='session_handles'))
         self.assertEquals(response.content,
-                          '{"session handles": ["Low Frequency With No RFI (GBT09A-001)"]}')
+                          '{"ids": [1], "session handles": ["Low Frequency With No RFI (GBT09A-001)"]}')
 
 class TestChangeSchedule(NellTestCase):
     def test_change_schedule(self):
