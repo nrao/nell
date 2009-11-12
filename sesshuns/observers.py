@@ -31,6 +31,9 @@ def public_schedule(request, *args, **kws):
     pend    = TimeAgent.est2utc(end) if timezone == 'ET' else end
     periods = Period.in_time_range(pstart, pend)
 
+    # ignore pending periods!
+    periods = [p for p in periods if p.state.abbreviation != 'P']
+
     calendar = gen_gbt_schedule(start, end, days, timezone, periods)
 
     return render_to_response(
