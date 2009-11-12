@@ -1,4 +1,4 @@
-from datetime                  import datetime, timedelta
+from datetime                  import datetime, timedelta, date
 from math                      import asin, acos, cos, sin
 from tools                     import TimeAccounting
 from django.conf               import settings
@@ -322,9 +322,24 @@ class Semester(models.Model):
         }
 
     @staticmethod
-    def getFutureSemesters(date):
-        "Returns a list of Semesters that start on or before the given date."
-        return [s for s in Semester.objects.all() if s.start() >= date]
+    def getFutureSemesters(today = datetime.today()):
+        "Returns a list of Semesters that start on or after the given date."
+        return sorted([s for s in Semester.objects.all() if s.start() >= today]
+                     , lambda x, y: cmp(x.start(), y.start()))
+
+    @staticmethod
+    def getPreviousSemesters(today = datetime.today()):
+        """
+        Returns a list of Semesters that occur prior to the given date
+        not including the current semester as defined by the given date.
+        """
+        return sorted([s for s in Semester.objects.all() if s.start() <= today]
+                     , lambda x, y: cmp(x.start(), y.start()))
+
+    @staticmethod
+    def getCurrentSemester(today = datetime.today()):
+        "Returns the current Semester."
+        return Semester.getPreviousSemesters(today)[-1]
 
     class Meta:
         db_table = "semesters"
@@ -373,6 +388,8 @@ class Project(models.Model):
     end_date         = models.DateTimeField(null = True, blank = True)
     friend           = models.ForeignKey(User, null = True, blank = True)
     accounting_notes = models.CharField(null = True, max_length = 1024)
+    notes            = models.TextField(null = True)
+    schedulers_notes = models.TextField(null = True)
 
     base_url = "/sesshuns/project/"
 
