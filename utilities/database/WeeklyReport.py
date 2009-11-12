@@ -14,7 +14,7 @@ def print_values(file, values):
             file.write("\t%s\n" % v)
 
 def GenerateReport(start):
-    outfile = open("./WeeklyReport.txt", 'w')
+    outfile = open("./DssWeeklyReport.txt", 'w')
     end     = start + timedelta(days = 7)
     periods = [p for p in Period.objects.all()]
 
@@ -76,33 +76,33 @@ def GenerateReport(start):
                   (last_month.strftime("%B").center(8)
                  , start.strftime("%B").center(8)))
     outfile.write("     Astronomy ~  %s %s\n" % \
-                  ("%.1f".center(8) % \
+                  (("%.1f" % \
                    sum([p.accounting.scheduled for p in last_periods \
-                        if p.session.project.project_type.type == "science"])
-                 , "%.1f".center(8) % \
+                   if p.session.project.project_type.type == "science"])).center(8)
+                 , ("%.1f" % \
                    sum([p.accounting.scheduled for p in this_periods \
-                        if p.session.project.project_type.type == "science"])))
+                   if p.session.project.project_type.type == "science"])).center(8)))
     outfile.write("   Maintenance ~  %s %s\n" % \
-                  ("%.1f".center(8) % \
+                  (("%.1f" % \
                    sum([p.accounting.scheduled for p in last_periods \
-                        if p.session.project.pcode == "Maintenance"])
-                ,  "%.1f".center(8) % \
+                   if p.session.project.pcode == "Maintenance"])).center(8)
+                ,  ("%.1f" % \
                    sum([p.accounting.scheduled for p in this_periods \
-                        if p.session.project.pcode == "Maintenance"])))
+                   if p.session.project.pcode == "Maintenance"])).center(8)))
     outfile.write("   Test & Comm ~  %s %s\n" % \
-                  ("%.1f".center(8) % \
+                  (("%.1f" % \
                    sum([p.accounting.scheduled for p in last_periods \
-                        if p.session.project.pcode[0] == "T"])
-                 , "%.1f".center(8) % \
+                        if p.session.project.pcode[0] == "T"])).center(8)
+                 , ("%.1f" % \
                    sum([p.accounting.scheduled for p in this_periods \
-                        if p.session.project.pcode[0] == "T"])))
+                        if p.session.project.pcode[0] == "T"])).center(8)))
     outfile.write("      Shutdown ~  %s %s\n" % \
-                  ("%.1f".center(8) % \
+                  (("%.1f" % \
                    sum([p.accounting.scheduled for p in last_periods \
-                        if p.session.project.pcode == "Shutdown"])
-                 , "%.1f".center(8) % \
+                        if p.session.project.pcode == "Shutdown"])).center(8)
+                 , ("%.1f" % \
                    sum([p.accounting.scheduled for p in this_periods \
-                        if p.session.project.pcode == "Shutdown"])))
+                        if p.session.project.pcode == "Shutdown"])).center(8)))
 
     ta         = TimeAccounting()
     pSemesters = Semester.getPreviousSemesters(start)
