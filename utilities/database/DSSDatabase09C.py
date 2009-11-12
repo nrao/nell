@@ -69,7 +69,12 @@ class DSSDatabase09C(DSSDatabase):
         rcvrs = ['L', 'K', 'X', 'Ku', 'MBA', 'S', 'Hol', 'Q', '342'] 
         rcvrChanges.append((dt, rcvrs))
 
-        # Nov 18: 342 -> 800, Ku -> Ka, Z goes up 
+        # Nov 12: Remove MBA
+        dt = datetime(2009, 11, 12, 16)
+        rcvrs = ['L', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '342'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Nov 18: 342 -> 800, Ku -> Ka, Z goes up, MBA goes up 
         dt = datetime(2009, 11, 18, 16)
         rcvrs = ['L', 'K', 'X', 'Ka', 'MBA', 'S', 'Hol', 'Q', 'Z', '800'] 
         rcvrChanges.append((dt, rcvrs))
