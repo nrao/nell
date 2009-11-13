@@ -33,7 +33,11 @@ class NellResource(Resource):
         o     = self.dbobject.objects.get(id = id)
         o.update_from_post(request.POST)
 
-        return HttpResponse("")
+        # NOTE: this originally returned "", but if we want JSON callbacks
+        # to work from GWT, need A response.  This change seems benign
+        #return HttpResponse("")
+        return HttpResponse(json.dumps({"success" : "ok"})
+                          , mimetype = "text/plain")
 
     def delete(self, request, *args):
         id = int(args[0])
