@@ -73,9 +73,7 @@ def display_name(user):
 
 @register.filter
 def pretty_none(value):
-    if value is None:
-        return ""
-    return value
+    return value if value else ""
 
 @register.filter
 def project_type(project):

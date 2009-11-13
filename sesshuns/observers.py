@@ -278,6 +278,100 @@ def modify_priority(request, *args, **kws):
     return HttpResponseRedirect("/project/%s" % pcode)
 
 @login_required
+def project_notes_form(request, *args, **kwds):
+    pcode, = args
+
+    # TBF Use a decorator
+    loginUser = request.user.username
+    requestor = first(User.objects.filter(username = loginUser))
+
+    if requestor is None:
+        requestor = create_user(loginUser)
+
+    #  If the requestor doesn't have access to this, redirect to their profile.
+    if not requestor.canViewProject(pcode):
+        return HttpResponseRedirect("/profile")
+
+    project = first(Project.objects.filter(pcode = pcode))
+    if project is None:
+        raise Http404 # Bum pcode
+
+    return render_to_response("sesshuns/project_notes_form.html"
+                            , {'p'        : project
+                             , 'requestor': requestor})
+
+@login_required
+def project_notes_save(request, *args, **kws):
+    pcode, = args
+
+    # TBF Use a decorator
+    loginUser = request.user.username
+    requestor = first(User.objects.filter(username = loginUser))
+
+    if requestor is None:
+        requestor = create_user(loginUser)
+
+    #  If the requestor doesn't have access to this, redirect to their profile.
+    if not requestor.canViewProject(pcode):
+        return HttpResponseRedirect("/profile")
+
+    project = first(Project.objects.filter(pcode = pcode))
+    if project is None:
+        raise Http404 # Bum pcode
+
+    project.notes = request.POST.get("notes", "")
+    project.save()
+
+    return HttpResponseRedirect("/project/%s" % pcode)
+
+@login_required
+def project_snotes_form(request, *args, **kwds):
+    pcode, = args
+
+    # TBF Use a decorator
+    loginUser = request.user.username
+    requestor = first(User.objects.filter(username = loginUser))
+
+    if requestor is None:
+        requestor = create_user(loginUser)
+
+    #  If the requestor doesn't have access to this, redirect to the project.
+    if not requestor.isAdmin():
+        return HttpResponseRedirect("/project/%s" % pcode)
+
+    project = first(Project.objects.filter(pcode = pcode))
+    if project is None:
+        raise Http404 # Bum pcode
+
+    return render_to_response("sesshuns/project_snotes_form.html"
+                            , {'p'        : project
+                             , 'requestor': requestor})
+
+@login_required
+def project_snotes_save(request, *args, **kws):
+    pcode, = args
+
+    # TBF Use a decorator
+    loginUser = request.user.username
+    requestor = first(User.objects.filter(username = loginUser))
+
+    if requestor is None:
+        requestor = create_user(loginUser)
+
+    #  If the requestor doesn't have access to this, redirect to the project.
+    if not requestor.isAdmin():
+        return HttpResponseRedirect("/project/%s" % pcode)
+
+    project = first(Project.objects.filter(pcode = pcode))
+    if project is None:
+        raise Http404 # Bum pcode
+
+    project.schedulers_notes = request.POST.get("notes", "")
+    project.save()
+
+    return HttpResponseRedirect("/project/%s" % pcode)
+
+@login_required
 def dynamic_contact_form(request, *args, **kws):
     u_id,     = args
     user      = first(User.objects.filter(id = u_id))

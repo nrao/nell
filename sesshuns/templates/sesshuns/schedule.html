@@ -13,6 +13,20 @@
     .type_astronomy {background-color:#EEEEEE}
     .type_maintenance {background-color:#98FB98}
     .moc_failure {background-color:#FF0000}
+    .info{
+        position:relative; /*this is the key*/
+        z-index:24; background-color:#fff;
+        color:#000;
+        text-decoration:none}
+    .info:hover{z-index:25; background-color:#ffffe0}
+    .info span{display: none}
+    .info:hover span{ /*the span will display just on :hover state*/
+        display:block;
+        position:absolute;
+        top:2em; left:2em; width:15em;
+        border:1px solid #000000;
+        background-color:#ffffe0; color:#000;
+        text-align: left}
   </style>
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"></script>
 <!--  
@@ -139,6 +153,9 @@
         <blink>
       {% endif %}
         <a href="/project/{{p.session.project.pcode}}">{{p.session.project.pcode}}</a>
+        {% if p.session.project.notes %}
+          <a href="" class="info">(N)<span><p>Project Notes:</p>{{p.session.project.notes|escape|linebreaks}}</span></a>
+        {% endif %}
       {% if not p.moc_met %}
         </blink>
       {% endif %}

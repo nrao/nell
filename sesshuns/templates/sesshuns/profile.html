@@ -45,7 +45,7 @@
         </div>
         <div class="span-8 colborder">  
           <h3 class="loud">Dynamic Contact Information</h3>
-          <p>{{u.contact_instructions}}</p>
+          <p>{{u.contact_instructions|escape|linebreaks}}</p>
           {% if authorized or requestor.isAdmin %}
           <a href="/profile/{{u.id}}/dynamic_contact/form">edit</a>
           {% endif %}
