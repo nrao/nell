@@ -83,28 +83,11 @@ def GenerateProjectReport():
     outfile.write("Project     |   Type   | Sessions | Not Enabled | Observers | Complete | Incomplete |  Avail / Rem Hrs | Obs Hrs | Blackout | Backup | Receivers\n")
 
     count           = 0
-    sorted_projects = sorted(Project.objects.filter(complete = False)
+    open_projects   = sorted(Project.objects.filter(complete = False)
                            , lambda x, y: cmp(x.pcode, y.pcode))
-    observed_hours  = 0
-    remaining_hours = 0
-    allotment_hours = 0
-    scheduled_hours = 0
 
-    for p in sorted_projects: 
+    for p in open_projects: 
         for typ in get_type(p):
-            ohours = get_obs_hours(p,typ)
-            rhours = get_rem_hours(p,typ)
-            ahours = get_allotment_hours(p,typ)
-            if p.has_schedulable_sessions():
-                shours=get_scheduled_session_hours(p,typ)
-            else:
-                shours=0
-            
-            observed_hours  += ohours
-            remaining_hours += rhours
-            allotment_hours += ahours
-            scheduled_hours += shours
-
             if count % 5 == 0:
                 outfile.write("-------------------------------------------------------------------------------------------------------------------------------------------\n")
             count += 1
@@ -119,45 +102,51 @@ def GenerateProjectReport():
                , str(len([s for s in p.sesshun_set.all() \
                             if s.status.complete == True])).center(8)
                , str(len(get_sessions(p, typ))).center(10)
-               , "".join([str(get_rem_schedulable_hours(p, typ)), " / ", str(rhours)]).rjust(16)
-               , str(ohours).center(7)
+               , "".join([str(get_rem_schedulable_hours(p, typ)), " / ", str(get_rem_hours(p,typ))]).rjust(16)
+               , str(get_obs_hours(p,typ)).center(7)
                , "Yes".center(8) if any([len(o.user.blackout_set.all()) == 0 for o in p.get_observers()]) else "        "
                , "Yes".center(6) if any([s.status.backup for s in p.sesshun_set.all()]) else "      "
                , get_rcvrs(p, typ)
                 )
             )
 
+    # TBF: Restrict some of these calcuations to current trimester periods
+    #      only.
+    trimester          = Semester.getCurrentSemester()
+    trimester_hrs_left = (trimester.end() - datetime.today()).days * 24
+
     outfile.write("\nTotal hours in a trimester = %.1f\n"% TRIMESTER_HOURS)
-
-    outfile.write("\nAllotment hours / Trimester Hours = %.1f%%\n" % 
-                  ((observed_hours + remaining_hours) / TRIMESTER_HOURS * 100.))
-
-    outfile.write("\nObserved hours  / Trimester Hours = %.1f%%\n" % 
-                  (observed_hours / TRIMESTER_HOURS * 100.))
-
-    outfile.write("\nRemaining hours / Trimester Hours = %.1f%%\n" % 
-                  (remaining_hours / TRIMESTER_HOURS * 100.))
-
-    trimester = Semester.getCurrentSemester()
-    trimester_hrs_left=(trimester.end()-datetime.today()).days*24
-
-    outfile.write("\nTotal hours left in a trimester = %.1f\n" % \
+    outfile.write("\nTotal hours left this trimester = %.1f\n" % \
                   trimester_hrs_left)
 
-    outfile.write("\nSum of all sessions allotment time = %.1f\n" % \
-                  allotment_hours)
+    projects = Project.objects.all()
+    ta       = TimeAccounting()
 
-    outfile.write("\nSum of all sessions remaining time = %.1f\n" % \
-                  remaining_hours)
+    hours = sum([s.allotment.total_time \
+                 for p in projects for s in p.sesshun_set.all()])
 
-    outfile.write("\nSum of all session allotments' time/total hours in a trimester = %.1f\n" % (allotment_hours / TRIMESTER_HOURS))
+    outfile.write("\nSum of all sessions allotment time = %.1f\n" % hours)
+    outfile.write("\nAllotment hours / Trimester Hours = %.1f%%\n" % 
+                  (hours / TRIMESTER_HOURS * 100.))
 
-    outfile.write("\nSum of all session remaining time/total hours left in  a trimester = %.1f\n" % float(remaining_hours / trimester_hrs_left))
+    outfile.write("\nObserved hours  / Trimester Hours = %.1f%%\n" % 
+                  (sum([ta.getTime("observed", p) for p in projects]) / TRIMESTER_HOURS * 100.))
 
+    hours = sum([ta.getTimeLeft(p) for p in projects])
+    outfile.write("\nSum of all sessions remaining time = %.1f\n" % hours)
+    outfile.write("\nRemaining hours / Trimester Hours = %.1f%%\n" % 
+                  (hours / TRIMESTER_HOURS * 100.))
+    outfile.write("\nRemaining hours / Trimester Hours Left = %.1f%%\n" % 
+                  float(hours / trimester_hrs_left * 100.))
+
+    hours = sum([s.allotment.total_time \
+                 for p in projects \
+                 for s in p.sesshun_set.all() \
+                 if s.schedulable()])
     outfile.write("\nSum of all schedulable sessions' total time = %.1f\n" % \
-                  scheduled_hours)
+                  hours)
 
-    outfile.write("\nSum of all schedulable sessions' total time/total hours in a trimester = %.1f\n" % (scheduled_hours / TRIMESTER_HOURS))  
+    outfile.write("\nSum of all schedulable sessions' total time / total hours in a trimester = %.1f%%\n" % (hours / TRIMESTER_HOURS * 100.))  
 
     outfile.close()
 
