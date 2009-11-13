@@ -243,9 +243,11 @@ def scheduling_email(request, *args, **kwds):
     if request.method == 'GET':
         start    = datetime.utcnow()
         end      = start + timedelta(days = 2)
+        # get all non-Deleted periods in this time range
+        # TBF: no easy way to use filters to avoid deleted periods?
         periods  = Period.objects.filter(start__gt = start, start__lt = end)
-        notifier = SchedulingNotifier([p for p in periods.all()])
-
+        periods  = [p for p in periods if p.state.abbreviation != 'D']
+        notifier = SchedulingNotifier(periods) 
         return HttpResponse(
             json.dumps({
                 'emails' : notifier.getAddresses()
