@@ -395,6 +395,8 @@ class TestProject(NellTestCase):
                , "PSC_time"   : "10.0"
                , "sem_time"   : "10.0"
                , "grade"      : "A"
+               , "notes"      : "notes"
+               , "schd_notes" : "scheduler's notes"
         }
         self.project.update_from_post(pdata)
         self.project.save()
@@ -1079,7 +1081,7 @@ class TestGetOptions(NellTestCase):
         c = Client()
         response = c.get('/sessions/options', dict(mode='project_codes'))
         self.assertEquals(response.content,
-                          '{"project codes": ["GBT09A-001"]}')
+                          '{"project codes": ["GBT09A-001"], "project ids": [1]}')
         response = c.get('/sessions/options', dict(mode='session_handles'))
         self.assertEquals(response.content,
                           '{"ids": [1], "session handles": ["Low Frequency With No RFI (GBT09A-001)"]}')
