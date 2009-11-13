@@ -30,7 +30,9 @@ def get_options(request, *args, **kws):
     if mode == "project_codes":
         projects = Project.objects.order_by('pcode')
         return HttpResponse(json.dumps({'project codes':
-                                        [ p.pcode for p in projects]})
+                                        [ p.pcode for p in projects]
+                                      , 'project ids':
+                                        [ p.id for p in projects]})
                           , mimetype = "text/plain")
     elif mode == "session_handles":
         ss = Sesshun.objects.order_by('name')
