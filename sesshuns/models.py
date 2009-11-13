@@ -1229,7 +1229,7 @@ class Sesshun(models.Model):
         #return consolidate_events(find_intersections(blackouts))
 
     def getObservedTime(self):
-        return TimeAccounting().getTimeLeft(self)
+        return TimeAccounting().getTime("observed", self)
 
     def jsondict(self):
         d = {"id"         : self.id
