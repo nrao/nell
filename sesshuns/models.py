@@ -414,12 +414,14 @@ class Project(models.Model):
         fsemester  = fdata.get("semester", "09C")
         semester   = first(Semester.objects.filter(semester = fsemester))
 
-        self.semester     = semester
-        self.project_type = p_type
-        self.pcode        = fdata.get("pcode", "")
-        self.name         = fdata.get("name", "")
-        self.thesis       = fdata.get("thesis", "false") == "true"
-        self.complete     = fdata.get("complete", "false") == "true"
+        self.semester         = semester
+        self.project_type     = p_type
+        self.pcode            = fdata.get("pcode", "")
+        self.name             = fdata.get("name", "")
+        self.thesis           = fdata.get("thesis", "false") == "true"
+        self.complete         = fdata.get("complete", "false") == "true"
+        self.notes            = fdata.get("notes", "")
+        self.schedulers_notes = fdata.get("schd_notes", "")
 
         self.save()
 
@@ -484,6 +486,9 @@ class Project(models.Model):
               , "complete"     : self.complete
               , "pi"           : pi
               , "co_i"         : co_i
+              , "notes"        : self.notes if self.notes is not None else ""
+              , "schd_notes"   : self.schedulers_notes \
+                                 if self.schedulers_notes is not None else ""
                 }
 
     def principal_contact(self):
