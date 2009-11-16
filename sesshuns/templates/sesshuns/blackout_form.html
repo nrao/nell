@@ -32,7 +32,7 @@
 <div type="text" id="datepicker"></div>
 <form action="/profile/{{u.id}}/blackout" method="POST">
   <p>
-    <label for="id_start">{{b.start_date|date:"H:i"}}</label>
+    <label for="id_start">Start:</label>
     <input type="text" name="start" id="id_start" title="Click once for calendar, click twice for previous entries, or alternatively, enter your date in the form mm/dd/yyyy." value="{{b.start_date|date:'m/d/Y'}}"/>
     <select name="starttime" id="id_starttime">
       {% for t in times %}
