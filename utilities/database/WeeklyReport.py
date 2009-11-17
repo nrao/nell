@@ -20,7 +20,7 @@ def GenerateReport(start):
 
     outfile.write("Last 7 days (%s to %s)\n" % (start.strftime("%m/%d/%Y")
                                               , end.strftime("%m/%d/%Y")))
-    outfile.write("=======================================\n")
+    outfile.write("======================================\n")
 
     observed_periods = \
         sorted(Set([p for p in periods \
@@ -40,7 +40,7 @@ def GenerateReport(start):
 
     outfile.write("\nNext Week\n")
     outfile.write("=========\n")
-    outfile.write("Observations scheduled for %s - %s\n" % (start.strftime("%m/%d/%Y"), end.strftime("%m/%d/%Y")))
+    outfile.write("Observations scheduled for %s - %s (note this only includes pre-scheduled projects):\n" % (start.strftime("%m/%d/%Y"), end.strftime("%m/%d/%Y")))
     values = ["%s, [%s], PI: %s\n\t\t%s" % \
               (p.session.project.pcode
              , p.session.observing_type.type
@@ -49,8 +49,8 @@ def GenerateReport(start):
               for p in upcoming_periods]
     print_values(outfile, Set(values))
 
-    outfile.write("\nContact Information for %s - %s\n" % (start.strftime("%m/%d/%Y"), end.strftime("%m/%d/%Y")))
-    outfile.write("===============================================\n")
+    outfile.write("\nContact Information for pre-scheduled projects for %s - %s\n" % (start.strftime("%m/%d/%Y"), end.strftime("%m/%d/%Y")))
+    outfile.write("==========================================================================\n")
     outfile.write("\tProject     PI                 Bands Email [NRAO contact]\n")
     outfile.write("\t----------- ------------------ ----- --------------------\n")
     values = ["%s %s %s %s [%s]" % \
@@ -71,7 +71,7 @@ def GenerateReport(start):
                          p.start.year  == start.year]
 
     outfile.write("\nScheduled Hours [backup]\n")
-    outfile.write("============================\n")
+    outfile.write("========================\n")
     outfile.write("Category/Month -> %s %s\n" % \
                   (last_month.strftime("%B").center(8)
                  , start.strftime("%B").center(8)))
@@ -146,7 +146,18 @@ def GenerateReport(start):
     outfile.write("\t         %.1f hours of Regular & RRS projects\n" % rest)
     outfile.write("\t         %.1f hours of Large projects\n" % large)
     outfile.write("\t         %.1f hours of VLBI projects\n" % vlbi)
-    outfile.write("\n* Includes projects that are on hold for trimester %s" % cSemester)
+    outfile.write("\n* Includes projects that are on hold for trimester %s\n" % cSemester)
+
+    visitors = ["%s - %s - %s" % (r.start_date.strftime("%m/%d/%Y")
+                              , r.end_date.strftime("%m/%d/%Y")
+                              , r.user.name()) \
+                for r in Reservation.objects.filter(
+                                      end_date__gte = start
+                                                   ).filter(
+                                      start_date__lte = end)]
+
+    outfile.write("\nVisitors coming for %s - %s:\n" % (start.strftime("%m/%d/%Y"), end.strftime("%m/%d/%Y")))
+    print_values(outfile, visitors)
 
 if __name__=='__main__':
     start = datetime.today()
