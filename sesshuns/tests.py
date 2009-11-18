@@ -381,7 +381,7 @@ class TestReceiverSchedule(NellTestCase):
                                    {"startdate" : startdate,
                                     "duration" : 7})
         self.failUnlessEqual(response.status_code, 200)
-        expected = '{"schedule": {"04/11/2009": ["342", "450", "600"], "04/06/2009": ["RRI", "342", "450"]}}'
+        expected = '{"receivers": ["RRI", "342", "450", "600", "800", "1070", "L", "S", "C", "X", "Ku", "K", "Ka", "Q", "MBA", "Z", "Hol", "KFPA"], "schedule": {"04/11/2009": ["342", "450", "600"], "04/06/2009": ["RRI", "342", "450"]}}'
         self.assertEqual(expected, response.content)
 
 class TestProject(NellTestCase):
