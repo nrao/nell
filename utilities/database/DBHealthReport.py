@@ -48,7 +48,7 @@ def print_values(file, values):
             file.write("\n\t%s" % v)
 
 def GenerateReport():
-    outfile = open("./DSSDbHealthReport.txt",'w')
+    outfile = open("./DssDbHealthReport.txt",'w')
 
     projects = sorted(Project.objects.all(), lambda x, y: cmp(x.pcode, y.pcode))
     sessions = sorted(Sesshun.objects.all(), lambda x, y: cmp(x.name, y.name))
