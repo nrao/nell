@@ -22,11 +22,19 @@ def receivers_schedule(request, *args, **kws):
     if duration is not None:
         duration = int(duration)
     schedule = Receiver_Schedule.extract_schedule(startdate, duration)
+    # get the alternative view of the schedule
+    diff = Receiver_Schedule.diff_schedule(schedule)
+    jsondiff = Receiver_Schedule.jsondict_diff(diff).get("diff_schedule", None)
+    # get all the maintanence days on the schedule
+    # (these are days that rcvr changes *can* happen)
+    maintenance = Period.objects.filter(session__name = "Maintenance")
     # get the list of all receivers
     rcvrs = [r.jsondict() for r in Receiver.objects.all() \
         if r.abbreviation != "NS"]
     return HttpResponse(
             json.dumps({"schedule" : Receiver_Schedule.jsondict(schedule)
+                      , "diff"     : jsondiff
+                      , "maintenance": [p.jsondict('UTC') for p in maintenance] 
                       , "receivers" : rcvrs})
           , mimetype = "text/plain")
 
