@@ -18,7 +18,8 @@ class IcalMap:
         self.cal.add('summary', 'GBT Schedule')
         self.cal.add('calscale', 'GREGORIAN')
 
-        periods = Period.objects.all()
+        all = Period.objects.all()
+        periods = [p for p in all if p.state.abbreviation != 'D']
         now = datetime.utcnow()
         for p in periods:
             event = Event()
