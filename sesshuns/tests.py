@@ -1343,6 +1343,38 @@ class TestObservers(NellTestCase):
             '/profile/%s/blackout' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 302)
 
+    def test_blackout2(self):
+        b     = self.create_blackout()
+        start = datetime(2009, 1, 1)
+        end   = datetime(2009, 1, 31)
+        until = datetime(2010, 1, 31)
+        data = {'start'       : start.date().strftime("%m/%d/%Y")
+              , 'starttime'   : start.time().strftime("%H:%M")
+              , 'end'         : end.date().strftime("%m/%d/%Y")
+              , 'endtime'     : end.time().strftime("%H:%M")
+              , 'tz'          : 'UTC'
+              , 'repeat'      : 'Once'
+              , 'until'       : until.strftime("%m/%d/%Y")
+              , 'untiltime'   : until.strftime("%H:%M")
+              , 'description' : "This is a test blackout."
+              , '_method'     : 'PUT'
+              , 'id'          : b.id
+                }
+
+        response = self.post(
+            '/profile/%s/blackout' % self.u.id, data)
+        self.failUnlessEqual(response.status_code, 302)
+        self.assertTrue("ERROR" not in response.content)
+
+        # test that a blackout can't have a missing end date
+        data['end'] = None
+        data['endtime'] = None
+        response = self.post(
+            '/profile/%s/blackout' % self.u.id, data)
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue("ERROR" in response.content)
+
+
     def test_get_period_day_time(self):
 
         # create a period

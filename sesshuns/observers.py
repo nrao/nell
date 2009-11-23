@@ -497,10 +497,18 @@ def blackout(request, *args, **kws):
     errors = [e for e in [stError, edError, utError] if e is not None]
 
     # more error checking!
+    # start, end can't be null
+    if start is None or end is None:
+        errors.append("ERROR: must specify Start and End")
+    # start has to be a start, end has to be an end 
     if end is not None and start is not None and end < start:
         errors.append("ERROR: End must be after Start")
     if end is not None and until is not None and until < end:
         errors.append("ERROR: Until must be after End")
+    # if it's repeating, we must have an until date
+    if repeat.repeat != "Once" and until is None:
+        errors.append("ERROR: if repeating, must specify Until")
+        
 
     # do we need to redirect back to the form because of errors?
     if len(errors) != 0:
