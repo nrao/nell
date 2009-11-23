@@ -344,6 +344,25 @@ class TestReceiverSchedule(NellTestCase):
                 rs.receiver = Receiver.objects.get(id = i + j)
                 rs.save()
 
+
+    def test_extract_diff_schedule(self):
+        startdate = datetime(2009, 4, 6, 12)
+        duration = 15
+        diff = Receiver_Schedule.extract_diff_schedule(startdate = startdate,
+                                                       days = duration)
+        expected = [datetime(2009, 4, 6, 0, 0)
+                  , datetime(2009, 4, 11, 0, 0)
+                  , datetime(2009, 4, 16, 0, 0)
+                  , datetime(2009, 4, 21, 0, 0)]
+        self.assertEqual(expected, [d[0] for d in diff])
+        jdiff = Receiver_Schedule.jsondict_diff(diff)
+        expected = {'diff_schedule': \
+            [{'down': [], 'up': [u'RRI', u'342', u'450'], 'day': '04/06/2009'}
+           , {'down': [u'RRI'], 'up': [u'600'], 'day': '04/11/2009'}
+           , {'down': [u'342'], 'up': [u'800'], 'day': '04/16/2009'}
+           , {'down': [u'450'], 'up': [u'1070'], 'day': '04/21/2009'}]}
+        self.assertEqual(expected, jdiff)
+
     def test_extract_schedule(self):
         startdate = datetime(2009, 4, 6, 12)
         duration = 15
@@ -381,7 +400,8 @@ class TestReceiverSchedule(NellTestCase):
                                    {"startdate" : startdate,
                                     "duration" : 7})
         self.failUnlessEqual(response.status_code, 200)
-        expected = '{"receivers": ["RRI", "342", "450", "600", "800", "1070", "L", "S", "C", "X", "Ku", "K", "Ka", "Q", "MBA", "Z", "Hol", "KFPA"], "schedule": {"04/11/2009": ["342", "450", "600"], "04/06/2009": ["RRI", "342", "450"]}}'
+        expected = '{"diff": [{"down": [], "up": ["RRI", "342", "450"], "day": "04/06/2009"}, {"down": ["RRI"], "up": ["600"], "day": "04/11/2009"}], "receivers": ["RRI", "342", "450", "600", "800", "1070", "L", "S", "C", "X", "Ku", "K", "Ka", "Q", "MBA", "Z", "Hol", "KFPA"], "maintenance": [], "schedule": {"04/11/2009": ["342", "450", "600"], "04/06/2009": ["RRI", "342", "450"]}}'
+
         self.assertEqual(expected, response.content)
 
 class TestProject(NellTestCase):
