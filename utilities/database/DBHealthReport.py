@@ -48,7 +48,7 @@ def print_values(file, values):
             file.write("\n\t%s" % v)
 
 def GenerateReport():
-    outfile = open("./DSSDbHealthReport.txt",'w')
+    outfile = open("./DssDbHealthReport.txt",'w')
 
     projects = sorted(Project.objects.all(), lambda x, y: cmp(x.pcode, y.pcode))
     sessions = sorted(Sesshun.objects.all(), lambda x, y: cmp(x.name, y.name))
@@ -134,9 +134,10 @@ def GenerateReport():
     outfile.write("\n\nOverlapping periods:")
     values  = []
     overlap = []
-    for p1 in periods:
+    not_deleted_periods = [p for p in periods if p.state.abbreviation != "D"]
+    for p1 in not_deleted_periods:
         start1, end1 = p1.start, p1.end()
-        for p2 in periods:
+        for p2 in not_deleted_periods:
             start2, end2 = p2.start, p2.end()
             if p1 != p2 and p1 not in overlap and p2 not in overlap:
                 if overlaps((start1, end1), (start2, end2)):
@@ -145,7 +146,7 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nPeriods with non-positive durations:")
-    values  = [p.session.name for p in periods if p.duration <= 0.]
+    values  = [p for p in periods if p.duration <= 0.]
     print_values(outfile, values)
 
 if __name__ == '__main__':

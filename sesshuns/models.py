@@ -905,6 +905,39 @@ class Receiver_Schedule(models.Model):
         return jschedule
 
     @staticmethod
+    def jsondict_diff(schedule):
+        jsonlist = []
+        for day, up, down in schedule:
+            jd = None if day is None else day.strftime("%m/%d/%Y")
+            jup   = [r.jsondict() for r in up]
+            jdown = [r.jsondict() for r in down]
+            jsonlist.append(dict(day = jd, up = jup, down = jdown))
+        return dict(diff_schedule = jsonlist)    
+
+    @staticmethod
+    def diff_schedule(schedule):
+        """
+        Given a schedule (produced from 'extract_schedule') produces a 
+        logically equivalent schedule, but in the form of deltas: it shows
+        for each listed date, what rcvrs are coming up and going down.
+        """
+        diff = []
+        # sort the schedule
+        sch = sorted(schedule.items())
+        prevRcvrs = []
+        for day, rcvrs in sch:
+            up = [r for r in rcvrs if r not in prevRcvrs]
+            down = [r for r in prevRcvrs if r not in rcvrs]
+            prevRcvrs = rcvrs
+            diff.append((day, up, down))
+        return diff
+
+    @staticmethod
+    def extract_diff_schedule(startdate = None, days = None):
+        sch = Receiver_Schedule.extract_schedule(startdate, days)
+        return Receiver_Schedule.diff_schedule(sch)
+
+    @staticmethod
     def extract_schedule(startdate = None, days = None):
         """
         Returns the entire receiver schedule starting at 'startdate' and
@@ -1041,7 +1074,8 @@ class Sesshun(models.Model):
         "A simple check for all explicit flags"
         return (self.status.enabled) and \
                (self.status.authorized) and \
-               (not self.status.complete)
+               (not self.status.complete) and \
+               (not self.project.complete)
 
     def delete(self):
         self.allotment.delete()
@@ -1725,6 +1759,7 @@ class Period(models.Model):
         if self.state.abbreviation == 'P':
             self.state = first(Period_State.objects.filter(abbreviation = 'S'))
             self.accounting.scheduled = self.duration
+            self.accounting.save()
 
     def delete(self):
         "Keep non-pending periods from being deleted."

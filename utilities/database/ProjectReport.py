@@ -110,8 +110,6 @@ def GenerateProjectReport():
                 )
             )
 
-    # TBF: Restrict some of these calcuations to current trimester periods
-    #      only.
     trimester          = Semester.getCurrentSemester()
     trimester_hrs_left = (trimester.end() - datetime.today()).days * 24
 
@@ -119,11 +117,24 @@ def GenerateProjectReport():
     outfile.write("\nTotal hours left this trimester = %.1f\n" % \
                   trimester_hrs_left)
 
-    projects = Project.objects.all()
-    ta       = TimeAccounting()
 
-    hours = sum([s.allotment.total_time \
-                 for p in projects for s in p.sesshun_set.all()])
+    # All open projects + 
+    # All projects for this trimester +
+    # All A grade projects that ran during this trimester
+    projects = \
+        [p for p in open_projects] + \
+        [p for p in Project.objects.filter(complete = True).filter(semester = trimester)] + \
+        [p for p in Project.objects.filter(complete = True) \
+           if p.semester != trimester.semester and \
+              any([s.allotment.grade == 4.0 for s in p.sesshun_set.all()]) and \
+              any([pd.start > trimester.start() and \
+                   pd.start < trimester.end() \
+                   for pd in s.period_set.all()])]
+
+    ta    = TimeAccounting()
+    hours = sum([min(ta.getProjectTotalTime(p)
+                   , ta.getProjSessionsTotalTime(p))
+                 for p in projects])
 
     outfile.write("\nSum of all sessions allotment time = %.1f\n" % hours)
     outfile.write("\nAllotment hours / Trimester Hours = %.1f%%\n" % 
@@ -132,7 +143,7 @@ def GenerateProjectReport():
     outfile.write("\nObserved hours  / Trimester Hours = %.1f%%\n" % 
                   (sum([ta.getTime("observed", p) for p in projects]) / TRIMESTER_HOURS * 100.))
 
-    hours = sum([ta.getTimeLeft(p) for p in projects])
+    hours = sum([ta.getTimeLeft(p) for p in projects if not p.complete])
     outfile.write("\nSum of all sessions remaining time = %.1f\n" % hours)
     outfile.write("\nRemaining hours / Trimester Hours = %.1f%%\n" % 
                   (hours / TRIMESTER_HOURS * 100.))

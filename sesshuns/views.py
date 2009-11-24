@@ -1,8 +1,9 @@
 from datetime                 import date, datetime, timedelta
 from django.http              import HttpResponse
-from models                   import Project, Sesshun, Period
+from models                   import Project, Sesshun, Period, Receiver
 from models                   import Receiver_Schedule, first, str2dt
 from tools                    import IcalMap, ScheduleTools, TimeAccounting
+from utilities                import TimeAgent
 from settings                 import PROXY_PORT
 from utilities.SchedulingNotifier import SchedulingNotifier
 
@@ -11,6 +12,7 @@ import simplejson as json
 ROOT_URL = "http://trent.gb.nrao.edu:%d" % PROXY_PORT
 
 def receivers_schedule(request, *args, **kws):
+    # get the schedule
     startdate = request.GET.get("startdate", None)
     if startdate is not None:
         d, t      = startdate.split(' ')
@@ -21,8 +23,20 @@ def receivers_schedule(request, *args, **kws):
     if duration is not None:
         duration = int(duration)
     schedule = Receiver_Schedule.extract_schedule(startdate, duration)
+    # get the alternative view of the schedule
+    diff = Receiver_Schedule.diff_schedule(schedule)
+    jsondiff = Receiver_Schedule.jsondict_diff(diff).get("diff_schedule", None)
+    # get all the maintanence days on the schedule
+    # (these are days that rcvr changes *can* happen)
+    maintenance = Period.objects.filter(session__name = "Maintenance")
+    # get the list of all receivers
+    rcvrs = [r.jsondict() for r in Receiver.objects.all() \
+        if r.abbreviation != "NS"]
     return HttpResponse(
-            json.dumps({"schedule" : Receiver_Schedule.jsondict(schedule)})
+            json.dumps({"schedule" : Receiver_Schedule.jsondict(schedule)
+                      , "diff"     : jsondiff
+                      , "maintenance": [p.jsondict('UTC') for p in maintenance] 
+                      , "receivers" : rcvrs})
           , mimetype = "text/plain")
 
 def get_options(request, *args, **kws):
