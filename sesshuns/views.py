@@ -3,6 +3,7 @@ from django.http              import HttpResponse
 from models                   import Project, Sesshun, Period, Receiver
 from models                   import Receiver_Schedule, first, str2dt
 from tools                    import IcalMap, ScheduleTools, TimeAccounting
+from utilities                import TimeAgent
 from settings                 import PROXY_PORT
 from utilities.SchedulingNotifier import SchedulingNotifier
 

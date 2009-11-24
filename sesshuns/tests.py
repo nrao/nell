@@ -1170,6 +1170,70 @@ class TestShiftPeriodBoundaries(NellTestCase):
                              , time    = time)) #"2009-10-11 04:00:00"))
         self.failUnless("ok" in response.content)                     
 
+class TestPublishPeriods(NellTestCase):
+
+    def setUp(self):
+        super(TestPublishPeriods, self).setUp()
+
+        # setup some periods
+        self.start = datetime(2000, 1, 1, 0)
+        self.end   = self.start + timedelta(hours = 12)
+        times = [(datetime(2000, 1, 1, 0), 5.0, "one", "S")
+               , (datetime(2000, 1, 1, 5), 3.0, "two", "P")
+               , (datetime(2000, 1, 1, 8), 4.0, "three", "S")
+               ]
+        self.ps = []
+        for start, dur, name, st in times:
+            s = create_sesshun()
+            s.name = name
+            s.save()
+            scheduled = dur if st == "S" else 0.0
+            pa = Period_Accounting(scheduled = scheduled)
+            pa.save()
+            state = first(Period_State.objects.filter(abbreviation = st))
+            p = Period( session    = s
+                      , start      = start
+                      , duration   = dur
+                      , state      = state
+                      , accounting = pa
+                      )
+            p.save()          
+            self.ps.append(p)
+
+    def tearDown(self):
+        super(TestPublishPeriods, self).tearDown()
+
+        for p in self.ps:
+            p.session.delete()
+            p.remove() #delete()
+
+    def test_publish_periods(self):
+
+        c = Client()
+
+        # check current state
+        ps = Period.objects.order_by("start")
+        exp = ["S", "P", "S"]
+        self.assertEquals(exp, [p.state.abbreviation for p in ps])
+        exp = [5.0, 0.0, 4.0]
+        self.assertEquals(exp, [p.accounting.scheduled for p in ps])
+
+        time = self.ps[0].start.strftime("%Y-%m-%d %H:%M:%S")
+        tz = "ET"
+        duration = 12
+        url = "/periods/publish"
+
+        response = c.post(url, dict(start    = time
+                                  , tz       = tz
+                                  , duration = duration)) 
+        self.failUnless("ok" in response.content)    
+
+        ps = Period.objects.order_by("start")
+        exp = ["S", "S", "S"]
+        self.assertEquals(exp, [p.state.abbreviation for p in ps])
+        exp = [5.0, 3.0, 4.0]
+        self.assertEquals(exp, [p.accounting.scheduled for p in ps])
+
 # Testing Observers UI
 
 class TestObservers(NellTestCase):

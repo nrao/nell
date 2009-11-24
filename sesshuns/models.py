@@ -1759,6 +1759,7 @@ class Period(models.Model):
         if self.state.abbreviation == 'P':
             self.state = first(Period_State.objects.filter(abbreviation = 'S'))
             self.accounting.scheduled = self.duration
+            self.accounting.save()
 
     def delete(self):
         "Keep non-pending periods from being deleted."
