@@ -34,7 +34,7 @@
               <th title="The classified observing type.">Type</th>
               <th title="Session is authorized to observe by GBT staff.">Authorized</th>
               <th title="Select this box to enable the session.">Enabled</th>
-            {% for s in p.sesshun_set.all %}
+            {% for s in sess %}
             <tr>
               <td>{{s.name}}</td>
               <td>{{s|target_horz}}</td>
