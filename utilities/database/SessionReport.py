@@ -6,6 +6,7 @@ from sesshuns.models      import *
 from tools.TimeAccounting import TimeAccounting
 from sets                 import Set
 from datetime             import *
+from sesshuns.templatetags.custom import *
 
 # TBF: isn't this the same as TimeAccounting.getProjSessionsTotalTime
 def get_total_time(project):
@@ -25,20 +26,12 @@ def ljust(value, width):
 def bl(value):
     return "T" if value else "F"
 
-def get_ra(sess):
-    tg = sess.target_set.all()[0]
-    return tg.vertical
-
-def get_dec(sess):
-    tg = sess.target_set.all()[0]
-    return tg.horizontal
-
 def GenerateReport(start):
     outfile = open("./DssSessionReport.txt", 'w')
     sorted_semesters=sorted(Semester.objects.all(),lambda x,y:cmp(x.semester,y.semester))
     ta = TimeAccounting()
     pcs = [11, 50, 12, 10, 10]
-    scs = [3, 3, 15, 13, 4, 5, 5, 5, 5, 5, 5, 5, 5, 15]
+    scs = [3, 3, 15, 9, 4, 5, 9, 8, 5, 5, 5, 5, 5, 15]
     for s in sorted_semesters:
         outfile.write("\n\n Trimester : %s" %s.semester)
         outfile.write("\n-----------------")
@@ -88,8 +81,8 @@ def GenerateReport(start):
                        , ljust(s.observing_type.type,  scs[3])
                        , ljust(s.session_type.type[0], scs[4])
                        , ljust(s.frequency,            scs[5])
-                       , ljust(get_ra(s),              scs[6])
-                       , ljust(get_dec(s),             scs[7])
+                       , ljust(target_horz(s),         scs[6])
+                       , ljust(target_vert(s),         scs[7])
                        , ljust(s.allotment.total_time, scs[8])
                        , ljust(ta.getTimeLeft(s),      scs[9])
                        , ljust(s.min_duration,         scs[10])
