@@ -53,7 +53,7 @@ def GenerateReport(start):
                            , str(get_total_time(p)).ljust(pcs[3])
                            , str(get_remaining_time(p,ta)).ljust(pcs[4])
                             ))
-                outfile.write("\n\n\t %s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" %\
+                outfile.write("\n\n\t %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s" %\
                        (ljust("sch",            scs[0])
                       , ljust("cmp",            scs[1])
                       , ljust("name",           scs[2])
@@ -75,7 +75,7 @@ def GenerateReport(start):
                            lambda x,y:cmp(x.name, y.name))
                 for s in sess: #p.sesshun_set.all():
 
-                    outfile.write("\n\t %s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" %\
+                    outfile.write("\n\t %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s" %\
                         (ljust(bl(s.schedulable()),    scs[0])
                        , ljust(bl(s.status.complete),  scs[1])
                        , ljust(s.name,                 scs[2])
