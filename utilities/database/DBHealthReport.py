@@ -5,6 +5,7 @@ setup_environ(settings)
 from sesshuns.models import *
 from sets            import Set
 from datetime        import date, datetime, timedelta
+from tools           import TimeAccounting
 
 def get_sessions(typ,sessions):
     return [s for s in sessions if s.session_type.type == typ]
@@ -48,6 +49,9 @@ def print_values(file, values):
             file.write("\n\t%s" % v)
 
 def GenerateReport():
+
+    ta = TimeAccounting()
+
     outfile = open("./DssDbHealthReport.txt",'w')
 
     projects = sorted(Project.objects.all(), lambda x, y: cmp(x.pcode, y.pcode))
@@ -61,16 +65,22 @@ def GenerateReport():
     outfile.write("\n\nSessions without a project:")
     values = [s.name for s in sessions if not s.project]
     print_values(outfile, values)
+
+    outfile.write("\n\nOpen sessions with alloted time < min duration:")
+    values = [s.name for s in sessions \
+              if s.session_type.type == "open" and \
+                 s.allotment.total_time < s.min_duration]
+    print_values(outfile, values)
         
     outfile.write("\n\nOpen sessions with time left < min duration:")
     values = [s.name for s in sessions \
-              if s.observing_type.type == "open" and \
-                 TimeAccounting.getTimeLeft(s) < s.min_duration]
+              if s.session_type.type == "open" and \
+                 ta.getTimeLeft(s) < s.min_duration]
     print_values(outfile, values)
 
     outfile.write("\n\nOpen sessions with max duration < min duration:")
     values = [s.name for s in sessions \
-              if s.observing_type.type == "open" and \
+              if s.session_type.type == "open" and \
                  s.min_duration > s.max_duration]
     print_values(outfile, values)
 
@@ -80,7 +90,7 @@ def GenerateReport():
 
     outfile.write("\n\nOpen sessions with default frequency 0:")
     values = [s.name for s in sessions \
-              if s.observing_type.type == "open" and s.frequency == 0.0]
+              if s.session_type.type == "open" and s.frequency == 0.0]
     print_values(outfile, values)
 
     outfile.write("\n\nSessions with unmatched observer parameter pairs:")
@@ -147,6 +157,10 @@ def GenerateReport():
 
     outfile.write("\n\nPeriods with non-positive durations:")
     values  = [p for p in periods if p.duration <= 0.]
+    print_values(outfile, values)
+
+    outfile.write("\n\nPeriods with negative observed times:")
+    values  = [str(p) for p in periods if p.accounting.observed() < 0.]
     print_values(outfile, values)
 
 if __name__ == '__main__':
