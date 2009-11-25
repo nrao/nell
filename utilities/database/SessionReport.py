@@ -38,15 +38,15 @@ def GenerateReport(start):
         the_projects=[p for p in s.project_set.all() if not p.complete]
         projects = sorted(the_projects, lambda x,y:cmp(x.pcode, y.pcode))
         if projects:
-            outfile.write("\n\n %s \t %s \t %s \t %s \t %s" % \
+            outfile.write("\n\n %s\t%s\t%s\t%s\t%s" % \
                 (str("pcode").ljust(pcs[0])
                , str("name").ljust(pcs[1])
                , str("PI").ljust(pcs[2])
                , str("total hrs").ljust(pcs[3])
                , str("remaining").ljust(pcs[4])))
-            outfile.write("\n" + ("-"*115))   
+            outfile.write("\n" + ("-"*105))   
             for p in projects:
-                outfile.write("\n\n %s \t %s \t %s \t %s \t %s" % \
+                outfile.write("\n\n %s\t%s\t%s\t%s\t%s" % \
                             (p.pcode.ljust(pcs[0])
                            , p.name[:50].ljust(pcs[1])
                            , p.principal_investigator().last_name.ljust(pcs[2])
@@ -70,7 +70,7 @@ def GenerateReport(start):
                       , ljust("btn",            scs[13])
                       , ljust("rcvrs",          scs[14])
                       ))
-                outfile.write("\n\t" + ("-"*120))                 
+                outfile.write("\n\t" + ("-"*106))                 
                 sess = sorted(p.sesshun_set.all(), \
                            lambda x,y:cmp(x.name, y.name))
                 for s in sess: #p.sesshun_set.all():
