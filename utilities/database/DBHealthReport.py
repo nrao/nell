@@ -84,6 +84,11 @@ def GenerateReport():
                  s.min_duration > s.max_duration]
     print_values(outfile, values)
 
+    outfile.write("\n\nSessions with negative observed time:")
+    values = [(s.name, str(s.getObservedTime()), str(s.allocation.total_time)) \
+        for s in sessions if ta.getTime("observed", s) < 0.0]
+    print_values(outfile, values)
+
     outfile.write("\n\nSessions without recievers:")
     values = [s.name for s in sessions if s.receiver_group_set.all() == []]
     print_values(outfile, values)
