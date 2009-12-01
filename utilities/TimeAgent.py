@@ -78,6 +78,10 @@ def est2utc(est):
     n_utc = n_est.astimezone(UTC)
     return n_utc.replace(tzinfo=None)
 
+def utcoffset():
+    now = datetime.datetime.utcnow()
+    return (now - utc2est(now)).seconds / 60 / 60
+
 def deg2rad(deg):
     "Translates degrees into radians."
     return math.pi * deg / 180

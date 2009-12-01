@@ -39,10 +39,10 @@ class SchedulingNotifier(Notifier):
 
         if self.periods != []:
             self.startdate = periods[0].start
+            self.enddate   = periods[-1].end()
         else:
-            self.startdate = datetime.now()
-
-        self.enddate = self.startdate + timedelta(hours = 48)
+            self.startdate = datetime.utcnow()
+            self.enddate   = self.startdate + timedelta(hours = 48)
 
         self.createAddresses()
         self.createSubject()
