@@ -120,7 +120,7 @@ def GenerateReport():
 
     outfile.write("\n\nProjects without any observers:")
     values = [p.pcode for p in projects \
-              if not p.has_sanctioned_observers() and not p.complete]
+              if not p.complete and len(p.get_observers()) == 0]
     print_values(outfile, values)
 
     outfile.write("\n\nReceiver changes happening on days other than maintenance days:")
