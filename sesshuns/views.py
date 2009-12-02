@@ -255,9 +255,9 @@ def delete_pending(request, *args, **kwds):
 
 def scheduling_email(request, *args, **kwds):
     if request.method == 'GET':
-        # Show the schedule from now until 7am eastern two days from now.
+        # Show the schedule from now until 8am eastern two days from now.
         start = datetime.utcnow()
-        end   = TimeAgent.est2utc(TimeAgent.utc2est(start + timedelta(days = 2)).replace(hour = 7, minute = 0, second = 0, microsecond = 0))
+        end   = TimeAgent.est2utc(TimeAgent.utc2est(start + timedelta(days = 2)).replace(hour = 8, minute = 0, second = 0, microsecond = 0))
 
         periods = Period.objects.filter(start__gt = start, start__lt = end).filter(state__abbreviation__in = ['S', 'P'])
         notifier = SchedulingNotifier(list(periods)) 
