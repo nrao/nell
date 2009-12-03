@@ -1547,6 +1547,15 @@ class Period_Accounting(models.Model):
               , "short_notice"          : self.short_notice
               , "description"           : description}
 
+    def validate(self):
+        "Checks for invalid results, and returns info"
+        for f in ["time_billed", "observed"]:
+            if self.get_time(f) < 0.0:
+                msg = "%s cannot be negative.  Please check times." % f
+                return (False, msg)
+        # valid!        
+        return (True, None)        
+
 class Period_State(models.Model):
     name         = models.CharField(max_length = 32)
     abbreviation = models.CharField(max_length = 32)

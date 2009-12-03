@@ -202,6 +202,15 @@ def period_time_accounting(request, *args, **kws):
         value = float(request.POST.get(field, None))
         a.set_changed_time(field, value) #request.POST.get(field, None))
     a.description = request.POST.get("description", None)
+
+    # valid the new time accounting
+    valid, msg = a.validate()
+    if not valid:
+        # don't save this, and notify the user
+        title = "Error setting Period Time Accounting"
+        return HttpResponse(json.dumps({'error':title, 'message':msg})
+                          , mimetype = "text/plain")
+
     a.save()
     # now return the consequences this may have to the rest of the
     # project time accounting
