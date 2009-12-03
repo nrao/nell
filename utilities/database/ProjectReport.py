@@ -9,10 +9,6 @@ from tools.TimeAccounting import TimeAccounting
 from sets                 import Set
 from datetime             import *
 
-# days in a trimester * hours
-# (And, yes, I'm ignoring leap years. Get off my back!)
-TRIMESTER_HOURS = (365. / 3.) * 24.
-
 def get_type(project):
     return Set([s.session_type.type for s in project.sesshun_set.all()])
 
@@ -111,9 +107,10 @@ def GenerateProjectReport():
             )
 
     trimester          = Semester.getCurrentSemester()
-    trimester_hrs_left = (trimester.end() - datetime.today()).days * 24
+    trimester_hrs_left = (trimester.end() - datetime.today()).days * 24.
+    TRIMESTER_HOURS    = (trimester.end() - trimester.start()).days * 24.
 
-    outfile.write("\nTotal hours in a trimester = %.1f\n"% TRIMESTER_HOURS)
+    outfile.write("\nTotal hours in this trimester = %.1f\n"% TRIMESTER_HOURS)
     outfile.write("\nTotal hours left this trimester = %.1f\n" % \
                   trimester_hrs_left)
 
@@ -136,18 +133,18 @@ def GenerateProjectReport():
                    , ta.getProjSessionsTotalTime(p))
                  for p in projects])
 
-    outfile.write("\nSum of all sessions allotment time = %.1f\n" % hours)
+    outfile.write("\nSum of all sessions' allotment time = %.1f\n" % hours)
     outfile.write("\nAllotment hours / Trimester Hours = %.1f%%\n" % 
                   (hours / TRIMESTER_HOURS * 100.))
 
-    outfile.write("\nObserved hours  / Trimester Hours = %.1f%%\n" % 
+    outfile.write("\nHours discharged / Trimester Hours = %.1f%%\n" % 
                   (sum([ta.getTime("observed", p) for p in projects]) / TRIMESTER_HOURS * 100.))
 
     hours = sum([ta.getTimeLeft(p) for p in projects if not p.complete])
-    outfile.write("\nSum of all sessions remaining time = %.1f\n" % hours)
-    outfile.write("\nRemaining hours / Trimester Hours = %.1f%%\n" % 
+    outfile.write("\nSum of all sessions' hours remaining = %.1f\n" % hours)
+    outfile.write("\nHours remaining / Trimester Hours = %.1f%%\n" % 
                   (hours / TRIMESTER_HOURS * 100.))
-    outfile.write("\nRemaining hours / Trimester Hours Left = %.1f%%\n" % 
+    outfile.write("\nHours remaining / Trimester Hours Left = %.1f%%\n" % 
                   float(hours / trimester_hrs_left * 100.))
 
     hours = sum([s.allotment.total_time \
