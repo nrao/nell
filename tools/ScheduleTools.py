@@ -158,8 +158,10 @@ class ScheduleTools(object):
 
         # create the tag used for all descriptions in time accounting
         nowStr = datetime.now().strftime("%Y-%m-%d %H:%M")    
-        tag = " [Shift Period Bnd. (%s)]: " % nowStr 
-        description = tag + desc
+        descHead = " [Shift Period Bnd. (%s) " % nowStr 
+        # dictionary of who gave and who got, where:
+        # descDct[gave/got] = [(desc. of original period, time, period id)]
+        descDct = {}
 
         # figure out the stuff that depends on which boundary we're moving
         if start_boundary:
@@ -174,6 +176,9 @@ class ScheduleTools(object):
         if period_growing:
             # what to do with the period?
             # give time!
+            # take notes for later    
+            descDct["got_time"] = [(period.__str__(), diff_hrs, period.id)]
+            descDct["gave_time"] = []
             period.accounting.short_notice += diff_hrs
             period.accounting.scheduled += diff_hrs
             period.duration += diff_hrs
@@ -188,28 +193,29 @@ class ScheduleTools(object):
                     if p.id != period.id]
             for p in affected_periods:
                 if p.start >= period.start and p.end() <= period.end():
-                    # remove this period; TBF: state -> deleted!
+                    # remove this period; 
+                    descDct["gave_time"].append((p.__str__(), p.duration, p.id))
                     value = p.accounting.get_time(reason)
                     p.accounting.set_changed_time(reason, value + p.duration)
                     p.delete() # The Deleted state!
                 else:
                     # give part of this periods time to the affecting period
                     other_time_point = p.end() if start_boundary else p.start
-                    #other_time = self.get_time_diff_hours(other_time_point
-                    #                                    , time)
                     other_time = dtDiffHrs(other_time_point, time)
+                    descDct["gave_time"].append((p.__str__(), other_time, p.id))
                     value = p.accounting.get_time(reason)
                     p.accounting.set_changed_time(reason, value + other_time)
                     p.duration -= other_time 
                     if not start_boundary:
                         p.start = time
-                p.accounting.description = description    
                 p.accounting.save()
                 p.save()
         else: 
             # period is shrinking
             # what to do w/ the period?
             # take time!
+            # take notes for later    
+            descDct["gave_time"]  = [(period.__str__(), diff_hrs, period.id)]   
             value = period.accounting.get_time(reason)
             period.accounting.set_changed_time(reason, value + diff_hrs)
             period.duration -= diff_hrs
@@ -217,11 +223,10 @@ class ScheduleTools(object):
                 period.start = time
             # what to do w/ the other affected period (just one!)?
             # give it time!
-            #value = neighbor.accounting.get_time(reason)
-            #neighbor.accounting.set_changed_time(reason, value + diff_hrs)
+            # take notes for later
+            descDct["got_time"] = [(neighbor.__str__(), diff_hrs, neighbor.id)]
             neighbor.accounting.short_notice += diff_hrs
             neighbor.accounting.scheduled += diff_hrs
-            neighbor.accounting.description = description
             neighbor.accounting.save()
             neighbor.duration += diff_hrs
             if not start_boundary:
@@ -229,9 +234,23 @@ class ScheduleTools(object):
             neighbor.save()    
         
         # in all cases:
-        period.accounting.description = description
         period.accounting.save()
         period.save()
+        
+        # in all cases, give the description of entire event:
+        description = descHead + "Period %s got %5.2f hours from: " %\
+            (descDct["got_time"][0][0]
+           , descDct["got_time"][0][1])
+        for p, hrs, pid in descDct["gave_time"]:
+            description += "%s (%5.2f hours) " % (p, hrs)
+        description += "] " + desc   
+
+        # now assign the description to all affected periods
+        for who in ["got_time", "gave_time"]:
+            for pname, hrs, pid in descDct[who]:
+                p = first(Period.objects.filter(id = pid))
+                p.accounting.description = description
+                p.accounting.save()
 
         # TBF: now we have to rescore all the affected periods!
 
