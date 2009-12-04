@@ -1874,6 +1874,10 @@ class TestScheduleTools(NellTestCase):
         self.assertTrue("SP broke." in canceled.accounting.description)
         self.assertEquals(3.0, backup.accounting.short_notice)
         self.assertTrue("SP broke." in backup.accounting.description)
+        
+        tag = "Period backup: 2000-01-01 02:00:00 for  3.00 Hrs got  3.00 hours from: one: 2000-01-01 00:00:00 for  5.00 Hrs ( 3.00 hours)"
+        self.assertTrue(tag in backup.accounting.description)
+        self.assertTrue(tag in canceled.accounting.description)
 
     def test_changeSchedule2(self):
 
@@ -1909,6 +1913,9 @@ class TestScheduleTools(NellTestCase):
         self.assertEquals(2.0, canceled.duration)
         self.assertEquals(3.0, canceled.accounting.lost_time_other)
         self.assertTrue(desc in canceled.accounting.description)
+
+        tag = "No Period got time from: one: 2000-01-01 00:00:00 for  5.00 Hrs ( 3.00 hours)"
+        self.assertTrue(tag in canceled.accounting.description)
 
     def test_changeSchedule3(self):
 

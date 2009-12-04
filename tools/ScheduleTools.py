@@ -3,7 +3,7 @@ from utilities.TimeAgent import dtDiffHrs
 
 class ScheduleTools(object):
 
-    def changeSchedule(self, start, duration, sesshun, reason, description):
+    def changeSchedule(self, start, duration, sesshun, reason, desc):
         """
         Change the schedule, and take care of all the time accounting.
         This is meant for use in such cases as examplified in Memo 11.2.
@@ -23,8 +23,10 @@ class ScheduleTools(object):
 
         # tag the descriptoin
         nowStr = datetime.now().strftime("%Y-%m-%d %H:%M")    
-        tag = " [Schedule Change (%s)]: " % nowStr 
-        description = tag + description
+        descHead = " [Insert Period (%s) " % nowStr 
+        # dictionary of who gave and who got, where:
+        # descDct[gave/got] = [(desc. of original period, time, period id)]
+        descDct = dict(gave_time = [], got_time = [])
 
         # what periods are we affecting?
         duration_mins = duration * 60.0
@@ -43,6 +45,7 @@ class ScheduleTools(object):
                 if debug:
                     print "delete period!"
                 # this entire period is being replaced
+                descDct["gave_time"].append((p.__str__(), p.duration, p.id))
                 other_sess_time = p.duration
                 p.delete() # the Deleted State!
             elif p.start >= start and p.end() > end:
@@ -51,6 +54,7 @@ class ScheduleTools(object):
                 # we're chopping off the beginning of this period
                 new_duration = (p.end() - end).seconds / 3600.0
                 other_sess_time = p.duration - new_duration
+                descDct["gave_time"].append((p.__str__(),other_sess_time, p.id))
                 p.duration = new_duration
                 p.start = end
             elif p.start < start and p.end() > end:
@@ -58,6 +62,7 @@ class ScheduleTools(object):
                     print "bi-secting period"
                 # we're chopping out the middle of a period: we fix this
                 # by adjusting the period, then creating a new one
+                descDct["gave_time"].append((p.__str__(), duration, p.id))
                 original_duration = p.duration
                 original_end      = p.end()
                 p.duration = (start - p.start).seconds / 3600.0
@@ -65,7 +70,7 @@ class ScheduleTools(object):
                 new_dur = (original_end - end).seconds / 3600.0
                 accounting = Period_Accounting(scheduled = new_dur
                                              , short_notice = new_dur
-                                             , description = description
+                                             , description = "" #description
                                                )
                 accounting.save()                             
                 pending = first(Period_State.objects.filter(abbreviation = 'P'))
@@ -87,6 +92,7 @@ class ScheduleTools(object):
                 # we're chopping off the end of this period
                 new_duration = (start - p.start).seconds / 3600.0
                 other_sess_time = p.duration - new_duration
+                descDct["gave_time"].append((p.__str__(),other_sess_time, p.id))
                 p.duration = new_duration
                          
             else:
@@ -98,9 +104,6 @@ class ScheduleTools(object):
                 # increment values: don't overwrite them!
                 value = p.accounting.get_time(reason)
                 p.accounting.set_changed_time(reason, value + other_sess_time)
-                desc = p.accounting.description \
-                    if p.accounting.description is not None else ""
-                p.accounting.description = desc + description
                 p.accounting.save()
                 p.save()
 
@@ -109,7 +112,7 @@ class ScheduleTools(object):
             # create a period for this
             pa = Period_Accounting(scheduled    = duration
                                  , short_notice = duration
-                                 , description  = description)
+                                 , description  = "") #description)
             pa.save()   
             pending = first(Period_State.objects.filter(abbreviation = 'P'))
             p = Period(session    = sesshun
@@ -120,8 +123,41 @@ class ScheduleTools(object):
                      , forecast   = start
                      , accounting = pa)
             p.save()    
+            descDct["got_time"].append((p.__str__(),p.duration, p.id))
 
-      # TBF: now we have to rescore all the affected periods!
+        # in all cases, give the description of entire event:
+        self.assignDescriptions(descDct, descHead, desc)
+
+        # TBF: now we have to rescore all the affected periods!
+
+    def assignDescriptions(self, descDct, descHead, desc):
+        """
+        Given a dictionary of which periods gave how much time to who,
+        when the transfer occured, and the details provided by the user,
+        create the verbal description of this, and apply it to all concerned
+        periods.
+        """
+
+        # create the description
+        description = ""
+        if len(descDct["got_time"]) > 0:
+            description = descHead + "Period %s got %5.2f hours from: " %\
+                (descDct["got_time"][0][0]
+               , descDct["got_time"][0][1])
+        else:
+            description = descHead + "No Period got time from: " 
+        for p, hrs, pid in descDct["gave_time"]:
+            description += "%s (%5.2f hours) " % (p, hrs)
+        description += "] " + desc 
+
+        # now assign the description to all affected periods
+        for who in ["got_time", "gave_time"]:
+            for pname, hrs, pid in descDct[who]:
+                p = first(Period.objects.filter(id = pid))
+                old = p.accounting.description \
+                    if p.accounting.description is not None else ""
+                p.accounting.description = old + description
+                p.accounting.save()
 
     def shiftPeriodBoundaries(self
                             , period
@@ -238,19 +274,7 @@ class ScheduleTools(object):
         period.save()
         
         # in all cases, give the description of entire event:
-        description = descHead + "Period %s got %5.2f hours from: " %\
-            (descDct["got_time"][0][0]
-           , descDct["got_time"][0][1])
-        for p, hrs, pid in descDct["gave_time"]:
-            description += "%s (%5.2f hours) " % (p, hrs)
-        description += "] " + desc   
-
-        # now assign the description to all affected periods
-        for who in ["got_time", "gave_time"]:
-            for pname, hrs, pid in descDct[who]:
-                p = first(Period.objects.filter(id = pid))
-                p.accounting.description = description
-                p.accounting.save()
+        self.assignDescriptions(descDct, descHead, desc)
 
         # TBF: now we have to rescore all the affected periods!
 
