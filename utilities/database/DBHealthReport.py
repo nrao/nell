@@ -168,5 +168,10 @@ def GenerateReport():
     values  = [str(p) for p in periods if p.accounting.observed() < 0.]
     print_values(outfile, values)
 
+    outfile.write("\n\nDeleted Periods with positive observed times:")
+    ps = [p for p in periods if p.state.abbreviation == 'D']
+    values  = [str(p) for p in ps if p.accounting.observed() > 0.]
+    print_values(outfile, values)
+
 if __name__ == '__main__':
     GenerateReport()
