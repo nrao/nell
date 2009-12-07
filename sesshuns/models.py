@@ -546,6 +546,10 @@ class Project(models.Model):
         return [p for p in self.getPeriods() if p.start > dt] 
 
 
+    def getPastPeriods(self, dt = datetime.now()):
+        "What periods are associated with this project in the past?"
+        return [p for p in self.getPeriods() if p.start <= dt] 
+
     def has_schedulable_sessions(self):
         sessions = [s for s in self.sesshun_set.all() if s.schedulable()]
         return True if sessions != [] else False
@@ -667,10 +671,7 @@ class Project(models.Model):
 
     def get_observed_periods(self, dt = datetime.now()):
         "What periods have been observed on this project?"
-        # WWHD?
-        return [p for s in self.sesshun_set.all() \
-                    for p in s.period_set.all() \
-                        if p.start < dt]
+        return self.getPastPeriods(dt)
 
     def get_allotment(self, grade):
         "Returns the allotment that matches the specified grade"
@@ -1613,6 +1614,9 @@ class Period(models.Model):
 
     def display_name(self):
         return self.__str__()
+
+    def isDeleted(self):
+        return self.state.abbreviation == 'D'
 
     def init_from_post(self, fdata, tz):
         self.from_post(fdata, tz)
