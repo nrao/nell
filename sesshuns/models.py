@@ -1266,6 +1266,9 @@ class Sesshun(models.Model):
     def getObservedTime(self):
         return TimeAccounting().getTime("observed", self)
 
+    def getTimeBilled(self):
+        return TimeAccounting().getTime("time_billed", self)
+
     def jsondict(self):
         d = {"id"         : self.id
            , "pcode"      : self.project.pcode
