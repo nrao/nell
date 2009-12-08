@@ -1113,7 +1113,6 @@ class TestChangeSchedule(NellTestCase):
         response = c.post('/schedule/change_schedule'
                         , dict(duration = "1.0"
                              , start    = "2009-10-11 04:00:00"))
-        print response                     
 
 class TestShiftPeriodBoundaries(NellTestCase):
     def setUp(self):

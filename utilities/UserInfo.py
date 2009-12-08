@@ -1,4 +1,6 @@
-from utilities import NRAOUserDB
+from   utilities import NRAOUserDB
+
+from   datetime  import datetime
 import lxml.etree as ET
 import urllib2
 
@@ -18,14 +20,15 @@ class UserInfo(object):
               , 'QueryAgent'
               , 'iBlertFoo'
               , opener = urllib2.build_opener())
+    __cache = {}
 
     def __init__(self):
-        self.ns = "{http://www.nrao.edu/namespaces/nrao}"
+        self.ns    = "{http://www.nrao.edu/namespaces/nrao}"
 
-    def getProfileByID(self, user):
+    def getProfileByID(self, user, use_cache = True):
         emails = [e.email for e in user.email_set.all()]
         try:
-            info = self.getStaticContactInfoByID(user.pst_id)
+            info = self.getStaticContactInfoByID(user.pst_id, use_cache)
         except:
             return dict(emails       = emails
                       , phones       = ['Not Available']
@@ -107,8 +110,17 @@ class UserInfo(object):
     def getStaticContactInfoByUserName(self, username):
         return self.getStaticContactInfo('userByAccountNameEquals', username)
 
-    def getStaticContactInfoByID(self, id):
-        return self.getStaticContactInfo('userById', id)
+    def getStaticContactInfoByID(self, id, use_cache = True):
+        time = 0; info = 1
+        now  = datetime.utcnow()
+
+        # The cache considers data stale after 60 minutes.
+        if not use_cache or \
+           not UserInfo.__cache.has_key(id) or \
+           (now - UserInfo.__cache[id][time]).seconds > 60. * 60.:
+            UserInfo.__cache[id] = (now, self.getStaticContactInfo('userById', id))
+
+        return UserInfo.__cache[id][info]
 
     def getStaticContactInfo(self, key, value):
         "Get contact info from query service, using given credentials for CAS."

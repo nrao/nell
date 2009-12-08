@@ -10,6 +10,8 @@ class NRAOBosDB:
     query services.  Thankfully, there is no security to get around.
     """
 
+    __cache = {}
+
     def __init__(self):
 
         self.opener = urllib2.build_opener()
@@ -21,7 +23,7 @@ class NRAOBosDB:
             'https://bos.nrao.edu/resReports/reservationsByPerson/'
         #    'https://bostest.cv.nrao.edu/resReports/reservationsByPerson/'
 
-    def reservations(self, project):
+    def reservations(self, project, use_cache = True):
         """
         Constructs a dictionary mapping the project's users to lists of
         reservations, where a reservation is a binary tuple of datetimes
@@ -30,7 +32,7 @@ class NRAOBosDB:
         retval = dict()
         for i in project.investigator_set.all():
             u = i.user
-            rs = self.getReservationsByUsername(u.username)
+            rs = self.getReservationsByUsername(u.username, use_cache)
             if rs:
                 retval[u] = rs
         return retval
@@ -53,7 +55,7 @@ class NRAOBosDB:
                 id = id + 1
         return jsonobjlist, id
  
-    def getReservationsByUsername(self, username):
+    def getReservationsByUsername(self, username, use_cache = True):
         """
         Uses BOS query service to return list of reservations for
         username, where a reservation is a binary tuple of datetimes
@@ -62,11 +64,21 @@ class NRAOBosDB:
         if username is None:
             #print "Error: getReservationsByUsername username arg is None"
             return []
-        url = self.baseUrlByPerson + username
-        fh = self.opener.open(url)
-        str = fh.read(0x4000)
-        parsed = self.parseReservationsXML(str)
-        return parsed
+
+        time = 0; info = 1
+        now  = datetime.utcnow()
+
+        # The cache considers data stale after 60 minutes.
+        if not use_cache or \
+           not NRAOBosDB.__cache.has_key(username) or \
+           (now - NRAOBosDB.__cache[username][time]).seconds > 60. * 60.:
+            url = self.baseUrlByPerson + username
+            fh  = self.opener.open(url)
+            str = fh.read(0x4000)
+
+            NRAOBosDB.__cache[username] = (now, self.parseReservationsXML(str))
+
+        return NRAOBosDB.__cache[username][info]
 
     def parseReservationsXML(self, str):
         "Parses XML returned by reservationsByPerson query."

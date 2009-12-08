@@ -212,11 +212,11 @@ class User(models.Model):
     def isOperator(self):
         return self.role.role == "Operator"
 
-    def getStaticContactInfo(self):
-        return UserInfo().getProfileByID(self)
+    def getStaticContactInfo(self, use_cache = True):
+        return UserInfo().getProfileByID(self, use_cache)
 
-    def getReservations(self):
-        return NRAOBosDB().getReservationsByUsername(self.username)
+    def getReservations(self, use_cache = True):
+        return NRAOBosDB().getReservationsByUsername(self.username, use_cache)
 
     def getPeriods(self):
         retval = []

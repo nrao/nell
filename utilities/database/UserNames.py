@@ -80,7 +80,8 @@ class UserNames(object):
 
         for u in users:
             if u.pst_id is not None:
-                info = UserInfo().getStaticContactInfoByID(u.pst_id)
+                info = UserInfo().getStaticContactInfoByID(u.pst_id
+                                                         , use_cache = False)
             
                 # extract what the PST thinks about this user
                 pstId        = int(info['id'])
@@ -218,7 +219,7 @@ class UserNames(object):
 
             # save off the username
             #print "getting id for: ", user, id
-            info = UserInfo().getStaticContactInfoByID(id)
+            info = UserInfo().getStaticContactInfoByID(id, use_cache = False)
             #print info
             username = info['account-info']['account-name']
 
