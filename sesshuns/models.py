@@ -1635,15 +1635,8 @@ class Period(models.Model):
             if tz == 'ET':
                 self.start = TimeAgent.est2utc(self.start)
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
-        self.score    = 0.0
+        self.score    = fdata.get("score", 0.0)
         self.forecast = now
-        #self.score    = fdata.get("score", 0.0)
-        #forecast      = fdata.get("forecast", None)
-        # No forecast or maybe 0 indicates new score
-        #if forecast is None:
-        #    self.forecast = forecast
-        #else:
-        #    self.forecast = TimeAgent.hour(now) # TBF: or what??
         self.backup   = True if fdata.get("backup", None) == 'true' else False
         stateAbbr = fdata.get("state", "P")
         self.state = first(Period_State.objects.filter(abbreviation=stateAbbr))
