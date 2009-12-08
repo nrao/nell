@@ -202,6 +202,15 @@ def period_time_accounting(request, *args, **kws):
         value = float(request.POST.get(field, None))
         a.set_changed_time(field, value) #request.POST.get(field, None))
     a.description = request.POST.get("description", None)
+
+    # valid the new time accounting
+    valid, msg = a.validate()
+    if not valid:
+        # don't save this, and notify the user
+        title = "Error setting Period Time Accounting"
+        return HttpResponse(json.dumps({'error':title, 'message':msg})
+                          , mimetype = "text/plain")
+
     a.save()
     # now return the consequences this may have to the rest of the
     # project time accounting
@@ -255,13 +264,13 @@ def delete_pending(request, *args, **kwds):
 
 def scheduling_email(request, *args, **kwds):
     if request.method == 'GET':
-        start    = datetime.utcnow()
-        end      = start + timedelta(days = 2)
-        # get all non-Deleted periods in this time range
-        # TBF: no easy way to use filters to avoid deleted periods?
-        periods  = Period.objects.filter(start__gt = start, start__lt = end)
-        periods  = [p for p in periods if p.state.abbreviation != 'D']
-        notifier = SchedulingNotifier(periods) 
+        # Show the schedule from now until 8am eastern two days from now.
+        start = datetime.utcnow()
+        end   = TimeAgent.est2utc(TimeAgent.utc2est(start + timedelta(days = 2)).replace(hour = 8, minute = 0, second = 0, microsecond = 0))
+
+        periods = Period.objects.filter(start__gt = start, start__lt = end).filter(state__abbreviation__in = ['S', 'P'])
+        notifier = SchedulingNotifier(list(periods)) 
+
         return HttpResponse(
             json.dumps({
                 'emails' : notifier.getAddresses()

@@ -22,6 +22,7 @@
 
 import smtplib
 from datetime import datetime
+import TimeAgent
 
 class emailNotifier:
 
@@ -105,10 +106,11 @@ class emailNotifier:
                 , "12" : "Dec"}
 
         now = datetime.today()
-        self.date = "%s, %s %s %s -0400" % (weekdays[now.strftime("%w")]
+        self.date = "%s, %s %s %s -0%d00" % (weekdays[now.strftime("%w")]
                                        , now.strftime("%d")
                                        , months[str(int(now.strftime("%m")))]
-                                       , now.strftime("%Y %H:%M:%S"))
+                                       , now.strftime("%Y %H:%M:%S")
+                                       , TimeAgent.utcoffset())
         if type(self.to) == list:
             to = ", ".join(self.to)
         else:

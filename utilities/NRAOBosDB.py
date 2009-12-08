@@ -18,8 +18,8 @@ class NRAOBosDB:
         # knows nothing about PST users
         #baseUrl ='https://bostest.cv.nrao.edu/resReports/reservationsByPerson/'
         self.baseUrlByPerson = \
-            'https://bostest.cv.nrao.edu/resReports/reservationsByPerson/'
-        #    'https://bos.nrao.edu/resReports/reservationsByPerson/'
+            'https://bos.nrao.edu/resReports/reservationsByPerson/'
+        #    'https://bostest.cv.nrao.edu/resReports/reservationsByPerson/'
 
     def reservations(self, project):
         """

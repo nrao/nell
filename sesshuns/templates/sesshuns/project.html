@@ -34,13 +34,13 @@
               <th title="The classified observing type.">Type</th>
               <th title="Session is authorized to observe by GBT staff.">Authorized</th>
               <th title="Select this box to enable the session.">Enabled</th>
-            {% for s in p.sesshun_set.all %}
+            {% for s in sess %}
             <tr>
               <td>{{s.name}}</td>
               <td>{{s|target_horz}}</td>
               <td>{{s|target_vert}}</td>
               <td>{{s.frequency}}</td>
-              <td>{{s.getObservedTime}} / {{s.allotment.total_time}}</td>
+              <td>{{s.getTimeBilled}} / {{s.allotment.total_time}}</td>
               <td>{{s.min_duration}} - {{s.max_duration}}</td>
               <td>{{s.observing_type.type}}</td>
               <td>{% if s.status.authorized %}Yes{% endif %}</td>

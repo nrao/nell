@@ -185,9 +185,13 @@ def project(request, *args, **kws):
         else:
             rcvr_blkouts.append((s.date(), e.date()))
 
+    # sort all the sessions by name
+    sess = sorted(project.sesshun_set.all(),lambda x,y:cmp(x.name,y.name))
+
     return render_to_response(
         "sesshuns/project.html"
       , {'p'           : project
+       , 'sess'        : sess
        , 'u'           : user
        , 'requestor'   : user
        , 'v'           : project.investigator_set.order_by('priority').all()
