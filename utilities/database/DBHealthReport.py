@@ -176,6 +176,19 @@ def GenerateReport():
                     overlap.extend([p1, p2])
     print_values(outfile, values)
 
+    outfile.write("\n\nGaps in historical schedule:")
+    now = datetime.utcnow()
+    ps_all = Period.objects.filter(start__lt = now).order_by("start")
+    ps = [p for p in ps_all if not p.isDeleted()] # TBF: use filter?
+    values = []
+    previous = ps[0]
+    for p in ps[1:]:
+        # periods should be head to tail - TBF: this catches overlaps too!
+        if p.start != previous.end():
+            values.append("Gap between: %s and %s" % (previous, p))
+        previous = p    
+    print_values(outfile, values)
+
     outfile.write("\n\nPeriods with non-positive durations:")
     values  = [p for p in periods if p.duration <= 0.]
     print_values(outfile, values)
