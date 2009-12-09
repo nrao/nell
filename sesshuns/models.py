@@ -881,6 +881,10 @@ class Receiver(models.Model):
     def jsondict(self):
         return self.abbreviation
 
+    def in_band(self, frequency):
+        "Does the given freq fall into this rcvr's freq range?"
+        return self.freq_low <= frequency <= self.freq_hi
+
     @staticmethod
     def get_abbreviations():
         return [r.abbreviation for r in Receiver.objects.all()]

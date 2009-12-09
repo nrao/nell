@@ -57,6 +57,7 @@ def GenerateReport():
     projects = sorted(Project.objects.all(), lambda x, y: cmp(x.pcode, y.pcode))
     sessions = sorted(Sesshun.objects.all(), lambda x, y: cmp(x.name, y.name))
     periods  = Period.objects.order_by("start")
+    rcvrs    = Receiver.objects.order_by("freq_low")
 
     outfile.write("Projects without sessions:")
     values = [p.pcode for p in projects if p.sesshun_set.all() == []]
@@ -90,7 +91,7 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nSessions without recievers:")
-    values = [s.name for s in sessions if s.receiver_group_set.all() == []]
+    values = [s.name for s in sessions if len(s.receiver_list()) == 0]
     print_values(outfile, values)
 
     outfile.write("\n\nOpen sessions with default frequency 0:")
@@ -107,6 +108,21 @@ def GenerateReport():
                      for t in s.target_set.all() \
                      if t.vertical == 0.0 and t.horizontal == 0.0]
     print_values(outfile, values)
+
+    outfile.write("\n\nSessions with frequency (GHz) out of all Rcvr bands")
+    values = []
+    for s in sessions:
+        out_of_band = False
+        # freq. must be out of band for ALL rcvrs to be reported
+        rcvrs = [first(Receiver.objects.filter(abbreviation = rname)) \
+            for rname in s.rcvrs_specified()]
+        in_bands = [r for r in rcvrs if r.in_band(s.frequency)]
+        # don't report sessions w/ out rcvrs: we do that above
+        if len(in_bands) == 0 and len(rcvrs) != 0:
+            values.append("%s %s %5.4f" % (s.name
+                                         , s.receiver_list_simple()
+                                         , s.frequency))
+    print_values(outfile, values)                                         
 
     outfile.write("\n\nProjects without a friend:")
     values = [p.pcode for p in projects if not p.complete and not p.friend]
@@ -128,7 +144,7 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nSessions for which periods are scheduled when none of their receivers are up:")
-    values = [p.session.name for p in periods if not p.has_required_receivers()]
+    values = [p.__str__() for p in periods if not p.has_required_receivers()]
     print_values(outfile, values)
 
     outfile.write("\n\nSessions with non-unique names:")
