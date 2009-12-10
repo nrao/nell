@@ -62,8 +62,9 @@ def GenerateReport(start):
                   (p.pcode.ljust(11)
                  , str(p.principal_investigator())[:17].ljust(18)
                  , ",".join(p.rcvrs_specified())[:4].center(5)
-                 , p.principal_investigator().getStaticContactInfo()['emails'][0]
-                 , p.friend)
+                 , first(p.principal_investigator().getStaticContactInfo()['emails'])
+                 , p.friend
+                 )
               for p in projects]
     print_values(outfile, Set(values))
 
