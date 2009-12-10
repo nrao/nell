@@ -73,9 +73,10 @@ def GenerateReport():
                  s.allotment.total_time < s.min_duration]
     print_values(outfile, values)
         
-    outfile.write("\n\nOpen sessions with time left < min duration:")
+    outfile.write("\n\nOpen sessions (not completed) with time left < min duration:")
     values = [s.name for s in sessions \
               if s.session_type.type == "open" and \
+                 not s.status.complete and \
                  ta.getTimeLeft(s) < s.min_duration]
     print_values(outfile, values)
 
