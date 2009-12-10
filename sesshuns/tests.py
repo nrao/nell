@@ -820,6 +820,8 @@ class TestSesshun(NellTestCase):
         ldata["source"] = "new source"
         ldata["total_time"] = "99"
         ldata["enabled"] = "true"
+        ldata["transit"] = "true"
+        ldata["nighttime"] = "false"
         s.update_from_post(ldata)
         
         # now get this session from the DB
@@ -829,6 +831,8 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.allotment.total_time, float(ldata["total_time"]))
         self.assertEqual(s.target_set.get().source, ldata["source"])
         self.assertEqual(s.status.enabled, ldata["enabled"] == "true")
+        self.assertEqual(s.transit(), ldata["transit"] == "true")
+        self.assertEqual(s.nighttime(), None)
 
     def test_update_from_post2(self):
         ss = Sesshun.objects.all()

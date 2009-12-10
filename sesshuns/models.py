@@ -1191,23 +1191,9 @@ class Sesshun(models.Model):
         self.status.save()
         self.save()
 
-        new_transit = self.get_field(fdata, "transit", False, bool)
-        old_transit = self.transit()
-        tp = Parameter.objects.filter(name='Transit')[0]
-        if old_transit is None:
-            if new_transit:
-                obs_param =  Observing_Parameter(session = self
-                                               , parameter = tp
-                                               , boolean_value = True
-                                                )
-                obs_param.save()
-        else:
-            obs_param = self.observing_parameter_set.filter(parameter=tp)[0]
-            if new_transit:
-                obs_param.boolean_value = True
-                obs_param.save()
-            else:
-                obs_param.delete()
+        self.update_bool_obs_param(fdata, "transit", "Transit", self.transit())
+        self.update_bool_obs_param(fdata, "nighttime", "Night-time Flag", \
+            self.nighttime())
 
         proposition = fdata.get("receiver", None)
         if proposition is not None:
@@ -1228,6 +1214,29 @@ class Sesshun(models.Model):
         t.save()
 
         self.save()
+
+    def update_bool_obs_param(self, fdata, json_name, name, old_value):
+        """
+        Generic method for taking a json dict and converting its given
+        boolean field into a boolean observing parameter.
+        """
+
+        new_value = self.get_field(fdata, json_name, False, bool)
+        tp = Parameter.objects.filter(name=name)[0]
+        if old_value is None:
+            if new_value:
+                obs_param =  Observing_Parameter(session = self
+                                               , parameter = tp
+                                               , boolean_value = True
+                                                )
+                obs_param.save()
+        else:
+            obs_param = self.observing_parameter_set.filter(parameter=tp)[0]
+            if new_value:
+                obs_param.boolean_value = True
+                obs_param.save()
+            else:
+                obs_param.delete()
 
     def get_ra_dec(self):
         target = first(self.target_set.all())
@@ -1293,6 +1302,7 @@ class Sesshun(models.Model):
            , "complete"   : self.status.complete
            , "backup"     : self.status.backup
            , "transit"    : self.transit() or False
+           , "nighttime"  : self.nighttime() or False
            , "receiver"   : self.get_receiver_req()
             }
 
@@ -1316,7 +1326,17 @@ class Sesshun(models.Model):
         Returns True or False if has 'Transit' observing parameter,
         else None if not.
         """
-        tp = Parameter.objects.filter(name='Transit')[0]
+        return self.has_bool_obs_param("Transit")
+
+    def nighttime(self):
+        """
+        Returns True or False if has 'Night-time Flag' observing parameter,
+        else None if not.
+        """
+        return self.has_bool_obs_param("Night-time Flag")
+
+    def has_bool_obs_param(self, name):
+        tp = Parameter.objects.filter(name=name)[0]
         top = self.observing_parameter_set.filter(parameter=tp)
         return top[0].boolean_value if top else None
 
