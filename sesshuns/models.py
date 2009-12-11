@@ -1206,7 +1206,7 @@ class Sesshun(models.Model):
         v_axis = fdata.get("source_v", None)
         h_axis = fdata.get("source_h", None)
 
-        t            = self.target_set.get()
+        t            = first(self.target_set.all())
         t.system     = system
         t.source     = fdata.get("source", None)
         t.vertical   = v_axis if v_axis is not None else t.vertical
