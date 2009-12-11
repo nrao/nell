@@ -84,34 +84,39 @@ class DSSDatabase09C(DSSDatabase):
         rcvrs = ['L', 'K', 'X', 'Ku', 'MBA', 'S', 'Hol', 'Q', '342'] 
         rcvrChanges.append((dt, rcvrs))
 
-        # Dec 15: 342 -> 800, Ku -> Ka, Z goes up
+        # Dec 9: Mustang down
+        dt = datetime(2009, 12, 9, 16)
+        rcvrs = ['L', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '342'] 
+        rcvrChanges.append((dt, rcvrs))
+
+        # Dec 15: 342 -> 800
         dt = datetime(2009, 12, 15, 16)
-        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Hol', 'Q', 'Ka', 'Z', '800'] 
+        rcvrs = ['L', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '800'] 
         rcvrChanges.append((dt, rcvrs))
 
         # Dec 30: 800 -> 342
         dt = datetime(2009, 12, 30, 16)
-        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Hol', 'Q', 'Ka', 'Z', '342'] 
+        rcvrs = ['L', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '342'] 
         rcvrChanges.append((dt, rcvrs))
 
         # Jan 5: 342 -> 800
         dt = datetime(2010, 1, 5, 16)
-        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Hol', 'Q', 'Ka', 'Z', '800'] 
+        rcvrs = ['L', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '800'] 
         rcvrChanges.append((dt, rcvrs))
 
         # Jan 21 800 down, 342 up
         dt = datetime(2010, 1, 21, 16)
-        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Hol', 'Q',  'Ka', 'Z', '342'] 
+        rcvrs = ['L', 'K', 'X', 'Ku', 'S', 'Hol', 'Q', '342'] 
         rcvrChanges.append((dt, rcvrs))
 
-        # Jan 26 KFPA up, Q-band down
+        # Jan 26 KFPA up, Z up, Ku -> Ka, Q-band down
         dt = datetime(2010, 1, 26, 16)
-        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Hol', 'KFPA',  'Ka', 'Z', '342'] 
+        rcvrs = ['L', 'K', 'X', 'S', 'Hol', 'KFPA',  'Ka', 'Z', '342'] 
         rcvrChanges.append((dt, rcvrs))
 
         # Feb 2: 342 -> 1070
         dt = datetime(2010, 2, 2, 16)
-        rcvrs = ['L', 'K', 'X', 'MBA', 'S', 'Hol', 'KFPA',  'Ka', 'Z', '1070'] 
+        rcvrs = ['L', 'K', 'X', 'S', 'Hol', 'KFPA',  'Ka', 'Z', '1070'] 
         rcvrChanges.append((dt, rcvrs))
 
         for dt, rcvrs in rcvrChanges:
