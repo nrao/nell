@@ -16,6 +16,7 @@ from utilities.database              import DSSPrime2DSS
 from utilities.receiver              import ReceiverCompile
 from utilities                       import UserInfo
 from utilities                       import NRAOBosDB
+from utilities.SchedulingNotifier    import SchedulingNotifier
 
 # Test field data
 fdata = {"total_time": "3"
@@ -2491,3 +2492,95 @@ class TestTimeAccounting(NellTestCase):
         self.ta.quietReport = True
         self.ta.report(self.project)
         
+class TestSchedulingNotifier(NellTestCase):
+
+    def setUp(self):
+        super(TestSchedulingNotifier, self).setUp()
+
+        self.project = Project.objects.order_by('pcode').all()[0]
+
+        # get some observers for this project
+        obsRole = first(Role.objects.filter(role = "Observer"))
+
+        # we need users to test this, but we'll actually hit 
+        # the PST server!  Bad! Not a unit test
+        # So, use the test flag in SchedulingNotifier
+        
+        self.user1 = User(sanctioned = True
+                        , role = obsRole
+                        , last_name = "User"
+                        , first_name = "First"
+                        #, username = "pmargani" # TBF
+                        #, pst_id = 823 # TBF
+                        )
+        self.user1.save()
+
+        self.investigator1 =  Investigator(project  = self.project
+                                         , user     = self.user1
+                                         , observer = True)
+        self.investigator1.save()
+
+        self.user2 = User(sanctioned = True
+                        , role = obsRole
+                        , last_name = "User"
+                        , first_name = "Second"
+                        #, username = "mclark" # TBF
+                        #, pst_id = 1063 # TBF
+                        )
+        self.user2.save()
+
+        self.investigator2 =  Investigator(project  = self.project
+                                         , user     = self.user2
+                                         , observer = True)
+        self.investigator2.save()
+
+
+        # setup some periods - times in UT
+        self.start = datetime(2000, 1, 1, 0)
+        self.end   = self.start + timedelta(hours = 12)
+        times = [(datetime(2000, 1, 1, 0), 5.0, "one")
+               , (datetime(2000, 1, 1, 5), 3.0, "two")
+               , (datetime(2000, 1, 1, 8), 4.0, "three")
+               ]
+        self.ps = []
+        state = first(Period_State.objects.filter(abbreviation = 'P'))        
+        for start, dur, name in times:
+            s = create_sesshun()
+            s.name = name
+            s.save()
+            pa = Period_Accounting(scheduled = dur)
+            pa.save()
+            p = Period( session    = s
+                      , start      = start
+                      , duration   = dur
+                      , state      = state
+                      , accounting = pa
+                      )
+            p.save()          
+            self.ps.append(p)
+
+        self.ta = TimeAccounting()
+
+    def tearDown(self):
+        super(TestSchedulingNotifier, self).tearDown()
+
+        for p in self.ps:
+            p.session.delete()
+            p.delete()
+
+
+    def testSchedulingNotifier(self):
+
+        n = SchedulingNotifier(self.ps, test = True)
+        self.assertEqual(['Second@test.edu', 'First@test.edu']
+                       , n.getAddresses())
+        self.assertEqual("Your GBT project has been scheduled (Dec 31-Jan 01)"
+                       , n.getSubject())
+        body = """
+Start (ET)   |      UT      |  LST  |  (hr) | Observer  | Rx        | Session
+------------------------------------------------------------------------------
+Dec 31 19:00 | Jan 01 00:00 | 01:18 |  5.00 | User      |           | one
+Jan 01 00:00 | Jan 01 05:00 | 06:19 |  3.00 | User      |           | two
+Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | User      |           | three
+        """        
+        self.assertEqual(body.strip(),  n.getSessionTable().strip())

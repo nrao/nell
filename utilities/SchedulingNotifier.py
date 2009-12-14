@@ -64,11 +64,19 @@ class SchedulingNotifier(Notifier):
         observers = [o.user for p in self.periods \
                             for o in p.session.project.get_observers()]
         observers.extend([p.session.project.principal_contact() \
-                          for p in self.periods])
+                          for p in self.periods \
+                          if p.session.project.principal_contact() is not None])
+                          
         observers = Set(observers)
 
-        addresses = Set([e for o in observers \
+        if not self.test:
+            # get email addresses from the PST
+            addresses = Set([e for o in observers \
                            for e in o.getStaticContactInfo()['emails']])
+        else:
+            # for testing, we don't want to use the PST server
+            # so just make up some emails
+            addresses = Set(["%s@test.edu" % o.first_name for o in observers])
 
         self.setAddresses(list(addresses))
 
