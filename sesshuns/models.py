@@ -1645,6 +1645,12 @@ class Period(models.Model):
     def isDeleted(self):
         return self.state.abbreviation == 'D'
 
+    def isScheduled(self):
+        return self.state.abbreviation == 'S'
+
+    def isPending(self):
+        return self.state.abbreviation == 'P'
+
     def init_from_post(self, fdata, tz):
         self.from_post(fdata, tz)
 
