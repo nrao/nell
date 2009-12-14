@@ -121,16 +121,9 @@ class TimeAccounting:
         tb = self.getTime("time_billed", obj)
         # ignores grade!
         if obj.__class__.__name__ == "Project":
-            #ss = obj.sesshun_set.all()
-            #obs = sum([self.getTime("observed", s) for s in ss])
-            #tb = sum([self.getTime("time_billed", s) for s in ss])
             total = self.getProjSessionsTotalTime(obj)
-            #return total - tb
         else: 
-            #obs = self.getTime("observed", obj)
-            #tb = self.getTime("time_billed", obj)
             total = obj.allotment.total_time
-            #return obj.allotment.total_time - tb
         return total - tb    
 
     def getTime(self, type, obj, dt=None, past=False):
@@ -146,7 +139,6 @@ class TimeAccounting:
         assert type in self.fields
         if obj.__class__.__name__ == "Project":
             ss = obj.sesshun_set.all()
-            #return sum([self.getTime(type, s) for s in ss])
             t = sum([self.getTime(type, s, dt, past) for s in ss])
         else:
             ps = obj.period_set.all()
