@@ -43,9 +43,9 @@ def create_sesshun():
 
     s = Sesshun()
     s.set_base_fields(fdata)
-    allot = Allotment(psc_time          = fdata.get("PSC_time", 0.0)
-                    , total_time        = fdata.get("total_time", 0.0)
-                    , max_semester_time = fdata.get("sem_time", 0.0)
+    allot = Allotment(psc_time          = float(fdata.get("PSC_time", 0.0))
+                    , total_time        = float(fdata.get("total_time", 0.0))
+                    , max_semester_time = float(fdata.get("sem_time", 0.0))
                     , grade             = 4.0
                       )
     allot.save()
@@ -2351,6 +2351,8 @@ class TestTimeAccounting(NellTestCase):
     def setUp(self):
         super(TestTimeAccounting, self).setUp()
 
+        self.project = Project.objects.order_by('pcode').all()[0]
+
         # setup some periods
         self.start = datetime(2000, 1, 1, 0)
         self.end   = self.start + timedelta(hours = 12)
@@ -2375,6 +2377,8 @@ class TestTimeAccounting(NellTestCase):
             p.save()          
             self.ps.append(p)
 
+        self.ta = TimeAccounting()
+
     def tearDown(self):
         super(TestTimeAccounting, self).tearDown()
 
@@ -2383,30 +2387,29 @@ class TestTimeAccounting(NellTestCase):
             p.delete()
 
     def test_getTimeLeft(self):
-        project = Project.objects.order_by('pcode').all()[0]
-        ta = TimeAccounting()
 
-        timeLeft = ta.getTimeLeft(project)
+        timeLeft = self.ta.getTimeLeft(self.project)
         self.assertEqual(-3.0, timeLeft)
 
         names = ["one", "three", "two"]
         times = [-2.0, -1.0, 0.0]
 
-        for i, s in enumerate(project.sesshun_set.order_by("name").all()):
-            timeLeft = ta.getTimeLeft(s)
+        for i, s in enumerate(self.project.sesshun_set.order_by("name").all()):
+            timeLeft = self.ta.getTimeLeft(s)
             self.assertEqual(names[i], s.name)
             self.assertEqual(times[i], timeLeft)
 
 
     def test_getTime(self):
 
-        project = Project.objects.order_by('pcode').all()[0]
-        ta = TimeAccounting()
-
-        pScheduled = ta.getTime('scheduled', project)
+        pScheduled = self.ta.getTime('scheduled', self.project)
         self.assertEqual(pScheduled, 12.0)
 
-        pNotBillable = ta.getTime('not_billable', project)
+        pBilled = self.ta.getTime('time_billed', self.project)
+        self.assertEqual(pBilled, 12.0)
+
+
+        pNotBillable = self.ta.getTime('not_billable', self.project)
         self.assertEqual(pNotBillable, 0.0)
 
         # now change something and watch it bubble up
@@ -2414,36 +2417,69 @@ class TestTimeAccounting(NellTestCase):
         self.ps[0].accounting.save()
         project = Project.objects.order_by('pcode').all()[0]
 
-        pNotBillable = ta.getTime('not_billable', self.ps[0].session)
+        pNotBillable = self.ta.getTime('not_billable', self.ps[0].session)
         self.assertEqual(pNotBillable, 1.0)
 
-        pNotBillable = ta.getTime('not_billable', project)
+        pNotBillable = self.ta.getTime('not_billable', project)
         self.assertEqual(pNotBillable, 1.0)
 
+    def test_getTime_2(self):
 
+        # check time dependencies at the project level
+        dt1   = self.start + timedelta(hours = 1)
+        projCmpSchd = self.ta.getTime('scheduled', self.project, dt1, True)
+        self.assertEqual(projCmpSchd, 5.0)
+        projUpSchd = self.ta.getTime('scheduled',  self.project, dt1, False)
+        self.assertEqual(projUpSchd, 7.0)
+
+        dt2   = self.start + timedelta(hours = 6)
+        projCmpSchd = self.ta.getTime('scheduled', self.project, dt2, True)
+        self.assertEqual(projCmpSchd, 8.0)
+        projUpSchd = self.ta.getTime('scheduled',  self.project, dt2, False)
+        self.assertEqual(projUpSchd, 4.0)
+
+        # check time dependencies at the session level
+        s1 = self.ps[0].session
+        sessCmpSchd = self.ta.getTime('scheduled', s1, dt2, True)
+        self.assertEqual(sessCmpSchd, 5.0)
+        sessUpSchd = self.ta.getTime('scheduled',  s1, dt2, False)
+        self.assertEqual(sessUpSchd, 0.0)
+
+    def test_getUpcomingTimeBilled(self):
+        prjUpBilled = self.ta.getUpcomingTimeBilled(self.project)
+        self.assertEqual(prjUpBilled, 0.0)
+
+        # change 'now'
+        dt = self.start - timedelta(hours = 1)
+        prjUpBilled = self.ta.getUpcomingTimeBilled(self.project, now=dt)
+        self.assertEqual(prjUpBilled, 12.0)
+
+    def test_getTimeRemainingFromCompleted(self):
+        remaining = self.ta.getTimeRemainingFromCompleted(self.project)
+        self.assertEqual(remaining, -3.0) # 9 - 12
+
+        remaining = self.ta.getTimeRemainingFromCompleted(self.ps[0].session)
+        self.assertEqual(remaining, -2.0) # 9 - 12
 
     def test_jsondict(self):
 
-        project = Project.objects.order_by('pcode').all()[0]
-        ta = TimeAccounting()
-
-        dct = ta.jsondict(project)
+        dct = self.ta.jsondict(self.project)
         self.assertEqual(3, len(dct['sessions']))
         self.assertEqual(1, len(dct['sessions'][0]['periods']))
 
         # test identity
-        ta.update_from_post(project, dct)
+        self.ta.update_from_post(self.project, dct)
         # get it fressh from the DB
         project = Project.objects.order_by('pcode').all()[0]
-        dct2 = ta.jsondict(project)
+        dct2 = self.ta.jsondict(project)
         self.assertEqual(dct, dct2)
 
         # now change something
         dct['sessions'][0]['periods'][0]['not_billable'] = 1.0
-        ta.update_from_post(project, dct)
+        self.ta.update_from_post(project, dct)
         # get it fressh from the DB
         project = Project.objects.order_by('pcode').all()[0]
-        dct2 = ta.jsondict(project)
+        dct2 = self.ta.jsondict(project)
         # they're different becuase not_billable bubbles up
         self.assertNotEqual(dct, dct2)
         b = dct2['not_billable'] 
@@ -2452,8 +2488,6 @@ class TestTimeAccounting(NellTestCase):
     def test_report(self):
 
         # just make sure it doesn't blow up
-        project = Project.objects.order_by('pcode').all()[0]
-        ta = TimeAccounting()
-        ta.quietReport = True
-        ta.report(project)
+        self.ta.quietReport = True
+        self.ta.report(self.project)
         

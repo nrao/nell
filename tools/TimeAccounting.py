@@ -47,7 +47,34 @@ class TimeAccounting:
         self.reportLines = []
         self.quietReport = False
 
-    # *** Project leve time accounting ***
+    # *** High level time accounting ***
+
+    # These methods are simply convenience methods: they mearly show how
+    # the lower level methods below can be used
+
+    def getCompletedTimeBilled(self, obj, now=datetime.utcnow()):
+        """
+        What is the billed time from all the scheduled periods in the past?
+        """
+        return self.getTime("time_billed", obj, dt=now, past=True)
+
+    def getTimeRemainingFromCompleted(self, obj, now=datetime.utcnow()):
+        "Allocated - time billed by completed periods"
+        tb = self.getTime("time_billed", obj, now, True)
+        if obj.__class__.__name__ == "Project":
+            total = self.getProjSessionsTotalTime(obj)
+        else: 
+            total = obj.allotment.total_time
+        return total - tb    
+        
+    def getUpcomingTimeBilled(self, obj, now=datetime.utcnow()):
+        """
+        What is the billed time from all the scheduled periods in the future?
+        """
+        return self.getTime("time_billed", obj, dt=now, past=False)
+
+
+    # *** Project level time accounting ***
 
     def getProjectTotalTime(self, proj):
         """
@@ -86,27 +113,67 @@ class TimeAccounting:
     
     # *** Object independent methods ***
 
+    def getTimeRemaining(self, obj):
+        return self.getTimeLeft(obj)
+
     def getTimeLeft(self, obj):
-        "Compares alloted time to observed time for projects or sessions"
+        "Compares alloted time to billed time for projects or sessions"
+        tb = self.getTime("time_billed", obj)
         # ignores grade!
         if obj.__class__.__name__ == "Project":
-            ss = obj.sesshun_set.all()
-            obs = sum([self.getTime("observed", s) for s in ss])
+            #ss = obj.sesshun_set.all()
+            #obs = sum([self.getTime("observed", s) for s in ss])
+            #tb = sum([self.getTime("time_billed", s) for s in ss])
             total = self.getProjSessionsTotalTime(obj)
-            return total - obs
+            #return total - tb
         else: 
-            obs = self.getTime("observed", obj)
-            return obj.allotment.total_time - obs
+            #obs = self.getTime("observed", obj)
+            #tb = self.getTime("time_billed", obj)
+            total = obj.allotment.total_time
+            #return obj.allotment.total_time - tb
+        return total - tb    
 
-    def getTime(self, type, obj):
-        "Generic method for bubbling up all period accting up to the sess/proj"
+    def getTime(self, type, obj, dt=None, past=False):
+        """
+        Generic method for bubbling up all period accting up to the sess/proj.
+        Note that if dt is None, this counts *all* Periods, regardless of 
+        position in time, and period state.
+          type : one of the Period_Accounting field names listed in self.fields
+          obj : either a project or session object
+          dt : filter periods summed by this date.  ignore if None
+          past : get periods before or after given dt
+        """
         assert type in self.fields
         if obj.__class__.__name__ == "Project":
             ss = obj.sesshun_set.all()
-            return sum([self.getTime(type, s) for s in ss])
+            #return sum([self.getTime(type, s) for s in ss])
+            t = sum([self.getTime(type, s, dt, past) for s in ss])
         else:
             ps = obj.period_set.all()
-            return sum([p.accounting.get_time(type) for p in ps])
+            if dt is None:
+                # count all periods
+                t =sum([p.accounting.get_time(type) for p in ps])
+            else:
+                # time dependent
+                if past:
+                    t = self.getCompletedTime(type, ps, dt)
+                else:
+                    t = self.getUpcomingTime(type, ps, dt)
+        return t            
+
+    def getCompletedTime(self, type, ps, dt):
+        "Add up the given type of time for those period before given time"
+        #ps = [p for p in periods if not p.isDeleted() and p.end() < dt]
+        #return sum([p.accounting.get_time(type) for p in ps])
+        # for now, ignore state!
+        return sum([p.accounting.get_time(type) for p in ps if p.start <= dt])
+
+    def getUpcomingTime(self, type, ps, dt):
+        "Add up the given type of time for those period after given time"
+        #ps = [p for p in periods if not p.isDeleted() and p.start > dt]
+        #return sum([p.accounting.get_time(type) for p in ps])
+        # for now, ignore state!
+        return sum([p.accounting.get_time(type) for p in ps if p.start > dt])
 
     def jsondict(self, proj):
         "Contains all levels of time accounting info"
