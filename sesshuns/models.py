@@ -565,6 +565,16 @@ class Project(models.Model):
     def has_sanctioned_observers(self):
         return True if self.get_sanctioned_observers() != [] else False
 
+    def transit(self):
+        "Returns true if a single one of it's sessions has this flag true"
+        sessions = [s for s in self.sesshun_set.all() if s.transit()]
+        return True if sessions != [] else False
+
+    def nighttime(self):
+        "Returns true if a single one of it's sessions has this flag true"
+        sessions = [s for s in self.sesshun_set.all() if s.nighttime()]
+        return True if sessions != [] else False
+
     def get_prescheduled_days(self, start, end):
         """
         Returns a list of binary tuples of the form (start, end) that
@@ -1583,6 +1593,18 @@ class Period_Accounting(models.Model):
                 return (False, msg)
         # valid!        
         return (True, None)        
+
+    def of_interest(self):
+        """
+        Time Accounting fields can be used to see if a Period has undergone
+        any kind of interesting change.
+        """
+        # check the description?  No, this could get filled out under
+        # even normal circumstances.
+        # Basically, by checking that the time_billed != scheduled time, 
+        # we are checking for non-zero fields in other_session, time_lost,
+        # etc.
+        return self.time_billed() != self.scheduled
 
 class Period_State(models.Model):
     name         = models.CharField(max_length = 32)

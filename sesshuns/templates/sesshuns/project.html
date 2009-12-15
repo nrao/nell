@@ -34,6 +34,12 @@
               <th title="The classified observing type.">Type</th>
               <th title="Session is authorized to observe by GBT staff.">Authorized</th>
               <th title="Select this box to enable the session.">Enabled</th>
+              {% if p.transit %}
+              <th title="Session RA must pass through transit">Transit</th>
+              {% endif %}
+              {% if p.nighttime %}
+              <th title="Require night-time observing for RFI avoidance.">RFI/Night</th>
+              {% endif %}
             {% for s in sess %}
             <tr>
               <td>{{s.name}}</td>
@@ -51,6 +57,12 @@
                   <a href="/project/{{p.pcode}}/session/{{s.name}}/enable"><img src="/static/images/unchecked.png" /></a>
                   {% endif %}
               </td>
+              {% if p.transit %}
+              <td>{% if s.transit %}Yes{% endif %}</td>
+              {% endif %}
+              {% if p.nighttime %}
+              <td>{% if s.nighttime %}Yes{% endif %}</td>
+              {% endif %}
             <tr>
             {% endfor %}
           </table>
