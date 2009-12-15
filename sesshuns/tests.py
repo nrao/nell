@@ -37,6 +37,7 @@ fdata = {"total_time": "3"
        , "authorized" : False
        , "complete" : False
        , "backup" : False
+       , "lst_ex" : ""
          }
 
 def create_sesshun():
@@ -795,6 +796,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.target_set.get().source, fdata["source"])
         self.assertEqual(s.status.enabled, fdata["enabled"])
+        self.assertEqual(s.get_LST_exclusion_string(),fdata["lst_ex"]) 
 
         # does this still work if you requery the DB?
         ss = Sesshun.objects.all()
@@ -814,6 +816,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.target_set.get().source, fdata["source"])
         self.assertEqual(s.status.enabled, fdata["enabled"])
+        self.assertEqual(s.get_LST_exclusion_string(), fdata["lst_ex"])
 
         # change a number of things and see if it catches it
         ldata = dict(fdata)
@@ -823,6 +826,7 @@ class TestSesshun(NellTestCase):
         ldata["enabled"] = "true"
         ldata["transit"] = "true"
         ldata["nighttime"] = "false"
+        ldata["lst_ex"] = "2.00-4.00"
         s.update_from_post(ldata)
         
         # now get this session from the DB
@@ -834,6 +838,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.status.enabled, ldata["enabled"] == "true")
         self.assertEqual(s.transit(), ldata["transit"] == "true")
         self.assertEqual(s.nighttime(), None)
+        self.assertEqual(s.get_LST_exclusion_string(), ldata["lst_ex"])
 
     def test_update_from_post2(self):
         ss = Sesshun.objects.all()

@@ -1204,6 +1204,7 @@ class Sesshun(models.Model):
         self.update_bool_obs_param(fdata, "transit", "Transit", self.transit())
         self.update_bool_obs_param(fdata, "nighttime", "Night-time Flag", \
             self.nighttime())
+        self.update_lst_exclusion(fdata)    
 
         proposition = fdata.get("receiver", None)
         if proposition is not None:
@@ -1247,6 +1248,77 @@ class Sesshun(models.Model):
                 obs_param.save()
             else:
                 obs_param.delete()
+
+    def update_lst_exclusion(self, fdata):
+        """
+        Converts the json representation of the LST exclude flag
+        to the model representation.
+        """
+        lowParam = first(Parameter.objects.filter(name="LST Exclude Low"))
+        hiParam  = first(Parameter.objects.filter(name="LST Exclude Hi"))
+        
+        # json dict string representation
+        lst_ex_string = fdata.get("lst_ex", None)
+        if lst_ex_string:
+            # unwrap and get the float values
+            lowStr, highStr = lst_ex_string.split("-")
+            low = float(lowStr)
+            high = float(highStr)
+            assert low <= high
+
+        # get the model's string representation
+        current_lst_ex_string = self.get_LST_exclusion_string()
+
+        print "new and old lst: ", lst_ex_string, current_lst_ex_string
+        if current_lst_ex_string == "":
+            if lst_ex_string:
+                # create a new LST Exlusion range
+                obs_param =  Observing_Parameter(session = self
+                                               , parameter = lowParam
+                                               , float_value = low 
+                                                )
+                obs_param.save()
+                obs_param =  Observing_Parameter(session = self
+                                               , parameter = hiParam
+                                               , float_value = high 
+                                                )
+                obs_param.save()
+            else:
+                # they are both none, nothing to do
+                pass
+        else:
+            # get the current model representation (NOT the string) 
+            lowObsParam = \
+                first(self.observing_parameter_set.filter(parameter=lowParam))
+            highObsParam = \
+                first(self.observing_parameter_set.filter(parameter=hiParam))
+            if lst_ex_string:
+                lowObsParam.float_value = low
+                lowObsParam.save()
+                highObsParam.float_value = high
+                highObsParam.save()
+            else:
+                lowObsParam.delete()
+                highObsParam.delete()
+
+
+    def get_LST_exclusion_string(self):
+        "Converts pair of observing parameters into low-high string"
+        lowParam = first(Parameter.objects.filter(name="LST Exclude Low"))
+        hiParam  = first(Parameter.objects.filter(name="LST Exclude Hi"))
+        lows  = self.observing_parameter_set.filter(parameter=lowParam)
+        highs = self.observing_parameter_set.filter(parameter=hiParam)
+        # make sure there aren't more then 1
+        assert len(lows) < 2
+        assert len(highs) < 2
+        # make sure they make a pair, or none at all
+        assert len(lows) == len(highs)
+        # LST Exlcusion isn't set?
+        if len(lows) == 0 and len(highs) == 0:
+            return ""
+        low = first(lows)
+        high = first(highs)
+        return "%.2f-%.2f" % (low.float_value, high.float_value)
 
     def get_ra_dec(self):
         target = first(self.target_set.all())
@@ -1313,6 +1385,7 @@ class Sesshun(models.Model):
            , "backup"     : self.status.backup
            , "transit"    : self.transit() or False
            , "nighttime"  : self.nighttime() or False
+           , "lst_ex"     : self.get_LST_exclusion_string() or ""
            , "receiver"   : self.get_receiver_req()
             }
 
