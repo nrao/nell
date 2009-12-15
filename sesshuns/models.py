@@ -1269,7 +1269,6 @@ class Sesshun(models.Model):
         # get the model's string representation
         current_lst_ex_string = self.get_LST_exclusion_string()
 
-        print "new and old lst: ", lst_ex_string, current_lst_ex_string
         if current_lst_ex_string == "":
             if lst_ex_string:
                 # create a new LST Exlusion range

@@ -2674,7 +2674,5 @@ Happy Observing!
         self.assertEqual(['Second@test.edu', 'First@test.edu']
                        , n.getAddresses())
         n.createDeletedSubject()
-        subject = """
-Reminder: Your GBT project will no longer be observing at the originally scheduled time
-        """
+        subject = "Reminder: GBT Schedule has changed."
         self.assertEqual(subject.strip(), n.getSubject().strip())
