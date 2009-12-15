@@ -268,7 +268,7 @@ def scheduling_email(request, *args, **kwds):
         start = datetime.utcnow()
         end   = TimeAgent.est2utc(TimeAgent.utc2est(start + timedelta(days = 2)).replace(hour = 8, minute = 0, second = 0, microsecond = 0))
 
-        periods = Period.objects.filter(start__gt = start, start__lt = end).filter(state__abbreviation__in = ['S', 'P'])
+        periods = Period.objects.filter(start__gt = start, start__lt = end) 
         notifier = SchedulingNotifier(list(periods)) 
 
         return HttpResponse(

@@ -2492,6 +2492,8 @@ class TestTimeAccounting(NellTestCase):
         self.ta.quietReport = True
         self.ta.report(self.project)
         
+# TBF: tests for this class already lives in nell/utilities!!!
+
 class TestSchedulingNotifier(NellTestCase):
 
     def setUp(self):
@@ -2543,7 +2545,7 @@ class TestSchedulingNotifier(NellTestCase):
                , (datetime(2000, 1, 1, 8), 4.0, "three")
                ]
         self.ps = []
-        state = first(Period_State.objects.filter(abbreviation = 'P'))        
+        state = first(Period_State.objects.filter(abbreviation = 'S'))        
         for start, dur, name in times:
             s = create_sesshun()
             s.name = name
@@ -2566,11 +2568,13 @@ class TestSchedulingNotifier(NellTestCase):
 
         for p in self.ps:
             p.session.delete()
-            p.delete()
+            p.remove() #delete()
 
 
-    def testSchedulingNotifier(self):
+    def test_schedulingNotifier(self):
 
+        # test the class from the default constructor:
+        # these are ony for observing periods
         n = SchedulingNotifier(self.ps, test = True)
         self.assertEqual(['Second@test.edu', 'First@test.edu']
                        , n.getAddresses())
@@ -2583,4 +2587,89 @@ Dec 31 19:00 | Jan 01 00:00 | 01:18 |  5.00 | User      |           | one
 Jan 01 00:00 | Jan 01 05:00 | 06:19 |  3.00 | User      |           | two
 Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | User      |           | three
         """        
-        self.assertEqual(body.strip(),  n.getSessionTable().strip())
+        self.assertEqual(body.strip(),  n.getSessionTable(self.ps).strip())
+
+        self.assertTrue("Changes" not in n.getBody())
+
+    def test_changes(self):
+
+        # make some changes to the schedule, and see what the notifier
+        # does
+        self.ps[1].accounting.lost_time_weather = 1.0
+        self.ps[1].accounting.save()
+
+        n = SchedulingNotifier(self.ps, test = True)
+        self.assertEqual(['Second@test.edu', 'First@test.edu']
+                       , n.getAddresses())
+        self.assertEqual("Your GBT project has been scheduled (Dec 31-Jan 01)"
+                       , n.getSubject())
+
+        # do the changes show up?
+        self.assertEqual(n.changedPeriods, [self.ps[1]])
+        table = """
+Start (ET)   |      UT      |  LST  |  (hr) | Observer  | Rx        | Session | Change\n------------------------------------------------------------------------------\nJan 01 00:00 | Jan 01 05:00 | 06:19 |  3.00 | User      |           | two | rescheduled        
+        """
+        self.assertEqual(table.strip()
+                       , n.getChangeTable().strip())
+        self.assertTrue("Changes" in n.getBody())
+
+        # make sure no one gets notified about deleted periods
+        n.createDeletedAddresses()
+        self.assertEqual([], n.getAddresses())
+        self.assertEqual([], n.deletedPeriods)
+        
+    def test_deleted(self):
+
+        # make some changes, including deleting some periods, 
+        # and make sure the notifier works
+        self.ps[1].accounting.lost_time_weather = 1.0
+        self.ps[1].accounting.save()
+        self.ps[2].delete()
+        self.ps[2].save()
+
+        # since the same project & observers is used for all our periods
+        # this isn't such a great test: the default addresses, etc. will
+        # not change
+        n = SchedulingNotifier(self.ps, test = True)
+        self.assertEqual(['Second@test.edu', 'First@test.edu']
+                       , n.getAddresses())
+        self.assertEqual("Your GBT project has been scheduled (Dec 31-Jan 01)"
+                       , n.getSubject())
+
+        # but now the deleted period should not show up in the main table!
+        body = """
+Dear Colleagues,
+
+The schedule for the period Dec 31 19:00 ET through Jan 01 07:00 ET is fixed and available.
+
+Start (ET)   |      UT      |  LST  |  (hr) | Observer  | Rx        | Session
+------------------------------------------------------------------------------
+Dec 31 19:00 | Jan 01 00:00 | 01:18 |  5.00 | User      |           | one
+Jan 01 00:00 | Jan 01 05:00 | 06:19 |  3.00 | User      |           | two
+
+Changes made to the schedule:
+ Start (ET)   |      UT      |  LST  |  (hr) | Observer  | Rx        | Session | Change
+------------------------------------------------------------------------------
+Jan 01 00:00 | Jan 01 05:00 | 06:19 |  3.00 | User      |           | two | rescheduled
+Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | User      |           | three | removed
+
+Please log into https://dss.gb.nrao.edu to view your observation
+related information.
+
+Any requests or problems with the schedule should be directed
+to helpdesk-dss@gb.nrao.edu.
+
+Happy Observing!
+        """
+        self.assertEqual(body.strip(), n.getBody().strip())
+
+        # now, a separate 'deleted' email should be able to go out
+        self.assertEqual(1, len(n.deletedPeriods))
+        n.createDeletedAddresses()
+        self.assertEqual(['Second@test.edu', 'First@test.edu']
+                       , n.getAddresses())
+        n.createDeletedSubject()
+        subject = """
+Reminder: Your GBT project will no longer be observing at the originally scheduled time
+        """
+        self.assertEqual(subject.strip(), n.getSubject().strip())
