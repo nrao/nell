@@ -1604,7 +1604,7 @@ class Period_Accounting(models.Model):
         # Basically, by checking that the time_billed != scheduled time, 
         # we are checking for non-zero fields in other_session, time_lost,
         # etc.
-        return self.time_billed() != self.scheduled
+        return self.time_billed() != self.scheduled or self.short_notice != 0.0
 
 class Period_State(models.Model):
     name         = models.CharField(max_length = 32)
