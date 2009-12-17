@@ -1545,9 +1545,67 @@ class TestDBReporter(NellTestCase):
 
 class TestDSSPrime2DSS(NellTestCase):
 
-    def test_DSSPrime2DSS(self):
-        t = DSSPrime2DSS()
+    def test_transfer(self):
+
+        # make sure our DB is almost blank 
+        projects = Project.objects.all()
+        self.assertEquals(1, len(projects))
+        ss = Sesshun.objects.all()
+        self.assertEquals(0, len(ss))
+        users = User.objects.all()
+        self.assertEquals(0, len(users))
+
+        t = DSSPrime2DSS(database = 'dss_prime_unit_tests')
         t.transfer()
+
+        # now test what we've got to make sure the transfer worked:
+
+        # check out the projects
+        projects = Project.objects.all()
+        # len(93) == 92 + 1 prexisting project in models
+        self.assertEquals(93, len(projects))
+
+        # spot check project table
+        projects = Project.objects.filter(semester__id = 15).all()
+        self.assertEquals(1, len(projects))
+        p = projects[0]
+        self.assertEquals("GBT05C-027", p.pcode)
+        self.assertEquals(False, p.thesis)
+        self.assertEquals("Balser", p.friend.last_name)
+        allots = p.allotments.all()
+        self.assertEquals(1, len(allots))
+        a = allots[0]
+        self.assertEquals(5.0, a.total_time)
+        self.assertEquals(4.0, a.grade)
+        invs = p.investigator_set.all()
+        self.assertEquals(2, len(invs))
+        self.assertEquals("Mangum", invs[0].user.last_name)
+        self.assertEquals("Wootten", invs[1].user.last_name)
+
+
+        ss = p.sesshun_set.all()
+        self.assertEquals(1, len(ss))
+        s = ss[0]
+        self.assertEquals("GBT05C-027-01", s.name)
+        self.assertEquals(32.75, s.frequency)
+        self.assertEquals(0, len(s.observing_parameter_set.all()))
+        self.assertEquals(False, s.status.complete)
+        self.assertEquals(5.0, s.allotment.total_time)
+        self.assertEquals(4.0, s.allotment.grade)
+        tgs = s.target_set.all()
+        self.assertEquals(1, len(tgs))
+        target = tgs[0]
+        self.assertEqual("G34.3,S68N,DR21OH", target.source)
+        self.assertAlmostEqual(0.022, target.vertical, 3)
+        self.assertAlmostEqual(4.84, target.horizontal, 2)
+        
+        ss = Sesshun.objects.all()
+        self.assertEquals(247, len(ss))
+
+        users = User.objects.all()
+        self.assertEquals(287, len(users))
+
+
 
 class TestReceiverCompile(NellTestCase):
 
