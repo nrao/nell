@@ -14,14 +14,15 @@ class UserNames(object):
     issues related to usernames and IDs.
     """
 
-    def findMissingUsers(self):
+    def findMissingUsers(self, files = None):
         "Interactive method that uses XML dump to find missing users."
 
         users = User.objects.filter(pst_id = None).all()
         print "num missing users to find: ", len(users) 
         print ""
         
-        infos = self.loadUserInfoFromDump()
+        infos = self.loadUserInfoFromDump(files)
+        print "loaded user xml dump"
 
         for user in users:
             emails = [e.email for e in user.email_set.all()]
@@ -41,14 +42,16 @@ class UserNames(object):
 
 
             
-    def loadUserInfoFromDump(self):
+    def loadUserInfoFromDump(self, files = None):
         "Uses a textual xml dump of PST to assign usernames/ids"
+        if files is None:
+            files = ["nrao.xml"]
         users = []
-        f = "nrao.xml"
-        parsed = ET.parse(f)
-        elements = parsed.getroot()
-        for element in elements:
-            users.append(UserInfo().parseUserXML(element))
+        for f in files:        
+            parsed = ET.parse(f)
+            elements = parsed.getroot()
+            for element in elements:
+                users.append(UserInfo().parseUserXML(element))
         return users
 
     def findUser(self, last_name, users):
@@ -407,9 +410,12 @@ class UserNames(object):
                             print u.pst_id, unique_id, id
                             continue
                     # save what we've learned to the DB!!!        
-                    u.username = accnt_name
-                    u.pst_id = unique_id
-                    u.save()
+                    if u.pst_id is None:
+                        print "Saving to: ", u
+                        print accnt_name, unique_id
+                        u.username = accnt_name
+                        u.pst_id = unique_id
+                        u.save()
                 elif numUsers == 0:
                     # no users - do we care if what's in the PST isn't all
                     # in our system?
