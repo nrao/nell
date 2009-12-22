@@ -221,9 +221,9 @@ class UserNames(object):
 
             # save off the username
             #print "getting id for: ", user, id
-            info = UserInfo().getStaticContactInfoByID(id)
-            #print info
-            username = info['account-info']['account-name']
+            info = user.getStaticContactInfo() #UserInfo().getStaticContactInfoByID(id)
+            print id, info
+            username = info['username'] #info['account-info']['account-name']getStaticContactInfo
 
             if user.username is not None:
                 if user.username == username:
@@ -231,7 +231,8 @@ class UserNames(object):
                     #print "usernames agree for: ", user
                     agree.append(user)
                 else:
-                    print "user.username != username! " + user.username + "!=" + username
+                    usernameStr = username if username is not None else ""
+                    print "user.username != username! " + user.username + "!=" + usernameStr
             else:
                 saved.append(user)
                 #print "saving username: ", user, username
