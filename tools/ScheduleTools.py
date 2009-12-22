@@ -114,12 +114,12 @@ class ScheduleTools(object):
                                  , short_notice = duration
                                  , description  = "") #description)
             pa.save()   
-            pending = first(Period_State.objects.filter(abbreviation = 'P'))
+            scheduled = first(Period_State.objects.filter(abbreviation = 'S'))
             p = Period(session    = sesshun
                      , start      = start
                      , duration   = duration
                      , score      = 0.0
-                     , state      = pending
+                     , state      = scheduled
                      , forecast   = start
                      , accounting = pa)
             p.save()    
