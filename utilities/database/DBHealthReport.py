@@ -132,7 +132,7 @@ def GenerateReport():
     outfile.write("\n\nProjects without any Schedulable sessions:")
     values = [p.pcode for p in projects \
               if not p.complete and \
-              not all([s.schedulable() for s in p.sesshun_set.all()])]
+              not any([s.schedulable() for s in p.sesshun_set.all()])]
     print_values(outfile, values)
 
     outfile.write("\n\nProjects without any observers:")
