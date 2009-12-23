@@ -405,6 +405,15 @@ class Project(models.Model):
     def get_allotments_display(self):
         return self.allotments.all()
 
+    def getObservedTime(self):
+        return TimeAccounting().getTime("observed", self)
+
+    def getTimeBilled(self):
+        return TimeAccounting().getTime("time_billed", self)
+
+    def getSumTotalTime(self):
+        return TimeAccounting().getProjectTotalTime(self)
+
     def init_from_post(self, fdata):
         self.update_from_post(fdata)
 
@@ -573,6 +582,11 @@ class Project(models.Model):
     def nighttime(self):
         "Returns true if a single one of it's sessions has this flag true"
         sessions = [s for s in self.sesshun_set.all() if s.nighttime()]
+        return True if sessions != [] else False
+
+    def anyCompleteSessions(self):
+        "Returns true if a single session has been set as complete"
+        sessions = [s for s in self.sesshun_set.all() if s.status.complete]
         return True if sessions != [] else False
 
     def get_prescheduled_days(self, start, end):

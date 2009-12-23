@@ -40,6 +40,9 @@
               {% if p.nighttime %}
               <th title="Require night-time observing for RFI avoidance.">RFI/Night</th>
               {% endif %}
+              {% if p.anyCompleteSessions %}
+              <th title="Session has been marked as complete.">Complete</th>
+              {% endif %}
             {% for s in sess %}
             <tr>
               <td>{{s.name}}</td>
@@ -62,6 +65,9 @@
               {% endif %}
               {% if p.nighttime %}
               <td>{% if s.nighttime %}Yes{% endif %}</td>
+              {% endif %}
+              {% if p.anyCompleteSessions %}
+              <td>{% if s.status.complete %}Yes{% endif %}</td>
               {% endif %}
             <tr>
             {% endfor %}
@@ -188,8 +194,17 @@
               <dd>{{p.semester.semester}}</dd>
               <dt>Thesis?</dt>
               <dd>{% if p.thesis %}Yes{% else %}No{% endif %}</dd>
+              <dt>Total Time (Hrs)</dt>
+              <dd>{{ p.getSumTotalTime }}</dd>
+              <dt>Time Billed (Hrs)</dt>
+              <dd>{{ p.getTimeBilled }}</dd>
               <dt>Complete?</dt>
-              <dd>{% if p.complete %}Yes{% else %}No{% endif %}</dd>
+              {% if p.complete %}
+                <dd style="color:red">Yes</dd>
+              {% else %} 
+                <dd>No</dd>
+              {% endif %}
+              <!-- <dd>{% if p.complete %}Yes{% else %}No{% endif %}</dd> -->
               <dt>Scheduling Alerts</dt>
               <ul>
               <dd style="color:red">{% if not p.has_sanctioned_observers %}<li>No trained observers</li>{% endif %}</dd>
