@@ -76,7 +76,6 @@ class SchedulingNotifier(Notifier):
          
     def notify(self):
         "send out all the different emails"
-        assert False
         # notify the obs; subject = "Your GBT Project has been scheduled..."
         Notifier.notify(self)
 
