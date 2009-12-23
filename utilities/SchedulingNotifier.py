@@ -84,7 +84,7 @@ class SchedulingNotifier(Notifier):
         self.createDeletedAddresses()
         self.createDeletedSubject()
         if len(self.getAddresses()) != 0:
-            Nofitier.notify(self)
+            Notifier.notify(self)
 
         # now let the staff know - "GBT schedule for ..."
         self.createStaffAddresses()
