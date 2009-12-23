@@ -316,6 +316,61 @@ class UserNames(object):
 
         return uniques
 
+    def addNewUsersFromProject(self, pcode, username, password):
+        """
+        Here, for the given project code, get it's authors list, and simply
+        create the basic User entries for these authors.
+        """
+
+        ps = Project.objects.filter(pcode = pcode)
+        assert len(ps) == 1
+        p = ps[0]
+
+        url = "https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm"
+        udb = NRAOUserDB( \
+            url  
+          , username
+          , password
+          , opener=urllib2.build_opener())
+
+        key = 'authorsByProposalId'
+
+        id = "%s/%s" % (p.pcode[:3], p.pcode[3:])
+
+        el = udb.get_data(key, id)
+
+        subel = el.getchildren()
+        authors = subel[0].getchildren()
+        numAuthors = len(authors)
+
+        # for each author, try to use the info we got
+        for i in range(numAuthors):
+            # get an author
+            a = authors[i]
+            # get it's info
+            last_name  = self.findTag(a, "last_name")
+            first_name = self.findTag(a, "first_name")
+            unique_id  = int(self.findTag(a, "unique_id"))
+            accnt_name = self.findTag(a, "account-name")
+            emailStr   = self.findTag(a, "email")
+            # find this author in OUR DB
+            users = User.objects.filter(first_name = first_name
+                                          , last_name = last_name).all()
+
+            if len(users) == 0:
+                # add new user!
+                u = User( sanctioned = False 
+                        , first_name  = first_name 
+                        , last_name   = last_name #row[2]
+                        , role        = first(Role.objects.filter(role = "Observer"))
+                 )
+                u.save()   
+                print "Added User: ", u
+            else:
+                print "User already in DB?: "
+                for u in users:
+                    print u
+            
     def getUserNamesFromProjects(self, username, password):
         """
         Here is a method for getting all usernames by first getting
