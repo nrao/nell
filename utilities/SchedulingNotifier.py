@@ -73,7 +73,7 @@ class SchedulingNotifier(Notifier):
         # deleted periods must also be tracked separately, because those
         # observers will get an email with a different subject
         self.deletedPeriods = sorted([p for p in periods if p.isDeleted()])
-         
+
     def notify(self):
         "send out all the different emails"
         # notify the obs; subject = "Your GBT Project has been scheduled..."
@@ -83,7 +83,8 @@ class SchedulingNotifier(Notifier):
         # might have been in scheduled in the past
         self.createDeletedAddresses()
         self.createDeletedSubject()
-        Nofitier.notify(self)
+        if len(self.getAddresses()) != 0:
+            Nofitier.notify(self)
 
         # now let the staff know - "GBT schedule for ..."
         self.createStaffAddresses()
