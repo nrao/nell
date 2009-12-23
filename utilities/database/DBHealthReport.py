@@ -157,7 +157,8 @@ def GenerateReport():
     outfile.write("\n\nPeriods Scheduled on blackout dates:")
     values = []
     for s in sessions:
-        for p in [p for p in s.period_set.all() if p.start >= datetime.today()]:
+        for p in [p for p in s.period_set.all() if p.start >= datetime.today() \
+                                                   and not p.isDeleted()]:
             blackouts = s.project.get_blackout_times(p.start, p.end())
             if blackouts:
                 values.append("%s on %s" % (s.name, p.start.strftime("%m/%d/%Y %H:%M")))
