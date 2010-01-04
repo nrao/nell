@@ -148,10 +148,9 @@ def GenerateReport():
     values = [p.__str__() for p in periods if not p.has_required_receivers()]
     print_values(outfile, values)
 
-    outfile.write("\n\nSessions with non-unique names:")
-    values  = [s.name for s in sessions]
-    for v in Set(values):
-        values.remove(v)
+    outfile.write("\n\nProjects that contain non-unique session names:")
+    names  = [(p.pcode, [s.name for s in p.sesshun_set.all()]) for p in projects]
+    values = [p for p, n in names if len(Set(n)) != len(n)]
     print_values(outfile, values)
 
     outfile.write("\n\nPeriods Scheduled on blackout dates:")
