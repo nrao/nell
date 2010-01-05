@@ -1603,7 +1603,7 @@ class Period_Accounting(models.Model):
            , self.short_notice)
 
     def observed(self):
-        "OT = SC - OS -LT"
+        "OT = SC - OS - LT"
         return self.scheduled - self.other_session() - self.lost_time()
 
     def other_session(self):
