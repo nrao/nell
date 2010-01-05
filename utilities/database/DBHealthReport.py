@@ -153,6 +153,16 @@ def GenerateReport():
     values = [p for p, n in names if len(Set(n)) != len(n)]
     print_values(outfile, values)
 
+    outfile.write("\n\nUsers with duplicate accounts:")
+    users  = list(User.objects.all())
+    values = []
+    for u in users:
+        users.remove(u)
+        for i in users:
+            if i.last_name == u.last_name and i.first_name == u.first_name:
+                values.append(u)
+    print_values(outfile, values)
+
     outfile.write("\n\nPeriods Scheduled on blackout dates:")
     values = []
     for s in sessions:
