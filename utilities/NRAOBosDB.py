@@ -1,7 +1,8 @@
 import urllib2
-import lxml.etree    as ET
-from sesshuns.models import *
-from datetime        import datetime
+import lxml.etree      as ET
+from sesshuns.models   import *
+from datetime          import datetime
+from django.core.cache import cache
 
 class NRAOBosDB:
 
@@ -9,8 +10,6 @@ class NRAOBosDB:
     This class is responsible for getting info from the BOS 
     query services.  Thankfully, there is no security to get around.
     """
-
-    __cache = {}
 
     def __init__(self):
 
@@ -65,20 +64,20 @@ class NRAOBosDB:
             #print "Error: getReservationsByUsername username arg is None"
             return []
 
-        time = 0; info = 1
-        now  = datetime.utcnow()
+        if not use_cache or cache.get(username) is None:
+            url          = self.baseUrlByPerson + username
+            fh           = self.opener.open(url)
+            reservations = self.parseReservationsXML(fh.read(0x4000))
 
-        # The cache considers data stale after 60 minutes.
-        if not use_cache or \
-           not NRAOBosDB.__cache.has_key(username) or \
-           (now - NRAOBosDB.__cache[username][time]).seconds > 60. * 60.:
-            url = self.baseUrlByPerson + username
-            fh  = self.opener.open(url)
-            str = fh.read(0x4000)
+            if cache.get(username) is None:
+                cache.add(username, reservations)
+            else:
+                cache.set(username, reservations)
+        else:
+            reservations = cache.get(username)
 
-            NRAOBosDB.__cache[username] = (now, self.parseReservationsXML(str))
-
-        return NRAOBosDB.__cache[username][info]
+        print "\n\nBOS:", reservations, "\n\n"
+        return reservations
 
     def parseReservationsXML(self, str):
         "Parses XML returned by reservationsByPerson query."

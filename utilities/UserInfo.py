@@ -1,6 +1,6 @@
-from   utilities import NRAOUserDB
+from   utilities         import NRAOUserDB
 
-from   datetime  import datetime
+from   django.core.cache import cache
 import lxml.etree as ET
 import urllib2
 
@@ -20,7 +20,6 @@ class UserInfo(object):
               , 'QueryAgent'
               , 'iBlertFoo'
               , opener = urllib2.build_opener())
-    __cache = {}
 
     def __init__(self):
         self.ns    = "{http://www.nrao.edu/namespaces/nrao}"
@@ -111,20 +110,32 @@ class UserInfo(object):
         return self.getStaticContactInfo('userByAccountNameEquals', username)
 
     def getStaticContactInfoByID(self, id, use_cache = True):
-        time = 0; info = 1
-        now  = datetime.utcnow()
+        return self.getStaticContactInfo('userById', id, use_cache)
 
-        # The cache considers data stale after 60 minutes.
-        if not use_cache or \
-           not UserInfo.__cache.has_key(id) or \
-           (now - UserInfo.__cache[id][time]).seconds > 60. * 60.:
-            UserInfo.__cache[id] = (now, self.getStaticContactInfo('userById', id))
+    def getStaticContactInfo(self, key, value, use_cache = True):
+        """
+        Get contact info from query service, using given credentials for CAS.
+        The cache is indexed by key value, i.e. if the key is userById, then
+        the value is the actual user id.
+        """
+        print "\n\nUserInfo:getStaticContactInfo"
+        cache_key = str(value) # keys have to be strings
 
-        return UserInfo.__cache[id][info]
+        if not use_cache or cache.get(cache_key) is None:
+            print "Getting new info"
+            info = parseUserXML(UserInfo.__userDB.get_data(key, value)) or "no reservations"
+            print "info =", info
 
-    def getStaticContactInfo(self, key, value):
-        "Get contact info from query service, using given credentials for CAS."
-        return self.parseUserXML(UserInfo.__userDB.get_data(key, value))
+            if cache.get(cache_key) is None:
+                cache.add(cache_key, info)
+            else:
+                cache.set(cache_key, info)
+        else:
+            print "Using cache info"
+            info = cache.get(cache_key)
+
+        print "UserInfo:", info, "\n\n"
+        return info if info != "no reservations" else None
 
     def findTag(self, node, tag):
         # TBF: why do all the XML tags have the namepace attatched?
