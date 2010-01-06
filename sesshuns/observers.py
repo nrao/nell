@@ -470,9 +470,12 @@ def parse_datetime(request, dateName, timeName, utcOffset):
 @login_required
 def blackout(request, *args, **kws):
     u_id, = args
-    user = first(User.objects.filter(id = u_id))
+
+    if request.method == 'GET': # This method is only good for POSTs.
+        return HttpResponseRedirect("/profile/%s" % u_id)
 
     # TBF Use a decorator to see if user can view this page
+    user      = first(User.objects.filter(id = u_id))
     loginUser = request.user.username
     requestor = first(User.objects.filter(username = loginUser))
 
