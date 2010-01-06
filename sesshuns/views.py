@@ -263,14 +263,12 @@ def delete_pending(request, *args, **kwds):
                       , mimetype = "text/plain")
 
 def scheduling_email(request, *args, **kwds):
+    # Show the schedule from now until 8am eastern two days from now.
+    start = datetime.utcnow()
+    end   = TimeAgent.est2utc(TimeAgent.utc2est(start + timedelta(days = 2)).replace(hour = 8, minute = 0, second = 0, microsecond = 0))
+    periods = Period.objects.filter(start__gt = start, start__lt = end) 
+    notifier = SchedulingNotifier(list(periods)) 
     if request.method == 'GET':
-        # Show the schedule from now until 8am eastern two days from now.
-        start = datetime.utcnow()
-        end   = TimeAgent.est2utc(TimeAgent.utc2est(start + timedelta(days = 2)).replace(hour = 8, minute = 0, second = 0, microsecond = 0))
-
-        periods = Period.objects.filter(start__gt = start, start__lt = end).filter(state__abbreviation__in = ['S', 'P'])
-        notifier = SchedulingNotifier(list(periods)) 
-
         return HttpResponse(
             json.dumps({
                 'emails' : notifier.getAddresses()
@@ -279,8 +277,9 @@ def scheduling_email(request, *args, **kwds):
             })
           , mimetype = "text/plain")
     elif request.method == 'POST':
-        notifier = SchedulingNotifier([])
-
+        # here we are overriding what/who gets sent for the first round
+        # of emails, but because we setup the object with Periods (above)
+        # we aren't controlling who gets the 'change schedule' emails (TBF)
         notifier.setAddresses(str(request.POST.get("emails", "")).replace(" ", "").split(","))
         notifier.setSubject(request.POST.get("subject", ""))
         notifier.setBody(request.POST.get("body", ""))

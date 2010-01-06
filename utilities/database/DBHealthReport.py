@@ -57,6 +57,7 @@ def GenerateReport():
     projects = sorted(Project.objects.all(), lambda x, y: cmp(x.pcode, y.pcode))
     sessions = sorted(Sesshun.objects.all(), lambda x, y: cmp(x.name, y.name))
     periods  = Period.objects.order_by("start")
+    rcvrs    = Receiver.objects.order_by("freq_low")
 
     outfile.write("Projects without sessions:")
     values = [p.pcode for p in projects if p.sesshun_set.all() == []]
@@ -72,9 +73,10 @@ def GenerateReport():
                  s.allotment.total_time < s.min_duration]
     print_values(outfile, values)
         
-    outfile.write("\n\nOpen sessions with time left < min duration:")
+    outfile.write("\n\nOpen sessions (not completed) with time left < min duration:")
     values = [s.name for s in sessions \
               if s.session_type.type == "open" and \
+                 not s.status.complete and \
                  ta.getTimeLeft(s) < s.min_duration]
     print_values(outfile, values)
 
@@ -90,7 +92,7 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nSessions without recievers:")
-    values = [s.name for s in sessions if s.receiver_group_set.all() == []]
+    values = [s.name for s in sessions if len(s.receiver_list()) == 0]
     print_values(outfile, values)
 
     outfile.write("\n\nOpen sessions with default frequency 0:")
@@ -108,6 +110,21 @@ def GenerateReport():
                      if t.vertical == 0.0 and t.horizontal == 0.0]
     print_values(outfile, values)
 
+    outfile.write("\n\nSessions with frequency (GHz) out of all Rcvr bands")
+    values = []
+    for s in sessions:
+        out_of_band = False
+        # freq. must be out of band for ALL rcvrs to be reported
+        rcvrs = [first(Receiver.objects.filter(abbreviation = rname)) \
+            for rname in s.rcvrs_specified()]
+        in_bands = [r for r in rcvrs if r.in_band(s.frequency)]
+        # don't report sessions w/ out rcvrs: we do that above
+        if len(in_bands) == 0 and len(rcvrs) != 0:
+            values.append("%s %s %5.4f" % (s.name
+                                         , s.receiver_list_simple()
+                                         , s.frequency))
+    print_values(outfile, values)                                         
+
     outfile.write("\n\nProjects without a friend:")
     values = [p.pcode for p in projects if not p.complete and not p.friend]
     print_values(outfile, values)
@@ -115,7 +132,7 @@ def GenerateReport():
     outfile.write("\n\nProjects without any Schedulable sessions:")
     values = [p.pcode for p in projects \
               if not p.complete and \
-              not all([s.schedulable() for s in p.sesshun_set.all()])]
+              not any([s.schedulable() for s in p.sesshun_set.all()])]
     print_values(outfile, values)
 
     outfile.write("\n\nProjects without any observers:")
@@ -128,7 +145,7 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nSessions for which periods are scheduled when none of their receivers are up:")
-    values = [p.session.name for p in periods if not p.has_required_receivers()]
+    values = [p.__str__() for p in periods if not p.has_required_receivers()]
     print_values(outfile, values)
 
     outfile.write("\n\nSessions with non-unique names within a project:")
@@ -144,7 +161,8 @@ def GenerateReport():
     outfile.write("\n\nPeriods Scheduled on blackout dates:")
     values = []
     for s in sessions:
-        for p in [p for p in s.period_set.all() if p.start >= datetime.today()]:
+        for p in [p for p in s.period_set.all() if p.start >= datetime.today() \
+                                                   and not p.isDeleted()]:
             blackouts = s.project.get_blackout_times(p.start, p.end())
             if blackouts:
                 values.append("%s on %s" % (s.name, p.start.strftime("%m/%d/%Y %H:%M")))
@@ -164,6 +182,19 @@ def GenerateReport():
                     overlap.extend([p1, p2])
     print_values(outfile, values)
 
+    outfile.write("\n\nGaps in historical schedule:")
+    now = datetime.utcnow()
+    ps_all = Period.objects.filter(start__lt = now).order_by("start")
+    ps = [p for p in ps_all if not p.isDeleted()] # TBF: use filter?
+    values = []
+    previous = ps[0]
+    for p in ps[1:]:
+        # periods should be head to tail - TBF: this catches overlaps too!
+        if p.start != previous.end():
+            values.append("Gap between: %s and %s" % (previous, p))
+        previous = p    
+    print_values(outfile, values)
+
     outfile.write("\n\nPeriods with non-positive durations:")
     values  = [p for p in periods if p.duration <= 0.]
     print_values(outfile, values)
@@ -176,6 +207,12 @@ def GenerateReport():
     ps = [p for p in periods if p.state.abbreviation == 'D']
     values  = [str(p) for p in ps if p.accounting.observed() > 0.]
     print_values(outfile, values)
+
+    outfile.write("\n\nPending Periods:") 
+    values  = [str(p) for p in periods if p.isPending()]
+    print_values(outfile, values)
+
+    
 
 if __name__ == '__main__':
     GenerateReport()

@@ -14,14 +14,15 @@ class UserNames(object):
     issues related to usernames and IDs.
     """
 
-    def findMissingUsers(self):
+    def findMissingUsers(self, files = None):
         "Interactive method that uses XML dump to find missing users."
 
         users = User.objects.filter(pst_id = None).all()
         print "num missing users to find: ", len(users) 
         print ""
         
-        infos = self.loadUserInfoFromDump()
+        infos = self.loadUserInfoFromDump(files)
+        print "loaded user xml dump"
 
         for user in users:
             emails = [e.email for e in user.email_set.all()]
@@ -41,14 +42,16 @@ class UserNames(object):
 
 
             
-    def loadUserInfoFromDump(self):
+    def loadUserInfoFromDump(self, files = None):
         "Uses a textual xml dump of PST to assign usernames/ids"
+        if files is None:
+            files = ["nrao.xml"]
         users = []
-        f = "nrao.xml"
-        parsed = ET.parse(f)
-        elements = parsed.getroot()
-        for element in elements:
-            users.append(UserInfo().parseUserXML(element))
+        for f in files:        
+            parsed = ET.parse(f)
+            elements = parsed.getroot()
+            for element in elements:
+                users.append(UserInfo().parseUserXML(element))
         return users
 
     def findUser(self, last_name, users):
@@ -219,9 +222,14 @@ class UserNames(object):
 
             # save off the username
             #print "getting id for: ", user, id
-            info = UserInfo().getStaticContactInfoByID(id, use_cache = False)
+            ##<<<<<<< local
+            #info = UserInfo().getStaticContactInfoByID(id, use_cache = False)
             #print info
-            username = info['account-info']['account-name']
+            #username = info['account-info']['account-name']
+            #=======
+            info = user.getStaticContactInfo(use_cache = False) #UserInfo().getStaticContactInfoByID(id)
+            print id, info
+            username = info['username'] #info['account-info']['account-name']getStaticContactInfo
 
             if user.username is not None:
                 if user.username == username:
@@ -229,7 +237,8 @@ class UserNames(object):
                     #print "usernames agree for: ", user
                     agree.append(user)
                 else:
-                    print "user.username != username! " + user.username + "!=" + username
+                    usernameStr = username if username is not None else ""
+                    print "user.username != username! " + user.username + "!=" + usernameStr
             else:
                 saved.append(user)
                 #print "saving username: ", user, username
@@ -313,6 +322,61 @@ class UserNames(object):
 
         return uniques
 
+    def addNewUsersFromProject(self, pcode, username, password):
+        """
+        Here, for the given project code, get it's authors list, and simply
+        create the basic User entries for these authors.
+        """
+
+        ps = Project.objects.filter(pcode = pcode)
+        assert len(ps) == 1
+        p = ps[0]
+
+        url = "https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm"
+        udb = NRAOUserDB( \
+            url  
+          , username
+          , password
+          , opener=urllib2.build_opener())
+
+        key = 'authorsByProposalId'
+
+        id = "%s/%s" % (p.pcode[:3], p.pcode[3:])
+
+        el = udb.get_data(key, id)
+
+        subel = el.getchildren()
+        authors = subel[0].getchildren()
+        numAuthors = len(authors)
+
+        # for each author, try to use the info we got
+        for i in range(numAuthors):
+            # get an author
+            a = authors[i]
+            # get it's info
+            last_name  = self.findTag(a, "last_name")
+            first_name = self.findTag(a, "first_name")
+            unique_id  = int(self.findTag(a, "unique_id"))
+            accnt_name = self.findTag(a, "account-name")
+            emailStr   = self.findTag(a, "email")
+            # find this author in OUR DB
+            users = User.objects.filter(first_name = first_name
+                                          , last_name = last_name).all()
+
+            if len(users) == 0:
+                # add new user!
+                u = User( sanctioned = False 
+                        , first_name  = first_name 
+                        , last_name   = last_name #row[2]
+                        , role        = first(Role.objects.filter(role = "Observer"))
+                 )
+                u.save()   
+                print "Added User: ", u
+            else:
+                print "User already in DB?: "
+                for u in users:
+                    print u
+            
     def getUserNamesFromProjects(self, username, password):
         """
         Here is a method for getting all usernames by first getting
@@ -408,9 +472,12 @@ class UserNames(object):
                             print u.pst_id, unique_id, id
                             continue
                     # save what we've learned to the DB!!!        
-                    u.username = accnt_name
-                    u.pst_id = unique_id
-                    u.save()
+                    if u.pst_id is None:
+                        print "Saving to: ", u
+                        print accnt_name, unique_id
+                        u.username = accnt_name
+                        u.pst_id = unique_id
+                        u.save()
                 elif numUsers == 0:
                     # no users - do we care if what's in the PST isn't all
                     # in our system?

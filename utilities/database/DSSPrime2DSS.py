@@ -31,6 +31,18 @@ class DSSPrime2DSS(object):
         # to use our self.create_09B_opportunities 
         self.use_transferred_windows = False
 
+        # for gathering information during the transfer
+        self.new_projects = []
+        self.old_projects = []
+
+        self.new_sessions = []
+        self.old_sessions = []
+
+        self.new_users = []
+        self.old_users = []
+
+        self.quiet = False
+
     def __del__(self):
         self.cursor.close()
 
@@ -59,6 +71,10 @@ class DSSPrime2DSS(object):
         # what else?
 
     def transfer(self):
+        """
+        This top-level function transfers ALL information into a DSS DB
+        that is assumed to be pristine.
+        """
         self.transfer_friends()
         self.transfer_projects()
         self.transfer_authors()
@@ -66,6 +82,23 @@ class DSSPrime2DSS(object):
         self.normalize_investigators()
         self.set_sanctioned_flags()
             
+    def transfer_only_new(self):
+        """
+        This top-level function transfers only information for projects
+        that are not yet in the DSS DB.
+        """
+    
+        # this method uses self.create_user, which checks for person 
+        # pre-existence, so it is safe to call here
+        self.transfer_friends()
+
+        self.transfer_new_projects()
+        
+        # now that we've transferred over the new projects, we
+        # can import info only that pertains to those new projects
+        self.transfer_new_proj_authors(self.new_projects)
+        self.transfer_new_proj_sessions(self.new_projects)
+
     def set_sanctioned_flags(self):
         # Get the list of sanctioned users from 09B
         f = open("/home/dss/data/sanctioned_users.txt", "r")
@@ -91,9 +124,17 @@ class DSSPrime2DSS(object):
                 for u in users:
                     if s[1] == u.last_name:
                         if s[0] != u.first_name:
-                            print "Is 08B sanctioned user %s %s possibly the same as 09C user %s %s?" % (s[0], s[1], u.first_name, u.last_name) 
+                            if not self.quiet:
+                                print "Is 08B sanctioned user %s %s possibly the same as 09C user %s %s?" % (s[0], s[1], u.first_name, u.last_name) 
 
-    def transfer_sessions(self):
+    def get_sessions(self, pcode = None):
+
+        # are we getting just sessions from the given pcode, or all sessions?
+        if pcode is None:
+            where_clause = ""
+        else:
+            where_clause = "WHERE projects.pcode = '%s'" % pcode
+
         query = """
                 SELECT sessions.*
                      , projects.pcode
@@ -112,152 +153,184 @@ class DSSPrime2DSS(object):
                    sessions.status_id = status.id AND
                    sessions.observing_type_id = observing_types.id AND
                    sessions.session_type_id = session_types.id
+                %s   
                 ORDER BY sessions.id
-                """
+                """ % where_clause 
         self.cursor.execute(query)
         
         rows = self.cursor.fetchall()
+        
+        if pcode is None:
+            # Just run a quick query to check that we got all the sessions
+            self.cursor.execute("SELECT id FROM sessions %s" % where_clause)
+            results = self.cursor.fetchall()
+            assert len(results) == len(rows)
 
-        # Just run a quick query to check that we got all the sessions
-        self.cursor.execute("SELECT id FROM sessions")
-        results = self.cursor.fetchall()
-        assert len(results) == len(rows)
+        return rows
 
+    def transfer_sessions(self):
+        "for backwards compatibility"
+        self.transfer_all_sessions()
+
+    def transfer_all_sessions(self):    
+        """
+        Transfers all sessions encountered.
+        """
+
+        rows = self.get_sessions()
         for row in rows:
-            otype = first(Observing_Type.objects.filter(type = row[23]))
-            stype = first(Session_Type.objects.filter(type = row[24]))
-            project = first(Project.objects.filter(pcode = row[12]))
+            self.add_session(row)
 
-            if project is None:
-                print "*********Transfer Sessions Error: no project for pcode: ", row[12]
-                continue
-              
+    def transfer_new_proj_sessions(self, pcodes):
+        """
+        Transfers over only those sessions that belong to the given projects.
+        """
 
-            allot = Allotment(psc_time          = float(row[14])
-                            , total_time        = float(row[15])
-                            , max_semester_time = float(row[16])
-                            , grade             = float(row[17])
-                              )
-            allot.save()
+        for pcode in pcodes:
+            rows = self.get_sessions(pcode)
+            for row in rows:
+                self.add_session(row)
 
-            status = Status(enabled    = row[19] == 1
-                          , authorized = row[20] == 1
-                          , complete   = row[21] == 1
-                          , backup     = row[22] == 1
-                            )
-            status.save()
+    def add_session(self, row):
+        """
+        Adds a new session to the DB using the given information.
+        Note: the given info is in the form of raw sql results, derived
+        from the sql used in get_session().
+        """
 
-            s = Sesshun(project        = project
-                      , session_type   = stype
-                      , observing_type = otype
-                      , allotment      = allot
-                      , status         = status
-                      , original_id    = row[6] 
-                      , name           = row[7]
-                      , frequency      = float(row[8]) if row[8] is not None else None
-                      , max_duration   = float(row[9]) if row[9] is not None else None
-                      , min_duration   = float(row[10]) if row[10] is not None else None
-                      , time_between   = float(row[11]) if row[11] is not None else None
+        otype = first(Observing_Type.objects.filter(type = row[23]))
+        stype = first(Session_Type.objects.filter(type = row[24]))
+        project = first(Project.objects.filter(pcode = row[12]))
+
+        if project is None:
+            print "*********Transfer Sessions Error: no project for pcode: ", row[12]
+            return
+          
+        allot = Allotment(psc_time          = float(row[14])
+                        , total_time        = float(row[15])
+                        , max_semester_time = float(row[16])
+                        , grade             = float(row[17])
+                          )
+        allot.save()
+
+        status = Status(enabled    = row[19] == 1
+                      , authorized = row[20] == 1
+                      , complete   = row[21] == 1
+                      , backup     = row[22] == 1
                         )
-            s.save()
+        status.save()
 
-            # now get the sources
-            s_id_prime = row[0]
-            query = """
-                    SELECT *
-                    FROM targets
-                    WHERE session_id = %s
-                    """ % s_id_prime
+        s = Sesshun(project        = project
+                  , session_type   = stype
+                  , observing_type = otype
+                  , allotment      = allot
+                  , status         = status
+                  , original_id    = row[6] 
+                  , name           = row[7]
+                  , frequency      = float(row[8]) if row[8] is not None else None
+                  , max_duration   = float(row[9]) if row[9] is not None else None
+                  , min_duration   = float(row[10]) if row[10] is not None else None
+                  , time_between   = float(row[11]) if row[11] is not None else None
+                    )
+        s.save()
+
+        # now get the sources
+        s_id_prime = row[0]
+        query = """
+                SELECT *
+                FROM targets
+                WHERE session_id = %s
+            """ % s_id_prime
+        self.cursor.execute(query)
+
+        # All Systems J2000!
+        system = first(System.objects.filter(name = "J2000"))
+
+        for t in self.cursor.fetchall():
+            try:
+                vertical = float(t[4])
+            except:
+                vertical = None
+                #print "Exception with row: ", t, s
+            try:
+                horizontal = float(t[5])
+            except:
+                horizontal = None
+                #print "Exception with row: ", t, s
+            if vertical is not None and horizontal is not None:    
+                target = Target(session    = s
+                          , system     = system
+                          , source     = t[3]
+                          , vertical   = float(t[4]) * (math.pi / 180)
+                          , horizontal = float(t[5]) * (math.pi / 12)
+                            )
+                target.save()
+
+        # now get the windows & opportunities
+        # TBF: initially, we thought there would be none of these, and
+        # they'd all be determined via the Cadences!
+        if self.use_transferred_windows:
+            query = "SELECT * FROM windows WHERE session_id = %s" % s_id_prime
             self.cursor.execute(query)
-
-            # All Systems J2000!
-            system = first(System.objects.filter(name = "J2000"))
-
-            for t in self.cursor.fetchall():
-                try:
-                    vertical = float(t[4])
-                except:
-                    vertical = None
-                    #print "Exception with row: ", t, s
-                try:
-                    horizontal = float(t[5])
-                except:
-                    horizontal = None
-                    #print "Exception with row: ", t, s
-                if vertical is not None and horizontal is not None:    
-                    target = Target(session    = s
-                              , system     = system
-                              , source     = t[3]
-                              , vertical   = float(t[4]) * (math.pi / 180)
-                              , horizontal = float(t[5]) * (math.pi / 12)
-                                )
-                    target.save()
-
-            # now get the windows & opportunities
-            # TBF: initially, we thought there would be none of these, and
-            # they'd all be determined via the Cadences!
-            if self.use_transferred_windows:
-                query = "SELECT * FROM windows WHERE session_id = %s" % s_id_prime
-                self.cursor.execute(query)
-                for w in self.cursor.fetchall():
-                    win = Window(session = s, required = w[2])
-                    win.save()
+            for w in self.cursor.fetchall():
+                win = Window(session = s, required = w[2])
+                win.save()
       
-                    query = "SELECT * FROM opportunities WHERE window_id = %s" % w[0]
-                    self.cursor.execute(query)
-                    
-                    for o in self.cursor.fetchall():
-                        op = Opportunity(window = win
-                                       , start_time = o[2]
-                                       , duration = float(o[3])
-                                       )
-                        op.save()
-
-            # now get the rcvrs
-            query = "SELECT id FROM receiver_groups WHERE session_id = %s" % s_id_prime
-            self.cursor.execute(query)
-
-            for id in self.cursor.fetchall():
-                rg = Receiver_Group(session = s)
-                rg.save()
-
-                query = """SELECT receivers.name
-                           FROM rg_receiver
-                           INNER JOIN receivers ON rg_receiver.receiver_id = receivers.id
-                           WHERE group_id = %s
-                        """ % id
+                query = "SELECT * FROM opportunities WHERE window_id = %s" % w[0]
                 self.cursor.execute(query)
-
-                for r_name in self.cursor.fetchall():
-                    rcvr = first(Receiver.objects.filter(name = r_name[0]))
-                    rg.receivers.add(rcvr)
-                rg.save()
                 
-            # now get the observing parameters
-            query = """SELECT * 
-                       FROM observing_parameters 
-                       WHERE session_id = %s
-                    """ % s_id_prime
-            self.cursor.execute(query)
-
-            for o in self.cursor.fetchall():
-                p  = first(Parameter.objects.filter(id = o[2]))
-                if p.name == 'Instruments' and o[3] == "None":
-                    pass
-                    #print "Not passing over Observing Parameter = Instruments(None)"
-                else:    
-                    op = Observing_Parameter(
-                    session        = s
-                  , parameter      = p
-                  , string_value   = o[3] if o[3] is not None else None
-                  , integer_value  = o[4] if o[4] is not None else None 
-                  , float_value    = float(o[5]) if o[5] is not None else None
-                  , boolean_value  = o[6] == 1 if o[6] is not None else None
-                  , datetime_value = o[7] if o[7] is not None else None
-                )
+                for o in self.cursor.fetchall():
+                    op = Opportunity(window = win
+                                   , start_time = o[2]
+                                   , duration = float(o[3])
+                                   )
                     op.save()
 
-        #self.populate_windows()
+        # now get the rcvrs
+        query = "SELECT id FROM receiver_groups WHERE session_id = %s" % s_id_prime
+        self.cursor.execute(query)
+
+        for id in self.cursor.fetchall():
+            rg = Receiver_Group(session = s)
+            rg.save()
+
+            query = """SELECT receivers.name
+                       FROM rg_receiver
+                       INNER JOIN receivers ON rg_receiver.receiver_id = receivers.id
+                       WHERE group_id = %s
+                    """ % id
+            self.cursor.execute(query)
+
+            for r_name in self.cursor.fetchall():
+                rcvr = first(Receiver.objects.filter(name = r_name[0]))
+                rg.receivers.add(rcvr)
+            rg.save()
+                
+        # now get the observing parameters
+        query = """SELECT * 
+                   FROM observing_parameters 
+                   WHERE session_id = %s
+                """ % s_id_prime
+        self.cursor.execute(query)
+
+        for o in self.cursor.fetchall():
+            p  = first(Parameter.objects.filter(id = o[2]))
+            if p.name == 'Instruments' and o[3] == "None":
+                pass
+                #print "Not passing over Observing Parameter = Instruments(None)"
+            else:    
+                op = Observing_Parameter(
+                session        = s
+              , parameter      = p
+              , string_value   = o[3] if o[3] is not None else None
+              , integer_value  = o[4] if o[4] is not None else None 
+              , float_value    = float(o[5]) if o[5] is not None else None
+              , boolean_value  = o[6] == 1 if o[6] is not None else None
+              , datetime_value = o[7] if o[7] is not None else None
+            )
+                op.save()
+
+        self.new_sessions.append(s)
 
     def normalize_investigators(self):
         for p in Project.objects.all():
@@ -268,33 +341,74 @@ class DSSPrime2DSS(object):
         query = "SELECT * FROM authors"
         self.cursor.execute(query)
 
-        for row in self.cursor.fetchall():
-            row  = list(row)
-            p_id = row.pop(1)
-            u    = self.create_user(row)
-            
-            query = "SELECT pcode FROM projects WHERE id = %s" % p_id
+        rows = self.cursor.fetchall()
+        for row in rows:
+            self.add_author(row)
+
+    def transfer_new_proj_authors(self, pcodes):
+        """
+        Transfers users/investigators only for those given projects.
+        """
+
+        for pcode in pcodes:
+            # get the project id for this pcode
+            query = "SELECT id FROM projects WHERE pcode = '%s'" % pcode
             self.cursor.execute(query)
-            pcode = self.cursor.fetchone()[0]
-            p     = first(Project.objects.filter(pcode = pcode).all())
+            rows = self.cursor.fetchall()
+            pid = rows[0][0]
 
-            if p is None:
-                print "*****ERROR: project absent for pcode: ", pcode
-                continue
+            # now get the authors for this project
+            query = "SELECT * from authors WHERE project_id = %d" % pid
+            self.cursor.execute(query)
+            rows = self.cursor.fetchall()
 
-            i = first(Investigator.objects.filter(project=p, user=u))
-            if i:
-                i.principal_contact      = row[6] == 1
-                i.principal_investigator = row[5] == 1
-            else:
-                i =  Investigator(project = p
-                                , user    = u
-                                , principal_contact      = row[6] == 1
-                                , principal_investigator = row[5] == 1
-                                  )
-            i.save()
+            for row in rows:
+                self.add_author(row)
+
+    def add_author(self, row):
+        """
+        Creates a User object if need be, then creates an Investigator
+        object to linke this User and it's Project.
+        """
+
+        row  = list(row)
+        p_id = row.pop(1)
+        # get the user
+        u    = self.create_user(row)
+            
+        # get the project
+        query = "SELECT pcode FROM projects WHERE id = %s" % p_id
+        self.cursor.execute(query)
+        pcode = self.cursor.fetchone()[0]
+        p     = first(Project.objects.filter(pcode = pcode).all())
+
+        if p is None:
+            print "*****ERROR: project absent for pcode: ", pcode
+            return 
+
+        # create the Investigator relation w/ the project & user
+        i = first(Investigator.objects.filter(project=p, user=u))
+        if i:
+            i.principal_contact      = row[6] == 1
+            i.principal_investigator = row[5] == 1
+        else:
+            i =  Investigator(project = p
+                            , user    = u
+                            , principal_contact      = row[6] == 1
+                            , principal_investigator = row[5] == 1
+                              )
+        i.save()
 
     def transfer_projects(self):
+        "maintains old interface"
+        self.transfer_all_projects()
+
+    def get_all_pushed_projects(self):
+        """
+        Query the DB for ALL the projects that have been pushed there,
+        and return the raw query result
+        """
+
         query = """
                 SELECT *
                 FROM projects
@@ -305,67 +419,107 @@ class DSSPrime2DSS(object):
         self.cursor.execute(query)
         
         rows = self.cursor.fetchall()
+
+        return rows
+
+    def transfer_all_projects(self):
+        "Get 'em all, transfer 'em all."
+
+        # to be used when initializing a new DB
+        rows = self.get_all_pushed_projects()
         for row in rows:
-            semester = first(Semester.objects.filter(semester = row[12]))
-            ptype    = first(Project_Type.objects.filter(type = row[14]))
+            self.add_project(row)
 
-            # friend_id from DSS' projects table
-            f_id = row[3]
-            if f_id != 0:
-                query = "select peoplekey from friends where id = %s" % f_id
-                self.cursor.execute(query)
+    def transfer_new_projects(self):
+        "Get 'em all, but only tranfer the ones we don't have yet."
 
-                # original_id from DSS users table
-                o_id   = int(self.cursor.fetchone()[0])
-                friend = first(User.objects.filter(original_id = o_id))
+        # to be use when making incremental updates
+        rows = self.get_all_pushed_projects()
+        for row in rows:
+            # TBF: check pcode - if we have it, don't transfer it.
+            pcode = row[4]
+            p = first(Project.objects.filter(pcode = pcode))
+            if p is None:
+                self.add_project(row)
+                self.new_projects.append(pcode)
+            else:
+                self.old_projects.append(pcode)
 
-                #if friend is not None:
-                #    p.friend = friend
-                #    p.save()
-                    #i =  Investigator(project = p
-                    #                , user    = friend
-                    #                , friend  = True
-                    #                  )
-                    #i.save()
+    def add_project(self, row):
+        """
+        Adds a new project to the DB based off the given list of values.
+        Note: these values are the raw result of a DB query.
+        Note: assumes all friends are in DSS DB already.
+        """
 
-            p = Project(semester     = semester
-                      , project_type = ptype
-                      , pcode        = row[4]
-                      , name         = self.filter_bad_char(row[5])
-                      , thesis       = row[6] == 1
-                      , complete     = row[7] == 1
-                      , start_date   = row[9]
-                      , end_date     = row[10]
-                      , friend       = friend
-                        )
-            p.save()
+        semester = first(Semester.objects.filter(semester = row[12]))
+        ptype    = first(Project_Type.objects.filter(type = row[14]))
 
-            query = """
-                    SELECT projects.pcode, allotment.*
-                    FROM `projects`
-                    LEFT JOIN (projects_allotments, allotment)
-                    ON (projects.id = projects_allotments.project_id AND
-                        projects_allotments.allotment_id = allotment.id)
-                    WHERE projects.pcode = '%s'
-                    """ % p.pcode
+        # friend_id from DSS' projects table
+        f_id = row[3]
+        if f_id != 0:
+            query = "select peoplekey from friends where id = %s" % f_id
             self.cursor.execute(query)
-            rows = self.cursor.fetchall()
-            for row in rows:
-                try:
-                    psc, total, max_sem, grade = map(float, row[2:])
-                except TypeError:
-                    if not self.silent:
-                        print "No alloment for project", p.pcode
-                else:
-                    a = Allotment(psc_time          = psc
-                                , total_time        = total
-                                , max_semester_time = max_sem
-                                , grade             = grade
-                                  )
-                    a.save()
+             # original_id from DSS users table
+            o_id   = int(self.cursor.fetchone()[0])
+            friend = first(User.objects.filter(original_id = o_id))
+             #if friend is not None:
+            #    p.friend = friend
+            #    p.save()
+                #i =  Investigator(project = p
+                #                , user    = friend
+                #                , friend  = True
+                #                  )
+                #i.save()
+        else:
+            friend = None
 
-                    pa = Project_Allotment(project = p, allotment = a)
-                    pa.save()
+        p = Project(semester     = semester
+                  , project_type = ptype
+                  , pcode        = row[4]
+                  , name         = self.filter_bad_char(row[5])
+                  , thesis       = row[6] == 1
+                  , complete     = row[7] == 1
+                  , start_date   = row[9]
+                  , end_date     = row[10]
+                  , friend       = friend
+                    )
+        p.save()
+        query = """
+                SELECT projects.pcode, allotment.*
+                FROM `projects`
+                LEFT JOIN (projects_allotments, allotment)
+                ON (projects.id = projects_allotments.project_id AND
+                    projects_allotments.allotment_id = allotment.id)
+                WHERE projects.pcode = '%s'
+                """ % p.pcode
+        self.cursor.execute(query)
+        rows = self.cursor.fetchall()
+        for row in rows:
+            self.add_project_allotment(p, row)
+
+    def add_project_allotment(self, project, row):
+        """
+        Add to the DSS DB the allotments for the given project.
+        The given allotment information is the raw result of a
+        DB query.
+        """
+
+        try:
+            psc, total, max_sem, grade = map(float, row[2:])
+        except TypeError:
+            if not self.silent:
+                print "No alloment for project", project.pcode
+        else:
+            a = Allotment(psc_time          = psc
+                        , total_time        = total
+                        , max_semester_time = max_sem
+                        , grade             = grade
+                          )
+            a.save()
+
+            pa = Project_Allotment(project = project, allotment = a)
+            pa.save()
 
     def transfer_friends(self):
 
@@ -383,6 +537,9 @@ class DSSPrime2DSS(object):
         # Skip to the next user if this one has been found
         if user is not None:
             row = self.cursor.fetchone()
+            # for reporting
+            if user not in self.old_users and user not in self.new_users:
+                self.old_users.append(user)
             return user
             
         # TBF: we must support outrageous accents
@@ -427,11 +584,54 @@ class DSSPrime2DSS(object):
                 #x = raw_input("check: ")
                 new_email.save()
 
+        # for reporting
+        self.new_users.append(u)
+
         return u
             
     def filter_bad_char(self, bad):
         good = bad.replace('\xad', '')
         return good
     
+    def report_transfer_only_new(self):
+        """
+        Presents information gathered during transfer process.
+        Right now this is tailer made for 'transfer_only_new'
+        """
 
+        # lines to print
+        ls = ""
 
+        # review
+        ls += "Transfered %d new projects and ignored %d old\n" % \
+            (len(self.new_projects), len(self.old_projects))
+                                                               
+        ls += "Transfered %d new sessions and ignored %d old\n" % \
+            (len(self.new_sessions), len(self.old_sessions))
+                                                               
+        ls += "Transfered %d new users and ignored %d old\n" % \
+            (len(self.new_users), len(self.old_users))
+                                                               
+
+        # project level details
+        # TBF: put this in a file
+        for pcode in self.new_projects:
+            ls += "\nProject: \n"
+            project = first(Project.objects.filter(pcode = pcode))
+            ls += "%s\n" % project 
+            ls += "Friend: %s\n" % project.friend
+            ls += "Users:\n"
+            for inv in project.investigator_set.all():
+                new = inv.user in self.new_users
+                ls += "    new: %s, %s\n" % (new, inv.user)
+            ls += "Sessions:\n"    
+            for s in project.sesshun_set.all():
+                ls += "    %s\n" % s
+        
+        if not self.quiet:
+            print ls
+
+        f = open("DSSPrime2DSS_report.txt", 'w')
+        f.writelines(ls)
+        f.close()
+                    

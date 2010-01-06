@@ -405,6 +405,15 @@ class Project(models.Model):
     def get_allotments_display(self):
         return self.allotments.all()
 
+    def getObservedTime(self):
+        return TimeAccounting().getTime("observed", self)
+
+    def getTimeBilled(self):
+        return TimeAccounting().getTime("time_billed", self)
+
+    def getSumTotalTime(self):
+        return TimeAccounting().getProjectTotalTime(self)
+
     def init_from_post(self, fdata):
         self.update_from_post(fdata)
 
@@ -564,6 +573,21 @@ class Project(models.Model):
 
     def has_sanctioned_observers(self):
         return True if self.get_sanctioned_observers() != [] else False
+
+    def transit(self):
+        "Returns true if a single one of it's sessions has this flag true"
+        sessions = [s for s in self.sesshun_set.all() if s.transit()]
+        return True if sessions != [] else False
+
+    def nighttime(self):
+        "Returns true if a single one of it's sessions has this flag true"
+        sessions = [s for s in self.sesshun_set.all() if s.nighttime()]
+        return True if sessions != [] else False
+
+    def anyCompleteSessions(self):
+        "Returns true if a single session has been set as complete"
+        sessions = [s for s in self.sesshun_set.all() if s.status.complete]
+        return True if sessions != [] else False
 
     def get_prescheduled_days(self, start, end):
         """
@@ -881,6 +905,10 @@ class Receiver(models.Model):
     def jsondict(self):
         return self.abbreviation
 
+    def in_band(self, frequency):
+        "Does the given freq fall into this rcvr's freq range?"
+        return self.freq_low <= frequency <= self.freq_hi
+
     @staticmethod
     def get_abbreviations():
         return [r.abbreviation for r in Receiver.objects.all()]
@@ -1187,23 +1215,10 @@ class Sesshun(models.Model):
         self.status.save()
         self.save()
 
-        new_transit = self.get_field(fdata, "transit", False, bool)
-        old_transit = self.transit()
-        tp = Parameter.objects.filter(name='Transit')[0]
-        if old_transit is None:
-            if new_transit:
-                obs_param =  Observing_Parameter(session = self
-                                               , parameter = tp
-                                               , boolean_value = True
-                                                )
-                obs_param.save()
-        else:
-            obs_param = self.observing_parameter_set.filter(parameter=tp)[0]
-            if new_transit:
-                obs_param.boolean_value = True
-                obs_param.save()
-            else:
-                obs_param.delete()
+        self.update_bool_obs_param(fdata, "transit", "Transit", self.transit())
+        self.update_bool_obs_param(fdata, "nighttime", "Night-time Flag", \
+            self.nighttime())
+        self.update_lst_exclusion(fdata)    
 
         proposition = fdata.get("receiver", None)
         if proposition is not None:
@@ -1216,7 +1231,7 @@ class Sesshun(models.Model):
         v_axis = fdata.get("source_v", None)
         h_axis = fdata.get("source_h", None)
 
-        t            = self.target_set.get()
+        t            = first(self.target_set.all())
         t.system     = system
         t.source     = fdata.get("source", None)
         t.vertical   = v_axis if v_axis is not None else t.vertical
@@ -1224,6 +1239,99 @@ class Sesshun(models.Model):
         t.save()
 
         self.save()
+
+    def update_bool_obs_param(self, fdata, json_name, name, old_value):
+        """
+        Generic method for taking a json dict and converting its given
+        boolean field into a boolean observing parameter.
+        """
+
+        new_value = self.get_field(fdata, json_name, False, bool)
+        tp = Parameter.objects.filter(name=name)[0]
+        if old_value is None:
+            if new_value:
+                obs_param =  Observing_Parameter(session = self
+                                               , parameter = tp
+                                               , boolean_value = True
+                                                )
+                obs_param.save()
+        else:
+            obs_param = self.observing_parameter_set.filter(parameter=tp)[0]
+            if new_value:
+                obs_param.boolean_value = True
+                obs_param.save()
+            else:
+                obs_param.delete()
+
+    def update_lst_exclusion(self, fdata):
+        """
+        Converts the json representation of the LST exclude flag
+        to the model representation.
+        """
+        lowParam = first(Parameter.objects.filter(name="LST Exclude Low"))
+        hiParam  = first(Parameter.objects.filter(name="LST Exclude Hi"))
+        
+        # json dict string representation
+        lst_ex_string = fdata.get("lst_ex", None)
+        if lst_ex_string:
+            # unwrap and get the float values
+            lowStr, highStr = lst_ex_string.split("-")
+            low = float(lowStr)
+            high = float(highStr)
+            assert low <= high
+
+        # get the model's string representation
+        current_lst_ex_string = self.get_LST_exclusion_string()
+
+        if current_lst_ex_string == "":
+            if lst_ex_string:
+                # create a new LST Exlusion range
+                obs_param =  Observing_Parameter(session = self
+                                               , parameter = lowParam
+                                               , float_value = low 
+                                                )
+                obs_param.save()
+                obs_param =  Observing_Parameter(session = self
+                                               , parameter = hiParam
+                                               , float_value = high 
+                                                )
+                obs_param.save()
+            else:
+                # they are both none, nothing to do
+                pass
+        else:
+            # get the current model representation (NOT the string) 
+            lowObsParam = \
+                first(self.observing_parameter_set.filter(parameter=lowParam))
+            highObsParam = \
+                first(self.observing_parameter_set.filter(parameter=hiParam))
+            if lst_ex_string:
+                lowObsParam.float_value = low
+                lowObsParam.save()
+                highObsParam.float_value = high
+                highObsParam.save()
+            else:
+                lowObsParam.delete()
+                highObsParam.delete()
+
+
+    def get_LST_exclusion_string(self):
+        "Converts pair of observing parameters into low-high string"
+        lowParam = first(Parameter.objects.filter(name="LST Exclude Low"))
+        hiParam  = first(Parameter.objects.filter(name="LST Exclude Hi"))
+        lows  = self.observing_parameter_set.filter(parameter=lowParam)
+        highs = self.observing_parameter_set.filter(parameter=hiParam)
+        # make sure there aren't more then 1
+        assert len(lows) < 2
+        assert len(highs) < 2
+        # make sure they make a pair, or none at all
+        assert len(lows) == len(highs)
+        # LST Exlcusion isn't set?
+        if len(lows) == 0 and len(highs) == 0:
+            return ""
+        low = first(lows)
+        high = first(highs)
+        return "%.2f-%.2f" % (low.float_value, high.float_value)
 
     def get_ra_dec(self):
         target = first(self.target_set.all())
@@ -1289,6 +1397,8 @@ class Sesshun(models.Model):
            , "complete"   : self.status.complete
            , "backup"     : self.status.backup
            , "transit"    : self.transit() or False
+           , "nighttime"  : self.nighttime() or False
+           , "lst_ex"     : self.get_LST_exclusion_string() or ""
            , "receiver"   : self.get_receiver_req()
             }
 
@@ -1312,7 +1422,17 @@ class Sesshun(models.Model):
         Returns True or False if has 'Transit' observing parameter,
         else None if not.
         """
-        tp = Parameter.objects.filter(name='Transit')[0]
+        return self.has_bool_obs_param("Transit")
+
+    def nighttime(self):
+        """
+        Returns True or False if has 'Night-time Flag' observing parameter,
+        else None if not.
+        """
+        return self.has_bool_obs_param("Night-time Flag")
+
+    def has_bool_obs_param(self, name):
+        tp = Parameter.objects.filter(name=name)[0]
         top = self.observing_parameter_set.filter(parameter=tp)
         return top[0].boolean_value if top else None
 
@@ -1560,6 +1680,18 @@ class Period_Accounting(models.Model):
         # valid!        
         return (True, None)        
 
+    def of_interest(self):
+        """
+        Time Accounting fields can be used to see if a Period has undergone
+        any kind of interesting change.
+        """
+        # check the description?  No, this could get filled out under
+        # even normal circumstances.
+        # Basically, by checking that the time_billed != scheduled time, 
+        # we are checking for non-zero fields in other_session, time_lost,
+        # etc.
+        return self.time_billed() != self.scheduled or self.short_notice != 0.0
+
 class Period_State(models.Model):
     name         = models.CharField(max_length = 32)
     abbreviation = models.CharField(max_length = 32)
@@ -1621,6 +1753,12 @@ class Period(models.Model):
     def isDeleted(self):
         return self.state.abbreviation == 'D'
 
+    def isScheduled(self):
+        return self.state.abbreviation == 'S'
+
+    def isPending(self):
+        return self.state.abbreviation == 'P'
+
     def init_from_post(self, fdata, tz):
         self.from_post(fdata, tz)
 
@@ -1651,15 +1789,8 @@ class Period(models.Model):
             if tz == 'ET':
                 self.start = TimeAgent.est2utc(self.start)
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
-        self.score    = 0.0
+        self.score    = fdata.get("score", 0.0)
         self.forecast = now
-        #self.score    = fdata.get("score", 0.0)
-        #forecast      = fdata.get("forecast", None)
-        # No forecast or maybe 0 indicates new score
-        #if forecast is None:
-        #    self.forecast = forecast
-        #else:
-        #    self.forecast = TimeAgent.hour(now) # TBF: or what??
         self.backup   = True if fdata.get("backup", None) == 'true' else False
         stateAbbr = fdata.get("state", "P")
         self.state = first(Period_State.objects.filter(abbreviation=stateAbbr))

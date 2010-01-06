@@ -6,6 +6,7 @@ from django.test.client  import Client
 from django.http         import QueryDict
 import simplejson as json
 import lxml.etree as et
+import MySQLdb as mysql
 
 from models                          import *
 from test_utils.NellTestCase         import NellTestCase
@@ -16,6 +17,7 @@ from utilities.database              import DSSPrime2DSS
 from utilities.receiver              import ReceiverCompile
 from utilities                       import UserInfo
 from utilities                       import NRAOBosDB
+from utilities.SchedulingNotifier    import SchedulingNotifier
 
 # Test field data
 fdata = {"total_time": "3"
@@ -36,6 +38,7 @@ fdata = {"total_time": "3"
        , "authorized" : False
        , "complete" : False
        , "backup" : False
+       , "lst_ex" : ""
          }
 
 def create_sesshun():
@@ -43,9 +46,9 @@ def create_sesshun():
 
     s = Sesshun()
     s.set_base_fields(fdata)
-    allot = Allotment(psc_time          = fdata.get("PSC_time", 0.0)
-                    , total_time        = fdata.get("total_time", 0.0)
-                    , max_semester_time = fdata.get("sem_time", 0.0)
+    allot = Allotment(psc_time          = float(fdata.get("PSC_time", 0.0))
+                    , total_time        = float(fdata.get("total_time", 0.0))
+                    , max_semester_time = float(fdata.get("sem_time", 0.0))
                     , grade             = 4.0
                       )
     allot.save()
@@ -794,6 +797,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.target_set.get().source, fdata["source"])
         self.assertEqual(s.status.enabled, fdata["enabled"])
+        self.assertEqual(s.get_LST_exclusion_string(),fdata["lst_ex"]) 
 
         # does this still work if you requery the DB?
         ss = Sesshun.objects.all()
@@ -813,6 +817,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.target_set.get().source, fdata["source"])
         self.assertEqual(s.status.enabled, fdata["enabled"])
+        self.assertEqual(s.get_LST_exclusion_string(), fdata["lst_ex"])
 
         # change a number of things and see if it catches it
         ldata = dict(fdata)
@@ -820,6 +825,9 @@ class TestSesshun(NellTestCase):
         ldata["source"] = "new source"
         ldata["total_time"] = "99"
         ldata["enabled"] = "true"
+        ldata["transit"] = "true"
+        ldata["nighttime"] = "false"
+        ldata["lst_ex"] = "2.00-4.00"
         s.update_from_post(ldata)
         
         # now get this session from the DB
@@ -829,6 +837,9 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.allotment.total_time, float(ldata["total_time"]))
         self.assertEqual(s.target_set.get().source, ldata["source"])
         self.assertEqual(s.status.enabled, ldata["enabled"] == "true")
+        self.assertEqual(s.transit(), ldata["transit"] == "true")
+        self.assertEqual(s.nighttime(), None)
+        self.assertEqual(s.get_LST_exclusion_string(), ldata["lst_ex"])
 
     def test_update_from_post2(self):
         ss = Sesshun.objects.all()
@@ -1534,9 +1545,143 @@ class TestDBReporter(NellTestCase):
 
 class TestDSSPrime2DSS(NellTestCase):
 
-    def test_DSSPrime2DSS(self):
-        t = DSSPrime2DSS()
+    def assert_DB_empty(self):
+        # make sure our DB is almost blank 
+        projects = Project.objects.all()
+        self.assertEquals(1, len(projects))
+        ss = Sesshun.objects.all()
+        self.assertEquals(0, len(ss))
+        users = User.objects.all()
+        self.assertEquals(0, len(users))
+
+    def compare_users(self, dbname):
+
+        old = []
+        new = []
+        fold, fnew = self.compare_users_worker(dbname, "friends", old, new)
+        pold, pnew = self.compare_users_worker(dbname, "authors", fold, fnew)
+        return (pold, pnew)
+
+    def compare_users_worker(self, dbname, table, old_users, new_users):
+        
+        db = mysql.connect(host   = "trent.gb.nrao.edu"
+                     , user   = "dss"
+                     , passwd = "asdf5!"
+                     , db     = dbname
+                            )
+        cursor = db.cursor()
+        
+        query = "SELECT * FROM %s" % table
+        cursor.execute(query)
+        
+        for row in cursor.fetchall():
+            idcol = 3 if table == "friends" else 4 
+            id = int(row[idcol])
+            user = first(User.objects.filter(original_id = id).all())
+            if user is None:
+                if id not in new_users:
+                    new_users.append(id)
+            else:
+                if id not in old_users:
+                    old_users.append(id)
+        
+        return (old_users, new_users)
+
+    def test_transfer(self):
+ 
+        self.assert_DB_empty()
+
+        t = DSSPrime2DSS(database = 'dss_prime_unit_tests')
+        t.quiet = True
         t.transfer()
+
+        # now test what we've got to make sure the transfer worked:
+
+        # check out the projects
+        projects = Project.objects.all()
+        # len(93) == 92 + 1 prexisting project in models
+        self.assertEquals(93, len(projects))
+
+        # spot check project table
+        projects = Project.objects.filter(semester__id = 15).all()
+        self.assertEquals(1, len(projects))
+        p = projects[0]
+        self.assertEquals("GBT05C-027", p.pcode)
+        self.assertEquals(False, p.thesis)
+        self.assertEquals("Balser", p.friend.last_name)
+        allots = p.allotments.all()
+        self.assertEquals(1, len(allots))
+        a = allots[0]
+        self.assertEquals(5.0, a.total_time)
+        self.assertEquals(4.0, a.grade)
+        invs = p.investigator_set.all()
+        self.assertEquals(2, len(invs))
+        self.assertEquals("Mangum", invs[0].user.last_name)
+        self.assertEquals("Wootten", invs[1].user.last_name)
+
+
+        ss = p.sesshun_set.all()
+        self.assertEquals(1, len(ss))
+        s = ss[0]
+        self.assertEquals("GBT05C-027-01", s.name)
+        self.assertEquals(32.75, s.frequency)
+        self.assertEquals(0, len(s.observing_parameter_set.all()))
+        self.assertEquals(False, s.status.complete)
+        self.assertEquals(5.0, s.allotment.total_time)
+        self.assertEquals(4.0, s.allotment.grade)
+        tgs = s.target_set.all()
+        self.assertEquals(1, len(tgs))
+        target = tgs[0]
+        self.assertEqual("G34.3,S68N,DR21OH", target.source)
+        self.assertAlmostEqual(0.022, target.vertical, 3)
+        self.assertAlmostEqual(4.84, target.horizontal, 2)
+        
+        ss = Sesshun.objects.all()
+        self.assertEquals(247, len(ss))
+
+        users = User.objects.all()
+        self.assertEquals(287, len(users))
+
+    def test_transfer_only_new_1(self):
+
+        self.assert_DB_empty()
+
+        # populate into an empty DB: not much of a test, really!
+        t = DSSPrime2DSS(database = 'dss_prime_unit_tests_2')
+        t.quiet = True
+        t.transfer_only_new()
+
+        self.assertEquals( 53, len(t.new_projects))
+        self.assertEquals(  0, len(t.old_projects))
+        self.assertEquals(121, len(t.new_sessions))
+        self.assertEquals(  0, len(t.old_sessions))
+        self.assertEquals(199, len(t.new_users))
+        self.assertEquals(  0, len(t.old_users))
+
+    def test_transfer_only_new_2(self):
+
+        self.assert_DB_empty()
+
+        # populate the DB w/ 09C and earlier stuff
+        t = DSSPrime2DSS(database = 'dss_prime_unit_tests')
+        t.quiet = True
+        t.transfer()
+
+        # now that our model DB is initialized, predict how many new and
+        # old users reside in our new source DB.
+        old_users, new_users = self.compare_users('dss_prime_unit_tests_2')
+
+        # now make sure we transfer only the new 10A stuff
+        t = DSSPrime2DSS(database = 'dss_prime_unit_tests_2')
+        t.quiet = True
+        t.transfer_only_new()
+
+        self.assertEquals( 53, len(t.new_projects))
+        self.assertEquals(  0, len(t.old_projects))
+        self.assertEquals(121, len(t.new_sessions))
+        self.assertEquals(  0, len(t.old_sessions))
+        self.assertEquals(len(new_users), len(t.new_users)) 
+        self.assertEquals(len(old_users), len(t.old_users))
 
 class TestReceiverCompile(NellTestCase):
 
@@ -2346,6 +2491,8 @@ class TestTimeAccounting(NellTestCase):
     def setUp(self):
         super(TestTimeAccounting, self).setUp()
 
+        self.project = Project.objects.order_by('pcode').all()[0]
+
         # setup some periods
         self.start = datetime(2000, 1, 1, 0)
         self.end   = self.start + timedelta(hours = 12)
@@ -2370,6 +2517,8 @@ class TestTimeAccounting(NellTestCase):
             p.save()          
             self.ps.append(p)
 
+        self.ta = TimeAccounting()
+
     def tearDown(self):
         super(TestTimeAccounting, self).tearDown()
 
@@ -2378,30 +2527,29 @@ class TestTimeAccounting(NellTestCase):
             p.delete()
 
     def test_getTimeLeft(self):
-        project = Project.objects.order_by('pcode').all()[0]
-        ta = TimeAccounting()
 
-        timeLeft = ta.getTimeLeft(project)
+        timeLeft = self.ta.getTimeLeft(self.project)
         self.assertEqual(-3.0, timeLeft)
 
         names = ["one", "three", "two"]
         times = [-2.0, -1.0, 0.0]
 
-        for i, s in enumerate(project.sesshun_set.order_by("name").all()):
-            timeLeft = ta.getTimeLeft(s)
+        for i, s in enumerate(self.project.sesshun_set.order_by("name").all()):
+            timeLeft = self.ta.getTimeLeft(s)
             self.assertEqual(names[i], s.name)
             self.assertEqual(times[i], timeLeft)
 
 
     def test_getTime(self):
 
-        project = Project.objects.order_by('pcode').all()[0]
-        ta = TimeAccounting()
-
-        pScheduled = ta.getTime('scheduled', project)
+        pScheduled = self.ta.getTime('scheduled', self.project)
         self.assertEqual(pScheduled, 12.0)
 
-        pNotBillable = ta.getTime('not_billable', project)
+        pBilled = self.ta.getTime('time_billed', self.project)
+        self.assertEqual(pBilled, 12.0)
+
+
+        pNotBillable = self.ta.getTime('not_billable', self.project)
         self.assertEqual(pNotBillable, 0.0)
 
         # now change something and watch it bubble up
@@ -2409,36 +2557,69 @@ class TestTimeAccounting(NellTestCase):
         self.ps[0].accounting.save()
         project = Project.objects.order_by('pcode').all()[0]
 
-        pNotBillable = ta.getTime('not_billable', self.ps[0].session)
+        pNotBillable = self.ta.getTime('not_billable', self.ps[0].session)
         self.assertEqual(pNotBillable, 1.0)
 
-        pNotBillable = ta.getTime('not_billable', project)
+        pNotBillable = self.ta.getTime('not_billable', project)
         self.assertEqual(pNotBillable, 1.0)
 
+    def test_getTime_2(self):
 
+        # check time dependencies at the project level
+        dt1   = self.start + timedelta(hours = 1)
+        projCmpSchd = self.ta.getTime('scheduled', self.project, dt1, True)
+        self.assertEqual(projCmpSchd, 5.0)
+        projUpSchd = self.ta.getTime('scheduled',  self.project, dt1, False)
+        self.assertEqual(projUpSchd, 7.0)
+
+        dt2   = self.start + timedelta(hours = 6)
+        projCmpSchd = self.ta.getTime('scheduled', self.project, dt2, True)
+        self.assertEqual(projCmpSchd, 8.0)
+        projUpSchd = self.ta.getTime('scheduled',  self.project, dt2, False)
+        self.assertEqual(projUpSchd, 4.0)
+
+        # check time dependencies at the session level
+        s1 = self.ps[0].session
+        sessCmpSchd = self.ta.getTime('scheduled', s1, dt2, True)
+        self.assertEqual(sessCmpSchd, 5.0)
+        sessUpSchd = self.ta.getTime('scheduled',  s1, dt2, False)
+        self.assertEqual(sessUpSchd, 0.0)
+
+    def test_getUpcomingTimeBilled(self):
+        prjUpBilled = self.ta.getUpcomingTimeBilled(self.project)
+        self.assertEqual(prjUpBilled, 0.0)
+
+        # change 'now'
+        dt = self.start - timedelta(hours = 1)
+        prjUpBilled = self.ta.getUpcomingTimeBilled(self.project, now=dt)
+        self.assertEqual(prjUpBilled, 12.0)
+
+    def test_getTimeRemainingFromCompleted(self):
+        remaining = self.ta.getTimeRemainingFromCompleted(self.project)
+        self.assertEqual(remaining, -3.0) # 9 - 12
+
+        remaining = self.ta.getTimeRemainingFromCompleted(self.ps[0].session)
+        self.assertEqual(remaining, -2.0) # 9 - 12
 
     def test_jsondict(self):
 
-        project = Project.objects.order_by('pcode').all()[0]
-        ta = TimeAccounting()
-
-        dct = ta.jsondict(project)
+        dct = self.ta.jsondict(self.project)
         self.assertEqual(3, len(dct['sessions']))
         self.assertEqual(1, len(dct['sessions'][0]['periods']))
 
         # test identity
-        ta.update_from_post(project, dct)
+        self.ta.update_from_post(self.project, dct)
         # get it fressh from the DB
         project = Project.objects.order_by('pcode').all()[0]
-        dct2 = ta.jsondict(project)
+        dct2 = self.ta.jsondict(project)
         self.assertEqual(dct, dct2)
 
         # now change something
         dct['sessions'][0]['periods'][0]['not_billable'] = 1.0
-        ta.update_from_post(project, dct)
+        self.ta.update_from_post(project, dct)
         # get it fressh from the DB
         project = Project.objects.order_by('pcode').all()[0]
-        dct2 = ta.jsondict(project)
+        dct2 = self.ta.jsondict(project)
         # they're different becuase not_billable bubbles up
         self.assertNotEqual(dct, dct2)
         b = dct2['not_billable'] 
@@ -2447,8 +2628,185 @@ class TestTimeAccounting(NellTestCase):
     def test_report(self):
 
         # just make sure it doesn't blow up
-        project = Project.objects.order_by('pcode').all()[0]
-        ta = TimeAccounting()
-        ta.quietReport = True
-        ta.report(project)
+        self.ta.quietReport = True
+        self.ta.report(self.project)
         
+# TBF: tests for this class already lives in nell/utilities!!!
+
+class TestSchedulingNotifier(NellTestCase):
+
+    def setUp(self):
+        super(TestSchedulingNotifier, self).setUp()
+
+        self.project = Project.objects.order_by('pcode').all()[0]
+
+        # get some observers for this project
+        obsRole = first(Role.objects.filter(role = "Observer"))
+
+        # we need users to test this, but we'll actually hit 
+        # the PST server!  Bad! Not a unit test
+        # So, use the test flag in SchedulingNotifier
+        
+        self.user1 = User(sanctioned = True
+                        , role = obsRole
+                        , last_name = "User"
+                        , first_name = "First"
+                        #, username = "pmargani" # TBF
+                        #, pst_id = 823 # TBF
+                        )
+        self.user1.save()
+
+        self.investigator1 =  Investigator(project  = self.project
+                                         , user     = self.user1
+                                         , observer = True)
+        self.investigator1.save()
+
+        self.user2 = User(sanctioned = True
+                        , role = obsRole
+                        , last_name = "User"
+                        , first_name = "Second"
+                        #, username = "mclark" # TBF
+                        #, pst_id = 1063 # TBF
+                        )
+        self.user2.save()
+
+        self.investigator2 =  Investigator(project  = self.project
+                                         , user     = self.user2
+                                         , observer = True)
+        self.investigator2.save()
+
+
+        # setup some periods - times in UT
+        self.start = datetime(2000, 1, 1, 0)
+        self.end   = self.start + timedelta(hours = 12)
+        times = [(datetime(2000, 1, 1, 0), 5.0, "one")
+               , (datetime(2000, 1, 1, 5), 3.0, "two")
+               , (datetime(2000, 1, 1, 8), 4.0, "three")
+               ]
+        self.ps = []
+        state = first(Period_State.objects.filter(abbreviation = 'S'))        
+        for start, dur, name in times:
+            s = create_sesshun()
+            s.name = name
+            s.save()
+            pa = Period_Accounting(scheduled = dur)
+            pa.save()
+            p = Period( session    = s
+                      , start      = start
+                      , duration   = dur
+                      , state      = state
+                      , accounting = pa
+                      )
+            p.save()          
+            self.ps.append(p)
+
+        self.ta = TimeAccounting()
+
+    def tearDown(self):
+        super(TestSchedulingNotifier, self).tearDown()
+
+        for p in self.ps:
+            p.session.delete()
+            p.remove() #delete()
+
+
+    def test_schedulingNotifier(self):
+
+        # test the class from the default constructor:
+        # these are ony for observing periods
+        n = SchedulingNotifier(self.ps, test = True)
+        self.assertEqual(['Second@test.edu', 'First@test.edu']
+                       , n.getAddresses())
+        self.assertEqual("Your GBT project has been scheduled (Dec 31-Jan 01)"
+                       , n.getSubject())
+        body = """
+Start (ET)   |      UT      |  LST  |  (hr) | Observer  | Rx        | Session
+------------------------------------------------------------------------------
+Dec 31 19:00 | Jan 01 00:00 | 01:18 |  5.00 | User      |           | one
+Jan 01 00:00 | Jan 01 05:00 | 06:19 |  3.00 | User      |           | two
+Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | User      |           | three
+        """        
+        self.assertEqual(body.strip(),  n.getSessionTable(self.ps).strip())
+
+        self.assertTrue("Changes" not in n.getBody())
+
+    def test_changes(self):
+
+        # make some changes to the schedule, and see what the notifier
+        # does
+        self.ps[1].accounting.lost_time_weather = 1.0
+        self.ps[1].accounting.save()
+
+        n = SchedulingNotifier(self.ps, test = True)
+        self.assertEqual(['Second@test.edu', 'First@test.edu']
+                       , n.getAddresses())
+        self.assertEqual("Your GBT project has been scheduled (Dec 31-Jan 01)"
+                       , n.getSubject())
+
+        # do the changes show up?
+        self.assertEqual(n.changedPeriods, [self.ps[1]])
+        table = """
+Start (ET)   |      UT      |  LST  |  (hr) | Observer  | Rx        | Session | Change\n------------------------------------------------------------------------------\nJan 01 00:00 | Jan 01 05:00 | 06:19 |  3.00 | User      |           | two | rescheduled        
+        """
+        self.assertEqual(table.strip()
+                       , n.getChangeTable().strip())
+        self.assertTrue("Changes" in n.getBody())
+
+        # make sure no one gets notified about deleted periods
+        n.createDeletedAddresses()
+        self.assertEqual([], n.getAddresses())
+        self.assertEqual([], n.deletedPeriods)
+        
+    def test_deleted(self):
+
+        # make some changes, including deleting some periods, 
+        # and make sure the notifier works
+        self.ps[1].accounting.lost_time_weather = 1.0
+        self.ps[1].accounting.save()
+        self.ps[2].delete()
+        self.ps[2].save()
+
+        # since the same project & observers is used for all our periods
+        # this isn't such a great test: the default addresses, etc. will
+        # not change
+        n = SchedulingNotifier(self.ps, test = True)
+        self.assertEqual(['Second@test.edu', 'First@test.edu']
+                       , n.getAddresses())
+        self.assertEqual("Your GBT project has been scheduled (Dec 31-Jan 01)"
+                       , n.getSubject())
+
+        # but now the deleted period should not show up in the main table!
+        body = """
+Dear Colleagues,
+
+The schedule for the period Dec 31 19:00 ET through Jan 01 07:00 ET is fixed and available.
+
+Start (ET)   |      UT      |  LST  |  (hr) | Observer  | Rx        | Session
+------------------------------------------------------------------------------
+Dec 31 19:00 | Jan 01 00:00 | 01:18 |  5.00 | User      |           | one
+Jan 01 00:00 | Jan 01 05:00 | 06:19 |  3.00 | User      |           | two
+
+Changes made to the schedule:
+ Start (ET)   |      UT      |  LST  |  (hr) | Observer  | Rx        | Session | Change
+------------------------------------------------------------------------------
+Jan 01 00:00 | Jan 01 05:00 | 06:19 |  3.00 | User      |           | two | rescheduled
+Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | User      |           | three | removed
+
+Please log into https://dss.gb.nrao.edu to view your observation
+related information.
+
+Any requests or problems with the schedule should be directed
+to helpdesk-dss@gb.nrao.edu.
+
+Happy Observing!
+        """
+        self.assertEqual(body.strip(), n.getBody().strip())
+
+        # now, a separate 'deleted' email should be able to go out
+        self.assertEqual(1, len(n.deletedPeriods))
+        n.createDeletedAddresses()
+        self.assertEqual(['Second@test.edu', 'First@test.edu']
+                       , n.getAddresses())
+        n.createDeletedSubject()
+        subject = "Reminder: GBT Schedule has changed."
+        self.assertEqual(subject.strip(), n.getSubject().strip())
