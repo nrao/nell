@@ -4,6 +4,8 @@ from   django.core.cache import cache
 import lxml.etree as ET
 import urllib2
 
+import traceback, sys
+
 class UserInfo(object):
 
     # TBF: should try to use a more object like XML parser
@@ -118,23 +120,18 @@ class UserInfo(object):
         The cache is indexed by key value, i.e. if the key is userById, then
         the value is the actual user id.
         """
-        print "\n\nUserInfo:getStaticContactInfo"
         cache_key = str(value) # keys have to be strings
 
         if not use_cache or cache.get(cache_key) is None:
-            print "Getting new info"
-            info = parseUserXML(UserInfo.__userDB.get_data(key, value)) or "no reservations"
-            print "info =", info
+            info = self.parseUserXML(UserInfo.__userDB.get_data(key, value)) or "no reservations"
 
             if cache.get(cache_key) is None:
                 cache.add(cache_key, info)
             else:
                 cache.set(cache_key, info)
         else:
-            print "Using cache info"
             info = cache.get(cache_key)
 
-        print "UserInfo:", info, "\n\n"
         return info if info != "no reservations" else None
 
     def findTag(self, node, tag):

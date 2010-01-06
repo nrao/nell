@@ -76,7 +76,6 @@ class NRAOBosDB:
         else:
             reservations = cache.get(username)
 
-        print "\n\nBOS:", reservations, "\n\n"
         return reservations
 
     def parseReservationsXML(self, str):
