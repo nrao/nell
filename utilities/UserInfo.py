@@ -4,8 +4,6 @@ from   django.core.cache import cache
 import lxml.etree as ET
 import urllib2
 
-import traceback, sys
-
 class UserInfo(object):
 
     # TBF: should try to use a more object like XML parser
