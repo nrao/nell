@@ -106,8 +106,8 @@ class UserInfo(object):
                   , affiliations = affiliations
                   , username     = username)
 
-    def getStaticContactInfoByUserName(self, username):
-        return self.getStaticContactInfo('userByAccountNameEquals', username)
+    def getStaticContactInfoByUserName(self, username, use_cache = True):
+        return self.getStaticContactInfo('userByAccountNameEquals', username, use_cache)
 
     def getStaticContactInfoByID(self, id, use_cache = True):
         return self.getStaticContactInfo('userById', id, use_cache)
