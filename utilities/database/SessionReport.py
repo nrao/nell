@@ -46,10 +46,13 @@ def GenerateReport(start):
                , str("remaining").ljust(pcs[4])))
             outfile.write("\n" + ("-"*105))   
             for p in projects:
+                if p.principal_investigator() is None:
+                    print p
+                pi = p.principal_investigator().last_name if p.principal_investigator() else "None"
                 outfile.write("\n\n %s\t%s\t%s\t%s\t%s" % \
                             (p.pcode.ljust(pcs[0])
                            , p.name[:50].ljust(pcs[1])
-                           , p.principal_investigator().last_name.ljust(pcs[2])
+                           , pi.ljust(pcs[2])
                            , str(get_total_time(p)).ljust(pcs[3])
                            , str(get_remaining_time(p,ta)).ljust(pcs[4])
                             ))
