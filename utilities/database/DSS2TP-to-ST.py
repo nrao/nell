@@ -37,7 +37,6 @@ from sesshuns.models import *
 from datetime        import datetime, timedelta
 import math
 import MySQLdb as m
-import datetime
 import pytz
 
 
@@ -184,7 +183,10 @@ def transfer_periods():
         stop_ut = i.end().replace(tzinfo = UTC)
         start_et = start_ut.astimezone(EST);
         stop_et = stop_ut.astimezone(EST);
-        duration = str((stop_et - start_et).seconds / 3600.0)
+        delta = stop_et - start_et
+        duration = str(delta.days * 24.0 + delta.seconds / 3600.0)
+
+        print start_et, stop_et, duration
                   
         cursor.execute("""INSERT INTO `periods`
                             (`id`, `session_id`, `start_time`, `duration`, `completed_hours`)
