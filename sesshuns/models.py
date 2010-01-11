@@ -280,6 +280,8 @@ class User(models.Model):
         shared_projects = [p for p in upcodes if self.isFriend(p) \
                                               or self.isInvestigator(p)]
         return shared_projects != [] or self.isAdmin() or self.isOperator()                                      
+# TBF: Remove this when we are sure we don't need this local email
+#      table anymore.
 class Email(models.Model):
     user  = models.ForeignKey(User)
     email = models.CharField(max_length = 255)
