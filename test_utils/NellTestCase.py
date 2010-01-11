@@ -1,12 +1,16 @@
 import unittest
 import pg
-from django.db import transaction
-
 import settings
+
+from django.db         import transaction
+from django.core.cache import cache
 
 class NellTestCase(unittest.TestCase):
 
     def setUp(self):
+        if hasattr(settings, "CACHE_BACKEND"):
+            settings.CACHE_BACKEND = "dummy://" # disable caching for testing
+
         dbname = "test_" + settings.DATABASE_NAME
         c = pg.connect(host = "trent", user = "dss", passwd = "asdf5!", dbname = dbname)
         sql = open("populate_db.sql").read()
