@@ -63,6 +63,22 @@ def display_allotments_for_project(project_id):
     }
 
 @register.filter
+def has_lost_time(period):
+    return period.accounting.lost_time() > 0.
+
+@register.filter
+def get_lost_time(period):
+    lt = []
+    if period.accounting.lost_time_weather > 0:
+        lt.append("weather = %2.2f hr" % period.accounting.lost_time_weather)
+    if period.accounting.lost_time_rfi > 0:
+        lt.append("RFI = %2.2f hr" % period.accounting.lost_time_rfi)
+    if period.accounting.lost_time_other > 0:
+        lt.append("other = %2.2f hr" % period.accounting.lost_time_other)
+
+    return ", ".join(lt)
+
+@register.filter
 def get_email(user):
     emails = user.getStaticContactInfo()['emails']
     return emails[0] if emails else ""
