@@ -25,19 +25,18 @@ class UserInfo(object):
         self.ns    = "{http://www.nrao.edu/namespaces/nrao}"
 
     def getProfileByID(self, user, use_cache = True):
-        emails = [e.email for e in user.email_set.all()]
         try:
             info = self.getStaticContactInfoByID(user.pst_id, use_cache)
         except:
-            return dict(emails       = emails
+            return dict(emails       = []
                       , phones       = ['Not Available']
                       , postals      = ['Not Available']
                       , affiliations = ['Not Available']
                       , username     = user.username)
         else:
-            return self.parseUserDict(info, emails, [], [])
+            return self.parseUserDict(info)
 
-    def parseUserDict(self, info, emails2 = [], phones2 = [], postals2 = []):   
+    def parseUserDict(self, info):
         "Convinience method so you don't have to deal with bad info dictionary."
         # TBF: we wouldn't need this function if the XML parsing didn't
         # suck so bad.
@@ -53,12 +52,11 @@ class UserInfo(object):
         # strip out the flag that tells us which one is default
         affiliations = [af[0]  for af in afs]
 
-        # prepend info w/ what we already have
-        emails  = [e for e in emails2]
-        phones  = [p for p in phones2]
-        postals = [p for p in postals2]
-
+        emails   = []
+        phones   = []
+        postals  = []
         contacts = info.get('contact-info', None)
+
         # got contacts?
         if contacts is not None:
             pst_emails = contacts.get('email-addresses', None)

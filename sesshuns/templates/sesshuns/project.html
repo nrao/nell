@@ -101,9 +101,7 @@
               </td>
               <td><a href="/profile/{{i.user.id}}">{{i.user|display_name}}</a></td>
               <td>
-                {% for e in i.user.email_set.all %}
-                {{e.email}}<br/>
-                {% endfor %}
+                {{i.user|get_email}}<br/>
               </td>
               <td>
                   {% if i.principal_investigator %}Yes{% endif %}

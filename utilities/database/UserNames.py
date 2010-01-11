@@ -25,8 +25,7 @@ class UserNames(object):
         print "loaded user xml dump"
 
         for user in users:
-            emails = [e.email for e in user.email_set.all()]
-            print "looking for user: ", user, emails
+            print "looking for user: ", user
             print ""
             self.findUser(user.last_name, infos)
             id = raw_input("What id to use: ")
