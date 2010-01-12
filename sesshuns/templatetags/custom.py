@@ -104,6 +104,15 @@ def project_type(project):
     return type            
 
 @register.filter
+def get_projects(user):
+    return sorted([i.project for i in user.investigator_set.all()]
+                , lambda x, y: cmp(x.pcode, y.pcode))
+
+@register.filter
+def sort_projects(projects):
+    return sorted(projects, lambda x, y: cmp(x.pcode, y.pcode))
+
+@register.filter
 def get_receiver_change(schedule, day):
     if day.date() not in [d.date() for d in schedule.keys()]:
         return "- No receiver changes" # No receiver change today
