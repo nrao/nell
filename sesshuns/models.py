@@ -77,7 +77,7 @@ def range_to_days(ranges):
         if rend - rstart > timedelta(days = 1):
             start = rstart
             end   = rstart.replace(hour = 0, minute = 0, second = 0) + timedelta(days = 1)
-            while start < rend:
+            while start < rend and end < rend:
                 if end - start >= timedelta(days = 1):
                     dates.append(start)
                 start = end
@@ -133,8 +133,8 @@ def consolidate_overlaps(events):
         for (begin2, end2) in events:
             if (begin1, end1) != (begin2, end2) and \
                begin1 < end2 and begin2 < end1:
-                begin = max([begin, begin1, begin2])
-                end   = min([end, end1, end2])
+                begin = min([begin, begin1, begin2])
+                end   = max([end, end1, end2])
         if (begin, end) not in reduced:
             reduced.append((begin, end))            
     return reduced
@@ -610,7 +610,9 @@ class Project(models.Model):
         times = [(d.start, d.start + timedelta(hours = d.duration)) \
                  for p in Project.objects.all() \
                  for d in p.getPeriods() \
-                 if p != self and d.start >= start and d.start <= end]
+                 if p != self and \
+                    d.state.abbreviation == 'S' and \
+                    overlaps((d.start, d.end()), (start, end))]
         return consolidate_events(times)
 
     def get_blackout_dates(self, start, end):

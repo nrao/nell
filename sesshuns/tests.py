@@ -565,11 +565,22 @@ class TestProject(NellTestCase):
         self.sesshun.project = self.project
         self.sesshun.save()
 
+        fdata = {'session'  : self.sesshun.id
+               , 'date'     : '2009-06-01'
+               , 'time'     : '10:00'
+               , 'duration' : 1.0
+               , 'backup'   : False}
+        self.period = Period()
+        self.period.init_from_post(fdata, 'UTC')
+        self.period.save()
+
     def tearDown(self):
         self.investigator2.delete()
         self.user2.delete()
         self.investigator1.delete()
         self.user1.delete()
+        self.period.delete()
+        self.sesshun.delete()
         self.project.delete()
 
     def test_get_blackout_times1(self):
@@ -607,7 +618,7 @@ class TestProject(NellTestCase):
 
         # Now we can finally do our test.
         expected = [
-            (datetime(2009, 1, 2, 12), datetime(2009, 1, 3, 11))
+            (datetime(2009, 1, 1, 11), datetime(2009, 1, 4, 13))
         ]
 
         today = datetime(2009, 1, 1)
@@ -817,6 +828,123 @@ class TestProject(NellTestCase):
 
         # Clean up.
         Receiver_Schedule.objects.all().delete()
+
+    def test_get_prescheduled_times(self):
+        start = datetime(2009, 6, 1)
+        end   = datetime(2009, 6, 2)
+
+        # No periods.
+        times = self.project.get_prescheduled_times(start, end)
+        self.assertEquals(0, len(times))
+
+        # Now add a project w/ prescheduled times.
+        otherproject = Project()
+        pdata = {"semester"   : "09A"
+               , "type"       : "science"
+               , "total_time" : "10.0"
+               , "PSC_time"   : "10.0"
+               , "sem_time"   : "10.0"
+               , "grade"      : "A"
+               , "notes"      : "notes"
+               , "schd_notes" : "scheduler's notes"
+        }
+        otherproject.update_from_post(pdata)
+        otherproject.save()
+
+        othersesshun = create_sesshun()
+        othersesshun.project = otherproject
+        othersesshun.save()
+
+        fdata = {'session'  : othersesshun.id
+               , 'date'     : '2009-06-01'
+               , 'time'     : '13:00'
+               , 'duration' : 1.0
+               , 'backup'   : False}
+        otherperiod = Period()
+        otherperiod.init_from_post(fdata, 'UTC')
+        otherperiod.state = Period_State.objects.filter(abbreviation = 'S')[0]
+        otherperiod.save()
+
+        # Test again
+        times = self.project.get_prescheduled_times(start, end)
+        self.assertEquals(1, len(times))
+        self.assertEquals(times[0][0], datetime(2009, 6, 1, 13))
+        self.assertEquals(times[0][1], datetime(2009, 6, 1, 14))
+
+        # Clean up
+        otherperiod.delete()
+        othersesshun.delete()
+        otherproject.delete()
+
+    def test_get_prescheduled_days(self):
+        start = datetime(2009, 6, 1)
+        end   = datetime(2009, 6, 3)
+
+        # No periods.
+        days = self.project.get_prescheduled_days(start, end)
+        self.assertEquals(0, len(days))
+
+        # Now add a project w/ prescheduled times but not for whole day.
+        otherproject = Project()
+        pdata = {"semester"   : "09A"
+               , "type"       : "science"
+               , "total_time" : "10.0"
+               , "PSC_time"   : "10.0"
+               , "sem_time"   : "10.0"
+               , "grade"      : "A"
+               , "notes"      : "notes"
+               , "schd_notes" : "scheduler's notes"
+        }
+        otherproject.update_from_post(pdata)
+        otherproject.save()
+
+        othersesshun = create_sesshun()
+        othersesshun.project = otherproject
+        othersesshun.save()
+
+        fdata = {'session'  : othersesshun.id
+               , 'date'     : '2009-06-01'
+               , 'time'     : '13:00'
+               , 'duration' : 1.0
+               , 'backup'   : False}
+        otherperiod = Period()
+        otherperiod.init_from_post(fdata, 'UTC')
+        otherperiod.state = Period_State.objects.filter(abbreviation = 'S')[0]
+        otherperiod.save()
+
+        # Test again
+        days = self.project.get_prescheduled_days(start, end)
+        self.assertEquals(0, len(days))
+
+        # Now add a period w/ prescheduled times for whole day.
+        fdata = {'session'  : othersesshun.id
+               , 'date'     : '2009-05-31'
+               , 'time'     : '23:00'
+               , 'duration' : 30.0
+               , 'backup'   : False}
+        anotherperiod = Period()
+        anotherperiod.init_from_post(fdata, 'UTC')
+        anotherperiod.state = Period_State.objects.filter(abbreviation = 'S')[0]
+        anotherperiod.save()
+
+        # Test again
+        days = self.project.get_prescheduled_days(start, end)
+        self.assertEquals(1, len(days))
+        self.assertEquals(days[0], datetime(2009, 6, 1))
+
+        # Now make that whole day prescheduled period part of the project.
+        anotherperiod.session = self.sesshun
+        anotherperiod.save()
+
+        # Test again
+        days = self.project.get_prescheduled_days(start, end)
+        self.assertEquals(0, len(days))
+
+        # Clean up
+        anotherperiod.delete()
+        otherperiod.delete()
+        othersesshun.delete()
+        otherproject.delete()
 
     def test_init_from_post(self):
         p1 = Project()
@@ -1847,8 +1975,8 @@ class TestConsolidateBlackouts(NellTestCase):
           , datetime(2009, 1, 4, 20)
         ]
         expected = [
-            # begin = b5 start, end = b1 end
-            (datetime(2009, 1, 2, 12), datetime(2009, 1, 3, 11))
+            # begin = b1 start, end = b5 end
+            (datetime(2009, 1, 1, 11), datetime(2009, 1, 4, 20))
         ]
 
         r = consolidate_events([(s, e) for s, e in zip(starts, ends)])
