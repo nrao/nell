@@ -87,7 +87,7 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nSessions with negative observed time:")
-    values = [(s.name, str(s.getObservedTime()), str(s.allocation.total_time)) \
+    values = [(s.name, str(s.getObservedTime()), str(s.allotment.total_time)) \
         for s in sessions if ta.getTime("observed", s) < 0.0]
     print_values(outfile, values)
 
