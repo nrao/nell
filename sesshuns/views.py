@@ -40,15 +40,17 @@ def receivers_schedule(request, *args, **kws):
           , mimetype = "text/plain")
 
 def change_rcvr_schedule(request, *args, **kws):
-
     # on a given date, some rcvrs are going up and coming down:
 
     startdate = request.POST.get("startdate", None)
+    # TBF: use datetime.strptime
+    #startdate = datetime.strptime(startdateStr, "%m/%d/%Y")
     if startdate is not None:
         d, t      = startdate.split(' ')
         y, m, d   = map(int, d.split('-'))
         h, mm, ss = map(int, map(float, t.split(':')))
         startdate = datetime(y, m, d, h, mm, ss)
+
     upStr   = request.POST.get("up", None)
     downStr = request.POST.get("down", None)
     error = "Error Changing Receiver Schedule"
@@ -56,7 +58,7 @@ def change_rcvr_schedule(request, *args, **kws):
     # translate the up & down rcvrs; TBF: refactor to method
     up = []
     if upStr is not None:
-        upNames = upStr.split(" ")
+        upNames = upStr.strip().split(" ")
         for abbr in upNames:
             r = Receiver.get_rcvr(abbr)
             if r is not None:
@@ -68,7 +70,7 @@ def change_rcvr_schedule(request, *args, **kws):
                                   , mimetype = "text/plain")
     down = []                                  
     if downStr is not None:
-        downNames = downStr.split(" ")
+        downNames = downStr.strip().split(" ")
         for abbr in downNames:
             r = Receiver.get_rcvr(abbr)
             if r is not None:
@@ -79,7 +81,7 @@ def change_rcvr_schedule(request, *args, **kws):
                                               , 'message': msg})
                                   , mimetype = "text/plain")
 
-    # finally, try and change the rcvr scheudle         
+    # finally, try and change the rcvr scheudle   
     success, msg = Receiver_Schedule.change_schedule(startdate, up, down)    
     if success:
         return HttpResponse(json.dumps({'success':'ok'})

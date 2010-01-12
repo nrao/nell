@@ -1054,7 +1054,7 @@ class Receiver_Schedule(models.Model):
         for d in down:
             if d not in available:
                 return (False
-                , "Receiver %s cannot come down on %s, is not up." % (u, date))
+                , "Receiver %s cannot come down on %s, is not up." % (d, date))
 
         # reconstruct the list of rcvrs available for this date
         now_available = [r for r in available if r not in down]
@@ -1086,7 +1086,6 @@ class Receiver_Schedule(models.Model):
                         # should be there now!
                         new = Receiver_Schedule(start_date = dt, receiver = u)
                         new.save()
-
 
         # return success 
         return (True, None)
