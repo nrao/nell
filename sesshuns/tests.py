@@ -506,7 +506,7 @@ class TestReceiverSchedule(NellTestCase):
                                   , "down" : "K"
                                    })
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue("Receiver Rcvr40_52 cannot come down" \
+        self.assertTrue("Receiver Rcvr18_26 cannot come down" \
                               in response.content)
         response = self.client.post('/receivers/change_schedule',
                                    {"startdate" : startdate
