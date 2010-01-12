@@ -45,7 +45,8 @@ def public_schedule(request, *args, **kws):
               , 'start'    : start
               , 'days'     : days
               , 'rschedule': Receiver_Schedule.extract_schedule(start, days)
-              , 'timezone' : timezone})
+              , 'timezone' : timezone
+              , 'is_logged_in': request.user.is_authenticated()})
 
 @login_required
 def home(request, *args, **kwds):
