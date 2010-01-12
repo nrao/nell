@@ -407,6 +407,122 @@ class TestReceiverSchedule(NellTestCase):
 
         self.assertEqual(expected, response.content)
 
+    def test_change_schedule(self):
+        "The simplest change: new change date at the end"
+
+        # get the current schedule
+        startdate = datetime(2009, 4, 6, 12)
+        schedule = Receiver_Schedule.extract_schedule(startdate = startdate)
+        dates = sorted(schedule.keys())
+
+        # now add a rcvr change latter in time 
+        last_date = dates[-1]
+        new_date = last_date + timedelta(days = 5)
+        available = schedule[last_date]
+        S = available[0]
+        L = Receiver.get_rcvr("L")
+        # take down S and put up L
+        Receiver_Schedule.change_schedule(new_date, [L], [S])
+
+        # make sure it changed appropriately
+        new_schd = Receiver_Schedule.extract_schedule(startdate = startdate)
+        new_dates = sorted(new_schd.keys())
+        self.assertEquals(len(dates) + 1, len(new_dates))
+        # nothing before the change changed?
+        for i, dt in enumerate(dates):
+            self.assertEquals(dt, new_dates[i])
+            self.assertEquals(schedule[dt], new_schd[new_dates[i]])
+
+        # now make sure the new change makes sense
+        X = Receiver.get_rcvr("X")
+        C = Receiver.get_rcvr("C")
+        rcvrs = [C, X, L]
+        self.assertEquals(rcvrs, new_schd[new_date])
+
+    def test_change_schedule_2(self):
+        "A more complicated change"
+
+        # get the current schedule
+        startdate = datetime(2009, 4, 6, 12)
+        schedule = Receiver_Schedule.extract_schedule(startdate = startdate)
+        dates = sorted(schedule.keys())
+        #for dt in dates:
+        #    print dt, [r.abbreviation for r in schedule[dt]]
+
+        # now add a rcvr change on one of these given days
+        change_date = dates[-3]
+        #new_date = last_date + timedelta(days = 5)
+        available = schedule[change_date]
+
+        L = available[1]
+        r342 = Receiver.get_rcvr("342")
+        # take down L and put up 342
+        Receiver_Schedule.change_schedule(change_date, [r342], [L])
+
+        # make sure it changed appropriately
+        new_schd = Receiver_Schedule.extract_schedule(startdate = startdate)
+        new_dates = sorted(new_schd.keys())
+        self.assertEquals(len(dates), len(new_dates))
+        #print "new: "
+        #for dt in new_dates:
+        #    print [r.abbreviation for r in new_schd[dt]]
+
+        # nothing before the change changed?
+        for i, dt in enumerate(dates):
+            if dt < change_date:
+                self.assertEquals(dt, new_dates[i])
+                self.assertEquals(schedule[dt], new_schd[new_dates[i]])
+
+        # now make sure the new change makes sense
+        # get last 3 dates
+        changed_dates = dates[len(dates)-3:]
+        X = Receiver.get_rcvr("X")
+        C = Receiver.get_rcvr("C")
+        S = Receiver.get_rcvr("S")
+        r1070 = Receiver.get_rcvr("1070")
+        changed_schd = {changed_dates[0] : [r1070, S, r342]
+                      , changed_dates[1] : [S, C, r342]
+                      , changed_dates[2] : [S, C, X, r342]}
+        for dt in changed_dates:
+            self.assertEquals(changed_schd[dt], new_schd[dt])
+
+    def test_change_receiver_schedule(self):
+        # last rcvr change:
+        # 2009-05-11 00:00:00 [u'S', u'C', u'X']
+
+        # successful change
+        startdate = datetime(2009, 5, 16)
+        response = self.client.post('/receivers/change_schedule',
+                                   {"startdate" : startdate
+                                  , "up" : "L"
+                                  , "down" : "S"
+                                   })
+        self.failUnlessEqual(response.status_code, 200)
+
+        # do something stupid
+        response = self.client.post('/receivers/change_schedule',
+                                   {"startdate" : startdate
+                                  , "up" : "Q"
+                                  , "down" : "K"
+                                   })
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue("Receiver Rcvr40_52 cannot come down" \
+                              in response.content)
+        response = self.client.post('/receivers/change_schedule',
+                                   {"startdate" : startdate
+                                  , "up" : "L"
+                                  , "down" : "K"
+                                   })
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue("Receiver Rcvr1_2 is already up" in response.content)
+        response = self.client.post('/receivers/change_schedule',
+                                   {"startdate" : startdate
+                                  , "up" : "Bob"
+                                  , "down" : "K"
+                                   })
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue("Unrecognized receiver: Bob" in response.content)
+        
 class TestProject(NellTestCase):
     def setUp(self):
         super(TestProject, self).setUp()

@@ -45,6 +45,7 @@ urlpatterns = patterns(''
    , url(r'^sessions/(\d+)$',     SessionResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^receivers$',          rcvr_schedule) #
    , url(r'^receivers/schedule$', receivers_schedule) #
+   , url(r'^receivers/change_schedule$', change_rcvr_schedule) #
    , url(r'^period/([^/]+)/moc_reschedule$', moc_reschedule)
    , url(r'^period/([^/]+)/moc_degraded$', moc_degraded)
    , url(r'^period/([^/]+)/time_accounting$', period_time_accounting) #

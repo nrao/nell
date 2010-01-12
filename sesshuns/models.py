@@ -913,6 +913,17 @@ class Receiver(models.Model):
     def get_abbreviations():
         return [r.abbreviation for r in Receiver.objects.all()]
 
+    @staticmethod
+    def get_rcvr(abbreviation):
+        "Convenience method for getting a receiver object by abbreviation"
+        return first(Receiver.objects.filter(abbreviation = abbreviation))
+
+    #@staticmethod
+    #def get_rcvr_by_name(name):
+    #    "Convenience method for getting a receiver object by abbreviation"
+    #    return first(Receiver.objects.filter(name = name))
+
+
 class Receiver_Schedule(models.Model):
     receiver   = models.ForeignKey(Receiver)
     start_date = models.DateTimeField(null = True)
@@ -1008,6 +1019,75 @@ class Receiver_Schedule(models.Model):
             prev = None
 
         return prev
+
+    @staticmethod
+    def available_receivers(date):
+        "Returns rcvrs available at end of given date"
+
+        prevDate = Receiver_Schedule.previousDate(date)
+
+        if prevDate is not None:
+            prevSchd = Receiver_Schedule.objects.filter(start_date = prevDate)
+            rcvrs = [p.receiver for p in prevSchd]
+        else:
+            rcvrs = []
+        return rcvrs    
+
+    @staticmethod
+    def change_schedule(date, up, down):
+        """
+        Here we change the receiver schedule according to the given rcvrs
+        that go up and down on the given date.  Uses extract schedule to 
+        determine what rcvrs are up on this given date so that the rcvr 
+        schedule can be changed using these deltas.  Raises errors if rcvrs are
+        specified to go up that are already up, or down that aren't up.
+        """
+        
+        available = Receiver_Schedule.available_receivers(date)
+
+        # check for errors
+        for u in up:
+            if u in available:
+                return (False, "Receiver %s is already up on %s" % (u, date))
+        for d in down:
+            if d not in available:
+                return (False
+                , "Receiver %s cannot come down on %s, is not up." % (u, date))
+
+        # reconstruct the list of rcvrs available for this date
+        now_available = [r for r in available if r not in down]
+        now_available.extend(up)
+
+        # is this a brand new rcvr change date?
+        rs_up = Receiver_Schedule.objects.filter(start_date = date)
+        if len(rs_up) == 0:
+            for r in now_available:
+                rs = Receiver_Schedule(receiver = r, start_date = date)
+                rs.save()
+
+        # now alter the subsequent dates on the schedule:
+        schedule = Receiver_Schedule.extract_schedule(date)
+        dates = sorted(schedule.keys())
+        for dt in dates:
+            if dt >= date:
+                # remove the rcvr(s) we just took down from all subsequent dates
+                for d in down:
+                    if d in schedule[dt]:
+                        # shouldn't be there anymore!
+                        gone =Receiver_Schedule.objects.filter(start_date = dt
+                                                             , receiver = d)
+                        for g in gone:
+                            g.delete()
+                # add the rcvr(s) we just put up to all subsequent dates
+                for u in up:
+                    if u not in schedule[dt]:
+                        # should be there now!
+                        new = Receiver_Schedule(start_date = dt, receiver = u)
+                        new.save()
+
+
+        # return success 
+        return (True, None)
 
 class Parameter(models.Model):
     name = models.CharField(max_length = 64)
