@@ -1092,6 +1092,39 @@ class Receiver_Schedule(models.Model):
         # return success 
         return (True, None)
 
+    @staticmethod
+    def delete_date(date):
+        "Remove all entries for the given date"
+        rs = Receiver_Schedule.objects.filter(start_date = date)
+        for r in rs:
+            r.delete()
+
+    @staticmethod
+    def shift_date(from_date, to_date):
+        "Move all entries for the given date to a new date"
+
+        # make sure the dates given are valid: you aren't allowed to shift
+        # a date beyond the neighboring dates
+        # NOTE: ensure you get all dates you need by explicity starting way back
+        start = from_date - timedelta(days = 365)
+        schedule = Receiver_Schedule.extract_schedule(startdate = start)
+        dates = sorted(schedule.keys())
+        if from_date not in dates:
+            return (False, "Original date not in Receiver Schedule")
+        from_index = dates.index(from_date)
+        prev_date = dates[from_index-1] if from_index != 0 else None
+        next_date = dates[from_index+1] if from_index != len(dates)-1 else None
+        if prev_date is None or next_date is None or to_date >= next_date or to_date <= prev_date:
+            return (False, "Cannot shift date to or past other dates")
+
+        # we must be clear to shift the date    
+        rs = Receiver_Schedule.objects.filter(start_date = from_date)
+        for r in rs:
+            r.start_date = to_date
+            r.save()
+        
+        return (True, None)
+        
 class Parameter(models.Model):
     name = models.CharField(max_length = 64)
     type = models.CharField(max_length = 32)

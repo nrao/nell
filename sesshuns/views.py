@@ -91,6 +91,21 @@ def change_rcvr_schedule(request, *args, **kws):
                                       , 'message': msg})
                            , mimetype = "text/plain")
 
+def shift_rcvr_schedule_date(request, *args, **kws):
+    fromStr = request.POST.get("from", None)
+    toStr   = request.POST.get("to", None)
+    fromDt = datetime.strptime(fromStr, "%m/%d/%Y")
+    toDt   = datetime.strptime(toStr, "%m/%d/%Y")
+    success, msg = Receiver_Schedule.shift_date(fromDt, toDt)    
+    if success:
+        return HttpResponse(json.dumps({'success':'ok'})
+                          , mimetype = "text/plain")
+    else:                          
+        error = "Error shifting date of Receiver Change."
+        return HttpResponse(json.dumps({'error': error
+                                      , 'message': msg})
+                           , mimetype = "text/plain")
+
 def get_options(request, *args, **kws):
     mode = request.GET.get("mode", None)
     if mode == "project_codes":

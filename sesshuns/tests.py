@@ -522,7 +522,50 @@ class TestReceiverSchedule(NellTestCase):
                                    })
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue("Unrecognized receiver: Bob" in response.content)
+
+#    def test_delete_date(self):
+#        # get the current schedule
+#        startdate = datetime(2009, 4, 6, 12)
+#        schedule = Receiver_Schedule.extract_schedule(startdate = startdate)
+#        dates = sorted(schedule.keys())
+#        for dt in dates:
+#            print dt, [r.abbreviation for r in schedule[dt]]
+#
+#        print "deleteing: ", dates[-3]
+#        Receiver_Schedule.delete_date(dates[-3])    
+#        schedule = Receiver_Schedule.extract_schedule(startdate = startdate)
+#        dates = sorted(schedule.keys())
+#        for dt in dates:
+#            print dt, [r.abbreviation for r in schedule[dt]]
+#        assert False
+        # now add a rcvr change on one of these given days
         
+    def test_shift_date(self):
+        startdate = datetime(2009, 4, 6, 12)
+        schedule = Receiver_Schedule.extract_schedule(startdate = startdate)
+        dates = sorted(schedule.keys())
+
+        from_date = dates[-3]
+        to_date   = from_date + timedelta(days = 1)
+        success, msg = Receiver_Schedule.shift_date(from_date, to_date)
+        self.assertEquals(True, success)
+
+        schedule = Receiver_Schedule.extract_schedule(startdate = startdate)
+        new_dates = sorted(schedule.keys())
+        for i in range(len(dates)-3):
+            self.assertEquals(dates[i], new_dates[i])
+
+        self.assertEquals(to_date, new_dates[-3])
+        self.assertEquals(dates[-2], new_dates[-2])
+        self.assertEquals(dates[-1], new_dates[-1])
+
+        # now test error checking
+        from_date = new_dates[-3]
+        to_date = from_date + timedelta(days = 12)
+        success, msg = Receiver_Schedule.shift_date(from_date, to_date)
+        self.assertEquals(False, success)
+        self.assertEquals("Cannot shift date to or past other dates", msg)
+
 class TestProject(NellTestCase):
     def setUp(self):
         super(TestProject, self).setUp()
