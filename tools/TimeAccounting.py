@@ -49,7 +49,7 @@ class TimeAccounting:
 
     # *** High level time accounting ***
 
-    # These methods are simply convenience methods: they mearly show how
+    # These methods are simply convenience methods: they merely show how
     # the lower level methods below can be used
 
     def getCompletedTimeBilled(self, obj, now=datetime.utcnow()):
