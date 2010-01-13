@@ -41,6 +41,11 @@ def GenerateReport(start):
                                for p in observed_periods \
                                if p.session.project.complete]))
 
+    outfile.write("\nTotal Lost Time was %2.2f hr\n" % sum([p.accounting.lost_time() for p in observed_periods]))
+    outfile.write("\tweather = %2.2f hr\n" % sum([p.accounting.lost_time_weather for p in observed_periods]))
+    outfile.write("\tRFI     = %2.2f hr\n" % sum([p.accounting.lost_time_rfi for p in observed_periods]))
+    outfile.write("\tother   = %2.2f hr\n" % sum([p.accounting.lost_time_other for p in observed_periods]))
+
     outfile.write("\nNext Week\n")
     outfile.write("=========\n")
     outfile.write("Observations scheduled for %s - %s (note this only includes pre-scheduled projects):\n" % (next_start.strftime("%m/%d/%Y"), next_end.strftime("%m/%d/%Y")))

@@ -17,10 +17,10 @@
               <th>Project ID</th>
               <th>Title</th>
             </tr>
-              {% for i in u.investigator_set.all %}
+              {% for p in u|get_projects %}
                 <tr>
-                  <td><a href="/project/{{i.project.pcode}}">{{i.project.pcode}}</a></td>
-                  <td>{{i.project.name}}</td>
+                  <td><a href="/project/{{p.pcode}}">{{p.pcode}}</a></td>
+                  <td>{{p.name}}</td>
                 </tr>
               {% endfor %}
           </table>
@@ -31,7 +31,7 @@
                   <th>Project ID</th>
                   <th>Title</th>
                 </tr>
-                  {% for p in u.project_set.all %}
+                  {% for p in u.project_set.all|sort_projects %}
                     <tr>
                       <!-- if u not in p.investigator_set.user
                            (not possible as template, nor important -->

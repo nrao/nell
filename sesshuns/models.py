@@ -78,7 +78,7 @@ def range_to_days(ranges):
         if rend - rstart > timedelta(days = 1):
             start = rstart
             end   = rstart.replace(hour = 0, minute = 0, second = 0) + timedelta(days = 1)
-            while start < rend:
+            while start < rend and end < rend:
                 if end - start >= timedelta(days = 1):
                     dates.append(start)
                 start = end
@@ -134,8 +134,8 @@ def consolidate_overlaps(events):
         for (begin2, end2) in events:
             if (begin1, end1) != (begin2, end2) and \
                begin1 < end2 and begin2 < end1:
-                begin = max([begin, begin1, begin2])
-                end   = min([end, end1, end2])
+                begin = min([begin, begin1, begin2])
+                end   = max([end, end1, end2])
         if (begin, end) not in reduced:
             reduced.append((begin, end))            
     return reduced
@@ -213,11 +213,11 @@ class User(models.Model):
     def isOperator(self):
         return self.role.role == "Operator"
 
-    def getStaticContactInfo(self):
-        return UserInfo().getProfileByID(self)
+    def getStaticContactInfo(self, use_cache = True):
+        return UserInfo().getProfileByID(self, use_cache)
 
-    def getReservations(self):
-        return NRAOBosDB().getReservationsByUsername(self.username)
+    def getReservations(self, use_cache = True):
+        return NRAOBosDB().getReservationsByUsername(self.username, use_cache)
 
     def getPeriods(self):
         retval = []
@@ -281,6 +281,8 @@ class User(models.Model):
         shared_projects = [p for p in upcodes if self.isFriend(p) \
                                               or self.isInvestigator(p)]
         return shared_projects != [] or self.isAdmin() or self.isOperator()                                      
+# TBF: Remove this when we are sure we don't need this local email
+#      table anymore.
 class Email(models.Model):
     user  = models.ForeignKey(User)
     email = models.CharField(max_length = 255)
@@ -609,7 +611,9 @@ class Project(models.Model):
         times = [(d.start, d.start + timedelta(hours = d.duration)) \
                  for p in Project.objects.all() \
                  for d in p.getPeriods() \
-                 if p != self and d.start >= start and d.start <= end]
+                 if p != self and \
+                    d.state.abbreviation == 'S' and \
+                    overlaps((d.start, d.end()), (start, end))]
         return consolidate_events(times)
 
     def get_blackout_dates(self, start, end):
@@ -914,6 +918,17 @@ class Receiver(models.Model):
     def get_abbreviations():
         return [r.abbreviation for r in Receiver.objects.all()]
 
+    @staticmethod
+    def get_rcvr(abbreviation):
+        "Convenience method for getting a receiver object by abbreviation"
+        return first(Receiver.objects.filter(abbreviation = abbreviation))
+
+    #@staticmethod
+    #def get_rcvr_by_name(name):
+    #    "Convenience method for getting a receiver object by abbreviation"
+    #    return first(Receiver.objects.filter(name = name))
+
+
 class Receiver_Schedule(models.Model):
     receiver   = models.ForeignKey(Receiver)
     start_date = models.DateTimeField(null = True)
@@ -1004,11 +1019,79 @@ class Receiver_Schedule(models.Model):
     @staticmethod
     def previousDate(date):
         try:
-            prev = Receiver_Schedule.objects.filter(start_date__lte = date).order_by('-start_date')[0].start_date
+            prev = Receiver_Schedule.objects.filter(start_date__lt = date).order_by('-start_date')[0].start_date
         except IndexError:
             prev = None
 
         return prev
+
+    @staticmethod
+    def available_receivers(date):
+        "Returns rcvrs available at end of given date"
+
+        prevDate = Receiver_Schedule.previousDate(date)
+
+        if prevDate is not None:
+            prevSchd = Receiver_Schedule.objects.filter(start_date = prevDate)
+            rcvrs = [p.receiver for p in prevSchd]
+        else:
+            rcvrs = []
+        return rcvrs    
+
+    @staticmethod
+    def change_schedule(date, up, down):
+        """
+        Here we change the receiver schedule according to the given rcvrs
+        that go up and down on the given date.  Uses extract schedule to 
+        determine what rcvrs are up on this given date so that the rcvr 
+        schedule can be changed using these deltas.  Raises errors if rcvrs are
+        specified to go up that are already up, or down that aren't up.
+        """
+        
+        available = Receiver_Schedule.available_receivers(date)
+
+        # check for errors
+        for u in up:
+            if u in available:
+                return (False, "Receiver %s is already up on %s" % (u, date))
+        for d in down:
+            if d not in available:
+                return (False
+                , "Receiver %s cannot come down on %s, is not up." % (d, date))
+
+        # reconstruct the list of rcvrs available for this date
+        now_available = [r for r in available if r not in down]
+        now_available.extend(up)
+
+        # is this a brand new rcvr change date?
+        rs_up = Receiver_Schedule.objects.filter(start_date = date)
+        if len(rs_up) == 0:
+            for r in now_available:
+                rs = Receiver_Schedule(receiver = r, start_date = date)
+                rs.save()
+
+        # now alter the subsequent dates on the schedule:
+        schedule = Receiver_Schedule.extract_schedule(date)
+        dates = sorted(schedule.keys())
+        for dt in dates:
+            if dt >= date:
+                # remove the rcvr(s) we just took down from all subsequent dates
+                for d in down:
+                    if d in schedule[dt]:
+                        # shouldn't be there anymore!
+                        gone =Receiver_Schedule.objects.filter(start_date = dt
+                                                             , receiver = d)
+                        for g in gone:
+                            g.delete()
+                # add the rcvr(s) we just put up to all subsequent dates
+                for u in up:
+                    if u not in schedule[dt]:
+                        # should be there now!
+                        new = Receiver_Schedule(start_date = dt, receiver = u)
+                        new.save()
+
+        # return success 
+        return (True, None)
 
 class Parameter(models.Model):
     name = models.CharField(max_length = 64)

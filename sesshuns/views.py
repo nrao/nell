@@ -28,7 +28,7 @@ def receivers_schedule(request, *args, **kws):
     jsondiff = Receiver_Schedule.jsondict_diff(diff).get("diff_schedule", None)
     # get all the maintanence days on the schedule
     # (these are days that rcvr changes *can* happen)
-    maintenance = Period.objects.filter(session__name = "Maintenance")
+    maintenance = Period.objects.filter(session__name = "Maintenance").order_by("start")
     # get the list of all receivers
     rcvrs = [r.jsondict() for r in Receiver.objects.all() \
         if r.abbreviation != "NS"]
@@ -38,6 +38,58 @@ def receivers_schedule(request, *args, **kws):
                       , "maintenance": [p.jsondict('UTC') for p in maintenance] 
                       , "receivers" : rcvrs})
           , mimetype = "text/plain")
+
+def change_rcvr_schedule(request, *args, **kws):
+    # on a given date, some rcvrs are going up and coming down:
+
+    startdate = request.POST.get("startdate", None)
+    # TBF: use datetime.strptime
+    #startdate = datetime.strptime(startdateStr, "%m/%d/%Y")
+    if startdate is not None:
+        d, t      = startdate.split(' ')
+        y, m, d   = map(int, d.split('-'))
+        h, mm, ss = map(int, map(float, t.split(':')))
+        startdate = datetime(y, m, d, h, mm, ss)
+
+    upStr   = request.POST.get("up", None)
+    downStr = request.POST.get("down", None)
+    error = "Error Changing Receiver Schedule"
+
+    # translate the up & down rcvrs; TBF: refactor to method
+    up = []
+    if upStr is not None:
+        upNames = upStr.strip().split(" ")
+        for abbr in upNames:
+            r = Receiver.get_rcvr(abbr)
+            if r is not None:
+                up.append(r)
+            else:    
+                msg = "Unrecognized receiver: %s" % abbr
+                return HttpResponse(json.dumps({'error': error
+                                              , 'message': msg})
+                                  , mimetype = "text/plain")
+    down = []                                  
+    if downStr is not None:
+        downNames = downStr.strip().split(" ")
+        for abbr in downNames:
+            r = Receiver.get_rcvr(abbr)
+            if r is not None:
+                down.append(r)
+            else:    
+                msg = "Unrecognized receiver: %s" % abbr
+                return HttpResponse(json.dumps({'error': error
+                                              , 'message': msg})
+                                  , mimetype = "text/plain")
+
+    # finally, try and change the rcvr scheudle   
+    success, msg = Receiver_Schedule.change_schedule(startdate, up, down)    
+    if success:
+        return HttpResponse(json.dumps({'success':'ok'})
+                          , mimetype = "text/plain")
+    else:                          
+        return HttpResponse(json.dumps({'error': error
+                                      , 'message': msg})
+                           , mimetype = "text/plain")
 
 def get_options(request, *args, **kws):
     mode = request.GET.get("mode", None)

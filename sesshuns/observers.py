@@ -45,7 +45,8 @@ def public_schedule(request, *args, **kws):
               , 'start'    : start
               , 'days'     : days
               , 'rschedule': Receiver_Schedule.extract_schedule(start, days)
-              , 'timezone' : timezone})
+              , 'timezone' : timezone
+              , 'is_logged_in': request.user.is_authenticated()})
 
 @login_required
 def home(request, *args, **kwds):
@@ -63,7 +64,8 @@ def home(request, *args, **kwds):
 def create_user(username):
     # If the DSS doesn't know about the user, but the User Portal does,
     # then add them to our database so they can at least see their profile.
-    info = UserInfo().getStaticContactInfoByUserName(username)
+    info = UserInfo().getStaticContactInfoByUserName(username
+                                                   , use_cache = False)
     user = User(pst_id     = info['id']
               , username   = username
               , first_name = info['name']['first-name']
@@ -143,8 +145,9 @@ def profile(request, *args, **kws):
     else:
         user = requestor
 
-    static_info  = user.getStaticContactInfo()
-    reservations = NRAOBosDB().getReservationsByUsername(user.username)
+    static_info  = user.getStaticContactInfo(use_cache = False)
+    reservations = NRAOBosDB().getReservationsByUsername(user.username
+                                                       , use_cache = False)
 
     return render_to_response("sesshuns/profile.html"
                             , {'u'            : user

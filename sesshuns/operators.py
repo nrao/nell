@@ -72,7 +72,7 @@ def gbt_schedule(request, *args, **kws):
     else:
         # default time range
         timezone  = 'ET'
-        days      = 14 
+        days      = 7 
         startDate = datetime.now()
 
     start = TimeAgent.truncateDt(startDate)
@@ -91,7 +91,7 @@ def gbt_schedule(request, *args, **kws):
     return render_to_response(
                'sesshuns/schedule.html'
              , {'calendar' : sorted(calendar.items())
-              , 'day_list' : range(1, 15)
+              , 'day_list' : range(1, 32)
               , 'tz_list'  : timezones
               , 'timezone' : timezone
               , 'today'    : datetime.now(EST)

@@ -1,7 +1,8 @@
 import urllib2
-import lxml.etree    as ET
-from sesshuns.models import *
-from datetime        import datetime
+import lxml.etree      as ET
+from sesshuns.models   import *
+from datetime          import datetime
+from django.core.cache import cache
 
 class NRAOBosDB:
 
@@ -21,7 +22,7 @@ class NRAOBosDB:
             'https://bos.nrao.edu/resReports/reservationsByPerson/'
         #    'https://bostest.cv.nrao.edu/resReports/reservationsByPerson/'
 
-    def reservations(self, project):
+    def reservations(self, project, use_cache = True):
         """
         Constructs a dictionary mapping the project's users to lists of
         reservations, where a reservation is a binary tuple of datetimes
@@ -30,7 +31,7 @@ class NRAOBosDB:
         retval = dict()
         for i in project.investigator_set.all():
             u = i.user
-            rs = self.getReservationsByUsername(u.username)
+            rs = self.getReservationsByUsername(u.username, use_cache)
             if rs:
                 retval[u] = rs
         return retval
@@ -53,7 +54,7 @@ class NRAOBosDB:
                 id = id + 1
         return jsonobjlist, id
  
-    def getReservationsByUsername(self, username):
+    def getReservationsByUsername(self, username, use_cache = True):
         """
         Uses BOS query service to return list of reservations for
         username, where a reservation is a binary tuple of datetimes
@@ -62,11 +63,20 @@ class NRAOBosDB:
         if username is None:
             #print "Error: getReservationsByUsername username arg is None"
             return []
-        url = self.baseUrlByPerson + username
-        fh = self.opener.open(url)
-        str = fh.read(0x4000)
-        parsed = self.parseReservationsXML(str)
-        return parsed
+
+        if not use_cache or cache.get(username) is None:
+            url          = self.baseUrlByPerson + username
+            fh           = self.opener.open(url)
+            reservations = self.parseReservationsXML(fh.read(0x4000))
+
+            if cache.get(username) is None:
+                cache.add(username, reservations)
+            else:
+                cache.set(username, reservations)
+        else:
+            reservations = cache.get(username)
+
+        return reservations
 
     def parseReservationsXML(self, str):
         "Parses XML returned by reservationsByPerson query."

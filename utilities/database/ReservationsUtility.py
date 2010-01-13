@@ -51,7 +51,8 @@ class ReservationsUtility(object):
         for user in users:
             print user
             if user.username is not None:
-                rs = self.bos.getReservationsByUsername(user.username)
+                rs = self.bos.getReservationsByUsername(user.username
+                                                      , use_cache = False)
                 if len(rs) != 0:
                     print "!!!!!!!!!!!!!!", rs
                     res.append((user, rs))

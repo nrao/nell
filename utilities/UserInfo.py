@@ -1,4 +1,6 @@
-from utilities import NRAOUserDB
+from   utilities         import NRAOUserDB
+
+from   django.core.cache import cache
 import lxml.etree as ET
 import urllib2
 
@@ -20,22 +22,21 @@ class UserInfo(object):
               , opener = urllib2.build_opener())
 
     def __init__(self):
-        self.ns = "{http://www.nrao.edu/namespaces/nrao}"
+        self.ns    = "{http://www.nrao.edu/namespaces/nrao}"
 
-    def getProfileByID(self, user):
-        emails = [e.email for e in user.email_set.all()]
+    def getProfileByID(self, user, use_cache = True):
         try:
-            info = self.getStaticContactInfoByID(user.pst_id)
+            info = self.getStaticContactInfoByID(user.pst_id, use_cache)
         except:
-            return dict(emails       = emails
+            return dict(emails       = []
                       , phones       = ['Not Available']
                       , postals      = ['Not Available']
                       , affiliations = ['Not Available']
                       , username     = user.username)
         else:
-            return self.parseUserDict(info, emails, [], [])
+            return self.parseUserDict(info)
 
-    def parseUserDict(self, info, emails2 = [], phones2 = [], postals2 = []):   
+    def parseUserDict(self, info):
         "Convinience method so you don't have to deal with bad info dictionary."
         # TBF: we wouldn't need this function if the XML parsing didn't
         # suck so bad.
@@ -51,12 +52,11 @@ class UserInfo(object):
         # strip out the flag that tells us which one is default
         affiliations = [af[0]  for af in afs]
 
-        # prepend info w/ what we already have
-        emails  = [e for e in emails2]
-        phones  = [p for p in phones2]
-        postals = [p for p in postals2]
-
+        emails   = []
+        phones   = []
+        postals  = []
         contacts = info.get('contact-info', None)
+
         # got contacts?
         if contacts is not None:
             pst_emails = contacts.get('email-addresses', None)
@@ -104,15 +104,31 @@ class UserInfo(object):
                   , affiliations = affiliations
                   , username     = username)
 
-    def getStaticContactInfoByUserName(self, username):
-        return self.getStaticContactInfo('userByAccountNameEquals', username)
+    def getStaticContactInfoByUserName(self, username, use_cache = True):
+        return self.getStaticContactInfo('userByAccountNameEquals', username, use_cache)
 
-    def getStaticContactInfoByID(self, id):
-        return self.getStaticContactInfo('userById', id)
+    def getStaticContactInfoByID(self, id, use_cache = True):
+        return self.getStaticContactInfo('userById', id, use_cache)
 
-    def getStaticContactInfo(self, key, value):
-        "Get contact info from query service, using given credentials for CAS."
-        return self.parseUserXML(UserInfo.__userDB.get_data(key, value))
+    def getStaticContactInfo(self, key, value, use_cache = True):
+        """
+        Get contact info from query service, using given credentials for CAS.
+        The cache is indexed by key value, i.e. if the key is userById, then
+        the value is the actual user id.
+        """
+        cache_key = str(value) # keys have to be strings
+
+        if not use_cache or cache.get(cache_key) is None:
+            info = self.parseUserXML(UserInfo.__userDB.get_data(key, value)) or "no reservations"
+
+            if cache.get(cache_key) is None:
+                cache.add(cache_key, info)
+            else:
+                cache.set(cache_key, info)
+        else:
+            info = cache.get(cache_key)
+
+        return info if info != "no reservations" else None
 
     def findTag(self, node, tag):
         # TBF: why do all the XML tags have the namepace attatched?

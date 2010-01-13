@@ -25,8 +25,7 @@ class UserNames(object):
         print "loaded user xml dump"
 
         for user in users:
-            emails = [e.email for e in user.email_set.all()]
-            print "looking for user: ", user, emails
+            print "looking for user: ", user
             print ""
             self.findUser(user.last_name, infos)
             id = raw_input("What id to use: ")
@@ -83,7 +82,8 @@ class UserNames(object):
 
         for u in users:
             if u.pst_id is not None:
-                info = UserInfo().getStaticContactInfoByID(u.pst_id)
+                info = UserInfo().getStaticContactInfoByID(u.pst_id
+                                                         , use_cache = False)
             
                 # extract what the PST thinks about this user
                 pstId        = int(info['id'])
@@ -221,7 +221,12 @@ class UserNames(object):
 
             # save off the username
             #print "getting id for: ", user, id
-            info = user.getStaticContactInfo() #UserInfo().getStaticContactInfoByID(id)
+            ##<<<<<<< local
+            #info = UserInfo().getStaticContactInfoByID(id, use_cache = False)
+            #print info
+            #username = info['account-info']['account-name']
+            #=======
+            info = user.getStaticContactInfo(use_cache = False) #UserInfo().getStaticContactInfoByID(id)
             print id, info
             username = info['username'] #info['account-info']['account-name']getStaticContactInfo
 

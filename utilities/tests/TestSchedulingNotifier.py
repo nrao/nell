@@ -65,7 +65,7 @@ class DummyUser:
         self.last_name = name
         self.emails    = emails
 
-    def getStaticContactInfo(self):
+    def getStaticContactInfo(self, use_cache = True):
         return {"emails": self.emails}
 
 class TestSchedulingNotifier(unittest.TestCase):

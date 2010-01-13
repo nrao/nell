@@ -407,6 +407,122 @@ class TestReceiverSchedule(NellTestCase):
 
         self.assertEqual(expected, response.content)
 
+    def test_change_schedule(self):
+        "The simplest change: new change date at the end"
+
+        # get the current schedule
+        startdate = datetime(2009, 4, 6, 12)
+        schedule = Receiver_Schedule.extract_schedule(startdate = startdate)
+        dates = sorted(schedule.keys())
+
+        # now add a rcvr change latter in time 
+        last_date = dates[-1]
+        new_date = last_date + timedelta(days = 5)
+        available = schedule[last_date]
+        S = available[0]
+        L = Receiver.get_rcvr("L")
+        # take down S and put up L
+        Receiver_Schedule.change_schedule(new_date, [L], [S])
+
+        # make sure it changed appropriately
+        new_schd = Receiver_Schedule.extract_schedule(startdate = startdate)
+        new_dates = sorted(new_schd.keys())
+        self.assertEquals(len(dates) + 1, len(new_dates))
+        # nothing before the change changed?
+        for i, dt in enumerate(dates):
+            self.assertEquals(dt, new_dates[i])
+            self.assertEquals(schedule[dt], new_schd[new_dates[i]])
+
+        # now make sure the new change makes sense
+        X = Receiver.get_rcvr("X")
+        C = Receiver.get_rcvr("C")
+        rcvrs = [C, X, L]
+        self.assertEquals(rcvrs, new_schd[new_date])
+
+    def test_change_schedule_2(self):
+        "A more complicated change"
+
+        # get the current schedule
+        startdate = datetime(2009, 4, 6, 12)
+        schedule = Receiver_Schedule.extract_schedule(startdate = startdate)
+        dates = sorted(schedule.keys())
+        #for dt in dates:
+        #    print dt, [r.abbreviation for r in schedule[dt]]
+
+        # now add a rcvr change on one of these given days
+        change_date = dates[-3]
+        #new_date = last_date + timedelta(days = 5)
+        available = schedule[change_date]
+
+        L = available[1]
+        r342 = Receiver.get_rcvr("342")
+        # take down L and put up 342
+        Receiver_Schedule.change_schedule(change_date, [r342], [L])
+
+        # make sure it changed appropriately
+        new_schd = Receiver_Schedule.extract_schedule(startdate = startdate)
+        new_dates = sorted(new_schd.keys())
+        self.assertEquals(len(dates), len(new_dates))
+        #print "new: "
+        #for dt in new_dates:
+        #    print [r.abbreviation for r in new_schd[dt]]
+
+        # nothing before the change changed?
+        for i, dt in enumerate(dates):
+            if dt < change_date:
+                self.assertEquals(dt, new_dates[i])
+                self.assertEquals(schedule[dt], new_schd[new_dates[i]])
+
+        # now make sure the new change makes sense
+        # get last 3 dates
+        changed_dates = dates[len(dates)-3:]
+        X = Receiver.get_rcvr("X")
+        C = Receiver.get_rcvr("C")
+        S = Receiver.get_rcvr("S")
+        r1070 = Receiver.get_rcvr("1070")
+        changed_schd = {changed_dates[0] : [r1070, S, r342]
+                      , changed_dates[1] : [S, C, r342]
+                      , changed_dates[2] : [S, C, X, r342]}
+        for dt in changed_dates:
+            self.assertEquals(changed_schd[dt], new_schd[dt])
+
+    def test_change_receiver_schedule(self):
+        # last rcvr change:
+        # 2009-05-11 00:00:00 [u'S', u'C', u'X']
+
+        # successful change
+        startdate = datetime(2009, 5, 16)
+        response = self.client.post('/receivers/change_schedule',
+                                   {"startdate" : startdate
+                                  , "up" : "L"
+                                  , "down" : "S"
+                                   })
+        self.failUnlessEqual(response.status_code, 200)
+
+        # do something stupid
+        response = self.client.post('/receivers/change_schedule',
+                                   {"startdate" : startdate
+                                  , "up" : "Q"
+                                  , "down" : "K"
+                                   })
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue("Receiver Rcvr18_26 cannot come down" \
+                              in response.content)
+        response = self.client.post('/receivers/change_schedule',
+                                   {"startdate" : startdate
+                                  , "up" : "L"
+                                  , "down" : "K"
+                                   })
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue("Receiver Rcvr1_2 is already up" in response.content)
+        response = self.client.post('/receivers/change_schedule',
+                                   {"startdate" : startdate
+                                  , "up" : "Bob"
+                                  , "down" : "K"
+                                   })
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue("Unrecognized receiver: Bob" in response.content)
+        
 class TestProject(NellTestCase):
     def setUp(self):
         super(TestProject, self).setUp()
@@ -449,11 +565,22 @@ class TestProject(NellTestCase):
         self.sesshun.project = self.project
         self.sesshun.save()
 
+        fdata = {'session'  : self.sesshun.id
+               , 'date'     : '2009-06-01'
+               , 'time'     : '10:00'
+               , 'duration' : 1.0
+               , 'backup'   : False}
+        self.period = Period()
+        self.period.init_from_post(fdata, 'UTC')
+        self.period.save()
+
     def tearDown(self):
         self.investigator2.delete()
         self.user2.delete()
         self.investigator1.delete()
         self.user1.delete()
+        self.period.delete()
+        self.sesshun.delete()
         self.project.delete()
 
     def test_get_blackout_times1(self):
@@ -491,7 +618,7 @@ class TestProject(NellTestCase):
 
         # Now we can finally do our test.
         expected = [
-            (datetime(2009, 1, 2, 12), datetime(2009, 1, 3, 11))
+            (datetime(2009, 1, 1, 11), datetime(2009, 1, 4, 13))
         ]
 
         today = datetime(2009, 1, 1)
@@ -701,6 +828,123 @@ class TestProject(NellTestCase):
 
         # Clean up.
         Receiver_Schedule.objects.all().delete()
+
+    def test_get_prescheduled_times(self):
+        start = datetime(2009, 6, 1)
+        end   = datetime(2009, 6, 2)
+
+        # No periods.
+        times = self.project.get_prescheduled_times(start, end)
+        self.assertEquals(0, len(times))
+
+        # Now add a project w/ prescheduled times.
+        otherproject = Project()
+        pdata = {"semester"   : "09A"
+               , "type"       : "science"
+               , "total_time" : "10.0"
+               , "PSC_time"   : "10.0"
+               , "sem_time"   : "10.0"
+               , "grade"      : "A"
+               , "notes"      : "notes"
+               , "schd_notes" : "scheduler's notes"
+        }
+        otherproject.update_from_post(pdata)
+        otherproject.save()
+
+        othersesshun = create_sesshun()
+        othersesshun.project = otherproject
+        othersesshun.save()
+
+        fdata = {'session'  : othersesshun.id
+               , 'date'     : '2009-06-01'
+               , 'time'     : '13:00'
+               , 'duration' : 1.0
+               , 'backup'   : False}
+        otherperiod = Period()
+        otherperiod.init_from_post(fdata, 'UTC')
+        otherperiod.state = Period_State.objects.filter(abbreviation = 'S')[0]
+        otherperiod.save()
+
+        # Test again
+        times = self.project.get_prescheduled_times(start, end)
+        self.assertEquals(1, len(times))
+        self.assertEquals(times[0][0], datetime(2009, 6, 1, 13))
+        self.assertEquals(times[0][1], datetime(2009, 6, 1, 14))
+
+        # Clean up
+        otherperiod.delete()
+        othersesshun.delete()
+        otherproject.delete()
+
+    def test_get_prescheduled_days(self):
+        start = datetime(2009, 6, 1)
+        end   = datetime(2009, 6, 3)
+
+        # No periods.
+        days = self.project.get_prescheduled_days(start, end)
+        self.assertEquals(0, len(days))
+
+        # Now add a project w/ prescheduled times but not for whole day.
+        otherproject = Project()
+        pdata = {"semester"   : "09A"
+               , "type"       : "science"
+               , "total_time" : "10.0"
+               , "PSC_time"   : "10.0"
+               , "sem_time"   : "10.0"
+               , "grade"      : "A"
+               , "notes"      : "notes"
+               , "schd_notes" : "scheduler's notes"
+        }
+        otherproject.update_from_post(pdata)
+        otherproject.save()
+
+        othersesshun = create_sesshun()
+        othersesshun.project = otherproject
+        othersesshun.save()
+
+        fdata = {'session'  : othersesshun.id
+               , 'date'     : '2009-06-01'
+               , 'time'     : '13:00'
+               , 'duration' : 1.0
+               , 'backup'   : False}
+        otherperiod = Period()
+        otherperiod.init_from_post(fdata, 'UTC')
+        otherperiod.state = Period_State.objects.filter(abbreviation = 'S')[0]
+        otherperiod.save()
+
+        # Test again
+        days = self.project.get_prescheduled_days(start, end)
+        self.assertEquals(0, len(days))
+
+        # Now add a period w/ prescheduled times for whole day.
+        fdata = {'session'  : othersesshun.id
+               , 'date'     : '2009-05-31'
+               , 'time'     : '23:00'
+               , 'duration' : 30.0
+               , 'backup'   : False}
+        anotherperiod = Period()
+        anotherperiod.init_from_post(fdata, 'UTC')
+        anotherperiod.state = Period_State.objects.filter(abbreviation = 'S')[0]
+        anotherperiod.save()
+
+        # Test again
+        days = self.project.get_prescheduled_days(start, end)
+        self.assertEquals(1, len(days))
+        self.assertEquals(days[0], datetime(2009, 6, 1))
+
+        # Now make that whole day prescheduled period part of the project.
+        anotherperiod.session = self.sesshun
+        anotherperiod.save()
+
+        # Test again
+        days = self.project.get_prescheduled_days(start, end)
+        self.assertEquals(0, len(days))
+
+        # Clean up
+        anotherperiod.delete()
+        otherperiod.delete()
+        othersesshun.delete()
+        otherproject.delete()
 
     def test_init_from_post(self):
         p1 = Project()
@@ -1124,7 +1368,6 @@ class TestChangeSchedule(NellTestCase):
         response = c.post('/schedule/change_schedule'
                         , dict(duration = "1.0"
                              , start    = "2009-10-11 04:00:00"))
-        print response                     
 
 class TestShiftPeriodBoundaries(NellTestCase):
     def setUp(self):
@@ -1732,8 +1975,8 @@ class TestConsolidateBlackouts(NellTestCase):
           , datetime(2009, 1, 4, 20)
         ]
         expected = [
-            # begin = b5 start, end = b1 end
-            (datetime(2009, 1, 2, 12), datetime(2009, 1, 3, 11))
+            # begin = b1 start, end = b5 end
+            (datetime(2009, 1, 1, 11), datetime(2009, 1, 4, 20))
         ]
 
         r = consolidate_events([(s, e) for s, e in zip(starts, ends)])
