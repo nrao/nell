@@ -1018,7 +1018,7 @@ class Receiver_Schedule(models.Model):
     @staticmethod
     def previousDate(date):
         try:
-            prev = Receiver_Schedule.objects.filter(start_date__lte = date).order_by('-start_date')[0].start_date
+            prev = Receiver_Schedule.objects.filter(start_date__lt = date).order_by('-start_date')[0].start_date
         except IndexError:
             prev = None
 
