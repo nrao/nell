@@ -1873,6 +1873,8 @@ class Period(models.Model):
             if tz == 'ET':
                 self.start = TimeAgent.est2utc(self.start)
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
+        self.score    = 0.0
+        self.forecast = TimeAgent.quarter(datetime.utcnow())
         self.backup   = True if fdata.get("backup", None) == 'true' else False
         stateAbbr = fdata.get("state", "P")
         self.state = first(Period_State.objects.filter(abbreviation=stateAbbr))
