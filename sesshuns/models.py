@@ -443,8 +443,8 @@ class Project(models.Model):
         grades   = map(grade_abc_2_float, fdata.get("grade", "A").split(', '))
         
         assert len(totals) == len(pscs) and \
-            len(totals) == len(max_sems) and \
-            len(totals) == len(grades)
+               len(totals) == len(max_sems) and \
+               len(totals) == len(grades)
 
         num_new = len(totals)
         num_cur = len(self.allotments.all())
@@ -1678,13 +1678,13 @@ class Target(models.Model):
 
     def __str__(self):
         return "%s at %s : %s" % (self.source
-                                , self.vertical
                                 , self.horizontal
+                                , self.vertical
                                   )
 
     def __unicode__(self):
         return "%s @ (%5.2f, %5.2f), Sys: %s" % \
-            (self.source, self.vertical, self.horizontal, self.system)
+            (self.source, self.horizontal, self.vertical, self.system)
 
     class Meta:
         db_table = "targets"
