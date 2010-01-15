@@ -188,6 +188,62 @@ class TestUser(NellTestCase):
                                 , self.user2.getObservedPeriods(oct2))
         self.assertEqual([],      self.user2.getUpcomingPeriods(dec1))
 
+class TestWindow(NellTestCase):
+    def setUp(self):
+        super(TestWindow, self).setUp()
+        self.sesshun = create_sesshun()
+        dt = datetime(2009, 6, 1, 12, 15)
+        pending = first(Period_State.objects.filter(abbreviation = "P"))
+        self.default_period = Period(session = self.sesshun
+                                   , start = dt
+                                   , duration = 5.0
+                                   , state = pending
+                                   )
+        self.default_period.save()                           
+        self.fdata = {"session":  1
+                    , "date":    "2009-6-1"
+                    , "duration": 7
+                    , "default_period" : self.default_period.id
+                    }
+
+    def test_update_from_post(self):
+        w = Window()
+        w.init_from_post(self.fdata)
+        
+        self.assertEqual(w.session, self.sesshun)
+        self.assertEqual(w.start_date, datetime(2009, 6, 1))
+        self.assertEqual(w.duration, self.fdata["duration"])
+        self.assertEqual(w.default_period.id, self.fdata["default_period"])
+        self.assertEqual(w.period, None)
+
+    def test_jsondict(self):
+         
+        start = datetime(2009, 6, 1)
+        startStr = start.strftime("%Y-%m-%d")
+        dur   = 7 # days
+        end = start + timedelta(days = dur)
+        endStr = end.strftime("%Y-%m-%d")
+        
+        w = Window()
+        w.start_date = start
+        w.duration = dur
+        w.session = self.sesshun
+        w.default_period = self.default_period
+
+        w.save()
+
+        jd = w.jsondict()
+
+        self.assertEqual(jd["duration"], dur)
+        self.assertEqual(jd["start"], startStr)
+        self.assertEqual(jd["end"], endStr)
+        self.assertEqual(jd["session"], self.sesshun.jsondict())
+        self.assertEqual(jd["default_period"]
+                       , self.default_period.jsondict('UTC'))
+        self.assertEqual(jd["period"], None)
+
+        w.delete()
+
 class TestPeriod(NellTestCase):
 
     def setUp(self):
@@ -1391,6 +1447,53 @@ class TestSessionResource(NellTestCase):
         r_json = json.loads(response.content)
         self.assertTrue(r_json.has_key('receiver'))
         self.assertEquals(r_json['receiver'], u'(342 | Ka) & (S | Ka)')
+
+class TestWindowResource(NellTestCase):
+
+    def setUp(self):
+        super(TestWindowResource, self).setUp()
+        self.client = Client()
+        self.sesshun = create_sesshun()
+        dt = datetime(2009, 6, 1, 12, 15)
+        pending = first(Period_State.objects.filter(abbreviation = "P"))
+        self.default_period = Period(session = self.sesshun
+                                   , start = dt
+                                   , duration = 5.0
+                                   , state = pending
+                                   )
+        self.default_period.save()                           
+        self.fdata = {"session":  self.sesshun.id
+                    , "date":    "2009-6-1"
+                    , "duration": 7
+                    , "default_period" : self.default_period.id
+                    }
+        self.w = Window()
+        self.w.init_from_post(self.fdata)
+        self.w.save()
+
+    def test_create(self):
+        response = self.client.post('/windows', self.fdata)
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_create_empty(self):
+        response = self.client.post('/windows')
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_read(self):
+        response = self.client.get('/windows/%d' % self.w.id)
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue('{"window": {"end": "2009-06-08"' in response.content)
+
+    def test_update(self):
+        fdata = self.fdata
+        fdata.update({"_method" : "put"})
+        response = self.client.post('/windows/%s' % self.w.id, fdata)
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_delete(self):
+        response = self.client.post('/windows/%s' % self.w.id, {"_method" : "delete"})
+        self.failUnlessEqual(response.status_code, 200)
+        
     
 class TestGetOptions(NellTestCase):
 

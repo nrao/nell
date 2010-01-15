@@ -57,6 +57,8 @@ urlpatterns = patterns(''
    , url(r'^periods/(ET)$',       PeriodResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^periods/(UTC)/(\d+)$',PeriodResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^periods/(ET)/(\d+)$', PeriodResource(permitted_methods=('PUT', 'GET', 'POST'))) #
+   , url(r'^windows$',           WindowResource(permitted_methods=('GET', 'PUT', 'POST'))) #
+   , url(r'^windows/(\d+)$',     WindowResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , (r'^admin/',                 include(admin.site.urls)) #
    , (r'^accounts/login/$', 'django_cas.views.login') #
    , (r'^accounts/logout/$', 'django_cas.views.logout')
