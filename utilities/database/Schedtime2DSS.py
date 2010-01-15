@@ -213,7 +213,7 @@ class Schedtime2DSS(object):
                              , start      = start
                              , duration   = duration
                              , score      = 0.0
-                             , forecast   = datetime.now()
+                             , forecast   = TimeAgent.quarter(datetime.utcnow())
                              , backup     = False
                              , accounting = pa)
                     p.save()         
