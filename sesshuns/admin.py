@@ -112,9 +112,9 @@ class Observing_ParameterAdmin(admin.ModelAdmin):
 class Observing_TypeAdmin(admin.ModelAdmin):
     list_display = ['type']
 
-class OpportunityInline(admin.TabularInline):
-    model = Opportunity
-    extra = 1
+#class OpportunityInline(admin.TabularInline):
+#    model = Opportunity
+#    extra = 1
 
 class ParameterAdmin(admin.ModelAdmin):
     list_display = ['name', 'type']
@@ -167,7 +167,8 @@ class StatusAdmin(admin.ModelAdmin):
     search_fields = ['id'] 
 
 class WindowAdmin(admin.ModelAdmin):
-    inlines = [OpportunityInline]
+    #inlines = [OpportunityInline]
+    pass
 
 class UserAdmin(admin.ModelAdmin):
     list_display = ['last_name', 'first_name', 'sanctioned', 'pst_id', 'original_id']
@@ -186,7 +187,7 @@ admin.site.register(Blackout)
 admin.site.register(Investigator, InvestigatorAdmin)
 admin.site.register(Observing_Parameter, Observing_ParameterAdmin)
 admin.site.register(Observing_Type, Observing_TypeAdmin)
-admin.site.register(Opportunity)
+#admin.site.register(Opportunity)
 admin.site.register(Parameter, ParameterAdmin)
 admin.site.register(Period, PeriodAdmin)
 admin.site.register(Period_Accounting, Period_AccountingAdmin)
