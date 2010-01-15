@@ -993,7 +993,7 @@ class Receiver_Schedule(models.Model):
         where start_date is a datetime object and [<receivers available>] is
         a list of Receiver objects.
         """
-        startdate = startdate or datetime(2009, 10, 1).date()
+        startdate = startdate or datetime(2009, 10, 1, 0, 0, 0)
         schedule  = dict()
         prev      = Receiver_Schedule.previousDate(startdate)
 
