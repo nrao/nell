@@ -113,22 +113,24 @@ class UserInfo(object):
     def getStaticContactInfo(self, key, value, use_cache = True):
         """
         Get contact info from query service, using given credentials for CAS.
-        The cache is indexed by key value, i.e. if the key is userById, then
-        the value is the actual user id.
+        The cache is indexed by NRAO User db id for static contact information.
         """
-        cache_key = str(value) # keys have to be strings
+        # If we don't want to use the cache, or if we are querying by
+        # username (i.e. we don't yet know the NRAO-wide user db info,
+        # or it isn't in the cache, go get it.
+        if not use_cache or str(value).isalpha() or cache.get(value) is None:
+            info = self.parseUserXML(UserInfo.__userDB.get_data(key, value))
 
-        if not use_cache or cache.get(cache_key) is None:
-            info = self.parseUserXML(UserInfo.__userDB.get_data(key, value)) or "no reservations"
-
-            if cache.get(cache_key) is None:
-                cache.add(cache_key, info)
-            else:
-                cache.set(cache_key, info)
+            if info.has_key('id'):
+                cache_key = str(info['id']) # keys have to be strings.
+                if cache.get(cache_key) is None:
+                    cache.add(cache_key, info)
+                else:
+                    cache.set(cache_key, info)
         else:
-            info = cache.get(cache_key)
+            info = cache.get(str(value))
 
-        return info if info != "no reservations" else None
+        return info
 
     def findTag(self, node, tag):
         # TBF: why do all the XML tags have the namepace attatched?
