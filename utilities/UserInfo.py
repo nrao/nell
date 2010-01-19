@@ -128,9 +128,9 @@ class UserInfo(object):
                 else:
                     cache.set(cache_key, info)
         else:
-            info = cache.get(cache_key)
+            info = cache.get(str(value))
 
-        return info if info != "no contact info" else None
+        return info
 
     def findTag(self, node, tag):
         # TBF: why do all the XML tags have the namepace attatched?
