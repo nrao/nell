@@ -1086,6 +1086,7 @@ class Receiver_Schedule(models.Model):
         # compare old diff to new diff (up and down params)
         diffs = Receiver_Schedule.extract_diff_schedule(startdate = date)
         dt, old_ups, old_downs = first([d for d in diffs if d[0] == date])
+        #print "original diff: ", old_ups, old_downs
 
         # what used to go up, that no longer does?
         remove_ups = Set(old_ups).difference(Set(up))
@@ -1104,10 +1105,12 @@ class Receiver_Schedule(models.Model):
         for d in remove_downs:
             if d not in ups:
                 ups.append(d)
+        #print "UP list: ", ups        
         downs = [d for d in add_downs]
         for u in remove_ups:
             if u not in downs:
                 downs.append(u)
+        #print "DOWN list: ", downs        
 
 
         # TBF: should we even error check?
@@ -1162,10 +1165,11 @@ class Receiver_Schedule(models.Model):
     @staticmethod
     def delete_date(date):
         "Remove all entries for the given date, and change subsequent schedule"
-
+ 
         # first check that this date is in the schedule
         rs = Receiver_Schedule.objects.filter(start_date = date)
-        assert len(rs) != 0
+        if len(rs) == 0:
+            return (False, "Date is not in Receiver Schedule: %s" % date)
 
         # we first reconcile the schedule to this change by reversing all
         # the changes that were meant to happen on this day:
@@ -1173,12 +1177,16 @@ class Receiver_Schedule(models.Model):
         day, ups, downs = first([d for d in diff_schedule if d[0] == date])
         
         # reverse it!
-        Receiver_Schedule.change_schedule(day, downs, ups, end_of_day = True)
+        s, msg = Receiver_Schedule.change_schedule(day, downs, ups, end_of_day = True)
+        if not s:
+            return (False, msg)
 
         # now we can clean up
         rs = Receiver_Schedule.objects.filter(start_date = date)
         for r in rs:
             r.delete()
+
+        return (True, None)    
 
     @staticmethod
     def shift_date(from_date, to_date):
