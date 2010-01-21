@@ -712,6 +712,13 @@ class Project(models.Model):
                 return a
         return None # uh-oh
 
+    def get_windows(self):
+        # TBF no filtering here, ALL windows!
+        return sorted([w for s in self.sesshun_set.all()
+                         for w in s.window_set.all()
+                         if s.session_type.type == 'windowed']
+                     , key = lambda x : x.start_date)
+
     class Meta:
         db_table = "projects"
 
@@ -1706,41 +1713,6 @@ class Observing_Parameter(models.Model):
                                                     , value
                                                     , self.session.id)
 
-class Window(models.Model):
-    session  = models.ForeignKey(Sesshun)
-    required = models.BooleanField()
-
-    def __unicode__(self):
-        return "Window (%d) for Sess (%d), Num Opts: %d" % \
-            (self.id
-           , self.session.id
-           , len(self.opportunity_set.all()))
-
-    class Meta:
-        db_table = "windows"
-
-class Opportunity(models.Model):
-    window     = models.ForeignKey(Window)
-    start_time = models.DateTimeField()
-    duration   = models.FloatField(help_text = "Hours")
-
-    def __unicode__(self):
-        return "Opt (%d) for Win (%d): %s for %5.2f hrs" % (self.id
-                                                          , self.window.id
-                                                          , self.start_time
-                                                          , self.duration)
-
-    def __repr__(self):
-        return "%s - %s" % (self.start_time
-                          , self.start_time + timedelta(hours = self.duration))
-
-    def __str__(self):
-        return "%s - %s" % (self.start_time
-                          , self.start_time + timedelta(hours = self.duration))
-
-    class Meta:
-        db_table = "opportunities"
-
 class System(models.Model):
     name   = models.CharField(max_length = 32)
     v_unit = models.CharField(max_length = 32)
@@ -1918,11 +1890,16 @@ class Period_State(models.Model):
     def get_names():
         return [s.name for s in Period_State.objects.all()]
 
+    @staticmethod
+    def get_state(abbr):
+        "Short hand for getting state by abbreviation"
+        return first(Period_State.object.filters(abbreviation = abbr))
+
 class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
     accounting = models.ForeignKey(Period_Accounting, null=True)
     state      = models.ForeignKey(Period_State, null=True)
-    start      = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm:ss")
+    start      = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm")
     duration   = models.FloatField(help_text = "Hours")
     score      = models.FloatField(null = True, editable=False)
     forecast   = models.DateTimeField(null = True, editable=False)
@@ -2176,6 +2153,127 @@ class Project_Blackout_09B(models.Model):
         # problems with postrgreSQL
         db_table = "project_blackouts_09b"
 
+class Window(models.Model):
+    session  = models.ForeignKey(Sesshun)
+    default_period = models.ForeignKey(Period, related_name = "default_periods")
+    period = models.ForeignKey(Period, related_name = "periods", null = True)
+    start_date =  models.DateField(help_text = "yyyy-mm-dd hh:mm:ss")
+    duration   = models.IntegerField(help_text = "Days")
+
+    def __unicode__(self):
+        return "Window (%d) for Sess (%d)" % \
+            (self.id
+           , self.session.id)
+
+    def __str__(self):
+        return "Window for %s, from %s for %d days, default: %s, period: %s" % \
+            (self.session.name
+           , self.start_date.strftime("%Y-%m-%d")
+           , self.duration
+           , self.default_period
+           , self.period)
+
+    def end(self):
+        return self.start_date + timedelta(days = self.duration)
+
+    def inWindow(self, date):
+        return (self.start_date <= date) and (date <= self.end())
+
+    def state(self):
+        "A Windows state is a combination of the state's of it's Periods"
+
+        # TBF: need to check that these make sense
+        deleted   = Period_State.get_state("D")
+        pending   = Period_State.get_state("P")
+        scheduled = Period_State.get_state("S")
+
+        if (self.default_period.isPending() and self.period is None):
+            # initial state windows are in when created
+            return pending
+        elif (self.default_period.isPending() and self.period.isPending()):
+            # transitory state during scheduling
+            return pending
+        elif (self.default_period.isDeleted() and self.period.isScheduled()):
+            # the window has been reconciled - final state
+            return scheduled
+        else:
+            # all other combos are errors
+            return None
+
+    def reconcile(self):
+        """
+        Similar to publishing a period, this moves a window from an inital,
+        or transitory state, to a final scheduled state.
+        Move the default period to deleted, and publish the scheduled period.
+        """
+
+        deleted   = Period_State.get_state("D")
+        pending   = Period_State.get_state("P")
+        scheduled = Period_State.get_state("S")
+        
+        # raise an error?
+        if not self.default_period.isPending() or \
+               self.period is None or \
+           not  self.period.isPending():
+            return
+
+        self.default_period.delete()
+        self.period.publish()
+
+
+    def jsondict(self):
+        js = {  "id"             : self.id
+              , "session"        : self.session.jsondict()
+              , "start"          : self.start_date.strftime("%Y-%m-%d")
+              , "end"            : self.end().strftime("%Y-%m-%d")
+              , "duration"       : self.duration
+              , "default_period" : self.default_period.jsondict('UTC')
+              , "period"         : self.period.jsondict('UTC') \
+                  if self.period is not None else None # TBF: tz?
+              }
+        return js              
+
+    def init_from_post(self, fdata):
+        self.from_post(fdata)
+
+    def update_from_post(self, fdata):
+        self.from_post(fdata)
+
+    def from_post(self, fdata):
+
+        # TBF: if fdata is empty, we create a window w/ null entries except
+        # for the session & default_period, where we use PK = 1 as defaults
+        # ; this is the approach taken by other classes; is this okay?
+
+        # most likely, we'll be specifying sessions for windows in the same
+        # manner as we do for periods
+        handle = fdata.get("handle", "")
+        if handle:
+            self.session = self.handle2session(handle)
+        else:
+            try:
+                maintenance = first(Project.objects.filter(pcode='Maintenance'))
+                self.session = first(Sesshun.objects.filter(project=maintenance))
+            except:
+                self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
+
+        # but we don't have good handles for periods, so just use ids
+        dp_id = fdata.get("default_period", None)
+        # aren't allowed none for default period - grab something!
+        if dp_id is None:
+            dp_id = Period.objects.all().order_by("id")[0].id
+        self.default_period = first(Period.objects.filter(id = dp_id))
+        p_id = fdata.get("period_id", None)
+        self.period = first(Period.objects.filter(id = p_id))
+
+        date = fdata.get("date", datetime.utcnow().strftime("%Y-%m-%d"))
+        self.start_date = datetime.strptime(date, "%Y-%m-%d")
+        self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0")))
+        
+        self.save()
+
+    class Meta:
+        db_table = "windows"
 
 class Reservation(models.Model):
     user       = models.ForeignKey(User)

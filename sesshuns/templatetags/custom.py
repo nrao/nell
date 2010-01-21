@@ -9,7 +9,10 @@ register = template.Library()
 
 @register.filter
 def hrs2sex(value):
-    return str(timedelta(hours=value))[:-3]
+    if isinstance(value, str):
+        return value
+    else:
+        return str(timedelta(hours=value))[:-3]
 
 @register.filter
 def dt2sex(value):
@@ -129,6 +132,18 @@ def get_receiver_change(schedule, day):
     string += "Remove: " + ", ".join(removed) if removed else ""
 
     return "- " + string if string else "- No receiver changes"
+
+@register.filter
+def end_date(start_date, days):
+    retval = start_date + timedelta(days = days)
+    return retval.strftime("%Y-%m-%d")
+
+@register.filter
+def date_no_secs(value):
+    if isinstance(value, str):
+        return value
+    else:
+        return value.strftime("%Y-%m-%d %H:%M")
 
 @register.filter
 def get_receivers(schedule, day):
