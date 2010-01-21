@@ -2272,6 +2272,16 @@ class Window(models.Model):
         
         self.save()
 
+    def eventjson(self, id):
+        end = self.start_date + timedelta(days = self.duration)
+
+        return {
+                "id"   : id
+              , "title": "".join(["Window ", self.session.name])
+              , "start": self.start_date.isoformat()
+              , "end"  : end.isoformat()
+        }
+
     class Meta:
         db_table = "windows"
 

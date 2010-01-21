@@ -116,6 +116,7 @@ def events(request, *args, **kws):
 
     # Scheduled telescope periods
     for p in project.getPeriods():
+        #print w.eventjson(id)
         jsonobjlist.append(p.eventjson(id))
         id = id + 1
 
@@ -123,6 +124,13 @@ def events(request, *args, **kws):
     date = datetime.fromtimestamp(float(start))
     for s in Semester.getFutureSemesters(date):
         jsonobjlist.append(s.eventjson(id))
+        id = id + 1
+
+    # Scheduled telescope windows
+    # TBF trial run, may calendar too busy
+    for w in project.get_windows():
+        print w.eventjson(id)
+        jsonobjlist.append(w.eventjson(id))
         id = id + 1
 
     return HttpResponse(json.dumps(jsonobjlist))
