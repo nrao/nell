@@ -2179,6 +2179,16 @@ class Window(models.Model):
     def inWindow(self, date):
         return (self.start_date <= date) and (date <= self.end())
 
+    def isInWindow(self, period):
+        "Does the given period overlap at all in window"
+
+        # need to compare date vs. datetime objs
+        winStart = datetime(self.start_date.year
+                          , self.start_date.month
+                          , self.start_date.day)
+        winEnd = winStart + timedelta(days = self.duration)                  
+        return overlaps((winStart, winEnd), (period.start, period.end()))
+
     def state(self):
         "A Windows state is a combination of the state's of it's Periods"
 
