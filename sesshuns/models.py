@@ -712,6 +712,13 @@ class Project(models.Model):
                 return a
         return None # uh-oh
 
+    def get_windows(self):
+        # TBF no filtering here, ALL windows!
+        return sorted([w for s in self.sesshun_set.all()
+                         for w in s.window_set.all()
+                         if s.session_type.type == 'windowed']
+                     , key = lambda x : x.start_date)
+
     class Meta:
         db_table = "projects"
 
@@ -1892,7 +1899,7 @@ class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
     accounting = models.ForeignKey(Period_Accounting, null=True)
     state      = models.ForeignKey(Period_State, null=True)
-    start      = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm:ss")
+    start      = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm")
     duration   = models.FloatField(help_text = "Hours")
     score      = models.FloatField(null = True, editable=False)
     forecast   = models.DateTimeField(null = True, editable=False)

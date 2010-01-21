@@ -162,12 +162,33 @@
               {% for per in p.get_observed_periods %}
                 <tr>
                   <td>{{per.session.name}}</td>
-                  <td>{{per.start}}</td>
-                  <td>{{per.duration}}</td>
-                  <td>{{per.accounting.time_billed}}</td>
+                  <td>{{per.start|date_no_secs}}</td>
+                  <td>{{per.duration|hrs2sex}}</td>
+                  <td>{{per.accounting.time_billed|hrs2sex}}</td>
                 </tr>
               {% endfor %}
           </table>
+        {% if p.get_windows %}
+          <h3 class="grey_highlight loud">Windows</h3>
+            <table>
+              <tr>
+                <th>Session</th>
+                <th>Window Start Date</th>
+                <th>Window End Date</th>
+                <th>Period Start Time</th>
+                <th>Period Duration</th>
+              </tr>
+                {% for window in p.get_windows %}
+                  <tr>
+                    <td>{{window.session.name}}</td>
+                    <td>{{window.start_date}}</td>
+                    <td>{{window.start_date|end_date:window.duration}}</td>
+                    <td>{{window.period.start|date_no_secs}}</td>
+                    <td>{{window.period.duration|hrs2sex}}</td>
+                  </tr>
+                {% endfor %}
+            </table>
+        {% endif %}
         <h3 class="grey_highlight loud">Project Notes (<a href="/project/{{p.pcode}}/notes/form">edit</a>)</h3>
           <p>
           {{p.notes|pretty_none|escape|linebreaks}}
