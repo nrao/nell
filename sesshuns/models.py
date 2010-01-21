@@ -2103,6 +2103,27 @@ class Period(models.Model):
         "A backdoor method for really deleting!"
         models.Model.delete(self)
 
+    def validWindows(self):
+        """
+        If a period belongs to a Windowed Session, then it should be assigned
+        to a Window as either a 'default_period' or a 'period'
+        """
+        if self.session.session_type.type != "windowed":
+            return True # who cares?
+
+        default_windows = self.default_window.all()
+        windows = self.window.all()
+
+        # neither one of these should point to more then one window
+        if len(default_windows) > 1 or len(windows) > 1:
+            return False
+
+        # this period should be assigned to at least one window
+        if len(default_windows) == 0 and len(windows) == 0:
+            return False
+        
+        return True
+
     @staticmethod
     def get_periods(start, duration, ignore_deleted = True):
         "Returns all periods that overlap given time interval (start, minutes)"
@@ -2155,8 +2176,8 @@ class Project_Blackout_09B(models.Model):
 
 class Window(models.Model):
     session  = models.ForeignKey(Sesshun)
-    default_period = models.ForeignKey(Period, related_name = "default_periods")
-    period = models.ForeignKey(Period, related_name = "periods", null = True)
+    default_period = models.ForeignKey(Period, related_name = "default_window")
+    period = models.ForeignKey(Period, related_name = "window", null = True)
     start_date =  models.DateField(help_text = "yyyy-mm-dd hh:mm:ss")
     duration   = models.IntegerField(help_text = "Days")
 
