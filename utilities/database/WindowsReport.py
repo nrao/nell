@@ -70,16 +70,20 @@ class WindowsReport():
             numWins = len(ws.window_set.all()) 
             self.add("\nSession: %s, # windows: %d\n" % (ws.name, numWins))
             # TBF: any bad periods? 
-            ps = ws.period_set.all()
+            ps = ws.period_set.order_by("start")
             badPs = [p for p in ps if not p.validWindows()]
             if len(badPs) != 0:
                 self.add("%d of %d periods not assigned to windows properly.\n" \
                     % (len(badPs), len(ps)))
+                for b in badPs:
+                    self.add("    %s\n" % self.periodStr(b))
             if numWins > 0:
                 cols = [5, 12, 5, 40, 40, 20]
                 data = ["id", "start", "# days", "default", "period", "notes"]
                 self.printData(data, cols, True)
-            for win in ws.window_set.all():
+            wins = list(ws.window_set.all())
+            wins.sort(key = lambda x:(x.start_date, x.start_date))
+            for win in wins:
                 flags = ""
                 if win.default_period is not None:
                     flags += "Default ~in." \
