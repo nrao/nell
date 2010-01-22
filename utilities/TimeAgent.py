@@ -201,3 +201,7 @@ def dtDiffHrs(time1, time2):
         diff = (time2 - time1).seconds 
     return diff / (60.0 * 60.0)    
 
+def date2datetime(date_obj):
+    "Converts Date object to a Datetime object"
+    return datetime.datetime(date_obj.year, date_obj.month, date_obj.day)
+
