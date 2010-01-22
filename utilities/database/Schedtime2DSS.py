@@ -5,12 +5,14 @@ from utilities                    import TimeAgent
 import math
 import MySQLdb as m
 
+from Report import Report, Line
+
 class Schedtime2DSS(object):
 
     """
     This class is reponsible for fetching data from the 'schedtime' table
     which is a raw table in MySQL that is a direct dump from Carl's system.
-    This is how we transfer over fixed periods and their associated 
+    This is how we transfer over fixed periods and their associated
     projects & sessions.
     """
 
@@ -27,6 +29,14 @@ class Schedtime2DSS(object):
                             )
         self.cursor = self.db.cursor()
         self.silent = silent
+        self.semester = Semester()
+
+        # these are the periods within this trimester that are already
+        # present in the system.
+        self.original_astronomy = []
+        self.original_tests = []
+        self.original_maintenance = []
+        self.original_shutdown = []
 
         # Map Carl's rcvr abbreviations to ours:
         # TBF: eventually should we move this into the DB?
@@ -46,7 +56,7 @@ class Schedtime2DSS(object):
                        , 'B' : 'Ka'
                        , 'Q' : 'Q'
                        , 'M' : 'MBA'
-                       , 'H' : 'Hol' 
+                       , 'H' : 'Hol'
                        , 'PF2'   : '1070' # TBF, WTF, make up your minds!
                        , 'PF1*3' : '342'
                        , 'PF1*4' : '450'
@@ -56,11 +66,11 @@ class Schedtime2DSS(object):
                        }
 
         # for keeping track of period times (checking for overlaps)
-        self.times = [] 
+        self.times = []
         # where does the pcode start?
         self.proj_counter = 500
         # a unique list of 'activity-observer'
-        self.session_names = [] 
+        self.session_names = []
 
 
     def transfer_fixed_periods(self, trimester):
@@ -77,31 +87,37 @@ class Schedtime2DSS(object):
         observer.
         """
 
+        # first, for reporting purposes, get what's already there.
+        self.original_astronomy = self.get_periods(trimester, "Astronomy")
+        self.original_tests = self.get_periods(trimester, "Tests")
+        self.original_maintenance = self.get_periods(trimester, "Maintenance")
+        self.original_shutdown = self.get_periods(trimester, "Shutdown")
+
         testingTypes = ['Tests', 'Calibration', 'Commissioning']
 
-        # Only transfer fixed periods from schedtime table that cover 
+        # Only transfer fixed periods from schedtime table that cover
         start, end = self.get_schedtime_dates(trimester)
 
         # prepare for transfering over fixed periods by creating the
         # necessary projects & session we know we'll need
-        self.create_project_and_session( trimester 
+        self.create_project_and_session( trimester
                                        , "Maintenance"
                                        , "non-science"
                                        , "Maintenance"
                                        , "maintenance")
-        self.create_project_and_session( trimester 
+        self.create_project_and_session( trimester
                                        , "Shutdown"
                                        , "non-science"
                                        , "Shutdown"
                                        , "maintenance")
-        
+
 
         query = """
-        SELECT etdate, startet, stopet, lengthet, type, pcode, vpkey, desc_,
-               bands, be, observers
-        FROM schedtime
-        WHERE etdate >= %s AND etdate < %s
-        ORDER BY etdate, startet
+        SELECT `etdate`, `startet`, `stopet`, `lengthet`, `type`, `pcode`, `vpkey`, `desc`,
+               `bands`, `be`, `observers`
+        FROM `schedtime`
+        WHERE `etdate` >= %s AND `etdate` < %s
+        ORDER BY `etdate`, `startet`
         """ % (start, end)
 
         self.cursor.execute(query)
@@ -126,9 +142,9 @@ class Schedtime2DSS(object):
             if 0 <= minutesTrue and minutesTrue < 15:
                 minute = 0
             elif 15 <= minutesTrue and minutesTrue < 30:
-                minute = 15 
+                minute = 15
             elif 30 <= minutesTrue and minutesTrue < 45:
-                minute = 30 
+                minute = 30
             else:
                 minute = 45
 
@@ -170,7 +186,7 @@ class Schedtime2DSS(object):
             elif type == "Shutdown":
                 # Shutdown is simple - not a whole lot going on
                 s = first(Sesshun.objects.filter(name = "Shutdown").all())
-            elif type == "Astronomy": 
+            elif type == "Astronomy":
                 # Astronomy is only complicated if something's not right
                 # can we use the vpkey?
                 if original_id is not None and original_id != 0:
@@ -216,8 +232,8 @@ class Schedtime2DSS(object):
                              , forecast   = TimeAgent.quarter(datetime.utcnow())
                              , backup     = False
                              , accounting = pa)
-                    p.save()         
-                    # keep track of this added one so we can 
+                    p.save()
+                    # keep track of this added one so we can
                     # check for subsequent overlaps
                     self.times.append((s, start, duration))
             else:
@@ -229,6 +245,7 @@ class Schedtime2DSS(object):
         #ps = self.get_testing_project_info()
         #for p in ps:
         #    print p
+
 
     def get_testing_project_info(self):
         "Returns info on testing projects - good for debugging."
@@ -247,11 +264,11 @@ class Schedtime2DSS(object):
               o the GB staff member responsible for any particular fixed period
               o the hardware needed, including:
                     + receiver
-        * all project codes created during the transfer must follow the 
+        * all project codes created during the transfer must follow the
           following pattern: TGBT$$$_### where:
               o $$$ - current trimester (e.g. '09C')
               o ### - auto-incrementing integer, starting at 500 for 09C
-        """    
+        """
 
         # get the additional info from the row we'll need
         description = row[7].strip()
@@ -272,7 +289,7 @@ class Schedtime2DSS(object):
             # create the project & session
             proj_name = self.get_project_name(trimester, self.proj_counter)
             self.proj_counter += 1
-            proj = self.create_project_and_session( trimester 
+            proj = self.create_project_and_session( trimester
                                                   , proj_name
                                                   , "non-science"
                                                   , sess_name
@@ -287,8 +304,8 @@ class Schedtime2DSS(object):
                                 , principal_contact = (priority==0)
                                 , principal_investigator = (priority==0)
                             )
-                i.save()                
-            # assign session rcvrs, allotetd time ...                
+                i.save()
+            # assign session rcvrs, allotetd time ...
             s = proj.sesshun_set.all()[0]
             s.allotment.total_time = duration
             s.save()
@@ -302,7 +319,7 @@ class Schedtime2DSS(object):
         else:
             # we've already created this proj/sess
             s = first(Sesshun.objects.filter(name = sess_name))
-            # update it's alloted time to take into account 
+            # update it's alloted time to take into account
             # this new period
             s.allotment.total_time += duration
             s.save()
@@ -332,15 +349,33 @@ class Schedtime2DSS(object):
 
     def get_schedtime_dates(self, trimester):
         "Schedtime table has a peculiar datetime system."
-        if trimester == "09C":
-            start = "20091002" # NOT Oct 1!!!!
-            end   = "20100201"
-        elif trimester == "09B":
-            start = "20090601" # NOT Oct 1!!!!
-            end   = "20091001"
-        else:
-            raise "what trimester is that?"
+        self.semester.semester = trimester
+
+        try:
+            startdate = self.semester.start()
+            enddate = self.semester.end()
+        except KeyError:
+            raise "Invalid trimester designator %s.  Must be A, B, or C" % trimester[2:]
+        except ValueError:
+            raise "Invalid trimester year %s.  Must be numeric, 00 - 99" % trimester[:2]
+
+        start = self.date_to_string(startdate)
+        end = self.date_to_string(enddate)
         return (start, end)
+
+    def date_to_string(self, date):
+        year = str(date.year)
+        month = str(date.month)
+
+        if len(month) == 1:
+            month = "0" + month
+
+        day = str(date.day)
+
+        if len(day) == 1:
+            day = "0" + day
+
+        return year + month + day
 
     def get_project_name(self, trimester, counter):
         return "TGBT%s_%03d" % (trimester, counter)
@@ -352,7 +387,7 @@ class Schedtime2DSS(object):
         if bands in ['RRI', 'PF1*3', 'PF1*4', 'PF1*6', 'PF1*8', 'PF2']:
             return [first(Receiver.objects.filter(
                                 abbreviation = self.rcvrMap[bands]))]
-        else:                                          
+        else:
             return [first(Receiver.objects.filter(
                                 abbreviation = self.rcvrMap[b])) for b in bands]
 
@@ -375,10 +410,10 @@ class Schedtime2DSS(object):
     def get_unique_user(self, last_name):
         "This last name you give me better be unique or I'm taking my ball home"
         users = User.objects.filter(last_name = last_name).all()
-        #TBF: assert (len(users) == 1) 
+        #TBF: assert (len(users) == 1)
         if len(users) == 0:
             print "SHIT! last_name not in DB: ", last_name
-            return None 
+            return None
         elif len(users) > 1:
             print "SHIT: too many last_names: ", users
             # TBF, WTF: handle this case by case:
@@ -387,9 +422,9 @@ class Schedtime2DSS(object):
                 print "SHIT: using John Ford for: ", users
                 return first(User.objects.filter(last_name = last_name
                                                , first_name = "John").all())
-            else:                              
+            else:
                 return users[0]
-        else:    
+        else:
             return users[0]
 
     def findOverlap(self, start, dur):
@@ -397,13 +432,13 @@ class Schedtime2DSS(object):
             if self.overlap(start, dur, start2, dur2):
                 print "overlap: ", start, dur, start2, dur2
                 return True
-        return False        
+        return False
 
     def overlap(self, start1, dur1, start2, dur2):
         end1 = start1 + timedelta(seconds = dur1 * 60 * 60)
         end2 = start2 + timedelta(seconds = dur2 * 60 * 60)
         return start1 < end2 and start2 < end1
- 
+
     def create_project_and_session(self, semesterName
                                        , projectName
                                        , projectType
@@ -415,28 +450,38 @@ class Schedtime2DSS(object):
 
         # clean up!
         ps = Project.objects.filter(pcode = projectName)
+
+        # Don't want to wipe out project Maintenance, if it's there.
+        # If it is, nothing more to be done.  But if it isn't there,
+        # we need to create it.
+        if projectName == "Maintenance" and len(ps) > 0:
+            return
+
         empty = [p.delete() for p in ps]
         ss = Sesshun.objects.filter(name = sessionName)
         empty = [s.delete() for s in ss]
 
         # first, just set up the project and single session
-        if semesterName == "09C":
-            semesterStart = datetime(2009, 10, 1)
-            semesterEnd = datetime(2010, 1, 31)
-        else:
-            semesterStart = datetime(2009, 6, 1)
-            semesterEnd = datetime(2009, 9, 30)
+        self.semester.semester = semesterName
+
+        try:
+            semesterStart = self.semester.start()
+            semesterEnd = self.semester.end()
+        except KeyError:
+            raise "Invalid trimester designator %s.  Must be A, B, or C" % trimester[2:]
+        except ValueError:
+            raise "Invalid trimester year %s.  Must be numeric, 00 - 99" % trimester[:2]
 
         semester = first(Semester.objects.filter(semester = semesterName))
         ptype    = first(Project_Type.objects.filter(type = projectType))
 
         p = Project(semester     = semester
                   , project_type = ptype
-                  , pcode        = projectName 
+                  , pcode        = projectName
                   , name         = projectName
-                  , thesis       = False 
+                  , thesis       = False
                   , complete     = False
-                  , start_date   = semesterStart 
+                  , start_date   = semesterStart
                   , end_date     = semesterEnd
                     )
         p.save()
@@ -446,15 +491,15 @@ class Schedtime2DSS(object):
         allot = Allotment(psc_time          = maxHrs
                         , total_time        = maxHrs
                         , max_semester_time = maxHrs
-                        , grade             = 4.0 
+                        , grade             = 4.0
                           )
         allot.save()
         pa = Project_Allotment(project = p, allotment = allot)
         pa.save()
         p.project_allotment_set.add(pa)
-        status = Status(enabled    = True 
+        status = Status(enabled    = True
                       , authorized = True
-                      , complete   = False 
+                      , complete   = False
                       , backup     = False
                         )
         status.save()
@@ -465,8 +510,8 @@ class Schedtime2DSS(object):
                   , observing_type = otype
                   , allotment      = allot
                   , status         = status
-                  , original_id    = 666 # TBF? 
-                  , name           = sessionName 
+                  , original_id    = 666 # TBF?
+                  , name           = sessionName
                   , frequency      = 0.0 #None
                   , max_duration   = 12.0 #None
                   , min_duration   = 0.0 #None
@@ -478,7 +523,7 @@ class Schedtime2DSS(object):
         system = first(System.objects.filter(name = "J2000"))
         target = Target(session    = s
                       , system     = system
-                      , source     = sessionName 
+                      , source     = sessionName
                       , vertical   = 0.0
                       , horizontal = 0.0
                     )
@@ -487,4 +532,155 @@ class Schedtime2DSS(object):
         # return the project, which links in the session
         return p
 
+    def report_result(self, trimester, sess_type, periods):
+        dss_prime_sql = """select `etdate`, `startet`, `lengthet`, `type`, `desc`
+                               from schedtime
+                               where `etdate` >= \"%s\" and `etdate` <= \"%s\"
+                               and %s order by `etdate`"""
 
+
+        self.semester.semester = trimester;
+        start_date = self.semester.start()
+
+        if sess_type == "Tests":
+            type_clause = "(type = 'Tests' or type = 'Commissioning')"
+        else:
+            type_clause = "type = \"%s\"" % sess_type
+
+        start, end = self.get_schedtime_dates(trimester)
+        header = ["date", "start (ET)", "length", "type", "desc"]
+        dss_header = ["date", "start (UT)", "length", "pcode", "desc"]
+
+        self.cursor.execute(dss_prime_sql % (start, end, type_clause))
+        rows = self.cursor.fetchall()
+
+        dss_prime_report = Report()
+        line = Line()
+
+        for i in header:
+            line.add(i)
+
+        dss_prime_report.add_headers(line)
+
+        for row in rows:
+            line.clear()
+
+            for item in row:
+                line.add(item)
+
+            dss_prime_report.add_line(line)
+
+
+        if sess_type == "Tests":
+            pcode = "TGBT" + trimester
+        else:
+            pcode = sess_type
+
+        dss_report = Report()
+        line.clear()
+
+        for i in dss_header:
+            line.add(i)
+
+        dss_report.add_headers(line)
+##         periods = Period.objects.filter(session__project__pcode = pcode, \
+##                                         start__gt = start_date).order_by("start")
+
+        for p in periods:
+            line.clear()
+            line.add(self.date_to_string(p.start))
+            line.add("%02i" % p.start.hour + "%02i" % p.start.minute)
+            line.add(p.duration)
+            line.add(p.session.project.pcode)
+            line.add(p.session.name)
+            dss_report.add_line(line)
+
+        return dss_prime_report, dss_report
+
+
+    def get_periods(self, trimester, sess_type):
+        """Obtains all the periods of a given type for the named trimester"""
+
+        self.semester.semester = trimester;
+        start_date = self.semester.start()
+
+        if sess_type == "Tests": # and commissioning
+            pcode = "TGBT" + trimester
+            periods = Period.objects.filter(session__project__pcode__contains = pcode, \
+                                            start__gt = start_date).order_by("start")
+        elif sess_type == "Astronomy":
+            pr = Period.objects.filter(session__project__project_type__type = "science", \
+                                      start__gt = start_date).order_by("start")
+            periods = [x for x in pr if x.session.project.pcode.find("TGBT") == -1]
+
+        else: # Maintenance and Shutdown
+            pcode = sess_type
+            periods = Period.objects.filter(session__project__pcode = pcode, \
+                                            start__gt = start_date).order_by("start")
+        return periods
+
+
+    def print_report(self, trimester):
+
+        astronomy = self.get_periods(trimester, "Astronomy")
+        tests = self.get_periods(trimester, "Tests")
+        maintenance = self.get_periods(trimester, "Maintenance")
+        shutdown = self.get_periods(trimester, "Shutdown")
+
+##         self.original_astronomy = []
+##         self.original_tests = []
+##         self.original_maintenance = []
+##         self.original_shutdown = []
+
+        print "original_astronomy   =", len(self.original_astronomy)
+        print "original_tests       =", len(self.original_tests)
+        print "original_maintenance =", len(self.original_maintenance)
+        print "original_shutdown    =", len(self.original_shutdown)
+
+        print "astronomy   =", len(astronomy)
+        print "tests       =", len(tests)
+        print "maintenance =", len(maintenance)
+        print "shutdown    =", len(shutdown)
+
+
+        new_astronomy = [x for x in astronomy if x not in self.original_astronomy]
+        new_tests = [x for x in tests if x not in self.original_tests]
+        new_maintenance = [x for x in maintenance if x not in self.original_maintenance]
+        new_shutdown = [x for x in shutdown if x not in self.original_shutdown]
+
+        print "new_astronomy   =", len(new_astronomy)
+        print "new_tests       =", len(new_tests)
+        print "new_maintenance =", len(new_maintenance)
+        print "new_shutdown    =", len(new_shutdown)
+
+        (prime_astronomy, dss_astronomy) = self.report_result(trimester, "Astronomy", new_astronomy)
+        (prime_tests, dss_tests) = self.report_result(trimester, "Tests", new_tests)
+        (prime_maintenance, dss_maintenance) = self.report_result(trimester, "Maintenance", new_maintenance)
+        (prime_shutdown, dss_shutdown) = self.report_result(trimester, "Shutdown", new_shutdown)
+
+        print "Summary of results:\n"
+        print "Astronomy: %i entries found, %i entries transferred." % \
+              (prime_astronomy.lines(), dss_astronomy.lines())
+        print "Test and commissioning: %i entries found, %i entries tranferred." % \
+              (prime_tests.lines(), dss_tests.lines())
+        print "Maintenance: %i entries found, %i entries transferred." % \
+              (prime_maintenance.lines(), dss_maintenance.lines())
+        print "Shutdown: %i entries found, %i entries transferred." % \
+              (prime_shutdown.lines(), dss_shutdown.lines())
+
+        print "\nAstronomy, DSS':"
+        prime_astronomy.output()
+        print "\nAstronomy, DSS:"
+        dss_astronomy.output()
+        print "\nTest and commissioning, DSS':"
+        prime_tests.output()
+        print "\nTest and commissioning, DSS:"
+        dss_tests.output()
+        print "\nMaintenance, DSS':"
+        prime_maintenance.output()
+        print "\nMaintenance, DSS:"
+        dss_maintenance.output()
+        print "\nShutdown, DSS':"
+        prime_shutdown.output()
+        print "\nShutdown, DSS:"
+        dss_shutdown.output()
