@@ -225,12 +225,14 @@ class Schedtime2DSS(object):
                     # instead, just saves these off as periods
                     pa = Period_Accounting(scheduled = duration)
                     pa.save()
+                    pending = Period_State.get_state("P")
                     p = Period(session    = s
                              , start      = start
                              , duration   = duration
                              , score      = 0.0
                              , forecast   = TimeAgent.quarter(datetime.utcnow())
                              , backup     = False
+                             , state      = pending
                              , accounting = pa)
                     p.save()
                     # keep track of this added one so we can
