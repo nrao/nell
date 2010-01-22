@@ -5,6 +5,8 @@ from utilities                    import TimeAgent
 import math
 import MySQLdb as m
 
+from Report import Report, Line
+
 class Schedtime2DSS(object):
 
     """
@@ -28,6 +30,13 @@ class Schedtime2DSS(object):
         self.cursor = self.db.cursor()
         self.silent = silent
         self.semester = Semester()
+
+        # these are the periods within this trimester that are already
+        # present in the system.
+        self.original_astronomy = []
+        self.original_tests = []
+        self.original_maintenance = []
+        self.original_shutdown = []
 
         # Map Carl's rcvr abbreviations to ours:
         # TBF: eventually should we move this into the DB?
@@ -77,6 +86,12 @@ class Schedtime2DSS(object):
         need the appropriate project & session names, along w/ appropriate
         observer.
         """
+
+        # first, for reporting purposes, get what's already there.
+        self.original_astronomy = self.get_periods(trimester, "Astronomy")
+        self.original_tests = self.get_periods(trimester, "Tests")
+        self.original_maintenance = self.get_periods(trimester, "Maintenance")
+        self.original_shutdown = self.get_periods(trimester, "Shutdown")
 
         testingTypes = ['Tests', 'Calibration', 'Commissioning']
 
@@ -230,6 +245,7 @@ class Schedtime2DSS(object):
         #ps = self.get_testing_project_info()
         #for p in ps:
         #    print p
+
 
     def get_testing_project_info(self):
         "Returns info on testing projects - good for debugging."
@@ -434,17 +450,27 @@ class Schedtime2DSS(object):
 
         # clean up!
         ps = Project.objects.filter(pcode = projectName)
+
+        # Don't want to wipe out project Maintenance, if it's there.
+        # If it is, nothing more to be done.  But if it isn't there,
+        # we need to create it.
+        if projectName == "Maintenance" and len(ps) > 0:
+            return
+
         empty = [p.delete() for p in ps]
         ss = Sesshun.objects.filter(name = sessionName)
         empty = [s.delete() for s in ss]
 
         # first, just set up the project and single session
-        if semesterName == "09C":
-            semesterStart = datetime(2009, 10, 1)
-            semesterEnd = datetime(2010, 1, 31)
-        else:
-            semesterStart = datetime(2009, 6, 1)
-            semesterEnd = datetime(2009, 9, 30)
+        self.semester.semester = semesterName
+
+        try:
+            semesterStart = self.semester.start()
+            semesterEnd = self.semester.end()
+        except KeyError:
+            raise "Invalid trimester designator %s.  Must be A, B, or C" % trimester[2:]
+        except ValueError:
+            raise "Invalid trimester year %s.  Must be numeric, 00 - 99" % trimester[:2]
 
         semester = first(Semester.objects.filter(semester = semesterName))
         ptype    = first(Project_Type.objects.filter(type = projectType))
@@ -506,19 +532,155 @@ class Schedtime2DSS(object):
         # return the project, which links in the session
         return p
 
-    def report_result(self, trimester):
+    def report_result(self, trimester, sess_type, periods):
         dss_prime_sql = """select `etdate`, `startet`, `lengthet`, `type`, `desc`
                                from schedtime
                                where `etdate` >= \"%s\" and `etdate` <= \"%s\"
-                               and `type` != \"Astronomy\" order by `type`, `etdate`"""
+                               and %s order by `etdate`"""
+
+
+        self.semester.semester = trimester;
+        start_date = self.semester.start()
+
+        if sess_type == "Tests":
+            type_clause = "(type = 'Tests' or type = 'Commissioning')"
+        else:
+            type_clause = "type = \"%s\"" % sess_type
 
         start, end = self.get_schedtime_dates(trimester)
+        header = ["date", "start (ET)", "length", "type", "desc"]
+        dss_header = ["date", "start (UT)", "length", "pcode", "desc"]
 
-        self.cursor.execute(dss_prime_sql % (start, end))
+        self.cursor.execute(dss_prime_sql % (start, end, type_clause))
         rows = self.cursor.fetchall()
 
-        print "DSS Prime data:\n"
+        dss_prime_report = Report()
+        line = Line()
+
+        for i in header:
+            line.add(i)
+
+        dss_prime_report.add_headers(line)
 
         for row in rows:
-            print row;
-        
+            line.clear()
+
+            for item in row:
+                line.add(item)
+
+            dss_prime_report.add_line(line)
+
+
+        if sess_type == "Tests":
+            pcode = "TGBT" + trimester
+        else:
+            pcode = sess_type
+
+        dss_report = Report()
+        line.clear()
+
+        for i in dss_header:
+            line.add(i)
+
+        dss_report.add_headers(line)
+##         periods = Period.objects.filter(session__project__pcode = pcode, \
+##                                         start__gt = start_date).order_by("start")
+
+        for p in periods:
+            line.clear()
+            line.add(self.date_to_string(p.start))
+            line.add("%02i" % p.start.hour + "%02i" % p.start.minute)
+            line.add(p.duration)
+            line.add(p.session.project.pcode)
+            line.add(p.session.name)
+            dss_report.add_line(line)
+
+        return dss_prime_report, dss_report
+
+
+    def get_periods(self, trimester, sess_type):
+        """Obtains all the periods of a given type for the named trimester"""
+
+        self.semester.semester = trimester;
+        start_date = self.semester.start()
+
+        if sess_type == "Tests": # and commissioning
+            pcode = "TGBT" + trimester
+            periods = Period.objects.filter(session__project__pcode__contains = pcode, \
+                                            start__gt = start_date).order_by("start")
+        elif sess_type == "Astronomy":
+            pr = Period.objects.filter(session__project__project_type__type = "science", \
+                                      start__gt = start_date).order_by("start")
+            periods = [x for x in pr if x.session.project.pcode.find("TGBT") == -1]
+
+        else: # Maintenance and Shutdown
+            pcode = sess_type
+            periods = Period.objects.filter(session__project__pcode = pcode, \
+                                            start__gt = start_date).order_by("start")
+        return periods
+
+
+    def print_report(self, trimester):
+
+        astronomy = self.get_periods(trimester, "Astronomy")
+        tests = self.get_periods(trimester, "Tests")
+        maintenance = self.get_periods(trimester, "Maintenance")
+        shutdown = self.get_periods(trimester, "Shutdown")
+
+##         self.original_astronomy = []
+##         self.original_tests = []
+##         self.original_maintenance = []
+##         self.original_shutdown = []
+
+        print "original_astronomy   =", len(self.original_astronomy)
+        print "original_tests       =", len(self.original_tests)
+        print "original_maintenance =", len(self.original_maintenance)
+        print "original_shutdown    =", len(self.original_shutdown)
+
+        print "astronomy   =", len(astronomy)
+        print "tests       =", len(tests)
+        print "maintenance =", len(maintenance)
+        print "shutdown    =", len(shutdown)
+
+
+        new_astronomy = [x for x in astronomy if x not in self.original_astronomy]
+        new_tests = [x for x in tests if x not in self.original_tests]
+        new_maintenance = [x for x in maintenance if x not in self.original_maintenance]
+        new_shutdown = [x for x in shutdown if x not in self.original_shutdown]
+
+        print "new_astronomy   =", len(new_astronomy)
+        print "new_tests       =", len(new_tests)
+        print "new_maintenance =", len(new_maintenance)
+        print "new_shutdown    =", len(new_shutdown)
+
+        (prime_astronomy, dss_astronomy) = self.report_result(trimester, "Astronomy", new_astronomy)
+        (prime_tests, dss_tests) = self.report_result(trimester, "Tests", new_tests)
+        (prime_maintenance, dss_maintenance) = self.report_result(trimester, "Maintenance", new_maintenance)
+        (prime_shutdown, dss_shutdown) = self.report_result(trimester, "Shutdown", new_shutdown)
+
+        print "Summary of results:\n"
+        print "Astronomy: %i entries found, %i entries transferred." % \
+              (prime_astronomy.lines(), dss_astronomy.lines())
+        print "Test and commissioning: %i entries found, %i entries tranferred." % \
+              (prime_tests.lines(), dss_tests.lines())
+        print "Maintenance: %i entries found, %i entries transferred." % \
+              (prime_maintenance.lines(), dss_maintenance.lines())
+        print "Shutdown: %i entries found, %i entries transferred." % \
+              (prime_shutdown.lines(), dss_shutdown.lines())
+
+        print "\nAstronomy, DSS':"
+        prime_astronomy.output()
+        print "\nAstronomy, DSS:"
+        dss_astronomy.output()
+        print "\nTest and commissioning, DSS':"
+        prime_tests.output()
+        print "\nTest and commissioning, DSS:"
+        dss_tests.output()
+        print "\nMaintenance, DSS':"
+        prime_maintenance.output()
+        print "\nMaintenance, DSS:"
+        dss_maintenance.output()
+        print "\nShutdown, DSS':"
+        prime_shutdown.output()
+        print "\nShutdown, DSS:"
+        dss_shutdown.output()

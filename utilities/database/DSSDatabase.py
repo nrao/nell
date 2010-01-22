@@ -4,6 +4,7 @@ from utilities.database.UserNames     import UserNames
 from sesshuns.models                  import *
 from datetime                         import date, datetime, timedelta
 
+
 class DSSDatabase(object):
 
     """
@@ -45,11 +46,10 @@ class DSSDatabase(object):
         "Method for appending new trimester data to existing DSS database"
 
         print "Running append(%s)" % trimester
-#        self.dss_prime.transfer_only_new()
-#        self.get_user_info()
-#        self.schedtime.transfer_fixed_periods(trimester)
-        self.schedtime.report_result(trimester)
-
+        self.dss_prime.transfer_only_new()
+        self.get_user_info()
+        self.schedtime.transfer_fixed_periods(trimester)
+        self.schedtime.print_report(trimester)
 
     def get_user_info(self):
         """
