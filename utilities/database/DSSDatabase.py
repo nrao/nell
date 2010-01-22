@@ -41,6 +41,10 @@ class DSSDatabase(object):
         # UserNames.createMissingUsers and run again.
         self.schedtime.transfer_fixed_periods(trimester)
 
+        # dss_prime created windows, and schedtime brought over periods;
+        # now tie them togethor
+        self.assign_periods_to_windows()
+
             
     def get_user_info(self):
         """
@@ -71,6 +75,51 @@ class DSSDatabase(object):
             print ""
             self.un.findMissingUsers()
 
+    def assign_periods_to_windows(self):
+        windows = Window.objects.all()
+        for w in windows:
+            self.assign_periods_to_window(w)
+
+    def assign_periods_to_window(self, window):
+        """
+        The cadence table in dss_prime tells us how to set up our window
+        time ranges, but it does not tell us how which periods are the 
+        default period for each window - it can't, this is an idea that only
+        exists in DSS, not in Carl's tools.  So, we have to try and match
+        up periods from this session that fall into each window.
+        """
+
+        # nothing to do if this window already has one
+        if window.default_period is not None:
+            return
+
+        # what periods overlap w/ this window?
+        ps = Period.get_periods(window.start_datetime()
+                              , window.duration * 24 * 60 # minutes
+                              , ignore_deleted = False)
+
+        # debug
+        #print " periods in win: ", window.start_datetime(), window.duration
+        #print ps
+        #print " periods for session: ", window.session.period_set.all()
+        
+        # which of them belong to this session?
+        sps = [p for p in ps if p.session == window.session]
+
+        # the only exceptable result is for there to be just one period now:
+        # no periods means the window is still un-initialized, and more
+        # then one period means a human has to intervene.
+        if len(sps) == 1:
+            window.default_period = sps[0]
+            window.save()
+        elif len(sps) == 0:
+            # TBF: report un-initialized window
+            print "NO PERIOD for window: ", window
+            pass
+        else:
+            # TBF: report multiple periods for window
+            print "> 1 PERIOD for window: ", window, sps
+            pass
 
     def validate_receiver_schedule(self):
         "Does this rcvr schedule make sense compared to other items?"
