@@ -135,7 +135,7 @@ def get_receiver_change(schedule, day):
 
 @register.filter
 def end_date(start_date, days):
-    retval = start_date + timedelta(days = days)
+    retval = start_date + timedelta(days = days -1)
     return retval.strftime("%Y-%m-%d")
 
 @register.filter
