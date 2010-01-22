@@ -659,7 +659,7 @@ class DSSPrime2DSS(object):
             self.cursor.execute(query)
             rows = self.cursor.fetchall()
             assert len(rows) == 1
-            original_id = int(rows[0])
+            original_id = int(rows[0][0])
             # get our DSS session
             sesshun = first(Sesshun.objects.filter(original_id = original_id))
             # finally, transfer the windows
