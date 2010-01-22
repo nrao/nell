@@ -4,8 +4,9 @@ from utilities.database.UserNames     import UserNames
 from sesshuns.models                  import *
 from datetime                         import date, datetime, timedelta
 
+
 class DSSDatabase(object):
-    
+
     """
     This class is responsible for populating a DSS database that has already
     been primed with static information (observing types table, etc.) with
@@ -41,7 +42,16 @@ class DSSDatabase(object):
         # UserNames.createMissingUsers and run again.
         self.schedtime.transfer_fixed_periods(trimester)
 
-            
+
+    def append(self, trimester):
+        "Method for appending new trimester data to existing DSS database"
+
+        print "Running append(%s)" % trimester
+        self.dss_prime.transfer_only_new()
+        self.get_user_info()
+        self.schedtime.transfer_fixed_periods(trimester)
+        self.schedtime.print_report(trimester)
+
     def get_user_info(self):
         """
         Here's all the hoops you have to jump through to get our User table
@@ -71,6 +81,51 @@ class DSSDatabase(object):
             print ""
             self.un.findMissingUsers()
 
+    def assign_periods_to_windows(self):
+        windows = Window.objects.all()
+        for w in windows:
+            self.assign_periods_to_window(w)
+
+    def assign_periods_to_window(self, window):
+        """
+        The cadence table in dss_prime tells us how to set up our window
+        time ranges, but it does not tell us how which periods are the 
+        default period for each window - it can't, this is an idea that only
+        exists in DSS, not in Carl's tools.  So, we have to try and match
+        up periods from this session that fall into each window.
+        """
+
+        # nothing to do if this window already has one
+        if window.default_period is not None:
+            return
+
+        # what periods overlap w/ this window?
+        ps = Period.get_periods(window.start_datetime()
+                              , window.duration * 24 * 60 # minutes
+                              , ignore_deleted = False)
+
+        # debug
+        #print " periods in win: ", window.start_datetime(), window.duration
+        #print ps
+        #print " periods for session: ", window.session.period_set.all()
+        
+        # which of them belong to this session?
+        sps = [p for p in ps if p.session == window.session]
+
+        # the only exceptable result is for there to be just one period now:
+        # no periods means the window is still un-initialized, and more
+        # then one period means a human has to intervene.
+        if len(sps) == 1:
+            window.default_period = sps[0]
+            window.save()
+        elif len(sps) == 0:
+            # TBF: report un-initialized window
+            print "NO PERIOD for window: ", window
+            pass
+        else:
+            # TBF: report multiple periods for window
+            print "> 1 PERIOD for window: ", window, sps
+            pass
 
     def validate_receiver_schedule(self):
         "Does this rcvr schedule make sense compared to other items?"
@@ -114,7 +169,7 @@ class DSSDatabase(object):
                                  , minute = 0
                                  , second = 0
                                  , microsecond = 0)
-            end_day = start_day + timedelta(days = 1)                     
+            end_day = start_day + timedelta(days = 1)
             day_periods = Period.objects.filter(start__gt = start_day
                                               , start__lt = end_day)
             # of these, is any one of them a maintenance?
@@ -122,7 +177,7 @@ class DSSDatabase(object):
                 if p.session.project.is_maintenance()]
             if len(maintenance) == 0:
                 bad.append(dt)
-                    
+
         print "Rcvr changes w/ out maintenance day: "
         bad.sort()
         for b in bad:

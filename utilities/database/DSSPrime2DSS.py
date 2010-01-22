@@ -330,6 +330,9 @@ class DSSPrime2DSS(object):
             )
                 op.save()
 
+        # now create windows from cadences
+        self.create_windows(s, s_id_prime)
+
         self.new_sessions.append(s)
 
     def normalize_investigators(self):
@@ -634,4 +637,99 @@ class DSSPrime2DSS(object):
         f = open("DSSPrime2DSS_report.txt", 'w')
         f.writelines(ls)
         f.close()
-                    
+
+    def transfer_only_windows(self):
+        """
+        This method is for 'back filling' the windows - the case where we've
+        already transfered project info, but didn't grab the cadence info; i.e.
+        this is to be called by itself.
+        """
+
+        # get all the sessions that have cadences
+        query = "SELECT session_id FROM cadences"
+        self.cursor.execute(query)
+        rows = self.cursor.fetchall()
+        ids = [int(r[0]) for r in rows]
+
+        # for each pair of sesshun and it's dss_prime PK, create it's windows
+        for session_dss_prime_id in ids:
+            # which session in DSS does this refer to?
+            query = "SELECT original_id FROM sessions WHERE id = %d" \
+                % (session_dss_prime_id)
+            self.cursor.execute(query)
+            rows = self.cursor.fetchall()
+            assert len(rows) == 1
+            original_id = int(rows[0][0])
+            # get our DSS session
+            sesshun = first(Sesshun.objects.filter(original_id = original_id))
+            # finally, transfer the windows
+            self.create_windows(sesshun, session_dss_prime_id)
+
+    def create_windows(self, sesshun, session_dss_prime_id):
+
+        rows = self.get_cadence(session_dss_prime_id)
+
+        # Note: really should only be one per session
+        for row in rows:
+            windows = self.cadence2windows(row)
+            for w in windows:
+                w.session = sesshun
+                w.save()
+                # NOTE: we can't do this yet, because we don't have 
+                # the periods yet.  That comes later, outside of this class
+                # now we have to match up the correct periods to the windows
+                #self.assign_periods_to_window(w)
+
+
+    def get_cadence(self, session_id):
+        
+        query = """
+        SELECT session_id, start_date, repeats, full_size, intervals
+        FROM cadences WHERE session_id = %d
+        """ % session_id
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+        
+    def string2int_list(self, string_value, length):
+        if string_value.find(',') == -1:
+            # scalar intervals - regular!
+            values = [int(string_value)] * length
+        else:
+            # vector intervals - irregular! ex: '1,2,1,5'
+            values = string_value.strip().split(',')
+            values = [int(v) for v in values]
+            if len(values) != length:
+                print "length vs. values off ", string_value, length, values
+        return values       
+
+    def cadence2windows(self, row):
+        """
+        Converts a row from the cadence table to a window object, but
+        does NOT assign the session nor the default_period.
+        """
+        windows = []
+
+        # row needs to conform to: session_id, start, repeats, full_size, interval
+
+        # convert this ET time that is supposed to represent a UT date
+        # i.e. 2009-10-2 19:00:00 => 2009-10-3
+        #starttime = datetime.strftime(row[1], "%Y-%m-%d %H:%M:%S")
+        starttime = row[1]
+        start = (starttime + timedelta(days = 1)).date() if starttime is not None else None
+        repeats = int(row[2])
+        # TBF: watch for vectors here like in intervals
+        full_sizes = self.string2int_list(row[3], repeats)
+        intervals = self.string2int_list(row[4], repeats)
+
+        # avoid nulls
+        if start is None or repeats is None or full_sizes is None or intervals is None:
+            windows = []
+        else:    
+            for i in range(repeats):
+                w = Window(start_date = start
+                         , duration = full_sizes[i]
+                          )
+                windows.append(w)          
+                start += timedelta(days = intervals[i])        
+
+        return windows
