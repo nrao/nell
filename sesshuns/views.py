@@ -40,6 +40,7 @@ def receivers_schedule(request, *args, **kws):
           , mimetype = "text/plain")
 
 def change_rcvr_schedule(request, *args, **kws):
+
     # on a given date, some rcvrs are going up and coming down:
 
     startdate = request.POST.get("startdate", None)
@@ -57,6 +58,7 @@ def change_rcvr_schedule(request, *args, **kws):
 
     # translate the up & down rcvrs; TBF: refactor to method
     up = []
+    upStr = upStr if upStr != "" else None
     if upStr is not None:
         upNames = upStr.strip().split(" ")
         for abbr in upNames:
@@ -69,6 +71,7 @@ def change_rcvr_schedule(request, *args, **kws):
                                               , 'message': msg})
                                   , mimetype = "text/plain")
     down = []                                  
+    downStr = downStr if downStr != "" else None
     if downStr is not None:
         downNames = downStr.strip().split(" ")
         for abbr in downNames:
@@ -87,6 +90,37 @@ def change_rcvr_schedule(request, *args, **kws):
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
     else:                          
+        return HttpResponse(json.dumps({'error': error
+                                      , 'message': msg})
+                           , mimetype = "text/plain")
+
+def shift_rcvr_schedule_date(request, *args, **kws):
+    fromStr = request.POST.get("from", None)
+    toStr   = request.POST.get("to", None)
+    fromDt = datetime.strptime(fromStr, "%m/%d/%Y %H:%M:%S")
+    toDt   = datetime.strptime(toStr, "%m/%d/%Y %H:%M:%S")
+    success, msg = Receiver_Schedule.shift_date(fromDt, toDt)    
+    if success:
+        return HttpResponse(json.dumps({'success':'ok'})
+                          , mimetype = "text/plain")
+    else:                          
+        error = "Error shifting date of Receiver Change."
+        return HttpResponse(json.dumps({'error': error
+                                      , 'message': msg})
+                           , mimetype = "text/plain")
+
+def delete_rcvr_schedule_date(request, *args, **kws):
+    print "delete_rcvr_schedule_date: ", request.POST
+    dateStr = request.POST.get("startdate", None)
+    dateDt = datetime.strptime(dateStr, "%m/%d/%Y %H:%M:%S")
+    print "date: ", dateDt
+    success, msg = Receiver_Schedule.delete_date(dateDt)    
+    print "results: ", success, msg
+    if success:
+        return HttpResponse(json.dumps({'success':'ok'})
+                          , mimetype = "text/plain")
+    else:                          
+        error = "Error deleting date of Receiver Change."
         return HttpResponse(json.dumps({'error': error
                                       , 'message': msg})
                            , mimetype = "text/plain")

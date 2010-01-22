@@ -1,7 +1,11 @@
 from sesshuns.models import *
 from utilities.TimeAgent import dtDiffHrs
+#from utilities           import ScorePeriod   # TBF scoring
 
 class ScheduleTools(object):
+
+    #def __init__(self):   # TBF scoring
+    #    self.sp = ScorePeriod()
 
     def changeSchedule(self, start, duration, sesshun, reason, desc):
         """
@@ -37,6 +41,7 @@ class ScheduleTools(object):
         # first, adjust each of the affected periods - including time accnting
         end = start + timedelta(hours = duration)
         for p in ps:
+            need_scoring = False
             if debug:
                 print "changing period: ", p
                 print "comparing period: ", p.start, p.end()
@@ -57,6 +62,7 @@ class ScheduleTools(object):
                 descDct["gave_time"].append((p.__str__(),other_sess_time, p.id))
                 p.duration = new_duration
                 p.start = end
+                need_scoring = True
             elif p.start < start and p.end() > end:
                 if debug:
                     print "bi-secting period"
@@ -86,6 +92,7 @@ class ScheduleTools(object):
                 # the original period is really giving up time to the 
                 # bi-secting new period, and the new second half!
                 other_sess_time = duration + new_dur
+                need_scoring = True
             elif p.start < start and p.end() > start:
                 if debug:
                     print "shorten period"
@@ -94,6 +101,7 @@ class ScheduleTools(object):
                 other_sess_time = p.duration - new_duration
                 descDct["gave_time"].append((p.__str__(),other_sess_time, p.id))
                 p.duration = new_duration
+                need_scoring = True
                          
             else:
                 raise "not covered"
@@ -106,6 +114,8 @@ class ScheduleTools(object):
                 p.accounting.set_changed_time(reason, value + other_sess_time)
                 p.accounting.save()
                 p.save()
+                #if need_scoring:  # TBF scoring
+                #    self.sp.run(p.id)
 
         # finally, anything to replace it with?
         if sesshun is not None:
@@ -123,12 +133,11 @@ class ScheduleTools(object):
                      , forecast   = start
                      , accounting = pa)
             p.save()    
+            #self.sp.run(p.id)  # TBF scoring
             descDct["got_time"].append((p.__str__(),p.duration, p.id))
 
         # in all cases, give the description of entire event:
         self.assignDescriptions(descDct, descHead, desc)
-
-        # TBF: now we have to rescore all the affected periods!
 
     def assignDescriptions(self, descDct, descHead, desc):
         """
@@ -244,6 +253,7 @@ class ScheduleTools(object):
                     p.duration -= other_time 
                     if not start_boundary:
                         p.start = time
+                    #self.sp.run(p.id)  # TBF scoring
                 p.accounting.save()
                 p.save()
         else: 
@@ -268,15 +278,15 @@ class ScheduleTools(object):
             if not start_boundary:
                 neighbor.start = time
             neighbor.save()    
+            #self.sp.run(neighbor.id)  # TBF scoring
         
         # in all cases:
         period.accounting.save()
         period.save()
+        #self.sp.run(period.id)  # TBF scoring
         
         # in all cases, give the description of entire event:
         self.assignDescriptions(descDct, descHead, desc)
-
-        # TBF: now we have to rescore all the affected periods!
 
         return (True, None)
 

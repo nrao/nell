@@ -9,7 +9,10 @@ register = template.Library()
 
 @register.filter
 def hrs2sex(value):
-    return str(timedelta(hours=value))[:-3]
+    if isinstance(value, str):
+        return value
+    else:
+        return str(timedelta(hours=value))[:-3]
 
 @register.filter
 def dt2sex(value):
@@ -104,6 +107,15 @@ def project_type(project):
     return type            
 
 @register.filter
+def get_projects(user):
+    return sorted([i.project for i in user.investigator_set.all()]
+                , lambda x, y: cmp(x.pcode, y.pcode))
+
+@register.filter
+def sort_projects(projects):
+    return sorted(projects, lambda x, y: cmp(x.pcode, y.pcode))
+
+@register.filter
 def get_receiver_change(schedule, day):
     if day.date() not in [d.date() for d in schedule.keys()]:
         return "- No receiver changes" # No receiver change today
@@ -120,6 +132,18 @@ def get_receiver_change(schedule, day):
     string += "Remove: " + ", ".join(removed) if removed else ""
 
     return "- " + string if string else "- No receiver changes"
+
+@register.filter
+def end_date(start_date, days):
+    retval = start_date + timedelta(days = days)
+    return retval.strftime("%Y-%m-%d")
+
+@register.filter
+def date_no_secs(value):
+    if isinstance(value, str):
+        return value
+    else:
+        return value.strftime("%Y-%m-%d %H:%M")
 
 @register.filter
 def get_receivers(schedule, day):

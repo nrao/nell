@@ -121,7 +121,7 @@ Observing</a> and the Observer's Introduction for more information).</li><p>
 
       <li><a name="SessionEnabled"><b>Session Enabled</b></a> : This attribute of a session ensures that the PI for a project has given the go-ahead for a session to be scheduled. No session can be run without this box being checked.  By unenabling sessions, team members can pause their observing program.</li><p>
       
-<li><a name="SessFreq"><b>Session Frequency</b></a>  : This is the canonical frequency, in GHz, used to score the <a href="#Session">Session</a>.  This frequency should be chosen to represent the poorest potential efficiency of your observations, usually (but not always) the highest frequency. For example, if you wish to observe several frequencies in the X-band (8-10 GHz) ranging from 8.1 GHz to 9.8 GHz you should enter 9.8 GHz as your canonical frequency, in the same way that your least efficient frequency should be used when making time estimates. Note that in certain circumstances (RFI, atmospheric effects, etc.) the highest frequency is not the least efficient, for example, K-band (18-26 GHz) observations are least efficient near an atmospheric water line at ~22 GHz. More information can be found on the scoring system and observing efficiencies and how they are calculated in the DSS <a href="/static/html/dspn5.2.pdf">Project Note 5.</a> This document also describes the observing efficiency of the GBT as a function of frequency.</li><p>
+<li><a name="SessFreq"><b>Session Frequency</b></a>  : This is the canonical frequency, in GHz, used to score the <a href="#Session">Session</a>.  This frequency should be chosen to represent the poorest potential efficiency of your observations, usually (but not always) the highest frequency. For example, if you wish to observe several frequencies in the X-band (8-10 GHz) ranging from 8.1 GHz to 9.8 GHz you should enter 9.8 GHz as your canonical frequency, in the same way that your least efficient frequency should be used when making time estimates. Note that in certain circumstances (RFI, atmospheric effects, etc.) the highest frequency is not the least efficient, for example, K-band (18-26 GHz) observations are least efficient near an atmospheric water line at ~22 GHz. More information can be found on the scoring system and observing efficiencies and how they are calculated in the DSS <a href="https://safe.nrao.edu/wiki/pub/GB/Dynamic/DynamicProjectNotes/dspn5.2.pdf">Project Note 5.</a> This document also describes the observing efficiency of the GBT as a function of frequency.</li><p>
 
 <li><a name="SessMinMax"><b>Session Min and Max Durations</b></a> :  These define limits to the length of a <a href="#TP">Telescope Period</a> to be scheduled from this <a href="#Session">Session</a>: the Telescope Period cannot be longer then the max duration, nor shorter then the min duration.</li><p>
 
@@ -136,7 +136,7 @@ If a project has a large number of sources spread across the sky, that
 project should have multiple sessions to represent the different sky areas
 within thier sources.  More information can be found on the scoring system
 and observing
-efficiencies and how they are calculated in the <a href="/static/html/dspn5.2.pdf">DSS Project Note 5</a>. <p>
+efficiencies and how they are calculated in the <a href="https://safe.nrao.edu/wiki/pub/GB/Dynamic/DynamicProjectNotes/dspn5.2.pdf">DSS Project Note 5</a>. <p>
 At present these coordinates must be entered
 as RA and Dec in J2000.</li><p>
 
@@ -145,7 +145,7 @@ as RA and Dec in J2000.</li><p>
       
 <li><a name="SessRem"><b>Session Remaining Hours</b></a> : This is the number of hours remaining for a session, equal to the difference between the <a href="#SessAllot">Session Allotted Hours</a> and the sum of all <a href="#TP">Telescope Periods</a> <a href="TPStatus">completed</a> for this Session.</li><p>
 
-      <li><a name="SessionScore"><b>Session Score</b></a> : The heart of the Dynamic Scheduling System (DSS) is the algorithm that chooses which <a href="#Session">Sessions</a> to schedule by scoring (or 'ranking') all Sessions according to a set of factors. This is described in complete detail in the DSS <a href="/static/html/dspn5.2.pdf">Project Note 5</a>
+      <li><a name="SessionScore"><b>Session Score</b></a> : The heart of the Dynamic Scheduling System (DSS) is the algorithm that chooses which <a href="#Session">Sessions</a> to schedule by scoring (or 'ranking') all Sessions according to a set of factors. This is described in complete detail in the DSS <a href="https://safe.nrao.edu/wiki/pub/GB/Dynamic/DynamicProjectNotes/dspn5.2.pdf">Project Note 5</a>
       </li><p>
 
       <li><a name="SessTarget"><b>Session Target</b></a> : A list of source names that the Session may use.  This is not used by the DSS to schedule the Session and is only for the observers use.      </li><p>

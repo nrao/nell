@@ -46,6 +46,8 @@ urlpatterns = patterns(''
    , url(r'^receivers$',          rcvr_schedule) #
    , url(r'^receivers/schedule$', receivers_schedule) #
    , url(r'^receivers/change_schedule$', change_rcvr_schedule) #
+   , url(r'^receivers/shift_date$', shift_rcvr_schedule_date) #
+   , url(r'^receivers/delete_date$', delete_rcvr_schedule_date) #
    , url(r'^period/([^/]+)/moc_reschedule$', moc_reschedule)
    , url(r'^period/([^/]+)/moc_degraded$', moc_degraded)
    , url(r'^period/([^/]+)/time_accounting$', period_time_accounting) #
@@ -56,6 +58,8 @@ urlpatterns = patterns(''
    , url(r'^periods/(ET)$',       PeriodResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^periods/(UTC)/(\d+)$',PeriodResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^periods/(ET)/(\d+)$', PeriodResource(permitted_methods=('PUT', 'GET', 'POST'))) #
+   , url(r'^windows$',           WindowResource(permitted_methods=('GET', 'PUT', 'POST'))) #
+   , url(r'^windows/(\d+)$',     WindowResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , (r'^admin/',                 include(admin.site.urls)) #
    , (r'^accounts/login/$', 'django_cas.views.login') #
    , (r'^accounts/logout/$', 'django_cas.views.logout')

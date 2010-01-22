@@ -33,13 +33,13 @@ def check_maintenance_and_rcvrs():
     for dt, rcvrs in Receiver_Schedule.extract_schedule().items():
         # Well, what are the periods for this day?
         periods = Period.objects.filter(
-                                   start__gt = dt.date()
-                                 , start__lt = dt.date() + timedelta(days = 1)
+                                   start__gt = dt
+                                 , start__lt = dt + timedelta(days = 1)
                                  )
         # of these, is any one of them a maintenance?
         if len([p for p in periods if p.session.project.is_maintenance()]) == 0:
-            bad.append(dt)
-    return bad
+            bad.append(dt.date())
+    return sorted(bad)
 
 def print_values(file, values):
     if values == []:
@@ -142,7 +142,7 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nReceiver changes happening on days other than maintenance days:")
-    values = [str(s.date()) for s in check_maintenance_and_rcvrs()]
+    values = [str(s) for s in check_maintenance_and_rcvrs()]
     print_values(outfile, values)
 
     outfile.write("\n\nSessions for which periods are scheduled when none of their receivers are up:")
@@ -155,13 +155,17 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nUsers with duplicate accounts:")
-    users  = list(User.objects.all())
+    users  = list(User.objects.order_by("last_name"))
     values = []
     for u in users:
         users.remove(u)
         for i in users:
             if i.last_name == u.last_name and i.first_name == u.first_name:
                 values.append(u)
+    print_values(outfile, values)
+
+    outfile.write("\n\nUsers with no username:")
+    values = [u for u in users if u.username is None]
     print_values(outfile, values)
 
     outfile.write("\n\nPeriods Scheduled on blackout dates:")

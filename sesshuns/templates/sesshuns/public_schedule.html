@@ -1,4 +1,3 @@
-
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
     <title>{% block title %}GBT Schedule{% endblock %}</title>
@@ -15,12 +14,9 @@
     <!-- Wait until next trimester: <script type="text/javascript" src="http://libraryh3lp.com/presence/jid/nrao-dss/chat.libraryh3lp.com/js"></script> 
     <script type="text/javascript" src="/static/javascript/help.js"></script> -->
 
-
 {% block scripts %}
   <link type="text/css" href="/static/css/lib/themes/base/ui.all.css" rel="stylesheet" />
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"></script>
-
-
   <script type="text/javascript">
   $(document).ready(function(){
     $("#id_start").datepicker();
@@ -42,32 +38,70 @@
   <div class="container">
     <div class="banner span-24">
       <img src="/static/images/banner.jpg" />
-      <table>
-        <tr>
-          <td style="text-align: left;">
-              <a href="/projects/ical" title="This link provides access to DSS events in the 'iCalendar' format.  To use this feature, right-click the 'ICAL' icon and select 'Copy Link Location'.  Then paste the link into your favorite iCalendar application.">
+    <table>
+{% if is_logged_in %}
+      <tr>
+        <td>
+          <form style="display: inline; vertical-align: super;" action="/search" method="POST" title="Search investigator first/last name, project ID, short project ID, project title, and trimester" >
+            <input type="text" name="search" />
+            <input type="submit" value="Search" />
+          </form>
+          {% if not requestor.isOperator %}
+          <a href="/projects/ical" title="This link provides access to DSS events in the 'iCalendar' format.  To use this feature, right-click the 'ICAL' icon and select 'Copy Link Location'.  Then paste the link into your favorite iCalendar application.">
+            <img src="/static/images/ical.gif" style="border: 0;" />
+          </a>
+          <a href="/schedule/" title="This link provides access to the public GBT schedule.">GBT Schedule</a>
+          {% endif %}
+        </td>
+        <td style="text-align: right;">
+          <span id="help" style="display: none; border-right: 10px solid white;">
+            <a href="#" onclick="showHelp(); return false;" title="Click here to connect to a DSS team member in live chat">
+              <img src="/static/images/chat.gif" style="border: 0;" />
+            </a>
+          </span>
+          <span id="offlinehelp" style="display: none;">
+            <a href="#" onclick="showOfflineHelp(); return false;">
+              <img src="/static/images/chat_offline.gif" style="border: 0;" />
+            </a>
+          </span>
+          <a href="mailto:helpdesk-dss@gb.nrao.edu" class="top_menu" title="Click here to offer suggestions or report bugs">Helpdesk</a> |
+          {% if not requestor.isOperator %}
+            <a href="/profile" class="top_menu" title="Click here to return to your home profile page">My Home</a> |
+          {% else %}
+            <a href="/schedule/" title="Return to the schedule page">GBT Schedule</a> |
+          {% endif %}
+          <a href="/static/html/main.html" class="top_menu" title="GBT Dynamic Scheduling System documentation">Docs</a> |
+          <a href="/accounts/logout/" class="top_menu" title="Click here to safely leave the current DSS login session">Logout</a>
+        </td>
+      </tr>
+{% else %}
+      <tr>
+        <td style="text-align: left;">
+          <a href="/projects/ical" title="This link provides access to DSS events in the 'iCalendar' format.  To use this feature, right-click the 'ICAL' icon and select 'Copy Link Location'.  Then paste the link into your favorite iCalendar application.">
               <img src="/static/images/ical.gif" style="border: 0;" />
             </a>
-          </td>
-          <td style="text-align: right;">
-            <span id="help" style="display: none; border-right: 10px solid white;">
-              <a href="#" onclick="showHelp(); return false;" title="Click here to connect to a DSS team member in live chat">
-                <img src="/static/images/chat.gif" style="border: 0;" />
-              </a>
-            </span>
-            <span id="offlinehelp" style="display: none;">
-              <a href="#" onclick="showOfflineHelp(); return false;">
-                <img src="/static/images/chat_offline.gif" style="border: 0;" />
-              </a>
-            </span>
-            <a href="mailto:helpdesk-dss@gb.nrao.edu" class="top_menu" title="Click here to offer suggestions or report bugs">Helpdesk</a> |
-            <a href="/static/html/main.html" class="top_menu" title="GBT Dynamic Scheduling System documentation">Docs</a> |
-            <a href="/profile" class="top_menu" title="Click here login to the DSS">DSS Login</a> 
-          </td>  
-        </tr>
+        </td>
+        <td style="text-align: right;">
+          <span id="help" style="display: none; border-right: 10px solid white;">
+            <a href="#" onclick="showHelp(); return false;" title="Click here to connect to a DSS team member in live chat">
+              <img src="/static/images/chat.gif" style="border: 0;" />
+            </a>
+          </span>
+          <span id="offlinehelp" style="display: none;">
+            <a href="#" onclick="showOfflineHelp(); return false;">
+              <img src="/static/images/chat_offline.gif" style="border: 0;" />
+            </a>
+          </span>
+          <a href="mailto:helpdesk-dss@gb.nrao.edu" class="top_menu" title="Click here to offer suggestions or report bugs">Helpdesk</a> |
+          <a href="/static/html/main.html" class="top_menu" title="GBT Dynamic Scheduling System documentation">Docs</a> |
+          <a href="/profile" class="top_menu" title="Click here login to the DSS">DSS Login</a> 
+        </td>  
+      </tr>
+{% endif %}
       </table>
     </div>
   </div>
+
   <h1 class="loud"><center>GBT Schedule</center></h1>
   <center>
 

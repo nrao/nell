@@ -7,6 +7,7 @@ from django.http               import QueryDict
 from settings                  import ANTIOCH_SERVER_URL
 from utilities.receiver        import ReceiverCompile
 from utilities                 import TimeAgent, UserInfo, NRAOBosDB
+from utilities                 import ScorePeriod
 
 import calendar
 import pg
@@ -77,7 +78,7 @@ def range_to_days(ranges):
         if rend - rstart > timedelta(days = 1):
             start = rstart
             end   = rstart.replace(hour = 0, minute = 0, second = 0) + timedelta(days = 1)
-            while start < rend:
+            while start < rend and end < rend:
                 if end - start >= timedelta(days = 1):
                     dates.append(start)
                 start = end
@@ -133,8 +134,8 @@ def consolidate_overlaps(events):
         for (begin2, end2) in events:
             if (begin1, end1) != (begin2, end2) and \
                begin1 < end2 and begin2 < end1:
-                begin = max([begin, begin1, begin2])
-                end   = min([end, end1, end2])
+                begin = min([begin, begin1, begin2])
+                end   = max([end, end1, end2])
         if (begin, end) not in reduced:
             reduced.append((begin, end))            
     return reduced
@@ -442,8 +443,8 @@ class Project(models.Model):
         grades   = map(grade_abc_2_float, fdata.get("grade", "A").split(', '))
         
         assert len(totals) == len(pscs) and \
-            len(totals) == len(max_sems) and \
-            len(totals) == len(grades)
+               len(totals) == len(max_sems) and \
+               len(totals) == len(grades)
 
         num_new = len(totals)
         num_cur = len(self.allotments.all())
@@ -610,7 +611,9 @@ class Project(models.Model):
         times = [(d.start, d.start + timedelta(hours = d.duration)) \
                  for p in Project.objects.all() \
                  for d in p.getPeriods() \
-                 if p != self and d.start >= start and d.start <= end]
+                 if p != self and \
+                    d.state.abbreviation == 'S' and \
+                    overlaps((d.start, d.end()), (start, end))]
         return consolidate_events(times)
 
     def get_blackout_dates(self, start, end):
@@ -708,6 +711,13 @@ class Project(models.Model):
             if diff < epsilon:
                 return a
         return None # uh-oh
+
+    def get_windows(self):
+        # TBF no filtering here, ALL windows!
+        return sorted([w for s in self.sesshun_set.all()
+                         for w in s.window_set.all()
+                         if s.session_type.type == 'windowed']
+                     , key = lambda x : x.start_date)
 
     class Meta:
         db_table = "projects"
@@ -990,7 +1000,7 @@ class Receiver_Schedule(models.Model):
         where start_date is a datetime object and [<receivers available>] is
         a list of Receiver objects.
         """
-        startdate = startdate or datetime(2009, 10, 1).date()
+        startdate = startdate or datetime(2009, 10, 1, 0, 0, 0)
         schedule  = dict()
         prev      = Receiver_Schedule.previousDate(startdate)
 
@@ -1016,6 +1026,16 @@ class Receiver_Schedule(models.Model):
     @staticmethod
     def previousDate(date):
         try:
+            prev = Receiver_Schedule.objects.filter(start_date__lt = date).order_by('-start_date')[0].start_date
+        except IndexError:
+            prev = None
+
+        return prev
+ 
+    @staticmethod
+    def mostRecentDate(date):
+        "Identical to previous date, but includes given date"
+        try:
             prev = Receiver_Schedule.objects.filter(start_date__lte = date).order_by('-start_date')[0].start_date
         except IndexError:
             prev = None
@@ -1023,20 +1043,28 @@ class Receiver_Schedule(models.Model):
         return prev
 
     @staticmethod
+    def available_rcvrs_end_of_day(date):
+        dt = Receiver_Schedule.mostRecentDate(date)
+        return Receiver_Schedule.available_receivers(dt)
+
+    @staticmethod
+    def available_rcvrs_start_of_day(date):
+        dt = Receiver_Schedule.previousDate(date)
+        return Receiver_Schedule.available_receivers(dt)
+        
+    @staticmethod
     def available_receivers(date):
-        "Returns rcvrs available at end of given date"
+        "Returns rcvrs given rcvr change date"
 
-        prevDate = Receiver_Schedule.previousDate(date)
-
-        if prevDate is not None:
-            prevSchd = Receiver_Schedule.objects.filter(start_date = prevDate)
-            rcvrs = [p.receiver for p in prevSchd]
+        if date is not None:
+            schd = Receiver_Schedule.objects.filter(start_date = date)
+            rcvrs = [p.receiver for p in schd]
         else:
             rcvrs = []
         return rcvrs    
 
     @staticmethod
-    def change_schedule(date, up, down):
+    def change_schedule(date, up, down, end_of_day = False):
         """
         Here we change the receiver schedule according to the given rcvrs
         that go up and down on the given date.  Uses extract schedule to 
@@ -1044,52 +1072,155 @@ class Receiver_Schedule(models.Model):
         schedule can be changed using these deltas.  Raises errors if rcvrs are
         specified to go up that are already up, or down that aren't up.
         """
-        
-        available = Receiver_Schedule.available_receivers(date)
+       
+        # TBF: how to error check before creating new RS entry?
+        # TBF: this code is twice as long as it should be - there
+        # are patterns for up & down params that can be refactored out
+        # TBF: won't remove the commented out prints until we know we're done
 
-        # check for errors
-        for u in up:
-            if u in available:
-                return (False, "Receiver %s is already up on %s" % (u, date))
-        for d in down:
-            if d not in available:
-                return (False
-                , "Receiver %s cannot come down on %s, is not up." % (d, date))
+        # is this a new date?
+        rss = Receiver_Schedule.objects.filter(start_date = date)
+        if len(rss) == 0:
+            # make a copy of the previous date
+            prev = Receiver_Schedule.previousDate(date)
+            prev_rs = Receiver_Schedule.objects.filter(start_date = prev)
+            for p in prev_rs:
+                rs = Receiver_Schedule(start_date = date
+                                     , receiver   = p.receiver)
+                rs.save()                     
+            rss = Receiver_Schedule.objects.filter(start_date = date)
 
-        # reconstruct the list of rcvrs available for this date
-        now_available = [r for r in available if r not in down]
-        now_available.extend(up)
+        # compare old diff to new diff (up and down params)
+        diffs = Receiver_Schedule.extract_diff_schedule(startdate = date)
+        dt, old_ups, old_downs = first([d for d in diffs if d[0] == date])
+        #print "original diff: ", old_ups, old_downs
 
-        # is this a brand new rcvr change date?
-        rs_up = Receiver_Schedule.objects.filter(start_date = date)
-        if len(rs_up) == 0:
-            for r in now_available:
-                rs = Receiver_Schedule(receiver = r, start_date = date)
-                rs.save()
+        # what used to go up, that no longer does?
+        remove_ups = Set(old_ups).difference(Set(up))
+        # what is going up that didn't before?
+        add_ups = Set(up).difference(Set(old_ups))
+        #print "UP Sets: ", remove_ups, add_ups
 
+        # what used to go down, that no longer does?
+        remove_downs = Set(old_downs).difference(Set(down))
+        # what is going down that didn't before?
+        add_downs = Set(down).difference(Set(old_downs))
+        #print "DOWN Sets: ", remove_downs, add_downs
+
+        # convert the sets to two lists of rcvrs: ups & downs
+        ups = [u for u in add_ups]
+        for d in remove_downs:
+            if d not in ups:
+                ups.append(d)
+        #print "UP list: ", ups        
+        downs = [d for d in add_downs]
+        for u in remove_ups:
+            if u not in downs:
+                downs.append(u)
+        #print "DOWN list: ", downs        
+
+
+        # TBF: should we even error check?
+        #for u in up:
+        #    if u in available:
+        #        return (False, "Receiver %s is already up on %s" % (u, date))
+        #for d in down:
+        #    if d not in available:
+        #        return (False
+        #        , "Receiver %s cannot come down on %s, is not up." % (d, date))
+
+ 
         # now alter the subsequent dates on the schedule:
         schedule = Receiver_Schedule.extract_schedule(date)
         dates = sorted(schedule.keys())
-        for dt in dates:
-            if dt >= date:
-                # remove the rcvr(s) we just took down from all subsequent dates
-                for d in down:
+        # remove the rcvr(s) we just took down from all subsequent dates, 
+        # until they dissappear on their own
+        for d in downs:
+            #print "d in down: ", d
+            for dt in dates:
+                if dt >= date:
+                    #print "down schd date: ", dt
+                    #, [r.abbreviation for r in schedule[dt]]
                     if d in schedule[dt]:
                         # shouldn't be there anymore!
                         gone =Receiver_Schedule.objects.filter(start_date = dt
                                                              , receiver = d)
                         for g in gone:
+                            #print "deleting: ", g
                             g.delete()
-                # add the rcvr(s) we just put up to all subsequent dates
-                for u in up:
+                    else:
+                        break
+        # add the rcvr(s) we just put up to all subsequent dates, 
+        # until they show up on their own
+        for u in ups:
+            #print "u in up: ", u
+            for dt in dates:
+                if dt >= date:
+                    #print "up schd date: ", dt
+                    #, [r.abbreviation for r in schedule[dt]]
                     if u not in schedule[dt]:
                         # should be there now!
                         new = Receiver_Schedule(start_date = dt, receiver = u)
                         new.save()
+                        #print "new: ", new
+                    else:
+                        break
 
         # return success 
         return (True, None)
 
+    @staticmethod
+    def delete_date(date):
+        "Remove all entries for the given date, and change subsequent schedule"
+ 
+        # first check that this date is in the schedule
+        rs = Receiver_Schedule.objects.filter(start_date = date)
+        if len(rs) == 0:
+            return (False, "Date is not in Receiver Schedule: %s" % date)
+
+        # we first reconcile the schedule to this change by reversing all
+        # the changes that were meant to happen on this day:
+        diff_schedule = Receiver_Schedule.extract_diff_schedule(startdate = date)
+        day, ups, downs = first([d for d in diff_schedule if d[0] == date])
+        
+        # reverse it!
+        s, msg = Receiver_Schedule.change_schedule(day, downs, ups, end_of_day = True)
+        if not s:
+            return (False, msg)
+
+        # now we can clean up
+        rs = Receiver_Schedule.objects.filter(start_date = date)
+        for r in rs:
+            r.delete()
+
+        return (True, None)    
+
+    @staticmethod
+    def shift_date(from_date, to_date):
+        "Move all entries for the given date to a new date"
+
+        # make sure the dates given are valid: you aren't allowed to shift
+        # a date beyond the neighboring dates
+        # NOTE: ensure you get all dates you need by explicity starting way back
+        start = from_date - timedelta(days = 365)
+        schedule = Receiver_Schedule.extract_schedule(startdate = start)
+        dates = sorted(schedule.keys())
+        if from_date not in dates:
+            return (False, "Original date not in Receiver Schedule")
+        from_index = dates.index(from_date)
+        prev_date = dates[from_index-1] if from_index != 0 else None
+        next_date = dates[from_index+1] if from_index != len(dates)-1 else None
+        if prev_date is None or next_date is None or to_date >= next_date or to_date <= prev_date:
+            return (False, "Cannot shift date to or past other dates")
+
+        # we must be clear to shift the date    
+        rs = Receiver_Schedule.objects.filter(start_date = from_date)
+        for r in rs:
+            r.start_date = to_date
+            r.save()
+        
+        return (True, None)
+        
 class Parameter(models.Model):
     name = models.CharField(max_length = 64)
     type = models.CharField(max_length = 32)
@@ -1582,41 +1713,6 @@ class Observing_Parameter(models.Model):
                                                     , value
                                                     , self.session.id)
 
-class Window(models.Model):
-    session  = models.ForeignKey(Sesshun)
-    required = models.BooleanField()
-
-    def __unicode__(self):
-        return "Window (%d) for Sess (%d), Num Opts: %d" % \
-            (self.id
-           , self.session.id
-           , len(self.opportunity_set.all()))
-
-    class Meta:
-        db_table = "windows"
-
-class Opportunity(models.Model):
-    window     = models.ForeignKey(Window)
-    start_time = models.DateTimeField()
-    duration   = models.FloatField(help_text = "Hours")
-
-    def __unicode__(self):
-        return "Opt (%d) for Win (%d): %s for %5.2f hrs" % (self.id
-                                                          , self.window.id
-                                                          , self.start_time
-                                                          , self.duration)
-
-    def __repr__(self):
-        return "%s - %s" % (self.start_time
-                          , self.start_time + timedelta(hours = self.duration))
-
-    def __str__(self):
-        return "%s - %s" % (self.start_time
-                          , self.start_time + timedelta(hours = self.duration))
-
-    class Meta:
-        db_table = "opportunities"
-
 class System(models.Model):
     name   = models.CharField(max_length = 32)
     v_unit = models.CharField(max_length = 32)
@@ -1637,13 +1733,13 @@ class Target(models.Model):
 
     def __str__(self):
         return "%s at %s : %s" % (self.source
-                                , self.vertical
                                 , self.horizontal
+                                , self.vertical
                                   )
 
     def __unicode__(self):
         return "%s @ (%5.2f, %5.2f), Sys: %s" % \
-            (self.source, self.vertical, self.horizontal, self.system)
+            (self.source, self.horizontal, self.vertical, self.system)
 
     class Meta:
         db_table = "targets"
@@ -1794,11 +1890,16 @@ class Period_State(models.Model):
     def get_names():
         return [s.name for s in Period_State.objects.all()]
 
+    @staticmethod
+    def get_state(abbr):
+        "Short hand for getting state by abbreviation"
+        return first(Period_State.object.filters(abbreviation = abbr))
+
 class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
     accounting = models.ForeignKey(Period_Accounting, null=True)
     state      = models.ForeignKey(Period_State, null=True)
-    start      = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm:ss")
+    start      = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm")
     duration   = models.FloatField(help_text = "Hours")
     score      = models.FloatField(null = True, editable=False)
     forecast   = models.DateTimeField(null = True, editable=False)
@@ -1870,8 +1971,8 @@ class Period(models.Model):
             if tz == 'ET':
                 self.start = TimeAgent.est2utc(self.start)
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
-        self.score    = fdata.get("score", 0.0)
-        self.forecast = now
+        self.score    = 0.0
+        self.forecast = TimeAgent.quarter(datetime.utcnow())
         self.backup   = True if fdata.get("backup", None) == 'true' else False
         stateAbbr = fdata.get("state", "P")
         self.state = first(Period_State.objects.filter(abbreviation=stateAbbr))
@@ -1882,6 +1983,7 @@ class Period(models.Model):
             pa.save()
             self.accounting = pa
         self.save()
+        ScorePeriod().run(self.id)
 
     def handle2session(self, h):
         n, p = h.rsplit('(', 1)
@@ -2051,6 +2153,127 @@ class Project_Blackout_09B(models.Model):
         # problems with postrgreSQL
         db_table = "project_blackouts_09b"
 
+class Window(models.Model):
+    session  = models.ForeignKey(Sesshun)
+    default_period = models.ForeignKey(Period, related_name = "default_periods")
+    period = models.ForeignKey(Period, related_name = "periods", null = True)
+    start_date =  models.DateField(help_text = "yyyy-mm-dd hh:mm:ss")
+    duration   = models.IntegerField(help_text = "Days")
+
+    def __unicode__(self):
+        return "Window (%d) for Sess (%d)" % \
+            (self.id
+           , self.session.id)
+
+    def __str__(self):
+        return "Window for %s, from %s for %d days, default: %s, period: %s" % \
+            (self.session.name
+           , self.start_date.strftime("%Y-%m-%d")
+           , self.duration
+           , self.default_period
+           , self.period)
+
+    def end(self):
+        return self.start_date + timedelta(days = self.duration)
+
+    def inWindow(self, date):
+        return (self.start_date <= date) and (date <= self.end())
+
+    def state(self):
+        "A Windows state is a combination of the state's of it's Periods"
+
+        # TBF: need to check that these make sense
+        deleted   = Period_State.get_state("D")
+        pending   = Period_State.get_state("P")
+        scheduled = Period_State.get_state("S")
+
+        if (self.default_period.isPending() and self.period is None):
+            # initial state windows are in when created
+            return pending
+        elif (self.default_period.isPending() and self.period.isPending()):
+            # transitory state during scheduling
+            return pending
+        elif (self.default_period.isDeleted() and self.period.isScheduled()):
+            # the window has been reconciled - final state
+            return scheduled
+        else:
+            # all other combos are errors
+            return None
+
+    def reconcile(self):
+        """
+        Similar to publishing a period, this moves a window from an inital,
+        or transitory state, to a final scheduled state.
+        Move the default period to deleted, and publish the scheduled period.
+        """
+
+        deleted   = Period_State.get_state("D")
+        pending   = Period_State.get_state("P")
+        scheduled = Period_State.get_state("S")
+        
+        # raise an error?
+        if not self.default_period.isPending() or \
+               self.period is None or \
+           not  self.period.isPending():
+            return
+
+        self.default_period.delete()
+        self.period.publish()
+
+
+    def jsondict(self):
+        js = {  "id"             : self.id
+              , "session"        : self.session.jsondict()
+              , "start"          : self.start_date.strftime("%Y-%m-%d")
+              , "end"            : self.end().strftime("%Y-%m-%d")
+              , "duration"       : self.duration
+              , "default_period" : self.default_period.jsondict('UTC')
+              , "period"         : self.period.jsondict('UTC') \
+                  if self.period is not None else None # TBF: tz?
+              }
+        return js              
+
+    def init_from_post(self, fdata):
+        self.from_post(fdata)
+
+    def update_from_post(self, fdata):
+        self.from_post(fdata)
+
+    def from_post(self, fdata):
+
+        # TBF: if fdata is empty, we create a window w/ null entries except
+        # for the session & default_period, where we use PK = 1 as defaults
+        # ; this is the approach taken by other classes; is this okay?
+
+        # most likely, we'll be specifying sessions for windows in the same
+        # manner as we do for periods
+        handle = fdata.get("handle", "")
+        if handle:
+            self.session = self.handle2session(handle)
+        else:
+            try:
+                maintenance = first(Project.objects.filter(pcode='Maintenance'))
+                self.session = first(Sesshun.objects.filter(project=maintenance))
+            except:
+                self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
+
+        # but we don't have good handles for periods, so just use ids
+        dp_id = fdata.get("default_period", None)
+        # aren't allowed none for default period - grab something!
+        if dp_id is None:
+            dp_id = Period.objects.all().order_by("id")[0].id
+        self.default_period = first(Period.objects.filter(id = dp_id))
+        p_id = fdata.get("period_id", None)
+        self.period = first(Period.objects.filter(id = p_id))
+
+        date = fdata.get("date", datetime.utcnow().strftime("%Y-%m-%d"))
+        self.start_date = datetime.strptime(date, "%Y-%m-%d")
+        self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0")))
+        
+        self.save()
+
+    class Meta:
+        db_table = "windows"
 
 class Reservation(models.Model):
     user       = models.ForeignKey(User)
