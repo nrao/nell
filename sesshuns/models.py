@@ -1893,7 +1893,7 @@ class Period_State(models.Model):
     @staticmethod
     def get_state(abbr):
         "Short hand for getting state by abbreviation"
-        return first(Period_State.object.filters(abbreviation = abbr))
+        return first(Period_State.objects.filter(abbreviation = abbr))
 
 class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
@@ -2176,7 +2176,7 @@ class Project_Blackout_09B(models.Model):
 
 class Window(models.Model):
     session  = models.ForeignKey(Sesshun)
-    default_period = models.ForeignKey(Period, related_name = "default_window")
+    default_period = models.ForeignKey(Period, related_name = "default_window", null = True)
     period = models.ForeignKey(Period, related_name = "window", null = True)
     start_date =  models.DateField(help_text = "yyyy-mm-dd hh:mm:ss")
     duration   = models.IntegerField(help_text = "Days")
@@ -2187,11 +2187,13 @@ class Window(models.Model):
            , self.session.id)
 
     def __str__(self):
+        name = self.session.name if self.session is not None else "None"
+        default_period = self.default_period.__str__() if self.default_period is not None else "None"
         return "Window for %s, from %s for %d days, default: %s, period: %s" % \
-            (self.session.name
+            (name
            , self.start_date.strftime("%Y-%m-%d")
            , self.duration
-           , self.default_period
+           , default_period
            , self.period)
 
     def end(self):
@@ -2199,6 +2201,12 @@ class Window(models.Model):
 
     def inWindow(self, date):
         return (self.start_date <= date) and (date <= self.end())
+
+    def start_datetime(self):
+        return TimeAgent.date2datetime(self.start_date)
+
+    def end_datetime(self):
+        return TimeAgent.date2datetime(self.end())
 
     def isInWindow(self, period):
         "Does the given period overlap at all in window"
