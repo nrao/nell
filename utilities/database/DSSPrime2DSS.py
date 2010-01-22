@@ -717,8 +717,10 @@ class DSSPrime2DSS(object):
         starttime = row[1]
         start = (starttime + timedelta(days = 1)).date() if starttime is not None else None
         repeats = int(row[2])
-        # TBF: watch for vectors here like in intervals
         full_sizes = self.string2int_list(row[3], repeats)
+        # the precence of full_size values of 0 means these are 0-based
+        # but we want a one day window to have a duration of 1 day.
+        full_sizes = [f+1 for f in full_sizes]
         intervals = self.string2int_list(row[4], repeats)
 
         # avoid nulls
@@ -726,7 +728,10 @@ class DSSPrime2DSS(object):
             windows = []
         else:    
             for i in range(repeats):
-                w = Window(start_date = start
+                # but Jules is actually treating the start date as 
+                # the midpoint of the window!  so adjust it!
+                wstart = start - timedelta(days = (full_sizes[i]/2))
+                w = Window(start_date = wstart
                          , duration = full_sizes[i]
                           )
                 windows.append(w)          
