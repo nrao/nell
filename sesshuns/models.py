@@ -58,20 +58,6 @@ def t2str(dt):
     else:    
         return dt.strftime("%H:%M")
 
-def grade_abc_2_float(abc):
-    grades = {'A' : 4.0, 'B' : 3.0, 'C' : 2.0}
-    return grades.get(abc, None)
-
-def grade_float_2_abc(grade):
-    grades = ['A', 'B', 'C']
-    floats = [4.0, 3.0, 2.0]
-    gradeLetter = 'C'
-    for i in range(len(grades)):
-        if grade >= (floats[i] - 10e-5):
-            gradeLetter = grades[i]
-            break
-    return gradeLetter
-
 def range_to_days(ranges):
     dates = []
     for rstart, rend in ranges:
@@ -440,8 +426,7 @@ class Project(models.Model):
         totals   = map(float, fdata.get("total_time", "0.0").split(', '))
         pscs     = map(float, fdata.get("PSC_time", "0.0").split(', '))
         max_sems = map(float, fdata.get("sem_time", "0.0").split(', '))
-        grades   = map(float, fdata.get("grade", 4.0).split(', '))
-        #grades   = map(grade_abc_2_float, fdata.get("grade", "A").split(', '))
+        grades   = map(float, fdata.get("grade", "4.0").split(', '))
         
         assert len(totals) == len(pscs) and \
                len(totals) == len(max_sems) and \
@@ -479,8 +464,7 @@ class Project(models.Model):
         totals   = ', '.join([str(a.total_time) for a in self.allotments.all()])
         pscs     = ', '.join([str(a.psc_time) for a in self.allotments.all()])
         max_sems = ', '.join([str(a.max_semester_time) for a in self.allotments.all()])
-        grades   = ', '.join([a.grade for a in self.allotments.all()])
-        #grades   = ', '.join([grade_float_2_abc(a.grade) for a in self.allotments.all()])
+        grades   = ', '.join([str(a.grade) for a in self.allotments.all()])
 
         pi = '; '.join([i.user.name() for i in self.investigator_set.all()
                         if i.principal_investigator])
@@ -706,7 +690,7 @@ class Project(models.Model):
 
     def get_allotment(self, grade):
         "Returns the allotment that matches the specified grade"
-        # watch out - this is a float!
+        # TBF watch out - this is a float!
         epsilon = 1e-3
         for a in self.allotments.all():
             diff = abs(a.grade - grade)
@@ -1307,11 +1291,8 @@ class Sesshun(models.Model):
                     rcvrs.append(r)
         return rcvrs        
 
-    def letter(self):
+    def grade(self):
         return self.allotment.grade
-
-    def letter_grade(self):
-        return grade_float_2_abc(self.allotment.grade)
 
     def num_rcvr_groups(self):
         return len(self.receiver_group_set.all())
@@ -1361,13 +1342,10 @@ class Sesshun(models.Model):
     def init_from_post(self, fdata):
         self.set_base_fields(fdata)
 
-        # grade - UI deals w/ letters (A,B,C) - DB deals with floats
-        #grade = grade_abc_2_float(fdata.get("grade", 'A'))
         allot = Allotment(psc_time          = fdata.get("PSC_time", 0.0)
                         , total_time        = fdata.get("total_time", 0.0)
                         , max_semester_time = fdata.get("sem_time", 0.0)
                         , grade             = fdata.get("grade", 4.0)
-                        #, grade             = grade
                           )
         allot.save()
         self.allotment        = allot
@@ -1417,13 +1395,10 @@ class Sesshun(models.Model):
         self.set_base_fields(fdata)
         self.save()
 
-        # grade - UI deals w/ letters (A,B,C) - DB deals with floats
-        #grade = grade_abc_2_float(fdata.get("grade", 'A'))
         self.allotment.psc_time          = fdata.get("PSC_time", 0.0)
         self.allotment.total_time        = fdata.get("total_time", 0.0)
         self.allotment.max_semester_time = fdata.get("sem_time", 0.0)
         self.allotment.grade             = fdata.get("grade", 4.0)
-        #self.allotment.grade             = grade
         self.allotment.save()
         self.save()
 
@@ -1605,7 +1580,6 @@ class Sesshun(models.Model):
            , "PSC_time"   : self.allotment.psc_time
            , "sem_time"   : self.allotment.max_semester_time
            , "grade"      : self.allotment.grade
-           #, "grade"      : grade_float_2_abc(self.allotment.grade)
            , "orig_ID"    : self.original_id
            , "name"       : self.name
            , "freq"       : self.frequency

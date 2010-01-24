@@ -23,7 +23,7 @@ from utilities.SchedulingNotifier    import SchedulingNotifier
 fdata = {"total_time": "3"
        , "req_max": "6"
        , "name": "Low Frequency With No RFI"
-       , "grade": "A"
+       , "grade": 4.0
        , "science": "pulsar"
        , "orig_ID": "0"
        , "between": "0"
@@ -84,7 +84,7 @@ class TestUser(NellTestCase):
                , "total_time" : "10.0"
                , "PSC_time"   : "10.0"
                , "sem_time"   : "10.0"
-               , "grade"      : "A"
+               , "grade"      : "4.0"
         }
         self.project.update_from_post(pdata)
         self.project.save()
@@ -720,7 +720,7 @@ class TestProject(NellTestCase):
                , "total_time" : "10.0"
                , "PSC_time"   : "10.0"
                , "sem_time"   : "10.0"
-               , "grade"      : "A"
+               , "grade"      : "4.0"
                , "notes"      : "notes"
                , "schd_notes" : "scheduler's notes"
         }
@@ -1031,7 +1031,7 @@ class TestProject(NellTestCase):
                , "total_time" : "10.0"
                , "PSC_time"   : "10.0"
                , "sem_time"   : "10.0"
-               , "grade"      : "A"
+               , "grade"      : "4.0"
                , "notes"      : "notes"
                , "schd_notes" : "scheduler's notes"
         }
@@ -1078,7 +1078,7 @@ class TestProject(NellTestCase):
                , "total_time" : "10.0"
                , "PSC_time"   : "10.0"
                , "sem_time"   : "10.0"
-               , "grade"      : "A"
+               , "grade"      : "4.0"
                , "notes"      : "notes"
                , "schd_notes" : "scheduler's notes"
         }
@@ -1154,7 +1154,7 @@ class TestProject(NellTestCase):
                  , "total_time" : "10.0"
                  , "PSC_time"   : "10.0"
                  , "sem_time"   : "10.0"
-                 , "grade"      : "A"
+                 , "grade"      : "4.0"
                    }
         f1(p_fdata)
         self.defaultAssertion(p_fdata, p1)
@@ -1164,7 +1164,7 @@ class TestProject(NellTestCase):
                  , "total_time" : "10.0, 5.0"
                  , "PSC_time"   : "10.0, 5.0"
                  , "sem_time"   : "10.0, 5.0"
-                 , "grade"      : "A, B"
+                 , "grade"      : "4.0, 3.0"
                    }
         f2(p_fdata1)
         self.defaultAssertion(p_fdata1, p2)
@@ -1174,7 +1174,7 @@ class TestProject(NellTestCase):
                  , "total_time" : "10.0, 5.0, 1.0"
                  , "PSC_time"   : "10.0, 5.0, 1.0"
                  , "sem_time"   : "10.0, 5.0, 1.0"
-                 , "grade"      : "A, B, C"
+                 , "grade"      : "4.0, 3.0, 2.0"
                    }
         f2(p_fdata)
         self.defaultAssertion(p_fdata, p2)
@@ -1186,7 +1186,7 @@ class TestProject(NellTestCase):
         totals = map(float, p_fdata.get("total_time").split(', '))
         pscs     = map(float, p_fdata.get("PSC_time", "").split(', '))
         max_sems = map(float, p_fdata.get("sem_time", "").split(', '))
-        grades   = map(grade_abc_2_float, p_fdata.get("grade", "").split(', '))
+        grades   = map(float, p_fdata.get("grade", "").split(', '))
         for a in p.allotments.all():
             self.assertTrue(a.total_time in totals)
             self.assertTrue(a.psc_time in pscs)
@@ -1300,20 +1300,6 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.target_set.get().source, ldata["source"])
         self.assertEqual(s.status.enabled, True) # "True" -> True
         self.assertEqual(s.original_id, 0) #ldata["orig_ID"]) -- "0.0" -> Int
-
-    def test_grade_abc_2_float(self):
-        s = Sesshun()
-        values = [('A',4.0),('B',3.0),('C',2.0)]
-        for letter, num in values:
-            fltGrade = grade_abc_2_float(letter)
-            self.assertEqual(num, fltGrade)
-
-    def test_grade_float_2_abc(self):
-        s = Sesshun()
-        values = [('A',4.0),('B',3.0),('C',2.0)]
-        for letter, num in values:
-            letterGrade = grade_float_2_abc(num)
-            self.assertEqual(letter, letterGrade)
 
 # Testing View Resources
 
@@ -1451,7 +1437,7 @@ class TestSessionResource(NellTestCase):
 
     def test_create2(self):
         fdata = {'req_max': ['6.0']
-               , 'grade': ['A']
+               , 'grade': ['4.0']
                , 'req_min': ['2.0']
                , 'sem_time': ['1.0']
                , 'id': ['0']

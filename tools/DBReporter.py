@@ -136,7 +136,6 @@ class DBReporter:
 
         sess_types = Session_Type.objects.all()
         obs_types = Observing_Type.objects.all()
-        grade_types = ['A','B','C']
         num_rcvr_grps = range(4)
         bools = [True, False]
 
@@ -146,8 +145,6 @@ class DBReporter:
         self.printInfo(info, "Sessions By Type:", "Type") 
         info = self.binSesshun(sess, obs_types, "observing_type")
         self.printInfo(info, "Sessions By Obs Type:", "Obs Type") 
-        info = self.binSesshun(sess, grade_types, "letter_grade", True)
-        self.printInfo(info, "Sessions By Grade:", "Grade") 
         info = self.binSesshun(sess, num_rcvr_grps, "num_rcvr_groups", True)
         self.printInfo(info, "Sessions By Num Receiver Groups:", "# Rcvr Grps") 
         info = self.binSesshun(sess, bools, "status.enabled") 
@@ -318,7 +315,7 @@ class DBReporter:
                            , "%5.2f" % s.allotment.total_time
                            , "N/A" # last obs. unknown because no history
                            , self.getCarlSessionComment(s)
-                           , s.letter_grade()
+                           , s.grade()
                            , "%5.2f" % s.allotment.total_time
                            , self.getSessionTypeLetter(s) # use DSS own meaning
                            , "" # no history

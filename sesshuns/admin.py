@@ -150,7 +150,7 @@ class SemesterAdmin(admin.ModelAdmin):
     list_display = ['semester']
 
 class SesshunAdmin(admin.ModelAdmin):
-    list_display = ['name', 'project', 'letter_grade', 'frequency', 'allotment', 'receiver_list', 'session_type', 'observing_type', 'status', 'schedulable']
+    list_display = ['name', 'project', 'grade', 'frequency', 'allotment', 'receiver_list', 'session_type', 'observing_type', 'status', 'schedulable']
     list_filter = ['session_type', 'observing_type', 'frequency']
     search_fields = ['name']
     exclude = ('allotment',)
