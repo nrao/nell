@@ -705,6 +705,13 @@ class Project(models.Model):
                          if s.session_type.type == 'windowed']
                      , key = lambda x : x.start_date)
 
+    def get_windows(self):
+        # TBF no filtering here, ALL windows!
+        return sorted([w for s in self.sesshun_set.all()
+                         for w in s.window_set.all()
+                         if s.session_type.type == 'windowed']
+                     , key = lambda x : x.start_date)
+
     class Meta:
         db_table = "projects"
 
