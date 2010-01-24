@@ -2179,26 +2179,33 @@ class Window(models.Model):
            , self.period)
 
     def end(self):
-        return self.start_date + timedelta(days = self.duration)
+        return self.last_date()
+
+    def last_date(self):
+        "Ex: start = 1/10, duration = 2 days, last_date = 1/11"
+        return self.start_date + timedelta(days = self.duration - 1)
 
     def inWindow(self, date):
-        return (self.start_date <= date) and (date <= self.end())
+        return (self.start_date <= date) and (date <= self.last_date())
 
     def start_datetime(self):
         return TimeAgent.date2datetime(self.start_date)
 
     def end_datetime(self):
-        return TimeAgent.date2datetime(self.end())
+        "We want this to go up to the last second of the last_date"
+        dt = TimeAgent.date2datetime(self.last_date())
+        return dt.replace(hour = 23, minute = 59, second = 59)
 
     def isInWindow(self, period):
         "Does the given period overlap at all in window"
 
         # need to compare date vs. datetime objs
-        winStart = datetime(self.start_date.year
-                          , self.start_date.month
-                          , self.start_date.day)
-        winEnd = winStart + timedelta(days = self.duration)                  
-        return overlaps((winStart, winEnd), (period.start, period.end()))
+        #winStart = datetime(self.start_date.year
+        #                  , self.start_date.month
+        #                  , self.start_date.day)
+        #winEnd = winStart + timedelta(days = self.duration)                  
+        return overlaps((self.start_datetime(), self.end_datetime())
+                      , (period.start, period.end()))
 
     def state(self):
         "A Windows state is a combination of the state's of it's Periods"

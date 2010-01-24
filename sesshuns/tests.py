@@ -221,7 +221,7 @@ class TestWindow(NellTestCase):
         start = datetime(2009, 6, 1)
         startStr = start.strftime("%Y-%m-%d")
         dur   = 7 # days
-        end = start + timedelta(days = dur)
+        end = start + timedelta(days = dur - 1)
         endStr = end.strftime("%Y-%m-%d")
         
         w = Window()
@@ -1556,13 +1556,13 @@ class TestWindowResource(NellTestCase):
     def test_read_one(self):
         response = self.client.get('/windows/%d' % self.w.id)
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue('{"window": {"end": "2009-06-08"' in response.content)
+        self.assertTrue('{"window": {"end": "2009-06-07"' in response.content)
 
     def test_read_filter(self):
         response = self.client.get('/windows'
                                 , {'filterSession' : self.sesshun.name})
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue('{"windows": [{"end": "2009-06-08"' in response.content)
+        self.assertTrue('{"windows": [{"end": "2009-06-07"' in response.content)
 
         response = self.client.get('/windows'
                                 , {'filterSession' : "not_there"})
@@ -1574,7 +1574,7 @@ class TestWindowResource(NellTestCase):
                                 , {'filterStartDate' : '2009-05-25 00:00:00' 
                                  , 'filterDuration' : 30})
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue('{"windows": [{"end": "2009-06-08"' in response.content)
+        self.assertTrue('{"windows": [{"end": "2009-06-07"' in response.content)
 
         response = self.client.get('/windows'
                                 , {'filterStartDate' : '2010-05-25 00:00:00' 
