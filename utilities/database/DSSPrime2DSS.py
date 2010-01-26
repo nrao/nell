@@ -638,7 +638,7 @@ class DSSPrime2DSS(object):
         f.writelines(ls)
         f.close()
 
-    def transfer_only_windows(self):
+    def transfer_only_windows(self, ignore_cmp = True, ignore_before = None):
         """
         This method is for 'back filling' the windows - the case where we've
         already transfered project info, but didn't grab the cadence info; i.e.
@@ -663,9 +663,21 @@ class DSSPrime2DSS(object):
             # get our DSS session
             sesshun = first(Sesshun.objects.filter(original_id = original_id))
             # finally, transfer the windows
-            self.create_windows(sesshun, session_dss_prime_id)
+            if sesshun is not None:
+                self.create_windows(sesshun
+                                  , session_dss_prime_id
+                                  , ignore_cmp
+                                  , ignore_before)
 
-    def create_windows(self, sesshun, session_dss_prime_id):
+    def create_windows(self
+                     , sesshun
+                     , session_dss_prime_id
+                     , ignore_cmp = True
+                     , ignore_before = None):
+        
+        # 1. skip this step if the session is completed (no point!)
+        if ignore_cmp and sesshun.status.complete:
+            return # no point - who cares
 
         rows = self.get_cadence(session_dss_prime_id)
 
@@ -673,8 +685,19 @@ class DSSPrime2DSS(object):
         for row in rows:
             windows = self.cadence2windows(row)
             for w in windows:
-                w.session = sesshun
-                w.save()
+                # 2. don't add windows that end before we care (no point!)
+                if ignore_before is not None:
+                    if w.last_date() < ignore_before: # start of 10A
+                        #w.delete() # no point
+                        pass
+                        # we don't need to delete them because they haven't
+                        # been saved yet!
+                    else:    
+                        w.session = sesshun
+                        w.save()
+                else:
+                    w.session = sesshun
+                    w.save()
                 # NOTE: we can't do this yet, because we don't have 
                 # the periods yet.  That comes later, outside of this class
                 # now we have to match up the correct periods to the windows
