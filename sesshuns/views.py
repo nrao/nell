@@ -142,6 +142,14 @@ def get_options(request, *args, **kws):
                                         ]
                                       , 'ids' : [s.id for s in ss]})
                           , mimetype = "text/plain")
+    elif mode == "windowed_session_handles":
+        ss = Sesshun.objects.filter(session_type__type = "windowed").order_by('name')
+        return HttpResponse(json.dumps({'session handles':
+                                        ["%s (%s)" % (s.name, s.project.pcode)
+                                         for s in ss
+                                        ]
+                                      , 'ids' : [s.id for s in ss]})
+                          , mimetype = "text/plain")
     elif mode == "session_names":
         ss = Sesshun.objects.order_by('name')
         pcode = request.GET.get("pcode", None)
