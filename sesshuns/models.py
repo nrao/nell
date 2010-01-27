@@ -1938,9 +1938,9 @@ class Period(models.Model):
         # TBF: should we do this?
         if self.accounting is not None:
             self.accounting.update_from_post(fdata)
-        
 
     def from_post(self, fdata, tz):
+
         handle = fdata.get("handle", "")
         if handle:
             self.session = self.handle2session(handle)
@@ -2263,11 +2263,28 @@ class Window(models.Model):
               , "start"          : self.start_date.strftime("%Y-%m-%d")
               , "end"            : self.end().strftime("%Y-%m-%d")
               , "duration"       : self.duration
-              , "default_period" : self.default_period.jsondict('UTC') if self.default_period is not None  else None
-              , "period"         : self.period.jsondict('UTC') \
-                  if self.period is not None else None # TBF: tz?
               }
+        # we need to do this so that the window explorer can work with
+        # a 'flat' json dictionary
+        self.add_period_json(js, "default", self.default_period)
+        self.add_period_json(js, "choosen", self.period)
         return js    
+
+    def add_period_json(self, jsondict, type, period):
+        "Adss part of the given period's json to given json dict"
+
+        if period is None:
+            keys = ['date', 'time', 'duration', 'state', 'period']
+            for k in keys:
+                key = "%s_%s" % (type, k)
+                jsondict[key] = None
+        else:
+            pjson = period.jsondict('UTC')
+            jsondict["%s_%s" % (type, "period")] = pjson
+            jsondict["%s_%s" % (type, "date")] = pjson['date']
+            jsondict["%s_%s" % (type, "time")] = pjson['time']
+            jsondict["%s_%s" % (type, "duration")]   = pjson['duration']
+            jsondict["%s_%s" % (type, "state")]      = pjson['state']
 
     def handle2session(self, h):
         n, p = h.rsplit('(', 1)
@@ -2293,9 +2310,6 @@ class Window(models.Model):
         self.from_post(fdata)
 
     def from_post(self, fdata):
-        # TBF: if fdata is empty, we create a window w/ null entries except
-        # for the session & default_period, where we use PK = 1 as defaults
-        # ; this is the approach taken by other classes; is this okay?
 
         # most likely, we'll be specifying sessions for windows in the same
         # manner as we do for periods
@@ -2309,24 +2323,68 @@ class Window(models.Model):
             except:
                 self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
 
-        # TBF: what's the plan?
-        # but we don't have good handles for periods, so just use ids
-        dp_id = fdata.get("default_period", None)
-        # aren't allowed none for default period - grab something!
-        if dp_id is None:
-            dp_id = Period.objects.all().order_by("id")[0].id
-        self.default_period = first(Period.objects.filter(id = dp_id))
-        p_id = fdata.get("period_id", None)
-        self.period = first(Period.objects.filter(id = p_id))
-
          # get the date
         date = fdata.get("start", datetime.utcnow().strftime("%Y-%m-%d"))
         self.start_date = datetime.strptime(date, "%Y-%m-%d").date()
 
         # TBF: why is this going back and forth as a float?
         self.duration = int(float(fdata.get("duration", "1.0")))
+
+        # we are working with a 'flat' dictionary that has only a few
+        # of the specified fields for it's two periods.
+        self.period_from_post(fdata, "default", self.session)
+        self.period_from_post(fdata, "choosen", self.session)
        
         self.save()
+
+    def period_from_post(self, fdata, type, sesshun):
+        "Update or create a period for a window based on post data."
+
+        try:
+            dur = float(fdata.get("%s_%s" % (type, "duration"), None))
+            duration = TimeAgent.rndHr2Qtr(dur)
+            date = fdata.get("%s_%s" % (type, "date"), None)
+            time = fdata.get("%s_%s" % (type, "time"), None)
+            now           = dt2str(TimeAgent.quarter(datetime.utcnow()))
+            if date is None:
+                start = now
+            else:
+                start = TimeAgent.quarter(strStr2dt(date, time + ':00'))
+        except:
+            duration = None
+            start = None
+
+        # do we have a period of this type yet?
+        if type == "default":
+            p = self.default_period
+        elif type == "choosen":
+            p = self.period
+        else:
+            raise "unknown type"
+
+        if p is None:
+            # try to create it from given info
+            if start is not None and duration is not None \
+                and sesshun is not None:
+               # create it! reuse the period code!
+               p = Period()
+               pfdata = dict(date = date
+                           , time = time
+                           , duration = duration
+                           , handle = self.toHandle())
+               p.init_from_post(pfdata, 'UTC')
+               if type == "default":
+                  self.default_period = p
+                  self.default_period.save()
+
+               elif type == "choosen":
+                  self.period = p
+                  self.period.save()
+        else:
+            # update it
+            p.start = start
+            p.duration = duration
+            p.save()
 
     def eventjson(self, id):
         end = self.start_date + timedelta(days = self.duration)

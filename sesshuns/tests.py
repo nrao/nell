@@ -199,21 +199,26 @@ class TestWindow(NellTestCase):
                                    , duration = 5.0
                                    , state = pending
                                    )
-        self.default_period.save()                           
+        self.default_period.save()    
+        pjson = self.default_period.jsondict('UTC')
         self.fdata = {"session":  1
                     , "start":    "2009-06-01"
                     , "duration": 7
-                    , "default_period" : self.default_period.id
+                    #, "default_period" : self.default_period.id
+                    , "default_date" : pjson['date'] 
+                    , "default_time" : pjson['time'] 
+                    , "default_duration" : pjson['duration'] 
+                    , "default_state" : pjson['state'] 
                     }
 
     def test_update_from_post(self):
         w = Window()
         w.init_from_post(self.fdata)
-        
+       
         self.assertEqual(w.session, self.sesshun)
         self.assertEqual(w.start_date, date(2009, 6, 1))
         self.assertEqual(w.duration, self.fdata["duration"])
-        self.assertEqual(w.default_period.id, self.fdata["default_period"])
+        self.assertEqual(w.default_period.start, self.default_period.start)
         self.assertEqual(w.period, None)
 
     def test_jsondict(self):
@@ -240,7 +245,7 @@ class TestWindow(NellTestCase):
         self.assertEqual(jd["session"], self.sesshun.jsondict())
         self.assertEqual(jd["default_period"]
                        , self.default_period.jsondict('UTC'))
-        self.assertEqual(jd["period"], None)
+        self.assertEqual(jd["choosen_period"], None)
 
         w.delete()
 
@@ -1536,10 +1541,15 @@ class TestWindowResource(NellTestCase):
                                    , state = pending
                                    )
         self.default_period.save()                           
+        pjson = self.default_period.jsondict('UTC')
         self.fdata = {"session":  self.sesshun.id
                     , "start":    "2009-06-01"
                     , "duration": 7
-                    , "default_period" : self.default_period.id
+                    #, "default_period" : self.default_period.id
+                    , "default_date" : pjson['date'] 
+                    , "default_time" : pjson['time'] 
+                    , "default_duration" : pjson['duration'] 
+                    , "default_state" : pjson['state'] 
                     }
         self.w = Window()
         self.w.init_from_post(self.fdata)
@@ -1556,13 +1566,14 @@ class TestWindowResource(NellTestCase):
     def test_read_one(self):
         response = self.client.get('/windows/%d' % self.w.id)
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue('{"window": {"end": "2009-06-07"' in response.content)
+
+        self.assertTrue('"end": "2009-06-07"' in response.content)
 
     def test_read_filter(self):
         response = self.client.get('/windows'
                                 , {'filterSession' : self.sesshun.name})
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue('{"windows": [{"end": "2009-06-07"' in response.content)
+        self.assertTrue('"end": "2009-06-07"' in response.content)
 
         response = self.client.get('/windows'
                                 , {'filterSession' : "not_there"})
@@ -1574,7 +1585,7 @@ class TestWindowResource(NellTestCase):
                                 , {'filterStartDate' : '2009-05-25' # 00:00:00' 
                                  , 'filterDuration' : 30})
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue('{"windows": [{"end": "2009-06-07"' in response.content)
+        self.assertTrue('"end": "2009-06-07"' in response.content)
 
         response = self.client.get('/windows'
                                 , {'filterStartDate' : '2010-05-25' # 00:00:00' 
