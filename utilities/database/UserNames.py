@@ -14,19 +14,25 @@ class UserNames(object):
     issues related to usernames and IDs.
     """
 
+    def __init__(self, output_file = None):
+        if output_file == None:
+            self.out = sys.stdout
+        else:
+            self.out = output_file
+            
     def findMissingUsers(self, files = None):
         "Interactive method that uses XML dump to find missing users."
 
         users = User.objects.filter(pst_id = None).all()
-        print "num missing users to find: ", len(users) 
-        print ""
+        print >> self.out, "num missing users to find: ", len(users) 
+        print >> self.out, ""
         
         infos = self.loadUserInfoFromDump(files)
-        print "loaded user xml dump"
+        print >> self.out, "loaded user xml dump"
 
         for user in users:
-            print "looking for user: ", user
-            print ""
+            print >> self.out, "looking for user: ", user
+            print >> self.out, ""
             self.findUser(user.last_name, infos)
             id = raw_input("What id to use: ")
             username = raw_input("What username to use: ")
@@ -37,7 +43,7 @@ class UserNames(object):
                 user.pst_id = None
                 user.username = None
             user.save()
-            print ""
+            print >> self.out, ""
 
 
             
@@ -62,10 +68,10 @@ class UserNames(object):
                last       = user['name']['first-name']
                username = user['account-info']['account-name']
                id       = user['id']
-               print "Found user of name: %s %s" % (first_name, last)
-               print "Emails: ", userInfo['emails']
-               print "username: %s, ID: %s" % (username, id)
-               print ""
+               print >> self.out, "Found user of name: %s %s" % (first_name, last)
+               print >> self.out, "Emails: ", userInfo['emails']
+               print >> self.out, "username: %s, ID: %s" % (username, id)
+               print >> self.out, ""
                
 
     def confirmUserInfo(self):
@@ -99,7 +105,7 @@ class UserNames(object):
                 #if pstId != u.pst_id or pstUsername != u.username or \
                 if pstFirstName != u.first_name or \
                    pstLastName != u.last_name:
-                    print "PST: %s %s vs. DSS: %s %s" % (pstFirstName
+                    print >> self.out, "PST: %s %s vs. DSS: %s %s" % (pstFirstName
                                                        , pstLastName
                                                        , u.first_name
                                                        , u.last_name)
@@ -109,21 +115,21 @@ class UserNames(object):
             else:
                 noPstId.append(u)
 
-        print "badIds: "
+        print >> self.out, "badIds: "
         for b in badIds:
-            print b
+            print >> self.out, b
 
-        print "badUsernames: "
+        print >> self.out, "badUsernames: "
         for b in badUsernames:
-            print b
+            print >> self.out, b
 
         # report
-        print "len(users): ", len(users)
-        print "len(noPstId): ", len(noPstId)
-        print "len(matched): ", len(matched)
-        print "len(mismatched): ", len(mismatched)
-        print "len(badIds): ", len(badIds)
-        print "len(badUsernames): ", len(badUsernames)
+        print >> self.out, "len(users): ", len(users)
+        print >> self.out, "len(noPstId): ", len(noPstId)
+        print >> self.out, "len(matched): ", len(matched)
+        print >> self.out, "len(mismatched): ", len(mismatched)
+        print >> self.out, "len(badIds): ", len(badIds)
+        print >> self.out, "len(badUsernames): ", len(badUsernames)
 
     def transferUserNamesByOriginalID(self):
         """
@@ -161,7 +167,7 @@ class UserNames(object):
             ourUser = first(User.objects.filter(original_id=original_id).all())
             # does this make sense?
             if ourUser is None:
-                print "missing user: ", line
+                print >> self.out, "missing user: ", line
                 ourUser = User(
                     original_id = original_id
                   , pst_id      = pst_id
@@ -177,7 +183,7 @@ class UserNames(object):
                 continue
             elif first_name != ourUser.first_name or \
                last_name != ourUser.last_name:
-                print "mismatch: ", ourUser, first_name, last_name
+                print >> self.out, "mismatch: ", ourUser, first_name, last_name
                 mismatched.append((ourUser, first_name, last_name))   
                 ourUser.first_name = first_name
                 ourUser.last_name = last_name
@@ -187,20 +193,20 @@ class UserNames(object):
             ourUser.pst_id   = pst_id
             ourUser.save()
     
-        print "mismatched: ", mismatched
-        print "missing: ", missing
-        print "len(mismatched): ", len(mismatched)
-        print "len(matched): ", len(matched)
-        print "len(missing): ", len(missing)
-        print "len(ourUsers): ", len(User.objects.all())
+        print >> self.out, "mismatched: ", mismatched
+        print >> self.out, "missing: ", missing
+        print >> self.out, "len(mismatched): ", len(mismatched)
+        print >> self.out, "len(matched): ", len(matched)
+        print >> self.out, "len(missing): ", len(missing)
+        print >> self.out, "len(ourUsers): ", len(User.objects.all())
 
     def getUserNamesFromIDs(self):
 
         # get rid of this banner once other print statements are gone
-        print "********** Retrieving usernames using PST IDs. *********"
+        print >> self.out, "********** Retrieving usernames using PST IDs. *********"
 
         noUsernames = User.objects.filter(username = None).all()
-        print "num w/ no username  now : ", len(noUsernames)
+        print >> self.out, "num w/ no username  now : ", len(noUsernames)
 
         # get all users
         users = User.objects.all()
@@ -215,7 +221,7 @@ class UserNames(object):
             id = user.pst_id
 
             if id is None:
-                print "skipping user, no pst_id: ", user
+                print >> self.out, "skipping user, no pst_id: ", user
                 missing.append(user)
                 continue
 
@@ -227,7 +233,7 @@ class UserNames(object):
             #username = info['account-info']['account-name']
             #=======
             info = user.getStaticContactInfo(use_cache = False) #UserInfo().getStaticContactInfoByID(id)
-            print id, info
+            print >> self.out, id, info
             username = info['username'] #info['account-info']['account-name']getStaticContactInfo
 
             if user.username is not None:
@@ -237,22 +243,22 @@ class UserNames(object):
                     agree.append(user)
                 else:
                     usernameStr = username if username is not None else ""
-                    print "user.username != username! " + user.username + "!=" + usernameStr
+                    print >> self.out, "user.username != username! " + user.username + "!=" + usernameStr
             else:
                 saved.append(user)
                 #print "saving username: ", user, username
                 user.username = username
                 user.save()
         
-        print "saved: ", saved
-        print "missing: ", missing
+        print >> self.out, "saved: ", saved
+        print >> self.out, "missing: ", missing
 
-        print "num agreed: ", len(agree)
-        print "num saved: ", len(saved)
-        print "num no pst_id: ", len(missing)
+        print >> self.out, "num agreed: ", len(agree)
+        print >> self.out, "num saved: ", len(saved)
+        print >> self.out, "num no pst_id: ", len(missing)
 
         noUsernames = User.objects.filter(username = None).all()
-        print "num w/ no username still : ", len(noUsernames)
+        print >> self.out, "num w/ no username still : ", len(noUsernames)
 
     def getUserNames(self, username, password):
         "DEPRECATED: but may be useful for testing query services"
@@ -275,18 +281,18 @@ class UserNames(object):
         #users =  User.objects.all()
         for user in users:
             if user.pst_id is not None:
-                print "users has pst_id: ", user
+                print >> self.out, "users has pst_id: ", user
                 continue
 
-            print user.last_name
+            print >> self.out, user.last_name
 
             if "'" in user.last_name:
                 skipping.append(user)
-                print "SKIP: ", user
+                print >> self.out, "SKIP: ", user
                 continue
 
             el = udb.get_data(key, user.last_name)
-            print ET.tostring(el, pretty_print=True)
+            print >> self.out, ET.tostring(el, pretty_print=True)
 
             # name
             first_name  = el[0][1].text
@@ -299,9 +305,9 @@ class UserNames(object):
 
             # save it off!
             #user.username = accountName
-            print accountName
+            print >> self.out, accountName
         
-        print "skipped: ", skipping
+        print >> self.out, "skipped: ", skipping
 
     def getUsersUniqueByLastName(self):
         
@@ -316,8 +322,8 @@ class UserNames(object):
             else:
                 notUniques.append(user)
         
-        print "Users that share the same last name: "
-        print notUniques
+        print >> self.out, "Users that share the same last name: "
+        print >> self.out, notUniques
 
         return uniques
 
@@ -370,11 +376,11 @@ class UserNames(object):
                         , role        = first(Role.objects.filter(role = "Observer"))
                  )
                 u.save()   
-                print "Added User: ", u
+                print >> self.out, "Added User: ", u
             else:
-                print "User already in DB?: "
+                print >> self.out, "User already in DB?: "
                 for u in users:
-                    print u
+                    print >> self.out, u
             
     def getUserNamesFromProjects(self, username, password):
         """
@@ -383,7 +389,7 @@ class UserNames(object):
         """
 
         # get rid of this banner once other print statements are gone
-        print "********** Retrieving usernames from project authors. *********"
+        print >> self.out, "********** Retrieving usernames from project authors. *********"
 
         # get all projects
         ps = Project.objects.all()
@@ -418,7 +424,7 @@ class UserNames(object):
             try:
                 el = udb.get_data(key, id)
             except:
-                print "EXCEPTION w/ id: ", id
+                print >> self.out, "EXCEPTION w/ id: ", id
                 failures.append(p)
                 continue
             #print ET.tostring(el, pretty_print=True)
@@ -467,13 +473,13 @@ class UserNames(object):
                     if u.pst_id is not None:
                         if u.pst_id != unique_id:
                             badIds.append((u, u.pst_id, unique_id, id))
-                            print "BAD ID!!!!!!!!!!!!!!!!!!!"
-                            print u.pst_id, unique_id, id
+                            print >> self.out, "BAD ID!!!!!!!!!!!!!!!!!!!"
+                            print >> self.out, u.pst_id, unique_id, id
                             continue
                     # save what we've learned to the DB!!!        
                     if u.pst_id is None:
-                        print "Saving to: ", u
-                        print accnt_name, unique_id
+                        print >> self.out, "Saving to: ", u
+                        print >> self.out, accnt_name, unique_id
                         u.username = accnt_name
                         u.pst_id = unique_id
                         u.save()
@@ -490,17 +496,17 @@ class UserNames(object):
         # who has been left out?
         
         # print list of problems    
-        print "USERS found: "
+        print >> self.out, "USERS found: "
         for user in usersFound:
-            print user
+            print >> self.out, user
 
-        print "Users Absent: "
+        print >> self.out, "Users Absent: "
         for user in usersAbsent:
-            print user
+            print >> self.out, user
 
-        print "Projects NOT in PST:"
+        print >> self.out, "Projects NOT in PST:"
         for p in notInPST:
-            print p
+            print >> self.out, p
 
         uniqueUsers = []
         redundantUsers = []
@@ -510,23 +516,23 @@ class UserNames(object):
             else:
                 redundantUsers.append((user, id, username))
 
-        print "redundant users: "
+        print >> self.out, "redundant users: "
         for r in redundantUsers:
-            print r
+            print >> self.out, r
 
-        print "bad ids users: "
+        print >> self.out, "bad ids users: "
         for r in badIds:
-            print r
+            print >> self.out, r
 
         # print summary
-        print "total # of projects: %d" % len(ps)
-        print "total # of projects that were NOT in PST: %d" % len(notInPST)
-        print "total # of project that caused exceptions: %d" % len(failures)
-        print ""
-        print "total # of users found: %d" % len(usersFound)
-        print "total # of users not in our DB: %d" % len(usersAbsent)
-        print "total # of users in our DB that share first & last name: %d" % len(usersMultiple)
-        print "total # of bad Ids: %d" % len(badIds)
+        print >> self.out, "total # of projects: %d" % len(ps)
+        print >> self.out, "total # of projects that were NOT in PST: %d" % len(notInPST)
+        print >> self.out, "total # of project that caused exceptions: %d" % len(failures)
+        print >> self.out, ""
+        print >> self.out, "total # of users found: %d" % len(usersFound)
+        print >> self.out, "total # of users not in our DB: %d" % len(usersAbsent)
+        print >> self.out, "total # of users in our DB that share first & last name: %d" % len(usersMultiple)
+        print >> self.out, "total # of bad Ids: %d" % len(badIds)
 
     def findTag(self, node, tag):
         value = None
@@ -604,7 +610,7 @@ class UserNames(object):
         victim = first(User.objects.filter(last_name = userLastName).all())
         victim.username = username
         victim.save()
-        print "User %s now has username: %s" % (victim, username)
+        print >> self.out, "User %s now has username: %s" % (victim, username)
 
     def save_project_observers(self):
 
