@@ -2258,15 +2258,33 @@ class Window(models.Model):
 
     def jsondict(self):
         js = {  "id"             : self.id
+              , "handle"         : self.toHandle()
               , "session"        : self.session.jsondict()
               , "start"          : self.start_date.strftime("%Y-%m-%d")
               , "end"            : self.end().strftime("%Y-%m-%d")
               , "duration"       : self.duration
-              , "default_period" : self.default_period.jsondict('UTC')
+              , "default_period" : self.default_period.jsondict('UTC') if self.default_period is not None  else None
               , "period"         : self.period.jsondict('UTC') \
                   if self.period is not None else None # TBF: tz?
               }
-        return js              
+        return js    
+
+    def handle2session(self, h):
+        n, p = h.rsplit('(', 1)
+        name = n.strip()
+        pcode, _ = p.split(')', 1)
+        return Sesshun.objects.filter(project__pcode__exact=pcode).get(name=name)
+
+    def toHandle(self):
+        if self.session is None:
+            return ""
+        if self.session.original_id is None:
+            original_id = ""
+        else:
+            original_id = str(self.session.original_id)
+        return "%s (%s) %s" % (self.session.name
+                             , self.session.project.pcode
+                             , original_id)
 
     def init_from_post(self, fdata):
         self.from_post(fdata)
@@ -2275,7 +2293,6 @@ class Window(models.Model):
         self.from_post(fdata)
 
     def from_post(self, fdata):
-
         # TBF: if fdata is empty, we create a window w/ null entries except
         # for the session & default_period, where we use PK = 1 as defaults
         # ; this is the approach taken by other classes; is this okay?
@@ -2292,6 +2309,7 @@ class Window(models.Model):
             except:
                 self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
 
+        # TBF: what's the plan?
         # but we don't have good handles for periods, so just use ids
         dp_id = fdata.get("default_period", None)
         # aren't allowed none for default period - grab something!
@@ -2301,10 +2319,13 @@ class Window(models.Model):
         p_id = fdata.get("period_id", None)
         self.period = first(Period.objects.filter(id = p_id))
 
-        date = fdata.get("date", datetime.utcnow().strftime("%Y-%m-%d"))
-        self.start_date = datetime.strptime(date, "%Y-%m-%d")
-        self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0")))
-        
+         # get the date
+        date = fdata.get("start", datetime.utcnow().strftime("%Y-%m-%d"))
+        self.start_date = datetime.strptime(date, "%Y-%m-%d").date()
+
+        # TBF: why is this going back and forth as a float?
+        self.duration = int(float(fdata.get("duration", "1.0")))
+       
         self.save()
 
     def eventjson(self, id):

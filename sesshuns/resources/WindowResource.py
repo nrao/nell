@@ -15,6 +15,7 @@ class WindowResource(NellResource):
         return super(WindowResource, self).create(request, *args, **kws)
     
     def read(self, request, *args, **kws):
+
         # one or many?
         if len(args) == 0:
             # many, use filters
@@ -28,7 +29,7 @@ class WindowResource(NellResource):
             filterStart = request.GET.get("filterStartDate", None)
             filterDur   = request.GET.get("filterDuration", None)
             if filterStart is not None and filterDur is not None:
-                start = str2dt(filterStart)
+                start = datetime.strptime(filterStart, "%Y-%m-%d") #str2dt(filterStart)
                 days = int(filterDur)
                 end = start + timedelta(days = days)
                 # TBF: we really want all the overlapping windows w/ this 

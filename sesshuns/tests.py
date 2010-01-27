@@ -201,7 +201,7 @@ class TestWindow(NellTestCase):
                                    )
         self.default_period.save()                           
         self.fdata = {"session":  1
-                    , "date":    "2009-6-1"
+                    , "start":    "2009-06-01"
                     , "duration": 7
                     , "default_period" : self.default_period.id
                     }
@@ -211,7 +211,7 @@ class TestWindow(NellTestCase):
         w.init_from_post(self.fdata)
         
         self.assertEqual(w.session, self.sesshun)
-        self.assertEqual(w.start_date, datetime(2009, 6, 1))
+        self.assertEqual(w.start_date, date(2009, 6, 1))
         self.assertEqual(w.duration, self.fdata["duration"])
         self.assertEqual(w.default_period.id, self.fdata["default_period"])
         self.assertEqual(w.period, None)
@@ -1537,7 +1537,7 @@ class TestWindowResource(NellTestCase):
                                    )
         self.default_period.save()                           
         self.fdata = {"session":  self.sesshun.id
-                    , "date":    "2009-6-1"
+                    , "start":    "2009-06-01"
                     , "duration": 7
                     , "default_period" : self.default_period.id
                     }
@@ -1571,13 +1571,13 @@ class TestWindowResource(NellTestCase):
 
         #YYYY-MM-DD hh:mm:ss
         response = self.client.get('/windows'
-                                , {'filterStartDate' : '2009-05-25 00:00:00' 
+                                , {'filterStartDate' : '2009-05-25' # 00:00:00' 
                                  , 'filterDuration' : 30})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('{"windows": [{"end": "2009-06-07"' in response.content)
 
         response = self.client.get('/windows'
-                                , {'filterStartDate' : '2010-05-25 00:00:00' 
+                                , {'filterStartDate' : '2010-05-25' # 00:00:00' 
                                  , 'filterDuration' : 30})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('{"windows": []}' in response.content)
