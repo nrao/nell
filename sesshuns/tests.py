@@ -204,7 +204,6 @@ class TestWindow(NellTestCase):
         self.fdata = {"session":  1
                     , "start":    "2009-06-01"
                     , "duration": 7
-                    #, "default_period" : self.default_period.id
                     , "default_date" : pjson['date'] 
                     , "default_time" : pjson['time'] 
                     , "default_duration" : pjson['duration'] 
@@ -243,8 +242,6 @@ class TestWindow(NellTestCase):
         self.assertEqual(jd["start"], startStr)
         self.assertEqual(jd["end"], endStr)
         self.assertEqual(jd["session"], self.sesshun.jsondict())
-        self.assertEqual(jd["default_period"]
-                       , self.default_period.jsondict('UTC'))
         self.assertEqual(jd["choosen_period"], None)
 
         w.delete()

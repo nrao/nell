@@ -2001,6 +2001,7 @@ class Period(models.Model):
 
     def jsondict(self, tz):
         start = self.start if tz == 'UTC' else TimeAgent.utc2est(self.start)
+        w = self.get_window()
         js =   {"id"           : self.id
               , "session"      : self.session.jsondict()
               , "handle"       : self.toHandle()
@@ -2013,6 +2014,9 @@ class Period(models.Model):
               , "forecast"     : dt2str(self.forecast)
               , "backup"       : self.backup
               , "state"        : self.state.abbreviation
+              , "windowed"     : True if w is not None else False
+              , "wstart"       : d2str(w.start_date) if w is not None else None
+              , "wend"         : d2str(w.last_date()) if w is not None else None
                 }
         # include the accounting but keep the dict flat
         if self.accounting is not None:
@@ -2092,13 +2096,16 @@ class Period(models.Model):
         "A backdoor method for really deleting!"
         models.Model.delete(self)
 
-    def validWindows(self):
+    def is_windowed(self):
+        return self.session.session_type.type == "windowed"
+
+    def has_valid_windows(self):
         """
         If a period belongs to a Windowed Session, then it should be assigned
         to a Window as either a 'default_period' or a 'period'
         """
         if self.session.session_type.type != "windowed":
-            return True # who cares?
+            return False # who cares?
 
         default_windows = self.default_window.all()
         windows = self.window.all()
@@ -2112,6 +2119,23 @@ class Period(models.Model):
             return False
         
         return True
+
+    def get_default_window(self):
+        "Get the window this period is a default period for."
+        if self.is_windowed() and self.has_valid_windows():
+            return first(self.default_window.all())
+        else:
+            return None
+
+    def get_window(self):
+        "Get the window this period is either default or choosen period for."
+        if self.is_windowed() and self.has_valid_windows():
+            if len(self.default_window.all()) == 1:
+                return first(self.default_window.all())
+            else:
+                return first(self.window.all())
+        else:
+            return None
 
     @staticmethod
     def get_periods(start, duration, ignore_deleted = True):
@@ -2280,7 +2304,6 @@ class Window(models.Model):
                 jsondict[key] = None
         else:
             pjson = period.jsondict('UTC')
-            jsondict["%s_%s" % (type, "period")] = pjson
             jsondict["%s_%s" % (type, "date")] = pjson['date']
             jsondict["%s_%s" % (type, "time")] = pjson['time']
             jsondict["%s_%s" % (type, "duration")]   = pjson['duration']

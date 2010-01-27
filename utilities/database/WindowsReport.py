@@ -71,7 +71,7 @@ class WindowsReport():
             self.add("\nSession: %s, # windows: %d\n" % (ws.name, numWins))
             # TBF: any bad periods? 
             ps = ws.period_set.order_by("start")
-            badPs = [p for p in ps if not p.validWindows()]
+            badPs = [p for p in ps if not p.has_valid_windows()]
             if len(badPs) != 0:
                 self.add("%d of %d periods not assigned to windows properly.\n" \
                     % (len(badPs), len(ps)))
