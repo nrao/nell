@@ -60,15 +60,31 @@ class WindowsReport():
     def report(self):
         wins = Window.objects.all().order_by("start_date")
         wss  = Sesshun.objects.filter(session_type__type = "windowed").order_by("name")
+        fss  = Sesshun.objects.filter(session_type__type = "fixed").order_by("name")
+        oss  = Sesshun.objects.filter(session_type__type = "open").order_by("name")
+        ss  = Sesshun.objects.order_by("name")
+
+        # any type of session could have windows
+        ss_wins = [s for s in ss if len(s.window_set.all()) != 0]
+
+        # which of these *are not* windowed?
+        ss_wins_not_windowed = [s for s in ss_wins \
+            if s.session_type.type != "windowed"]
+        
         badWins = [w for w in wins if not self.isInitialized(w)]
 
         self.add("Number of Windowed Sessions: %d\n" % len(wss)) 
+        self.add("Number of Fixed Sessions: %d\n" % len(fss)) 
+        self.add("Number of Open Sessions: %d\n" % len(oss)) 
+        self.add("Number of Sessions w/ Windows: %d\n" % len(ss_wins)) 
+        self.add("Number of Sessions w/ Windows that aren not windowed (BAD): %d\n" % len(ss_wins_not_windowed)) 
         self.add("Number of Windows: %d\n" % len(wins)) 
         self.add("Number of uninitialized Windows: %d\n" % len(badWins)) 
 
-        for ws in wss:
+        for ws in ss_wins:
             numWins = len(ws.window_set.all()) 
-            self.add("\nSession: %s, # windows: %d\n" % (ws.name, numWins))
+            self.add("\nSession: %s, type: %s, # windows: %d\n" % \
+                (ws.name, ws.session_type.type, numWins))
             # TBF: any bad periods? 
             ps = ws.period_set.order_by("start")
             badPs = [p for p in ps if not p.has_valid_windows()]
