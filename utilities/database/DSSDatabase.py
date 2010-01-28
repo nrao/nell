@@ -27,7 +27,7 @@ class DSSDatabase(object):
         self.schedtime = Schedtime2DSS(database = database)
 
         # responsible for filling in info on users using the PST
-        self.un = UserNames()
+        self.un = UserNames(sys.stderr)
 
     def create(self, trimester):
         "Method for creating a new DSS database "
@@ -46,9 +46,10 @@ class DSSDatabase(object):
     def append(self, trimester):
         "Method for appending new trimester data to existing DSS database"
 
-        print "Running append(%s)" % trimester
         self.dss_prime.transfer_only_new()
+        print "Getting user information.  This may take several minutes..."
         self.get_user_info()
+        print "Transferring fixed periods..."
         self.schedtime.transfer_fixed_periods(trimester)
         self.schedtime.print_report(trimester)
 
