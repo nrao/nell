@@ -192,6 +192,8 @@ class TestWindow(NellTestCase):
     def setUp(self):
         super(TestWindow, self).setUp()
         self.sesshun = create_sesshun()
+        self.sesshun.session_type = Session_Type.get_type("windowed")
+        self.sesshun.save()
         dt = datetime(2009, 6, 1, 12, 15)
         pending = first(Period_State.objects.filter(abbreviation = "P"))
         self.default_period = Period(session = self.sesshun
@@ -246,6 +248,38 @@ class TestWindow(NellTestCase):
 
         w.delete()
 
+#    def test_reconcile(self):
+#
+#        deleted   = Period_State.get_state("D")
+#        pending   = Period_State.get_state("P")
+#        scheduled = Period_State.get_state("S")
+#
+#        start = datetime(2009, 6, 1)
+#        dur   = 7 # days
+#        
+#        w = Window()
+#        w.start_date = start
+#        w.duration = dur
+#        w.session = self.sesshun
+#        w.default_period = self.default_period
+#        w.save()
+#        w_id = w.id
+#
+#        # test
+#        self.assertEquals(w.default_period.state, pending) 
+#
+#        w.reconcile()
+#
+#        # test
+#        # get it fresh from the DB
+#        w = first(Window.objects.filter(id = w_id)) 
+#        print w
+#        print w.default_period, w.default_period.state
+#        self.assertEquals(w.default_period.state, scheduled) 
+#        self.assertEquals(w.period.state, scheduled) 
+#        self.assertEquals(w.period.id, w.default_period.id) 
+
+
 class TestPeriod(NellTestCase):
 
     def setUp(self):
@@ -289,6 +323,83 @@ class TestPeriod(NellTestCase):
         self.assertEqual(jd["state"], "P")
 
         p.delete()
+
+    def test_windows(self):
+
+        # create a window w/ a period
+        original_type = self.sesshun.session_type
+        self.sesshun.session_type = Session_Type.get_type("windowed")
+
+        start = datetime(2009, 6, 1, 12, 15)
+        dur   = 180
+
+        p = Period()
+        p.start = start
+        p.duration = dur
+        p.session = self.sesshun
+        p.state = Period_State.get_state('P')
+        p.accounting = Period_Accounting(scheduled = 0.0)
+        p.accounting.save()
+        p.save()
+        p_id = p.id
+
+        wstart = (start - timedelta(days = 7)).date()
+        w = Window(start_date = wstart
+                 , duration = 10 # days
+                 , session = self.sesshun
+                 , default_period = p)
+        w.save()         
+
+        # and a period w/ out a window         
+        p2 = Period()
+        p2.start = start
+        p2.duration = dur
+        p2.session = self.sesshun
+        p2.state = Period_State.get_state('P')
+        pa2 = Period_Accounting(scheduled = 0.0)
+        pa2.save()
+        p2.accounting = pa2
+        p2.save()
+        p2_id = p2.id
+
+        # test
+        self.assertEquals(True,  p.is_windowed())
+        self.assertEquals(True,  p.has_valid_windows())
+        self.assertEquals(True,  p2.is_windowed())
+        self.assertEquals(False, p2.has_valid_windows())
+        self.assertEquals(w,     p.get_default_window())
+        self.assertEquals(w,     p.get_window())
+        self.assertEquals(True,  p.is_windowed_default())
+
+        # now assign this second period as the 'choosen' period for the win.
+        w.period = p2
+        w.save()
+
+        # test
+        self.assertEquals(True,  p2.is_windowed())
+        self.assertEquals(True,  p2.has_valid_windows())
+        self.assertEquals(None,  p2.get_default_window())
+        self.assertEquals(w,     p2.get_window())
+        self.assertEquals(False, p2.is_windowed_default())
+
+        # now publish!
+        #p.publish()
+       
+
+        # test
+        #deleted = Period_State.get_state("D")
+        #scheduled = Period_State.get_state("S")
+        # get these periods fresh from db again
+        #p = first(Period.objects.filter(id = p_id))
+        #p2 = first(Period.objects.filter(id = p2_id))
+        #self.assertEquals(deleted, p.state)
+        #self.assertEquals(scheduled, p2.state)
+
+        # cleanup
+        self.sesshun.session_type = original_type 
+        w.delete()
+        p.delete()
+        p2.save()
 
     def test_get_periods(self):
 

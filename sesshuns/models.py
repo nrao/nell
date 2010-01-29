@@ -886,6 +886,10 @@ class Session_Type(models.Model):
     class Meta:
         db_table = "session_types"
 
+    @staticmethod
+    def get_type(type):
+        return first(Session_Type.objects.filter(type = type))
+
 class Observing_Type(models.Model):
     type = models.CharField(max_length = 64)
 
@@ -2077,18 +2081,41 @@ class Period(models.Model):
         else:
             return True
 
+    def move_to_deleted_state(self):
+        "all in the name"
+        self.state = Period_State.get_state("D")
+        self.save()
+
+    def move_to_scheduled_state(self):
+        "worker for publish method: pending -> scheduled, and init time accnt."
+        assert self.state.abbreviation == "P"
+        self.state = first(Period_State.objects.filter(abbreviation = 'S'))
+        self.accounting.scheduled = self.duration
+        self.accounting.save()
+        self.save()
+
     def publish(self):
         "pending state -> scheduled state: and init the time accounting"
         if self.state.abbreviation == 'P':
-            self.state = first(Period_State.objects.filter(abbreviation = 'S'))
-            self.accounting.scheduled = self.duration
-            self.accounting.save()
+            self.move_to_scheduled_state()
+        # TBF    
+        #    if not self.is_windowed():
+        #        self.move_to_scheduled_state()
+        #    else:
+                # must reconcile the window
+                # but at this point, you need to raise an error if 
+                # periods/windows aren't setup properly
+        #        if not self.has_valid_windows():
+        #            raise "Period %s cant be published: invalid windows" % self
+        #        else:
+        #            # now leave the actual work to the window
+        #            w = self.get_window()
+        #            w.reconcile()
 
     def delete(self):
         "Keep non-pending periods from being deleted."
         if self.state.abbreviation != 'P':
-            self.state = first(Period_State.objects.filter(abbreviation = 'D'))
-            self.save()
+            self.move_to_deleted_state()
         else:
             models.Model.delete(self)  # pending can really get removed!
 
@@ -2136,6 +2163,15 @@ class Period(models.Model):
                 return first(self.window.all())
         else:
             return None
+
+    def is_windowed_default(self):
+        "Is this period the default period for a window? If not, is the choosen"
+        # assume error checking done before hand
+        # self.is_windowed() and self.has_valid_windows()
+        if len(self.default_window.all()) == 1:
+            return True
+        else:
+            return False
 
     @staticmethod
     def get_periods(start, duration, ignore_deleted = True):
@@ -2274,19 +2310,37 @@ class Window(models.Model):
         or transitory state, to a final scheduled state.
         Move the default period to deleted, and publish the scheduled period.
         """
+        
+        # TBF
+        return
 
         deleted   = Period_State.get_state("D")
         pending   = Period_State.get_state("P")
         scheduled = Period_State.get_state("S")
         
         # raise an error?
-        if not self.default_period.isPending() or \
-               self.period is None or \
-           not  self.period.isPending():
-            return
+        assert self.default_period is not None
+        #if not self.default_period.isPending() or \
+        #       self.period is None or \
+        #   not  self.period.isPending():
+        #    return
 
-        self.default_period.delete()
-        self.period.publish()
+        if self.period is not None:
+            # use this period as the scheduled one!
+            # don't use the high level Period method's publish and delete 
+            self.default_period.move_to_deleted_state()
+            self.default_period.save()
+            self.period.move_to_scheduled_state()
+            self.period.save()
+        else:
+            # use the default period!
+            print "rec w/ default"
+            self.default_period.move_to_scheduled_state()
+            self.default_period.save()
+            self.period = self.default_period
+            self.period.save()
+            
+        
 
 
     def jsondict(self):
