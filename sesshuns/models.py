@@ -699,18 +699,16 @@ class Project(models.Model):
         return None # uh-oh
 
     def get_windows(self):
+        # TBF WTF - until windows DB is sane, hide this till then
+        return []
+
         # TBF no filtering here, ALL windows!
         return sorted([w for s in self.sesshun_set.all()
                          for w in s.window_set.all()
                          if s.session_type.type == 'windowed']
                      , key = lambda x : x.start_date)
 
-    def get_windows(self):
-        # TBF no filtering here, ALL windows!
-        return sorted([w for s in self.sesshun_set.all()
-                         for w in s.window_set.all()
-                         if s.session_type.type == 'windowed']
-                     , key = lambda x : x.start_date)
+
 
     class Meta:
         db_table = "projects"
@@ -2278,7 +2276,6 @@ class Window(models.Model):
         return self.default_period and self.default_period.abbreviaton in ['S', 'C']
 
     def is_scheduled_or_completed(self):
-       
         period = self.period if self.period is not None and self.period.state.abbreviation in ['S', 'C'] else None
         if period is None:
             period = self.default_period if self.default_period is not None and self.default_period.state.abbreviation in ['S', 'C'] else None
