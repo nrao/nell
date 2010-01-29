@@ -183,8 +183,13 @@
                     <td>{{window.session.name}}</td>
                     <td>{{window.start_date}}</td>
                     <td>{{window.start_date|end_date:window.duration}}</td>
-                    <td>{{window.period.start|date_no_secs}}</td>
-                    <td>{{window.period.duration|hrs2sex}}</td>
+                    {% if window.is_scheduled_or_completed %}
+                      <td>{{window.is_scheduled_or_completed.start|date_no_secs}}</td>
+                      <td>{{window.is_scheduled_or_completed.duration|hrs2sex}}</td>
+                    {% else %}
+                      <td></td>
+                      <td></td>
+                    {% endif %}
                   </tr>
                 {% endfor %}
             </table>

@@ -2238,6 +2238,15 @@ class Window(models.Model):
         return overlaps((self.start_datetime(), self.end_datetime())
                       , (period.start, period.end()))
 
+    def is_published(self):
+        return self.default_period and self.default_period.abbreviaton in ['S', 'C']
+
+    def is_scheduled_or_completed(self):
+        period = self.period if self.period is not None and self.period.get_state() in ['S', 'C'] else None
+        if period is None:
+            period = self.default_period if self.default_period is not None and self.default_period.get_state() in ['S', 'C'] else None
+        return period
+
     def state(self):
         "A Windows state is a combination of the state's of it's Periods"
 
