@@ -346,8 +346,7 @@ def delete_pending(request, *args, **kwds):
     duration = int(daysPeriods) * 24 * 60
     periods = Period.get_periods(start, duration)
     for p in periods:
-        if p.state.abbreviation == 'P':
-            print "deleting period: ", p
+        if p.state.abbreviation == 'P' and not p.is_windowed():
             p.delete()
             # don't save here, because the state has NOT been changed,
             # it's really been removed since it was in the Pending state
