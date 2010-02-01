@@ -699,9 +699,6 @@ class Project(models.Model):
         return None # uh-oh
 
     def get_windows(self):
-        # TBF WTF - until windows DB is sane, hide this till then
-        return []
-
         # TBF no filtering here, ALL windows!
         return sorted([w for s in self.sesshun_set.all()
                          for w in s.window_set.all()
