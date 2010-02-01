@@ -73,11 +73,15 @@ class WindowsReport():
         
         badWins = [w for w in wins if not self.isInitialized(w)]
 
+        # windowed sessions with no windoes?
+        no_wins = [s for s in wss if len(s.window_set.all()) == 0]
+
         self.add("Number of Windowed Sessions: %d\n" % len(wss)) 
         self.add("Number of Fixed Sessions: %d\n" % len(fss)) 
         self.add("Number of Open Sessions: %d\n" % len(oss)) 
         self.add("Number of Sessions w/ Windows: %d\n" % len(ss_wins)) 
         self.add("Number of Sessions w/ Windows that aren not windowed (BAD): %d\n" % len(ss_wins_not_windowed)) 
+        self.add("Number of Windowed Sessions w/ out Windows (VERY BAD): %d\n" % len(no_wins))
         self.add("Number of Windows: %d\n" % len(wins)) 
         self.add("Number of uninitialized Windows: %d\n" % len(badWins)) 
 
