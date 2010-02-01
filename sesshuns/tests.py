@@ -1686,7 +1686,7 @@ class TestWindowResource(NellTestCase):
         response = self.client.get('/windows'
                                 , {'filterSession' : "not_there"})
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue('{"windows": []}' in response.content)
+        self.assertTrue('{"windows": [], "total": 0}' in response.content)
 
         #YYYY-MM-DD hh:mm:ss
         response = self.client.get('/windows'
@@ -1699,7 +1699,7 @@ class TestWindowResource(NellTestCase):
                                 , {'filterStartDate' : '2010-05-25' # 00:00:00' 
                                  , 'filterDuration' : 30})
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue('{"windows": []}' in response.content)
+        self.assertTrue('{"windows": [], "total": 0}' in response.content)
 
     def test_update(self):
         fdata = self.fdata
