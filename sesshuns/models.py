@@ -705,7 +705,13 @@ class Project(models.Model):
                          if s.session_type.type == 'windowed']
                      , key = lambda x : x.start_date)
 
-
+    def get_active_windows(self):
+        "Returns current and future windows."
+        wins = self.get_windows()
+        now = datetime.utcnow()
+        today = date(now.year, now.month, now.day)
+        return [ w for w in wins
+                 if today < (w.start_date + timedelta(days = w.duration)) ]
 
     class Meta:
         db_table = "projects"

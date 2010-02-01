@@ -127,9 +127,8 @@ def events(request, *args, **kws):
         id = id + 1
 
     # Scheduled telescope windows
-    # TBF trial run, may calendar too busy
+    # TBF trial run, may make calendar too busy
     for w in project.get_windows():
-        #print w.eventjson(id)
         jsonobjlist.append(w.eventjson(id))
         id = id + 1
 

@@ -168,8 +168,8 @@
                 </tr>
               {% endfor %}
           </table>
-        {% if p.get_windows %}
-          <h3 class="grey_highlight loud">Windows</h3>
+        {% if p.get_active_windows %}
+          <h3 class="grey_highlight loud">Upcoming Windows</h3>
             <table>
               <tr>
                 <th>Session</th>
@@ -178,7 +178,7 @@
                 <th>Period Start Time</th>
                 <th>Period Duration</th>
               </tr>
-                {% for window in p.get_windows %}
+                {% for window in p.get_active_windows %}
                   <tr>
                     <td>{{window.session.name}}</td>
                     <td>{{window.start_date}}</td>
