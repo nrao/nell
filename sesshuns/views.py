@@ -335,6 +335,7 @@ def publish_periods(request, *args, **kwds):
                       , mimetype = "text/plain")
 
 def delete_pending(request, *args, **kwds):
+    "Removes pending periods of open sessions"
 
     # from the time range passed in, get the pending periods to delete
     startPeriods = request.POST.get("start"
@@ -346,7 +347,8 @@ def delete_pending(request, *args, **kwds):
     duration = int(daysPeriods) * 24 * 60
     periods = Period.get_periods(start, duration)
     for p in periods:
-        if p.state.abbreviation == 'P' and not p.is_windowed():
+        if p.state.abbreviation == 'P' and \
+            p.session.session_type.type == 'open':
             p.delete()
             # don't save here, because the state has NOT been changed,
             # it's really been removed since it was in the Pending state
