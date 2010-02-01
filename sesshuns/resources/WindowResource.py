@@ -7,6 +7,21 @@ from datetime              import datetime, timedelta
 
 import simplejson as json
 
+jsonMap = { "id" : "id"
+          , "handle" : "session__name"
+          , "start"  : "start_date"
+          , "duration" : "duration"
+          , "last" : "start_date"
+          , "default_date" : "default_period__start"
+          , "default_time" : "default_period__start"
+          , "default_duration" : "default_period__duration"
+          , "default_state" : "default_period__state"
+          , "choosen_date" : "choosen_period__start"
+          , "choosen_time" : "choosen_period__start"
+          , "choosen_duration" : "choosen_period__duration"
+          , "choosen_state" : "choosen_period__state"
+          }
+    
 class WindowResource(NellResource):
     def __init__(self, *args, **kws):
         super(WindowResource, self).__init__(Window, *args, **kws)
@@ -19,6 +34,8 @@ class WindowResource(NellResource):
         # one or many?
         if len(args) == 0:
             # many, use filters
+            sortField = jsonMap.get(request.GET.get("sortField", "handle"), "start_date")
+            order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""             
             query_set = Window.objects
 
             filterSession = request.GET.get("filterSession", None)
@@ -36,8 +53,13 @@ class WindowResource(NellResource):
                 # time range, not just the ones that start w/ in it.
                 query_set = query_set.filter(start_date__gte = start
                                            , start_date__lte = end)
-            windows = query_set.order_by("start_date")
-            return HttpResponse(json.dumps(dict(windows = [w.jsondict() for w in windows]))
+            windows = query_set.order_by(order + sortField)
+            total = len(windows)
+            offset = int(request.GET.get("offset", 0))
+            limit  = int(request.GET.get("limit", 50))
+            windows = windows[offset:offset+limit]
+            return HttpResponse(json.dumps(dict(total = total
+                 , windows = [w.jsondict() for w in windows]))
             , content_type = "application/json")
         else:
             # one, identified by id in arg list
