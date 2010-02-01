@@ -1641,7 +1641,7 @@ class TestWindowResource(NellTestCase):
         super(TestWindowResource, self).setUp()
         self.client = Client()
         self.sesshun = create_sesshun()
-        dt = datetime(2009, 6, 1, 12, 15)
+        dt = datetime(2010, 1, 1, 12, 15)
         pending = first(Period_State.objects.filter(abbreviation = "P"))
         self.default_period = Period(session = self.sesshun
                                    , start = dt
@@ -1651,7 +1651,7 @@ class TestWindowResource(NellTestCase):
         self.default_period.save()                           
         pjson = self.default_period.jsondict('UTC')
         self.fdata = {"session":  self.sesshun.id
-                    , "start":    "2009-06-01"
+                    , "start":    "2010-01-01"
                     , "duration": 7
                     #, "default_period" : self.default_period.id
                     , "default_date" : pjson['date'] 
@@ -1662,6 +1662,14 @@ class TestWindowResource(NellTestCase):
         self.w = Window()
         self.w.init_from_post(self.fdata)
         self.w.save()
+
+    def tearDown(self):
+        super(TestWindowResource, self).tearDown()
+
+        # cleanup
+        self.w.delete()
+        self.default_period.delete()
+        self.sesshun.delete()
 
     def test_create(self):
         response = self.client.post('/windows', self.fdata)
@@ -1675,13 +1683,13 @@ class TestWindowResource(NellTestCase):
         response = self.client.get('/windows/%d' % self.w.id)
         self.failUnlessEqual(response.status_code, 200)
 
-        self.assertTrue('"end": "2009-06-07"' in response.content)
+        self.assertTrue('"end": "2010-01-07"' in response.content)
 
     def test_read_filter(self):
         response = self.client.get('/windows'
                                 , {'filterSession' : self.sesshun.name})
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue('"end": "2009-06-07"' in response.content)
+        self.assertTrue('"end": "2010-01-07"' in response.content)
 
         response = self.client.get('/windows'
                                 , {'filterSession' : "not_there"})
@@ -1690,13 +1698,20 @@ class TestWindowResource(NellTestCase):
 
         #YYYY-MM-DD hh:mm:ss
         response = self.client.get('/windows'
-                                , {'filterStartDate' : '2009-05-25' # 00:00:00' 
+                                , {'filterStartDate' : '2009-12-25' # 00:00:00' 
                                  , 'filterDuration' : 30})
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue('"end": "2009-06-07"' in response.content)
+        self.assertTrue('"end": "2010-01-07"' in response.content)
+
+        # make sure we catch overlaps
+        response = self.client.get('/windows'
+                                , {'filterStartDate' : '2010-01-07' # 00:00:00' 
+                                 , 'filterDuration' : 30})
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue('"end": "2010-01-07"' in response.content)
 
         response = self.client.get('/windows'
-                                , {'filterStartDate' : '2010-05-25' # 00:00:00' 
+                                , {'filterStartDate' : '2011-05-25' # 00:00:00' 
                                  , 'filterDuration' : 30})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('{"windows": [], "total": 0}' in response.content)
