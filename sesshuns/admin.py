@@ -1,3 +1,4 @@
+from datetime          import datetime
 from django.contrib    import admin
 from django.http       import HttpResponse
 from django.utils.html import escape
@@ -167,8 +168,30 @@ class StatusAdmin(admin.ModelAdmin):
     search_fields = ['id'] 
 
 class WindowAdmin(admin.ModelAdmin):
+    def get_project_name(self):
+        return self.session.project.pcode
+    get_project_name.short_description = 'Project'
+    get_project_name.admin_order_field = 'session__project__pcode'
+
+    def get_session_name(self):
+        return self.session.name
+    get_session_name.short_description = 'Session'
+    get_session_name.admin_order_field = 'session__name'
+
+    def get_period_state(self):
+        return self.default_period.state.name
+    get_period_state.short_description = "Default Period's State"
+    get_period_state.admin_order_field = 'default_period__state__name'
+
+    def get_inWindow(self):
+        return self.inWindow(datetime.utcnow().date())
+    get_inWindow.short_description = 'In Window?'
+
+    date_hierarchy = 'start_date'
+    list_display = [get_project_name, get_session_name, 'state', 'default_period', get_period_state, 'start_date', 'duration', get_inWindow]
+    list_filter = ['start_date', 'duration']
+    search_fields = ['session__name', 'session__project__pcode']
     #inlines = [OpportunityInline]
-    pass
 
 class UserAdmin(admin.ModelAdmin):
     list_display = ['last_name', 'first_name', 'sanctioned', 'pst_id', 'original_id']

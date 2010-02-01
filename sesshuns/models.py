@@ -175,13 +175,13 @@ class Role(models.Model):
         return self.role
 
 class User(models.Model):
-    original_id = models.IntegerField(null = True)
-    pst_id      = models.IntegerField(null = True)
-    username    = models.CharField(max_length = 32, null = True)
+    original_id = models.IntegerField(null = True, blank = True)
+    pst_id      = models.IntegerField(null = True, blank = True)
+    username    = models.CharField(max_length = 32, null = True, blank = True)
     sanctioned  = models.BooleanField(default = False)
     first_name  = models.CharField(max_length = 32)
     last_name   = models.CharField(max_length = 150)
-    contact_instructions = models.TextField(null = True)
+    contact_instructions = models.TextField(null = True, blank = True)
     role                 = models.ForeignKey(Role)
 
     class Meta:
@@ -347,7 +347,7 @@ class Allotment(models.Model):
     total_time        = models.FloatField(help_text = "Hours")
     max_semester_time = models.FloatField(help_text = "Hours")
     grade             = models.FloatField(help_text = "0.0 - 4.0")
-    ignore_grade      = models.NullBooleanField(null = True, default = False)
+    ignore_grade      = models.NullBooleanField(null = True, default = False, blank = True)
 
     base_url = "/sesshuns/allotment/"
 
@@ -376,9 +376,9 @@ class Project(models.Model):
     start_date       = models.DateTimeField(null = True, blank = True)
     end_date         = models.DateTimeField(null = True, blank = True)
     friend           = models.ForeignKey(User, null = True, blank = True)
-    accounting_notes = models.CharField(null = True, max_length = 1024)
-    notes            = models.TextField(null = True)
-    schedulers_notes = models.TextField(null = True)
+    accounting_notes = models.CharField(null = True, max_length = 1024, blank = True)
+    notes            = models.TextField(null = True, blank = True)
+    schedulers_notes = models.TextField(null = True, blank = True)
 
     base_url = "/sesshuns/project/"
 
@@ -742,11 +742,11 @@ class TimeZone(models.Model):
         
 class Blackout(models.Model):
     user         = models.ForeignKey(User)
-    start_date   = models.DateTimeField(null = True)
-    end_date     = models.DateTimeField(null = True)
+    start_date   = models.DateTimeField(null = True, blank = True)
+    end_date     = models.DateTimeField(null = True, blank = True)
     repeat       = models.ForeignKey(Repeat)
-    until        = models.DateTimeField(null = True)
-    description  = models.CharField(null = True, max_length = 1024)
+    until        = models.DateTimeField(null = True, blank = True)
+    description  = models.CharField(null = True, max_length = 1024, blank = True)
 
     def __unicode__(self):
         return "%s Blackout for %s: %s - %s" % \
@@ -930,7 +930,7 @@ class Receiver(models.Model):
 
 class Receiver_Schedule(models.Model):
     receiver   = models.ForeignKey(Receiver)
-    start_date = models.DateTimeField(null = True)
+    start_date = models.DateTimeField(null = True, blank = True)
 
     def __unicode__(self):
         return "%s on %s" % \
@@ -1243,15 +1243,16 @@ class Sesshun(models.Model):
     observing_type     = models.ForeignKey(Observing_Type)
     allotment          = models.ForeignKey(Allotment)
     status             = models.ForeignKey(Status)
-    original_id        = models.IntegerField(null = True)
+    original_id        = models.IntegerField(null = True, blank = True)
     name               = models.CharField(null = True
-                                        , max_length = 64)
-    frequency          = models.FloatField(null = True, help_text = "GHz")
-    max_duration       = models.FloatField(null = True, help_text = "Hours")
-    min_duration       = models.FloatField(null = True, help_text = "Hours")
+                                        , max_length = 64
+                                        , blank = True)
+    frequency          = models.FloatField(null = True, help_text = "GHz", blank = True)
+    max_duration       = models.FloatField(null = True, help_text = "Hours", blank = True)
+    min_duration       = models.FloatField(null = True, help_text = "Hours", blank = True)
     time_between       = models.FloatField(null = True, help_text = "Hours", blank = True)
-    accounting_notes   = models.CharField(null = True, max_length = 1024)
-    notes              = models.CharField(null = True, max_length = 1024)
+    accounting_notes   = models.CharField(null = True, max_length = 1024, blank = True)
+    notes              = models.CharField(null = True, max_length = 1024, blank = True)
 
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
@@ -1660,11 +1661,11 @@ class Receiver_Group(models.Model):
 class Observing_Parameter(models.Model):
     session        = models.ForeignKey(Sesshun)
     parameter      = models.ForeignKey(Parameter)
-    string_value   = models.CharField(null = True, max_length = 64)
-    integer_value  = models.IntegerField(null = True)
-    float_value    = models.FloatField(null = True)
-    boolean_value  = models.NullBooleanField(null = True)
-    datetime_value = models.DateTimeField(null = True)
+    string_value   = models.CharField(null = True, max_length = 64, blank = True)
+    integer_value  = models.IntegerField(null = True, blank = True)
+    float_value    = models.FloatField(null = True, blank = True)
+    boolean_value  = models.NullBooleanField(null = True, blank = True)
+    datetime_value = models.DateTimeField(null = True, blank = True)
 
     class Meta:
         db_table = "observing_parameters"
@@ -1715,9 +1716,9 @@ class System(models.Model):
 class Target(models.Model):
     session    = models.ForeignKey(Sesshun)
     system     = models.ForeignKey(System)
-    source     = models.CharField(null = True, max_length = 32)
-    vertical   = models.FloatField(null = True)
-    horizontal = models.FloatField(null = True)
+    source     = models.CharField(null = True, max_length = 32, blank = True)
+    vertical   = models.FloatField(null = True, blank = True)
+    horizontal = models.FloatField(null = True, blank = True)
 
     def __str__(self):
         return "%s at %s : %s" % (self.source
@@ -1752,7 +1753,7 @@ class Period_Accounting(models.Model):
                                        , default = 0.0) 
     short_notice          = models.FloatField(help_text = "Hours"  # SN
                                        , default = 0.0) 
-    description           = models.CharField(null = True, max_length = 512)
+    description           = models.CharField(null = True, max_length = 512, blank = True)
 
     class Meta:
         db_table = "periods_accounting"
@@ -1889,8 +1890,8 @@ class Period(models.Model):
     state      = models.ForeignKey(Period_State, null=True)
     start      = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm")
     duration   = models.FloatField(help_text = "Hours")
-    score      = models.FloatField(null = True, editable=False)
-    forecast   = models.DateTimeField(null = True, editable=False)
+    score      = models.FloatField(null = True, editable=False, blank = True)
+    forecast   = models.DateTimeField(null = True, editable=False, blank = True)
     backup     = models.BooleanField()
     moc_ack    = models.BooleanField(default = False)
 
@@ -2206,9 +2207,9 @@ class Period(models.Model):
 class Project_Blackout_09B(models.Model):
     project      = models.ForeignKey(Project)
     requester    = models.ForeignKey(User)
-    start_date   = models.DateTimeField(null = True)
-    end_date     = models.DateTimeField(null = True)
-    description  = models.CharField(null = True, max_length = 512)
+    start_date   = models.DateTimeField(null = True, blank = True)
+    end_date     = models.DateTimeField(null = True, blank = True)
+    description  = models.CharField(null = True, max_length = 512, blank = True)
 
     def __unicode__(self):
         return "Blackout for %s: %s - %s" % (self.project.pcode, self.start_date, self.end_date)
@@ -2220,8 +2221,8 @@ class Project_Blackout_09B(models.Model):
 
 class Window(models.Model):
     session  = models.ForeignKey(Sesshun)
-    default_period = models.ForeignKey(Period, related_name = "default_window", null = True)
-    period = models.ForeignKey(Period, related_name = "window", null = True)
+    default_period = models.ForeignKey(Period, related_name = "default_window", null = True, blank = True)
+    period = models.ForeignKey(Period, related_name = "window", null = True, blank = True)
     start_date =  models.DateField(help_text = "yyyy-mm-dd hh:mm:ss")
     duration   = models.IntegerField(help_text = "Days")
 
@@ -2298,6 +2299,7 @@ class Window(models.Model):
         else:
             # all other combos are errors
             return None
+    state.short_description = 'Window State'
 
     def reconcile(self):
         """
