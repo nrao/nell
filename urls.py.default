@@ -32,7 +32,7 @@ urlpatterns = patterns(''
    , url(r'^projects$',           ProjectResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^projects/(\d+)$',     ProjectResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^projects/ical$',      get_ical)
-   , url(r'^projects/time_accounting/([^/]+)$',              time_accounting)
+   , url(r'^projects/time_accounting/([^/]+)$',              time_accounting) #
    , url(r'^schedule/$',                                   gbt_schedule)
    , url(r'^schedule/public$',                             public_schedule)
    , url(r'^schedule/email$',                              scheduling_email)
@@ -43,7 +43,7 @@ urlpatterns = patterns(''
    , url(r'^schedule/shift_period_boundaries$', shift_period_boundaries) #
    , url(r'^sessions$',           SessionResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^sessions/(\d+)$',     SessionResource(permitted_methods=('PUT', 'GET', 'POST'))) #
-   , url(r'^receivers$',          rcvr_schedule) #
+   , url(r'^receivers$',          rcvr_schedule)
    , url(r'^receivers/schedule$', receivers_schedule) #
    , url(r'^receivers/change_schedule$', change_rcvr_schedule) #
    , url(r'^receivers/shift_date$', shift_rcvr_schedule_date) #
@@ -61,7 +61,7 @@ urlpatterns = patterns(''
    , url(r'^windows$',           WindowResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^windows/(\d+)$',     WindowResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , (r'^admin/',                 include(admin.site.urls)) #
-   , (r'^accounts/login/$', 'django_cas.views.login') #
+   , (r'^accounts/login/$', 'django_cas.views.login')
    , (r'^accounts/logout/$', 'django_cas.views.logout')
    , (r'^robots.txt$', 'django.views.static.serve',
         { 'path'         : "txt/robots.txt"
