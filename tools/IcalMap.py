@@ -18,8 +18,9 @@ class IcalMap:
         self.cal.add('summary', 'GBT Schedule')
         self.cal.add('calscale', 'GREGORIAN')
 
+        # this calendar only displays Scheduled periods
         all = Period.objects.all()
-        periods = [p for p in all if p.state.abbreviation != 'D']
+        periods = [p for p in all if p.state.abbreviation == 'S']
         now = datetime.utcnow()
         for p in periods:
             event = Event()
