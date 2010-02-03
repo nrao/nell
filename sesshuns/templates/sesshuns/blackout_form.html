@@ -86,7 +86,7 @@
     <input type="text" name="until" id="id_until" title="Click once for calendar, click twice for previous entries" value="{{b.until|date:'m/d/Y'}}"/>
     <select name="untiltime" id="id_untiltime">
       {% for t in times %}
-      {% ifequal t b.until|date:"H:M" %}
+      {% ifequal t b.until|date:"H:i" %}
       <option selected="selected">{{t}}</option>
       {% else %}
       <option >{{t}}</option>
