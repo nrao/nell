@@ -2089,6 +2089,9 @@ class TestObservers(NellTestCase):
             '/profile/%s/blackout' % self.u.id
           , {'_method' : 'DELETE', 'id' : b.id})
         self.failUnlessEqual(response.status_code, 302)
+        # shouldn't this delete the blackout?
+        b = first(Blackout.objects.filter(id = b.id))
+        self.assertEqual(None, b)
 
         data['end'] = date(2009, 5, 31).strftime("%m/%d/%Y")
         _ = data.pop('_method')

@@ -479,9 +479,6 @@ def parse_datetime(request, dateName, timeName, utcOffset):
 def blackout(request, *args, **kws):
     u_id, = args
 
-    if request.method == 'GET': # This method is only good for POSTs.
-        return HttpResponseRedirect("/profile/%s" % u_id)
-
     # TBF Use a decorator to see if user can view this page
     user      = first(User.objects.filter(id = u_id))
     loginUser = request.user.username
@@ -493,11 +490,12 @@ def blackout(request, *args, **kws):
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
 
-    # if we're deleting this black out, get it over with
-    if request.GET.get('_method', '') == "DELETE":
-        b = first(Blackout.objects.filter(
-                id = int(request.GET.get('id', '0'))))
-        b.delete()
+    if request.method == 'GET': # This method is only good for POSTs.
+        # but if we're deleting this black out, get it over with
+        if request.GET.get('_method', '') == "DELETE":
+            b = first(Blackout.objects.filter(
+                    id = int(request.GET.get('id', '0'))))
+            b.delete()
         return HttpResponseRedirect("/profile/%s" % u_id)
         
     # TBF: is this error checking so ugly because we aren't using
