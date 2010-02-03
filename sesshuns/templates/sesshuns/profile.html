@@ -106,7 +106,7 @@
               <th>Until</th>
               <th>Description</th>
             </tr>
-            {% for b in u.blackout_set.all %}
+            {% for b in blackouts %}
             <tr>
               <td>{{b.start_date|date:'j M Y H:i'}}</td>
               <td>{{b.end_date|date:'j M Y H:i'}}</td>

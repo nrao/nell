@@ -155,9 +155,11 @@ def profile(request, *args, **kws):
     static_info  = user.getStaticContactInfo(use_cache = False)
     reservations = NRAOBosDB().getReservationsByUsername(user.username
                                                        , use_cache = False)
+    blackouts = user.blackout_set.order_by("start_date")                                                       
 
     return render_to_response("sesshuns/profile.html"
                             , {'u'            : user
+                             , 'blackouts'    : blackouts
                              , 'requestor'    : requestor
                              , 'authorized'   : user == requestor # allowed to edit
                              #, 'clients'      : Project.objects.filter(friend=user)
