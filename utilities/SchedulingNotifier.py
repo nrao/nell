@@ -114,14 +114,14 @@ class SchedulingNotifier(Notifier):
                           
         observers = Set(observers)
 
-        if not self.test:
+        #if not self.test:
             # get email addresses from the PST
-            addresses = Set([e for o in observers \
-                           for e in o.getStaticContactInfo()['emails']])
-        else:
+        addresses = Set([e for o in observers \
+                         for e in o.getStaticContactInfo()['emails']])
+        #else:
             # for testing, we don't want to use the PST server
             # so just make up some emails
-            addresses = Set(["%s@test.edu" % o.first_name for o in observers])
+        #    addresses = Set(["%s@test.edu" % o.first_name for o in observers])
 
         self.setAddresses(list(addresses))
 
@@ -189,20 +189,20 @@ Thank You.
         self.logMessage("Body: %s\n" % self.getBody())
 
     def getSessionTable(self, periods):
-        table  = "Start (ET)   |      UT      |  LST  |  (hr) | Observer  | Rx        | Session\n"
+        table  = "Start (ET)   |      UT      |  LST  |  (hr) |    PI     | Rx        | Session\n"
         table += "------------------------------------------------------------------------------\n"
         for p in periods:
             if p.session.project.pcode == "Maintenance":
-                observer = ""
+                pi = ""
             else:
-                observer = p.session.project.get_observers()[0].user.last_name[:9] if p.session.project.get_observers() else "Unknown"
+                pi = p.session.project.principal_investigator().last_name[:9] if p.session.project.principal_investigator() else "Unknown"
 
             table += "%s | %s | %s | %5s | %-9s | %-9s | %s\n" % (
                 TimeAgent.utc2est(p.start).strftime('%b %d %H:%M')
               , p.start.strftime('%b %d %H:%M')
               , TimeAgent.dt2tlst(p.start).strftime('%H:%M')
               , "%2.2f" % p.duration
-              , observer
+              , pi
               , p.session.receiver_list_simple()[:9]
               , p.session.name
             )
