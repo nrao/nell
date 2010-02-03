@@ -1006,17 +1006,16 @@ class Receiver_Schedule(models.Model):
 
         if prev is None:
             schedule[startdate] = [] # Empty schedule on/before this date
-        else:
-            startdate = prev
+            prev = startdate
 
         if days is not None:
             enddate = startdate + timedelta(days = days)
             rs = Receiver_Schedule.objects.filter(
-                                          start_date__gte = startdate
+                                          start_date__gte = prev
                                                  ).filter(
                                           start_date__lte = enddate)
         else:
-            rs = Receiver_Schedule.objects.filter(start_date__gte = startdate)
+            rs = Receiver_Schedule.objects.filter(start_date__gte = prev)
 
         for s in rs:
             schedule.setdefault(s.start_date, []).append(s.receiver)

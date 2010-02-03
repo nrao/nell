@@ -534,9 +534,31 @@ class TestReceiverSchedule(NellTestCase):
            , {'down': [u'450'], 'up': [u'1070'], 'day': '04/21/2009'}]}
         self.assertEqual(expected, jdiff)
 
-    def test_extract_schedule(self):
+    def test_extract_schedule1(self):
         startdate = datetime(2009, 4, 6, 12)
         duration = 15
+        schedule = Receiver_Schedule.extract_schedule(startdate = startdate,
+                                                      days = duration)
+        expected = [datetime(2009, 4, 11, 0, 0)
+                  , datetime(2009, 4, 16, 0, 0)
+                  , datetime(2009, 4, 6, 0, 0)
+                  , datetime(2009, 4, 21, 0, 0)]
+        self.assertEqual(expected, schedule.keys())
+        jschedule = Receiver_Schedule.jsondict(schedule)
+        expected = {'04/11/2009': [u'342', u'450', u'600']
+                  , '04/16/2009': [u'450', u'600', u'800']
+                  , '04/06/2009': [u'RRI', u'342', u'450']
+                  , '04/21/2009': [u'600', u'800', u'1070']}
+        self.assertEqual(expected, jschedule)
+
+    def test_extract_schedule2(self):
+        """
+        Making sure we starting counting duration from the startdate
+        rather than some previous receiver change date.
+        """
+
+        startdate = datetime(2009, 4, 7, 12)
+        duration = 14
         schedule = Receiver_Schedule.extract_schedule(startdate = startdate,
                                                       days = duration)
         expected = [datetime(2009, 4, 11, 0, 0)
