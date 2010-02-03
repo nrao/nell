@@ -2023,6 +2023,8 @@ class Period(models.Model):
               , "backup"       : self.backup
               , "state"        : self.state.abbreviation
               , "windowed"     : True if w is not None else False
+              , "wdefault"     : self.is_windowed_default() \
+                                     if w is not None else None
               , "wstart"       : d2str(w.start_date) if w is not None else None
               , "wend"         : d2str(w.last_date()) if w is not None else None
                 }
@@ -2103,18 +2105,18 @@ class Period(models.Model):
         if self.state.abbreviation == 'P':
             self.move_to_scheduled_state()
         # TBF    
-        #    if not self.is_windowed():
-        #        self.move_to_scheduled_state()
+        #if not self.is_windowed():
+        #    self.move_to_scheduled_state()
+        #else:
+            # must reconcile the window
+            # but at this point, you need to raise an error if 
+            # periods/windows aren't setup properly
+        #    if not self.has_valid_windows():
+        #        raise "Period %s cant be published: invalid windows" % self
         #    else:
-                # must reconcile the window
-                # but at this point, you need to raise an error if 
-                # periods/windows aren't setup properly
-        #        if not self.has_valid_windows():
-        #            raise "Period %s cant be published: invalid windows" % self
-        #        else:
-        #            # now leave the actual work to the window
-        #            w = self.get_window()
-        #            w.reconcile()
+        #        # now leave the actual work to the window
+        #        w = self.get_window()
+        #        w.reconcile()
 
     def delete(self):
         "Keep non-pending periods from being deleted."
