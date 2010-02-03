@@ -1414,6 +1414,72 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.status.enabled, True) # "True" -> True
         self.assertEqual(s.original_id, 0) #ldata["orig_ID"]) -- "0.0" -> Int
 
+class TestBlackout(NellTestCase):
+
+    def setUp(self):
+        super(TestBlackout, self).setUp()
+
+        # create some blackouts    
+        self.u = User(first_name = "Test"
+                    , last_name  = "User"
+                    , role       = first(Role.objects.all())
+                    , username   = "testuser" #self.auth_user.username
+                      )
+        self.u.save()
+
+        once = first(Repeat.objects.filter(repeat = 'Once'))
+        self.blackout1 = Blackout(user       = self.u
+                            , repeat     = once 
+                            , start_date = datetime(2009, 1, 1, 11)
+                            , end_date   = datetime(2009, 1, 3, 11))
+        self.blackout1.save()
+
+        weekly = first(Repeat.objects.filter(repeat = 'Weekly'))
+        self.blackout2 = Blackout(user       = self.u
+                            , repeat     = weekly
+                            , start_date = datetime(2009, 1, 4, 11)
+                            , end_date   = datetime(2009, 1, 4, 13)
+                            , until      = datetime(2009, 5, 4, 11))
+        self.blackout2.save()
+
+    def test_generateDates(self):
+
+        # no repeats are easy ...
+        dts = [(self.blackout1.start_date, self.blackout1.end_date)]
+        calstart = datetime(2009, 1, 1)
+        calend   = datetime(2009, 1, 30)
+        gdts = self.blackout1.generateDates(calstart, calend)
+        self.assertEquals(dts, gdts)
+
+        # repeats are more complicated
+        # how does January look?
+        start = self.blackout2.start_date
+        end = self.blackout2.end_date
+        dts = [(start, end)]
+        for i in [1,2,3]:
+            dts.append((start + timedelta(days = 7 * i)
+                      , end   + timedelta(days = 7 * i)))
+        gdts = self.blackout2.generateDates(calstart, calend)
+        self.assertEquals(dts, gdts)
+
+        # and Feb?
+        calstart = datetime(2009, 2, 1)
+        calend   = datetime(2009, 2, 28)
+        gdts = self.blackout2.generateDates(calstart, calend)
+        self.assertEquals(4, len(gdts))
+
+        # should be none in June.
+        calstart = datetime(2009, 6, 1)
+        calend   = datetime(2009, 6, 30)
+        gdts = self.blackout2.generateDates(calstart, calend)
+        self.assertEquals(0, len(gdts))
+
+        # should be none in previous June.
+        calstart = datetime(2008, 6, 1)
+        calend   = datetime(2008, 6, 30)
+        gdts = self.blackout2.generateDates(calstart, calend)
+        self.assertEquals(0, len(gdts))
+
 # Testing View Resources
 
 class TestPeriodResource(NellTestCase):
