@@ -63,8 +63,9 @@ class WindowResource(NellResource):
                 windows = [w for w in windows if w.last_date() >= start]
             total = len(windows)
             offset = int(request.GET.get("offset", 0))
-            limit  = int(request.GET.get("limit", 50))
-            windows = windows[offset:offset+limit]
+            limit  = int(request.GET.get("limit", -1))
+            if limit != -1:
+                windows = windows[offset:offset+limit]
             return HttpResponse(json.dumps(dict(total = total
                  , windows = [w.jsondict() for w in windows]))
             , content_type = "application/json")
