@@ -32,14 +32,15 @@ def check_maintenance_and_rcvrs():
     bad = []
     for dt, rcvrs in Receiver_Schedule.extract_schedule().items():
         # Well, what are the periods for this day?
+        start = dt.replace(hour = 0)
         periods = Period.objects.filter(
-                                   start__gt = dt
-                                 , start__lt = dt + timedelta(days = 1)
+                                   start__gt = start
+                                 , start__lt = start + timedelta(days = 1)
                                  )
         # of these, is any one of them a maintenance?
         if len([p for p in periods if p.session.project.is_maintenance()]) == 0:
             bad.append(dt.date())
-    return sorted(bad)
+    return sorted(Set(bad))
 
 def print_values(file, values):
     if values == []:
