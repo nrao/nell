@@ -2335,7 +2335,8 @@ class Window(models.Model):
             # the window has been reconciled, w/ the default
             # period being superceded by the choosen - final state
             return scheduled
-        elif self.default_period.id == self.period.id and \
+        elif self.period is not None and \
+             self.default_period.id == self.period.id and \
              self.default_period.isScheduled() and \
              self.period.isScheduled():
             # the window has been reconciled, w/ the default
