@@ -2,6 +2,7 @@ from datetime                 import date, datetime, timedelta
 from django.http              import HttpResponse
 from models                   import Project, Sesshun, Period, Receiver
 from models                   import Receiver_Schedule, first, str2dt
+from models                   import Window 
 from tools                    import IcalMap, ScheduleTools, TimeAccounting
 from utilities                import TimeAgent
 from settings                 import PROXY_PORT
@@ -110,12 +111,9 @@ def shift_rcvr_schedule_date(request, *args, **kws):
                            , mimetype = "text/plain")
 
 def delete_rcvr_schedule_date(request, *args, **kws):
-    print "delete_rcvr_schedule_date: ", request.POST
     dateStr = request.POST.get("startdate", None)
     dateDt = datetime.strptime(dateStr, "%m/%d/%Y %H:%M:%S")
-    print "date: ", dateDt
     success, msg = Receiver_Schedule.delete_date(dateDt)    
-    print "results: ", success, msg
     if success:
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
@@ -313,6 +311,7 @@ def period_time_accounting(request, *args, **kws):
     js = ta.jsondict(project)
     return HttpResponse(json.dumps(js), mimetype = "text/plain")
 
+#@transaction.commit_on_success
 def publish_periods(request, *args, **kwds):
 
     # from the time range passed in, get the periods to publish
@@ -323,13 +322,8 @@ def publish_periods(request, *args, **kwds):
     dt = str2dt(startPeriods)
     start = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
     duration = int(daysPeriods) * 24 * 60
-    periods = Period.get_periods(start, duration)
 
-    # publishing moves any period whose state is Pending to Scheduled,
-    # and initializes time accounting (scheduled == period duration).
-    for p in periods:
-        p.publish()
-        p.save()
+    Period.publish_periods(start, duration)
 
     return HttpResponse(json.dumps({'success':'ok'})
                       , mimetype = "text/plain")

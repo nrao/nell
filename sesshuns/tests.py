@@ -196,10 +196,13 @@ class TestWindow(NellTestCase):
         self.sesshun.save()
         dt = datetime(2009, 6, 1, 12, 15)
         pending = first(Period_State.objects.filter(abbreviation = "P"))
+        pa = Period_Accounting(scheduled = 0.0)
+        pa.save()
         self.default_period = Period(session = self.sesshun
                                    , start = dt
                                    , duration = 5.0
                                    , state = pending
+                                   , accounting = pa
                                    )
         self.default_period.save()    
         pjson = self.default_period.jsondict('UTC')
@@ -248,37 +251,86 @@ class TestWindow(NellTestCase):
 
         w.delete()
 
-#    def test_reconcile(self):
-#
-#        deleted   = Period_State.get_state("D")
-#        pending   = Period_State.get_state("P")
-#        scheduled = Period_State.get_state("S")
-#
-#        start = datetime(2009, 6, 1)
-#        dur   = 7 # days
-#        
-#        w = Window()
-#        w.start_date = start
-#        w.duration = dur
-#        w.session = self.sesshun
-#        w.default_period = self.default_period
-#        w.save()
-#        w_id = w.id
-#
-#        # test
-#        self.assertEquals(w.default_period.state, pending) 
-#
-#        w.reconcile()
-#
-#        # test
-#        # get it fresh from the DB
-#        w = first(Window.objects.filter(id = w_id)) 
-#        print w
-#        print w.default_period, w.default_period.state
-#        self.assertEquals(w.default_period.state, scheduled) 
-#        self.assertEquals(w.period.state, scheduled) 
-#        self.assertEquals(w.period.id, w.default_period.id) 
+    def test_reconcile(self):
 
+        deleted   = Period_State.get_state("D")
+        pending   = Period_State.get_state("P")
+        scheduled = Period_State.get_state("S")
+
+        start = datetime(2009, 6, 1)
+        dur   = 7 # days
+        
+        w = Window()
+        w.start_date = start
+        w.duration = dur
+        w.session = self.sesshun
+        w.default_period = self.default_period
+        w.save()
+        w_id = w.id
+
+        # test
+        self.assertEquals(w.default_period.state, pending) 
+        self.assertEquals(w.state(), pending) 
+
+        # this should move the default_period to scheduled
+        # and copy the defatul_period to period
+        w.reconcile()
+
+        # test
+        # get it fresh from the DB
+        w = first(Window.objects.filter(id = w_id)) 
+        self.assertEquals(w.default_period.state, scheduled) 
+        self.assertTrue(w.period is not None)
+        self.assertEquals(w.period.state, scheduled) 
+        self.assertEquals(w.period.id, w.default_period.id) 
+        self.assertEquals(w.state(), scheduled) 
+
+    def test_reconcile_2(self):
+
+        deleted   = Period_State.get_state("D")
+        pending   = Period_State.get_state("P")
+        scheduled = Period_State.get_state("S")
+       
+        # the period to be scheduled
+        pa = Period_Accounting(scheduled = 0.0)
+        pa.save()
+        dt = self.default_period.start - timedelta(days = 2)
+        period = Period(session = self.sesshun
+                                   , start = dt
+                                   , duration = 5.0
+                                   , state = pending
+                                   , accounting = pa
+                                   )
+        period.save()    
+
+        start = datetime(2009, 6, 1)
+        dur   = 7 # days
+        
+        w = Window()
+        w.start_date = start
+        w.duration = dur
+        w.session = self.sesshun
+        w.default_period = self.default_period
+        w.period = period
+        w.save()
+        w_id = w.id
+
+        # test
+        self.assertEquals(w.default_period.state, pending) 
+        self.assertEquals(w.period.state, pending) 
+        self.assertEquals(w.state(), pending) 
+
+        # this should move the default_period to deleted
+        # and the choosen period to scheduled
+        w.reconcile()
+
+        # test
+        # get it fresh from the DB
+        w = first(Window.objects.filter(id = w_id)) 
+        self.assertEquals(w.default_period.state, deleted) 
+        self.assertTrue(w.period is not None)
+        self.assertEquals(w.period.state, scheduled) 
+        self.assertEquals(w.state(), scheduled) 
 
 class TestPeriod(NellTestCase):
 
@@ -384,7 +436,6 @@ class TestPeriod(NellTestCase):
 
         # now publish!
         #p.publish()
-       
 
         # test
         #deleted = Period_State.get_state("D")
@@ -1931,6 +1982,47 @@ class TestPublishPeriods(NellTestCase):
         self.assertEquals(exp, [p.state.abbreviation for p in ps])
         exp = [5.0, 3.0, 4.0]
         self.assertEquals(exp, [p.accounting.scheduled for p in ps])
+
+    def test_publish_periods_with_windows(self):
+
+        # Assign periods to our windows
+        # 1 - scheduled -> window 1
+        # 2 - pending -> window 2
+        # 3 - scheduled -> window 2, make pending
+        pending = Period_State.get_state("P")
+        scheduled = Period_State.get_state("S")
+
+        p1 = self.ps[0]
+        w1 = Window( session = p1.session
+                   , start_date = p1.start.date() - timedelta(days = 7)
+                   , duration = 10 # days
+                   , default_period = p1
+                   , period = p1 )
+        w1.save()           
+
+        p2 = self.ps[1]
+        p3 = self.ps[2] 
+        p3.state = Period_State.get_state("P")
+        p3.save()
+        # NOTE: ovelapping windows for same session - shouldn't matter
+        w2 = Window( session = p2.session # NOTE: same session for all 3 periods
+                   , start_date = p1.start.date() - timedelta(days = 7)
+                   , duration = 10 # days
+                   , default_period = p2
+                   , period = p3 )
+        w2.save()
+
+        # check the states
+        self.assertEquals(scheduled, w1.state())
+        self.assertEquals(pending, w2.state())
+
+        # reconcile both windows
+        w1.reconcile()
+        w2.reconcile()
+
+        # make sure the states are right now
+        self.assertEquals(scheduled, w1.state())
+        self.assertEquals(scheduled, w2.state())
 
 # Testing Observers UI
 

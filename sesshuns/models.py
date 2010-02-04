@@ -2094,29 +2094,22 @@ class Period(models.Model):
 
     def move_to_scheduled_state(self):
         "worker for publish method: pending -> scheduled, and init time accnt."
-        assert self.state.abbreviation == "P"
-        self.state = first(Period_State.objects.filter(abbreviation = 'S'))
-        self.accounting.scheduled = self.duration
-        self.accounting.save()
-        self.save()
+        if self.state.abbreviation == "P":
+            self.state = first(Period_State.objects.filter(abbreviation = 'S'))
+            self.accounting.scheduled = self.duration
+            self.accounting.save()
+            self.save()
 
     def publish(self):
         "pending state -> scheduled state: and init the time accounting"
-        if self.state.abbreviation == 'P':
-            self.move_to_scheduled_state()
-        # TBF    
-        #if not self.is_windowed():
-        #    self.move_to_scheduled_state()
-        #else:
-            # must reconcile the window
-            # but at this point, you need to raise an error if 
-            # periods/windows aren't setup properly
-        #    if not self.has_valid_windows():
-        #        raise "Period %s cant be published: invalid windows" % self
-        #    else:
-        #        # now leave the actual work to the window
-        #        w = self.get_window()
-        #        w.reconcile()
+        # NOTE: it would be ideal to 'publish' a period's associated
+        # window (reconcile it, really).  But we haven't been able to
+        # get that to work properly, so windowed periods must be handled
+        # elsewhere when publishing.
+        if not self.is_windowed():
+            if self.state.abbreviation == 'P':
+                self.move_to_scheduled_state()
+
 
     def delete(self):
         "Keep non-pending periods from being deleted."
@@ -2212,6 +2205,37 @@ class Period(models.Model):
             ps = [p for p in ps if p.state.abbreviation != 'D']
         return ps
 
+    @staticmethod
+    def publish_periods(start, duration):
+        """
+        Due to problems we encountered with the relationship between
+        periods and windows in the DB, we can't reconcile windows
+        from within a period's publish method, we must take this approach.
+        """
+
+        periods = Period.get_periods(start, duration)
+
+        # publishing moves any period whose state is Pending to Scheduled,
+        # and initializes time accounting (scheduled == period duration).
+        wids = []
+        for p in periods:
+            if p.session.session_type.type != 'windowed':
+                p.publish()
+                p.save()
+            else:
+                # don't publish this period, instead, find out what window
+                # it belongs to so we can reconcile it latter.
+                # what window does it belong to?
+                w = p.get_window()
+                if w is not None and w.id not in wids:
+                    wids.append(w.id)
+
+        # now reconcile any windows
+        for wid in wids:
+            window = first(Window.objects.filter(id = wid))
+            window.reconcile()
+            window.save()
+    
 # TBF: temporary table/class for scheduling just 09B.  We can safely
 # dispose of this after 09B is complete.  Delete Me!
 class Project_Blackout_09B(models.Model):
@@ -2243,12 +2267,12 @@ class Window(models.Model):
 
     def __str__(self):
         name = self.session.name if self.session is not None else "None"
-        default_period = self.default_period.__str__() if self.default_period is not None else "None"
+        #default_period = self.default_period.__str__() if self.default_period is not None else "None"
         return "Window for %s, from %s for %d days, default: %s, period: %s" % \
             (name
            , self.start_date.strftime("%Y-%m-%d")
            , self.duration
-           , default_period
+           , self.default_period
            , self.period)
 
     def end(self):
@@ -2274,15 +2298,18 @@ class Window(models.Model):
 
         # need to compare date vs. datetime objs
         #winStart = datetime(self.start_date.year
+        # with what we have in memory
         #                  , self.start_date.month
         #                  , self.start_date.day)
         #winEnd = winStart + timedelta(days = self.duration)                  
         return overlaps((self.start_datetime(), self.end_datetime())
                       , (period.start, period.end()))
 
+    # TBF: is this correct?
     def is_published(self):
         return self.default_period and self.default_period.abbreviaton in ['S', 'C']
 
+    # TBF: refactor this to use the state method
     def is_scheduled_or_completed(self):
         period = self.period if self.period is not None and self.period.state.abbreviation in ['S', 'C'] else None
         if period is None:
@@ -2304,11 +2331,19 @@ class Window(models.Model):
             # transitory state during scheduling
             return pending
         elif (self.default_period.isDeleted() and self.period.isScheduled()):
-            # the window has been reconciled - final state
+            # the window has been reconciled, w/ the default
+            # period being superceded by the choosen - final state
+            return scheduled
+        elif self.default_period.id == self.period.id and \
+             self.default_period.isScheduled() and \
+             self.period.isScheduled():
+            # the window has been reconciled, w/ the default
+            # period being scheduled and set to the choosen - final state
             return scheduled
         else:
             # all other combos are errors
             return None
+
     state.short_description = 'Window State'
 
     def reconcile(self):
@@ -2317,9 +2352,6 @@ class Window(models.Model):
         or transitory state, to a final scheduled state.
         Move the default period to deleted, and publish the scheduled period.
         """
-        
-        # TBF
-        return
 
         deleted   = Period_State.get_state("D")
         pending   = Period_State.get_state("P")
@@ -2327,28 +2359,27 @@ class Window(models.Model):
         
         # raise an error?
         assert self.default_period is not None
-        #if not self.default_period.isPending() or \
-        #       self.period is None or \
-        #   not  self.period.isPending():
-        #    return
+
+        # if this has already been reconciled, or is in an invalid
+        # state, don't do anything.
+        state = self.state()
+        if state is None or state == scheduled:
+            return
 
         if self.period is not None:
             # use this period as the scheduled one!
-            # don't use the high level Period method's publish and delete 
             self.default_period.move_to_deleted_state()
             self.default_period.save()
             self.period.move_to_scheduled_state()
             self.period.save()
         else:
             # use the default period!
-            print "rec w/ default"
             self.default_period.move_to_scheduled_state()
             self.default_period.save()
             self.period = self.default_period
             self.period.save()
-            
-        
 
+        self.save()    
 
     def jsondict(self):
         js = {  "id"             : self.id
