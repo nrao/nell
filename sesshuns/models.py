@@ -2325,13 +2325,18 @@ class Window(models.Model):
         pending   = Period_State.get_state("P")
         scheduled = Period_State.get_state("S")
 
-        if (self.default_period.isPending() and self.period is None):
+        if self.default_period is None:
+            return None # error
+        elif (self.default_period is not None and \
+            self.default_period.isPending() and self.period is None):
             # initial state windows are in when created
             return pending
-        elif (self.default_period.isPending() and self.period.isPending()):
+        elif (self.default_period is not None and \
+            self.default_period.isPending() and self.period.isPending()):
             # transitory state during scheduling
             return pending
-        elif (self.default_period.isDeleted() and self.period.isScheduled()):
+        elif (self.default_period.isDeleted() and \
+             self.period is not None and self.period.isScheduled()):
             # the window has been reconciled, w/ the default
             # period being superceded by the choosen - final state
             return scheduled
@@ -2342,6 +2347,9 @@ class Window(models.Model):
             # the window has been reconciled, w/ the default
             # period being scheduled and set to the choosen - final state
             return scheduled
+        elif self.period is None and \
+             self.default_period.isScheduled():
+             return scheduled # TBF: this really should be an error state
         else:
             # all other combos are errors
             return None
