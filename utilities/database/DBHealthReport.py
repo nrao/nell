@@ -166,6 +166,7 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nUsers with no username:")
+    users  = list(User.objects.order_by("last_name"))
     values = [u for u in users if u.username is None]
     print_values(outfile, values)
 
