@@ -58,6 +58,11 @@ class WindowsReport():
             return "None"
 
     def report(self):
+
+        pending   = Period_State.get_state("P")
+        scheduled = Period_State.get_state("S")
+        deleted   = Period_State.get_state("D")
+
         wins = Window.objects.all().order_by("start_date")
         wss  = Sesshun.objects.filter(session_type__type = "windowed").order_by("name")
         fss  = Sesshun.objects.filter(session_type__type = "fixed").order_by("name")
@@ -72,9 +77,20 @@ class WindowsReport():
             if s.session_type.type != "windowed"]
         
         badWins = [w for w in wins if not self.isInitialized(w)]
+        goodWins = [w for w in wins if self.isInitialized(w)]
 
         # windowed sessions with no windoes?
         no_wins = [s for s in wss if len(s.window_set.all()) == 0]
+
+        # number of windows that are in pending
+        pending_wins = [w for w in goodWins if w.state() == pending]
+
+        # number of windows that are in scheduled
+        scheduled_wins = [w for w in goodWins if w.state() == scheduled]
+
+        # number of windows that have been scheduled before their default
+        scheduled_early_wins = [w for w in scheduled_wins \
+                                  if w.default_period.state == deleted]
 
         self.add("Number of Windowed Sessions: %d\n" % len(wss)) 
         self.add("Number of Fixed Sessions: %d\n" % len(fss)) 
@@ -83,7 +99,11 @@ class WindowsReport():
         self.add("Number of Sessions w/ Windows that aren not windowed (BAD): %d\n" % len(ss_wins_not_windowed)) 
         self.add("Number of Windowed Sessions w/ out Windows (VERY BAD): %d\n" % len(no_wins))
         self.add("Number of Windows: %d\n" % len(wins)) 
-        self.add("Number of uninitialized Windows: %d\n" % len(badWins)) 
+        self.add("Number of uninitialized Windows: %d\n" % len(badWins))
+        self.add("Number of pending windows: %d\n" % len(pending_wins))
+        self.add("Number of scheduled windows: %d\n" % len(scheduled_wins))
+        self.add("Number of scheduled early windows: %d\n" % \
+            len(scheduled_early_wins))
 
         for ws in ss_wins:
             numWins = len(ws.window_set.all()) 
