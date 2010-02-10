@@ -143,4 +143,6 @@ class WindowsReport():
         if self.filename is not None:
             f = open(self.filename, 'w')
             f.writelines(self.reportLines)
-            
+
+if __name__ == '__main__':
+    WindowsReport(filename = "WindowsReport.txt").report()            
