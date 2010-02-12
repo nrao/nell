@@ -326,10 +326,11 @@ def publish_periods(request, *args, **kwds):
 
     Period.publish_periods(start, duration)
 
-    # Let the world know!
-    update = 'GBT Schedule Updated - https://dss.gb.nrao.edu/schedule/public'
-    tweet = twitter.Api(username = 'GrnBnkTelescope'
-                      , password = 'dYN4m1(').PostUpdate(update)
+    # Let the world know if we so desire. Default is to tweet.
+    if request.POST.get("tweet", "True") == "True":
+        update = 'GBT Schedule Update - https://dss.gb.nrao.edu/schedule/public'
+        twitter.Api(username = 'GrnBnkTelescope'
+                  , password = 'dYN4m1(').PostUpdate(update)
 
     # Ok, we're done.
     return HttpResponse(json.dumps({'success':'ok'})
