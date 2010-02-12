@@ -2014,9 +2014,11 @@ class TestPublishPeriods(NellTestCase):
         duration = 12
         url = "/periods/publish"
 
+        # Remember not to embarrass ourselves by tweeting! tweet == False
         response = c.post(url, dict(start    = time
                                   , tz       = tz
-                                  , duration = duration)) 
+                                  , duration = duration
+                                  , tweet    = False)) 
         self.failUnless("ok" in response.content)    
 
         ps = Period.objects.order_by("start")

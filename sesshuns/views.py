@@ -9,6 +9,7 @@ from settings                 import PROXY_PORT
 from utilities.SchedulingNotifier import SchedulingNotifier
 
 import simplejson as json
+import twitter
 
 ROOT_URL = "http://trent.gb.nrao.edu:%d" % PROXY_PORT
 
@@ -335,6 +336,13 @@ def publish_periods(request, *args, **kwds):
 
     Period.publish_periods(start, duration)
 
+    # Let the world know if we so desire. Default is to tweet.
+    if request.POST.get("tweet", "True") == "True":
+        update = 'GBT Schedule Update - https://dss.gb.nrao.edu/schedule/public'
+        twitter.Api(username = 'GrnBnkTelescope'
+                  , password = 'dYN4m1(').PostUpdate(update)
+
+    # Ok, we're done.
     return HttpResponse(json.dumps({'success':'ok'})
                       , mimetype = "text/plain")
 
