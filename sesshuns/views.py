@@ -5,7 +5,7 @@ from models                   import Receiver_Schedule, first, str2dt
 from models                   import Window 
 from tools                    import IcalMap, ScheduleTools, TimeAccounting
 from utilities                import TimeAgent
-from settings                 import PROXY_PORT
+from settings                 import PROXY_PORT, DATABASE_NAME
 from utilities.SchedulingNotifier import SchedulingNotifier
 
 import simplejson as json
@@ -336,8 +336,9 @@ def publish_periods(request, *args, **kwds):
 
     Period.publish_periods(start, duration)
 
-    # Let the world know if we so desire. Default is to tweet.
-    if request.POST.get("tweet", "True") == "True":
+    # Let the world know if we so desire. Default is to tweet unless we
+    # are using our sandboxes.
+    if DATABASE_NAME == 'dss' and request.POST.get("tweet", "True") == "True":
         update = 'GBT Schedule Update - https://dss.gb.nrao.edu/schedule/public'
         twitter.Api(username = 'GrnBnkTelescope'
                   , password = 'dYN4m1(').PostUpdate(update)
