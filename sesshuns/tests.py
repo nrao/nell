@@ -1977,6 +1977,27 @@ class TestPublishPeriods(NellTestCase):
             p.session.delete()
             p.remove() #delete()
 
+    def test_publish_periods_by_id(self):
+        c = Client()
+
+        # check current state
+        ps = Period.objects.order_by("start")
+        exp = ["S", "P", "S"]
+        self.assertEquals(exp, [p.state.abbreviation for p in ps])
+        exp = [5.0, 0.0, 4.0]
+        self.assertEquals(exp, [p.accounting.scheduled for p in ps])
+
+        time = self.ps[0].start.strftime("%Y-%m-%d %H:%M:%S")
+
+        url = "/periods/publish/%d" % self.ps[1].id
+
+        response = c.post(url) #, dict(start    = time
+        self.failUnless("ok" in response.content)    
+
+        ps = Period.objects.order_by("start")
+        exp = ["S", "S", "S"]
+        self.assertEquals(exp, [p.state.abbreviation for p in ps])
+
     def test_publish_periods(self):
 
         c = Client()
