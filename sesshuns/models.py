@@ -1937,6 +1937,9 @@ class Period(models.Model):
     def isPending(self):
         return self.state.abbreviation == 'P'
 
+    def isCompleted(self):
+        return self.state.abbreviation == 'C'
+
     def init_from_post(self, fdata, tz):
         self.from_post(fdata, tz)
 
@@ -2317,6 +2320,23 @@ class Window(models.Model):
             period = self.default_period if self.default_period is not None and self.default_period.state.abbreviation in ['S', 'C'] else None
         return period
 
+    ##################################################################
+    # state will return the state of the window, or none if the window
+    # is not in a legal state.  The truth table is as follows, where
+    # 'D' is deleted, 'P' pending, 'S' scheduled, and 'C' completed:
+    #
+    #    period                default_period         state
+    #    None                  P                      P
+    #    S                     D                      S
+    #    S                     S                      S
+    #    C                     C                      C
+    #    C                     D                      C
+    #    P                     P                      P*
+    #
+    # Any other combinaton returns None
+    #
+    # * This is legal, but Antioch won't accept a window in this state
+    ##################################################################
     def state(self):
         "A Windows state is a combination of the state's of it's Periods"
 
@@ -2324,37 +2344,44 @@ class Window(models.Model):
         deleted   = Period_State.get_state("D")
         pending   = Period_State.get_state("P")
         scheduled = Period_State.get_state("S")
+        completed = Period_State.get_state("C")
 
-        if self.default_period is None:
-            return None # error
-        elif (self.default_period is not None and \
-            self.default_period.isPending() and self.period is None):
-            # initial state windows are in when created
-            return pending
-        elif (self.default_period is not None and \
-            self.default_period.isPending() and self.period.isPending()):
-            # transitory state during scheduling
-            return pending
-        elif (self.default_period.isDeleted() and \
-             self.period is not None and self.period.isScheduled()):
-            # the window has been reconciled, w/ the default
-            # period being superceded by the choosen - final state
-            return scheduled
-        elif self.period is not None and \
-             self.default_period.id == self.period.id and \
-             self.default_period.isScheduled() and \
-             self.period.isScheduled():
-            # the window has been reconciled, w/ the default
-            # period being scheduled and set to the choosen - final state
-            return scheduled
-        elif self.period is None and \
-             self.default_period.isScheduled():
-             return scheduled # TBF: this really should be an error state
+        if self.default_period:
+            if self.default_period.isPending() and self.period is None:
+                # initial state windows are in when created
+                return pending
+            else:
+                if self.period:
+                    if self.default_period.isCompleted() and self.period.isCompleted():
+                        return completed
+                    if self.default_period.isPending() and self.period.isPending():
+                        return pending
+                    if self.default_period.isDeleted() and self.period.isScheduled():
+                        return scheduled
+                    if self.default_period.isScheduled() and self.period.isScheduled():
+                        return scheduled
+                    if self.default_period.isDeleted() and self.period.isCompleted():
+                        return completed
+                # We have a default period, it is not pending, and
+                # none of the other conditions is met.
+                return None
         else:
-            # all other combos are errors
+            # No default period!
             return None
 
     state.short_description = 'Window State'
+
+    def dual_pending_state(self):
+        """
+        Returns true if both period and default_period exist and are
+        in a Pending state
+        """
+        if self.default_period and self.period:
+            if self.default_period.isPending() and self.period.isPending():
+                return True
+        return False
+
+    dual_pending_state.short_description = 'Window special pending state'
 
     def reconcile(self):
         """
