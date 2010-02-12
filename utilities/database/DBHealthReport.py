@@ -1,3 +1,5 @@
+#!/bin/env python
+
 from django.core.management import setup_environ
 import settings
 setup_environ(settings)
@@ -49,6 +51,311 @@ def print_values(file, values):
         for v in values:
             file.write("\n\t%s" % v)
 
+
+# Windowed Sessions w/ no windows (just give count)
+
+def get_windowed_sessions_with_no_window():
+    s = Sesshun.objects.all()
+    sw = s.filter(session_type__type__exact = "windowed")
+    windowless = [x for x in sw if len(x.window_set.all()) == 0]
+    return windowless
+
+# non-Windowed Sessions w/ windows (just give count)
+
+def get_non_windowed_sessions_with_windows():
+    s = Sesshun.objects.all()
+    snw = s.exclude(session_type__type__exact = "windowed")
+    windowed = [x for x in snw if len(x.window_set.all()) > 0]
+    return windowed
+
+# windows w/ out start, duration, or default_period
+
+def get_incomplete_windows():
+    ws = Window.objects.all()
+    win_no_start = ws.filter(start_date = None)
+    win_no_dur = ws.filter(duration = None)
+    win_no_period = ws.filter(default_period = None)
+    return (win_no_start, win_no_dur, win_no_period)
+
+# windows w/ any period outside the window range
+
+def get_win_period_outside():
+    ws = Window.objects.all()
+    wp = ws.exclude(default_period = None)
+    badwin = []
+    outside = False
+
+    for i in wp:
+        dps = i.default_period.start # start datetime for period
+        dpe = i.default_period.end() # end datetime for period
+        ws = i.start_datetime()     # start datetime for window
+        we = i.end_datetime()       # end datetime for window
+
+        if dps < ws or dpe > we:
+            outside = True
+
+        if i.period:
+            if i.period.start() < ws or i.period.end() > we:
+                outside = True
+
+        if outside:
+            badwin.append(i)
+
+    return badwin
+
+# overlapping windows belonging to the same session
+
+def get_overlapping_windows():
+    w = Window.objects.all()
+    sid = Set()
+    overlap = []
+
+    for i in w:
+        sid.add(i.session_id)
+
+    for i in sid:
+        wwsid = w.filter(session__id__exact = i)
+        s = len(wwsid)
+
+        # Would like to do this in terms of the model/SQL
+
+        for j in range(0, s):
+            for k in range(j + 1, s):
+                w1s = wwsid[j].start_datetime()     # start datetime for window
+                w1e = wwsid[j].end_datetime()       # end datetime for window
+                w2s = wwsid[k].start_datetime()
+                w2e = wwsid[k].end_datetime()
+
+                # Here we check that the windows don't overlap.  To
+                # meet this condition, a window's start *and* end time
+                # must *both* be less than another's start, *or*
+                # greater than another's end time. That would place
+                # the entire window either before or after the other
+                # window.
+                if not ((w2s < w1s and w2e < w1s) or (w2s > w1e and w2e > w1e)):
+                    overlap.append((wwsid[j], wwsid[k]))
+    return overlap
+
+# periods belonging to windowed sessions that are not assigned to a window.
+
+def get_non_window_periods():
+    ws = Sesshun.objects.filter(session_type__type__exact = "windowed")
+    non_window_periods = []
+
+    for s in ws:
+        pds = s.period_set.all()
+        win = s.window_set.all()
+        winp = Set()
+
+        for i in win:
+            if i.default_period:
+                winp.add(i.default_period)
+
+            if i.period:
+                winp.add(i.period)
+
+        for i in pds:
+            if i not in winp:
+                non_window_periods.append(i)
+
+    return non_window_periods
+
+# windows with more than one period in the scheduled state
+
+def get_windows_with_scheduled_periods():
+    # need a set of windows with more than one period to start with
+    w = Window.objects.exclude(default_period = None).exclude(period = None)
+    w = w.filter(period__state__name = "scheduled").filter(default_period__state__name = "scheduled")
+    return w
+
+
+# windows of the same session with less than 48 hour inter-window interval
+
+def get_window_within_48():
+    w = Window.objects.all()
+    sid = Set()
+    within48 = []
+
+    for i in w:
+        sid.add(i.session_id)
+
+    for i in sid:
+        wwsid = w.filter(session__id__exact = i)
+        s = len(wwsid)
+
+        # Would like to do this in terms of the model/SQL
+
+        for j in range(0, s):
+            for k in range(j + 1, s):
+                w1s = wwsid[j].start_datetime()     # start datetime for window
+                w1e = wwsid[j].end_datetime()       # end datetime for window
+                w2s = wwsid[k].start_datetime()
+                w2e = wwsid[k].end_datetime()
+
+                # Here we check that the windows don't come closer
+                # than 48 hours to each other.  To meet this
+                # condition, the earlier window's end time must be
+                # less at least 2 days earlier than the later window's
+                # start.
+
+                if w1s < w2s:
+                    delta = w2s - w1e
+#                    print w2s, "-", w1e, "=", delta
+                else:
+                    delta = w1s - w2e
+#                    print w1s, "-", w2e, "=", delta
+
+                if delta.days < 2:
+                    within48.append((wwsid[j], wwsid[k], delta))
+    return within48
+
+# windows whose period is pending
+
+def get_pathological_windows():
+    pathological = []
+    w = Window.objects.all()
+
+    for i in w:
+        if i.state() == None or i.dual_pending_state():
+            pathological.append(i)
+
+    return pathological
+
+
+# windows with periods not represented in its session's period list
+
+def get_windows_with_rogue_periods():
+    w = Window.objects.exclude(default_period = None)
+    rogue = []
+
+    for i in w:
+        ps = i.session.period_set.filter(id__exact = i.default_period.id)
+
+        if len(ps) == 0:
+            rogue.append(i)
+
+        if i.period:
+            ps = i.session.period_set.filter(id__exact = i.period.id)
+
+            if len(ps) == 0:
+                rogue.append(i)
+    return rogue
+
+def output_windows(file, wins):
+    for i in wins:
+        file.write("\t%s\t%i\n" % (i.session.name, i.id))
+
+def get_closed_projets_with_open_sessions():
+    p = Project.objects.filter(complete = True)
+    cp = []
+
+    for i in p:
+        if i.sesshun_set.filter(status__complete = False):
+           cp.append(i)
+
+    return cp
+
+    
+
+def output_windows_report(file):
+    file.write("\n\nWindows:\n\n")
+
+    w = []
+    w.append(get_windowed_sessions_with_no_window())
+    w.append(get_non_windowed_sessions_with_windows())
+    w.append(get_incomplete_windows())
+    w.append(get_win_period_outside())
+    w.append(get_overlapping_windows())
+    w.append(get_non_window_periods())
+    w.append(get_windows_with_scheduled_periods())
+    w.append(get_window_within_48())
+    w.append(get_pathological_windows())
+    w.append(get_windows_with_rogue_periods())
+
+    file.write("Summary\n")
+    file.write("\tNumber of windowed sessions with no windows: %i\n" % len(w[0]))
+    file.write("\tNumber of non-windowed sessions with windows assigned: %i\n" % len(w[1]))
+    file.write("\tNumber of incomplete windows (missing data: start, duration, period): (%i, %i, %i)\n" % (len(w[2][0]), len(w[2][1]), len(w[2][2])))
+    file.write("\tNumber of windows with periods outside window: %i\n" % len(w[3]))
+    file.write("\tNumber of overlapping window pairs: %i\n" % len(w[4]))
+    file.write("\tNumber of periods belonging in windowed sessions not in windows: %i\n" % (len(w[5])))
+    file.write("\tWindows with more than one period in the scheduled state: %i\n" % len(w[6]))
+    file.write("\tWindows within same session that come within 48 hours of each other: %i\n" % len(w[7]))
+    file.write("\tWindows in an illegal state: %i\n" % len(w[8]))
+    file.write("\tWindows with periods not in their session period set: %i\n" % len(w[9]))
+
+
+    file.write("\n\nWindow Details\n\n")
+
+    if len(w[0]):
+        file.write("Windowed sessions with no windows:\n")
+
+        for i in w[0]:
+            file.write("\t%s\n" % i.name)
+
+    if len(w[1]):
+        file.write("\nNon-windowed sessions with windows assigned:\n")
+
+        for i in w[1]:
+            file.write("\t%s\n" % i.name)
+
+    if len(w[2]):
+        file.write("\nIncomplete windows:\n")
+
+        if len(w[2][0]):
+            file.write("\n\tWith no start date:\n")
+            output_windows(file, w[2][0])
+
+        if len(w[2][1]):
+            file.write("\n\tWith no duration:\n")
+            output_windows(file, w[2][1])
+
+        if len(w[2][2]):
+            file.write("\n\tWith no period:\n")
+#            print_values(file, w[2][2])
+            output_windows(file, w[2][2])
+
+    if len(w[3]):
+        file.write("\nWindows with periods outside window:\n")
+        output_windows(file, w[3])
+
+    if len(w[4]):
+        file.write("\nOverlapping window pairs:\n")
+
+        for i in w[4]:
+            file.write("\t%s\t%i\t&\t%s\t%i\n" % \
+                       (i[0].session.name, i[0].id, i[1].session.name, i[1].id))
+
+    if len(w[5]):
+        file.write("\nPeriods belonging in windowed sessions not in windows:\n")
+
+        for i in w[5]:
+            file.write("\t%s\t%i\n" % (i.session.name, i.id))
+
+    if len(w[6]):
+        file.write("\nWindows with more than one period in the scheduled state:\n")
+        output_windows(file, w[6])
+
+    if len(w[7]):
+        file.write("\nWindows within same session that come within 48 hours of each other:\n")
+        file.write("\n\t(Window, Window, delta(days, seconds))\n")
+
+        for i in w[7]:
+            #exclude windows that overlap. Those are covered earlier.
+            if not (i[2].days < 0 or i[2].seconds < 0):
+                file.write("\t%s\t%i\t&\t%s\t%i\t(%i, %i)\n" % \
+                           (i[0].session.name, i[0].id, i[1].session.name,
+                            i[1].id, i[2].days, i[2].seconds))
+
+    if len(w[8]):
+        file.write("\nWindows in an illegal state:\n")
+        output_windows(file, w[8])
+
+    if len(w[9]):
+        file.write("\nWindows with periods not in their session period set:\n")
+        output_windows(file, w[9])
+
+
 def GenerateReport():
 
     ta = TimeAccounting()
@@ -73,7 +380,7 @@ def GenerateReport():
               if s.session_type.type == "open" and \
                  s.allotment.total_time < s.min_duration]
     print_values(outfile, values)
-        
+
     outfile.write("\n\nOpen sessions (not completed) with time left < min duration:")
     values = [s.name for s in sessions \
               if s.session_type.type == "open" and \
@@ -125,7 +432,7 @@ def GenerateReport():
             values.append("%s %s %5.4f" % (s.name
                                          , s.receiver_list_simple()
                                          , s.frequency))
-    print_values(outfile, values)                                         
+    print_values(outfile, values)
 
     outfile.write("\n\nProjects without a friend:")
     values = [p.pcode for p in projects if not p.complete and not p.friend]
@@ -204,7 +511,7 @@ def GenerateReport():
         # periods should be head to tail - TBF: this catches overlaps too!
         if p.start != previous.end():
             values.append("Gap between: %s and %s" % (previous, p))
-        previous = p    
+        previous = p
     print_values(outfile, values)
 
     outfile.write("\n\nPeriods with non-positive durations:")
@@ -220,9 +527,16 @@ def GenerateReport():
     values  = [str(p) for p in ps if p.accounting.observed() > 0.]
     print_values(outfile, values)
 
-    outfile.write("\n\nPending Periods (non-windowed):") 
+    outfile.write("\n\nPending Periods (non-windowed):")
     values  = [str(p) for p in periods if p.isPending() and not p.is_windowed()]
     print_values(outfile, values)
+
+    outfile.write("\n\nCompleted projects with non-complete sessions:")
+    print_values(outfile, get_closed_projets_with_open_sessions())
+
+    output_windows_report(outfile)
+
+
 
 if __name__ == '__main__':
     GenerateReport()
