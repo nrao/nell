@@ -95,7 +95,7 @@ def get_win_period_outside():
             outside = True
 
         if i.period:
-            if i.period.start() < ws or i.period.end() > we:
+            if i.period.start < ws or i.period.end() > we:
                 outside = True
 
         if outside:
@@ -255,7 +255,39 @@ def get_closed_projets_with_open_sessions():
 
     return cp
 
-    
+######################################################################
+# Look for sessions that have something other than just 1 target.
+######################################################################
+
+def sessions_with_null_or_multiple_targets():
+    ss = Sesshun.objects.all()
+    s = [x for x in ss if len(x.target_set.all()) is not 1]
+    return s
+
+######################################################################
+# Sessions with NULL frequency
+######################################################################
+
+def sessions_with_null_frequency():
+    ss = Sesshun.objects.all()
+    s = ss.filter(frequency = None)
+    return s
+
+######################################################################
+# Sessions with bad targets.  A bad target is defined as a session
+# that has just 1 target, but said target is missing ra and/or dec.
+######################################################################
+
+def sessions_with_bad_target():
+    ss = Sesshun.objects.all()
+    s = [x for x in ss if len(x.target_set.all()) is 1]
+    bad_target_sessions = [x for x in s if x.target_set.all()[0].horizontal is None
+                           or x.target_set.all()[0].vertical is None]
+    return bad_target_sessions
+
+######################################################################
+# Writes out the Windows reports
+######################################################################
 
 def output_windows_report(file):
     file.write("\n\nWindows:\n\n")
@@ -533,6 +565,18 @@ def GenerateReport():
 
     outfile.write("\n\nCompleted projects with non-complete sessions:")
     print_values(outfile, get_closed_projets_with_open_sessions())
+
+    outfile.write("\n\nSessions with wrong number of targets (!= 1):")
+    values = sessions_with_null_or_multiple_targets()
+    print_values(outfile, values)
+
+    outfile.write("\n\nSessions with frequency == NULL:")
+    values = sessions_with_null_frequency()
+    print_values(outfile, values)
+
+    outfile.write("\n\nSessions with NULL RA and/or DEC:")
+    values = sessions_with_bad_target()
+    print_values(outfile, values)
 
     output_windows_report(outfile)
 
