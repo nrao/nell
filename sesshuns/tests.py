@@ -1991,7 +1991,8 @@ class TestPublishPeriods(NellTestCase):
 
         url = "/periods/publish/%d" % self.ps[1].id
 
-        response = c.post(url) #, dict(start    = time
+        # Remember not to embarrass ourselves by tweeting! tweet == False
+        response = c.post(url, dict(tweet = False))
         self.failUnless("ok" in response.content)    
 
         ps = Period.objects.order_by("start")
