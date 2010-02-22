@@ -29,6 +29,7 @@
               <th title="The target right ascension in J2000.">RA</th>
               <th title="The target declination in J2000.">Dec</th>
               <th title="The target frequency in GHz.">Freq</th>
+              <th title="The required receiver(s).">Rcvr</th>
               <th title="The billed and the allotted time in hours.">Time billed</th>
               <th title="The requested minimum and maximum duration of a telescope period.  To change these values, send an email to the helpdesk.">Min/Max Durations</th>
               <th title="The classified observing type.">Type</th>
@@ -49,6 +50,7 @@
               <td>{{s|target_horz}}</td>
               <td>{{s|target_vert}}</td>
               <td>{{s.frequency}}</td>
+              <td>{{s.receiver_list_simple}}</td>
               <td>{{s.getTimeBilled}} / {{s.allotment.total_time}}</td>
               <td>{{s.min_duration}} - {{s.max_duration}}</td>
               <td>{{s.observing_type.type}}</td>
