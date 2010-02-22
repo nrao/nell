@@ -9,7 +9,8 @@ from settings                 import PROXY_PORT, DATABASE_NAME
 from utilities.SchedulingNotifier import SchedulingNotifier
 
 import simplejson as json
-import twitter
+# TBF: get this back in once we figure out the deployment issues.
+#import twitter
 
 ROOT_URL = "http://trent.gb.nrao.edu:%d" % PROXY_PORT
 
@@ -338,10 +339,10 @@ def publish_periods(request, *args, **kwds):
 
     # Let the world know if we so desire. Default is to tweet unless we
     # are using our sandboxes.
-    if DATABASE_NAME == 'dss' and request.POST.get("tweet", "True") == "True":
-        update = 'GBT Schedule Update - https://dss.gb.nrao.edu/schedule/public'
-        twitter.Api(username = 'GrnBnkTelescope'
-                  , password = 'dYN4m1(').PostUpdate(update)
+    #if DATABASE_NAME == 'dss' and request.POST.get("tweet", "True") == "True":
+    #    update = 'GBT Schedule Update - https://dss.gb.nrao.edu/schedule/public'
+    #    twitter.Api(username = 'GrnBnkTelescope'
+    #              , password = 'dYN4m1(').PostUpdate(update)
 
     # Ok, we're done.
     return HttpResponse(json.dumps({'success':'ok'})
