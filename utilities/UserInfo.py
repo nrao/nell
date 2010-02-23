@@ -29,7 +29,9 @@ class UserInfo(object):
             info = self.getStaticContactInfoByID(user.pst_id, use_cache)
         except:
             return dict(emails       = []
+                      , emailDescs   = []
                       , phones       = ['Not Available']
+                      , phoneDescs   = ['Not Available']
                       , postals      = ['Not Available']
                       , affiliations = ['Not Available']
                       , username     = user.username)
