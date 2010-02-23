@@ -163,8 +163,8 @@ def profile(request, *args, **kws):
                              , 'requestor'    : requestor
                              , 'authorized'   : user == requestor # allowed to edit
                              #, 'clients'      : Project.objects.filter(friend=user)
-                             , 'emails'       : static_info['emails']
-                             , 'phones'       : static_info['phones']
+                             , 'emails'       : static_info['emailDescs']
+                             , 'phones'       : static_info['phoneDescs']
                              , 'postals'      : static_info['postals']
                              , 'affiliations' : static_info['affiliations']
                              , 'username'     : static_info['username']

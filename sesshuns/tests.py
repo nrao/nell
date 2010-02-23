@@ -2697,9 +2697,14 @@ class TestUserInfo(NellTestCase):
         self.xml = et.fromstring(self.xmlStr)
         self.xmlDict = \
         {'contact-info': \
-            {'phone-numbers':   {'default-phone-number': '304-456-2202'}
-           , 'email-addresses': {'default-email-address': 'pmargani@nrao.edu'
-                             , 'additional-email-address': ['paghots@hotmail.com', 'pmargani@gmail.com']}
+            {'phone-numbers':   {'default-phone-number': {'description' : 'Work'
+                                                         ,'number' : '304-456-2202'}}
+           , 'email-addresses': {'default-email-address': {'description' : 'Work'
+                                                          ,'addr' : 'pmargani@nrao.edu'}
+                             , 'additional-email-address': [{'description' : 'Other'
+                                                            ,'addr' : 'paghots@hotmail.com'}
+                                                          , {'description' : 'Personal'
+                                                            ,'addr' : 'pmargani@gmail.com'}]}
            , 'postal-addresses': [{'city': 'Green Bank'
                                  , 'streetlines': ['NRAO', 'PO Box 2']
                                  , 'address-type': 'Office'
@@ -2733,14 +2738,20 @@ class TestUserInfo(NellTestCase):
         emails = ['pmargani@nrao.edu'
                 , 'paghots@hotmail.com'
                 , 'pmargani@gmail.com']
+        emailDescs = ['pmargani@nrao.edu (Work)'
+                    , 'paghots@hotmail.com (Other)'
+                    , 'pmargani@gmail.com (Personal)']
         phones = ['304-456-2202']        
+        phoneDescs = ['304-456-2202 (Work)']        
         postals = \
             ['NRAO, PO Box 2, Green Bank, West Virginia, 24944, USA, (Office)'
            , '49 columbus Ave., W. Bridgewater, Massachusetts, 02379, United States, (Other)']
         affiliations = ['National Radio Astronomy Observatory '
                       , 'Oregon, University of']
         self.assertEquals(emails, info['emails'])        
+        self.assertEquals(emailDescs, info['emailDescs'])        
         self.assertEquals(phones, info['phones'])
+        self.assertEquals(phoneDescs, info['phoneDescs'])
         self.assertEquals(postals, info['postals'])
         self.assertEquals(affiliations, info['affiliations'])
         self.assertEquals('pmargani', info['username'])
