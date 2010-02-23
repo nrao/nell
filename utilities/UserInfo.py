@@ -68,14 +68,24 @@ class UserInfo(object):
         if contacts is not None:
             # got emails?
             pst_emails = contacts.get('email-addresses', None)
-            emails, emailDescs = self.parseUserDictEntry(pst_emails
-                                                       , 'email-address'
-                                                       , 'addr')
+            try:
+                emails, emailDescs = self.parseUserDictEntry(pst_emails
+                                                           , 'email-address'
+                                                           , 'addr')
+            except:
+                emails = []
+                emailDescs = []
+
             # got phones?
             pst_phones = contacts.get('phone-numbers', None)                
-            phones, phoneDescs = self.parseUserDictEntry(pst_phones
-                                                       , 'phone-number'
-                                                       , 'number')
+            try:
+                phones, phoneDescs = self.parseUserDictEntry(pst_phones
+                                                           , 'phone-number'
+                                                           , 'number')
+            except:
+                phones = []
+                phoneDescs = []
+
             # got postal addresses?
             pst_postals = contacts.get('postal-addresses', None)
             if pst_postals is not None:
