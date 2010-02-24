@@ -1444,6 +1444,7 @@ class TestSesshun(NellTestCase):
         ldata["transit"] = "true"
         ldata["nighttime"] = "false"
         ldata["lst_ex"] = "2.00-4.00"
+        ldata["receiver"] = "(K & (X | (L | C)))"
         s.update_from_post(ldata)
         
         # now get this session from the DB
@@ -1456,6 +1457,12 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.transit(), ldata["transit"] == "true")
         self.assertEqual(s.nighttime(), None)
         self.assertEqual(s.get_LST_exclusion_string(), ldata["lst_ex"])
+        rgs = s.receiver_group_set.all()
+        self.assertEqual(2, len(rgs))
+        self.assertEqual(['K']
+                       , [r.abbreviation for r in rgs[0].receivers.all()])
+        self.assertEqual(['L', 'C', 'X']
+                       , [r.abbreviation for r in rgs[1].receivers.all()])
 
     def test_update_from_post2(self):
         ss = Sesshun.objects.all()
@@ -1764,14 +1771,18 @@ class TestSessionResource(NellTestCase):
         self.failUnlessEqual(response.status_code, 200)
         r_json = json.loads(response.content)
         self.assertTrue(r_json.has_key('receiver'))
-        self.assertEquals(r_json['receiver'], u'(K) & (L | S)')
+        # Next two lines are logically equivalent
+        #self.assertEquals(r_json['receiver'], u'(K) & (L | S)')
+        self.assertEquals(r_json['receiver'], u'(K & (L | S))')
         # etc
         response = self.client.post('/sessions',
                                     {'receiver' : 'Ka | (342 & S)'})
         self.failUnlessEqual(response.status_code, 200)
         r_json = json.loads(response.content)
         self.assertTrue(r_json.has_key('receiver'))
-        self.assertEquals(r_json['receiver'], u'(342 | Ka) & (S | Ka)')
+        # Next two lines are logically equivalent
+        #self.assertEquals(r_json['receiver'], u'(342 | Ka) & (S | Ka)')
+        self.assertEquals(r_json['receiver'], u'((342 | Ka) & (S | Ka))')
 
 class TestWindowResource(NellTestCase):
 
@@ -2513,7 +2524,44 @@ class TestDSSPrime2DSS(NellTestCase):
 
 class TestReceiverCompile(NellTestCase):
 
+    def setUp(self):
+
+        super(TestReceiverCompile, self).setUp()
+        self.nn = Receiver.get_abbreviations()
+        self.rc = ReceiverCompile(self.nn)
+        
+        # normalize:   values[0] -> values[1]
+        # denormalize: values[1] -> values[0]
+        self.values = [('Q', [['Q']])
+                     , ('((L | X) | C)', [['L', 'X', 'C']])
+                     , ('(K & (L | S))', [['K'], ['L', 'S']])
+                     , ('((342 | K) & (342 | Ka))'
+                      , [['342', 'K'], ['342', 'Ka']] )
+                     , ('((((L | X) | C) | S) & 342)'
+                      , [['L', 'X', 'C', 'S'], ['342']])
+                     ]
+                    
+    def test_pairValues(self):
+
+        self.assertEquals('Q', self.rc.pairValues(['Q'], '|'))
+        self.assertEquals('((L | X) | C)'
+                         , self.rc.pairValues(['L', 'X', 'C'], '|'))
+        self.assertEquals('(((((L | X) | C) | A) | B) | C)'          
+                    , self.rc.pairValues(['L', 'X', 'C', 'A', 'B', 'C'], '|'))
+
+    def test_denormalize(self):
+
+        for v in self.values:
+            self.assertEquals(v[0], self.rc.denormalize(v[1]))
+
+    def test_symmettry(self):
+
+        for v in self.values:
+            self.assertEquals(v[0]
+                            , self.rc.denormalize(self.rc.normalize(v[0])))
+
     def test_normalize(self):
+
         nn = Receiver.get_abbreviations()
         rc = ReceiverCompile(nn)
         self.assertEquals(rc.normalize(u'Q'), [[u'Q']])
