@@ -529,6 +529,10 @@ class TestReceiver(NellTestCase):
 
     def test_save_receivers(self):
         s = Sesshun.objects.all()[0]
+        rcvr = ''
+        s.save_receivers(rcvr)
+        rgs = s.receiver_group_set.all()
+        self.assertEqual(0, len(rgs))
         rcvr = 'L'
         s.save_receivers(rcvr)
         rgs = s.receiver_group_set.all()

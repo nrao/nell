@@ -19,7 +19,9 @@ class ReceiverCompile:
         'and' may be represented by '&' or '^' and 'or' may be represented
         by '|' or 'v'.
         """
-        if text is None:
+        if text is not None:
+            text = text.strip()
+        if text is None or text == "":
             return []
         if isinstance(text, unicode):
             text = text.encode("ascii")
