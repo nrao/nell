@@ -1736,6 +1736,28 @@ class Target(models.Model):
         return "%s @ (%5.2f, %5.2f), Sys: %s" % \
             (self.source, self.horizontal, self.vertical, self.system)
 
+    def get_horizontal(self):
+        "Returns the horizontal component in sexigesimal form."
+        if self.horizontal is None:
+            return ""
+
+        horz = TimeAgent.rad2hr(self.horizontal)
+        mins = (horz - int(horz)) * 60
+        secs = (mins - int(mins)) * 60
+        if abs(secs - 60.) < 0.1:
+            mins = int(mins) + 1
+            if abs(mins - 60.) < 0.1:
+                mins = 0.0
+                horz = int(horz) + 1
+            secs = 0.0
+        return ":".join(map(str, [int(horz), int(mins), "%.1f" % secs]))
+
+    def get_vertical(self):
+        if self.vertical is None:
+            return ""
+
+        return "%.3f" % TimeAgent.rad2deg(self.vertical)
+
     class Meta:
         db_table = "targets"
 

@@ -3,7 +3,6 @@ from sesshuns            import models
 from datetime            import datetime, timedelta
 from sesshuns.models     import first
 from sets                import Set
-from utilities.TimeAgent import rad2hr, rad2deg, est2utc
 
 register = template.Library()
 
@@ -21,18 +20,7 @@ def dt2sex(value):
 @register.filter
 def target_horz(value):
     t = first(value.target_set.all())
-    if t is None or t.horizontal is None:
-        return ""
-    horz = rad2hr(t.horizontal)
-    mins = (horz - int(horz)) * 60
-    secs = (mins - int(mins)) * 60
-    if abs(secs - 60.) < 0.1:
-        mins = int(mins) + 1
-        if abs(mins - 60.) < 0.1:
-            mins = 0.0
-            horz = int(horz) + 1
-        secs = 0.0
-    return ":".join(map(str, [int(horz), int(mins), "%.1f" % secs]))
+    return t.get_horizontal()
 
 @register.inclusion_tag('flatten.html')
 def edit_allotment(sesshun_id):
@@ -48,9 +36,7 @@ def edit_allotment(sesshun_id):
 @register.filter
 def target_vert(value):
     t = first(value.target_set.all())
-    if t is None or t.vertical is None:
-        return ""
-    return "%.3f" % rad2deg(t.vertical)
+    return t.get_vertical()
 
 @register.inclusion_tag('flatten.html')
 def display_allotments_for_project(project_id):
