@@ -110,10 +110,9 @@ def GenerateProjectReport():
     trimester_hrs_left = (trimester.end() - datetime.today()).days * 24.
     TRIMESTER_HOURS    = (trimester.end() - trimester.start()).days * 24.
 
-    outfile.write("\nTotal hours in this trimester = %.1f\n"% TRIMESTER_HOURS)
+    outfile.write("\nTotal hours in this trimester   = %.1f"% TRIMESTER_HOURS)
     outfile.write("\nTotal hours left this trimester = %.1f\n" % \
                   trimester_hrs_left)
-
 
     # All open projects + 
     # All projects for this trimester +
@@ -129,32 +128,28 @@ def GenerateProjectReport():
                    for pd in s.period_set.all()])]
 
     ta    = TimeAccounting()
-    hours = sum([min(ta.getProjectTotalTime(p)
-                   , ta.getProjSessionsTotalTime(p))
-                 for p in projects])
+    hours = sum([ta.getProjectTotalTime(p) for p in projects])
 
-    outfile.write("\nSum of all sessions' allotment time = %.1f\n" % hours)
-    outfile.write("\nAllotment hours / Trimester Hours = %.1f%%\n" % 
+    outfile.write("\nSum of all projects' allotment time = %.1f" % hours)
+    outfile.write("\nAllotment hours / Trimester Hours   = %.1f%%" % 
                   (hours / TRIMESTER_HOURS * 100.))
 
-    outfile.write("\nHours discharged / Trimester Hours = %.1f%%\n" % 
-                  (sum([ta.getTime("observed", p) for p in projects]) / TRIMESTER_HOURS * 100.))
+    outfile.write("\nTime billed     / Trimester Hours   = %.1f%%\n" % 
+                  (sum([ta.getCompletedTimeBilled(p) for p in projects]) / TRIMESTER_HOURS * 100.))
 
     hours = sum([ta.getTimeLeft(p) for p in projects if not p.complete])
-    outfile.write("\nSum of all sessions' hours remaining = %.1f\n" % hours)
-    outfile.write("\nHours remaining / Trimester Hours = %.1f%%\n" % 
+    outfile.write("\nSum of all projects' hours remaining   = %.1f" % hours)
+    outfile.write("\nHours remaining / Trimester Hours      = %.1f%%" % 
                   (hours / TRIMESTER_HOURS * 100.))
     outfile.write("\nHours remaining / Trimester Hours Left = %.1f%%\n" % 
                   float(hours / trimester_hrs_left * 100.))
 
-    hours = sum([s.allotment.total_time \
-                 for p in projects \
-                 for s in p.sesshun_set.all() \
-                 if s.schedulable()])
-    outfile.write("\nSum of all schedulable sessions' total time = %.1f\n" % \
+    hours = sum([ta.getProjectSchedulableTotalTime(p) for p in projects])
+    outfile.write("\nSum of all schedulable time             = %.1f" % \
                   hours)
 
-    outfile.write("\nSum of all schedulable sessions' total time / total hours in a trimester = %.1f%%\n" % (hours / TRIMESTER_HOURS * 100.))  
+    outfile.write("\nSchedulable time / Trimester Hours      = %.1f%%" % (hours / TRIMESTER_HOURS * 100.))  
+    outfile.write("\nSchedulable time / Trimester Hours Left = %.1f%%\n" % (hours / trimester_hrs_left * 100.))  
 
     outfile.close()
 
