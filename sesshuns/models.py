@@ -403,6 +403,12 @@ class Project(models.Model):
     def getSumTotalTime(self):
         return TimeAccounting().getProjectTotalTime(self)
 
+    def getTimeRemainingFromCompleted(self):
+        return TimeAccounting().getTimeRemainingFromCompleted(self)
+
+    def getTimeRemaining(self):
+        return TimeAccounting().getTimeRemaining(self)
+
     def init_from_post(self, fdata):
         self.update_from_post(fdata)
 
@@ -477,6 +483,7 @@ class Project(models.Model):
               , "total_time"   : totals
               , "PSC_time"     : pscs
               , "sem_time"     : max_sems
+              , "remaining"    : self.getTimeRemaining()
               , "grade"        : grades
               , "pcode"        : self.pcode
               , "name"         : self.name
@@ -1584,6 +1591,9 @@ class Sesshun(models.Model):
     def getTimeBilled(self):
         return TimeAccounting().getTime("time_billed", self)
 
+    def getTimeRemaining(self):
+        return TimeAccounting().getTimeRemaining(self)
+
     def jsondict(self):
         d = {"id"         : self.id
            , "pcode"      : self.project.pcode
@@ -1592,6 +1602,7 @@ class Sesshun(models.Model):
            , "total_time" : self.allotment.total_time
            , "PSC_time"   : self.allotment.psc_time
            , "sem_time"   : self.allotment.max_semester_time
+           , "remaining"  : self.getTimeRemaining()
            , "grade"      : self.allotment.grade
            , "orig_ID"    : self.original_id
            , "name"       : self.name

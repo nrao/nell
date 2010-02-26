@@ -357,12 +357,16 @@ class TestPeriod(NellTestCase):
         start = datetime(2009, 6, 1, 12, 15)
         dur   = 180
         
+        pa = Period_Accounting(scheduled = 0)
+        pa.save()
+
         p = Period()
         p.start = start
         p.duration = dur
         p.session = self.sesshun
         p.backup = True
         p.state = first(Period_State.objects.filter(abbreviation = 'P'))
+        p.accounting = pa
 
         p.save()
 
@@ -1796,10 +1800,13 @@ class TestWindowResource(NellTestCase):
         self.sesshun = create_sesshun()
         dt = datetime(2010, 1, 1, 12, 15)
         pending = first(Period_State.objects.filter(abbreviation = "P"))
+        pa = Period_Accounting(scheduled = 0)
+        pa.save()
         self.default_period = Period(session = self.sesshun
                                    , start = dt
                                    , duration = 5.0
                                    , state = pending
+                                   , accounting = pa
                                    )
         self.default_period.save()                           
         pjson = self.default_period.jsondict('UTC')
