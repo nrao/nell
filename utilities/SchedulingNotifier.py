@@ -1,32 +1,43 @@
-# Copyright (C) 2009 Associated Universities, Inc. Washington DC, USA.
+######################################################################
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software Foundation,
-# Inc., 675 Mass Ave Cambridge, MA 02139, USA.
+#  Copyright (C) 2009 Associated Universities, Inc. Washington DC, USA.
 #
-# Correspondence concerning GBT software should be addressed as follows:
-#     GBT Operations
-#     National Radio Astronomy Observatory
-#     P. O. Box 2
-#     Green Bank, WV 24944-0002 USA
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful, but
+#  WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+#  General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+#  Correspondence concerning GBT software should be addressed as follows:
+#  GBT Operations
+#  National Radio Astronomy Observatory
+#  P. O. Box 2
+#  Green Bank, WV 24944-0002 USA
+#
+#  $Id:$
+#
+######################################################################
 
-from   Notifier  import Notifier
-from   datetime  import datetime, timedelta
-from   sets      import Set
+from Notifier import Notifier
+from datetime import datetime, timedelta
+from sets     import Set
+from Email    import Email
+
+
 import TimeAgent
 
 class SchedulingNotifier(Notifier):
- 
+
     def __init__(self
                , periods
                , skipEmails = []
@@ -34,9 +45,8 @@ class SchedulingNotifier(Notifier):
                , log        = False):
         Notifier.__init__(self, skipEmails, test, log)
 
+        self.sender = "helpdesk-dss@gb.nrao.edu"
         self.examinePeriods(periods)
-        #self.periods = periods
-
         self.periods.sort(lambda x, y: cmp(x.start, y.start))
 
         if self.periods != []:
@@ -46,15 +56,24 @@ class SchedulingNotifier(Notifier):
             self.startdate = datetime.utcnow()
             self.enddate   = self.startdate + timedelta(hours = 48)
 
-        # by default, set the class up for notifying obsevers of what
-        # will be obseved in the next time period
-        self.createObservingAddresses()
-        self.createObservingSubject()
-        self.createBody()
+        self.emailProjectMap = self.createAddresses(self.periods)
+        self.registerTemplate("observer", Email(self.sender,
+                                                self.createObservingAddresses(),
+                                                self.createObservingSubject(),
+                                                self.createBody()))
+        self.registerTemplate("deleted", Email(self.sender,
+                                               self.createDeletedAddresses(),
+                                               self.createDeletedSubject(),
+                                               self.createDeletedBody()))
+        self.registerTemplate("staff", Email(self.sender,
+                                             self.createStaffAddresses(),
+                                             self.createStaffSubject(),
+                                             self.createBody()))            
+
 
     def examinePeriods(self, periods):
         """
-        This class must notify observers of eminent observations, *and*
+        This class must notify observers of imminent observations, *and*
         remind observers of things that have changed.  Here we filter out
         the two purposes from our generic list of periods.
         """
@@ -69,82 +88,107 @@ class SchedulingNotifier(Notifier):
         # the list of periods that we must list to remind obs. of changes:
         self.changedPeriods = sorted([p for p in periods if p.isDeleted() or \
                                    p.accounting.of_interest()])
-                              
+
         # deleted periods must also be tracked separately, because those
         # observers will get an email with a different subject
         self.deletedPeriods = sorted([p for p in periods if p.isDeleted()])
 
     def notify(self):
         "send out all the different emails"
-        # notify the obs; subject = "Your GBT Project has been scheduled..."
-        Notifier.notify(self)
+
+        print "In SchedulingNotifier.notify()"
+        # notify the obs; subject = "Your GBT Project has been
+        # scheduled..."  Because each observer will get a custom
+        # 'subject' line with the pcode appended, each must get a
+        # separate email.
+
+        for i in self.getAddresses("observer"):
+            pcodes = " - ".join(self.emailProjectMap[i])
+            email = self.cloneTemplate("observer")
+            subject = "%s (%s)" % (email.GetSubject(), pcodes)
+            email.SetRecipients(i)
+            email.SetSubject(subject)
+            self.post(email)
 
         # now let the people who aren't observing know, but who
         # might have been in scheduled in the past
-        self.createDeletedAddresses()
-        self.createDeletedSubject()
-        if len(self.getAddresses()) != 0:
-            Notifier.notify(self)
+
+        if len(self.getAddresses("deleted")) != 0:
+            email = self.cloneTemplate("deleted")
+            self.post(email)
 
         # now let the staff know - "GBT schedule for ..."
-        self.createStaffAddresses()
-        self.createStaffSubject()
-        Notifier.notify(self)
+
+        if len(self.getAddresses("staff")) != 0:
+            email = self.cloneTemplate("staff")
+            self.post(email)
+
+        Notifier.notify(self) # send all the queued messages out!
+        self.flushQueue()     # just in case.  If queue is empty, does nothing.
 
     def createStaffAddresses(self):
-        self.setAddresses(["gbtops@gb.nrao.edu", "gbtlocal@gb.nrao.edu", "gbtime@gb.nrao.edu"])
-        self.logMessage("Staff To: %s\n" % self.getAddresses())
+        staff = ["gbtops@gb.nrao.edu", "gbtlocal@gb.nrao.edu", "gbtime@gb.nrao.edu"]
+        self.logMessage("Staff To: %s\n" % staff)
+        return staff
 
     def createObservingAddresses(self):
         "get addresses of only those who are observing"
-        self.createAddresses(self.observingPeriods)
+        return self.emailProjectMap.keys()
 
     def createDeletedAddresses(self):
         "get addresses of only those who had periods originally scheduled"
-        self.createAddresses(self.deletedPeriods)
+        return self.createAddresses(self.deletedPeriods).keys()
 
     def createAddresses(self, periods):
-        # Make sure we get succinct list of observers because we need to
-        # query the user db and we should minimize the number of calls.
-        observers = [o.user for p in periods \
-                            for o in p.session.project.get_observers()]
-        observers.extend([p.session.project.principal_contact() \
-                          for p in periods \
-                          if p.session.project.principal_contact() is not None])
-                          
-        observers = Set(observers)
+        """
+        Creates and returns a dictionary containing the addresses
+        associated with the periods as keys, and maintaining the
+        association of the projects to those addresses.  Projects
+        associated with the addresses are stored in a set which is
+        accessed using the address as a key.
+        """
+        eaddr = {}
 
-        #if not self.test:
-            # get email addresses from the PST
-        addresses = Set([e for o in observers \
-                         for e in o.getStaticContactInfo()['emails']])
-        #else:
-            # for testing, we don't want to use the PST server
-            # so just make up some emails
-        #    addresses = Set(["%s@test.edu" % o.first_name for o in observers])
+        for p in periods:
 
-        self.setAddresses(list(addresses))
+            obs = [o.user for o in p.session.project.get_observers()]
+            pc = p.session.project.principal_contact()
 
-        self.logMessage("To: %s\n" % self.getAddresses())
+            if pc is not None and pc not in obs:
+                obs.append(p.session.project.principal_contact())
+
+            for o in obs:
+                for e in o.getStaticContactInfo()['emails']:
+                    if eaddr.has_key(e):
+                        eaddr[e].add(p.session.project.pcode)
+                    else:
+                        eaddr[e] = set([p.session.project.pcode])
+
+        self.logMessage("To: %s\n" % eaddr.keys())
+        return eaddr
 
     def createStaffSubject(self):
-        self.setSubject("GBT schedule for %s-%s" % \
-                        (TimeAgent.utc2est(self.startdate).strftime('%b %d')
-                       , TimeAgent.utc2est(self.enddate).strftime('%b %d')))
-        self.logMessage("Staff Subject: %s\n" % self.getSubject())
+        subject = "GBT schedule for %s-%s" % \
+                  (TimeAgent.utc2est(self.startdate).strftime('%b %d'),
+                   TimeAgent.utc2est(self.enddate).strftime('%b %d'))
+        self.logMessage("Staff Subject: %s\n" % subject)
+        return subject
 
     def createDeletedSubject(self):
-        self.setSubject("Reminder: GBT Schedule has changed.")
-        self.logMessage("Subject: %s\n" % self.getSubject())
+        subject = "Reminder: GBT Schedule has changed."
+        self.logMessage("Deleted Subject: %s\n" % subject)
+        return subject
 
     def createObservingSubject(self):
-        self.setSubject("Your GBT project has been scheduled (%s-%s)" % \
-                        (TimeAgent.utc2est(self.startdate).strftime('%b %d')
-                       , TimeAgent.utc2est(self.enddate).strftime('%b %d')))
-        self.logMessage("Subject: %s\n" % self.getSubject())
+        subject = "Your GBT project has been scheduled (%s-%s)" % \
+                  (TimeAgent.utc2est(self.startdate).strftime('%b %d'),
+                   TimeAgent.utc2est(self.enddate).strftime('%b %d'))
+        self.logMessage("Observing Subject: %s\n" % subject)
+        return subject
 
     def createBody(self):
-        self.setBody("""
+        body = \
+"""
 Dear Colleagues,
 
 The schedule for the period %s ET through %s ET is fixed and available.
@@ -155,21 +199,24 @@ Please log into https://dss.gb.nrao.edu to view your observation
 related information.
 
 Any requests or problems with the schedule should be directed
-to helpdesk-dss@gb.nrao.edu.
+to %s.
 
 Happy Observing!
-""" % (TimeAgent.utc2est(self.startdate).strftime('%b %d %H:%M')
-     , TimeAgent.utc2est(self.enddate).strftime('%b %d %H:%M')
-     , self.getSessionTable(self.observingPeriods)
-     , self.getChanges()))
+""" \
+        % (TimeAgent.utc2est(self.startdate).strftime('%b %d %H:%M'),
+           TimeAgent.utc2est(self.enddate).strftime('%b %d %H:%M'),
+           self.getSessionTable(self.observingPeriods),
+           self.getChanges(), self.sender)
 
-        self.logMessage("Body: %s\n" % self.getBody())
+        self.logMessage("Observing and Staff Body: %s\n" % body)
+        return body
 
     def createDeletedBody(self):
-        self.setBody("""
+        body = \
+"""
 Dear Colleagues,
 
-This is a reminder that the following projects had been scheduled 
+This is a reminder that the following projects had been scheduled
 between %s ET through %s ET, but have been removed from the schedule.
 
 %s
@@ -181,12 +228,13 @@ Any requests or problems with the schedule should be directed
 to helpdesk-dss@gb.nrao.edu.
 
 Thank You.
-""" % (TimeAgent.utc2est(self.startdate).strftime('%b %d %H:%M')
-     , TimeAgent.utc2est(self.enddate).strftime('%b %d %H:%M')
-     , self.getSessionTable(self.deletedPeriods)
-     ))
-  
-        self.logMessage("Body: %s\n" % self.getBody())
+""" \
+        % (TimeAgent.utc2est(self.startdate).strftime('%b %d %H:%M'),
+           TimeAgent.utc2est(self.enddate).strftime('%b %d %H:%M'),
+           self.getSessionTable(self.deletedPeriods))
+
+        self.logMessage("Body: %s\n" % body)
+        return body
 
     def getSessionTable(self, periods):
         table  = "Start (ET)   |      UT      |  LST  |  (hr) |    PI     | Rx        | Session\n"
@@ -214,7 +262,7 @@ Thank You.
         else:
             changes = "Changes made to the schedule:\n %s" % \
                 self.getChangeTable()
-        return changes        
+        return changes
 
     def getChangeTable(self):
         table  = "Start (ET)   |      UT      |  LST  |  (hr) | Observer  | Rx        | Session | Change\n"
@@ -223,7 +271,8 @@ Thank You.
             if p.session.project.pcode == "Maintenance":
                 observer = ""
             else:
-                observer = p.session.project.get_observers()[0].user.last_name[:9] if p.session.project.get_observers() else "Unknown"
+                observer = p.session.project.get_observers()[0].user.last_name[:9] \
+                           if p.session.project.get_observers() else "Unknown"
 
             table += "%s | %s | %s | %5s | %-9s | %-9s | %s | %s\n" % (
                 TimeAgent.utc2est(p.start).strftime('%b %d %H:%M')
@@ -236,4 +285,3 @@ Thank You.
               , "rescheduled" if not p.isDeleted() else "removed"
             )
         return table
-

@@ -2,7 +2,7 @@ from datetime                 import date, datetime, timedelta
 from django.http              import HttpResponse
 from models                   import Project, Sesshun, Period, Receiver
 from models                   import Receiver_Schedule, first, str2dt
-from models                   import Window 
+from models                   import Window
 from tools                    import IcalMap, ScheduleTools, TimeAccounting
 from utilities                import TimeAgent
 from settings                 import PROXY_PORT, DATABASE_NAME
@@ -38,7 +38,7 @@ def receivers_schedule(request, *args, **kws):
     return HttpResponse(
             json.dumps({"schedule" : Receiver_Schedule.jsondict(schedule)
                       , "diff"     : jsondiff
-                      , "maintenance": [p.jsondict('UTC') for p in maintenance] 
+                      , "maintenance": [p.jsondict('UTC') for p in maintenance]
                       , "receivers" : rcvrs})
           , mimetype = "text/plain")
 
@@ -68,12 +68,12 @@ def change_rcvr_schedule(request, *args, **kws):
             r = Receiver.get_rcvr(abbr)
             if r is not None:
                 up.append(r)
-            else:    
+            else:
                 msg = "Unrecognized receiver: %s" % abbr
                 return HttpResponse(json.dumps({'error': error
                                               , 'message': msg})
                                   , mimetype = "text/plain")
-    down = []                                  
+    down = []
     downStr = downStr if downStr != "" else None
     if downStr is not None:
         downNames = downStr.strip().split(" ")
@@ -81,18 +81,18 @@ def change_rcvr_schedule(request, *args, **kws):
             r = Receiver.get_rcvr(abbr)
             if r is not None:
                 down.append(r)
-            else:    
+            else:
                 msg = "Unrecognized receiver: %s" % abbr
                 return HttpResponse(json.dumps({'error': error
                                               , 'message': msg})
                                   , mimetype = "text/plain")
 
-    # finally, try and change the rcvr scheudle   
-    success, msg = Receiver_Schedule.change_schedule(startdate, up, down)    
+    # finally, try and change the rcvr scheudle
+    success, msg = Receiver_Schedule.change_schedule(startdate, up, down)
     if success:
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
-    else:                          
+    else:
         return HttpResponse(json.dumps({'error': error
                                       , 'message': msg})
                            , mimetype = "text/plain")
@@ -102,11 +102,11 @@ def shift_rcvr_schedule_date(request, *args, **kws):
     toStr   = request.POST.get("to", None)
     fromDt = datetime.strptime(fromStr, "%m/%d/%Y %H:%M:%S")
     toDt   = datetime.strptime(toStr, "%m/%d/%Y %H:%M:%S")
-    success, msg = Receiver_Schedule.shift_date(fromDt, toDt)    
+    success, msg = Receiver_Schedule.shift_date(fromDt, toDt)
     if success:
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
-    else:                          
+    else:
         error = "Error shifting date of Receiver Change."
         return HttpResponse(json.dumps({'error': error
                                       , 'message': msg})
@@ -115,11 +115,11 @@ def shift_rcvr_schedule_date(request, *args, **kws):
 def delete_rcvr_schedule_date(request, *args, **kws):
     dateStr = request.POST.get("startdate", None)
     dateDt = datetime.strptime(dateStr, "%m/%d/%Y %H:%M:%S")
-    success, msg = Receiver_Schedule.delete_date(dateDt)    
+    success, msg = Receiver_Schedule.delete_date(dateDt)
     if success:
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
-    else:                          
+    else:
         error = "Error deleting date of Receiver Change."
         return HttpResponse(json.dumps({'error': error
                                       , 'message': msg})
@@ -193,13 +193,13 @@ def change_schedule(request, *args, **kws):
         h, mm, ss = map(int, map(float, t.split(':')))
         startdate = datetime(y, m, d, h, mm, ss)
     duration = request.POST.get("duration", None)
-    if duration is not None: 
+    if duration is not None:
         duration = float(duration) # hours!
     sess_handle = request.POST.get("session", "")
     sess_name = sess_handle.split("(")[0].strip()
     s = first(Sesshun.objects.filter(name = sess_name))
     reason = request.POST.get("reason", "other_session_other")
-    desc = request.POST.get("description", "") 
+    desc = request.POST.get("description", "")
     # this method handles the heavy lifting
     st = ScheduleTools()
     st.changeSchedule(startdate, duration, s, reason, desc)
@@ -226,7 +226,7 @@ def shift_period_boundaries(request, *args, **kws):
     # plus any neighbor to it.
     ps = Period.get_periods(original_time - timedelta(minutes = 1)
                           , 15.0)
-    neighbors = [p for p in ps if p.id != period_id]                      
+    neighbors = [p for p in ps if p.id != period_id]
     if len(neighbors) == 0:
         neighbor = None
     else:
@@ -238,12 +238,13 @@ def shift_period_boundaries(request, *args, **kws):
         return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
     else:
         return HttpResponse(json.dumps({'error':'Error Shifting Period Boundary', 'message':msg}), mimetype = "text/plain")
-    
+
 def time_accounting(request, *args, **kws):
     """
     POST: Sets Project time accounting.
-    GET: Serves up json for time accounting from periods up to the project"
+    GET: Serves up json for time accounting from periods up to the project
     """
+
     ta = TimeAccounting()
     pcode = args[0]
     project = first(Project.objects.filter(pcode = pcode))
@@ -278,7 +279,7 @@ def session_time_accounting(request, *args, **kws):
 
 def period_time_accounting(request, *args, **kws):
     "Sets some time accounting variables for given period"
-    
+
     id = args[0]
     period = first(Period.objects.filter(id = id))
     a = period.accounting
@@ -324,8 +325,8 @@ def publish_periods(request, *args, **kwds):
         start = p.start
         # TBF: kluge, we don't want to publish the next period as well,
         # so end a minute early to avoid picking it up.
-        duration = int(p.duration * 60.0) # hrs to minutes 
-    else:    
+        duration = int(p.duration * 60.0) # hrs to minutes
+    else:
         # from the time range passed in, get the periods to publish
         startPeriods = request.POST.get("start"
                                  , datetime.now().strftime("%Y-%m-%d"))
@@ -374,25 +375,26 @@ def delete_pending(request, *args, **kwds):
 def scheduling_email(request, *args, **kwds):
     # Show the schedule from now until 8am eastern two days from now.
     start = datetime.utcnow()
-    end   = TimeAgent.est2utc(TimeAgent.utc2est(start + timedelta(days = 2)).replace(hour = 8, minute = 0, second = 0, microsecond = 0))
-    periods = Period.objects.filter(start__gt = start, start__lt = end) 
-    notifier = SchedulingNotifier(list(periods)) 
+    end   = TimeAgent.est2utc(TimeAgent.utc2est(start + timedelta(days = 2)).replace(
+        hour = 8, minute = 0, second = 0, microsecond = 0))
+    periods = Period.objects.filter(start__gt = start, start__lt = end)
+    notifier = SchedulingNotifier(list(periods))
+
     if request.method == 'GET':
         return HttpResponse(
             json.dumps({
-                'emails' : notifier.getAddresses()
-              , 'subject': notifier.getSubject()
-              , 'body'   : notifier.getBody()
+                'emails' : notifier.getAddresses("observer")
+              , 'subject': notifier.getSubject("observer")
+              , 'body'   : notifier.getBody("observer")
             })
           , mimetype = "text/plain")
     elif request.method == 'POST':
         # here we are overriding what/who gets sent for the first round
         # of emails, but because we setup the object with Periods (above)
         # we aren't controlling who gets the 'change schedule' emails (TBF)
-        notifier.setAddresses(str(request.POST.get("emails", "")).replace(" ", "").split(","))
-        notifier.setSubject(request.POST.get("subject", ""))
-        notifier.setBody(request.POST.get("body", ""))
-
+        notifier.setAddresses("observer", str(request.POST.get("emails", "")).replace(" ", "").split(","))
+        notifier.setSubject("observer", request.POST.get("subject", ""))
+        notifier.setBody("observer", request.POST.get("body", ""))
         notifier.notify()
 
         return HttpResponse(json.dumps({'success':'ok'})
