@@ -921,6 +921,12 @@ class Receiver(models.Model):
     class Meta:
         db_table = "receivers"
 
+    def full_description(self):
+        return "(%s) %s: %5.2f - %5.2f" % (self.abbreviation
+                                         , self.name
+                                         , self.freq_low
+                                         , self.freq_hi)
+
     def jsondict(self):
         return self.abbreviation
 
