@@ -1859,8 +1859,9 @@ class Period_Accounting(models.Model):
                 , 'lost_time_other'
                 ]
         for field in fields:        
-            self.set_changed_time(field
-                                , float(fdata.get(field, "0.0")))    
+            value = fdata.get(field, None)
+            if value is not None:
+                self.set_changed_time(field, value)
         self.save()
 
     def jsondict(self):
