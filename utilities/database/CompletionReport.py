@@ -67,10 +67,15 @@ def GenerateReport(start):
             rep.add_headers(line)
 
             for p in projects:
+                
+
+
                 line.clear()
                 line.add(p.pcode)
                 line.add(p.name[:50])
-                line.add(p.principal_investigator().last_name)
+
+                pi = p.principal_investigator()
+                line.add(pi.last_name if pi else "No PI assigned!")
                 line.add(ta.getProjectTotalTime(p), fptype)
                 line.add(ta.getProjSessionsTotalTime(p), fptype)
                 line.add(ta.getCompletedTimeBilled(p), fptype)
