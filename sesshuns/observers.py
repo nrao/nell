@@ -7,6 +7,22 @@ from models                   import *
 from sets                     import Set
 from utilities                import gen_gbt_schedule, UserInfo, NRAOBosDB
 
+def get_requestor(request):
+    """
+    Gets login name, and if we don't have a user with that name,
+    creates one before returning the user.
+    """
+
+    loginUser = request.user.username
+
+    # CAS used by PST allows usernames in logins to be case insensitive
+    requestor = first(User.objects.filter(username__iexact = loginUser))
+
+    if requestor is None:
+        requestor = create_user(loginUser)
+
+    return requestor
+
 def public_schedule(request, *args, **kws):
     # serve up the GBT schedule
     timezones = ['ET', 'UTC']
@@ -50,11 +66,7 @@ def public_schedule(request, *args, **kws):
 
 @login_required
 def home(request, *args, **kwds):
-    loginUser = request.user.username
-    requestor = first(User.objects.filter(username = loginUser))
-
-    if requestor is None:
-        requestor = create_user(loginUser)
+    requestor = get_requestor(request)
 
     if requestor.isOperator():
         return HttpResponseRedirect("/schedule/")
@@ -136,11 +148,7 @@ def events(request, *args, **kws):
 
 @login_required
 def profile(request, *args, **kws):
-    loginUser = request.user.username
-    requestor = first(User.objects.filter(username = loginUser))
-
-    if requestor is None:
-        requestor = create_user(loginUser)
+    requestor = get_requestor(request)
 
     if len(args) > 0:
         u_id,     = args
@@ -173,11 +181,7 @@ def profile(request, *args, **kws):
 
 @login_required
 def project(request, *args, **kws):
-    loginUser = request.user.username
-    user      = first(User.objects.filter(username = loginUser))
-
-    if user is None:
-        user = create_user(loginUser)
+    user = get_requestor(request)
 
     pcode,    = args
     #  If the requestor doesn't have access to this, redirect to their profile.
@@ -214,11 +218,7 @@ def project(request, *args, **kws):
 
 @login_required
 def search(request, *args, **kws):
-    loginUser = request.user.username
-    user      = first(User.objects.filter(username = loginUser))
-
-    if user is None:
-        user = create_user(loginUser)
+    user = get_requestor(request)
 
     search = request.POST.get('search', '')
 
@@ -297,12 +297,7 @@ def modify_priority(request, *args, **kws):
 def project_notes_form(request, *args, **kwds):
     pcode, = args
 
-    # TBF Use a decorator
-    loginUser = request.user.username
-    requestor = first(User.objects.filter(username = loginUser))
-
-    if requestor is None:
-        requestor = create_user(loginUser)
+    requestor = get_requestor(request)
 
     #  If the requestor doesn't have access to this, redirect to their profile.
     if not requestor.canViewProject(pcode):
@@ -320,12 +315,7 @@ def project_notes_form(request, *args, **kwds):
 def project_notes_save(request, *args, **kws):
     pcode, = args
 
-    # TBF Use a decorator
-    loginUser = request.user.username
-    requestor = first(User.objects.filter(username = loginUser))
-
-    if requestor is None:
-        requestor = create_user(loginUser)
+    requestor = get_requestor(request)
 
     #  If the requestor doesn't have access to this, redirect to their profile.
     if not requestor.canViewProject(pcode):
@@ -344,12 +334,7 @@ def project_notes_save(request, *args, **kws):
 def project_snotes_form(request, *args, **kwds):
     pcode, = args
 
-    # TBF Use a decorator
-    loginUser = request.user.username
-    requestor = first(User.objects.filter(username = loginUser))
-
-    if requestor is None:
-        requestor = create_user(loginUser)
+    requestor = get_requstor(request)
 
     #  If the requestor doesn't have access to this, redirect to the project.
     if not requestor.isAdmin():
@@ -367,12 +352,7 @@ def project_snotes_form(request, *args, **kwds):
 def project_snotes_save(request, *args, **kws):
     pcode, = args
 
-    # TBF Use a decorator
-    loginUser = request.user.username
-    requestor = first(User.objects.filter(username = loginUser))
-
-    if requestor is None:
-        requestor = create_user(loginUser)
+    requestor = get_requestor(request)
 
     #  If the requestor doesn't have access to this, redirect to the project.
     if not requestor.isAdmin():
@@ -392,12 +372,7 @@ def dynamic_contact_form(request, *args, **kws):
     u_id,     = args
     user      = first(User.objects.filter(id = u_id))
 
-    # TBF Use a decorator
-    loginUser = request.user.username
-    requestor = first(User.objects.filter(username = loginUser))
-
-    if requestor is None:
-        requestor = create_user(loginUser)
+    requestor = get_requestor(request)
 
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
@@ -411,12 +386,7 @@ def dynamic_contact_save(request, *args, **kws):
     u_id, = args
     user  = first(User.objects.filter(id = u_id))
 
-    # TBF Use a decorator
-    loginUser = request.user.username
-    requestor = first(User.objects.filter(username = loginUser))
-
-    if requestor is None:
-        requestor = create_user(loginUser)
+    requestor = get_requestor(request)
 
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
@@ -430,13 +400,8 @@ def dynamic_contact_save(request, *args, **kws):
 @login_required
 def blackout_form(request, *args, **kws):
     u_id,     = args
-    loginUser = request.user.username
     user      = first(User.objects.filter(id = u_id))
-    requestor = first(User.objects.filter(username = loginUser))
-
-    # TBF Use a decorator to see if user is allowed here
-    if requestor is None:
-        requestor = create_user(loginUser)
+    requestor = get_requestor(request)
 
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
@@ -480,14 +445,9 @@ def parse_datetime(request, dateName, timeName, utcOffset):
 @login_required
 def blackout(request, *args, **kws):
     u_id, = args
-
-    # TBF Use a decorator to see if user can view this page
     user      = first(User.objects.filter(id = u_id))
-    loginUser = request.user.username
-    requestor = first(User.objects.filter(username = loginUser))
 
-    if requestor is None:
-        requestor = create_user(loginUser)
+    requestor = get_requestor(request)
 
     if user != requestor and not requestor.isAdmin():
         return HttpResponseRedirect("/profile")
