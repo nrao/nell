@@ -19,12 +19,15 @@ class ProjectResource(NellResource):
             # many, filtered by:
             sortField = request.GET.get("sortField", "id")
             sortField = "pcode" if sortField == "null" or \
-                                   sortField == "pi" or \
                                    sortField == "co_i" \
                                     else sortField
             sortField = "semester__semester" if sortField == "semester" else sortField
             order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
             query_set = Project.objects
+            if sortField == "pi":
+                print "sorting on pi"
+                sortField = "investigator__user__last_name"
+                query_set = query_set.filter(Q(investigator__principal_investigator = True))
     
             filterClp = request.GET.get("filterClp", None)
             if filterClp is not None:
