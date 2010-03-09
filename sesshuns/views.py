@@ -2,12 +2,15 @@ from datetime                 import date, datetime, timedelta
 from django.http              import HttpResponse
 from models                   import Project, Sesshun, Period, Receiver
 from models                   import Receiver_Schedule, first, str2dt
+from models                   import Window 
 from tools                    import IcalMap, ScheduleTools, TimeAccounting
 from utilities                import TimeAgent
-from settings                 import PROXY_PORT
+from settings                 import PROXY_PORT, DATABASE_NAME
 from utilities.SchedulingNotifier import SchedulingNotifier
 
 import simplejson as json
+# TBF: get this back in once we figure out the deployment issues.
+import twitter
 
 ROOT_URL = "http://trent.gb.nrao.edu:%d" % PROXY_PORT
 
@@ -110,12 +113,9 @@ def shift_rcvr_schedule_date(request, *args, **kws):
                            , mimetype = "text/plain")
 
 def delete_rcvr_schedule_date(request, *args, **kws):
-    print "delete_rcvr_schedule_date: ", request.POST
     dateStr = request.POST.get("startdate", None)
     dateDt = datetime.strptime(dateStr, "%m/%d/%Y %H:%M:%S")
-    print "date: ", dateDt
     success, msg = Receiver_Schedule.delete_date(dateDt)    
-    print "results: ", success, msg
     if success:
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
@@ -313,24 +313,38 @@ def period_time_accounting(request, *args, **kws):
     js = ta.jsondict(project)
     return HttpResponse(json.dumps(js), mimetype = "text/plain")
 
+#@transaction.commit_on_success
 def publish_periods(request, *args, **kwds):
 
-    # from the time range passed in, get the periods to publish
-    startPeriods = request.POST.get("start"
+    # support publishing periods by time range, or a single one by id
+    if len(args) == 1:
+        # reuse code by using this periods time range
+        pid = int(args[0])
+        p = first(Period.objects.filter(id = pid))
+        start = p.start
+        # TBF: kluge, we don't want to publish the next period as well,
+        # so end a minute early to avoid picking it up.
+        duration = int(p.duration * 60.0) # hrs to minutes 
+    else:    
+        # from the time range passed in, get the periods to publish
+        startPeriods = request.POST.get("start"
                                  , datetime.now().strftime("%Y-%m-%d"))
-    daysPeriods  = request.POST.get("duration", "1")
-    tz           = request.POST.get("tz", "UTC")
-    dt = str2dt(startPeriods)
-    start = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
-    duration = int(daysPeriods) * 24 * 60
-    periods = Period.get_periods(start, duration)
+        daysPeriods  = request.POST.get("duration", "1")
+        tz           = request.POST.get("tz", "UTC")
+        dt = str2dt(startPeriods)
+        start = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
+        duration = int(daysPeriods) * 24 * 60
 
-    # publishing moves any period whose state is Pending to Scheduled,
-    # and initializes time accounting (scheduled == period duration).
-    for p in periods:
-        p.publish()
-        p.save()
+    Period.publish_periods(start, duration)
 
+    # Let the world know if we so desire. Default is to tweet unless we
+    # are using our sandboxes.
+    if DATABASE_NAME == 'dss' and request.POST.get("tweet", "True") == "True":
+        update = 'GBT Schedule Update - https://dss.gb.nrao.edu/schedule/public'
+        twitter.Api(username = 'GrnBnkTelescope'
+                  , password = 'dYN4m1(').PostUpdate(update)
+
+    # Ok, we're done.
     return HttpResponse(json.dumps({'success':'ok'})
                       , mimetype = "text/plain")
 

@@ -83,6 +83,15 @@ class TimeAccounting:
         """
         return sum([a.total_time for a in proj.allotments.all()])
 
+    def getProjectSchedulableTotalTime(self, proj):
+        """
+        Projects can have n allotments (w/ n grades).
+        What is the portion of all these that is actually schedulable?
+        """
+        total       = self.getProjectTotalTime(proj)
+        schedulable = self.getProjSessionsSchedulableTotalTime(proj)
+        return min(schedulable, total)
+
     def getProjectTimes(self, proj):
         "Returns dict. of times organized by grade"
         times = []
@@ -103,6 +112,15 @@ class TimeAccounting:
         """
         ss = proj.sesshun_set.all()
         return sum([s.allotment.total_time for s in ss])
+
+    def getProjSessionsSchedulableTotalTime(self, proj):
+        """
+        A project is alloted a certain amount of time (by grade).
+        But the sum of it's sessions' schedulable alloted time can actually 
+        be different.
+        """
+        ss = proj.sesshun_set.all()
+        return sum([s.allotment.total_time for s in ss if s.schedulable()])
 
     # *** Session level time accounting ***
 

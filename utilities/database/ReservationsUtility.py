@@ -28,35 +28,20 @@ class ReservationsUtility(object):
             return
 
         # if that worked, clean up the current reservations:
-        # TBF: until BOS starts return to us *current* as well as upcoming
-        # reservations, we need to hold on to any reservations that haven't
-        # ended yet.
         staleRes = Reservation.objects.all()
-        tomorrow = datetime.now() + timedelta(days = 1)
         for r in staleRes:
-            if r.start_date > tomorrow:
-                r.delete()
-            else:
-               if r.end_date > datetime.now():
-                   print "holding on to reservation: ", r.user, r.start_date
+            r.delete()
 
         # save the latest info to the database
-        # TBF: since we aren't cleaning out the DB, watch for reduncant entries
+        # since we aren't cleaning out the DB, watch for reduncant entries
         for user, dates in currentRes:
             for date in dates:
-                # do we already have this?
-                rs = Reservation.objects.filter(user = user
-                                             , start_date = date[0]
-                                             , end_date   = date[1])
-                if len(rs) == 0:                         
-                    print "new reservation: ", user, date
-                    new = Reservation(user       = user
-                                    , start_date = date[0]
-                                    , end_date   = date[1]
-                                    )
-                    new.save()
-                else:
-                    print "redundant res: ", rs
+                print "new reservation: ", user, date
+                new = Reservation(user       = user
+                                , start_date = date[0]
+                                , end_date   = date[1]
+                                )
+                new.save()
 
     def getReservationsFromBOS(self):
         "Use the query service to get all reservations for DSS users."

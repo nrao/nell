@@ -376,7 +376,7 @@ class Project(models.Model):
     start_date       = models.DateTimeField(null = True, blank = True)
     end_date         = models.DateTimeField(null = True, blank = True)
     friend           = models.ForeignKey(User, null = True, blank = True)
-    accounting_notes = models.CharField(null = True, max_length = 1024, blank = True)
+    accounting_notes = models.TextField(null = True, blank = True)
     notes            = models.TextField(null = True, blank = True)
     schedulers_notes = models.TextField(null = True, blank = True)
 
@@ -402,6 +402,12 @@ class Project(models.Model):
 
     def getSumTotalTime(self):
         return TimeAccounting().getProjectTotalTime(self)
+
+    def getTimeRemainingFromCompleted(self):
+        return TimeAccounting().getTimeRemainingFromCompleted(self)
+
+    def getTimeRemaining(self):
+        return TimeAccounting().getTimeRemaining(self)
 
     def init_from_post(self, fdata):
         self.update_from_post(fdata)
@@ -477,6 +483,7 @@ class Project(models.Model):
               , "total_time"   : totals
               , "PSC_time"     : pscs
               , "sem_time"     : max_sems
+              , "remaining"    : self.getTimeRemaining()
               , "grade"        : grades
               , "pcode"        : self.pcode
               , "name"         : self.name
@@ -914,6 +921,12 @@ class Receiver(models.Model):
     class Meta:
         db_table = "receivers"
 
+    def full_description(self):
+        return "(%s) %s: %5.2f - %5.2f" % (self.abbreviation
+                                         , self.name
+                                         , self.freq_low
+                                         , self.freq_hi)
+
     def jsondict(self):
         return self.abbreviation
 
@@ -1258,8 +1271,8 @@ class Sesshun(models.Model):
     max_duration       = models.FloatField(null = True, help_text = "Hours", blank = True)
     min_duration       = models.FloatField(null = True, help_text = "Hours", blank = True)
     time_between       = models.FloatField(null = True, help_text = "Hours", blank = True)
-    accounting_notes   = models.CharField(null = True, max_length = 1024, blank = True)
-    notes              = models.CharField(null = True, max_length = 1024, blank = True)
+    accounting_notes   = models.TextField(null = True, blank = True)
+    notes              = models.TextField(null = True, blank = True)
 
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
@@ -1559,14 +1572,13 @@ class Sesshun(models.Model):
         return False
         
     def get_receiver_req(self):
-        grps = [' | '.join([r.abbreviation \
-                            for r in rg.receivers.all()]) \
-                for rg in self.receiver_group_set.all()]
+        nn = Receiver.get_abbreviations()
+        rc = ReceiverCompile(nn)
 
-        if grps and len(grps) == 1:
-            return grps[0]
-        else:
-            return ' & '.join(['(%s)' % g for g in grps])
+        rcvrs = [[r.abbreviation \
+                     for r in rg.receivers.all()] \
+                         for rg in self.receiver_group_set.all()]
+        return rc.denormalize(rcvrs)
 
     def get_ha_limit_blackouts(self, startdate, days):
         # TBF: Not complete or even correct yet.
@@ -1585,6 +1597,9 @@ class Sesshun(models.Model):
     def getTimeBilled(self):
         return TimeAccounting().getTime("time_billed", self)
 
+    def getTimeRemaining(self):
+        return TimeAccounting().getTimeRemaining(self)
+
     def jsondict(self):
         d = {"id"         : self.id
            , "pcode"      : self.project.pcode
@@ -1593,6 +1608,7 @@ class Sesshun(models.Model):
            , "total_time" : self.allotment.total_time
            , "PSC_time"   : self.allotment.psc_time
            , "sem_time"   : self.allotment.max_semester_time
+           , "remaining"  : self.getTimeRemaining()
            , "grade"      : self.allotment.grade
            , "orig_ID"    : self.original_id
            , "name"       : self.name
@@ -1737,6 +1753,28 @@ class Target(models.Model):
         return "%s @ (%5.2f, %5.2f), Sys: %s" % \
             (self.source, self.horizontal, self.vertical, self.system)
 
+    def get_horizontal(self):
+        "Returns the horizontal component in sexigesimal form."
+        if self.horizontal is None:
+            return ""
+
+        horz = TimeAgent.rad2hr(self.horizontal)
+        mins = (horz - int(horz)) * 60
+        secs = (mins - int(mins)) * 60
+        if abs(secs - 60.) < 0.1:
+            mins = int(mins) + 1
+            if abs(mins - 60.) < 0.1:
+                mins = 0.0
+                horz = int(horz) + 1
+            secs = 0.0
+        return ":".join(map(str, [int(horz), int(mins), "%.1f" % secs]))
+
+    def get_vertical(self):
+        if self.vertical is None:
+            return ""
+
+        return "%.3f" % TimeAgent.rad2deg(self.vertical)
+
     class Meta:
         db_table = "targets"
 
@@ -1760,7 +1798,7 @@ class Period_Accounting(models.Model):
                                        , default = 0.0) 
     short_notice          = models.FloatField(help_text = "Hours"  # SN
                                        , default = 0.0) 
-    description           = models.CharField(null = True, max_length = 512, blank = True)
+    description           = models.TextField(null = True, blank = True)
 
     class Meta:
         db_table = "periods_accounting"
@@ -1821,8 +1859,9 @@ class Period_Accounting(models.Model):
                 , 'lost_time_other'
                 ]
         for field in fields:        
-            self.set_changed_time(field
-                                , float(fdata.get(field, "0.0")))    
+            value = fdata.get(field, None)
+            if value is not None:
+                self.set_changed_time(field, value)
         self.save()
 
     def jsondict(self):
@@ -1937,6 +1976,9 @@ class Period(models.Model):
     def isPending(self):
         return self.state.abbreviation == 'P'
 
+    def isCompleted(self):
+        return self.state.abbreviation == 'C'
+
     def init_from_post(self, fdata, tz):
         self.from_post(fdata, tz)
 
@@ -2042,6 +2084,8 @@ class Period(models.Model):
         Only bothers to calculate MOC for open sessions whose end time
         is not already past.
         """
+        # TBF: Hack!  Remove when MOC is ok.
+        return True
         # TBF: When windows are working correctly, replace with line below.
         #if self.session.session_type.type not in ("open", "windowed") or \
         if self.session.session_type.type not in ("open",) or \
@@ -2093,29 +2137,22 @@ class Period(models.Model):
 
     def move_to_scheduled_state(self):
         "worker for publish method: pending -> scheduled, and init time accnt."
-        assert self.state.abbreviation == "P"
-        self.state = first(Period_State.objects.filter(abbreviation = 'S'))
-        self.accounting.scheduled = self.duration
-        self.accounting.save()
-        self.save()
+        if self.state.abbreviation == "P":
+            self.state = first(Period_State.objects.filter(abbreviation = 'S'))
+            self.accounting.scheduled = self.duration
+            self.accounting.save()
+            self.save()
 
     def publish(self):
         "pending state -> scheduled state: and init the time accounting"
-        if self.state.abbreviation == 'P':
-            self.move_to_scheduled_state()
-        # TBF    
-        #if not self.is_windowed():
-        #    self.move_to_scheduled_state()
-        #else:
-            # must reconcile the window
-            # but at this point, you need to raise an error if 
-            # periods/windows aren't setup properly
-        #    if not self.has_valid_windows():
-        #        raise "Period %s cant be published: invalid windows" % self
-        #    else:
-        #        # now leave the actual work to the window
-        #        w = self.get_window()
-        #        w.reconcile()
+        # NOTE: it would be ideal to 'publish' a period's associated
+        # window (reconcile it, really).  But we haven't been able to
+        # get that to work properly, so windowed periods must be handled
+        # elsewhere when publishing.
+        if not self.is_windowed():
+            if self.state.abbreviation == 'P':
+                self.move_to_scheduled_state()
+
 
     def delete(self):
         "Keep non-pending periods from being deleted."
@@ -2211,6 +2248,37 @@ class Period(models.Model):
             ps = [p for p in ps if p.state.abbreviation != 'D']
         return ps
 
+    @staticmethod
+    def publish_periods(start, duration):
+        """
+        Due to problems we encountered with the relationship between
+        periods and windows in the DB, we can't reconcile windows
+        from within a period's publish method, we must take this approach.
+        """
+
+        periods = Period.get_periods(start, duration)
+
+        # publishing moves any period whose state is Pending to Scheduled,
+        # and initializes time accounting (scheduled == period duration).
+        wids = []
+        for p in periods:
+            if p.session.session_type.type != 'windowed':
+                p.publish()
+                p.save()
+            else:
+                # don't publish this period, instead, find out what window
+                # it belongs to so we can reconcile it latter.
+                # what window does it belong to?
+                w = p.get_window()
+                if w is not None and w.id not in wids:
+                    wids.append(w.id)
+
+        # now reconcile any windows
+        for wid in wids:
+            window = first(Window.objects.filter(id = wid))
+            window.reconcile()
+            window.save()
+    
 # TBF: temporary table/class for scheduling just 09B.  We can safely
 # dispose of this after 09B is complete.  Delete Me!
 class Project_Blackout_09B(models.Model):
@@ -2272,21 +2340,41 @@ class Window(models.Model):
 
         # need to compare date vs. datetime objs
         #winStart = datetime(self.start_date.year
+        # with what we have in memory
         #                  , self.start_date.month
         #                  , self.start_date.day)
         #winEnd = winStart + timedelta(days = self.duration)                  
         return overlaps((self.start_datetime(), self.end_datetime())
                       , (period.start, period.end()))
 
+    # TBF: is this correct?
     def is_published(self):
         return self.default_period and self.default_period.abbreviaton in ['S', 'C']
 
+    # TBF: refactor this to use the state method
     def is_scheduled_or_completed(self):
         period = self.period if self.period is not None and self.period.state.abbreviation in ['S', 'C'] else None
         if period is None:
             period = self.default_period if self.default_period is not None and self.default_period.state.abbreviation in ['S', 'C'] else None
         return period
 
+    ##################################################################
+    # state will return the state of the window, or none if the window
+    # is not in a legal state.  The truth table is as follows, where
+    # 'D' is deleted, 'P' pending, 'S' scheduled, and 'C' completed:
+    #
+    #    period                default_period         state
+    #    None                  P                      P
+    #    S                     D                      S
+    #    S                     S                      S
+    #    C                     C                      C
+    #    C                     D                      C
+    #    P                     P                      P*
+    #
+    # Any other combinaton returns None
+    #
+    # * This is legal, but Antioch won't accept a window in this state
+    ##################################################################
     def state(self):
         "A Windows state is a combination of the state's of it's Periods"
 
@@ -2294,20 +2382,44 @@ class Window(models.Model):
         deleted   = Period_State.get_state("D")
         pending   = Period_State.get_state("P")
         scheduled = Period_State.get_state("S")
+        completed = Period_State.get_state("C")
 
-        if (self.default_period.isPending() and self.period is None):
-            # initial state windows are in when created
-            return pending
-        elif (self.default_period.isPending() and self.period.isPending()):
-            # transitory state during scheduling
-            return pending
-        elif (self.default_period.isDeleted() and self.period.isScheduled()):
-            # the window has been reconciled - final state
-            return scheduled
+        if self.default_period:
+            if self.default_period.isPending() and self.period is None:
+                # initial state windows are in when created
+                return pending
+            else:
+                if self.period:
+                    if self.default_period.isCompleted() and self.period.isCompleted():
+                        return completed
+                    if self.default_period.isPending() and self.period.isPending():
+                        return pending
+                    if self.default_period.isDeleted() and self.period.isScheduled():
+                        return scheduled
+                    if self.default_period.isScheduled() and self.period.isScheduled():
+                        return scheduled
+                    if self.default_period.isDeleted() and self.period.isCompleted():
+                        return completed
+                # We have a default period, it is not pending, and
+                # none of the other conditions is met.
+                return None
         else:
-            # all other combos are errors
+            # No default period!
             return None
+
     state.short_description = 'Window State'
+
+    def dual_pending_state(self):
+        """
+        Returns true if both period and default_period exist and are
+        in a Pending state
+        """
+        if self.default_period and self.period:
+            if self.default_period.isPending() and self.period.isPending():
+                return True
+        return False
+
+    dual_pending_state.short_description = 'Window special pending state'
 
     def reconcile(self):
         """
@@ -2315,9 +2427,6 @@ class Window(models.Model):
         or transitory state, to a final scheduled state.
         Move the default period to deleted, and publish the scheduled period.
         """
-        
-        # TBF
-        return
 
         deleted   = Period_State.get_state("D")
         pending   = Period_State.get_state("P")
@@ -2325,28 +2434,27 @@ class Window(models.Model):
         
         # raise an error?
         assert self.default_period is not None
-        #if not self.default_period.isPending() or \
-        #       self.period is None or \
-        #   not  self.period.isPending():
-        #    return
+
+        # if this has already been reconciled, or is in an invalid
+        # state, don't do anything.
+        state = self.state()
+        if state is None or state == scheduled:
+            return
 
         if self.period is not None:
             # use this period as the scheduled one!
-            # don't use the high level Period method's publish and delete 
             self.default_period.move_to_deleted_state()
             self.default_period.save()
             self.period.move_to_scheduled_state()
             self.period.save()
         else:
             # use the default period!
-            print "rec w/ default"
             self.default_period.move_to_scheduled_state()
             self.default_period.save()
             self.period = self.default_period
             self.period.save()
-            
-        
 
+        self.save()    
 
     def jsondict(self):
         js = {  "id"             : self.id

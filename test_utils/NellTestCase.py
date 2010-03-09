@@ -2,14 +2,13 @@ import unittest
 import pg
 import settings
 
-from django.db         import transaction
-from django.core.cache import cache
+from django.db  import transaction
 
 class NellTestCase(unittest.TestCase):
 
     def setUp(self):
         if hasattr(settings, "CACHE_BACKEND"):
-            settings.CACHE_BACKEND = "dummy://" # disable caching for testing
+            settings.CACHE_BACKEND = "dummy:///" # disable caching for testing
 
         dbname = "test_" + settings.DATABASE_NAME
         c = pg.connect(host = "trent", user = "dss", passwd = "asdf5!", dbname = dbname)
@@ -46,7 +45,9 @@ class NellTestCase(unittest.TestCase):
 
         # Resequence ids on all tables
         for tb_name in tables:
-            if 'auth' not in tb_name and 'django' not in tb_name:
+            if 'auth'   not in tb_name and \
+               'django' not in tb_name and \
+               'cache'  not in tb_name:
                 reseq_cmd = """
                 BEGIN;
                 SELECT setval('"%s_id_seq"', coalesce(max("id"), 1), max("id") IS NOT null) FROM "%s";
@@ -55,4 +56,3 @@ class NellTestCase(unittest.TestCase):
                 c.query(reseq_cmd)
 
         c.close()
-        

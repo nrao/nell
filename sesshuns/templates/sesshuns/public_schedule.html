@@ -46,11 +46,14 @@
             <input type="text" name="search" />
             <input type="submit" value="Search" />
           </form>
+          <a href="http://twitter.com/grnbnktelescope" title="Follow us on Twitter! Get notified when the GBT schedule updates.">
+            <img src="/static/images/twitter.jpg" style="border: 0;" height=20 width=20 />
+          </a>
           {% if not requestor.isOperator %}
           <a href="/projects/ical" title="This link provides access to DSS events in the 'iCalendar' format.  To use this feature, right-click the 'ICAL' icon and select 'Copy Link Location'.  Then paste the link into your favorite iCalendar application.">
             <img src="/static/images/ical.gif" style="border: 0;" />
           </a>
-          <a href="/schedule/" title="This link provides access to the public GBT schedule.">GBT Schedule</a>
+          <a href="/schedule/" title="This link provides access to the full GBT schedule (requires logon).">GBT Schedule</a>
           {% endif %}
         </td>
         <td style="text-align: right;">
@@ -77,6 +80,9 @@
 {% else %}
       <tr>
         <td style="text-align: left;">
+          <a href="http://twitter.com/grnbnktelescope" title="Follow us on Twitter! Get notified when the GBT schedule updates.">
+            <img src="/static/images/twitter.jpg" style="border: 0;" height=20 width=20 />
+          </a>
           <a href="/projects/ical" title="This link provides access to DSS events in the 'iCalendar' format.  To use this feature, right-click the 'ICAL' icon and select 'Copy Link Location'.  Then paste the link into your favorite iCalendar application.">
               <img src="/static/images/ical.gif" style="border: 0;" />
             </a>
@@ -144,7 +150,7 @@
       <th>Project Title</th>
       <th title="Primary Investigator.  To list the observers for this project, click on the Project ID">PI</th>
       <th>Friend</th>
-      <th>Rcvrs</th>
+      <th title="Receivers (Names and frequency ranges in GHz) = (RRI) Rcvr_RRI:  0.10 -  1.60, (342) Rcvr_342:  0.29 -  0.40, (450) Rcvr_450:  0.39 -  0.52, (600) Rcvr_600:  0.51 -  0.69, (800) Rcvr_800:  0.68 -  0.92, (1070) Rcvr_1070:  0.91 -  1.23, (L) Rcvr1_2:  1.15 -  1.73, (S) Rcvr2_3:  1.73 -  2.60, (C) Rcvr4_6:  3.95 -  6.10, (X) Rcvr8_10:  8.00 - 10.00, (Hol) Holography: 11.70 - 12.20, (Ku) Rcvr12_18: 12.00 - 15.40, (KFPA) RcvrArray18_26: 17.00 - 27.50, (K) Rcvr18_26: 18.00 - 26.50, (Ka) Rcvr26_40: 26.00 - 39.50, (Q) Rcvr40_52: 38.20 - 49.80, (MBA) Rcvr_PAR: 80.00 - 100.00">Rcvrs</th>
     </tr>
     {% for start, end,start_cutoff, end_cutoff, p in ps %}
     <tr>

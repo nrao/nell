@@ -29,7 +29,9 @@ class UserInfo(object):
             info = self.getStaticContactInfoByID(user.pst_id, use_cache)
         except:
             return dict(emails       = []
+                      , emailDescs   = []
                       , phones       = ['Not Available']
+                      , phoneDescs   = ['Not Available']
                       , postals      = ['Not Available']
                       , affiliations = ['Not Available']
                       , username     = user.username)
@@ -55,33 +57,35 @@ class UserInfo(object):
         emails   = []
         phones   = []
         postals  = []
+        # some consumers will want just the plain emails, since they'll
+        # use them to send actuall emails, while others want a more 
+        # descriptive format
+        emailDescs  = []
+        phoneDescs  = []
         contacts = info.get('contact-info', None)
 
         # got contacts?
         if contacts is not None:
-            pst_emails = contacts.get('email-addresses', None)
             # got emails?
-            if pst_emails is not None:
-                default = pst_emails.get('default-email-address', None)
-                if default is not None and default not in emails:
-                    emails.append(default)
-                others = pst_emails.get('additional-email-address', None)
-                if others is not None:
-                    for other in others:
-                        if other not in emails:
-                            emails.append(other)
-            pst_phones = contacts.get('phone-numbers', None)                
+            pst_emails = contacts.get('email-addresses', None)
+            try:
+                emails, emailDescs = self.parseUserDictEntry(pst_emails
+                                                           , 'email-address'
+                                                           , 'addr')
+            except:
+                emails = []
+                emailDescs = []
+
             # got phones?
-            # TBF: phone & email code is redundant - use a single function
-            if pst_phones is not None:
-                default = pst_phones.get('default-phone-number', None)
-                if default is not None and default not in phones:
-                    phones.append(default)
-                others = pst_phones.get('additional-phone-number', None)
-                if others is not None:
-                    for other in others:
-                        if other not in phones:
-                            phones.append(other)
+            pst_phones = contacts.get('phone-numbers', None)                
+            try:
+                phones, phoneDescs = self.parseUserDictEntry(pst_phones
+                                                           , 'phone-number'
+                                                           , 'number')
+            except:
+                phones = []
+                phoneDescs = []
+
             # got postal addresses?
             pst_postals = contacts.get('postal-addresses', None)
             if pst_postals is not None:
@@ -99,10 +103,45 @@ class UserInfo(object):
                     postals.append(str)
 
         return dict(emails       = emails
+                  , emailDescs   = emailDescs
                   , phones       = phones
+                  , phoneDescs   = phoneDescs
                   , postals      = postals
                   , affiliations = affiliations
                   , username     = username)
+
+    def parseUserDictEntry(self, pst_values, name, valueName):
+        """
+        Takes a dictionary of the form
+        { 'default-name' : {'valueName' : 'value', 'description', 'desc'}
+        , 'additional-name' : [{'valueName' : 'value', 'description', 'desc'}]}
+        and returns two simple lists of:
+        [ 'value (desc)', 'value (desc)', ...]
+        [ 'value', 'value', ...]
+        """
+        values = []
+        plainValues = []
+        if pst_values is not None:
+            defaultTag = 'default-%s' % name
+            default = pst_values.get(defaultTag, None)
+            if default is not None:
+                value = default.get(valueName,'')
+                defaultStr = "%s (%s)" % (value, default.get('description', ''))
+            else:
+                defaultStr = None
+            if defaultStr is  not None and defaultStr not in values:
+                values.append(defaultStr)
+                plainValues.append(value)
+            additionalTag = 'additional-%s' % name    
+            others = pst_values.get(additionalTag, None)
+            if others is not None:
+                for other in others:
+                    value = other.get(valueName,'')
+                    otherStr = "%s (%s)" % (value, other.get('description', ''))
+                    if otherStr not in values:
+                        values.append(otherStr)
+                        plainValues.append(value)
+        return (plainValues, values)
 
     def getStaticContactInfoByUserName(self, username, use_cache = True):
         return self.getStaticContactInfo('userByAccountNameEquals', username, use_cache)
@@ -143,29 +182,64 @@ class UserInfo(object):
                 values[k] = v.text
         return values   
 
-    def parseSectionList(self, sec, tagBase, attr):
+    def parseSectionList(self, sec, tagBase, attr, keys):
+        """
+        Takes a section like this:
+        <nrao:email-addresses>
+        <nrao:default-email-address addr="pmargani@nrao.edu">
+        <nrao:description>Work</nrao:description>
+        </nrao:default-email-address>
+        <nrao:additional-email-address addr="paghots@hotmail.com">
+        <nrao:description>Other</nrao:description>
+        </nrao:additional-email-address>
+        <nrao:additional-email-address addr="pmargani@gmail.com">
+        <nrao:description>Personal</nrao:description>
+        </nrao:additional-email-address>
+        </nrao:email-addresses>
+        and returns
+        { "default-email-address" : "pmargani@nrao.edu"
+        , "additional-email-address" : ["1", "etc."] }
+        """
+        
         values = {}
         defaultTag = "default-%s" % tagBase
         addTag = "additional-%s" % tagBase
         default = self.findTag(sec, defaultTag)
         if default is not None:
-            values[defaultTag] = default.get(attr)
+            defaultValue = self.parseSectionText(default, keys)
+            defaultValue[attr] = default.get(attr)
+            values[defaultTag] = defaultValue
         others = sec.findall(self.ns + addTag)
         if len(others) > 0:
             values[addTag] = []
         for i in range(len(others)):
-            values[addTag].append(others[i].get(attr))
+            otherValue = self.parseSectionText(others[i], keys)
+            otherValue[attr] = others[i].get(attr)
+            values[addTag].append(otherValue)
         return values
 
-    def parseSection(self, sec, secName, secDetailName, attr):
+    def parseSection(self, sec, secName, secDetailName, attr, keys):
         "Parses sections like email-addresses and phone-numbers"
         values = {}
         s = self.findTag(sec, secName)
         if s is not None:
-            values = self.parseSectionList(s, secDetailName, attr)
+            values = self.parseSectionList(s, secDetailName, attr, keys)
         return values
 
     def parsePostals(self, sec):
+        """
+        Returns a list of dictionaries, where each dict is the result of 
+        parsing a section like:
+        <nrao:additional-postal-address>
+        <nrao:address-type>Office</nrao:address-type>
+        <nrao:streetline>NRAO</nrao:streetline>
+        <nrao:streetline>PO Box 2</nrao:streetline>
+        <nrao:city>Green Bank</nrao:city>
+        <nrao:state>West Virginia</nrao:state>
+        <nrao:country>USA</nrao:country>
+        <nrao:postal-code>24944</nrao:postal-code>
+        </nrao:additional-postal-address>
+        """
         postals = []
         keys = ['address-type', 'city', 'state', 'country', 'postal-code']
         s = self.findTag(sec, 'postal-addresses')
@@ -217,14 +291,18 @@ class UserInfo(object):
         ci = self.findTag(element, "contact-info")
         if ci is not None:
             userInfo['contact-info'] = {}
-            userInfo['contact-info']['email-addresses'] = self.parseSection(ci
-                                                                          , 'email-addresses'
-                                                                          , 'email-address'
-                                                                          , 'addr')
-            userInfo['contact-info']['phone-numbers'] = self.parseSection(ci
-                                                                        , 'phone-numbers'
-                                                                        , 'phone-number'
-                                                                        , 'number')
+            userInfo['contact-info']['email-addresses'] = \
+                self.parseSection(ci
+                               , 'email-addresses'
+                               , 'email-address'
+                               , 'addr'
+                               , ['description'])
+            userInfo['contact-info']['phone-numbers'] = \
+                self.parseSection(ci
+                                , 'phone-numbers'
+                                , 'phone-number'
+                                , 'number'
+                                , ['description'])
             userInfo['contact-info']['postal-addresses'] = self.parsePostals(ci)                                                                        
         # affiliation-info section
         # TBF: redundant redundant redundant

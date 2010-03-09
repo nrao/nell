@@ -195,10 +195,13 @@ class TestWindow(NellTestCase):
         self.sesshun.save()
         dt = datetime(2009, 6, 1, 12, 15)
         pending = first(Period_State.objects.filter(abbreviation = "P"))
+        pa = Period_Accounting(scheduled = 0.0)
+        pa.save()
         self.default_period = Period(session = self.sesshun
                                    , start = dt
                                    , duration = 5.0
                                    , state = pending
+                                   , accounting = pa
                                    )
         self.default_period.save()    
         pjson = self.default_period.jsondict('UTC')
@@ -247,37 +250,86 @@ class TestWindow(NellTestCase):
 
         w.delete()
 
-#    def test_reconcile(self):
-#
-#        deleted   = Period_State.get_state("D")
-#        pending   = Period_State.get_state("P")
-#        scheduled = Period_State.get_state("S")
-#
-#        start = datetime(2009, 6, 1)
-#        dur   = 7 # days
-#        
-#        w = Window()
-#        w.start_date = start
-#        w.duration = dur
-#        w.session = self.sesshun
-#        w.default_period = self.default_period
-#        w.save()
-#        w_id = w.id
-#
-#        # test
-#        self.assertEquals(w.default_period.state, pending) 
-#
-#        w.reconcile()
-#
-#        # test
-#        # get it fresh from the DB
-#        w = first(Window.objects.filter(id = w_id)) 
-#        print w
-#        print w.default_period, w.default_period.state
-#        self.assertEquals(w.default_period.state, scheduled) 
-#        self.assertEquals(w.period.state, scheduled) 
-#        self.assertEquals(w.period.id, w.default_period.id) 
+    def test_reconcile(self):
 
+        deleted   = Period_State.get_state("D")
+        pending   = Period_State.get_state("P")
+        scheduled = Period_State.get_state("S")
+
+        start = datetime(2009, 6, 1)
+        dur   = 7 # days
+        
+        w = Window()
+        w.start_date = start
+        w.duration = dur
+        w.session = self.sesshun
+        w.default_period = self.default_period
+        w.save()
+        w_id = w.id
+
+        # test
+        self.assertEquals(w.default_period.state, pending) 
+        self.assertEquals(w.state(), pending) 
+
+        # this should move the default_period to scheduled
+        # and copy the defatul_period to period
+        w.reconcile()
+
+        # test
+        # get it fresh from the DB
+        w = first(Window.objects.filter(id = w_id)) 
+        self.assertEquals(w.default_period.state, scheduled) 
+        self.assertTrue(w.period is not None)
+        self.assertEquals(w.period.state, scheduled) 
+        self.assertEquals(w.period.id, w.default_period.id) 
+        self.assertEquals(w.state(), scheduled) 
+
+    def test_reconcile_2(self):
+
+        deleted   = Period_State.get_state("D")
+        pending   = Period_State.get_state("P")
+        scheduled = Period_State.get_state("S")
+       
+        # the period to be scheduled
+        pa = Period_Accounting(scheduled = 0.0)
+        pa.save()
+        dt = self.default_period.start - timedelta(days = 2)
+        period = Period(session = self.sesshun
+                                   , start = dt
+                                   , duration = 5.0
+                                   , state = pending
+                                   , accounting = pa
+                                   )
+        period.save()    
+
+        start = datetime(2009, 6, 1)
+        dur   = 7 # days
+        
+        w = Window()
+        w.start_date = start
+        w.duration = dur
+        w.session = self.sesshun
+        w.default_period = self.default_period
+        w.period = period
+        w.save()
+        w_id = w.id
+
+        # test
+        self.assertEquals(w.default_period.state, pending) 
+        self.assertEquals(w.period.state, pending) 
+        self.assertEquals(w.state(), pending) 
+
+        # this should move the default_period to deleted
+        # and the choosen period to scheduled
+        w.reconcile()
+
+        # test
+        # get it fresh from the DB
+        w = first(Window.objects.filter(id = w_id)) 
+        self.assertEquals(w.default_period.state, deleted) 
+        self.assertTrue(w.period is not None)
+        self.assertEquals(w.period.state, scheduled) 
+        self.assertEquals(w.state(), scheduled) 
 
 class TestPeriod(NellTestCase):
 
@@ -305,12 +357,16 @@ class TestPeriod(NellTestCase):
         start = datetime(2009, 6, 1, 12, 15)
         dur   = 180
         
+        pa = Period_Accounting(scheduled = 0)
+        pa.save()
+
         p = Period()
         p.start = start
         p.duration = dur
         p.session = self.sesshun
         p.backup = True
         p.state = first(Period_State.objects.filter(abbreviation = 'P'))
+        p.accounting = pa
 
         p.save()
 
@@ -383,7 +439,6 @@ class TestPeriod(NellTestCase):
 
         # now publish!
         #p.publish()
-       
 
         # test
         #deleted = Period_State.get_state("D")
@@ -478,6 +533,10 @@ class TestReceiver(NellTestCase):
 
     def test_save_receivers(self):
         s = Sesshun.objects.all()[0]
+        rcvr = ''
+        s.save_receivers(rcvr)
+        rgs = s.receiver_group_set.all()
+        self.assertEqual(0, len(rgs))
         rcvr = 'L'
         s.save_receivers(rcvr)
         rgs = s.receiver_group_set.all()
@@ -1393,6 +1452,7 @@ class TestSesshun(NellTestCase):
         ldata["transit"] = "true"
         ldata["nighttime"] = "false"
         ldata["lst_ex"] = "2.00-4.00"
+        ldata["receiver"] = "(K & (X | (L | C)))"
         s.update_from_post(ldata)
         
         # now get this session from the DB
@@ -1405,6 +1465,12 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.transit(), ldata["transit"] == "true")
         self.assertEqual(s.nighttime(), None)
         self.assertEqual(s.get_LST_exclusion_string(), ldata["lst_ex"])
+        rgs = s.receiver_group_set.all()
+        self.assertEqual(2, len(rgs))
+        self.assertEqual(['K']
+                       , [r.abbreviation for r in rgs[0].receivers.all()])
+        self.assertEqual(['L', 'C', 'X']
+                       , [r.abbreviation for r in rgs[1].receivers.all()])
 
     def test_update_from_post2(self):
         ss = Sesshun.objects.all()
@@ -1713,14 +1779,18 @@ class TestSessionResource(NellTestCase):
         self.failUnlessEqual(response.status_code, 200)
         r_json = json.loads(response.content)
         self.assertTrue(r_json.has_key('receiver'))
-        self.assertEquals(r_json['receiver'], u'(K) & (L | S)')
+        # Next two lines are logically equivalent
+        #self.assertEquals(r_json['receiver'], u'(K) & (L | S)')
+        self.assertEquals(r_json['receiver'], u'(K & (L | S))')
         # etc
         response = self.client.post('/sessions',
                                     {'receiver' : 'Ka | (342 & S)'})
         self.failUnlessEqual(response.status_code, 200)
         r_json = json.loads(response.content)
         self.assertTrue(r_json.has_key('receiver'))
-        self.assertEquals(r_json['receiver'], u'(342 | Ka) & (S | Ka)')
+        # Next two lines are logically equivalent
+        #self.assertEquals(r_json['receiver'], u'(342 | Ka) & (S | Ka)')
+        self.assertEquals(r_json['receiver'], u'((342 | Ka) & (S | Ka))')
 
 class TestWindowResource(NellTestCase):
 
@@ -1730,10 +1800,13 @@ class TestWindowResource(NellTestCase):
         self.sesshun = create_sesshun()
         dt = datetime(2010, 1, 1, 12, 15)
         pending = first(Period_State.objects.filter(abbreviation = "P"))
+        pa = Period_Accounting(scheduled = 0)
+        pa.save()
         self.default_period = Period(session = self.sesshun
                                    , start = dt
                                    , duration = 5.0
                                    , state = pending
+                                   , accounting = pa
                                    )
         self.default_period.save()                           
         pjson = self.default_period.jsondict('UTC')
@@ -1926,6 +1999,28 @@ class TestPublishPeriods(NellTestCase):
             p.session.delete()
             p.remove() #delete()
 
+    def test_publish_periods_by_id(self):
+        c = Client()
+
+        # check current state
+        ps = Period.objects.order_by("start")
+        exp = ["S", "P", "S"]
+        self.assertEquals(exp, [p.state.abbreviation for p in ps])
+        exp = [5.0, 0.0, 4.0]
+        self.assertEquals(exp, [p.accounting.scheduled for p in ps])
+
+        time = self.ps[0].start.strftime("%Y-%m-%d %H:%M:%S")
+
+        url = "/periods/publish/%d" % self.ps[1].id
+
+        # Remember not to embarrass ourselves by tweeting! tweet == False
+        response = c.post(url, dict(tweet = False))
+        self.failUnless("ok" in response.content)    
+
+        ps = Period.objects.order_by("start")
+        exp = ["S", "S", "S"]
+        self.assertEquals(exp, [p.state.abbreviation for p in ps])
+
     def test_publish_periods(self):
 
         c = Client()
@@ -1942,9 +2037,11 @@ class TestPublishPeriods(NellTestCase):
         duration = 12
         url = "/periods/publish"
 
+        # Remember not to embarrass ourselves by tweeting! tweet == False
         response = c.post(url, dict(start    = time
                                   , tz       = tz
-                                  , duration = duration)) 
+                                  , duration = duration
+                                  , tweet    = False)) 
         self.failUnless("ok" in response.content)    
 
         ps = Period.objects.order_by("start")
@@ -1952,6 +2049,47 @@ class TestPublishPeriods(NellTestCase):
         self.assertEquals(exp, [p.state.abbreviation for p in ps])
         exp = [5.0, 3.0, 4.0]
         self.assertEquals(exp, [p.accounting.scheduled for p in ps])
+
+    def test_publish_periods_with_windows(self):
+
+        # Assign periods to our windows
+        # 1 - scheduled -> window 1
+        # 2 - pending -> window 2
+        # 3 - scheduled -> window 2, make pending
+        pending = Period_State.get_state("P")
+        scheduled = Period_State.get_state("S")
+
+        p1 = self.ps[0]
+        w1 = Window( session = p1.session
+                   , start_date = p1.start.date() - timedelta(days = 7)
+                   , duration = 10 # days
+                   , default_period = p1
+                   , period = p1 )
+        w1.save()           
+
+        p2 = self.ps[1]
+        p3 = self.ps[2] 
+        p3.state = Period_State.get_state("P")
+        p3.save()
+        # NOTE: ovelapping windows for same session - shouldn't matter
+        w2 = Window( session = p2.session # NOTE: same session for all 3 periods
+                   , start_date = p1.start.date() - timedelta(days = 7)
+                   , duration = 10 # days
+                   , default_period = p2
+                   , period = p3 )
+        w2.save()
+
+        # check the states
+        self.assertEquals(scheduled, w1.state())
+        self.assertEquals(pending, w2.state())
+
+        # reconcile both windows
+        w1.reconcile()
+        w2.reconcile()
+
+        # make sure the states are right now
+        self.assertEquals(scheduled, w1.state())
+        self.assertEquals(scheduled, w2.state())
 
 # Testing Observers UI
 
@@ -2397,7 +2535,44 @@ class TestDSSPrime2DSS(NellTestCase):
 
 class TestReceiverCompile(NellTestCase):
 
+    def setUp(self):
+
+        super(TestReceiverCompile, self).setUp()
+        self.nn = Receiver.get_abbreviations()
+        self.rc = ReceiverCompile(self.nn)
+        
+        # normalize:   values[0] -> values[1]
+        # denormalize: values[1] -> values[0]
+        self.values = [('Q', [['Q']])
+                     , ('((L | X) | C)', [['L', 'X', 'C']])
+                     , ('(K & (L | S))', [['K'], ['L', 'S']])
+                     , ('((342 | K) & (342 | Ka))'
+                      , [['342', 'K'], ['342', 'Ka']] )
+                     , ('((((L | X) | C) | S) & 342)'
+                      , [['L', 'X', 'C', 'S'], ['342']])
+                     ]
+                    
+    def test_pairValues(self):
+
+        self.assertEquals('Q', self.rc.pairValues(['Q'], '|'))
+        self.assertEquals('((L | X) | C)'
+                         , self.rc.pairValues(['L', 'X', 'C'], '|'))
+        self.assertEquals('(((((L | X) | C) | A) | B) | C)'          
+                    , self.rc.pairValues(['L', 'X', 'C', 'A', 'B', 'C'], '|'))
+
+    def test_denormalize(self):
+
+        for v in self.values:
+            self.assertEquals(v[0], self.rc.denormalize(v[1]))
+
+    def test_symmettry(self):
+
+        for v in self.values:
+            self.assertEquals(v[0]
+                            , self.rc.denormalize(self.rc.normalize(v[0])))
+
     def test_normalize(self):
+
         nn = Receiver.get_abbreviations()
         rc = ReceiverCompile(nn)
         self.assertEquals(rc.normalize(u'Q'), [[u'Q']])
@@ -2581,9 +2756,14 @@ class TestUserInfo(NellTestCase):
         self.xml = et.fromstring(self.xmlStr)
         self.xmlDict = \
         {'contact-info': \
-            {'phone-numbers':   {'default-phone-number': '304-456-2202'}
-           , 'email-addresses': {'default-email-address': 'pmargani@nrao.edu'
-                             , 'additional-email-address': ['paghots@hotmail.com', 'pmargani@gmail.com']}
+            {'phone-numbers':   {'default-phone-number': {'description' : 'Work'
+                                                         ,'number' : '304-456-2202'}}
+           , 'email-addresses': {'default-email-address': {'description' : 'Work'
+                                                          ,'addr' : 'pmargani@nrao.edu'}
+                             , 'additional-email-address': [{'description' : 'Other'
+                                                            ,'addr' : 'paghots@hotmail.com'}
+                                                          , {'description' : 'Personal'
+                                                            ,'addr' : 'pmargani@gmail.com'}]}
            , 'postal-addresses': [{'city': 'Green Bank'
                                  , 'streetlines': ['NRAO', 'PO Box 2']
                                  , 'address-type': 'Office'
@@ -2617,14 +2797,20 @@ class TestUserInfo(NellTestCase):
         emails = ['pmargani@nrao.edu'
                 , 'paghots@hotmail.com'
                 , 'pmargani@gmail.com']
+        emailDescs = ['pmargani@nrao.edu (Work)'
+                    , 'paghots@hotmail.com (Other)'
+                    , 'pmargani@gmail.com (Personal)']
         phones = ['304-456-2202']        
+        phoneDescs = ['304-456-2202 (Work)']        
         postals = \
             ['NRAO, PO Box 2, Green Bank, West Virginia, 24944, USA, (Office)'
            , '49 columbus Ave., W. Bridgewater, Massachusetts, 02379, United States, (Other)']
         affiliations = ['National Radio Astronomy Observatory '
                       , 'Oregon, University of']
         self.assertEquals(emails, info['emails'])        
+        self.assertEquals(emailDescs, info['emailDescs'])        
         self.assertEquals(phones, info['phones'])
+        self.assertEquals(phoneDescs, info['phoneDescs'])
         self.assertEquals(postals, info['postals'])
         self.assertEquals(affiliations, info['affiliations'])
         self.assertEquals('pmargani', info['username'])

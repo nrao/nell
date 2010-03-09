@@ -68,12 +68,16 @@
   </form>
   <strong>
   Support Links:
-  <a href="#" onClick="window.open('http://wiki.gb.nrao.edu/bin/view/Observing/GbtFriends{{'%Y%m'|get_date}}', 'On-Duty Support Scientist', 'width=1000, height=700, scrollbars=yes');return true;">
+  <a href="#" onClick="window.open('http://safe.nrao.edu/wiki/bin/view/GB/Observing/GbtFriends{{'%Y%m'|get_date}}', 'On-Duty Support Scientist', 'width=1000, height=700, scrollbars=yes');return true;">
     On-Duty Support Scientist
   </a>
   |
   <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar', 'Support Staff Absences & Contact Info', 'width=1000, height=700, scrollbars=yes');return true;">
     Support Staff Absences & Contact Info
+  </a>
+  |
+  <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/SupportSchedule2009', 'DSS Team Support Schedule', 'width=1000, height=700, scrollbars=yes');return true;">
+    DSS Team Support Schedule
   </a>
   |
   <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/TeamSchedule2009', 'DSS Team Absences & Contact Info', 'width=1000, height=700, scrollbars=yes');return true;">
@@ -116,7 +120,7 @@
       <th>PI</th>
       <th title="Ordered list of observers to contact for this project">Observers</th>
       <th>Friend</th>
-      <th>Rcvrs</th>
+      <th title="Receivers (Names and frequency ranges in GHz) = (RRI) Rcvr_RRI:  0.10 -  1.60, (342) Rcvr_342:  0.29 -  0.40, (450) Rcvr_450:  0.39 -  0.52, (600) Rcvr_600:  0.51 -  0.69, (800) Rcvr_800:  0.68 -  0.92, (1070) Rcvr_1070:  0.91 -  1.23, (L) Rcvr1_2:  1.15 -  1.73, (S) Rcvr2_3:  1.73 -  2.60, (C) Rcvr4_6:  3.95 -  6.10, (X) Rcvr8_10:  8.00 - 10.00, (Hol) Holography: 11.70 - 12.20, (Ku) Rcvr12_18: 12.00 - 15.40, (KFPA) RcvrArray18_26: 17.00 - 27.50, (K) Rcvr18_26: 18.00 - 26.50, (Ka) Rcvr26_40: 26.00 - 39.50, (Q) Rcvr40_52: 38.20 - 49.80, (MBA) Rcvr_PAR: 80.00 - 100.00">Rcvrs</th>
     </tr>
     {% for start, end,start_cutoff, end_cutoff, p in ps %}
       {% if requestor.isOperator and p|moc_reschedule %}
