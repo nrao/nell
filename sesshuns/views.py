@@ -297,7 +297,7 @@ def period_time_accounting(request, *args, **kws):
         a.set_changed_time(field, value) #request.POST.get(field, None))
     a.description = request.POST.get("description", None)
 
-    # valid the new time accounting
+    # validate the new time accounting
     valid, msg = a.validate()
     if not valid:
         # don't save this, and notify the user

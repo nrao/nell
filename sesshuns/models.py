@@ -2242,12 +2242,11 @@ class Window(models.Model):
 
     def __str__(self):
         name = self.session.name if self.session is not None else "None"
-        default_period = self.default_period.__str__() if self.default_period is not None else "None"
         return "Window for %s, from %s for %d days, default: %s, period: %s" % \
             (name
            , self.start_date.strftime("%Y-%m-%d")
            , self.duration
-           , default_period
+           , self.default_period
            , self.period)
 
     def end(self):
