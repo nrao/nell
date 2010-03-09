@@ -376,7 +376,7 @@ class Project(models.Model):
     start_date       = models.DateTimeField(null = True, blank = True)
     end_date         = models.DateTimeField(null = True, blank = True)
     friend           = models.ForeignKey(User, null = True, blank = True)
-    accounting_notes = models.CharField(null = True, max_length = 1024, blank = True)
+    accounting_notes = models.TextField(null = True, blank = True)
     notes            = models.TextField(null = True, blank = True)
     schedulers_notes = models.TextField(null = True, blank = True)
 
@@ -1271,8 +1271,8 @@ class Sesshun(models.Model):
     max_duration       = models.FloatField(null = True, help_text = "Hours", blank = True)
     min_duration       = models.FloatField(null = True, help_text = "Hours", blank = True)
     time_between       = models.FloatField(null = True, help_text = "Hours", blank = True)
-    accounting_notes   = models.CharField(null = True, max_length = 1024, blank = True)
-    notes              = models.CharField(null = True, max_length = 1024, blank = True)
+    accounting_notes   = models.TextField(null = True, blank = True)
+    notes              = models.TextField(null = True, blank = True)
 
     restrictions = "Unrestricted" # TBF Do we still need restrictions?
 
@@ -1798,7 +1798,7 @@ class Period_Accounting(models.Model):
                                        , default = 0.0) 
     short_notice          = models.FloatField(help_text = "Hours"  # SN
                                        , default = 0.0) 
-    description           = models.CharField(null = True, max_length = 512, blank = True)
+    description           = models.TextField(null = True, blank = True)
 
     class Meta:
         db_table = "periods_accounting"
@@ -1859,8 +1859,9 @@ class Period_Accounting(models.Model):
                 , 'lost_time_other'
                 ]
         for field in fields:        
-            self.set_changed_time(field
-                                , float(fdata.get(field, "0.0")))    
+            value = fdata.get(field, None)
+            if value is not None:
+                self.set_changed_time(field, value)
         self.save()
 
     def jsondict(self):

@@ -114,37 +114,16 @@ def GenerateProjectReport():
     outfile.write("\nTotal hours left this trimester = %.1f\n" % \
                   trimester_hrs_left)
 
-    # All open projects + 
-    # All projects for this trimester +
-    # All A grade projects that ran during this trimester
-    projects = \
-        [p for p in open_projects] + \
-        [p for p in Project.objects.filter(complete = True).filter(semester = trimester)] + \
-        [p for p in Project.objects.filter(complete = True) \
-           if p.semester != trimester.semester and \
-              any([s.allotment.grade == 4.0 for s in p.sesshun_set.all()]) and \
-              any([pd.start > trimester.start() and \
-                   pd.start < trimester.end() \
-                   for pd in s.period_set.all()])]
-
     ta    = TimeAccounting()
-    hours = sum([ta.getProjectTotalTime(p) for p in projects])
+    hours = sum([ta.getTimeLeft(p) for p in open_projects])
 
-    outfile.write("\nSum of all projects' allotment time = %.1f" % hours)
-    outfile.write("\nAllotment hours / Trimester Hours   = %.1f%%" % 
+    outfile.write("\nSum of all incomplete projects' hours remaining = %.1f" % hours)
+    outfile.write("\nHours remaining / Trimester Hours               = %.1f%%" % 
                   (hours / TRIMESTER_HOURS * 100.))
-
-    outfile.write("\nTime billed     / Trimester Hours   = %.1f%%\n" % 
-                  (sum([ta.getCompletedTimeBilled(p) for p in projects]) / TRIMESTER_HOURS * 100.))
-
-    hours = sum([ta.getTimeLeft(p) for p in projects if not p.complete])
-    outfile.write("\nSum of all projects' hours remaining   = %.1f" % hours)
-    outfile.write("\nHours remaining / Trimester Hours      = %.1f%%" % 
-                  (hours / TRIMESTER_HOURS * 100.))
-    outfile.write("\nHours remaining / Trimester Hours Left = %.1f%%\n" % 
+    outfile.write("\nHours remaining / Trimester Hours Left          = %.1f%%\n" % 
                   float(hours / trimester_hrs_left * 100.))
 
-    hours = sum([ta.getProjectSchedulableTotalTime(p) for p in projects])
+    hours = sum([ta.getProjectSchedulableTotalTime(p) for p in open_projects])
     outfile.write("\nSum of all schedulable time             = %.1f" % \
                   hours)
 
