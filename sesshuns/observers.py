@@ -334,7 +334,7 @@ def project_notes_save(request, *args, **kws):
 def project_snotes_form(request, *args, **kwds):
     pcode, = args
 
-    requestor = get_requstor(request)
+    requestor = get_requestor(request)
 
     #  If the requestor doesn't have access to this, redirect to the project.
     if not requestor.isAdmin():
