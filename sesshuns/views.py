@@ -400,3 +400,21 @@ def scheduling_email(request, *args, **kwds):
     else:
         return HttpResponse(json.dumps({'success':'error'})
                           , mimetype = "text/plain")
+
+def window_assign_period(request, *args, **kwds):
+    if len(args) != 2:
+        return HttpResponse(json.dumps({'success':'error'})
+                          , mimetype = "text/plain")
+    windowId = int(args[0])
+    periodId = int(args[1])
+    default = request.POST.get("default", True)
+
+    # get the window & assign the period
+    win = first(Window.objects.filter(id = windowId))
+    if win is None:
+        return HttpResponse(json.dumps({'success':'error'})
+                          , mimetype = "text/plain")
+    win.assignPeriod(periodId, default)
+
+    return HttpResponse(json.dumps({'success':'ok'})
+                      , mimetype = "text/plain")

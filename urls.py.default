@@ -54,7 +54,7 @@ urlpatterns = patterns(''
    , url(r'^periods/publish$',     publish_periods) #
    , url(r'^periods/publish/(\d+)$',     publish_periods) #
    , url(r'^periods/delete_pending', delete_pending) #
- 
+   , url(r'^window/([^/]+)/assign_period/(\d+)$', window_assign_period)
    , url(r'^periods/(UTC)$',      PeriodResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^periods/(ET)$',       PeriodResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^periods/(UTC)/(\d+)$',PeriodResource(permitted_methods=('PUT', 'GET', 'POST'))) #

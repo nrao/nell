@@ -2596,6 +2596,17 @@ class Window(models.Model):
               , "end"  : end.isoformat()
         }
 
+    def assignPeriod(self, periodId, default):
+        "Assign the given period to the default or choosen period"
+        p = first(Period.objects.filter(id = periodId))
+        if p is None:
+            return
+        if default:
+            self.default_period = p
+        else:
+            self.period = p
+        self.save()
+
     class Meta:
         db_table = "windows"
 
