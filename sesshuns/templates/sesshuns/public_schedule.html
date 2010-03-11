@@ -191,7 +191,7 @@
         {% if p.session.project.is_maintenance %}
           {{rschedule|get_receivers:day}}
         {% else %}
-          {{p.session.receiver_list_simple}}
+          {{p.receiver_list}}
         {% endif %}
       </td>
     </tr>

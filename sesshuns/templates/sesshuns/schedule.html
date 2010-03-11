@@ -48,7 +48,7 @@
 {% endblock %}
 {% block content %}
   <center>
-  <h1 class="loud">GBT Schedule</h1>
+  <h1 class="loud">GBT New Schedule</h1>
   <form name="getCalendar" action="/schedule/" method="POST">
   <p>
     <label for="id_start">Start:</label>
@@ -207,7 +207,7 @@
         {% if p.session.project.is_maintenance %}
           {{rschedule|get_receivers:day}}
         {% else %}
-          {{p.session.receiver_list_simple}}
+          {{p.receiver_list}}
         {% endif %}
       </td>
     </tr>

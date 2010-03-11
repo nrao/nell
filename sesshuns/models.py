@@ -1930,6 +1930,7 @@ class Period_State(models.Model):
         "Short hand for getting state by abbreviation"
         return first(Period_State.objects.filter(abbreviation = abbr))
 
+
 class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
     accounting = models.ForeignKey(Period_Accounting, null=True)
@@ -1940,10 +1941,26 @@ class Period(models.Model):
     forecast   = models.DateTimeField(null = True, editable=False, blank = True)
     backup     = models.BooleanField()
     moc_ack    = models.BooleanField(default = False)
+    receivers  = models.ManyToManyField(Receiver, through = "Period_Receiver")
 
     class Meta:
         db_table = "periods"
     
+    @staticmethod
+    def create(*args, **kws):
+        """
+        Recomended way of 'overriding' the constructor.  Here we want to make
+        sure that all new Periods init their rcvrs correctly.
+        """
+        p = Period(**kws)
+        # don't save & init rcvrs unless you can
+        if not kws.has_key("session"):
+            # need the session first!
+            return p
+        p.save()
+        p.init_rcvrs_from_session()
+        return p
+            
     def end(self):
         "The period ends at start + duration"
         return self.start + timedelta(hours = self.duration)
@@ -2014,14 +2031,60 @@ class Period(models.Model):
         self.backup   = True if fdata.get("backup", None) == 'true' else False
         stateAbbr = fdata.get("state", "P")
         self.state = first(Period_State.objects.filter(abbreviation=stateAbbr))
+
+
         # how to initialize scheduled time? when they get published!
         # so, only create an accounting object if it needs it.
         if self.accounting is None:
             pa = Period_Accounting(scheduled = 0.0)
             pa.save()
             self.accounting = pa
+
         self.save()
+
+        # now that we have an id (from saving), we can specify the relation
+        # between this period and assocaited rcvrs
+        self.update_rcvrs_from_post(fdata)
+
+        # rescore! TBF: do we *always* do this?
         ScorePeriod().run(self.id)
+
+    def update_rcvrs_from_post(self, fdata):
+
+        # clear them out
+        rps = Period_Receiver.objects.filter(period = self)
+        for rp in rps:
+            rp.delete()
+
+        # insert the new ones: what are they?
+        rcvrStr = fdata.get("receivers", "")
+        if rcvrStr == "":
+            # use the sessions receivers - this will happen on init
+            if self.session is not None:
+                rcvrAbbrs = self.session.rcvrs_specified()
+            else:
+                rcvrAbbrs = []
+        else:    
+            rcvrAbbrs = rcvrStr.split(",")
+
+        # now that we have their names, put them in the DB    
+        for r in rcvrAbbrs:
+            rcvr = first(Receiver.objects.filter(abbreviation = r.strip()))
+            if rcvr is not None:
+                rp = Period_Receiver(receiver = rcvr, period = self)
+                rp.save()
+            
+    def init_rcvrs_from_session(self):
+        "Use the session's rcvrs for the ones associated w/ this period."
+        if self.session is None:
+            return
+        rcvrAbbrs = self.session.rcvrs_specified()
+        for r in rcvrAbbrs:
+            rcvr = first(Receiver.objects.filter(abbreviation = r.strip()))
+            if rcvr is not None:
+                rp = Period_Receiver(receiver = rcvr, period = self)
+                rp.save()
+
 
     def handle2session(self, h):
         n, p = h.rsplit('(', 1)
@@ -2068,6 +2131,7 @@ class Period(models.Model):
                                      if w is not None else None
               , "wstart"       : d2str(w.start_date) if w is not None else None
               , "wend"         : d2str(w.last_date()) if w is not None else None
+              , "receivers"    : self.get_rcvrs_json()
                 }
         # include the accounting but keep the dict flat
         if self.accounting is not None:
@@ -2077,6 +2141,13 @@ class Period(models.Model):
             accounting_js.update({'accounting_id' : accounting_id})
             js.update(accounting_js)
         return js
+
+    def receiver_list(self):
+        return self.get_rcvrs_json()
+
+    def get_rcvrs_json(self):
+        rcvrs = [r.abbreviation for r in self.receivers.all()]
+        return ", ".join(rcvrs)
 
     def moc_met(self):
         """
@@ -2279,6 +2350,13 @@ class Period(models.Model):
             window.reconcile()
             window.save()
     
+class Period_Receiver(models.Model):
+    period = models.ForeignKey(Period)
+    receiver = models.ForeignKey(Receiver)
+
+    class Meta:
+        db_table = "periods_receivers"
+
 # TBF: temporary table/class for scheduling just 09B.  We can safely
 # dispose of this after 09B is complete.  Delete Me!
 class Project_Blackout_09B(models.Model):
@@ -2567,7 +2645,7 @@ class Window(models.Model):
             if start is not None and duration is not None \
                 and sesshun is not None:
                # create it! reuse the period code!
-               p = Period()
+               p = Period.create()
                pfdata = dict(date = date
                            , time = time
                            , duration = duration

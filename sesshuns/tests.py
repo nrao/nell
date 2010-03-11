@@ -341,7 +341,22 @@ class TestPeriod(NellTestCase):
                     , "time":    "12:15"
                     , "duration": 4.25
                     , "backup":   False
+                    , "receivers": "L, X"
                      }
+
+    def test_create(self):
+        
+        # make sure the sesshun has some rcvrs
+        self.sesshun.save_receivers("L")
+
+        p = Period.create(session = self.sesshun
+                        , start = datetime(2009, 10, 1)
+                        , duration = 10.0
+                        )
+
+        self.assertEqual(p.session.id, 1)
+        self.assertEqual(p.duration, 10.0)
+        self.assertEqual(p.receiver_list(), "L")
 
     def test_update_from_post(self):
         p = Period()
@@ -351,6 +366,8 @@ class TestPeriod(NellTestCase):
         self.assertEqual(p.start, datetime(2009, 6, 1, 12, 15))
         self.assertEqual(p.duration, self.fdata["duration"])
         self.assertEqual(p.backup, self.fdata["backup"])
+        self.assertEqual(len(p.receivers.all()), 2)
+        #self.assertEqual(p.receivers.all(), 2)
 
     def test_jsondict(self):
          
@@ -370,12 +387,20 @@ class TestPeriod(NellTestCase):
 
         p.save()
 
+        L = Receiver.get_rcvr("L")
+        X = Receiver.get_rcvr("X")
+        pr = Period_Receiver(period = p, receiver = L)
+        pr.save()
+        pr = Period_Receiver(period = p, receiver = X)
+        pr.save()
+
         jd = p.jsondict('UTC')
 
         self.assertEqual(jd["duration"], dur)
         self.assertEqual(jd["date"], "2009-06-01")
         self.assertEqual(jd["time"], "12:15")
         self.assertEqual(jd["state"], "P")
+        self.assertEqual(jd["receivers"], "L, X")
 
         p.delete()
 
