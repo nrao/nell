@@ -1,50 +1,93 @@
-# Copyright (C) 2008 Associated Universities, Inc. Washington DC, USA.
+######################################################################
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
+#  Notifier sends out a batch of emails to notify investigators and
+#  staff concerning GBT projects.
 #
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
+#  Copyright (C) 2008 Associated Universities, Inc. Washington DC, USA.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software Foundation,
-# Inc., 675 Mass Ave Cambridge, MA 02139, USA.
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
 #
-# Correspondence concerning GBT software should be addressed as follows:
-#     GBT Operations
-#     National Radio Astronomy Observatory
-#     P. O. Box 2
-#     Green Bank, WV 24944-0002 USA
+#  This program is distributed in the hope that it will be useful, but
+#  WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+#  General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+#  Correspondence concerning GBT software should be addressed as follows:
+#  GBT Operations
+#  National Radio Astronomy Observatory
+#  P. O. Box 2
+#  Green Bank, WV 24944-0002 USA
+#
+#  $Id:$
+#
+######################################################################
 
 from datetime      import datetime
 from emailNotifier import emailNotifier
+from Email         import Email
+from Queue         import Queue, Empty
+from copy          import deepcopy
+
 
 class Notifier(object):
 
     """
     This abstract class is responsible for sending out a batch of emails to
-    notify DSS investigators concerning issues with their project(s).  
-    Note: Children of this class should implement the stub method, 
+    notify DSS investigators concerning issues with their project(s).
+    Note: Children of this class should implement the stub method,
     sendNotifications.
     """
-    
+
+    class Prototype:
+        """
+        this class is used to keep prototype emails that the class
+        user may wish to register, then clone for their own use.
+        (copied from activestate.com,
+        http://code.activestate.com/recipes/86651-prototype-pattern/)
+        """
+        def __init__(self):
+            self._objs = {}
+
+        def registerObject(self, name, obj):
+            """
+            register an object.
+            """
+            self._objs[name] = obj
+
+        def unregisterObject(self, name):
+            """unregister an object"""
+            del self._objs[name]
+
+        def clone(self, name, **attr):
+            """clone a registered object and add/replace attr"""
+            obj = deepcopy(self._objs[name])
+            obj.__dict__.update(attr)
+            return obj
+
+        def getObject(self, name):
+            """return a reference to the actual stored object"""
+            return self._objs[name]
+
+
     def __init__(self, skipEmails = [], test = False, log = False):
         self.skipEmails  = skipEmails
         self.test        = test
 
-        self.to          = []
-        self.subject     = ""
-        self.body        = ""
-
         self.log         = log
         self.logfile     = None
         self.logfilename = None
+        self.queue       = Queue(0)
+        self.email_templates = Notifier.Prototype()
 
-    def startLogging(self):    
+
+    def startLogging(self):
         if not self.log:
             return
 
@@ -63,38 +106,64 @@ class Notifier(object):
         if self.log:
             self.logFile.close()
 
-    def setAddresses(self, addresses):
-        self.to = [a for a in addresses if a not in self.skipEmails]
+    def setAddresses(self, key, addresses):
+        to = [a for a in addresses if a not in self.skipEmails]
+        self.email_templates.getObject(key).SetRecipients(to)
 
-    def getAddresses(self):
-        return self.to
+    def getAddresses(self, key):
+        return self.email_templates.getObject(key).GetRecipientList()
 
-    def setSubject(self, subject):
-        self.subject = subject
+    def setSubject(self, key, subject):
+        self.email_templates.getObject(key).SetSubject(subject)
 
-    def getSubject(self):
-        return self.subject
+    def getSubject(self, key):
+        return self.email_templates.getObject(key).GetSubject()
 
-    def setBody(self, body):
-        self.body = body
+    def setBody(self, key, body):
+        self.email_templates.getObject(key).SetBody(body)
 
-    def getBody(self):
-        return self.body
+    def getBody(self, key):
+        return self.email_templates.getObject(key).GetBody()
+
+    def setSender(self, key, sender):
+        self.email_templates.getObject(key).SetSender(sender)
+
+    def getSender(self, key):
+        return self.email_templates.getObject(key).GetSender()
+
+    def registerTemplate(self, key, email):
+        self.email_templates.registerObject(key, email)
+
+    def cloneTemplate(self, key):
+        return self.email_templates.clone(key)
+
+    def unregisterTemplate(self, key):
+        self.email_templates.unregisterObject(key)
+
+    def post(self, email):
+        self.queue.put(email)
+
+    def flushQueue(self):
+        try:
+            while not self.queue.empty():
+                email = self.queue.get_nowait()
+        except Empty:
+            pass
 
     def notify(self):
         "Send out the emails."
-        if self.test:
-            return 
 
         self.startLogging()
 
         try:
-            emailer = emailNotifier(smtp = "smtp.gb.nrao.edu"
-                                  , frm  = "helpdesk-dss@gb.nrao.edu")
-            emailer.SetTo(self.getAddresses())
-            emailer.SetSubject(self.getSubject())
-            emailer.SetMessage(self.getBody())
-            emailer.Notify()
+            emailer = emailNotifier(smtp = "smtp.gb.nrao.edu")
+
+            while not self.queue.empty():
+                email = self.queue.get_nowait()
+                emailer.TestSend(email)
+##                 emailer.Send(email)
+        except Empty:
+            pass
         except:
             print "Error: Could not send mail!"
             self.logMessage("Error: Could not send mail!\n")
