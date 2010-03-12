@@ -1767,13 +1767,13 @@ class Target(models.Model):
                 mins = 0.0
                 horz = int(horz) + 1
             secs = 0.0
-        return ":".join(map(str, [int(horz), int(mins), "%.1f" % secs]))
+        return ":".join(map(str, ["%02d" % int(horz), "%02d" % int(mins), "%04.1f" % secs]))
 
     def get_vertical(self):
         if self.vertical is None:
             return ""
 
-        return "%.3f" % TimeAgent.rad2deg(self.vertical)
+        return "%.2f" % TimeAgent.rad2deg(self.vertical)
 
     class Meta:
         db_table = "targets"
