@@ -29,7 +29,7 @@ def bl(value):
 
 def GenerateReport(start):
     outfile   = open("./DssSessionReport.txt", 'w')
-    scs       = [1, 13, 5, 3, 4, 10, 6, 6, 6, 6, 6, 5, 15]
+    scs       = [1, 13, 5, 6, 4, 10, 6, 6, 6, 6, 6, 5, 15]
     semesters = sorted(Semester.objects.all()
                      , lambda x,y:cmp(x.semester,y.semester))
     ta        = TimeAccounting()
@@ -55,8 +55,8 @@ def GenerateReport(start):
                    (ljust("",         scs[0])
                   , ljust("name",     scs[1])
                   , center("orgID",   scs[2])
-                  , rjust("obs",      scs[3])
-                  , ljust("sess",     scs[4])
+                  , center("obs",     scs[3])
+                  , ljust("type",     scs[4])
                   , center("RA",      scs[5])
                   , rjust("Dec",      scs[6])
                   , center("rem",     scs[7])
@@ -75,7 +75,7 @@ def GenerateReport(start):
                     (ljust(bl(s.schedulable()),          scs[0])
                    , ljust(s.name,                       scs[1])
                    , rjust(s.original_id,                scs[2])
-                   , center(s.observing_type.type[0],    scs[3])
+                   , center(s.observing_type.type[:6],   scs[3])
                    , center(s.session_type.type[0],      scs[4])
                    , ljust(target.get_horizontal(),      scs[5])
                    , rjust(target.get_vertical(),        scs[6])
