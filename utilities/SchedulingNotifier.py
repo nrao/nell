@@ -38,14 +38,19 @@ import TimeAgent
 
 class SchedulingNotifier(Notifier):
 
+
     def __init__(self
-               , periods
+               , periods    = []
                , skipEmails = []
                , test       = False
                , log        = False):
         Notifier.__init__(self, skipEmails, test, log)
 
         self.sender = "helpdesk-dss@gb.nrao.edu"
+        self.setPeriods(periods)
+
+
+    def setPeriods(self, periods):
         self.examinePeriods(periods)
         self.periods.sort(lambda x, y: cmp(x.start, y.start))
 
@@ -68,8 +73,7 @@ class SchedulingNotifier(Notifier):
         self.registerTemplate("staff", Email(self.sender,
                                              self.createStaffAddresses(),
                                              self.createStaffSubject(),
-                                             self.createBody()))            
-
+                                             self.createBody()))     
 
     def examinePeriods(self, periods):
         """
@@ -96,16 +100,25 @@ class SchedulingNotifier(Notifier):
     def notify(self):
         "send out all the different emails"
 
-        print "In SchedulingNotifier.notify()"
         # notify the obs; subject = "Your GBT Project has been
         # scheduled..."  Because each observer will get a custom
         # 'subject' line with the pcode appended, each must get a
         # separate email.
 
         for i in self.getAddresses("observer"):
-            pcodes = " - ".join(self.emailProjectMap[i])
+            try:
+                pcodes = " - ".join(self.emailProjectMap[i])
+            except KeyError: # You WILL get a key error if scheduler
+                             # changes observer email addresses
+                pcodes = None
+
             email = self.cloneTemplate("observer")
-            subject = "%s (%s)" % (email.GetSubject(), pcodes)
+
+            if pcodes:
+                subject = "%s (%s)" % (email.GetSubject(), pcodes)
+            else:
+                subject = email.GetSubject()
+
             email.SetRecipients(i)
             email.SetSubject(subject)
             self.post(email)
@@ -238,7 +251,7 @@ Thank You.
 
     def getSessionTable(self, periods):
         table  = "Start (ET)   |      UT      |  LST  |  (hr) |    PI     | Rx        | Session\n"
-        table += "------------------------------------------------------------------------------\n"
+        table += "------------------------------------------------------------------------------------\n"
         for p in periods:
             if p.session.project.pcode == "Maintenance":
                 pi = ""
@@ -260,13 +273,16 @@ Thank You.
         if len(self.changedPeriods) == 0:
             changes = ""
         else:
-            changes = "Changes made to the schedule:\n %s" % \
+            changes = "Changes made to the schedule:\n%s" % \
                 self.getChangeTable()
         return changes
 
     def getChangeTable(self):
-        table  = "Start (ET)   |      UT      |  LST  |  (hr) | Observer  | Rx        | Session | Change\n"
-        table += "------------------------------------------------------------------------------\n"
+        table  = "Start (ET)   |      UT      |  LST  |  (hr) | Observer  "
+        table += "| Rx        | Session       | Change\n"
+        table += "-------------------------------------------------------"
+        table += "-------------------------------------------\n"
+        
         for p in self.changedPeriods:
             if p.session.project.pcode == "Maintenance":
                 observer = ""
@@ -274,7 +290,7 @@ Thank You.
                 observer = p.session.project.get_observers()[0].user.last_name[:9] \
                            if p.session.project.get_observers() else "Unknown"
 
-            table += "%s | %s | %s | %5s | %-9s | %-9s | %s | %s\n" % (
+            table += "%s | %s | %s | %5s | %-9s | %-9s | %-13s | %s\n" % (
                 TimeAgent.utc2est(p.start).strftime('%b %d %H:%M')
               , p.start.strftime('%b %d %H:%M')
               , TimeAgent.dt2tlst(p.start).strftime('%H:%M')

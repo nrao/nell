@@ -1,3 +1,5 @@
+# -*- coding: iso-8859-15 -*-
+
 from django              import template
 from sesshuns            import models
 from datetime            import datetime, timedelta
@@ -32,7 +34,7 @@ def target_horz(value):
             mins = 0.0
             horz = int(horz) + 1
         secs = 0.0
-    return ":".join(map(str, [int(horz), int(mins), "%.1f" % secs]))
+    return "%02i:%02i:%04.1f" % (int(horz), int(mins), secs)
 
 @register.inclusion_tag('flatten.html')
 def edit_allotment(sesshun_id):
@@ -50,7 +52,18 @@ def target_vert(value):
     t = first(value.target_set.all())
     if t is None or t.vertical is None:
         return ""
-    return "%.3f" % rad2deg(t.vertical)
+
+    degs = rad2deg(t.vertical)
+
+    if degs < 0:
+        degs = abs(degs)
+        sign = "-"
+    else:
+        sign = " "
+        
+    mins = (degs - int(degs)) * 60
+    secs = (mins - int(mins)) * 60
+    return "%s%02i°%02i'%04.1f\"" % (sign, int(degs), int(mins), secs)
 
 @register.inclusion_tag('flatten.html')
 def display_allotments_for_project(project_id):
