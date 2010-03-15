@@ -50,23 +50,33 @@ def GenerateReport(start):
     sorted_semesters=sorted(Semester.objects.all(),lambda x,y:cmp(x.semester,y.semester))
     ta = TimeAccounting()
 
+    blank_line = Line()
+    blank_line.add(" ")
+    prj_head = Line()
+    sess_head = Line()
+
+    for i in project_header:
+        prj_head.add(i)
+
+    for i in session_header:
+        sess_head.add(i)
+                
     for s in sorted_semesters:
         print "\n Trimester : %s" % (s.semester)
         print "----------------"
 
-        the_projects=[p for p in s.project_set.all() if not p.complete]
+        the_projects = [p for p in s.project_set.all() if not p.complete]
         projects = sorted(the_projects, lambda x, y: cmp(x.pcode, y.pcode))
+
         if projects:
 
-            rep = Report()
+            tri_report = Report()
             line = Line()
 
-            for i in project_header:
-                line.add(i)
-
-            rep.add_headers(line)
-
             for p in projects:
+
+                prj_report = Report()
+                prj_report.add_headers(prj_head)
                 line.clear()
                 line.add(p.pcode)
                 line.add(p.name[:50])
@@ -78,17 +88,16 @@ def GenerateReport(start):
                 line.add(ta.getCompletedTimeBilled(p), fptype)
                 line.add(ta.getUpcomingTimeBilled(p), fptype)
                 line.add(ta.getTimeRemainingFromCompleted(p), fptype)
-                rep.add_line(line)
+                prj_report.add_line(line)
+                tri_report.add_report(prj_report)
+                tri_report.add_line(blank_line)
                 line.clear()
 
-                for i in session_header:
-                    line.add(i)
-                    
-                rep2 = Report()
-                rep2.add_headers(line)
+                sess_report = Report()
+                sess_report.add_headers(sess_head)
 
                 sess = sorted(p.sesshun_set.all(), \
-                           lambda x,y:cmp(x.name, y.name))
+                              lambda x,y:cmp(x.name, y.name))
                 for s in sess:
 
                     line.clear()
@@ -110,10 +119,14 @@ def GenerateReport(start):
                     line.add(s.min_duration, fptype)
                     line.add(s.max_duration, fptype)
                     line.add("".join(s.rcvrs_specified()))
-                    rep2.add_line(line)
+                    sess_report.add_line(line)
 
-                rep.add_report(rep2)
-            rep.output()
+                tri_report.add_report(sess_report)
+                tri_report.add_line(blank_line)
+                tri_report.add_line(blank_line)
+                tri_report.add_line(blank_line)
+            tri_report.normalize()
+            tri_report.output()
         else:
             print "\t None"
 

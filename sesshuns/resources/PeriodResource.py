@@ -7,11 +7,26 @@ from utilities       import TimeAgent
 
 import simplejson as json
 
+import sys
+import traceback
+
+def formatExceptionInfo(maxTBlevel=5):
+    cla, exc, trbk = sys.exc_info()
+    excName = cla.__name__
+    try:
+        excArgs = exc.__dict__["args"]
+    except KeyError:
+        excArgs = "<no args>"
+        excTb = traceback.format_tb(trbk, maxTBlevel)
+    return (excName, excArgs, excTb)
+
+
 class PeriodResource(NellResource):
     def __init__(self, *args, **kws):
         super(PeriodResource, self).__init__(Period, *args, **kws)
 
     def read(self, request, *args, **kws):
+
         tz = args[0]
         # one or many?
         if len(args) == 1:
@@ -25,9 +40,10 @@ class PeriodResource(NellResource):
             start = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
             duration = int(daysPeriods) * 24 * 60
             periods = Period.get_periods(start, duration)
+            ptz = [p.jsondict(tz) for p in periods]
             return HttpResponse(
                         json.dumps(dict(total = len(periods)
-                                      , periods = [p.jsondict(tz) for p in periods]))
+                                      , periods = ptz))
                       , content_type = "application/json")
         else:
             # we're getting a single period as specified by ID
@@ -41,7 +57,7 @@ class PeriodResource(NellResource):
         o.init_from_post(request.POST, tz)
         # Query the database to insure data is in the correct data type
         o = first(self.dbobject.objects.filter(id = o.id))
-        
+
         return HttpResponse(json.dumps(o.jsondict(tz))
                           , mimetype = "text/plain")
 
@@ -57,6 +73,6 @@ class PeriodResource(NellResource):
         id = int(args[1])
         o  = self.dbobject.objects.get(id = id)
         o.delete()
-        
+
         return HttpResponse(json.dumps({"success": "ok"}))
 
