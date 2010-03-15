@@ -1792,6 +1792,57 @@ class TestSessionResource(NellTestCase):
         #self.assertEquals(r_json['receiver'], u'(342 | Ka) & (S | Ka)')
         self.assertEquals(r_json['receiver'], u'((342 | Ka) & (S | Ka))')
 
+class TestUserResources(NellTestCase):
+
+    def setUp(self):
+        super(TestUserResources, self).setUp()
+        self.client = Client()
+        self.fdata = {
+                      }
+        self.users = []
+        self.users.append(User(original_id = 0
+                    , pst_id      = 0
+                    , username    = 'foo'
+                    , sanctioned  = False
+                    , first_name  = 'Foo'
+                    , last_name   = 'Bar'
+                    , contact_instructions = ""
+                    , role  = first(Role.objects.all())
+                     ))
+        self.users[-1].save()
+        self.users.append(User(original_id = 0
+                    , pst_id      = 0
+                    , username    = 'mmccarty'
+                    , sanctioned  = True
+                    , first_name  = 'Mike'
+                    , last_name   = 'McCarty'
+                    , contact_instructions = ""
+                    , role  = first(Role.objects.all())
+                     ))
+        self.users[-1].save()
+
+    def test_read(self):
+        response = self.client.get('/users')
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue('"total": 2' in response.content)
+
+    def test_read_with_filter(self):
+        response = self.client.get('/users?filterText=foo')
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue('"total": 1' in response.content)
+
+    def test_update(self):
+        fdata = self.fdata
+        fdata.update({"_method" : "put"
+                    , "username" : "foo"
+                    , "sanctioned" : "True"
+                    , "first_name" : "Foo"
+                    , "last_name"  : "Bar"
+                    , "contact_instructions" : ""
+                     })
+        response = self.client.post('/users/%s' % self.users[0].id, fdata)
+        self.failUnlessEqual(response.status_code, 200)
+
 class TestWindowResource(NellTestCase):
 
     def setUp(self):

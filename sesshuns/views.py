@@ -2,6 +2,7 @@ from datetime                 import date, datetime, timedelta
 from django.http              import HttpResponse
 from models                   import Project, Sesshun, Period, Receiver
 from models                   import Receiver_Schedule, first, str2dt
+from models                   import User
 from models                   import Window 
 from tools                    import IcalMap, ScheduleTools, TimeAccounting
 from utilities                import TimeAgent
@@ -134,6 +135,14 @@ def get_options(request, *args, **kws):
                                       , 'project ids':
                                         [ p.id for p in projects]})
                           , mimetype = "text/plain")
+    elif mode == "users":
+        users = User.objects.order_by('last_name')
+        return HttpResponse(json.dumps(
+           {'users' : ["%s, %s" % (u.last_name, u.first_name) for u in users]
+          , 'ids'   : [u.id for u in users]
+           })
+         , mimetype = "text/plain")
+
     elif mode == "session_handles":
         ss = Sesshun.objects.order_by('name')
         return HttpResponse(json.dumps({'session handles':

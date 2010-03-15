@@ -190,6 +190,24 @@ class User(models.Model):
     def __str__(self):
         return "%s, %s" % (self.last_name, self.first_name)
 
+    def update_from_post(self, fdata):
+        self.username    = fdata.get('username')
+        sanctioned       = fdata.get('sanctioned')
+        self.sanctioned  = sanctioned.lower() == 'true' if sanctioned is not None else sanctioned
+        self.first_name  = fdata.get('first_name')
+        self.last_name   = fdata.get('last_name')
+        self.contact_instructions   = fdata.get('contact_instructions')
+        self.save()
+
+    def jsondict(self):
+        projects = ','.join([i.project.pcode for i in self.investigator_set.all()])
+        return {'id' : self.id
+              , 'first_name' : self.first_name
+              , 'last_name'  : self.last_name
+              , 'sanctioned' : self.sanctioned
+              , 'projects'   : projects
+                }
+
     def name(self):
         return self.__str__()
 
