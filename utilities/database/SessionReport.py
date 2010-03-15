@@ -25,7 +25,7 @@ def center(value, width):
         return str(value)[:width].center(width)
 
 def bl(value):
-    return "" if value else "X"
+    return "X" if value else ""
 
 def GenerateReport(start):
     outfile   = open("./DssSessionReport.txt", 'w')
@@ -72,7 +72,7 @@ def GenerateReport(start):
 
                 target = first(s.target_set.all())
                 outfile.write("\n\t %s %s %s %s %s %s %s %s %s %s %s %s %s" %\
-                    (ljust(bl(s.schedulable()),          scs[0])
+                    (ljust(bl(s.status.complete),        scs[0])
                    , ljust(s.name,                       scs[1])
                    , rjust(s.original_id,                scs[2])
                    , center(s.observing_type.type[:6],   scs[3])
