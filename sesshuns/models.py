@@ -7,7 +7,7 @@ from django.http               import QueryDict
 from settings                  import ANTIOCH_SERVER_URL
 from utilities.receiver        import ReceiverCompile
 from utilities                 import TimeAgent, UserInfo, NRAOBosDB
-from utilities                 import ScorePeriod
+from utilities                 import Score
 
 import calendar
 import pg
@@ -2009,7 +2009,11 @@ class Period(models.Model):
             if tz == 'ET':
                 self.start = TimeAgent.est2utc(self.start)
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
+        print "first self.id ", self.id
         self.score    = 0.0
+        self.forecast = datetime(2000, 0, 0, 0, 0, 0)
+        #self.score    = Score().get([self.id]).get(self.id, 0.0)
+        #self.forecast = TimeAgent.quarter(datetime.utcnow())
         self.forecast = TimeAgent.quarter(datetime.utcnow())
         self.backup   = True if fdata.get("backup", None) == 'true' else False
         stateAbbr = fdata.get("state", "P")
@@ -2021,7 +2025,6 @@ class Period(models.Model):
             pa.save()
             self.accounting = pa
         self.save()
-        ScorePeriod().run(self.id)
 
     def handle2session(self, h):
         n, p = h.rsplit('(', 1)

@@ -1,11 +1,11 @@
 from sesshuns.models import *
 from utilities.TimeAgent import dtDiffHrs
-#from utilities           import ScorePeriod   # TBF scoring
+#from utilities           import Score   # TBF scoring
 
 class ScheduleTools(object):
 
     #def __init__(self):   # TBF scoring
-    #    self.sp = ScorePeriod()
+    #    self.sp = Score()
 
     def changeSchedule(self, start, duration, sesshun, reason, desc):
         """
