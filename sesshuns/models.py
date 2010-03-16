@@ -892,6 +892,31 @@ class Investigator(models.Model):
             , self.principal_contact
             , self.principal_investigator )
 
+    def jsondict(self):
+        return {"name"       : self.user.last_name
+              , "pi"         : self.principal_investigator
+              , "contact"    : self.principal_contact
+              , "remote"     : self.user.sanctioned
+              , "observer"   : self.observer
+              , "priority"   : self.priority
+              , "project_id" : self.project.id
+              , "user_id"    : self.user.id
+               }
+
+    def init_from_post(self, fdata):
+        project = first(Project.objects.filter(id = fdata.get("project_id"))) or first(Project.objects.all())
+        user    = first(User.objects.filter(id = fdata.get("user_id"))) or first(User.objects.all())
+        self.project                = project
+        self.user                   = user
+        self.observer               = fdata.get('observer', 'false').lower() == 'true'
+        self.principal_contact      = fdata.get('contact', 'false').lower() == 'true'
+        self.principal_investigator = fdata.get('pi', 'false').lower() == 'true'
+        self.priority               = int(fdata.get('priority', 1))
+        self.save()
+
+    def update_from_post(self, fdata):
+        self.init_from_post(fdata)
+
     def name(self):
         return self.user
 
