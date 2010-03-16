@@ -29,6 +29,8 @@
 #
 ######################################################################
 
+from pprint import pprint
+
 class Line:
 
     def __init__(self, line = None):
@@ -54,10 +56,18 @@ class Line:
     def get_widths(self):
         return self.widths
 
+    def set_widths(self, w):
+        self.widths = w
+
     def clear(self):
         self.columns = []
         self.widths = []
 
+    def my_type(self):
+        return "Line"
+
+    def normalize(self):
+        pass
 
     def _ljust(self, value, width, datatype = None):
         if datatype == None:
@@ -68,6 +78,7 @@ class Line:
             return str("%5.2f" % value)[:width].ljust(width)
         else:
             return str(value)[:width].ljust(width)
+
 
     def output(self, widths = None, indent = 0):
 
@@ -113,19 +124,25 @@ class Report:
     def lines(self):
         return len(self.elements)
 
+    def my_type(self):
+        return "Report"
+
     def output(self, widths = None, indent = None):
 
-        if self.indent > 0:
-            print
+##         if self.indent > 0:
+##             print
 
-        self.headers.output(self.widths, self.indent)
-        print " " * self.indent + "-" * sum(self.widths)
+        underscore = " " * self.indent + "-" * sum(self.widths)
+
+        if self.headers:
+            self.headers.output(self.widths, self.indent)
+            print underscore
 
         for i in self.elements:
             i.output(self.widths, self.indent)
 
-        if self.indent > 0:
-            print
+##         if self.indent > 0:
+##             print
 
     def clear(self):
         self.elements = []
@@ -133,6 +150,38 @@ class Report:
         self.widths = []
         self.indent = 0
 
+
+    def normalize(self):
+        wm = {}
+
+        for i in self.elements:
+            w = i.get_widths()
+            l = len(w)
+
+            if not wm.has_key(l):
+                wm[l] = []
+
+                for i in range(0, l):
+                    wm[l].append([])
+
+            for i in range(0, l):
+                wm[l][i].append(w[i])
+
+        max_w = {}
+
+        for i in wm.keys():
+            max_w[i] = [max(x) for x in wm[i]]
+
+        for i in self.elements:
+            l = len(i.get_widths())
+            i.set_widths(max_w[l])
+            i.normalize()
+
+    def get_widths(self):
+        return self.widths
+
+    def set_widths(self, w):
+        self.widths = w
 
     def _set_widths(self, widths):
 
