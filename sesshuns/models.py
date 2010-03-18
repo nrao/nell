@@ -2042,7 +2042,7 @@ class Period(models.Model):
         self.backup   = True if fdata.get("backup", None) == 'true' else False
         stateAbbr = fdata.get("state", "P")
         self.state = first(Period_State.objects.filter(abbreviation=stateAbbr))
-
+        self.moc_ack = fdata.get("moc_ack", self.moc_ack)
 
         # how to initialize scheduled time? when they get published!
         # so, only create an accounting object if it needs it.
@@ -2136,6 +2136,7 @@ class Period(models.Model):
               , "score"        : self.score
               , "forecast"     : dt2str(self.forecast)
               , "backup"       : self.backup
+              , "moc_ack"      : self.moc_ack
               , "state"        : self.state.abbreviation
               , "windowed"     : True if w is not None else False
               , "wdefault"     : self.is_windowed_default() \
@@ -2163,14 +2164,15 @@ class Period(models.Model):
     def moc_met(self):
         """
         Returns a Boolean indicated if MOC are met (True) or not (False).
-        Only bothers to calculate MOC for open sessions whose end time
-        is not already past.
+        Only bothers to calculate MOC for open and windowed sessions whose
+        end time is not already past.
         """
-        # TBF: Hack!  Remove when MOC is ok.
-        return True
-        # TBF: When windows are working correctly, replace with line below.
-        #if self.session.session_type.type not in ("open", "windowed") or \
-        if self.session.session_type.type not in ("open",) or \
+        # TBF: When correctly calculating MOC for < 2 GHz observations,
+        #      remove this hack.
+        if self.session.frequency <= 2.:
+            return True
+
+        if self.session.session_type.type not in ("open", "windowed") or \
            self.end() < datetime.utcnow():
             return True
 

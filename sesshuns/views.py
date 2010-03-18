@@ -454,7 +454,6 @@ def scheduling_email(request, *args, **kwds):
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
     else:
-        print "WHAT???"
         return HttpResponse(json.dumps({'success':'error'})
                           , mimetype = "text/plain")
 
@@ -476,3 +475,14 @@ def window_assign_period(request, *args, **kwds):
     return HttpResponse(json.dumps({'success':'ok'})
                       , mimetype = "text/plain")
 
+def toggle_moc(request, *args, **kwds):
+    if len(args) != 1:
+        return HttpResponse(json.dumps({'success':'error'})
+                          , mimetype = "text/plain")
+
+    period = first(Period.objects.filter(id = args[0]))
+    period.moc_ack = not period.moc_ack
+    period.save()
+
+    return HttpResponse(json.dumps({'success':'ok'})
+                      , mimetype = "text/plain")
