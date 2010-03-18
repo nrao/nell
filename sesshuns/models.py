@@ -1990,31 +1990,43 @@ class Period(models.Model):
 
     def from_post(self, fdata, tz):
 
+        # only update the score if something in the period has changed
+        update_score = False
+        if not update_score:
+            update_score = self.id is None
         handle = fdata.get("handle", "")
         if handle:
-            self.session = self.handle2session(handle)
+            new_session = self.handle2session(handle)
+            if not update_score:
+                update_score = self.session != new_session
+            self.session = new_session
         else:
             try:
                 maintenance = first(Project.objects.filter(pcode='Maintenance'))
                 self.session = first(Sesshun.objects.filter(project=maintenance))
             except:
                 self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
-        now           = dt2str(TimeAgent.quarter(datetime.utcnow()))
+        now           = TimeAgent.quarter(datetime.utcnow())
         date          = fdata.get("date", None)
         time          = fdata.get("time", "00:00")
         if date is None:
             self.start = now
         else:
-            self.start = TimeAgent.quarter(strStr2dt(date, time + ':00'))
+            new_start = TimeAgent.quarter(strStr2dt(date, time + ':00'))
             if tz == 'ET':
-                self.start = TimeAgent.est2utc(self.start)
-        self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
-        print "first self.id ", self.id
-        self.score    = 0.0
-        self.forecast = datetime(2000, 0, 0, 0, 0, 0)
-        #self.score    = Score().get([self.id]).get(self.id, 0.0)
-        #self.forecast = TimeAgent.quarter(datetime.utcnow())
-        self.forecast = TimeAgent.quarter(datetime.utcnow())
+                new_start = TimeAgent.est2utc(self.start)
+            if not update_score:
+                update_score = self.start != new_start
+            self.start = new_start
+        new_duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "1.0")))
+        if not update_score:
+            update_score = self.duration != new_duration
+        self.duration = new_duration
+        if update_score and now < self.start:
+            self.score = Score().session(self.session.id
+                                       , self.start
+                                       , self.duration)
+            self.forecast = TimeAgent.quarter(datetime.utcnow())
         self.backup   = True if fdata.get("backup", None) == 'true' else False
         stateAbbr = fdata.get("state", "P")
         self.state = first(Period_State.objects.filter(abbreviation=stateAbbr))

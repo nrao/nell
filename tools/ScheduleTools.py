@@ -1,11 +1,12 @@
-from sesshuns.models import *
-from utilities.TimeAgent import dtDiffHrs
-#from utilities           import Score   # TBF scoring
+from datetime            import datetime, timedelta
+from sesshuns.models     import *
+from utilities.TimeAgent import dtDiffHrs, quarter
+from utilities           import Score
 
 class ScheduleTools(object):
 
-    #def __init__(self):   # TBF scoring
-    #    self.sp = Score()
+    def __init__(self):
+        self.score = Score()
 
     def changeSchedule(self, start, duration, sesshun, reason, desc):
         """
@@ -113,9 +114,9 @@ class ScheduleTools(object):
                 value = p.accounting.get_time(reason)
                 p.accounting.set_changed_time(reason, value + other_sess_time)
                 p.accounting.save()
+                if need_scoring:
+                    self.scorePeriod(p)
                 p.save()
-                #if need_scoring:  # TBF scoring
-                #    self.sp.run(p.id)
 
         # finally, anything to replace it with?
         if sesshun is not None:
@@ -132,8 +133,8 @@ class ScheduleTools(object):
                      , state      = scheduled
                      , forecast   = start
                      , accounting = pa)
+            self.scorePeriod(p)
             p.save()    
-            #self.sp.run(p.id)  # TBF scoring
             descDct["got_time"].append((p.__str__(),p.duration, p.id))
 
         # in all cases, give the description of entire event:
@@ -253,7 +254,7 @@ class ScheduleTools(object):
                     p.duration -= other_time 
                     if not start_boundary:
                         p.start = time
-                    #self.sp.run(p.id)  # TBF scoring
+                    self.scorePeriod(p)
                 p.accounting.save()
                 p.save()
         else: 
@@ -277,18 +278,23 @@ class ScheduleTools(object):
             neighbor.duration += diff_hrs
             if not start_boundary:
                 neighbor.start = time
+            self.scorePeriod(neighbor)
             neighbor.save()    
-            #self.sp.run(neighbor.id)  # TBF scoring
         
         # in all cases:
+        self.scorePeriod(period)
         period.accounting.save()
         period.save()
-        #self.sp.run(period.id)  # TBF scoring
         
         # in all cases, give the description of entire event:
         self.assignDescriptions(descDct, descHead, desc)
 
         return (True, None)
-
-               
-
+        
+    def scorePeriod(self, period):
+        now = quarter(datetime.utcnow())
+        if now < period.start:
+            period.score = self.score.session(period.session.id
+                                            , period.start
+                                            , period.duration)
+            period.forecast = now

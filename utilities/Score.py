@@ -43,4 +43,4 @@ class Score(object):
             print "IOError service", url
         else:
             asstr = f.read()
-            print json.loads(asstr)['score']
+            return float(json.loads(asstr)['score'])
