@@ -1919,34 +1919,43 @@ class TestInvestigatorResource(NellTestCase):
                      }
 
     def test_create(self):
-        response = self.client.post('/investigators/%s' % self.p.id
+        response = self.client.post('/investigators' 
                                   , self.fdata)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_create_empty(self):
-        response = self.client.post('/investigators/%s' % self.p.id)
+        response = self.client.post('/investigators'
+                                  , {'project_id' : self.p.id})
         self.failUnlessEqual(response.status_code, 200)
 
     def test_read(self):
-        response = self.client.get('/investigators/%s' % self.p.id)
+        response = self.client.get('/investigators'
+                                 , {'project_id' : self.p.id})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"total": 2' in response.content)
 
     def test_read_with_filter(self):
         response = self.client.get(
-              '/investigators/%s?filterText=Mike' % self.p.id)
+              '/investigators'
+            , {'project_id' : self.p.id
+            ,  'filterText' : 'Mike'
+            })
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"total": 1' in response.content)
         self.assertTrue('McCarty' in response.content)
 
     def test_update(self):
         fdata = self.fdata
-        fdata.update({"_method" : "put"})
-        response = self.client.post('/investigators/%s' % self.p.id, fdata)
+        fdata.update({"_method" : "put"
+                    , "remote"  : "True"
+                    })
+        response = self.client.post('/investigators/%s' % self.ins[-1].id
+                                  , fdata)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_delete(self):
-        response = self.client.post('/investigators/%s' % self.p.id, {"_method" : "delete"})
+        response = self.client.post('/investigators/%s' % self.ins[-1].id
+                                  , {"_method" : "delete"})
         self.failUnlessEqual(response.status_code, 200)
         
     

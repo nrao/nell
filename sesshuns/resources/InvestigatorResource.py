@@ -15,11 +15,15 @@ class InvestigatorResource(NellResource):
     
     def read(self, request, *args, **kws):
         try:
-            p_id, = args
+            # using brakets because we want a key error if its not there
+            p_id = request.GET["project_id"]
         except:
-            raise Http404
+            return HttpResponse(json.dumps(dict(total = 0
+                                              , investigators = []))
+                          , content_type = "application/json")
 
         sortField = request.GET.get("sortField", "id")
+        sortField = "id" if sortField == "null" else sortField
         order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
         query_set = Investigator.objects.filter(project__id = p_id)
         if sortField == "pi":

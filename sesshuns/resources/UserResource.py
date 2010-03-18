@@ -59,9 +59,6 @@ class UserResource(Resource):
         u     = User.objects.get(id = id)
         u.update_from_post(request.POST)
 
-        # NOTE: this originally returned "", but if we want JSON callbacks
-        # to work from GWT, need A response.  This change seems benign
-        #return HttpResponse("")
         return HttpResponse(json.dumps({"success" : "ok"})
                           , mimetype = "text/plain")
 
