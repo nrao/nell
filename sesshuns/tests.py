@@ -1978,6 +1978,15 @@ class TestInvestigatorResource(NellTestCase):
                                   , fdata)
         self.failUnlessEqual(response.status_code, 200)
 
+        fdata2 = {u'pi': [u'false'], u'user_id': [u'494.0']
+                , u'name': [u'McCarty, Michael'], u'observer': [u'true']
+                , u'priority': [u'1.0'], u'contact': [u'false']
+                , u'remote': [u'true'], u'project_id': [u'5.0']
+                , u'id': [u'995.0'], u'_method': [u'put']}
+        response = self.client.post('/investigators/%s' % self.ins[-1].id
+                                  , fdata2)
+        self.failUnlessEqual(response.status_code, 200)
+
     def test_delete(self):
         response = self.client.post('/investigators/%s' % self.ins[-1].id
                                   , {"_method" : "delete"})
