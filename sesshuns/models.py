@@ -191,6 +191,8 @@ class User(models.Model):
         return "%s, %s" % (self.last_name, self.first_name)
 
     def update_from_post(self, fdata):
+        role  = first(Role.objects.filter(role = fdata.get('role')))
+        self.role        = role
         self.username    = fdata.get('username')
         sanctioned       = fdata.get('sanctioned')
         self.sanctioned  = sanctioned.lower() == 'true' if sanctioned is not None else sanctioned
@@ -202,10 +204,12 @@ class User(models.Model):
     def jsondict(self):
         projects = ','.join([i.project.pcode for i in self.investigator_set.all()])
         return {'id' : self.id
+              , 'username'   : self.username
               , 'first_name' : self.first_name
               , 'last_name'  : self.last_name
               , 'sanctioned' : self.sanctioned
               , 'projects'   : projects
+              , 'role'       : self.role.role
                 }
 
     def name(self):
@@ -916,6 +920,9 @@ class Investigator(models.Model):
         self.principal_investigator = fdata.get('pi', 'false').lower() == 'true'
         self.priority               = int(float(fdata.get('priority', 1)))
         self.save()
+
+        self.user.sanctioned        = fdata.get('remote', 'false').lower() == 'true'
+        self.user.save()
 
     def update_from_post(self, fdata):
         self.init_from_post(fdata)
