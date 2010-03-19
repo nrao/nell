@@ -9,11 +9,26 @@ from utilities       import Score
 
 import simplejson as json
 
+import sys
+import traceback
+
+def formatExceptionInfo(maxTBlevel=5):
+    cla, exc, trbk = sys.exc_info()
+    excName = cla.__name__
+    try:
+        excArgs = exc.__dict__["args"]
+    except KeyError:
+        excArgs = "<no args>"
+        excTb = traceback.format_tb(trbk, maxTBlevel)
+    return (excName, excArgs, excTb)
+
+
 class PeriodResource(NellResource):
     def __init__(self, *args, **kws):
         super(PeriodResource, self).__init__(Period, *args, **kws)
 
     def read(self, request, *args, **kws):
+
         tz = args[0]
         score_period = Score()
         # one or many?
@@ -67,6 +82,6 @@ class PeriodResource(NellResource):
         id = int(args[1])
         o  = self.dbobject.objects.get(id = id)
         o.delete()
-        
+
         return HttpResponse(json.dumps({"success": "ok"}))
 

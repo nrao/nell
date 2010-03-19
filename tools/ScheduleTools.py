@@ -81,7 +81,7 @@ class ScheduleTools(object):
                                                )
                 accounting.save()                             
                 pending = first(Period_State.objects.filter(abbreviation = 'P'))
-                period_2cd_half = Period(session  = p.session
+                period_2cd_half = Period.create(session  = p.session
                                        , start    = end
                                        , duration = new_dur
                                        , state    = pending
@@ -127,7 +127,7 @@ class ScheduleTools(object):
                                  , description  = "") #description)
             pa.save()   
             scheduled = first(Period_State.objects.filter(abbreviation = 'S'))
-            p = Period(session    = sesshun
+            p = Period.create(session    = sesshun
                      , start      = start
                      , duration   = duration
                      , score      = 0.0

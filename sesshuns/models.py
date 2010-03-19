@@ -190,6 +190,28 @@ class User(models.Model):
     def __str__(self):
         return "%s, %s" % (self.last_name, self.first_name)
 
+    def update_from_post(self, fdata):
+        role  = first(Role.objects.filter(role = fdata.get('role')))
+        self.role        = role
+        self.username    = fdata.get('username')
+        sanctioned       = fdata.get('sanctioned')
+        self.sanctioned  = sanctioned.lower() == 'true' if sanctioned is not None else sanctioned
+        self.first_name  = fdata.get('first_name')
+        self.last_name   = fdata.get('last_name')
+        self.contact_instructions   = fdata.get('contact_instructions')
+        self.save()
+
+    def jsondict(self):
+        projects = ','.join([i.project.pcode for i in self.investigator_set.all()])
+        return {'id' : self.id
+              , 'username'   : self.username
+              , 'first_name' : self.first_name
+              , 'last_name'  : self.last_name
+              , 'sanctioned' : self.sanctioned
+              , 'projects'   : projects
+              , 'role'       : self.role.role
+                }
+
     def name(self):
         return self.__str__()
 
@@ -873,6 +895,37 @@ class Investigator(models.Model):
             , self.observer
             , self.principal_contact
             , self.principal_investigator )
+
+    def jsondict(self):
+        return {"id"         : self.id
+              , "name"       : "%s, %s" % (self.user.last_name, self.user.first_name)
+              , "pi"         : self.principal_investigator
+              , "contact"    : self.principal_contact
+              , "remote"     : self.user.sanctioned
+              , "observer"   : self.observer
+              , "priority"   : self.priority
+              , "project_id" : self.project.id
+              , "user_id"    : self.user.id
+               }
+
+    def init_from_post(self, fdata):
+        p_id    = int(float(fdata.get("project_id")))
+        u_id    = int(float(fdata.get("user_id")))
+        project = first(Project.objects.filter(id = p_id)) or first(Project.objects.all())
+        user    = first(User.objects.filter(id = u_id)) or first(User.objects.all())
+        self.project                = project
+        self.user                   = user
+        self.observer               = fdata.get('observer', 'false').lower() == 'true'
+        self.principal_contact      = fdata.get('contact', 'false').lower() == 'true'
+        self.principal_investigator = fdata.get('pi', 'false').lower() == 'true'
+        self.priority               = int(float(fdata.get('priority', 1)))
+        self.save()
+
+        self.user.sanctioned        = fdata.get('remote', 'false').lower() == 'true'
+        self.user.save()
+
+    def update_from_post(self, fdata):
+        self.init_from_post(fdata)
 
     def name(self):
         return self.user
@@ -1767,13 +1820,24 @@ class Target(models.Model):
                 mins = 0.0
                 horz = int(horz) + 1
             secs = 0.0
-        return ":".join(map(str, [int(horz), int(mins), "%.1f" % secs]))
+        return "%02i:%02i:%04.1f" % (int(horz), int(mins), secs)
 
     def get_vertical(self):
         if self.vertical is None:
             return ""
 
-        return "%.3f" % TimeAgent.rad2deg(self.vertical)
+        degs = TimeAgent.rad2deg(self.vertical)
+
+        if degs < 0:
+            degs = abs(degs)
+            sign = "-"
+        else:
+            sign = " "
+
+        mins = (degs - int(degs)) * 60
+        secs = (mins - int(mins)) * 60
+        return "%s%02i:%02i:%04.1f" % (sign, int(degs), int(mins), secs)
+
 
     class Meta:
         db_table = "targets"
@@ -1930,6 +1994,7 @@ class Period_State(models.Model):
         "Short hand for getting state by abbreviation"
         return first(Period_State.objects.filter(abbreviation = abbr))
 
+
 class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
     accounting = models.ForeignKey(Period_Accounting, null=True)
@@ -1940,10 +2005,26 @@ class Period(models.Model):
     forecast   = models.DateTimeField(null = True, editable=False, blank = True)
     backup     = models.BooleanField()
     moc_ack    = models.BooleanField(default = False)
+    receivers  = models.ManyToManyField(Receiver, through = "Period_Receiver")
 
     class Meta:
         db_table = "periods"
     
+    @staticmethod
+    def create(*args, **kws):
+        """
+        Recomended way of 'overriding' the constructor.  Here we want to make
+        sure that all new Periods init their rcvrs correctly.
+        """
+        p = Period(**kws)
+        # don't save & init rcvrs unless you can
+        if not kws.has_key("session"):
+            # need the session first!
+            return p
+        p.save()
+        p.init_rcvrs_from_session()
+        return p
+            
     def end(self):
         "The period ends at start + duration"
         return self.start + timedelta(hours = self.duration)
@@ -2030,13 +2111,56 @@ class Period(models.Model):
         self.backup   = True if fdata.get("backup", None) == 'true' else False
         stateAbbr = fdata.get("state", "P")
         self.state = first(Period_State.objects.filter(abbreviation=stateAbbr))
+        self.moc_ack = fdata.get("moc_ack", self.moc_ack)
+
         # how to initialize scheduled time? when they get published!
         # so, only create an accounting object if it needs it.
         if self.accounting is None:
             pa = Period_Accounting(scheduled = 0.0)
             pa.save()
             self.accounting = pa
+
         self.save()
+
+        # now that we have an id (from saving), we can specify the relation
+        # between this period and assocaited rcvrs
+        self.update_rcvrs_from_post(fdata)
+
+    def update_rcvrs_from_post(self, fdata):
+
+        # clear them out
+        rps = Period_Receiver.objects.filter(period = self)
+        for rp in rps:
+            rp.delete()
+
+        # insert the new ones: what are they?
+        rcvrStr = fdata.get("receivers", "")
+        if rcvrStr == "":
+            # use the sessions receivers - this will happen on init
+            if self.session is not None:
+                rcvrAbbrs = self.session.rcvrs_specified()
+            else:
+                rcvrAbbrs = []
+        else:    
+            rcvrAbbrs = rcvrStr.split(",")
+
+        # now that we have their names, put them in the DB    
+        for r in rcvrAbbrs:
+            rcvr = first(Receiver.objects.filter(abbreviation = r.strip()))
+            if rcvr is not None:
+                rp = Period_Receiver(receiver = rcvr, period = self)
+                rp.save()
+            
+    def init_rcvrs_from_session(self):
+        "Use the session's rcvrs for the ones associated w/ this period."
+        if self.session is None:
+            return
+        rcvrAbbrs = self.session.rcvrs_specified()
+        for r in rcvrAbbrs:
+            rcvr = first(Receiver.objects.filter(abbreviation = r.strip()))
+            if rcvr is not None:
+                rp = Period_Receiver(receiver = rcvr, period = self)
+                rp.save()
 
     def handle2session(self, h):
         n, p = h.rsplit('(', 1)
@@ -2078,12 +2202,14 @@ class Period(models.Model):
               , "cscore"       : cscore           # current score
               , "forecast"     : dt2str(self.forecast)
               , "backup"       : self.backup
+              , "moc_ack"      : self.moc_ack
               , "state"        : self.state.abbreviation
               , "windowed"     : True if w is not None else False
               , "wdefault"     : self.is_windowed_default() \
                                      if w is not None else None
               , "wstart"       : d2str(w.start_date) if w is not None else None
               , "wend"         : d2str(w.last_date()) if w is not None else None
+              , "receivers"    : self.get_rcvrs_json()
                 }
         # include the accounting but keep the dict flat
         if self.accounting is not None:
@@ -2094,17 +2220,25 @@ class Period(models.Model):
             js.update(accounting_js)
         return js
 
+    def receiver_list(self):
+        return self.get_rcvrs_json()
+
+    def get_rcvrs_json(self):
+        rcvrs = [r.abbreviation for r in self.receivers.all()]
+        return ", ".join(rcvrs)
+
     def moc_met(self):
         """
         Returns a Boolean indicated if MOC are met (True) or not (False).
-        Only bothers to calculate MOC for open sessions whose end time
-        is not already past.
+        Only bothers to calculate MOC for open and windowed sessions whose
+        end time is not already past.
         """
-        # TBF: Hack!  Remove when MOC is ok.
-        return True
-        # TBF: When windows are working correctly, replace with line below.
-        #if self.session.session_type.type not in ("open", "windowed") or \
-        if self.session.session_type.type not in ("open",) or \
+        # TBF: When correctly calculating MOC for < 2 GHz observations,
+        #      remove this hack.
+        if self.session.frequency <= 2.:
+            return True
+
+        if self.session.session_type.type not in ("open", "windowed") or \
            self.end() < datetime.utcnow():
             return True
 
@@ -2295,6 +2429,13 @@ class Period(models.Model):
             window.reconcile()
             window.save()
     
+class Period_Receiver(models.Model):
+    period = models.ForeignKey(Period)
+    receiver = models.ForeignKey(Receiver)
+
+    class Meta:
+        db_table = "periods_receivers"
+
 # TBF: temporary table/class for scheduling just 09B.  We can safely
 # dispose of this after 09B is complete.  Delete Me!
 class Project_Blackout_09B(models.Model):
@@ -2582,7 +2723,7 @@ class Window(models.Model):
             if start is not None and duration is not None \
                 and sesshun is not None:
                # create it! reuse the period code!
-               p = Period()
+               p = Period.create()
                pfdata = dict(date = date
                            , time = time
                            , duration = duration
@@ -2610,6 +2751,17 @@ class Window(models.Model):
               , "start": self.start_date.isoformat()
               , "end"  : end.isoformat()
         }
+
+    def assignPeriod(self, periodId, default):
+        "Assign the given period to the default or choosen period"
+        p = first(Period.objects.filter(id = periodId))
+        if p is None:
+            return
+        if default:
+            self.default_period = p
+        else:
+            self.period = p
+        self.save()
 
     class Meta:
         db_table = "windows"

@@ -1,3 +1,5 @@
+# -*- coding: iso-8859-15 -*-
+
 from django              import template
 from sesshuns            import models
 from datetime            import datetime, timedelta
@@ -20,7 +22,22 @@ def dt2sex(value):
 @register.filter
 def target_horz(value):
     t = first(value.target_set.all())
+## <<<<<<< local
+##     if t is None or t.horizontal is None:
+##         return ""
+##     horz = rad2hr(t.horizontal)
+##     mins = (horz - int(horz)) * 60
+##     secs = (mins - int(mins)) * 60
+##     if abs(secs - 60.) < 0.1:
+##         mins = int(mins) + 1
+##         if abs(mins - 60.) < 0.1:
+##             mins = 0.0
+##             horz = int(horz) + 1
+##         secs = 0.0
+##     return "%02i:%02i:%04.1f" % (int(horz), int(mins), secs)
+## =======
     return t.get_horizontal()
+## >>>>>>> other
 
 @register.inclusion_tag('flatten.html')
 def edit_allotment(sesshun_id):
@@ -36,7 +53,24 @@ def edit_allotment(sesshun_id):
 @register.filter
 def target_vert(value):
     t = first(value.target_set.all())
+## <<<<<<< local
+##     if t is None or t.vertical is None:
+##         return ""
+
+##     degs = rad2deg(t.vertical)
+
+##     if degs < 0:
+##         degs = abs(degs)
+##         sign = "-"
+##     else:
+##         sign = " "
+        
+##     mins = (degs - int(degs)) * 60
+##     secs = (mins - int(mins)) * 60
+##     return "%s%02i°%02i'%04.1f\"" % (sign, int(degs), int(mins), secs)
+## =======
     return t.get_vertical()
+## >>>>>>> other
 
 @register.inclusion_tag('flatten.html')
 def display_allotments_for_project(project_id):
