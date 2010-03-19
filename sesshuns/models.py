@@ -190,6 +190,28 @@ class User(models.Model):
     def __str__(self):
         return "%s, %s" % (self.last_name, self.first_name)
 
+    def update_from_post(self, fdata):
+        role  = first(Role.objects.filter(role = fdata.get('role')))
+        self.role        = role
+        self.username    = fdata.get('username')
+        sanctioned       = fdata.get('sanctioned')
+        self.sanctioned  = sanctioned.lower() == 'true' if sanctioned is not None else sanctioned
+        self.first_name  = fdata.get('first_name')
+        self.last_name   = fdata.get('last_name')
+        self.contact_instructions   = fdata.get('contact_instructions')
+        self.save()
+
+    def jsondict(self):
+        projects = ','.join([i.project.pcode for i in self.investigator_set.all()])
+        return {'id' : self.id
+              , 'username'   : self.username
+              , 'first_name' : self.first_name
+              , 'last_name'  : self.last_name
+              , 'sanctioned' : self.sanctioned
+              , 'projects'   : projects
+              , 'role'       : self.role.role
+                }
+
     def name(self):
         return self.__str__()
 
@@ -873,6 +895,37 @@ class Investigator(models.Model):
             , self.observer
             , self.principal_contact
             , self.principal_investigator )
+
+    def jsondict(self):
+        return {"id"         : self.id
+              , "name"       : "%s, %s" % (self.user.last_name, self.user.first_name)
+              , "pi"         : self.principal_investigator
+              , "contact"    : self.principal_contact
+              , "remote"     : self.user.sanctioned
+              , "observer"   : self.observer
+              , "priority"   : self.priority
+              , "project_id" : self.project.id
+              , "user_id"    : self.user.id
+               }
+
+    def init_from_post(self, fdata):
+        p_id    = int(float(fdata.get("project_id")))
+        u_id    = int(float(fdata.get("user_id")))
+        project = first(Project.objects.filter(id = p_id)) or first(Project.objects.all())
+        user    = first(User.objects.filter(id = u_id)) or first(User.objects.all())
+        self.project                = project
+        self.user                   = user
+        self.observer               = fdata.get('observer', 'false').lower() == 'true'
+        self.principal_contact      = fdata.get('contact', 'false').lower() == 'true'
+        self.principal_investigator = fdata.get('pi', 'false').lower() == 'true'
+        self.priority               = int(float(fdata.get('priority', 1)))
+        self.save()
+
+        self.user.sanctioned        = fdata.get('remote', 'false').lower() == 'true'
+        self.user.save()
+
+    def update_from_post(self, fdata):
+        self.init_from_post(fdata)
 
     def name(self):
         return self.user
