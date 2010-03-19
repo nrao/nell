@@ -12,6 +12,8 @@ admin.autodiscover()
 # Note a blank comment attached to the url denotes local access only
 
 urlpatterns = patterns(''
+   , url(r'^investigators$',       InvestigatorResource(permitted_methods=('GET', 'PUT', 'POST'))) #
+   , url(r'^investigators/(\d+)$', InvestigatorResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^profile/(\d+)/blackout$',                      blackout)
    , url(r'^profile/(\d+)/blackout/form$',                 blackout_form)
    , url(r'^profile/(\d+)/dynamic_contact/form$',          dynamic_contact_form)
@@ -55,6 +57,8 @@ urlpatterns = patterns(''
    , url(r'^periods/publish$',     publish_periods) #
    , url(r'^periods/publish/(\d+)$',     publish_periods) #
    , url(r'^periods/delete_pending', delete_pending) #
+   , url(r'^users$',           UserResource(permitted_methods=('GET', 'PUT', 'POST'))) #
+   , url(r'^users/(\d+)$',     UserResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^window/([^/]+)/assign_period/(\d+)$', window_assign_period)
    , url(r'^periods/(UTC)$',      PeriodResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^periods/(ET)$',       PeriodResource(permitted_methods=('GET', 'PUT', 'POST'))) #

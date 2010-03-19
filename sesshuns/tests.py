@@ -1864,6 +1864,7 @@ class TestUserResources(NellTestCase):
                     , "first_name" : "Foo"
                     , "last_name"  : "Bar"
                     , "contact_instructions" : ""
+                    , "role": "Observer"
                      })
         response = self.client.post('/users/%s' % self.users[0].id, fdata)
         self.failUnlessEqual(response.status_code, 200)
@@ -1950,7 +1951,8 @@ class TestInvestigatorResource(NellTestCase):
 
     def test_create_empty(self):
         response = self.client.post('/investigators'
-                                  , {'project_id' : self.p.id})
+                                  , {'project_id' : self.p.id
+                                   , 'user_id': self.users[-1].id})
         self.failUnlessEqual(response.status_code, 200)
 
     def test_read(self):
