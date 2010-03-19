@@ -2,18 +2,32 @@ from datetime                 import date, datetime, timedelta
 from django.http              import HttpResponse
 from models                   import Project, Sesshun, Period, Receiver
 from models                   import Receiver_Schedule, first, str2dt
-from models                   import User
 from models                   import Window 
+from models                   import User
 from tools                    import IcalMap, ScheduleTools, TimeAccounting
 from utilities                import TimeAgent
 from settings                 import PROXY_PORT, DATABASE_NAME
 from utilities.SchedulingNotifier import SchedulingNotifier
+from pprint import pprint
 
 import simplejson as json
 # TBF: get this back in once we figure out the deployment issues.
 import twitter
 
 ROOT_URL = "http://trent.gb.nrao.edu:%d" % PROXY_PORT
+
+import sys
+import traceback
+
+def formatExceptionInfo(maxTBlevel=5):
+    cla, exc, trbk = sys.exc_info()
+    excName = cla.__name__
+    try:
+        excArgs = exc.__dict__["args"]
+    except KeyError:
+        excArgs = "<no args>"
+        excTb = traceback.format_tb(trbk, maxTBlevel)
+    return (excName, excArgs, excTb)
 
 def receivers_schedule(request, *args, **kws):
     # get the schedule
@@ -251,8 +265,9 @@ def shift_period_boundaries(request, *args, **kws):
 def time_accounting(request, *args, **kws):
     """
     POST: Sets Project time accounting.
-    GET: Serves up json for time accounting from periods up to the project"
+    GET: Serves up json for time accounting from periods up to the project
     """
+
     ta = TimeAccounting()
     pcode = args[0]
     project = first(Project.objects.filter(pcode = pcode))
@@ -380,32 +395,101 @@ def delete_pending(request, *args, **kwds):
     return HttpResponse(json.dumps({'success':'ok'})
                       , mimetype = "text/plain")
 
+######################################################################
+# Declaring 'notifier' as a global allows it to keep state between
+# 'GET' and 'POST' calls of scheduling_email.
+######################################################################
+
+try:
+    notifier = SchedulingNotifier()
+except:
+    print formatExceptionInfo()
+
 def scheduling_email(request, *args, **kwds):
-    # Show the schedule from now until 8am eastern two days from now.
-    start = datetime.utcnow()
-    end   = TimeAgent.est2utc(TimeAgent.utc2est(start + timedelta(days = 2)).replace(hour = 8, minute = 0, second = 0, microsecond = 0))
-    periods = Period.objects.filter(start__gt = start, start__lt = end) 
-    notifier = SchedulingNotifier(list(periods)) 
+
+    address_key = ["observer_address", "deleted_address", "staff_address"]
+    subject_key = ["observer_subject", "deleted_subject", "staff_subject"]
+    body_key    = ["observer_body", "deleted_body", "staff_body"]
+    email_key   = ["observer", "deleted", "staff"]
+
     if request.method == 'GET':
-        return HttpResponse(
-            json.dumps({
-                'emails' : notifier.getAddresses()
-              , 'subject': notifier.getSubject()
-              , 'body'   : notifier.getBody()
-            })
-          , mimetype = "text/plain")
+        try:
+            # Show the schedule from now until 8am eastern 'duration' days from now.
+            start    = datetime.utcnow()
+            duration = int(request.GET.get("duration"))
+            end      = TimeAgent.est2utc(TimeAgent.utc2est(start + timedelta(days = duration)).replace(
+                hour = 8, minute = 0, second = 0, microsecond = 0))
+            periods  = Period.objects.filter(start__gt = start, start__lt = end)
+            notifier.setPeriods(list(periods))
+
+            return HttpResponse(
+                json.dumps({
+                    'observer_address' : notifier.getAddresses("observer"),
+                    'observer_subject' : notifier.getSubject("observer"),
+                    'observer_body'    : notifier.getBody("observer"),
+                    'deleted_address'  : notifier.getAddresses("deleted"),
+                    'deleted_subject'  : notifier.getSubject("deleted"),
+                    'deleted_body'     : notifier.getBody("deleted"),
+                    'staff_address'    : notifier.getAddresses("staff"),
+                    'staff_subject'    : notifier.getSubject("staff"),
+                    'staff_body'       : notifier.getBody("staff")
+                })
+              , mimetype = "text/plain")
+        except:
+            print formatExceptionInfo()
+            return HttpResponse(json.dumps({'success':'error'})
+                                , mimetype = "text/plain")
+
     elif request.method == 'POST':
         # here we are overriding what/who gets sent for the first round
         # of emails, but because we setup the object with Periods (above)
         # we aren't controlling who gets the 'change schedule' emails (TBF)
-        notifier.setAddresses(str(request.POST.get("emails", "")).replace(" ", "").split(","))
-        notifier.setSubject(request.POST.get("subject", ""))
-        notifier.setBody(request.POST.get("body", ""))
 
-        notifier.notify()
+        try:
+            for i in range(0, 3):
+                addr = str(request.POST.get(address_key[i], "")).replace(" ", "").split(",")
+                notifier.setAddresses(email_key[i], addr)
+                notifier.setSubject(email_key[i], request.POST.get(subject_key[i], ""))
+                notifier.setBody(email_key[i], request.POST.get(body_key[i], ""))
+
+            notifier.notify()
+        except:
+            print formatExceptionInfo()
+            return HttpResponse(json.dumps({'success':'error'})
+                                , mimetype = "text/plain")
 
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
     else:
         return HttpResponse(json.dumps({'success':'error'})
                           , mimetype = "text/plain")
+
+def window_assign_period(request, *args, **kwds):
+    if len(args) != 2:
+        return HttpResponse(json.dumps({'success':'error'})
+                          , mimetype = "text/plain")
+    windowId = int(args[0])
+    periodId = int(args[1])
+    default = request.POST.get("default", True)
+
+    # get the window & assign the period
+    win = first(Window.objects.filter(id = windowId))
+    if win is None:
+        return HttpResponse(json.dumps({'success':'error'})
+                          , mimetype = "text/plain")
+    win.assignPeriod(periodId, default)
+
+    return HttpResponse(json.dumps({'success':'ok'})
+                      , mimetype = "text/plain")
+
+def toggle_moc(request, *args, **kwds):
+    if len(args) != 1:
+        return HttpResponse(json.dumps({'success':'error'})
+                          , mimetype = "text/plain")
+
+    period = first(Period.objects.filter(id = args[0]))
+    period.moc_ack = not period.moc_ack
+    period.save()
+
+    return HttpResponse(json.dumps({'success':'ok'})
+                      , mimetype = "text/plain")
