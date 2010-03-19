@@ -89,6 +89,7 @@ class ScheduleTools(object):
                                        , forecast = end
                                        , accounting = accounting 
                                          )
+                self.scorePeriod(period_2cd_half)
                 period_2cd_half.save()                         
                 # the original period is really giving up time to the 
                 # bi-secting new period, and the new second half!

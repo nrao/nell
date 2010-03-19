@@ -2063,7 +2063,7 @@ class Period(models.Model):
               , "end"  : end.isoformat()
         }
 
-    def jsondict(self, tz):
+    def jsondict(self, tz, cscore):
         start = self.start if tz == 'UTC' else TimeAgent.utc2est(self.start)
         w = self.get_window()
         js =   {"id"           : self.id
@@ -2074,7 +2074,8 @@ class Period(models.Model):
               , "time"         : t2str(start)
               , "lst"          : str(TimeAgent.dt2tlst(self.start))
               , "duration"     : self.duration
-              , "score"        : self.score
+              , "sscore"       : self.score       # scheduling score
+              , "cscore"       : cscore           # current score
               , "forecast"     : dt2str(self.forecast)
               , "backup"       : self.backup
               , "state"        : self.state.abbreviation
@@ -2494,7 +2495,7 @@ class Window(models.Model):
                 key = "%s_%s" % (type, k)
                 jsondict[key] = None
         else:
-            pjson = period.jsondict('UTC')
+            pjson = period.jsondict('UTC', 0.0)
             jsondict["%s_%s" % (type, "date")] = pjson['date']
             jsondict["%s_%s" % (type, "time")] = pjson['time']
             jsondict["%s_%s" % (type, "duration")]   = pjson['duration']
