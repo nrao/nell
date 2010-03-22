@@ -2,6 +2,9 @@
 
 # Look for variables marked with #MODIFY# to adapt for a specific installation
 
+# set this to True only for production - must be False for unit tests to run
+USE_REVERSION = False #MODIFY#
+
 STATIC_DOC_ROOT='{path to your sandbox}/nell/sesshuns/static' #MODIFY#
 
 SERVER_EMAIL = 'dss@gb.nrao.edu'
