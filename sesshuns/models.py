@@ -2207,6 +2207,10 @@ class Period(models.Model):
             js.update(accounting_js)
         return js
 
+    def get_rcvr_ranges(self):
+        ranges = ["%5.2f - %5.2f".strip() % (r.freq_low, r.freq_hi) for r in self.receivers.all()]
+        return ", ".join(ranges)
+
     def receiver_list(self):
         return self.get_rcvrs_json()
 
