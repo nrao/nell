@@ -16,6 +16,8 @@ class RevisionReport(object):
         # related to object revisions
         self.relatedClasses = []
 
+        self.timeFormat = "%Y-%m-%d %H:%M:%S"
+
     def add(self, lines):
         "For use with printing reports"
         if not self.quietReport:
@@ -31,7 +33,7 @@ class RevisionReport(object):
     def reportObjectForTime(self, obj, timeStr):
     
         # ex: 010-03-19 09:35:45
-        dt = datetime.strptime(timeStr, "%Y-%m-%d %H:%M:%S")
+        dt = datetime.strptime(timeStr, self.timeFormat)
         self.reportObjectAtTime(obj, time = dt)
     
     def reportObject(self, obj, time = None, field = None):
@@ -137,7 +139,7 @@ class RevisionReport(object):
 
     def reportVersion(self, v, field = None):
 
-        dt = v.revision.date_created.strftime("%Y-%m-%d %H:%M:%S")
+        dt = v.revision.date_created.strftime(self.timeFormat)
         cmt = v.revision.comment
         info = None
         if field is None:
@@ -173,6 +175,37 @@ class RevisionReport(object):
     
     def interpretRcvrGrp(self, rg):
         return [self.getRcvrAbbr(r) for r in rg]
+
+    def getSession(self, pcode, name):
+        ss = Sesshun.objects.filter(name = name)
+        s = first([s for s in ss if s.project.pcode == pcode])
+        return s
+
+    def runFromCommandLine(self, args):
+        """
+        Abstract method that takes sys.args and finds the right top level
+        method of this class to call.
+        """
+        pass 
+
+    def parseOptions(self, args, keys):
+        "For use with runFromCommandLine"
+        options = {}
+        for arg in args:
+            parts = arg.split("=")
+            if len(parts) != 2:
+                return (options, "argument invalid: %s" % arg)
+            key = parts[0][1:]
+            options[key] = parts[1]
+        # do the args passed in match expectations?    
+        #for k in options.keys():
+        #    if k not in keys:
+        #       return (options, "unexpected arg: %s" % k)
+        # do the args have all the necessary ones?
+        for k in keys:
+            if k not in options.keys():
+                return (options, "args missing: %s" % k)
+        return (options, None)    
     
 
         

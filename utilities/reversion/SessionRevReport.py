@@ -1,7 +1,10 @@
+#! /usr/bin/env python
+from django.core.management import setup_environ
+import settings
+setup_environ(settings)
+
 from sesshuns.models import *
-#import reversion
 from reversion.models import Version
-#from reversion import revision
 from RevisionReport import RevisionReport
 
 class SessionRevReport(RevisionReport):
@@ -57,7 +60,13 @@ class SessionRevReport(RevisionReport):
             lastRs = diffs[-1][3]
             lastRs.sort()
             if rcvrs != lastRs:
-                diffs.append((datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "receivers", lastRs, rcvrs))
+                diff = VersionDiff(dt = datetime.now()
+                                 , field = "receivers"
+                                 , value1 = lastRs
+                                 , value2 = rcvrs
+                                  )
+                diffs.append(diff)
+                #diffs.append((datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "receivers", lastRs, rcvrs))
     
         return diffs             
     
@@ -110,10 +119,7 @@ class SessionRevReport(RevisionReport):
 
         self.write()
 
-    def getSession(self, pcode, name):
-        ss = Sesshun.objects.filter(name = name)
-        s = first([s for s in ss if s.project.pcode == pcode])
-        return s
+
     
     def reportSession(self
                     , pcode
@@ -137,4 +143,61 @@ class SessionRevReport(RevisionReport):
         s = self.getSession(pcode, name) 
         self.reportObjectForTime(s, timeStr)
         self.write()
-                
+
+    def runFromCommandLine(self, args):
+
+        msg = None
+        keys = ['pcode', 'name', 'type']
+        types = ['history', 'diffs', 'time']
+
+        # first check of arguments
+        opts, msg = self.parseOptions(args[1:], keys)
+        if msg is not None:
+            return msg
+        type  = opts['type']    
+        pcode = opts['pcode']    
+        name  = opts['name']    
+        if type not in types:
+            return "type arg must be in type: %s" % (", ".join(types))
+
+        # what type of report to run?
+        if type == 'history':
+            self.reportSession(pcode, name)
+        elif type == 'diffs':
+            self.reportSessionDiffs(pcode, name)
+        elif type == 'time':
+            timeStr = opts.get('time', None)
+            if timeStr is None:
+                return "type=time must include time option"
+            self.reportSessionForTime(pcode, name, timeStr)
+        else:
+            return "Type %s not supported" % type
+        return msg
+
+
+def show_help(program):
+    print "\nThe arguments to", program, "are:"
+    print "\t-pcode=pcode -name=name -type=type [-time=time]"
+    print "\nwhere:"
+    print "\tpcode = project code, in double quotes"
+    print "\tname  = session name, in double quotes"
+    print "\ttype  = one of [history, diffs, time]"
+    print "\ttime  = if 'time' type choosen, the time in YY-mm-dd HH:MM:SS"
+    print "\nAll required arguments are required.  Anything else is optional :)"
+
+if __name__ == '__main__':
+
+    if len(sys.argv) < 2:
+        show_help(sys.argv[0])
+        sys.exit()
+    else:    
+        filename = "SessionRevReport.txt"
+        sr = SessionRevReport(filename = filename)                 
+        msg = sr.runFromCommandLine(sys.argv)
+            
+        if msg is not None:
+            print msg
+            print ""
+            show_help(sys.argv[0])
+            sys.exit()
+            

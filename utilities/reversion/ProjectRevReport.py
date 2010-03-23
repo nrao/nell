@@ -1,3 +1,8 @@
+#! /usr/bin/env python
+from django.core.management import setup_environ
+import settings
+setup_environ(settings)
+
 from sesshuns.models import *
 from reversion.models import Version
 from RevisionReport import RevisionReport
@@ -54,3 +59,61 @@ class ProjectRevReport(RevisionReport):
             if d.object_version.object.pcode == pcode:
                 self.reportVersion(d)
         self.write()
+
+
+    def runFromCommandLine(self, args):
+
+        msg = None
+        keys = ['pcode', 'type']
+        types = ['history', 'diffs', 'time']
+
+        # first check of arguments
+        opts, msg = self.parseOptions(args[1:], keys)
+        if msg is not None:
+            return msg
+        type  = opts['type']    
+        pcode = opts['pcode']    
+        name  = opts['name']    
+        if type not in types:
+            return "type arg must be in type: %s" % (", ".join(types))
+
+        # what type of report to run?
+        if type == 'history':
+            self.reportProject(pcode)
+        elif type == 'diffs':
+            self.reportProjectDiffs(pcode)
+        elif type == 'time':
+            timeStr = opts.get('time', None)
+            if timeStr is None:
+                return "type=time must include time option"
+            self.reportProjectForTime(pcode, timeStr)
+        else:
+            return "Type %s not supported" % type
+        return msg
+
+
+def show_help(program):
+    print "\nThe arguments to", program, "are:"
+    print "\t-pcode=pcode -name=name -type=type [-time=time]"
+    print "\nwhere:"
+    print "\tpcode = project code, in double quotes"
+    print "\ttype  = one of [history, diffs, time]"
+    print "\ttime  = if 'time' type choosen, the time in YY-mm-dd HH:MM:SS"
+    print "\nAll required arguments are required.  Anything else is optional :)"
+
+if __name__ == '__main__':
+
+    if len(sys.argv) < 2:
+        show_help(sys.argv[0])
+        sys.exit()
+    else:    
+        filename = "ProjectRevReport.txt"
+        pr = ProjectRevReport(filename = filename)                 
+        msg = pr.runFromCommandLine(sys.argv)
+            
+        if msg is not None:
+            print msg
+            print ""
+            show_help(sys.argv[0])
+            sys.exit()
+                    

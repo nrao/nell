@@ -1,3 +1,8 @@
+#! /usr/bin/env python
+from django.core.management import setup_environ
+import settings
+setup_environ(settings)
+
 from sesshuns.models import *
 from reversion.models import Version
 from RevisionReport import RevisionReport
@@ -67,3 +72,66 @@ class PeriodRevReport(RevisionReport):
         self.add("Period: %s at %s\n\n" % (p, timeStr))
         self.reportObjectForTime(p, timeStr)
         self.write() 
+
+    def runFromCommandLine(self, args):
+
+        msg = None
+        keys = ['type']
+        types = ['session', 'start']
+
+        # first check of arguments
+        opts, msg = self.parseOptions(args[1:], keys)
+        if msg is not None:
+            return msg
+        type  = opts['type']    
+        if type not in types:
+            return "type arg must be in type: %s" % (", ".join(types))
+
+        # what type of report to run?
+        if type == 'session':
+            pcode = opts.get('pcode', None)
+            name = opts.get('name', None)
+            if pcode is None or name is None:
+                return "type=session must include session name & pcode"
+            s = self.getSession(pcode, name)    
+            self.reportSessionPeriods(s)
+        elif type == 'start':
+            timeStr = opts.get('time', None)
+            if timeStr is None:
+                return "type=start must include time option"
+            try:
+                dt = datetime.strptime(timeStr, self.timeFormat)
+            except:
+                return "could not format time string: %s" % timeStr
+            self.reportPeriods(dt)
+        else:
+            return "Type %s not supported" % type
+        return msg
+
+
+def show_help(program):
+    print "\nThe arguments to", program, "are:"
+    print "\t-type=type [-time=time] [-pcode=pcode] [-name=name]"
+    print "\nwhere:"
+    print "\ttype  = one of [session, start]"
+    print "\tpcode = if type session, project code, in double quotes"
+    print "\tname  = if type session, session name, in double quotes"
+    print "\ttime  = if type start choosen, the start time in YY-mm-dd HH:MM:SS"
+    print "\nAll required arguments are required.  Anything else is optional :)"
+
+if __name__ == '__main__':
+
+    if len(sys.argv) < 2:
+        show_help(sys.argv[0])
+        sys.exit()
+    else:    
+        filename = "PeriodRevReport.txt"
+        pr = PeriodRevReport(filename = filename)                 
+        msg = pr.runFromCommandLine(sys.argv)
+            
+        if msg is not None:
+            print msg
+            print ""
+            show_help(sys.argv[0])
+            sys.exit()
+        
