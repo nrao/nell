@@ -2,13 +2,14 @@ from sesshuns.models import *
 #import reversion
 from reversion.models import Version
 #from reversion import revision
-from revisionReport import RevisionReport
+from RevisionReport import RevisionReport
 
 class SessionRevReport(RevisionReport):
 
-    def __init__(self):
-        #super(RevisionReport, self)
-
+    def __init__(self, filename = None):
+        super(SessionRevReport, self).__init__(filename)
+        #RevisionReport.__init__(self)
+       
         self.relatedClasses = ['Receiver_Group'
                              , 'Receiver'
                              , 'Status'
@@ -18,8 +19,9 @@ class SessionRevReport(RevisionReport):
 
     def getSessionRcvrDiffs(self, pcode, name):
         """
-        Rcvrs for Session and Periods are deleted and readded every time a change is made,
-        so tracking their changes takes a lot of interpretation.
+        Rcvrs for Session and Periods are deleted and readded every time a 
+        change is made,  so tracking their changes takes a lot of
+        interpretation.
         """
         diffs = []
         s = self.getSession(pcode, name)
@@ -43,7 +45,7 @@ class SessionRevReport(RevisionReport):
         for v in svs[1:]:
             ds = self.diffVersions(vprev, v)
             for d in ds:
-                if d[1] == "receivers":
+                if d.field == "receivers":
                     diffs.append(self.interpretRcvrGrpDiff(d))
             vprev = v
     
@@ -82,8 +84,10 @@ class SessionRevReport(RevisionReport):
         return diffs
             
     
-    def reportSessionDiffs(self, pcode, name, periods = False):
+    def reportSessionDiffs(self, pcode, name): #, periods = False):
     
+        self.add("Differences for Session: %s (%s)\n\n" % (name, pcode))
+
         diffs = []
         s = self.getSession(pcode, name) 
         if s is None:
@@ -97,25 +101,40 @@ class SessionRevReport(RevisionReport):
         diffs.extend(self.getSessionRcvrDiffs(pcode, name))
         diffs.sort()    
         for d in diffs:
-            print "(%s) field %s: %s -> %s" % (d[0], d[1], d[2], d[3])
-        if periods:
-            ps = s.period_set.all()
-            for p in ps:
-                "****** Diffs for Period: %s", p
-                self.reportPeriodDiffs(p.id)
+            self.add("%s\n" % d)
+        #if periods:
+        #    ps = s.period_set.all()
+        #    for p in ps:
+        #        self.add("\n****** Diffs for Period: %s\n" % p)
+        #        self.reportPeriodDiffs(p.id)
+
+        self.write()
 
     def getSession(self, pcode, name):
         ss = Sesshun.objects.filter(name = name)
         s = first([s for s in ss if s.project.pcode == pcode])
         return s
     
-    def reportSession(self, pcode, name, time = None, field = None, periods = False):
+    def reportSession(self
+                    , pcode
+                    , name
+                    , time = None
+                    , field = None
+                    #, periods = False):
+                      ):
+
+        self.add("Revision Report for Session: %s (%s)\n\n" % (name, pcode))
+
         s = self.getSession(pcode, name) 
         self.reportObject(s, time, field)
-        print "Diffs: "
-        self.reportSessionDiffs(pcode, name, periods)
+        self.add("\nDiffs: \n")
+        self.reportSessionDiffs(pcode, name) #periods)
+
+        self.write()
 
     def reportSessionForTime(self, pcode, name, timeStr):
+        self.add("Session: %s (%s) at %s\n\n" % (name, pcode, timeStr))
         s = self.getSession(pcode, name) 
         self.reportObjectForTime(s, timeStr)
+        self.write()
                 

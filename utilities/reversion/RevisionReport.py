@@ -2,21 +2,31 @@ from sesshuns.models import *
 import reversion
 from reversion.models import Version
 from reversion import revision
+from VersionDiff import VersionDiff
 
-def tryThis():
-    s = getSession("BB240", "BB240-02") 
-    vs = Version.objects.get_for_object(s) 
-    for v in vs:
-        print ""
-        print "revision on: ", v.revision.date_created
-        for vv in v.revision.version_set.all():
-            print "    ", v
+class RevisionReport(object):
 
-class RevisionReport:
+    def __init__(self, filename = None):
 
-    def __init__(self):
+        # related to actual reporting
+        self.reportLines = []
+        self.quietReport = False
+        self.filename = filename
 
+        # related to object revisions
         self.relatedClasses = []
+
+    def add(self, lines):
+        "For use with printing reports"
+        if not self.quietReport:
+            print lines
+        self.reportLines += lines
+
+    def write(self):        
+        # write it out
+        if self.filename is not None:
+            f = open(self.filename, 'w')
+            f.writelines(self.reportLines)
 
     def reportObjectForTime(self, obj, timeStr):
     
@@ -40,14 +50,14 @@ class RevisionReport:
             print "retrieving initial version: "
             v = Version.objects.get_for_object(obj)[0]
     
-        self.reportVersion(v, field)
+        self.reportVersions(v, field)
     
     def reportObjectHistory(self, obj, field = None):
     
         vs = Version.objects.get_for_object(obj)
     
         for v in vs:
-            self.reportVersion(v, field)
+            self.reportVersions(v, field)
     
     def getObjectDiffs(self, obj):
     
@@ -72,7 +82,8 @@ class RevisionReport:
     
         diffs = self.getObjectDiffs(obj)
         for d in diffs:
-            print "(%s) field %s: %s -> %s" % (d[0], d[1], d[2], d[3])
+            self.add("%s\n" % d)
+        #    print "(%s) field %s: %s -> %s" % (d[0], d[1], d[2], d[3])
     
     def areEqual(self, v1, v2):
         "Simple compare, unless these are floats"
@@ -84,59 +95,68 @@ class RevisionReport:
             return v1 == v2
     
     def diffVersions(self, v1, v2):
-    
+        "Are there any fields in these two versions which are different?"
         diffs = []
         keys = v1.field_dict.keys()
         for key in keys:
             value1 = v1.field_dict[key]
             value2 = v2.field_dict[key]
             if not self.areEqual(value1, value2):
-                dt = v2.revision.date_created.strftime("%Y-%m-%d %H:%M:%S")
-                diffs.append((dt, key, value1, value2))
+                dt = v2.revision.date_created #.strftime("%Y-%m-%d %H:%M:%S")
+                diff = VersionDiff(dt = dt
+                                 , field = key
+                                 , value1 = value1
+                                 , value2 = value2)
+                diffs.append(diff)                                 
+                #diffs.append((dt, key, value1, value2))
     
         return diffs
     
-    def reportVersion(self, v, field = None):
-    
+    def reportVersions(self, v, field = None):
+        "Reports this version and 'related' versions"
         vs = [v]
         vs.extend(self.getRelatedVersions(v))
         for v in vs:
-            self.reportTheVersion(v, field)
+            self.reportVersion(v, field)
 
     def getRelatedVersions(self, ver):
-
-        vs = []
+        """
+        Usually we want to know about other objects that are part of this
+        version's revision.  For example, when a session is modified through
+        its JSON service, all it's related objects are of interest also.
+        """
+        #vs = []
         rvs = ver.revision.version_set.all()
-        for v in rvs:
-            #print v.object_version.object.__class__.__name__
-            if v.object_version.object.__class__.__name__ in self.relatedClasses:
-                vs.append(v)
+        vs = [v for v in rvs if v.object_version.object.__class__.__name__  in \
+            self.relatedClasses]
+        #for v in rvs:
+        #    if v.object_version.object.__class__.__name__ in \
+        #        self.relatedClasses:
+        #        vs.append(v)
         return vs
 
-    def reportTheVersion(self, v, field = None):
+    def reportVersion(self, v, field = None):
 
         dt = v.revision.date_created.strftime("%Y-%m-%d %H:%M:%S")
         cmt = v.revision.comment
         info = None
         if field is None:
-            #info = "%s" % v.object_version.object
             info = v.field_dict
         else:
             info = v.field_dict.get(field, None)
             if info is not None:
                 info = "%s : %s" % (field, info)
         if info is not None:
-            print ""
-            print "WHEN: %s" % dt
-            print "%s" % cmt
-            print "WHAT: %s" % v.object_version.object.__class__.__name__
+            self.add("\n")
+            self.add("WHEN: %s\n" % dt)
+            self.add("%s\n" % cmt)
+            self.add("WHAT: %s\n" % v.object_version.object.__class__.__name__)
             if field is None:
-                print "Details:"
+                self.add("Details:\n")
                 for k, v in info.items():
-                    print "%s : %s" % (k, v)
+                    self.add("%s : %s\n" % (k, v))
             else:
-                print "%s" % info
-            #print "%15s %20s %s" % (dt, cmt, info)
+                self.add("%s\n" % info)
     
     def getRcvr(self, rcvrId):
         return first(Receiver.objects.filter(id = rcvrId))
