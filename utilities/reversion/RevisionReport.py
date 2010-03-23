@@ -25,25 +25,20 @@ class RevisionReport(object):
         self.reportLines += lines
 
     def write(self):        
+        "For use with printing reports"
         # write it out
         if self.filename is not None:
             f = open(self.filename, 'w')
             f.writelines(self.reportLines)
 
     def reportObjectForTime(self, obj, timeStr):
+        "Zoom in on the object at just the given time (YY-mm-dd HH:MM:SS)"
     
         # ex: 010-03-19 09:35:45
         dt = datetime.strptime(timeStr, self.timeFormat)
-        self.reportObjectAtTime(obj, time = dt)
+        self.reportObject(obj, time = dt)
     
-    def reportObject(self, obj, time = None, field = None):
-    
-        if time is None:
-            self.reportObjectHistory(obj, field)
-        else:
-            self.reportObjectAtTime(obj, time, field)
-    
-    def reportObjectAtTime(self, obj, time, field = None):
+    def getVersionAtTime(self, obj, time):
     
         try:
             v = Version.objects.get_for_date(obj, time)
@@ -51,16 +46,62 @@ class RevisionReport(object):
             print "could not find obj at time: ", time
             print "retrieving initial version: "
             v = Version.objects.get_for_object(obj)[0]
+        return v    
     
-        self.reportVersions(v, field)
+    def reportObject(self, obj, time = None, field = None):
     
-    def reportObjectHistory(self, obj, field = None):
-    
-        vs = Version.objects.get_for_object(obj)
-    
+        vs = self.getAllVersions(obj, time)
         for v in vs:
-            self.reportVersions(v, field)
+            self.reportVersion(v, field)
     
+    def getAllVersions(self, obj, time = None):
+        "Get all versions related to the given object, full hist. or at time"
+
+        if time is None:
+            vs = list(Version.objects.get_for_object(obj))
+        else:
+            vs = [self.getVersionAtTime(obj, time)]
+
+        
+        # what are the versions related by revision?
+        related = []
+        for v in vs:
+            related.extend(self.getRelatedVersions(v))
+
+        # what are the verions of related objs in other revisions?
+        children = self.getRelatedObjectVersions(obj, time)
+
+        # put'm all togethor - avoid duplicates
+        for c in children:
+            if c.id not in [v.id for v in vs]:
+                vs.append(c)
+        for r in related:
+            if r.id not in [v.id for v in vs]:
+                vs.append(r)
+
+        # sort by revision date
+        vs.sort(key=lambda x: x.revision.date_created)
+
+        return vs
+
+    def getRelatedObjectVersions(self, obj, time = None):
+        "Abstract class."
+        # Example, if a session is enabled/disabled, this doesn't affect
+        # the sesshun obj, but the status obj, so you need to look for 
+        # the status versions too
+        return []
+
+    def getRelatedVersions(self, ver):
+        """
+        Usually we want to know about other objects that are part of this
+        version's revision.  For example, when a session is modified through
+        its JSON service, all it's related objects are of interest also.
+        """
+        rvs = ver.revision.version_set.all()
+        vs = [v for v in rvs if v.object_version.object.__class__.__name__  in \
+            self.relatedClasses]
+        return vs
+
     def getObjectDiffs(self, obj):
     
         diffs = []
@@ -114,30 +155,8 @@ class RevisionReport(object):
     
         return diffs
     
-    def reportVersions(self, v, field = None):
-        "Reports this version and 'related' versions"
-        vs = [v]
-        vs.extend(self.getRelatedVersions(v))
-        for v in vs:
-            self.reportVersion(v, field)
-
-    def getRelatedVersions(self, ver):
-        """
-        Usually we want to know about other objects that are part of this
-        version's revision.  For example, when a session is modified through
-        its JSON service, all it's related objects are of interest also.
-        """
-        #vs = []
-        rvs = ver.revision.version_set.all()
-        vs = [v for v in rvs if v.object_version.object.__class__.__name__  in \
-            self.relatedClasses]
-        #for v in rvs:
-        #    if v.object_version.object.__class__.__name__ in \
-        #        self.relatedClasses:
-        #        vs.append(v)
-        return vs
-
     def reportVersion(self, v, field = None):
+        "Prints out all the details for a given version."
 
         dt = v.revision.date_created.strftime(self.timeFormat)
         cmt = v.revision.comment

@@ -20,6 +20,17 @@ class SessionRevReport(RevisionReport):
                              , 'Allotment'
                               ]
 
+    def getRelatedObjectVersions(self, sesshun, time = None):
+        "We want to look for revisions with status, allotment, & other objs."
+
+        vs = []
+        vs.extend(Version.objects.get_for_object(sesshun.status))
+        vs.extend(Version.objects.get_for_object(sesshun.allotment))
+        for t in sesshun.target_set.all():
+            vs.extend(Version.objects.get_for_object(t))
+        return vs    
+
+         
     def getSessionRcvrDiffs(self, pcode, name):
         """
         Rcvrs for Session and Periods are deleted and readded every time a 
@@ -108,7 +119,7 @@ class SessionRevReport(RevisionReport):
             diffs.extend(self.getObjectDiffs(t))
         diffs.extend(self.getObjectDiffs(s.status))
         diffs.extend(self.getSessionRcvrDiffs(pcode, name))
-        diffs.sort()    
+        diffs.sort(key=lambda v: v.dt)
         for d in diffs:
             self.add("%s\n" % d)
         #if periods:

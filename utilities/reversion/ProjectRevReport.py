@@ -47,7 +47,7 @@ class ProjectRevReport(RevisionReport):
             diffs.extend(self.getObjectDiffs(a))
         for i in p.investigator_set.all():
             diffs.extend(self.getObjectDiffs(i))
-        diffs.sort()    
+        diffs.sort(key=lambda d: d.dt)
         for d in diffs:
             self.add("%s\n" % d)
         self.write()    
@@ -73,7 +73,6 @@ class ProjectRevReport(RevisionReport):
             return msg
         type  = opts['type']    
         pcode = opts['pcode']    
-        name  = opts['name']    
         if type not in types:
             return "type arg must be in type: %s" % (", ".join(types))
 

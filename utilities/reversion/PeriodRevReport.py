@@ -63,6 +63,7 @@ class PeriodRevReport(RevisionReport):
         for r in rps:
         #for r in p.receivers.all():
             diffs.extend(self.getObjectDiffs(r))
+        diffs.sort(key=lambda d: d.dt)    
         for d in diffs:
             self.add("%s\n" % d)
         self.write()    
