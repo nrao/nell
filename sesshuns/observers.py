@@ -8,6 +8,8 @@ from sets                     import Set
 from utilities                import gen_gbt_schedule, UserInfo, NRAOBosDB
 from reversion                import revision
 
+
+
 def get_requestor(request):
     """
     Gets login name, and if we don't have a user with that name,
@@ -23,6 +25,12 @@ def get_requestor(request):
         requestor = create_user(loginUser)
 
     return requestor
+
+def get_rev_comment(request, obj, method):
+       
+    where = "%s %s" % (obj.__class__.__name__, method)
+    who = request.user.username
+    return "WHO: %s, WHERE: %s" % (who, where)
 
 def public_schedule(request, *args, **kws):
     # serve up the GBT schedule
@@ -264,7 +272,9 @@ def toggle_session(request, *args, **kws):
     s = first(Sesshun.objects.filter(project__pcode = pcode, name = sname))
     s.status.enabled = not s.status.enabled
     s.status.save()
-    
+   
+    revision.comment = get_rev_comment(request, s, "toggle_session")
+
     return HttpResponseRedirect("/project/%s" % pcode)
 
 @revision.create_on_success
@@ -278,6 +288,8 @@ def toggle_observer(request, *args, **kws):
     project = Project.objects.filter(pcode=pcode)[0]
     project.normalize_investigators()
     
+    revision.comment = get_rev_comment(request, i, "toggle_observer")
+
     return HttpResponseRedirect("/project/%s" % pcode)
 
 @revision.create_on_success
@@ -299,6 +311,8 @@ def modify_priority(request, *args, **kws):
             if i == I:
                 t = i
     
+    revision.comment = get_rev_comment(request, project, "modify_priority")
+
     return HttpResponseRedirect("/project/%s" % pcode)
 
 
@@ -339,6 +353,10 @@ def project_notes_save(request, *args, **kws):
     project.notes = request.POST.get("notes", "")
     project.save()
 
+    revision.comment = get_rev_comment(request
+                                     , project
+                                     , "project_notes_save")
+
     return HttpResponseRedirect("/project/%s" % pcode)
 
 @revision.create_on_success
@@ -378,6 +396,10 @@ def project_snotes_save(request, *args, **kws):
     project.schedulers_notes = request.POST.get("notes", "")
     project.save()
 
+    revision.comment = get_rev_comment(request
+                                     , project
+                                     , "project_snotes_save")
+
     return HttpResponseRedirect("/project/%s" % pcode)
 
 @login_required
@@ -408,6 +430,10 @@ def dynamic_contact_save(request, *args, **kws):
     user = first(User.objects.filter(id = u_id))
     user.contact_instructions = request.POST.get("contact_instructions", "")
     user.save()
+
+    revision.comment = get_rev_comment(request
+                                     , user
+                                     , "dynamic_contact_save")
 
     return HttpResponseRedirect("/profile/%s" % u_id)
 
@@ -526,4 +552,6 @@ def blackout(request, *args, **kws):
     b.description = description
     b.save()
         
+    revision.comment = get_rev_comment(request, b, "blackout")
+
     return HttpResponseRedirect("/profile/%s" % u_id)
