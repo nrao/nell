@@ -6,6 +6,7 @@ from django.shortcuts         import render_to_response
 from models                   import *
 from sets                     import Set
 from utilities                import gen_gbt_schedule, UserInfo, NRAOBosDB
+from reversion                import revision
 
 def get_requestor(request):
     """
@@ -64,6 +65,7 @@ def public_schedule(request, *args, **kws):
               , 'timezone' : timezone
               , 'is_logged_in': request.user.is_authenticated()})
 
+@revision.create_on_success
 @login_required
 def home(request, *args, **kwds):
     requestor = get_requestor(request)
@@ -146,6 +148,7 @@ def events(request, *args, **kws):
 
     return HttpResponse(json.dumps(jsonobjlist))
 
+@revision.create_on_success
 @login_required
 def profile(request, *args, **kws):
     requestor = get_requestor(request)
@@ -179,6 +182,7 @@ def profile(request, *args, **kws):
                              , 'reserves'     : reservations
                              , 'isOps'        : requestor.isOperator()})
 
+@revision.create_on_success
 @login_required
 def project(request, *args, **kws):
     user = get_requestor(request)
@@ -216,6 +220,7 @@ def project(request, *args, **kws):
        }
     )
 
+@revision.create_on_success
 @login_required
 def search(request, *args, **kws):
     user = get_requestor(request)
@@ -252,6 +257,7 @@ def search(request, *args, **kws):
                              , 'requestor': user
                                })
 
+@revision.create_on_success
 @login_required
 def toggle_session(request, *args, **kws):
     pcode, sname = args
@@ -261,6 +267,7 @@ def toggle_session(request, *args, **kws):
     
     return HttpResponseRedirect("/project/%s" % pcode)
 
+@revision.create_on_success
 @login_required
 def toggle_observer(request, *args, **kws):
     pcode, i_id = args
@@ -273,6 +280,7 @@ def toggle_observer(request, *args, **kws):
     
     return HttpResponseRedirect("/project/%s" % pcode)
 
+@revision.create_on_success
 @login_required
 def modify_priority(request, *args, **kws):
     pcode, i_id, dir = args
@@ -293,6 +301,8 @@ def modify_priority(request, *args, **kws):
     
     return HttpResponseRedirect("/project/%s" % pcode)
 
+
+@revision.create_on_success
 @login_required
 def project_notes_form(request, *args, **kwds):
     pcode, = args
@@ -311,6 +321,7 @@ def project_notes_form(request, *args, **kwds):
                             , {'p'        : project
                              , 'requestor': requestor})
 
+@revision.create_on_success
 @login_required
 def project_notes_save(request, *args, **kws):
     pcode, = args
@@ -330,6 +341,7 @@ def project_notes_save(request, *args, **kws):
 
     return HttpResponseRedirect("/project/%s" % pcode)
 
+@revision.create_on_success
 @login_required
 def project_snotes_form(request, *args, **kwds):
     pcode, = args
@@ -348,6 +360,7 @@ def project_snotes_form(request, *args, **kwds):
                             , {'p'        : project
                              , 'requestor': requestor})
 
+@revision.create_on_success
 @login_required
 def project_snotes_save(request, *args, **kws):
     pcode, = args
@@ -381,6 +394,7 @@ def dynamic_contact_form(request, *args, **kws):
                             , {'u'        : user
                              , 'requestor': requestor})
 
+@revision.create_on_success
 @login_required
 def dynamic_contact_save(request, *args, **kws):
     u_id, = args
@@ -442,6 +456,7 @@ def parse_datetime(request, dateName, timeName, utcOffset):
         error = "ERROR: malformed %s date" % dateName
     return (dt, error)    
  
+@revision.create_on_success
 @login_required
 def blackout(request, *args, **kws):
     u_id, = args

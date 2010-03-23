@@ -9,6 +9,7 @@ from utilities                import TimeAgent
 from settings                 import PROXY_PORT, DATABASE_NAME
 from utilities.SchedulingNotifier import SchedulingNotifier
 from pprint import pprint
+from reversion import revision
 
 import simplejson as json
 # TBF: get this back in once we figure out the deployment issues.
@@ -29,6 +30,7 @@ def formatExceptionInfo(maxTBlevel=5):
         excTb = traceback.format_tb(trbk, maxTBlevel)
     return (excName, excArgs, excTb)
 
+@revision.create_on_success
 def receivers_schedule(request, *args, **kws):
     # get the schedule
     startdate = request.GET.get("startdate", None)
@@ -57,6 +59,7 @@ def receivers_schedule(request, *args, **kws):
                       , "receivers" : rcvrs})
           , mimetype = "text/plain")
 
+@revision.create_on_success
 def change_rcvr_schedule(request, *args, **kws):
 
     # on a given date, some rcvrs are going up and coming down:
@@ -112,6 +115,7 @@ def change_rcvr_schedule(request, *args, **kws):
                                       , 'message': msg})
                            , mimetype = "text/plain")
 
+@revision.create_on_success
 def shift_rcvr_schedule_date(request, *args, **kws):
     fromStr = request.POST.get("from", None)
     toStr   = request.POST.get("to", None)
@@ -127,6 +131,7 @@ def shift_rcvr_schedule_date(request, *args, **kws):
                                       , 'message': msg})
                            , mimetype = "text/plain")
 
+@revision.create_on_success
 def delete_rcvr_schedule_date(request, *args, **kws):
     dateStr = request.POST.get("startdate", None)
     dateDt = datetime.strptime(dateStr, "%m/%d/%Y %H:%M:%S")
@@ -140,6 +145,7 @@ def delete_rcvr_schedule_date(request, *args, **kws):
                                       , 'message': msg})
                            , mimetype = "text/plain")
 
+@revision.create_on_success
 def get_options(request, *args, **kws):
     mode = request.GET.get("mode", None)
     if mode == "project_codes":
@@ -206,6 +212,7 @@ def get_ical(request, *args, **kws):
     response['Content-Disposition'] = 'attachment; filename=GBTschedule.ics'
     return response
 
+@revision.create_on_success
 def change_schedule(request, *args, **kws):
     "Replaces time period w/ new session, handling time accounting."
     # just have a lot of params to process
@@ -228,6 +235,7 @@ def change_schedule(request, *args, **kws):
     st.changeSchedule(startdate, duration, s, reason, desc)
     return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
 
+@revision.create_on_success
 def shift_period_boundaries(request, *args, **kws):
     "moves boundray between two or more periods, handling time accounting."
     # just have a lot of params to process
@@ -261,7 +269,8 @@ def shift_period_boundaries(request, *args, **kws):
         return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
     else:
         return HttpResponse(json.dumps({'error':'Error Shifting Period Boundary', 'message':msg}), mimetype = "text/plain")
-    
+
+@revision.create_on_success
 def time_accounting(request, *args, **kws):
     """
     POST: Sets Project time accounting.
@@ -285,6 +294,7 @@ def time_accounting(request, *args, **kws):
     js = ta.jsondict(project)
     return HttpResponse(json.dumps(js), mimetype = "text/plain")
 
+@revision.create_on_success
 def session_time_accounting(request, *args, **kws):
     "Sets some time accounting variables for given period"
 
@@ -300,6 +310,7 @@ def session_time_accounting(request, *args, **kws):
     js = ta.jsondict(s.project)
     return HttpResponse(json.dumps(js), mimetype = "text/plain")
 
+@revision.create_on_success
 def period_time_accounting(request, *args, **kws):
     "Sets some time accounting variables for given period"
     
@@ -338,6 +349,7 @@ def period_time_accounting(request, *args, **kws):
     return HttpResponse(json.dumps(js), mimetype = "text/plain")
 
 #@transaction.commit_on_success
+@revision.create_on_success
 def publish_periods(request, *args, **kwds):
 
     # support publishing periods by time range, or a single one by id
@@ -372,6 +384,7 @@ def publish_periods(request, *args, **kwds):
     return HttpResponse(json.dumps({'success':'ok'})
                       , mimetype = "text/plain")
 
+@revision.create_on_success
 def delete_pending(request, *args, **kwds):
     "Removes pending periods of open sessions"
 
@@ -464,6 +477,7 @@ def scheduling_email(request, *args, **kwds):
         return HttpResponse(json.dumps({'success':'error'})
                           , mimetype = "text/plain")
 
+@revision.create_on_success
 def window_assign_period(request, *args, **kwds):
     if len(args) != 2:
         return HttpResponse(json.dumps({'success':'error'})

@@ -7,7 +7,8 @@ import sys
 
 # supress the stderr coming from the following import
 saveout = sys.stderr
-fsock = open('out.log', 'w')
+# TBF: where to write this that has permissions? 
+fsock = open('/users/dss/out.log', 'w')
 sys.stderr = fsock
 
 from sesshuns.models import *
