@@ -1,5 +1,5 @@
 from datetime                  import datetime, timedelta, date
-from math                      import asin, acos, cos, sin
+from math                      import asin, acos, cos, sin, modf
 from tools                     import TimeAccounting
 from django.conf               import settings
 from django.db                 import models
@@ -1828,6 +1828,7 @@ class Target(models.Model):
             secs = 0.0
         return "%02i:%02i:%04.1f" % (int(horz), int(mins), secs)
 
+
     def get_vertical(self):
         if self.vertical is None:
             return ""
@@ -1840,10 +1841,18 @@ class Target(models.Model):
         else:
             sign = " "
 
-        mins = (degs - int(degs)) * 60
-        secs = (mins - int(mins)) * 60
-        return "%s%02i:%02i:%04.1f" % (sign, int(degs), int(mins), secs)
+        fpart, ddegs = modf(degs)
+        fpart, dmins = modf(fpart * 60)
+        dsecs = round(fpart * 60, 1)
 
+        if dsecs > 59.9:
+            dmins = dmins + 1
+            dsecs = 0.0
+        if dmins > 59.9:
+            ddegs = ddegs + 1
+            dmins = 0.0
+
+        return "%s%02i:%02i:%04.1f" % (sign, int(ddegs), int(dmins), dsecs)
 
     class Meta:
         db_table = "targets"

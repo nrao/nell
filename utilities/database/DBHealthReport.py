@@ -68,7 +68,9 @@ def get_non_windowed_sessions_with_windows():
     windowed = [x for x in snw if len(x.window_set.all()) > 0]
     return windowed
 
-# helper function returns windows whose start-date + duration is 
+# helper function returns windows whose start-date + duration
+# (i.e. end date) is >= now and whose start date is < some future
+# date.
 
 def get_windows():
     gt_date = datetime.now().date() - timedelta(1)
@@ -92,9 +94,9 @@ def get_win_period_outside():
     ws = get_windows()
     wp = ws.exclude(default_period = None)
     badwin = []
-    outside = False
 
     for i in wp:
+        outside = False
         ws = i.start_datetime()          # start datetime for window
         we = i.end_datetime()            # end datetime for window
 
