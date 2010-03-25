@@ -7,7 +7,7 @@ from django.http               import QueryDict
 from settings                  import ANTIOCH_SERVER_URL
 from utilities.receiver        import ReceiverCompile
 from utilities                 import TimeAgent, UserInfo, NRAOBosDB
-from utilities                 import ScorePeriod
+from utilities                 import Score
 
 import calendar
 import pg
@@ -2086,27 +2086,47 @@ class Period(models.Model):
 
     def from_post(self, fdata, tz):
 
+        # only update the score if something in the period has changed
+        update_score = False
+        if not update_score:
+            update_score = self.id is None
+        # if newly created then start with a default of zero
+        if update_score:
+            self.score = 0.0
+            self.forecast = TimeAgent.quarter(datetime.utcnow())
         handle = fdata.get("handle", "")
         if handle:
-            self.session = self.handle2session(handle)
+            new_session = self.handle2session(handle)
+            if not update_score:
+                update_score = self.session != new_session
+            self.session = new_session
         else:
             try:
                 maintenance = first(Project.objects.filter(pcode='Maintenance'))
                 self.session = first(Sesshun.objects.filter(project=maintenance))
             except:
                 self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
-        now           = dt2str(TimeAgent.quarter(datetime.utcnow()))
+        now           = TimeAgent.quarter(datetime.utcnow())
         date          = fdata.get("date", None)
         time          = fdata.get("time", "00:00")
         if date is None:
             self.start = now
         else:
-            self.start = TimeAgent.quarter(strStr2dt(date, time + ':00'))
+            new_start = TimeAgent.quarter(strStr2dt(date, time + ':00'))
             if tz == 'ET':
-                self.start = TimeAgent.est2utc(self.start)
-        self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
-        self.score    = 0.0
-        self.forecast = TimeAgent.quarter(datetime.utcnow())
+                new_start = TimeAgent.est2utc(self.start)
+            if not update_score:
+                update_score = self.start != new_start
+            self.start = new_start
+        new_duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "1.0")))
+        if not update_score:
+            update_score = self.duration != new_duration
+        self.duration = new_duration
+        if update_score and now < self.start:
+            self.score = Score().session(self.session.id
+                                       , self.start
+                                       , self.duration)
+            self.forecast = TimeAgent.quarter(datetime.utcnow())
         self.backup   = True if fdata.get("backup", None) == 'true' else False
         stateAbbr = fdata.get("state", "P")
         self.state = first(Period_State.objects.filter(abbreviation=stateAbbr))
@@ -2124,9 +2144,6 @@ class Period(models.Model):
         # now that we have an id (from saving), we can specify the relation
         # between this period and assocaited rcvrs
         self.update_rcvrs_from_post(fdata)
-
-        # rescore! TBF: do we *always* do this?
-        ScorePeriod().run(self.id)
 
     def update_rcvrs_from_post(self, fdata):
 
@@ -2164,7 +2181,6 @@ class Period(models.Model):
                 rp = Period_Receiver(receiver = rcvr, period = self)
                 rp.save()
 
-
     def handle2session(self, h):
         n, p = h.rsplit('(', 1)
         name = n.strip()
@@ -2190,7 +2206,7 @@ class Period(models.Model):
               , "end"  : end.isoformat()
         }
 
-    def jsondict(self, tz):
+    def jsondict(self, tz, cscore):
         start = self.start if tz == 'UTC' else TimeAgent.utc2est(self.start)
         w = self.get_window()
         js =   {"id"           : self.id
@@ -2201,7 +2217,8 @@ class Period(models.Model):
               , "time"         : t2str(start)
               , "lst"          : str(TimeAgent.dt2tlst(self.start))
               , "duration"     : self.duration
-              , "score"        : self.score
+              , "sscore"       : self.score       # scheduling score
+              , "cscore"       : cscore           # current score
               , "forecast"     : dt2str(self.forecast)
               , "backup"       : self.backup
               , "moc_ack"      : self.moc_ack
@@ -2473,7 +2490,6 @@ class Window(models.Model):
 
     def __str__(self):
         name = self.session.name if self.session is not None else "None"
-        #default_period = self.default_period.__str__() if self.default_period is not None else "None"
         return "Window for %s, from %s for %d days, default: %s, period: %s" % \
             (name
            , self.start_date.strftime("%Y-%m-%d")
@@ -2643,7 +2659,7 @@ class Window(models.Model):
                 key = "%s_%s" % (type, k)
                 jsondict[key] = None
         else:
-            pjson = period.jsondict('UTC')
+            pjson = period.jsondict('UTC', 0.0)
             jsondict["%s_%s" % (type, "date")] = pjson['date']
             jsondict["%s_%s" % (type, "time")] = pjson['time']
             jsondict["%s_%s" % (type, "duration")]   = pjson['duration']

@@ -4,6 +4,8 @@ from django.http              import HttpResponse, HttpResponseRedirect
 from NellResource    import NellResource
 from sesshuns.models import Period, first, jsonMap, str2dt
 from utilities       import TimeAgent
+from utilities       import Score
+#from utilities       import formatExceptionInfo
 
 import simplejson as json
 
@@ -24,6 +26,7 @@ def formatExceptionInfo(maxTBlevel=5):
 class PeriodResource(NellResource):
     def __init__(self, *args, **kws):
         super(PeriodResource, self).__init__(Period, *args, **kws)
+        self.score_period = Score()
 
     def read(self, request, *args, **kws):
 
@@ -40,16 +43,20 @@ class PeriodResource(NellResource):
             start = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
             duration = int(daysPeriods) * 24 * 60
             periods = Period.get_periods(start, duration)
-            ptz = [p.jsondict(tz) for p in periods]
+            pids = [p.id for p in periods]
+            sd = self.score_period.periods(pids)
+            scores = [sd.get(pid, 0.0) for pid in pids]
             return HttpResponse(
-                        json.dumps(dict(total = len(periods)
-                                      , periods = ptz))
-                      , content_type = "application/json")
+                json.dumps(dict(total = len(periods)
+                              , periods = [p.jsondict(tz, s)
+                                               for (p, s) in zip(periods, scores)]))
+              , content_type = "application/json")
         else:
             # we're getting a single period as specified by ID
-            p_id  = args[1]
+            p_id  = int(args[1])
             p     = first(Period.objects.filter(id = p_id))
-            return HttpResponse(json.dumps(dict(period = p.jsondict(tz))))
+            score = self.score_period.periods([p_id]).get(p_id, 0.0)
+            return HttpResponse(json.dumps(dict(period = p.jsondict(tz, score))))
 
     def create_worker(self, request, *args, **kws):
         o = self.dbobject()
@@ -57,8 +64,9 @@ class PeriodResource(NellResource):
         o.init_from_post(request.POST, tz)
         # Query the database to insure data is in the correct data type
         o = first(self.dbobject.objects.filter(id = o.id))
-
-        return HttpResponse(json.dumps(o.jsondict(tz))
+        score = self.score_period.periods([o.id]).get(o.id, 0.0)
+        
+        return HttpResponse(json.dumps(o.jsondict(tz, score))
                           , mimetype = "text/plain")
 
     def update(self, request, *args, **kws):
