@@ -26,11 +26,11 @@ def formatExceptionInfo(maxTBlevel=5):
 class PeriodResource(NellResource):
     def __init__(self, *args, **kws):
         super(PeriodResource, self).__init__(Period, *args, **kws)
+        self.score_period = Score()
 
     def read(self, request, *args, **kws):
 
         tz = args[0]
-        score_period = Score()
         # one or many?
         if len(args) == 1:
             # we are getting periods from within a range of dates
@@ -44,7 +44,7 @@ class PeriodResource(NellResource):
             duration = int(daysPeriods) * 24 * 60
             periods = Period.get_periods(start, duration)
             pids = [p.id for p in periods]
-            sd = score_period.periods(pids)
+            sd = self.score_period.periods(pids)
             scores = [sd.get(pid, 0.0) for pid in pids]
             return HttpResponse(
                 json.dumps(dict(total = len(periods)
@@ -55,17 +55,16 @@ class PeriodResource(NellResource):
             # we're getting a single period as specified by ID
             p_id  = int(args[1])
             p     = first(Period.objects.filter(id = p_id))
-            score = score_period.periods([p_id]).get(p_id, 0.0)
+            score = self.score_period.periods([p_id]).get(p_id, 0.0)
             return HttpResponse(json.dumps(dict(period = p.jsondict(tz, score))))
 
     def create_worker(self, request, *args, **kws):
         o = self.dbobject()
         tz = args[0]
-        score_period = Score()
         o.init_from_post(request.POST, tz)
         # Query the database to insure data is in the correct data type
         o = first(self.dbobject.objects.filter(id = o.id))
-        score = score_period.periods([o.id]).get(o.id, 0.0)
+        score = self.score_period.periods([o.id]).get(o.id, 0.0)
         
         return HttpResponse(json.dumps(o.jsondict(tz, score))
                           , mimetype = "text/plain")

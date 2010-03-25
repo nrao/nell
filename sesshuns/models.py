@@ -2075,6 +2075,10 @@ class Period(models.Model):
         update_score = False
         if not update_score:
             update_score = self.id is None
+        # if newly created then start with a default of zero
+        if update_score:
+            self.score = 0.0
+            self.forecast = TimeAgent.quarter(datetime.utcnow())
         handle = fdata.get("handle", "")
         if handle:
             new_session = self.handle2session(handle)

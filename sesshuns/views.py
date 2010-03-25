@@ -53,7 +53,7 @@ def receivers_schedule(request, *args, **kws):
     return HttpResponse(
             json.dumps({"schedule" : Receiver_Schedule.jsondict(schedule)
                       , "diff"     : jsondiff
-                      , "maintenance": [p.jsondict('UTC') for p in maintenance] 
+                      , "maintenance": [p.jsondict('UTC', 0.0) for p in maintenance]
                       , "receivers" : rcvrs})
           , mimetype = "text/plain")
 
