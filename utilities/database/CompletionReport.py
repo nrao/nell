@@ -7,6 +7,7 @@ from tools.TimeAccounting import TimeAccounting
 from sets                 import Set
 from datetime             import *
 from sesshuns.templatetags.custom import *
+import sys
 
 from Report import Report, Line
 
@@ -85,9 +86,9 @@ def GenerateReport(start):
                 line.add(pi.last_name if pi else "No PI assigned!")
                 line.add(ta.getProjectTotalTime(p), fptype)
                 line.add(ta.getProjSessionsTotalTime(p), fptype)
-                line.add(ta.getCompletedTimeBilled(p), fptype)
-                line.add(ta.getUpcomingTimeBilled(p), fptype)
-                line.add(ta.getTimeRemainingFromCompleted(p), fptype)
+                line.add(ta.getCompletedTimeBilled(p,start), fptype)
+                line.add(ta.getUpcomingTimeBilled(p,start), fptype)
+                line.add(ta.getTimeRemainingFromCompleted(p,start), fptype)
                 prj_report.add_line(line)
                 tri_report.add_report(prj_report)
                 tri_report.add_line(blank_line)
@@ -113,9 +114,9 @@ def GenerateReport(start):
                     line.add(target_horz(s))
                     line.add(target_vert(s))
                     line.add(s.allotment.total_time)
-                    line.add(ta.getCompletedTimeBilled(s), fptype)
-                    line.add(ta.getUpcomingTimeBilled(s), fptype)
-                    line.add(ta.getTimeRemainingFromCompleted(s), fptype)
+                    line.add(ta.getCompletedTimeBilled(s, start), fptype)
+                    line.add(ta.getUpcomingTimeBilled(s, start), fptype)
+                    line.add(ta.getTimeRemainingFromCompleted(s, start), fptype)
                     line.add(s.min_duration, fptype)
                     line.add(s.max_duration, fptype)
                     line.add("".join(s.rcvrs_specified()))
@@ -131,6 +132,18 @@ def GenerateReport(start):
             print "\t None"
 
 if __name__=='__main__':
-    start = datetime.today()
+
+    # use today for the start time, or the passed in time
+    if len(sys.argv) > 1:
+        try:
+            opt = sys.argv[1]
+            parts = opt.split("=")
+            start = datetime.strptime(parts[1], "%Y-%m-%d %H:%M:%S")
+        except:
+            print 'Option must be -start="YYYY-mm-dd HH:MM:SS"'
+            sys.exit()
+    else:
+        start = datetime.today()
+
     GenerateReport(start)
 
