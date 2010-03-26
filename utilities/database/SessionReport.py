@@ -27,9 +27,18 @@ def center(value, width):
 def bl(value):
     return "X" if value else ""
 
+def scheduable(sess):
+    if sess.status.enabled and sess.status.authorized:
+        return "S"
+    else:
+        return ""
+
 def GenerateReport(start):
     outfile   = open("./DssSessionReport.txt", 'w')
-    scs       = [1, 13, 5, 6, 4, 10, 11, 6, 6, 6, 6, 5, 15]
+    scs       = [1, 13, 5, 3, 6, 4, 10, 11, 6, 6, 6, 6, 5, 15]
+    scss      = " %s" * len(scs)
+    hdrFormat = "\n\n\t " + scss
+    dataFormat = "\n\t " + scss
     semesters = sorted(Semester.objects.all()
                      , lambda x,y:cmp(x.semester,y.semester))
     ta        = TimeAccounting()
@@ -39,7 +48,7 @@ def GenerateReport(start):
                         , lambda x,y:cmp(x.pcode, y.pcode))
         if projects:
             outfile.write("\n\n")
-            outfile.write("=" * 96)   
+            outfile.write("=" * 100)   
             outfile.write("\n\nTrimester: %s\n" %s.semester)
             outfile.write("-" * 14)   
 
@@ -51,40 +60,43 @@ def GenerateReport(start):
                        , ta.getTimeLeft(p)
                        , ta.getProjectTotalTime(p)))
 
-            outfile.write("\n\n\t %s %s %s %s %s %s %s %s %s %s %s %s %s" %\
+            outfile.write(hdrFormat % \
                    (ljust("",         scs[0])
                   , ljust("name",     scs[1])
                   , center("orgID",   scs[2])
-                  , center("obs",     scs[3])
-                  , ljust("type",     scs[4])
-                  , center("RA",      scs[5])
-                  , center("Dec",     scs[6])
-                  , center("rem",     scs[7])
-                  , center("tot",     scs[8])
-                  , rjust("min",      scs[9])
-                  , rjust("max",      scs[10])
-                  , rjust("btwn",     scs[11])
-                  , ljust("rcvrs",    scs[12])))
+                  , center("sch",     scs[3])
+                  , center("obs",     scs[4])
+                  , ljust("type",     scs[5])
+                  , center("RA",      scs[6])
+                  , center("Dec",     scs[7])
+                  , center("rem",     scs[8])
+                  , center("tot",     scs[9])
+                  , rjust("min",      scs[10])
+                  , rjust("max",      scs[11])
+                  , rjust("btwn",     scs[12])
+                  , ljust("rcvrs",    scs[13])))
 
             sessions = sorted(p.sesshun_set.all()
                             , lambda x,y:cmp(x.name, y.name))
             for s in sessions:
 
                 target = first(s.target_set.all())
-                outfile.write("\n\t %s %s %s %s %s %s %s %s %s %s %s %s %s" %\
+
+                outfile.write(dataFormat % \
                     (ljust(bl(s.status.complete),        scs[0])
                    , ljust(s.name,                       scs[1])
                    , rjust(s.original_id,                scs[2])
-                   , center(s.observing_type.type[:6],   scs[3])
-                   , center(s.session_type.type[0],      scs[4])
-                   , ljust(target.get_horizontal(),      scs[5])
-                   , ljust(target.get_vertical(),        scs[6])
-                   , rjust(ta.getTimeLeft(s),            scs[7])
-                   , rjust(s.allotment.total_time,       scs[8])
-                   , rjust(s.min_duration,               scs[9])
-                   , rjust(s.max_duration,               scs[10])
-                   , rjust(s.time_between,               scs[11])
-                   , ljust("".join(s.rcvrs_specified()), scs[12])
+                   , center(scheduable(s),               scs[3])
+                   , center(s.observing_type.type[:6],   scs[4])
+                   , center(s.session_type.type[0],      scs[5])
+                   , ljust(target.get_horizontal(),      scs[6])
+                   , ljust(target.get_vertical(),        scs[7])
+                   , rjust(ta.getTimeLeft(s),            scs[8])
+                   , rjust(s.allotment.total_time,       scs[9])
+                   , rjust(s.min_duration,               scs[10])
+                   , rjust(s.max_duration,               scs[11])
+                   , rjust(s.time_between,               scs[12])
+                   , ljust("".join(s.rcvrs_specified()), scs[13])
                    ))
 
             if p != projects[-1]:
