@@ -8,7 +8,6 @@ from tools                    import IcalMap, ScheduleTools, TimeAccounting
 from utilities                import TimeAgent
 from settings                 import PROXY_PORT, DATABASE_NAME
 from utilities.SchedulingNotifier import SchedulingNotifier
-from pprint import pprint
 from reversion import revision
 
 import simplejson as json
@@ -437,7 +436,7 @@ def delete_pending(request, *args, **kwds):
 try:
     notifier = SchedulingNotifier()
 except:
-    print formatExceptionInfo()
+    formatExceptionInfo()
 
 def scheduling_email(request, *args, **kwds):
 
@@ -472,7 +471,7 @@ def scheduling_email(request, *args, **kwds):
                 })
               , mimetype = "text/plain")
         except:
-            print formatExceptionInfo()
+            formatExceptionInfo()
             return HttpResponse(json.dumps({'success':'error'})
                                 , mimetype = "text/plain")
 
@@ -490,7 +489,7 @@ def scheduling_email(request, *args, **kwds):
 
             notifier.notify()
         except:
-            print formatExceptionInfo()
+            formatExceptionInfo()
             return HttpResponse(json.dumps({'success':'error'})
                                 , mimetype = "text/plain")
 
