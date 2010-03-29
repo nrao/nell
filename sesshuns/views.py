@@ -422,8 +422,6 @@ def scheduling_email(request, *args, **kwds):
                                                   microsecond = 0))
 
             periods  = list(Period.objects.filter(start__gt = start, start__lt = end))
-            periods.sort(lambda x, y: cmp(x.start, y.start))
-            periods = periods[:-1] # don't want the one who's end-time goes past 'end'
             notifier.setPeriods(periods)
 
             return HttpResponse(
