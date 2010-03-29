@@ -198,10 +198,6 @@ class SchedulingNotifier(Notifier):
                   (TimeAgent.utc2est(self.startdate).strftime('%b %d'),
                    TimeAgent.utc2est(self.enddate).strftime('%b %d'))
         self.logMessage("Observing Subject: %s\n" % subject)
-
-        print "self.startdate (UTC):", self.startdate
-        print "self.enddate (UTC):", self.enddate
-        print "subject:", subject
         return subject
 
     def createBody(self):

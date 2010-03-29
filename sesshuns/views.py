@@ -1,33 +1,20 @@
-from datetime                 import date, datetime, timedelta
-from django.http              import HttpResponse
-from models                   import Project, Sesshun, Period, Receiver
-from models                   import Receiver_Schedule, first, str2dt
-from models                   import Window
-from models                   import User
-from tools                    import IcalMap, ScheduleTools, TimeAccounting
-from utilities                import TimeAgent
-from settings                 import PROXY_PORT, DATABASE_NAME
-from utilities.SchedulingNotifier import SchedulingNotifier
-from pprint import pprint
+from datetime                      import date, datetime, timedelta
+from django.http                   import HttpResponse
+from models                        import Project, Sesshun, Period, Receiver
+from models                        import Receiver_Schedule, first, str2dt
+from models                        import Window
+from models                        import User
+from tools                         import IcalMap, ScheduleTools, TimeAccounting
+from utilities                     import TimeAgent
+from settings                      import PROXY_PORT, DATABASE_NAME
+from utilities.SchedulingNotifier  import SchedulingNotifier
+from utilities.FormatExceptionInfo import formatExceptionInfo
 
 import simplejson as json
 # TBF: get this back in once we figure out the deployment issues.
 import twitter
 
 ROOT_URL = "http://trent.gb.nrao.edu:%d" % PROXY_PORT
-
-import sys
-import traceback
-
-def formatExceptionInfo(maxTBlevel=5):
-    cla, exc, trbk = sys.exc_info()
-    excName = cla.__name__
-    try:
-        excArgs = exc.__dict__["args"]
-    except KeyError:
-        excArgs = "<no args>"
-        excTb = traceback.format_tb(trbk, maxTBlevel)
-    return (excName, excArgs, excTb)
 
 def receivers_schedule(request, *args, **kws):
     # get the schedule
@@ -403,7 +390,7 @@ def delete_pending(request, *args, **kwds):
 try:
     notifier = SchedulingNotifier()
 except:
-    print formatExceptionInfo()
+    formatExceptionInfo()
 
 def scheduling_email(request, *args, **kwds):
 
@@ -438,7 +425,7 @@ def scheduling_email(request, *args, **kwds):
                 })
               , mimetype = "text/plain")
         except:
-            print formatExceptionInfo()
+            formatExceptionInfo()
             return HttpResponse(json.dumps({'success':'error'})
                                 , mimetype = "text/plain")
 
@@ -456,7 +443,7 @@ def scheduling_email(request, *args, **kwds):
 
             notifier.notify()
         except:
-            print formatExceptionInfo()
+            formatExceptionInfo()
             return HttpResponse(json.dumps({'success':'error'})
                                 , mimetype = "text/plain")
 
