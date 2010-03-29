@@ -51,12 +51,13 @@ class SchedulingNotifier(Notifier):
 
 
     def setPeriods(self, periods):
+
+        periods.sort(lambda x, y: cmp(x.start, y.start))
         self.examinePeriods(periods)
-        self.periods.sort(lambda x, y: cmp(x.start, y.start))
 
         if self.periods != []:
-            self.startdate = periods[0].start
-            self.enddate   = periods[-1].end()
+            self.startdate = self.periods[0].start
+            self.enddate   = self.periods[-1].end()
         else:
             self.startdate = datetime.utcnow()
             self.enddate   = self.startdate + timedelta(hours = 48)
@@ -197,6 +198,10 @@ class SchedulingNotifier(Notifier):
                   (TimeAgent.utc2est(self.startdate).strftime('%b %d'),
                    TimeAgent.utc2est(self.enddate).strftime('%b %d'))
         self.logMessage("Observing Subject: %s\n" % subject)
+
+        print "self.startdate (UTC):", self.startdate
+        print "self.enddate (UTC):", self.enddate
+        print "subject:", subject
         return subject
 
     def createBody(self):
