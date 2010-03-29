@@ -131,12 +131,8 @@ def shift_rcvr_schedule_date(request, *args, **kws):
     toStr   = request.POST.get("to", None)
     fromDt = datetime.strptime(fromStr, "%m/%d/%Y %H:%M:%S")
     toDt   = datetime.strptime(toStr, "%m/%d/%Y %H:%M:%S")
-<<<<<<< local
     success, msg = Receiver_Schedule.shift_date(fromDt, toDt)    
     revision.comment = get_rev_comment(request, None, "shift_rcvr_schedule")
-=======
-    success, msg = Receiver_Schedule.shift_date(fromDt, toDt)
->>>>>>> other
     if success:
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
@@ -150,12 +146,8 @@ def shift_rcvr_schedule_date(request, *args, **kws):
 def delete_rcvr_schedule_date(request, *args, **kws):
     dateStr = request.POST.get("startdate", None)
     dateDt = datetime.strptime(dateStr, "%m/%d/%Y %H:%M:%S")
-<<<<<<< local
     success, msg = Receiver_Schedule.delete_date(dateDt)    
     revision.comment = get_rev_comment(request, None, "delete_rcvr_schedule")
-=======
-    success, msg = Receiver_Schedule.delete_date(dateDt)
->>>>>>> other
     if success:
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
@@ -292,10 +284,7 @@ def shift_period_boundaries(request, *args, **kws):
     else:
         return HttpResponse(json.dumps({'error':'Error Shifting Period Boundary', 'message':msg}), mimetype = "text/plain")
 
-<<<<<<< local
 @revision.create_on_success
-=======
->>>>>>> other
 def time_accounting(request, *args, **kws):
     """
     POST: Sets Project time accounting.
