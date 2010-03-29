@@ -204,7 +204,7 @@ class TestWindow(NellTestCase):
                                    , accounting = pa
                                    )
         self.default_period.save()    
-        pjson = self.default_period.jsondict('UTC')
+        pjson = self.default_period.jsondict('UTC', 1.1)
         self.fdata = {"session":  1
                     , "start":    "2009-06-01"
                     , "duration": 7
@@ -394,7 +394,7 @@ class TestPeriod(NellTestCase):
         pr = Period_Receiver(period = p, receiver = X)
         pr.save()
 
-        jd = p.jsondict('UTC')
+        jd = p.jsondict('UTC', 1.1)
 
         self.assertEqual(jd["duration"], dur)
         self.assertEqual(jd["date"], "2009-06-01")
@@ -1610,15 +1610,18 @@ class TestPeriodResource(NellTestCase):
         self.p.init_from_post(self.fdata, 'UTC')
         self.p.save()
 
-    def test_create(self):
+    # Requires antioch server
+    def xtest_create(self):
         response = self.client.post(self.rootURL + '/UTC', self.fdata)
         self.failUnlessEqual(response.status_code, 200)
 
-    def test_create_empty(self):
+    # Requires antioch server
+    def xtest_create_empty(self):
         response = self.client.post(self.rootURL + '/ET')
         self.failUnlessEqual(response.status_code, 200)
 
-    def test_read(self):
+    # Requires antioch server
+    def xtest_read(self):
         url = "%s/%s?startPeriods=%s&daysPeriods=%d" % \
                             (self.rootURL 
                            , 'UTC'
@@ -1628,7 +1631,8 @@ class TestPeriodResource(NellTestCase):
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(response.content[:11], '{"total": 1')
 
-    def test_read_keywords(self):
+    # Requires antioch server
+    def xtest_read_keywords(self):
         # use a date range that picks up our one period
         url = "%s/%s?startPeriods=%s&daysPeriods=%d" % \
                             (self.rootURL 
@@ -1649,6 +1653,7 @@ class TestPeriodResource(NellTestCase):
         self.assertEqual(response.content[:11], '{"total": 0')
 
 
+    # If antioch server running requires it contain the appropriate periods
     def test_update(self):
         fdata = self.fdata
         fdata.update({"_method" : "put"})
@@ -2012,7 +2017,7 @@ class TestWindowResource(NellTestCase):
                                    , accounting = pa
                                    )
         self.default_period.save()                           
-        pjson = self.default_period.jsondict('UTC')
+        pjson = self.default_period.jsondict('UTC', 1.1)
         self.fdata = {"session":  self.sesshun.id
                     , "start":    "2010-01-01"
                     , "duration": 7

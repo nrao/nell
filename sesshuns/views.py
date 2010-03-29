@@ -53,7 +53,7 @@ def receivers_schedule(request, *args, **kws):
     return HttpResponse(
             json.dumps({"schedule" : Receiver_Schedule.jsondict(schedule)
                       , "diff"     : jsondiff
-                      , "maintenance": [p.jsondict('UTC') for p in maintenance]
+                      , "maintenance": [p.jsondict('UTC', 0.0) for p in maintenance]
                       , "receivers" : rcvrs})
           , mimetype = "text/plain")
 
@@ -321,7 +321,7 @@ def period_time_accounting(request, *args, **kws):
         a.set_changed_time(field, value) #request.POST.get(field, None))
     a.description = request.POST.get("description", None)
 
-    # valid the new time accounting
+    # validate the new time accounting
     valid, msg = a.validate()
     if not valid:
         # don't save this, and notify the user
@@ -421,14 +421,9 @@ def scheduling_email(request, *args, **kwds):
                                          .replace(hour = 8, minute = 0, second = 0,
                                                   microsecond = 0))
 
-            print "View.py: start (UTC):", start
-            print "View.py: duration:", duration
-            print "View.py: end (UTC):", end
             periods  = list(Period.objects.filter(start__gt = start, start__lt = end))
             periods.sort(lambda x, y: cmp(x.start, y.start))
             periods = periods[:-1] # don't want the one who's end-time goes past 'end'
-
-            print "PERIODS:\n", periods
             notifier.setPeriods(periods)
 
             return HttpResponse(
