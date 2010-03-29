@@ -15,6 +15,7 @@ from sets                      import Set
 import urllib2
 import simplejson as json
 import sys
+import reversion
 
 def first(results, default = None):
     return default if len(results) == 0 else results[0]
@@ -376,10 +377,11 @@ class Allotment(models.Model):
     def __unicode__(self):
         return "(%d) Total: %5.2f, Grade: %5.2f, PSC: %5.2f, Max: %5.2f" % \
                                        (self.id
-                                      , self.total_time
-                                      , self.grade
-                                      , self.psc_time
-                                      , self.max_semester_time) 
+                                      , float(self.total_time)
+                                      , float(self.grade)
+                                      , float(self.psc_time)
+                                      , float(self.max_semester_time)
+                                      ) 
 
     def get_absolute_url(self):
         return "/sesshuns/allotment/%i/" % self.id
@@ -1341,9 +1343,9 @@ class Sesshun(models.Model):
         return "(%d) %s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s, status: %s" % (
                   self.id
                 , self.name if self.name is not None else ""
-                , self.frequency if self.frequency is not None else 0
-                , self.allotment.total_time
-                      if self.allotment.total_time is not None else 0
+                , float(self.frequency) if self.frequency is not None else float(0.0)
+                , float(self.allotment.total_time)
+                      if self.allotment.total_time is not None else float(0.0)
                 , self.receiver_list()
                 , self.status)
 
@@ -1810,7 +1812,10 @@ class Target(models.Model):
 
     def __unicode__(self):
         return "%s @ (%5.2f, %5.2f), Sys: %s" % \
-            (self.source, self.horizontal, self.vertical, self.system)
+            (self.source
+           , float(self.horizontal)
+           , float(self.vertical)
+           , self.system)
 
     def get_horizontal(self):
         "Returns the horizontal component in sexigesimal form."
@@ -1885,12 +1890,12 @@ class Period_Accounting(models.Model):
     def __unicode__(self):
         return "Id (%d); SC:%5.2f OT:%5.2f NB:%5.2f OS:%5.2f LT:%5.2f SN:%5.2f" % \
             (self.id
-           , self.scheduled
-           , self.observed()
-           , self.not_billable
-           , self.other_session()
-           , self.lost_time()
-           , self.short_notice)
+           , float(self.scheduled)
+           , float(self.observed())
+           , float(self.not_billable)
+           , float(self.other_session())
+           , float(self.lost_time())
+           , float(self.short_notice))
 
     def observed(self):
         "OT = SC - OS - LT"
@@ -2797,3 +2802,44 @@ class Reservation(models.Model):
     class Meta:
         db_table = "reservations"
 
+def register_for_revision():
+    register_model(Role)
+    register_model(User, follow=['role'])
+    register_model(Email, follow=['user'])
+    register_model(Semester)
+    register_model(Project_Type)
+    register_model(Allotment)
+    register_model(Project, follow=['semester', 'project_type', 'friend', 'allotments', 'investigator_set'])
+    register_model(Project_Allotment, follow=['project', 'allotment'])
+    register_model(Repeat)
+    register_model(TimeZone)
+    register_model(Blackout, follow=['user','repeat'] )
+    register_model(Investigator)
+    register_model(Session_Type)
+    register_model(Observing_Type)
+    register_model(Receiver)
+    register_model(Receiver_Schedule)
+    register_model(Parameter)
+    register_model(Status)
+    register_model(Sesshun, follow=['target_set','allotment'])
+    register_model(Receiver_Group, follow=['receivers'])
+    register_model(Observing_Parameter)
+    register_model(System)
+    register_model(Target)
+    register_model(Period_Accounting)
+    register_model(Period_State)
+    register_model(Period, follow=['accounting', 'state', 'receivers'])
+    register_model(Period_Receiver, follow=['period', 'receiver'])
+    #Project_Blackout_09B
+    register_model(Window)
+    #Reservation
+
+def register_model(model, follow = None):
+    if not reversion.is_registered(model) and settings.USE_REVERSION:
+        print "registering model with reversion: ", model
+        if follow is None:
+            reversion.register(model)
+        else:
+            reversion.register(model, follow = follow)
+
+register_for_revision()    

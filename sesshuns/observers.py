@@ -6,6 +6,9 @@ from django.shortcuts         import render_to_response
 from models                   import *
 from sets                     import Set
 from utilities                import gen_gbt_schedule, UserInfo, NRAOBosDB
+from reversion                import revision
+
+
 
 def get_requestor(request):
     """
@@ -22,6 +25,12 @@ def get_requestor(request):
         requestor = create_user(loginUser)
 
     return requestor
+
+def get_rev_comment(request, obj, method):
+       
+    where = "%s %s" % (obj.__class__.__name__, method)
+    who = request.user.username
+    return "WHO: %s, WHERE: %s" % (who, where)
 
 def public_schedule(request, *args, **kws):
     # serve up the GBT schedule
@@ -64,6 +73,7 @@ def public_schedule(request, *args, **kws):
               , 'timezone' : timezone
               , 'is_logged_in': request.user.is_authenticated()})
 
+@revision.create_on_success
 @login_required
 def home(request, *args, **kwds):
     requestor = get_requestor(request)
@@ -146,6 +156,7 @@ def events(request, *args, **kws):
 
     return HttpResponse(json.dumps(jsonobjlist))
 
+@revision.create_on_success
 @login_required
 def profile(request, *args, **kws):
     requestor = get_requestor(request)
@@ -179,6 +190,7 @@ def profile(request, *args, **kws):
                              , 'reserves'     : reservations
                              , 'isOps'        : requestor.isOperator()})
 
+@revision.create_on_success
 @login_required
 def project(request, *args, **kws):
     user = get_requestor(request)
@@ -216,6 +228,7 @@ def project(request, *args, **kws):
        }
     )
 
+@revision.create_on_success
 @login_required
 def search(request, *args, **kws):
     user = get_requestor(request)
@@ -252,15 +265,19 @@ def search(request, *args, **kws):
                              , 'requestor': user
                                })
 
+@revision.create_on_success
 @login_required
 def toggle_session(request, *args, **kws):
     pcode, sname = args
     s = first(Sesshun.objects.filter(project__pcode = pcode, name = sname))
     s.status.enabled = not s.status.enabled
     s.status.save()
-    
+   
+    revision.comment = get_rev_comment(request, s, "toggle_session")
+
     return HttpResponseRedirect("/project/%s" % pcode)
 
+@revision.create_on_success
 @login_required
 def toggle_observer(request, *args, **kws):
     pcode, i_id = args
@@ -271,8 +288,11 @@ def toggle_observer(request, *args, **kws):
     project = Project.objects.filter(pcode=pcode)[0]
     project.normalize_investigators()
     
+    revision.comment = get_rev_comment(request, i, "toggle_observer")
+
     return HttpResponseRedirect("/project/%s" % pcode)
 
+@revision.create_on_success
 @login_required
 def modify_priority(request, *args, **kws):
     pcode, i_id, dir = args
@@ -291,8 +311,12 @@ def modify_priority(request, *args, **kws):
             if i == I:
                 t = i
     
+    revision.comment = get_rev_comment(request, project, "modify_priority")
+
     return HttpResponseRedirect("/project/%s" % pcode)
 
+
+@revision.create_on_success
 @login_required
 def project_notes_form(request, *args, **kwds):
     pcode, = args
@@ -311,6 +335,7 @@ def project_notes_form(request, *args, **kwds):
                             , {'p'        : project
                              , 'requestor': requestor})
 
+@revision.create_on_success
 @login_required
 def project_notes_save(request, *args, **kws):
     pcode, = args
@@ -328,8 +353,13 @@ def project_notes_save(request, *args, **kws):
     project.notes = request.POST.get("notes", "")
     project.save()
 
+    revision.comment = get_rev_comment(request
+                                     , project
+                                     , "project_notes_save")
+
     return HttpResponseRedirect("/project/%s" % pcode)
 
+@revision.create_on_success
 @login_required
 def project_snotes_form(request, *args, **kwds):
     pcode, = args
@@ -348,6 +378,7 @@ def project_snotes_form(request, *args, **kwds):
                             , {'p'        : project
                              , 'requestor': requestor})
 
+@revision.create_on_success
 @login_required
 def project_snotes_save(request, *args, **kws):
     pcode, = args
@@ -365,6 +396,10 @@ def project_snotes_save(request, *args, **kws):
     project.schedulers_notes = request.POST.get("notes", "")
     project.save()
 
+    revision.comment = get_rev_comment(request
+                                     , project
+                                     , "project_snotes_save")
+
     return HttpResponseRedirect("/project/%s" % pcode)
 
 @login_required
@@ -381,6 +416,7 @@ def dynamic_contact_form(request, *args, **kws):
                             , {'u'        : user
                              , 'requestor': requestor})
 
+@revision.create_on_success
 @login_required
 def dynamic_contact_save(request, *args, **kws):
     u_id, = args
@@ -394,6 +430,10 @@ def dynamic_contact_save(request, *args, **kws):
     user = first(User.objects.filter(id = u_id))
     user.contact_instructions = request.POST.get("contact_instructions", "")
     user.save()
+
+    revision.comment = get_rev_comment(request
+                                     , user
+                                     , "dynamic_contact_save")
 
     return HttpResponseRedirect("/profile/%s" % u_id)
 
@@ -442,6 +482,7 @@ def parse_datetime(request, dateName, timeName, utcOffset):
         error = "ERROR: malformed %s date" % dateName
     return (dt, error)    
  
+@revision.create_on_success
 @login_required
 def blackout(request, *args, **kws):
     u_id, = args
@@ -511,4 +552,6 @@ def blackout(request, *args, **kws):
     b.description = description
     b.save()
         
+    revision.comment = get_rev_comment(request, b, "blackout")
+
     return HttpResponseRedirect("/profile/%s" % u_id)

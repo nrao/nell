@@ -9,6 +9,7 @@ from utilities                import TimeAgent
 from settings                 import PROXY_PORT, DATABASE_NAME
 from utilities.SchedulingNotifier import SchedulingNotifier
 from pprint import pprint
+from reversion import revision
 
 import simplejson as json
 # TBF: get this back in once we figure out the deployment issues.
@@ -29,6 +30,14 @@ def formatExceptionInfo(maxTBlevel=5):
         excTb = traceback.format_tb(trbk, maxTBlevel)
     return (excName, excArgs, excTb)
 
+def get_rev_comment(request, obj, method):
+      
+    className = obj.__class__.__name__ if obj is not None else ""  
+    where = "%s %s" % (className, method)
+    who = request.user.username
+    return "WHO: %s, WHERE: %s" % (who, where)
+
+@revision.create_on_success
 def receivers_schedule(request, *args, **kws):
     # get the schedule
     startdate = request.GET.get("startdate", None)
@@ -57,6 +66,7 @@ def receivers_schedule(request, *args, **kws):
                       , "receivers" : rcvrs})
           , mimetype = "text/plain")
 
+@revision.create_on_success
 def change_rcvr_schedule(request, *args, **kws):
 
     # on a given date, some rcvrs are going up and coming down:
@@ -104,6 +114,9 @@ def change_rcvr_schedule(request, *args, **kws):
 
     # finally, try and change the rcvr scheudle   
     success, msg = Receiver_Schedule.change_schedule(startdate, up, down)    
+
+    revision.comment = get_rev_comment(request, None, "change_rcvr_schedule")
+
     if success:
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
@@ -112,12 +125,14 @@ def change_rcvr_schedule(request, *args, **kws):
                                       , 'message': msg})
                            , mimetype = "text/plain")
 
+@revision.create_on_success
 def shift_rcvr_schedule_date(request, *args, **kws):
     fromStr = request.POST.get("from", None)
     toStr   = request.POST.get("to", None)
     fromDt = datetime.strptime(fromStr, "%m/%d/%Y %H:%M:%S")
     toDt   = datetime.strptime(toStr, "%m/%d/%Y %H:%M:%S")
     success, msg = Receiver_Schedule.shift_date(fromDt, toDt)    
+    revision.comment = get_rev_comment(request, None, "shift_rcvr_schedule")
     if success:
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
@@ -127,10 +142,12 @@ def shift_rcvr_schedule_date(request, *args, **kws):
                                       , 'message': msg})
                            , mimetype = "text/plain")
 
+@revision.create_on_success
 def delete_rcvr_schedule_date(request, *args, **kws):
     dateStr = request.POST.get("startdate", None)
     dateDt = datetime.strptime(dateStr, "%m/%d/%Y %H:%M:%S")
     success, msg = Receiver_Schedule.delete_date(dateDt)    
+    revision.comment = get_rev_comment(request, None, "delete_rcvr_schedule")
     if success:
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
@@ -140,6 +157,7 @@ def delete_rcvr_schedule_date(request, *args, **kws):
                                       , 'message': msg})
                            , mimetype = "text/plain")
 
+@revision.create_on_success
 def get_options(request, *args, **kws):
     mode = request.GET.get("mode", None)
     if mode == "project_codes":
@@ -206,6 +224,7 @@ def get_ical(request, *args, **kws):
     response['Content-Disposition'] = 'attachment; filename=GBTschedule.ics'
     return response
 
+@revision.create_on_success
 def change_schedule(request, *args, **kws):
     "Replaces time period w/ new session, handling time accounting."
     # just have a lot of params to process
@@ -226,8 +245,10 @@ def change_schedule(request, *args, **kws):
     # this method handles the heavy lifting
     st = ScheduleTools()
     st.changeSchedule(startdate, duration, s, reason, desc)
+    revision.comment = get_rev_comment(request, None, "change_schedule")
     return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
 
+@revision.create_on_success
 def shift_period_boundaries(request, *args, **kws):
     "moves boundray between two or more periods, handling time accounting."
     # just have a lot of params to process
@@ -257,11 +278,13 @@ def shift_period_boundaries(request, *args, **kws):
     # this method handles the heavy lifting
     st = ScheduleTools()
     success, msg = st.shiftPeriodBoundaries(period, start_boundary, time, neighbor, reason, desc)
+    revision.comment = get_rev_comment(request, None, "shift_period_boundaries")
     if success:
         return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
     else:
         return HttpResponse(json.dumps({'error':'Error Shifting Period Boundary', 'message':msg}), mimetype = "text/plain")
-    
+
+@revision.create_on_success
 def time_accounting(request, *args, **kws):
     """
     POST: Sets Project time accounting.
@@ -282,9 +305,11 @@ def time_accounting(request, *args, **kws):
         a.total_time = float(request.POST.get("total_time", None))
         a.save()
         project.save()
+        revision.comment = get_rev_comment(request, None, "time_accounting")
     js = ta.jsondict(project)
     return HttpResponse(json.dumps(js), mimetype = "text/plain")
 
+@revision.create_on_success
 def session_time_accounting(request, *args, **kws):
     "Sets some time accounting variables for given period"
 
@@ -294,12 +319,14 @@ def session_time_accounting(request, *args, **kws):
     s.allotment.save()
     s.accounting_notes = request.POST.get("description", None)
     s.save()
+    revision.comment = get_rev_comment(request, None, "session_time_accounting")
     # now return the consequences this may have to the rest of the
     # project time accounting
     ta = TimeAccounting()
     js = ta.jsondict(s.project)
     return HttpResponse(json.dumps(js), mimetype = "text/plain")
 
+@revision.create_on_success
 def period_time_accounting(request, *args, **kws):
     "Sets some time accounting variables for given period"
     
@@ -330,6 +357,7 @@ def period_time_accounting(request, *args, **kws):
                           , mimetype = "text/plain")
 
     a.save()
+    revision.comment = get_rev_comment(request, None, "period_time_accounting")
     # now return the consequences this may have to the rest of the
     # project time accounting
     project = period.session.project
@@ -338,6 +366,7 @@ def period_time_accounting(request, *args, **kws):
     return HttpResponse(json.dumps(js), mimetype = "text/plain")
 
 #@transaction.commit_on_success
+@revision.create_on_success
 def publish_periods(request, *args, **kwds):
 
     # support publishing periods by time range, or a single one by id
@@ -361,6 +390,8 @@ def publish_periods(request, *args, **kwds):
 
     Period.publish_periods(start, duration)
 
+    revision.comment = get_rev_comment(request, None, "publish_periods")
+
     # Let the world know if we so desire. Default is to tweet unless we
     # are using our sandboxes.
     if DATABASE_NAME == 'dss' and request.POST.get("tweet", "True") == "True":
@@ -372,6 +403,7 @@ def publish_periods(request, *args, **kwds):
     return HttpResponse(json.dumps({'success':'ok'})
                       , mimetype = "text/plain")
 
+@revision.create_on_success
 def delete_pending(request, *args, **kwds):
     "Removes pending periods of open sessions"
 
@@ -391,6 +423,8 @@ def delete_pending(request, *args, **kwds):
             # don't save here, because the state has NOT been changed,
             # it's really been removed since it was in the Pending state
             #p.save()
+
+    revision.comment = get_rev_comment(request, None, "delete_pending")
 
     return HttpResponse(json.dumps({'success':'ok'})
                       , mimetype = "text/plain")
@@ -464,6 +498,7 @@ def scheduling_email(request, *args, **kwds):
         return HttpResponse(json.dumps({'success':'error'})
                           , mimetype = "text/plain")
 
+@revision.create_on_success
 def window_assign_period(request, *args, **kwds):
     if len(args) != 2:
         return HttpResponse(json.dumps({'success':'error'})
@@ -479,6 +514,8 @@ def window_assign_period(request, *args, **kwds):
                           , mimetype = "text/plain")
     win.assignPeriod(periodId, default)
 
+    revision.comment = get_rev_comment(request, None, "window_assign_period")
+
     return HttpResponse(json.dumps({'success':'ok'})
                       , mimetype = "text/plain")
 
@@ -490,6 +527,8 @@ def toggle_moc(request, *args, **kwds):
     period = first(Period.objects.filter(id = args[0]))
     period.moc_ack = not period.moc_ack
     period.save()
+
+    revision.comment = get_rev_comment(request, None, "toggle_moc")
 
     return HttpResponse(json.dumps({'success':'ok'})
                       , mimetype = "text/plain")

@@ -8,6 +8,8 @@ from utilities       import Score
 #from utilities       import formatExceptionInfo
 
 import simplejson as json
+import reversion
+from reversion import revision
 
 import sys
 import traceback
@@ -58,6 +60,7 @@ class PeriodResource(NellResource):
             score = self.score_period.periods([p_id]).get(p_id, 0.0)
             return HttpResponse(json.dumps(dict(period = p.jsondict(tz, score))))
 
+    @revision.create_on_success
     def create_worker(self, request, *args, **kws):
         o = self.dbobject()
         tz = args[0]
@@ -66,20 +69,27 @@ class PeriodResource(NellResource):
         o = first(self.dbobject.objects.filter(id = o.id))
         score = self.score_period.periods([o.id]).get(o.id, 0.0)
         
+        revision.comment = self.get_rev_comment(request, o, "create_worker")
+
         return HttpResponse(json.dumps(o.jsondict(tz, score))
                           , mimetype = "text/plain")
 
+    @revision.create_on_success
     def update(self, request, *args, **kws):
         tz    = args[0]
         id    = int(args[1])
         o     = self.dbobject.objects.get(id = id)
         o.update_from_post(request.POST, tz)
 
+        revision.comment = self.get_rev_comment(request, o, "update")
+
         return HttpResponse("")
 
+    @revision.create_on_success
     def delete(self, request, *args):
         id = int(args[1])
         o  = self.dbobject.objects.get(id = id)
+        revision.comment = self.get_rev_comment(request, o, "delete")        
         o.delete()
 
         return HttpResponse(json.dumps({"success": "ok"}))
