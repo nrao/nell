@@ -1,4 +1,4 @@
-from sesshuns.models import *
+from sesshuns.models import Project, Project_Type, Semester
 from TimeAccounting  import TimeAccounting
 from utilities       import TimeAgent
 
