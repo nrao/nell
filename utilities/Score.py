@@ -14,6 +14,7 @@ class Score(object):
         Given a list of period ids, returns a dictionary with the
         ids as keys and the values the associated scores.
         """
+        return {}
         pdict = "&pids=".join(map(str, periodIds))
         url = "".join([self.url, "/periods?pids=", pdict])
         try:
