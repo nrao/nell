@@ -1,46 +1,23 @@
+import urllib
 
 from settings                 import PROXY_PORT
-from utilities                import TimeAgent
-import urllib
-import simplejson as json
 
-class Score(object):
+class ScorePeriod(object):
 
     def __init__(self):
-        self.url = "http://trent.gb.nrao.edu:%d/score" % PROXY_PORT
-
-    def periods(self, periodIds):
-        """
-        Given a list of period ids, returns a dictionary with the
-        ids as keys and the values the associated scores.
-        """
-        pdict = "&pids=".join(map(str, periodIds))
-        url = "".join([self.url, "/periods?pids=", pdict])
-        try:
-            f = urllib.urlopen(url)
-        except IOError:
-            print "IOError service", url
+        if PROXY_PORT != 0:
+            self.url = "http://trent.gb.nrao.edu:%d/score" % PROXY_PORT
         else:
-            asstr = f.read()
-            results = json.loads(asstr)['scores']
-            retval = {}
-            for d in results:
-                retval[d['pid']] = d['score']
-            return retval
+            self.url = None
 
-    def session(self, sessionId, start, durHrs):
-        """
-        Given a session id, a start time, and duration
-        returns its score.
-        """
-        params = urllib.urlencode(dict(sid      = sessionId
-                                     , start    = TimeAgent.quarter(start)
-                                     , duration = int(round(4.0*durHrs))*15))
-        url = "".join([self.url, "/session?", params])
+    def run(self, periodId):
+        # Make unit tests run faster for Mike!
+        if self.url is None:
+            return
+        params = urllib.urlencode({'id': periodId})
         try:
-            f = urllib.urlopen(url)
+            f = urllib.urlopen(self.url, params)
         except IOError:
-            print "IOError service", url
+            print "IOError service", self.url
         else:
-            asstr = f.read()
-            return float(json.loads(asstr)['score'])
+            f.read()
