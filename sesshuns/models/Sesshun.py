@@ -1,4 +1,5 @@
 from django.db import models
+from math      import modf
 from utilities import TimeAgent
 
 from Allotment      import Allotment
@@ -37,9 +38,9 @@ class Sesshun(models.Model):
         return "(%d) %s : %5.2f GHz, %5.2f Hrs, Rcvrs: %s, status: %s" % (
                   self.id
                 , self.name if self.name is not None else ""
-                , self.frequency if self.frequency is not None else 0
-                , self.allotment.total_time
-                      if self.allotment.total_time is not None else 0
+                , float(self.frequency) if self.frequency is not None else float(0.0)
+                , float(self.allotment.total_time)
+                      if self.allotment.total_time is not None else float(0.0)
                 , self.receiver_list()
                 , self.status)
 
@@ -436,7 +437,10 @@ class Target(models.Model):
 
     def __unicode__(self):
         return "%s @ (%5.2f, %5.2f), Sys: %s" % \
-            (self.source, self.horizontal, self.vertical, self.system)
+            (self.source
+           , float(self.horizontal)
+           , float(self.vertical)
+           , self.system)
 
     def get_horizontal(self):
         "Returns the horizontal component in sexigesimal form."
@@ -466,10 +470,18 @@ class Target(models.Model):
         else:
             sign = " "
 
-        mins = (degs - int(degs)) * 60
-        secs = (mins - int(mins)) * 60
-        return "%s%02i:%02i:%04.1f" % (sign, int(degs), int(mins), secs)
+        fpart, ddegs = modf(degs)
+        fpart, dmins = modf(fpart * 60)
+        dsecs = round(fpart * 60, 1)
 
+        if dsecs > 59.9:
+            dmins = dmins + 1
+            dsecs = 0.0
+        if dmins > 59.9:
+            ddegs = ddegs + 1
+            dmins = 0.0
+
+        return "%s%02i:%02i:%04.1f" % (sign, int(ddegs), int(dmins), dsecs)
 
     class Meta:
         db_table  = "targets"

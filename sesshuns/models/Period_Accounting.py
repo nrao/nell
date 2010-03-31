@@ -29,12 +29,12 @@ class Period_Accounting(models.Model):
     def __unicode__(self):
         return "Id (%d); SC:%5.2f OT:%5.2f NB:%5.2f OS:%5.2f LT:%5.2f SN:%5.2f" % \
             (self.id
-           , self.scheduled
-           , self.observed()
-           , self.not_billable
-           , self.other_session()
-           , self.lost_time()
-           , self.short_notice)
+           , float(self.scheduled)
+           , float(self.observed())
+           , float(self.not_billable)
+           , float(self.other_session())
+           , float(self.lost_time())
+           , float(self.short_notice))
 
     def observed(self):
         "OT = SC - OS - LT"

@@ -1,5 +1,6 @@
 from tools                  import DBReporter
 
+from revision_register      import register_for_revision
 from Allotment              import Allotment
 from Blackout               import Blackout
 from common                 import *
@@ -12,6 +13,7 @@ from Period                 import Period, Period_Receiver  # <--BAD
 from Period_State           import Period_State
 from Project_Blackout_09B   import Project_Blackout_09B
 from Project                import Project
+from Project_Allotment      import Project_Allotment
 from Project_Type           import Project_Type
 from Receiver               import Receiver
 from Receiver_Schedule      import Receiver_Schedule

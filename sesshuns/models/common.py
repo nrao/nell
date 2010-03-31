@@ -7,7 +7,7 @@ from django.http               import QueryDict
 from settings                  import ANTIOCH_SERVER_URL
 from utilities.receiver        import ReceiverCompile
 from utilities                 import TimeAgent, UserInfo, NRAOBosDB
-from utilities                 import ScorePeriod
+from utilities                 import Score
 
 import calendar
 import pg
@@ -15,6 +15,7 @@ from sets                      import Set
 import urllib2
 import simplejson as json
 import sys
+import reversion
 
 def first(results, default = None):
     return default if len(results) == 0 else results[0]

@@ -83,24 +83,47 @@ class Period(models.Model):
 
     def from_post(self, fdata, tz):
 
+        # only update the score if something in the period has changed
+        update_score = False
+        if not update_score:
+            update_score = self.id is None
+        # if newly created then start with a default of zero
+        if update_score:
+            self.score = 0.0
+            self.forecast = TimeAgent.quarter(datetime.utcnow())
         handle = fdata.get("handle", "")
         if handle:
-            self.session = self.handle2session(handle)
+            new_session = self.handle2session(handle)
+            if not update_score:
+                update_score = self.session != new_session
+            self.session = new_session
         else:
             try:
                 maintenance = first(Project.objects.filter(pcode='Maintenance'))
                 self.session = first(Sesshun.objects.filter(project=maintenance))
             except:
                 self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
-        now           = dt2str(TimeAgent.quarter(datetime.utcnow()))
+        now           = TimeAgent.quarter(datetime.utcnow())
         date          = fdata.get("date", None)
         time          = fdata.get("time", "00:00")
         if date is None:
             self.start = now
         else:
-            self.start = TimeAgent.quarter(strStr2dt(date, time + ':00'))
+            new_start = TimeAgent.quarter(strStr2dt(date, time + ':00'))
             if tz == 'ET':
-                self.start = TimeAgent.est2utc(self.start)
+                new_start = TimeAgent.est2utc(self.start)
+            if not update_score:
+                update_score = self.start != new_start
+            self.start = new_start
+        new_duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "1.0")))
+        if not update_score:
+            update_score = self.duration != new_duration
+        self.duration = new_duration
+        if update_score and now < self.start:
+            self.score = Score().session(self.session.id
+                                       , self.start
+                                       , self.duration)
+            self.forecast = TimeAgent.quarter(datetime.utcnow())
         self.duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "0.0")))
         self.score    = 0.0
         self.forecast = TimeAgent.quarter(datetime.utcnow())
@@ -121,9 +144,6 @@ class Period(models.Model):
         # now that we have an id (from saving), we can specify the relation
         # between this period and assocaited rcvrs
         self.update_rcvrs_from_post(fdata)
-
-        # rescore! TBF: do we *always* do this?
-        ScorePeriod().run(self.id)
 
     def update_rcvrs_from_post(self, fdata):
 
@@ -187,7 +207,7 @@ class Period(models.Model):
               , "end"  : end.isoformat()
         }
 
-    def jsondict(self, tz):
+    def jsondict(self, tz, cscore):
         start = self.start if tz == 'UTC' else TimeAgent.utc2est(self.start)
         w = self.get_window()
         js =   {"id"           : self.id
@@ -198,7 +218,8 @@ class Period(models.Model):
               , "time"         : t2str(start)
               , "lst"          : str(TimeAgent.dt2tlst(self.start))
               , "duration"     : self.duration
-              , "score"        : self.score
+              , "sscore"       : self.score       # scheduling score
+              , "cscore"       : cscore           # current score
               , "forecast"     : dt2str(self.forecast)
               , "backup"       : self.backup
               , "moc_ack"      : self.moc_ack
@@ -218,6 +239,10 @@ class Period(models.Model):
             accounting_js.update({'accounting_id' : accounting_id})
             js.update(accounting_js)
         return js
+
+    def get_rcvr_ranges(self):
+        ranges = ["%5.2f - %5.2f".strip() % (r.freq_low, r.freq_hi) for r in self.receivers.all()]
+        return ", ".join(ranges)
 
     def receiver_list(self):
         return self.get_rcvrs_json()

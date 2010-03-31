@@ -26,7 +26,6 @@ class Window(models.Model):
 
     def __str__(self):
         name = self.session.name if self.session is not None else "None"
-        #default_period = self.default_period.__str__() if self.default_period is not None else "None"
         return "Window for %s, from %s for %d days, default: %s, period: %s" % \
             (name
            , self.start_date.strftime("%Y-%m-%d")
@@ -196,7 +195,7 @@ class Window(models.Model):
                 key = "%s_%s" % (type, k)
                 jsondict[key] = None
         else:
-            pjson = period.jsondict('UTC')
+            pjson = period.jsondict('UTC', 0.0)
             jsondict["%s_%s" % (type, "date")] = pjson['date']
             jsondict["%s_%s" % (type, "time")] = pjson['time']
             jsondict["%s_%s" % (type, "duration")]   = pjson['duration']

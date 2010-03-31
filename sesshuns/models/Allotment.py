@@ -12,10 +12,10 @@ class Allotment(models.Model):
     def __unicode__(self):
         return "(%d) Total: %5.2f, Grade: %5.2f, PSC: %5.2f, Max: %5.2f" % \
                                        (self.id
-                                      , self.total_time
-                                      , self.grade
-                                      , self.psc_time
-                                      , self.max_semester_time) 
+                                      , float(self.total_time)
+                                      , float(self.grade)
+                                      , float(self.psc_time)
+                                      , float(self.max_semester_time)) 
 
     def get_absolute_url(self):
         return "/sesshuns/allotment/%i/" % self.id

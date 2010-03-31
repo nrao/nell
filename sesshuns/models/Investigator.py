@@ -53,11 +53,17 @@ class Investigator(models.Model):
         u_id    = int(float(fdata.get("user_id")))
         project = first(Project.objects.filter(id = p_id)) or first(Project.objects.all())
         user    = first(User.objects.filter(id = u_id)) or first(User.objects.all())
+        pi      = fdata.get('pi', 'false').lower() == 'true'
+        if pi:
+            # Reset any other PIs to False
+            for i in Investigator.objects.filter(project = project):
+                i.principal_investigator = False
+                i.save()
         self.project                = project
         self.user                   = user
         self.observer               = fdata.get('observer', 'false').lower() == 'true'
         self.principal_contact      = fdata.get('contact', 'false').lower() == 'true'
-        self.principal_investigator = fdata.get('pi', 'false').lower() == 'true'
+        self.principal_investigator = pi
         self.priority               = int(float(fdata.get('priority', 1)))
         self.save()
 
