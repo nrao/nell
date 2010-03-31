@@ -1611,17 +1611,17 @@ class TestPeriodResource(NellTestCase):
         self.p.save()
 
     # Requires antioch server
-    def xtest_create(self):
+    def test_create(self):
         response = self.client.post(self.rootURL + '/UTC', self.fdata)
         self.failUnlessEqual(response.status_code, 200)
 
     # Requires antioch server
-    def xtest_create_empty(self):
+    def test_create_empty(self):
         response = self.client.post(self.rootURL + '/ET')
         self.failUnlessEqual(response.status_code, 200)
 
     # Requires antioch server
-    def xtest_read(self):
+    def test_read(self):
         url = "%s/%s?startPeriods=%s&daysPeriods=%d" % \
                             (self.rootURL 
                            , 'UTC'
@@ -1632,7 +1632,7 @@ class TestPeriodResource(NellTestCase):
         self.assertEqual(response.content[:11], '{"total": 1')
 
     # Requires antioch server
-    def xtest_read_keywords(self):
+    def test_read_keywords(self):
         # use a date range that picks up our one period
         url = "%s/%s?startPeriods=%s&daysPeriods=%d" % \
                             (self.rootURL 
