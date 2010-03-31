@@ -2836,7 +2836,7 @@ def register_for_revision():
 
 def register_model(model, follow = None):
     if not reversion.is_registered(model) and settings.USE_REVERSION:
-        print "registering model with reversion: ", model
+        #print "registering model with reversion: ", model
         if follow is None:
             reversion.register(model)
         else:

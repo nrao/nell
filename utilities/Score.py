@@ -17,9 +17,7 @@ class Score(object):
         Given a list of period ids, returns a dictionary with the
         ids as keys and the values the associated scores.
         """
-        # Make unit tests run faster for Mike!
-        if self.url is None:
-            return
+        return {}
         pdict = "&pids=".join(map(str, periodIds))
         url = "".join([self.url, "/periods?pids=", pdict])
         try:
