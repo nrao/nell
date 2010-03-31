@@ -10,8 +10,7 @@ from Period_Accounting      import Period_Accounting
 from Period                 import Period, Period_Receiver  # <--BAD
 from Period_State           import Period_State
 from Project_Blackout_09B   import Project_Blackout_09B
-from Project                import Project
-from Project_Allotment      import Project_Allotment
+from Project                import Project, Project_Allotment
 from Project_Type           import Project_Type
 from Receiver               import Receiver
 from Receiver_Schedule      import Receiver_Schedule
