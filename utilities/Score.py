@@ -1,6 +1,6 @@
 
 from settings                 import PROXY_PORT
-from utilities                import TimeAgent
+import TimeAgent
 import urllib
 import simplejson as json
 import time

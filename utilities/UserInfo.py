@@ -1,4 +1,4 @@
-from   utilities         import NRAOUserDB
+from   NRAOUserDB         import NRAOUserDB
 
 from   django.core.cache import cache
 import lxml.etree as ET
