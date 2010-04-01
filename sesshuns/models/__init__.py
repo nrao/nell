@@ -1,4 +1,4 @@
-from tools                  import DBReporter
+from tools                  import IcalMap
 
 from revision_register      import register_for_revision
 from Allotment              import Allotment
