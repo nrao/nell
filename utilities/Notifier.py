@@ -160,8 +160,8 @@ class Notifier(object):
 
             while not self.queue.empty():
                 email = self.queue.get_nowait()
-##                 emailer.TestSend(email)
-                emailer.Send(email)
+                emailer.TestSend(email)
+##                 emailer.Send(email)
         except Empty:
             pass
         except:

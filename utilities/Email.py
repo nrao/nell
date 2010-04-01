@@ -57,21 +57,28 @@ class Email:
         more email addresses, either in a comma or semicolon separated
         list or in a Python list.  It is converted internally to a
         list of strings (if it isn't already), each being an email
-        address.
+        address.  If there are no addresses, the internal list is
+        empty.
         """
 
         if type(recipients) == str:
-            separator = None
-            recipients = recipients.replace(" ", "")
-            
-            if "," in recipients:
-                separator = ","
-            elif ";" in recipients:
-                separator = ";"
+            if recipients == "":
+                self.recipients = []
+            else:
+                separator = None
+                recipients = recipients.replace(" ", "")
 
-            self.recipients = recipients.split(separator)
+                if "," in recipients:
+                    separator = ","
+                elif ";" in recipients:
+                    separator = ";"
+
+                self.recipients = recipients.split(separator)
         else:
-            self.recipients = recipients
+            if len(recipients) == 1 and recipients[0] == "":
+                self.recipients = []
+            else:
+                self.recipients = recipients
 
     def GetRecipientString(self):
         "Returns the list of recipients as a comma-separated string."
