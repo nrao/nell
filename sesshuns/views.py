@@ -1,14 +1,18 @@
-from datetime                 import date, datetime, timedelta
-from django.http              import HttpResponse
-from models                   import Project, Sesshun, Period, Receiver
-from models                   import Receiver_Schedule, first, str2dt
-from models                   import Window
-from models                   import User
-from tools                    import IcalMap, ScheduleTools, TimeAccounting
-from utilities                import TimeAgent
-from settings                 import PROXY_PORT, DATABASE_NAME
-from utilities.SchedulingNotifier import SchedulingNotifier
-from reversion import revision
+from datetime                      import date, datetime, timedelta
+from django.http                   import HttpResponse
+from django.db.models              import Q
+from models                        import Project, Sesshun, Period, Receiver
+from models                        import Receiver_Schedule, first, str2dt
+from models                        import Window
+from models                        import User
+from tools                         import IcalMap, ScheduleTools, TimeAccounting
+from utilities                     import TimeAgent
+from settings                      import PROXY_PORT, DATABASE_NAME
+from utilities.SchedulingNotifier  import SchedulingNotifier
+from utilities.FormatExceptionInfo import formatExceptionInfo
+from utilities.Notifier            import Notifier
+from utilities.Email               import Email
+from reversion                     import revision
 
 import simplejson as json
 # TBF: get this back in once we figure out the deployment issues.
@@ -19,19 +23,9 @@ ROOT_URL = "http://trent.gb.nrao.edu:%d" % PROXY_PORT
 import sys
 import traceback
 
-def formatExceptionInfo(maxTBlevel=5):
-    cla, exc, trbk = sys.exc_info()
-    excName = cla.__name__
-    try:
-        excArgs = exc.__dict__["args"]
-    except KeyError:
-        excArgs = "<no args>"
-        excTb = traceback.format_tb(trbk, maxTBlevel)
-    return (excName, excArgs, excTb)
-
 def get_rev_comment(request, obj, method):
-      
-    className = obj.__class__.__name__ if obj is not None else ""  
+
+    className = obj.__class__.__name__ if obj is not None else ""
     where = "%s %s" % (className, method)
     who = request.user.username
     return "WHO: %s, WHERE: %s" % (who, where)
@@ -111,8 +105,8 @@ def change_rcvr_schedule(request, *args, **kws):
                                               , 'message': msg})
                                   , mimetype = "text/plain")
 
-    # finally, try and change the rcvr scheudle   
-    success, msg = Receiver_Schedule.change_schedule(startdate, up, down)    
+    # finally, try and change the rcvr scheudle
+    success, msg = Receiver_Schedule.change_schedule(startdate, up, down)
 
     revision.comment = get_rev_comment(request, None, "change_rcvr_schedule")
 
@@ -130,7 +124,7 @@ def shift_rcvr_schedule_date(request, *args, **kws):
     toStr   = request.POST.get("to", None)
     fromDt = datetime.strptime(fromStr, "%m/%d/%Y %H:%M:%S")
     toDt   = datetime.strptime(toStr, "%m/%d/%Y %H:%M:%S")
-    success, msg = Receiver_Schedule.shift_date(fromDt, toDt)    
+    success, msg = Receiver_Schedule.shift_date(fromDt, toDt)
     revision.comment = get_rev_comment(request, None, "shift_rcvr_schedule")
     if success:
         return HttpResponse(json.dumps({'success':'ok'})
@@ -145,7 +139,7 @@ def shift_rcvr_schedule_date(request, *args, **kws):
 def delete_rcvr_schedule_date(request, *args, **kws):
     dateStr = request.POST.get("startdate", None)
     dateDt = datetime.strptime(dateStr, "%m/%d/%Y %H:%M:%S")
-    success, msg = Receiver_Schedule.delete_date(dateDt)    
+    success, msg = Receiver_Schedule.delete_date(dateDt)
     revision.comment = get_rev_comment(request, None, "delete_rcvr_schedule")
     if success:
         return HttpResponse(json.dumps({'success':'ok'})
@@ -498,6 +492,117 @@ def scheduling_email(request, *args, **kwds):
     else:
         return HttpResponse(json.dumps({'success':'error'})
                           , mimetype = "text/plain")
+
+
+
+def getInvestigators(pcodes):
+    pi = []
+    pc = []
+    ci = []
+    try:
+        for i in pcodes:
+            p = Project.objects.filter(pcode = i)[0]
+            for k in p.investigator_set.all():
+                if k.principal_investigator:
+                    for j in k.user.email_set.all():
+                        pi.append(j.email)
+                if k.principal_contact:
+                    for j in k.user.email_set.all():
+                        pc.append(j.email)
+                if not k.principal_investigator and not k.principal_contact:
+                    for j in k.user.email_set.all():
+                        ci.append(j.email)
+    except IndexError, data:
+        pass # in case of blanks at the end of the list.
+    return pi, pc, ci
+
+
+def getPcodesFromFilter(request):
+
+    query_set = Project.objects.all()
+    filterClp = request.GET.get("filterClp", None)
+
+    if filterClp is not None:
+        query_set = query_set.filter(
+            complete = (filterClp.lower() == "true"))
+
+    filterType = request.GET.get("filterType", None)
+
+    if filterType is not None:
+        query_set = query_set.filter(project_type__type = filterType.lower())
+
+    filterSem = request.GET.get("filterSem", None)
+
+    if filterSem is not None:
+        query_set = query_set.filter(semester__semester__icontains = filterSem)
+
+    filterText = request.GET.get("filterText", None)
+
+    if filterText is not None:
+        query_set = query_set.filter(
+                Q(name__icontains                            = filterText) |
+                Q(pcode__icontains                           = filterText) |
+                Q(semester__semester__icontains              = filterText) |
+                Q(project_type__type__icontains              = filterText))
+
+    pcodes = [p.pcode for p in query_set]
+    return pcodes
+
+
+def projects_email(request, *args, **kwds):
+    if request.method == 'GET':
+        try:
+            # Show the schedule from now until 8am eastern 'duration' days from now.
+            pcodes = request.GET.get("pcodes") # pcodes is a Unicode string
+
+            if pcodes:
+                pcode_list = pcodes.split(" ")
+            else:
+                pcode_list = getPcodesFromFilter(request)
+
+            pi_list, pc_list, ci_list = getInvestigators(pcode_list)
+
+            return HttpResponse(
+                json.dumps({
+                    'PI-Addresses'   : pi_list,
+                    'PC-Addresses'   : pc_list,
+                    'CO-I-Addresses' : ci_list,
+                    'PCODES'         : pcode_list
+                 })
+              , mimetype = "text/plain")
+        except:
+            formatExceptionInfo()
+            return HttpResponse(json.dumps({'success':'error'}),
+                                mimetype = "text/plain")
+
+    elif request.method == 'POST':
+        try:
+            email_key = "projects_email"
+            pe_notifier = Notifier()
+            pe_notifier.registerTemplate(email_key, Email("helpdesk-dss@gb.nrao.edu", "", "", ""))
+            addr = str(request.POST.get("address", "")).replace(" ", "").split(",")
+            subject = request.POST.get("subject", "")
+            body = request.POST.get("body", "")
+
+            email = pe_notifier.cloneTemplate(email_key)
+            email.SetRecipients(addr)
+            email.SetSubject(subject)
+            email.SetBody(body)
+            pe_notifier.post(email)
+            pe_notifier.notify()
+
+            return HttpResponse(json.dumps({'success':'ok'}),
+                                mimetype = "text/plain")
+        except:
+            formatExceptionInfo()
+            return HttpResponse(json.dumps({'success':'error'}),
+                                mimetype = "text/plain")
+            
+
+    else:
+        return HttpResponse(json.dumps({'success':'error'}),
+                            mimetype = "text/plain")
+
 
 @revision.create_on_success
 def window_assign_period(request, *args, **kwds):
