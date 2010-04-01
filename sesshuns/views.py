@@ -465,7 +465,7 @@ def scheduling_email(request, *args, **kwds):
                 })
               , mimetype = "text/plain")
         except:
-            print formatExceptionInfo()
+            formatExceptionInfo()
             return HttpResponse(json.dumps({'success':'error'})
                                 , mimetype = "text/plain")
 
@@ -483,7 +483,7 @@ def scheduling_email(request, *args, **kwds):
 
             notifier.notify()
         except:
-            print formatExceptionInfo()
+            formatExceptionInfo()
             return HttpResponse(json.dumps({'success':'error'})
                                 , mimetype = "text/plain")
 
