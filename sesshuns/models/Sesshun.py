@@ -382,6 +382,7 @@ class Sesshun(models.Model):
            , "nighttime"  : self.nighttime() or False
            , "lst_ex"     : self.get_LST_exclusion_string() or ""
            , "receiver"   : self.get_receiver_req()
+           , "project_complete" : "Yes" if self.project.complete else "No"
             }
 
         target = first(self.target_set.all())

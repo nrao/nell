@@ -24,6 +24,11 @@ class SessionResource(NellResource):
                 query_set = query_set.filter(
                     status__enabled = (filterEnb.lower() == "true"))
 
+            filterProjClp= request.GET.get("filterProjClp", None)
+            if filterProjClp is not None:
+                query_set = query_set.filter(
+                    project__complete = (filterProjClp.lower() == "true"))
+            
             filterClp= request.GET.get("filterClp", None)
             if filterClp is not None:
                 query_set = query_set.filter(
