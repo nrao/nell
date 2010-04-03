@@ -47,7 +47,12 @@ class SessionResource(NellResource):
 
             filterFreq = request.GET.get("filterFreq", None)
             if filterFreq is not None:
-                query_set = query_set.filter(frequency__gt = float(filterFreq))
+                if ">" in filterFreq:
+                    filterFreq = filterFreq.replace(">", "")
+                    query_set = query_set.filter(frequency__gt = float(filterFreq))
+                elif "<=" in filterFreq:
+                    filterFreq = filterFreq.replace("<=", "")
+                    query_set = query_set.filter(frequency__lte = float(filterFreq))
 
             filterText = request.GET.get("filterText", None)
             if filterText is not None:
