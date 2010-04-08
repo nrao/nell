@@ -5,6 +5,7 @@ from Sesshun           import Sesshun
 from Period_Accounting import Period_Accounting
 from Period_State      import Period_State
 from Receiver          import Receiver
+from Receiver_Schedule import Receiver_Schedule
 
 class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
@@ -281,12 +282,14 @@ class Period(models.Model):
         # E.g. for one session:
         #     [[a, b, c], [x, y, z]] = (a OR b OR c) AND (x OR y OR z)
         required = [self.session.receiver_group_set.all()]
-        if required == []:
+        if all([len(set) == 0 for set in required]):
             return False # No receivers, problem!
 
         schedule = Receiver_Schedule.extract_schedule(self.start, 0)
-        if schedule == {}:
+        if schedule == {} or \
+           (len(schedule.values()) == 1 and schedule.values()[0] == []):
             return False # no schedule, no required rcvrs!
+
         # should return a single date w/ rcvr list
         items = schedule.items()
         assert len(items) == 1
@@ -295,10 +298,9 @@ class Period(models.Model):
         receivers = Set(receivers)
         if not any([all([Set(g.receivers.all()).intersection(receivers) \
                         for g in set]) for set in required]):
-            # No receivers available. 
-            return False
+            return False # Receiver isn't up
         else:
-            return True
+            return True # Receiver is up
 
     def move_to_deleted_state(self):
         "all in the name"
@@ -428,32 +430,30 @@ class Period(models.Model):
 
         periods = Period.get_periods(start, duration)
 
-        # publishing moves any period whose state is Pending to Scheduled,
+        # Publishing moves any period whose state is Pending to Scheduled,
         # and initializes time accounting (scheduled == period duration).
-        wids = []
+        windows = []
         for p in periods:
             if p.session.session_type.type != 'windowed':
                 p.publish()
                 p.save()
             else:
-                # don't publish this period, instead, find out what window
-                # it belongs to so we can reconcile it latter.
-                # what window does it belong to?
-                w = p.get_window()
-                if w is not None and w.id not in wids:
-                    wids.append(w.id)
+                # Don't publish this period, instead, find out the window
+                # to which it belongs so we can reconcile it latter.
+                window = p.get_window()
+                if window is not None and \
+                   window.id not in [w.id for w in windows]:
+                    windows.append(window)
 
-        # now reconcile any windows
-        for wid in wids:
-            window = first(Window.objects.filter(id = wid))
-            window.reconcile()
-            window.save()
-    
+        # Now, reconcile any windows.
+        for w in windows:
+            w.reconcile()
+            w.save()
+
 class Period_Receiver(models.Model):
-    period = models.ForeignKey(Period)
+    period   = models.ForeignKey(Period)
     receiver = models.ForeignKey(Receiver)
 
     class Meta:
         db_table  = "periods_receivers"
         app_label = "sesshuns"
-

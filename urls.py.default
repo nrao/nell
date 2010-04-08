@@ -63,8 +63,8 @@ urlpatterns = patterns(''
    , url(r'^periods/(ET)/(\d+)$', PeriodResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^windows$',           WindowResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^windows/(\d+)$',     WindowResource(permitted_methods=('PUT', 'GET', 'POST'))) #
-   , url(r'^users$',              UserResource(permitted_methods=('GET', 'PUT', 'POST'))) #
-   , url(r'^users/(\d+)$',        UserResource(permitted_methods=('PUT', 'GET', 'POST'))) #
+   , url(r'^users$',           UserResource(permitted_methods=('GET', 'PUT', 'POST'))) #
+   , url(r'^users/(\d+)$',     UserResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^investigators$',      InvestigatorResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^investigators/([^/]+)$',InvestigatorResource(permitted_methods=('PUT', 'GET', 'POST')))
    , (r'^admin/',                 include(admin.site.urls)) #
