@@ -197,6 +197,7 @@ class Sesshun(models.Model):
         self.update_bool_obs_param(fdata, "nighttime", "Night-time Flag", \
             self.nighttime())
         self.update_lst_exclusion(fdata)    
+        self.update_xi_obs_param(fdata, self.get_min_eff_tsys_factor())
 
         proposition = fdata.get("receiver", None)
         if proposition is not None:
@@ -217,6 +218,28 @@ class Sesshun(models.Model):
         t.save()
 
         self.save()
+
+    def update_xi_obs_param(self, fdata, old_value):
+        """
+        For taking a json dict and converting its given
+        xi float field into a 'Min Eff TSys' float observing parameter.
+        """
+        new_value = self.get_field(fdata, "xi_factor", 1.0, float)
+        tp = Parameter.objects.filter(name="Min Eff TSys")[0]
+        if old_value is None:
+            if new_value and new_value != 1.0:
+                obs_param =  Observing_Parameter(session = self
+                                               , parameter = tp
+                                               , float_value = new_value
+                                                )
+                obs_param.save()
+        else:
+            obs_param = self.observing_parameter_set.filter(parameter=tp)[0]
+            if new_value and new_value != 1.0:
+                obs_param.float_value = new_value
+                obs_param.save()
+            else:
+                obs_param.delete()
 
     def update_bool_obs_param(self, fdata, json_name, name, old_value):
         """
@@ -383,6 +406,7 @@ class Sesshun(models.Model):
            , "lst_ex"     : self.get_LST_exclusion_string() or ""
            , "receiver"   : self.get_receiver_req()
            , "project_complete" : "Yes" if self.project.complete else "No"
+           , "xi_factor"  : self.get_min_eff_tsys_factor() or 1.0
             }
 
         target = first(self.target_set.all())
@@ -407,6 +431,13 @@ class Sesshun(models.Model):
         """
         return self.has_bool_obs_param("Transit")
 
+    def get_min_eff_tsys_factor(self):
+        """
+        Returns factor if has 'Min Eff TSys' observing parameter,
+        else None.
+        """
+        return self.has_float_obs_param("Min Eff TSys")
+
     def nighttime(self):
         """
         Returns True or False if has 'Night-time Flag' observing parameter,
@@ -418,6 +449,14 @@ class Sesshun(models.Model):
         tp = Parameter.objects.filter(name=name)[0]
         top = self.observing_parameter_set.filter(parameter=tp)
         return top[0].boolean_value if top else None
+
+    def has_float_obs_param(self, name):
+        try:
+            tp = Parameter.objects.filter(name=name)[0]
+            top = self.observing_parameter_set.filter(parameter=tp)
+            return top[0].float_value
+        except IndexError:
+            return None
 
     class Meta:
         db_table  = "sessions"
