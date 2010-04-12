@@ -1,6 +1,7 @@
 from django.db  import models
 from common     import *
 
+from Project           import Project
 from Sesshun           import Sesshun
 from Period_Accounting import Period_Accounting
 from Period_State      import Period_State
@@ -120,11 +121,14 @@ class Period(models.Model):
         if not update_score:
             update_score = self.duration != new_duration
         self.duration = new_duration
+        scorer = Score()
         if update_score and now < self.start:
-            self.score = Score().session(self.session.id
+            self.score = scorer.session(self.session.id
                                        , self.start
                                        , self.duration)
             self.forecast = TimeAgent.quarter(datetime.utcnow())
+        else:
+            scorer.clear()
         self.backup   = True if fdata.get("backup", None) == 'true' else False
         stateAbbr = fdata.get("state", "P")
         self.state = first(Period_State.objects.filter(abbreviation=stateAbbr))
