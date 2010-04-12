@@ -589,6 +589,11 @@ def GenerateReport():
     values  = [str(p) for p in ps if p.accounting.observed() > 0.]
     print_values(outfile, values)
 
+    outfile.write("\n\nDeleted and Scheduled Periods with non-positive scheduled time:")
+    ps = [p for p in periods if p.state.abbreviation in ['D', 'S']]
+    values  = [p for p in ps if p.accounting.scheduled <= 0.0]
+    print_values(outfile, values)
+
     outfile.write("\n\nPending Periods (non-windowed):")
     values  = [str(p) for p in periods if p.isPending() and not p.is_windowed()]
     print_values(outfile, values)
