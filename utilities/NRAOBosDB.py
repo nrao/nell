@@ -1,6 +1,5 @@
 import urllib2
 import lxml.etree      as ET
-from sesshuns.models   import *
 from datetime          import datetime
 from django.core.cache import cache
 
@@ -20,7 +19,7 @@ class NRAOBosDB:
         #baseUrl ='https://bostest.cv.nrao.edu/resReports/reservationsByPerson/'
         self.baseUrlByPerson = \
             'https://bos.nrao.edu/resReports/reservationsByPerson/'
-        #    'https://bostest.cv.nrao.edu/resReports/reservationsByPerson/'
+        #    'https://bost#est.cv.nrao.edu/resReports/reservationsByPerson/'
 
     def reservations(self, project, use_cache = True):
         """
@@ -101,30 +100,3 @@ class NRAOBosDB:
         if value_tag is not None:
             value = value_tag.text
         return value  
-
-    def _testSystem(self):
-        "for testing purposes."
-        users = User.objects.all()
-
-        for u in users:
-            if u.username is None:
-                continue
-            print u, u.username
-            url = self.baseUrlByPerson + u.username
-        
-            # no security!  Ha Ha!
-            try:
-                fh = self.opener.open(url)
-            except:
-                print "exception for user, username: ", u, u.username
-                continue
-            str = fh.read(0x4000)
-            data = ET.fromstring(str)
-            #print data
-            if len(data) > 0:
-                print "found a reservation!"
-                print len(data)
-                print data
-                print str
-
-

@@ -124,4 +124,5 @@ INSTALLED_APPS = (
 # via the proxy.  Use your port specified in
 # /home/dss/conundrum/conf/nginx.conf
 
-PROXY_PORT = 8001     #MODIFY#
+PROXY_PORT = 8001       #MODIFY#
+ANTIOCH_HOST =  "http://trent.gb.nrao.edu"    #MODIFY#

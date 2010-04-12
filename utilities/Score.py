@@ -1,4 +1,3 @@
-
 from settings                 import PROXY_PORT, ANTIOCH_HOST
 import TimeAgent
 import urllib
@@ -17,9 +16,12 @@ class Score(Borg):
     _shared_state = {}
 
     def __init__(self):
+        self.clear()
+        self.url = "%s:%d/score" % (ANTIOCH_HOST, PROXY_PORT)
+
+    def clear(self):
         self.scores = {}
         self.time = time.time()
-        self.url = "%s:%d/score" % (ANTIOCH_HOST, PROXY_PORT)
 
     def periods(self, periodIds):
         """
@@ -28,8 +30,7 @@ class Score(Borg):
         """
         new_time = time.time()
         if new_time - self.time > 5*60:
-            self.scores = {}
-            self.time = time.time()
+            self.clear()
         # sets
         available = set(self.scores.keys())
         need = set(periodIds)
@@ -47,8 +48,7 @@ class Score(Borg):
         Given a session id, a start time, and duration
         returns its score.
         """
-        self.scores = {}
-        self.time = time.time()
+        self.clear()
         params = urllib.urlencode(dict(sid      = sessionId
                                      , start    = TimeAgent.quarter(start)
                                      , duration = int(round(4.0*durHrs))*15))
@@ -83,8 +83,7 @@ class Score(Borg):
             return {}
         except ValueError:
             print "ValueError - is antioch running?"
-            self.scores = {}
-            self.time = time.time()
+            self.clear()
             return {}
         else:
             return retval
