@@ -10,7 +10,7 @@ STATIC_DOC_ROOT='{path to your sandbox}/nell/sesshuns/static' #MODIFY#
 SERVER_EMAIL = 'dss@gb.nrao.edu'
 EMAIL_HOST   = 'smtp.gb.nrao.edu'
 
-DEBUG = True # Set to False for production                   #MODIFY#
+DEBUG = True # Set to False for production TBF really? we don't!  #MODIFY#
 SEND_BROKEN_LINK_EMAILS = False # Set to True for production #MODIFY#
 
 TEMPLATE_DEBUG = DEBUG
@@ -80,7 +80,7 @@ SECRET_KEY = '=e3g42_zv8*b2@ivmr*ll%m2g&8alj_d$k2x44mm0scupht$-4'
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
     'django.template.loaders.app_directories.load_template_source',
-    'django.template.loaders.eggs.load_template_source',
+    'django.template.loaders.eggs.load_template_source',  # TBF commented out in release?!
 )
 
 MIDDLEWARE_CLASSES = (
