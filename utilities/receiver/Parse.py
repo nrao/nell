@@ -170,7 +170,7 @@ def parseF():
         if symbol == ")" :
             getNext()
         else :
-            raise SyntaxError, "F1: missing right paren"
+            raise SyntaxError, "F1: missing right paren: %s" % symbol
             #print "error F1: missing right paren"
     else :
         answer = []

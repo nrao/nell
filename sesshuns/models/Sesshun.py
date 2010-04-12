@@ -149,8 +149,8 @@ class Sesshun(models.Model):
         system = first(System.objects.filter(name = "J2000").all()
                      , System.objects.all()[0])
 
-        v_axis = fdata.get("source_v", None)
-        h_axis = fdata.get("source_h", None)
+        v_axis = fdata.get("source_v", 0.0)
+        h_axis = fdata.get("source_h", 0.0)
         
         target = Target(session    = self
                       , system     = system

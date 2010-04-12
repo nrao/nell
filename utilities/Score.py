@@ -1,5 +1,5 @@
 
-from settings                 import PROXY_PORT
+from settings                 import PROXY_PORT, ANTIOCH_HOST
 import TimeAgent
 import urllib
 import simplejson as json
@@ -19,7 +19,7 @@ class Score(Borg):
     def __init__(self):
         self.scores = {}
         self.time = time.time()
-        self.url = "http://trent.gb.nrao.edu:%d/score" % PROXY_PORT
+        self.url = "%s:%d/score" % (ANTIOCH_HOST, PROXY_PORT)
 
     def periods(self, periodIds):
         """

@@ -1474,6 +1474,7 @@ class TestSesshun(NellTestCase):
 
     def test_init_from_post(self):
         s = Sesshun()
+        fdata["receiver"] = "((K & Ku) & L)"
         s.init_from_post(fdata)
         
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
