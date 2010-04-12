@@ -179,6 +179,10 @@
             {% if not p.moc_met and p.moc_ack %}
               <img src="/static/images/checked.png" />
             {% endif %}
+            {% if p|has_lost_time %}
+              <br/>
+              (Lost Time: {{p|get_lost_time}})
+            {% endif %}
           </td>
         {% endif %}
       {% endifequal %}
