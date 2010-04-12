@@ -389,8 +389,11 @@ def publish_periods(request, *args, **kwds):
     # are using our sandboxes.
     if DATABASE_NAME == 'dss' and request.POST.get("tweet", "True") == "True":
         update = 'GBT Schedule Update - https://dss.gb.nrao.edu/schedule/public'
-        twitter.Api(username = 'GrnBnkTelescope'
-                  , password = 'dYN4m1(').PostUpdate(update)
+        try:
+            twitter.Api(username = 'GrnBnkTelescope'
+                      , password = 'dYN4m1(').PostUpdate(update)
+        except: # That's ok, the world doesn't HAVE to know.
+            formatExceptionInfo()
 
     # Ok, we're done.
     return HttpResponse(json.dumps({'success':'ok'})

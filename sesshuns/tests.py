@@ -405,6 +405,7 @@ class TestPeriod(NellTestCase):
         p.delete()
 
     def test_windows(self):
+        pending = Period_State.get_state('P')
 
         # create a window w/ a period
         original_type = self.sesshun.session_type
@@ -417,7 +418,7 @@ class TestPeriod(NellTestCase):
         p.start = start
         p.duration = dur
         p.session = self.sesshun
-        p.state = Period_State.get_state('P')
+        p.state = pending
         p.accounting = Period_Accounting(scheduled = 0.0)
         p.accounting.save()
         p.save()
@@ -435,7 +436,7 @@ class TestPeriod(NellTestCase):
         p2.start = start
         p2.duration = dur
         p2.session = self.sesshun
-        p2.state = Period_State.get_state('P')
+        p2.state = pending
         pa2 = Period_Accounting(scheduled = 0.0)
         pa2.save()
         p2.accounting = pa2
@@ -541,6 +542,38 @@ class TestPeriod(NellTestCase):
         # cleanup
         for p in ps:
             p.delete()
+
+    def test_has_required_receivers(self):
+        p = Period.create(session = self.sesshun
+                        , start = datetime(2009, 11, 1)
+                        , duration = 10.0
+                        )
+
+        # No receivers for the session yet.
+        self.assertEquals(False, p.has_required_receivers())
+
+        # Make sure the sesshun has some rcvrs
+        self.sesshun.save_receivers("S")
+
+        # No schedule yet.
+        self.assertEquals(False, p.has_required_receivers())
+
+        # Make a schedule.
+        rs = Receiver_Schedule()
+        rs.start_date = p.start
+        rs.receiver   = Receiver.objects.filter(abbreviation = "L")[0]
+        rs.save()
+
+        # Receiver still not up on schedule yet.
+        self.assertEquals(False, p.has_required_receivers())
+
+        # Make sure the sesshun has a receiver on the schedule.
+        rg = Receiver_Group.objects.filter(session = self.sesshun)[0]
+        rg.delete()
+        self.sesshun.save_receivers("L")
+
+        # Receiver now on schedule.
+        self.assertEquals(True, p.has_required_receivers())
 
 class TestReceiver(NellTestCase):
 
@@ -1441,6 +1474,7 @@ class TestSesshun(NellTestCase):
 
     def test_init_from_post(self):
         s = Sesshun()
+        fdata["receiver"] = "((K & Ku) & L)"
         s.init_from_post(fdata)
         
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
@@ -2208,8 +2242,6 @@ class TestPublishPeriods(NellTestCase):
             p.remove() #delete()
 
     def test_publish_periods_by_id(self):
-        c = Client()
-
         # check current state
         ps = Period.objects.order_by("start")
         exp = ["S", "P", "S"]
@@ -2222,7 +2254,7 @@ class TestPublishPeriods(NellTestCase):
         url = "/periods/publish/%d" % self.ps[1].id
 
         # Remember not to embarrass ourselves by tweeting! tweet == False
-        response = c.post(url, dict(tweet = False))
+        response = Client().post(url, dict(tweet = False))
         self.failUnless("ok" in response.content)    
 
         ps = Period.objects.order_by("start")
@@ -2230,9 +2262,6 @@ class TestPublishPeriods(NellTestCase):
         self.assertEquals(exp, [p.state.abbreviation for p in ps])
 
     def test_publish_periods(self):
-
-        c = Client()
-
         # check current state
         ps = Period.objects.order_by("start")
         exp = ["S", "P", "S"]
@@ -2246,10 +2275,10 @@ class TestPublishPeriods(NellTestCase):
         url = "/periods/publish"
 
         # Remember not to embarrass ourselves by tweeting! tweet == False
-        response = c.post(url, dict(start    = time
-                                  , tz       = tz
-                                  , duration = duration
-                                  , tweet    = False)) 
+        response = Client().post(url, dict(start    = time
+                                         , tz       = tz
+                                         , duration = duration
+                                         , tweet    = False)) 
         self.failUnless("ok" in response.content)    
 
         ps = Period.objects.order_by("start")
@@ -2259,15 +2288,18 @@ class TestPublishPeriods(NellTestCase):
         self.assertEquals(exp, [p.accounting.scheduled for p in ps])
 
     def test_publish_periods_with_windows(self):
-
         # Assign periods to our windows
         # 1 - scheduled -> window 1
         # 2 - pending -> window 2
         # 3 - scheduled -> window 2, make pending
-        pending = Period_State.get_state("P")
+        pending   = Period_State.get_state("P")
         scheduled = Period_State.get_state("S")
+        windowed  = Session_Type.objects.filter(type = "windowed")[0]
 
         p1 = self.ps[0]
+        p1.session.session_type = windowed
+        p1.session.save()
+
         w1 = Window( session = p1.session
                    , start_date = p1.start.date() - timedelta(days = 7)
                    , duration = 10 # days
@@ -2276,9 +2308,15 @@ class TestPublishPeriods(NellTestCase):
         w1.save()           
 
         p2 = self.ps[1]
+        p2.session.session_type = windowed
+        p2.session.save()
+
         p3 = self.ps[2] 
-        p3.state = Period_State.get_state("P")
+        p3.session.session_type = windowed
+        p3.session.save()
+        p3.state = pending
         p3.save()
+
         # NOTE: ovelapping windows for same session - shouldn't matter
         w2 = Window( session = p2.session # NOTE: same session for all 3 periods
                    , start_date = p1.start.date() - timedelta(days = 7)
@@ -2291,13 +2329,30 @@ class TestPublishPeriods(NellTestCase):
         self.assertEquals(scheduled, w1.state())
         self.assertEquals(pending, w2.state())
 
-        # reconcile both windows
-        w1.reconcile()
-        w2.reconcile()
+        time = w1.start_date.strftime("%Y-%m-%d %H:%M:%S")
+        tz = "ET"
+        duration = 12
+        url = "/periods/publish"
+
+        # Remember not to embarrass ourselves by tweeting! tweet == False
+        response = Client().post(url, dict(start    = time
+                                         , tz       = tz
+                                         , duration = duration
+                                         , tweet    = False)) 
+        self.failUnless("ok" in response.content)    
 
         # make sure the states are right now
-        self.assertEquals(scheduled, w1.state())
-        self.assertEquals(scheduled, w2.state())
+        for w in Window.objects.order_by("start_date"):
+            self.assertEquals(scheduled, w.state())
+
+        # Put things back the way we found them.
+        open = Session_Type.objects.filter(type = "open")[0]
+        p1.session.session_type = open
+        p1.session.save()
+        p2.session.session_type = open
+        p2.session.save()
+        p3.session.session_type = open
+        p3.session.save()
 
 # Testing Observers UI
 
