@@ -31,7 +31,7 @@
               <th title="The target frequency in GHz.">Freq</th>
               <th title="The required receiver(s).">Rcvr</th>
               <th title="The billed and the allotted time in hours.">Time billed</th>
-              <th title="The requested minimum and maximum duration of a telescope period.  To change these values, send an email to the helpdesk.">Min/Max Durations</th>
+              <th title="The requested minimum and maximum duration (in hours) of a telescope period.  To change these values, send an email to the helpdesk.">Min/Max Durations</th>
               <th title="The classified observing type.">Type</th>
               <th title="Session is authorized to observe by GBT staff.">Authorized</th>
               <th title="Select this box to enable the session.">Enabled</th>
@@ -157,8 +157,8 @@
           <table>
             <tr>
               <th>Session</th>
-              <th>Start Time</th>
-              <th>Duration</th>
+              <th title="Period Start Time (UTC)">Start Time</th>
+              <th title="How long the Period lasts, in hours.">Duration</th>
               <th>Billed Hours</th>
             </tr>
               {% for per in p.get_observed_periods %}
@@ -177,8 +177,8 @@
                 <th>Session</th>
                 <th>Window Start Date</th>
                 <th>Window End Date</th>
-                <th>Period Start Time</th>
-                <th>Period Duration</th>
+                <th title="Start time of Period (UTC)">Period Start Time</th>
+                <th title="How long the Period lasts, in hours.">Period Duration</th>
               </tr>
                 {% for window in p.get_active_windows %}
                   <tr>
