@@ -21,7 +21,7 @@
         <h3 class="alt">{{p.name}}</h3>
         <hr />
       </div>
-      <div class="span-17 colborder" id="content">
+      <div class="span-19 colborder" id="content">
         <h3 class="grey_highlight loud">Project Sessions</h3>
           <table>
             <tr>
@@ -43,6 +43,9 @@
               {% endif %}
               {% if p.anyCompleteSessions %}
               <th title="Session has been marked as complete.">Complete</th>
+              {% endif %}
+              {% if p.anyNonOneXiSessions %}
+              <th title="Scaling factor applied to min effective Tsys to enable observations in degraded atmospheric conditions.">Xi</th>
               {% endif %}
             {% for s in sess %}
             <tr>
@@ -70,6 +73,13 @@
               {% endif %}
               {% if p.anyCompleteSessions %}
               <td>{% if s.status.complete %}Yes{% endif %}</td>
+              {% endif %}
+              {% if p.anyNonOneXiSessions %}
+                {% if s.get_min_eff_tsys_factor %}
+                  <td>{{s.get_min_eff_tsys_factor}}</td>
+                {% else %}
+                  <td>1.0</td>
+                {% endif %}
               {% endif %}
             <tr>
             {% endfor %}
@@ -207,7 +217,7 @@
           </p>
         {% endif %}
       </div>
-      <div class="span-6 last" id="sidebar">
+      <div class="span-4 last" id="sidebar">
         <div id="observer_info">
           <h3 class="caps">Information</h3>
           <div class="box">
