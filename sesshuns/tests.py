@@ -1512,6 +1512,7 @@ class TestSesshun(NellTestCase):
         ldata["nighttime"] = "false"
         ldata["lst_ex"] = "2.00-4.00"
         ldata["receiver"] = "(K & (X | (L | C)))"
+        ldata["xi_factor"] = 1.76
         s.update_from_post(ldata)
         
         # now get this session from the DB
@@ -1524,6 +1525,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.transit(), ldata["transit"] == "true")
         self.assertEqual(s.nighttime(), None)
         self.assertEqual(s.get_LST_exclusion_string(), ldata["lst_ex"])
+        self.assertEqual(s.get_min_eff_tsys_factor(), ldata["xi_factor"])
         rgs = s.receiver_group_set.all()
         self.assertEqual(2, len(rgs))
         self.assertEqual(['K']
