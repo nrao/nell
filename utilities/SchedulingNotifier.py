@@ -279,7 +279,7 @@ Thank You.
         return changes
 
     def getChangeTable(self):
-        table  = "Start (ET)   |      UT      |  LST  |  (hr) | Observer  "
+        table  = "Start (ET)   |      UT      |  LST  |  (hr) |    PI     "
         table += "| Rx        | Session       | Change\n"
         table += "-------------------------------------------------------"
         table += "-------------------------------------------\n"
