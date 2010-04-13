@@ -516,7 +516,7 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nSessions for which periods are scheduled when none of their receivers are up:")
-    values = [p.__str__() for p in periods if not p.has_required_receivers()]
+    values = [p.__str__() for p in periods if not p.has_required_receivers() and p.session.project.pcode not in ("Maintenance", "Shutdown")]
     print_values(outfile, values)
 
     outfile.write("\n\nProjects that contain non-unique session names:")
