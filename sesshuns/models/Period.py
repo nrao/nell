@@ -306,6 +306,28 @@ class Period(models.Model):
         else:
             return True # Receiver is up
 
+    def has_observed_rcvrs_in_schedule(self):
+
+
+        #obs_rcvrs = [r.abbreviation for r in self.receivers.all()]
+        obs_rcvrs = self.receivers.all()
+
+        schedule = Receiver_Schedule.extract_schedule(self.start, 0)
+        if schedule == {} or \
+           (len(schedule.values()) == 1 and schedule.values()[0] == []):
+            return False # no schedule, no required rcvrs!
+
+        # should return a single date w/ rcvr list
+        items = schedule.items()
+        assert len(items) == 1
+        dt, receivers = items[0]
+
+        for r in obs_rcvrs:
+            if r not in receivers:
+                return False # Receiver isn't up
+
+        return True # Receiver is up
+
     def move_to_deleted_state(self):
         "all in the name"
         self.state = Period_State.get_state("D")

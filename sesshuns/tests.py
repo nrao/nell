@@ -575,6 +575,45 @@ class TestPeriod(NellTestCase):
         # Receiver now on schedule.
         self.assertEquals(True, p.has_required_receivers())
 
+    def test_has_observed_rcvrs_in_schedule(self):
+        p = Period.create(session = self.sesshun
+                        , start = datetime(2009, 11, 1)
+                        , duration = 10.0
+                        )
+
+        # No receivers for the session yet.
+        self.assertEquals(False, p.has_observed_rcvrs_in_schedule())
+
+        # Make sure the period has some rcvrs
+        #self.sesshun.save_receivers("S")
+        p.update_rcvrs_from_post({"receivers" : "S"})
+
+        # No schedule yet.
+        self.assertEquals(False, p.has_observed_rcvrs_in_schedule())
+
+        # Make a schedule.
+        rs = Receiver_Schedule()
+        rs.start_date = p.start
+        rs.receiver   = Receiver.objects.filter(abbreviation = "L")[0]
+        rs.save()
+
+        # Receiver still not up on schedule yet.
+        self.assertEquals(False, p.has_observed_rcvrs_in_schedule())
+
+        # Make sure the period observed w/ a receiver on the schedule.
+        #rg = Receiver_Group.objects.filter(session = self.sesshun)[0]
+        #rg.delete()
+        #self.sesshun.save_receivers("L")
+        p.update_rcvrs_from_post({"receivers" : "L"})
+
+        # Receiver now on schedule.
+        self.assertEquals(True, p.has_observed_rcvrs_in_schedule())
+
+        # now insist that the period observed w/ two rcvrs, one of which
+        # was *not* on the schedule - should return false
+        p.update_rcvrs_from_post({"receivers" : "L, S"})
+        self.assertEquals(False, p.has_observed_rcvrs_in_schedule())
+
 class TestReceiver(NellTestCase):
 
     def setUp(self):
