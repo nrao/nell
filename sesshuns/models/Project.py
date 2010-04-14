@@ -226,6 +226,11 @@ class Project(models.Model):
         sessions = [s for s in self.sesshun_set.all() if s.nighttime()]
         return True if sessions != [] else False
 
+    def anyNonOneXiSessions(self):
+        "Returns true if a single session has a non 1.0 xi factor."
+        sessions = [s for s in self.sesshun_set.all() if s.get_min_eff_tsys_factor() is not None and s.get_min_eff_tsys_factor() != 1.0]
+        return sessions != []
+
     def anyCompleteSessions(self):
         "Returns true if a single session has been set as complete"
         sessions = [s for s in self.sesshun_set.all() if s.status.complete]
