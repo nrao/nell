@@ -286,17 +286,19 @@ Thank You.
         
         for p in self.changedPeriods:
             if p.session.project.pcode == "Maintenance":
-                observer = ""
+                pi = ""
             else:
-                observer = p.session.project.get_observers()[0].user.last_name[:9] \
-                           if p.session.project.get_observers() else "Unknown"
+                try:
+                    pi = p.session.project.investigator_set.filter(principal_investigator=True)[0].user.last_name[:9]
+                except:
+                    pi = "unknown"
 
             table += "%s | %s | %s | %5s | %-9s | %-9s | %-13s | %s\n" % (
                 TimeAgent.utc2est(p.start).strftime('%b %d %H:%M')
               , p.start.strftime('%b %d %H:%M')
               , TimeAgent.dt2tlst(p.start).strftime('%H:%M')
               , "%2.2f" % p.duration
-              , observer
+              , pi
               , p.session.receiver_list_simple()[:9]
               , p.session.name
               , "rescheduled" if not p.isDeleted() else "removed"
