@@ -9,7 +9,7 @@ from tools                         import IcalMap, ScheduleTools, TimeAccounting
 from utilities                     import TimeAgent
 from settings                      import PROXY_PORT, DATABASE_NAME
 from utilities.SchedulingNotifier  import SchedulingNotifier
-from utilities.FormatExceptionInfo import formatExceptionInfo
+from utilities.FormatExceptionInfo import formatExceptionInfo, printException, exceptionJSONdict
 from utilities.Notifier            import Notifier
 from utilities.Email               import Email
 from reversion                     import revision
@@ -433,7 +433,7 @@ def delete_pending(request, *args, **kwds):
 try:
     notifier = SchedulingNotifier()
 except:
-    formatExceptionInfo()
+    printException(formatExceptionInfo())
 
 def scheduling_email(request, *args, **kwds):
 
@@ -468,8 +468,9 @@ def scheduling_email(request, *args, **kwds):
                 })
               , mimetype = "text/plain")
         except:
-            formatExceptionInfo()
-            return HttpResponse(json.dumps({'success':'error'})
+            jd = exceptionJSONdict(formatExceptionInfo())
+            return HttpResponse(json.dumps({'error'          :'Python exception on server',
+                                            'exception_data' : jd})
                                 , mimetype = "text/plain")
 
     elif request.method == 'POST':
@@ -486,8 +487,11 @@ def scheduling_email(request, *args, **kwds):
 
             notifier.notify()
         except:
-            formatExceptionInfo()
-            return HttpResponse(json.dumps({'success':'error'})
+            ei = formatExceptionInfo()
+            jd = exceptionJSONdict(ei)
+            return HttpResponse(json.dumps({'error'          :'Python exception on Nell',
+                                            'exception_data' : jd,
+                                            })
                                 , mimetype = "text/plain")
 
         return HttpResponse(json.dumps({'success':'ok'})
