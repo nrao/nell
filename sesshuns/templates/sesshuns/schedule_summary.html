@@ -1,0 +1,151 @@
+{% extends "sesshuns/base.html" %}
+{% load custom %}
+{% block title %}
+  {% if project %}
+  {{project}}
+  {% else %}
+  GBT
+  {% endif %}
+  Schedule Summary for {{month}} {{year}}
+{% endblock %}
+{% block scripts %}
+  <link type="text/css" href="/static/css/lib/themes/base/ui.all.css" rel="stylesheet" />
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    $("#id_start").datepicker();
+  });
+  </script>
+  <style type="text/css">
+    .day_header {background-color:#c3d9ff}
+    .project_type {width:1%; text-align:center}
+    .type_test {background-color:#87CEFA} 
+    .type_astronomy {background-color:#EEEEEE}
+    .type_maintenance {background-color:#98FB98}
+  </style>
+{% endblock %}
+{% block content %}
+  <center>
+  <p>
+  <form action="/schedule/summary" method="POST">
+    <label for="id_month">Month:</label>
+    <select name="month" id="id_month">
+      {% for m in months %}
+        {% if m %}
+          {% ifequal m month %}
+            <option selected="selected">{{m}}</option>
+          {% else %}
+            <option>{{m}}</option>
+          {% endifequal %}
+        {% endif %}
+      {% endfor %}
+    </select>
+    &nbsp; 
+    <label for="id_year">Year:</label>
+    <select name="year" id="year">
+      {% for y in years %}
+        {% ifequal y year %}
+          <option selected="selected">{{y}}</option>
+        {% else %}
+          <option>{{y}}</option>
+        {% endifequal %}
+      {% endfor %}
+    </select>
+    &nbsp; 
+    <label for="id_summary">Project:</label>
+    {% if project %}
+      <input type="text" name="project" value={{project}} />
+    {% else %}
+      <input type="text" name="project" />
+    {% endif %}
+    &nbsp; 
+    <label for="id_summary">Summary:</label>
+    <select name="summary" id="summary">
+      {% ifequal summary "schedule" %}
+        <option selected="selected">schedule</option>
+      {% else %}
+        <option>schedule</option>
+      {% endifequal %}
+      {% ifequal summary "project" %}
+        <option selected="selected">project</option>
+      {% else %}
+        <option>project</option>
+      {% endifequal %}
+    </select>
+    &nbsp; 
+    <input type="submit" value="View"/>
+  </form>
+  </p>
+  </center>
+
+  <hr />
+    <h1 class="loud">
+      <center>
+        {% if project %}
+          {{project}}
+        {% else %}
+          GBT
+        {% endif %}
+        Schedule Summary for {{month}} {{year}}
+      </center>
+    </h1>
+    <table>
+    {% for day, ps in calendar %}
+    {% if ps %}
+    <tr class="day_header"> 
+      <th>{{day|date:"F d"}}</th>
+      <th title="Start and End times for the start day (timezone). '+' indicates that the period continues on in an undisplayed date.">{{day|date:"l"}}</th>
+      <th title="Project Type: 'A' : Astronomy, 'T' : Test, 'M' : Maintenance">Type</th>
+      <th>Project</th>
+      <th>Friend</th>
+      <th title="Receivers (Names and frequency ranges in GHz) = (RRI) Rcvr_RRI:  0.10 -  1.60, (342) Rcvr_342:  0.29 -  0.40, (450) Rcvr_450:  0.39 -  0.52, (600) Rcvr_600:  0.51 -  0.69, (800) Rcvr_800:  0.68 -  0.92, (1070) Rcvr_1070:  0.91 -  1.23, (L) Rcvr1_2:  1.15 -  1.73, (S) Rcvr2_3:  1.73 -  2.60, (C) Rcvr4_6:  3.95 -  6.10, (X) Rcvr8_10:  8.00 - 10.00, (Hol) Holography: 11.70 - 12.20, (Ku) Rcvr12_18: 12.00 - 15.40, (KFPA) RcvrArray18_26: 17.00 - 27.50, (K) Rcvr18_26: 18.00 - 26.50, (Ka) Rcvr26_40: 26.00 - 39.50, (Q) Rcvr40_52: 38.20 - 49.80, (MBA) Rcvr_PAR: 80.00 - 100.00">Rcvrs</th>
+    </tr>
+    {% endif %}
+    {% for start, end,start_cutoff, end_cutoff, p in ps %}
+    <tr>
+      {% if start_cutoff or end_cutoff %}
+        {%if start_cutoff %}
+          <td>+{{start|date:"H:i"}} - {{end|date:"H:i"}}</td>
+        {% else %}
+          <td>{{start|date:"H:i"}} - {{end|date:"H:i"}}+</td>
+        {% endif %}
+      {% else %}    
+          <td>{{start|date:"H:i"}} - {{end|date:"H:i"}}</td>
+      {% endif %}    
+      <td>{{start|get_duration:end}}</td>
+      {% ifequal p.session.project.project_type.type "non-science" %}
+        {% if p.session.project.is_maintenance %}
+          <td class="project_type type_maintenance" >{{p.session.project|project_type}}</td>
+        {% else %}
+          <td class="project_type type_test" >{{p.session.project|project_type}}</td>
+        {% endif %}
+      {% else %}
+          <td class="project_type type_astronomy">{{p.session.project|project_type}}</td>
+      {% endifequal %}
+      <td>
+        <a href="/project/{{p.session.project.pcode}}">{{p.session.project.pcode}}</a>
+      {% ifequal p.session.project.project_type.type "science" %}
+        - <a href="http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}">{{p.session.project.name}}</a>
+      {% else %}
+        {% if not p.session.project.is_maintenance %}
+          - {{p.session.name}}
+        {% endif %}
+      {% endifequal %}
+      {% if not p.session.project.is_maintenance %}
+        [{{p.session.project.principal_investigator.last_name|pretty_none}}]
+      {% endif %}
+      </td>
+      <td>{{p.session.project.friend.last_name|pretty_none}}</a></td>
+      <td>
+        {% if not p.session.project.is_maintenance %}
+          {{p.receiver_list}}
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    {% endfor %}
+    </table>
+</body>  
+
+
+{% endblock %}

@@ -166,6 +166,10 @@ def format_list(aList):
     return ", ".join(aList) if aList else "None"
 
 @register.filter
+def get_duration(start, end):
+    return "%.2f" % ((end - start).seconds / 3600.) # hours
+
+@register.filter
 def format_reservations(reservations):
     return ", ".join([a + " to " + b for a, b in [(x.strftime('%m-%d-%Y'), y.strftime('%m-%d-%Y')) for x, y in reservations]]) if reservations else "None"
 
