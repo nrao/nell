@@ -7,7 +7,8 @@ from Investigator           import Investigator
 from Observing_Type         import Observing_Type
 from Parameter              import Parameter
 from Period_Accounting      import Period_Accounting
-from Period                 import Period, Period_Receiver  # <--BAD
+from Period                 import Period
+from Period_Receiver        import Period_Receiver
 from Period_State           import Period_State
 from Project_Blackout_09B   import Project_Blackout_09B
 from Project                import Project, Project_Allotment

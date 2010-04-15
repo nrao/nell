@@ -8,6 +8,7 @@ import simplejson as json
 import lxml.etree as et
 import MySQLdb as mysql
 
+from httpadapters                    import *
 from models                          import *
 from test_utils.NellTestCase         import NellTestCase
 from tools                           import DBReporter
@@ -1641,7 +1642,8 @@ class TestPeriodResource(NellTestCase):
                     , 'duration' : 1.0
                     , 'backup'   : True}
         self.p = Period()
-        self.p.init_from_post(self.fdata, 'UTC')
+        adapter = PeriodHttpAdapter(self.p)
+        adapter.init_from_post(self.fdata, 'UTC')
         self.p.save()
 
     # Requires antioch server
