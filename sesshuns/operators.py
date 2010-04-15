@@ -3,9 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.http              import HttpResponse, HttpResponseRedirect
 from django.shortcuts         import render_to_response
 from models                   import *
+from observers                import project_search
 from sets                     import Set
 from utilities                import gen_gbt_schedule
 from utilities.TimeAgent      import EST
+import calendar
 
 @login_required
 def moc_reschedule(request, *args, **kws):
@@ -86,11 +88,11 @@ def gbt_schedule(request, *args, **kws):
     # ignore pending periods!
     periods = [p for p in periods if p.state.abbreviation != 'P']
 
-    calendar = gen_gbt_schedule(start, end, days, 'ET', periods)
+    schedule = gen_gbt_schedule(start, end, days, 'ET', periods)
 
     return render_to_response(
                'sesshuns/schedule.html'
-             , {'calendar' : sorted(calendar.items())
+             , {'calendar' : sorted(schedule.items())
               , 'day_list' : range(1, 32)
               , 'tz_list'  : timezones
               , 'timezone' : timezone
@@ -111,3 +113,84 @@ def rcvr_schedule(request, *args, **kwds):
                'sesshuns/receivers.html'
              , {'receivers': receivers
               , 'schedule' : sorted(schedule.items())})
+
+@login_required
+def summary(request, *args, **kws):
+    now        = datetime.now()
+    last_month = now - timedelta(days = 31)
+
+    if request.method == 'POST': 
+        summary = request.POST.get('summary', 'schedule') 
+
+        project = project_search(request.POST.get('project', ''))
+        if isinstance(project, list) and len(project) == 1:
+            project = project[0].pcode
+        else:
+            project = ''
+
+        month   = request.POST.get('month', None) 
+        year    = int(request.POST.get('year', None))
+        if month and year:
+            start = datetime(int(year)
+                           , [m for m in calendar.month_name].index(month)
+                           , 1)
+        else: # Default to last month
+            start = datetime(last_month.year, last_month.month, 1)
+            month = calendar.month_name[start.month]
+            year  = start.year
+    else: # Default to last month
+        summary    = 'schedule'
+        project    = ''
+        start      = datetime(last_month.year, last_month.month, 1)
+        month      = calendar.month_name[start.month]
+        year       = start.year
+
+    end  = datetime(start.year
+                  , start.month
+                  , calendar.monthrange(start.year, start.month)[1]) + \
+           timedelta(days = 1)
+
+    # View is in ET, database is in UTC. Ignore pending periods.
+    periods = Period.in_time_range(TimeAgent.est2utc(start)
+                                 , TimeAgent.est2utc(end))
+    periods = [p for p in periods if p.state.abbreviation != 'P']
+    if project:
+        periods = [p for p in periods if p.session.project.pcode == project]
+
+    # Get schedule for this time.
+    schedule = gen_gbt_schedule(start, end, (end - start).days, "ET", periods)
+
+    if summary == "schedule":
+        url      = 'sesshuns/schedule_summary.html'
+        projects = []
+        days     = {}
+        hours    = {}
+    else:
+        url      = 'sesshuns/project_summary.html'
+        projects = list(Set([p.session.project for p in periods]))
+        projects.sort(lambda x, y: cmp(x.pcode, y.pcode))
+
+        days  = {}
+        hours = {}
+        for p in periods:
+            d = days.setdefault(p.session.project.pcode, [])
+            days[p.session.project.pcode] = list(Set(d + [p.start.day]))
+
+            h = hours.setdefault(p.session.project.pcode, 0)
+            hours[p.session.project.pcode] = h + p.accounting.observed()
+
+    return render_to_response(
+               url
+             , {'calendar' : sorted(schedule.items())
+              , 'projects' : zip(projects
+                               , [[str(d) for d in sorted(v)] \
+                                          for v in days.values()]
+                               , hours.values())
+              , 'start'    : start
+              , 'months'   : calendar.month_name 
+              , 'month'    : month
+              , 'years'    : [y for y in xrange(2009, now.year + 2, 1)]
+              , 'year'     : year
+              , 'summary'  : summary
+              , 'project'  : project
+              , 'is_logged_in': request.user.is_authenticated()})
