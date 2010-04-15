@@ -256,7 +256,7 @@ def project_search(value):
 def search(request, *args, **kws):
     user     = get_requestor(request)
     search   = request.POST.get('search', '')
-    projects = self.project_search(search)
+    projects = project_search(search)
     users    = User.objects.filter(
         Q(first_name__icontains = search) | Q(last_name__icontains = search))
 
