@@ -228,17 +228,11 @@ def project(request, *args, **kws):
        }
     )
 
-@revision.create_on_success
-@login_required
-def search(request, *args, **kws):
-    user = get_requestor(request)
-
-    search = request.POST.get('search', '')
-
+def project_search(value):
     projects = Project.objects.filter(
-        Q(pcode__icontains = search) | \
-            Q(name__icontains = search) | \
-            Q(semester__semester__icontains = search.upper()))
+        Q(pcode__icontains = value) | \
+            Q(name__icontains = value) | \
+            Q(semester__semester__icontains = value.upper()))
     projects = [p for p in projects]
 
     # Search for project by short code.
@@ -252,10 +246,18 @@ def search(request, *args, **kws):
 
         code = code[1:] if len(code) > 2 and code[0] == "0" else code
 
-        if code == search.upper() and p not in projects:
+        if code == value.upper() and p not in projects:
             projects.append(p)
 
-    users = User.objects.filter(
+    return projects
+
+@revision.create_on_success
+@login_required
+def search(request, *args, **kws):
+    user     = get_requestor(request)
+    search   = request.POST.get('search', '')
+    projects = project_search(search)
+    users    = User.objects.filter(
         Q(first_name__icontains = search) | Q(last_name__icontains = search))
 
     return render_to_response("sesshuns/search.html"
