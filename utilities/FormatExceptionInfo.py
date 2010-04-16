@@ -1,5 +1,9 @@
 import sys
 import traceback
+from django.http import HttpResponse
+import inspect
+import simplejson as json
+
 
 def formatExceptionInfo(maxTBlevel=5):
     """
@@ -34,3 +38,26 @@ def exceptionJSONdict(formattedException):
           "exception_args"      : formattedException[1],
           "exception_traceback" : formattedException[2]}
     return jd
+
+
+def JSONExceptionInfo(msg = None):
+    print "in JSONExceptionInfo"
+    jd = exceptionJSONdict(formatExceptionInfo()) # get this first, in case of trouble below
+
+    try:
+        frame = inspect.currentframe()            # the stack frame for this function
+        oframes = inspect.getouterframes(frame)   # the list of frames leading to call of this function
+        caller = oframes[1]                       # We're interested in the caller of this function
+        fname = caller[3]                         # Calling function's name
+
+        if msg == None:
+            msg = 'Uncaught exception in'
+    except:
+        msg   = "Oops, error in JSONExceptionInfo, can't process error!"
+        fname = ""
+    finally:
+        del frame
+        del oframes
+
+    return HttpResponse(json.dumps({'error': '%s %s' % (msg, fname),
+                                      'exception_data': jd}), mimetype = "text/plain")
