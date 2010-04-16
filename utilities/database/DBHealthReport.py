@@ -42,7 +42,7 @@ def check_maintenance_and_rcvrs():
         # of these, is any one of them a maintenance?
         if len([p for p in periods if p.session.project.is_maintenance()]) == 0:
             bad.append(dt.date())
-    return sorted(Set(bad))
+    return sorted(Set(bad))[1:] # Remove start of DSS
 
 def print_values(file, values):
     if values == []:
@@ -462,8 +462,10 @@ def GenerateReport():
         for s in sessions if ta.getTime("observed", s) < 0.0]
     print_values(outfile, values)
 
-    outfile.write("\n\nSessions without recievers:")
-    values = [s.name for s in sessions if len(s.receiver_list()) == 0]
+    outfile.write("\n\nSessions without receivers:")
+    values = [s.name for s in sessions \
+              if len(s.receiver_list()) == 0 and \
+                 s.project.pcode not in ("Maintenance", "Shutdown")]
     print_values(outfile, values)
 
     outfile.write("\n\nOpen sessions with default frequency 0:")
