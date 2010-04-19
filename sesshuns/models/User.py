@@ -58,7 +58,10 @@ class User(models.Model):
         return UserInfo().getProfileByID(self, use_cache)
 
     def getReservations(self, use_cache = True):
-        return NRAOBosDB().getReservationsByUsername(self.username, use_cache)
+        try:
+            return NRAOBosDB().getReservationsByUsername(self.username, use_cache)
+        except:
+            return []
 
     def getPeriods(self):
         retval = []
