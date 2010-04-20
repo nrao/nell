@@ -28,7 +28,7 @@ def formatExceptionInfo(maxTBlevel=5):
 
 class PeriodResource(NellResource):
     def __init__(self, *args, **kws):
-        super(PeriodResource, self).__init__(Period, *args, **kws)
+        super(PeriodResource, self).__init__(Period, PeriodHttpAdapter, *args, **kws)
         self.score_period = Score()
 
     def read(self, request, *args, **kws):

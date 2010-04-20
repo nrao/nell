@@ -2,6 +2,7 @@ from datetime        import datetime
 from sesshuns.models import Period, Period_Accounting, Period_Receiver, \
                             Period_State, Project, Receiver, Sesshun
 from sesshuns.models.common import *
+from SessionHttpAdapter     import SessionHttpAdapter
 from utilities       import TimeAgent
 
 class PeriodHttpAdapter (object):
@@ -9,11 +10,29 @@ class PeriodHttpAdapter (object):
     def __init__(self, period):
         self.period = period
 
+    def load(self, period):
+        self.period = period
+
+    @staticmethod
+    def create(*args, **kws):
+        """
+        Recomended way of 'overriding' the constructor.  Here we want to make
+        sure that all new Periods init their rcvrs correctly.
+        """
+        p = Period(**kws)
+        # don't save & init rcvrs unless you can
+        if not kws.has_key("session"):
+            # need the session first!
+            return p
+        p.save()
+        PeriodHttpAdapter(p).init_rcvrs_from_session()
+        return p
+            
     def jsondict(self, tz, cscore):
         start = self.period.start if tz == 'UTC' else TimeAgent.utc2est(self.period.start)
         w = self.period.get_window()
         js =   {"id"           : self.period.id
-              , "session"      : self.period.session.jsondict()
+              , "session"      : SessionHttpAdapter(self.period.session).jsondict()
               , "handle"       : self.period.toHandle()
               , "stype"        : self.period.session.session_type.type[0].swapcase()
               , "date"         : d2str(start)

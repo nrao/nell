@@ -1,14 +1,15 @@
 from django.db.models         import Q
 from django.http              import HttpResponse, HttpResponseRedirect, Http404
 
-from NellResource import NellResource
+from NellResource          import NellResource
 from sesshuns.models       import Investigator, first
+from sesshuns.httpadapters import InvestigatorHttpAdapter
 
 import simplejson as json
 
 class InvestigatorResource(NellResource):
     def __init__(self, *args, **kws):
-        super(InvestigatorResource, self).__init__(Investigator, *args, **kws)
+        super(InvestigatorResource, self).__init__(Investigator, InvestigatorHttpAdapter, *args, **kws)
 
     def create(self, request, *args, **kws):
         return super(InvestigatorResource, self).create(request, *args, **kws)
@@ -41,6 +42,7 @@ class InvestigatorResource(NellResource):
         offset        = int(request.GET.get("offset", 0))
         limit         = int(request.GET.get("limit", 50))
         investigators = investigators[offset:offset+limit]
-        return HttpResponse(json.dumps(dict(total = total
-                                          , investigators = [i.jsondict() for i in investigators]))
-                          , content_type = "application/json")
+        return HttpResponse(json.dumps(
+              dict(total = total
+                , investigators = [InvestigatorHttpAdapter(i).jsondict() for i in investigators]))
+            , content_type = "application/json")

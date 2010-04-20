@@ -4,6 +4,7 @@ from Blackout               import Blackout
 from common                 import *
 from Email                  import Email
 from Investigator           import Investigator
+from Observing_Parameter    import Observing_Parameter
 from Observing_Type         import Observing_Type
 from Parameter              import Parameter
 from Period_Accounting      import Period_Accounting
@@ -11,15 +12,18 @@ from Period                 import Period
 from Period_Receiver        import Period_Receiver
 from Period_State           import Period_State
 from Project_Blackout_09B   import Project_Blackout_09B
-from Project                import Project, Project_Allotment
+from Project                import Project
+from Project_Allotment      import Project_Allotment
 from Project_Type           import Project_Type
 from Receiver               import Receiver
+from Receiver_Group         import Receiver_Group
 from Receiver_Schedule      import Receiver_Schedule
 from Repeat                 import Repeat
 from Reservation            import Reservation
 from Role                   import Role
 from Semester               import Semester
-from Sesshun                import Sesshun, Target, Receiver_Group, Observing_Parameter  # <--BAD
+from Sesshun                import Sesshun
+from Target                 import Target
 from Session_Type           import Session_Type
 from Status                 import Status
 from System                 import System

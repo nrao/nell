@@ -24,21 +24,6 @@ class Period(models.Model):
         db_table  = "periods"
         app_label = "sesshuns"
     
-    @staticmethod
-    def create(*args, **kws):
-        """
-        Recomended way of 'overriding' the constructor.  Here we want to make
-        sure that all new Periods init their rcvrs correctly.
-        """
-        p = Period(**kws)
-        # don't save & init rcvrs unless you can
-        if not kws.has_key("session"):
-            # need the session first!
-            return p
-        p.save()
-        p.init_rcvrs_from_session()
-        return p
-            
     def end(self):
         "The period ends at start + duration"
         return self.start + timedelta(hours = self.duration)
