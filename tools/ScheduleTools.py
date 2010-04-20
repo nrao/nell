@@ -7,6 +7,40 @@ class ScheduleTools(object):
 
     def __init__(self):
         self.score = Score()
+        
+        # Scheduling Range == 8 AM EST of the first day specified to
+        # 8 AM EST of the last day specified
+        self.schedulingStart = 8 # EST
+        self.schedulingEnd   = 8 # EST
+
+    def getUTCHour(self, dt, estHour):
+        dtEst = datetime(dt.year, dt.month, dt.day, estHour)
+        dtUtc = TimeAgent.est2utc(dtEst)
+        return dtUtc.hour
+        
+    def getSchedulingRange(self, firstDay, days):
+        """
+        Converts given time range (start dt, days) to 'scheduling range' 
+        (start dt, minutes)
+        """
+
+        start = datetime(firstDay.year
+                       , firstDay.month
+                       , firstDay.day
+                       , self.getUTCHour(firstDay, self.schedulingStart)
+                        )
+
+        lastDay = firstDay + timedelta(days = days)
+
+        end   = datetime(lastDay.year
+                       , lastDay.month
+                       , lastDay.day
+                       , self.getUTCHour(lastDay, self.schedulingEnd)
+                        )
+
+        duration = TimeAgent.dtDiffMins(end, start)
+
+        return (start, duration)
 
     def changeSchedule(self, start, duration, sesshun, reason, desc):
         """
