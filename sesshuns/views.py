@@ -417,8 +417,10 @@ def publish_periods(request, *args, **kwds):
             daysPeriods  = request.POST.get("duration", "1")
             tz           = request.POST.get("tz", "UTC")
             dt = str2dt(startPeriods)
-            start = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
-            duration = int(daysPeriods) * 24 * 60
+            start, duration = ScheduleTools().getSchedulingRange(dt
+                                                  , int(daysPeriods))
+            #start = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
+            #duration = int(daysPeriods) * 24 * 60
 
         Period.publish_periods(start, duration)
 
@@ -452,8 +454,10 @@ def delete_pending(request, *args, **kwds):
         daysPeriods  = request.POST.get("duration", "1")
         tz           = request.POST.get("tz", "UTC")
         dt = str2dt(startPeriods)
-        start = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
-        duration = int(daysPeriods) * 24 * 60
+        #start = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
+        #duration = int(daysPeriods) * 24 * 60
+        start, duration = ScheduleTools().getSchedulingRange(dt
+                                                           , int(daysPeriods))
         periods = Period.get_periods(start, duration)
         for p in periods:
             if p.state.abbreviation == 'P' and \
