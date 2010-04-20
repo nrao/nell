@@ -285,15 +285,6 @@ def sessions_with_null_or_multiple_targets():
     return s
 
 ######################################################################
-# Sessions with NULL frequency
-######################################################################
-
-def sessions_with_null_frequency():
-    ss = Sesshun.objects.all()
-    s = ss.filter(frequency = None)
-    return s
-
-######################################################################
 # Sessions with bad targets.  A bad target is defined as a session
 # that has just 1 target, but said target is missing ra and/or dec.
 ######################################################################
@@ -622,8 +613,7 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nSessions with frequency == NULL:")
-    values = sessions_with_null_frequency()
-    print_values(outfile, values)
+    print_values(outfile, Sesshun.objects.filter(frequency = None))
 
     outfile.write("\n\nSessions with NULL RA and/or DEC:")
     values = sessions_with_bad_target()
