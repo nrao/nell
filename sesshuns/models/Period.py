@@ -213,6 +213,7 @@ class Period(models.Model):
         w = self.get_window()
         js =   {"id"           : self.id
               , "session"      : self.session.jsondict()
+              , "session_name" : self.session.name
               , "handle"       : self.toHandle()
               , "stype"        : self.session.session_type.type[0].swapcase()
               , "date"         : d2str(start)
