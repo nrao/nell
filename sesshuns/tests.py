@@ -2310,9 +2310,11 @@ class TestPublishPeriods(NellTestCase):
         exp = [5.0, 0.0, 4.0]
         self.assertEquals(exp, [p.accounting.scheduled for p in ps])
 
-        time = self.ps[0].start.strftime("%Y-%m-%d %H:%M:%S")
+        # have to use the scheduling range
+        dt = self.ps[0].start - timedelta(days = 1)
+        time = dt.strftime("%Y-%m-%d %H:%M:%S")
         tz = "ET"
-        duration = 12
+        duration = 2 #12
         url = "/periods/publish"
 
         # Remember not to embarrass ourselves by tweeting! tweet == False
@@ -2370,9 +2372,11 @@ class TestPublishPeriods(NellTestCase):
         self.assertEquals(scheduled, w1.state())
         self.assertEquals(pending, w2.state())
 
-        time = w1.start_date.strftime("%Y-%m-%d %H:%M:%S")
+        # remeber that we publish using the scheduling range
+        dt = w1.start_date - timedelta(days = 1)
+        time = dt.strftime("%Y-%m-%d %H:%M:%S")
         tz = "ET"
-        duration = 12
+        duration = 13 #12
         url = "/periods/publish"
 
         # Remember not to embarrass ourselves by tweeting! tweet == False
@@ -3184,6 +3188,30 @@ class TestScheduleTools(NellTestCase):
         for p in self.ps:
             p.session.delete()
             p.remove() #delete()
+
+
+    def test_getSchedulingRange(self):
+
+        # scheduling range is 8:00 to the last day at 8:00 EST 
+        dt = datetime(2010, 1, 1)
+        days = 2
+        expStart = datetime(2010, 1, 1, 13)
+        expEnd   = datetime(2010, 1, 3, 13)
+        expDur = TimeAgent.dtDiffMins(expStart, expEnd)
+
+        start, dur = ScheduleTools().getSchedulingRange(dt, days)
+        self.assertEquals(expStart, start)
+        self.assertEquals(expDur, dur)
+
+        dt = datetime(2010, 6, 10)
+        days = 3
+        expStart = datetime(2010, 6, 10, 12)
+        expEnd   = datetime(2010, 6, 13, 12)
+        expDur = TimeAgent.dtDiffMins(expStart, expEnd)
+
+        start, dur = ScheduleTools().getSchedulingRange(dt, days)
+        self.assertEquals(expStart, start)
+        self.assertEquals(expDur, dur)
 
 
     def test_changeSchedule1(self):
