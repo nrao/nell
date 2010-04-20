@@ -128,8 +128,8 @@ def summary(request, *args, **kws):
         else:
             project = ''
 
-        month   = request.POST.get('month', None) 
-        year    = int(request.POST.get('year', None))
+        month = request.POST.get('month', None) 
+        year  = int(request.POST.get('year', None))
         if month and year:
             start = datetime(int(year)
                            , [m for m in calendar.month_name].index(month)
@@ -150,47 +150,60 @@ def summary(request, *args, **kws):
                   , calendar.monthrange(start.year, start.month)[1]) + \
            timedelta(days = 1)
 
-    # View is in ET, database is in UTC. Ignore pending periods.
+    # View is in ET, database is in UTC. Only use scheduled periods.
     periods = Period.in_time_range(TimeAgent.est2utc(start)
                                  , TimeAgent.est2utc(end))
-    periods = [p for p in periods if p.state.abbreviation != 'P']
+    periods = [p for p in periods if p.state.abbreviation == 'S']
     if project:
         periods = [p for p in periods if p.session.project.pcode == project]
 
-    # Get schedule for this time.
-    schedule = gen_gbt_schedule(start, end, (end - start).days, "ET", periods)
-
+    # Handle either schedule or project summaries.
     if summary == "schedule":
+        schedule = gen_gbt_schedule(start
+                                  , end
+                                  , (end - start).days
+                                  , "ET"
+                                  , periods)
         url      = 'sesshuns/schedule_summary.html'
         projects = []
         days     = {}
         hours    = {}
+        summary  = {}
     else:
         url      = 'sesshuns/project_summary.html'
         projects = list(Set([p.session.project for p in periods]))
         projects.sort(lambda x, y: cmp(x.pcode, y.pcode))
 
-        days  = {}
-        hours = {}
+        schedule = {}
+        days     = dict([(p.pcode, []) for p in projects])
+        hours    = dict([(p.pcode, 0) for p in projects])
+        summary  = dict([(c, 0) for c in Project.get_categories()])
         for p in periods:
-            d = days.setdefault(p.session.project.pcode, [])
-            days[p.session.project.pcode] = list(Set(d + [p.start.day]))
+            pstart = TimeAgent.utc2est(p.start)
+            pend   = TimeAgent.utc2est(p.end())
 
-            h = hours.setdefault(p.session.project.pcode, 0)
-            hours[p.session.project.pcode] = h + p.accounting.observed()
+            # Find the days this period ran within the month.
+            day = pstart.day if pstart >= start else pend.day
+            days[p.session.project.pcode].append(str(day))
+
+            # Find the duration of this period within the month.
+            duration = (min(pend, end) - max(pstart, start)).seconds / 3600.
+            hours[p.session.project.pcode] += duration
+
+            # Tally hours for various categories important to Operations.
+            summary[p.session.project.get_category()] += duration
 
     return render_to_response(
                url
              , {'calendar' : sorted(schedule.items())
-              , 'projects' : zip(projects
-                               , [[str(d) for d in sorted(v)] \
-                                          for v in days.values()]
-                               , hours.values())
+              , 'projects' : [(p
+                             , sorted(list(Set(days[p.pcode])))
+                             , hours[p.pcode]) for p in projects]
               , 'start'    : start
               , 'months'   : calendar.month_name 
               , 'month'    : month
               , 'years'    : [y for y in xrange(2009, now.year + 2, 1)]
               , 'year'     : year
-              , 'summary'  : summary
+              , 'summary'  : [(t, summary[t]) for t in sorted(summary)]
               , 'project'  : project
               , 'is_logged_in': request.user.is_authenticated()})

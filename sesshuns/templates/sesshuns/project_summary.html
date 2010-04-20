@@ -91,6 +91,26 @@
     <td>{{hours}}</td>
   </tr>
   {% endfor %}
+  <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td><strong>Total Hours:</strong></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  {% for type, hours in summary %}
+  <tr>
+    <td><strong>{{type}}</strong></td>
+    <td>{{hours}}</td>
+    <td></td>
+    <td></td>
+  </tr>
+  {% endfor %}
   </table>
   </center>
 
