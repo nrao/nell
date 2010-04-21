@@ -74,6 +74,11 @@ class ScheduleTools(object):
         if debug:
             print "len(ps): ", len(ps)
 
+        scheduledPeriods = [p for p in ps if p.state.abbreviation == 'S']
+        if len(scheduledPeriods) != len(ps):
+            msg = "All affected Periods must be in the Scheduled State"
+            return (False, msg)
+
         # first, adjust each of the affected periods - including time accnting
         end = start + timedelta(hours = duration)
         for p in ps:
@@ -175,6 +180,8 @@ class ScheduleTools(object):
 
         # in all cases, give the description of entire event:
         self.assignDescriptions(descDct, descHead, desc)
+
+        return (True, None)
 
     def assignDescriptions(self, descDct, descHead, desc):
         """
