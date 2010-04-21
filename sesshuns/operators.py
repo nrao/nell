@@ -153,7 +153,7 @@ def summary(request, *args, **kws):
     # View is in ET, database is in UTC. Only use scheduled periods.
     periods = Period.in_time_range(TimeAgent.est2utc(start)
                                  , TimeAgent.est2utc(end))
-    periods = [p for p in periods if p.state.abbreviation == 'S']
+    periods = [p for p in periods if p.isScheduled()]
     if project:
         periods = [p for p in periods if p.session.project.pcode == project]
 

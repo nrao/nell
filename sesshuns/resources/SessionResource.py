@@ -3,12 +3,13 @@ from django.db.models         import Q
 
 from NellResource import NellResource
 from sesshuns.models       import Sesshun, first, jsonMap
+from sesshuns.httpadapters import SessionHttpAdapter
 
 import simplejson as json
 
 class SessionResource(NellResource):
     def __init__(self, *args, **kws):
-        super(SessionResource, self).__init__(Sesshun, *args, **kws)
+        super(SessionResource, self).__init__(Sesshun, SessionHttpAdapter, *args, **kws)
  
     def create(self, request, *args, **kws):
         return super(SessionResource, self).create(request, *args, **kws)
@@ -72,11 +73,12 @@ class SessionResource(NellResource):
             offset = int(request.GET.get("offset", 0))
             limit  = int(request.GET.get("limit", 50))
             sessions = sessions[offset:offset+limit]
-            return HttpResponse(json.dumps(dict(total = total
-                                              , sessions = [s.jsondict() for s in sessions]))
-                              , content_type = "application/json")
+            return HttpResponse(json.dumps(
+                     dict(total = total
+                        , sessions = [SessionHttpAdapter(s).jsondict() for s in sessions]))
+                   , content_type = "application/json")
         else:
             s_id  = args[0]
             s     = first(Sesshun.objects.filter(id = s_id))
-            return HttpResponse(json.dumps(dict(session = s.jsondict())))
+            return HttpResponse(json.dumps(dict(session = SessionHttpAdapter(s).jsondict())))
 

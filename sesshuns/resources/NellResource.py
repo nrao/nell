@@ -8,8 +8,9 @@ import reversion
 from reversion import revision
 
 class NellResource(Resource):
-    def __init__(self, dbobject, *args, **kws):
+    def __init__(self, dbobject, adapter, *args, **kws):
         self.dbobject = dbobject
+        self.adapter  = adapter(None)
         super(NellResource, self).__init__(*args, **kws)
 
     def create(self, request, *args, **kws):
@@ -30,20 +31,23 @@ class NellResource(Resource):
     @revision.create_on_success 
     def create_worker(self, request, *args, **kws):
         o = self.dbobject()
-        o.init_from_post(request.POST)
+        self.adapter.load(o)
+        self.adapter.init_from_post(request.POST)
         # Query the database to insure data is in the correct data type
         o = first(self.dbobject.objects.filter(id = o.id))
+        self.adapter.load(o)
     
         revision.comment = self.get_rev_comment(request, o, "create_worker")
 
-        return HttpResponse(json.dumps(o.jsondict())
+        return HttpResponse(json.dumps(self.adapter.jsondict())
                           , mimetype = "text/plain")
 
     @revision.create_on_success 
     def update(self, request, *args, **kws):
         id    = int(args[0])
         o     = self.dbobject.objects.get(id = id)
-        o.update_from_post(request.POST)
+        self.adapter.load(o)
+        self.adapter.update_from_post(request.POST)
 
         revision.comment = self.get_rev_comment(request, o, "update")
 

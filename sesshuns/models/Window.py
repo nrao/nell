@@ -172,35 +172,6 @@ class Window(models.Model):
 
         self.save()    
 
-    def jsondict(self):
-        js = {  "id"             : self.id
-              , "handle"         : self.toHandle()
-              , "session"        : self.session.jsondict()
-              , "start"          : self.start_date.strftime("%Y-%m-%d")
-              , "end"            : self.end().strftime("%Y-%m-%d")
-              , "duration"       : self.duration
-              }
-        # we need to do this so that the window explorer can work with
-        # a 'flat' json dictionary
-        self.add_period_json(js, "default", self.default_period)
-        self.add_period_json(js, "choosen", self.period)
-        return js    
-
-    def add_period_json(self, jsondict, type, period):
-        "Adss part of the given period's json to given json dict"
-
-        if period is None:
-            keys = ['date', 'time', 'duration', 'state', 'period']
-            for k in keys:
-                key = "%s_%s" % (type, k)
-                jsondict[key] = None
-        else:
-            pjson = period.jsondict('UTC', 0.0)
-            jsondict["%s_%s" % (type, "date")] = pjson['date']
-            jsondict["%s_%s" % (type, "time")] = pjson['time']
-            jsondict["%s_%s" % (type, "duration")]   = pjson['duration']
-            jsondict["%s_%s" % (type, "state")]      = pjson['state']
-
     def handle2session(self, h):
         n, p = h.rsplit('(', 1)
         name = n.strip()
@@ -217,91 +188,6 @@ class Window(models.Model):
         return "%s (%s) %s" % (self.session.name
                              , self.session.project.pcode
                              , original_id)
-
-    def init_from_post(self, fdata):
-        self.from_post(fdata)
-
-    def update_from_post(self, fdata):
-        self.from_post(fdata)
-
-    def from_post(self, fdata):
-
-        # most likely, we'll be specifying sessions for windows in the same
-        # manner as we do for periods
-        handle = fdata.get("handle", "")
-        if handle:
-            self.session = self.handle2session(handle)
-        else:
-            try:
-                maintenance = first(Project.objects.filter(pcode='Maintenance'))
-                self.session = first(Sesshun.objects.filter(project=maintenance))
-            except:
-                self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
-
-         # get the date
-        date = fdata.get("start", datetime.utcnow().strftime("%Y-%m-%d"))
-        self.start_date = datetime.strptime(date, "%Y-%m-%d").date()
-
-        # TBF: why is this going back and forth as a float?
-        self.duration = int(float(fdata.get("duration", "1.0")))
-
-        # we are working with a 'flat' dictionary that has only a few
-        # of the specified fields for it's two periods.
-        self.period_from_post(fdata, "default", self.session)
-        self.period_from_post(fdata, "choosen", self.session)
-       
-        self.save()
-
-    def period_from_post(self, fdata, type, sesshun):
-        "Update or create a period for a window based on post data."
-
-        # TBF:  Too much code in this try block.  What error(s) are we 
-        #       guarding against here?
-        try:
-            dur = float(fdata.get("%s_%s" % (type, "duration"), None))
-            duration = TimeAgent.rndHr2Qtr(dur)
-            date = fdata.get("%s_%s" % (type, "date"), None)
-            time = fdata.get("%s_%s" % (type, "time"), None)
-            now           = dt2str(TimeAgent.quarter(datetime.utcnow()))
-            if date is None:
-                start = now
-            else:
-                start = TimeAgent.quarter(strStr2dt(date, time + ':00'))
-        except:
-            duration = None
-            start = None
-
-        # do we have a period of this type yet?
-        if type == "default":
-            p = self.default_period
-        elif type == "choosen":
-            p = self.period
-        else:
-            raise "unknown type"
-
-        if p is None:
-            # try to create it from given info
-            if start is not None and duration is not None \
-                and sesshun is not None:
-               # create it! reuse the period code!
-               p = Period.create()
-               pfdata = dict(date = date
-                           , time = time
-                           , duration = duration
-                           , handle = self.toHandle())
-               p.init_from_post(pfdata, 'UTC')
-               if type == "default":
-                  self.default_period = p
-                  self.default_period.save()
-
-               elif type == "choosen":
-                  self.period = p
-                  self.period.save()
-        else:
-            # update it
-            p.start = start
-            p.duration = duration
-            p.save()
 
     def eventjson(self, id):
         end = self.start_date + timedelta(days = self.duration)

@@ -1,7 +1,8 @@
-from datetime            import datetime, timedelta
-from sesshuns.models     import *
-from utilities.TimeAgent import dtDiffHrs, quarter
-from utilities           import Score
+from datetime              import datetime, timedelta
+from sesshuns.models       import *
+from sesshuns.httpadapters import PeriodHttpAdapter
+from utilities.TimeAgent   import dtDiffHrs, quarter
+from utilities             import Score
 
 class ScheduleTools(object):
 
@@ -115,7 +116,7 @@ class ScheduleTools(object):
                                                )
                 accounting.save()                             
                 pending = first(Period_State.objects.filter(abbreviation = 'P'))
-                period_2cd_half = Period.create(session  = p.session
+                period_2cd_half = PeriodHttpAdapter.create(session  = p.session
                                        , start    = end
                                        , duration = new_dur
                                        , state    = pending
@@ -161,7 +162,7 @@ class ScheduleTools(object):
                                  , description  = "") #description)
             pa.save()   
             scheduled = first(Period_State.objects.filter(abbreviation = 'S'))
-            p = Period.create(session    = sesshun
+            p = PeriodHttpAdapter.create(session    = sesshun
                      , start      = start
                      , duration   = duration
                      , score      = 0.0
