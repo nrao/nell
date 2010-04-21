@@ -34,8 +34,51 @@ class Project(models.Model):
     def __str__(self):
         return self.pcode
 
+    def is_science(self):
+        return self.project_type.type == "science"
+
+    def is_shutdown(self):
+        return self.name == 'Shutdown'
+
     def is_maintenance(self):
-        return self.name == 'Maintenance' 
+        return any([s.observing_type.type == 'maintenance' \
+                    for s in self.sesshun_set.all()])
+
+    def is_test(self):
+        return any([s.observing_type.type == 'testing' \
+                    for s in self.sesshun_set.all()])
+
+    def is_commissioning(self):
+        return any([s.observing_type.type == 'commissioning' \
+                    for s in self.sesshun_set.all()])
+
+    def is_calibration(self):
+        return any([s.observing_type.type == 'calibration' \
+                    for s in self.sesshun_set.all()])
+
+    @staticmethod
+    def get_categories():
+        "Return all possible categories of interest to Operations."
+        return ["Un-assigned", "Astronomy", "Maintenance", "Shutdown"
+              , "Tests", "Calibration", "Commissioning"]
+
+    def get_category(self):
+        "Categorize this project in a meaningful way for Operations."
+        category = "Un-assigned"
+        if self.is_science():
+            category = "Astronomy"
+        elif self.is_shutdown():
+            category = "Shutdown"
+        elif self.is_maintenance():
+            category = "Maintenance"
+        elif self.is_test():
+            category = "Tests"
+        elif self.is_commissioning():
+            category = "Commissioning"
+        elif self.is_calibration():
+            category = "Calibration"
+
+        return category
 
     def get_allotments_display(self):
         return self.allotments.all()

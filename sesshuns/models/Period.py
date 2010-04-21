@@ -440,11 +440,13 @@ class Period(models.Model):
         can overlap into the first day.
         """
         # TBF: why doesn't ps.query.group_by = ['start'] work?
-        day_before = begin - timedelta(days = 1)
-        ps = Period.objects.filter(start__gt = day_before
+        ps = Period.objects.filter(start__gt = begin - timedelta(days = 1)
                                  , start__lt = end).order_by('start')
+        ps = [p for p in ps if p.end() >= begin]
+
         if ignore_deleted:                      
             ps = [p for p in ps if p.state.abbreviation != 'D']
+
         return ps
 
     @staticmethod
