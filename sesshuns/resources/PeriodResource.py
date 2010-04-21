@@ -50,9 +50,10 @@ class PeriodResource(NellResource):
             sd           = self.score_period.periods(pids)
             scores       = [sd.get(pid, 0.0) for pid in pids]
             return HttpResponse(
-                json.dumps(dict(total = len(periods)
+                json.dumps(dict(total   = len(periods)
                               , periods = [PeriodHttpAdapter(p).jsondict(tz, s)
-                                               for (p, s) in zip(periods, scores)]))
+                                           for (p, s) in zip(periods, scores)]
+                              , success = 'ok'))
               , content_type = "application/json")
         else:
             # we're getting a single period as specified by ID
@@ -60,7 +61,10 @@ class PeriodResource(NellResource):
             p       = first(Period.objects.filter(id = p_id))
             score   = self.score_period.periods([p_id]).get(p_id, 0.0)
             adapter = PeriodHttpAdapter(p)
-            return HttpResponse(json.dumps(dict(period = adapter.jsondict(tz, score))))
+            return HttpResponse(
+                json.dumps(dict(period  = adapter.jsondict(tz, score))
+                              , success = 'ok')
+              , content_type = "application/json")
 
     @revision.create_on_success
     def create_worker(self, request, *args, **kws):
@@ -87,7 +91,8 @@ class PeriodResource(NellResource):
 
         revision.comment = self.get_rev_comment(request, o, "update")
 
-        return HttpResponse("")
+        return HttpResponse(json.dumps({"success": "ok"})
+                          , mimetype = "text/plain")
 
     @revision.create_on_success
     def delete(self, request, *args):
@@ -96,5 +101,6 @@ class PeriodResource(NellResource):
         revision.comment = self.get_rev_comment(request, o, "delete")        
         o.delete()
 
-        return HttpResponse(json.dumps({"success": "ok"}))
+        return HttpResponse(json.dumps({"success": "ok"})
+                          , mimetype = "text/plain")
 

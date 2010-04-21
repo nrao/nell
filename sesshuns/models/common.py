@@ -4,7 +4,7 @@ from tools                     import TimeAccounting
 from django.conf               import settings
 from django.db                 import models
 from django.http               import QueryDict
-from settings                  import ANTIOCH_SERVER_URL
+from settings                  import ANTIOCH_HOST, PROXY_PORT
 from utilities.receiver        import ReceiverCompile
 from utilities                 import TimeAgent, UserInfo, NRAOBosDB
 from utilities                 import Score

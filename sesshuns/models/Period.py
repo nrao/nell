@@ -104,8 +104,8 @@ class Period(models.Model):
            self.end() < datetime.utcnow():
             return True
 
-        url = ANTIOCH_SERVER_URL + \
-              "/moc?session_id=" + \
+        url = "%s:%d/" % (ANTIOCH_HOST, PROXY_PORT) + \
+              "moc?session_id=" + \
               `self.session.id` + \
               "&start=" + \
               self.start.isoformat().replace("T", "+").replace(":", "%3A")
@@ -114,6 +114,7 @@ class Period(models.Model):
             moc = json.loads(antioch_cnn.read(0x4000))['moc']
         except:
             moc = True
+            raise
 
         return moc
 

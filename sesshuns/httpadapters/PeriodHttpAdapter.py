@@ -33,6 +33,7 @@ class PeriodHttpAdapter (object):
         w = self.period.get_window()
         js =   {"id"           : self.period.id
               , "session"      : SessionHttpAdapter(self.period.session).jsondict()
+              , "session_name" : self.period.session.name
               , "handle"       : self.period.toHandle()
               , "stype"        : self.period.session.session_type.type[0].swapcase()
               , "date"         : d2str(start)
