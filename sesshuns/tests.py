@@ -3192,27 +3192,47 @@ class TestScheduleTools(NellTestCase):
 
     def test_getSchedulingRange(self):
 
-        # scheduling range is 8:00 to the last day at 8:00 EST 
+        # scheduling range is 0:00 of timezone of first day
+        # to the last day at 8:00 EST 
+
+        # test it in winter time
         dt = datetime(2010, 1, 1)
         days = 2
-        expStart = datetime(2010, 1, 1, 13)
+        expStart = datetime(2010, 1, 1, 0)
         expEnd   = datetime(2010, 1, 3, 13)
         expDur = TimeAgent.dtDiffMins(expStart, expEnd)
 
-        start, dur = ScheduleTools().getSchedulingRange(dt, days)
+        start, dur = ScheduleTools().getSchedulingRange(dt, 'UTC', days)
         self.assertEquals(expStart, start)
         self.assertEquals(expDur, dur)
 
+        # make sure it works in ET too
+        expStart = datetime(2010, 1, 1, 5)
+        expEnd   = datetime(2010, 1, 3, 13)
+        expDur = TimeAgent.dtDiffMins(expStart, expEnd)
+
+        start, dur = ScheduleTools().getSchedulingRange(dt, 'ET', days)
+        self.assertEquals(expStart, start)
+
+        # test it in summer time
         dt = datetime(2010, 6, 10)
         days = 3
-        expStart = datetime(2010, 6, 10, 12)
+        expStart = datetime(2010, 6, 10, 0)
         expEnd   = datetime(2010, 6, 13, 12)
         expDur = TimeAgent.dtDiffMins(expStart, expEnd)
 
-        start, dur = ScheduleTools().getSchedulingRange(dt, days)
+        start, dur = ScheduleTools().getSchedulingRange(dt, 'UTC', days)
         self.assertEquals(expStart, start)
         self.assertEquals(expDur, dur)
 
+        # make sure it works in ET too
+        expStart = datetime(2010, 6, 10, 4)
+        expEnd   = datetime(2010, 6, 13, 12)
+        expDur = TimeAgent.dtDiffMins(expStart, expEnd)
+
+        start, dur = ScheduleTools().getSchedulingRange(dt, 'ET', days)
+        self.assertEquals(expStart, start)
+        self.assertEquals(expDur, dur)
 
     def test_changeSchedule1(self):
 
