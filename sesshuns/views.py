@@ -14,6 +14,7 @@ from utilities.FormatExceptionInfo import JSONExceptionInfo
 from utilities.Notifier            import Notifier
 from utilities.Email               import Email
 from reversion                     import revision
+from httpadapters                  import PeriodHttpAdapter
 
 import simplejson as json
 # TBF: get this back in once we figure out the deployment issues.
@@ -54,10 +55,10 @@ def receivers_schedule(request, *args, **kws):
         return HttpResponse(
                 json.dumps({"schedule" : Receiver_Schedule.jsondict(schedule)
                           , "diff"     : jsondiff
-                          , "maintenance": [p.jsondict('UTC', 0.0) for p in maintenance]
+                          , "maintenance": [PeriodHttpAdapter(p).jsondict('UTC', 0.0) for p in maintenance]
                           , "receivers" : rcvrs})
               , mimetype = "text/plain")
-    except:
+    except ValueError:
         return JSONExceptionInfo()
 
 @revision.create_on_success

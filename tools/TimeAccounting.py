@@ -162,7 +162,7 @@ class TimeAccounting:
             ps = obj.period_set.all()
             if dt is None:
                 # count all periods
-                t =sum([p.accounting.get_time(type) for p in ps])
+                t =sum([p.accounting.get_time(type) for p in ps if p.accounting is not None])
             else:
                 # time dependent
                 if past:

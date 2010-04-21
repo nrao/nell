@@ -44,7 +44,7 @@ class PeriodHttpAdapter (object):
               , "forecast"     : dt2str(self.period.forecast)
               , "backup"       : self.period.backup
               , "moc_ack"      : self.period.moc_ack
-              , "state"        : self.period.state.abbreviation
+              , "state"        : self.period.state.abbreviation if self.period.state is not None else ""
               , "windowed"     : True if w is not None else False
               , "wdefault"     : self.period.is_windowed_default() \
                                      if w is not None else None
