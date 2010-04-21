@@ -62,7 +62,7 @@ class TimeAccounting:
         "Allocated - time billed by completed periods"
         tb = self.getTime("time_billed", obj, now, True)
         if obj.__class__.__name__ == "Project":
-            total = self.getProjSessionsTotalTime(obj)
+            total = self.getProjectTotalTime(obj)
         else: 
             total = obj.allotment.total_time
         return total - tb    
@@ -139,7 +139,7 @@ class TimeAccounting:
         tb = self.getTime("time_billed", obj)
         # ignores grade!
         if obj.__class__.__name__ == "Project":
-            total = self.getProjSessionsTotalTime(obj)
+            total = self.getProjectTotalTime(obj)
         else: 
             total = obj.allotment.total_time
         return total - tb    
