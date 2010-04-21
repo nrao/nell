@@ -258,9 +258,15 @@ def change_schedule(request, *args, **kws):
         desc = request.POST.get("description", "")
         # this method handles the heavy lifting
         st = ScheduleTools()
-        st.changeSchedule(startdate, duration, s, reason, desc)
-        revision.comment = get_rev_comment(request, None, "change_schedule")
-        return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
+        success, msg = st.changeSchedule(startdate, duration, s, reason, desc)
+        if success:
+            revision.comment = get_rev_comment(request, None, "change_schedule")
+            return HttpResponse(json.dumps({'success':'ok'})
+                              , mimetype = "text/plain")
+        else:                      
+            return HttpResponse(json.dumps(\
+                {'error':'Error Inserting Period', 'message':msg})
+              , mimetype = "text/plain")
     except:
         return JSONExceptionInfo()
 
@@ -281,6 +287,7 @@ def shift_period_boundaries(request, *args, **kws):
         start_boundary = bool(int(request.POST.get("start_boundary", 1)))
         reason = request.POST.get("reason", "other_session_other")
         desc = request.POST.get("description", "")
+
         # now, what is the neighbor to this boundary?
         original_time = period.start if start_boundary else period.end()
         # many ways to do this. one way is to find all periods w/ in 15 mins
@@ -293,6 +300,7 @@ def shift_period_boundaries(request, *args, **kws):
             neighbor = None
         else:
             neighbor = neighbors[0]
+
         # this method handles the heavy lifting
         st = ScheduleTools()
         success, msg = st.shiftPeriodBoundaries(period, start_boundary, time, neighbor, reason, desc)
@@ -419,6 +427,7 @@ def publish_periods(request, *args, **kwds):
             tz           = request.POST.get("tz", "UTC")
             dt = str2dt(startPeriods)
             start, duration = ScheduleTools().getSchedulingRange(dt
+                                                  , tz
                                                   , int(daysPeriods))
             #start = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
             #duration = int(daysPeriods) * 24 * 60
@@ -458,6 +467,7 @@ def delete_pending(request, *args, **kwds):
         #start = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
         #duration = int(daysPeriods) * 24 * 60
         start, duration = ScheduleTools().getSchedulingRange(dt
+                                                           , tz
                                                            , int(daysPeriods))
         periods = Period.get_periods(start, duration)
         for p in periods:

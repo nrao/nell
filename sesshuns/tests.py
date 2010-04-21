@@ -3213,27 +3213,47 @@ class TestScheduleTools(NellTestCase):
 
     def test_getSchedulingRange(self):
 
-        # scheduling range is 8:00 to the last day at 8:00 EST 
+        # scheduling range is 0:00 of timezone of first day
+        # to the last day at 8:00 EST 
+
+        # test it in winter time
         dt = datetime(2010, 1, 1)
         days = 2
-        expStart = datetime(2010, 1, 1, 13)
+        expStart = datetime(2010, 1, 1, 0)
         expEnd   = datetime(2010, 1, 3, 13)
         expDur = TimeAgent.dtDiffMins(expStart, expEnd)
 
-        start, dur = ScheduleTools().getSchedulingRange(dt, days)
+        start, dur = ScheduleTools().getSchedulingRange(dt, 'UTC', days)
         self.assertEquals(expStart, start)
         self.assertEquals(expDur, dur)
 
+        # make sure it works in ET too
+        expStart = datetime(2010, 1, 1, 5)
+        expEnd   = datetime(2010, 1, 3, 13)
+        expDur = TimeAgent.dtDiffMins(expStart, expEnd)
+
+        start, dur = ScheduleTools().getSchedulingRange(dt, 'ET', days)
+        self.assertEquals(expStart, start)
+
+        # test it in summer time
         dt = datetime(2010, 6, 10)
         days = 3
-        expStart = datetime(2010, 6, 10, 12)
+        expStart = datetime(2010, 6, 10, 0)
         expEnd   = datetime(2010, 6, 13, 12)
         expDur = TimeAgent.dtDiffMins(expStart, expEnd)
 
-        start, dur = ScheduleTools().getSchedulingRange(dt, days)
+        start, dur = ScheduleTools().getSchedulingRange(dt, 'UTC', days)
         self.assertEquals(expStart, start)
         self.assertEquals(expDur, dur)
 
+        # make sure it works in ET too
+        expStart = datetime(2010, 6, 10, 4)
+        expEnd   = datetime(2010, 6, 13, 12)
+        expDur = TimeAgent.dtDiffMins(expStart, expEnd)
+
+        start, dur = ScheduleTools().getSchedulingRange(dt, 'ET', days)
+        self.assertEquals(expStart, start)
+        self.assertEquals(expDur, dur)
 
     def test_changeSchedule1(self):
 
@@ -3779,8 +3799,9 @@ class TestTimeAccounting(NellTestCase):
 
     def test_getTimeLeft(self):
 
+        # Project has no time allotted, and 5 + 3 + 4 = 12 hrs billed
         timeLeft = self.ta.getTimeLeft(self.project)
-        self.assertEqual(-3.0, timeLeft)
+        self.assertEqual(-12.0, timeLeft)
 
         names = ["one", "three", "two"]
         times = [-2.0, -1.0, 0.0]
@@ -3847,10 +3868,10 @@ class TestTimeAccounting(NellTestCase):
 
     def test_getTimeRemainingFromCompleted(self):
         remaining = self.ta.getTimeRemainingFromCompleted(self.project)
-        self.assertEqual(remaining, -3.0) # 9 - 12
+        self.assertEqual(remaining, -12.0) # 0 - 12
 
         remaining = self.ta.getTimeRemainingFromCompleted(self.ps[0].session)
-        self.assertEqual(remaining, -2.0) # 9 - 12
+        self.assertEqual(remaining, -2.0) # 3 - 5
 
     def test_jsondict(self):
 

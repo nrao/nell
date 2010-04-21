@@ -9,9 +9,9 @@ class ScheduleTools(object):
     def __init__(self):
         self.score = Score()
         
-        # Scheduling Range == 8 AM EST of the first day specified to
+        # Scheduling Range == 0:00 (TIMEZONE) of the first day specified to
         # 8 AM EST of the last day specified
-        self.schedulingStart = 8 # EST
+        #self.schedulingStart = 8 # EST
         self.schedulingEnd   = 8 # EST
 
     def getUTCHour(self, dt, estHour):
@@ -19,16 +19,17 @@ class ScheduleTools(object):
         dtUtc = TimeAgent.est2utc(dtEst)
         return dtUtc.hour
         
-    def getSchedulingRange(self, firstDay, days):
+    def getSchedulingRange(self, firstDay, timezone, days):
         """
         Converts given time range (start dt, days) to 'scheduling range' 
         (start dt, minutes)
         """
 
+        startHour = 0 if timezone == 'UTC' else self.getUTCHour(firstDay, 0)
         start = datetime(firstDay.year
                        , firstDay.month
                        , firstDay.day
-                       , self.getUTCHour(firstDay, self.schedulingStart)
+                       , startHour
                         )
 
         lastDay = firstDay + timedelta(days = days)
@@ -73,6 +74,11 @@ class ScheduleTools(object):
         ps = Period.get_periods(start, duration_mins)
         if debug:
             print "len(ps): ", len(ps)
+
+        scheduledPeriods = [p for p in ps if p.state.abbreviation == 'S']
+        if len(scheduledPeriods) != len(ps):
+            msg = "All affected Periods must be in the Scheduled State"
+            return (False, msg)
 
         # first, adjust each of the affected periods - including time accnting
         end = start + timedelta(hours = duration)
@@ -175,6 +181,8 @@ class ScheduleTools(object):
 
         # in all cases, give the description of entire event:
         self.assignDescriptions(descDct, descHead, desc)
+
+        return (True, None)
 
     def assignDescriptions(self, descDct, descHead, desc):
         """
