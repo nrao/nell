@@ -16,6 +16,10 @@ alter table reservations alter column end_date type timestamp without time zone;
 
 -- Example project
 INSERT INTO allotment VALUES (DEFAULT, 100.5, 100.5, 100.5, 4.0);
+--INSERT INTO projects VALUES (DEFAULT, 1, 1, 'GBT-M09A', 'Maintenance', false, false, null, null, null, null, null, null);
+--INSERT INTO status VALUES (DEFAULT, false, false, false, false);
+--INSERT INTO sessions VALUES (DEFAULT, 1, 1, 1, 1, 1, 0, 'Maintenance', null, null, null, null, null, null);
+--INSERT INTO periods VALUES (DEFAULT, 1, null, null, '2009-4-30 00:00:00', 6, null, null, false, false);
 
 INSERT INTO roles VALUES (DEFAULT, 'Administrator');
 INSERT INTO roles VALUES (DEFAULT, 'Observer');
