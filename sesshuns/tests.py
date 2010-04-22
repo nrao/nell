@@ -39,6 +39,7 @@ fdata = {"total_time": "3"
        , "complete" : False
        , "backup" : False
        , "lst_ex" : ""
+       , "el_limit" : 25.0
          }
 
 def create_sesshun():
@@ -1582,6 +1583,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.nighttime(), None)
         self.assertEqual(s.get_LST_exclusion_string(), ldata["lst_ex"])
         self.assertEqual(s.get_min_eff_tsys_factor(), ldata["xi_factor"])
+        self.assertEqual(s.get_elevation_limit(),fdata["el_limit"]) 
         rgs = s.receiver_group_set.all()
         self.assertEqual(2, len(rgs))
         self.assertEqual(['K']
