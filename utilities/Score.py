@@ -3,14 +3,7 @@ import TimeAgent
 import urllib
 import simplejson as json
 import time
-
-class Borg(object):
-    _shared_state = {}
-
-    def __new__(cls, *a, **k):
-        obj = object.__new__(cls, *a, **k)
-        obj.__dict__ = cls._shared_state
-        return obj
+from Borg import Borg
 
 class Score(Borg):
     _shared_state = {}

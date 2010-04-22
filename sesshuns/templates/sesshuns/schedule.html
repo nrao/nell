@@ -49,6 +49,7 @@
 {% block content %}
   <center>
   <h1 class="loud">GBT Schedule</h1>
+  <p>{{pubdate|date:"l F d, Y  f A T"}}<p>
   <form name="getCalendar" action="/schedule/" method="POST">
   <p>
     <label for="id_start">Start:</label>

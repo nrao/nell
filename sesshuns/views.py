@@ -12,6 +12,7 @@ from utilities.SchedulingNotifier  import SchedulingNotifier
 from utilities.FormatExceptionInfo import formatExceptionInfo
 from utilities.Notifier            import Notifier
 from utilities.Email               import Email
+from utilities                     import Shelf
 from reversion                     import revision
 
 import simplejson as json
@@ -489,6 +490,13 @@ def scheduling_email(request, *args, **kwds):
             formatExceptionInfo()
             return HttpResponse(json.dumps({'success':'error'})
                                 , mimetype = "text/plain")
+
+        # Remember when we did this
+        try:
+            Shelf()["publish_time"] = datetime.utcnow()
+            Shelf().sync()
+        except:
+            formatExceptionInfo()
 
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
