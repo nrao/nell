@@ -114,7 +114,6 @@ class Period(models.Model):
             moc = json.loads(antioch_cnn.read(0x4000))['moc']
         except:
             moc = True
-            raise
 
         return moc
 
