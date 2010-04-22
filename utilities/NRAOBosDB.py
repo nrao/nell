@@ -65,8 +65,11 @@ class NRAOBosDB:
 
         if not use_cache or cache.get(username) is None:
             url          = self.baseUrlByPerson + username
-            fh           = self.opener.open(url)
-            reservations = self.parseReservationsXML(fh.read(0x4000))
+            try:
+                fh           = self.opener.open(url)
+                reservations = self.parseReservationsXML(fh.read(0x4000))
+            except:
+                reservations = []
 
             if cache.get(username) is None:
                 cache.add(username, reservations)

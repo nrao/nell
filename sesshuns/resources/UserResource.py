@@ -2,6 +2,7 @@ from django.db.models         import Q
 from django.http              import HttpResponse, HttpResponseRedirect
 from django_restapi.resource  import Resource
 from sesshuns.models       import User, first
+from sesshuns.httpadapters import UserHttpAdapter
 
 import simplejson as json
 
@@ -44,20 +45,23 @@ class UserResource(Resource):
             offset    = int(request.GET.get("offset", 0))
             limit     = int(request.GET.get("limit", 50))
             users     = users[offset:offset+limit]
-            return HttpResponse(json.dumps(dict(total = total
-                                              , users = [u.jsondict() for u in users]))
-                              , content_type = "application/json")
+            return HttpResponse(
+                     json.dumps(dict(total = total
+                                   , users = [UserHttpAdapter(u).jsondict() for u in users]))
+                   , content_type = "application/json")
         else:
             # one, identified by id
             u_id, = args
             user  = first(User.objects.filter(id = u_id))
-            return HttpResponse(json.dumps(dict(user = user.jsondict()))
+            adapter = UserHttpAdapter(user)
+            return HttpResponse(json.dumps(dict(user = adapter.jsondict()))
                               , content_type = "application/json")
 
     def update(self, request, *args, **kws):
-        id    = int(args[0])
-        u     = User.objects.get(id = id)
-        u.update_from_post(request.POST)
+        id      = int(args[0])
+        u       = User.objects.get(id = id)
+        adapter = UserHttpAdapter(u)
+        adapter.update_from_post(request.POST)
 
         return HttpResponse(json.dumps({"success" : "ok"})
                           , mimetype = "text/plain")

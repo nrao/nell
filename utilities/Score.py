@@ -54,7 +54,7 @@ class Score(Borg):
             print "IOError service", url
             return 0.0
         except ValueError:
-            print "ValueError - is antioch running?"
+            print "ValueError - is antioch running? (%s)" % url
             return 0.0
         else:
             return retval
@@ -75,7 +75,7 @@ class Score(Borg):
             print "IOError service", url
             return {}
         except ValueError:
-            print "ValueError - is antioch running?"
+            print "ValueError - is antioch running? (%s)" % url
             self.clear()
             return {}
         else:

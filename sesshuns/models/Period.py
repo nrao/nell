@@ -24,21 +24,6 @@ class Period(models.Model):
         db_table  = "periods"
         app_label = "sesshuns"
     
-    @staticmethod
-    def create(*args, **kws):
-        """
-        Recomended way of 'overriding' the constructor.  Here we want to make
-        sure that all new Periods init their rcvrs correctly.
-        """
-        p = Period(**kws)
-        # don't save & init rcvrs unless you can
-        if not kws.has_key("session"):
-            # need the session first!
-            return p
-        p.save()
-        p.init_rcvrs_from_session()
-        return p
-            
     def end(self):
         "The period ends at start + duration"
         return self.start + timedelta(hours = self.duration)
@@ -74,121 +59,6 @@ class Period(models.Model):
     def isCompleted(self):
         return self.state.abbreviation == 'C'
 
-    def init_from_post(self, fdata, tz):
-        self.from_post(fdata, tz)
-
-    def update_from_post(self, fdata, tz):
-        self.from_post(fdata, tz)
-        # TBF: should we do this?
-        if self.accounting is not None:
-            self.accounting.update_from_post(fdata)
-
-    def from_post(self, fdata, tz):
-
-        # only update the score if something in the period has changed
-        update_score = False
-        if not update_score:
-            update_score = self.id is None
-        # if newly created then start with a default of zero
-        if update_score:
-            self.score = 0.0
-            self.forecast = TimeAgent.quarter(datetime.utcnow())
-        handle = fdata.get("handle", "")
-        if handle:
-            new_session = self.handle2session(handle)
-            if not update_score:
-                update_score = self.session != new_session
-            self.session = new_session
-        else:
-            try:
-                maintenance = first(Project.objects.filter(pcode='Maintenance'))
-                self.session = first(Sesshun.objects.filter(project=maintenance))
-            except:
-                self.session  = Sesshun.objects.get(id=fdata.get("session", 1))
-        now           = TimeAgent.quarter(datetime.utcnow())
-        date          = fdata.get("date", None)
-        time          = fdata.get("time", "00:00")
-        if date is None:
-            self.start = now
-        else:
-            new_start = TimeAgent.quarter(strStr2dt(date, time + ':00'))
-            if tz == 'ET':
-                new_start = TimeAgent.est2utc(self.start)
-            if not update_score:
-                update_score = self.start != new_start
-            self.start = new_start
-        new_duration = TimeAgent.rndHr2Qtr(float(fdata.get("duration", "1.0")))
-        if not update_score:
-            update_score = self.duration != new_duration
-        self.duration = new_duration
-        scorer = Score()
-        if update_score and now < self.start:
-            self.score = scorer.session(self.session.id
-                                       , self.start
-                                       , self.duration)
-            self.forecast = TimeAgent.quarter(datetime.utcnow())
-        else:
-            scorer.clear()
-        self.backup   = True if fdata.get("backup", None) == 'true' else False
-        stateAbbr = fdata.get("state", "P")
-        self.state = first(Period_State.objects.filter(abbreviation=stateAbbr))
-        self.moc_ack = fdata.get("moc_ack", self.moc_ack)
-
-        # how to initialize scheduled time? when they get published!
-        # so, only create an accounting object if it needs it.
-        if self.accounting is None:
-            pa = Period_Accounting(scheduled = 0.0)
-            pa.save()
-            self.accounting = pa
-
-        self.save()
-
-        # now that we have an id (from saving), we can specify the relation
-        # between this period and assocaited rcvrs
-        self.update_rcvrs_from_post(fdata)
-
-    def update_rcvrs_from_post(self, fdata):
-
-        # clear them out
-        rps = Period_Receiver.objects.filter(period = self)
-        for rp in rps:
-            rp.delete()
-
-        # insert the new ones: what are they?
-        rcvrStr = fdata.get("receivers", "")
-        if rcvrStr == "":
-            # use the sessions receivers - this will happen on init
-            if self.session is not None:
-                rcvrAbbrs = self.session.rcvrs_specified()
-            else:
-                rcvrAbbrs = []
-        else:    
-            rcvrAbbrs = rcvrStr.split(",")
-
-        # now that we have their names, put them in the DB    
-        for r in rcvrAbbrs:
-            rcvr = first(Receiver.objects.filter(abbreviation = r.strip()))
-            if rcvr is not None:
-                rp = Period_Receiver(receiver = rcvr, period = self)
-                rp.save()
-            
-    def init_rcvrs_from_session(self):
-        "Use the session's rcvrs for the ones associated w/ this period."
-        if self.session is None:
-            return
-        rcvrAbbrs = self.session.rcvrs_specified()
-        for r in rcvrAbbrs:
-            rcvr = first(Receiver.objects.filter(abbreviation = r.strip()))
-            if rcvr is not None:
-                rp = Period_Receiver(receiver = rcvr, period = self)
-                rp.save()
-
-    def handle2session(self, h):
-        n, p = h.rsplit('(', 1)
-        name = n.strip()
-        pcode, _ = p.split(')', 1)
-        return Sesshun.objects.filter(project__pcode__exact=pcode).get(name=name)
-
     def toHandle(self):
         if self.session.original_id is None:
             original_id = ""
@@ -207,39 +77,6 @@ class Period(models.Model):
               , "start": self.start.isoformat()
               , "end"  : end.isoformat()
         }
-
-    def jsondict(self, tz, cscore):
-        start = self.start if tz == 'UTC' else TimeAgent.utc2est(self.start)
-        w = self.get_window()
-        js =   {"id"           : self.id
-              , "session"      : self.session.jsondict()
-              , "handle"       : self.toHandle()
-              , "stype"        : self.session.session_type.type[0].swapcase()
-              , "date"         : d2str(start)
-              , "time"         : t2str(start)
-              , "lst"          : str(TimeAgent.dt2tlst(self.start))
-              , "duration"     : self.duration
-              , "sscore"       : self.score       # scheduling score
-              , "cscore"       : cscore           # current score
-              , "forecast"     : dt2str(self.forecast)
-              , "backup"       : self.backup
-              , "moc_ack"      : self.moc_ack
-              , "state"        : self.state.abbreviation
-              , "windowed"     : True if w is not None else False
-              , "wdefault"     : self.is_windowed_default() \
-                                     if w is not None else None
-              , "wstart"       : d2str(w.start_date) if w is not None else None
-              , "wend"         : d2str(w.last_date()) if w is not None else None
-              , "receivers"    : self.get_rcvrs_json()
-                }
-        # include the accounting but keep the dict flat
-        if self.accounting is not None:
-            accounting_js = self.accounting.jsondict()
-            # make sure the final jsondict has only one 'id'
-            accounting_id = accounting_js.pop('id')
-            accounting_js.update({'accounting_id' : accounting_id})
-            js.update(accounting_js)
-        return js
 
     def get_rcvr_ranges(self):
         ranges = ["%5.2f - %5.2f".strip() % (r.freq_low, r.freq_hi) for r in self.receivers.all()]
@@ -267,8 +104,8 @@ class Period(models.Model):
            self.end() < datetime.utcnow():
             return True
 
-        url = ANTIOCH_SERVER_URL + \
-              "/moc?session_id=" + \
+        url = "%s:%d/" % (ANTIOCH_HOST, PROXY_PORT) + \
+              "moc?session_id=" + \
               `self.session.id` + \
               "&start=" + \
               self.start.isoformat().replace("T", "+").replace(":", "%3A")
@@ -277,6 +114,7 @@ class Period(models.Model):
             moc = json.loads(antioch_cnn.read(0x4000))['moc']
         except:
             moc = True
+            raise
 
         return moc
 
@@ -305,6 +143,28 @@ class Period(models.Model):
             return False # Receiver isn't up
         else:
             return True # Receiver is up
+
+    def has_observed_rcvrs_in_schedule(self):
+
+
+        #obs_rcvrs = [r.abbreviation for r in self.receivers.all()]
+        obs_rcvrs = self.receivers.all()
+
+        schedule = Receiver_Schedule.extract_schedule(self.start, 0)
+        if schedule == {} or \
+           (len(schedule.values()) == 1 and schedule.values()[0] == []):
+            return False # no schedule, no required rcvrs!
+
+        # should return a single date w/ rcvr list
+        items = schedule.items()
+        assert len(items) == 1
+        dt, receivers = items[0]
+
+        for r in obs_rcvrs:
+            if r not in receivers:
+                return False # Receiver isn't up
+
+        return True # Receiver is up
 
     def move_to_deleted_state(self):
         "all in the name"
@@ -417,11 +277,13 @@ class Period(models.Model):
         can overlap into the first day.
         """
         # TBF: why doesn't ps.query.group_by = ['start'] work?
-        day_before = begin - timedelta(days = 1)
-        ps = Period.objects.filter(start__gt = day_before
+        ps = Period.objects.filter(start__gt = begin - timedelta(days = 1)
                                  , start__lt = end).order_by('start')
+        ps = [p for p in ps if p.end() >= begin]
+
         if ignore_deleted:                      
             ps = [p for p in ps if p.state.abbreviation != 'D']
+
         return ps
 
     @staticmethod
@@ -454,10 +316,3 @@ class Period(models.Model):
             w.reconcile()
             w.save()
 
-class Period_Receiver(models.Model):
-    period   = models.ForeignKey(Period)
-    receiver = models.ForeignKey(Receiver)
-
-    class Meta:
-        db_table  = "periods_receivers"
-        app_label = "sesshuns"

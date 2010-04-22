@@ -1,12 +1,48 @@
-from datetime            import datetime, timedelta
-from sesshuns.models     import *
-from utilities.TimeAgent import dtDiffHrs, quarter
-from utilities           import Score
+from datetime              import datetime, timedelta
+from sesshuns.models       import *
+from sesshuns.httpadapters import PeriodHttpAdapter
+from utilities.TimeAgent   import dtDiffHrs, quarter
+from utilities             import Score
 
 class ScheduleTools(object):
 
     def __init__(self):
         self.score = Score()
+        
+        # Scheduling Range == 0:00 (TIMEZONE) of the first day specified to
+        # 8 AM EST of the last day specified
+        #self.schedulingStart = 8 # EST
+        self.schedulingEnd   = 8 # EST
+
+    def getUTCHour(self, dt, estHour):
+        dtEst = datetime(dt.year, dt.month, dt.day, estHour)
+        dtUtc = TimeAgent.est2utc(dtEst)
+        return dtUtc.hour
+        
+    def getSchedulingRange(self, firstDay, timezone, days):
+        """
+        Converts given time range (start dt, days) to 'scheduling range' 
+        (start dt, minutes)
+        """
+
+        startHour = 0 if timezone == 'UTC' else self.getUTCHour(firstDay, 0)
+        start = datetime(firstDay.year
+                       , firstDay.month
+                       , firstDay.day
+                       , startHour
+                        )
+
+        lastDay = firstDay + timedelta(days = days)
+
+        end   = datetime(lastDay.year
+                       , lastDay.month
+                       , lastDay.day
+                       , self.getUTCHour(lastDay, self.schedulingEnd)
+                        )
+
+        duration = TimeAgent.dtDiffMins(end, start)
+
+        return (start, duration)
 
     def changeSchedule(self, start, duration, sesshun, reason, desc):
         """
@@ -38,6 +74,11 @@ class ScheduleTools(object):
         ps = Period.get_periods(start, duration_mins)
         if debug:
             print "len(ps): ", len(ps)
+
+        scheduledPeriods = [p for p in ps if p.state.abbreviation == 'S']
+        if len(scheduledPeriods) != len(ps):
+            msg = "All affected Periods must be in the Scheduled State"
+            return (False, msg)
 
         # first, adjust each of the affected periods - including time accnting
         end = start + timedelta(hours = duration)
@@ -81,7 +122,7 @@ class ScheduleTools(object):
                                                )
                 accounting.save()                             
                 pending = first(Period_State.objects.filter(abbreviation = 'P'))
-                period_2cd_half = Period.create(session  = p.session
+                period_2cd_half = PeriodHttpAdapter.create(session  = p.session
                                        , start    = end
                                        , duration = new_dur
                                        , state    = pending
@@ -127,7 +168,7 @@ class ScheduleTools(object):
                                  , description  = "") #description)
             pa.save()   
             scheduled = first(Period_State.objects.filter(abbreviation = 'S'))
-            p = Period.create(session    = sesshun
+            p = PeriodHttpAdapter.create(session    = sesshun
                      , start      = start
                      , duration   = duration
                      , score      = 0.0
@@ -140,6 +181,8 @@ class ScheduleTools(object):
 
         # in all cases, give the description of entire event:
         self.assignDescriptions(descDct, descHead, desc)
+
+        return (True, None)
 
     def assignDescriptions(self, descDct, descHead, desc):
         """

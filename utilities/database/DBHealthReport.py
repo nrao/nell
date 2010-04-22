@@ -42,7 +42,7 @@ def check_maintenance_and_rcvrs():
         # of these, is any one of them a maintenance?
         if len([p for p in periods if p.session.project.is_maintenance()]) == 0:
             bad.append(dt.date())
-    return sorted(Set(bad))
+    return sorted(Set(bad))[1:] # Remove start of DSS
 
 def print_values(file, values):
     if values == []:
@@ -285,15 +285,6 @@ def sessions_with_null_or_multiple_targets():
     return s
 
 ######################################################################
-# Sessions with NULL frequency
-######################################################################
-
-def sessions_with_null_frequency():
-    ss = Sesshun.objects.all()
-    s = ss.filter(frequency = None)
-    return s
-
-######################################################################
 # Sessions with bad targets.  A bad target is defined as a session
 # that has just 1 target, but said target is missing ra and/or dec.
 ######################################################################
@@ -462,8 +453,10 @@ def GenerateReport():
         for s in sessions if ta.getTime("observed", s) < 0.0]
     print_values(outfile, values)
 
-    outfile.write("\n\nSessions without recievers:")
-    values = [s.name for s in sessions if len(s.receiver_list()) == 0]
+    outfile.write("\n\nSessions without receivers:")
+    values = [s.name for s in sessions \
+              if len(s.receiver_list()) == 0 and \
+                 s.project.pcode not in ("Maintenance", "Shutdown")]
     print_values(outfile, values)
 
     outfile.write("\n\nOpen sessions with default frequency 0:")
@@ -515,8 +508,22 @@ def GenerateReport():
     values = [str(s) for s in check_maintenance_and_rcvrs()]
     print_values(outfile, values)
 
+    outfile.write("\n\nPeriods which have been observed when none of their receivers were up:")
+    start = datetime(2009, 10, 10) # don't bother looking before this
+    end = datetime.utcnow() - timedelta(days=1) # leave a day buffer
+    obs_ps = [p for p in periods if p.start > start and p.start < end \
+        and p.session.name not in ['Shutdown', 'Maintenance']]
+    bad_ps = [p for p in obs_ps if not p.has_observed_rcvrs_in_schedule()]
+    values = ["%s, %s" % (p.__str__(), p.receiver_list()) for p in bad_ps]
+    print_values(outfile, values)
+
     outfile.write("\n\nSessions for which periods are scheduled when none of their receivers are up:")
-    values = [p.__str__() for p in periods if not p.has_required_receivers() and p.session.project.pcode not in ("Maintenance", "Shutdown")]
+    now = datetime.utcnow()
+    future_ps = [p for p in periods if p.start > now \
+        and p.session.name not in ['Shutdown', 'Maintenance']]
+    bad_ps = [p for p in future_ps if not p.has_required_receivers()]
+    values = ["%s, %s" % (p.__str__(), p.session.receiver_list_simple()) \
+        for p in bad_ps]
     print_values(outfile, values)
 
     outfile.write("\n\nProjects that contain non-unique session names:")
@@ -606,8 +613,7 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nSessions with frequency == NULL:")
-    values = sessions_with_null_frequency()
-    print_values(outfile, values)
+    print_values(outfile, Sesshun.objects.filter(frequency = None))
 
     outfile.write("\n\nSessions with NULL RA and/or DEC:")
     values = sessions_with_bad_target()

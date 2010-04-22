@@ -3,12 +3,13 @@ from django.http              import HttpResponse, HttpResponseRedirect
 
 from NellResource import NellResource
 from sesshuns.models       import Project, first
+from sesshuns.httpadapters import ProjectHttpAdapter
 
 import simplejson as json
 
 class ProjectResource(NellResource):
     def __init__(self, *args, **kws):
-        super(ProjectResource, self).__init__(Project, *args, **kws)
+        super(ProjectResource, self).__init__(Project, ProjectHttpAdapter, *args, **kws)
 
     def create(self, request, *args, **kws):
         return super(ProjectResource, self).create(request, *args, **kws)
@@ -60,13 +61,13 @@ class ProjectResource(NellResource):
             limit    = int(request.GET.get("limit", 50))
             projects = projects[offset:offset+limit]
             return HttpResponse(json.dumps(dict(total = total
-                                              , projects = [p.jsondict() for p in projects]))
+                                              , projects = [ProjectHttpAdapter(p).jsondict() for p in projects]))
                               , content_type = "application/json")
         else:
             # one, identified by id
             p_id = args[0]
             proj = first(Project.objects.filter(id = p_id))
-            return HttpResponse(json.dumps(dict(project = proj.jsondict()))
+            return HttpResponse(json.dumps(dict(project = ProjectHttpAdapter(proj).jsondict()))
                               , content_type = "application/json")
 
 

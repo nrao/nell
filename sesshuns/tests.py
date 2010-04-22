@@ -8,6 +8,7 @@ import simplejson as json
 import lxml.etree as et
 import MySQLdb as mysql
 
+from httpadapters                    import *
 from models                          import *
 from test_utils.NellTestCase         import NellTestCase
 from tools                           import DBReporter
@@ -44,7 +45,8 @@ def create_sesshun():
     "Utility method for creating a Sesshun to test."
 
     s = Sesshun()
-    s.set_base_fields(fdata)
+    s_adapter = SessionHttpAdapter(s)
+    s_adapter.set_base_fields(fdata)
     allot = Allotment(psc_time          = float(fdata.get("PSC_time", 0.0))
                     , total_time        = float(fdata.get("total_time", 0.0))
                     , max_semester_time = float(fdata.get("sem_time", 0.0))
@@ -85,8 +87,8 @@ class TestUser(NellTestCase):
                , "sem_time"   : "10.0"
                , "grade"      : "4.0"
         }
-        self.project.update_from_post(pdata)
-        self.project.save()
+        adapter = ProjectHttpAdapter(self.project)
+        adapter.update_from_post(pdata)
 
         obsRole = first(Role.objects.filter(role = "Observer"))
 
@@ -204,7 +206,7 @@ class TestWindow(NellTestCase):
                                    , accounting = pa
                                    )
         self.default_period.save()    
-        pjson = self.default_period.jsondict('UTC', 1.1)
+        pjson = PeriodHttpAdapter(self.default_period).jsondict('UTC', 1.1)
         self.fdata = {"session":  1
                     , "start":    "2009-06-01"
                     , "duration": 7
@@ -216,7 +218,8 @@ class TestWindow(NellTestCase):
 
     def test_update_from_post(self):
         w = Window()
-        w.init_from_post(self.fdata)
+        adapter = WindowHttpAdapter(w)
+        adapter.init_from_post(self.fdata)
        
         self.assertEqual(w.session, self.sesshun)
         self.assertEqual(w.start_date, date(2009, 6, 1))
@@ -240,12 +243,14 @@ class TestWindow(NellTestCase):
 
         w.save()
 
-        jd = w.jsondict()
+        adapter = WindowHttpAdapter(w)
+
+        jd = adapter.jsondict()
 
         self.assertEqual(jd["duration"], dur)
         self.assertEqual(jd["start"], startStr)
         self.assertEqual(jd["end"], endStr)
-        self.assertEqual(jd["session"], self.sesshun.jsondict())
+        self.assertEqual(jd["session"], SessionHttpAdapter(self.sesshun).jsondict())
         self.assertEqual(jd["choosen_period"], None)
 
         w.delete()
@@ -347,9 +352,9 @@ class TestPeriod(NellTestCase):
     def test_create(self):
         
         # make sure the sesshun has some rcvrs
-        self.sesshun.save_receivers("L")
+        SessionHttpAdapter(self.sesshun).save_receivers("L")
 
-        p = Period.create(session = self.sesshun
+        p = PeriodHttpAdapter.create(session = self.sesshun
                         , start = datetime(2009, 10, 1)
                         , duration = 10.0
                         )
@@ -360,7 +365,8 @@ class TestPeriod(NellTestCase):
 
     def test_update_from_post(self):
         p = Period()
-        p.init_from_post(self.fdata, 'UTC')
+        adapter = PeriodHttpAdapter(p)
+        adapter.init_from_post(self.fdata, 'UTC')
         
         self.assertEqual(p.session, self.sesshun)
         self.assertEqual(p.start, datetime(2009, 6, 1, 12, 15))
@@ -394,7 +400,7 @@ class TestPeriod(NellTestCase):
         pr = Period_Receiver(period = p, receiver = X)
         pr.save()
 
-        jd = p.jsondict('UTC', 1.1)
+        jd = PeriodHttpAdapter(p).jsondict('UTC', 1.1)
 
         self.assertEqual(jd["duration"], dur)
         self.assertEqual(jd["date"], "2009-06-01")
@@ -544,7 +550,7 @@ class TestPeriod(NellTestCase):
             p.delete()
 
     def test_has_required_receivers(self):
-        p = Period.create(session = self.sesshun
+        p = PeriodHttpAdapter.create(session = self.sesshun
                         , start = datetime(2009, 11, 1)
                         , duration = 10.0
                         )
@@ -553,7 +559,7 @@ class TestPeriod(NellTestCase):
         self.assertEquals(False, p.has_required_receivers())
 
         # Make sure the sesshun has some rcvrs
-        self.sesshun.save_receivers("S")
+        SessionHttpAdapter(self.sesshun).save_receivers("S")
 
         # No schedule yet.
         self.assertEquals(False, p.has_required_receivers())
@@ -570,10 +576,50 @@ class TestPeriod(NellTestCase):
         # Make sure the sesshun has a receiver on the schedule.
         rg = Receiver_Group.objects.filter(session = self.sesshun)[0]
         rg.delete()
-        self.sesshun.save_receivers("L")
+        SessionHttpAdapter(self.sesshun).save_receivers("L")
 
         # Receiver now on schedule.
         self.assertEquals(True, p.has_required_receivers())
+
+    def test_has_observed_rcvrs_in_schedule(self):
+        p = PeriodHttpAdapter.create(session = self.sesshun
+                        , start = datetime(2009, 11, 1)
+                        , duration = 10.0
+                        )
+
+        # No receivers for the session yet.
+        self.assertEquals(False, p.has_observed_rcvrs_in_schedule())
+
+        # Make sure the period has some rcvrs
+        #self.sesshun.save_receivers("S")
+        adapter = PeriodHttpAdapter(p)
+        adapter.update_rcvrs_from_post({"receivers" : "S"})
+
+        # No schedule yet.
+        self.assertEquals(False, p.has_observed_rcvrs_in_schedule())
+
+        # Make a schedule.
+        rs = Receiver_Schedule()
+        rs.start_date = p.start
+        rs.receiver   = Receiver.objects.filter(abbreviation = "L")[0]
+        rs.save()
+
+        # Receiver still not up on schedule yet.
+        self.assertEquals(False, p.has_observed_rcvrs_in_schedule())
+
+        # Make sure the period observed w/ a receiver on the schedule.
+        #rg = Receiver_Group.objects.filter(session = self.sesshun)[0]
+        #rg.delete()
+        #self.sesshun.save_receivers("L")
+        adapter.update_rcvrs_from_post({"receivers" : "L"})
+
+        # Receiver now on schedule.
+        self.assertEquals(True, p.has_observed_rcvrs_in_schedule())
+
+        # now insist that the period observed w/ two rcvrs, one of which
+        # was *not* on the schedule - should return false
+        adapter.update_rcvrs_from_post({"receivers" : "L, S"})
+        self.assertEquals(False, p.has_observed_rcvrs_in_schedule())
 
 class TestReceiver(NellTestCase):
 
@@ -581,7 +627,8 @@ class TestReceiver(NellTestCase):
         super(TestReceiver, self).setUp()
         self.client = Client()
         s = Sesshun()
-        s.init_from_post({})
+        adapter = SessionHttpAdapter(s)
+        adapter.init_from_post({})
         s.save()
 
     def test_get_abbreviations(self):
@@ -592,17 +639,18 @@ class TestReceiver(NellTestCase):
     def test_save_receivers(self):
         s = Sesshun.objects.all()[0]
         rcvr = ''
-        s.save_receivers(rcvr)
+        adapter = SessionHttpAdapter(s)
+        adapter.save_receivers(rcvr)
         rgs = s.receiver_group_set.all()
         self.assertEqual(0, len(rgs))
         rcvr = 'L'
-        s.save_receivers(rcvr)
+        adapter.save_receivers(rcvr)
         rgs = s.receiver_group_set.all()
         self.assertEqual(1, len(rgs))
         self.assertEqual(rcvr, rgs[0].receivers.all()[0].abbreviation)
 
         s.receiver_group_set.all().delete()
-        s.save_receivers('L | (X & S)')
+        adapter.save_receivers('L | (X & S)')
         rgs = s.receiver_group_set.all()
         #print rgs
         # TBF WTF? now it is S, then it is X??
@@ -710,6 +758,7 @@ class TestReceiverSchedule(NellTestCase):
                                    {"startdate" : startdate,
                                     "duration" : 7})
         self.failUnlessEqual(response.status_code, 200)
+        #expected = '{"diff": [{"down": [], "up": ["RRI", "342", "450"], "day": "04/06/2009"}, {"down": ["RRI"], "up": ["600"], "day": "04/11/2009"}], "receivers": ["RRI", "342", "450", "600", "800", "1070", "L", "S", "C", "X", "Ku", "K", "Ka", "Q", "MBA", "Z", "Hol", "KFPA"], "maintenance": [{"wdefault": null, "wstart": null, "handle": "Maintenance (GBT-M09A) 0", "wend": null, "state": "", "moc_ack": false, "windowed": false, "sscore": null, "cscore": 0.0, "duration": 6.0, "lst": "09:10:57", "session": {"grade": 4.0, "nighttime": false, "transit": false, "sem_time": 100.5, "lst_ex": "", "id": 1, "pcode": "GBT-M09A", "authorized": false, "type": "open", "remaining": 100.5, "total_time": 100.5, "complete": false, "project_complete": "No", "PSC_time": 100.5, "name": "Maintenance", "science": "radar", "orig_ID": 0, "enabled": false, "xi_factor": 1.0, "receiver": "", "backup": false}, "time": "00:00", "date": "2009-04-30", "receivers": "", "forecast": null, "backup": false, "id": 1, "stype": "O"}], "schedule": {"04/11/2009": ["342", "450", "600"], "04/06/2009": ["RRI", "342", "450"]}}'
         expected = '{"diff": [{"down": [], "up": ["RRI", "342", "450"], "day": "04/06/2009"}, {"down": ["RRI"], "up": ["600"], "day": "04/11/2009"}], "receivers": ["RRI", "342", "450", "600", "800", "1070", "L", "S", "C", "X", "Ku", "K", "Ka", "Q", "MBA", "Z", "Hol", "KFPA"], "maintenance": [], "schedule": {"04/11/2009": ["342", "450", "600"], "04/06/2009": ["RRI", "342", "450"]}}'
 
         self.assertEqual(expected, response.content)
@@ -966,6 +1015,7 @@ class TestProject(NellTestCase):
         super(TestProject, self).setUp()
 
         self.project = Project()
+        self.project_adapter = ProjectHttpAdapter(self.project)
         pdata = {"semester"   : "09A"
                , "type"       : "science"
                , "total_time" : "10.0"
@@ -975,8 +1025,7 @@ class TestProject(NellTestCase):
                , "notes"      : "notes"
                , "schd_notes" : "scheduler's notes"
         }
-        self.project.update_from_post(pdata)
-        self.project.save()
+        self.project_adapter.update_from_post(pdata)
 
         # Create Investigator1 and his 3 blackouts.
         self.user1 = User(sanctioned = True
@@ -1009,8 +1058,8 @@ class TestProject(NellTestCase):
                , 'duration' : 1.0
                , 'backup'   : False}
         self.period = Period()
-        self.period.init_from_post(fdata, 'UTC')
-        self.period.save()
+        self.period_adapter = PeriodHttpAdapter(self.period)
+        self.period_adapter.init_from_post(fdata, 'UTC')
 
     def tearDown(self):
         self.investigator2.delete()
@@ -1234,7 +1283,7 @@ class TestProject(NellTestCase):
         # No available receivers at these times: 
         expected = [(datetime(2009, 4, 1), datetime(2009, 4, 11))
                   , (datetime(2009, 5, 1), None)]
-        self.sesshun.save_receivers('L | (X & S)')
+        SessionHttpAdapter(self.sesshun).save_receivers('L | (X & S)')
 
         blackouts = self.project.get_receiver_blackout_ranges(start, end)
         self.assertEquals(expected, blackouts)
@@ -1243,7 +1292,7 @@ class TestProject(NellTestCase):
         # No available receivers at these times: 
         expected = [(datetime(2009, 4, 1), datetime(2009, 4, 26))
                   , (datetime(2009, 5, 1), datetime(2009, 5, 6))]
-        self.sesshun.save_receivers('K | (X & S)')
+        SessionHttpAdapter(self.sesshun).save_receivers('K | (X & S)')
 
         blackouts = self.project.get_receiver_blackout_ranges(start, end)
         self.assertEquals(expected, blackouts)
@@ -1251,14 +1300,14 @@ class TestProject(NellTestCase):
 
         # No available receivers at these times: 
         expected = [(datetime(2009, 4, 11), None)]
-        self.sesshun.save_receivers('600')
+        SessionHttpAdapter(self.sesshun).save_receivers('600')
 
         blackouts = self.project.get_receiver_blackout_ranges(start, end)
         self.assertEquals(expected, blackouts)
         self.sesshun.receiver_group_set.all().delete()
 
         # Always an available receiver.
-        self.sesshun.save_receivers('(800 | S) | Ku')
+        SessionHttpAdapter(self.sesshun).save_receivers('(800 | S) | Ku')
 
         blackouts = self.project.get_receiver_blackout_ranges(start, end)
         self.assertEquals([], blackouts)
@@ -1286,8 +1335,8 @@ class TestProject(NellTestCase):
                , "notes"      : "notes"
                , "schd_notes" : "scheduler's notes"
         }
-        otherproject.update_from_post(pdata)
-        otherproject.save()
+        adapter = ProjectHttpAdapter(otherproject)
+        adapter.update_from_post(pdata)
 
         othersesshun = create_sesshun()
         othersesshun.project = otherproject
@@ -1299,7 +1348,8 @@ class TestProject(NellTestCase):
                , 'duration' : 1.0
                , 'backup'   : False}
         otherperiod = Period()
-        otherperiod.init_from_post(fdata, 'UTC')
+        adapter = PeriodHttpAdapter(otherperiod)
+        adapter.init_from_post(fdata, 'UTC')
         otherperiod.state = Period_State.objects.filter(abbreviation = 'S')[0]
         otherperiod.save()
 
@@ -1333,7 +1383,8 @@ class TestProject(NellTestCase):
                , "notes"      : "notes"
                , "schd_notes" : "scheduler's notes"
         }
-        otherproject.update_from_post(pdata)
+        project_adapter = ProjectHttpAdapter(otherproject)
+        project_adapter.update_from_post(pdata)
         otherproject.save()
 
         othersesshun = create_sesshun()
@@ -1346,7 +1397,8 @@ class TestProject(NellTestCase):
                , 'duration' : 1.0
                , 'backup'   : False}
         otherperiod = Period()
-        otherperiod.init_from_post(fdata, 'UTC')
+        period_adapter = PeriodHttpAdapter(otherperiod)
+        period_adapter.init_from_post(fdata, 'UTC')
         otherperiod.state = Period_State.objects.filter(abbreviation = 'S')[0]
         otherperiod.save()
 
@@ -1361,7 +1413,8 @@ class TestProject(NellTestCase):
                , 'duration' : 30.0
                , 'backup'   : False}
         anotherperiod = Period()
-        anotherperiod.init_from_post(fdata, 'UTC')
+        period_adapter.load(anotherperiod)
+        period_adapter.init_from_post(fdata, 'UTC')
         anotherperiod.state = Period_State.objects.filter(abbreviation = 'S')[0]
         anotherperiod.save()
 
@@ -1387,15 +1440,17 @@ class TestProject(NellTestCase):
     def test_init_from_post(self):
         p1 = Project()
         p2 = Project()
-        self.gitrdone(p1, p1.init_from_post, p2, p2.init_from_post)
+        self.gitrdone(p1, ProjectHttpAdapter(p1).init_from_post
+                    , p2, ProjectHttpAdapter(p2).init_from_post)
 
         p3 = Project()
-        p3.init_from_post({})
+        adapter = ProjectHttpAdapter(p3)
+        adapter.init_from_post({})
 
     def test_update_from_post(self):
         p1 = Project()
         p2 = Project()
-        self.gitrdone(p1, p1.update_from_post, p2, p2.update_from_post)
+        self.gitrdone(p1, ProjectHttpAdapter(p1).update_from_post, p2, ProjectHttpAdapter(p2).update_from_post)
 
     def gitrdone(self, p1, f1, p2, f2):
         "Mike was here."
@@ -1475,7 +1530,7 @@ class TestSesshun(NellTestCase):
     def test_init_from_post(self):
         s = Sesshun()
         fdata["receiver"] = "((K & Ku) & L)"
-        s.init_from_post(fdata)
+        SessionHttpAdapter(s).init_from_post(fdata)
         
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.target_set.get().source, fdata["source"])
@@ -1494,7 +1549,8 @@ class TestSesshun(NellTestCase):
     def test_update_from_post(self):
         ss = Sesshun.objects.all()
         s = Sesshun()
-        s.init_from_post(fdata)
+        adapter = SessionHttpAdapter(s)
+        adapter.init_from_post(fdata)
         
         self.assertEqual(s.frequency, fdata["freq"])
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
@@ -1513,7 +1569,7 @@ class TestSesshun(NellTestCase):
         ldata["lst_ex"] = "2.00-4.00"
         ldata["receiver"] = "(K & (X | (L | C)))"
         ldata["xi_factor"] = 1.76
-        s.update_from_post(ldata)
+        adapter.update_from_post(ldata)
         
         # now get this session from the DB
         ss = Sesshun.objects.all()
@@ -1536,7 +1592,8 @@ class TestSesshun(NellTestCase):
     def test_update_from_post2(self):
         ss = Sesshun.objects.all()
         s = Sesshun()
-        s.init_from_post(fdata)
+        adapter = SessionHttpAdapter(s)
+        adapter.init_from_post(fdata)
         
         self.assertEqual(s.frequency, fdata["freq"])
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
@@ -1551,7 +1608,7 @@ class TestSesshun(NellTestCase):
         ldata["total_time"] = "99.9"
         ldata["orig_ID"] = "0.0"
         ldata["enabled"] = "true" 
-        s.update_from_post(ldata)
+        adapter.update_from_post(ldata)
         
         # now get this session from the DB
         ss = Sesshun.objects.all()
@@ -1643,7 +1700,8 @@ class TestPeriodResource(NellTestCase):
                     , 'duration' : 1.0
                     , 'backup'   : True}
         self.p = Period()
-        self.p.init_from_post(self.fdata, 'UTC')
+        adapter = PeriodHttpAdapter(self.p)
+        adapter.init_from_post(self.fdata, 'UTC')
         self.p.save()
 
     # Requires antioch server
@@ -1719,7 +1777,7 @@ class TestProjectResource(NellTestCase):
                     , 'sem_time'   : '50.0'
                       }
         self.p = Project()
-        self.p.init_from_post(self.fdata)
+        ProjectHttpAdapter(self.p).init_from_post(self.fdata)
         self.p.save()
 
     def test_create(self):
@@ -1759,7 +1817,7 @@ class TestSessionResource(NellTestCase):
         super(TestSessionResource, self).setUp()
         self.client = Client()
         s = Sesshun()
-        s.init_from_post({})
+        SessionHttpAdapter(s).init_from_post({})
         s.save()
         self.s = s
 
@@ -1924,7 +1982,8 @@ class TestInvestigatorResource(NellTestCase):
                  , 'sem_time'   : '50.0'
                    }
         self.p = Project()
-        self.p.init_from_post(p_fdata)
+        p_adapter = ProjectHttpAdapter(self.p)
+        p_adapter.init_from_post(p_fdata)
         self.p.save()
 
         self.users = []
@@ -2053,7 +2112,8 @@ class TestWindowResource(NellTestCase):
                                    , accounting = pa
                                    )
         self.default_period.save()                           
-        pjson = self.default_period.jsondict('UTC', 1.1)
+        p_adapter = PeriodHttpAdapter(self.default_period)
+        pjson = p_adapter.jsondict('UTC', 1.1)
         self.fdata = {"session":  self.sesshun.id
                     , "start":    "2010-01-01"
                     , "duration": 7
@@ -2064,8 +2124,8 @@ class TestWindowResource(NellTestCase):
                     , "default_state" : pjson['state'] 
                     }
         self.w = Window()
-        self.w.init_from_post(self.fdata)
-        self.w.save()
+        w_adapter = WindowHttpAdapter(self.w)
+        w_adapter.init_from_post(self.fdata)
 
     def tearDown(self):
         super(TestWindowResource, self).tearDown()
@@ -2271,9 +2331,11 @@ class TestPublishPeriods(NellTestCase):
         exp = [5.0, 0.0, 4.0]
         self.assertEquals(exp, [p.accounting.scheduled for p in ps])
 
-        time = self.ps[0].start.strftime("%Y-%m-%d %H:%M:%S")
+        # have to use the scheduling range
+        dt = self.ps[0].start - timedelta(days = 1)
+        time = dt.strftime("%Y-%m-%d %H:%M:%S")
         tz = "ET"
-        duration = 12
+        duration = 2 #12
         url = "/periods/publish"
 
         # Remember not to embarrass ourselves by tweeting! tweet == False
@@ -2331,9 +2393,11 @@ class TestPublishPeriods(NellTestCase):
         self.assertEquals(scheduled, w1.state())
         self.assertEquals(pending, w2.state())
 
-        time = w1.start_date.strftime("%Y-%m-%d %H:%M:%S")
+        # remeber that we publish using the scheduling range
+        dt = w1.start_date - timedelta(days = 1)
+        time = dt.strftime("%Y-%m-%d %H:%M:%S")
         tz = "ET"
-        duration = 12
+        duration = 13 #12
         url = "/periods/publish"
 
         # Remember not to embarrass ourselves by tweeting! tweet == False
@@ -2384,7 +2448,8 @@ class TestObservers(NellTestCase):
         self.client.login(username = "dss", password = "asdf5!")
         
         self.p = Project()
-        self.p.init_from_post({'semester'   : '09C'
+        adapter = ProjectHttpAdapter(self.p)
+        adapter.init_from_post({'semester'   : '09C'
                              , 'type'       : 'science'
                              , 'pcode'      : 'mike' 
                              , 'name'       : 'mikes awesome project!'
@@ -2392,7 +2457,6 @@ class TestObservers(NellTestCase):
                              , 'total_time' : '100.0'
                              , 'sem_time'   : '50.0'
                                })
-        self.p.save()
 
         i =  Investigator(project = self.p
                         , user    = self.u
@@ -2405,7 +2469,7 @@ class TestObservers(NellTestCase):
                      , 'source'   : 'testing'
                        })
         self.s = Sesshun()
-        self.s.init_from_post(fdata2)
+        SessionHttpAdapter(self.s).init_from_post(fdata2)
         self.s.project = self.p
         self.s.save()
 
@@ -3147,6 +3211,50 @@ class TestScheduleTools(NellTestCase):
             p.remove() #delete()
 
 
+    def test_getSchedulingRange(self):
+
+        # scheduling range is 0:00 of timezone of first day
+        # to the last day at 8:00 EST 
+
+        # test it in winter time
+        dt = datetime(2010, 1, 1)
+        days = 2
+        expStart = datetime(2010, 1, 1, 0)
+        expEnd   = datetime(2010, 1, 3, 13)
+        expDur = TimeAgent.dtDiffMins(expStart, expEnd)
+
+        start, dur = ScheduleTools().getSchedulingRange(dt, 'UTC', days)
+        self.assertEquals(expStart, start)
+        self.assertEquals(expDur, dur)
+
+        # make sure it works in ET too
+        expStart = datetime(2010, 1, 1, 5)
+        expEnd   = datetime(2010, 1, 3, 13)
+        expDur = TimeAgent.dtDiffMins(expStart, expEnd)
+
+        start, dur = ScheduleTools().getSchedulingRange(dt, 'ET', days)
+        self.assertEquals(expStart, start)
+
+        # test it in summer time
+        dt = datetime(2010, 6, 10)
+        days = 3
+        expStart = datetime(2010, 6, 10, 0)
+        expEnd   = datetime(2010, 6, 13, 12)
+        expDur = TimeAgent.dtDiffMins(expStart, expEnd)
+
+        start, dur = ScheduleTools().getSchedulingRange(dt, 'UTC', days)
+        self.assertEquals(expStart, start)
+        self.assertEquals(expDur, dur)
+
+        # make sure it works in ET too
+        expStart = datetime(2010, 6, 10, 4)
+        expEnd   = datetime(2010, 6, 13, 12)
+        expDur = TimeAgent.dtDiffMins(expStart, expEnd)
+
+        start, dur = ScheduleTools().getSchedulingRange(dt, 'ET', days)
+        self.assertEquals(expStart, start)
+        self.assertEquals(expDur, dur)
+
     def test_changeSchedule1(self):
 
         # check accounting before changing schedule
@@ -3691,8 +3799,9 @@ class TestTimeAccounting(NellTestCase):
 
     def test_getTimeLeft(self):
 
+        # Project has no time allotted, and 5 + 3 + 4 = 12 hrs billed
         timeLeft = self.ta.getTimeLeft(self.project)
-        self.assertEqual(-3.0, timeLeft)
+        self.assertEqual(-12.0, timeLeft)
 
         names = ["one", "three", "two"]
         times = [-2.0, -1.0, 0.0]
@@ -3759,10 +3868,10 @@ class TestTimeAccounting(NellTestCase):
 
     def test_getTimeRemainingFromCompleted(self):
         remaining = self.ta.getTimeRemainingFromCompleted(self.project)
-        self.assertEqual(remaining, -3.0) # 9 - 12
+        self.assertEqual(remaining, -12.0) # 0 - 12
 
         remaining = self.ta.getTimeRemainingFromCompleted(self.ps[0].session)
-        self.assertEqual(remaining, -2.0) # 9 - 12
+        self.assertEqual(remaining, -2.0) # 3 - 5
 
     def test_jsondict(self):
 
