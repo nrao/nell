@@ -13,6 +13,7 @@ from utilities.FormatExceptionInfo import formatExceptionInfo, printException
 from utilities.FormatExceptionInfo import JSONExceptionInfo
 from utilities.Notifier            import Notifier
 from utilities.Email               import Email
+from utilities                     import Shelf
 from reversion                     import revision
 from httpadapters                  import PeriodHttpAdapter
 
@@ -546,6 +547,13 @@ def scheduling_email(request, *args, **kwds):
             notifier.notify()
         except:
             return JSONExceptionInfo()
+
+        # Remember when we did this
+        try:
+            Shelf()["publish_time"] = datetime.utcnow()
+            Shelf().sync()
+        except:
+            formatExceptionInfo()
 
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
