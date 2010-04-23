@@ -1788,6 +1788,19 @@ class TestProjectResource(NellTestCase):
         response = self.client.post('/projects')
         self.failUnlessEqual(response.status_code, 200)
 
+    def test_create_no_allotment(self):
+        # Get copy of fdata in local scope to modify for the purposes
+        # of this test.
+        fdata = self.fdata.copy()
+        fdata.update({'total_time' : ''
+                    , 'PSC_time'   : ''
+                    , 'sem_time'   : ''
+                    , 'grade'      : ''
+                      })
+
+        response = self.client.post('/projects', fdata)
+        self.failUnlessEqual(response.status_code, 200)
+
     def test_read(self):
         response = self.client.get('/projects')
         self.failUnlessEqual(response.status_code, 200)
