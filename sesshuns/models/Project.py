@@ -161,6 +161,9 @@ class Project(models.Model):
         sessions = [s for s in self.sesshun_set.all() if s.schedulable()]
         return True if sessions != [] else False
 
+    def isInvestigator(self, user):
+        return user.id in [i.user.id for i in self.investigator_set.all()]
+
     def get_observers(self):
         return [i for i in self.investigator_set.order_by('priority').all() \
                 if i.observer]

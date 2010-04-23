@@ -33,15 +33,6 @@
             <input type="text" name="search" />
             <input type="submit" value="Search" />
           </form>
-          <a href="http://twitter.com/grnbnktelescope" title="Follow us on Twitter! Get notified when the GBT schedule updates.">
-            <img src="/static/images/twitter.jpg" style="border: 0;" height=20 width=20 />
-          </a>
-          {% if not requestor.isOperator %}
-          <a href="/projects/ical" title="This link provides access to DSS events in the 'iCalendar' format.  To use this feature, right-click the 'ICAL' icon and select 'Copy Link Location'.  Then paste the link into your favorite iCalendar application.">
-            <img src="/static/images/ical.gif" style="border: 0;" />
-          </a>
-          <a href="/schedule/" title="This link provides access to the public GBT schedule.">GBT Schedule</a>
-          {% endif %}
         </td>
         <td style="text-align: right;">
           <span id="help" style="display: none; border-right: 10px solid white;">
@@ -54,11 +45,15 @@
               <img src="/static/images/chat_offline.gif" style="border: 0;" />
             </a>
           </span>
+          <a href="http://twitter.com/grnbnktelescope" title="Follow us on Twitter! Get notified when the GBT schedule updates.">
+            <img src="/static/images/twitter.jpg" style="border: 0;" height=20 width=20 />
+          </a> |
+          {% if not requestor.isOperator %}
+          <a href="/schedule/" title="This link provides access to the GBT schedule.">GBT Schedule</a> |
+          {% endif %}
           <a href="mailto:helpdesk-dss@gb.nrao.edu" class="top_menu" title="Click here to offer suggestions or report bugs">Helpdesk</a> |
           {% if not requestor.isOperator %}
             <a href="/profile" class="top_menu" title="Click here to return to your home profile page">My Home</a> |
-          {% else %}
-            <a href="/schedule/" title="Return to the schedule page">GBT Schedule</a> |
           {% endif %}
           <a href="/static/html/main.html" class="top_menu" title="GBT Dynamic Scheduling System documentation">Docs</a> |
           <a href="/accounts/logout/" class="top_menu" title="Click here to safely leave the current DSS login session">Logout</a>
