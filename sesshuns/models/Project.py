@@ -187,6 +187,11 @@ class Project(models.Model):
         sessions = [s for s in self.sesshun_set.all() if s.get_min_eff_tsys_factor() is not None and s.get_min_eff_tsys_factor() != 1.0]
         return sessions != []
 
+    def anyElevationLimits(self):
+        "Returns true if a single session has the El Limit obs param set."
+        sessions = [s for s in self.sesshun_set.all() if s.get_elevation_limit() is not None]
+        return sessions != []
+
     def anyCompleteSessions(self):
         "Returns true if a single session has been set as complete"
         sessions = [s for s in self.sesshun_set.all() if s.status.complete]

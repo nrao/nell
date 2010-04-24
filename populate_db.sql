@@ -149,3 +149,4 @@ INSERT INTO parameters VALUES (DEFAULT, 'Time Day', 'datetime');
 INSERT INTO parameters VALUES (DEFAULT, 'Transit', 'boolean');
 INSERT INTO parameters VALUES (DEFAULT, 'Transit Before', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Transit After', 'float');
+INSERT INTO parameters VALUES (DEFAULT, 'El Limit', 'float');

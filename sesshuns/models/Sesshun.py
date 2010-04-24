@@ -162,6 +162,13 @@ class Sesshun(models.Model):
         """
         return self.has_float_obs_param("Min Eff TSys")
 
+    def get_elevation_limit(self):
+        """
+        Returns factor if has 'El Limit' observing parameter,
+        else None.
+        """
+        return self.has_float_obs_param("El Limit")
+
     def transit(self):
         """
         Returns True or False if has 'Transit' observing parameter,

@@ -47,6 +47,9 @@
               {% if p.anyNonOneXiSessions %}
               <th title="Scaling factor applied to min effective Tsys to enable observations in degraded atmospheric conditions.">Xi</th>
               {% endif %}
+              {% if p.anyElevationLimits %}
+              <th title="Elevation Limit (degrees) overrides the Hour Angle Limit; enables observations at lower elevations regardless of efficiencies.">EL</th>
+              {% endif %}
             {% for s in sess %}
             <tr>
               <td>{{s.name}}</td>
@@ -81,6 +84,14 @@
                   <td>1.0</td>
                 {% endif %}
               {% endif %}
+              {% if p.anyElevationLimits %}
+                {% if s.get_elevation_limit %}
+                  <td>{{s.get_elevation_limit}}</td>
+                {% else %}
+                  <td></td>
+                {% endif %}
+              {% endif %}
+              
             <tr>
             {% endfor %}
           </table>
