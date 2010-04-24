@@ -30,6 +30,11 @@ class SessionResource(NellResource):
                 query_set = query_set.filter(
                     project__complete = (filterProjClp.lower() == "true"))
             
+            filterAuth= request.GET.get("filterAuth", None)
+            if filterAuth is not None:
+                query_set = query_set.filter(
+                    status__authorized = (filterAuth.lower() == "true"))
+
             filterClp= request.GET.get("filterClp", None)
             if filterClp is not None:
                 query_set = query_set.filter(
