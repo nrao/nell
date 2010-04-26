@@ -48,7 +48,7 @@
               <th title="Scaling factor applied to min effective Tsys to enable observations in degraded atmospheric conditions.">Xi</th>
               {% endif %}
               {% if p.anyElevationLimits %}
-              <th title="Elevation Limit (degrees) overrides the Hour Angle Limit; enables observations at lower elevations regardless of efficiencies.">EL</th>
+              <th title="Minimum elevation (degrees) considered for scheduling by the DSS.  Setting this value can be used to enable observations at low elevations.  You are seeing this column because you chose to override the DSS default. ">Min. Elev.</th>
               {% endif %}
             {% for s in sess %}
             <tr>
