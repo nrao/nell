@@ -48,7 +48,11 @@
 {% endblock %}
 {% block content %}
   <center>
-  <h1 class="loud">GBT Schedule</h1>
+  <h1 class="loud">GBT Schedule
+  <a href="/projects/ical" title="This link provides access to DSS events in the 'iCalendar' format.  To use this feature, right-click the 'ICAL' icon and select 'Copy Link Location'.  Then paste the link into your favorite iCalendar application.">
+    <img src="/static/images/ical.gif" style="border: 0;" />
+  </a>
+  </h1>
   <p>{{pubdate|date:"l F d, Y  f A T"}}<p>
   <form name="getCalendar" action="/schedule/" method="POST">
   <p>

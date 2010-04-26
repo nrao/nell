@@ -5,6 +5,7 @@ from django.http              import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts         import render_to_response
 from models                   import *
 from sets                     import Set
+from tools                    import IcalMap
 from utilities.TimeAgent      import EST, UTC
 from utilities                import gen_gbt_schedule, UserInfo, NRAOBosDB
 from utilities                import Shelf
@@ -495,9 +496,24 @@ def parse_datetime(request, dateName, timeName, utcOffset):
  
 @revision.create_on_success
 @login_required
+def observer_ical(request, *args, **kws):
+    u_id,     = args
+    user      = first(User.objects.filter(id = u_id))
+    requestor = get_requestor(request)
+
+    if user != requestor and not requestor.isAdmin():
+        return # Sorry, you can't see someone else's calendar.
+
+    response = HttpResponse(IcalMap(user).getSchedule())
+    response['Content-Type'] = 'text/calendar'
+    response['Content-Disposition'] = 'attachment; filename=GBTschedule.ics'
+    return response
+
+@revision.create_on_success
+@login_required
 def blackout(request, *args, **kws):
     u_id, = args
-    user      = first(User.objects.filter(id = u_id))
+    user  = first(User.objects.filter(id = u_id))
 
     requestor = get_requestor(request)
 
