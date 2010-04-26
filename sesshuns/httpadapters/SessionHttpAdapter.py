@@ -85,7 +85,6 @@ class SessionHttpAdapter (object):
         rc = ReceiverCompile(abbreviations)
         ands = rc.normalize(proposition)
         for ors in ands:
-            # TBF:  Caused recursive import during model separation
             rg = Receiver_Group(session = self.sesshun)
             rg.save()
             for rcvr in ors:
