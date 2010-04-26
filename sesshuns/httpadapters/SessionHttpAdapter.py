@@ -169,6 +169,14 @@ class SessionHttpAdapter (object):
         el limit float field into a 'El Limit' float observing parameter.
         """
         new_value = self.get_field(fdata, "el_limit", None, float)
+        # make sure it's in a legal range
+        if new_value is not None:
+            try:
+                fv = float(new_value)
+                if fv < 5.0 or fv > 90.0:
+                    return # value out of range
+            except:
+                return # nonsense value
         tp = Parameter.objects.filter(name="El Limit")[0]
         if old_value is None:
             if new_value and new_value != "":
