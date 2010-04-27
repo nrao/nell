@@ -62,8 +62,8 @@ class PeriodResource(NellResource):
             score   = self.score_period.periods([p_id]).get(p_id, 0.0)
             adapter = PeriodHttpAdapter(p)
             return HttpResponse(
-                json.dumps(dict(period  = adapter.jsondict(tz, score))
-                              , success = 'ok')
+                json.dumps(dict(period  = adapter.jsondict(tz, score)
+                              , success = 'ok'))
               , content_type = "application/json")
 
     @revision.create_on_success
