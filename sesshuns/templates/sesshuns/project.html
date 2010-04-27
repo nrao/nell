@@ -57,7 +57,7 @@
               <td>{{s|target_vert}}</td>
               <td>{{s.frequency}}</td>
               <td>{{s.receiver_list_simple}}</td>
-              <td>{{s.getTimeBilled}} / {{s.allotment.total_time}}</td>
+              <td>{{s|getTimeBilled}} / {{s.allotment.total_time}}</td>
               <td>{{s.min_duration}} - {{s.max_duration}}</td>
               <td>{{s.observing_type.type}}</td>
               <td>{% if s.status.authorized %}Yes{% endif %}</td>
@@ -242,9 +242,9 @@
               <dt>Thesis?</dt>
               <dd>{% if p.thesis %}Yes{% else %}No{% endif %}</dd>
               <dt>Total Time (Hrs)</dt>
-              <dd>{{ p.getSumTotalTime }}</dd>
+              <dd>{{ p|getSumTotalTime }}</dd>
               <dt>Time Billed (Hrs)</dt>
-              <dd>{{ p.getTimeBilled }}</dd>
+              <dd>{{ p|getTimeBilled }}</dd>
               <dt>Complete?</dt>
               {% if p.complete %}
                 <dd style="color:red">Yes</dd>

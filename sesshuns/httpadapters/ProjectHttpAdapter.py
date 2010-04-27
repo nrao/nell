@@ -1,5 +1,6 @@
 from sesshuns.models        import Allotment, Project_Allotment, Project_Type, Semester
 from sesshuns.models.common import first
+from tools                  import TimeAccounting
 
 class ProjectHttpAdapter (object):
 
@@ -83,7 +84,7 @@ class ProjectHttpAdapter (object):
               , "total_time"   : totals
               , "PSC_time"     : pscs
               , "sem_time"     : max_sems
-              , "remaining"    : self.project.getTimeRemaining()
+              , "remaining"    : TimeAccounting().getTimeRemaining(self.project)
               , "grade"        : grades
               , "pcode"        : self.project.pcode
               , "name"         : self.project.name

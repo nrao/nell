@@ -1,8 +1,6 @@
 from datetime   import datetime
 from django.db  import models
 
-from tools        import TimeAccounting
-
 #models
 from common            import *
 from Allotment         import Allotment
@@ -82,21 +80,6 @@ class Project(models.Model):
 
     def get_allotments_display(self):
         return self.allotments.all()
-
-    def getObservedTime(self):
-        return TimeAccounting().getTime("observed", self)
-
-    def getTimeBilled(self):
-        return TimeAccounting().getTime("time_billed", self)
-
-    def getSumTotalTime(self):
-        return TimeAccounting().getProjectTotalTime(self)
-
-    def getTimeRemainingFromCompleted(self):
-        return TimeAccounting().getTimeRemainingFromCompleted(self)
-
-    def getTimeRemaining(self):
-        return TimeAccounting().getTimeRemaining(self)
 
     def principal_contact(self):
         "Who is the principal contact for this Project?"

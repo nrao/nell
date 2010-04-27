@@ -1,5 +1,6 @@
 from sesshuns.models import *
 from utilities       import TimeAgent
+from tools           import TimeAccounting
 
 class SessionHttpAdapter (object):
 
@@ -275,7 +276,7 @@ class SessionHttpAdapter (object):
            , "total_time" : self.sesshun.allotment.total_time
            , "PSC_time"   : self.sesshun.allotment.psc_time
            , "sem_time"   : self.sesshun.allotment.max_semester_time
-           , "remaining"  : self.sesshun.getTimeRemaining()
+           , "remaining"  : TimeAccounting().getTimeRemaining(self.sesshun)
            , "grade"      : self.sesshun.allotment.grade
            , "orig_ID"    : self.sesshun.original_id
            , "name"       : self.sesshun.name

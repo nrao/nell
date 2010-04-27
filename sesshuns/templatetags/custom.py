@@ -5,6 +5,7 @@ from sesshuns            import models
 from datetime            import datetime, timedelta
 from sesshuns.models     import first
 from sets                import Set
+from tools               import TimeAccounting
 
 register = template.Library()
 
@@ -52,6 +53,14 @@ def display_allotments_for_project(project_id):
       , 'edit_only': False
       , 'base_url' : models.Allotment.base_url
     }
+
+@register.filter
+def getTimeBilled(obj):
+    return TimeAccounting().getTime("time_billed", obj)
+
+@register.filter
+def getSumTotalTime(project):
+    return TimeAccounting().getProjectTotalTime(project)
 
 @register.filter
 def has_lost_time(period):

@@ -1,6 +1,4 @@
 from django.db import models
-from math      import modf
-from utilities import TimeAgent
 
 from Allotment      import Allotment
 from common         import *
@@ -145,15 +143,6 @@ class Sesshun(models.Model):
         #blackouts = json.load(urlllib.urlopen(url))['blackouts']
 
         #return consolidate_events(find_intersections(blackouts))
-
-    def getObservedTime(self):
-        return TimeAccounting().getTime("observed", self)
-
-    def getTimeBilled(self):
-        return TimeAccounting().getTime("time_billed", self)
-
-    def getTimeRemaining(self):
-        return TimeAccounting().getTimeRemaining(self)
 
     def get_min_eff_tsys_factor(self):
         """
