@@ -6,7 +6,8 @@ from models                   import *
 from observers                import project_search
 from sets                     import Set
 from utilities                import gen_gbt_schedule
-from utilities.TimeAgent      import EST
+from utilities                import Shelf
+from utilities.TimeAgent      import EST, UTC
 import calendar
 
 @login_required
@@ -90,6 +91,12 @@ def gbt_schedule(request, *args, **kws):
 
     schedule = gen_gbt_schedule(start, end, days, 'ET', periods)
 
+    try:
+        tzutc = Shelf()["publish_time"].replace(tzinfo=UTC)
+        pubdate = tzutc.astimezone(EST)
+    except:
+        pubdate = None
+
     return render_to_response(
                'sesshuns/schedule.html'
              , {'calendar' : sorted(schedule.items())
@@ -101,7 +108,9 @@ def gbt_schedule(request, *args, **kws):
               , 'days'     : days
               , 'rschedule': Receiver_Schedule.extract_schedule(start, days)
               , 'timezone' : timezone
-              , 'requestor': requestor})
+              , 'requestor': requestor
+              , 'pubdate'  : pubdate
+               })
 
 def rcvr_schedule(request, *args, **kwds):
     receivers = [r for r in Receiver.objects.all() if r.abbreviation != 'NS']

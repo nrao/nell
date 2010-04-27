@@ -29,10 +29,10 @@ class ProjectHttpAdapter (object):
 
         self.project.save()
 
-        totals   = map(float, fdata.get("total_time", "0.0").split(', '))
-        pscs     = map(float, fdata.get("PSC_time", "0.0").split(', '))
-        max_sems = map(float, fdata.get("sem_time", "0.0").split(', '))
-        grades   = map(float, fdata.get("grade", "4.0").split(', '))
+        totals   = map(float, [t for t in fdata.get("total_time", "0.0").split(', ') if t != ''])
+        pscs     = map(float, [p for p in fdata.get("PSC_time", "0.0").split(', ') if p != ''])
+        max_sems = map(float, [m for m in fdata.get("sem_time", "0.0").split(', ') if m != ''])
+        grades   = map(float, [g for g in fdata.get("grade", "4.0").split(', ') if g != ''])
         
         assert len(totals) == len(pscs) and \
                len(totals) == len(max_sems) and \

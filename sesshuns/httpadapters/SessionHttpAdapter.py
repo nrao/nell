@@ -85,7 +85,6 @@ class SessionHttpAdapter (object):
         rc = ReceiverCompile(abbreviations)
         ands = rc.normalize(proposition)
         for ors in ands:
-            # TBF:  Caused recursive import during model separation
             rg = Receiver_Group(session = self.sesshun)
             rg.save()
             for rcvr in ors:
@@ -116,6 +115,8 @@ class SessionHttpAdapter (object):
             self.sesshun.nighttime())
         self.update_lst_exclusion(fdata)    
         self.update_xi_obs_param(fdata, self.sesshun.get_min_eff_tsys_factor())
+        self.update_el_limit_obs_param(fdata
+                                     , self.sesshun.get_elevation_limit())
 
         proposition = fdata.get("receiver", None)
         if proposition is not None:
@@ -152,8 +153,40 @@ class SessionHttpAdapter (object):
                                                 )
                 obs_param.save()
         else:
-            obs_param = self.observing_parameter_set.filter(parameter=tp)[0]
+            obs_param = self.sesshun.observing_parameter_set.filter(parameter=tp)[0]
             if new_value and new_value != 1.0:
+                obs_param.float_value = new_value
+                obs_param.save()
+            else:
+                obs_param.delete()
+
+    # TBF: opportunities for refactoring and code sharing between this
+    # and update_xi_obs_param
+    def update_el_limit_obs_param(self, fdata, old_value):
+        """
+        For taking a json dict and converting its given
+        el limit float field into a 'El Limit' float observing parameter.
+        """
+        new_value = self.get_field(fdata, "el_limit", None, float)
+        if new_value is not None: # make sure it's in a legal range
+            try:
+                fv = float(new_value)
+                if fv < 5.0 or fv > 90.0:
+                    return # value out of range
+            except:
+                return # nonsense value
+
+        tp = Parameter.objects.filter(name="El Limit")[0]
+        if old_value is None:
+            if new_value and new_value != "":
+                obs_param =  Observing_Parameter(session = self.sesshun
+                                               , parameter = tp
+                                               , float_value = new_value
+                                                )
+                obs_param.save()
+        else:
+            obs_param = self.sesshun.observing_parameter_set.filter(parameter=tp)[0]
+            if new_value and new_value != "":
                 obs_param.float_value = new_value
                 obs_param.save()
             else:
@@ -260,6 +293,7 @@ class SessionHttpAdapter (object):
            , "receiver"   : self.sesshun.get_receiver_req()
            , "project_complete" : "Yes" if self.sesshun.project.complete else "No"
            , "xi_factor"  : self.sesshun.get_min_eff_tsys_factor() or 1.0
+           , "el_limit"   : self.sesshun.get_elevation_limit() or None # TBF- default? 
             }
 
         target = first(self.sesshun.target_set.all())

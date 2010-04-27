@@ -5,10 +5,11 @@ from django.http              import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts         import render_to_response
 from models                   import *
 from sets                     import Set
+from tools                    import IcalMap
+from utilities.TimeAgent      import EST, UTC
 from utilities                import gen_gbt_schedule, UserInfo, NRAOBosDB
+from utilities                import Shelf
 from reversion                import revision
-
-
 
 def get_requestor(request):
     """
@@ -61,6 +62,13 @@ def public_schedule(request, *args, **kws):
 
     calendar = gen_gbt_schedule(start, end, days, timezone, periods)
 
+    try:
+        tzutc = Shelf()["publish_time"].replace(tzinfo=UTC)
+        tz = EST if timezone == 'ET' else UTC
+        pubdate = tzutc.astimezone(tz)
+    except:
+        pubdate = None
+
     return render_to_response(
                'sesshuns/public_schedule.html'
              , {'calendar' : sorted(calendar.items())
@@ -71,7 +79,9 @@ def public_schedule(request, *args, **kws):
               , 'days'     : days
               , 'rschedule': Receiver_Schedule.extract_schedule(start, days)
               , 'timezone' : timezone
-              , 'is_logged_in': request.user.is_authenticated()})
+              , 'is_logged_in': request.user.is_authenticated()
+              , 'pubdate'  : pubdate
+               })
 
 @revision.create_on_success
 @login_required
@@ -486,9 +496,24 @@ def parse_datetime(request, dateName, timeName, utcOffset):
  
 @revision.create_on_success
 @login_required
+def observer_ical(request, *args, **kws):
+    u_id,     = args
+    user      = first(User.objects.filter(id = u_id))
+    requestor = get_requestor(request)
+
+    if user != requestor and not requestor.isAdmin():
+        return # Sorry, you can't see someone else's calendar.
+
+    response = HttpResponse(IcalMap(user).getSchedule())
+    response['Content-Type'] = 'text/calendar'
+    response['Content-Disposition'] = 'attachment; filename=GBTschedule.ics'
+    return response
+
+@revision.create_on_success
+@login_required
 def blackout(request, *args, **kws):
     u_id, = args
-    user      = first(User.objects.filter(id = u_id))
+    user  = first(User.objects.filter(id = u_id))
 
     requestor = get_requestor(request)
 

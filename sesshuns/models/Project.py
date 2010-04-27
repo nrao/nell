@@ -161,6 +161,9 @@ class Project(models.Model):
         sessions = [s for s in self.sesshun_set.all() if s.schedulable()]
         return True if sessions != [] else False
 
+    def isInvestigator(self, user):
+        return user.id in [i.user.id for i in self.investigator_set.all()]
+
     def get_observers(self):
         return [i for i in self.investigator_set.order_by('priority').all() \
                 if i.observer]
@@ -185,6 +188,16 @@ class Project(models.Model):
     def anyNonOneXiSessions(self):
         "Returns true if a single session has a non 1.0 xi factor."
         sessions = [s for s in self.sesshun_set.all() if s.get_min_eff_tsys_factor() is not None and s.get_min_eff_tsys_factor() != 1.0]
+        return sessions != []
+
+    def anyElevationLimits(self):
+        "Returns true if a single session has the El Limit obs param set."
+        sessions = [s for s in self.sesshun_set.all() if s.get_elevation_limit() is not None]
+        return sessions != []
+
+    def anyElevationLimits(self):
+        "Returns true if a single session has the El Limit obs param set."
+        sessions = [s for s in self.sesshun_set.all() if s.get_elevation_limit() is not None]
         return sessions != []
 
     def anyCompleteSessions(self):

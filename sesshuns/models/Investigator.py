@@ -1,22 +1,7 @@
-from datetime                  import datetime, timedelta, date
-from math                      import asin, acos, cos, sin
-from tools                     import TimeAccounting
-from django.conf               import settings
-from django.db                 import models
-from django.http               import QueryDict
-from utilities                 import TimeAgent, UserInfo, NRAOBosDB
-
-import calendar
-import pg
-from sets                      import Set
-import urllib2
-import simplejson as json
-import sys
-
-from common     import *
-
-from Project  import Project
-from User     import User
+from django.db import models
+from common    import *
+from Project   import Project
+from User      import User
 
 class Investigator(models.Model):
     project                = models.ForeignKey(Project)
