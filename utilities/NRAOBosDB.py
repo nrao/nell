@@ -45,10 +45,11 @@ class NRAOBosDB:
         for user, reservations in self.reservations(project).items():
             for start, end in reservations:
                 jsonobjlist.append({
-                    "id"   : id
-                  , "title": "".join([user.name(), " in Green Bank"])
-                  , "start": start.isoformat()
-                  , "end"  : end.isoformat()
+                    "id"       : id
+                  , "title"    : "".join([user.name(), " in Green Bank"])
+                  , "start"    : start.isoformat()
+                  , "end"      : end.isoformat()
+                  , "className": 'reservation'
                 })
                 id = id + 1
         return jsonobjlist, id

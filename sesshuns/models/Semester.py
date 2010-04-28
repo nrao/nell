@@ -31,9 +31,10 @@ class Semester(models.Model):
 
     def eventjson(self, id):
         return {
-            "id"   : id
-          , "title": "".join(["Start of ", self.semester])
-          , "start": self.start().isoformat()
+            "id"   :     id
+          , "title":     "".join(["Start of ", self.semester])
+          , "start":     self.start().isoformat()
+          , "className": 'semester'
         }
 
     @staticmethod

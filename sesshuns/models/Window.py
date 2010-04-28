@@ -193,10 +193,11 @@ class Window(models.Model):
         end = self.start_date + timedelta(days = self.duration)
 
         return {
-                "id"   : id
-              , "title": "".join(["Window ", self.session.name])
-              , "start": self.start_date.isoformat()
-              , "end"  : end.isoformat()
+                "id"   :     id
+              , "title":     "".join(["Window ", self.session.name])
+              , "start":     self.start_date.isoformat()
+              , "end"  :     end.isoformat()
+              , "className": 'window'
         }
 
     def assignPeriod(self, periodId, default):

@@ -99,10 +99,11 @@ class Blackout(models.Model):
         title    = "%s: %s" % (self.user.name()
                              , self.description or "blackout")
         return [{
-            "id"   : self.id
-          , "title": title
-          , "start": d[0].isoformat() if d[0] else None
-          , "end"  : d[1].isoformat() if d[1] else None
+            "id"   :      self.id
+          , "title":      title
+          , "start":      d[0].isoformat() if d[0] else None
+          , "end"  :      d[1].isoformat() if d[1] else None
+          , "className": 'blackout'
         } for d in dates]
 
     class Meta:

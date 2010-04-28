@@ -144,12 +144,22 @@
 	
 	/* To change the color of events on a per-class basis (such as with the
 	 * "className" attribute of a CalEvent), do something like this:
-	 *
-	 * .full-calendar-month .myclass td {
-	 *    background: green;
-	 *    }
 	 */
+.full-calendar-month .blackout td {
+    background: #99CCBB;
+    }
 	
+.full-calendar-month .reservation td {
+    background: #EEAABB;
+    }
+	
+.full-calendar-month .window td {
+    background: #CCBBDD;
+    }
+	
+.full-calendar-month .semester td {
+    background: #FFAA77;
+    }
 	
 	
 	
