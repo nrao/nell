@@ -1,3 +1,9 @@
+#! /usr/bin/env python
+
+from django.core.management import setup_environ
+import settings
+setup_environ(settings)
+
 from sesshuns.models import *
 
 # this module rocks!
@@ -113,4 +119,6 @@ class UpdateEphemeris():
             self.errors.append("Unknown Error with: %s\n" % className)
             return None
 
-
+# TBF: does not work - import errors when trying to call this way
+if __name__ == '__main__':
+    up = UpdateEphemeris(filename = "updateEphemeris.txt")
