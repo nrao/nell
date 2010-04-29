@@ -65,7 +65,8 @@ class SessionHttpAdapter (object):
         proposition = fdata.get("receiver")
         self.save_receivers(proposition)
         
-        system = first(System.objects.filter(name = "J2000").all()
+        systemName = fdata.get("coord_mode", "J2000")
+        system = first(System.objects.filter(name = systemName).all()
                      , System.objects.all()[0])
 
         v_axis = fdata.get("source_v", 0.0)
@@ -124,7 +125,8 @@ class SessionHttpAdapter (object):
             self.sesshun.receiver_group_set.all().delete()
             self.save_receivers(proposition)
 
-        system = first(System.objects.filter(name = "J2000").all()
+        systemName = fdata.get("coord_mode", "J2000")
+        system = first(System.objects.filter(name = systemName).all()
                      , System.objects.all()[0])
 
         v_axis = fdata.get("source_v", None)
