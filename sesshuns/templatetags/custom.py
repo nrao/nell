@@ -23,7 +23,16 @@ def dt2sex(value):
 @register.filter
 def target_horz(value):
     t = first(value.target_set.all())
-    return t.get_horizontal()
+    # TBF: place holder until we release alternate ephemeris
+    tag = "" #"*" if t.isEphemeris() else ""
+    return t.get_horizontal() + tag
+
+@register.filter
+def target_vert(value):
+    t = first(value.target_set.all())
+    # TBF: place holder until we release alternate ephemeris
+    tag = "" #"*"  if t.isEphemeris() else ""
+    return t.get_vertical() + tag
 
 @register.inclusion_tag('flatten.html')
 def edit_allotment(sesshun_id):
@@ -35,11 +44,6 @@ def edit_allotment(sesshun_id):
       , 'edit_only': True
       , 'base_url' : models.Allotment.base_url
     }
-
-@register.filter
-def target_vert(value):
-    t = first(value.target_set.all())
-    return t.get_vertical()
 
 @register.inclusion_tag('flatten.html')
 def display_allotments_for_project(project_id):
