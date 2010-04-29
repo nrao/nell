@@ -18,6 +18,7 @@ from utilities.database              import DSSPrime2DSS
 from utilities.receiver              import ReceiverCompile
 from utilities                       import UserInfo
 from utilities                       import NRAOBosDB
+from utilities                       import UpdateEphemeris
 
 # Test field data
 fdata = {"total_time": "3"
@@ -3158,6 +3159,39 @@ class TestUserInfo(NellTestCase):
         self.assertEquals(postals, info['postals'])
         self.assertEquals(affiliations, info['affiliations'])
         self.assertEquals('pmargani', info['username'])
+
+class TestUpdateEphemeris(NellTestCase):
+
+    def testUpdate(self):
+
+        up = UpdateEphemeris.UpdateEphemeris()
+        up.quietReport = True
+
+        # the no-op
+        up.update()
+        self.assertEquals(0, len(up.updates))
+        self.assertEquals(0, len(up.errors))
+
+        s = create_sesshun()
+        target = s.target_set.all()[0]
+        target.system = first(System.objects.filter(name = "Ephemeris"))
+        target.source = "Mars"
+        target.save()
+
+        # make sure we update it!
+        up.update()
+        self.assertEquals(1, len(up.updates))
+        self.assertEquals(0, len(up.errors))
+
+        # make sure we catch errors!
+        target.source = "Mr. Nubbles!"
+        target.save()
+        up.update()
+        self.assertEquals(0, len(up.updates))
+        self.assertEquals(1, len(up.errors))
+
+        # cleanup
+        s.delete()
 
 class TestNRAOBosDB(NellTestCase):
 

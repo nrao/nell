@@ -66,6 +66,9 @@ class Target(models.Model):
 
         return "%s%02i:%02i:%04.1f" % (sign, int(ddegs), int(dmins), dsecs)
 
+    def isEphemeris(self):
+        return self.system.name == "Ephemeris"
+
     class Meta:
         db_table  = "targets"
         app_label = "sesshuns"
