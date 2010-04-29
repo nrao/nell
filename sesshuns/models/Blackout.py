@@ -54,8 +54,8 @@ class Blackout(models.Model):
         if self.start_date is None or self.end_date is None:
             return [] # What does it mean to have None in start or end?
 
-        if self.start_date > calend:
-            return [] # Outside this time period - hasn't started yet
+        if self.start_date > calend or self.end_date < calstart:
+            return [] # Outside time period - hasn't started or already done
 
         start       = self.start_date
         end         = self.end_date
