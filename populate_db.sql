@@ -128,6 +128,7 @@ INSERT INTO systems VALUES (DEFAULT, 'HaDec',         'ra',  'dec');
 INSERT INTO systems VALUES (DEFAULT, 'ApparentRaDec', 'ra',  'dec');
 INSERT INTO systems VALUES (DEFAULT, 'CableWrap',     'az',  'el');
 INSERT INTO systems VALUES (DEFAULT, 'Encoder',       'az',  'el');
+INSERT INTO systems VALUES (DEFAULT, 'Ephemeris',     'ra',  'dec');
 
 INSERT INTO parameters VALUES (DEFAULT , 'Instruments', 'string');
 INSERT INTO parameters VALUES (DEFAULT, 'LST Include Low', 'float');
