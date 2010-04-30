@@ -3172,6 +3172,7 @@ class TestUpdateEphemeris(NellTestCase):
         self.assertEquals(0, len(up.updates))
         self.assertEquals(0, len(up.errors))
 
+        # let's observe Mars!
         s = create_sesshun()
         target = s.target_set.all()[0]
         target.system = first(System.objects.filter(name = "Ephemeris"))
@@ -3179,6 +3180,13 @@ class TestUpdateEphemeris(NellTestCase):
         target.save()
 
         # make sure we update it!
+        up.update()
+        self.assertEquals(1, len(up.updates))
+        self.assertEquals(0, len(up.errors))
+
+        # now let's observe a famouse comet
+        target.source = "C/1995 O1 (Hale-Bopp)"
+        target.save()
         up.update()
         self.assertEquals(1, len(up.updates))
         self.assertEquals(0, len(up.errors))

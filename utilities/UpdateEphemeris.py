@@ -5,6 +5,7 @@ import settings
 setup_environ(settings)
 
 from sesshuns.models import *
+from utilities.ephemerisComets import ephemerisComets
 
 # this module rocks!
 import ephem
@@ -31,6 +32,9 @@ class UpdateEphemeris():
         self.epoch = "2000"
         now = datetime.utcnow()
         self.nowStr = now.strftime("%Y/%m/%d")
+
+        # make sure we get all the comet info we may need
+        self.comets = ephemerisComets
 
     def add(self, lines):
         "For use with printing reports"
@@ -69,6 +73,7 @@ class UpdateEphemeris():
 
         self.add("Updating Ephemeris for %s (UTC)\n" % datetime.utcnow())
 
+
         tgs = Target.objects.filter(system__name = "Ephemeris")
 
         self.add("Attempting to update %d targets.\n" % len(tgs))
@@ -105,8 +110,29 @@ class UpdateEphemeris():
         self.updates.append(line) 
 
     def getEphemObj(self, target):
-        "Make sure we can get the object which gives the ra & dec"
+        "Make sure we can get the proper object which gives the ra & dec"
 
+        # Either the source name is one of the supplied major/minor planets and 
+        # satellites, or it is one in a long list of comets
+        if target.source in self.comets.keys():
+            obj = self.getEphemCometObj(target)
+        else:
+            obj = self.getEphemPlanetObj(target)
+        return obj    
+
+    def getEphemCometObj(self, target):
+        "Uses the dict of comet ephemeris to calculate ra & dec"
+
+        try:
+            line = self.comets[target.source]
+            comet = ephem.readdb(line)
+            return comet
+        except:
+            self.errors.append("Unknown Error w/ comet: %s\n" % target.source)
+            return None
+
+    def getEphemPlanetObj(self, target):
+        "Make sure we can get the object which gives the ra & dec"
         className = target.source
         try:
             epClass = getattr(ephem, className)
