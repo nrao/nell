@@ -18,6 +18,7 @@ INSERT INTO semesters VALUES (DEFAULT, '05B');
 INSERT INTO semesters VALUES (DEFAULT, '05C');
 INSERT INTO semesters VALUES (DEFAULT, '04A');
 INSERT INTO semesters VALUES (DEFAULT, '10A');
+INSERT INTO semesters VALUES (DEFAULT, '10B');
 
 INSERT INTO project_types VALUES (DEFAULT, 'science');
 INSERT INTO project_types VALUES (DEFAULT, 'non-science');
