@@ -1,21 +1,16 @@
-from datetime                      import date, datetime, timedelta
-from django.http                   import HttpResponse
-from django.db.models              import Q
-from models                        import Project, Sesshun, Period, Receiver
-from models                        import Receiver_Schedule, first, str2dt
-from models                        import Window
-from models                        import User
-from tools                         import IcalMap, ScheduleTools, TimeAccounting
-from utilities                     import TimeAgent
-from settings                      import PROXY_PORT, DATABASE_NAME
-from utilities.SchedulingNotifier  import SchedulingNotifier
-from utilities.FormatExceptionInfo import formatExceptionInfo, printException
-from utilities.FormatExceptionInfo import JSONExceptionInfo
-from utilities.Notifier            import Notifier
-from utilities.Email               import Email
-from utilities                     import Shelf
-from reversion                     import revision
-from httpadapters                  import PeriodHttpAdapter
+from datetime                           import date, datetime, timedelta
+from django.http                        import HttpResponse
+from django.db.models                   import Q
+from httpadapters                       import PeriodHttpAdapter
+from models                             import *
+from nell.tools                         import IcalMap, ScheduleTools, TimeAccounting
+from nell.utilities                     import TimeAgent, Shelf
+from nell.utilities.SchedulingNotifier  import SchedulingNotifier
+from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException, JSONExceptionInfo
+from nell.utilities.Notifier            import Notifier
+from nell.utilities.Email               import Email
+from reversion                          import revision
+from settings                           import PROXY_PORT, DATABASE_NAME
 
 import simplejson as json
 # TBF: get this back in once we figure out the deployment issues.

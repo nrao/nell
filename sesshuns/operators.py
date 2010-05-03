@@ -1,13 +1,12 @@
 from datetime                       import datetime, timedelta
 from django.contrib.auth.decorators import login_required
-from django.http              import HttpResponse, HttpResponseRedirect
-from django.shortcuts         import render_to_response
-from models                   import *
-from observers                import project_search
-from sets                     import Set
-from utilities                import gen_gbt_schedule
-from utilities                import Shelf
-from utilities.TimeAgent      import EST, UTC
+from django.http                    import HttpResponse, HttpResponseRedirect
+from django.shortcuts               import render_to_response
+from models                         import *
+from nell.utilities                 import gen_gbt_schedule, Shelf
+from nell.utilities.TimeAgent       import EST, UTC
+from observers                      import project_search
+from sets                           import Set
 import calendar
 
 @login_required

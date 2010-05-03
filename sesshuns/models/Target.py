@@ -1,9 +1,8 @@
-from Sesshun import Sesshun
-from System  import System
-from utilities import TimeAgent
-
-from django.db import models
-from math      import modf
+from django.db      import models
+from math           import modf
+from nell.utilities import TimeAgent
+from Sesshun        import Sesshun
+from System         import System
 
 class Target(models.Model):
     session    = models.ForeignKey(Sesshun)

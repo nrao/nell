@@ -1,8 +1,8 @@
-from datetime              import datetime, timedelta
-from sesshuns.models       import *
-from sesshuns.httpadapters import PeriodHttpAdapter
-from utilities.TimeAgent   import dtDiffHrs, quarter
-from utilities             import Score
+from datetime                   import datetime, timedelta
+from sesshuns.models            import *
+from sesshuns.httpadapters      import PeriodHttpAdapter
+from nell.utilities.TimeAgent   import dtDiffHrs, quarter
+from nell.utilities             import Score
 
 class ScheduleTools(object):
 

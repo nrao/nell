@@ -1,9 +1,9 @@
-from datetime        import datetime
-from sesshuns.models import Period, Period_Accounting, Period_Receiver, \
-                            Period_State, Project, Receiver, Sesshun
+from datetime               import datetime
+from nell.utilities         import TimeAgent
+from sesshuns.models        import Period, Period_Accounting, Period_Receiver, \
+                                   Period_State, Project, Receiver, Sesshun
 from sesshuns.models.common import *
 from SessionHttpAdapter     import SessionHttpAdapter
-from utilities       import TimeAgent
 
 class PeriodHttpAdapter (object):
 

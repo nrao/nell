@@ -8,17 +8,13 @@ import simplejson as json
 import lxml.etree as et
 import MySQLdb as mysql
 
-from httpadapters                    import *
-from models                          import *
-from test_utils.NellTestCase         import NellTestCase
-from tools                           import DBReporter
-from tools                           import ScheduleTools
-from tools                           import TimeAccounting
-from utilities.database              import DSSPrime2DSS
-from utilities.receiver              import ReceiverCompile
-from utilities                       import UserInfo
-from utilities                       import NRAOBosDB
-from utilities                       import UpdateEphemeris
+from httpadapters                 import *
+from models                       import *
+from nell.test_utils.NellTestCase import NellTestCase
+from nell.tools                   import DBReporter, ScheduleTools, TimeAccounting
+from nell.utilities.database      import DSSPrime2DSS
+from nell.utilities.receiver      import ReceiverCompile
+from nell.utilities               import UserInfo, NRAOBosDB, UpdateEphemeris
 
 # Test field data
 fdata = {"total_time": "3"
@@ -2533,7 +2529,7 @@ class TestObservers(NellTestCase):
         self.assertEqual(i.observer, True)
 
     def test_dynamic_contact_form(self):
-        response = self.get('/profile/%s/dynamic_contact/form' % self.u.id)
+        response = self.get('/profile/%s/dynamic_contact' % self.u.id)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_dynamic_contact_save(self):
@@ -2553,14 +2549,14 @@ class TestObservers(NellTestCase):
         return b
         
     def test_blackout_form(self):
-        response = self.get('/profile/%s/blackout/form' % self.u.id)
+        response = self.get('/profile/%s/blackout' % self.u.id)
         self.failUnlessEqual(response.status_code, 200)
 
         b = self.create_blackout()
         data = {'_method' : 'PUT'
               , 'id'      : b.id
                 }
-        response = self.get('/profile/%s/blackout/form' % self.u.id, data)
+        response = self.get('/profile/%s/blackout' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue(b.description in response.content)
 

@@ -1,6 +1,6 @@
+from nell.tools             import TimeAccounting
 from sesshuns.models        import Allotment, Project_Allotment, Project_Type, Semester
 from sesshuns.models.common import first
-from tools                  import TimeAccounting
 
 class ProjectHttpAdapter (object):
 

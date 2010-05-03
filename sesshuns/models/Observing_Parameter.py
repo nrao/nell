@@ -1,7 +1,6 @@
 from django.db  import models
-
-from Sesshun   import Sesshun
-from Parameter import Parameter
+from Sesshun    import Sesshun
+from Parameter  import Parameter
 
 class Observing_Parameter(models.Model):
     session        = models.ForeignKey(Sesshun)

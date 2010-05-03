@@ -1,2 +1,2 @@
-from utilities.database.ReservationsUtility import ReservationsUtility
+from nell.utilities.database.ReservationsUtility import ReservationsUtility
 ReservationsUtility().updateReservations()

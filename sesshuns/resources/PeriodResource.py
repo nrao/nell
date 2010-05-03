@@ -4,9 +4,7 @@ from django.http              import HttpResponse, HttpResponseRedirect
 from NellResource    import NellResource
 from sesshuns.models import Period, first, jsonMap, str2dt
 from sesshuns.httpadapters import PeriodHttpAdapter
-from utilities       import TimeAgent
-from utilities       import Score
-#from utilities       import formatExceptionInfo
+from nell.utilities        import TimeAgent, Score #, formatExceptionInfo
 
 import simplejson as json
 import reversion

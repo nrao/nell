@@ -1,6 +1,6 @@
-from sesshuns.models import *
-from datetime        import datetime, timedelta
-from utilities.database.UserNames import UserNames
+from datetime                          import datetime, timedelta
+from nell.utilities.database.UserNames import UserNames
+from sesshuns.models                   import *
 import math
 import MySQLdb as m
 

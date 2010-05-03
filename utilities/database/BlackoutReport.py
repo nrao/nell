@@ -6,7 +6,7 @@ setup_environ(settings)
 
 from datetime        import datetime, timedelta
 from sesshuns.models import *
-from utilities       import TimeAgent
+from nell.utilities  import TimeAgent
 
 def GenerateBlackoutReport():
     outfile = open("./DssBlackoutReport.txt", 'w')

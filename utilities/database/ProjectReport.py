@@ -4,10 +4,10 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from sesshuns.models      import *
-from tools.TimeAccounting import TimeAccounting
-from sets                 import Set
-from datetime             import *
+from datetime                  import *
+from nell.tools.TimeAccounting import TimeAccounting
+from sesshuns.models           import *
+from sets                      import Set
 
 def get_type(project):
     return Set([s.session_type.type for s in project.sesshun_set.all()])

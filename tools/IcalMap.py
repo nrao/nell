@@ -1,7 +1,6 @@
 from sesshuns.models import *
-from icalendar       import Calendar, Event
+from icalendar       import Calendar, Event, UTC
 from datetime        import datetime, timedelta
-from icalendar       import UTC # timezone
 
 class IcalMap:
 

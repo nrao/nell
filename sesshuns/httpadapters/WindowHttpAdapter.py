@@ -1,5 +1,4 @@
 from datetime               import datetime
-
 from PeriodHttpAdapter      import PeriodHttpAdapter
 from SessionHttpAdapter     import SessionHttpAdapter
 from sesshuns.models        import Period, Sesshun

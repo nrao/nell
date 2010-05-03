@@ -5,7 +5,7 @@ from sesshuns            import models
 from datetime            import datetime, timedelta
 from sesshuns.models     import first
 from sets                import Set
-from tools               import TimeAccounting
+from nell.tools          import TimeAccounting
 
 register = template.Library()
 

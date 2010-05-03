@@ -3,10 +3,9 @@ from math                      import asin, acos, cos, sin
 from django.conf               import settings
 from django.db                 import models
 from django.http               import QueryDict
+from nell.utilities            import TimeAgent, UserInfo, NRAOBosDB, Score
+from nell.utilities.receiver   import ReceiverCompile
 from settings                  import ANTIOCH_HOST, PROXY_PORT
-from utilities.receiver        import ReceiverCompile
-from utilities                 import TimeAgent, UserInfo, NRAOBosDB
-from utilities                 import Score
 
 import calendar
 import pg

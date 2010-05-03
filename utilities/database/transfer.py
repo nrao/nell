@@ -3,15 +3,15 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from sesshuns.models      import *
-from tools.TimeAccounting import TimeAccounting
-from sets                 import Set
-from datetime             import *
+from datetime                  import *
+from nell.tools.TimeAccounting import TimeAccounting
+from sesshuns.models           import *
+from sets                      import Set
 
 import sys
 
 if len(sys.argv) > 1:
-    from utilities.database.DSSDatabase import DSSDatabase
+    from nell.utilities.database.DSSDatabase import DSSDatabase
     db = DSSDatabase(database = 'dss_prime')
     db.append(sys.argv[1])
 else:
