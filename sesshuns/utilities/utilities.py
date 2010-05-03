@@ -3,6 +3,14 @@ from django.db.models import Q
 from nell.utilities   import UserInfo
 from sesshuns.models  import *
 
+def acknowledge_moc(requestor, period):
+    """
+    Sets acknowledge flag for periods which fail MOC.
+    """
+    if requestor.isOperator(): # Only operators can acknowledge MOC failures.
+        period.moc_ack = True 
+        period.save()
+
 def get_rev_comment(request, obj, method):
     where = "%s %s" % (obj.__class__.__name__, method)
     who   = request.user.username

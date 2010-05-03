@@ -16,6 +16,19 @@ def admin_only(view_func):
         return view_func(request, *args, **kwds)
     return decorate
 
+def is_operator(view_func):
+    """
+    If the logged in user isn't an operator and if he/she isn't
+    an administrator, redirect elsewhere. Otherwise, proceed as planned.
+    """
+    redirect_url = '/schedule/public'
+    def decorate(request, *args, **kwds):
+        requestor = get_requestor(request)
+        if not requestor.isOperator() and not requestor.isAdmin():
+            return HttpResponseRedirect(redirect_url)
+        return view_func(request, *args, **kwds)
+    return decorate
+
 def has_access(view_func):
     """
     If the logged in user isn't allowed to see this page and if he/she isn't
