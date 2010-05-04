@@ -3,6 +3,17 @@ from django.db.models import Q
 from nell.utilities   import UserInfo
 from sesshuns.models  import *
 
+def getReceivers(names):
+    rcvrs = []
+    error = None
+    for name in [n for n in names if len(n) != 0]:
+        r = Receiver.get_rcvr(name)
+        if r is not None:
+            rcvrs.append(r)
+        else:
+            error = 'Unrecognized receiver: %s' % name
+    return error, rcvrs
+
 def getInvestigators(pcodes):
     pi = []
     pc = []
