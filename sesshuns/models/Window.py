@@ -1,7 +1,7 @@
 from django.db  import models
 from datetime   import datetime, timedelta
 
-from utilities import TimeAgent
+from nell.utilities import TimeAgent
 
 from common  import *
 from Sesshun import Sesshun

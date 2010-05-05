@@ -7,7 +7,7 @@ setup_environ(settings)
 from sesshuns.models import *
 from sets            import Set
 from datetime        import date, datetime, timedelta
-from tools           import TimeAccounting
+from nell.tools      import TimeAccounting
 
 def get_sessions(typ,sessions):
     return [s for s in sessions if s.session_type.type == typ]

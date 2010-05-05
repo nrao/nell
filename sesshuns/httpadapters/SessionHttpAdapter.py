@@ -1,6 +1,6 @@
+from nell.utilities  import TimeAgent
+from nell.tools      import TimeAccounting
 from sesshuns.models import *
-from utilities       import TimeAgent
-from tools           import TimeAccounting
 
 class SessionHttpAdapter (object):
 

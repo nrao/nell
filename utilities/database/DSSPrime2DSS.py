@@ -1,6 +1,6 @@
-from sesshuns.models import *
-from datetime        import datetime, timedelta
-from utilities.database.UserNames import UserNames
+from datetime                          import datetime, timedelta
+from nell.utilities.database.UserNames import UserNames
+from sesshuns.models                   import *
 import math
 import MySQLdb as m
 
@@ -28,7 +28,7 @@ class DSSPrime2DSS(object):
 
         # Carl transferred only Astronomy Windows & Opportunities.
         # set this to false if you are to ignore these and instead want
-        # to use our self.create_09B_opportunities 
+        # to use our self.create_09B_opportunities
         self.use_transferred_windows = False
 
         # for gathering information during the transfer
@@ -81,19 +81,19 @@ class DSSPrime2DSS(object):
         self.transfer_sessions()
         self.normalize_investigators()
         self.set_sanctioned_flags()
-            
+
     def transfer_only_new(self):
         """
         This top-level function transfers only information for projects
         that are not yet in the DSS DB.
         """
-    
-        # this method uses self.create_user, which checks for person 
+
+        # this method uses self.create_user, which checks for person
         # pre-existence, so it is safe to call here
         self.transfer_friends()
 
         self.transfer_new_projects()
-        
+
         # now that we've transferred over the new projects, we
         # can import info only that pertains to those new projects
         self.transfer_new_proj_authors(self.new_projects)
@@ -125,7 +125,7 @@ class DSSPrime2DSS(object):
                     if s[1] == u.last_name:
                         if s[0] != u.first_name:
                             if not self.quiet:
-                                print "Is 08B sanctioned user %s %s possibly the same as 09C user %s %s?" % (s[0], s[1], u.first_name, u.last_name) 
+                                print "Is 08B sanctioned user %s %s possibly the same as 09C user %s %s?" % (s[0], s[1], u.first_name, u.last_name)
 
     def get_sessions(self, pcode = None):
 
@@ -153,13 +153,13 @@ class DSSPrime2DSS(object):
                    sessions.status_id = status.id AND
                    sessions.observing_type_id = observing_types.id AND
                    sessions.session_type_id = session_types.id
-                %s   
+                %s
                 ORDER BY sessions.id
-                """ % where_clause 
+                """ % where_clause
         self.cursor.execute(query)
-        
+
         rows = self.cursor.fetchall()
-        
+
         if pcode is None:
             # Just run a quick query to check that we got all the sessions
             self.cursor.execute("SELECT id FROM sessions %s" % where_clause)
@@ -172,7 +172,7 @@ class DSSPrime2DSS(object):
         "for backwards compatibility"
         self.transfer_all_sessions()
 
-    def transfer_all_sessions(self):    
+    def transfer_all_sessions(self):
         """
         Transfers all sessions encountered.
         """
@@ -205,7 +205,7 @@ class DSSPrime2DSS(object):
         if project is None:
             print "*********Transfer Sessions Error: no project for pcode: ", row[12]
             return
-          
+
         allot = Allotment(psc_time          = float(row[14])
                         , total_time        = float(row[15])
                         , max_semester_time = float(row[16])
@@ -225,7 +225,7 @@ class DSSPrime2DSS(object):
                   , observing_type = otype
                   , allotment      = allot
                   , status         = status
-                  , original_id    = row[6] 
+                  , original_id    = row[6]
                   , name           = row[7]
                   , frequency      = float(row[8]) if row[8] is not None else None
                   , max_duration   = float(row[9]) if row[9] is not None else None
@@ -257,7 +257,7 @@ class DSSPrime2DSS(object):
             except:
                 horizontal = None
                 #print "Exception with row: ", t, s
-            if vertical is not None and horizontal is not None:    
+            if vertical is not None and horizontal is not None:
                 target = Target(session    = s
                           , system     = system
                           , source     = t[3]
@@ -275,10 +275,10 @@ class DSSPrime2DSS(object):
             for w in self.cursor.fetchall():
                 win = Window(session = s, required = w[2])
                 win.save()
-      
+
                 query = "SELECT * FROM opportunities WHERE window_id = %s" % w[0]
                 self.cursor.execute(query)
-                
+
                 for o in self.cursor.fetchall():
                     op = Opportunity(window = win
                                    , start_time = o[2]
@@ -305,28 +305,36 @@ class DSSPrime2DSS(object):
                 rcvr = first(Receiver.objects.filter(name = r_name[0]))
                 rg.receivers.add(rcvr)
             rg.save()
-                
+
         # now get the observing parameters
-        query = """SELECT * 
-                   FROM observing_parameters 
-                   WHERE session_id = %s
+        query = """SELECT op.string_value, op.integer_value, op.float_value,
+                          op.boolean_value, op.datetime_value, parameters.name
+                   FROM observing_parameters as op, parameters
+                   WHERE session_id = %s and parameters.id = op.parameter_id
                 """ % s_id_prime
         self.cursor.execute(query)
 
+        # key: o[0] = string_value
+        #      o[1] = integer_value
+        #      o[2] = float_value
+        #      o[3] = boolean_value
+        #      o[4] = datetime_value
+        #      o[5] = parameters.name
+
         for o in self.cursor.fetchall():
-            p  = first(Parameter.objects.filter(id = o[2]))
-            if p.name == 'Instruments' and o[3] == "None":
-                pass
+            p  = first(Parameter.objects.filter(name = o[5]))
+            if p.name == 'Instruments' and o[0] == "None":
                 #print "Not passing over Observing Parameter = Instruments(None)"
-            else:    
+                pass
+            else:
                 op = Observing_Parameter(
                 session        = s
               , parameter      = p
-              , string_value   = o[3] if o[3] is not None else None
-              , integer_value  = o[4] if o[4] is not None else None 
-              , float_value    = float(o[5]) if o[5] is not None else None
-              , boolean_value  = o[6] == 1 if o[6] is not None else None
-              , datetime_value = o[7] if o[7] is not None else None
+              , string_value   = o[0] if o[0] is not None else None
+              , integer_value  = o[1] if o[1] is not None else None
+              , float_value    = float(o[2]) if o[2] is not None else None
+              , boolean_value  = o[3] == 1 if o[3] is not None else None
+              , datetime_value = o[4] if o[4] is not None else None
             )
                 op.save()
 
@@ -378,7 +386,7 @@ class DSSPrime2DSS(object):
         p_id = row.pop(1)
         # get the user
         u    = self.create_user(row)
-            
+
         # get the project
         query = "SELECT pcode FROM projects WHERE id = %s" % p_id
         self.cursor.execute(query)
@@ -387,7 +395,7 @@ class DSSPrime2DSS(object):
 
         if p is None:
             print "*****ERROR: project absent for pcode: ", pcode
-            return 
+            return
 
         # create the Investigator relation w/ the project & user
         i = first(Investigator.objects.filter(project=p, user=u))
@@ -420,7 +428,7 @@ class DSSPrime2DSS(object):
                    projects.project_type_id = project_types.id
                 """
         self.cursor.execute(query)
-        
+
         rows = self.cursor.fetchall()
 
         return rows
@@ -528,7 +536,7 @@ class DSSPrime2DSS(object):
 
         query = "SELECT * FROM friends"
         self.cursor.execute(query)
-        
+
         for row in self.cursor.fetchall():
             _   = self.create_user(row)
 
@@ -544,7 +552,7 @@ class DSSPrime2DSS(object):
             if user not in self.old_users and user not in self.new_users:
                 self.old_users.append(user)
             return user
-            
+
         # TBF: we must support outrageous accents
         try:
             firstName = unicode(row[1])
@@ -569,7 +577,7 @@ class DSSPrime2DSS(object):
                , sanctioned  = False
                , first_name  = firstName #row[1]
                , last_name   = lastName #row[2]
-               , pst_id      = pst_id 
+               , pst_id      = pst_id
                , role        = first(Role.objects.filter(role = "Observer"))
                  )
         u.save()
@@ -591,11 +599,11 @@ class DSSPrime2DSS(object):
         self.new_users.append(u)
 
         return u
-            
+
     def filter_bad_char(self, bad):
         good = bad.replace('\xad', '')
         return good
-    
+
     def report_transfer_only_new(self):
         """
         Presents information gathered during transfer process.
@@ -608,29 +616,29 @@ class DSSPrime2DSS(object):
         # review
         ls += "Transfered %d new projects and ignored %d old\n" % \
             (len(self.new_projects), len(self.old_projects))
-                                                               
+
         ls += "Transfered %d new sessions and ignored %d old\n" % \
             (len(self.new_sessions), len(self.old_sessions))
-                                                               
+
         ls += "Transfered %d new users and ignored %d old\n" % \
             (len(self.new_users), len(self.old_users))
-                                                               
+
 
         # project level details
         # TBF: put this in a file
         for pcode in self.new_projects:
             ls += "\nProject: \n"
             project = first(Project.objects.filter(pcode = pcode))
-            ls += "%s\n" % project 
+            ls += "%s\n" % project
             ls += "Friend: %s\n" % project.friend
             ls += "Users:\n"
             for inv in project.investigator_set.all():
                 new = inv.user in self.new_users
                 ls += "    new: %s, %s\n" % (new, inv.user)
-            ls += "Sessions:\n"    
+            ls += "Sessions:\n"
             for s in project.sesshun_set.all():
                 ls += "    %s\n" % s
-        
+
         if not self.quiet:
             print ls
 
@@ -674,7 +682,7 @@ class DSSPrime2DSS(object):
                      , session_dss_prime_id
                      , ignore_cmp = True
                      , ignore_before = None):
-        
+
         # 1. skip this step if the session is completed (no point!)
         if ignore_cmp and sesshun.status.complete:
             return # no point - who cares
@@ -692,27 +700,27 @@ class DSSPrime2DSS(object):
                         pass
                         # we don't need to delete them because they haven't
                         # been saved yet!
-                    else:    
+                    else:
                         w.session = sesshun
                         w.save()
                 else:
                     w.session = sesshun
                     w.save()
-                # NOTE: we can't do this yet, because we don't have 
+                # NOTE: we can't do this yet, because we don't have
                 # the periods yet.  That comes later, outside of this class
                 # now we have to match up the correct periods to the windows
                 #self.assign_periods_to_window(w)
 
 
     def get_cadence(self, session_id):
-        
+
         query = """
         SELECT session_id, start_date, repeats, full_size, intervals
         FROM cadences WHERE session_id = %d
         """ % session_id
         self.cursor.execute(query)
         return self.cursor.fetchall()
-        
+
     def string2int_list(self, string_value, length):
         if string_value.find(',') == -1:
             # scalar intervals - regular!
@@ -723,7 +731,7 @@ class DSSPrime2DSS(object):
             values = [int(v) for v in values]
             if len(values) != length:
                 print "length vs. values off ", string_value, length, values
-        return values       
+        return values
 
     def cadence2windows(self, row):
         """
@@ -749,15 +757,15 @@ class DSSPrime2DSS(object):
         # avoid nulls
         if start is None or repeats is None or full_sizes is None or intervals is None:
             windows = []
-        else:    
+        else:
             for i in range(repeats):
-                # but Jules is actually treating the start date as 
+                # but Jules is actually treating the start date as
                 # the midpoint of the window!  so adjust it!
                 wstart = start - timedelta(days = (full_sizes[i]/2))
                 w = Window(start_date = wstart
                          , duration = full_sizes[i]
                           )
-                windows.append(w)          
-                start += timedelta(days = intervals[i])        
+                windows.append(w)
+                start += timedelta(days = intervals[i])
 
         return windows

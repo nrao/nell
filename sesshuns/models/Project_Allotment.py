@@ -1,7 +1,6 @@
 from django.db  import models
-
-from Project   import Project
-from Allotment import Allotment
+from Project    import Project
+from Allotment  import Allotment
 
 class Project_Allotment(models.Model):
     project = models.ForeignKey(Project)

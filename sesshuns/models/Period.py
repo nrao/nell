@@ -1,6 +1,5 @@
-from django.db  import models
-from common     import *
-
+from django.db         import models
+from common            import *
 from Project           import Project
 from Sesshun           import Sesshun
 from Period_Accounting import Period_Accounting

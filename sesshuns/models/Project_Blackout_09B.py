@@ -1,7 +1,6 @@
-from django.db  import models
-
-from Project import Project
-from User    import User
+from django.db import models
+from Project   import Project
+from User      import User
 
 # TBF: temporary table/class for scheduling just 09B.  We can safely
 # dispose of this after 09B is complete.  Delete Me!

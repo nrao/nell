@@ -6,7 +6,6 @@ setup_environ(settings)
 
 from sesshuns.models      import *
 
-
 class ScheduleReport():
 
     def __init__(self, filename = None):

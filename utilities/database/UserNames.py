@@ -3,8 +3,7 @@ from datetime           import datetime, timedelta
 import math
 import MySQLdb as m
 import logging, urllib2
-from utilities          import NRAOUserDB
-from utilities          import UserInfo
+from nell.utilities     import NRAOUserDB, UserInfo
 import lxml.etree as ET
 
 class UserNames(object):

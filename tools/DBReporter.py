@@ -1,6 +1,6 @@
 from sesshuns.models import *
 from TimeAccounting  import TimeAccounting
-from utilities       import TimeAgent
+from nell.utilities  import TimeAgent
 
 class DBReporter:
 

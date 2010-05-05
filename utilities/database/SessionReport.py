@@ -2,9 +2,9 @@ from   django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from datetime             import *
-from sesshuns.models      import *
-from tools.TimeAccounting import TimeAccounting
+from datetime                  import *
+from nell.tools.TimeAccounting import TimeAccounting
+from sesshuns.models           import *
 
 def ljust(value, width):
     if type(value) == type(3.14): # watch out for floats

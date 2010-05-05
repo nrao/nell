@@ -1,6 +1,6 @@
 from datetime                  import datetime
 from django.db                 import models
-from utilities                 import UserInfo, NRAOBosDB
+from nell.utilities            import UserInfo, NRAOBosDB
 from sets                      import Set
 
 from Role       import Role

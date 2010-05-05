@@ -1,7 +1,6 @@
 from django.db import models
-
-from Period   import Period
-from Receiver import Receiver
+from Period    import Period
+from Receiver  import Receiver
 
 class Period_Receiver(models.Model):
     period   = models.ForeignKey(Period)

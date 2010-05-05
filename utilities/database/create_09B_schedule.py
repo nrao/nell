@@ -1,7 +1,7 @@
-from utilities.database.DSSPrime2DSS import DSSPrime2DSS
-from utilities.database.DSS2DSSPrime import DSS2DSSPrime
-from tools.DBReporter import DBReporter 
-from tools.IcalMap import IcalMap
+from nell.utilities.database.DSSPrime2DSS import DSSPrime2DSS
+from nell.utilities.database.DSS2DSSPrime import DSS2DSSPrime
+from nell.tools.DBReporter                import DBReporter 
+from nell.tools.IcalMap                   import IcalMap
 
 print "Instructions for how to do this manually are at: "
 print "http://wiki.gb.nrao.edu/bin/view/Software/HowToSchedule09B"

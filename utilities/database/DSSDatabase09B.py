@@ -1,6 +1,6 @@
-from utilities.database.DSSDatabase import DSSDatabase
-from datetime                       import datetime
-from sesshuns.models                import *
+from datetime                            import datetime
+from nell.utilities.database.DSSDatabase import DSSDatabase
+from sesshuns.models                     import *
 
 class DSSDatabase09B(DSSDatabase):
     """

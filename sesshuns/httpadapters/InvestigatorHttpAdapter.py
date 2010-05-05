@@ -1,4 +1,5 @@
 from sesshuns.models import first, Project, User, Investigator
+
 class InvestigatorHttpAdapter (object):
 
     def __init__(self, investigator):

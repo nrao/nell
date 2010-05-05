@@ -1,7 +1,7 @@
-from sesshuns.models              import *
-from datetime                     import datetime, timedelta
-from utilities.database.UserNames import UserNames
-from utilities                    import TimeAgent
+from datetime                          import datetime, timedelta
+from nell.utilities.database.UserNames import UserNames
+from nell.utilities                    import TimeAgent
+from sesshuns.models                   import *
 import math
 import MySQLdb as m
 

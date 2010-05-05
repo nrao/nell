@@ -4,8 +4,8 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from sesshuns.models      import Project, first
-from tools.TimeAccounting import TimeAccounting
+from nell.tools.TimeAccounting import TimeAccounting
+from sesshuns.models           import Project, first
 import sys
 
 def GenerateProjectTimeAccountingReport(pcode):

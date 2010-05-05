@@ -2,11 +2,11 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from sesshuns.models      import *
-from tools.TimeAccounting import TimeAccounting
-from sets                 import Set
-from datetime             import *
-from sesshuns.templatetags.custom import *
+from sesshuns.models              import *
+from nell.tools.TimeAccounting    import TimeAccounting
+from sets                         import Set
+from datetime                     import *
+from sesshuns.templatetags.custom import * # TBF: NO! NO!
 import sys
 
 from Report import Report, Line

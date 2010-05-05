@@ -1,7 +1,7 @@
 from sesshuns.models        import Role
 from sesshuns.models.common import first
 
-class UserHttpAdapter (object):
+class UserHttpAdapter(object):
 
     def __init__(self, user):
         self.user = user
