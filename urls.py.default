@@ -14,6 +14,7 @@ admin.autodiscover()
 urlpatterns = patterns(''
    , url(r'^profile/(\d+)/blackout$',                      blackout)
    , url(r'^profile/(\d+)/dynamic_contact$',               dynamic_contact)
+   , url(r'^profile/(\d+)/preferences$',                   preferences)
    , url(r'^profile/(\d+)$',                               profile)
    , url(r'^profile',                                      profile)
    , url(r'^$',                                            home)

@@ -1,3 +1,4 @@
+from django.core.exceptions  import ObjectDoesNotExist
 from django.db   import models
 from datetime    import datetime, timedelta
 
@@ -110,3 +111,19 @@ class Blackout(models.Model):
         db_table  = "blackouts"
         app_label = "sesshuns"
 
+    def adjustDate(self, dt):
+        try:
+            tz = self.user.preference.timeZone
+        except ObjectDoesNotExist:
+            return dt
+
+        return dt - tz.utcOffset()
+
+    def adjustedStartDate(self):
+        return self.adjustDate(self.start_date)
+
+    def adjustedEndDate(self):
+        return self.adjustDate(self.end_date)
+
+    def adjustedUntil(self):
+        return self.adjustDate(self.until)

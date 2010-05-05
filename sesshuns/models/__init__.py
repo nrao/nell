@@ -7,6 +7,7 @@ from Investigator           import Investigator
 from Observing_Parameter    import Observing_Parameter
 from Observing_Type         import Observing_Type
 from Parameter              import Parameter
+from Preference             import Preference
 from Period_Accounting      import Period_Accounting
 from Period                 import Period
 from Period_Receiver        import Period_Receiver

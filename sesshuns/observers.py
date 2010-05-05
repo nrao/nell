@@ -2,6 +2,8 @@ from datetime                       import datetime, time, timedelta
 from decorators                     import *
 from django.contrib.auth.decorators import login_required
 from django.db.models         import Q
+from django.core.exceptions   import ObjectDoesNotExist
+from django.forms             import ModelForm
 from django.http              import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts         import render_to_response
 from models                   import *
@@ -75,6 +77,31 @@ def home(request, *args, **kwds):
     else:
         return HttpResponseRedirect("/profile")
 
+@login_required
+def preferences(request, *args, **kws):
+    user = first(User.objects.filter(id = args[0]))
+    class PreferencesForm(ModelForm):
+        class Meta:
+            model = Preference
+            exclude = ('user', )
+
+    try:
+        preferences = user.preference
+    except ObjectDoesNotExist:
+        preferences = Preference(user = user, timeZone = first(TimeZone.objects.all()))
+
+    if request.method == "POST":
+        f = PreferencesForm(request.POST, instance = preferences)
+        f.save()
+        return HttpResponseRedirect("/profile/%s" % user.id)
+
+    form = PreferencesForm(instance = preferences)
+
+    return render_to_response('sesshuns/preferences.html'
+                            , {'form' : form
+                             , 'u'    : user
+                            })
+
 @revision.create_on_success
 @login_required
 @has_user_access
@@ -91,9 +118,16 @@ def profile(request, *args, **kws):
     static_info  = user.getStaticContactInfo(use_cache = False)
     reservations = NRAOBosDB().getReservationsByUsername(user.username
                                                        , use_cache = False)
+
+    try:
+        tz = user.preference.timeZone
+    except ObjectDoesNotExist:
+        tz = first(TimeZone.objects.filter(timeZone = "UTC"))
+
     blackouts    = user.blackout_set.order_by("start_date")
     return render_to_response("sesshuns/profile.html"
                             , {'u'            : user
+                             , 'tz'           : tz
                              , 'blackouts'    : blackouts
                              , 'requestor'    : requestor
                              , 'authorized'   : user == requestor

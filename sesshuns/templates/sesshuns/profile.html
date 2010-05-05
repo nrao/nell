@@ -3,11 +3,20 @@
 {% block title %}Profile - {{u|display_name}} {% endblock %}
 {% block content %}
       <div id="header" class="span-24 last">
-        <h1>{{u|display_name}}
-          <a href="/investigator/{{u.id}}/ical" title="This link provides access to all of your observation and reservation events across all of your projects in the 'iCalendar' format.  To use this feature, right-click the 'ICAL' icon and select 'Copy Link Location'.  Then paste the link into your favorite iCalendar application.">
-            <img src="/static/images/ical.gif" style="border: 0;" />
-          </a>
-        </h1>
+        <table>
+          <tr>
+            <td>
+              <h1>{{u|display_name}}
+                <a href="/investigator/{{u.id}}/ical" title="This link provides access to all of your observation and reservation events across all of your projects in the 'iCalendar' format.  To use this feature, right-click the 'ICAL' icon and select 'Copy Link Location'.  Then paste the link into your favorite iCalendar application.">
+                  <img src="/static/images/ical.gif" style="border: 0;" />
+                </a>
+              </h1>
+            </td>
+            <td>
+              <a href="/profile/{{u.id}}/preferences">Preferences</a>
+            </td>
+          </tr>
+        </table>
       </div>
       <div id="subheader" class="span-24 last">
         <!-- Add affiliation here. -->
@@ -101,7 +110,7 @@
         </div>
         <hr />
         <div>
-          <h3 class="loud">Blackout Dates (UTC)</h3>
+          <h3 class="loud">Blackout Dates ({{tz}})</h3>
           <table>
             <tr>
               <th>Begin</th>
@@ -112,11 +121,11 @@
             </tr>
             {% for b in blackouts %}
             <tr>
-              <td>{{b.start_date|date:'j M Y H:i'}}</td>
-              <td>{{b.end_date|date:'j M Y H:i'}}</td>
+              <td>{{b.adjustedStartDate|date:'j M Y H:i'}}</td>
+              <td>{{b.adjustedEndDate|date:'j M Y H:i'}}</td>
               <td>{{b.repeat.repeat}}</td>
               {% if b.until %}
-              <td>{{b.until|date:'j M Y H:i'}}</td>
+              <td>{{b.adjustedUntil|date:'j M Y H:i'}}</td>
               {% else %}
               <td>{{b.until|pretty_none}}</td>
               {% endif %}
