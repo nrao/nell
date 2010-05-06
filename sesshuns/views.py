@@ -375,8 +375,8 @@ def delete_pending(request, *args, **kwds):
     given by a start time and duration.
     """
     startPeriods = request.POST.get("start"
-                                  , datetime.now().strftime("%Y-%m-%d"))
-    startPeriods = datetime.strptime(startPeriods, '%Y-%m-%d')
+                                  , datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    startPeriods = datetime.strptime(startPeriods, '%Y-%m-%d %H:%M:%S')
 
     start, duration = ScheduleTools().getSchedulingRange(
                           startPeriods
@@ -403,7 +403,6 @@ except:
 
 @catch_json_parse_errors
 def scheduling_email(request, *args, **kwds):
-
     address_key = ["observer_address", "deleted_address", "staff_address"]
     subject_key = ["observer_subject", "deleted_subject", "staff_subject"]
     body_key    = ["observer_body", "deleted_body", "staff_body"]
@@ -464,7 +463,8 @@ def scheduling_email(request, *args, **kwds):
 @catch_json_parse_errors
 def projects_email(request, *args, **kwds):
     if request.method == 'GET':
-        pcode_list = pcodes.split(" ") if request.GET.get("pcodes") else getPcodesFromFilter(request)
+        pcodes = request.GET.get("pcodes", None)
+        pcode_list = pcodes.split(" ") if pcodes is not None else getPcodesFromFilter(request)
         pi_list, pc_list, ci_list = getInvestigators(pcode_list)
 
         return HttpResponse(json.dumps({'PI-Addresses':   pi_list
