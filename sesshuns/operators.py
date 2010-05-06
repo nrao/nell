@@ -192,7 +192,8 @@ def summary(request, *args, **kws):
                url
              , {'calendar' : sorted(schedule.items())
               , 'projects' : [(p
-                             , sorted(list(Set(days[p.pcode])))
+                             , sorted(list(Set(days[p.pcode]))
+                                    , lambda x, y: cmp(int(x), int(y)))
                              , hours[p.pcode]) for p in projects]
               , 'start'    : start
               , 'months'   : calendar.month_name 

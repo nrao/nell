@@ -21,6 +21,7 @@
     .project_type {width:1%; text-align:center}
     .type_test {background-color:#87CEFA} 
     .type_astronomy {background-color:#EEEEEE}
+    .type_calibration {background-color:#F0E68C}
     .type_maintenance {background-color:#98FB98}
   </style>
 {% endblock %}
@@ -95,7 +96,7 @@
     <tr class="day_header"> 
       <th>{{day|date:"F d"}}</th>
       <th title="Start and End times for the start day (timezone). '+' indicates that the period continues on in an undisplayed date.">{{day|date:"l"}}</th>
-      <th title="Project Type: 'A' : Astronomy, 'T' : Test, 'M' : Maintenance">Type</th>
+      <th title="Project Type: 'A' : Astronomy, 'C' : Calibration, 'M' : 'Maintenance', 'T' : Test">Type</th>
       <th>Project</th>
       <th>Friend</th>
       <th title="Receivers (Names and frequency ranges in GHz) = (RRI) Rcvr_RRI:  0.10 -  1.60, (342) Rcvr_342:  0.29 -  0.40, (450) Rcvr_450:  0.39 -  0.52, (600) Rcvr_600:  0.51 -  0.69, (800) Rcvr_800:  0.68 -  0.92, (1070) Rcvr_1070:  0.91 -  1.23, (L) Rcvr1_2:  1.15 -  1.73, (S) Rcvr2_3:  1.73 -  2.60, (C) Rcvr4_6:  3.95 -  6.10, (X) Rcvr8_10:  8.00 - 10.00, (Hol) Holography: 11.70 - 12.20, (Ku) Rcvr12_18: 12.00 - 15.40, (KFPA) RcvrArray18_26: 17.00 - 27.50, (K) Rcvr18_26: 18.00 - 26.50, (Ka) Rcvr26_40: 26.00 - 39.50, (Q) Rcvr40_52: 38.20 - 49.80, (MBA) Rcvr_PAR: 80.00 - 100.00">Rcvrs</th>
@@ -116,7 +117,11 @@
       {% ifequal p.session.project.project_type.type "non-science" %}
         {% if p.session.project.is_maintenance %}
           <td class="project_type type_maintenance" >{{p.session.project|project_type}}</td>
-        {% else %}
+        {% endif %}
+        {% if p.session.project.is_calibration %}
+          <td class="project_type type_calibration" >{{p.session.project|project_type}}</td>
+        {% endif %}
+        {% if not p.session.project.is_maintenance and not p.session.project.is_calibration %}
           <td class="project_type type_test" >{{p.session.project|project_type}}</td>
         {% endif %}
       {% else %}

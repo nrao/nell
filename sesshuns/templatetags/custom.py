@@ -99,8 +99,10 @@ def project_type(project):
     if project.project_type.type == 'science':
         type = 'A'
     else:
-        if project.name == 'Maintenance':
+        if project.is_maintenance():
             type = 'M'
+        elif project.is_calibration():
+            type = 'C'
         else:
             type = 'T'
     return type            
