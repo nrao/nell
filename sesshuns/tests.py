@@ -2278,10 +2278,11 @@ class TestShiftPeriodBoundaries(NellTestCase):
                              , time    = time)) #"2009-10-11 04:00:00"))
         self.failUnless("ok" in response.content)                     
 
-class TestPublishPeriods(NellTestCase):
+class PeriodsTestCase(NellTestCase):
+    "Parent class for test cases that need periods to work with."
 
     def setUp(self):
-        super(TestPublishPeriods, self).setUp()
+        super(PeriodsTestCase, self).setUp()
 
         # setup some periods
         self.start = datetime(2000, 1, 1, 0)
@@ -2309,11 +2310,70 @@ class TestPublishPeriods(NellTestCase):
             self.ps.append(p)
 
     def tearDown(self):
-        super(TestPublishPeriods, self).tearDown()
+        super(PeriodsTestCase, self).tearDown()
 
         for p in self.ps:
             p.session.delete()
             p.remove() #delete()
+
+class TestSchedulingEmail(PeriodsTestCase):
+    "Subclass PeriodsTestCase so that we have Periods to work with."
+
+    def test_scheduling_email(self):
+
+        # TBF: this is a dumb test, since email is always generated for NOW;
+        # we need to create some periods for NOW to show up in the email
+        url = "/schedule/email"
+        response = Client().get(url, dict(duration = 2))
+ 
+        self.failUnless(response.status_code == 200)  
+
+class TestProjectsEmail(PeriodsTestCase):
+    "Subclass PeriodsTestCase so that we have Periods to work with."
+
+    def test_projects_email(self):
+        pcodes = "GBT09A-001"
+
+        url = "/projects/email"
+
+        response = Client().get(url, dict(pcodes = pcodes))
+
+        self.failUnless(response.status_code == 200)  
+        self.failUnless('"PCODES": ["GBT09A-001"]' in response.content)
+
+class TestDeletePending(PeriodsTestCase):
+    "Subclass PeriodsTestCase so that we have Periods to work with."
+
+    def test_delete_pending(self):
+
+        # check current state
+        ps = Period.objects.order_by("start")
+        exp = ["S", "P", "S"]
+        self.assertEquals(exp, [p.state.abbreviation for p in ps])
+        exp = [5.0, 0.0, 4.0]
+        self.assertEquals(exp, [p.accounting.scheduled for p in ps])
+
+        # have to use the scheduling range
+        dt = self.ps[0].start - timedelta(days = 1)
+        time = dt.strftime("%Y-%m-%d %H:%M:%S")
+        tz = "ET"
+        duration = 2 #12
+        url = "/periods/delete_pending"
+
+        response = Client().post(url, dict(start    = time
+                                         , tz       = tz
+                                         , duration = duration
+                                         ))
+        self.failUnless("ok" in response.content)    
+
+        ps = Period.objects.order_by("start")
+        exp = ["S", "S"]
+        self.assertEquals(exp, [p.state.abbreviation for p in ps])
+        exp = [5.0, 4.0]
+        self.assertEquals(exp, [p.accounting.scheduled for p in ps])
+
+class TestPublishPeriods(PeriodsTestCase):
+    "Subclass PeriodsTestCase so that we have Periods to work with."
 
     def test_publish_periods_by_id(self):
         # check current state
