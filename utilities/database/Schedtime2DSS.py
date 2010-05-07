@@ -508,7 +508,7 @@ class Schedtime2DSS(object):
                   , name           = sessionName
                   , frequency      = 0.0 #None
                   , max_duration   = 12.0 #None
-                  , min_duration   = 0.0 #None
+                  , min_duration   = 1.0 #None
                   , time_between   = 0.0 #None
                     )
         s.save()
