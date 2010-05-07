@@ -68,10 +68,13 @@ class DSSDatabase(object):
             print "Are these differences in names acceptable?"
             self.un.confirmUserInfo()
             x = raw_input("Continue and get missing IDs/usernames? CtrlX if not.")
+        # TBF: We can't use this anymore because the ID we're getting is
+        # the global_id, not the id we use.  We should just wait till we
+        # have a mirror of their DB in GB.
+        #self.un.getUserNamesFromProjects('QueryAgent', 'iBlertFoo')
 
-        self.un.getUserNamesFromProjects('QueryAgent', 'iBlertFoo')
-
-        self.un.getUserNamesFromIDs()
+        # TBF: can't do this if the above line isn't being run
+        #self.un.getUserNamesFromIDs()
 
         if self.interactive:
             print "Finally, check DB vs. PST one more time: "
