@@ -14,6 +14,7 @@ from nell.utilities           import gen_gbt_schedule, NRAOBosDB
 from nell.utilities           import Shelf
 from reversion                import revision
 from utilities                import *
+from validators               import BlackoutValidator
 import pytz
 
 def public_schedule(request, *args, **kws):
@@ -337,76 +338,41 @@ def blackout(request, *args, **kws):
     """
     Allows investigators to manage blackouts.
     """
-    u_id,     = args
+    b_id = None
+    if len(args) == 1:
+        u_id,     = args
+    else:
+        u_id, b_id, = args
+
     user      = first(User.objects.filter(id = u_id))
     requestor = get_requestor(request)
 
-    if request.method == 'GET':
-        b = first(Blackout.objects.filter(id = int(request.GET.get('id', '0'))))
-        if request.GET.get('_method', '') == "DELETE":
-            b.delete()
-            return HttpResponseRedirect("/profile/%s" % u_id)
-        else:
-            return render_to_response(
-                "sesshuns/blackout_form.html"
-              , get_blackout_form_context(request.GET.get('_method', '')
-                                        , b
-                                        , user
-                                        , requestor
-                                        , []))
-
-    # TBF: Use a django form!
-    # Now see if the data to be saved is valid    
-    # Convert blackout to UTC.
-    utcOffset = first(TimeZone.objects.filter(timeZone = request.POST['tz'])).utcOffset()
-    # watch for malformed dates
-    start, stError = parse_datetime(request, 'start', 'starttime', utcOffset)
-    end,   edError = parse_datetime(request,   'end',   'endtime', utcOffset)
-    until, utError = parse_datetime(request, 'until', 'untiltime', utcOffset)
-    repeat      = first(Repeat.objects.filter(repeat = request.POST['repeat']))
-    description = request.POST['description']
-    errors = [e for e in [stError, edError, utError] if e is not None]
-
-    # more error checking!
-    # start, end can't be null
-    if start is None or end is None:
-        errors.append("ERROR: must specify Start and End")
-    # start has to be a start, end has to be an end 
-    if end is not None and start is not None and end < start:
-        errors.append("ERROR: End must be after Start")
-    if end is not None and until is not None and until < end:
-        errors.append("ERROR: Until must be after End")
-    # if it's repeating, we must have an until date
-    if repeat.repeat != "Once" and until is None:
-        errors.append("ERROR: if repeating, must specify Until")
-
-    # do we need to redirect back to the form because of errors?
-    if len(errors) != 0:
-         if request.POST.get('_method', '') == 'PUT':
-            # go back to editing this pre-existing blackout date
-            b = first(Blackout.objects.filter(id = int(request.POST.get('id', 0))))
-            return render_to_response("sesshuns/blackout_form.html"
-                 , get_blackout_form_context('PUT', b, user, requestor, errors))
-         else:
-            # go back to creating a new one
-            return render_to_response("sesshuns/blackout_form.html"
-                 , get_blackout_form_context('', None, user, requestor, errors))
-         
-    # no errors - retrieve obj, or create new one
-    if request.POST.get('_method', '') == 'PUT':
-        b = first(Blackout.objects.filter(id = request.POST.get('id', '0')))
-    else:
-        b = Blackout(user = user)
-    b.start_date  = start
-    b.end_date    = end
-    b.until       = until
-    b.repeat      = repeat
-    b.description = description
-    b.save()
+    if request.method == 'POST':
+        validator = BlackoutValidator.validate(request.POST)
+        # do we need to redirect back to the form because of errors?
+        if len(validator.errors) == 0:
+            # no errors - retrieve obj, or create new one
+            b = first(Blackout.objects.filter(id = b_id)) if request.POST.get('_method', '') == 'PUT' \
+                                                          else Blackout(user = user)
+            b.start_date, b.end_date, b.until = (validator.start_date, validator.end_date, validator.until)
+            b.repeat      = validator.repeat
+            b.description = validator.description
+            b.save()
         
-    revision.comment = get_rev_comment(request, b, "blackout")
+            revision.comment = get_rev_comment(request, b, "blackout")
 
-    return HttpResponseRedirect("/profile/%s" % u_id)
+            return HttpResponseRedirect("/profile/%s" % u_id)
+            
+        return render_to_response("sesshuns/blackout_form.html"
+             , get_blackout_form_context(b_id, validator, user, requestor, validator.errors))
+
+    b = first(Blackout.objects.filter(id = b_id)) if b_id is not None else None
+    if request.GET.get('_method', '') == "DELETE" and b is not None:
+        b.delete()
+        return HttpResponseRedirect("/profile/%s" % u_id)
+    return render_to_response(
+        "sesshuns/blackout_form.html"
+      , get_blackout_form_context(b_id, b, user, requestor, []))
 
 @login_required
 def events(request, *args, **kws):

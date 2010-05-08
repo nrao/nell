@@ -111,13 +111,13 @@ def get_requestor(request):
 
     return requestor
 
-def get_blackout_form_context(method, blackout, user, requestor, errors):
+def get_blackout_form_context(b_id, fdata, user, requestor, errors):
     "Returns dictionary for populating blackout form"
     return {
         'u'        : user
       , 'requestor': requestor
-      , 'method'   : method
-      , 'b'        : blackout # b's dates in DB are UTC
+      , 'b_id'   : b_id
+      , 'b'        : fdata # b's dates in DB are UTC
       , 'tzs'      : TimeZone.objects.all()
       , 'timezone' : 'UTC' # form always starts at UTC
       , 'repeats'  : Repeat.objects.all()
@@ -126,14 +126,14 @@ def get_blackout_form_context(method, blackout, user, requestor, errors):
       , 'errors'   : errors
     }
 
-def parse_datetime(request, dateName, timeName, utcOffset):
+def parse_datetime(fdata, dateName, timeName, utcOffset):
     "Extract the date & time from the form values to make a datetime obj"
     dt    = None
     error = None
     try:
-        if request.POST[dateName] != '':
+        if fdata[dateName] != '':
             dt = datetime.strptime(
-                "%s %s" % (request.POST[dateName], request.POST[timeName])
+                "%s %s" % (fdata[dateName], fdata[timeName])
               , "%m/%d/%Y %H:%M") + utcOffset
     except:
         error = "ERROR: malformed %s date" % dateName

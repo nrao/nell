@@ -30,7 +30,12 @@
 </div>
 
 <div type="text" id="datepicker"></div>
+{% if b_id %}
+<form action="/profile/{{u.id}}/blackout/{{b_id}}" method="POST">
+  <input type="hidden" name="_method" value="PUT"/>
+{% else %}
 <form action="/profile/{{u.id}}/blackout" method="POST">
+{% endif %}
   <p>
     <label for="id_start">Start:</label>
     <input type="text" name="start" id="id_start" title="Click once for calendar, click twice for previous entries, or alternatively, enter your date in the form mm/dd/yyyy." value="{{b.start_date|date:'m/d/Y'}}"/>
@@ -98,10 +103,6 @@
     <label for="id_description">Description:</label> 
     <input id="id_description" type="text" name="description" maxlength="512" value="{{b.description}}" />
   </p>
-  {% if b %}
-  <input type="hidden" name="_method" value="{{method}}" />
-  <input type="hidden" name="id" value="{{b.id}}" />
-  {% endif %}
   <input type="submit" value="Save"/>&nbsp;&nbsp;
   <input type="submit" value="Cancel" onclick="window.location.href = '/profile/{{u.id}}'; return false"/>
 </form>

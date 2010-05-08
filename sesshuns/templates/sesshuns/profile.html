@@ -123,8 +123,8 @@
               <td>{{b.description}}</td>
             {% if authorized or requestor.isAdmin %}
               <td>
-                <a href="/profile/{{u.id}}/blackout?_method=PUT&id={{b.id}}">edit</a> |
-                <a href="/profile/{{u.id}}/blackout?_method=DELETE&id={{b.id}}">delete</a>
+                <a href="/profile/{{u.id}}/blackout/{{b.id}}">edit</a> |
+                <a href="/profile/{{u.id}}/blackout/{{b.id}}?_method=DELETE">delete</a>
               </td>
             {% endif %}
             </tr>
