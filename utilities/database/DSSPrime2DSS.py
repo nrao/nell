@@ -324,7 +324,7 @@ class DSSPrime2DSS(object):
         for o in self.cursor.fetchall():
             p  = first(Parameter.objects.filter(name = o[5]))
             if p.name == 'Instruments' and o[0] == "None":
-                print "Not passing over Observing Parameter = Instruments(None)"
+                #print "Not passing over Observing Parameter = Instruments(None)"
                 pass
             else:
                 op = Observing_Parameter(

@@ -1,4 +1,3 @@
-from django.core.exceptions  import ObjectDoesNotExist
 from django.db   import models
 from datetime    import datetime, timedelta
 from pytz        import timezone

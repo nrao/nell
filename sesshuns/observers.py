@@ -129,11 +129,11 @@ def profile(request, *args, **kws):
     blackouts    = user.blackout_set.order_by("start_date")
     return render_to_response("sesshuns/profile.html"
                             , {'u'            : user
-                             , 'tz'           : tz
                              , 'blackouts'    : blackouts
                              , 'requestor'    : requestor
                              , 'authorized'   : user == requestor
                              #, 'clients'      : Project.objects.filter(friend=user)
+                             , 'tz'           : tz
                              , 'emails'       : static_info['emailDescs']
                              , 'phones'       : static_info['phoneDescs']
                              , 'postals'      : static_info['postals']

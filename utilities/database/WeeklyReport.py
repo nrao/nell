@@ -161,9 +161,11 @@ def GenerateReport(start):
     outfile.write("\t         %.1f hours of VLBI projects\n" % vlbi)
     outfile.write("\n* Includes projects that are on hold for trimester %s\n" % cSemester)
 
-    visitors = ["%s - %s - %s" % (r.start_date.strftime("%m/%d/%Y")
-                              , r.end_date.strftime("%m/%d/%Y")
-                              , r.user.name()) \
+    visitors = ["%s - %s - %s [%s] [%s]" % (r.start_date.strftime("%m/%d")
+                              , r.end_date.strftime("%m/%d")
+                              , r.user.name()
+                              , ', '.join(r.user.getProjects())
+                              , ', '.join(r.user.getFriends())) \
                 for r in Reservation.objects.filter(
                                       end_date__gte = next_start
                                                    ).filter(

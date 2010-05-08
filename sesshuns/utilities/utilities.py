@@ -3,6 +3,69 @@ from django.db.models import Q
 from nell.utilities   import UserInfo
 from sesshuns.models  import *
 
+def getReceivers(names):
+    rcvrs = []
+    error = None
+    for name in [n for n in names if len(n) != 0]:
+        r = Receiver.get_rcvr(name)
+        if r is not None:
+            rcvrs.append(r)
+        else:
+            error = 'Unrecognized receiver: %s' % name
+    return error, rcvrs
+
+def getInvestigators(pcodes):
+    pi = []
+    pc = []
+    ci = []
+    try:
+        for i in pcodes:
+            p = Project.objects.filter(pcode = i)[0]
+            for k in p.investigator_set.all():
+                if k.principal_investigator:
+                    for j in k.user.email_set.all():
+                        pi.append(j.email)
+                if k.principal_contact:
+                    for j in k.user.email_set.all():
+                        pc.append(j.email)
+                if not k.principal_investigator and not k.principal_contact:
+                    for j in k.user.email_set.all():
+                        ci.append(j.email)
+    except IndexError, data:
+        pass # in case of blanks at the end of the list.
+    return pi, pc, ci
+
+def getPcodesFromFilter(request):
+
+    query_set = Project.objects.all()
+    filterClp = request.GET.get("filterClp", None)
+
+    if filterClp is not None:
+        query_set = query_set.filter(
+            complete = (filterClp.lower() == "true"))
+
+    filterType = request.GET.get("filterType", None)
+
+    if filterType is not None:
+        query_set = query_set.filter(project_type__type = filterType.lower())
+
+    filterSem = request.GET.get("filterSem", None)
+
+    if filterSem is not None:
+        query_set = query_set.filter(semester__semester__icontains = filterSem)
+
+    filterText = request.GET.get("filterText", None)
+
+    if filterText is not None:
+        query_set = query_set.filter(
+                Q(name__icontains                            = filterText) |
+                Q(pcode__icontains                           = filterText) |
+                Q(semester__semester__icontains              = filterText) |
+                Q(project_type__type__icontains              = filterText))
+
+    pcodes = [p.pcode for p in query_set]
+    return pcodes
+
 def acknowledge_moc(requestor, period):
     """
     Sets acknowledge flag for periods which fail MOC.
@@ -12,7 +75,8 @@ def acknowledge_moc(requestor, period):
         period.save()
 
 def get_rev_comment(request, obj, method):
-    where = "%s %s" % (obj.__class__.__name__, method)
+    className = obj.__class__.__name__ if obj is not None else ""
+    where = "%s %s" % (className, method)
     who   = request.user.username
     return "WHO: %s, WHERE: %s" % (who, where)
 

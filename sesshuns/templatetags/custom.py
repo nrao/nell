@@ -23,15 +23,13 @@ def dt2sex(value):
 @register.filter
 def target_horz(value):
     t = first(value.target_set.all())
-    # TBF: place holder until we release alternate ephemeris
-    tag = "" #"*" if t.isEphemeris() else ""
+    tag = "*" if t.isEphemeris() else ""
     return t.get_horizontal() + tag
 
 @register.filter
 def target_vert(value):
     t = first(value.target_set.all())
-    # TBF: place holder until we release alternate ephemeris
-    tag = "" #"*"  if t.isEphemeris() else ""
+    tag = "*"  if t.isEphemeris() else ""
     return t.get_vertical() + tag
 
 @register.inclusion_tag('flatten.html')
@@ -101,8 +99,10 @@ def project_type(project):
     if project.project_type.type == 'science':
         type = 'A'
     else:
-        if project.name == 'Maintenance':
+        if project.is_maintenance():
             type = 'M'
+        elif project.is_calibration():
+            type = 'C'
         else:
             type = 'T'
     return type            

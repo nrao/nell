@@ -3,17 +3,11 @@
 {% block title %}Profile - {{u|display_name}} {% endblock %}
 {% block content %}
       <div id="header" class="span-24 last">
-        <table>
-          <tr>
-            <td>
-              <h1>{{u|display_name}}
-                <a href="/investigator/{{u.id}}/ical" title="This link provides access to all of your observation and reservation events across all of your projects in the 'iCalendar' format.  To use this feature, right-click the 'ICAL' icon and select 'Copy Link Location'.  Then paste the link into your favorite iCalendar application.">
-                  <img src="/static/images/ical.gif" style="border: 0;" />
-                </a>
-              </h1>
-            </td>
-          </tr>
-        </table>
+        <h1>{{u|display_name}}
+          <a href="/investigator/{{u.id}}/ical" title="This link provides access to all of your observation and reservation events across all of your projects in the 'iCalendar' format.  To use this feature, right-click the 'ICAL' icon and select 'Copy Link Location'.  Then paste the link into your favorite iCalendar application.">
+            <img src="/static/images/ical.gif" style="border: 0;" />
+          </a>
+        </h1>
       </div>
       <div id="subheader" class="span-24 last">
         <!-- Add affiliation here. -->

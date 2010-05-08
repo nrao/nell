@@ -79,6 +79,18 @@ class User(models.Model):
             retval[project] = [p for p in period if p.start < dt]
         return retval
 
+    def getFriends(self):
+        "Returns a list of all the friends that are assisting this user."
+        projects = [i.project for i in self.investigator_set.all()]
+        return list(Set([p.friend.last_name for p in projects]))
+
+    def getProjects(self):
+        """
+        Returns a list of all the project codes for which this user is an
+        investigator.
+        """
+        return [i.project.pcode for i in self.investigator_set.all()]
+
     def isInvestigator(self, pcode):
         "Is this user an investigator on the given project?"
         return pcode in [i.project.pcode for i in self.investigator_set.all()]
