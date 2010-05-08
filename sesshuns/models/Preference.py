@@ -5,10 +5,10 @@ from TimeZone    import TimeZone
 class Preference(models.Model):
 
     user     = models.OneToOneField(User)
-    timeZone = models.ForeignKey(TimeZone)
+    timeZone = models.CharField(max_length = 256)
 
     def __str__(self):
-        return "%s (%s)" % (self.user.last_name, self.timeZone.timeZone)
+        return "%s (%s)" % (self.user.last_name, self.timeZone)
 
     class Meta:
         db_table  = "preferences"

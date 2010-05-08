@@ -3,7 +3,7 @@ from decorators                     import *
 from django.contrib.auth.decorators import login_required
 from django.db.models         import Q
 from django.core.exceptions   import ObjectDoesNotExist
-from django.forms             import ModelForm
+from django                   import forms
 from django.http              import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts         import render_to_response
 from models                   import *
@@ -14,6 +14,7 @@ from nell.utilities           import gen_gbt_schedule, NRAOBosDB
 from nell.utilities           import Shelf
 from reversion                import revision
 from utilities                import *
+import pytz
 
 def public_schedule(request, *args, **kws):
     """
@@ -79,23 +80,24 @@ def home(request, *args, **kwds):
 
 @login_required
 def preferences(request, *args, **kws):
-    user = first(User.objects.filter(id = args[0]))
-    class PreferencesForm(ModelForm):
-        class Meta:
-            model = Preference
-            exclude = ('user', )
+    user = get_requestor(request)
+    class PreferencesForm(forms.Form):
+        timeZone = forms.ChoiceField(choices = [(tz, tz) for tz in pytz.all_timezones])
 
     try:
         preferences = user.preference
     except ObjectDoesNotExist:
-        preferences = Preference(user = user, timeZone = first(TimeZone.objects.all()))
+        preferences = Preference(user = user)
+        preferences.save()
 
+    form = PreferencesForm(initial = {'timeZone' : preferences.timeZone})
     if request.method == "POST":
-        f = PreferencesForm(request.POST, instance = preferences)
-        f.save()
-        return HttpResponseRedirect("/profile/%s" % user.id)
+        form = PreferencesForm(request.POST)
+        if form.is_valid():
+            preferences.timeZone = form.cleaned_data['timeZone']
+            preferences.save()
+            return HttpResponseRedirect("/profile/%s" % user.id)
 
-    form = PreferencesForm(instance = preferences)
 
     return render_to_response('sesshuns/preferences.html'
                             , {'form' : form
@@ -122,7 +124,7 @@ def profile(request, *args, **kws):
     try:
         tz = user.preference.timeZone
     except ObjectDoesNotExist:
-        tz = first(TimeZone.objects.filter(timeZone = "UTC"))
+        tz = "UTC"
 
     blackouts    = user.blackout_set.order_by("start_date")
     return render_to_response("sesshuns/profile.html"

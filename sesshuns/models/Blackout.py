@@ -1,6 +1,8 @@
 from django.core.exceptions  import ObjectDoesNotExist
 from django.db   import models
 from datetime    import datetime, timedelta
+from pytz        import timezone
+import pytz
 
 from User        import User
 from Repeat      import Repeat
@@ -113,11 +115,14 @@ class Blackout(models.Model):
 
     def adjustDate(self, dt):
         try:
-            tz = self.user.preference.timeZone
+            tz_pref = self.user.preference.timeZone
         except ObjectDoesNotExist:
             return dt
 
-        return dt - tz.utcOffset()
+        fmt = '%Y-%m-%d %H:%M:%S %Z%z'
+        tz  = timezone(tz_pref)
+        utc = pytz.utc
+        return utc.localize(dt).astimezone(tz)
 
     def adjustedStartDate(self):
         return self.adjustDate(self.start_date)
