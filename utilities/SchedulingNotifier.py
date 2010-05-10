@@ -91,12 +91,14 @@ class SchedulingNotifier(Notifier):
             sorted([p for p in periods if not p.isDeleted()])
 
         # the list of periods that we must list to remind obs. of changes:
-        self.changedPeriods = sorted([p for p in periods if p.isDeleted() or \
+        self.changedPeriods = sorted([p for p in periods if \
+                             (p.isDeleted() and not p.session.isWindowed()) or \
                                    p.accounting.of_interest()])
 
         # deleted periods must also be tracked separately, because those
         # observers will get an email with a different subject
-        self.deletedPeriods = sorted([p for p in periods if p.isDeleted()])
+        self.deletedPeriods = sorted([p for p in periods if p.isDeleted() and \
+                                                   not p.session.isWindowed()])
 
     def notify(self):
         "send out all the different emails"

@@ -68,9 +68,10 @@ class DSSDatabase(object):
             print "Are these differences in names acceptable?"
             self.un.confirmUserInfo()
             x = raw_input("Continue and get missing IDs/usernames? CtrlX if not.")
-        # TBF: We can't use this anymore because the ID we're getting is
-        # the global_id, not the id we use.  We should just wait till we
-        # have a mirror of their DB in GB.
+        # I'm commenting this out to make sure that we don't blindly run
+        # this code till it's been checked out.  And it needs to be tested
+        # right before it's run because the OpenSky/PST interfaces it relies
+        # on may change w/ out notification (PRM).
         #self.un.getUserNamesFromProjects('QueryAgent', 'iBlertFoo')
 
         # TBF: can't do this if the above line isn't being run
