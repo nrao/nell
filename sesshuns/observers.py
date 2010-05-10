@@ -88,9 +88,8 @@ def profile(request, *args, **kws):
     else:
         user = requestor
 
-    static_info  = user.getStaticContactInfo(use_cache = False)
-    reservations = NRAOBosDB().getReservationsByUsername(user.username
-                                                       , use_cache = False)
+    static_info  = user.getStaticContactInfo()
+    reservations = NRAOBosDB().getReservationsByUsername(user.username)
     blackouts    = user.blackout_set.order_by("start_date")
     return render_to_response("sesshuns/profile.html"
                             , {'u'            : user
@@ -294,6 +293,14 @@ def observer_ical(request, *args, **kws):
     response['Content-Disposition'] = 'attachment; filename=GBTschedule.ics'
     return response
 
+
+@login_required
+@has_access
+def clear_user_cache(request, *args, **kwds):
+    user = first(User.objects.filter(id = args[0]))
+    user.clearCachedInfo()
+    return HttpResponseRedirect("/profile/%s" % args[0])
+ 
 @revision.create_on_success
 @login_required
 @has_access

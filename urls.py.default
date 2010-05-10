@@ -63,6 +63,7 @@ urlpatterns = patterns(''
    , url(r'^windows/(\d+)$',     WindowResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^users$',           UserResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^users/(\d+)$',     UserResource(permitted_methods=('PUT', 'GET', 'POST'))) #
+   , url(r'^investigator/([^/]+)/clear_cache$',         clear_user_cache)
    , url(r'^investigator/([^/]+)/ical$',                observer_ical)
    , url(r'^investigator/([^/]+)/ical/[A-za-z.]*$',     observer_ical)
    , url(r'^investigators$',      InvestigatorResource(permitted_methods=('PUT', 'GET', 'POST'))) #

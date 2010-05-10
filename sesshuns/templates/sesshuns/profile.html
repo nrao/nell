@@ -51,12 +51,12 @@
           <h3 class="loud">Dynamic Contact Information</h3>
           <p>{{u.contact_instructions|escape|linebreaks}}</p>
           {% if authorized or requestor.isAdmin %}
-          <a href="/profile/{{u.id}}/dynamic_contact/form">edit</a>
+          <a href="/profile/{{u.id}}/dynamic_contact">edit</a>
           {% endif %}
         </div>  
         <div class="span-8 last">  
           <h3 class="loud">Static Contact Information</h3>  
-          <em>To update, edit your profile at <a href="https://my.nrao.edu">my.nrao.edu</a></em>
+          <em>To update, edit your profile at <a href="https://my.nrao.edu">my.nrao.edu</a> then click <a href="/investigator/{{u.id}}/clear_cache">refresh</a>. </em>
           <table>
             <tr>
               <th>Email(s)</th>
@@ -162,6 +162,7 @@
         </div>
         <div id="reservation">
           <h3 class="caps">Upcoming Reservations</h3>
+          <a href="/investigator/{{u.id}}/clear_cache">Refresh</a>
           <div class="box">
           <table>
             <tr>

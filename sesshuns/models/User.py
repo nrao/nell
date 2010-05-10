@@ -1,4 +1,5 @@
 from datetime                  import datetime
+from django.core.cache         import cache
 from django.db                 import models
 from nell.utilities            import UserInfo, NRAOBosDB
 from sets                      import Set
@@ -114,4 +115,7 @@ class User(models.Model):
         upcodes = [i.project.pcode for i in user.investigator_set.all()]
         shared_projects = [p for p in upcodes if self.isFriend(p) \
                                               or self.isInvestigator(p)]
-        return shared_projects != [] or self.isAdmin() or self.isOperator()                                      
+        return shared_projects != [] or self.isAdmin() or self.isOperator()               
+    def clearCachedInfo(self):
+        cache.delete(self.username)
+        cache.delete(str(self.pst_id)) # Keys are strings only.
