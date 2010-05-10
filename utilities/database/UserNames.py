@@ -403,6 +403,9 @@ class UserNames(object):
           , opener=urllib2.build_opener())
 
         key = 'authorsByProposalId'
+        global_id_key = 'userByGlobalId'
+
+        ui = UserInfo()
 
         # for keeping track of our progess
         failures = []
@@ -447,10 +450,20 @@ class UserNames(object):
                 # This 'unique_id' is really the global_id, not the 'id'
                 # that we are using throughout our code!
                 # That means this is not a suitable way of setting the
-                # pst_id anymore!
-                unique_id  = int(self.findTag(a, "unique_id"))
+                # pst_id anymore! so save it and move on.
+                global_id  = int(self.findTag(a, "unique_id"))
                 accnt_name = self.findTag(a, "account-name")
                 emailStr   = self.findTag(a, "email")
+
+                # now, turn around and get OUR id from the global_id
+                try:
+                    el = udb.get_data(global_id_key, global_id)
+                    globalInfo = ui.parseUserXML(el)
+                    pst_id = globalInfo['id']
+                except:
+                    print >> self.out, "EXCEPTION w/ global_id: ", global_id  
+                    failures.append(p)
+                    continue
 
                 # find this author in OUR DB
                 users = User.objects.filter(first_name = first_name
@@ -472,22 +485,21 @@ class UserNames(object):
                 # Only save to the DB if we got one unique user                 
                 if numUsers == 1:
                     u = users[0]        
-                    if (u, unique_id, accnt_name) not in usersFound:
-                            usersFound.append((u, unique_id, accnt_name))
+                    if (u, pst_id, accnt_name) not in usersFound:
+                            usersFound.append((u, pst_id, accnt_name))
                     if u.pst_id is not None:
-                        if u.pst_id != unique_id:
-                            badIds.append((u, u.pst_id, unique_id, id))
+                        if u.pst_id != pst_id:
+                            badIds.append((u, u.pst_id, pst_id))
                             print >> self.out, "BAD ID!!!!!!!!!!!!!!!!!!!"
-                            print >> self.out, u.pst_id, unique_id, id
+                            print >> self.out, u.pst_id, pst_id
                             continue
                     # save what we've learned to the DB!!!        
                     if u.pst_id is None:
                         print >> self.out, "Saving to: ", u
-                        print >> self.out, accnt_name, unique_id
+                        print >> self.out, accnt_name, pst_id
                         u.username = accnt_name
-                        u.pst_id = unique_id
-                        # TBF: Don't save!!! That is *not* our pst_id!
-                        #u.save()
+                        u.pst_id = pst_id
+                        u.save()
                 elif numUsers == 0:
                     # no users - do we care if what's in the PST isn't all
                     # in our system?
