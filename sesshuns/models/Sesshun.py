@@ -45,6 +45,15 @@ class Sesshun(models.Model):
     def get_absolute_url(self):
         return "/sesshuns/sesshun/%i/" % self.id
 
+    def isOpen(self):
+        return self.session_type.type == "open"
+
+    def isWindowed(self):
+        return self.session_type.type == "windowed"
+
+    def isFixed(self):
+        return self.session_type.type == "fixed"
+
     def receiver_list(self):
         "Returns a string representation of the rcvr logic."
         return " AND ".join([rg.__str__() for rg in self.receiver_group_set.all()])
