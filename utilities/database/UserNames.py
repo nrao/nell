@@ -443,6 +443,11 @@ class UserNames(object):
                 # get it's info
                 last_name  = self.findTag(a, "last_name")
                 first_name = self.findTag(a, "first_name")
+                # TBF WTF!
+                # This 'unique_id' is really the global_id, not the 'id'
+                # that we are using throughout our code!
+                # That means this is not a suitable way of setting the
+                # pst_id anymore!
                 unique_id  = int(self.findTag(a, "unique_id"))
                 accnt_name = self.findTag(a, "account-name")
                 emailStr   = self.findTag(a, "email")
@@ -481,7 +486,8 @@ class UserNames(object):
                         print >> self.out, accnt_name, unique_id
                         u.username = accnt_name
                         u.pst_id = unique_id
-                        u.save()
+                        # TBF: Don't save!!! That is *not* our pst_id!
+                        #u.save()
                 elif numUsers == 0:
                     # no users - do we care if what's in the PST isn't all
                     # in our system?
