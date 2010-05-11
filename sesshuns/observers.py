@@ -15,6 +15,7 @@ from nell.utilities           import Shelf
 from reversion                import revision
 from utilities                import *
 from validators               import BlackoutValidator
+from pytz                     import timezone
 import pytz
 
 def public_schedule(request, *args, **kws):
@@ -105,6 +106,14 @@ def preferences(request, *args, **kws):
                              , 'u'    : user
                             })
 
+def adjustDate(tz_pref, dt):
+    if dt is None:
+        return
+    fmt = '%Y-%m-%d %H:%M:%S %Z%z'
+    tz  = timezone(tz_pref)
+    utc = pytz.utc
+    return utc.localize(dt).astimezone(tz)
+
 @revision.create_on_success
 @login_required
 @has_user_access
@@ -123,11 +132,18 @@ def profile(request, *args, **kws):
                                                        , use_cache = False)
 
     try:
-        tz = user.preference.timeZone
+        tz = requestor.preference.timeZone
     except ObjectDoesNotExist:
         tz = "UTC"
 
-    blackouts    = user.blackout_set.order_by("start_date")
+    blackouts    = [{'user'        : user
+                   , 'start_date'  : adjustDate(tz, b.start_date)
+                   , 'end_date'    : adjustDate(tz, b.end_date)
+                   , 'repeat'      : b.repeat
+                   , 'until'       : adjustDate(tz, b.until)
+                   , 'description' : b.description
+                    } for b in user.blackout_set.order_by("start_date")]
+
     return render_to_response("sesshuns/profile.html"
                             , {'u'            : user
                              , 'blackouts'    : blackouts

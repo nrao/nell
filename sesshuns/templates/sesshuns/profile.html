@@ -112,11 +112,11 @@
             </tr>
             {% for b in blackouts %}
             <tr>
-              <td>{{b.adjustedStartDate|date:'j M Y H:i'}}</td>
-              <td>{{b.adjustedEndDate|date:'j M Y H:i'}}</td>
+              <td>{{b.start_date|date:'j M Y H:i'}}</td>
+              <td>{{b.end_date|date:'j M Y H:i'}}</td>
               <td>{{b.repeat.repeat}}</td>
               {% if b.until %}
-              <td>{{b.adjustedUntil|date:'j M Y H:i'}}</td>
+              <td>{{b.until|date:'j M Y H:i'}}</td>
               {% else %}
               <td>{{b.until|pretty_none}}</td>
               {% endif %}
