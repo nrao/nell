@@ -63,9 +63,9 @@
               <td>{% if s.status.authorized %}Yes{% endif %}</td>
               <td>
                   {% if s.status.enabled %}
-                  <a href="/project/{{p.pcode}}/session/{{s.name}}/enable"><img src="/static/images/checked.png" /></a>
+                  <a href="/project/{{p.pcode}}/session/{{s.id}}/enable"><img src="/static/images/checked.png" /></a>
                   {% else %}
-                  <a href="/project/{{p.pcode}}/session/{{s.name}}/enable"><img src="/static/images/unchecked.png" /></a>
+                  <a href="/project/{{p.pcode}}/session/{{s.id}}/enable"><img src="/static/images/unchecked.png" /></a>
                   {% endif %}
               </td>
               {% if p.transit %}

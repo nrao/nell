@@ -164,8 +164,8 @@ def toggle_session(request, *args, **kws):
     """
     Allows investigators to enables or disable a session for a project.
     """
-    pcode, sname = args
-    s = first(Sesshun.objects.filter(project__pcode = pcode, name = sname))
+    pcode, sid = args
+    s = first(Sesshun.objects.filter(project__pcode = pcode, id = sid))
     s.status.enabled = not s.status.enabled
     s.status.save()
 
