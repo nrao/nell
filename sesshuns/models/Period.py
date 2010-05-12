@@ -193,6 +193,8 @@ class Period(models.Model):
         if self.state.abbreviation != 'P':
             self.move_to_deleted_state()
         else:
+            self.window.clear()
+            self.default_window.clear()
             models.Model.delete(self)  # pending can really get removed!
 
     def remove(self):
