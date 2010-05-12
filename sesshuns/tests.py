@@ -2637,7 +2637,7 @@ class TestObservers(NellTestCase):
 
     def test_toggle_session(self):
         response = self.post(
-            '/project/%s/session/%s/enable' % (self.p.pcode, self.s.name))
+            '/project/%s/session/%s/enable' % (self.p.pcode, self.s.id))
         self.failUnlessEqual(response.status_code, 302)
         s = first(Sesshun.objects.filter(id = self.s.id))
         self.assertEqual(s.status.enabled, True)
