@@ -280,9 +280,6 @@ def dynamic_contact(request, *args, **kws):
         revision.comment = get_rev_comment(request, user, "dynamic_contact_save")
         return HttpResponseRedirect("/profile/%s" % args[0])
 
-@revision.create_on_success
-@login_required
-@has_access
 def observer_ical(request, *args, **kws):
     """
     Serves up an investigator-centric iCalendar.
@@ -292,7 +289,6 @@ def observer_ical(request, *args, **kws):
     response['Content-Type'] = 'text/calendar'
     response['Content-Disposition'] = 'attachment; filename=GBTschedule.ics'
     return response
-
 
 @login_required
 @has_access
