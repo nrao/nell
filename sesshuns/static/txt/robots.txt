@@ -1,6 +1,6 @@
 # This file politely asks web robots to cooperate.
 #
-User-agent: *
-Disallow: /
 User=agent: Googlebot
 Disallow:
+User-agent: *
+Disallow: /
