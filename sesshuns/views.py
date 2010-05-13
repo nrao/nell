@@ -191,7 +191,7 @@ def get_ical(request, *args, **kws):
     """
     Returns the entire GBT calendar in iCalendar format.
     """
-    response = HttpResponse(IcalMap().getSchedule())
+    response = HttpResponse(IcalMap().getSchedule(), mimetype='text/calendar')
     response['Content-Type'] = 'text/calendar'
     response['Content-Disposition'] = 'attachment; filename=GBTschedule.ics'
     return response

@@ -288,7 +288,7 @@ def observer_ical(request, *args, **kws):
     Serves up an investigator-centric iCalendar.
     """
     user     = first(User.objects.filter(id = args[0]))
-    response = HttpResponse(IcalMap(user).getSchedule())
+    response = HttpResponse(IcalMap(user).getSchedule(), mimetype='text/calendar')
     response['Content-Type'] = 'text/calendar'
     response['Content-Disposition'] = 'attachment; filename=GBTschedule.ics'
     return response
