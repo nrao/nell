@@ -49,6 +49,7 @@ def public_schedule(request, *args, **kws):
         pubdate = tzutc.astimezone(tz)
     except:
         pubdate = None
+    print "pubdate", pubdate
 
     return render_to_response(
                'sesshuns/public_schedule.html'
