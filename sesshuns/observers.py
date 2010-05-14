@@ -1,21 +1,21 @@
 from datetime                       import datetime, time, timedelta
 from decorators                     import *
 from django.contrib.auth.decorators import login_required
-from django.db.models         import Q
-from django.core.exceptions   import ObjectDoesNotExist
-from django                   import forms
-from django.http              import HttpResponse, HttpResponseRedirect, Http404
-from django.shortcuts         import render_to_response
-from models                   import *
-from sets                     import Set
-from nell.tools               import IcalMap
-from nell.utilities.TimeAgent import EST, UTC
-from nell.utilities           import gen_gbt_schedule, NRAOBosDB
-from nell.utilities           import Shelf
-from reversion                import revision
-from utilities                import *
-from validators               import BlackoutValidator
-from pytz                     import timezone
+from django.db.models               import Q
+from django.core.exceptions         import ObjectDoesNotExist
+from django                         import forms
+from django.http                    import HttpResponse, HttpResponseRedirect, Http404
+from django.shortcuts               import render_to_response
+from models                         import *
+from sets                           import Set
+from nell.tools                     import IcalMap
+from nell.utilities.TimeAgent       import EST, UTC
+from nell.utilities                 import gen_gbt_schedule, NRAOBosDB
+from nell.utilities                 import Shelf
+from reversion                      import revision
+from utilities                      import *
+from validators                     import BlackoutValidator
+from forms                          import BlackoutForm
 import pytz
 
 def public_schedule(request, *args, **kws):
@@ -106,14 +106,6 @@ def preferences(request, *args, **kws):
                              , 'u'    : user
                             })
 
-def adjustDate(tz_pref, dt):
-    if dt is None:
-        return
-    fmt = '%Y-%m-%d %H:%M:%S %Z%z'
-    tz  = timezone(tz_pref)
-    utc = pytz.utc
-    return utc.localize(dt).astimezone(tz)
-
 @revision.create_on_success
 @login_required
 @has_user_access
@@ -137,6 +129,7 @@ def profile(request, *args, **kws):
         tz = "UTC"
 
     blackouts    = [{'user'        : user
+                   , 'id'          : b.id
                    , 'start_date'  : adjustDate(tz, b.start_date)
                    , 'end_date'    : adjustDate(tz, b.end_date)
                    , 'repeat'      : b.repeat
@@ -362,17 +355,23 @@ def blackout(request, *args, **kws):
 
     user      = first(User.objects.filter(id = u_id))
     requestor = get_requestor(request)
+    try:
+        tz = user.preference.timeZone
+    except ObjectDoesNotExist:
+        tz = "UTC"
+
 
     if request.method == 'POST':
-        validator = BlackoutValidator.validate(request.POST)
+        f = BlackoutForm(request.POST)
+        f.format_dates(tz, request.POST)
         # do we need to redirect back to the form because of errors?
-        if len(validator.errors) == 0:
+        if f.is_valid():
             # no errors - retrieve obj, or create new one
             b = first(Blackout.objects.filter(id = b_id)) if request.POST.get('_method', '') == 'PUT' \
                                                           else Blackout(user = user)
-            b.start_date, b.end_date, b.until = (validator.start_date, validator.end_date, validator.until)
-            b.repeat      = validator.repeat
-            b.description = validator.description
+            b.start_date, b.end_date, b.until = (f.cleaned_start, f.cleaned_end, f.cleaned_until)
+            b.repeat      = f.cleaned_data['repeat']
+            b.description = f.cleaned_data['description']
             b.save()
         
             revision.comment = get_rev_comment(request, b, "blackout")
@@ -380,15 +379,26 @@ def blackout(request, *args, **kws):
             return HttpResponseRedirect("/profile/%s" % u_id)
             
         return render_to_response("sesshuns/blackout_form.html"
-             , get_blackout_form_context(b_id, validator, user, requestor, validator.errors))
+                            , {'form' : f
+                             , 'requestor' : requestor
+                             , 'u'    : user
+                             , 'b_id' : b_id
+                             , 'tz'   : tz
+                              })
 
     b = first(Blackout.objects.filter(id = b_id)) if b_id is not None else None
+    f = BlackoutForm.initialize(b, tz) if b is not None else BlackoutForm()
+
     if request.GET.get('_method', '') == "DELETE" and b is not None:
         b.delete()
         return HttpResponseRedirect("/profile/%s" % u_id)
-    return render_to_response(
-        "sesshuns/blackout_form.html"
-      , get_blackout_form_context(b_id, b, user, requestor, []))
+    return render_to_response("sesshuns/blackout_form.html"
+                            , {'form' : f
+                             , 'requestor' : requestor
+                             , 'u'    : user
+                             , 'b_id' : b_id
+                             , 'tz'   : tz
+                              })
 
 @login_required
 def events(request, *args, **kws):

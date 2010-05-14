@@ -2623,13 +2623,12 @@ class TestObservers(NellTestCase):
         end   = datetime(2009, 1, 31)
         until = datetime(2010, 1, 31)
         data = {'start'       : start.date().strftime("%m/%d/%Y")
-              , 'starttime'   : start.time().strftime("%H:%M")
+              , 'start_time'   : start.time().strftime("%H:%M")
               , 'end'         : end.date().strftime("%m/%d/%Y")
-              , 'endtime'     : end.time().strftime("%H:%M")
-              , 'tz'          : 'UTC'
-              , 'repeat'      : 'Once'
+              , 'end_time'     : end.time().strftime("%H:%M")
+              , 'repeats'      : 'Once'
               , 'until'       : until.strftime("%m/%d/%Y")
-              , 'untiltime'   : until.strftime("%H:%M")
+              , 'until_time'   : until.strftime("%H:%M")
               , 'description' : "This is a test blackout."
               , '_method'     : "PUT"
                 }
@@ -2661,7 +2660,7 @@ class TestObservers(NellTestCase):
         data['until'] = ''
         response    = self.post(
             '/profile/%s/blackout' % self.u.id, data)
-        self.failUnlessEqual(response.status_code, 302)
+        self.failUnlessEqual(response.status_code, 200)
 
     def test_blackout2(self):
         b     = self.create_blackout()
@@ -2669,13 +2668,12 @@ class TestObservers(NellTestCase):
         end   = datetime(2009, 1, 31)
         until = datetime(2010, 1, 31)
         data = {'start'       : start.date().strftime("%m/%d/%Y")
-              , 'starttime'   : start.time().strftime("%H:%M")
+              , 'start_time'   : start.time().strftime("%H:%M")
               , 'end'         : end.date().strftime("%m/%d/%Y")
-              , 'endtime'     : end.time().strftime("%H:%M")
-              , 'tz'          : 'UTC'
-              , 'repeat'      : 'Once'
+              , 'end_time'     : end.time().strftime("%H:%M")
+              , 'repeats'      : 'Once'
               , 'until'       : until.strftime("%m/%d/%Y")
-              , 'untiltime'   : until.strftime("%H:%M")
+              , 'until_time'   : until.strftime("%H:%M")
               , 'description' : "This is a test blackout."
                 }
 
@@ -2686,7 +2684,7 @@ class TestObservers(NellTestCase):
 
         # test that a blackout can't have a missing end date
         data['end'] = None
-        data['endtime'] = None
+        data['end_time'] = None
         response = self.post(
             '/profile/%s/blackout/%s' % (self.u.id, b.id), data)
         self.failUnlessEqual(response.status_code, 200)

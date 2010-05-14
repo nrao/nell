@@ -1,5 +1,8 @@
 from datetime         import time
 from django.db.models import Q
+from pytz             import timezone
+import pytz
+
 from nell.utilities   import UserInfo
 from sesshuns.models  import *
 
@@ -126,15 +129,28 @@ def get_blackout_form_context(b_id, fdata, user, requestor, errors):
       , 'errors'   : errors
     }
 
-def parse_datetime(fdata, dateName, timeName, utcOffset):
+def adjustDate(tz_pref, dt, to_utc = False):
+    if dt is None:
+        return
+    fmt = '%Y-%m-%d %H:%M:%S %Z%z'
+    tz  = timezone(tz_pref)
+    utc = pytz.utc
+    if to_utc:
+        return tz.localize(dt).astimezone(utc)
+    else:
+        return utc.localize(dt).astimezone(tz)
+
+def parse_datetime(fdata, dateName, timeName, tz):
     "Extract the date & time from the form values to make a datetime obj"
     dt    = None
     error = None
     try:
         if fdata[dateName] != '':
-            dt = datetime.strptime(
-                "%s %s" % (fdata[dateName], fdata[timeName])
-              , "%m/%d/%Y %H:%M") + utcOffset
+            dt = adjustDate(tz, datetime.strptime(
+                                 "%s %s" % (fdata[dateName], fdata[timeName])
+                               , "%m/%d/%Y %H:%M")
+                          , to_utc = True)
+
     except:
         error = "ERROR: malformed %s date" % dateName
     return (dt, error)    
