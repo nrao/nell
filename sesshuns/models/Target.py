@@ -18,11 +18,14 @@ class Target(models.Model):
                                   )
 
     def __unicode__(self):
-        return "%s @ (%5.2f, %5.2f), Sys: %s" % \
-            (self.source
-           , float(self.horizontal)
-           , float(self.vertical)
-           , self.system)
+        if self.source and self.horizontal and self.vertical:
+            return "%s @ (%5.2f, %5.2f), Sys: %s" % \
+                (self.source
+               , float(self.horizontal)
+               , float(self.vertical)
+               , self.system)
+        else:
+            return "Incomplete target for session %s - missing fields" % self.session.name
 
     def get_horizontal(self):
         "Returns the horizontal component in sexigesimal form."

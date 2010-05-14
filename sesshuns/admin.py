@@ -167,6 +167,9 @@ class Session_TypeAdmin(admin.ModelAdmin):
 class StatusAdmin(admin.ModelAdmin):
     search_fields = ['id'] 
 
+class TargetAdmin(admin.ModelAdmin):
+    search_fields = ['source']
+
 class WindowAdmin(admin.ModelAdmin):
     def get_project_name(self):
         return self.session.project.pcode
@@ -224,6 +227,6 @@ admin.site.register(Sesshun, SesshunAdmin)
 admin.site.register(Session_Type, Session_TypeAdmin)
 #admin.site.register(Status, StatusAdmin)
 admin.site.register(System)
-admin.site.register(Target)
+admin.site.register(Target, TargetAdmin)
 admin.site.register(User, UserAdmin)
 admin.site.register(Window, WindowAdmin)
