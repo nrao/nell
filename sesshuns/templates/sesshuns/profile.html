@@ -169,7 +169,7 @@
               <th>check-in</th>
               <th>check-out</th>
             </tr>
-              {% for r in reserves %}
+              {% for r in reservations %}
                 <tr>
                   <td title="{{r.0|date:'m/d/Y'}}">
                     {{ r.0|date:"D, M d" }}

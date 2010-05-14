@@ -83,27 +83,22 @@ def profile(request, *args, **kws):
     Shows a user-centric page chock-full of interesting tidbits.
     """
     requestor = get_requestor(request)
-    if len(args) > 0:
-        user = first(User.objects.filter(id = args[0]))
-    else:
-        user = requestor
-
+    user = first(User.objects.filter(id = args[0])) if args else requestor
     static_info  = user.getStaticContactInfo()
     reservations = NRAOBosDB().getReservationsByUsername(user.username)
-    blackouts    = user.blackout_set.order_by("start_date")
+    blackouts    = [b for b in user.blackout_set.order_by("start_date") \
+                      if b.isActive()]
     return render_to_response("sesshuns/profile.html"
                             , {'u'            : user
                              , 'blackouts'    : blackouts
                              , 'requestor'    : requestor
                              , 'authorized'   : user == requestor
-                             #, 'clients'      : Project.objects.filter(friend=user)
                              , 'emails'       : static_info['emailDescs']
                              , 'phones'       : static_info['phoneDescs']
                              , 'postals'      : static_info['postals']
                              , 'affiliations' : static_info['affiliations']
                              , 'username'     : static_info['username']
-                             , 'reserves'     : reservations
-                             , 'isOps'        : requestor.isOperator()})
+                             , 'reservations' : reservations})
 
 @revision.create_on_success
 @login_required
