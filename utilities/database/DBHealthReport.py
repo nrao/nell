@@ -493,7 +493,7 @@ def GenerateReport():
     values = [p.pcode for p in projects if not p.complete and not p.friend]
     print_values(outfile, values)
 
-    outfile.write("\n\nProjects without any Schedulable sessions:")
+    outfile.write("\n\nProjects without any schedulable sessions:")
     values = [p.pcode for p in projects \
               if not p.complete and \
               not any([s.schedulable() for s in p.sesshun_set.all()])]
@@ -502,6 +502,12 @@ def GenerateReport():
     outfile.write("\n\nProjects without any observers:")
     values = [p.pcode for p in projects \
               if not p.complete and len(p.get_observers()) == 0]
+    print_values(outfile, values)
+
+    outfile.write("\n\nProjects whose project type is inconsistent with its sessions' observing types:")
+    values = [p.pcode for p in projects \
+                      if p.is_science() and \
+                         not all([s.isScience() for s in p.sesshun_set.all()])]
     print_values(outfile, values)
 
     outfile.write("\n\nReceiver changes happening on days other than maintenance days:")

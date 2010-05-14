@@ -54,6 +54,9 @@ class Sesshun(models.Model):
     def isFixed(self):
         return self.session_type.type == "fixed"
 
+    def isScience(self):
+        return self.observing_type.type not in ("commissioning", "testing", "calibration", "maintenance")
+
     def receiver_list(self):
         "Returns a string representation of the rcvr logic."
         return " AND ".join([rg.__str__() for rg in self.receiver_group_set.all()])
