@@ -25,7 +25,7 @@ class Blackout(models.Model):
         if self.start_date is None:
             return False # Never started, not active
         
-        if self.repeat.repeat == "Once" and self.end_date <= date:
+        if self.repeat.repeat == "Once" and self.end_date and self.end_date <= date:
             return False # Done
 
         if self.start_date >= date:
