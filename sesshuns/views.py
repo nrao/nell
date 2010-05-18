@@ -352,7 +352,7 @@ def publish_periods(request, *args, **kwds):
         start, duration = ScheduleTools().getSchedulingRange(
                               startPeriods
                             , request.POST.get("tz", "UTC")
-                            , int(request.POST.get("duration", "1")))
+                            , int(request.POST.get("duration", "1")) - 1)
 
     Period.publish_periods(start, duration)
     revision.comment = get_rev_comment(request, None, "publish_periods")
@@ -381,7 +381,7 @@ def delete_pending(request, *args, **kwds):
     start, duration = ScheduleTools().getSchedulingRange(
                           startPeriods
                         , request.POST.get("tz", "UTC")
-                        , int(request.POST.get("duration", "1")))
+                        , int(request.POST.get("duration", "1")) - 1)
 
     for p in Period.get_periods(start, duration):
         if p.isPending() and p.session.session_type.type == 'open':
