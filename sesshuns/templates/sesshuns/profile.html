@@ -11,8 +11,17 @@
       </div>
       <div id="subheader" class="span-24 last">
         <!-- Add affiliation here. -->
-        <hr />
+        <form action='/profile/{{u.id}}' method="GET" >
+          <label for="id_tz"> Time Zone:</label>
+          <select id="id_tz" name='tz' onChange="submit()">
+            <option value='Default'>Default</option>
+            {% for t in tzs %}
+            <option value='{{t}}' {%ifequal t selected_tz %} selected{% endifequal %}>{{t}}</option>
+            {% endfor %}
+          </select>
+        </form>
       </div>
+      <hr />
       <div class="span-17 colborder" id="content">
         <h3 class="loud">Projects</h3>
         <div>
@@ -101,7 +110,7 @@
         </div>
         <hr />
         <div>
-          <h3 class="loud">Blackout Dates (UTC)</h3>
+          <h3 class="loud">Blackout Dates ({{tz}})</h3>
           <table>
             <tr>
               <th>Begin</th>
@@ -123,15 +132,15 @@
               <td>{{b.description}}</td>
             {% if authorized or requestor.isAdmin %}
               <td>
-                <a href="/profile/{{u.id}}/blackout?_method=PUT&id={{b.id}}">edit</a> |
-                <a href="/profile/{{u.id}}/blackout?_method=DELETE&id={{b.id}}">delete</a>
+                <a href="/profile/{{u.id}}/blackout/{{b.id}}/">edit</a> |
+                <a href="/profile/{{u.id}}/blackout/{{b.id}}/?_method=DELETE">delete</a>
               </td>
             {% endif %}
             </tr>
             {% endfor %}
           </table>
           {% if authorized or requestor.isAdmin %}
-          <a href="/profile/{{u.id}}/blackout">add</a>
+          <a href="/profile/{{u.id}}/blackout/">add</a>
           {% endif %}
           <br/>
           <br/>
@@ -144,13 +153,13 @@
           </h3>
           <div class="box">
             <ul>
-            {% for proj, pds in u.getUpcomingPeriodsByProject.items %}
+            {% for proj, pds in upcomingPeriods %}
               {% if pds %}
               <li title="{{proj.pcode}}">{{proj.pcode}}</li>
                 <ul>
                   {% for pd in pds %}
-                    <li title="{{pd.session.name}}: {{pd.start|date:'Y-m-d H:i'}} UTC for {{pd.duration|hrs2sex}} hrs">
-                    {{pd.session.name}}: {{pd.start|date:"D, M d H:i"}} UTC for {{pd.duration|hrs2sex}} hrs
+                    <li title="{{pd.session.name}}: {{pd.start|date:'Y-m-d H:i'}} {{tz}} for {{pd.duration|hrs2sex}} hrs">
+                    {{pd.session.name}}: {{pd.start|date:"D, M d H:i"}} {{tz}} for {{pd.duration|hrs2sex}} hrs
                     </li>
                   {% endfor %}
                 </ul>

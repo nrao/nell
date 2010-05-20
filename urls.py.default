@@ -12,10 +12,12 @@ admin.autodiscover()
 # Note a blank comment attached to the url denotes local access only
 
 urlpatterns = patterns(''
-   , url(r'^profile/(\d+)/blackout$',                      blackout)
+   , url(r'^profile/(\d+)/blackout/(\d+)/$',               blackout)
+   , url(r'^profile/(\d+)/blackout/$',                     blackout)
    , url(r'^profile/(\d+)/dynamic_contact$',               dynamic_contact)
    , url(r'^profile/(\d+)$',                               profile)
    , url(r'^profile',                                      profile)
+   , url(r'^preferences$',                                 preferences)
    , url(r'^$',                                            home)
    , url(r'^project/([^/]+)/events$',                      events)
    , url(r'^project/([^/]+)/unavailable$',                 dates_not_schedulable)

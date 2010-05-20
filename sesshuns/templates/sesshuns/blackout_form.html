@@ -4,12 +4,6 @@
 {% block scripts %}
   <link type="text/css" href="/static/css/lib/themes/base/ui.all.css" rel="stylesheet" />
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"></script>
-<!--  
-  <link type="text/css" href="http://jqueryui.com/latest/themes/base/ui.all.css" rel="stylesheet" /> >
-  <script type="text/javascript" src="http://jqueryui.com/latest/jquery-1.3.2.js"></script>
-  <script type="text/javascript" src="http://jqueryui.com/latest/ui/ui.core.js"></script>
-  <script type="text/javascript" src="http://jqueryui.com/latest/ui/ui.datepicker.js"></script>
--->  
   <script type="text/javascript">
   $(document).ready(function(){
     $("#id_start").datepicker();
@@ -24,8 +18,8 @@
   <h3 class="loud">Blackout Date for {{u|display_name}}</h3>
 </div>
 <div  >
-  {% for e in errors %}
-    <p class="error">{{e}}</p>
+  {% for e in form.non_field_errors %}
+    <div class="error">{{e}}</div>
   {% endfor %}
 </div>
 
@@ -36,78 +30,52 @@
 </div>
 
 <div type="text" id="datepicker"></div>
-<form action="/profile/{{u.id}}/blackout" method="POST">
-  <p>
-    <label for="id_start">Start:</label>
-    <input type="text" name="start" id="id_start" title="Click once for calendar, click twice for previous entries, or alternatively, enter your date in the form mm/dd/yyyy." value="{{b.start_date|date:'m/d/Y'}}"/>
-    <select name="starttime" id="id_starttime">
-      {% for t in times %}
-      {% ifequal t b.start_date|date:"H:i" %}
-      <option selected="selected">{{t}}</option>
-      {% else %}
-      <option >{{t}}</option>
-      {% endifequal %}
-      {% endfor %}
-    </select>
-  </p>
-  <p>
-    <label for="id_end">End:</label>
-    <input type="text" name="end" id="id_end" title="Click once for calendar, click twice for previous entries, or alternatively, enter your date in the form mm/dd/yyyy." value="{{b.end_date|date:'m/d/Y'}}"/>
-    <select name="endtime" id="id_endtime">
-      {% for t in times %}
-      {% ifequal t b.end_date|date:"H:i" %}
-      <option selected="selected">{{t}}</option>
-      {% else %}
-      <option >{{t}}</option>
-      {% endifequal %}
-      {% endfor %}
-    </select>
-  </p>
-  <p>
-    <label for="id_tz">Tz:</label>
-    <select name="tz" id="id_tz">
-      {% for tz in tzs %}
-      {% ifequal tz.timeZone timezone %}
-      <option selected="selected">{{tz.timeZone}}</option>
-      {% else %}
-      <option >{{tz.timeZone}}</option>
-      {% endifequal %}
-      {% endfor %}
-    </select>
-  </p>
-  <p>
-    <label for="id_repeat">Repeat:</label> 
-    <select name="repeat" id="id_repeat">
-      {% for r in repeats %}
-      {% ifequal r b.repeat %}
-      <option selected="selected">{{r.repeat}}</option>
-      {% else %}
-      <option >{{r.repeat}}</option>
-      {% endifequal %}
-      {% endfor %}
-    </select>
-  </p>
-  <p>
-    <label for="id_until">Until:</label> 
-    <input type="text" name="until" id="id_until" title="Click once for calendar, click twice for previous entries" value="{{b.until|date:'m/d/Y'}}"/>
-    <select name="untiltime" id="id_untiltime">
-      {% for t in times %}
-      {% ifequal t b.until|date:"H:i" %}
-      <option selected="selected">{{t}}</option>
-      {% else %}
-      <option >{{t}}</option>
-      {% endifequal %}
-      {% endfor %}
-    </select>
-  </p>
-  <p>
-    <label for="id_description">Description:</label> 
-    <input id="id_description" type="text" name="description" maxlength="512" value="{{b.description}}" />
-  </p>
-  {% if b %}
-  <input type="hidden" name="_method" value="{{method}}" />
-  <input type="hidden" name="id" value="{{b.id}}" />
-  {% endif %}
+{% if b_id %}
+<form action="/profile/{{u.id}}/blackout/{{b_id}}/" method="POST">
+  <input type="hidden" name="_method" value="PUT"/>
+{% else %}
+<form action="/profile/{{u.id}}/blackout/" method="POST">
+{% endif %}
+  <fieldset>
+  <legend>{{tz}} Time Zone</legend>
+  <table>
+    <tr>
+      <th style="width: 50px;">Start Date:</th>
+      <td>
+        {{ form.start }}
+        {{ form.start_time }}
+        <span class="error">{{ form.start.errors.0 }}</span>
+      </td>
+    </tr>
+    <tr>
+      <th >End Date:</th>
+      <td>
+        {{ form.end }}
+        {{ form.end_time }}
+        <span class="error">{{ form.end.errors.0 }}</span>
+      </td>
+    </tr>
+    <tr>
+      <th >Repeats:</th>
+      <td>
+        {{ form.repeats }}
+      </td>
+    </tr>
+    <tr>
+      <th >Until:</th>
+      <td>
+        {{ form.until }}
+        {{ form.until_time }}
+      </td>
+    </tr>
+    <tr>
+      <th >Description:</th>
+      <td>
+        {{ form.description }}
+      </td>
+    </tr>
+  </table>
+  </fieldset>
   <input type="submit" value="Save"/>&nbsp;&nbsp;
   <input type="submit" value="Cancel" onclick="window.location.href = '/profile/{{u.id}}'; return false"/>
 </form>

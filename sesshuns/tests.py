@@ -2675,10 +2675,7 @@ class TestObservers(NellTestCase):
         self.failUnlessEqual(response.status_code, 200)
 
         b = self.create_blackout()
-        data = {'_method' : 'PUT'
-              , 'id'      : b.id
-                }
-        response = self.get('/profile/%s/blackout' % self.u.id, data)
+        response = self.get('/profile/%s/blackout/%s' % (self.u.id, b.id))
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue(b.description in response.content)
 
@@ -2688,28 +2685,26 @@ class TestObservers(NellTestCase):
         end   = datetime(2009, 1, 31)
         until = datetime(2010, 1, 31)
         data = {'start'       : start.date().strftime("%m/%d/%Y")
-              , 'starttime'   : start.time().strftime("%H:%M")
+              , 'start_time'   : start.time().strftime("%H:%M")
               , 'end'         : end.date().strftime("%m/%d/%Y")
-              , 'endtime'     : end.time().strftime("%H:%M")
-              , 'tz'          : 'UTC'
-              , 'repeat'      : 'Once'
+              , 'end_time'     : end.time().strftime("%H:%M")
+              , 'repeats'      : 'Once'
               , 'until'       : until.strftime("%m/%d/%Y")
-              , 'untiltime'   : until.strftime("%H:%M")
+              , 'until_time'   : until.strftime("%H:%M")
               , 'description' : "This is a test blackout."
-              , '_method'     : 'PUT'
-              , 'id'          : b.id
+              , '_method'     : "PUT"
                 }
 
         response = self.post(
-            '/profile/%s/blackout' % self.u.id, data)
+            '/profile/%s/blackout/%s' % (self.u.id, b.id), data)
         b = first(Blackout.objects.filter(id = b.id))
         self.assertEqual(b.end_date.date().strftime("%m/%d/%Y") , data.get('end'))
         self.assertEqual(b.until.date().strftime("%m/%d/%Y") , data.get('until'))
         self.failUnlessEqual(response.status_code, 302)
         
         response = self.get(
-            '/profile/%s/blackout' % self.u.id
-          , {'_method' : 'DELETE', 'id' : b.id})
+            '/profile/%s/blackout/%s' % (self.u.id, b.id)
+          , {'_method' : 'DELETE'})
         self.failUnlessEqual(response.status_code, 302)
         # shouldn't this delete the blackout?
         b = first(Blackout.objects.filter(id = b.id))
@@ -2717,7 +2712,6 @@ class TestObservers(NellTestCase):
 
         data['end'] = date(2009, 5, 31).strftime("%m/%d/%Y")
         _ = data.pop('_method')
-        _ = data.pop('id')
         response    = self.post(
             '/profile/%s/blackout' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 302)
@@ -2728,7 +2722,7 @@ class TestObservers(NellTestCase):
         data['until'] = ''
         response    = self.post(
             '/profile/%s/blackout' % self.u.id, data)
-        self.failUnlessEqual(response.status_code, 302)
+        self.failUnlessEqual(response.status_code, 200)
 
     def test_blackout2(self):
         b     = self.create_blackout()
@@ -2736,28 +2730,25 @@ class TestObservers(NellTestCase):
         end   = datetime(2009, 1, 31)
         until = datetime(2010, 1, 31)
         data = {'start'       : start.date().strftime("%m/%d/%Y")
-              , 'starttime'   : start.time().strftime("%H:%M")
+              , 'start_time'   : start.time().strftime("%H:%M")
               , 'end'         : end.date().strftime("%m/%d/%Y")
-              , 'endtime'     : end.time().strftime("%H:%M")
-              , 'tz'          : 'UTC'
-              , 'repeat'      : 'Once'
+              , 'end_time'     : end.time().strftime("%H:%M")
+              , 'repeats'      : 'Once'
               , 'until'       : until.strftime("%m/%d/%Y")
-              , 'untiltime'   : until.strftime("%H:%M")
+              , 'until_time'   : until.strftime("%H:%M")
               , 'description' : "This is a test blackout."
-              , '_method'     : 'PUT'
-              , 'id'          : b.id
                 }
 
         response = self.post(
-            '/profile/%s/blackout' % self.u.id, data)
+            '/profile/%s/blackout/%s' % (self.u.id, b.id), data)
         self.failUnlessEqual(response.status_code, 302)
         self.assertTrue("ERROR" not in response.content)
 
         # test that a blackout can't have a missing end date
         data['end'] = None
-        data['endtime'] = None
+        data['end_time'] = None
         response = self.post(
-            '/profile/%s/blackout' % self.u.id, data)
+            '/profile/%s/blackout/%s' % (self.u.id, b.id), data)
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue("ERROR" in response.content)
 

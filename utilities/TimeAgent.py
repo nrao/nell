@@ -211,3 +211,14 @@ def date2datetime(date_obj):
     "Converts Date object to a Datetime object"
     return datetime.datetime(date_obj.year, date_obj.month, date_obj.day)    
 
+def adjustDateTimeTz(tz_pref, dt, to_utc = False):
+    if dt is None:
+        return
+    fmt = '%Y-%m-%d %H:%M:%S %Z%z'
+    tz  = pytz.timezone(tz_pref)
+    utc = pytz.utc
+    if to_utc:
+        return tz.localize(dt).astimezone(utc)
+    else:
+        return utc.localize(dt).astimezone(tz)
+
