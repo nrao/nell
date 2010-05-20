@@ -14,7 +14,6 @@ from nell.utilities                 import gen_gbt_schedule, NRAOBosDB
 from nell.utilities                 import Shelf
 from reversion                      import revision
 from utilities                      import *
-from validators                     import BlackoutValidator
 from forms                          import BlackoutForm
 import pytz
 
