@@ -1,4 +1,6 @@
 from django.db         import models
+
+from utilities         import adjustDateTimeTz
 from common            import *
 from Project           import Project
 from Sesshun           import Sesshun
@@ -67,13 +69,13 @@ class Period(models.Model):
                              , self.session.project.pcode
                              , original_id)
 
-    def eventjson(self, id):
+    def eventjson(self, id, tz = None):
         end = self.start + timedelta(hours = self.duration)
 
         return {
                 "id"   : id
               , "title": "".join(["Observing ", self.session.name])
-              , "start": self.start.isoformat()
+              , "start": adjustDateTimeTz(tz, self.start).isoformat() if tz is not None else self.start.isoformat()
               , "end"  : end.isoformat()
         }
 

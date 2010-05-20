@@ -2,6 +2,7 @@ from django.core.exceptions   import ObjectDoesNotExist
 from django.db   import models
 from datetime    import datetime, timedelta
 
+from utilities.TimeAgent import adjustDateTimeTz
 from User        import User
 from Repeat      import Repeat
 
@@ -93,10 +94,12 @@ class Blackout(models.Model):
                                , minute = end.minute)
         return dates
 
-    def eventjson(self, calstart, calend, id = None):
+    def eventjson(self, calstart, calend, id = None, tz = None):
         calstart = datetime.fromtimestamp(float(calstart))
         calend   = datetime.fromtimestamp(float(calend))
         dates    = self.generateDates(calstart, calend)
+        if tz is not None:
+            dates = [(adjustDateTimeTz(tz, s), adjustDateTimeTz(tz, e)) for s, e in dates]
         title    = "%s: %s" % (self.user.name()
                              , self.description or "blackout")
         return [{

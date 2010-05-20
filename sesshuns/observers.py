@@ -9,7 +9,7 @@ from django.shortcuts               import render_to_response
 from models                         import *
 from sets                           import Set
 from nell.tools                     import IcalMap
-from nell.utilities.TimeAgent       import EST, UTC
+from nell.utilities.TimeAgent       import EST, UTC, adjustDateTimeTz
 from nell.utilities                 import gen_gbt_schedule, NRAOBosDB
 from nell.utilities                 import Shelf
 from reversion                      import revision
@@ -123,20 +123,30 @@ def profile(request, *args, **kws):
     reservations = NRAOBosDB().getReservationsByUsername(user.username
                                                        , use_cache = False)
 
-    try:
-        tz = requestor.preference.timeZone
-    except ObjectDoesNotExist:
-        tz = "UTC"
+    selected_tz = request.GET.get("tz", "Default")
+    if selected_tz == "Default":
+        try:
+            tz = requestor.preference.timeZone
+        except ObjectDoesNotExist:
+            tz = "UTC"
+    else:
+        tz = selected_tz
 
     blackouts    = [{'user'        : user
                    , 'id'          : b.id
-                   , 'start_date'  : adjustDate(tz, b.start_date)
-                   , 'end_date'    : adjustDate(tz, b.end_date)
+                   , 'start_date'  : adjustDateTimeTz(tz, b.start_date)
+                   , 'end_date'    : adjustDateTimeTz(tz, b.end_date)
                    , 'repeat'      : b.repeat
-                   , 'until'       : adjustDate(tz, b.until)
+                   , 'until'       : adjustDateTimeTz(tz, b.until)
                    , 'description' : b.description
                     } for b in user.blackout_set.order_by("start_date")]
 
+    upcomingPeriods = [(proj
+                       , [{'session'  : pd.session
+                         , 'start'    : adjustDateTimeTz(tz, pd.start)
+                         , 'duration' : pd.duration
+                          } for pd in pds]
+                         ) for proj, pds in user.getUpcomingPeriodsByProject().items()]
     return render_to_response("sesshuns/profile.html"
                             , {'u'            : user
                              , 'blackouts'    : blackouts
@@ -150,7 +160,20 @@ def profile(request, *args, **kws):
                              , 'affiliations' : static_info['affiliations']
                              , 'username'     : static_info['username']
                              , 'reserves'     : reservations
-                             , 'isOps'        : requestor.isOperator()})
+                             , 'upcomingPeriods' : upcomingPeriods
+                             , 'tzs'             : pytz.all_timezones
+                             , 'selected_tz'     : selected_tz
+                             , 'isOps'           : requestor.isOperator()})
+
+def adjustBlackoutTZ(tz, blackout):
+    return {'user'        : blackout.user
+          , 'id'          : blackout.id
+          , 'start_date'  : adjustDateTimeTz(tz, blackout.start_date)
+          , 'end_date'    : adjustDateTimeTz(tz, blackout.end_date)
+          , 'repeat'      : blackout.repeat
+          , 'until'       : adjustDateTimeTz(tz, blackout.until)
+          , 'description' : blackout.description
+           }
 
 @revision.create_on_success
 @login_required
@@ -160,6 +183,15 @@ def project(request, *args, **kws):
     Shows a project-centric page chock-full of interesting tidbits.
     """
     requestor = get_requestor(request)
+    selected_tz = request.GET.get("tz", "Default")
+    if selected_tz == "Default":
+        try:
+            tz = requestor.preference.timeZone
+        except ObjectDoesNotExist:
+            tz = "UTC"
+    else:
+        tz = selected_tz
+
     project   = first(Project.objects.filter(pcode = args[0]))
     if project is None:
         raise Http404 # Bum pcode
@@ -176,15 +208,40 @@ def project(request, *args, **kws):
     # sort all the sessions by name
     sess = sorted(project.sesshun_set.all(), lambda x,y: cmp(x.name, y.name))
 
+    investigators = project.investigator_set.order_by('priority').all()
+    blackouts     = [adjustBlackoutTZ(tz, b) for i in investigators for b in i.projectBlackouts()]
+    periods = [{'session'    : p.session
+              , 'start'      : adjustDateTimeTz(tz, p.start)
+              , 'duration'   : p.duration
+              , 'accounting' : p.accounting
+               } for p in project.get_observed_periods()]
+    windows = [{'session'   : w.session
+              , 'start_date' : w.start_date
+              , 'duration'   : w.duration
+              , 'is_scheduled_or_completed' : {'start' : adjustDateTimeTz(tz, w.is_scheduled_or_completed().start)
+                                             , 'duration' : w.is_scheduled_or_completed().duration
+                                               } if w.is_scheduled_or_completed() is not None else None
+               } for w in project.get_active_windows()]
+    upcomingPeriods = [{'session'  : pd.session
+                      , 'start'    : adjustDateTimeTz(tz, pd.start)
+                      , 'duration' : pd.duration
+                       } for pd in project.getUpcomingPeriods()]
     return render_to_response(
         "sesshuns/project.html"
       , {'p'           : project
        , 'sess'        : sess
        , 'u'           : requestor
        , 'requestor'   : requestor
-       , 'v'           : project.investigator_set.order_by('priority').all()
+       , 'v'           : investigators
        , 'r'           : NRAOBosDB().reservations(project)
        , 'rcvr_blkouts': rcvr_blkouts
+       , 'tz'          : tz
+       , 'projectBlackouts' : blackouts
+       , 'periods'          : periods
+       , 'windows'          : windows
+       , 'upcomingPeriods'  : upcomingPeriods
+       , 'tzs'              : pytz.all_timezones
+       , 'selected_tz'      : selected_tz
        }
     )
 
@@ -411,6 +468,16 @@ def events(request, *args, **kws):
     start     = request.GET.get('start', '')
     end       = request.GET.get('end', '')
     project   = first(Project.objects.filter(pcode = pcode).all())
+    requestor = get_requestor(request)
+
+    selected_tz = request.GET.get("tz", "Default")
+    if selected_tz == "Default":
+        try:
+            tz = requestor.preference.timeZone
+        except ObjectDoesNotExist:
+            tz = "UTC"
+    else:
+        tz = selected_tz
 
     # Each event needs a unique id.  Let's start with 1.
     id          = 1
@@ -420,7 +487,7 @@ def events(request, *args, **kws):
     blackouts = Set([b for i in project.investigator_set.all() \
                        for b in i.user.blackout_set.all()])
     for b in blackouts:
-        jsonobjlist.extend(b.eventjson(start, end, id))
+        jsonobjlist.extend(b.eventjson(start, end, id, tz))
         id = id + 1
 
     # Investigator reservations
@@ -429,8 +496,7 @@ def events(request, *args, **kws):
 
     # Scheduled telescope periods
     for p in project.getPeriods():
-        #print w.eventjson(id)
-        jsonobjlist.append(p.eventjson(id))
+        jsonobjlist.append(p.eventjson(id, tz))
         id = id + 1
 
     # Semester start dates
