@@ -3,7 +3,7 @@
 {% block title %} {{p.pcode}} {% endblock %}
 {% block scripts %}
     <script type="text/javascript">
-      var event_url = "/project/{{p.pcode}}/events"; // For calendar
+      var event_url = "/project/{{p.pcode}}/events?tz={{selected_tz}}"; // For calendar
       var unavailable_url = "/project/{{p.pcode}}/unavailable"; // For calendar
     </script>
     <!-- <script type="text/javascript" src="/static/javascript/lib/jquery.js"></script> -->
@@ -19,6 +19,15 @@
       </div>
       <div id="subheader" class="span-24 last">
         <h3 class="alt">{{p.name}}</h3>
+        <form action='/project/{{p.pcode}}' method="GET" >
+          <label for="id_tz"> Time Zone:</label>
+          <select id="id_tz" name='tz' onChange="submit()">
+            <option value='Default'>Default</option>
+            {% for t in tzs %}
+            <option value='{{t}}' {%ifequal t selected_tz %} selected{% endifequal %}>{{t}}</option>
+            {% endfor %}
+          </select>
+        </form>
         <hr />
       </div>
       <div class="span-19 colborder" id="content">
@@ -96,7 +105,7 @@
             {% endfor %}
           </table>
 
-        <h3 class="grey_highlight loud">Project Calendar (UTC)</h3>
+        <h3 class="grey_highlight loud">Project Calendar ({{tz}})</h3>
           <p align="center">
             ** Any days shaded in <span style = "background-color: #999999">gray</span> in the calendar indicate that the project cannot be scheduled on that day. **<br/>
             <span style="background-color: #C1D9EC">observations</span>,
@@ -153,7 +162,7 @@
             </tr>
             {% endfor %}
           </table>
-        <h3 class="grey_highlight loud">Observer Blackouts (UTC)</h3>
+        <h3 class="grey_highlight loud">Observer Blackouts ({{tz}})</h3>
           <table>
             <tr>
               <th>Observer</th>
@@ -163,11 +172,10 @@
               <th>Until</th>
               <th>Description</th>
             </tr>
-            {% for i in v %}
-              {% for b in i.projectBlackouts %}
+              {% for b in projectBlackouts %}
                 <tr>
                   <td>
-                    <a href="/profile/{{i.user.id}}">{{i.user|display_name}}</a>
+                    <a href="/profile/{{b.user.id}}">{{b.user|display_name}}</a>
                   </td>
                   <td>{{b.start_date|date:'j M Y H:i'}}</td>
                   <td>{{b.end_date|date:'j M Y H:i'}}</td>
@@ -180,17 +188,16 @@
                   <td>{{b.description}}</td>
                 </tr>
               {% endfor %}
-            {% endfor %}
           </table>
-        <h3 class="grey_highlight loud">Telescope Periods Completed</h3>
+        <h3 class="grey_highlight loud">Telescope Periods Completed ({{tz}})</h3>
           <table>
             <tr>
               <th>Session</th>
-              <th title="Period Start Time (UTC)">Start Time</th>
+              <th title="Period Start Time ({{tz}})">Start Time</th>
               <th title="How long the Period lasts, in hours.">Duration</th>
               <th>Billed Hours</th>
             </tr>
-              {% for per in p.get_observed_periods %}
+              {% for per in periods %}
                 <tr>
                   <td>{{per.session.name}}</td>
                   <td>{{per.start|date_no_secs}}</td>
@@ -206,10 +213,10 @@
                 <th>Session</th>
                 <th>Window Start Date</th>
                 <th>Window End Date</th>
-                <th title="Start time of Period (UTC)">Period Start Time</th>
+                <th title="Start time of Period ({{tz}})">Period Start Time</th>
                 <th title="How long the Period lasts, in hours.">Period Duration</th>
               </tr>
-                {% for window in p.get_active_windows %}
+                {% for window in windows %}
                   <tr>
                     <td>{{window.session.name}}</td>
                     <td>{{window.start_date}}</td>
@@ -306,9 +313,9 @@
           <h3 class="caps">Upcoming Observations</h3>
           <div class="box">
             <ul>
-            {% for pd in p.getUpcomingPeriods %}
-              <li title="{{pd.session.name}}: {{pd.start|date:'Y-m-d H:i'}} UTC for {{pd.duration|hrs2sex}} hrs">
-                    {{pd.session.name}}: {{pd.start|date:"D, M d H:i"}} UTC for {{pd.duration|hrs2sex}} hrs
+            {% for pd in upcomingPeriods %}
+              <li title="{{pd.session.name}}: {{pd.start|date:'Y-m-d H:i'}} {{tz}} for {{pd.duration|hrs2sex}} hrs">
+                    {{pd.session.name}}: {{pd.start|date:"D, M d H:i"}} {{tz}} for {{pd.duration|hrs2sex}} hrs
                     </li>
             {% endfor %}
             </ul>

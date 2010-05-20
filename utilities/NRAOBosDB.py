@@ -1,7 +1,7 @@
 import urllib2
-import lxml.etree      as ET
-from datetime          import datetime
-from django.core.cache import cache
+import lxml.etree        as ET
+from datetime            import datetime
+from django.core.cache   import cache
 
 class NRAOBosDB:
 
@@ -35,7 +35,7 @@ class NRAOBosDB:
                 retval[u] = rs
         return retval
 
-    def eventjson(self, project, id):
+    def eventjson(self, project, id, tz = None):
         """
         Take a Project and a starting id and returns a list of json
         dictionaries representing each reservation.  The keys of the json

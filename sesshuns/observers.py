@@ -1,17 +1,22 @@
 from datetime                       import datetime, time, timedelta
 from decorators                     import *
 from django.contrib.auth.decorators import login_required
-from django.db.models         import Q
-from django.http              import HttpResponse, HttpResponseRedirect, Http404
-from django.shortcuts         import render_to_response
-from models                   import *
-from sets                     import Set
-from nell.tools               import IcalMap
-from nell.utilities.TimeAgent import EST, UTC
-from nell.utilities           import gen_gbt_schedule, NRAOBosDB
-from nell.utilities           import Shelf
-from reversion                import revision
-from utilities                import *
+from django.db.models               import Q
+from django.core.exceptions         import ObjectDoesNotExist
+from django                         import forms
+from django.http                    import HttpResponse, HttpResponseRedirect, Http404
+from django.shortcuts               import render_to_response
+from models                         import *
+from sets                           import Set
+from nell.tools                     import IcalMap
+from nell.utilities.TimeAgent       import EST, UTC, adjustDateTimeTz
+from nell.utilities                 import gen_gbt_schedule, NRAOBosDB
+from nell.utilities                 import Shelf
+from reversion                      import revision
+from utilities                      import *
+from validators                     import BlackoutValidator
+from forms                          import BlackoutForm
+import pytz
 
 def public_schedule(request, *args, **kws):
     """
@@ -75,6 +80,42 @@ def home(request, *args, **kwds):
     else:
         return HttpResponseRedirect("/profile")
 
+@login_required
+def preferences(request, *args, **kws):
+    user = get_requestor(request)
+    class PreferencesForm(forms.Form):
+        timeZone = forms.ChoiceField(choices = [(tz, tz) for tz in pytz.all_timezones])
+
+    try:
+        preferences = user.preference
+    except ObjectDoesNotExist:
+        preferences = Preference(user = user)
+        preferences.save()
+
+    form = PreferencesForm(initial = {'timeZone' : preferences.timeZone})
+    if request.method == "POST":
+        form = PreferencesForm(request.POST)
+        if form.is_valid():
+            preferences.timeZone = form.cleaned_data['timeZone']
+            preferences.save()
+            return HttpResponseRedirect("/profile/%s" % user.id)
+
+
+    return render_to_response('sesshuns/preferences.html'
+                            , {'form' : form
+                             , 'u'    : user
+                            })
+
+def adjustBlackoutTZ(tz, blackout):
+    return {'user'        : blackout.user
+          , 'id'          : blackout.id
+          , 'start_date'  : adjustDateTimeTz(tz, blackout.start_date)
+          , 'end_date'    : adjustDateTimeTz(tz, blackout.end_date)
+          , 'repeat'      : blackout.repeat
+          , 'until'       : adjustDateTimeTz(tz, blackout.until)
+          , 'description' : blackout.description
+           }
+
 @revision.create_on_success
 @login_required
 @has_user_access
@@ -88,17 +129,47 @@ def profile(request, *args, **kws):
     reservations = NRAOBosDB().getReservationsByUsername(user.username)
     blackouts    = [b for b in user.blackout_set.order_by("start_date") \
                       if b.isActive()]
+
+    selected_tz = request.GET.get("tz", "Default")
+    if selected_tz == "Default":
+        try:
+            tz = requestor.preference.timeZone
+        except ObjectDoesNotExist:
+            tz = "UTC"
+    else:
+        tz = selected_tz
+
+    blackouts    = [{'user'        : user
+                   , 'id'          : b.id
+                   , 'start_date'  : adjustDateTimeTz(tz, b.start_date)
+                   , 'end_date'    : adjustDateTimeTz(tz, b.end_date)
+                   , 'repeat'      : b.repeat
+                   , 'until'       : adjustDateTimeTz(tz, b.until)
+                   , 'description' : b.description
+                    } for b in user.blackout_set.order_by("start_date")]
+
+    upcomingPeriods = [(proj
+                       , [{'session'  : pd.session
+                         , 'start'    : adjustDateTimeTz(tz, pd.start)
+                         , 'duration' : pd.duration
+                          } for pd in pds]
+                         ) for proj, pds in user.getUpcomingPeriodsByProject().items()]
     return render_to_response("sesshuns/profile.html"
                             , {'u'            : user
                              , 'blackouts'    : blackouts
                              , 'requestor'    : requestor
                              , 'authorized'   : user == requestor
+                             , 'tz'           : tz
                              , 'emails'       : static_info['emailDescs']
                              , 'phones'       : static_info['phoneDescs']
                              , 'postals'      : static_info['postals']
                              , 'affiliations' : static_info['affiliations']
                              , 'username'     : static_info['username']
-                             , 'reservations' : reservations})
+                             , 'reservations' : reservations
+                             , 'upcomingPeriods' : upcomingPeriods
+                             , 'tzs'             : pytz.all_timezones
+                             , 'selected_tz'     : selected_tz
+                             , 'isOps'           : requestor.isOperator()})
 
 @revision.create_on_success
 @login_required
@@ -108,6 +179,15 @@ def project(request, *args, **kws):
     Shows a project-centric page chock-full of interesting tidbits.
     """
     requestor = get_requestor(request)
+    selected_tz = request.GET.get("tz", "Default")
+    if selected_tz == "Default":
+        try:
+            tz = requestor.preference.timeZone
+        except ObjectDoesNotExist:
+            tz = "UTC"
+    else:
+        tz = selected_tz
+
     project   = first(Project.objects.filter(pcode = args[0]))
     if project is None:
         raise Http404 # Bum pcode
@@ -124,15 +204,40 @@ def project(request, *args, **kws):
     # sort all the sessions by name
     sess = sorted(project.sesshun_set.all(), lambda x,y: cmp(x.name, y.name))
 
+    investigators = project.investigator_set.order_by('priority').all()
+    blackouts     = [adjustBlackoutTZ(tz, b) for i in investigators for b in i.projectBlackouts()]
+    periods = [{'session'    : p.session
+              , 'start'      : adjustDateTimeTz(tz, p.start)
+              , 'duration'   : p.duration
+              , 'accounting' : p.accounting
+               } for p in project.get_observed_periods()]
+    windows = [{'session'   : w.session
+              , 'start_date' : w.start_date
+              , 'duration'   : w.duration
+              , 'is_scheduled_or_completed' : {'start' : adjustDateTimeTz(tz, w.is_scheduled_or_completed().start)
+                                             , 'duration' : w.is_scheduled_or_completed().duration
+                                               } if w.is_scheduled_or_completed() is not None else None
+               } for w in project.get_active_windows()]
+    upcomingPeriods = [{'session'  : pd.session
+                      , 'start'    : adjustDateTimeTz(tz, pd.start)
+                      , 'duration' : pd.duration
+                       } for pd in project.getUpcomingPeriods()]
     return render_to_response(
         "sesshuns/project.html"
       , {'p'           : project
        , 'sess'        : sess
        , 'u'           : requestor
        , 'requestor'   : requestor
-       , 'v'           : project.investigator_set.order_by('priority').all()
+       , 'v'           : investigators
        , 'r'           : NRAOBosDB().reservations(project)
        , 'rcvr_blkouts': rcvr_blkouts
+       , 'tz'          : tz
+       , 'projectBlackouts' : blackouts
+       , 'periods'          : periods
+       , 'windows'          : windows
+       , 'upcomingPeriods'  : upcomingPeriods
+       , 'tzs'              : pytz.all_timezones
+       , 'selected_tz'      : selected_tz
        }
     )
 
@@ -299,76 +404,58 @@ def blackout(request, *args, **kws):
     """
     Allows investigators to manage blackouts.
     """
-    u_id,     = args
+    b_id = None
+    if len(args) == 1:
+        u_id,     = args
+    else:
+        u_id, b_id, = args
+
     user      = first(User.objects.filter(id = u_id))
     requestor = get_requestor(request)
+    try:
+        tz = user.preference.timeZone
+    except ObjectDoesNotExist:
+        tz = "UTC"
 
-    if request.method == 'GET':
-        b = first(Blackout.objects.filter(id = int(request.GET.get('id', '0'))))
-        if request.GET.get('_method', '') == "DELETE":
-            b.delete()
-            return HttpResponseRedirect("/profile/%s" % u_id)
-        else:
-            return render_to_response(
-                "sesshuns/blackout_form.html"
-              , get_blackout_form_context(request.GET.get('_method', '')
-                                        , b
-                                        , user
-                                        , requestor
-                                        , []))
 
-    # TBF: Use a django form!
-    # Now see if the data to be saved is valid    
-    # Convert blackout to UTC.
-    utcOffset = first(TimeZone.objects.filter(timeZone = request.POST['tz'])).utcOffset()
-    # watch for malformed dates
-    start, stError = parse_datetime(request, 'start', 'starttime', utcOffset)
-    end,   edError = parse_datetime(request,   'end',   'endtime', utcOffset)
-    until, utError = parse_datetime(request, 'until', 'untiltime', utcOffset)
-    repeat      = first(Repeat.objects.filter(repeat = request.POST['repeat']))
-    description = request.POST['description']
-    errors = [e for e in [stError, edError, utError] if e is not None]
-
-    # more error checking!
-    # start, end can't be null
-    if start is None or end is None:
-        errors.append("ERROR: must specify Start and End")
-    # start has to be a start, end has to be an end 
-    if end is not None and start is not None and end < start:
-        errors.append("ERROR: End must be after Start")
-    if end is not None and until is not None and until < end:
-        errors.append("ERROR: Until must be after End")
-    # if it's repeating, we must have an until date
-    if repeat.repeat != "Once" and until is None:
-        errors.append("ERROR: if repeating, must specify Until")
-
-    # do we need to redirect back to the form because of errors?
-    if len(errors) != 0:
-         if request.POST.get('_method', '') == 'PUT':
-            # go back to editing this pre-existing blackout date
-            b = first(Blackout.objects.filter(id = int(request.POST.get('id', 0))))
-            return render_to_response("sesshuns/blackout_form.html"
-                 , get_blackout_form_context('PUT', b, user, requestor, errors))
-         else:
-            # go back to creating a new one
-            return render_to_response("sesshuns/blackout_form.html"
-                 , get_blackout_form_context('', None, user, requestor, errors))
-         
-    # no errors - retrieve obj, or create new one
-    if request.POST.get('_method', '') == 'PUT':
-        b = first(Blackout.objects.filter(id = request.POST.get('id', '0')))
-    else:
-        b = Blackout(user = user)
-    b.start_date  = start
-    b.end_date    = end
-    b.until       = until
-    b.repeat      = repeat
-    b.description = description
-    b.save()
+    if request.method == 'POST':
+        f = BlackoutForm(request.POST)
+        f.format_dates(tz, request.POST)
+        # do we need to redirect back to the form because of errors?
+        if f.is_valid():
+            # no errors - retrieve obj, or create new one
+            b = first(Blackout.objects.filter(id = b_id)) if request.POST.get('_method', '') == 'PUT' \
+                                                          else Blackout(user = user)
+            b.start_date, b.end_date, b.until = (f.cleaned_start, f.cleaned_end, f.cleaned_until)
+            b.repeat      = f.cleaned_data['repeat']
+            b.description = f.cleaned_data['description']
+            b.save()
         
-    revision.comment = get_rev_comment(request, b, "blackout")
+            revision.comment = get_rev_comment(request, b, "blackout")
 
-    return HttpResponseRedirect("/profile/%s" % u_id)
+            return HttpResponseRedirect("/profile/%s" % u_id)
+            
+        return render_to_response("sesshuns/blackout_form.html"
+                            , {'form' : f
+                             , 'requestor' : requestor
+                             , 'u'    : user
+                             , 'b_id' : b_id
+                             , 'tz'   : tz
+                              })
+
+    b = first(Blackout.objects.filter(id = b_id)) if b_id is not None else None
+    f = BlackoutForm.initialize(b, tz) if b is not None else BlackoutForm()
+
+    if request.GET.get('_method', '') == "DELETE" and b is not None:
+        b.delete()
+        return HttpResponseRedirect("/profile/%s" % u_id)
+    return render_to_response("sesshuns/blackout_form.html"
+                            , {'form' : f
+                             , 'requestor' : requestor
+                             , 'u'    : user
+                             , 'b_id' : b_id
+                             , 'tz'   : tz
+                              })
 
 @login_required
 def events(request, *args, **kws):
@@ -381,6 +468,16 @@ def events(request, *args, **kws):
     start     = request.GET.get('start', '')
     end       = request.GET.get('end', '')
     project   = first(Project.objects.filter(pcode = pcode).all())
+    requestor = get_requestor(request)
+
+    selected_tz = request.GET.get("tz", "Default")
+    if selected_tz == "Default":
+        try:
+            tz = requestor.preference.timeZone
+        except ObjectDoesNotExist:
+            tz = "UTC"
+    else:
+        tz = selected_tz
 
     # Each event needs a unique id.  Let's start with 1.
     id          = 1
@@ -390,7 +487,7 @@ def events(request, *args, **kws):
     blackouts = Set([b for i in project.investigator_set.all() \
                        for b in i.user.blackout_set.all()])
     for b in blackouts:
-        jsonobjlist.extend(b.eventjson(start, end, id))
+        jsonobjlist.extend(b.eventjson(start, end, id, tz))
         id = id + 1
 
     # Investigator reservations
@@ -399,8 +496,7 @@ def events(request, *args, **kws):
 
     # Scheduled telescope periods
     for p in project.getPeriods():
-        #print w.eventjson(id)
-        jsonobjlist.append(p.eventjson(id))
+        jsonobjlist.append(p.eventjson(id, tz))
         id = id + 1
 
     # Semester start dates

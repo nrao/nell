@@ -11,6 +11,7 @@ from Period_Accounting      import Period_Accounting
 from Period                 import Period
 from Period_Receiver        import Period_Receiver
 from Period_State           import Period_State
+from Preference             import Preference
 from Project_Blackout_09B   import Project_Blackout_09B
 from Project                import Project
 from Project_Allotment      import Project_Allotment

@@ -1,0 +1,26 @@
+{% extends "sesshuns/base.html" %}
+{% load custom %}
+{% block title %}Preferences - {{u|display_name}} {% endblock %}
+{% block content %}
+  <div id="header" class="span-24 last">
+    <table>
+      <tr>
+        <td>
+          <h1>{{u|display_name}}
+          </h1>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <form action="/preferences" method="POST">
+            <fieldset>
+              <legend>Preferences</legend>
+              {{form.as_p}}
+            </fieldset>
+            <input type="submit" value="Save"/>
+          </form>
+        </td>
+      </tr>
+    </table>
+  </div>
+{% endblock %}
