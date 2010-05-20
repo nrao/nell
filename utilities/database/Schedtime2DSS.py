@@ -491,8 +491,8 @@ class Schedtime2DSS(object):
         pa = Project_Allotment(project = p, allotment = allot)
         pa.save()
         p.project_allotment_set.add(pa)
-        status = Status(enabled    = True
-                      , authorized = True
+        status = Status(enabled    = False
+                      , authorized = False
                       , complete   = False
                       , backup     = False
                         )

@@ -213,8 +213,9 @@ class DSSPrime2DSS(object):
                           )
         allot.save()
 
-        status = Status(enabled    = row[19] == 1
-                      , authorized = row[20] == 1
+        # For now, make sure all new sessions are not enabled/authorized
+        status = Status(enabled    = False #row[19] == 1
+                      , authorized = False #row[20] == 1
                       , complete   = row[21] == 1
                       , backup     = row[22] == 1
                         )
