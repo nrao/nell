@@ -8,7 +8,7 @@ from nell.utilities                     import TimeAgent, Shelf
 from nell.utilities.SchedulingNotifier  import SchedulingNotifier
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException, JSONExceptionInfo
 from nell.utilities.Notifier            import Notifier
-from nell.utilities.Email               import Email
+from nell.utilities.Email               import Email as EmailMessage  #name clash with models
 from reversion                          import revision
 from settings                           import PROXY_PORT, DATABASE_NAME
 from utilities                          import *
@@ -476,7 +476,8 @@ def projects_email(request, *args, **kwds):
     elif request.method == 'POST':
         email_key = "projects_email"
         pe_notifier = Notifier()
-        pe_notifier.registerTemplate(email_key, Email("helpdesk-dss@gb.nrao.edu", "", "", ""))
+        em_templ = EmailMessage("helpdesk-dss@gb.nrao.edu", "", "", "")
+        pe_notifier.registerTemplate(email_key, em_templ)
         addr = str(request.POST.get("address", "")).replace(" ", "").split(",")
         subject = request.POST.get("subject", "")
         body = request.POST.get("body", "")
