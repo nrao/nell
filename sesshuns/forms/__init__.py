@@ -1,1 +1,2 @@
-from BlackoutForm import BlackoutForm
+from BlackoutForm    import BlackoutForm
+from PreferencesForm import PreferencesForm

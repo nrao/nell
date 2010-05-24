@@ -11,15 +11,6 @@
       </div>
       <div id="subheader" class="span-24 last">
         <!-- Add affiliation here. -->
-        <form action='/profile/{{u.id}}' method="GET" >
-          <label for="id_tz"> Time Zone:</label>
-          <select id="id_tz" name='tz' onChange="submit()">
-            <option value='Default'>Default</option>
-            {% for t in tzs %}
-            <option value='{{t}}' {%ifequal t selected_tz %} selected{% endifequal %}>{{t}}</option>
-            {% endfor %}
-          </select>
-        </form>
       </div>
       <hr />
       <div class="span-17 colborder" id="content">

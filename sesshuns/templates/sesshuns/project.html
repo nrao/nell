@@ -3,7 +3,7 @@
 {% block title %} {{p.pcode}} {% endblock %}
 {% block scripts %}
     <script type="text/javascript">
-      var event_url = "/project/{{p.pcode}}/events?tz={{selected_tz}}"; // For calendar
+      var event_url = "/project/{{p.pcode}}/events?tz={{tz}}"; // For calendar
       var unavailable_url = "/project/{{p.pcode}}/unavailable"; // For calendar
     </script>
     <!-- <script type="text/javascript" src="/static/javascript/lib/jquery.js"></script> -->
@@ -19,15 +19,6 @@
       </div>
       <div id="subheader" class="span-24 last">
         <h3 class="alt">{{p.name}}</h3>
-        <form action='/project/{{p.pcode}}' method="GET" >
-          <label for="id_tz"> Time Zone:</label>
-          <select id="id_tz" name='tz' onChange="submit()">
-            <option value='Default'>Default</option>
-            {% for t in tzs %}
-            <option value='{{t}}' {%ifequal t selected_tz %} selected{% endifequal %}>{{t}}</option>
-            {% endfor %}
-          </select>
-        </form>
         <hr />
       </div>
       <div class="span-19 colborder" id="content">

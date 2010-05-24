@@ -14,10 +14,7 @@
 
 {% endblock %}
 {% block content %}
-<div >
-  <h3 class="loud">Blackout Date for {{u|display_name}}</h3>
-</div>
-<div  >
+<div>
   {% for e in form.non_field_errors %}
     <div class="error">{{e}}</div>
   {% endfor %}
@@ -37,14 +34,22 @@
 <form action="/profile/{{u.id}}/blackout/" method="POST">
 {% endif %}
   <fieldset>
-  <legend>{{tz}} Time Zone</legend>
+  <legend>Blackout for {{u|display_name}}</legend>
   <table>
+    <tr>
+      <th style="width: 50px;">Time Zone:</th>
+      <td>
+        {{ tz_form.timeZone }}
+      </td>
+    </tr>
     <tr>
       <th style="width: 50px;">Start Date:</th>
       <td>
         {{ form.start }}
         {{ form.start_time }}
-        <span class="error">{{ form.start.errors.0 }}</span>
+        {% if form.start.errors %}
+          <span class="error">{{ form.start.errors.0 }}</span>
+        {% endif %}
       </td>
     </tr>
     <tr>
@@ -52,7 +57,9 @@
       <td>
         {{ form.end }}
         {{ form.end_time }}
-        <span class="error">{{ form.end.errors.0 }}</span>
+        {% if form.end.errors %}
+          <span class="error">{{ form.end.errors.0 }}</span>
+        {% endif %}
       </td>
     </tr>
     <tr>

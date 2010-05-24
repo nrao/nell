@@ -3,7 +3,6 @@ from decorators                     import *
 from django.contrib.auth.decorators import login_required
 from django.db.models               import Q
 from django.core.exceptions         import ObjectDoesNotExist
-from django                         import forms
 from django.http                    import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts               import render_to_response
 from models                         import *
@@ -14,7 +13,7 @@ from nell.utilities                 import gen_gbt_schedule, NRAOBosDB
 from nell.utilities                 import Shelf
 from reversion                      import revision
 from utilities                      import *
-from forms                          import BlackoutForm
+from forms                          import BlackoutForm, PreferencesForm
 import pytz
 
 def public_schedule(request, *args, **kws):
@@ -82,9 +81,6 @@ def home(request, *args, **kwds):
 @login_required
 def preferences(request, *args, **kws):
     user = get_requestor(request)
-    class PreferencesForm(forms.Form):
-        timeZone = forms.ChoiceField(choices = [(tz, tz) for tz in pytz.all_timezones], label = 'Default Time Zone')
-
     try:
         preferences = user.preference
     except ObjectDoesNotExist:
@@ -126,14 +122,10 @@ def profile(request, *args, **kws):
     static_info  = user.getStaticContactInfo()
     reservations = NRAOBosDB().getReservationsByUsername(user.username)
 
-    selected_tz = request.GET.get("tz", "Default")
-    if selected_tz == "Default":
-        try:
-            tz = requestor.preference.timeZone
-        except ObjectDoesNotExist:
-            tz = "UTC"
-    else:
-        tz = selected_tz
+    try:
+        tz = requestor.preference.timeZone
+    except ObjectDoesNotExist:
+        tz = "UTC"
 
     blackouts    = [{'user'        : user
                    , 'id'          : b.id
@@ -164,8 +156,7 @@ def profile(request, *args, **kws):
                              , 'username'     : static_info['username']
                              , 'reservations' : reservations
                              , 'upcomingPeriods' : upcomingPeriods
-                             , 'tzs'             : pytz.all_timezones
-                             , 'selected_tz'     : selected_tz
+                             , 'tzs'             : pytz.common_timezones
                              , 'isOps'           : requestor.isOperator()})
 
 @revision.create_on_success
@@ -176,14 +167,10 @@ def project(request, *args, **kws):
     Shows a project-centric page chock-full of interesting tidbits.
     """
     requestor = get_requestor(request)
-    selected_tz = request.GET.get("tz", "Default")
-    if selected_tz == "Default":
-        try:
-            tz = requestor.preference.timeZone
-        except ObjectDoesNotExist:
-            tz = "UTC"
-    else:
-        tz = selected_tz
+    try:
+       tz = requestor.preference.timeZone
+    except ObjectDoesNotExist:
+        tz = "UTC"
 
     project   = first(Project.objects.filter(pcode = args[0]))
     if project is None:
@@ -233,8 +220,7 @@ def project(request, *args, **kws):
        , 'periods'          : periods
        , 'windows'          : windows
        , 'upcomingPeriods'  : upcomingPeriods
-       , 'tzs'              : pytz.all_timezones
-       , 'selected_tz'      : selected_tz
+       , 'tzs'              : pytz.common_timezones
        }
     )
 
@@ -401,59 +387,56 @@ def blackout(request, *args, **kws):
     """
     Allows investigators to manage blackouts.
     """
-    b_id = None
     if len(args) == 1:
-        u_id,     = args
+        u_id, = args
+        b_id  = None
     else:
         u_id, b_id, = args
 
     user      = first(User.objects.filter(id = u_id))
     requestor = get_requestor(request)
+
     try:
         tz = user.preference.timeZone
     except ObjectDoesNotExist:
         tz = "UTC"
 
+    tz_form = PreferencesForm(initial = {'timeZone' : tz})
+
     if request.method == 'POST':
         f = BlackoutForm(request.POST)
         f.format_dates(tz, request.POST)
-        # do we need to redirect back to the form because of errors?
-        if f.is_valid():
-            # no errors - retrieve obj, or create new one
-            b = first(Blackout.objects.filter(id = b_id)) if request.POST.get('_method', '') == 'PUT' \
-                                                          else Blackout(user = user)
-            b.start_date, b.end_date, b.until = (f.cleaned_start, f.cleaned_end, f.cleaned_until)
+        if f.is_valid(): # redirect on form errors
+            if request.POST.get('_method', '') == 'PUT':
+                b = first(Blackout.objects.filter(id = b_id))
+            else:
+                b = Blackout(user = user)
+
+            b.start_date  = f.cleaned_start
+            b.end_date    = f.cleaned_end
+            b.until       = f.cleaned_until
             b.repeat      = f.cleaned_data['repeat']
             b.description = f.cleaned_data['description']
             b.save()
         
             revision.comment = get_rev_comment(request, b, "blackout")
-
             return HttpResponseRedirect("/profile/%s" % u_id)
-            
-        print dir(f), f.errors, dir(f.errors)
-        return render_to_response("sesshuns/blackout_form.html"
-                            , {'form' : f
-                             , 'requestor' : requestor
-                             , 'u'    : user
-                             , 'b_id' : b_id
-                             , 'tz'   : tz
-                              })
+    else:
+        b = first(Blackout.objects.filter(id = b_id)) if b_id is not None else None
+        if request.GET.get('_method', '') == "DELETE" and b is not None:
+            b.delete()
+            return HttpResponseRedirect("/profile/%s" % u_id)
 
-    b = first(Blackout.objects.filter(id = b_id)) if b_id is not None else None
-    f = BlackoutForm.initialize(b, tz) if b is not None else BlackoutForm()
-
-    if request.GET.get('_method', '') == "DELETE" and b is not None:
-        b.delete()
-        return HttpResponseRedirect("/profile/%s" % u_id)
+        f = BlackoutForm.initialize(b, tz) if b is not None else BlackoutForm()
 
     return render_to_response("sesshuns/blackout_form.html"
-                            , {'form' : f
+                            , {'form'      : f
                              , 'requestor' : requestor
-                             , 'u'    : user
-                             , 'b_id' : b_id
-                             , 'tz'   : tz
-                              })
+                             , 'u'         : user
+                             , 'b_id'      : b_id
+                             , 'tz'        : tz
+                             , 'tz_form'   : tz_form
+                             })
 
 @login_required
 def events(request, *args, **kws):
@@ -468,14 +451,10 @@ def events(request, *args, **kws):
     project   = first(Project.objects.filter(pcode = pcode).all())
     requestor = get_requestor(request)
 
-    selected_tz = request.GET.get("tz", "Default")
-    if selected_tz == "Default":
-        try:
-            tz = requestor.preference.timeZone
-        except ObjectDoesNotExist:
-            tz = "UTC"
-    else:
-        tz = selected_tz
+    try:
+        tz = requestor.preference.timeZone
+    except ObjectDoesNotExist:
+        tz = "UTC"
 
     # Each event needs a unique id.  Let's start with 1.
     id          = 1
