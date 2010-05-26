@@ -2671,11 +2671,11 @@ class TestObservers(NellTestCase):
         return b
         
     def test_blackout_form(self):
-        response = self.get('/profile/%s/blackout' % self.u.id)
+        response = self.get('/profile/%s/blackout/' % self.u.id)
         self.failUnlessEqual(response.status_code, 200)
 
         b = self.create_blackout()
-        response = self.get('/profile/%s/blackout/%s' % (self.u.id, b.id))
+        response = self.get('/profile/%s/blackout/%s/' % (self.u.id, b.id))
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue(b.description in response.content)
 
@@ -2696,14 +2696,14 @@ class TestObservers(NellTestCase):
                 }
 
         response = self.post(
-            '/profile/%s/blackout/%s' % (self.u.id, b.id), data)
+            '/profile/%s/blackout/%s/' % (self.u.id, b.id), data)
         b = first(Blackout.objects.filter(id = b.id))
         self.assertEqual(b.end_date.date().strftime("%m/%d/%Y") , data.get('end'))
         self.assertEqual(b.until.date().strftime("%m/%d/%Y") , data.get('until'))
         self.failUnlessEqual(response.status_code, 302)
         
         response = self.get(
-            '/profile/%s/blackout/%s' % (self.u.id, b.id)
+            '/profile/%s/blackout/%s/' % (self.u.id, b.id)
           , {'_method' : 'DELETE'})
         self.failUnlessEqual(response.status_code, 302)
         # shouldn't this delete the blackout?
@@ -2713,7 +2713,7 @@ class TestObservers(NellTestCase):
         data['end'] = date(2009, 5, 31).strftime("%m/%d/%Y")
         _ = data.pop('_method')
         response    = self.post(
-            '/profile/%s/blackout' % self.u.id, data)
+            '/profile/%s/blackout/' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 302)
         b = first(self.u.blackout_set.all())
         self.assertEqual(b.end_date.date().strftime("%m/%d/%Y"), data.get('end'))
@@ -2740,7 +2740,7 @@ class TestObservers(NellTestCase):
                 }
 
         response = self.post(
-            '/profile/%s/blackout/%s' % (self.u.id, b.id), data)
+            '/profile/%s/blackout/%s/' % (self.u.id, b.id), data)
         self.failUnlessEqual(response.status_code, 302)
         self.assertTrue("ERROR" not in response.content)
 
@@ -2748,7 +2748,7 @@ class TestObservers(NellTestCase):
         data['end'] = None
         data['end_time'] = None
         response = self.post(
-            '/profile/%s/blackout/%s' % (self.u.id, b.id), data)
+            '/profile/%s/blackout/%s/' % (self.u.id, b.id), data)
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue("ERROR" in response.content)
 
