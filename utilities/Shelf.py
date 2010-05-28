@@ -1,5 +1,6 @@
 import shelve
-from Borg import Borg
+from settings  import PROXY_PORT
+from Borg      import Borg
 
 class Shelf(Borg):
     """
@@ -10,7 +11,7 @@ class Shelf(Borg):
     _shared_state = {}
 
     def __init__(self):
-        self.shelf = shelve.open("/tmp/nell_shelve")
+        self.shelf = shelve.open("/tmp/nell_shelve_%d" % PROXY_PORT)
 
     def __getitem__(self, name):
         return self.shelf[name]
