@@ -404,9 +404,15 @@ def blackout(request, *args, **kws):
     tz_form = PreferencesForm(initial = {'timeZone' : tz})
 
     if request.method == 'POST':
+        tz_form = PreferencesForm(request.POST)
+        if tz_form.is_valid():
+            tzp = tz_form.cleaned_data['timeZone']
+        else:
+            tz_form = PreferencesForm()
+            tzp = tz
         f = BlackoutForm(request.POST)
-        f.format_dates(tz, request.POST)
-        if f.is_valid(): # redirect on form errors
+        f.format_dates(tzp, request.POST)
+        if f.is_valid():
             if request.POST.get('_method', '') == 'PUT':
                 b = first(Blackout.objects.filter(id = b_id))
             else:
