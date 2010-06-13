@@ -530,3 +530,13 @@ def toggle_moc(request, *args, **kwds):
 
     return HttpResponse(json.dumps({'success':'ok'})
                       , mimetype = "text/plain")
+
+def reservations(request, *args, **kws):
+    start = request.GET.get('start')
+    days     = int(request.GET.get('days'))
+    end    = (datetime.strptime(start, "%m/%d/%Y") + timedelta(days = days)).strftime("%m/%d/%Y")
+    reservations = NRAOBosDB().reservationsRange(start, end)
+    print start, end, len(reservations)
+    return HttpResponse(json.dumps({'reservations' : reservations
+                                  , 'total'        : len(reservations)
+                                   }))
