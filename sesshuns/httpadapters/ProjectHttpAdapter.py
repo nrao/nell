@@ -1,5 +1,5 @@
 from nell.tools             import TimeAccounting
-from sesshuns.models        import Allotment, Project_Allotment, Project_Type, Semester
+from sesshuns.models        import Allotment, Project_Allotment, Project_Type, Semester, User
 from sesshuns.models.common import first
 
 class ProjectHttpAdapter (object):
@@ -18,11 +18,14 @@ class ProjectHttpAdapter (object):
         p_type     = first(Project_Type.objects.filter(type = fproj_type))
         fsemester  = fdata.get("semester", "09C")
         semester   = first(Semester.objects.filter(semester = fsemester))
+        f_lname, f_fname = fdata.get("friends", "").split(", ")
+        friend = first(User.objects.filter(last_name = f_lname, first_name = f_fname))
 
         self.project.semester         = semester
         self.project.project_type     = p_type
         self.project.pcode            = fdata.get("pcode", "")
         self.project.name             = fdata.get("name", "")
+        self.project.friend           = friend
         self.project.thesis           = fdata.get("thesis", "false") == "true"
         self.project.complete         = fdata.get("complete", "false") == "true"
         self.project.notes            = fdata.get("notes", "")
@@ -92,6 +95,7 @@ class ProjectHttpAdapter (object):
               , "complete"     : self.project.complete
               , "pi"           : pi
               , "co_i"         : co_i
+              , "friend"       : self.project.friend.name() if self.project.friend is not None else ""
               , "notes"        : self.project.notes if self.project.notes is not None else ""
               , "schd_notes"   : self.project.schedulers_notes \
                                  if self.project.schedulers_notes is not None else ""

@@ -13,8 +13,10 @@ class UserHttpAdapter(object):
         role  = first(Role.objects.filter(role = fdata.get('role')))
         self.user.role        = role
         self.user.username    = fdata.get('username')
-        sanctioned       = fdata.get('sanctioned')
+        sanctioned            = fdata.get('sanctioned')
+        staff                 = fdata.get('sanctioned')
         self.user.sanctioned  = sanctioned.lower() == 'true' if sanctioned is not None else sanctioned
+        self.user.staff       = staff.lower() == 'true' if staff is not None else staff
         self.user.first_name  = fdata.get('first_name')
         self.user.last_name   = fdata.get('last_name')
         self.user.contact_instructions   = fdata.get('contact_instructions')
@@ -27,6 +29,7 @@ class UserHttpAdapter(object):
               , 'first_name' : self.user.first_name
               , 'last_name'  : self.user.last_name
               , 'sanctioned' : self.user.sanctioned
+              , 'staff'      : self.user.staff
               , 'projects'   : projects
               , 'role'       : self.user.role.role
                 }

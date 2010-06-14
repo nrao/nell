@@ -145,6 +145,14 @@ def get_options(request, *args, **kws):
                       , 'ids': [u.id for u in users]})
           , mimetype = "text/plain")
 
+    elif mode == "friends":
+        users = User.objects.filter(staff = True).order_by('last_name')
+        return HttpResponse(
+            json.dumps({'friends': ["%s, %s" % (u.last_name, u.first_name) \
+                                  for u in users]
+                      , 'ids': [u.id for u in users]})
+          , mimetype = "text/plain")
+
     elif mode == "session_handles":
         ss = Sesshun.objects.order_by('name')
         return HttpResponse(
@@ -536,7 +544,6 @@ def reservations(request, *args, **kws):
     days     = int(request.GET.get('days'))
     end    = (datetime.strptime(start, "%m/%d/%Y") + timedelta(days = days)).strftime("%m/%d/%Y")
     reservations = NRAOBosDB().reservationsRange(start, end)
-    print start, end, len(reservations)
     return HttpResponse(json.dumps({'reservations' : reservations
                                   , 'total'        : len(reservations)
                                    }))
