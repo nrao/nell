@@ -1,6 +1,7 @@
 from datetime                           import date, datetime, timedelta
 from decorators                         import catch_json_parse_errors
 from django.http                        import HttpResponse
+from django.contrib.auth.models         import User as AuthUser
 from httpadapters                       import PeriodHttpAdapter
 from models                             import *
 from nell.tools                         import IcalMap, ScheduleTools, TimeAccounting
@@ -126,6 +127,10 @@ def delete_rcvr_schedule_date(request, *args, **kws):
         return HttpResponse(json.dumps({'error': error, 'message': msg})
                            , mimetype = "text/plain")
 
+def isFriend(username):
+    au = first(AuthUser.objects.filter(username = username))
+    return (au.is_staff if au is not None else False) and username != "dss"
+
 @revision.create_on_success
 @catch_json_parse_errors
 def get_options(request, *args, **kws):
@@ -146,7 +151,8 @@ def get_options(request, *args, **kws):
           , mimetype = "text/plain")
 
     elif mode == "friends":
-        users = User.objects.filter(staff = True).order_by('last_name')
+        users = [u for u in User.objects.all().order_by('last_name') 
+                   if isFriend(u.username)]
         return HttpResponse(
             json.dumps({'friends': ["%s, %s" % (u.last_name, u.first_name) \
                                   for u in users]

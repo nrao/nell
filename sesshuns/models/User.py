@@ -16,7 +16,6 @@ class User(models.Model):
     last_name   = models.CharField(max_length = 150)
     contact_instructions = models.TextField(null = True, blank = True)
     role                 = models.ForeignKey(Role)
-    staff                = models.BooleanField(default = False)
 
     class Meta:
         db_table  = "users"
