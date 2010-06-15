@@ -96,7 +96,7 @@ def rcvr_schedule(request, *args, **kwds):
     """
     receivers = [r for r in Receiver.objects.all() if r.abbreviation != 'NS']
     schedule  = {}
-    for day, rcvrs in Receiver_Schedule.extract_schedule(datetime.utcnow(), 90).items():
+    for day, rcvrs in Receiver_Schedule.extract_schedule(datetime.utcnow(), 180).items():
         schedule[day] = [r in rcvrs for r in receivers]
 
     return render_to_response(

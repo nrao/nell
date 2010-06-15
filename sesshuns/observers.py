@@ -177,7 +177,7 @@ def project(request, *args, **kws):
         raise Http404 # Bum pcode
 
     now          = datetime.utcnow().replace(hour = 0, minute = 0, second = 0)
-    later        = now + timedelta(days = 90)
+    later        = now + timedelta(days = 180)
     rcvr_blkouts = []
     for s, e in project.get_receiver_blackout_ranges(now, later):
         if e is None:
