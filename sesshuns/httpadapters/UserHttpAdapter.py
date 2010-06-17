@@ -25,9 +25,10 @@ class UserHttpAdapter(object):
         self.user.save()
 
         auth_user          = first(User.objects.filter(username = username))
-        staff              = fdata.get('staff')
-        auth_user.is_staff = staff.lower() == 'true' if staff is not None else staff
-        auth_user.save()
+        if auth_user is not None:
+            staff              = fdata.get('staff')
+            auth_user.is_staff = staff.lower() == 'true' if staff is not None else staff
+            auth_user.save()
 
     def jsondict(self):
         auth_user       = first(User.objects.filter(username = self.user.username))

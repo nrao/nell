@@ -18,7 +18,10 @@ class ProjectHttpAdapter (object):
         p_type     = first(Project_Type.objects.filter(type = fproj_type))
         fsemester  = fdata.get("semester", "09C")
         semester   = first(Semester.objects.filter(semester = fsemester))
-        f_lname, f_fname = fdata.get("friends", "").split(", ")
+        try:
+            f_lname, f_fname = fdata.get("friends", "").split(", ")
+        except ValueError:
+            f_lname, f_fname = ("", "")
         friend = first(User.objects.filter(last_name = f_lname, first_name = f_fname))
 
         self.project.semester         = semester
