@@ -16,9 +16,10 @@ class SessionResource(NellResource):
 
     def read(self, request, *args, **kws):
         if len(args) == 0:
-            sortField = jsonMap.get(request.GET.get("sortField", "pcode"), "project__pcode")
-            order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
-            query_set = Sesshun.objects
+            requestSort = request.GET.get("sortField", "pcode")
+            sortField   = jsonMap.get(requestSort, "project__pcode")
+            order       = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
+            query_set   = Sesshun.objects
 
             filterEnb = request.GET.get("filterEnb", None)
             if filterEnb is not None:
@@ -74,13 +75,18 @@ class SessionResource(NellResource):
                     Q(session_type__type__icontains=filterText) |
                     Q(observing_type__type__icontains=filterText))
             sessions = query_set.order_by(order + sortField)
-            total  = len(sessions)
-            offset = int(request.GET.get("offset", 0))
-            limit  = int(request.GET.get("limit", 50))
-            sessions = sessions[offset:offset+limit]
+            total    = len(sessions)
+            offset   = int(request.GET.get("offset", 0))
+            limit    = int(request.GET.get("limit", 50))
+            json_sessions = [SessionHttpAdapter(s).jsondict() for s in sessions]
+            if requestSort == "xi_factor":
+                json_sessions = sorted(json_sessions
+                                     , key = lambda session: session['xi_factor']
+                                     , reverse = order == "-")
+            json_sessions = json_sessions[offset:offset+limit]
             return HttpResponse(json.dumps(
                      dict(total = total
-                        , sessions = [SessionHttpAdapter(s).jsondict() for s in sessions]))
+                        , sessions = json_sessions))
                    , content_type = "application/json")
         else:
             s_id  = args[0]
