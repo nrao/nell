@@ -97,6 +97,9 @@ def create_user(username):
               , role       = first(Role.objects.filter(role = "Observer")))
     user.save()
 
+    p = Preference(user = user, timeZone = "UTC")
+    p.save()
+
     return user
 
 def get_requestor(request):
