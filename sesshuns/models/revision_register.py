@@ -18,6 +18,7 @@ from Project_Type           import Project_Type
 from Receiver               import Receiver
 from Receiver_Group         import Receiver_Group
 from Receiver_Schedule      import Receiver_Schedule
+from Receiver_Temperature   import Receiver_Temperature
 from Repeat                 import Repeat
 from Reservation            import Reservation
 from Role                   import Role
@@ -48,6 +49,7 @@ def register_for_revision():
     register_model(Observing_Type)
     register_model(Receiver)
     register_model(Receiver_Schedule)
+    register_model(Receiver_Temperature)
     register_model(Parameter)
     register_model(Status)
     register_model(Sesshun, follow=['target_set','allotment'])

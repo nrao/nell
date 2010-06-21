@@ -206,6 +206,13 @@ class Receiver_ScheduleAdmin(admin.ModelAdmin):
     search_fields = ['receiver__abbreviation','receiver__name']
     date_hierarchy = 'start_date'
 
+class Receiver_TemperatureAdmin(admin.ModelAdmin):
+    def get_receiver_name(self):
+        return self.receiver.name
+    get_receiver_name.short_description = 'Receiver'
+    get_receiver_name.admin_order_field = 'receiver__name'
+    list_display = [get_receiver_name, "frequency", "temperature"]
+
 # Registration of Administrative Interfaces
 
 admin.site.register(Allotment, AllotmentAdmin)
@@ -222,6 +229,7 @@ admin.site.register(Project_Type, Project_TypeAdmin)
 admin.site.register(Receiver, ReceiverAdmin)
 #admin.site.register(Receiver_Group)
 admin.site.register(Receiver_Schedule, Receiver_ScheduleAdmin)
+admin.site.register(Receiver_Temperature, Receiver_TemperatureAdmin)
 admin.site.register(Semester, SemesterAdmin)
 admin.site.register(Sesshun, SesshunAdmin)
 admin.site.register(Session_Type, Session_TypeAdmin)
