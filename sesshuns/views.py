@@ -447,11 +447,12 @@ def scheduling_email(request, *args, **kwds):
         notifier.notify()
 
         # Remember when we did this
-        try:
-            Shelf()["publish_time"] = datetime.utcnow()
-            Shelf().sync()
-        except:
-            formatExceptionInfo()
+        if DATABASE_NAME == 'dss':
+            try:
+                Shelf()["publish_time"] = datetime.utcnow()
+                Shelf().sync()
+            except:
+                formatExceptionInfo()
 
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
