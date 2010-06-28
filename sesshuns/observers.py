@@ -110,6 +110,13 @@ def adjustBlackoutTZ(tz, blackout):
           , 'description' : blackout.description
            }
 
+def checkAuthUser(u):
+    if u.auth_user_id is None:
+        from django.contrib.auth.models import User as AuthUser
+        au = first(AuthUser.objects.filter(username = u.username))
+        u.auth_user = au
+        u.save()
+
 @revision.create_on_success
 @login_required
 @has_user_access
@@ -118,6 +125,7 @@ def profile(request, *args, **kws):
     Shows a user-centric page chock-full of interesting tidbits.
     """
     requestor = get_requestor(request)
+    checkAuthUser(requestor)
     user = first(User.objects.filter(id = args[0])) if args else requestor
     static_info  = user.getStaticContactInfo()
     reservations = NRAOBosDB().getReservationsByUsername(user.username)
