@@ -17,7 +17,7 @@ class User(models.Model):
     last_name   = models.CharField(max_length = 150)
     contact_instructions = models.TextField(null = True, blank = True)
     role                 = models.ForeignKey(Role)
-    auth_user            = models.ForeignKey(AuthUser)
+    auth_user            = models.ForeignKey(AuthUser, null = True)
 
     class Meta:
         db_table  = "users"
