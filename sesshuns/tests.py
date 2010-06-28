@@ -3328,10 +3328,27 @@ class TestNRAOBosDB(NellTestCase):
         """
         self.xml = et.fromstring(self.xmlStr)
 
+        self.xmlStr2 = """
+        <nrao:reservations domestic="true" xmlns:nrao="http://www.nrao.edu/namespaces/nrao">
+            <nrao:reservation id="3407">
+                <nrao:user id="1">Mike McCarty</nrao:user>
+                <nrao:startDate>2010-07-19</nrao:startDate>
+                <nrao:endDate>2010-07-25</nrao:endDate>
+            </nrao:reservation>
+        </nrao:reservations>
+        """
+        self.xml2 = et.fromstring(self.xmlStr)
+
     def test_parseReservationsXML(self):
 
         dates = self.bos.parseReservationsXML(self.xmlStr)
         exp = [(datetime(2009, 8, 25, 0, 0), datetime(2009, 8, 28, 0, 0))]
+        self.assertEqual(dates, exp)
+
+    def test_parseReservationsDateRangeXML(self):
+
+        dates = self.bos.parseReservationsDateRangeXML(self.xmlStr2)
+        exp = [('Mike McCarty', datetime(2010, 7, 19, 0, 0), datetime(2010, 7, 25, 0, 0))]
         self.assertEqual(dates, exp)
 
 class TestScheduleTools(NellTestCase):
