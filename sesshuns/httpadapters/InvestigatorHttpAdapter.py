@@ -39,8 +39,7 @@ class InvestigatorHttpAdapter (object):
         self.investigator.priority               = int(float(fdata.get('priority', 1)))
         self.investigator.save()
 
-        self.investigator.user.sanctioned        = fdata.get('remote', 'false').lower() == 'true'
-        self.investigator.user.save()
-
     def update_from_post(self, fdata):
         self.init_from_post(fdata)
+        self.investigator.user.sanctioned        = fdata.get('remote', 'false').lower() == 'true'
+        self.investigator.user.save()

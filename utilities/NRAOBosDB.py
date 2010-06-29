@@ -20,6 +20,8 @@ class NRAOBosDB:
         self.baseUrlByPerson = \
             'https://bos.nrao.edu/resReports/reservationsByPerson/'
         #    'https://bost#est.cv.nrao.edu/resReports/reservationsByPerson/'
+        self.baseUrl= \
+            'https://bos.nrao.edu/resReports/reservations'
 
     def reservations(self, project, use_cache = True):
         """
@@ -34,6 +36,11 @@ class NRAOBosDB:
             if rs:
                 retval[u] = rs
         return retval
+
+    def reservationsRange(self, start, end):
+        return [{'name'  : u
+               , 'start' : s.strftime("%m/%d/%Y")
+               , 'end'   : e.strftime("%m/%d/%Y")} for u, s, e in self.getReservationsByDateRange(start, end)]
 
     def eventjson(self, project, id, tz = None):
         """
@@ -54,6 +61,24 @@ class NRAOBosDB:
                 id = id + 1
         return jsonobjlist, id
  
+    def getReservationsByDateRange(self, start, end):
+        """
+        Uses BOS query service to return list of reservations for
+        a specified date range, where a reservation is a binary tuple of datetimes
+        representing the check-in and check-out dates.
+        """
+        if start is None or end is None:
+            return []
+
+        url = self.baseUrl + '?sdate=%s&edate=%s' % (start, end)
+        try:
+            fh           = self.opener.open(url)
+            reservations = self.parseReservationsDateRangeXML(fh.read(0x4000))
+        except:
+            reservations = []
+        return reservations
+
+
     def getReservationsByUsername(self, username, use_cache = True):
         """
         Uses BOS query service to return list of reservations for
@@ -79,6 +104,20 @@ class NRAOBosDB:
         else:
             reservations = cache.get(username)
 
+        return reservations
+
+    def parseReservationsDateRangeXML(self, str):
+        "Parses XML returned by reservations query."
+        data = ET.fromstring(str)
+        reservations = []
+        for i in range(len(data)):
+            # TBF: why can't I use self.findTag?
+            res = data[i].getchildren()
+            assert 'startDate' in res[1].tag
+            name  = res[0].text
+            start = self.str2dt(res[1].text)
+            end   = self.str2dt(res[2].text)
+            reservations.append((name, start, end))
         return reservations
 
     def parseReservationsXML(self, str):

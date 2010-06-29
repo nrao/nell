@@ -1,4 +1,5 @@
 from datetime                  import datetime
+from django.contrib.auth.models import User as AuthUser
 from django.core.cache         import cache
 from django.db                 import models
 from nell.utilities            import UserInfo, NRAOBosDB
@@ -16,6 +17,7 @@ class User(models.Model):
     last_name   = models.CharField(max_length = 150)
     contact_instructions = models.TextField(null = True, blank = True)
     role                 = models.ForeignKey(Role)
+    auth_user            = models.ForeignKey(AuthUser, null = True)
 
     class Meta:
         db_table  = "users"

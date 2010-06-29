@@ -10,15 +10,22 @@ class UserHttpAdapter(object):
         self.user = user
 
     def update_from_post(self, fdata):
+        username = fdata.get('username')
+
         role  = first(Role.objects.filter(role = fdata.get('role')))
         self.user.role        = role
-        self.user.username    = fdata.get('username')
-        sanctioned       = fdata.get('sanctioned')
+        self.user.username    = username
+        sanctioned            = fdata.get('sanctioned')
         self.user.sanctioned  = sanctioned.lower() == 'true' if sanctioned is not None else sanctioned
         self.user.first_name  = fdata.get('first_name')
         self.user.last_name   = fdata.get('last_name')
         self.user.contact_instructions   = fdata.get('contact_instructions')
         self.user.save()
+
+        if self.user.auth_user is not None:
+            staff = fdata.get('staff')
+            self.user.auth_user.is_staff = staff.lower() == 'true' if staff is not None else staff
+            self.user.auth_user.save()
 
     def jsondict(self):
         projects = ','.join([i.project.pcode for i in self.user.investigator_set.all()])
@@ -27,6 +34,7 @@ class UserHttpAdapter(object):
               , 'first_name' : self.user.first_name
               , 'last_name'  : self.user.last_name
               , 'sanctioned' : self.user.sanctioned
+              , 'staff'      : self.user.auth_user.is_staff if self.user.auth_user is not None else False
               , 'projects'   : projects
               , 'role'       : self.user.role.role
                 }
