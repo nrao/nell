@@ -95,14 +95,16 @@ def pretty_none(value):
 
 @register.filter
 def project_type(project):
-    # types: 'A', 'M', 'T'
+    # types: 'A', 'M', 'T', 'C'
     if project.project_type.type == 'science':
         type = 'A'
     else:
         if project.is_maintenance():
             type = 'M'
-        elif project.is_calibration():
+        elif project.is_commissioning():
             type = 'C'
+        elif project.is_calibration():
+            type = 'K'
         else:
             type = 'T'
     return type            
