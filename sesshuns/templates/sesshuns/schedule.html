@@ -11,7 +11,8 @@
     .project_type {width:1%; text-align:center}
     .type_test {background-color:#87CEFA} 
     .type_astronomy {background-color:#EEEEEE}
-    .type_calibration {background-color:#F0E68C}
+    .type_commissioning {background-color:#F0E68C}
+    .type_calibration {background-color:#FF9933}
     .type_maintenance {background-color:#98FB98}
     .moc_failure {background-color:#FF0000}
     .info{
@@ -24,7 +25,7 @@
     .info:hover span{ /*the span will display just on :hover state*/
         display:block;
         position:absolute;
-        top:2em; left:2em; width:15em;
+        top:2em; left:2em; width:70em;
         border:1px solid #000000;
         background-color:#ffffe0; color:#000;
         text-align: left}
@@ -117,7 +118,7 @@
     {% for day, ps in calendar %}
     <tr class="day_header"> 
       <th title="Start and End times for the start day (ET). '+' indicates that the period continues on in an undisplayed date.">{{day|date:"D Y-m-d"}}</th>
-      <th title="Project Type: 'A' : Astronomy, 'C' : Calibration, 'M' : 'Maintenance, 'T' : Test">Type</th>
+      <th title="Project Type: 'A' : Astronomy, 'C' : Commissioning, 'K' : Calibration, 'M' : 'Maintenance, 'T' : Test">Type</th>
       <th>Project ID</th>
       <th>Project Title</th>
       <th>PI</th>
@@ -149,13 +150,13 @@
       {% ifequal p.session.project.project_type.type "non-science" %}
         {% if p.session.project.is_maintenance %}
           <td class="project_type type_maintenance" >{{p.session.project|project_type}}</td>
-        {% endif %}
-        {% if p.session.project.is_calibration %}
+        {% else %} {% if p.session.project.is_calibration %}
           <td class="project_type type_calibration" >{{p.session.project|project_type}}</td>
-        {% endif %}
-        {% if not p.session.project.is_maintenance and not p.session.project.is_calibration %}
+        {% else %} {% if p.session.project.is_commissioning %}
+          <td class="project_type type_commissioning" >{{p.session.project|project_type}}</td>
+        {% else %}
           <td class="project_type type_test" >{{p.session.project|project_type}}</td>
-        {% endif %}
+        {% endif %}{% endif %}{% endif %}
       {% else %}
           <td class="project_type type_astronomy">{{p.session.project|project_type}}</td>
       {% endifequal %}
