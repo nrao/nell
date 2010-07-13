@@ -83,10 +83,10 @@
     <th> Days </th>
     <th> Hours </th>
   </tr>
-  {% for project, days, hours in projects %}
+  {% for project, receivers, days, hours in projects %}
   <tr>
     <td>{{project.pcode}}</td>
-    <td>{{project.rcvrs_specified|format_list}}</td>
+    <td>{{receivers|format_list}}</td>
     <td>{{days|format_list}}</td>
     <td>{{hours}}</td>
   </tr>

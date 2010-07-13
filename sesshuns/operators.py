@@ -161,6 +161,7 @@ def summary(request, *args, **kws):
                                   , periods)
         url      = 'sesshuns/schedule_summary.html'
         projects = []
+        receivers = {}
         days     = {}
         hours    = {}
         summary  = {}
@@ -168,6 +169,12 @@ def summary(request, *args, **kws):
         url      = 'sesshuns/project_summary.html'
         projects = list(Set([p.session.project for p in periods]))
         projects.sort(lambda x, y: cmp(x.pcode, y.pcode))
+
+        receivers = {}
+        for p in periods:
+            rxs = receivers.get(p.session.project.pcode, [])
+            rxs.extend(p.session.rcvrs_specified())
+            receivers[p.session.project.pcode] = rxs
 
         schedule = {}
         days     = dict([(p.pcode, []) for p in projects])
@@ -192,6 +199,7 @@ def summary(request, *args, **kws):
                url
              , {'calendar' : sorted(schedule.items())
               , 'projects' : [(p
+                             , sorted(list(Set(receivers[p.pcode])))
                              , sorted(list(Set(days[p.pcode]))
                                     , lambda x, y: cmp(int(x), int(y)))
                              , hours[p.pcode]) for p in projects]
