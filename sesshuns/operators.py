@@ -173,7 +173,7 @@ def summary(request, *args, **kws):
         receivers = {}
         for p in periods:
             rxs = receivers.get(p.session.project.pcode, [])
-            rxs.extend(p.session.rcvrs_specified())
+            rxs.extend([r.abbreviation for r in p.receivers.all()])
             receivers[p.session.project.pcode] = rxs
 
         schedule = {}
