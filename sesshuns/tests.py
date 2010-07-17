@@ -1685,6 +1685,29 @@ class TestBlackout(NellTestCase):
         gdts = self.blackout2.generateDates(calstart, calend)
         self.assertEquals(0, len(gdts))
 
+# Testing Views
+
+class TestViews(NellTestCase):
+
+    def test_configurations_explorer_post(self):
+        data = {'Thesis?': ['false']               , 'Grade(s)': ['false']
+              , 'Name': ['false']                  , 'PSC Time(s)': ['false']
+              , 'Remaining Time': ['false']        , 'name': ['foo']
+              , 'Co-I': ['false']                  , 'Complete?': ['false']
+              , 'PCode': ['false']                 , 'Friend': ['false']
+              , 'Max. Trimester Time(s)': ['false'], 'Trimester': ['false']
+              , 'PI': ['false']                    , 'Type': ['false']
+              , 'Total Time(s)': ['false']         , 'explorer': ['/projects']
+              }
+        c = Client()
+        response = c.post('/configurations/explorer', data)
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_configurations_explorer_get(self):
+        c = Client()
+        response = c.get('/configurations/explorer', {'explorer': '/project'})
+        self.failUnlessEqual(response.status_code, 200)
+
 # Testing View Resources
 
 class TestPeriodResource(NellTestCase):

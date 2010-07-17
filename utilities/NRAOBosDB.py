@@ -71,6 +71,7 @@ class NRAOBosDB:
             return []
 
         url = self.baseUrl + '?sdate=%s&edate=%s' % (start, end)
+        print url
         try:
             fh           = self.opener.open(url)
             reservations = self.parseReservationsDateRangeXML(fh.read(0x4000))
