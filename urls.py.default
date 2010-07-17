@@ -12,6 +12,8 @@ admin.autodiscover()
 # Note a blank comment attached to the url denotes local access only
 
 urlpatterns = patterns(''
+   , url(r'^configurations/explorer$',                     configurations_explorer)
+   , url(r'^configurations/explorer/(\d+)$',               configurations_explorer)
    , url(r'^profile/(\d+)/blackout/(\d+)/$',               blackout)
    , url(r'^profile/(\d+)/blackout/$',                     blackout)
    , url(r'^profile/(\d+)/dynamic_contact$',               dynamic_contact)

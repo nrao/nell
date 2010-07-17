@@ -554,3 +554,41 @@ def reservations(request, *args, **kws):
     return HttpResponse(json.dumps({'reservations' : reservations
                                   , 'total'        : len(reservations)
                                    }))
+
+tab_map = {
+           '/investigators' : 'Investigator'
+         , '/periods'       : 'Period'
+         , '/projects'      : 'Project'
+         , '/sessions'      : 'Session'
+         , '/users'         : 'User'
+         , '/windows'       : 'Window'
+          }
+
+def configurations_explorer(request, *args, **kws):
+    if request.method == 'POST':
+        ec = ExplorerConfiguration(name = request.POST.get('name')
+                                 , tab = tab_map.get(request.POST.get('explorer'), None))
+        ec.save()
+
+        # Get all values that look like they might be true, hidden
+        columns = [k for k, v in request.POST.iteritems() if v in ('true', ['true'] )]
+    
+        # Save the columns that belong to this configuration
+        for name in columns:
+            c = Column(name = name, explorer_configuration = ec)
+            c.save()
+        return HttpResponse(json.dumps({'success':'ok', 'id' : ec.id})
+                          , mimetype = "text/plain")
+    else:
+        try:
+            id, = args
+        except ValueError:
+            # If the id isn't there then get all configurations.
+            tab     = tab_map.get(request.GET.get('explorer'))
+            configs = [(ec.name, ec.id) for ec in ExplorerConfiguration.objects.filter(tab = tab)]
+            return HttpResponse(json.dumps({'configs' : configs})
+                              , mimetype = "text/plain")
+        config = first(ExplorerConfiguration.objects.filter(id = id))
+        if config is not None:
+            return HttpResponse(json.dumps({'columns' : [c.name for c in config.column_set.all()]})
+                                          , mimetype = "text/plain")
