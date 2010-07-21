@@ -187,13 +187,16 @@ def summary(request, *args, **kws):
             # Find the days this period ran within the month.
             day = pstart.day if pstart >= start else pend.day
             days[p.session.project.pcode].append(str(day))
+            if day != pend.day: # For multi-day periods
+                days[p.session.project.pcode].append(str(pend.day))
 
             # Find the duration of this period within the month.
-            duration = (min(pend, end) - max(pstart, start)).seconds / 3600.
-            hours[p.session.project.pcode] += duration
+            duration = min(pend, end) - max(pstart, start)
+            hrs = duration.seconds / 3600. + duration.days * 24.
+            hours[p.session.project.pcode] += hrs
 
             # Tally hours for various categories important to Operations.
-            summary[p.session.project.get_category()] += duration
+            summary[p.session.project.get_category()] += hrs
 
     return render_to_response(
                url
