@@ -5,6 +5,7 @@ from Column                 import Column
 from common                 import *
 from Email                  import Email
 from ExplorerConfiguration  import ExplorerConfiguration
+from Filter                 import Filter
 from Investigator           import Investigator
 from Observing_Parameter    import Observing_Parameter
 from Observing_Type         import Observing_Type

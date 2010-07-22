@@ -564,9 +564,10 @@ tab_map = {
          , '/windows'       : 'Window'
           }
 
-def configurations_explorer(request, *args, **kws):
+def column_configurations_explorer(request, *args, **kws):
     if request.method == 'POST':
         ec = ExplorerConfiguration(name = request.POST.get('name')
+                                 , type = EXPLORER_CONFIG_TYPE_COLUMN
                                  , tab = tab_map.get(request.POST.get('explorer'), None))
         ec.save()
 
@@ -585,10 +586,52 @@ def configurations_explorer(request, *args, **kws):
         except ValueError:
             # If the id isn't there then get all configurations.
             tab     = tab_map.get(request.GET.get('explorer'))
-            configs = [(ec.name, ec.id) for ec in ExplorerConfiguration.objects.filter(tab = tab)]
+            configs = [(ec.name, ec.id) 
+                         for ec in ExplorerConfiguration.objects.filter(tab = tab
+                                                                      , type = EXPLORER_CONFIG_TYPE_COLUMN
+                                                                        )]
             return HttpResponse(json.dumps({'configs' : configs})
                               , mimetype = "text/plain")
-        config = first(ExplorerConfiguration.objects.filter(id = id))
+        config = first(ExplorerConfiguration.objects.filter(id = id
+                                                          , type = EXPLORER_CONFIG_TYPE_COLUMN
+                                                           ))
         if config is not None:
             return HttpResponse(json.dumps({'columns' : [c.name for c in config.column_set.all()]})
+                                          , mimetype = "text/plain")
+
+def filter_combinations_explorer(request, *args, **kws):
+    if request.method == 'POST':
+        ec = ExplorerConfiguration(name = request.POST.get('name')
+                                 , type = EXPLORER_CONFIG_TYPE_FILTER
+                                 , tab = tab_map.get(request.POST.get('explorer'), None))
+        ec.save()
+
+        # Save the filters that belong to this configuration
+        for k, v in request.POST.iteritems():
+            if k not in ('name', 'explorer'):
+                f = Filter(name = k, value = v, explorer_configuration = ec)
+                f.save()
+        return HttpResponse(json.dumps({'success':'ok', 'id' : ec.id})
+                          , mimetype = "text/plain")
+    else:
+        try:
+            id, = args
+        except ValueError:
+            # If the id isn't there then get all configurations.
+            tab     = tab_map.get(request.GET.get('explorer'))
+            configs = [(ec.name, ec.id) 
+                         for ec in ExplorerConfiguration.objects.filter(tab = tab
+                                                                      , type = EXPLORER_CONFIG_TYPE_FILTER
+                                                                        )]
+            return HttpResponse(json.dumps({'configs' : configs})
+                              , mimetype = "text/plain")
+        config = first(ExplorerConfiguration.objects.filter(id = id
+                                                          , type = EXPLORER_CONFIG_TYPE_FILTER
+                                                           ))
+        if config is not None:
+            filters = {}
+            for f in config.filter_set.all():
+                filters.update({f.name : f.value})
+            
+            return HttpResponse(json.dumps({'filters' : filters})
                                           , mimetype = "text/plain")
