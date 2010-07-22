@@ -1689,7 +1689,7 @@ class TestBlackout(NellTestCase):
 
 class TestViews(NellTestCase):
 
-    def test_configurations_explorer_post(self):
+    def test_column_configurations_explorer_post(self):
         data = {'Thesis?': ['false']               , 'Grade(s)': ['false']
               , 'Name': ['false']                  , 'PSC Time(s)': ['false']
               , 'Remaining Time': ['false']        , 'name': ['foo']
@@ -1700,13 +1700,27 @@ class TestViews(NellTestCase):
               , 'Total Time(s)': ['false']         , 'explorer': ['/projects']
               }
         c = Client()
-        response = c.post('/configurations/explorer', data)
+        response = c.post('/configurations/explorer/columnConfigs', data)
         self.failUnlessEqual(response.status_code, 200)
 
-    def test_configurations_explorer_get(self):
+    def test_column_configurations_explorer_get(self):
         c = Client()
-        response = c.get('/configurations/explorer', {'explorer': '/project'})
+        response = c.get('/configurations/explorer/columnConfigs', {'explorer': '/project'})
         self.failUnlessEqual(response.status_code, 200)
+
+    def test_filter_combinations_explorer_post(self):
+        data = {'Trimester': '08C'
+              , 'Project Type': 'science'
+              , 'Complete': 'True'
+              , 'explorer': '/projects'
+              , 'name': 'test'
+              }
+        c = Client()
+        response = c.post('/configurations/explorer/filterCombos', data)
+        self.failUnlessEqual(response.status_code, 200)
+        r = eval(response.content)
+        ec = first(ExplorerConfiguration.objects.filter(id = r['id']))
+        self.assertTrue(ec is not None)
 
 # Testing View Resources
 
