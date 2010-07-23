@@ -579,8 +579,18 @@ def updateExplorerConfig(name, type, tab):
         ec.save()
     return ec
 
+def deleteExplorerConfig(id):
+    ec = first(ExplorerConfiguration.objects.filter(id = id))
+    if ec is not None:
+        ec.delete()
+    return HttpResponse(json.dumps({'success':'ok'})
+                      , mimetype = "text/plain")
+
 def column_configurations_explorer(request, *args, **kws):
     if request.method == 'POST':
+        if request.POST.get("method_") == "DELETE":
+            id, = args
+            return deleteExplorerConfig(id)
         ec = updateExplorerConfig(request.POST.get('name')
                                 , EXPLORER_CONFIG_TYPE_COLUMN
                                 , tab_map.get(request.POST.get('explorer'), None))
@@ -614,6 +624,9 @@ def column_configurations_explorer(request, *args, **kws):
 
 def filter_combinations_explorer(request, *args, **kws):
     if request.method == 'POST':
+        if request.POST.get("method_") == "DELETE":
+            id, = args
+            return deleteExplorerConfig(id)
         ec = updateExplorerConfig(name = request.POST.get('name')
                                 , type = EXPLORER_CONFIG_TYPE_FILTER
                                 , tab = tab_map.get(request.POST.get('explorer'), None))
