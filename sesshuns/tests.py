@@ -1722,6 +1722,16 @@ class TestViews(NellTestCase):
         ec = first(ExplorerConfiguration.objects.filter(id = r['id']))
         self.assertTrue(ec is not None)
 
+    def test_reservations(self):
+        c = Client()
+        data = {'start' : '6/1/2010'
+              , 'days'  : '61'
+               }
+        response = c.get('/reservations', data)
+        self.failUnlessEqual(response.status_code, 200)
+        r = eval(response.content)
+        self.assertTrue(len(r.get('reservations')) == 0)
+
 # Testing View Resources
 
 class TestPeriodResource(NellTestCase):
