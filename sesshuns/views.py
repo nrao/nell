@@ -4,6 +4,7 @@ from django.http                        import HttpResponse
 from django.contrib.auth.models         import User as AuthUser
 from httpadapters                       import PeriodHttpAdapter
 from models                             import *
+from models                             import User as NellUser
 from nell.tools                         import IcalMap, ScheduleTools, TimeAccounting
 from nell.utilities                     import TimeAgent, Shelf
 from nell.utilities.SchedulingNotifier  import SchedulingNotifier
@@ -550,7 +551,7 @@ def hasIncompleteProject(reservation):
     u = first(User.objects.filter(pst_id = reservation['id']))
     if u is None:
         return False
-    return False in [p.complete for p in u.project_set.all()]
+    return any([i.project.complete for i in u.investigator_set.all()])
 
 def reservations(request, *args, **kws):
     start        = request.GET.get('start')
