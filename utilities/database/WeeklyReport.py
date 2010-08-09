@@ -7,12 +7,34 @@ from nell.tools      import TimeAccounting
 from sesshuns.models import *
 from sets            import Set
 
+import calendar
+
 def print_values(file, values):
     if values == []:
         file.write("\tNone\n")
     else:
         for v in values:
             file.write("\t%s\n" % v)
+
+def get_observed_time(month, periods, condition):
+    duration = 0
+    for i in [p for p in periods if eval(condition)]:
+        pstart = TimeAgent.utc2est(i.start)
+        pend   = TimeAgent.utc2est(i.end())
+
+        # Limit ourselves to time actually in the desired month.
+        start = pstart
+        if pstart.month != month:
+            start = datetime(pstart.year, month, 1)
+
+        end = pend
+        if pend.month != month:
+            _, day = calendar.monthrange(pend.year, month)
+            end = datetime(pend.year, month, day, 23, 59, 59)
+
+        duration += (end - start).seconds / 3600.
+
+    return duration
 
 def GenerateReport(start):
     outfile    = open("./DssWeeklyReport.txt", 'w')
@@ -82,7 +104,6 @@ def GenerateReport(start):
                       if p.start.month == start.month and \
                          p.start.year  == start.year]
 
-
     outfile.write("\nScheduled Hours [backup]\n")
     outfile.write("========================\n")
     outfile.write("Category/Month -> %s %s\n" % \
@@ -90,32 +111,56 @@ def GenerateReport(start):
                  , start.strftime("%B").center(8)))
     outfile.write("     Astronomy ~  %s %s\n" % \
                   (("%.1f" % \
-                   sum([p.accounting.scheduled for p in last_periods \
-                   if p.session.project.project_type.type == "science"])).center(8)
+                    get_observed_time(
+                        last_month.month
+                      , last_periods
+                      , 'p.session.project.project_type.type == "science"')
+                   ).center(8)
                  , ("%.1f" % \
-                   sum([p.accounting.scheduled for p in this_periods \
-                   if p.session.project.project_type.type == "science"])).center(8)))
+                     get_observed_time(
+                        start.month
+                      , this_periods
+                      , 'p.session.project.project_type.type == "science"')
+                   ).center(8)))
     outfile.write("   Maintenance ~  %s %s\n" % \
                   (("%.1f" % \
-                   sum([p.accounting.scheduled for p in last_periods \
-                   if p.session.project.pcode == "Maintenance"])).center(8)
+                    get_observed_time(
+                        last_month.month
+                      , last_periods
+                      , 'p.session.project.pcode == "Maintenance"')
+                   ).center(8)
                 ,  ("%.1f" % \
-                   sum([p.accounting.scheduled for p in this_periods \
-                   if p.session.project.pcode == "Maintenance"])).center(8)))
+                    get_observed_time(
+                        start.month
+                      , this_periods
+                      , 'p.session.project.pcode == "Maintenance"')
+                   ).center(8)))
     outfile.write("   Test & Comm ~  %s %s\n" % \
                   (("%.1f" % \
-                   sum([p.accounting.scheduled for p in last_periods \
-                        if p.session.project.pcode[0] == "T"])).center(8)
+                    get_observed_time(
+                        last_month.month
+                      , last_periods
+                      , 'p.session.project.pcode[0] == "T"')
+                   ).center(8)
                  , ("%.1f" % \
-                   sum([p.accounting.scheduled for p in this_periods \
-                        if p.session.project.pcode[0] == "T"])).center(8)))
+                    get_observed_time(
+                        start.month
+                      , this_periods
+                      , 'p.session.project.pcode[0] == "T"')
+                   ).center(8)))
     outfile.write("      Shutdown ~  %s %s\n" % \
                   (("%.1f" % \
-                   sum([p.accounting.scheduled for p in last_periods \
-                        if p.session.project.pcode == "Shutdown"])).center(8)
+                    get_observed_time(
+                        last_month.month
+                      , last_periods
+                      , 'p.session.project.pcode == "Shutdown"')
+                   ).center(8)
                  , ("%.1f" % \
-                   sum([p.accounting.scheduled for p in this_periods \
-                        if p.session.project.pcode == "Shutdown"])).center(8)))
+                    get_observed_time(
+                        start.month
+                      , this_periods
+                      , 'p.session.project.pcode == "Shutdown"')
+                   ).center(8)))
 
     ta         = TimeAccounting()
     pSemesters = Semester.getPreviousSemesters(start)
