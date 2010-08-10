@@ -11,7 +11,8 @@ import MySQLdb as mysql
 from httpadapters                 import *
 from models                       import *
 from nell.test_utils.NellTestCase import NellTestCase
-from nell.tools                   import DBReporter, ScheduleTools, TimeAccounting
+from nell.tools                   import DBReporter, ScheduleTools
+from nell.tools                   import IcalAntioch, TimeAccounting
 from nell.utilities.database      import DSSPrime2DSS
 from nell.utilities.receiver      import ReceiverCompile
 from nell.utilities               import UserInfo, NRAOBosDB, UpdateEphemeris
@@ -4085,3 +4086,22 @@ class TestTimeAccounting(NellTestCase):
         # just make sure it doesn't blow up
         self.ta.quietReport = True
         self.ta.report(self.project)
+
+class TestIcalAntioch(NellTestCase):
+        
+    def testWriteSchedule(self):
+
+        #ic = IcalAntioch.IcalAntioch(None, None)
+        ic = IcalAntioch(None, None)
+
+        pStr = "Period: 18 (0)  at 2006-02-01 00:00:00 for 420 (420) with score of 3.669943 from 2006-02-01 00:00:00 Scheduled  band: X  RA: 4.674547 grade: 4.0"
+
+        dct = ic.parsePeriod(pStr)
+
+        self.assertEquals('18', dct["sName"])
+        self.assertEquals('X',  dct["band"])
+
+        dct['id'] = 34
+        event = ic.createEvent(dct)
+
+        self.assertTrue(event is not None)
