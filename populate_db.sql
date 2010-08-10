@@ -153,7 +153,7 @@ INSERT INTO parameters VALUES (DEFAULT, 'Transit Before', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Transit After', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'El Limit', 'float');
 
-INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Telescope motion required', 'M', '');
+INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Telescope motion required', 'M', 'N');
 INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'No telescope required ', 'N', 'MNBASDZE');
 INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Tipping structure in Bird Bath positon ', 'B', 'NBZ');
 INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Tipping structure in Access positon', 'A', 'NAZ');
