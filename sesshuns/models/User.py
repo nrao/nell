@@ -85,7 +85,7 @@ class User(models.Model):
     def getFriends(self):
         "Returns a list of all the friends that are assisting this user."
         projects = [i.project for i in self.investigator_set.all()]
-        return list(Set([p.friend.last_name for p in projects]))
+        return list(Set([p.friend.last_name if p.friend else "" for p in projects]))
 
     def getProjects(self):
         """
