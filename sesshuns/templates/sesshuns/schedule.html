@@ -117,7 +117,10 @@
   </em>
   </strong>
   </center>
+
+  {# The Calendar Table #}
   <table>
+    {# Loop through for each day in the calendar. #}
     {% for day, ps in calendar %}
     <tr class="day_header"> 
       <th title="Start and End times for the start day (ET). '+' indicates that the period continues on in an undisplayed date.">{{day|date:"D Y-m-d"}}</th>
@@ -129,18 +132,29 @@
       <th>Friend</th>
       <th title="Receivers (Names and frequency ranges in GHz) = (RRI) Rcvr_RRI:  0.10 -  1.60, (342) Rcvr_342:  0.29 -  0.40, (450) Rcvr_450:  0.39 -  0.52, (600) Rcvr_600:  0.51 -  0.69, (800) Rcvr_800:  0.68 -  0.92, (1070) Rcvr_1070:  0.91 -  1.23, (L) Rcvr1_2:  1.15 -  1.73, (S) Rcvr2_3:  1.73 -  2.60, (C) Rcvr4_6:  3.95 -  6.10, (X) Rcvr8_10:  8.00 - 10.00, (Hol) Holography: 11.70 - 12.20, (Ku) Rcvr12_18: 12.00 - 15.40, (KFPA) RcvrArray18_26: 17.00 - 27.50, (K) Rcvr18_26: 18.00 - 26.50, (Ka) Rcvr26_40: 26.00 - 39.50, (Q) Rcvr40_52: 38.20 - 49.80, (MBA) Rcvr_PAR: 80.00 - 100.00">Rcvrs</th>
     </tr>
+
+    {# this for-block loops for each period in the day. #}
     {% for start, end,start_cutoff, end_cutoff, p in ps %}
+
+      {# Notify operator of minimum observing condition (MOC) failure #}
       {% if requestor.isOperator and p|moc_reschedule %}
         <script type="text/javascript">
           window.open("/period/{{p.id}}/moc_reschedule", "MOC Failure", "width=1000,height=300");
         </script>
       {% endif %}
+
+      {# Notify operator of MOC degradation #}
       {% if requestor.isOperator and p|moc_degraded %}
         <script type="text/javascript">
           window.open("/period/{{p.id}}/moc_degraded", "MOC Degraded", "width=1000,height=300");
         </script>
       {% endif %}
+
+      {# New table row for the period #}
       <tr class="{{p|moc_class}}">
+
+      {# The Date/Time column #}
+      {# start/end cutoff indicates that the period's start/end occurs before/after day. #}
       {% if start_cutoff or end_cutoff %}
         {%if start_cutoff %}
           <td>+{{start|date:"H:i"}} - {{end|date:"H:i"}}</td>
@@ -150,6 +164,10 @@
       {% else %}    
           <td>{{start|date:"H:i"}} - {{end|date:"H:i"}}</td>
       {% endif %}    
+
+      {# The 'Type' column                                            #}
+      {# Looking at the period type to set the data row class.        #}
+      {# This is what sets the 'Type' background color in the display #}
       {% ifequal p.session.project.project_type.type "non-science" %}
         {% if p.session.project.is_maintenance %}
           <td class="project_type type_maintenance" >{{p.session.project|project_type}}</td>
@@ -163,36 +181,47 @@
       {% else %}
           <td class="project_type type_astronomy">{{p.session.project|project_type}}</td>
       {% endifequal %}
+
+      {# The 'project ID' column. #}
       <td>
-      {% if not p.moc_met and not p.moc_ack %}
+      {% if not p.moc_met and not p.moc_ack %} {# blink if MOC event not acknowledged. #}
         <blink>
       {% endif %}
+
         <a href="/project/{{p.session.project.pcode}}">{{p.session.project.pcode}}</a>
-        {% if p.session.project.notes %}
+        {% if p.session.project.notes %} {# append the '(N)' link for project notes. #}
           <a href="" class="info">(N)<span><p>Project Notes:</p>{{p.session.project.notes|escape|linebreaks}}</span></a>
         {% endif %}
+
       {% if not p.moc_met and p.moc_ack %}
         </blink>
       {% endif %}
+
       </td>
+
+      {# data for 'Project Title' column #}
       {% ifequal p.session.project.project_type.type "science" %}
         <td>
+          {# output the project title as an anchor link to the proposal's page on the rescal #}
           <a href="#" onClick="window.open('http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}', 'Proposal Cover Page', 'width=1000, height=700, scrollbars=yes');return true;">{{p.session.project.name}}</a>
+
           {% if not p.moc_met and p.moc_ack %}
             <img src="/static/images/checked.png" />
           {% endif %}
+
           {% if p|has_lost_time %}
             <br/>
             (Lost Time: {{p|get_lost_time}})
           {% endif %}
         </td>
-      {% else %}
+      {% else %} {# something other than 'science' #}
         {% if p.session.project.is_maintenance %}
           <td>
             <a href="http://gbrescal.gb.nrao.edu/webcal/webcal.dbw?view=day&date={{p.start|date:"Y-m-d"}}">{{p.session.name}}</a>
+            {# adds a little message about scheduled receiver change: 'Add: <rx>, Remove: <rx> #}
             {{rschedule|get_receiver_change:day}}
           </td>
-        {% else %}
+        {% else %} {# non-science and non-maintenance #}
           <td>
             {{p.session.name}}
             {% if not p.moc_met and p.moc_ack %}
@@ -203,13 +232,17 @@
               (Lost Time: {{p|get_lost_time}})
             {% endif %}
           </td>
-        {% endif %}
-      {% endifequal %}
+        {% endif %}    {# end of maintenance/other case #}
+      {% endifequal %} {# end of test for science case  #}
+
+      {# 'PI' (principal investigator) column. #}
       <td>
         <a href="/profile/{{p.session.project.principal_investigator.id}}">
           {{p.session.project.principal_investigator.last_name|pretty_none}}
         </a>
       </td>
+
+      {# 'data for 'Observers' column.  May be more than one observer. #}
       <td>
         {% for o in p.session.project.get_sanctioned_observers %}
           <span title="Phones: {{o.user.getStaticContactInfo.phones|format_list}}, Dynamic: {{o.user.contact_instructions}}, Reservations: {{o.user.getReservations|format_reservations}}">
@@ -217,6 +250,8 @@
           </span>
         {% endfor %}
       </td>
+
+      {# data for 'Friend' column. #}
       <td>
         {% if p.session.project.friend %}
         <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar', 'Support Staff Absences & Contact Info', 'width=1000, height=700, scrollbars=yes');return true;">
@@ -226,16 +261,59 @@
           {{p.session.project.friend.last_name|pretty_none}}
         {% endif %}
       </td>
+
+      {# data for 'Rcvrs' column. #}
       <td>
+        {# If the period is a science period, gets the period's receiver list   #}
+        {# and outputs them.  If it is a maintenance day, looks at the receiver #}
+        {# schedule and outputs all the receiver for that day.                  #}
         {% if p.session.project.is_maintenance %}
           {{rschedule|get_receivers:day}}
         {% else %}
           {{p.receiver_list}}
         {% endif %}
       </td>
-    </tr>
-    {% endfor %}
-    {% endfor %}
+    </tr>       {# end of one table row #}
+
+    {# If we just output a maintenance project, now output all the maintenance #}
+    {# activities in their own table. #}
+    {% if p.session.project.is_maintenance %}
+        <tr>
+          <td></td>
+          <td></td>
+          <td colspan=7>
+            <table border=1 frame=void rules=all cellpadding=3>
+                <tr class="project_type type_maintenance" align=left><th>Time</th>
+              <th><a href="/resourcecal_add_activity/{{p.id}}">Activity</a></th></tr>
+            {% for mag in p.maintenance_activity_group_set.all %}
+              {% for ma in mag.get_time_sorted_set %} 
+                {% if ma.approved %}
+            <tr><td>{{ma.time_range}}</td>
+              <td><a href="/resourcecal_display_activity/{{ma.id}}">
+                  {% filter flag_rc_conflicts:ma %}
+                  {{ma.summary}}
+                  {% endfilter %}
+                </a>&nbsp;&nbsp;<a href="" class="info">Notes<span>
+                  <p>Description:</p>{{ma.description|escape|linebreaks}}</span></a>
+                {% else %}
+                <tr><td><i>{{ma.time_range}}</i></td>
+                  <td><a href="/resourcecal_display_activity/{{ma.id}}"><i>
+                        {% filter flag_rc_conflicts:ma %}
+                        {{ma.summary}}
+                        {% endfilter %}
+                      </i>
+                    </a>&nbsp;&nbsp;<a href="" class="info"><i>Notes</i><span>
+                      <p>Description:</p>{{ma.description|escape|linebreaks}}</span></a>
+                {% endif %}  {# approved #}
+              {% endfor %} {# each maintenance activity #}
+            {% endfor %} {# each maintenance group (usually only one) #}
+            </table>
+          </td>
+        </tr>
+    {% endif %}  
+
+    {% endfor %}{# for p in ps; for each period in the day #}
+    {% endfor %}{# for each day #}
   </table>
 </body>  
 
