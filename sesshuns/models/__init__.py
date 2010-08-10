@@ -19,6 +19,7 @@ from Project_Type                    import Project_Type
 from Receiver                        import Receiver
 from Receiver_Group                  import Receiver_Group
 from Receiver_Schedule               import Receiver_Schedule
+from Receiver_Temperature            import Receiver_Temperature
 from Repeat                          import Repeat
 from Reservation                     import Reservation
 from Role                            import Role
