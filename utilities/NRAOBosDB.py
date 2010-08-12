@@ -38,9 +38,10 @@ class NRAOBosDB:
         return retval
 
     def reservationsRange(self, start, end):
-        return [{'name'  : u
+        return [{'id'    : id
+               , 'name'  : u
                , 'start' : s.strftime("%m/%d/%Y")
-               , 'end'   : e.strftime("%m/%d/%Y")} for u, s, e in self.getReservationsByDateRange(start, end)]
+               , 'end'   : e.strftime("%m/%d/%Y")} for id, u, s, e in self.getReservationsByDateRange(start, end)]
 
     def eventjson(self, project, id, tz = None):
         """
@@ -114,10 +115,11 @@ class NRAOBosDB:
             # TBF: why can't I use self.findTag?
             res = data[i].getchildren()
             assert 'startDate' in res[1].tag
+            user_id = res[0].attrib.get('id')
             name  = res[0].text
             start = self.str2dt(res[1].text)
             end   = self.str2dt(res[2].text)
-            reservations.append((name, start, end))
+            reservations.append((user_id, name, start, end))
         return reservations
 
     def parseReservationsXML(self, str):

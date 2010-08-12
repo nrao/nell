@@ -163,3 +163,6 @@ jsonMap = {"authorized"     : "status__authorized"
          , "total_time"     : "allotment__total_time"
          , "type"           : "session_type__type"
                }
+
+EXPLORER_CONFIG_TYPE_COLUMN = 0
+EXPLORER_CONFIG_TYPE_FILTER = 1

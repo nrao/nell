@@ -4,6 +4,7 @@ from django.http                        import HttpResponse
 from django.contrib.auth.models         import User as AuthUser
 from httpadapters                       import PeriodHttpAdapter
 from models                             import *
+from models                             import User as NellUser
 from nell.tools                         import IcalMap, ScheduleTools, TimeAccounting
 from nell.utilities                     import TimeAgent, Shelf
 from nell.utilities.SchedulingNotifier  import SchedulingNotifier
@@ -546,11 +547,123 @@ def toggle_moc(request, *args, **kwds):
     return HttpResponse(json.dumps({'success':'ok'})
                       , mimetype = "text/plain")
 
+def hasIncompleteProject(reservation):
+    u = first(User.objects.filter(pst_id = reservation['id']))
+    if u is None:
+        return False
+    return any([i.project.complete for i in u.investigator_set.all()])
+
 def reservations(request, *args, **kws):
-    start = request.GET.get('start')
-    days     = int(request.GET.get('days'))
-    end    = (datetime.strptime(start, "%m/%d/%Y") + timedelta(days = days)).strftime("%m/%d/%Y")
-    reservations = NRAOBosDB().reservationsRange(start, end)
+    start        = request.GET.get('start')
+    days         = int(request.GET.get('days'))
+    end          = (datetime.strptime(start, "%m/%d/%Y") + timedelta(days = days)).strftime("%m/%d/%Y")
+    reservations = [r for r in NRAOBosDB().reservationsRange(start, end) if hasIncompleteProject(r)]
+
     return HttpResponse(json.dumps({'reservations' : reservations
                                   , 'total'        : len(reservations)
                                    }))
+
+tab_map = {
+           '/investigators' : 'Investigator'
+         , '/periods'       : 'Period'
+         , '/projects'      : 'Project'
+         , '/sessions'      : 'Session'
+         , '/users'         : 'User'
+         , '/windows'       : 'Window'
+          }
+
+def updateExplorerConfig(name, type, tab):
+    ec = first(ExplorerConfiguration.objects.filter(name = name, type = type, tab  = tab))
+    if ec is not None:
+        # Clear out old values if we're updated an existing config
+        for c in ec.column_set.all():
+            c.delete()
+        for f in ec.filter_set.all():
+            f.delete()
+    else:
+        ec = ExplorerConfiguration(name = name
+                                 , type = type
+                                 , tab  = tab)
+        ec.save()
+    return ec
+
+def deleteExplorerConfig(id):
+    ec = first(ExplorerConfiguration.objects.filter(id = id))
+    if ec is not None:
+        ec.delete()
+    return HttpResponse(json.dumps({'success':'ok'})
+                      , mimetype = "text/plain")
+
+def column_configurations_explorer(request, *args, **kws):
+    if request.method == 'POST':
+        if request.POST.get("method_") == "DELETE":
+            id, = args
+            return deleteExplorerConfig(id)
+        ec = updateExplorerConfig(request.POST.get('name')
+                                , EXPLORER_CONFIG_TYPE_COLUMN
+                                , tab_map.get(request.POST.get('explorer'), None))
+
+        # Get all values that look like they might be true, hidden
+        columns = [k for k, v in request.POST.iteritems() if v in ('true', ['true'] )]
+    
+        # Save the columns that belong to this configuration
+        for name in columns:
+            c = Column(name = name, explorer_configuration = ec)
+            c.save()
+        return HttpResponse(json.dumps({'success':'ok', 'id' : ec.id})
+                          , mimetype = "text/plain")
+    else:
+        try:
+            id, = args
+        except ValueError:
+            # If the id isn't there then get all configurations.
+            tab     = tab_map.get(request.GET.get('explorer'))
+            configs = [(ec.name, ec.id) 
+                 for ec in ExplorerConfiguration.objects.filter(tab = tab, type = EXPLORER_CONFIG_TYPE_COLUMN)]
+    
+            return HttpResponse(json.dumps({'configs' : configs})
+                              , mimetype = "text/plain")
+        config = first(ExplorerConfiguration.objects.filter(id = id
+                                                          , type = EXPLORER_CONFIG_TYPE_COLUMN
+                                                           ))
+        if config is not None:
+            return HttpResponse(json.dumps({'columns' : [c.name for c in config.column_set.all()]})
+                                          , mimetype = "text/plain")
+
+def filter_combinations_explorer(request, *args, **kws):
+    if request.method == 'POST':
+        if request.POST.get("method_") == "DELETE":
+            id, = args
+            return deleteExplorerConfig(id)
+        ec = updateExplorerConfig(name = request.POST.get('name')
+                                , type = EXPLORER_CONFIG_TYPE_FILTER
+                                , tab = tab_map.get(request.POST.get('explorer'), None))
+
+        # Save the filters that belong to this configuration
+        for k, v in request.POST.iteritems():
+            if k not in ('name', 'explorer'):
+                f = Filter(name = k, value = v, explorer_configuration = ec)
+                f.save()
+        return HttpResponse(json.dumps({'success':'ok', 'id' : ec.id})
+                          , mimetype = "text/plain")
+    else:
+        try:
+            id, = args
+        except ValueError:
+            # If the id isn't there then get all configurations.
+            tab     = tab_map.get(request.GET.get('explorer'))
+            configs = [(ec.name, ec.id) 
+                 for ec in ExplorerConfiguration.objects.filter(tab = tab, type = EXPLORER_CONFIG_TYPE_FILTER)]
+
+            return HttpResponse(json.dumps({'configs' : configs})
+                              , mimetype = "text/plain")
+        config = first(ExplorerConfiguration.objects.filter(id = id
+                                                          , type = EXPLORER_CONFIG_TYPE_FILTER
+                                                           ))
+        if config is not None:
+            filters = {}
+            for f in config.filter_set.all():
+                filters.update({f.name : f.value})
+            
+            return HttpResponse(json.dumps({'filters' : filters})
+                                          , mimetype = "text/plain")
