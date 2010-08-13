@@ -3,6 +3,7 @@ from django.http              import HttpResponse, HttpResponseRedirect
 from django_restapi.resource  import Resource
 from sesshuns.models       import User, first
 from sesshuns.httpadapters import UserHttpAdapter
+from NellResource import NellResource
 
 import simplejson as json
 
@@ -14,15 +15,13 @@ class MethodException(Exception):
     def __str__(self):
         return "Method '%s' is invalid for UserResource." % self.method
 
-class UserResource(Resource):
+class UserResource(NellResource):
+
+    def __init__(self, *args, **kws):
+        super(UserResource, self).__init__(User, UserHttpAdapter, *args, **kws)
 
     def create(self, request, *args, **kws):
-        method = request.POST.get("_method", None)
-        if method == "put":
-            return self.update(request, *args, **kws)
-        else:
-            raise MethodException(method)
-
+        return super(UserResource, self).create(request, *args, **kws)
     
     def read(self, request, *args, **kws):
         if len(args) == 0:
