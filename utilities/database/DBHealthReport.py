@@ -419,6 +419,7 @@ def GenerateReport():
     sessions = sorted(Sesshun.objects.all(), lambda x, y: cmp(x.name, y.name))
     periods  = Period.objects.order_by("start")
     rcvrs    = Receiver.objects.order_by("freq_low")
+    deleted  = Period_State.get_state('D')
 
     outfile.write("Projects without sessions:")
     values = [p.pcode for p in projects if p.sesshun_set.all() == []]
@@ -518,7 +519,8 @@ def GenerateReport():
     start = datetime(2009, 10, 10) # don't bother looking before this
     end = datetime.utcnow() - timedelta(days=1) # leave a day buffer
     obs_ps = [p for p in periods if p.start > start and p.start < end \
-        and p.session.name not in ['Shutdown', 'Maintenance']]
+        and p.session.name not in ['Shutdown', 'Maintenance'] \
+        and p.state != deleted]
     bad_ps = [p for p in obs_ps if not p.has_observed_rcvrs_in_schedule()]
     values = ["%s, %s" % (p.__str__(), p.receiver_list()) for p in bad_ps]
     print_values(outfile, values)
