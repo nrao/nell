@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.http                    import HttpResponse, HttpResponseRedirect
 from django.shortcuts               import render_to_response
 from models                         import *
-from nell.utilities                 import gen_gbt_schedule, Shelf
+from nell.utilities                 import gen_gbt_schedule
 from nell.utilities.TimeAgent       import EST, UTC
 from observers                      import project_search
 from sets                           import Set
@@ -69,7 +69,8 @@ def gbt_schedule(request, *args, **kws):
     schedule = gen_gbt_schedule(start, end, days, 'ET', periods)
 
     try:
-        tzutc = Shelf()["publish_time"].replace(tzinfo=UTC)
+        s_n = Schedule_Notification.objects.all()
+        tzutc = s_n[len(s_n)-1].date.replace(tzinfo=UTC)
         pubdate = tzutc.astimezone(EST)
     except:
         pubdate = None

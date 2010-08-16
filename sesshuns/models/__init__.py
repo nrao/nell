@@ -23,6 +23,7 @@ from Receiver_Temperature   import Receiver_Temperature
 from Repeat                 import Repeat
 from Reservation            import Reservation
 from Role                   import Role
+from Schedule_Notification  import Schedule_Notification
 from Semester               import Semester
 from Sesshun                import Sesshun
 from Target                 import Target
