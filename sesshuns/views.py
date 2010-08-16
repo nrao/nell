@@ -5,7 +5,7 @@ from django.contrib.auth.models         import User as AuthUser
 from httpadapters                       import PeriodHttpAdapter
 from models                             import *
 from nell.tools                         import IcalMap, ScheduleTools, TimeAccounting
-from nell.utilities                     import TimeAgent, Shelf
+from nell.utilities                     import TimeAgent
 from nell.utilities.SchedulingNotifier  import SchedulingNotifier
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException, JSONExceptionInfo
 from nell.utilities.Notifier            import Notifier
@@ -460,13 +460,9 @@ def scheduling_email(request, *args, **kwds):
 
         notifier.notify()
 
-        # Remember when we did this
-        if DATABASE_NAME == 'dss':
-            try:
-                Shelf()["publish_time"] = datetime.utcnow()
-                Shelf().sync()
-            except:
-                formatExceptionInfo()
+        # Remember when we did this to allow time-tagging of the schedule
+        sn = Schedule_Notification(date = datetime.utcnow())
+        sn.save()
 
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")

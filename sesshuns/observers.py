@@ -10,7 +10,6 @@ from sets                           import Set
 from nell.tools                     import IcalMap
 from nell.utilities.TimeAgent       import EST, UTC, adjustDateTimeTz
 from nell.utilities                 import gen_gbt_schedule, NRAOBosDB
-from nell.utilities                 import Shelf
 from reversion                      import revision
 from utilities                      import *
 from forms                          import BlackoutForm, PreferencesForm
@@ -47,7 +46,8 @@ def public_schedule(request, *args, **kws):
     calendar = gen_gbt_schedule(start, end, days, timezone, periods)
 
     try:
-        tzutc = Shelf()["publish_time"].replace(tzinfo = UTC)
+        s_n = Schedule_Notification.objects.all()
+        tzutc = s_n[len(s_n)-1].date.replace(tzinfo=UTC)
         tz = EST if timezone == 'ET' else UTC
         pubdate = tzutc.astimezone(tz)
     except:
