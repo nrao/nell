@@ -547,7 +547,7 @@ def hasIncompleteProject(reservation):
     u = first(User.objects.filter(pst_id = reservation['id']))
     if u is None:
         return False
-    return any([i.project.complete for i in u.investigator_set.all()])
+    return any([not i.project.complete for i in u.investigator_set.all()])
 
 def reservations(request, *args, **kws):
     start        = request.GET.get('start')
