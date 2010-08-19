@@ -128,9 +128,9 @@ def delete_rcvr_schedule_date(request, *args, **kws):
         return HttpResponse(json.dumps({'error': error, 'message': msg})
                            , mimetype = "text/plain")
 
-def isFriend(username):
-    au = first(AuthUser.objects.filter(username = username))
-    return (au.is_staff if au is not None else False) and username != "dss"
+def isFriend(user):
+    au = user.auth_user
+    return (au.is_staff if au is not None else False) and user.username != "dss"
 
 @revision.create_on_success
 @catch_json_parse_errors
@@ -153,7 +153,7 @@ def get_options(request, *args, **kws):
 
     elif mode == "friends":
         users = [u for u in User.objects.all().order_by('last_name') 
-                   if isFriend(u.username)]
+                   if isFriend(u)]
         return HttpResponse(
             json.dumps({'friends': ["%s, %s" % (u.last_name, u.first_name) \
                                   for u in users]

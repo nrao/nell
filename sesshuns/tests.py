@@ -2006,6 +2006,25 @@ class TestUserResources(NellTestCase):
                      ))
         self.users[-1].save()
 
+    def test_create(self):
+        fdata = self.fdata
+        fdata.update({"username"   : "foo2"
+                    , "original_id" : "99"
+                    , "sanctioned" : "True"
+                    , "first_name" : "Foogle"
+                    , "last_name"  : "Bar"
+                    , "contact_instructions" : "Best to call my mom's house.  Ask for Pooh Bear."
+                    , "role": "Observer"
+                     })
+        response = self.client.post('/users', fdata)
+        self.failUnlessEqual(response.status_code, 200)
+
+        u = first(User.objects.filter(original_id = fdata['original_id']))
+        self.assertTrue(u is not None)
+
+        response = self.client.post('/users', {})
+        self.failUnlessEqual(response.status_code, 200)
+
     def test_read(self):
         response = self.client.get('/users')
         self.failUnlessEqual(response.status_code, 200)
@@ -2019,6 +2038,8 @@ class TestUserResources(NellTestCase):
     def test_update(self):
         fdata = self.fdata
         fdata.update({"_method" : "put"
+                    , "pst_id"  : "1"
+                    , "original_id"  : "12"
                     , "username" : "foo"
                     , "sanctioned" : "True"
                     , "first_name" : "Foo"
@@ -3396,7 +3417,7 @@ class TestNRAOBosDB(NellTestCase):
     def test_parseReservationsDateRangeXML(self):
 
         dates = self.bos.parseReservationsDateRangeXML(self.xmlStr2)
-        exp = [('Mike McCarty', datetime(2010, 7, 19, 0, 0), datetime(2010, 7, 25, 0, 0))]
+        exp = [('1', 'Mike McCarty', datetime(2010, 7, 19, 0, 0), datetime(2010, 7, 25, 0, 0))]
         self.assertEqual(dates, exp)
 
 class TestScheduleTools(NellTestCase):
