@@ -38,6 +38,8 @@ def check_maintenance_and_rcvrs():
         periods = Period.objects.filter(
                                    start__gt = start
                                  , start__lt = start + timedelta(days = 1)
+                                 ).exclude(
+                                   state__name = 'Deleted'
                                  )
         # of these, is any one of them a maintenance?
         if len([p for p in periods if p.session.project.is_maintenance()]) == 0:
@@ -417,7 +419,7 @@ def GenerateReport():
 
     projects = sorted(Project.objects.all(), lambda x, y: cmp(x.pcode, y.pcode))
     sessions = sorted(Sesshun.objects.all(), lambda x, y: cmp(x.name, y.name))
-    periods  = Period.objects.order_by("start")
+    periods  = Period.objects.exclude(state__name = 'Deleted').order_by('start')
     rcvrs    = Receiver.objects.order_by("freq_low")
     deleted  = Period_State.get_state('D')
 

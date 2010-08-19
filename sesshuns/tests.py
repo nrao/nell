@@ -1686,6 +1686,53 @@ class TestBlackout(NellTestCase):
         gdts = self.blackout2.generateDates(calstart, calend)
         self.assertEquals(0, len(gdts))
 
+# Testing Views
+
+class TestViews(NellTestCase):
+
+    def test_column_configurations_explorer_post(self):
+        data = {'Thesis?': ['false']               , 'Grade(s)': ['false']
+              , 'Name': ['false']                  , 'PSC Time(s)': ['false']
+              , 'Remaining Time': ['false']        , 'name': ['foo']
+              , 'Co-I': ['false']                  , 'Complete?': ['false']
+              , 'PCode': ['false']                 , 'Friend': ['false']
+              , 'Max. Trimester Time(s)': ['false'], 'Trimester': ['false']
+              , 'PI': ['false']                    , 'Type': ['false']
+              , 'Total Time(s)': ['false']         , 'explorer': ['/projects']
+              }
+        c = Client()
+        response = c.post('/configurations/explorer/columnConfigs', data)
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_column_configurations_explorer_get(self):
+        c = Client()
+        response = c.get('/configurations/explorer/columnConfigs', {'explorer': '/project'})
+        self.failUnlessEqual(response.status_code, 200)
+
+    def test_filter_combinations_explorer_post(self):
+        data = {'Trimester': '08C'
+              , 'Project Type': 'science'
+              , 'Complete': 'True'
+              , 'explorer': '/projects'
+              , 'name': 'test'
+              }
+        c = Client()
+        response = c.post('/configurations/explorer/filterCombos', data)
+        self.failUnlessEqual(response.status_code, 200)
+        r = eval(response.content)
+        ec = first(ExplorerConfiguration.objects.filter(id = r['id']))
+        self.assertTrue(ec is not None)
+
+    def test_reservations(self):
+        c = Client()
+        data = {'start' : '6/1/2010'
+              , 'days'  : '61'
+               }
+        response = c.get('/reservations', data)
+        self.failUnlessEqual(response.status_code, 200)
+        r = eval(response.content)
+        self.assertTrue(len(r.get('reservations')) == 0)
+
 # Testing View Resources
 
 class TestPeriodResource(NellTestCase):
