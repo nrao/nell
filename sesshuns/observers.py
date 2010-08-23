@@ -29,7 +29,10 @@ def public_schedule(request, *args, **kws):
         timezone  = request.POST.get('tz', 'ET')
         days      = int(request.POST.get('days', 5))    
         startDate = request.POST.get('start', None) 
-        startDate = datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now() 
+        try:
+            startDate = datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now() 
+        except: # Bad input?
+            startDate = datetime.now()
     else:
         # default time range
         timezone  = 'ET'
