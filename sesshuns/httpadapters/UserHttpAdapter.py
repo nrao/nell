@@ -42,7 +42,7 @@ class UserHttpAdapter(object):
                 printException(formatExceptionInfo())
 
         staff = fdata.get('staff')
-        self.user.auth_user.is_staff = staff.lower() == 'true' if staff is not None else staff
+        self.user.auth_user.is_staff = staff.lower() == 'true' if staff is not None else False
         self.user.auth_user.save()
 
     def jsondict(self):
