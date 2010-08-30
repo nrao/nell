@@ -259,15 +259,111 @@ class UserNames(object):
         noUsernames = User.objects.filter(username = None).all()
         print >> self.out, "num w/ no username still : ", len(noUsernames)
 
+    def assignUserNames(self, username, password):
+        "Where we can, get usernames for those users who don't have 'em"
+
+        # We will query PST using last name where we can.
+
+        ui = UserInfo()
+
+        # use service to get all users with this last name
+        #url = 'https://mirror.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
+        url = 'https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
+        #udb = NRAOUserDB.NRAOUserDB( \
+        udb = NRAOUserDB( \
+            url
+          , username
+          , password
+          , opener=urllib2.build_opener())
+
+        key = 'usersByLastNameLike'
+
+        users = self.getUsersUniqueByLastName()
+
+        missing = [u for u in users if (u.pst_id is None and u.username is None)] 
+
+        print "num missing users: ", len(missing)
+
+        self.match = []
+        self.noMatch = []
+        self.duplicates = []
+
+        for user in missing:
+            print user
+            if user.last_name in ['Ivanova', 'Jone']:
+                continue
+
+            if "'" in user.last_name:
+                print >> self.out, "SKIP: ", user
+                continue             
+
+            el = udb.get_data(key, user.last_name)
+            #print >> self.out, ET.tostring(el, pretty_print=True)
+
+            #print "parsing xMl:"
+            infos = []
+            xmlUsers = el.getchildren()
+            print "xmlUsers: ", xmlUsers
+            for xmli in range(len(xmlUsers)):
+                e = xmlUsers[xmli]
+                print e
+                info = ui.parseUserXMLWorker(e)
+
+                print xmli
+                print info
+                first_name = info['name']['first-name']
+                username = info['account-info']['account-name']
+                id = int(info['id'])
+
+                infos.append((first_name, username, id))
+
+
+            matchingInfo = [i for i in infos if i[0] == user.first_name]
+
+            #if first_name == user.first_name:
+            if len(matchingInfo) == 1:
+                print "got for user: ", user, username, id
+                user.username = username
+                user.pst_id = id
+                user.save()
+                self.match.append((user, username, id))
+            elif len(matchingInfo) > 1:
+                print "duplicate PST entry", user
+                self.duplicates.append((user, matchingInfo))
+            else:
+                print "no match!", user
+                self.noMatch.append((user, infos))
+
+
+
+        print "matches: ", len(self.match)
+        for u, un, id in self.match:
+            print u, un, id
+        print "no matches: ", len(self.noMatch)
+        for u, i in self.noMatch:
+            print u, i
+        print "duplicates: ", len(self.duplicates)
+        for u, i in self.duplicates:
+            print u, i
+
+        users = self.getUsersUniqueByLastName()
+        missing = [u for u in users if (u.pst_id is None and u.username is None)] 
+        print "NOW num missing users: ", len(missing)
+
+
     def getUserNames(self, username, password):
         "DEPRECATED: but may be useful for testing query services"
+
+        #ui = UserInfo.UserInfo()
+        ui = UserInfo()
 
         skipping = []
 
         # use service to get all users with this last name
-        url = 'https://mirror.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
-        #url = 'https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
-        udb = NRAOUserDB.NRAOUserDB( \
+        #url = 'https://mirror.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
+        url = 'https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
+        #udb = NRAOUserDB.NRAOUserDB( \
+        udb = NRAOUserDB( \
             url
           , username
           , password
@@ -279,6 +375,11 @@ class UserNames(object):
 
         #users =  User.objects.all()
         for user in users:
+
+            # users not in PST
+            if user.last_name in ['Ivanova']:
+                continue
+
             if user.pst_id is not None:
                 print >> self.out, "users has pst_id: ", user
                 continue
@@ -293,18 +394,31 @@ class UserNames(object):
             el = udb.get_data(key, user.last_name)
             print >> self.out, ET.tostring(el, pretty_print=True)
 
+            print "parsing xMl:"
+            print ui.parseUserXML(el)
+            
+            #els = el.getchildren()
+            #assert len(els) == 1
+            #el = els[0]
+
+            #items = el.items()
+            #id = [int(i[1]) for i in items if i[0] == 'id'][0]
+            #print >> self.out, "pst_id: ", id
+
             # name
-            first_name  = el[0][1].text
+            #first_name  = el[0][1].text
             #middle_name = el[0][2].text
             #last_name   = el[0][3].text
             #assert (last_name == user.last_name)
 
             # account name
-            accountName = el[4][0].text
+            #accountName = el[4][0].text
+
+            # pst id
 
             # save it off!
             #user.username = accountName
-            print >> self.out, accountName
+            #print >> self.out, accountName
         
         print >> self.out, "skipped: ", skipping
 
@@ -321,8 +435,10 @@ class UserNames(object):
             else:
                 notUniques.append(user)
         
-        print >> self.out, "Users that share the same last name: "
-        print >> self.out, notUniques
+        print >> self.out, "num Users that share the same last name: "
+        print >> self.out, len(notUniques)
+        print >> self.out, "out of a total of: " 
+        print >> self.out, len(users)
 
         return uniques
 
