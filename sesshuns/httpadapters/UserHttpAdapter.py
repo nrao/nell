@@ -1,5 +1,6 @@
-from sesshuns.models        import Role
-from sesshuns.models.common import first
+from sesshuns.models                    import Role
+from sesshuns.models.common             import first
+from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
 
 class UserHttpAdapter(object):
 
@@ -25,10 +26,24 @@ class UserHttpAdapter(object):
         self.user.role        = role
         self.user.save()
 
-        if self.user.auth_user is not None:
-            staff = fdata.get('staff')
-            self.user.auth_user.is_staff = staff.lower() == 'true' if staff is not None else staff
-            self.user.auth_user.save()
+        if self.user.auth_user is None:
+            try:
+                from django.contrib.auth.models import User as AuthUser
+                self.user.auth_user = \
+                    AuthUser(username = fdata.get('username', "")
+                           , password = "!"
+                            )
+                self.user.auth_user.save()
+                self.user.save()
+                #  TBF  Why is this necessary?
+                self.user.auth_user_id = self.user.auth_user.id
+                self.user.save()
+            except:
+                printException(formatExceptionInfo())
+
+        staff = fdata.get('staff')
+        self.user.auth_user.is_staff = staff.lower() == 'true' if staff is not None else False
+        self.user.auth_user.save()
 
     def jsondict(self):
         projects = ','.join([i.project.pcode for i in self.user.investigator_set.all()])
