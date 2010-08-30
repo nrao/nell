@@ -281,7 +281,6 @@ class UserNames(object):
         users = self.getUsersUniqueByLastName()
 
         missing = [u for u in users if (u.pst_id is None and u.username is None)] 
-
         print "num missing users: ", len(missing)
 
         self.match = []
@@ -322,6 +321,7 @@ class UserNames(object):
 
             #if first_name == user.first_name:
             if len(matchingInfo) == 1:
+                first_name, username, id = matchingInfo[0]
                 print "got for user: ", user, username, id
                 user.username = username
                 user.pst_id = id
@@ -769,4 +769,6 @@ class UserNames(object):
                , pst_id     = 3259
                , role       = role
                )
-        u.save()       
+        u.save()  
+
+
