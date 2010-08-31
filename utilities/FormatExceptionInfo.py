@@ -41,7 +41,6 @@ def exceptionJSONdict(formattedException):
 
 
 def JSONExceptionInfo(msg = None):
-    print "in JSONExceptionInfo"
     jd = exceptionJSONdict(formatExceptionInfo()) # get this first, in case of trouble below
 
     try:
