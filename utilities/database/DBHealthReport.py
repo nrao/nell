@@ -593,6 +593,10 @@ def GenerateReport():
         previous = p
     print_values(outfile, values)
 
+    outfile.write("\n\nPeriods with time billed exceeding duration:")
+    values  = [p for p in periods if p.duration < p.accounting.time_billed()]
+    print_values(outfile, values)
+
     outfile.write("\n\nPeriods with non-positive durations:")
     values  = [p for p in periods if p.duration <= 0.]
     print_values(outfile, values)

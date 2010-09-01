@@ -10,6 +10,16 @@ setup_environ(settings)
 from nell.tools.TimeAccounting import TimeAccounting
 from sesshuns.models           import Project, first
 
+def delta_to_hours(delta):
+    return delta.days * 24 + delta.seconds / 3600.0
+
+def get_period_end(p):
+    return p.start + datetime.timedelta(hours=p.accounting.scheduled)
+
+def sanity(p, start):
+    x = p.accounting.time_billed() - delta_to_hours(start - p.start)
+    return max(x, 0)
+
 class StartEndAccounting(TimeAccounting):
     def getTime(self, obj, start, end):
         """
@@ -24,13 +34,21 @@ class StartEndAccounting(TimeAccounting):
         else:
             ps = obj.period_set.all()
             t = self.getCompletedTime(ps, start, end)
-        return t            
+        return t
 
     def getCompletedTime(self, ps, start, end):
         "Add up the billed time for those periods in time range."
-        # TODO do we want min(time_billed, end - p.start)??
-        return sum([p.accounting.time_billed() for p in ps
-                    if p.start >= start and p.start < end])
+        for p in [pp for pp in ps if pp.start >= start and pp.start < end]:
+            print p
+            print "\t", p.accounting.time_billed(), delta_to_hours(end - p.start)
+        for p in [pp for pp in ps if get_period_end(pp) > start and pp.start < start]:
+            print p
+            print "\t", p.accounting.time_billed(), sanity(p, start)
+        return sum([min(p.accounting.time_billed(), delta_to_hours(end - p.start))
+                    for p in ps if p.start >= start and p.start < end] +
+                   [min(p.accounting.time_billed(), sanity(p, start))
+                    for p in ps if get_period_end(p) > start and p.start < start]
+                   )
 
     def getStartEndProjects(self, projects, start, end):
         projects_with_hours = []
