@@ -66,7 +66,17 @@ def gbt_schedule(request, *args, **kws):
 
     periods  = [p for p in Period.in_time_range(pstart, pend) \
                 if not p.isPending()]
-    schedule = gen_gbt_schedule(start, end, days, 'ET', periods)
+    maintenance_activities = {}
+
+    for p in periods:
+        if p.session.observing_type.type == "maintenance":
+            mas = Maintenance_Activity.get_maintenance_activity_set(p)
+        else:
+            mas = None
+
+        maintenance_activities[p] = mas
+            
+    schedule = gen_gbt_schedule(start, end, days, 'ET', periods, maintenance_activities)
 
     try:
         s_n = Schedule_Notification.objects.all()

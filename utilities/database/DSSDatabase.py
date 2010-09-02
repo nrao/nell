@@ -48,7 +48,7 @@ class DSSDatabase(object):
         self.dss_prime.transfer_only_new()
         print "Getting user information.  This may take several minutes..."
         self.get_user_info()
-        print "Transferring fixed periods..."
+        print "Transferring fixed periods for trimester %s..." % (trimester)
         self.schedtime.transfer_fixed_periods(trimester)
         self.schedtime.print_report(trimester)
 
