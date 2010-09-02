@@ -33,7 +33,7 @@ from django.contrib.auth.models import User as djangoUser
 
 class Maintenance_Activity_Change(models.Model):
 
-    user = models.ForeignKey(djangoUser)
+    responsible = models.TextField(null = True, blank = True)
     date = models.DateTimeField()
 
     class Meta:
@@ -41,14 +41,6 @@ class Maintenance_Activity_Change(models.Model):
         app_label = "sesshuns"
 
     def __unicode__(self):
-        lname = self.user.last_name
-        fname = self.user.first_name
-        uname = self.user.username
-
-        if lname and fname:
-            name = lname + ", " + fname
-        else:
-            name = uname
-            
+                    
         date = str(self.date)
-        return "%s -- %s" % (name, date)
+        return "%s -- %s" % (self.responsible, date)

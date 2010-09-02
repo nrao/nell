@@ -109,42 +109,6 @@ class MyCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
         return mark_safe(u'\n'.join(output))
 
 ######################################################################
-# Load dictionary from Maintenance_Activity object
-######################################################################
-
-def load_maintenance_activity_data(ma):
-
-    start = TimeAgent.utc2est(ma.start)
-    duration = timedelta(hours = ma.duration)
-    end = start + duration
-    change_receiver = True if len(ma.receiver_changes.all()) else False
-    old_receiver = None if not change_receiver else \
-                   ma.receiver_changes.all()[0].down_receiver_id
-    new_receiver = None if not change_receiver else \
-                   ma.receiver_changes.all()[0].up_receiver_id
-
-    data = {'subject'         : ma.subject,
-            'date'            : start.date(),
-            'time'            : start.time(),
-            'end_choice'      : "end_time",
-            'end_time'        : end.time(),
-            'responsible'     : None if len(ma.contacts.all()) == 0 else \
-                                [u.id for u in ma.contacts.all()][0],
-            'location'        : ma.location,
-            'telescope'       : ma.telescope_resource.id,
-            'software'        : ma.software_resource.id,
-            'receivers'       : [r.id for r in ma.receivers.all()],
-            'change_receiver' : change_receiver,
-            'old_receiver'    : old_receiver,
-            'new_receiver'    : new_receiver,
-            'backends'        : [b.id for b in ma.backends.all()],
-            'description'     : ma.description,
-            'entity_id'       : activity_id
-            }
-
-    return data
-
-######################################################################
 # The form.  All the fields for the 'Add/Edit Record' form are defined
 # here.  Set the 'xxx_req' booleans appropriately to set which fields
 # must be filled in by the user to be valid.
@@ -162,17 +126,27 @@ class RCAddActivityForm(forms.Form):
     backends_req    = False
     description_req = False
 
-    subject = forms.CharField(required = subject_req, max_length=100)
+
+    hours = [(i, "%02i" % i) for i in range(0, 24)]
+    minutes = [(i, "%02i" % i) for i in range(0, 60, 5)]
+
+    subject = forms.CharField(required = subject_req,
+                              max_length = 100,
+                              widget = forms.TextInput(attrs = {'size': '80'}))
     date = forms.DateField(required = date_req)
-    time = forms.TimeField(required = time_req)
+    time_hr  = forms.ChoiceField(required = time_req, choices = hours)
+    time_min = forms.ChoiceField(required = time_req, choices = minutes)
     end_choice = forms.ChoiceField(choices=[("end_time", "End Time"),
                                             ("duration", "Duration")],
                                    widget=forms.RadioSelect(renderer = HorizRadioRender))
-    end_time = forms.TimeField(required = end_time_req)
-    users = [(u.id, "%s" % (u.username))
-             for u in djangoUser.objects.filter(is_staff = True).order_by('username')]
-    responsible = forms.ChoiceField(required = responsible_req, choices = users)
-    location = forms.CharField(required = location_req, max_length = 200)
+    end_time_hr = forms.ChoiceField(required = end_time_req, choices = hours)
+    end_time_min = forms.ChoiceField(required = end_time_req, choices = minutes)
+    responsible = forms.CharField(required = responsible_req,
+                                  max_length = 256,
+                                  widget = forms.TextInput(attrs = {'size': '70'}))
+
+    location = forms.CharField(required = location_req, max_length = 200,
+                               widget = forms.TextInput(attrs = {'size': '80'}))
     tel_resc = [(p.id, p.resource) for p in Maintenance_Telescope_Resources.objects.all()]
     telescope = forms.ChoiceField(choices = tel_resc,
                                   widget = forms.RadioSelect(renderer = BRRadioRender))
@@ -204,6 +178,10 @@ class RCAddActivityForm(forms.Form):
     backends = forms.MultipleChoiceField(required = backends_req,
                                          choices = be, widget = MyCheckboxSelectMultiple)
     description = forms.CharField(required = description_req, widget = forms.Textarea)
+    intervals = [(0, "None"), (1, "Daily"), (7, "Weekly")]
+    recurrency_interval = forms.ChoiceField(choices = intervals)
+    recurrency_until = forms.DateField(required = False)
+
     entity_id = forms.IntegerField(required = False, widget = forms.HiddenInput)
 
 ######################################################################
@@ -225,14 +203,14 @@ def display_maintenance_activity(request, activity_id = None):
         start = TimeAgent.utc2est(ma.start)
         duration = timedelta(hours = ma.duration)
         end = start + duration
+        u = djangoUser.objects.filter(username = request.user)[0]
 
         params = {'subject'         : ma.subject,
                   'date'            : start.date(),
-                  'time'            : start.time(),
+                  'time'            : start,
                   'end_choice'      : "end_time",
                   'end_time'        : end.time(),
-                  'responsible'     : None if len(ma.contacts.all()) == 0 else \
-                                      [u.username for u in ma.contacts.all()],
+                  'responsible'     : ma.contacts,
                   'location'        : ma.location,
                   'telescope'       : ma.telescope_resource.resource,
                   'software'        : ma.software_resource.resource,
@@ -244,30 +222,13 @@ def display_maintenance_activity(request, activity_id = None):
                   'last_modified'   : str(ma.modifications.all()[len(ma.modifications.all()) - 1]),
                   'created'         : str(ma.modifications.all()[0]),
                   'receiver_swap'   : ma.receiver_changes.all(),
-                  'supervisor_mode' : True if u.username == "rcreager" else False
+                  'supervisor_mode' : True if (u and u.username == "rcreager") else False
                  }
     else:
         params = {}
 
     return render_to_response('sesshuns/rc_display_activity.html',
                               params)
-
-
-######################################################################
-# get_maintenance_activity_group(period_id)
-#
-# Obtains the maintenance activity group associated with the period.
-# If it doesn't exist, creates one.
-######################################################################
-
-def get_maintenance_activity_group(period_id):
-    p = Period.objects.filter(id = period_id)[0]
-
-    if len(p.maintenance_activity_group_set.all()) == 0:
-        mag = Maintenance_Activity_Group(period = p)
-        mag.save()
-
-    return p.maintenance_activity_group_set.all()[0]
 
 ######################################################################
 # The view.  This is called twice, by the 'GET' and 'POST' paths.  The
@@ -284,28 +245,35 @@ def add_activity(request, period_id = None):
 
         if form.is_valid():
             # process the returned stuff here...
-            print "Maintenance Period ID:", form.cleaned_data["entity_id"]
-            mag = get_maintenance_activity_group(form.cleaned_data["entity_id"])
-            ma = Maintenance_Activity(maintenance_group = mag)
+            ma = Maintenance_Activity()
             ma.save() # needs to have a primary key for many-to-many
                       # relationships to be set.
-            process_activity(ma, form)
+            process_activity(request, ma, form)
             return HttpResponseRedirect('/schedule/')
     else:
         if period_id:
             default_telescope = Maintenance_Telescope_Resources.objects.filter(rc_code = 'N')[0]
             default_software = Maintenance_Software_Resources.objects.filter(rc_code = 'N')[0]
             u = djangoUser.objects.filter(username = request.user)[0]
+
+            if u:
+                user = u.last_name + ", " + u.first_name if (u.last_name and u.first_name) else u.username
+            else:
+                user = ""
+            
             p = Period.objects.filter(id = int(period_id))[0]
             start = TimeAgent.utc2est(p.start)
 
-            initial_data = {'date'        : start.date(),
-                            'time'        : start.time(),
-                            'end_choice'  : "end_time",
-                            'responsible' : u.id,
-                            'telescope'   : default_telescope.id,
-                            'software'    : default_software.id,
-                            'entity_id'   : period_id
+            initial_data = {'date'              : start.date(),
+                            'time_hr'           : start.hour,
+                            'time_min'          : start.minute,
+                            'end_choice'        : "duration",
+                            'end_time_hr'       : 1,
+                            'end_time_min'      : 0,
+                            'responsible'       : user,
+                            'telescope'         : default_telescope.id,
+                            'software'          : default_software.id,
+                            'entity_id'         : period_id
                             }
 
             form = RCAddActivityForm(initial = initial_data)
@@ -334,39 +302,40 @@ def edit_activity(request, activity_id = None):
             # process the returned stuff here...
             print "Maintenance Activity ID:", form.cleaned_data["entity_id"]
             ma = Maintenance_Activity.objects.filter(id = form.cleaned_data["entity_id"])[0]
-            process_activity(ma, form)
+            process_activity(request, ma, form)
             return HttpResponseRedirect('/schedule/')
     else:
-        u = djangoUser.objects.filter(username = request.user)[0]
         ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
 
         if request.GET['ActionEvent'] == 'Modify':
             start = TimeAgent.utc2est(ma.start)
             duration = timedelta(hours = ma.duration)
-            end = start + duration
             change_receiver = True if len(ma.receiver_changes.all()) else False
             old_receiver = None if not change_receiver else \
                            ma.receiver_changes.all()[0].down_receiver_id
             new_receiver = None if not change_receiver else \
                            ma.receiver_changes.all()[0].up_receiver_id
 
-            initial_data = {'subject'         : ma.subject,
-                            'date'            : start.date(),
-                            'time'            : start.time(),
-                            'end_choice'      : "end_time",
-                            'end_time'        : end.time(),
-                            'responsible'     : None if len(ma.contacts.all()) == 0 else \
-                                                [u.id for u in ma.contacts.all()][0],
-                            'location'        : ma.location,
-                            'telescope'       : ma.telescope_resource.id,
-                            'software'        : ma.software_resource.id,
-                            'receivers'       : [r.id for r in ma.receivers.all()],
-                            'change_receiver' : change_receiver,
-                            'old_receiver'    : old_receiver,
-                            'new_receiver'    : new_receiver,
-                            'backends'        : [b.id for b in ma.backends.all()],
-                            'description'     : ma.description,
-                            'entity_id'       : activity_id
+            initial_data = {'subject'             : ma.subject,
+                            'date'                : start.date(),
+                            'time_hr'             : start.hour,
+                            'time_min'            : start.minute,
+                            'end_choice'          : "duration",
+                            'end_time_hr'         : duration.seconds / 3600,
+                            'end_time_min'        : duration.seconds % 3600 / 60,
+                            'responsible'         : ma.contacts,
+                            'location'            : ma.location,
+                            'telescope'           : ma.telescope_resource.id,
+                            'software'            : ma.software_resource.id,
+                            'receivers'           : [r.id for r in ma.receivers.all()],
+                            'change_receiver'     : change_receiver,
+                            'old_receiver'        : old_receiver,
+                            'new_receiver'        : new_receiver,
+                            'backends'            : [b.id for b in ma.backends.all()],
+                            'description'         : ma.description,
+                            'entity_id'           : activity_id,
+                            'recurrency_interval' : ma.repeat_interval,
+                            'recurrency_until'    : ma.repeat_end
                             }
 
             form = RCAddActivityForm(initial = initial_data)
@@ -374,23 +343,21 @@ def edit_activity(request, activity_id = None):
             ma.delete()
             return HttpResponseRedirect('/schedule/')
         elif request.GET['ActionEvent'] == 'Approve':
+            u = djangoUser.objects.filter(username = request.user)[0]
             ma.add_approval(u)
             ma.save()
 
             # Record any receiver changes in the receiver schedule table.
             for i in ma.get_receiver_changes():
-                print "date =", ma.start.date()
-                print "up   =", i.up_receiver
-                print "down =", i.down_receiver
                 rsched = datetime(ma.start.year, ma.start.month, ma.start.day, 16)
                 Receiver_Schedule.change_schedule(rsched, [i.up_receiver], [i.down_receiver])
 
             return HttpResponseRedirect('/schedule/')
-        
+
     return render_to_response('sesshuns/rc_add_activity_form.html', {'form': form, })
 
 ######################################################################
-# def process_activity(ma, form)
+# def process_activity(request, ma, form)
 #
 # This is a helper function to handle the transfer of data from the
 # form to the database. The only difference between the 'add_activity'
@@ -399,12 +366,13 @@ def edit_activity(request, activity_id = None):
 # is retrieved from the database by id.  The rest is done by this
 # function.
 #
+# request: The request object
 # ma: The Maintenance_Activity object
 # form: The RCAddActivityForm object
 #
 ######################################################################
 
-def process_activity(ma, form):
+def process_activity(request, ma, form):
     """
     Does some processing in common between the add and the edit views.
     """
@@ -416,26 +384,23 @@ def process_activity(ma, form):
     # must be converted to UTC.  The end-time need not be
     # converted since a duration is computed and stored in the
     # database instead of the end time.
-    start = datetime.combine(form.cleaned_data['date'], form.cleaned_data['time'])
+    date = form.cleaned_data['date']
+    start = datetime(date.year, date.month, date.day,
+                     hour = int(form.cleaned_data['time_hr']), minute = int(form.cleaned_data['time_min']))
     ma.start = TimeAgent.est2utc(start)
-    print "Date:", form.cleaned_data['date']
-    print "Time:", form.cleaned_data['time']
 
     if form.cleaned_data["end_choice"] == "end_time":
-        end = datetime.combine(form.cleaned_data['date'], form.cleaned_data['end_time'])
+        end_date = form.cleaned_data['date']
+        end = datetime(year = end_date.year, month = end_date.month, day = end_date.day,
+                       hour = int(form.cleaned_data['end_time_hr']), minute = int(form.cleaned_data['end_time_min']))
         delta = end - start
         ma.duration = delta.seconds / 3600.0 # in decimal hours
         print "End time:", ma.duration
     else:
-        duration = form.cleaned_data['end_time']
-        ma.duration = duration.hour + duration.minute / 60.0 + duration.second / 3600.0
+        ma.duration = float(form.cleaned_data['end_time_hr']) + float(form.cleaned_data["end_time_min"]) / 60.0
         print "Duration:", ma.duration
 
-    u = djangoUser.objects.filter(id = form.cleaned_data["responsible"])[0]
-
-    if len(ma.contacts.all()):
-        ma.contacts.clear()
-    ma.contacts.add(u)
+    ma.contacts = form.cleaned_data["responsible"]
     print "Responsible:", form.cleaned_data["responsible"]
 
     ma.location = form.cleaned_data["location"]
@@ -492,8 +457,35 @@ def process_activity(ma, form):
 
     ma.description = form.cleaned_data["description"]
     print "Description:", form.cleaned_data["description"]
+    print "Recurrency selected:", form.cleaned_data["recurrency_interval"]
+    ma.repeat_interval = form.cleaned_data["recurrency_interval"]
+    ma.repeat_end = form.cleaned_data["recurrency_until"]
 
+    # assign right period for maintenance activity.  If no
+    # periods, this will remain 'None'
+    start = TimeAgent.truncateDt(ma.start)
+    end = start + timedelta(days = 1)
+    periods = Period.get_periods_by_observing_type(start, end, "maintenance")
+    print "MA Start: %s" % (ma.start)
+    print "Candidate periods:", periods
+    
+    for p in periods:
+        if ma.start >= p.start and ma.start < p.end():
+            ma.period = p
+            print "Assigning to period id %i" % (p.id)
+        
     # Now add user and timestamp for modification.  Earliest mod is
     # considered creation.
-    ma.add_modification(u)
+    u = djangoUser.objects.filter(username = request.user)[0]
+
+    if u:
+        if u.first_name and u.last_name:
+            modifying_user = u.last_name + ", " + u.first_name
+        else:
+            modifying_user = u.username
+    else:
+        modifying_user = "anonymous"
+        
+    print "Adding modification by %s" % (modifying_user)
+    ma.add_modification(modifying_user)
     ma.save()

@@ -15,6 +15,12 @@ hold the form controls.
   {% block title %}Add/Edit Record{% endblock %}
 
   {% block scripts %}
+  <link type="text/css" href="/static/css/lib/themes/base/ui.all.css" rel="stylesheet" />
+  <style type="text/css" media="print">
+    body {line-height:1.5;font-family:"Helvetica Neue", Arial, Helvetica,
+              sans-serif;color:#000;background:none;font-size:7pt;}
+  </style>
+
   <style type="text/css">
 
     label {font-weight:normal;}
@@ -98,6 +104,48 @@ hold the form controls.
             down_rcvr.disabled = true;
         }
     }
+
+{% comment %}
+    function GetResponsible()
+    {
+        var dropdn = returnObjById("id_{{ form.responsible.html_name }}");
+        var resp_field = returnObjById("id_{{ form.responsible_field.html_name }}");
+        var text = resp_field.value;
+        var selection = dropdn.options[dropdn.selectedIndex].text;
+
+        if (text)
+        {
+            resp_field.value = text + ", " + selection;
+        }
+        else
+        {
+            resp_field.value = selection;
+        }
+    }
+
+    function EditResponsibleField()
+    {
+        var dropdn = returnObjById("id_{{ form.responsible.html_name }}");
+        dropdn.selectedIndex = -1;
+    }
+{% endcomment %}
+
+  </script>
+
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"></script>
+
+<!--  
+  <link type="text/css" href="http://jqueryui.com/latest/themes/base/ui.all.css" rel="stylesheet" /> >
+  <script type="text/javascript" src="http://jqueryui.com/latest/jquery-1.3.2.js"></script> 
+  <script type="text/javascript" src="http://jqueryui.com/latest/ui/ui.core.js"></script>
+  <script type="text/javascript" src="http://jqueryui.com/latest/ui/ui.datepicker.js"></script>
+-->  
+  <script type="text/javascript">
+  $(document).ready(function(){
+    $("#id_{{ form.date.html_name }}").datepicker();
+    $("#id_{{ form.recurrency_until.html_name }}").datepicker()
+    setTimeout('document.getCalendar.submit()', 1000*60*5);
+  });
   </script>
 
   {% endblock %}
@@ -130,31 +178,34 @@ hold the form controls.
       </div>
 
       <div class="fieldWrapper">
-        <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Date</B></td>
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Start</B></td>
           <td width="80%" class="table_fields" align="left" valign="middle" colspan="2">
+            <label><b>Date</b>&nbsp;&nbsp;</label>
             {{ form.date.errors }}
             {{ form.date }}
+            <label>&nbsp;&nbsp<b>Time</b>&nbsp;&nbsp;</label>
+            <label>&nbsp;&nbsp;Hour&nbsp;&nbsp;</label>
+            {{ form.time_hr.errors }}
+            {{ form.time_hr }}
+            <label>&nbsp;&nbsp;Minutes&nbsp;&nbsp;</label>
+            {{ form.time_min.errors }}
+            {{ form.time_min }}
           </td>
         </tr>
       </div>
 
       <div class="fieldWrapper">
-        <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Time</B></td>
-          <td width="80%" class="table_fields" align="left" valign="top" colspan="2">
-            {{ form.time.errors }}
-            {{ form.time }}
-          </td>
-        </tr>
-      </div>
-
-      <div class="fieldWrapper">
-        <tr><td width="15%" class="table_captions" align="right" valign="top">&nbsp</td>
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><b>End</b></td>
           <td width="40%" class="table_fields" align="left" valign="top">
             {{ form.end_choice.errors }}
             {{ form.end_choice }}
             <td width="40%" class="table_fields" align="left" valign="top">
-              {{ form.end_time.errors }}
-              {{ form.end_time }}
+            <label>&nbsp;&nbsp;Hour&nbsp;&nbsp;</label>
+            {{ form.end_time_hr.errors }}
+            {{ form.end_time_hr }}
+            <label>&nbsp;&nbsp;Minutes&nbsp;&nbsp;</label>
+            {{ form.end_time_min.errors }}
+            {{ form.end_time_min }}
             </td>
         </tr>
       </div>
@@ -244,6 +295,18 @@ hold the form controls.
         </tr>
       </div>
 
+          <div class="fieldWrapper">
+            <tr><td width="15%" class="table_captions" align="right" valign="top"><b>Recurrency</b></td>
+              <td width="80%" class="table_fields" align="left" valign="middle" colspan="2">
+                <label><b>Interval</b>&nbsp;&nbsp;</label>
+                {{ form.recurrency_interval.errors }}
+                {{ form.recurrency_interval }}
+                <label>&nbsp;&nbsp<b>until</b>&nbsp;&nbsp;</label>
+                {{ form.recurrency_until.errors }}
+                {{ form.recurrency_until }}
+              </td>
+            </tr>
+          </div>
     </table>
 
     <div align=center>

@@ -28,11 +28,9 @@
 ######################################################################
 
 from django.db                       import models
-from datetime                        import timedelta, datetime
 from User                            import User
 from Receiver                        import Receiver
 from Backend                         import Backend
-from Maintenance_Activity_Group      import Maintenance_Activity_Group
 from Maintenance_Telescope_Resources import Maintenance_Telescope_Resources
 from Maintenance_Software_Resources  import Maintenance_Software_Resources
 from Maintenance_Activity_Change     import Maintenance_Activity_Change
@@ -40,20 +38,21 @@ from Maintenance_Receivers_Swap      import Maintenance_Receivers_Swap
 from datetime                        import datetime, date, time, timedelta
 from nell.utilities                  import TimeAgent
 from django.contrib.auth.models      import User as djangoUser
+from Period                          import Period
 
 import re
 
 class Maintenance_Activity(models.Model):
 
-    maintenance_group  = models.ForeignKey(Maintenance_Activity_Group, null = True)
+    period             = models.ForeignKey(Period, null = True)
     telescope_resource = models.ForeignKey(Maintenance_Telescope_Resources, null = True)
     software_resource  = models.ForeignKey(Maintenance_Software_Resources, null = True)
-    contacts           = models.ManyToManyField(djangoUser, null = True)
     receivers          = models.ManyToManyField(Receiver, null = True)
     backends           = models.ManyToManyField(Backend, null = True)
     subject            = models.CharField(max_length = 200)
     start              = models.DateTimeField(null = True)
     duration           = models.FloatField(null = True, help_text = "Hours", blank = True)
+    contacts           = models.TextField(null = True, blank = True)
     location           = models.TextField(null = True, blank = True)
     description        = models.TextField(null = True, blank = True)
     approved           = models.BooleanField(default = False)
@@ -66,6 +65,8 @@ class Maintenance_Activity(models.Model):
     receiver_changes   = models.ManyToManyField(Maintenance_Receivers_Swap,
                                                 db_table = "maintenance_activity_receivers_swap",
                                                 null = True)
+    repeat_interval    = models.IntegerField(null = True) # 0, 1, 7 for none, daily, weekly
+    repeat_end         = models.DateField(null = True)    # repeat until
 
     class Meta:
         db_table  = "maintenance_activity"
@@ -84,15 +85,14 @@ class Maintenance_Activity(models.Model):
         duration      = self.duration if self.duration else 'None'
         description   = self.description if self.description else 'None'
         approved      = "Yes" if self.approved else "No"
-        contacts      = "; ".join(["%s, %s" % (e.last_name, e.first_name)
-                                   for e in self.get_contacts()]) if self.id else ""
+        contacts      = self.contacts if self.contacts else 'None'
         approvals     = self.approvals.all() if self.id else 'None'
         modifications = self.modifications.all() if self.id else 'None'
 
         repstr = "Subject: %s\nLocation: %s\nTelescope Resource: %s\nSoftware Resource: %s\n"
         repstr += "Receivers: %s\nBackends: %s\nReceiver changes: %s\nStart: %s\n"
-        repstr += "Description: %s\nApproved: %s\nApprovals: %s\nModifications: %s\n"
-        repstr += "Contacts: %s\n"
+        repstr += "Description: %s\nApproved: %s\nApprovals: %s\n"
+        repstr += "Modifications: %s\nContacts: %s\n"
         repstr %= (subject, location, tel_resource, soft_resource, receivers,
                    backends, rcvr_ch, start, description, approved, approvals,
                    modifications, contacts)
@@ -105,7 +105,7 @@ class Maintenance_Activity(models.Model):
         Install Holography/Zpectrometer - White/Watts/Morton [T=A, S=P, R=H, B=Z]
         """
         subject = self.subject
-        contacts = "/".join([u.last_name for u in self.contacts.all()])
+        contacts = self.contacts
         resources = self.get_resource_summary()
         ss = "%s - %s %s" % (subject, contacts, resources)
         return ss
@@ -188,18 +188,6 @@ class Maintenance_Activity(models.Model):
     def get_description(self):
         return self.description
 
-    def set_start(self, start):
-        self.start = start
-
-    def get_start(self):
-        return self.start
-
-    def add_contact(self, contact):
-        self.contacts.add(contact)
-
-    def get_contacts(self):
-        return self.contacts.all()
-
     def add_receiver_change(self, old_receiver, new_receiver):
         rs = Maintenance_Receivers_Swap()
         rs.down_receiver = self._get_receiver(old_receiver)
@@ -213,7 +201,7 @@ class Maintenance_Activity(models.Model):
     def add_approval(self, user):
         self.approved = True
         approval = Maintenance_Activity_Change()
-        approval.user = user
+        approval.responsible = user
         approval.date = datetime.now()
         approval.save()
         self.approvals.add(approval)
@@ -224,8 +212,11 @@ class Maintenance_Activity(models.Model):
     def add_modification(self, user):
         self.approved = False
         change = Maintenance_Activity_Change()
-        change.user = user
+        change.responsible = user
+        print "user = %s" % user
+        print "change.responsible = %s" % change.responsible
         change.date = datetime.now()
+        print "change.date = %s" % change.date
         change.save()
         self.modifications.add(change)
 
@@ -234,12 +225,20 @@ class Maintenance_Activity(models.Model):
 
     def check_for_conflicting_resources(self):
         """
-        Checks to see within the maintenance group whether there are
-        maintenance activities whose resource requirements conflict.
-        If it finds any, it appends the resource specification
-        (presented in the same way the summary does) to a list.
+        Checks other maintenance activities on the same day to see
+        whether there are maintenance activities whose resource
+        requirements conflict.  If it finds any, it appends the
+        resource specification (presented in the same way the summary
+        does) to a list.
         """
-        mas = self.maintenance_group.get_time_sorted_set()
+
+        start = self.start
+        end = start + timedelta(days = 1)
+        mas = Maintenance_Activity.objects \
+              .filter(start__gte = start) \
+              .filter(start__lte = end) \
+              .order_by('start')
+
         rval = []
 
         for i in range(0, len(mas)):
@@ -260,14 +259,16 @@ class Maintenance_Activity(models.Model):
                         if 'T=' in i:
                             for j in other_summary:
                                 if 'T=' in j:  # both have 'T='
-                                    tr = Maintenance_Telescope_Resources.objects.filter(rc_code=i[2])[0]
+                                    tr = Maintenance_Telescope_Resources.objects\
+                                         .filter(rc_code=i[2])[0]
 
                                     if j[2] not in tr.compatibility:
                                         rval.append(i)
                         elif 'S=' in i:
                             for j in other_summary:
                                 if 'S=' in j:  # both have 'S='
-                                    sr = Maintenance_Software_Resources.objects.filter(rc_code=i[2])[0]
+                                    sr = Maintenance_Software_Resources.objects\
+                                         .filter(rc_code=i[2])[0]
 
                                     if j[2] not in sr.compatibility:
                                         rval.append(i)
@@ -277,8 +278,8 @@ class Maintenance_Activity(models.Model):
                             # equivalent.  Flag conflicts if any of
                             # these match, i.e. U=600 matches R=600.
                             x = re.match('[RUD]=.', i)
-                            
-                            for j in other_summary: 
+
+                            for j in other_summary:
                                 y = re.match('[RUD]=.', j)
 
                                 if x and y:
@@ -317,3 +318,58 @@ class Maintenance_Activity(models.Model):
             return l[0]
         else:
             return None
+
+    @staticmethod
+    def get_maintenance_activity_set(period):
+        """
+        Returns a set of maintenance activities occuring during this
+        period's duration, in time order.
+        """
+
+        # To handle repeat maintenance activity objects:
+        repeatQ = (models.Q(repeat_interval = 1) | models.Q(repeat_interval = 7))\
+                  & (models.Q(start__lte = period.end())  & models.Q(repeat_end__gte = period.end()))
+
+        start_endQ = models.Q(start__gte = period.start) & models.Q(start__lte = period.end())
+        periodQ = models.Q(period = period)
+        mas = Maintenance_Activity.objects.filter(repeatQ | periodQ)
+        r = [i for i in mas]
+        r.sort(cmp = lambda x, y: cmp(x.start.time(), y.start.time()))
+
+        # Weekly repeats have a problem: what if the repeat falls on a
+        # day that is not a maintenance day?  Where should we put it?
+        # One strategy is to examine the maintenance periods from 3
+        # days in the past to 3 days into the future.  if none of
+        # those is more suitable, we keep the weekly activity here. If
+        # there is a tie, we favor the earlier date. This is done by
+        # taking the modulo 7 of start - maintenance_activity.start
+        # and mapping it to the values in 'dm'.  Lowest value wins.
+
+        x = []
+        dm = {4: 30, 5: 20, 6: 10, 0: 0, 1: 15, 2: 25, 3: 35}
+        delta = timedelta(days = 3)
+        today = TimeAgent.truncateDt(period.start)
+        p = Period.get_periods_by_observing_type(today - delta, today + delta, "maintenance")
+
+        for i in r:
+            if i.repeat_interval == 7:
+                start_date = TimeAgent.truncateDt(i.start)
+                diff = (today - start_date).days % 7
+
+                if (diff):
+                    # doesn't fall on this date.  Is this the closest period though?
+
+                    for j in p:
+                        if j != period:  # check only other periods
+                            mod = (j.start.date() - start_date.date()).days % 7
+
+                            if dm[mod] < dm[diff]: # There is a better fit with another period
+                                x.append(i)        # so don't list it here.  Mark it for deletion.
+                                break
+
+        for i in x:
+            if i in r:
+                r.remove(i)
+
+
+        return r
