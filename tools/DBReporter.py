@@ -37,14 +37,32 @@ class DBReporter:
             f.writelines(self.lines)
             f.close()
 
-    def report(self):
+    def reportProjectSummaryBySemester(self, semester = None):
+
+        if semester is None:
+            projs = Project.objects.order_by("pcode").all()
+        else:
+            projs = Project.objects.filter(semester__semester = semester ).order_by("pcode")
+            
+        self.reportProjectSummary(projs)
+
+    def reportProjectSummaryByPcode(self, pcodes):
+
+        projs = []
+        for pcode in pcodes:
+            ps = Project.objects.filter(pcode = pcode)
+            projs.extend(ps)
+        self.reportProjectSummary(projs)
+
+    def reportProjectSummary(self, projs):    
 
         # *** General Info ***
         # gather stats on projects - how many, how many of what type, total hrs ..
-        projs = Project.objects.order_by("pcode").all()
+
         numProjs = len(projs)
         totalProjHrs = sum([self.ta.getProjectTotalTime(p) for p in projs])
         self.add("\n*** Projects ***\n")
+
         self.add("Total # of Projects: %d, Total Hrs: %5.2f\n\n" % (numProjs, totalProjHrs))
     
         semesters = Semester.objects.all().order_by('semester')
@@ -69,7 +87,55 @@ class DBReporter:
         for p in projs:
             ss = p.sesshun_set.all()
             hrs = self.ta.getProjSessionsTotalTime(p)
-            ssIds = ["%d" % s.original_id for s in ss]
+            ssIds = ["%s" % s.original_id for s in ss]
+            ssIds.sort()
+            ssIdStrs = " ".join(ssIds)
+            data = [p.pcode, str(len(ss)), "%5.2f" % hrs, ssIdStrs]
+            self.printData(data, cols)
+        self.add("\n") 
+  
+        self.printLines()
+
+    def report(self, semester = None):
+
+        # *** General Info ***
+        # gather stats on projects - how many, how many of what type, total hrs ..
+        if semester is None:
+            projs = Project.objects.order_by("pcode").all()
+        else:
+            projs = Project.objects.filter(semester__semester = semester ).order_by("pcode")
+        numProjs = len(projs)
+        totalProjHrs = sum([self.ta.getProjectTotalTime(p) for p in projs])
+        if semester is None:
+            self.add("\n*** Projects ***\n")
+        else:
+            self.add("\n*** Projects for Semester %s ***\n" % semester)
+
+        self.add("Total # of Projects: %d, Total Hrs: %5.2f\n\n" % (numProjs, totalProjHrs))
+    
+        semesters = Semester.objects.all().order_by('semester')
+        proj_types = Project_Type.objects.all()
+    
+
+        projSems = self.binProject(projs, semesters, "semester")
+        self.printInfo(projSems, "Projects by Semester: ", "Semester")
+
+        projTypes = self.binProject(projs, proj_types, "project_type")
+        self.printInfo(projTypes, "Projects by Type: ", "Type")
+
+        projThesis = self.binProject(projs, [True, False], "thesis")
+        self.printInfo(projThesis, "Projects by Thesis: ", "Thesis")
+
+        # project summary: for each project, how many sess, hrs, etc.
+        self.add("\n")    
+        self.add("Project Summary (modeled from Carl's report): \n")
+        header = ["Name", "#", "Hrs", "Original IDs"]
+        cols = [10, 5, 6, 50]
+        self.printData(header, cols, True)
+        for p in projs:
+            ss = p.sesshun_set.all()
+            hrs = self.ta.getProjSessionsTotalTime(p)
+            ssIds = ["%s" % s.original_id for s in ss]
             ssIds.sort()
             ssIdStrs = " ".join(ssIds)
             data = [p.pcode, str(len(ss)), "%5.2f" % hrs, ssIdStrs]

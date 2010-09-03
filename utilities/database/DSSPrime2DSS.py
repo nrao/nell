@@ -1,5 +1,6 @@
 from datetime                          import datetime, timedelta
 from nell.utilities.database.UserNames import UserNames
+from nell.tools.DBReporter             import DBReporter
 from sesshuns.models                   import *
 import math
 import MySQLdb as m
@@ -98,6 +99,13 @@ class DSSPrime2DSS(object):
         # can import info only that pertains to those new projects
         self.transfer_new_proj_authors(self.new_projects)
         self.transfer_new_proj_sessions(self.new_projects)
+
+        # keep a record of what you did
+        self.report_transfer_only_new()
+
+        # also print out the mimic of carl's report
+        dbr = DBReporter(filename = "DBReport.xt")
+        dbr.reportProjectSummaryByPcode(self.new_projects)
 
     def set_sanctioned_flags(self):
         # Get the list of sanctioned users from 09B
