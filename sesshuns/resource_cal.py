@@ -28,7 +28,7 @@
 ######################################################################
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models     import User as djangoUser
+#from django.contrib.auth.models     import User as djangoUser
 from django.http                    import HttpResponse, HttpResponseRedirect
 from django.template                import Context, loader
 from django.shortcuts               import render_to_response
@@ -43,6 +43,7 @@ from django.utils.html              import escape, conditional_escape
 from django                         import template
 from nell.utilities                 import TimeAgent
 from datetime                       import date, datetime, time
+from utilities                      import get_requestor
 
 
 ######################################################################
@@ -203,7 +204,13 @@ def display_maintenance_activity(request, activity_id = None):
         start = TimeAgent.utc2est(ma.start)
         duration = timedelta(hours = ma.duration)
         end = start + duration
-        u = djangoUser.objects.filter(username = request.user)[0]
+        u = get_requestor(request)
+        supervisors = ["rcreager", "ashelton", "banderso", "mchestnu"]
+
+        if u and u.username in supervisors:
+            supervisor_mode = True
+        else:
+            supervisor_mode = False
 
         params = {'subject'         : ma.subject,
                   'date'            : start.date(),
@@ -222,7 +229,7 @@ def display_maintenance_activity(request, activity_id = None):
                   'last_modified'   : str(ma.modifications.all()[len(ma.modifications.all()) - 1]),
                   'created'         : str(ma.modifications.all()[0]),
                   'receiver_swap'   : ma.receiver_changes.all(),
-                  'supervisor_mode' : True if (u and u.username == "rcreager") else False
+                  'supervisor_mode' : supervisor_mode
                  }
     else:
         params = {}
@@ -254,13 +261,8 @@ def add_activity(request, period_id = None):
         if period_id:
             default_telescope = Maintenance_Telescope_Resources.objects.filter(rc_code = 'N')[0]
             default_software = Maintenance_Software_Resources.objects.filter(rc_code = 'N')[0]
-            u = djangoUser.objects.filter(username = request.user)[0]
-
-            if u:
-                user = u.last_name + ", " + u.first_name if (u.last_name and u.first_name) else u.username
-            else:
-                user = ""
-            
+            u = get_requestor(request)
+            user = get_user_name(u);
             p = Period.objects.filter(id = int(period_id))[0]
             start = TimeAgent.utc2est(p.start)
 
@@ -300,7 +302,7 @@ def edit_activity(request, activity_id = None):
 
         if form.is_valid():
             # process the returned stuff here...
-            print "Maintenance Activity ID:", form.cleaned_data["entity_id"]
+            #print "Maintenance Activity ID:", form.cleaned_data["entity_id"]
             ma = Maintenance_Activity.objects.filter(id = form.cleaned_data["entity_id"])[0]
             process_activity(request, ma, form)
             return HttpResponseRedirect('/schedule/')
@@ -343,8 +345,9 @@ def edit_activity(request, activity_id = None):
             ma.delete()
             return HttpResponseRedirect('/schedule/')
         elif request.GET['ActionEvent'] == 'Approve':
-            u = djangoUser.objects.filter(username = request.user)[0]
-            ma.add_approval(u)
+            u = get_requestor(request)
+            user = get_user_name(u)
+            ma.add_approval(user)
             ma.save()
 
             # Record any receiver changes in the receiver schedule table.
@@ -378,7 +381,7 @@ def process_activity(request, ma, form):
     """
     # process the returned stuff here...
     ma.subject = form.cleaned_data['subject']
-    print "Subject:", form.cleaned_data['subject']
+    #print "Subject:", form.cleaned_data['subject']
 
     # The date and time entered into the form will be ET.  It
     # must be converted to UTC.  The end-time need not be
@@ -395,31 +398,31 @@ def process_activity(request, ma, form):
                        hour = int(form.cleaned_data['end_time_hr']), minute = int(form.cleaned_data['end_time_min']))
         delta = end - start
         ma.duration = delta.seconds / 3600.0 # in decimal hours
-        print "End time:", ma.duration
+        #print "End time:", ma.duration
     else:
         ma.duration = float(form.cleaned_data['end_time_hr']) + float(form.cleaned_data["end_time_min"]) / 60.0
-        print "Duration:", ma.duration
+        #print "Duration:", ma.duration
 
     ma.contacts = form.cleaned_data["responsible"]
-    print "Responsible:", form.cleaned_data["responsible"]
+    #print "Responsible:", form.cleaned_data["responsible"]
 
     ma.location = form.cleaned_data["location"]
-    print "Location:", form.cleaned_data["location"]
+    #print "Location:", form.cleaned_data["location"]
 
     trid = form.cleaned_data["telescope"]
     ma.telescope_resource = Maintenance_Telescope_Resources.objects.filter(id = trid)[0]
-    print "Telescope:", form.cleaned_data["telescope"]
+    #print "Telescope:", form.cleaned_data["telescope"]
 
     srid = form.cleaned_data["software"]
     ma.software_resource = Maintenance_Software_Resources.objects.filter(id = srid)[0]
-    print "Software:", form.cleaned_data["software"]
+    #print "Software:", form.cleaned_data["software"]
 
     ma.receivers.clear()
 
     for rid in form.cleaned_data["receivers"]:
         rcvr = Receiver.objects.filter(id = rid)[0]
         ma.receivers.add(rcvr)
-    print "Receivers:", form.cleaned_data["receivers"]
+    #print "Receivers:", form.cleaned_data["receivers"]
 
     if form.cleaned_data["change_receiver"] == True:
         down_rcvr_id = form.cleaned_data["old_receiver"]
@@ -443,8 +446,8 @@ def process_activity(request, ma, form):
 
         ma.receiver_changes.clear()
         ma.receiver_changes.add(mrs)
-        print "Changing receiver %s to %s" % (form.cleaned_data["old_receiver"],
-                                              form.cleaned_data["new_receiver"])
+        #print "Changing receiver %s to %s" % (form.cleaned_data["old_receiver"],
+        #                                      form.cleaned_data["new_receiver"])
     else:
         ma.receiver_changes.clear()
 
@@ -453,11 +456,11 @@ def process_activity(request, ma, form):
     for bid in form.cleaned_data["backends"]:
         be = Backend.objects.filter(id = bid)[0]
         ma.backends.add(be)
-    print "Backends:", form.cleaned_data["backends"]
+    #print "Backends:", form.cleaned_data["backends"]
 
     ma.description = form.cleaned_data["description"]
-    print "Description:", form.cleaned_data["description"]
-    print "Recurrency selected:", form.cleaned_data["recurrency_interval"]
+    #print "Description:", form.cleaned_data["description"]
+    #print "Recurrency selected:", form.cleaned_data["recurrency_interval"]
     ma.repeat_interval = form.cleaned_data["recurrency_interval"]
     ma.repeat_end = form.cleaned_data["recurrency_until"]
 
@@ -466,26 +469,29 @@ def process_activity(request, ma, form):
     start = TimeAgent.truncateDt(ma.start)
     end = start + timedelta(days = 1)
     periods = Period.get_periods_by_observing_type(start, end, "maintenance")
-    print "MA Start: %s" % (ma.start)
-    print "Candidate periods:", periods
-    
+    #print "MA Start: %s" % (ma.start)
+    #print "Candidate periods:", periods
+
     for p in periods:
         if ma.start >= p.start and ma.start < p.end():
             ma.period = p
-            print "Assigning to period id %i" % (p.id)
-        
+            #print "Assigning to period id %i" % (p.id)
+
     # Now add user and timestamp for modification.  Earliest mod is
     # considered creation.
-    u = djangoUser.objects.filter(username = request.user)[0]
-
-    if u:
-        if u.first_name and u.last_name:
-            modifying_user = u.last_name + ", " + u.first_name
-        else:
-            modifying_user = u.username
-    else:
-        modifying_user = "anonymous"
-        
-    print "Adding modification by %s" % (modifying_user)
+    u = get_requestor(request)
+    modifying_user = get_user_name(u)
+    #print "Adding modification by %s" % (modifying_user)
     ma.add_modification(modifying_user)
     ma.save()
+
+def get_user_name(u):
+    if u:
+        if u.first_name and u.last_name:
+            user = u.last_name + ", " + u.first_name
+        else:
+            user = u.username
+    else:
+        user = "anonymous"
+
+    return user

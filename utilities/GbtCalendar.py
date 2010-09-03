@@ -1,7 +1,7 @@
 from   datetime  import timedelta
 import TimeAgent
 
-def gen_gbt_schedule(start, end, days, timezone, periods, maintenance_activities):
+def gen_gbt_schedule(start, end, days, timezone, periods, maintenance_activities = None):
     # construct the calendar - we are getting a little bit into presentation
     # detail here, but that's mostly because the timezone business sucks.
     cal = {}
@@ -38,6 +38,9 @@ def get_period_day_time(day, period, first_day, end, timezone, mas):
                 end_cutoff = True
     #startStr = start.strftime("%H:%M")
     #endStr = end.strftime("%H:%M")
-    ma = mas[period]
+    if mas:
+        ma = mas[period]
+    else:
+        ma = []
 
     return (start, end, start_cutoff, end_cutoff, period, ma)

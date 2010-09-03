@@ -29,7 +29,7 @@
 ######################################################################
 
 from django.db                  import models
-from django.contrib.auth.models import User as djangoUser
+## from django.contrib.auth.models import User as djangoUser
 
 class Maintenance_Activity_Change(models.Model):
 

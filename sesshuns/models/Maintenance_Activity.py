@@ -37,7 +37,7 @@ from Maintenance_Activity_Change     import Maintenance_Activity_Change
 from Maintenance_Receivers_Swap      import Maintenance_Receivers_Swap
 from datetime                        import datetime, date, time, timedelta
 from nell.utilities                  import TimeAgent
-from django.contrib.auth.models      import User as djangoUser
+## from django.contrib.auth.models      import User as djangoUser
 from Period                          import Period
 
 import re
@@ -213,10 +213,10 @@ class Maintenance_Activity(models.Model):
         self.approved = False
         change = Maintenance_Activity_Change()
         change.responsible = user
-        print "user = %s" % user
-        print "change.responsible = %s" % change.responsible
+        #print "user = %s" % user
+        #print "change.responsible = %s" % change.responsible
         change.date = datetime.now()
-        print "change.date = %s" % change.date
+        #print "change.date = %s" % change.date
         change.save()
         self.modifications.add(change)
 
