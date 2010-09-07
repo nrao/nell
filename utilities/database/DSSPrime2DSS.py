@@ -104,7 +104,7 @@ class DSSPrime2DSS(object):
         self.report_transfer_only_new()
 
         # also print out the mimic of carl's report
-        dbr = DBReporter(filename = "DBReport.xt")
+        dbr = DBReporter(filename = "DBReport.xt", quiet = self.quiet)
         dbr.reportProjectSummaryByPcode(self.new_projects)
 
     def set_sanctioned_flags(self):
