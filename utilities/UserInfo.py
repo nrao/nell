@@ -34,6 +34,7 @@ class UserInfo(object):
                       , phoneDescs   = ['Not Available']
                       , postals      = ['Not Available']
                       , affiliations = ['Not Available']
+                      , status       = 'Not Available'
                       , username     = user.username)
         else:
             return self.parseUserDict(info)
@@ -48,6 +49,7 @@ class UserInfo(object):
         accntInfo = info.get('account-info', None)
         if accntInfo is not None:
             username = accntInfo.get('account-name', None)
+            status   = accntInfo.get('entry-status', None)
 
         # got affiliations?
         afs = info.get('affiliation-info', [])
@@ -108,6 +110,7 @@ class UserInfo(object):
                   , phoneDescs   = phoneDescs
                   , postals      = postals
                   , affiliations = affiliations
+                  , status       = status
                   , username     = username)
 
     def parseUserDictEntry(self, pst_values, name, valueName):
@@ -288,7 +291,7 @@ class UserInfo(object):
         # account-info
         at = self.findTag(element, "account-info")
         if at is not None:
-            actKeys = ['account-name'] # need anything else?
+            actKeys = ['account-name', 'entry-status'] # need anything else?
             userInfo['account-info'] = self.parseSectionText(at, actKeys)
         # contact-info section
         ci = self.findTag(element, "contact-info")

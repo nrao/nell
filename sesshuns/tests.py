@@ -3304,7 +3304,8 @@ class TestUserInfo(NellTestCase):
                      , 'first-name': 'Paul'
                      , 'middle-name': 'Raffi'
                      , 'last-name': 'Marganian'}
-            , 'account-info': {'account-name': 'pmargani'}         
+            , 'account-info': {'account-name': 'pmargani'         
+                             , 'entry-status': 'Suspect'}
             , 'id': '823'
             , 'affiliation-info': [("National Radio Astronomy Observatory ", True)
                              , ("Oregon, University of", False)]
@@ -3337,6 +3338,7 @@ class TestUserInfo(NellTestCase):
         self.assertEquals(postals, info['postals'])
         self.assertEquals(affiliations, info['affiliations'])
         self.assertEquals('pmargani', info['username'])
+        self.assertEquals('Suspect', info['status'])
 
 class TestUpdateEphemeris(NellTestCase):
 
