@@ -1,5 +1,6 @@
 from icalendar       import Calendar, Event, UTC
 from datetime        import datetime, timedelta
+from utilities.TimeAgent import dt2semester 
 
 class IcalAntioch:
 
@@ -43,6 +44,33 @@ class IcalAntioch:
         f.write(self.cal.as_string())
         f.close()        
 
+    def parseSchedule(self):
+
+        bandFilter = ['Q']
+        print "filtering for bands: ", bandFilter
+
+        # read in the input
+        f = open(self.inputFile, 'r')
+        lines = f.readlines()
+        f.close()
+        id = 0
+        ps = []
+        total = 0
+        semTotals = {'06A' : 0
+                   , '06B' : 0
+                   , '06C' : 0}
+        for l in lines:
+            p = self.parsePeriod(l)
+            if p['band'] in bandFilter:
+                semester = dt2semester(p['start']) 
+                semTotals[semester] += p['duration']
+                total += p['duration']
+                ps.append((p, semester, total, semTotals[semester]))
+            #print p
+        for p, sem, tl, st in ps:
+            print "%9s at %s in %s for %d mins (%5.2f hrs) makes total of %d (%5.2f hrs) and for semester %d (%5.2f hrs)" % (p['sName'], p['start'], sem, p['duration'], p['duration']/60.0, tl, tl/60.0, st, st/60.0)
+            
+
     def parsePeriod(self, pStr):
         """
         Given Antioch's string rep. of a Period, parse it.
@@ -80,6 +108,8 @@ class IcalAntioch:
         return dict(sName = sName
                   , dtstart = dtstart
                   , dtend = dtend
+                  , start = start
+                  , duration = durMins
                   , band = band)
 
     def createEvent(self, dct):
