@@ -553,7 +553,16 @@ def reservations(request, *args, **kws):
     start        = request.GET.get('start')
     days         = int(request.GET.get('days'))
     end          = (datetime.strptime(start, "%m/%d/%Y") + timedelta(days = days)).strftime("%m/%d/%Y")
-    reservations = [r for r in NRAOBosDB().reservationsRange(start, end) if hasIncompleteProject(r)]
+    useBos       = False
+    if useBos:
+        reservations = [r for r in NRAOBosDB().reservationsRange(start, end) if hasIncompleteProject(r)]
+    else:
+        reservations = [{'id'    : 0
+                       , 'name'  : r.user.name()
+                       , 'start' : r.start_date.strftime("%m/%d/%Y")
+                       , 'end'   : r.end_date.strftime("%m/%d/%Y")
+                       } for r in Reservation.objects.all() 
+                          if any([not i.project.complete for i in r.user.investigator_set.all()])]
 
     return HttpResponse(json.dumps({'reservations' : reservations
                                   , 'total'        : len(reservations)
