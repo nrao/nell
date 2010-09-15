@@ -17,6 +17,7 @@ from nell.utilities.database      import DSSPrime2DSS
 from nell.utilities.receiver      import ReceiverCompile
 from nell.utilities               import UserInfo, NRAOBosDB, UpdateEphemeris
 from nell.utilities               import SchedulingNotifier 
+from nell.utilities               import PSTMirrorDB
 
 # Test field data
 fdata = {"total_time": "3"
@@ -3201,6 +3202,39 @@ class TestConsolidateBlackouts(NellTestCase):
         # No conflicts.
         r = consolidate_events([])
         self.assertEquals([], r)
+
+class TestPSTMirrorDB(NellTestCase):
+
+    # this really isn't a 'unit test' since I'm interacting with PST's
+    # Database, but a test is better then no test
+    def test_getProfileByID(self):
+
+        db = PSTMirrorDB(passwd = "wugupHA8")
+        # 823 - pst_id for pmargani
+        info = db.getStaticContactInfoByID(823)
+
+        # expected values
+        emails = ['pmargani@nrao.edu'
+                , 'paghots@hotmail.com'
+                , 'pmargani@gmail.com']
+        emailDescs = ['pmargani@nrao.edu (Work)'
+                    , 'paghots@hotmail.com (Other)'
+                    , 'pmargani@gmail.com (Personal)']
+        phones = ['304-456-2202', '304-456-2206']        
+        phoneDescs = ['304-456-2202 (Work)', '304-456-2206 (Other)']        
+        postals = \
+            ['NRAO, PO Box 2, Green Bank, West Virginia, 24944, USA, (Office)'
+           , '49 columbus Ave., W. Bridgewater, Massachusetts, 02379, United States, (Other)']
+        affiliations = ['National Radio Astronomy Observatory '
+                      , 'Oregon, University of']
+        self.assertEquals(emails, info['emails'])        
+        self.assertEquals(emailDescs, info['emailDescs'])        
+        self.assertEquals(phones, info['phones'])
+        self.assertEquals(phoneDescs, info['phoneDescs'])
+        self.assertEquals(postals, info['postals'])
+        self.assertEquals(affiliations, info['affiliations'])
+        self.assertEquals('pmargani', info['username'])
+        self.assertEquals(True, info['status'])
 
 class TestUserInfo(NellTestCase):
 

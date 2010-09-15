@@ -5,3 +5,4 @@ from NRAOBosDB            import NRAOBosDB
 from NRAOUserDB           import NRAOUserDB
 from Score                import Score
 from UserInfo             import UserInfo
+from PSTMirrorDB          import PSTMirrorDB
