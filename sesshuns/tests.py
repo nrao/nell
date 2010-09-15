@@ -3236,6 +3236,30 @@ class TestPSTMirrorDB(NellTestCase):
         self.assertEquals('pmargani', info['username'])
         self.assertEquals(True, info['status'])
 
+    # this is even more un "unit" test - we're interface with TWO
+    # external systems
+    def test_compareProfiles(self):
+        "Compare the outputs from UserInfo & PSTMirrorDB"
+
+
+        db = PSTMirrorDB(passwd = "wugupHA8")
+        # 823 - pst_id for pmargani
+        mirror = db.getStaticContactInfoByID(823)
+
+        ui = UserInfo()
+        xml = ui.getStaticContactInfoByID(823)
+        pst = ui.parseUserDict(xml)
+
+        # get rid of any elements that are different
+        # by design, status key is different
+        mirror.pop('status')
+        pst.pop('status')
+        # for some reason, the XML derived addresses aren't in order
+        mirror.pop('postals')
+        pst.pop('postals')
+        self.assertEquals(mirror, pst)
+
+
 class TestUserInfo(NellTestCase):
 
     def setUp(self):
