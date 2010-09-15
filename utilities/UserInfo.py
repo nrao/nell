@@ -1,4 +1,5 @@
 from   NRAOUserDB         import NRAOUserDB
+from   PSTMirrorDB        import PSTMirrorDB
 
 from   django.core.cache import cache
 import lxml.etree as ET
@@ -22,11 +23,24 @@ class UserInfo(object):
               , opener = urllib2.build_opener())
 
     def __init__(self):
+
         self.ns    = "{http://www.nrao.edu/namespaces/nrao}"
+
+        # we can either pull from the PST web services, or
+        # from the local mirror
+        self.useMirror = False
+        self.mirror = None
+
+        if self.useMirror:
+            self.mirror = PSTMirrorDB()
 
     def getProfileByID(self, user, use_cache = True):
         try:
-            info = self.getStaticContactInfoByID(user.pst_id, use_cache)
+            if self.useMirror:
+                info = self.mirror.getStaticContactInfoByID(user.pst_id)
+            else:    
+                info = self.getStaticContactInfoByID(user.pst_id
+                                                   , use_cache)
         except:
             return dict(emails       = []
                       , emailDescs   = []
@@ -37,7 +51,10 @@ class UserInfo(object):
                       , status       = 'Not Available'
                       , username     = user.username)
         else:
-            return self.parseUserDict(info)
+            if self.useMirror:
+                return info
+            else:
+                return self.parseUserDict(info)
 
     def parseUserDict(self, info):
         "Convinience method so you don't have to deal with bad info dictionary."
