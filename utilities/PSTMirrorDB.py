@@ -77,7 +77,13 @@ class PSTMirrorDB(object):
 
         self.cursor.execute(q)
         rows = self.cursor.fetchall()
-        return (rows[0][0], rows[0][1], bool(rows[0][2]))
+        return (rows[0][0], rows[0][1], self.oneBitStr2Bool(rows[0][2]))
+
+    def oneBitStr2Bool(self, bstr):
+        if '\x00' == bstr:
+            return False
+        else:
+            return True
 
     def getEmails(self, person_id):
 
@@ -175,23 +181,40 @@ class PSTMirrorDB(object):
 
         return values, valueDescs    
        
-    def findPeopleByNames(self, firstName, lastName):
+    def findPeopleByLastName(self, lastName, firstName = None):
         """
         This is a utilitly used for finding users who have been newly 
         transferred over from Carl's system into the DSS, and still do
         not have a pst_id or username associated with them.
         """
 
-        query = """
-        SELECT person_id, enabled 
-        FROM person 
-        WHERE firstName = '%s' 
-          AND lastName = '%s'
-        """ % (firstName, lastName)
+        if firstName is None:
+            firstNameClause = ""
+        else:
+            firstNameClause = " AND p.firstName = '%s'" % firstName
 
-        self.cursor.execute(query)
+        q = """
+        SELECT p.personAuthentication_id, 
+          ua.personName, p.enabled, p.firstName
+        FROM person as p, userAuthentication as ua
+        WHERE p.personAuthentication_id = ua.userAuthentication_id
+          AND p.lastName = '%s' %s
+        """ % (lastName, firstNameClause)
+
+        self.cursor.execute(q)
         rows = self.cursor.fetchall()
-        print rows
-        return rows
+
+        info = []
+        for r in rows:
+            print r
+            pst_id = int(r[0])
+            username = r[1]
+            enabled = self.oneBitStr2Bool(r[2])
+            firstName = r[3]
+            info.append((pst_id, username, firstName, enabled))
+        return info 
+
+ 
+
 
 

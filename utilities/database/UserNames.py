@@ -3,7 +3,7 @@ from datetime           import datetime, timedelta
 import math
 import MySQLdb as m
 import logging, urllib2
-from nell.utilities     import NRAOUserDB, UserInfo
+from nell.utilities     import NRAOUserDB, UserInfo, PSTMirrorDB
 import lxml.etree as ET
 
 class UserNames(object):
@@ -262,23 +262,31 @@ class UserNames(object):
     def assignUserNames(self, username, password):
         "Where we can, get usernames for those users who don't have 'em"
 
+        useMirror = True
+
         # We will query PST using last name where we can.
 
         ui = UserInfo()
 
-        # use service to get all users with this last name
-        #url = 'https://mirror.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
-        url = 'https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
-        #udb = NRAOUserDB.NRAOUserDB( \
-        udb = NRAOUserDB( \
-            url
-          , username
-          , password
-          , opener=urllib2.build_opener())
+        if useMirror:
+            # dont use the PST web service, but our local mirror of the DB
+            mirror = PSTMirrorDB()
+        else:    
+            # use service to get all users with this last name
+            #url = 'https://mirror.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
+            url = 'https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
+            #udb = NRAOUserDB.NRAOUserDB( \
+            udb = NRAOUserDB( \
+                url
+              , username
+              , password
+              , opener=urllib2.build_opener())
+    
+            key = 'usersByLastNameLike'
 
-        key = 'usersByLastNameLike'
-
-        users = self.getUsersUniqueByLastName()
+        users = User.objects.all() 
+        # why would we want to limit this to just these names?
+        #self.getUsersUniqueByLastName()
 
         missing = [u for u in users if (u.pst_id is None and u.username is None)] 
         print "num missing users: ", len(missing)
@@ -296,25 +304,32 @@ class UserNames(object):
                 print >> self.out, "SKIP: ", user
                 continue             
 
-            el = udb.get_data(key, user.last_name)
-            #print >> self.out, ET.tostring(el, pretty_print=True)
-
-            #print "parsing xMl:"
             infos = []
-            xmlUsers = el.getchildren()
-            print "xmlUsers: ", xmlUsers
-            for xmli in range(len(xmlUsers)):
-                e = xmlUsers[xmli]
-                print e
-                info = ui.parseUserXMLWorker(e)
+            if useMirror:
+                lastNames = mirror.findPeopleByLastName(user.last_name)
+                for pst_id, username, firstName, enabled in lastNames:
+                    if enabled:
+                        infos.append((firstName, username, pst_id))
+                    else:
+                        print "DDDDDDDDDDDDDD disabled: ", user.last_name, firstName
+            else:
+                el = udb.get_data(key, user.last_name)
+                #print >> self.out, ET.tostring(el, pretty_print=True)
 
-                print xmli
-                print info
-                first_name = info['name']['first-name']
-                username = info['account-info']['account-name']
-                id = int(info['id'])
-
-                infos.append((first_name, username, id))
+                #print "parsing xMl:"
+                xmlUsers = el.getchildren()
+                print "xmlUsers: ", xmlUsers
+                for xmli in range(len(xmlUsers)):
+                    e = xmlUsers[xmli]
+                    print e
+                    info = ui.parseUserXMLWorker(e)
+    
+                    print xmli
+                    print info
+                    first_name = info['name']['first-name']
+                    username = info['account-info']['account-name']
+                    id = int(info['id'])
+                    infos.append((first_name, username, id))
 
 
             matchingInfo = [i for i in infos if i[0] == user.first_name]
