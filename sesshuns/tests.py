@@ -3209,7 +3209,7 @@ class TestPSTMirrorDB(NellTestCase):
     # Database, but a test is better then no test
     def test_getProfileByID(self):
 
-        db = PSTMirrorDB(passwd = "wugupHA8")
+        db = PSTMirrorDB()
         # 823 - pst_id for pmargani
         info = db.getStaticContactInfoByID(823)
 
@@ -3242,7 +3242,7 @@ class TestPSTMirrorDB(NellTestCase):
         "Compare the outputs from UserInfo & PSTMirrorDB"
 
 
-        db = PSTMirrorDB(passwd = "wugupHA8")
+        db = PSTMirrorDB()
         # 823 - pst_id for pmargani
         mirror = db.getStaticContactInfoByID(823)
 

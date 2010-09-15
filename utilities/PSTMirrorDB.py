@@ -14,7 +14,7 @@ class PSTMirrorDB(object):
 
     def __init__(self, host = "trent.gb.nrao.edu"
                      , user = "nrao_200"
-                     , passwd = ""
+                     , passwd = "wugupHA8"
                      , database = "nrao_200"
                      , silent   = True
                  ):
