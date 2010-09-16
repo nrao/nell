@@ -13,6 +13,8 @@ class UserInfo(object):
     This class is responsible for dynamically retrieving and parsing
     info about a given user from the PST query services.  It utilitizes
     NRAOUserDB to get around their CAS authentication.
+    Note, that by toggling a flag we can sidestep the query service and the
+    XML parsing by reading our local mirror directly.
     """
 
     # Log in only once to minimize authentication overhead.
@@ -26,9 +28,13 @@ class UserInfo(object):
 
         self.ns    = "{http://www.nrao.edu/namespaces/nrao}"
 
-        # we can either pull from the PST web services, or
-        # from the local mirror
-        self.useMirror = False
+        # We can either pull from the PST web services, or
+        # from the local mirror.
+        # When using the mirror, the XML parsing stuff is not needed,
+        # as is all the caching.  However, we are leaving all this
+        # in place so that we can easily switch back to the query services
+        # if there is a problem.
+        self.useMirror = True
         self.mirror = None
 
         if self.useMirror:
