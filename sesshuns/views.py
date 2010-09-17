@@ -553,7 +553,7 @@ def reservations(request, *args, **kws):
     start        = request.GET.get('start')
     days         = int(request.GET.get('days'))
     end          = (datetime.strptime(start, "%m/%d/%Y") + timedelta(days = days)).strftime("%m/%d/%Y")
-    useBos       = False
+    useBos       = True
     if useBos:
         reservations = [r for r in NRAOBosDB().reservationsRange(start, end) if hasIncompleteProject(r)]
     else:
