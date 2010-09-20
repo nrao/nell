@@ -424,7 +424,7 @@ def GenerateReport():
     deleted  = Period_State.get_state('D')
 
     outfile.write("Projects without sessions:")
-    values = [p.pcode for p in projects if p.sesshun_set.all() == []]
+    values = [p.pcode for p in projects if len(p.sesshun_set.all()) == 0]
     print_values(outfile, values)
 
     outfile.write("\n\nSessions without a project:")
