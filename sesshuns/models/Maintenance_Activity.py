@@ -140,6 +140,19 @@ class Maintenance_Activity(models.Model):
         return "%02i:%02i - %02i:%02i" % (start.time().hour, start.time().minute,
                                           end.time().hour, end.time().minute)
 
+    def get_start(self):
+        if self.period:
+            start = datetime(period.start.year, period.start.month, period.start.day,
+                             self.start.hour, self.start.minute)
+        else:
+            start = self.start
+
+        return start
+
+    def get_end(self):
+        d = timedelta(hours = self.duration)
+        return self.get_start() + d
+
     def set_telescope_resource(self, resource):
         self.telescope_resource = resource
 
@@ -327,13 +340,12 @@ class Maintenance_Activity(models.Model):
         """
 
         # To handle repeat maintenance activity objects:
-        repeatQ = (models.Q(repeat_interval = 1) | models.Q(repeat_interval = 7))\
-                  & (models.Q(start__lte = period.end())  & models.Q(repeat_end__gte = period.end()))
-
+        repeatQ    = (models.Q(repeat_interval = 1) | models.Q(repeat_interval = 7))\
+                     & (models.Q(start__lte = period.end())  & models.Q(repeat_end__gte = period.end()))
         start_endQ = models.Q(start__gte = period.start) & models.Q(start__lte = period.end())
-        periodQ = models.Q(period = period)
-        mas = Maintenance_Activity.objects.filter(repeatQ | periodQ)
-        r = [i for i in mas]
+        periodQ    = models.Q(period = period)
+        mas        = Maintenance_Activity.objects.filter(repeatQ | periodQ | start_endQ)
+        r          = [i for i in mas]
         r.sort(cmp = lambda x, y: cmp(x.start.time(), y.start.time()))
 
         # Weekly repeats have a problem: what if the repeat falls on a

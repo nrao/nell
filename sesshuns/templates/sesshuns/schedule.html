@@ -123,7 +123,7 @@
     {# Loop through for each day in the calendar. #}
     {% for day, ps in calendar %}
     <tr class="day_header"> 
-      <th title="Start and End times for the start day (ET). '+' indicates that the period continues on in an undisplayed date.">{{day|date:"D Y-m-d"}}</th>
+      <th title="Start and End times for the start day (ET). '+' indicates that the period continues on in an undisplayed date."><a href="/resourcecal_add_activity/{{day|date:"Y/m/d"}}/">{{day|date:"D Y-m-d"}}</a></th>
       <th title="Project Type: 'A' : Astronomy, 'C' : Commissioning, 'K' : Calibration, 'M' : 'Maintenance, 'T' : Test">Type</th>
       <th>Project ID</th>
       <th>Project Title</th>
@@ -134,7 +134,7 @@
     </tr>
 
     {# this for-block loops for each period in the day. #}
-    {% for start, end,start_cutoff, end_cutoff, p, mas in ps %}
+    {% for start, end, start_cutoff, end_cutoff, p, mas in ps %}
 
       {# Notify operator of minimum observing condition (MOC) failure #}
       {% if requestor.isOperator and p|moc_reschedule %}
@@ -277,14 +277,47 @@
 
     {# If we just output a maintenance project, now output all the maintenance #}
     {# activities in their own table. #}
+
     {% if p.session.project.is_maintenance %}
+      <tr>
+        <td></td>
+        <td></td>
+        <td colspan=7>
+          <table border=1 frame=void rules=all cellpadding=3>
+              <tr class="project_type type_maintenance" align=left><th>Time</th>
+            <th><a href="/resourcecal_add_activity/{{p.id}}">Activity</a></th></tr>
+            {% for ma in mas %} 
+              {% if ma.approved %}
+          <tr><td>{{ma.time_range}}</td>
+            <td><a href="/resourcecal_display_activity/{{ma.id}}">
+                {% filter flag_rc_conflicts:ma %}
+                {{ma.summary}}
+                {% endfilter %}
+              </a>&nbsp;&nbsp;<a href="" class="info">Notes<span>
+                <p>Description:</p>{{ma.description|escape|linebreaks}}</span></a>
+              {% else %}
+              <tr><td><i>{{ma.time_range}}</i></td>
+                <td><a href="/resourcecal_display_activity/{{ma.id}}"><i>
+                      {% filter flag_rc_conflicts:ma %}
+                      {{ma.summary}}
+                      {% endfilter %}
+                    </i>
+                  </a>&nbsp;&nbsp;<a href="" class="info"><i>Notes</i><span>
+                    <p>Description:</p>{{ma.description|escape|linebreaks}}</span></a>
+              {% endif %}  {# approved #}
+            {% endfor %} {# each maintenance activity #}
+          </table>
+        </td>
+      </tr>
+    {% else %}
+      {% if mas %}
         <tr>
           <td></td>
           <td></td>
           <td colspan=7>
             <table border=1 frame=void rules=all cellpadding=3>
                 <tr class="project_type type_maintenance" align=left><th>Time</th>
-              <th><a href="/resourcecal_add_activity/{{p.id}}">Activity</a></th></tr>
+              <th>Activity</th></tr>
               {% for ma in mas %} 
                 {% if ma.approved %}
             <tr><td>{{ma.time_range}}</td>
@@ -308,8 +341,8 @@
             </table>
           </td>
         </tr>
-    {% endif %}  
-
+      {% endif %}
+    {% endif %}
     {% endfor %}{# for p in ps; for each period in the day #}
     {% endfor %}{# for each day #}
   </table>
