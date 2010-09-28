@@ -274,12 +274,8 @@ def add_activity(request, period_id = None, year = None, month = None, day = Non
     else:
         default_telescope = Maintenance_Telescope_Resources.objects.filter(rc_code = 'N')[0]
         default_software = Maintenance_Software_Resources.objects.filter(rc_code = 'N')[0]
-        u = djangoUser.objects.filter(username = request.user)[0]
-
-        if u:
-            user = u.last_name + ", " + u.first_name if (u.last_name and u.first_name) else u.username
-        else:
-            user = ""
+        u = get_requestor(request)
+        user = get_user_name(u)
 
         if period_id:
             p = Period.objects.filter(id = int(period_id))[0]
