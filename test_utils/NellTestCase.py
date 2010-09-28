@@ -11,9 +11,11 @@ class NellTestCase(unittest.TestCase):
             settings.CACHE_BACKEND = "dummy:///" # disable caching for testing
 
         dbname = "test_" + settings.DATABASE_NAME
+        port   = int(settings.DATABASE_PORT) if settings.DATABASE_PORT != '' else 5432
         c = pg.connect(host   = settings.DATABASE_HOST
                      , user   = settings.DATABASE_USER
                      , passwd = settings.DATABASE_PASSWORD
+                     , port   = port
                      , dbname = dbname)
         sql = open("populate_db.sql").read()
         c.query(sql)
@@ -21,9 +23,11 @@ class NellTestCase(unittest.TestCase):
 
     def tearDown(self):
         dbname = "test_" + settings.DATABASE_NAME
+        port   = int(settings.DATABASE_PORT) if settings.DATABASE_PORT != '' else 5432
         c = pg.connect(host = settings.DATABASE_HOST
                      , user = settings.DATABASE_USER
                      , passwd = settings.DATABASE_PASSWORD
+                     , port   = port
                      , dbname = dbname)
 
         # Query to list all table names in the db
