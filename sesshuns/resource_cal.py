@@ -251,8 +251,6 @@ def add_activity(request, period_id = None, year = None, month = None, day = Non
     if request.method == 'POST':
         form = RCAddActivityForm(request.POST)
 
-        print request.POST
-
         if form.is_valid():
             # process the returned stuff here...
             ma = Maintenance_Activity()
