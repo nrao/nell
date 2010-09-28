@@ -250,3 +250,8 @@ def flag_rc_conflicts(value, maintenance_activity):
     value = SafeUnicode(value)
     return value
 flag_rc_conflicts.is_safe = True
+
+@register.filter
+def is_period(item):
+    return type(item) == Period
+

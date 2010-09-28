@@ -201,7 +201,7 @@ class RCAddActivityForm(forms.Form):
 def display_maintenance_activity(request, activity_id = None):
     if activity_id:
         ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
-        start = TimeAgent.utc2est(ma.start)
+        start = TimeAgent.utc2est(ma.get_start())
         duration = timedelta(hours = ma.duration)
         end = start + duration
         u = get_requestor(request)
@@ -212,24 +212,25 @@ def display_maintenance_activity(request, activity_id = None):
         else:
             supervisor_mode = False
 
-        params = {'subject'         : ma.subject,
-                  'date'            : start.date(),
-                  'time'            : start,
-                  'end_choice'      : "end_time",
-                  'end_time'        : end.time(),
-                  'responsible'     : ma.contacts,
-                  'location'        : ma.location,
-                  'telescope'       : ma.telescope_resource.resource,
-                  'software'        : ma.software_resource.resource,
-                  'receivers'       : ", ".join([r.full_description() for r in ma.receivers.all()]),
-                  'backends'        : ", ".join([b.full_description() for b in ma.backends.all()]),
-                  'description'     : ma.description,
-                  'activity_id'     : activity_id,
-                  'approval'        : 'Yes' if ma.approved else 'No',
-                  'last_modified'   : str(ma.modifications.all()[len(ma.modifications.all()) - 1]),
-                  'created'         : str(ma.modifications.all()[0]),
-                  'receiver_swap'   : ma.receiver_changes.all(),
-                  'supervisor_mode' : supervisor_mode
+        params = {'subject'            : ma.subject,
+                  'date'               : start.date(),
+                  'time'               : start.time(),
+                  'end_choice'         : "end_time",
+                  'end_time'           : end.time(),
+                  'responsible'        : ma.contacts,
+                  'location'           : ma.location,
+                  'telescope'          : ma.telescope_resource.resource,
+                  'software'           : ma.software_resource.resource,
+                  'receivers'          : ", ".join([r.full_description() for r in ma.receivers.all()]),
+                  'backends'           : ", ".join([b.full_description() for b in ma.backends.all()]),
+                  'description'        : ma.description,
+                  'activity_id'        : activity_id,
+                  'approval'           : 'Yes' if ma.approved else 'No',
+                  'last_modified'      : str(ma.modifications.all()[len(ma.modifications.all()) - 1]),
+                  'created'            : str(ma.modifications.all()[0]),
+                  'receiver_swap'      : ma.receiver_changes.all(),
+                  'supervisor_mode'    : True if (u and u.username == "rcreager") else False,
+                  'maintenance_period' : ma.period_id
                  }
     else:
         params = {}
@@ -246,9 +247,11 @@ def display_maintenance_activity(request, activity_id = None):
 ######################################################################
 
 @login_required
-def add_activity(request, period_id = None):
+def add_activity(request, period_id = None, year = None, month = None, day = None):
     if request.method == 'POST':
         form = RCAddActivityForm(request.POST)
+
+        print request.POST
 
         if form.is_valid():
             # process the returned stuff here...
@@ -256,31 +259,47 @@ def add_activity(request, period_id = None):
             ma.save() # needs to have a primary key for many-to-many
                       # relationships to be set.
             process_activity(request, ma, form)
-            return HttpResponseRedirect('/schedule/')
+
+            if request.POST['ActionEvent'] =="Submit And Continue":
+                if period_id:
+                    redirect_url = '/resourcecal_add_activity/%i/' % (period_id)
+                elif year and month and day:
+                    redirect_url = '/resourcecal_add_activity/%s/%s/%s/' % (year, month, day)
+                else:
+                    redirect_url = '/resourcecal_add_activity/'
+                    
+                return HttpResponseRedirect(redirect_url)
+            else:
+                return HttpResponseRedirect('/schedule/')
     else:
+        default_telescope = Maintenance_Telescope_Resources.objects.filter(rc_code = 'N')[0]
+        default_software = Maintenance_Software_Resources.objects.filter(rc_code = 'N')[0]
+        u = djangoUser.objects.filter(username = request.user)[0]
+
+        if u:
+            user = u.last_name + ", " + u.first_name if (u.last_name and u.first_name) else u.username
+        else:
+            user = ""
+
         if period_id:
-            default_telescope = Maintenance_Telescope_Resources.objects.filter(rc_code = 'N')[0]
-            default_software = Maintenance_Software_Resources.objects.filter(rc_code = 'N')[0]
-            u = get_requestor(request)
-            user = get_user_name(u);
             p = Period.objects.filter(id = int(period_id))[0]
             start = TimeAgent.utc2est(p.start)
+        elif year and month and day:
+            start = datetime(int(year), int(month), int(day))
 
-            initial_data = {'date'              : start.date(),
-                            'time_hr'           : start.hour,
-                            'time_min'          : start.minute,
-                            'end_choice'        : "duration",
-                            'end_time_hr'       : 1,
-                            'end_time_min'      : 0,
-                            'responsible'       : user,
-                            'telescope'         : default_telescope.id,
-                            'software'          : default_software.id,
-                            'entity_id'         : period_id
-                            }
+        initial_data = {'date'              : start.date(),
+                        'time_hr'           : start.hour,
+                        'time_min'          : start.minute,
+                        'end_choice'        : "duration",
+                        'end_time_hr'       : 1,
+                        'end_time_min'      : 0,
+                        'responsible'       : user,
+                        'telescope'         : default_telescope.id,
+                        'software'          : default_software.id,
+                        'entity_id'         : period_id
+                        }
 
-            form = RCAddActivityForm(initial = initial_data)
-        else:
-            form = RCAddActivityForm()
+        form = RCAddActivityForm(initial = initial_data)
 
     return render_to_response('sesshuns/rc_add_activity_form.html', {'form': form, })
 
@@ -310,7 +329,7 @@ def edit_activity(request, activity_id = None):
         ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
 
         if request.GET['ActionEvent'] == 'Modify':
-            start = TimeAgent.utc2est(ma.start)
+            start = TimeAgent.utc2est(ma.get_start())
             duration = timedelta(hours = ma.duration)
             change_receiver = True if len(ma.receiver_changes.all()) else False
             old_receiver = None if not change_receiver else \
@@ -352,7 +371,8 @@ def edit_activity(request, activity_id = None):
 
             # Record any receiver changes in the receiver schedule table.
             for i in ma.get_receiver_changes():
-                rsched = datetime(ma.start.year, ma.start.month, ma.start.day, 16)
+                start = ma.get_start()
+                rsched = datetime(start.year, start.month, start.day, 16)
                 Receiver_Schedule.change_schedule(rsched, [i.up_receiver], [i.down_receiver])
 
             return HttpResponseRedirect('/schedule/')
@@ -466,14 +486,12 @@ def process_activity(request, ma, form):
 
     # assign right period for maintenance activity.  If no
     # periods, this will remain 'None'
-    start = TimeAgent.truncateDt(ma.start)
+    start = TimeAgent.truncateDt(ma.get_start())
     end = start + timedelta(days = 1)
     periods = Period.get_periods_by_observing_type(start, end, "maintenance")
-    #print "MA Start: %s" % (ma.start)
-    #print "Candidate periods:", periods
 
     for p in periods:
-        if ma.start >= p.start and ma.start < p.end():
+        if ma.get_start() >= p.start and ma.get_start() < p.end():
             ma.period = p
             #print "Assigning to period id %i" % (p.id)
 
