@@ -73,7 +73,9 @@ class SessionResource(NellResource):
                     Q(project__pcode__icontains=filterText) |
                     Q(project__semester__semester__icontains=filterText) |
                     Q(session_type__type__icontains=filterText) |
-                    Q(observing_type__type__icontains=filterText))
+                    Q(observing_type__type__icontains=filterText) |
+                    Q(target__source__icontains=filterText)
+                    )
             sessions = query_set.order_by(order + sortField)
             total    = len(sessions)
             offset   = int(request.GET.get("offset", 0))
