@@ -23,7 +23,7 @@ class WindowHttpAdapter (object):
         # we need to do this so that the window explorer can work with
         # a 'flat' json dictionary
         self.add_period_json(js, "default", self.window.default_period)
-        self.add_period_json(js, "choosen", self.window.period)
+        self.add_period_json(js, "chosen", self.window.period)
         return js    
 
     def init_from_post(self, fdata):
@@ -56,7 +56,7 @@ class WindowHttpAdapter (object):
         # we are working with a 'flat' dictionary that has only a few
         # of the specified fields for it's two periods.
         self.period_from_post(fdata, "default", self.window.session)
-        self.period_from_post(fdata, "choosen", self.window.session)
+        self.period_from_post(fdata, "chosen", self.window.session)
        
         self.window.save()
 
@@ -97,7 +97,7 @@ class WindowHttpAdapter (object):
         # do we have a period of this type yet?
         if type == "default":
             p = self.window.default_period
-        elif type == "choosen":
+        elif type == "chosen":
             p = self.window.period
         else:
             raise "unknown type"
@@ -117,7 +117,7 @@ class WindowHttpAdapter (object):
                   self.window.default_period = p
                   self.window.default_period.save()
 
-               elif type == "choosen":
+               elif type == "chosen":
                   self.window.period = p
                   self.window.period.save()
         else:

@@ -193,7 +193,7 @@ def show_help(program):
     print "\tpcode = project code, in double quotes"
     print "\tname  = session name, in double quotes"
     print "\ttype  = one of [history, diffs, time]"
-    print "\ttime  = if 'time' type choosen, the time in YY-mm-dd HH:MM:SS"
+    print "\ttime  = if 'time' type chosen, the time in YY-mm-dd HH:MM:SS"
     print "\nAll required arguments are required.  Anything else is optional :)"
 
 if __name__ == '__main__':
