@@ -1,4 +1,4 @@
-from   datetime  import timedelta
+from   datetime  import datetime, timedelta
 import TimeAgent
 
 def gen_gbt_schedule(start, end, days, timezone, periods, maintenance_activities = None):
@@ -36,10 +36,11 @@ def get_period_day_time(day, period, first_day, end, timezone, mas):
             # will the end of this period not be displayed?
             if day == last_day:
                 end_cutoff = True
-    #startStr = start.strftime("%H:%M")
-    #endStr = end.strftime("%H:%M")
+
+    # only associate today's maintenance activities with the period
+    # (period may split over 2 days)
     if mas:
-        ma = mas[period]
+        ma = [m for m in mas[period] if TimeAgent.utc2est(m.get_start()).date() == day.date()]
     else:
         ma = []
 
