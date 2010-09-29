@@ -8,6 +8,8 @@ import simplejson as json
 import lxml.etree as et
 import MySQLdb as mysql
 
+from random import randint
+
 from httpadapters                 import *
 from models                       import *
 from nell.test_utils.NellTestCase import NellTestCase
@@ -16,7 +18,7 @@ from nell.tools                   import IcalAntioch, TimeAccounting
 from nell.utilities.database      import DSSPrime2DSS
 from nell.utilities.receiver      import ReceiverCompile
 from nell.utilities               import UserInfo, NRAOBosDB, UpdateEphemeris
-from nell.utilities               import SchedulingNotifier 
+from nell.utilities               import SchedulingNotifier
 from nell.utilities               import PSTMirrorDB
 
 # Test field data
@@ -116,20 +118,20 @@ class TestUser(NellTestCase):
 
         # TBF: end of redundant code, now add periods
         #period_data = {"session" : self.sesshun
-        #             , "date" 
+        #             , "date"
         state = first(Period_State.objects.filter(abbreviation = 'S'))
         self.period1 = Period(session  = self.sesshun
                             , start    = datetime(2010, 10, 1, 0, 0, 0)
                             , duration = 1.0
                             , state    = state
                             , backup   = False)
-        self.period1.save()                    
+        self.period1.save()
         self.period2 = Period(session  = self.sesshun
                             , start    = datetime(2010, 10, 2, 5, 0, 0)
                             , duration = 3.5
                             , state    = state
                             , backup   = False)
-        self.period2.save()                    
+        self.period2.save()
 
         # add the project friend
         self.user3 = User(sanctioned = True, role = obsRole)
@@ -173,7 +175,7 @@ class TestUser(NellTestCase):
         self.assertEqual(False, self.user4.canViewUser(self.user3))
 
     def test_getPeriods(self):
-        
+
         # exp values
         periods = [self.period1, self.period2]
         sep1 = datetime(2010,  9, 1, 0, 0, 0)
@@ -206,22 +208,22 @@ class TestWindow(NellTestCase):
                                    , state = pending
                                    , accounting = pa
                                    )
-        self.default_period.save()    
+        self.default_period.save()
         pjson = PeriodHttpAdapter(self.default_period).jsondict('UTC', 1.1)
         self.fdata = {"session":  1
                     , "start":    "2009-06-01"
                     , "duration": 7
-                    , "default_date" : pjson['date'] 
-                    , "default_time" : pjson['time'] 
-                    , "default_duration" : pjson['duration'] 
-                    , "default_state" : pjson['state'] 
+                    , "default_date" : pjson['date']
+                    , "default_time" : pjson['time']
+                    , "default_duration" : pjson['duration']
+                    , "default_state" : pjson['state']
                     }
 
     def test_update_from_post(self):
         w = Window()
         adapter = WindowHttpAdapter(w)
         adapter.init_from_post(self.fdata)
-       
+
         self.assertEqual(w.session, self.sesshun)
         self.assertEqual(w.start_date, date(2009, 6, 1))
         self.assertEqual(w.duration, self.fdata["duration"])
@@ -229,13 +231,13 @@ class TestWindow(NellTestCase):
         self.assertEqual(w.period, None)
 
     def test_jsondict(self):
-         
+
         start = datetime(2009, 6, 1)
         startStr = start.strftime("%Y-%m-%d")
         dur   = 7 # days
         end = start + timedelta(days = dur - 1)
         endStr = end.strftime("%Y-%m-%d")
-        
+
         w = Window()
         w.start_date = start
         w.duration = dur
@@ -264,7 +266,7 @@ class TestWindow(NellTestCase):
 
         start = datetime(2009, 6, 1)
         dur   = 7 # days
-        
+
         w = Window()
         w.start_date = start
         w.duration = dur
@@ -274,8 +276,8 @@ class TestWindow(NellTestCase):
         w_id = w.id
 
         # test
-        self.assertEquals(w.default_period.state, pending) 
-        self.assertEquals(w.state(), pending) 
+        self.assertEquals(w.default_period.state, pending)
+        self.assertEquals(w.state(), pending)
 
         # this should move the default_period to scheduled
         # and copy the defatul_period to period
@@ -283,19 +285,19 @@ class TestWindow(NellTestCase):
 
         # test
         # get it fresh from the DB
-        w = first(Window.objects.filter(id = w_id)) 
-        self.assertEquals(w.default_period.state, scheduled) 
+        w = first(Window.objects.filter(id = w_id))
+        self.assertEquals(w.default_period.state, scheduled)
         self.assertTrue(w.period is not None)
-        self.assertEquals(w.period.state, scheduled) 
-        self.assertEquals(w.period.id, w.default_period.id) 
-        self.assertEquals(w.state(), scheduled) 
+        self.assertEquals(w.period.state, scheduled)
+        self.assertEquals(w.period.id, w.default_period.id)
+        self.assertEquals(w.state(), scheduled)
 
     def test_reconcile_2(self):
 
         deleted   = Period_State.get_state("D")
         pending   = Period_State.get_state("P")
         scheduled = Period_State.get_state("S")
-       
+
         # the period to be scheduled
         pa = Period_Accounting(scheduled = 0.0)
         pa.save()
@@ -306,11 +308,11 @@ class TestWindow(NellTestCase):
                                    , state = pending
                                    , accounting = pa
                                    )
-        period.save()    
+        period.save()
 
         start = datetime(2009, 6, 1)
         dur   = 7 # days
-        
+
         w = Window()
         w.start_date = start
         w.duration = dur
@@ -321,9 +323,9 @@ class TestWindow(NellTestCase):
         w_id = w.id
 
         # test
-        self.assertEquals(w.default_period.state, pending) 
-        self.assertEquals(w.period.state, pending) 
-        self.assertEquals(w.state(), pending) 
+        self.assertEquals(w.default_period.state, pending)
+        self.assertEquals(w.period.state, pending)
+        self.assertEquals(w.state(), pending)
 
         # this should move the default_period to deleted
         # and the chosen period to scheduled
@@ -331,11 +333,11 @@ class TestWindow(NellTestCase):
 
         # test
         # get it fresh from the DB
-        w = first(Window.objects.filter(id = w_id)) 
-        self.assertEquals(w.default_period.state, deleted) 
+        w = first(Window.objects.filter(id = w_id))
+        self.assertEquals(w.default_period.state, deleted)
         self.assertTrue(w.period is not None)
-        self.assertEquals(w.period.state, scheduled) 
-        self.assertEquals(w.state(), scheduled) 
+        self.assertEquals(w.period.state, scheduled)
+        self.assertEquals(w.state(), scheduled)
 
 class TestPeriod(NellTestCase):
 
@@ -351,7 +353,7 @@ class TestPeriod(NellTestCase):
                      }
 
     def test_create(self):
-        
+
         # make sure the sesshun has some rcvrs
         SessionHttpAdapter(self.sesshun).save_receivers("L")
 
@@ -368,7 +370,7 @@ class TestPeriod(NellTestCase):
         p = Period()
         adapter = PeriodHttpAdapter(p)
         adapter.init_from_post(self.fdata, 'UTC')
-        
+
         self.assertEqual(p.session, self.sesshun)
         self.assertEqual(p.start, datetime(2009, 6, 1, 12, 15))
         self.assertEqual(p.duration, self.fdata["duration"])
@@ -377,10 +379,10 @@ class TestPeriod(NellTestCase):
         #self.assertEqual(p.receivers.all(), 2)
 
     def test_jsondict(self):
-         
+
         start = datetime(2009, 6, 1, 12, 15)
         dur   = 180
-        
+
         pa = Period_Accounting(scheduled = 0)
         pa.save()
 
@@ -436,9 +438,9 @@ class TestPeriod(NellTestCase):
                  , duration = 10 # days
                  , session = self.sesshun
                  , default_period = p)
-        w.save()         
+        w.save()
 
-        # and a period w/ out a window         
+        # and a period w/ out a window
         p2 = Period()
         p2.start = start
         p2.duration = dur
@@ -483,7 +485,7 @@ class TestPeriod(NellTestCase):
         #self.assertEquals(scheduled, p2.state)
 
         # cleanup
-        self.sesshun.session_type = original_type 
+        self.sesshun.session_type = original_type
         w.delete()
         p.delete()
         p2.save()
@@ -506,7 +508,7 @@ class TestPeriod(NellTestCase):
                       , state      = state
                       , accounting = pa
                       )
-            p.save()          
+            p.save()
             ps.append(p)
 
         # now try and retrieve them from the DB:
@@ -772,7 +774,7 @@ class TestReceiverSchedule(NellTestCase):
         schedule = Receiver_Schedule.extract_schedule(startdate = startdate)
         dates = sorted(schedule.keys())
 
-        # now add a rcvr change latter in time 
+        # now add a rcvr change latter in time
         last_date = dates[-1]
         new_date = last_date + timedelta(days = 5)
         available = schedule[last_date]
@@ -854,7 +856,7 @@ class TestReceiverSchedule(NellTestCase):
         #for dt in dates:
         #    print dt, [r.abbreviation for r in schedule[dt]]
 
-        # now add a rcvr change latter in time 
+        # now add a rcvr change latter in time
         last_date = dates[-1]
         new_date = last_date + timedelta(days = 5)
         available = schedule[last_date]
@@ -880,7 +882,7 @@ class TestReceiverSchedule(NellTestCase):
         rcvrs = sorted([r.abbreviation for r in [L, Q, X]])
         new_rs = sorted([r.abbreviation for r in new_schd[new_date]])
         self.assertEquals(rcvrs, new_rs)
- 
+
         # now specify this same change to this date - nothing should happen
         s, msg = Receiver_Schedule.change_schedule(new_date, [L, Q], [S, C])
         self.assertEquals(True, s)
@@ -906,7 +908,7 @@ class TestReceiverSchedule(NellTestCase):
         new_rs = sorted([r.abbreviation for r in new_schd_3[new_date]])
         self.assertEquals(rcvrs, new_rs)
 
-        
+
     def test_change_receiver_schedule(self):
         # last rcvr change:
         # 2009-05-11 00:00:00 [u'S', u'C', u'X']
@@ -946,7 +948,7 @@ class TestReceiverSchedule(NellTestCase):
         dates = sorted(schedule.keys())
         #for dt in dates:
         #    print dt, [r.abbreviation for r in schedule[dt]]
-                              
+
         # specifying something as going that is already up does not cause
         # an error
         response = self.client.post('/receivers/change_schedule',
@@ -965,7 +967,7 @@ class TestReceiverSchedule(NellTestCase):
         #    print dt, [r.abbreviation for r in schedule[dt]]
 
         # delete a date
-        Receiver_Schedule.delete_date(dates[-3])    
+        Receiver_Schedule.delete_date(dates[-3])
 
         # get the new schedule
         new_schedule = Receiver_Schedule.extract_schedule(startdate = startdate)
@@ -975,16 +977,16 @@ class TestReceiverSchedule(NellTestCase):
         self.assertEquals(len(new_dates) + 1, len(dates))
         # but schedule should'nt have changed up to this date
         for dt in dates[:4]:
-            self.assertEquals(new_schedule[dt], schedule[dt])   
-        # does the change make sense?    
-        new_rs = []    
+            self.assertEquals(new_schedule[dt], schedule[dt])
+        # does the change make sense?
+        new_rs = []
         for dt in new_dates[len(new_dates)-3:]:
             new_rs.append(sorted([r.abbreviation for r in new_schedule[dt]]))
         exp_rs = [['1070', '800', 'L']
                 , ['800',  'C',   'L']
                 , ['800',  'C',   'X']]
-        self.assertEquals(exp_rs, new_rs)        
-            
+        self.assertEquals(exp_rs, new_rs)
+
     def test_shift_date(self):
         startdate = datetime(2009, 4, 6, 12)
         schedule = Receiver_Schedule.extract_schedule(startdate = startdate)
@@ -1281,7 +1283,7 @@ class TestProject(NellTestCase):
         blackouts = self.project.get_receiver_blackout_ranges(start, end)
         self.assertEquals([], blackouts)
 
-        # No available receivers at these times: 
+        # No available receivers at these times:
         expected = [(datetime(2009, 4, 1), datetime(2009, 4, 11))
                   , (datetime(2009, 5, 1), None)]
         SessionHttpAdapter(self.sesshun).save_receivers('L | (X & S)')
@@ -1290,7 +1292,7 @@ class TestProject(NellTestCase):
         self.assertEquals(expected, blackouts)
         self.sesshun.receiver_group_set.all().delete()
 
-        # No available receivers at these times: 
+        # No available receivers at these times:
         expected = [(datetime(2009, 4, 1), datetime(2009, 4, 26))
                   , (datetime(2009, 5, 1), datetime(2009, 5, 6))]
         SessionHttpAdapter(self.sesshun).save_receivers('K | (X & S)')
@@ -1299,7 +1301,7 @@ class TestProject(NellTestCase):
         self.assertEquals(expected, blackouts)
         self.sesshun.receiver_group_set.all().delete()
 
-        # No available receivers at these times: 
+        # No available receivers at these times:
         expected = [(datetime(2009, 4, 11), None)]
         SessionHttpAdapter(self.sesshun).save_receivers('600')
 
@@ -1465,7 +1467,7 @@ class TestProject(NellTestCase):
                    }
         f1(p_fdata)
         self.defaultAssertion(p_fdata, p1)
-        
+
         p_fdata1 = {"semester" : "09A"
                  , "type"     : "science"
                  , "total_time" : "10.0, 5.0"
@@ -1499,7 +1501,7 @@ class TestProject(NellTestCase):
             self.assertTrue(a.psc_time in pscs)
             self.assertTrue(a.max_semester_time in max_sems)
             self.assertTrue(a.grade in grades)
-        
+
 class TestSesshun(NellTestCase):
 
     def setUp(self):
@@ -1532,11 +1534,11 @@ class TestSesshun(NellTestCase):
         s = Sesshun()
         fdata["receiver"] = "((K & Ku) & L)"
         SessionHttpAdapter(s).init_from_post(fdata)
-        
+
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.target_set.get().source, fdata["source"])
         self.assertEqual(s.status.enabled, fdata["enabled"])
-        self.assertEqual(s.get_LST_exclusion_string(),fdata["lst_ex"]) 
+        self.assertEqual(s.get_LST_exclusion_string(),fdata["lst_ex"])
 
         # does this still work if you requery the DB?
         ss = Sesshun.objects.all()
@@ -1552,7 +1554,7 @@ class TestSesshun(NellTestCase):
         s = Sesshun()
         adapter = SessionHttpAdapter(s)
         adapter.init_from_post(fdata)
-        
+
         self.assertEqual(s.frequency, fdata["freq"])
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.target_set.get().source, fdata["source"])
@@ -1571,7 +1573,7 @@ class TestSesshun(NellTestCase):
         ldata["receiver"] = "(K & (X | (L | C)))"
         ldata["xi_factor"] = 1.76
         adapter.update_from_post(ldata)
-        
+
         # now get this session from the DB
         ss = Sesshun.objects.all()
         s = ss[1]
@@ -1583,7 +1585,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.nighttime(), None)
         self.assertEqual(s.get_LST_exclusion_string(), ldata["lst_ex"])
         self.assertEqual(s.get_min_eff_tsys_factor(), ldata["xi_factor"])
-        self.assertEqual(s.get_elevation_limit(),fdata["el_limit"]) 
+        self.assertEqual(s.get_elevation_limit(),fdata["el_limit"])
         rgs = s.receiver_group_set.all()
         self.assertEqual(2, len(rgs))
         self.assertEqual(['K']
@@ -1596,22 +1598,22 @@ class TestSesshun(NellTestCase):
         s = Sesshun()
         adapter = SessionHttpAdapter(s)
         adapter.init_from_post(fdata)
-        
+
         self.assertEqual(s.frequency, fdata["freq"])
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.target_set.get().source, fdata["source"])
         self.assertEqual(s.status.enabled, fdata["enabled"])
         self.assertEqual(s.original_id, int(fdata["orig_ID"]))
 
-        # check to see if we can handle odd types 
+        # check to see if we can handle odd types
         ldata = dict(fdata)
         ldata["freq"] = "10.5"
-        ldata["source"] = None 
+        ldata["source"] = None
         ldata["total_time"] = "99.9"
         ldata["orig_ID"] = "0.0"
-        ldata["enabled"] = "true" 
+        ldata["enabled"] = "true"
         adapter.update_from_post(ldata)
-        
+
         # now get this session from the DB
         ss = Sesshun.objects.all()
         s = ss[1]
@@ -1626,7 +1628,7 @@ class TestBlackout(NellTestCase):
     def setUp(self):
         super(TestBlackout, self).setUp()
 
-        # create some blackouts    
+        # create some blackouts
         self.u = User(first_name = "Test"
                     , last_name  = "User"
                     , role       = first(Role.objects.all())
@@ -1636,7 +1638,7 @@ class TestBlackout(NellTestCase):
 
         once = first(Repeat.objects.filter(repeat = 'Once'))
         self.blackout1 = Blackout(user       = self.u
-                            , repeat     = once 
+                            , repeat     = once
                             , start_date = datetime(2009, 1, 1, 11)
                             , end_date   = datetime(2009, 1, 3, 11))
         self.blackout1.save()
@@ -1766,7 +1768,7 @@ class TestPeriodResource(NellTestCase):
     # Requires antioch server
     def test_read(self):
         url = "%s/%s?startPeriods=%s&daysPeriods=%d" % \
-                            (self.rootURL 
+                            (self.rootURL
                            , 'UTC'
                            , self.fdata['date'] + '%20' + self.fdata['time'] + ':00'
                            , 2)
@@ -1778,7 +1780,7 @@ class TestPeriodResource(NellTestCase):
     def test_read_keywords(self):
         # use a date range that picks up our one period
         url = "%s/%s?startPeriods=%s&daysPeriods=%d" % \
-                            (self.rootURL 
+                            (self.rootURL
                            , 'UTC'
                            , self.fdata['date'] + '%20' + self.fdata['time'] + ':00'
                            , 3)
@@ -1787,9 +1789,9 @@ class TestPeriodResource(NellTestCase):
         self.assertEqual(response.content[:11], '{"total": 1')
         # now use a date range that doesn't
         url = "%s/%s?startPeriods=%s&daysPeriods=%d" % (
-                                                     self.rootURL 
+                                                     self.rootURL
                                                    , 'UTC'
-                                                   , '2009-06-02 00:00:00' 
+                                                   , '2009-06-02 00:00:00'
                                                    , 3)
         response = self.client.get(url)
         self.failUnlessEqual(response.status_code, 200)
@@ -1871,8 +1873,8 @@ class TestProjectResource(NellTestCase):
     def test_delete(self):
         response = self.client.post('/projects/%s' % self.p.id, {"_method" : "delete"})
         self.failUnlessEqual(response.status_code, 200)
-        
-    
+
+
 class TestSessionResource(NellTestCase):
 
     def setUp(self):
@@ -1958,7 +1960,7 @@ class TestSessionResource(NellTestCase):
         r_json = json.loads(response.content)
         self.assertTrue(r_json.has_key('receiver'))
         self.assertEquals(r_json['receiver'], 'L')
-    
+
     def test_create_rcvrs(self):   # TBF hold until handles multiple rcvrs
         response = self.client.post('/sessions',
                                     {'receiver' : 'K & (L | S)'})
@@ -2128,7 +2130,7 @@ class TestInvestigatorResource(NellTestCase):
                      }
 
     def test_create(self):
-        response = self.client.post('/investigators' 
+        response = self.client.post('/investigators'
                                   , self.fdata)
         self.failUnlessEqual(response.status_code, 200)
 
@@ -2176,8 +2178,8 @@ class TestInvestigatorResource(NellTestCase):
         response = self.client.post('/investigators/%s' % self.ins[-1].id
                                   , {"_method" : "delete"})
         self.failUnlessEqual(response.status_code, 200)
-        
-    
+
+
 class TestWindowResource(NellTestCase):
 
     def setUp(self):
@@ -2194,17 +2196,17 @@ class TestWindowResource(NellTestCase):
                                    , state = pending
                                    , accounting = pa
                                    )
-        self.default_period.save()                           
+        self.default_period.save()
         p_adapter = PeriodHttpAdapter(self.default_period)
         pjson = p_adapter.jsondict('UTC', 1.1)
         self.fdata = {"session":  self.sesshun.id
                     , "start":    "2010-01-01"
                     , "duration": 7
                     #, "default_period" : self.default_period.id
-                    , "default_date" : pjson['date'] 
-                    , "default_time" : pjson['time'] 
-                    , "default_duration" : pjson['duration'] 
-                    , "default_state" : pjson['state'] 
+                    , "default_date" : pjson['date']
+                    , "default_time" : pjson['time']
+                    , "default_duration" : pjson['duration']
+                    , "default_state" : pjson['state']
                     }
         self.w = Window()
         w_adapter = WindowHttpAdapter(self.w)
@@ -2245,20 +2247,20 @@ class TestWindowResource(NellTestCase):
 
         #YYYY-MM-DD hh:mm:ss
         response = self.client.get('/windows'
-                                , {'filterStartDate' : '2009-12-25' # 00:00:00' 
+                                , {'filterStartDate' : '2009-12-25' # 00:00:00'
                                  , 'filterDuration' : 30})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"end": "2010-01-07"' in response.content)
 
         # make sure we catch overlaps
         response = self.client.get('/windows'
-                                , {'filterStartDate' : '2010-01-07' # 00:00:00' 
+                                , {'filterStartDate' : '2010-01-07' # 00:00:00'
                                  , 'filterDuration' : 30})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"end": "2010-01-07"' in response.content)
 
         response = self.client.get('/windows'
-                                , {'filterStartDate' : '2011-05-25' # 00:00:00' 
+                                , {'filterStartDate' : '2011-05-25' # 00:00:00'
                                  , 'filterDuration' : 30})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('{"windows": [], "total": 0}' in response.content)
@@ -2272,8 +2274,8 @@ class TestWindowResource(NellTestCase):
     def test_delete(self):
         response = self.client.post('/windows/%s' % self.w.id, {"_method" : "delete"})
         self.failUnlessEqual(response.status_code, 200)
-        
-    
+
+
 class TestGetOptions(NellTestCase):
 
     def test_get_options(self):
@@ -2319,7 +2321,7 @@ class TestShiftPeriodBoundaries(NellTestCase):
                       , state      = state
                       , accounting = pa
                       )
-            p.save()          
+            p.save()
             self.ps.append(p)
 
         self.backup = create_sesshun()
@@ -2347,7 +2349,7 @@ class TestShiftPeriodBoundaries(NellTestCase):
                              , start_boundary = 1
                              , description = "test"
                              , time    = time)) #"2009-10-11 04:00:00"))
-        self.failUnless("ok" in response.content)                     
+        self.failUnless("ok" in response.content)
 
 class PeriodsTestCase(NellTestCase):
     "Parent class for test cases that need periods to work with."
@@ -2377,7 +2379,7 @@ class PeriodsTestCase(NellTestCase):
                       , state      = state
                       , accounting = pa
                       )
-            p.save()          
+            p.save()
             self.ps.append(p)
 
     def tearDown(self):
@@ -2410,7 +2412,7 @@ class TestSchedulingNotifier(PeriodsTestCase):
         self.ps[0].accounting.lost_time_other = self.ps[0].duration
         self.ps[0].save()
 
-        # also create a windowed session with default period that 
+        # also create a windowed session with default period that
         # is in the deleted state
         s = create_sesshun()
         s.session_type = first(Session_Type.objects.filter(type = "windowed"))
@@ -2418,7 +2420,7 @@ class TestSchedulingNotifier(PeriodsTestCase):
 
         # new default period for a window that is after the original periods
         start_time = self.ps[2].start + timedelta(hours = self.ps[2].duration)
-        dur = 3.0 
+        dur = 3.0
 
         pa = Period_Accounting(scheduled = 0)
         pa.save()
@@ -2429,13 +2431,13 @@ class TestSchedulingNotifier(PeriodsTestCase):
                   , state      = state
                   , accounting = pa
                   )
-        p.save()          
+        p.save()
         w1 = Window( session = s
                    , start_date = p.start.date() - timedelta(days = 7)
                    , duration = 10 # days
                    , default_period = p
                    , period = None )
-        w1.save()  
+        w1.save()
 
         ps = [self.ps[0]
             , self.ps[1]
@@ -2457,8 +2459,8 @@ class TestSchedulingEmail(PeriodsTestCase):
         # we need to create some periods for NOW to show up in the email
         url = "/schedule/email"
         response = Client().get(url, dict(duration = 2))
- 
-        self.failUnless(response.status_code == 200)  
+
+        self.failUnless(response.status_code == 200)
 
 class TestProjectsEmail(PeriodsTestCase):
     "Subclass PeriodsTestCase so that we have Periods to work with."
@@ -2470,7 +2472,7 @@ class TestProjectsEmail(PeriodsTestCase):
 
         response = Client().get(url, dict(pcodes = pcodes))
 
-        self.failUnless(response.status_code == 200)  
+        self.failUnless(response.status_code == 200)
         self.failUnless('"PCODES": ["GBT09A-001"]' in response.content)
 
 class TestDeletePending(PeriodsTestCase):
@@ -2496,7 +2498,7 @@ class TestDeletePending(PeriodsTestCase):
                                          , tz       = tz
                                          , duration = duration
                                          ))
-        self.failUnless("ok" in response.content)    
+        self.failUnless("ok" in response.content)
 
         ps = Period.objects.order_by("start")
         exp = ["S", "S"]
@@ -2521,7 +2523,7 @@ class TestPublishPeriods(PeriodsTestCase):
 
         # Remember not to embarrass ourselves by tweeting! tweet == False
         response = Client().post(url, dict(tweet = False))
-        self.failUnless("ok" in response.content)    
+        self.failUnless("ok" in response.content)
 
         ps = Period.objects.order_by("start")
         exp = ["S", "S", "S"]
@@ -2546,8 +2548,8 @@ class TestPublishPeriods(PeriodsTestCase):
         response = Client().post(url, dict(start    = time
                                          , tz       = tz
                                          , duration = duration
-                                         , tweet    = False)) 
-        self.failUnless("ok" in response.content)    
+                                         , tweet    = False))
+        self.failUnless("ok" in response.content)
 
         ps = Period.objects.order_by("start")
         exp = ["S", "S", "S"]
@@ -2573,13 +2575,13 @@ class TestPublishPeriods(PeriodsTestCase):
                    , duration = 10 # days
                    , default_period = p1
                    , period = p1 )
-        w1.save()           
+        w1.save()
 
         p2 = self.ps[1]
         p2.session.session_type = windowed
         p2.session.save()
 
-        p3 = self.ps[2] 
+        p3 = self.ps[2]
         p3.session.session_type = windowed
         p3.session.save()
         p3.state = pending
@@ -2608,8 +2610,8 @@ class TestPublishPeriods(PeriodsTestCase):
         response = Client().post(url, dict(start    = time
                                          , tz       = tz
                                          , duration = duration
-                                         , tweet    = False)) 
-        self.failUnless("ok" in response.content)    
+                                         , tweet    = False))
+        self.failUnless("ok" in response.content)
 
         # make sure the states are right now
         for w in Window.objects.order_by("start_date"):
@@ -2638,7 +2640,7 @@ class TestObservers(NellTestCase):
             settings.MIDDLEWARE_CLASSES      = settings.MIDDLEWARE_CLASSES[:-1]
 
         self.client = Client()
-        
+
         self.auth_user = m.User.objects.create_user('dss', 'dss@nrao.edu', 'asdf5!')
         self.auth_user.is_staff = True
         self.auth_user.save()
@@ -2650,12 +2652,12 @@ class TestObservers(NellTestCase):
                       )
         self.u.save()
         self.client.login(username = "dss", password = "asdf5!")
-        
+
         self.p = Project()
         adapter = ProjectHttpAdapter(self.p)
         adapter.init_from_post({'semester'   : '09C'
                              , 'type'       : 'science'
-                             , 'pcode'      : 'mike' 
+                             , 'pcode'      : 'mike'
                              , 'name'       : 'mikes awesome project!'
                              , 'PSC_time'   : '100.0'
                              , 'total_time' : '100.0'
@@ -2739,7 +2741,7 @@ class TestObservers(NellTestCase):
         b.description = "This is a test blackout."
         b.save()
         return b
-        
+
     def test_blackout_form(self):
         response = self.get('/profile/%s/blackout/' % self.u.id)
         self.failUnlessEqual(response.status_code, 200)
@@ -2771,7 +2773,7 @@ class TestObservers(NellTestCase):
         self.assertEqual(b.end_date.date().strftime("%m/%d/%Y") , data.get('end'))
         self.assertEqual(b.until.date().strftime("%m/%d/%Y") , data.get('until'))
         self.failUnlessEqual(response.status_code, 302)
-        
+
         response = self.get(
             '/profile/%s/blackout/%s/' % (self.u.id, b.id)
           , {'_method' : 'DELETE'})
@@ -2832,9 +2834,9 @@ class TestObservers(NellTestCase):
                  , start = datetime(2009, 9, 9, 12)
                  , duration = 1.0
                  , state = state)
-        p.save()         
+        p.save()
         day = datetime(2009, 9, 9)
-        
+
         # make sure it comes back in the correct day for UTC
         data = { 'start': day.strftime("%m/%d/%Y")
                , 'days' : 3
@@ -2845,7 +2847,7 @@ class TestObservers(NellTestCase):
              , (datetime(2009, 9, 10), [])
              , (datetime(2009, 9, 11), [])]
 
-        self.assertEqual(exp, calendar)     
+        self.assertEqual(exp, calendar)
 
         # make sure it comes back in the correct day for EST
         data = { 'start': day.strftime("%m/%d/%Y")
@@ -2856,7 +2858,7 @@ class TestObservers(NellTestCase):
         exp = [(datetime(2009, 9, 9), [(datetime(2009, 9, 9, 8), datetime(2009, 9, 9, 9), False, False, p)])
              , (datetime(2009, 9, 10), [])
              , (datetime(2009, 9, 11), [])]
-        self.assertEqual(exp, calendar)     
+        self.assertEqual(exp, calendar)
 
         # clean up
         p.remove() #delete()
@@ -2871,7 +2873,7 @@ class TestObservers(NellTestCase):
                  , start = datetime(2009, 9, 2, 1)
                  , duration = 6.0
                  , state = state)
-        p.save()         
+        p.save()
         day = datetime(2009, 9, 1)
 
         # make sure it comes back in the correct day for UTC
@@ -2883,7 +2885,7 @@ class TestObservers(NellTestCase):
         exp = [(datetime(2009, 9, 1), [])
              , (datetime(2009, 9, 2), [(datetime(2009, 9, 2, 1), datetime(2009, 9, 2, 7), False, False, p)])
              , (datetime(2009, 9, 3), [])]
-        self.assertEqual(exp, calendar)     
+        self.assertEqual(exp, calendar)
 
         # make sure it comes back in the correct day for EST
         data = { 'start' : day.strftime("%m/%d/%Y")
@@ -2894,7 +2896,7 @@ class TestObservers(NellTestCase):
         exp = [(datetime(2009, 9, 1), [(datetime(2009, 9, 1, 21), datetime(2009, 9, 2), False, False, p)])
              , (datetime(2009, 9, 2), [(datetime(2009, 9, 2), datetime(2009, 9, 2, 3), False, False, p)])
              , (datetime(2009, 9, 3), [])]
-        self.assertEqual(exp, calendar)     
+        self.assertEqual(exp, calendar)
 
         # show the cutoff: '(..)'
         data = { 'start' : day.strftime("%m/%d/%Y")
@@ -2903,7 +2905,7 @@ class TestObservers(NellTestCase):
         response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
         exp = [(datetime(2009, 9, 1), [(datetime(2009, 9, 1, 21), datetime(2009, 9, 2), False, True, p)])]
-        self.assertEqual(exp, calendar)  
+        self.assertEqual(exp, calendar)
 
         # clean up
         p.remove() #delete()
@@ -2920,7 +2922,7 @@ class TestDBReporter(NellTestCase):
 class TestDSSPrime2DSS(NellTestCase):
 
     def assert_DB_empty(self):
-        # make sure our DB is almost blank 
+        # make sure our DB is almost blank
         projects = Project.objects.all()
         self.assertEquals(1, len(projects))
         ss = Sesshun.objects.all()
@@ -2937,19 +2939,19 @@ class TestDSSPrime2DSS(NellTestCase):
         return (pold, pnew)
 
     def compare_users_worker(self, dbname, table, old_users, new_users):
-        
+
         db = mysql.connect(host   = "trent.gb.nrao.edu"
                      , user   = "dss"
                      , passwd = "asdf5!"
                      , db     = dbname
                             )
         cursor = db.cursor()
-        
+
         query = "SELECT * FROM %s" % table
         cursor.execute(query)
-        
+
         for row in cursor.fetchall():
-            idcol = 3 if table == "friends" else 4 
+            idcol = 3 if table == "friends" else 4
             id = int(row[idcol])
             user = first(User.objects.filter(original_id = id).all())
             if user is None:
@@ -2958,11 +2960,11 @@ class TestDSSPrime2DSS(NellTestCase):
             else:
                 if id not in old_users:
                     old_users.append(id)
-        
+
         return (old_users, new_users)
 
     def test_transfer(self):
- 
+
         self.assert_DB_empty()
 
         t = DSSPrime2DSS(database = 'dss_prime_unit_tests')
@@ -3009,7 +3011,7 @@ class TestDSSPrime2DSS(NellTestCase):
         self.assertEqual("G34.3,S68N,DR21OH", target.source)
         self.assertAlmostEqual(0.022, target.vertical, 3)
         self.assertAlmostEqual(4.84, target.horizontal, 2)
-        
+
         ss = Sesshun.objects.all()
         self.assertEquals(247, len(ss))
 
@@ -3054,7 +3056,7 @@ class TestDSSPrime2DSS(NellTestCase):
         self.assertEquals(  0, len(t.old_projects))
         self.assertEquals(121, len(t.new_sessions))
         self.assertEquals(  0, len(t.old_sessions))
-        self.assertEquals(len(new_users), len(t.new_users)) 
+        self.assertEquals(len(new_users), len(t.new_users))
         self.assertEquals(len(old_users), len(t.old_users))
 
 class TestReceiverCompile(NellTestCase):
@@ -3064,7 +3066,7 @@ class TestReceiverCompile(NellTestCase):
         super(TestReceiverCompile, self).setUp()
         self.nn = Receiver.get_abbreviations()
         self.rc = ReceiverCompile(self.nn)
-        
+
         # normalize:   values[0] -> values[1]
         # denormalize: values[1] -> values[0]
         self.values = [('Q', [['Q']])
@@ -3075,13 +3077,13 @@ class TestReceiverCompile(NellTestCase):
                      , ('((((L | X) | C) | S) & 342)'
                       , [['L', 'X', 'C', 'S'], ['342']])
                      ]
-                    
+
     def test_pairValues(self):
 
         self.assertEquals('Q', self.rc.pairValues(['Q'], '|'))
         self.assertEquals('((L | X) | C)'
                          , self.rc.pairValues(['L', 'X', 'C'], '|'))
-        self.assertEquals('(((((L | X) | C) | A) | B) | C)'          
+        self.assertEquals('(((((L | X) | C) | A) | B) | C)'
                     , self.rc.pairValues(['L', 'X', 'C', 'A', 'B', 'C'], '|'))
 
     def test_denormalize(self):
@@ -3356,21 +3358,25 @@ class TestUserInfo(NellTestCase):
                                  , 'address-type': 'Other'
                                  , 'state': 'Massachusetts'
                                  , 'country': 'United States'
-                                 , 'postal-code': '02379'}]                  
+                                 , 'postal-code': '02379'}]
             }
             , 'name': {'prefix': 'Mr'
                      , 'first-name': 'Paul'
                      , 'middle-name': 'Raffi'
                      , 'last-name': 'Marganian'}
+<<<<<<< local
+            , 'account-info': {'account-name': 'pmargani'}
+=======
             , 'account-info': {'account-name': 'pmargani'         
                              , 'entry-status': 'Suspect'}
+>>>>>>> other
             , 'id': '823'
             , 'affiliation-info': [("National Radio Astronomy Observatory ", True)
                              , ("Oregon, University of", False)]
         }
 
     def test_parseUserXML(self):
-        i = self.ui.parseUserXML(self.xml) 
+        i = self.ui.parseUserXML(self.xml)
         self.assertEqual(i, self.xmlDict)
 
     def test_parseUserDict(self):
@@ -3382,15 +3388,15 @@ class TestUserInfo(NellTestCase):
         emailDescs = ['pmargani@nrao.edu (Work)'
                     , 'paghots@hotmail.com (Other)'
                     , 'pmargani@gmail.com (Personal)']
-        phones = ['304-456-2202']        
-        phoneDescs = ['304-456-2202 (Work)']        
+        phones = ['304-456-2202']
+        phoneDescs = ['304-456-2202 (Work)']
         postals = \
             ['NRAO, PO Box 2, Green Bank, West Virginia, 24944, USA, (Office)'
            , '49 columbus Ave., W. Bridgewater, Massachusetts, 02379, United States, (Other)']
         affiliations = ['National Radio Astronomy Observatory '
                       , 'Oregon, University of']
-        self.assertEquals(emails, info['emails'])        
-        self.assertEquals(emailDescs, info['emailDescs'])        
+        self.assertEquals(emails, info['emails'])
+        self.assertEquals(emailDescs, info['emailDescs'])
         self.assertEquals(phones, info['phones'])
         self.assertEquals(phoneDescs, info['phoneDescs'])
         self.assertEquals(postals, info['postals'])
@@ -3494,7 +3500,7 @@ class TestScheduleTools(NellTestCase):
                ]
         self.ps = []
         # init them as Scheduled, so that 'deleting' them just changes state
-        state = first(Period_State.objects.filter(abbreviation = 'S'))        
+        state = first(Period_State.objects.filter(abbreviation = 'S'))
         for start, dur, name in times:
             s = create_sesshun()
             s.name = name
@@ -3507,7 +3513,7 @@ class TestScheduleTools(NellTestCase):
                       , state      = state
                       , accounting = pa
                       )
-            p.save()          
+            p.save()
             self.ps.append(p)
 
         self.backup = create_sesshun()
@@ -3526,7 +3532,7 @@ class TestScheduleTools(NellTestCase):
     def test_getSchedulingRange(self):
 
         # scheduling range is 0:00 of timezone of first day
-        # to the last day at 8:00 EST 
+        # to the last day at 8:00 EST
 
         # test it in winter time
         dt = datetime(2010, 1, 1)
@@ -3578,12 +3584,12 @@ class TestScheduleTools(NellTestCase):
         # try to mirror examples from Memo 11.2
         # Example 2 (Ex. 1 is a no op)
         change_start = self.ps[0].start + timedelta(hours = 2)
-        ScheduleTools().changeSchedule(change_start 
-                                    , 3.0 
+        ScheduleTools().changeSchedule(change_start
+                                    , 3.0
                                     , self.backup
                                     , "other_session_other"
                                     , "SP broke.")
-        
+
         # get the periods from the DB again for updated values
         ps = Period.get_periods(self.start, 12.0*60.0)
         # check accounting after changing schedule
@@ -3601,7 +3607,7 @@ class TestScheduleTools(NellTestCase):
         self.assertTrue("SP broke." in canceled.accounting.description)
         self.assertEquals(3.0, backup.accounting.short_notice)
         self.assertTrue("SP broke." in backup.accounting.description)
-        
+
         tag = "Period backup: 2000-01-01 02:00:00 for  3.00 Hrs got  3.00 hours from: one: 2000-01-01 00:00:00 for  5.00 Hrs ( 3.00 hours)"
         self.assertTrue(tag in backup.accounting.description)
         self.assertTrue(tag in canceled.accounting.description)
@@ -3615,15 +3621,15 @@ class TestScheduleTools(NellTestCase):
             self.assertEquals(scheduled[i], p.accounting.observed())
 
         # try to mirror examples from Memo 11.2
-        # Example 3 - last 3 hrs of first period replaced w/ nothing 
+        # Example 3 - last 3 hrs of first period replaced w/ nothing
         change_start = self.ps[0].start + timedelta(hours = 2)
         desc = "SP croaked."
-        ScheduleTools().changeSchedule(change_start 
-                                    , 3.0 
+        ScheduleTools().changeSchedule(change_start
+                                    , 3.0
                                     , None
                                     , "lost_time_other"
                                     , desc)
-        
+
         # get the periods from the DB again for updated values
         ps = Period.get_periods(self.start, 12.0*60.0)
         # check accounting after changing schedule
@@ -3657,12 +3663,12 @@ class TestScheduleTools(NellTestCase):
         change_start = self.ps[1].start - timedelta(hours = 1)
         backup = self.ps[1].session
         desc = "Session Two starting hour early; not billed time for Two."
-        ScheduleTools().changeSchedule(change_start 
-                                    , 1.0 
+        ScheduleTools().changeSchedule(change_start
+                                    , 1.0
                                     , backup
                                     , "other_session_weather"
                                     , desc)
-        
+
         # get the periods from the DB again for updated values
         ps = Period.get_periods(self.start, 12.0*60.0)
         # check accounting after changing schedule
@@ -3679,7 +3685,7 @@ class TestScheduleTools(NellTestCase):
         self.assertEquals(1.0, canceled.accounting.other_session_weather)
         self.assertTrue(desc in canceled.accounting.description)
         self.assertEquals(1.0, backup.accounting.short_notice)
-        self.assertTrue(desc in backup.accounting.description)                        
+        self.assertTrue(desc in backup.accounting.description)
         # now, don't bill this new period the hour
         self.assertEquals(1.0, backup.accounting.observed())
         self.assertEquals(1.0, backup.accounting.time_billed())
@@ -3698,14 +3704,14 @@ class TestScheduleTools(NellTestCase):
 
         # try to mirror examples from Memo 11.2
         # Example 5 (scheduled first period replaced w/ backup)
-        change_start = self.ps[0].start 
+        change_start = self.ps[0].start
         desc = "Hurricane Georges"
-        ScheduleTools().changeSchedule(change_start 
-                                    , 5.0 
+        ScheduleTools().changeSchedule(change_start
+                                    , 5.0
                                     , self.backup
                                     , "other_session_weather"
                                     , desc)
-        
+
         # get the periods from the DB again for updated values
         ps = Period.get_periods(self.start, 12.0*60.0, ignore_deleted = False)
         # TBF: how to handle these Periods that r compleletly replaced?
@@ -3739,12 +3745,12 @@ class TestScheduleTools(NellTestCase):
         # one end early
         change_start = self.ps[1].start + timedelta(hours = 2.0)
         desc = "fix this bug"
-        ScheduleTools().changeSchedule(change_start 
-                                    , 5.0 
+        ScheduleTools().changeSchedule(change_start
+                                    , 5.0
                                     , self.backup
                                     , "other_session_other"
                                     , desc)
-        
+
         # get the periods from the DB again for updated values
         ps = Period.get_periods(self.start, 12.0*60.0, ignore_deleted = False)
         # make sure we don't get deleted period
@@ -3762,7 +3768,7 @@ class TestScheduleTools(NellTestCase):
         # check affected periods
         canceled = first(Period.objects.filter(state__abbreviation = 'D'))
         self.assertEquals(canceled.start, self.ps[2].start)
-        
+
     def test_changeSchedule_ultimate_chaos(self):
         "gitrdone!"
 
@@ -3777,12 +3783,12 @@ class TestScheduleTools(NellTestCase):
         # one end early
         change_start = self.ps[0].start + timedelta(hours = 2.0)
         desc = "chaos!"
-        ScheduleTools().changeSchedule(change_start 
-                                    , 8.0 
+        ScheduleTools().changeSchedule(change_start
+                                    , 8.0
                                     , self.backup
                                     , "other_session_other"
                                     , desc)
-        
+
         # get the periods from the DB again for updated values
         ps = Period.get_periods(self.start, 12.0*60.0, ignore_deleted = False)
         # make sure we don't get deleted period
@@ -3802,7 +3808,7 @@ class TestScheduleTools(NellTestCase):
         # check affected periods
         canceled = first(Period.objects.filter(state__abbreviation = 'D'))
         self.assertEquals(canceled.start, self.ps[1].start)
-        
+
     def test_changeSchedule_bisect(self):
 
         # check accounting before changing schedule
@@ -3814,12 +3820,12 @@ class TestScheduleTools(NellTestCase):
         # make sure we can handle bi-secting a pre-existing period
         change_start = self.ps[0].start + timedelta(hours = 1.0)
         desc = "bisect!"
-        ScheduleTools().changeSchedule(change_start 
-                                    , 2.0 
+        ScheduleTools().changeSchedule(change_start
+                                    , 2.0
                                     , self.backup
                                     , "other_session_other"
                                     , desc)
-        
+
         # get the periods from the DB again for updated values
         ps = Period.get_periods(self.start, 12.0*60.0)
         self.assertEquals(5, len(ps))
@@ -3846,7 +3852,7 @@ class TestScheduleTools(NellTestCase):
         desc = "starting second period an hour latter"
         ScheduleTools().shiftPeriodBoundaries(self.ps[1]
                                      , True # start boundary
-                                     , new_start 
+                                     , new_start
                                      , self.ps[0]
                                      , "other_session_other"
                                      , desc)
@@ -3889,7 +3895,7 @@ class TestScheduleTools(NellTestCase):
         desc = "starting second period an hour early"
         ScheduleTools().shiftPeriodBoundaries(self.ps[1]
                                      , True # start boundary
-                                     , new_start 
+                                     , new_start
                                      , self.ps[0]
                                      , "other_session_other"
                                      , desc)
@@ -3927,7 +3933,7 @@ class TestScheduleTools(NellTestCase):
         desc = "ending second period an hour early"
         ScheduleTools().shiftPeriodBoundaries(self.ps[1]
                                      , False # end boundary
-                                     , new_end 
+                                     , new_end
                                      , self.ps[2]
                                      , "other_session_other"
                                      , desc)
@@ -3965,7 +3971,7 @@ class TestScheduleTools(NellTestCase):
         desc = "ending second period an hour latter"
         ScheduleTools().shiftPeriodBoundaries(self.ps[1]
                                      , False # end boundary
-                                     , new_end 
+                                     , new_end
                                      , self.ps[2]
                                      , "other_session_other"
                                      , desc)
@@ -4003,7 +4009,7 @@ class TestScheduleTools(NellTestCase):
         desc = "starting third period four hours early"
         ScheduleTools().shiftPeriodBoundaries(self.ps[2]
                                      , True # start boundary
-                                     , new_start 
+                                     , new_start
                                      , self.ps[1]
                                      , "other_session_other"
                                      , desc)
@@ -4043,7 +4049,7 @@ class TestScheduleTools(NellTestCase):
         desc = "ending first period four hours latter"
         ScheduleTools().shiftPeriodBoundaries(self.ps[0]
                                      , False # end boundary
-                                     , new_end 
+                                     , new_end
                                      , self.ps[1]
                                      , "other_session_other"
                                      , desc)
@@ -4084,7 +4090,7 @@ class TestTimeAccounting(NellTestCase):
                , (datetime(2000, 1, 1, 8), 4.0, "three")
                ]
         self.ps = []
-        state = first(Period_State.objects.filter(abbreviation = 'P'))        
+        state = first(Period_State.objects.filter(abbreviation = 'P'))
         for start, dur, name in times:
             s = create_sesshun()
             s.name = name
@@ -4097,7 +4103,7 @@ class TestTimeAccounting(NellTestCase):
                       , state      = state
                       , accounting = pa
                       )
-            p.save()          
+            p.save()
             self.ps.append(p)
 
         self.ta = TimeAccounting()
@@ -4206,7 +4212,7 @@ class TestTimeAccounting(NellTestCase):
         dct2 = self.ta.jsondict(project)
         # they're different becuase not_billable bubbles up
         self.assertNotEqual(dct, dct2)
-        b = dct2['not_billable'] 
+        b = dct2['not_billable']
         self.assertEqual(b, 1.0)
 
     def test_report(self):
@@ -4215,21 +4221,140 @@ class TestTimeAccounting(NellTestCase):
         self.ta.quietReport = True
         self.ta.report(self.project)
 
+class TestMaintenanceActivity(NellTestCase):
+    def setUp(self):
+        super(TestMaintenanceActivity, self).setUp()
+        self.location = "Upstairs, Downstairs"
+        self.subject = "Test Maintenance Activity"
+        self.desc = "Doing a bunch of impossible stuff!"
+        # receivers for receiver swap
+        old_receiver = Receiver.objects.filter(id = 8)[0]
+        new_receiver = Receiver.objects.filter(name = "Rcvr26_40")[0]
+        #zpectrometer backend
+        zpect_be = Backend.objects.filter(abbreviation = "Zpect")[0]
+        # a couple of users...
+        u = User()
+        u.username = "ncreager"
+        u.last_name = "Creager"
+        u.first_name = "Nona"
+        u.role = Role.objects.all()[0]
+        u.save()
+        u = User()
+        u.username = "pcreager"
+        u.last_name = "Creager"
+        u.first_name = "Phaedra"
+        u.role = Role.objects.all()[0]
+        u.save()
+        #create a maintenance activity
+        ma = Maintenance_Activity(subject = self.subject)
+        ma.save()
+        ma.set_location(self.location)
+        ma.set_telescope_resource(Maintenance_Telescope_Resources.objects.filter(id = 6)[0])
+        ma.set_software_resource(Maintenance_Software_Resources.objects.filter(id = 5)[0])
+        ma.add_receiver(old_receiver)
+        ma.add_receiver(new_receiver)
+        ma.add_backend("DCR") # can name the backend, or...
+        ma.add_backend(zpect_be) # add a backend object
+        ma.add_receiver_change(old_receiver, new_receiver)
+        ma.set_description(self.desc)
+        ma.add_contact(u)
+        ma.save()        
+
+    def tearDown(self):
+        super(TestMaintenanceActivity, self).tearDown()
+
+    def test_subject(self):
+        ma = Maintenance_Activity.objects.all()[0]
+        subject = ma.get_subject()
+        self.assertEqual(subject, self.subject)
+
+    def test_location(self):
+        ma = Maintenance_Activity.objects.all()[0]
+        location = ma.get_location()
+        self.assertEqual(location, self.location)
+
+    def test_telescope_resource(self):
+        ma = Maintenance_Activity.objects.all()[0]
+        resource = ma.get_telescope_resource()
+        self.assertEqual(resource.id, 6)
+
+    def test_software_resource(self):
+        ma = Maintenance_Activity.objects.all()[0]
+        resource = ma.get_software_resource()
+        self.assertEqual(resource.id, 5)
+
+    def test_receivers(self):
+        ma = Maintenance_Activity.objects.all()[0]
+        rcvrs = ma.get_receivers()
+        self.assertEqual(len(rcvrs), 2)
+        self.assertEqual(rcvrs[0].name, "Rcvr1_2")
+        self.assertEqual(rcvrs[1].name, "Rcvr26_40")
+
+    def test_backends(self):
+        ma = Maintenance_Activity.objects.all()[0]
+        be = ma.get_backends()
+        self.assertEqual(len(be), 2)
+        self.assertEqual(be[0].abbreviation, "DCR")
+        self.assertEqual(be[1].abbreviation, "Zpect")
+
+    def test_receiver_changes(self):
+        ma = Maintenance_Activity.objects.all()[0]
+        rc = ma.get_receiver_changes()
+        self.assertEqual(len(rc), 1)
+        self.assertEqual(rc[0].down_receiver.name, "Rcvr1_2")
+        self.assertEqual(rc[0].up_receiver.name, "Rcvr26_40")
+
+    def test_description(self):
+        ma = Maintenance_Activity.objects.all()[0]
+        desc = ma.get_description()
+        self.assertEqual(desc, self.desc)
+
+    def test_contacts(self):
+        ma = Maintenance_Activity.objects.all()[0]
+        contacts = ma.get_contacts()
+        self.assertEqual(len(contacts), 1)
+        self.assertEqual(contacts[0].first_name, "Phaedra")
+
+    def _add_approval(self):
+        ma = Maintenance_Activity.objects.all()[0]
+        u = User.objects.filter(first_name = "Nona")[0]
+        ma.add_approval(u)
+        ma.save()
+
+    def _add_modification(self):
+        ma = Maintenance_Activity.objects.all()[0]
+        u = User.objects.filter(first_name = "Phaedra")[0]
+        ma.add_modification(u)
+        ma.save()
+
+    def test_approval(self):
+        ma = Maintenance_Activity.objects.all()[0]
+        self.assertEqual(ma.approved, False)
+        self.assertEqual(len(ma.get_approvals()), 0)
+        self._add_approval()
+        ma = Maintenance_Activity.objects.all()[0]
+        self.assertEqual(ma.approved, True)
+        self.assertEqual(len(ma.get_approvals()), 1)
+
+    def test_modification(self):
+        self._add_approval()
+        ma = Maintenance_Activity.objects.all()[0]
+        self.assertEqual(ma.approved, True)
+        self._add_modification()
+        ma = Maintenance_Activity.objects.all()[0]
+        self.assertEqual(ma.approved, False)
+        self.assertEqual(len(ma.get_modifications()), 1)
+
 class TestIcalAntioch(NellTestCase):
         
     def testWriteSchedule(self):
-
         #ic = IcalAntioch.IcalAntioch(None, None)
         ic = IcalAntioch(None, None)
-
         pStr = "Period: 18 (0)  at 2006-02-01 00:00:00 for 420 (420) with score of 3.669943 from 2006-02-01 00:00:00 Scheduled  band: X  RA: 4.674547 grade: 4.0"
-
         dct = ic.parsePeriod(pStr)
-
         self.assertEquals('18', dct["sName"])
         self.assertEquals('X',  dct["band"])
-
         dct['id'] = 34
         event = ic.createEvent(dct)
-
         self.assertTrue(event is not None)
+

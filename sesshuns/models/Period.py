@@ -1,13 +1,13 @@
 from django.db         import models
 
-from utilities         import adjustDateTimeTz
-from common            import *
-from Project           import Project
-from Sesshun           import Sesshun
-from Period_Accounting import Period_Accounting
-from Period_State      import Period_State
-from Receiver          import Receiver
-from Receiver_Schedule import Receiver_Schedule
+from utilities            import adjustDateTimeTz
+from common               import *
+from Project              import Project
+from Sesshun              import Sesshun
+from Period_Accounting    import Period_Accounting
+from Period_State         import Period_State
+from Receiver             import Receiver
+from Receiver_Schedule    import Receiver_Schedule
 
 class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
@@ -275,7 +275,13 @@ class Period(models.Model):
         if ignore_deleted:                      
             ps = [p for p in ps if p.state.abbreviation != 'D']
         return ps
-          
+
+    @staticmethod
+    def get_periods_by_observing_type(start, end, ot):
+        typeQ = models.Q(session__observing_type__type = ot)
+        start_endQ = models.Q(start__gte = start) & models.Q(start__lte = end)
+        p = Period.objects.filter(typeQ & start_endQ)
+        return p
         
     @staticmethod    
     def in_time_range(begin, end, ignore_deleted = True):

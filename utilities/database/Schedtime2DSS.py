@@ -118,6 +118,8 @@ class Schedtime2DSS(object):
 
         self.cursor.execute(query)
         rows = self.cursor.fetchall()
+        print "Schedtime2DSS: start = %s, end = %s" % (start, end)
+        print "Schedtime2DSS query rows:", rows
 
         for row in rows:
             #print row

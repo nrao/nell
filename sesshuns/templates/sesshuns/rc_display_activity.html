@@ -1,0 +1,164 @@
+{% extends "sesshuns/base.html" %}
+
+  {% block title %}GBT Resource Calendar - Event Details{% endblock %}
+
+  {% block scripts %}
+  <style type="text/css">
+
+    label {font-weight:normal;}
+
+    table.maintenance
+    {
+    border-collapse:collapse;
+    border: 1px solid black;
+    }
+
+    .table_header
+    {
+        text-align:center;
+        font-family: Helvetica, Arial, sans-serif;
+        font-size: 14px;
+        background-color: #003366;
+        color: #FFFFFF;
+        font-weight: bold;
+    }
+
+    .table_captions
+    {
+    text-align:right;
+    border: 1px solid black;
+    font-size: 12px;
+    font-weight: normal;
+    font-family: Helvetica, Arial, sans-serif;
+    background-color: #DEB887;
+    color: #000000;
+    }
+
+    .table_fields
+    {
+    border: 1px solid black;
+    font-size: 12px;
+    font-weight: normal;
+    font-family: Helvetica,
+    Arial, sans-serif;
+    background-color: #FEFAD8;
+    color: #000000;
+    }
+
+    .table_buttons
+    {
+    text-align:center;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 12px;
+    font-weight: normal;
+    }
+
+  </style>
+
+  {% endblock %}
+
+  {% load custom %}
+
+  {% block content %}
+
+    <BR><table class="maintenance" width="95%">
+      <tr><td class="table_header" align="center" width="95%" colspan="2">
+          Event details [{{ activity_id }}]
+        </td>
+      </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Subject</B></td>
+        <td width="80%" class="table_fields" align="left" valign="top">
+          {{ subject }}
+        </td>
+      </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Date</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ date }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Time</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            From {{ time }} to {{ end_time }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Approved</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ approval }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Location</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ location }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Responsible</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ responsible }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Telescope</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ telescope }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Software</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ software }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Receivers</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ receivers }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Receiver Changes</B></td>
+        <td width="80%" class="table_fields" align="left" valign="top">
+            {% for i in receiver_swap %}
+            <b>Down: </b>{{i.down_receiver.full_description}};  <b>Up:</b>{{i.up_receiver.full_description}}
+            {% endfor %}
+        </td>
+      </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Backends</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ backends }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Description</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ description }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Last Modified</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ last_modified }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Created</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ created }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"<b>period id</b></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ maintenance_period }}
+          </td>
+        </tr>
+    </table>
+
+    <table WIDTH="95%">
+      <TR><td class="table_buttons" width="100%"><hr>
+          <form action="/resourcecal_edit_activity/{{activity_id}}" method="get">
+          {% if supervisor_mode %}
+          <input name="ActionEvent" type="submit" class="stdfont" value="Approve">
+          {% endif %}
+          <input name="ActionEvent" type="submit" class="stdfont" value="Modify">
+          <input name="ActionEvent" type="submit" class="stdfont" value="Delete">
+          </form>
+        </TD>
+      </TR>
+
+      <tr><td class="table_buttons" width="100%"><hr>
+        <INPUT NAME="back" TYPE="button" CLASS="stdfont" ONCLICK="javascript:history.go(-1)" VALUE="Back">
+        </td>
+      </tr>
+  {% endblock %}

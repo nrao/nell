@@ -49,14 +49,14 @@ def gbt_schedule(request, *args, **kws):
     timezones = ['ET', 'UTC']
 
     # TBF: error handling
-    if request.method == 'POST': 
+    if request.method == 'POST':
         timezone  = request.POST.get('tz', 'ET')
-        days      = int(request.POST.get('days', 5))    
-        startDate = request.POST.get('start', None) 
-        startDate = datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now() 
+        days      = int(request.POST.get('days', 5))
+        startDate = request.POST.get('start', None)
+        startDate = datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now()
     else: # default time range
         timezone  = 'ET'
-        days      = 7 
+        days      = 7
         startDate = datetime.now()
 
     start   = TimeAgent.truncateDt(startDate)
@@ -66,7 +66,24 @@ def gbt_schedule(request, *args, **kws):
 
     periods  = [p for p in Period.in_time_range(pstart, pend) \
                 if not p.isPending()]
-    schedule = gen_gbt_schedule(start, end, days, 'ET', periods)
+    maintenance_activities = {}
+
+    for i in range(0, len(periods)):
+        if periods[i].session.observing_type.type == "maintenance":
+            mas = Maintenance_Activity.get_maintenance_activity_set(periods[i])
+        else:
+            if i < len(periods) - 1:
+                mas = Maintenance_Activity.objects\
+                      .filter(start__gte = periods[i].start)\
+                      .filter(start__lt = periods[i + 1].start)
+            else:
+                mas = Maintenance_Activity.objects\
+                      .filter(start__gte = periods[i].start)\
+                      .filter(start__lt = periods[i].end())
+
+        maintenance_activities[periods[i]] = mas
+
+    schedule = gen_gbt_schedule(start, end, days, 'ET', periods, maintenance_activities)
 
     try:
         s_n = Schedule_Notification.objects.all()
@@ -115,8 +132,8 @@ def summary(request, *args, **kws):
     now        = datetime.now()
     last_month = now - timedelta(days = 31)
 
-    if request.method == 'POST': 
-        summary = request.POST.get('summary', 'schedule') 
+    if request.method == 'POST':
+        summary = request.POST.get('summary', 'schedule')
 
         project = project_search(request.POST.get('project', ''))
         if isinstance(project, list) and len(project) == 1:
@@ -124,7 +141,7 @@ def summary(request, *args, **kws):
         else:
             project = ''
 
-        month = request.POST.get('month', None) 
+        month = request.POST.get('month', None)
         year  = int(request.POST.get('year', None))
         if month and year:
             start = datetime(int(year)
@@ -208,7 +225,7 @@ def summary(request, *args, **kws):
                                     , lambda x, y: cmp(int(x), int(y)))
                              , hours[p.pcode]) for p in projects]
               , 'start'    : start
-              , 'months'   : calendar.month_name 
+              , 'months'   : calendar.month_name
               , 'month'    : month
               , 'years'    : [y for y in xrange(2009, now.year + 2, 1)]
               , 'year'     : year

@@ -1,11 +1,12 @@
 # -*- coding: iso-8859-15 -*-
 
-from django              import template
-from sesshuns            import models
-from datetime            import datetime, timedelta
-from sesshuns.models     import first
-from sets                import Set
-from nell.tools          import TimeAccounting
+from django                  import template
+from django.utils.safestring import SafeUnicode
+from sesshuns                import models
+from datetime                import datetime, timedelta
+from sesshuns.models         import first
+from sets                    import Set
+from nell.tools              import TimeAccounting
 
 register = template.Library()
 
@@ -107,7 +108,7 @@ def project_type(project):
             type = 'K'
         else:
             type = 'T'
-    return type            
+    return type
 
 @register.filter
 def get_projects(user):
@@ -212,3 +213,45 @@ def moc_degraded(period):
         return not period.moc_met()
     else:
         return False
+
+@register.filter
+def split_over_two_table_columns(value, splitter):
+    """
+    Used by the resource calendar to split a bunch of HTML controls
+    that are separated by a '<br>' over two table columns.
+    """
+    a = value.split('<br>')
+    a.insert(len(a)/2 + len(a) % 2, splitter)
+    value = SafeUnicode('<br>'.join(a))
+    return value
+split_over_two_table_columns.is_safe = True
+
+
+@register.filter
+def flag_rc_conflicts(value, maintenance_activity):
+    """
+    Used to flag the summary of a maintenance activity for conflicts.
+    Conflicting resources will be output in red.  Resources will be
+    flagged as conflicting if any other activity uses the same
+    mutually exclusive resource during some overlapping time,
+    regardless of who caused the conflict.
+    """
+    # this will check against all other activities in group to see if
+    # any resources are in conflict.  A list of resource abbreviations
+    # will be returned, over which the filter will iterate.
+    conflicts = maintenance_activity.check_for_conflicting_resources()
+
+    for i in conflicts:
+        rpos = value.find(i)
+
+        if rpos != -1:
+            value = value.replace(i, i[:2] + '<font color="red">' + i[2:] + '</font>', 1)
+
+    value = SafeUnicode(value)
+    return value
+flag_rc_conflicts.is_safe = True
+
+@register.filter
+def is_period(item):
+    return type(item) == Period
+
