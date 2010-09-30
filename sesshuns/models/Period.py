@@ -237,7 +237,7 @@ class Period(models.Model):
             return None
 
     def get_window(self):
-        "Get the window this period is either default or choosen period for."
+        "Get the window this period is either default or chosen period for."
         if self.is_windowed() and self.has_valid_windows():
             if len(self.default_window.all()) == 1:
                 return first(self.default_window.all())
@@ -247,7 +247,10 @@ class Period(models.Model):
             return None
 
     def is_windowed_default(self):
-        "Is this period the default period for a window? If not, is the choosen"
+        """
+        Is this period the default period for a window?
+        If not, is it the chosen"
+        """
         # assume error checking done before hand
         # self.is_windowed() and self.has_valid_windows()
         if len(self.default_window.all()) == 1:

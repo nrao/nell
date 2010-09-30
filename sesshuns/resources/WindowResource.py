@@ -17,10 +17,10 @@ jsonMap = { "id" : "id"
           , "default_time" : "default_period__start"
           , "default_duration" : "default_period__duration"
           , "default_state" : "default_period__state"
-          , "choosen_date" : "choosen_period__start"
-          , "choosen_time" : "choosen_period__start"
-          , "choosen_duration" : "choosen_period__duration"
-          , "choosen_state" : "choosen_period__state"
+          , "chosen_date" : "chosen_period__start"
+          , "chosen_time" : "chosen_period__start"
+          , "chosen_duration" : "chosen_period__duration"
+          , "chosen_state" : "chosen_period__state"
           }
     
 class WindowResource(NellResource):

@@ -201,7 +201,7 @@ class Window(models.Model):
         }
 
     def assignPeriod(self, periodId, default):
-        "Assign the given period to the default or choosen period"
+        "Assign the given period to the default or chosen period"
         p = first(Period.objects.filter(id = periodId))
         if p is None:
             return

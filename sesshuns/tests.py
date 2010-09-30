@@ -253,7 +253,7 @@ class TestWindow(NellTestCase):
         self.assertEqual(jd["start"], startStr)
         self.assertEqual(jd["end"], endStr)
         self.assertEqual(jd["session"], SessionHttpAdapter(self.sesshun).jsondict())
-        self.assertEqual(jd["choosen_period"], None)
+        self.assertEqual(jd["chosen_period"], None)
 
         w.delete()
 
@@ -327,7 +327,7 @@ class TestWindow(NellTestCase):
         self.assertEquals(w.state(), pending) 
 
         # this should move the default_period to deleted
-        # and the choosen period to scheduled
+        # and the chosen period to scheduled
         w.reconcile()
 
         # test
@@ -460,7 +460,7 @@ class TestPeriod(NellTestCase):
         self.assertEquals(w,     p.get_window())
         self.assertEquals(True,  p.is_windowed_default())
 
-        # now assign this second period as the 'choosen' period for the win.
+        # now assign this second period as the 'chosen' period for the win.
         w.period = p2
         w.save()
 
