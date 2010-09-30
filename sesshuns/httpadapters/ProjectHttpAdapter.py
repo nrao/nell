@@ -31,6 +31,7 @@ class ProjectHttpAdapter (object):
         self.project.friend           = friend
         self.project.thesis           = fdata.get("thesis", "false") == "true"
         self.project.complete         = fdata.get("complete", "false") == "true"
+        self.project.blackouts        = fdata.get("blackouts", "false") == "true"
         self.project.notes            = fdata.get("notes", "")
         self.project.schedulers_notes = fdata.get("schd_notes", "")
 
@@ -95,6 +96,7 @@ class ProjectHttpAdapter (object):
               , "pcode"        : self.project.pcode
               , "name"         : self.project.name
               , "thesis"       : self.project.thesis
+              , "blackouts"    : self.project.blackouts
               , "complete"     : self.project.complete
               , "pi"           : pi
               , "co_i"         : co_i

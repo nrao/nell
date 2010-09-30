@@ -163,7 +163,7 @@
               <th>Until</th>
               <th>Description</th>
             </tr>
-              {% for b in projectBlackouts %}
+              {% for b in observerBlackouts %}
                 <tr>
                   <td>
                     <a href="/profile/{{b.user.id}}">{{b.user|display_name}}</a>
@@ -180,6 +180,48 @@
                 </tr>
               {% endfor %}
           </table>
+
+           <div>
+           {% if p.blackouts %}
+           <h3 class="grey_highlight loud">Project Blackouts ({{tz}})</h3>
+           <table>
+             <tr>
+               <th>Begin</th>
+               <th>End</th>
+               <th>Repeat</th>
+               <th>Until</th>
+               <th>Description</th>
+             </tr>
+             {% for b in projectBlackouts %}
+             <tr>
+               <td>{{b.start_date|date:'j M Y H:i'}}</td>
+               <td>{{b.end_date|date:'j M Y H:i'}}</td>
+               <td>{{b.repeat.repeat}}</td>
+               {% if b.until %}
+               <td>{{b.until|date:'j M Y H:i'}}</td>
+               {% else %}
+               <td>{{b.until|pretty_none}}</td>
+               {% endif %}
+               <td>{{b.description}}</td>
+             {% if authorized or requestor.isAdmin %}
+               <td>
+                 <a href="/project/{{p.pcode}}/blackout/{{b.id}}/">edit</a> |
+                 <a href="/project/{{p.pcode}}/blackout/{{b.id}}/?_method=DELETE">delete</a>
+               </td>
+             {% endif %}
+             </tr>
+             {% endfor %}
+           </table>
+           {% if authorized or requestor.isAdmin %}
+           <a href="/project/{{p.pcode}}/blackout/">add</a>
+           {% endif %}
+           <br/>
+           <br/>
+           <br/>
+         </div>
+         {% endif %}
+
+
         <h3 class="grey_highlight loud">Telescope Periods Completed ({{tz}})</h3>
           <table>
             <tr>
