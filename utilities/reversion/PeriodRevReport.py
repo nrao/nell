@@ -117,7 +117,7 @@ def show_help(program):
     print "\ttype  = one of [session, start]"
     print "\tpcode = if type session, project code, in double quotes"
     print "\tname  = if type session, session name, in double quotes"
-    print "\ttime  = if type start choosen, the start time in YY-mm-dd HH:MM:SS"
+    print "\ttime  = if type start chosen, the start time in YY-mm-dd HH:MM:SS"
     print "\nAll required arguments are required.  Anything else is optional :)"
 
 if __name__ == '__main__':
