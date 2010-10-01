@@ -2282,7 +2282,7 @@ class TestGetOptions(NellTestCase):
         response = c.get('/sessions/options', dict(mode='project_codes'))
         self.assertEquals(response.content,
                           '{"project codes": ["GBT09A-001"], "project ids": [1]}')
-        response = c.get('/sessions/options', dict(mode='session_handles'))
+        response = c.get('/sessions/options', dict(mode='session_handles', complete='false', enabled='true'))
         self.assertEquals(response.content,
                           '{"ids": [1], "session handles": ["Low Frequency With No RFI (GBT09A-001)"]}')
 
