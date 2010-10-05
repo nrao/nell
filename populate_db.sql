@@ -80,7 +80,7 @@ INSERT INTO semesters VALUES (DEFAULT, '11C');
 INSERT INTO project_types VALUES (DEFAULT, 'science');
 INSERT INTO project_types VALUES (DEFAULT, 'non-science');
 
-INSERT INTO projects VALUES (DEFAULT, 1, 1, 'GBT09A-001', '', false, false, NULL, NULL);
+INSERT INTO projects VALUES (DEFAULT, 1, 1, 'GBT09A-001', '', false, false, false, NULL, NULL);
 
 INSERT INTO session_types VALUES (DEFAULT, 'open');
 INSERT INTO session_types VALUES (DEFAULT, 'fixed');

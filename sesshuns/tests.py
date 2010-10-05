@@ -1,5 +1,6 @@
 from copy                import copy
 from datetime            import date, datetime, timedelta
+from time                import mktime
 from django.conf         import settings
 from django.contrib.auth import models as m
 from django.test.client  import Client
@@ -1626,7 +1627,7 @@ class TestBlackout(NellTestCase):
     def setUp(self):
         super(TestBlackout, self).setUp()
 
-        # create some blackouts    
+        # create some user blackouts    
         self.u = User(first_name = "Test"
                     , last_name  = "User"
                     , role       = first(Role.objects.all())
@@ -1648,6 +1649,55 @@ class TestBlackout(NellTestCase):
                             , end_date   = datetime(2009, 1, 4, 13)
                             , until      = datetime(2009, 5, 4, 11))
         self.blackout2.save()
+
+        # create some project blackouts
+        semester = first(Semester.objects.filter(semester = "08C"))
+        ptype    = first(Project_Type.objects.filter(type = "science"))
+
+        self.pcode = "GBT08C-01"
+        self.project = Project(semester = semester
+                             , project_type = ptype
+                             , pcode = self.pcode
+                               )
+        self.project.save()                       
+
+        #once = first(Repeat.objects.filter(repeat = 'Once'))
+        self.blackout3 = Blackout(project    = self.project
+                                , repeat     = once 
+                                , start_date = datetime(2008, 10, 1, 11)
+                                , end_date   = datetime(2008, 10, 3, 11))
+        self.blackout3.save()
+        
+    def test_eventjson(self):
+
+        # user blackout
+        calstart = datetime(2009, 1, 1)
+        calend   = datetime(2009, 1, 30)
+        json = self.blackout1.eventjson(mktime(calstart.timetuple())
+                                      , mktime(calend.timetuple()))
+        event = {'className': 'blackout'
+               , 'start': '2009-01-01T11:00:00'
+               , 'end': '2009-01-03T11:00:00'
+               , 'id': 1L
+               , 'title': 'Test User: blackout'
+               }
+        self.assertEqual(event, json[0])       
+
+        # project blackout
+        calstart = datetime(2008, 10, 1)
+        calend   = datetime(2008, 10, 30)
+        json = self.blackout3.eventjson(mktime(calstart.timetuple())
+                                      , mktime(calend.timetuple()))
+        event = {'className': 'blackout'
+               , 'start': '2008-10-01T11:00:00'
+               , 'end': '2008-10-03T11:00:00'
+               , 'id': 3L
+               , 'title': '%s: blackout' % self.pcode
+               }
+        self.assertEqual(event, json[0]) 
+
+    # TBF
+    # test_isActive
 
     def test_generateDates(self):
 
@@ -1686,6 +1736,19 @@ class TestBlackout(NellTestCase):
         calend   = datetime(2008, 6, 30)
         gdts = self.blackout2.generateDates(calstart, calend)
         self.assertEquals(0, len(gdts))
+
+        # no repeats are easy ... even for project blackouts
+        dts = [(self.blackout3.start_date, self.blackout3.end_date)]
+        calstart = datetime(2008, 10, 1)
+        calend   = datetime(2008, 10, 30)
+        gdts = self.blackout3.generateDates(calstart, calend)
+        self.assertEquals(dts, gdts)
+
+    def test_projectBlackout(self):
+        "Repeat some of the other tests, but for project blackouts"
+
+        self.assertEquals(self.blackout3.forName(), self.project.pcode)
+        self.assertEquals(self.blackout3.forUrlId(), self.project.pcode)
 
 # Testing Views
 
@@ -2739,17 +2802,40 @@ class TestObservers(NellTestCase):
         b.description = "This is a test blackout."
         b.save()
         return b
-        
+
+    def create_blackout_for_project(self):
+        b             = Blackout(project = self.p)
+        b.start       = datetime(2009, 1, 1)
+        b.end         = datetime(2009, 12, 31)
+        b.repeat      = first(Repeat.objects.all())
+        b.description = "This is a test blackout for a project."
+        b.save()
+        return b       
+
     def test_blackout_form(self):
+
+        # user blackout
         response = self.get('/profile/%s/blackout/' % self.u.id)
         self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue("Blackout for Test User" in response.content)
 
         b = self.create_blackout()
         response = self.get('/profile/%s/blackout/%s/' % (self.u.id, b.id))
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue(b.description in response.content)
 
+        # project blackout
+        response = self.get('/project/%s/blackout/' % self.p.pcode)
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue("Blackout for mike" in response.content)
+
+        b = self.create_blackout_for_project()
+        response = self.get('/project/%s/blackout/%s/' % (self.p.pcode, b.id))
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue(b.description in response.content)
+
     def test_blackout(self):
+        # create a blackout
         b     = self.create_blackout()
         start = datetime(2009, 1, 1)
         end   = datetime(2009, 1, 31)
@@ -2765,6 +2851,7 @@ class TestObservers(NellTestCase):
               , '_method'     : "PUT"
                 }
 
+        # edit it
         response = self.post(
             '/profile/%s/blackout/%s/' % (self.u.id, b.id), data)
         b = first(Blackout.objects.filter(id = b.id))
@@ -2772,6 +2859,7 @@ class TestObservers(NellTestCase):
         self.assertEqual(b.until.date().strftime("%m/%d/%Y") , data.get('until'))
         self.failUnlessEqual(response.status_code, 302)
         
+        # delete it
         response = self.get(
             '/profile/%s/blackout/%s/' % (self.u.id, b.id)
           , {'_method' : 'DELETE'})
@@ -2780,6 +2868,7 @@ class TestObservers(NellTestCase):
         b = first(Blackout.objects.filter(id = b.id))
         self.assertEqual(None, b)
 
+        # create a new one
         data['end'] = date(2009, 5, 31).strftime("%m/%d/%Y")
         _ = data.pop('_method')
         response    = self.post(
@@ -2789,10 +2878,11 @@ class TestObservers(NellTestCase):
         self.assertEqual(b.end_date.date().strftime("%m/%d/%Y"), data.get('end'))
         b.delete()
 
+        # create another new one?
         data['until'] = ''
         response    = self.post(
-            '/profile/%s/blackout' % self.u.id, data)
-        self.failUnlessEqual(response.status_code, 200)
+            '/profile/%s/blackout/' % self.u.id, data)
+        self.failUnlessEqual(response.status_code, 302)
 
     def test_blackout2(self):
         b     = self.create_blackout()
@@ -2822,6 +2912,51 @@ class TestObservers(NellTestCase):
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue("ERROR" in response.content)
 
+    def test_blackout3(self):
+        "Like test_blackout, but for a project"
+
+        # create an initial blackout
+        b     = self.create_blackout_for_project()
+        start = datetime(2009, 1, 1)
+        end   = datetime(2009, 1, 31)
+        until = datetime(2010, 1, 31)
+        data = {'start'       : start.date().strftime("%m/%d/%Y")
+              , 'start_time'   : start.time().strftime("%H:%M")
+              , 'end'         : end.date().strftime("%m/%d/%Y")
+              , 'end_time'     : end.time().strftime("%H:%M")
+              , 'repeats'      : 'Once'
+              , 'until'       : until.strftime("%m/%d/%Y")
+              , 'until_time'   : until.strftime("%H:%M")
+              , 'description' : "This is a test project blackout."
+              , '_method'     : "PUT"
+                }
+
+        # now edit it
+        response = self.post(
+            '/project/%s/blackout/%s/' % (self.p.pcode, b.id), data)
+        b = first(Blackout.objects.filter(id = b.id))
+        self.assertEqual(b.end_date.date().strftime("%m/%d/%Y") , data.get('end'))
+        self.assertEqual(b.until.date().strftime("%m/%d/%Y") , data.get('until'))
+        self.failUnlessEqual(response.status_code, 302)
+        
+        # now delete it
+        response = self.get(
+            '/project/%s/blackout/%s/' % (self.p.pcode, b.id)
+          , {'_method' : 'DELETE'})
+        self.failUnlessEqual(response.status_code, 302)
+        # shouldn't this delete the blackout?
+        b = first(Blackout.objects.filter(id = b.id))
+        self.assertEqual(None, b)
+
+        # now create one 
+        data['end'] = date(2009, 5, 31).strftime("%m/%d/%Y")
+        _ = data.pop('_method')
+        response    = self.post(
+            '/project/%s/blackout/' % self.p.pcode, data)
+        self.failUnlessEqual(response.status_code, 302)
+        b = first(self.p.blackout_set.all())
+        self.assertEqual(b.end_date.date().strftime("%m/%d/%Y"), data.get('end'))
+        b.delete()
 
     def test_get_period_day_time(self):
 

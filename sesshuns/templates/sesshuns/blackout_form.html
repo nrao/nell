@@ -27,14 +27,12 @@
 </div>
 
 <div type="text" id="datepicker"></div>
-{% if b_id %}
-<form action="/profile/{{u.id}}/blackout/{{b_id}}/" method="POST">
+<form action={{action}} method="POST">
+  {% if b_id %}
   <input type="hidden" name="_method" value="PUT"/>
-{% else %}
-<form action="/profile/{{u.id}}/blackout/" method="POST">
-{% endif %}
+  {% endif %}
   <fieldset>
-  <legend>Blackout for {{u|display_name}}</legend>
+  <legend>Blackout for {{for_name}}</legend>
   <table>
     <tr>
       <th style="width: 50px;">Time Zone:</th>
@@ -84,6 +82,6 @@
   </table>
   </fieldset>
   <input type="submit" value="Save"/>&nbsp;&nbsp;
-  <input type="submit" value="Cancel" onclick="window.location.href = '/profile/{{u.id}}'; return false"/>
+  <input type="submit" value="Cancel" onclick="window.location.href = '{{cancel}}'; return false"/>
 </form>
 {% endblock %}

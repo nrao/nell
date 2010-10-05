@@ -29,6 +29,9 @@ class User(models.Model):
     def name(self):
         return self.__str__()
 
+    def display_name(user):
+        return "%s %s" % (user.first_name, user.last_name)
+
     def isAdmin(self):
         return self.role.role == "Administrator"
 

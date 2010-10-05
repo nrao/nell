@@ -4,10 +4,13 @@ from datetime    import datetime, timedelta
 
 from utilities.TimeAgent import adjustDateTimeTz
 from User        import User
+from Project     import Project
 from Repeat      import Repeat
 
 class Blackout(models.Model):
-    user         = models.ForeignKey(User)
+    #user         = models.ForeignKey(User)
+    user         = models.ForeignKey(User, null = True)
+    project      = models.ForeignKey(Project, null = True)
     start_date   = models.DateTimeField(null = True, blank = True)
     end_date     = models.DateTimeField(null = True, blank = True)
     repeat       = models.ForeignKey(Repeat)
@@ -16,8 +19,35 @@ class Blackout(models.Model):
 
     def __unicode__(self):
         return "%s Blackout for %s: %s - %s" % \
-               (self.repeat.repeat, self.user, self.start_date, self.end_date)
+               (self.repeat.repeat, self.forName(), self.start_date, self.end_date)
 
+    def checkValidUser(self):
+        # TBF: better way of checking for these?
+        assert ((self.project is not None) or (self.user is not None))
+        assert (not ((self.project is None) and (self.user is None)))
+    
+    def forUser(self):
+        "Assumes one of [user,project] is NULL"
+        self.checkValidUser()
+        return self.project is None
+
+    #def forWhom(self):
+    #    """
+    #    Who is this blackout for?  Assumes one of [user,project] is NULL.
+    #    """
+    #    return self.user if self.forUser() else self.project
+
+    def forUrlId(self):
+        "Returns the url id for whom this blackout is for"
+        return self.user.id if self.forUser() else self.project.pcode  
+
+    def forName(self):
+        """
+        Returns the name for whom this blackout is for:
+           * user - display name
+           * project - pcode
+        """
+        return self.user.display_name() if self.forUser() else self.project.pcode  
     def isActive(self, date = datetime.utcnow()):
         """
         Takes a UTC datetime object and returns a Boolean indicating whether
@@ -103,7 +133,7 @@ class Blackout(models.Model):
         dates    = self.generateDates(calstart, calend)
         if tz is not None:
             dates = [(adjustDateTimeTz(tz, s), adjustDateTimeTz(tz, e)) for s, e in dates]
-        title    = "%s: %s" % (self.user.name()
+        title    = "%s: %s" % (self.forName() #self.user.name()
                              , self.description or "blackout")
         return [{
             "id"   :      self.id
