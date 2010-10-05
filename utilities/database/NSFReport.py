@@ -76,10 +76,10 @@ def getShutdown(month):
 def printSummary(outfile, label, items):
     outfile.write("%s %s %s %s %s\n" % \
                   (label
-                 , ("%.1f" % sum(items)).center(8)
-                 , ("%.1f" % items[0]).center(8)
-                 , ("%.1f" % items[1]).center(8)
-                 , ("%.1f" % items[2]).center(8)))
+                 , ("%.2f" % sum(items)).center(8)
+                 , ("%.2f" % items[0]).center(8)
+                 , ("%.2f" % items[1]).center(8)
+                 , ("%.2f" % items[2]).center(8)))
 
 def GenerateReport(label, months):
     assert len(months) == 3, "Are we still doing quarters?"
@@ -113,10 +113,10 @@ def GenerateReport(label, months):
     total = zip(scheduled, maintenance, testing, shutdown)
     outfile.write("%s %s %s %s %s\n" % \
                   ('Total Hours '
-                 , ("%.1f" % sum([sum(t) for t in total])).center(8)
-                 , ("%.1f" % sum(total[0])).center(8)
-                 , ("%.1f" % sum(total[1])).center(8)
-                 , ("%.1f" % sum(total[2])).center(8)))
+                 , ("%.2f" % sum([sum(t) for t in total])).center(8)
+                 , ("%.2f" % sum(total[0])).center(8)
+                 , ("%.2f" % sum(total[1])).center(8)
+                 , ("%.2f" % sum(total[2])).center(8)))
 
 def show_help():
     print "\nThe arguments to NSFReport are:"
