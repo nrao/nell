@@ -17,11 +17,13 @@ def filterPeriods(periods, condition):
     "Filters periods according to some critia, e.g. is science?"
     return [p for p in periods if eval(condition)]
 
-def filterPeriodsByDate(periods, dt):
+def filterPeriodsByDate(periods, start):
     "Returns the periods within a given month and year."
-    return filterPeriods(
-             periods
-           , "p.start.month == %d and p.start.year == %d" % (dt.month, dt.year))
+    _, day = calendar.monthrange(start.year, start.month)
+    stop  = datetime(start.year, start.month, day, 23, 59, 59)
+    ustart = TimeAgent.est2utc(start)
+    ustop  = TimeAgent.est2utc(stop)
+    return [p for p in periods if (p.start >= ustart or p.end() > ustart) and p.start < ustop]
 
 def normalizePeriodStartStop(period, dt):
     """
@@ -30,7 +32,7 @@ def normalizePeriodStartStop(period, dt):
     """
     start = TimeAgent.utc2est(period.start)
     if start.month != dt.month:
-        start = datetime(dt.year, dt.month, 1)
+        start = datetime(dt.year, dt.month, 1, 0, 0, 0)
 
     stop = TimeAgent.utc2est(period.end())
     if stop.month != dt.month:
@@ -40,25 +42,31 @@ def normalizePeriodStartStop(period, dt):
     return start, stop
 
 def getTime(periods, month):
+    periods.sort(key = lambda x: x.start)
+    ss = [(stop - start).seconds / 3600. for start, stop in [normalizePeriodStartStop(p, month) for p in periods]]
+    #f = open("stuff%d.txt" % month.month, "w")
+    #for p, s in zip(periods, ss):
+    #    f.write("%s, %s, %s\n" % (p.session.project.pcode, p.start, s))
+    #f.close()
     return sum([(stop - start).seconds / 3600. \
                  for start, stop in [normalizePeriodStartStop(p, month) \
                                      for p in periods]])
 
 def getScheduledTime(month):
     "Returns scheduled astronomy time for this month."
-    periods = filterPeriodsByDate(filterPeriods(getPeriods(), 'p.session.project.project_type.type == "science"'), month)
+    periods = filterPeriodsByDate(filterPeriods(getPeriods(), 'p.session.project.is_science()'), month)
     return getTime(periods, month)
     
 def getDowntime(month):
-    periods = filterPeriodsByDate(filterPeriods(getPeriods(), 'p.session.project.project_type.type == "science"'), month)
+    periods = filterPeriodsByDate(filterPeriods(getPeriods(), 'p.session.project.is_science()'), month)
     return sum([p.accounting.lost_time() for p in periods])
 
 def getMaintenance(month):
-    periods = filterPeriodsByDate(filterPeriods(getPeriods(), 'p.session.project.pcode == "Maintenance"'), month)
+    periods = filterPeriodsByDate(filterPeriods(getPeriods(), 'p.session.project.is_maintenance()'), month)
     return getTime(periods, month)
 
 def getTesting(month):
-    periods = filterPeriodsByDate(filterPeriods(getPeriods(), 'p.session.project.pcode[0] == "T"'), month)
+    periods = filterPeriodsByDate(filterPeriods(getPeriods(), 'p.session.project.is_test() or p.session.project.is_commissioning() or p.session.project.is_calibration()'), month)
     return getTime(periods, month)
 
 def getShutdown(month):
