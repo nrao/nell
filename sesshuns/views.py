@@ -161,7 +161,7 @@ def get_options(request, *args, **kws):
           , mimetype = "text/plain")
 
     elif mode == "session_handles":
-        complete = request.GET.get('complete') == 'true'
+        complete = not (request.GET.get('notcomplete') == 'true')
         enabled  = request.GET.get('enabled') == 'true'
         ss = Sesshun.objects.filter(status__complete = complete).filter(status__enabled = enabled).order_by('name')
         return HttpResponse(
