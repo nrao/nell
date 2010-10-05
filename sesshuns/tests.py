@@ -661,10 +661,10 @@ class TestReceiver(NellTestCase):
         #print rgs[0].receivers.all()[1].abbreviation
         #print rgs[1].receivers.all()[0].abbreviation
         #print rgs[1].receivers.all()[1].abbreviation
-        self.assertEqual('L', rgs[0].receivers.all()[0].abbreviation)
-        self.assertEqual('X', rgs[0].receivers.all()[1].abbreviation)
-        self.assertEqual('L', rgs[1].receivers.all()[0].abbreviation)
-        self.assertEqual('S', rgs[1].receivers.all()[1].abbreviation)
+        self.assertEqual('L', rgs[0].receivers.all().order_by('id')[0].abbreviation)
+        self.assertEqual('X', rgs[0].receivers.all().order_by('id')[1].abbreviation)
+        self.assertEqual('L', rgs[1].receivers.all().order_by('id')[0].abbreviation)
+        self.assertEqual('S', rgs[1].receivers.all().order_by('id')[1].abbreviation)
 
 class TestReceiverSchedule(NellTestCase):
 
@@ -2282,7 +2282,7 @@ class TestGetOptions(NellTestCase):
         response = c.get('/sessions/options', dict(mode='project_codes'))
         self.assertEquals(response.content,
                           '{"project codes": ["GBT09A-001"], "project ids": [1]}')
-        response = c.get('/sessions/options', dict(mode='session_handles', complete='false', enabled='true'))
+        response = c.get('/sessions/options', dict(mode='session_handles', notcomplete='true', enabled='true'))
         self.assertEquals(response.content,
                           '{"ids": [1], "session handles": ["Low Frequency With No RFI (GBT09A-001)"]}')
 
