@@ -161,9 +161,15 @@ def get_options(request, *args, **kws):
           , mimetype = "text/plain")
 
     elif mode == "session_handles":
-        complete = not (request.GET.get('notcomplete') == 'true')
-        enabled  = request.GET.get('enabled') == 'true'
-        ss = Sesshun.objects.filter(status__complete = complete).filter(status__enabled = enabled).order_by('name')
+        incomplete = request.GET.get('notcomplete', None)
+        enabled    = request.GET.get('enabled')
+        if incomplete is not None and enabled is not None:
+            complete = not (incomplete.lower() == 'true', None)
+            enabled  = enabled.lower() == 'true'
+            ss = Sesshun.objects.filter(status__complete = complete).filter(status__enabled = enabled).order_by('name')
+        else:
+            ss = Sesshun.objects.all().order_by('name')
+
         return HttpResponse(
             json.dumps({
                 'session handles': ["%s (%s)" % (s.name, s.project.pcode) \
