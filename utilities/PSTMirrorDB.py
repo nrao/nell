@@ -41,6 +41,8 @@ class PSTMirrorDB(object):
                       , postals      = ['Not Available']
                       , affiliations = ['Not Available']
                       , status       = 'Not Available'
+                      , first_name   = 'Not Available'
+                      , last_name    = 'Not Available'
                       , username     = user.username)
 
     def getStaticContactInfoByID(self, userAuth_id):
@@ -49,7 +51,7 @@ class PSTMirrorDB(object):
         The excpetion to this is the status field.
         """
 
-        person_id, username, enabled = self.getBasicInfo(userAuth_id)
+        person_id, username, enabled, fn, ln = self.getBasicInfo(userAuth_id)
 
         emails, emailDescs   = self.getEmails(person_id)
         phones, phoneDescs   = self.getPhones(person_id)
@@ -62,14 +64,18 @@ class PSTMirrorDB(object):
                   , phoneDescs = phoneDescs
                   , postals = postalDescs
                   , affiliations = affiliations
+                  , username = username
                   # this field is the only one that differs from UserInfo
                   , status = enabled
-                  , username = username)
+                  # these fields only appear in this mirror class
+                  , first_name = fn
+                  , last_name  = ln
+                  )
 
     def getBasicInfo(self, userAuth_id):
 
         q = """
-        SELECT p.person_id, ua.personName, p.enabled
+        SELECT p.person_id, ua.personName, p.enabled, p.firstName, p.lastName
         FROM person as p, userAuthentication as ua
         WHERE p.personAuthentication_id = %d
         AND p.personAuthentication_id = ua.userAuthentication_id
@@ -77,7 +83,12 @@ class PSTMirrorDB(object):
 
         self.cursor.execute(q)
         rows = self.cursor.fetchall()
-        return (rows[0][0], rows[0][1], self.oneBitStr2Bool(rows[0][2]))
+        return (rows[0][0]
+              , rows[0][1]
+              , self.oneBitStr2Bool(rows[0][2])
+              , rows[0][3]
+              , rows[0][4]
+              )
 
     def oneBitStr2Bool(self, bstr):
         if '\x00' == bstr:

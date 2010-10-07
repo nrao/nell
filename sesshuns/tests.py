@@ -3393,6 +3393,8 @@ class TestPSTMirrorDB(NellTestCase):
         # get rid of any elements that are different
         # by design, status key is different
         mirror.pop('status')
+        mirror.pop('first_name')
+        mirror.pop('last_name')
         pst.pop('status')
         # for some reason, the XML derived addresses aren't in order
         mirror.pop('postals')
