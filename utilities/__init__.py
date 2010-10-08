@@ -7,3 +7,4 @@ from Score                import Score
 from UserInfo             import UserInfo
 from PSTMirrorDB          import PSTMirrorDB
 from PSTQueryService      import PSTQueryService
+from PSTInterface         import PSTInterface
