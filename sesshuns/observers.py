@@ -131,7 +131,8 @@ def profile(request, *args, **kws):
     checkAuthUser(requestor)
     user = first(User.objects.filter(id = args[0])) if args else requestor
     static_info  = user.getStaticContactInfo()
-    reservations = NRAOBosDB().getReservationsByUsername(user.username())
+    username = static_info['username']
+    reservations = NRAOBosDB().getReservationsByUsername(username)
 
     try:
         tz = requestor.preference.timeZone

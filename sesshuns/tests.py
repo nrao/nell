@@ -18,7 +18,7 @@ from nell.utilities.database      import DSSPrime2DSS
 from nell.utilities.receiver      import ReceiverCompile
 from nell.utilities               import UserInfo, NRAOBosDB, UpdateEphemeris
 from nell.utilities               import SchedulingNotifier 
-from nell.utilities               import PSTMirrorDB
+from nell.utilities               import PSTMirrorDB, PSTQueryService
 
 # Test field data
 fdata = {"total_time": "3"
@@ -3381,15 +3381,14 @@ class TestPSTMirrorDB(NellTestCase):
     # this is even more un "unit" test - we're interface with TWO
     # external systems
     def test_compareProfiles(self):
-        "Compare the outputs from UserInfo & PSTMirrorDB"
+        "Compare the outputs from PSTQueryService & PSTMirrorDB"
 
 
         db = PSTMirrorDB()
         # 823 - pst_id for pmargani
         mirror = db.getStaticContactInfoByID(823)
 
-        ui = UserInfo()
-        ui.useMirror = False
+        ui = PSTQueryService()
         xml = ui.getStaticContactInfoByID(823)
         pst = ui.parseUserDict(xml)
 
@@ -3405,12 +3404,18 @@ class TestPSTMirrorDB(NellTestCase):
         self.assertEquals(mirror, pst)
 
 
-class TestUserInfo(NellTestCase):
+class TestPSTQueryService(NellTestCase):
 
     def setUp(self):
-        super(TestUserInfo, self).setUp()
+        super(TestPSTQueryService, self).setUp()
 
-        self.ui = UserInfo()
+        self.ui = PSTQueryService()
+
+        self.me = User(first_name = "Paul"
+                     , last_name = "Marganian"
+                     , role_id = 1
+                     , pst_id = 823)
+        self.me.save()
 
         #<?xml version="1.0" encoding="UTF-8"?>
         self.xmlStr =  """
@@ -3543,6 +3548,27 @@ class TestUserInfo(NellTestCase):
         self.assertEquals('pmargani', info['username'])
         self.assertEquals('Suspect', info['status'])
 
+    # THis is NOT a unit -test: it actually interacts w/ the PST service!
+    def test_pstServices(self):
+        
+        username =  self.ui.getUsername(self.me.pst_id)
+        self.assertEquals('pmargani', username)
+
+        id = self.ui.getIdFromUsername(username)
+        self.assertEquals(823, id)
+
+        # TBF: for some reason, the returned info has something trivially
+        # different then self.xmlDict, but I don't know what.
+        info = self.ui.getStaticContactInfoByUserName(username)
+        self.assertEquals(self.xmlDict['name'],info['name'])
+
+        info = self.ui.getStaticContactInfoByID(self.me.pst_id)
+        self.assertEquals(self.xmlDict['name'],info['name'])
+
+        info = self.ui.getProfileByID(self.me)
+        self.assertEquals('pmargani', info['username'])
+
+        
 class TestUpdateEphemeris(NellTestCase):
 
     def testUpdate(self):

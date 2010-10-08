@@ -1,6 +1,7 @@
+from PSTInterface import PSTInterface
 import MySQLdb as m
 
-class PSTMirrorDB(object):
+class PSTMirrorDB(PSTInterface):
     """
     This class is responsible for reading user info from the mirror of
     the PST DB available in Green Bank.  This is a read-only, MySql DB,
@@ -8,8 +9,11 @@ class PSTMirrorDB(object):
     into our model.
     Note that the formatting of the resulting profile info does not make
     complete sense; but the format is dictated by being backward compatible
-    with the output form UserInfo.  The excpetion to this is the 'status'
+    with the output from the old method, PSTQueryService.
+    The excpetion to this is the 'status'
     field, which is not displayed, but only used for internal purposes.
+    Note that this is a child of PSTInterface, as is PSTQueryService,
+    but this is the preffered interface, since it's much faster.
     """
 
     def __init__(self, host = "trent.gb.nrao.edu"
@@ -53,13 +57,11 @@ class PSTMirrorDB(object):
         rows = self.cursor.fetchall()
         return int(rows[0][0])
 
-    def getProfileByID(self, user):
+    def getProfileByID(self, user, use_cache = True):
         try:
-        #if 1:
             # Note: our pst_id is their userAuthentication PK.
             return self.getStaticContactInfoByID(user.pst_id)
         except:
-        #else:
             return dict(emails       = []
                       , emailDescs   = []
                       , phones       = ['Not Available']
@@ -72,9 +74,14 @@ class PSTMirrorDB(object):
                       , last_name    = 'Not Available'
                       )
 
-    def getStaticContactInfoByID(self, userAuth_id):
+    def getStaticContactInfoByUserName(self, username, use_cache = True):
+        id = self.getIdFromUsername(username)
+        return self.getStaticContactInfoByID(id)
+
+    def getStaticContactInfoByID(self, userAuth_id, use_cache = True):
         """
-        This returns the same output as the method of the same name in UserInfo.
+        This returns the same output as the method of the same name in 
+        PSTQueryService.
         The excpetion to this is the status field.
         """
 
