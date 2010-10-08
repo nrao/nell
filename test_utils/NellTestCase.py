@@ -6,30 +6,30 @@ from django.db  import transaction
 
 class NellTestCase(unittest.TestCase):
 
-    def setUp(self):
-        if hasattr(settings, "CACHE_BACKEND"):
-            settings.CACHE_BACKEND = "dummy:///" # disable caching for testing
+    def __init__(self, *args, **kws):
+        super(NellTestCase, self).__init__(*args, **kws)
+        self.c = None
 
+    def connect(self):
         dbname = "test_" + settings.DATABASE_NAME
         port   = int(settings.DATABASE_PORT) if settings.DATABASE_PORT != '' else 5432
-        c = pg.connect(host   = settings.DATABASE_HOST
+        return pg.connect(host   = settings.DATABASE_HOST
                      , user   = settings.DATABASE_USER
                      , passwd = settings.DATABASE_PASSWORD
                      , port   = port
                      , dbname = dbname)
+
+    def setUp(self):
+        if hasattr(settings, "CACHE_BACKEND"):
+            settings.CACHE_BACKEND = "dummy:///" # disable caching for testing
+        c = self.connect()
+
         sql = open("populate_db.sql").read()
         c.query(sql)
         c.close()
 
     def tearDown(self):
-        dbname = "test_" + settings.DATABASE_NAME
-        port   = int(settings.DATABASE_PORT) if settings.DATABASE_PORT != '' else 5432
-        c = pg.connect(host = settings.DATABASE_HOST
-                     , user = settings.DATABASE_USER
-                     , passwd = settings.DATABASE_PASSWORD
-                     , port   = port
-                     , dbname = dbname)
-
+        c = self.connect()
         # Query to list all table names in the db
         sql = """SELECT c.relname as "Name"
                  FROM pg_catalog.pg_class c

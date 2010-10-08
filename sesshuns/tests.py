@@ -653,7 +653,7 @@ class TestReceiver(NellTestCase):
 
         s.receiver_group_set.all().delete()
         adapter.save_receivers('L | (X & S)')
-        rgs = s.receiver_group_set.all()
+        rgs = s.receiver_group_set.all().order_by('id')
         #print rgs
         # TBF WTF? now it is S, then it is X??
         #print rgs[0].receivers.all()[1].abbreviation
@@ -662,10 +662,15 @@ class TestReceiver(NellTestCase):
         #print rgs[0].receivers.all()[1].abbreviation
         #print rgs[1].receivers.all()[0].abbreviation
         #print rgs[1].receivers.all()[1].abbreviation
-        self.assertEqual('L', rgs[0].receivers.all()[0].abbreviation)
-        self.assertEqual('X', rgs[0].receivers.all()[1].abbreviation)
-        self.assertEqual('L', rgs[1].receivers.all()[0].abbreviation)
-        self.assertEqual('S', rgs[1].receivers.all()[1].abbreviation)
+        print "Receiver Groups", rgs
+        rs = rgs[0].receivers.all().order_by('id')
+        print "Receivers", [r.abbreviation for r in rs]
+        self.assertEqual('L', rs[0].abbreviation)
+        self.assertEqual('X', rs[1].abbreviation)
+        rs = rgs[1].receivers.all().order_by('id')
+        print "Receivers", [r.abbreviation for r in rs]
+        self.assertEqual('L', rs[0].abbreviation)
+        self.assertEqual('S', rs[1].abbreviation)
 
 class TestReceiverSchedule(NellTestCase):
 
@@ -2339,7 +2344,7 @@ class TestGetOptions(NellTestCase):
         response = c.get('/sessions/options', dict(mode='project_codes'))
         self.assertEquals(response.content,
                           '{"project codes": ["GBT09A-001"], "project ids": [1]}')
-        response = c.get('/sessions/options', dict(mode='session_handles'))
+        response = c.get('/sessions/options', dict(mode='session_handles', notcomplete='true', enabled='true'))
         self.assertEquals(response.content,
                           '{"ids": [1], "session handles": ["Low Frequency With No RFI (GBT09A-001)"]}')
 

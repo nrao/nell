@@ -90,12 +90,10 @@ class UserNames(object):
         assert ui.useMirror
         
         for i, u  in enumerate(users):
-            print u
             #debug
             #print "confirming %d of %d users." % (i, len(users))
             if u.pst_id is not None:
                 info = ui.getProfileByID(u)
-                print info
             
                 # extract what the PST thinks about this user
                 pstId        = u.pst_id # WTF? #int(info['id'])
@@ -111,7 +109,7 @@ class UserNames(object):
 
                 if (pstId != u.pst_id):
                     badIds.append((u, u.pst_id, pstId))
-                #if (u.username is not None) and (pstUsername.lower() != u.username()): #.lower()):
+                #if (u.username is not None) and (pstUsername.lower() != u.username.lower()):
                 #    badUsernames.append((u, u.username, pstUsername))
                 # just check for names
                 #if pstId != u.pst_id or pstUsername != u.username or \

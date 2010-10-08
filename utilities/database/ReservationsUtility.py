@@ -57,7 +57,7 @@ class ReservationsUtility(object):
                     rs = self.bos.getReservationsByUsername(user.username
                                                           , use_cache = False)
                 except:
-                    print "Excpetion retrieving res. for: ", user
+                    print "Error retrieving reservations for: ", user, user.username
                     rs = []
                 if len(rs) != 0:
                     print "!!!!!!!!!!!!!!", rs

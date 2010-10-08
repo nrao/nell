@@ -67,7 +67,7 @@ class PSTMirrorDB(object):
                       , postals      = ['Not Available']
                       , affiliations = ['Not Available']
                       , status       = 'Not Available'
-                      , username     = '?' #user.username()
+                      , username     = 'Not Available' 
                       , first_name   = 'Not Available'
                       , last_name    = 'Not Available'
                       )
@@ -94,9 +94,9 @@ class PSTMirrorDB(object):
                   , username = username
                   # this field is the only one that differs from UserInfo
                   , status = enabled
-                  # add these on only in mirror
+                  # these fields only appear in this mirror class
                   , first_name = fn
-                  , last_name = ln
+                  , last_name  = ln
                   )
 
     def getBasicInfo(self, userAuth_id):
