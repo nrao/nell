@@ -91,7 +91,6 @@ def create_user(username):
     info = UserInfo().getStaticContactInfoByUserName(username
                                                    , use_cache = False)
     user = User(pst_id     = info['id']
-              , username   = username
               , first_name = info['name']['first-name']
               , last_name  = info['name']['last-name']
               , role       = first(Role.objects.filter(role = "Observer")))
@@ -110,7 +109,8 @@ def get_requestor(request):
     Note: CAS (used by PST) has case-insensitive usernames.
     """
     loginUser = request.user.username
-    requestor = first(User.objects.filter(username__iexact = loginUser))
+    pst_id = UserInfo().getIdFromUsername(loginUser)
+    requestor = first(User.objects.filter(pst_id = pst_id))
 
     if requestor is None:
         requestor = create_user(loginUser)

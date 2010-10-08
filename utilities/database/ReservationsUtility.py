@@ -53,8 +53,12 @@ class ReservationsUtility(object):
         for user in users:
             print user
             if user.username is not None:
-                rs = self.bos.getReservationsByUsername(user.username
-                                                      , use_cache = False)
+                try:
+                    rs = self.bos.getReservationsByUsername(user.username
+                                                          , use_cache = False)
+                except:
+                    print "Error retrieving reservations for: ", user, user.username
+                    rs = []
                 if len(rs) != 0:
                     print "!!!!!!!!!!!!!!", rs
                     res.append((user, rs))

@@ -1636,7 +1636,6 @@ class TestBlackout(NellTestCase):
         self.u = User(first_name = "Test"
                     , last_name  = "User"
                     , role       = first(Role.objects.all())
-                    , username   = "testuser" #self.auth_user.username
                       )
         self.u.save()
 
@@ -2056,7 +2055,6 @@ class TestUserResources(NellTestCase):
         self.users = []
         self.users.append(User(original_id = 0
                     , pst_id      = 0
-                    , username    = 'foo'
                     , sanctioned  = False
                     , first_name  = 'Foo'
                     , last_name   = 'Bar'
@@ -2066,7 +2064,6 @@ class TestUserResources(NellTestCase):
         self.users[-1].save()
         self.users.append(User(original_id = 0
                     , pst_id      = 0
-                    , username    = 'mmccarty'
                     , sanctioned  = True
                     , first_name  = 'Mike'
                     , last_name   = 'McCarty'
@@ -2077,13 +2074,13 @@ class TestUserResources(NellTestCase):
 
     def test_create(self):
         fdata = self.fdata
-        fdata.update({"username"   : "foo2"
-                    , "original_id" : "99"
+        fdata.update({"original_id" : "99"
                     , "sanctioned" : "True"
                     , "first_name" : "Foogle"
                     , "last_name"  : "Bar"
                     , "contact_instructions" : "Best to call my mom's house.  Ask for Pooh Bear."
                     , "role": "Observer"
+                    , "username": "dss" # in tests only 
                      })
         response = self.client.post('/users', fdata)
         self.failUnlessEqual(response.status_code, 200)
@@ -2109,12 +2106,12 @@ class TestUserResources(NellTestCase):
         fdata.update({"_method" : "put"
                     , "pst_id"  : "1"
                     , "original_id"  : "12"
-                    , "username" : "foo"
                     , "sanctioned" : "True"
                     , "first_name" : "Foo"
                     , "last_name"  : "Bar"
                     , "contact_instructions" : ""
                     , "role": "Observer"
+                    , "username": "dss" # in tests only
                      })
         response = self.client.post('/users/%s' % self.users[0].id, fdata)
         self.failUnlessEqual(response.status_code, 200)
@@ -2140,7 +2137,6 @@ class TestInvestigatorResource(NellTestCase):
         self.users = []
         self.users.append(User(original_id = 0
                     , pst_id      = 0
-                    , username    = 'foo'
                     , sanctioned  = False
                     , first_name  = 'Foo'
                     , last_name   = 'Bar'
@@ -2150,7 +2146,6 @@ class TestInvestigatorResource(NellTestCase):
         self.users[-1].save()
         self.users.append(User(original_id = 0
                     , pst_id      = 0
-                    , username    = 'mmccarty'
                     , sanctioned  = True
                     , first_name  = 'Mike'
                     , last_name   = 'McCarty'
@@ -2160,7 +2155,6 @@ class TestInvestigatorResource(NellTestCase):
         self.users[-1].save()
         self.users.append(User(original_id = 0
                     , pst_id      = 0
-                    , username    = 'noproject'
                     , sanctioned  = True
                     , first_name  = 'Doless'
                     , last_name   = 'NoProject'
@@ -2711,10 +2705,11 @@ class TestObservers(NellTestCase):
         self.auth_user.is_staff = True
         self.auth_user.save()
 
-        self.u = User(first_name = "Test"
-                    , last_name  = "User"
+        self.u = User(first_name = "dss" #"Test"
+                    , last_name  = "account" #"User"
+                    , pst_id     = 3259
                     , role       = first(Role.objects.all())
-                    , username   = self.auth_user.username
+                    #, username   = self.auth_user.username
                       )
         self.u.save()
         self.client.login(username = "dss", password = "asdf5!")
@@ -2771,7 +2766,7 @@ class TestObservers(NellTestCase):
     def test_search(self):
         response = self.post('/search', {'search' : 'Test'})
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue("User" in response.content)
+        self.assertTrue("account" in response.content)
 
     def test_toggle_session(self):
         response = self.post(
@@ -2822,7 +2817,7 @@ class TestObservers(NellTestCase):
         # user blackout
         response = self.get('/profile/%s/blackout/' % self.u.id)
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue("Blackout for Test User" in response.content)
+        self.assertTrue("Blackout for dss account" in response.content)
 
         b = self.create_blackout()
         response = self.get('/profile/%s/blackout/%s/' % (self.u.id, b.id))
@@ -3376,6 +3371,13 @@ class TestPSTMirrorDB(NellTestCase):
         self.assertEquals('pmargani', info['username'])
         self.assertEquals(True, info['status'])
 
+    def test_getBadProfile(self):
+        "Make sure we can handle bogus info."
+
+        db = PSTMirrorDB()
+        username = db.getUsername(0)
+        self.assertEquals(None, username)
+
     # this is even more un "unit" test - we're interface with TWO
     # external systems
     def test_compareProfiles(self):
@@ -3387,12 +3389,15 @@ class TestPSTMirrorDB(NellTestCase):
         mirror = db.getStaticContactInfoByID(823)
 
         ui = UserInfo()
+        ui.useMirror = False
         xml = ui.getStaticContactInfoByID(823)
         pst = ui.parseUserDict(xml)
 
         # get rid of any elements that are different
         # by design, status key is different
         mirror.pop('status')
+        mirror.pop('first_name')
+        mirror.pop('last_name')
         pst.pop('status')
         # for some reason, the XML derived addresses aren't in order
         mirror.pop('postals')
