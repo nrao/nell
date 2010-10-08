@@ -11,7 +11,6 @@ from common     import first
 class User(models.Model):
     original_id = models.IntegerField(null = True, blank = True)
     pst_id      = models.IntegerField(null = True, blank = True)
-    username    = models.CharField(max_length = 32, null = True, blank = True)
     sanctioned  = models.BooleanField(default = False)
     first_name  = models.CharField(max_length = 32)
     last_name   = models.CharField(max_length = 150)
@@ -32,6 +31,11 @@ class User(models.Model):
     def display_name(user):
         return "%s %s" % (user.first_name, user.last_name)
 
+    def username(self):
+        "This is no longer stored in the DB, but is pulled"
+        # TBF: use a simple cache?
+        return UserInfo().getUsername(self.pst_id)
+
     def isAdmin(self):
         return self.role.role == "Administrator"
 
@@ -43,7 +47,7 @@ class User(models.Model):
 
     def getReservations(self, use_cache = True):
         try:
-            return NRAOBosDB().getReservationsByUsername(self.username, use_cache)
+            return NRAOBosDB().getReservationsByUsername(self.username(), use_cache)
         except:
             return []
 
@@ -122,5 +126,5 @@ class User(models.Model):
                                               or self.isInvestigator(p)]
         return shared_projects != [] or self.isAdmin() or self.isOperator()               
     def clearCachedInfo(self):
-        cache.delete(self.username)
+        cache.delete(self.username())
         cache.delete(str(self.pst_id)) # Keys are strings only.

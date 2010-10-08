@@ -32,7 +32,7 @@ class NRAOBosDB:
         retval = dict()
         for i in project.investigator_set.all():
             u = i.user
-            rs = self.getReservationsByUsername(u.username, use_cache)
+            rs = self.getReservationsByUsername(u.username(), use_cache)
             if rs:
                 retval[u] = rs
         return retval

@@ -82,24 +82,37 @@ class UserNames(object):
         noPstId = []
         matched = []
         mismatched = []
+        lastNames = []
         badIds = []
         badUsernames = []
 
-        for u in users:
+        ui = UserInfo()
+        assert ui.useMirror
+        
+        for i, u  in enumerate(users):
+            print u
+            #debug
+            #print "confirming %d of %d users." % (i, len(users))
             if u.pst_id is not None:
-                info = UserInfo().getStaticContactInfoByID(u.pst_id
-                                                         , use_cache = False)
+                info = ui.getProfileByID(u)
+                print info
             
                 # extract what the PST thinks about this user
-                pstId        = int(info['id'])
-                pstUsername  = info['account-info']['account-name'].strip()
-                pstFirstName = info['name']['first-name'].strip()
-                pstLastName  = info['name']['last-name'].strip()
+                pstId        = u.pst_id # WTF? #int(info['id'])
+                pstUsername  = info['username'] #info['account-info']['account-name'].strip()
+                try:
+                    pstFirstName = unicode(info['first_name']) #info['name']['first-name'].strip()
+                except:
+                    pstFirstName = "UnicodeExp"
+                try:
+                    pstLastName  = unicode(info['last_name']) #info['name']['last-name'].strip()
+                except:
+                    pstLastName = "UnicodeExp"
 
                 if (pstId != u.pst_id):
                     badIds.append((u, u.pst_id, pstId))
-                if (pstUsername != u.username):
-                    badUsernames.append((u, u.username, pstUsername))
+                #if (u.username is not None) and (pstUsername.lower() != u.username()): #.lower()):
+                #    badUsernames.append((u, u.username, pstUsername))
                 # just check for names
                 #if pstId != u.pst_id or pstUsername != u.username or \
                 if pstFirstName != u.first_name or \
@@ -108,7 +121,9 @@ class UserNames(object):
                                                        , pstLastName
                                                        , u.first_name
                                                        , u.last_name)
-                    mismatched.append(u)
+                    if u.last_name != pstLastName:
+                        lastNames.append((u, pstFirstName, pstLastName))
+                    mismatched.append((u, pstFirstName, pstLastName))
                 else:
                     matched.append(u)
             else:
@@ -119,14 +134,19 @@ class UserNames(object):
             print >> self.out, b
 
         print >> self.out, "badUsernames: "
+        print >> self.out, "user | DSS username | PST username"
         for b in badUsernames:
             print >> self.out, b
 
+        print >> self.out, "bad last names: "
+        for b in lastNames:
+            print >> self.out, b
         # report
         print >> self.out, "len(users): ", len(users)
         print >> self.out, "len(noPstId): ", len(noPstId)
         print >> self.out, "len(matched): ", len(matched)
         print >> self.out, "len(mismatched): ", len(mismatched)
+        print >> self.out, "len(lastNames): ", len(lastNames)
         print >> self.out, "len(badIds): ", len(badIds)
         print >> self.out, "len(badUsernames): ", len(badUsernames)
 

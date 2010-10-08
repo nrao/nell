@@ -116,7 +116,7 @@ def adjustBlackoutTZ(tz, blackout):
 def checkAuthUser(u):
     if u.auth_user_id is None:
         from django.contrib.auth.models import User as AuthUser
-        au = first(AuthUser.objects.filter(username = u.username))
+        au = first(AuthUser.objects.filter(username = u.username()))
         u.auth_user = au
         u.save()
 
@@ -131,7 +131,7 @@ def profile(request, *args, **kws):
     checkAuthUser(requestor)
     user = first(User.objects.filter(id = args[0])) if args else requestor
     static_info  = user.getStaticContactInfo()
-    reservations = NRAOBosDB().getReservationsByUsername(user.username)
+    reservations = NRAOBosDB().getReservationsByUsername(user.username())
 
     try:
         tz = requestor.preference.timeZone
@@ -218,6 +218,7 @@ def project(request, *args, **kws):
                       , 'start'    : adjustDateTimeTz(tz, pd.start)
                       , 'duration' : pd.duration
                        } for pd in project.getUpcomingPeriods()]
+    res = NRAOBosDB().reservations(project)                   
     return render_to_response(
         "sesshuns/project.html"
       , {'p'           : project
@@ -225,7 +226,7 @@ def project(request, *args, **kws):
        , 'u'           : requestor
        , 'requestor'   : requestor
        , 'v'           : investigators
-       , 'r'           : NRAOBosDB().reservations(project)
+       , 'r'           : res 
        , 'rcvr_blkouts': rcvr_blkouts
        , 'tz'          : tz
        , 'observerBlackouts': obsBlackouts

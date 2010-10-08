@@ -7,6 +7,9 @@ import urllib2
 
 class UserInfo(object):
 
+    # TBF: take out the xml and query service stuff, and let this be
+    # just an interface that either uses the query service or the PST mirror.
+
     # TBF: should try to use a more object like XML parser
     # TBF: we are parsing first to a dict, then further parsing that dict. BAD
     """
@@ -39,6 +42,29 @@ class UserInfo(object):
 
         if self.useMirror:
             self.mirror = PSTMirrorDB()
+
+    def getUsername(self, pst_id):
+        "Pull the username, since it's no longer in the DSS DB."
+        if self.useMirror:
+            username = self.mirror.getUsername(pst_id)
+        else:
+            info = self.getStaticContactInfoByUserName(self, id, use_cache = False)
+            username = info['username']
+        return username
+
+    def getIdFromUsername(self, username):
+        "Queries the PST for the ID from the given username"
+
+        # This may be necessary in situations such as when a user logs in,
+        # all we have is their CAS account name, so we need to convert
+        # that to a pst id.
+
+        if self.useMirror:
+            id = self.mirror.getIdFromUsername(username)
+        else:
+            info = self.getStaticContactInfoByID(self, id, use_cache = False)
+            id = info['id']
+        return id
 
     def getProfileByID(self, user, use_cache = True):
         try:
@@ -170,10 +196,17 @@ class UserInfo(object):
         return (plainValues, values)
 
     def getStaticContactInfoByUserName(self, username, use_cache = True):
-        return self.getStaticContactInfo('userByAccountNameEquals', username, use_cache)
+        if useMirror:
+            pst_id = self.mirror.getIdFromUsername(username)
+            return self.mirror.getProfileByID(pst_id) 
+        else:
+            return self.getStaticContactInfo('userByAccountNameEquals', username, use_cache)
 
     def getStaticContactInfoByID(self, id, use_cache = True):
-        return self.getStaticContactInfo('userById', id, use_cache)
+        if self.useMirror:
+            return self.mirror.getProfileByID(id) 
+        else:    
+            return self.getStaticContactInfo('userById', id, use_cache)
 
     def getStaticContactInfo(self, key, value, use_cache = True):
         """
