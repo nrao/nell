@@ -137,12 +137,10 @@ class Sesshun(models.Model):
         return False
         
     def get_receiver_req(self):
-        nn = Receiver.get_abbreviations()
-        rc = ReceiverCompile(nn)
-
         rcvrs = [[r.abbreviation \
-                     for r in rg.receivers.all()] \
-                         for rg in self.receiver_group_set.all()]
+                     for r in rg.receivers.all().order_by('id')] \
+                         for rg in self.receiver_group_set.all().order_by('id')]
+        rc = ReceiverCompile(Receiver.get_abbreviations())
         return rc.denormalize(rcvrs)
 
     def get_ha_limit_blackouts(self, startdate, days):

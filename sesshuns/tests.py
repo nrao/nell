@@ -1590,12 +1590,12 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.get_LST_exclusion_string(), ldata["lst_ex"])
         self.assertEqual(s.get_min_eff_tsys_factor(), ldata["xi_factor"])
         self.assertEqual(s.get_elevation_limit(),fdata["el_limit"]) 
-        rgs = s.receiver_group_set.all()
+        rgs = s.receiver_group_set.all().order_by('id')
         self.assertEqual(2, len(rgs))
         self.assertEqual(['K']
-                       , [r.abbreviation for r in rgs[0].receivers.all()])
+                       , [r.abbreviation for r in rgs[0].receivers.all().order_by('id')])
         self.assertEqual(['L', 'C', 'X']
-                       , [r.abbreviation for r in rgs[1].receivers.all()])
+                       , [r.abbreviation for r in rgs[1].receivers.all().order_by('id')])
 
     def test_update_from_post2(self):
         ss = Sesshun.objects.all()
@@ -3128,7 +3128,7 @@ class TestDSSPrime2DSS(NellTestCase):
         a = allots[0]
         self.assertEquals(5.0, a.total_time)
         self.assertEquals(4.0, a.grade)
-        invs = p.investigator_set.all()
+        invs = p.investigator_set.all().order_by('id')
         self.assertEquals(2, len(invs))
         self.assertEquals("Mangum", invs[0].user.last_name)
         self.assertEquals("Wootten", invs[1].user.last_name)
