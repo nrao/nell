@@ -662,13 +662,10 @@ class TestReceiver(NellTestCase):
         #print rgs[0].receivers.all()[1].abbreviation
         #print rgs[1].receivers.all()[0].abbreviation
         #print rgs[1].receivers.all()[1].abbreviation
-        print "Receiver Groups", rgs
         rs = rgs[0].receivers.all().order_by('id')
-        print "Receivers", [r.abbreviation for r in rs]
         self.assertEqual('L', rs[0].abbreviation)
         self.assertEqual('X', rs[1].abbreviation)
         rs = rgs[1].receivers.all().order_by('id')
-        print "Receivers", [r.abbreviation for r in rs]
         self.assertEqual('L', rs[0].abbreviation)
         self.assertEqual('S', rs[1].abbreviation)
 
