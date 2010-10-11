@@ -11,6 +11,7 @@ import MySQLdb as mysql
 
 from httpadapters                 import *
 from models                       import *
+from sesshuns.utilities           import *
 from nell.test_utils.NellTestCase import NellTestCase
 from nell.tools                   import DBReporter, ScheduleTools
 from nell.tools                   import IcalAntioch, TimeAccounting
@@ -3044,6 +3045,24 @@ class TestObservers(NellTestCase):
         p.remove() #delete()
         s.delete()
 
+    def test_create_user(self):
+        "Stick Paul in the DSS DB"
+
+        pauls = User.objects.filter(last_name = "Marganian")
+        self.assertEqual(0, len(pauls))
+
+        create_user('pmargani')
+
+        pauls = User.objects.filter(last_name = "Marganian")
+        self.assertEqual(1, len(pauls))
+        paul = pauls[0]
+        self.assertEqual(821, paul.pst_id)
+
+        paul.delete()
+        pauls = User.objects.filter(last_name = "Marganian")
+        self.assertEqual(0, len(pauls))
+
+      
 # Testing Utilities
 class TestDBReporter(NellTestCase):
 

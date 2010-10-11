@@ -90,9 +90,9 @@ def create_user(username):
     """
     info = UserInfo().getStaticContactInfoByUserName(username
                                                    , use_cache = False)
-    user = User(pst_id     = info['id']
-              , first_name = info['name']['first-name']
-              , last_name  = info['name']['last-name']
+    user = User(pst_id     = info['person_id']
+              , first_name = info['first_name']
+              , last_name  = info['last_name']
               , role       = first(Role.objects.filter(role = "Observer")))
     user.save()
 
