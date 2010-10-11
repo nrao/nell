@@ -2707,7 +2707,7 @@ class TestObservers(NellTestCase):
 
         self.u = User(first_name = "dss" #"Test"
                     , last_name  = "account" #"User"
-                    , pst_id     = 3259
+                    , pst_id     = 3251
                     , role       = first(Role.objects.all())
                     #, username   = self.auth_user.username
                       )
