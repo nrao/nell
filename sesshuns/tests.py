@@ -3345,8 +3345,9 @@ class TestPSTMirrorDB(NellTestCase):
     def test_getProfileByID(self):
 
         db = PSTMirrorDB()
-        # 823 - pst_id for pmargani
-        info = db.getStaticContactInfoByID(823)
+        # 821 - pst_id for pmargani
+        globalId = 821
+        info = db.getStaticContactInfoByID(globalId)
 
         # expected values
         emails = ['pmargani@nrao.edu'
@@ -3370,6 +3371,18 @@ class TestPSTMirrorDB(NellTestCase):
         self.assertEquals(affiliations, info['affiliations'])
         self.assertEquals('pmargani', info['username'])
         self.assertEquals(True, info['status'])
+        self.assertEquals(globalId, info['person_id'])
+        self.assertEquals(823, info['personAuth_id'])
+
+    def test_getIdFromUsername(self):
+
+        db = PSTMirrorDB()
+        globalId = 821
+        username = 'pmargani'
+        id = db.getIdFromUsername(username)
+        self.assertEquals(globalId, id)
+        un = db.getUsername(globalId)
+        self.assertEquals(username, un)
 
     def test_getBadProfile(self):
         "Make sure we can handle bogus info."
@@ -3383,13 +3396,14 @@ class TestPSTMirrorDB(NellTestCase):
     def test_compareProfiles(self):
         "Compare the outputs from PSTQueryService & PSTMirrorDB"
 
+        globalId =821
 
         db = PSTMirrorDB()
         # 823 - pst_id for pmargani
-        mirror = db.getStaticContactInfoByID(823)
+        mirror = db.getStaticContactInfoByID(globalId)
 
         ui = PSTQueryService()
-        xml = ui.getStaticContactInfoByID(823)
+        xml = ui.getStaticContactInfoByID(globalId)
         pst = ui.parseUserDict(xml)
 
         # get rid of any elements that are different
@@ -3397,6 +3411,8 @@ class TestPSTMirrorDB(NellTestCase):
         mirror.pop('status')
         mirror.pop('first_name')
         mirror.pop('last_name')
+        mirror.pop('person_id')
+        mirror.pop('personAuth_id')
         pst.pop('status')
         # for some reason, the XML derived addresses aren't in order
         mirror.pop('postals')
@@ -3414,13 +3430,13 @@ class TestPSTQueryService(NellTestCase):
         self.me = User(first_name = "Paul"
                      , last_name = "Marganian"
                      , role_id = 1
-                     , pst_id = 823)
+                     , pst_id = 821)
         self.me.save()
 
         #<?xml version="1.0" encoding="UTF-8"?>
         self.xmlStr =  """
         <nrao:query-result xmlns:nrao="http://www.nrao.edu/namespaces/nrao" >
-        <nrao:user id="823" domestic="true" xmlns:nrao="http://www.nrao.edu/namespaces/nrao">
+        <nrao:user id="823" globalid="821" domestic="true" xmlns:nrao="http://www.nrao.edu/namespaces/nrao">
         <nrao:name>
         <nrao:prefix>Mr</nrao:prefix>
         <nrao:first-name>Paul</nrao:first-name>
@@ -3515,6 +3531,7 @@ class TestPSTQueryService(NellTestCase):
             , 'account-info': {'account-name': 'pmargani'         
                              , 'entry-status': 'Suspect'}
             , 'id': '823'
+            , 'globalid': '821'
             , 'affiliation-info': [("National Radio Astronomy Observatory ", True)
                              , ("Oregon, University of", False)]
         }
@@ -3555,7 +3572,7 @@ class TestPSTQueryService(NellTestCase):
         self.assertEquals('pmargani', username)
 
         id = self.ui.getIdFromUsername(username)
-        self.assertEquals(823, id)
+        self.assertEquals(821, id)
 
         # TBF: for some reason, the returned info has something trivially
         # different then self.xmlDict, but I don't know what.

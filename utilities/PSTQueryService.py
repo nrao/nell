@@ -43,7 +43,7 @@ class PSTQueryService(PSTInterface):
         # that to a pst id.
 
         info = self.getStaticContactInfoByUserName(username)
-        return int(info['id'])
+        return int(info['globalid'])
 
     def getProfileByID(self, user, use_cache = True):
         try:
@@ -65,7 +65,7 @@ class PSTQueryService(PSTInterface):
         return self.getStaticContactInfo('userByAccountNameEquals', username, use_cache)
 
     def getStaticContactInfoByID(self, id, use_cache = True):
-        return self.getStaticContactInfo('userById', id, use_cache)
+        return self.getStaticContactInfo('userByGlobalId', id, use_cache)
 
 
     def parseUserDict(self, info):
@@ -309,7 +309,7 @@ class PSTQueryService(PSTInterface):
             elif key == 'globalid':
                 globalid = value
         userInfo['id'] = id        
-        userInfo['globalid'] = id        
+        userInfo['globalid'] = globalid        
         # name section
         name = self.findTag(element, "name")
         if name is not None:

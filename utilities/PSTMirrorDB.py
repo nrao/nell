@@ -36,7 +36,6 @@ class PSTMirrorDB(PSTInterface):
     def getUsername(self, id):
         "Pull out username, since we no longer keep it in the DSS DB."
 
-        # TBF: soon this id will be the person.person_id field
         try:
             person_id, username, enabled, fn, ln = self.getBasicInfo(id)
         except:
@@ -44,13 +43,13 @@ class PSTMirrorDB(PSTInterface):
         return username
 
     def getIdFromUsername(self, username):
-        "Pulls PK to userAuthentication table, given userAuthentication.personName."
+        "Pulls PK to person table, given userAuthentication.personName."
 
-        # TBF: soon this id will be the person.person_id field
         q = """
-        SELECT ua.userAuthentication_id
-        FROM userAuthentication as ua
+        SELECT p.person_id
+        FROM person as p, userAuthentication as ua
         WHERE ua.personName = '%s'
+        AND p.personAuthentication_id = ua.userAuthentication_id
         """ % username
 
         self.cursor.execute(q)
@@ -59,7 +58,7 @@ class PSTMirrorDB(PSTInterface):
 
     def getProfileByID(self, user, use_cache = True):
         try:
-            # Note: our pst_id is their userAuthentication PK.
+            # Note: our pst_id is their person PK.
             return self.getStaticContactInfoByID(user.pst_id)
         except:
             return dict(emails       = []
@@ -72,20 +71,22 @@ class PSTMirrorDB(PSTInterface):
                       , username     = 'Not Available' 
                       , first_name   = 'Not Available'
                       , last_name    = 'Not Available'
+                      , person_id    = 'Not Available'
+                      , personAuth_id= 'Not Available'
                       )
 
     def getStaticContactInfoByUserName(self, username, use_cache = True):
         id = self.getIdFromUsername(username)
         return self.getStaticContactInfoByID(id)
 
-    def getStaticContactInfoByID(self, userAuth_id, use_cache = True):
+    def getStaticContactInfoByID(self, person_id, use_cache = True):
         """
         This returns the same output as the method of the same name in 
         PSTQueryService.
         The excpetion to this is the status field.
         """
 
-        person_id, username, enabled, fn, ln = self.getBasicInfo(userAuth_id)
+        personAuth_id, username, enabled, fn, ln = self.getBasicInfo(person_id)
 
         emails, emailDescs   = self.getEmails(person_id)
         phones, phoneDescs   = self.getPhones(person_id)
@@ -99,6 +100,8 @@ class PSTMirrorDB(PSTInterface):
                   , postals = postalDescs
                   , affiliations = affiliations
                   , username = username
+                  , person_id = person_id
+                  , personAuth_id = personAuth_id
                   # this field is the only one that differs from UserInfo
                   , status = enabled
                   # these fields only appear in this mirror class
@@ -106,14 +109,14 @@ class PSTMirrorDB(PSTInterface):
                   , last_name  = ln
                   )
 
-    def getBasicInfo(self, userAuth_id):
+    def getBasicInfo(self, person_id):
 
         q = """
-        SELECT p.person_id, ua.personName, p.enabled, p.firstName, p.lastName
+        SELECT p.personAuthentication_id, ua.personName, p.enabled, p.firstName, p.lastName
         FROM person as p, userAuthentication as ua
-        WHERE p.personAuthentication_id = %d
+        WHERE p.person_id = %d
         AND p.personAuthentication_id = ua.userAuthentication_id
-        """ % userAuth_id
+        """ % person_id
 
         self.cursor.execute(q)
         rows = self.cursor.fetchall()
