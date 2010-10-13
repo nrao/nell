@@ -180,7 +180,7 @@ def summary(request, *args, **kws):
         schedule = {}
         days     = dict([(p.pcode, []) for p in projects])
         hours    = dict([(p.pcode, 0) for p in projects])
-        summary  = dict([(c, 0) for c in Project.get_categories()])
+        summary  = dict([(c, 0) for c in Sesshun.getCategories()])
         for p in periods:
             pstart = TimeAgent.utc2est(p.start)
             pend   = TimeAgent.utc2est(p.end())
@@ -197,7 +197,7 @@ def summary(request, *args, **kws):
             hours[p.session.project.pcode] += hrs
 
             # Tally hours for various categories important to Operations.
-            summary[p.session.project.get_category()] += hrs
+            summary[p.session.getCategory()] += hrs
 
     return render_to_response(
                url
