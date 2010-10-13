@@ -20,7 +20,7 @@ sys.stderr = saveout
 users = User.objects.all()
 
 for u in users:
-    if u.pst_id is not None and u.username is not None:
-        print "%d,%s" % (u.pst_id, u.username)
+    if u.pst_id is not None and u.username() is not None:
+        print "%d,%s" % (u.pst_id, u.username())
 
 
