@@ -128,3 +128,8 @@ class User(models.Model):
     def clearCachedInfo(self):
         cache.delete(self.username())
         cache.delete(str(self.pst_id)) # Keys are strings only.
+
+    def hasIncompleteProject(self): 
+        return any([not i.project.complete \
+            for i in self.investigator_set.all()])
+        

@@ -1790,14 +1790,101 @@ class TestViews(NellTestCase):
         self.assertTrue(ec is not None)
 
     def test_reservations(self):
+
+        # create a user
+        # Brian Cherinka (pst_id 802) has a reservation in Oct.
+        # let's get it.
+        roles = Role.objects.all()
+        u = User(first_name = "delete"
+               , last_name = "me"
+               , role = roles[0]
+               , pst_id = 802
+                 )
+        u.save() 
+        # giv'm a project
+        projs = Project.objects.all()
+        inv = Investigator(user = u, project = projs[0])
+        inv.save()
+
         c = Client()
-        data = {'start' : '6/1/2010'
-              , 'days'  : '61'
+        data = {'start' : '10/10/2010'
+              , 'days'  : '8'
                }
         response = c.get('/reservations', data)
         self.failUnlessEqual(response.status_code, 200)
         r = eval(response.content)
-        self.assertTrue(len(r.get('reservations')) == 0)
+
+        exp = {'reservations': 
+                 [{'pcodes': 'GBT09A-001'
+                 , 'start': '10/05/2010'
+                 , 'end': '10/10/2010'
+                 , 'id': '802'
+                 , 'name': 'Brian Cherinka'}]
+               , 'total': 1}
+
+        self.assertEquals(exp, r)
+
+        # cleanup
+        inv.delete()
+        u.delete()
+
+    def test_reservations_from_db(self):
+        
+        # create a user
+        roles = Role.objects.all()
+        u = User(first_name = "delete"
+               , last_name = "me"
+               , role = roles[0]
+                 )
+        u.save() 
+
+        # giv'm a project
+        projs = Project.objects.all()
+        inv = Investigator(user = u, project = projs[0])
+        inv.save()
+
+        # giv'm a reservation
+        start = date(2006, 2, 10)
+        end   = date(2006, 2, 15)
+        res = Reservation(user = u
+                        , start_date = start
+                        , end_date   = end
+                          )
+        res.save()
+
+        frmt = "%m/%d/%Y"
+        rs = getReservationsFromDB(start.strftime(frmt)
+                                 , end.strftime(frmt)
+                                  )
+        exp = [{'pcodes': u'GBT09A-001'
+              , 'start': '02/10/2006'
+              , 'end': '02/15/2006'
+              , 'id': None
+              , 'name': 'me, delete'
+               }]
+        self.assertEquals(exp, rs)
+
+        # make sure it still gets picked up two days later
+        start = date(2006, 2, 12)
+        end   = date(2006, 2, 17)
+        rs = getReservationsFromDB(start.strftime(frmt)
+                                 , end.strftime(frmt)
+                                  )
+        self.assertEquals(exp, rs)
+
+        # make sure it is not picked up 
+        start = date(2006, 2, 22)
+        end   = date(2006, 2, 27)
+        rs = getReservationsFromDB(start.strftime(frmt)
+                                 , end.strftime(frmt)
+                                  )
+        self.assertEquals([], rs)
+
+        # cleanup
+        res.delete()
+        inv.delete()
+        u.delete()
+
 
 # Testing View Resources
 

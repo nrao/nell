@@ -551,26 +551,15 @@ def toggle_moc(request, *args, **kwds):
     return HttpResponse(json.dumps({'success':'ok'})
                       , mimetype = "text/plain")
 
-def hasIncompleteProject(reservation):
-    u = first(User.objects.filter(pst_id = reservation['id']))
-    if u is None:
-        return False
-    return any([not i.project.complete for i in u.investigator_set.all()])
-
 def reservations(request, *args, **kws):
     start        = request.GET.get('start')
     days         = int(request.GET.get('days'))
     end          = (datetime.strptime(start, "%m/%d/%Y") + timedelta(days = days)).strftime("%m/%d/%Y")
     useBos       = True
     if useBos:
-        reservations = [r for r in NRAOBosDB().reservationsRange(start, end) if hasIncompleteProject(r)]
-    else:
-        reservations = [{'id'    : 0
-                       , 'name'  : r.user.name()
-                       , 'start' : r.start_date.strftime("%m/%d/%Y")
-                       , 'end'   : r.end_date.strftime("%m/%d/%Y")
-                       } for r in Reservation.objects.all() 
-                          if any([not i.project.complete for i in r.user.investigator_set.all()])]
+        reservations = getReservationsFromBOS(start, end)
+    else:    
+        reservations = getReservationsFromDB(start, end)
 
     return HttpResponse(json.dumps({'reservations' : reservations
                                   , 'total'        : len(reservations)

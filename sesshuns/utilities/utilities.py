@@ -180,3 +180,33 @@ def project_search(value):
             projects.append(p)
 
     return projects
+
+def getReservationsFromBOS(start, end):
+
+    res = NRAOBosDB().reservationsRange(start, end)
+    reservations = []
+    for r in res:
+       user = first(User.objects.filter(pst_id = r['id']))
+       if user is not None:
+           pcodes = ",".join(user.getProjects())
+           hasInc = user.hasIncompleteProject()
+       else:
+           pcodes = ""
+           hasInc = False
+       if hasInc:
+           r.update({"pcodes" : pcodes})
+           reservations.append(r)
+    return reservations
+
+def getReservationsFromDB(start, end):
+    startDT = datetime.strptime(start, "%m/%d/%Y")
+    endDT   = datetime.strptime(end  , "%m/%d/%Y")
+    resDB = [r for r in Reservation.objects.all() if r.end_date >= startDT and r.start_date <= endDT] 
+    reservations = [{'id'    : r.user.pst_id 
+                   , 'name'  : r.user.name()
+                   , 'pcodes': ",".join(r.user.getProjects())
+                   , 'start' : r.start_date.strftime("%m/%d/%Y")
+                   , 'end'   : r.end_date.strftime("%m/%d/%Y")
+                   } for r in resDB if r.user is not None and r.user.hasIncompleteProject()] 
+    return reservations
+    
