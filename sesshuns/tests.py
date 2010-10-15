@@ -1792,13 +1792,14 @@ class TestViews(NellTestCase):
     def test_reservations(self):
 
         # create a user
-        # Brian Cherinka (pst_id 802) has a reservation in Oct.
-        # let's get it.
+        # Brian Cherinka (pst_id 800) has a reservation in Oct.
+        # let's get that reservation, but make it point to this user.
         roles = Role.objects.all()
         u = User(first_name = "delete"
                , last_name = "me"
                , role = roles[0]
-               , pst_id = 802
+               # BOS gives id of 802 -> global id of 800
+               , pst_id = 800
                  )
         u.save() 
         # giv'm a project
@@ -1818,7 +1819,7 @@ class TestViews(NellTestCase):
                  [{'pcodes': 'GBT09A-001'
                  , 'start': '10/05/2010'
                  , 'end': '10/10/2010'
-                 , 'id': '802'
+                 , 'id': 800
                  , 'name': 'Brian Cherinka'}]
                , 'total': 1}
 
@@ -1860,7 +1861,7 @@ class TestViews(NellTestCase):
               , 'start': '02/10/2006'
               , 'end': '02/15/2006'
               , 'id': None
-              , 'name': 'me, delete'
+              , 'name': 'delete me'
                }]
         self.assertEquals(exp, rs)
 
@@ -3477,6 +3478,45 @@ class TestPSTMirrorDB(NellTestCase):
         self.assertEquals(globalId, info['person_id'])
         self.assertEquals(823, info['personAuth_id'])
 
+    def test_getIdFromUserAuthenticationId(self):
+
+        db = PSTMirrorDB()
+        globalId = 821
+        userAuthId = 823
+        username = 'pmargani'
+        id = db.getIdFromUserAuthenticationId(userAuthId)
+        self.assertEquals(globalId, id)
+
+    def test_getBadProfile(self):
+        "Make sure we can handle bogus info."
+
+        db = PSTMirrorDB()
+        username = db.getUsername(0)
+        self.assertEquals(None, username)
+
+    # this is even more un "unit" test - we're interface with TWO
+    # external systems
+    def test_compareProfiles(self):
+        "Compare the outputs from PSTQueryService & PSTMirrorDB"
+
+        globalId =821
+
+        db = PSTMirrorDB()
+        # 823 - pst_id for pmargani
+        mirror = db.getStaticContactInfoByID(globalId)
+
+        ui = PSTQueryService()
+        xml = ui.getStaticContactInfoByID(globalId)
+        pst = ui.parseUserDict(xml)
+
+        # get rid of any elements that are different
+        # by design, status key is different
+        mirror.pop('status')
+        mirror.pop('first_name')
+        mirror.pop('last_name')
+        mirror.pop('person_id')
+        mirror.pop('personAuth_id')
+        pst.pop('status')
     def test_getIdFromUsername(self):
 
         db = PSTMirrorDB()
@@ -3671,11 +3711,14 @@ class TestPSTQueryService(NellTestCase):
     # THis is NOT a unit -test: it actually interacts w/ the PST service!
     def test_pstServices(self):
         
+        globalid = 821
+        userAuthId = 823
+
         username =  self.ui.getUsername(self.me.pst_id)
         self.assertEquals('pmargani', username)
 
         id = self.ui.getIdFromUsername(username)
-        self.assertEquals(821, id)
+        self.assertEquals(globalid, id)
 
         # TBF: for some reason, the returned info has something trivially
         # different then self.xmlDict, but I don't know what.
@@ -3688,6 +3731,9 @@ class TestPSTQueryService(NellTestCase):
         info = self.ui.getProfileByID(self.me)
         self.assertEquals('pmargani', info['username'])
 
+        id = self.ui.getIdFromUserAuthenticationId(userAuthId)
+        self.assertEquals(globalid, id)
+        
         
 class TestUpdateEphemeris(NellTestCase):
 

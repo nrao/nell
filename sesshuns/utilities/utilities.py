@@ -182,11 +182,19 @@ def project_search(value):
     return projects
 
 def getReservationsFromBOS(start, end):
+    """
+    Returns a dictionary of reservation info that falls within
+    the given dates by querying the BOS.
+    Make sure this creates the same output as getReservationsFromDB.
+    """
 
     res = NRAOBosDB().reservationsRange(start, end)
     reservations = []
     for r in res:
-       user = first(User.objects.filter(pst_id = r['id']))
+       # TBF: BOS is still using the wrong ID - we need 'global id'
+       userAuth_id = int(r['id'])
+       pst_id = UserInfo().getIdFromUserAuthenticationId(userAuth_id)
+       user = first(User.objects.filter(pst_id = pst_id))
        if user is not None:
            pcodes = ",".join(user.getProjects())
            hasInc = user.hasIncompleteProject()
@@ -195,15 +203,23 @@ def getReservationsFromBOS(start, end):
            hasInc = False
        if hasInc:
            r.update({"pcodes" : pcodes})
+           r.update({"id" : user.pst_id})
            reservations.append(r)
     return reservations
 
 def getReservationsFromDB(start, end):
+    """
+    Returns a dictionary of reservation info that falls within the
+    given dates by querying the Reservations table, which is populated
+    daily using the BOS query service.
+    Make sure this creates the same output as getReservationsFromBOS.
+    """
+
     startDT = datetime.strptime(start, "%m/%d/%Y")
     endDT   = datetime.strptime(end  , "%m/%d/%Y")
     resDB = [r for r in Reservation.objects.all() if r.end_date >= startDT and r.start_date <= endDT] 
     reservations = [{'id'    : r.user.pst_id 
-                   , 'name'  : r.user.name()
+                   , 'name'  : r.user.display_name()
                    , 'pcodes': ",".join(r.user.getProjects())
                    , 'start' : r.start_date.strftime("%m/%d/%Y")
                    , 'end'   : r.end_date.strftime("%m/%d/%Y")

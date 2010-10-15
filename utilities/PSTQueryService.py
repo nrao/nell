@@ -45,6 +45,11 @@ class PSTQueryService(PSTInterface):
         info = self.getStaticContactInfoByUserName(username)
         return int(info['globalid'])
 
+    def getIdFromUserAuthenticationId(self, userAuth_id):
+        # we need this because the BOS still passes us this ID
+        info = self.getStaticContactInfo('userById', userAuth_id)
+        return int(info['globalid'])
+
     def getProfileByID(self, user, use_cache = True):
         try:
             info = self.getStaticContactInfoByID(user.pst_id

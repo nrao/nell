@@ -56,6 +56,24 @@ class PSTMirrorDB(PSTInterface):
         rows = self.cursor.fetchall()
         return int(rows[0][0])
 
+    def getIdFromUserAuthenticationId(self, userAuth_id):
+        """
+        For those interfaces that might still be using the PK of 
+        the userAuthentication table (like the BOS), convert this
+        to the 'global_id', that is the PK of the person table.
+        """
+
+        q = """
+        SELECT p.person_id
+        FROM person as p, userAuthentication as ua
+        WHERE ua.userAuthentication_id = %d
+        AND p.personAuthentication_id = ua.userAuthentication_id
+        """ % userAuth_id
+
+        self.cursor.execute(q)
+        rows = self.cursor.fetchall()
+        return int(rows[0][0])
+
     def getProfileByID(self, user, use_cache = True):
         try:
             # Note: our pst_id is their person PK.
