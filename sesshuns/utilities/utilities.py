@@ -196,7 +196,7 @@ def getReservationsFromBOS(start, end):
        pst_id = UserInfo().getIdFromUserAuthenticationId(userAuth_id)
        user = first(User.objects.filter(pst_id = pst_id))
        if user is not None:
-           pcodes = ",".join(user.getProjects())
+           pcodes = ",".join(user.getIncompleteProjects())
            hasInc = user.hasIncompleteProject()
        else:
            pcodes = ""
@@ -220,7 +220,7 @@ def getReservationsFromDB(start, end):
     resDB = [r for r in Reservation.objects.all() if r.end_date >= startDT and r.start_date <= endDT] 
     reservations = [{'id'    : r.user.pst_id 
                    , 'name'  : r.user.display_name()
-                   , 'pcodes': ",".join(r.user.getProjects())
+                   , 'pcodes': ",".join(r.user.getIncompleteProjects())
                    , 'start' : r.start_date.strftime("%m/%d/%Y")
                    , 'end'   : r.end_date.strftime("%m/%d/%Y")
                    } for r in resDB if r.user is not None and r.user.hasIncompleteProject()] 

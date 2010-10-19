@@ -101,6 +101,11 @@ class User(models.Model):
         """
         return [i.project.pcode for i in self.investigator_set.all()]
 
+    def getIncompleteProjects(self):
+        "Like getProjects, but only for those that are still not completed."
+        return [i.project.pcode for i in self.investigator_set.all() \
+            if not i.project.complete]
+
     def isInvestigator(self, pcode):
         "Is this user an investigator on the given project?"
         return pcode in [i.project.pcode for i in self.investigator_set.all()]
