@@ -111,7 +111,7 @@ class TestSchedulingNotifier(unittest.TestCase):
     def test_createStaffAddresses(self):
         self.notifier.createStaffAddresses()
         addresses = self.notifier.getAddresses()
-        self.assertTrue('gbtlocal@gb.nrao.edu' in addresses)
+        self.assertTrue('gbtinfo@gb.nrao.edu' in addresses)
         self.assertTrue('gbtops@gb.nrao.edu' in addresses)
         self.assertTrue('gbtime@gb.nrao.edu' in addresses)
 
