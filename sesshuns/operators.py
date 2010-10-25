@@ -12,6 +12,17 @@ from utilities                      import get_requestor, acknowledge_moc
 import calendar
 
 @login_required
+def remotely_qualified(request, *args, **kws):
+    """
+    Returns all remotely qualified observers.
+    """
+    requestor = get_requestor(request)
+    qualified = User.objects.filter(sanctioned = True).order_by('last_name')
+
+    return render_to_response('sesshuns/remotely_qualified.html'
+                            , dict(requestor = requestor, q = qualified))
+
+@login_required
 def moc_reschedule(request, *args, **kws):
     """
     Allows an operator to acknowledge when the MOC is bad before an observation.
