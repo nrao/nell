@@ -13,14 +13,14 @@ jsonMap = { "id" : "id"
           , "start"  : "start_date"
           , "duration" : "duration"
           , "last" : "start_date"
-          , "default_date" : "default_period__start"
-          , "default_time" : "default_period__start"
-          , "default_duration" : "default_period__duration"
-          , "default_state" : "default_period__state"
-          , "chosen_date" : "chosen_period__start"
-          , "chosen_time" : "chosen_period__start"
-          , "chosen_duration" : "chosen_period__duration"
-          , "chosen_state" : "chosen_period__state"
+          #, "default_date" : "default_period__start"
+          #, "default_time" : "default_period__start"
+          #, "default_duration" : "default_period__duration"
+          #, "default_state" : "default_period__state"
+          #, "chosen_date" : "chosen_period__start"
+          #, "chosen_time" : "chosen_period__start"
+          #, "chosen_duration" : "chosen_period__duration"
+          #, "chosen_state" : "chosen_period__state"
           }
     
 class WindowResource(NellResource):
@@ -42,6 +42,10 @@ class WindowResource(NellResource):
             filterSession = request.GET.get("filterSession", None)
             if filterSession is not None:
                 query_set = query_set.filter(session__name = filterSession)
+
+            filterSessionId = request.GET.get("filterSessionId", None)
+            if filterSessionId is not None:
+                query_set = query_set.filter(session__id = filterSessionId)
 
             # time range filters come as a pair
             filterByDateRange = False

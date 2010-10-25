@@ -8,6 +8,7 @@ from Period_Accounting import Period_Accounting
 from Period_State      import Period_State
 from Receiver          import Receiver
 from Receiver_Schedule import Receiver_Schedule
+#from Window            import Window
 
 class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
@@ -20,6 +21,7 @@ class Period(models.Model):
     backup     = models.BooleanField()
     moc_ack    = models.BooleanField(default = False)
     receivers  = models.ManyToManyField(Receiver, through = "Period_Receiver")
+    window     = models.ForeignKey("Window", null=True, related_name = "periods")
 
     class Meta:
         db_table  = "periods"
@@ -35,8 +37,8 @@ class Period(models.Model):
         return (self.end() > day) and (self.start < next_day)
 
     def __unicode__(self):
-        return "Period for Session (%d): %s for %5.2f Hrs (%s)" % \
-            (self.session.id, self.start, self.duration, self.state.abbreviation)
+        return "Period (%d) for Session (%d): %s for %5.2f Hrs (%s) - %s" % \
+            (self.id,self.session.id, self.start, self.duration, self.state.abbreviation, self.accounting)
 
     def __str__(self):
         return "%s: %s for %5.2f Hrs" % \
@@ -187,9 +189,11 @@ class Period(models.Model):
         # window (reconcile it, really).  But we haven't been able to
         # get that to work properly, so windowed periods must be handled
         # elsewhere when publishing.
-        if not self.is_windowed():
-            if self.state.abbreviation == 'P':
-                self.move_to_scheduled_state()
+        if self.state.abbreviation == 'P':
+            self.move_to_scheduled_state()
+            if self.is_windowed() and self.window is not None:
+                self.window.publish() #Period(self.id)
+                self.window.save()
 
 
     def delete(self):
@@ -197,8 +201,8 @@ class Period(models.Model):
         if self.state.abbreviation != 'P':
             self.move_to_deleted_state()
         else:
-            self.window.clear()
-            self.default_window.clear()
+            #self.window.clear()
+            #self.default_window.clear()
             models.Model.delete(self)  # pending can really get removed!
 
     def remove(self):
@@ -208,41 +212,10 @@ class Period(models.Model):
     def is_windowed(self):
         return self.session.session_type.type == "windowed"
 
-    def has_valid_windows(self):
-        """
-        If a period belongs to a Windowed Session, then it should be assigned
-        to a Window as either a 'default_period' or a 'period'
-        """
-        if self.session.session_type.type != "windowed":
-            return False # who cares?
-
-        default_windows = self.default_window.all()
-        windows = self.window.all()
-
-        # neither one of these should point to more then one window
-        if len(default_windows) > 1 or len(windows) > 1:
-            return False
-
-        # this period should be assigned to at least one window
-        if len(default_windows) == 0 and len(windows) == 0:
-            return False
-        
-        return True
-
     def get_default_window(self):
         "Get the window this period is a default period for."
         if self.is_windowed() and self.has_valid_windows():
             return first(self.default_window.all())
-        else:
-            return None
-
-    def get_window(self):
-        "Get the window this period is either default or chosen period for."
-        if self.is_windowed() and self.has_valid_windows():
-            if len(self.default_window.all()) == 1:
-                return first(self.default_window.all())
-            else:
-                return first(self.window.all())
         else:
             return None
 
@@ -302,24 +275,27 @@ class Period(models.Model):
         """
 
         periods = Period.get_periods(start, duration)
+        for p in periods:
+            p.publish()
+            p.save()
 
         # Publishing moves any period whose state is Pending to Scheduled,
         # and initializes time accounting (scheduled == period duration).
-        windows = []
-        for p in periods:
-            if p.session.session_type.type != 'windowed':
-                p.publish()
-                p.save()
-            else:
+        #windows = []
+        #for p in periods:
+        #    if p.session.session_type.type != 'windowed':
+        #        p.publish()
+        #        p.save()
+        #    else:
                 # Don't publish this period, instead, find out the window
                 # to which it belongs so we can reconcile it latter.
-                window = p.get_window()
-                if window is not None and \
-                   window.id not in [w.id for w in windows]:
-                    windows.append(window)
+        #        window = p.get_window()
+        #        if window is not None and \
+        #           window.id not in [w.id for w in windows]:
+        #            windows.append(window)
 
         # Now, reconcile any windows.
-        for w in windows:
-            w.reconcile()
-            w.save()
+        #for w in windows:
+        #    w.reconcile()
+        #    w.save()
 

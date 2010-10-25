@@ -15,9 +15,11 @@ class Window(models.Model):
                                      , null = True
                                      , blank = True
                                      )
-    period         = models.ForeignKey(Period, related_name = "window", null = True, blank = True)
+    #period         = models.ForeignKey(Period, related_name = "window", null = True, blank = True)
     start_date     = models.DateField(help_text = "yyyy-mm-dd hh:mm:ss")
     duration       = models.IntegerField(help_text = "Days")
+    complete      = models.BooleanField(default = False)
+    total_time     = models.FloatField(help_text = "Hours", null = True, default = 0.0)
 
     def __unicode__(self):
         return "Window (%d) for Sess (%d)" % \
@@ -26,12 +28,12 @@ class Window(models.Model):
 
     def __str__(self):
         name = self.session.name if self.session is not None else "None"
-        return "Window for %s, from %s for %d days, default: %s, period: %s" % \
+        return "Window for %s, from %s for %d days, default: %s, # periods: %d" % \
             (name
            , self.start_date.strftime("%Y-%m-%d")
            , self.duration
            , self.default_period
-           , self.period)
+           , len(self.periods.all())) #self.period)
 
     def end(self):
         return self.last_date()
@@ -63,114 +65,54 @@ class Window(models.Model):
         return overlaps((self.start_datetime(), self.end_datetime())
                       , (period.start, period.end()))
 
-    # TBF: is this correct?
-    def is_published(self):
-        return self.default_period and self.default_period.abbreviaton in ['S', 'C']
-
-    # TBF: refactor this to use the state method
-    def is_scheduled_or_completed(self):
-        period = self.period if self.period is not None and self.period.state.abbreviation in ['S', 'C'] else None
-        if period is None:
-            period = self.default_period if self.default_period is not None and self.default_period.state.abbreviation in ['S', 'C'] else None
-        return period
-
-    ##################################################################
-    # state will return the state of the window, or none if the window
-    # is not in a legal state.  The truth table is as follows, where
-    # 'D' is deleted, 'P' pending, 'S' scheduled, and 'C' completed:
-    #
-    #    period                default_period         state
-    #    None                  P                      P
-    #    S                     D                      S
-    #    S                     S                      S
-    #    C                     C                      C
-    #    C                     D                      C
-    #    P                     P                      P*
-    #
-    # Any other combinaton returns None
-    #
-    # * This is legal, but Antioch won't accept a window in this state
-    ##################################################################
-    def state(self):
-        "A Windows state is a combination of the state's of it's Periods"
-
-        # TBF: need to check that these make sense
-        deleted   = Period_State.get_state("D")
-        pending   = Period_State.get_state("P")
-        scheduled = Period_State.get_state("S")
-        completed = Period_State.get_state("C")
-
-        if self.default_period:
-            if self.default_period.isPending() and self.period is None:
-                # initial state windows are in when created
-                return pending
-            else:
-                if self.period:
-                    if self.default_period.isCompleted() and self.period.isCompleted():
-                        return completed
-                    if self.default_period.isPending() and self.period.isPending():
-                        return pending
-                    if self.default_period.isDeleted() and self.period.isScheduled():
-                        return scheduled
-                    if self.default_period.isScheduled() and self.period.isScheduled():
-                        return scheduled
-                    if self.default_period.isDeleted() and self.period.isCompleted():
-                        return completed
-                # We have a default period, it is not pending, and
-                # none of the other conditions is met.
-                return None
-        else:
-            # No default period!
-            return None
-
-    state.short_description = 'Window State'
-
-    def dual_pending_state(self):
-        """
-        Returns true if both period and default_period exist and are
-        in a Pending state
-        """
-        if self.default_period and self.period:
-            if self.default_period.isPending() and self.period.isPending():
-                return True
         return False
 
-    dual_pending_state.short_description = 'Window special pending state'
+    def timeRemaining(self):
+        "Total - Billed"
+        return self.total_time - self.timeBilled()
 
-    def reconcile(self):
+    def timeBilled(self):
         """
-        Similar to publishing a period, this moves a window from an inital,
-        or transitory state, to a final scheduled state.
-        Move the default period to deleted, and publish the scheduled period.
+        Simply the sum of all the periods' time billed, regardless of
+        state.  Remember that, in a healthy systme, pending and deleted
+        periods should have no time billed.
         """
+        return sum([p.accounting.time_billed() for p in self.periods.all()])
 
-        deleted   = Period_State.get_state("D")
-        pending   = Period_State.get_state("P")
-        scheduled = Period_State.get_state("S")
+    def publish(self): #Period(self, p_id):
+        "A period was just published, see if we can complete this."
+
+        timeRemaining = self.timeRemaining()
+
+        if timeRemaining == 0:
+            # this window is complete!
+            self.complete = True
+            if self.default_period.isPending():
+                self.default_period.move_to_deleted_state()
+        else:    
+            # window is not complete, but default gets adjusted
+            self.default_period.duration = timeRemaining
+            self.default_period.save()
         
-        # raise an error?
-        assert self.default_period is not None
-
-        # if this has already been reconciled, or is in an invalid
-        # state, don't do anything.
-        state = self.state()
-        if state is None or state == scheduled:
-            return
-
-        if self.period is not None:
-            # use this period as the scheduled one!
-            self.default_period.move_to_deleted_state()
+    def setComplete(self, complete):
+        """
+        When a window is set as not complete, the default period
+        comes back.
+        """
+        remaining = self.timeRemaining()
+        if not complete and remaining != 0:
+            self.default_period.duration = remaining
+            self.default_period.state = Period_State.get_state("P")
             self.default_period.save()
-            self.period.move_to_scheduled_state()
-            self.period.save()
-        else:
-            # use the default period!
-            self.default_period.move_to_scheduled_state()
-            self.default_period.save()
-            self.period = self.default_period
-            self.period.save()
+        self.complete = complete
+        self.save()
 
-        self.save()    
+    def periodStates(self):
+        return [p.state for p in self.periods.all().order_by("start")]
+
+    def pendingPeriods(self):
+        pending = Period_State.get_state("P")
+        return [p for p in self.periods.all() if p.state == pending]
 
     def handle2session(self, h):
         n, p = h.rsplit('(', 1)
@@ -199,18 +141,7 @@ class Window(models.Model):
               , "end"  :     end.isoformat()
               , "className": 'window'
         }
-
-    def assignPeriod(self, periodId, default):
-        "Assign the given period to the default or chosen period"
-        p = first(Period.objects.filter(id = periodId))
-        if p is None:
-            return
-        if default:
-            self.default_period = p
-        else:
-            self.period = p
-        self.save()
-
+ 
     class Meta:
         db_table  = "windows"
         app_label = "sesshuns"

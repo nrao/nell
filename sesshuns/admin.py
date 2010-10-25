@@ -191,7 +191,7 @@ class WindowAdmin(admin.ModelAdmin):
     get_inWindow.short_description = 'In Window?'
 
     date_hierarchy = 'start_date'
-    list_display = [get_project_name, get_session_name, 'state', 'default_period', get_period_state, 'start_date', 'duration', get_inWindow]
+    list_display = [get_project_name, get_session_name, 'default_period', get_period_state, 'start_date', 'duration', get_inWindow]
     list_filter = ['start_date', 'duration']
     search_fields = ['session__name', 'session__project__pcode']
     #inlines = [OpportunityInline]

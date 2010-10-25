@@ -37,13 +37,35 @@ class PeriodResource(NellResource):
             # we are getting periods from within a range of dates
             sortField    = jsonMap.get(request.GET.get("sortField", "start"), "start")
             order        = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
-            startPeriods = request.GET.get("startPeriods"
-                                         , datetime.now().strftime("%Y-%m-%d"))
-            daysPeriods  = request.GET.get("daysPeriods", "1")
-            dt           = str2dt(startPeriods)
-            start        = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
-            duration     = int(daysPeriods) * 24 * 60
-            periods      = Period.get_periods(start, duration)
+
+            # Either filter by date, or by something else.
+            # Filtering by date involves a pair of keywords
+            startPeriods = request.GET.get("startPeriods", None)
+            daysPeriods  = request.GET.get("daysPeriods",  None)
+            #startPeriods = request.GET.get("startPeriods"
+            #                             , datetime.now().strftime("%Y-%m-%d"))
+            #daysPeriods  = request.GET.get("daysPeriods", "1")
+
+            if startPeriods is not None and daysPeriods is not None:
+                if startPeriods is None:
+                    startPeriods = datetime.now().strftime("%Y-%m-%d")
+                if daysPeriods is None:
+                    daysPeriods = "1"        
+                dt           = str2dt(startPeriods)
+                start        = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
+                duration     = int(daysPeriods) * 24 * 60
+                periods      = Period.get_periods(start, duration)
+            else:
+                # filter by something else
+                query_set = Period.objects
+
+                # window id
+                filterWnd = request.GET.get("filterWnd", None)
+                if filterWnd is not None:
+                    wId = int(filterWnd)
+                    query_set = query_set.filter(window__id = wId)
+
+                periods = query_set.order_by(order + sortField)    
             pids         = [p.id for p in periods]
             sd           = self.score_period.periods(pids)
             scores       = [sd.get(pid, 0.0) for pid in pids]

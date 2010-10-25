@@ -30,7 +30,7 @@ class PeriodHttpAdapter (object):
             
     def jsondict(self, tz, cscore):
         start = self.period.start if tz == 'UTC' else TimeAgent.utc2est(self.period.start)
-        w = self.period.get_window()
+        w = self.period.window
         js =   {"id"           : self.period.id
               , "session"      : SessionHttpAdapter(self.period.session).jsondict()
               , "session_name" : self.period.session.name
@@ -121,6 +121,10 @@ class PeriodHttpAdapter (object):
         stateAbbr = fdata.get("state", "P")
         self.period.state = first(Period_State.objects.filter(abbreviation=stateAbbr))
         self.period.moc_ack = fdata.get("moc_ack", self.period.moc_ack)
+
+        wId = fdata.get("window_id", None)
+        if wId is not None:
+            self.period.window_id = wId
 
         # how to initialize scheduled time? when they get published!
         # so, only create an accounting object if it needs it.
