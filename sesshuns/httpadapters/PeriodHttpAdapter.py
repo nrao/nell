@@ -126,6 +126,14 @@ class PeriodHttpAdapter (object):
         if wId is not None:
             self.period.window_id = wId
 
+        # is this period a default period for a window?
+        default = fdata.get("wdefault", None)
+        if default is not None and default == "true" \
+            and self.period.window is not None:
+            self.period.window.default_period = self.period
+            self.period.window.save()
+            
+
         # how to initialize scheduled time? when they get published!
         # so, only create an accounting object if it needs it.
         if self.period.accounting is None:
