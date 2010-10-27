@@ -100,7 +100,8 @@ class Window(models.Model):
         comes back.
         """
         remaining = self.timeRemaining()
-        if not complete and remaining != 0:
+        if not complete and self.complete and \
+          remaining != 0 and self.default_period is not None:
             self.default_period.duration = remaining
             self.default_period.state = Period_State.get_state("P")
             self.default_period.save()
