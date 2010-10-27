@@ -192,7 +192,7 @@ class Period(models.Model):
         if self.state.abbreviation == 'P':
             self.move_to_scheduled_state()
             if self.is_windowed() and self.window is not None:
-                self.window.publish() #Period(self.id)
+                self.window.publish() 
                 self.window.save()
 
 

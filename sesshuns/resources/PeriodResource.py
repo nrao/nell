@@ -42,9 +42,6 @@ class PeriodResource(NellResource):
             # Filtering by date involves a pair of keywords
             startPeriods = request.GET.get("startPeriods", None)
             daysPeriods  = request.GET.get("daysPeriods",  None)
-            #startPeriods = request.GET.get("startPeriods"
-            #                             , datetime.now().strftime("%Y-%m-%d"))
-            #daysPeriods  = request.GET.get("daysPeriods", "1")
 
             if startPeriods is not None and daysPeriods is not None:
                 if startPeriods is None:

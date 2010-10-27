@@ -379,6 +379,8 @@ class TestWindow(NellTestCase):
         self.period.accounting.save()
 
         w = Window.objects.get(id = self.w_id)
+        w.complete = True
+        #print w, w.complete, w.timeRemaining()
 
         # test
         w.setComplete(False)
