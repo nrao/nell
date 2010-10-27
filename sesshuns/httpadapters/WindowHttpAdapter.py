@@ -1,7 +1,7 @@
 from datetime               import datetime
 from PeriodHttpAdapter      import PeriodHttpAdapter
 from SessionHttpAdapter     import SessionHttpAdapter
-from sesshuns.models        import Period, Sesshun
+from sesshuns.models        import Period, Sesshun, Period_State
 from sesshuns.models.common import *
 
 class WindowHttpAdapter (object):
@@ -56,8 +56,7 @@ class WindowHttpAdapter (object):
         self.window.duration = int(float(fdata.get("duration", "1.0")))
 
         self.window.total_time = float(fdata.get("total_time", "0.0"))
-        self.window.complete = fdata.get("complete", "false") == "true"
+        self.window.setComplete(fdata.get("complete", "false") == "true")
 
         self.window.save()
-
 
