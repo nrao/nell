@@ -57,6 +57,45 @@ class Sesshun(models.Model):
     def isScience(self):
         return self.observing_type.type not in ("commissioning", "testing", "calibration", "maintenance")
 
+    def isShutdown(self):
+        return self.project.name == 'Shutdown'
+
+    def isMaintenance(self):
+        return self.observing_type.type == 'maintenance'
+
+    def isTest(self):
+        return self.observing_type.type == 'testing' 
+
+    def isCommissioning(self):
+        return self.observing_type.type == 'commissioning' 
+
+    def isCalibration(self):
+        return self.observing_type.type == 'calibration' 
+
+    @staticmethod
+    def getCategories():
+        "Return all possible categories of interest to Operations."
+        return ["Un-assigned", "Astronomy", "Maintenance", "Shutdown"
+              , "Tests", "Calibration", "Commissioning"]
+
+    def getCategory(self):
+        "Categorize this project in a meaningful way for Operations."
+        category = "Un-assigned"
+        if self.isScience():
+            category = "Astronomy"
+        elif self.isShutdown():
+            category = "Shutdown"
+        elif self.isMaintenance():
+            category = "Maintenance"
+        elif self.isTest():
+            category = "Tests"
+        elif self.isCommissioning():
+            category = "Commissioning"
+        elif self.isCalibration():
+            category = "Calibration"
+
+        return category
+
     def receiver_list(self):
         "Returns a string representation of the rcvr logic."
         return " AND ".join([rg.__str__() for rg in self.receiver_group_set.all()])
@@ -137,12 +176,10 @@ class Sesshun(models.Model):
         return False
         
     def get_receiver_req(self):
-        nn = Receiver.get_abbreviations()
-        rc = ReceiverCompile(nn)
-
         rcvrs = [[r.abbreviation \
-                     for r in rg.receivers.all()] \
-                         for rg in self.receiver_group_set.all()]
+                     for r in rg.receivers.all().order_by('id')] \
+                         for rg in self.receiver_group_set.all().order_by('id')]
+        rc = ReceiverCompile(Receiver.get_abbreviations())
         return rc.denormalize(rcvrs)
 
     def get_ha_limit_blackouts(self, startdate, days):

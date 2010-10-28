@@ -267,6 +267,10 @@ def output_windows(file, wins):
     for i in wins:
         file.write("\t%s\t%i\n" % (i.session.name, i.id))
 
+def output_windows2(file, wins):
+    for w in wins:
+        file.write("%s\n" % w.__str__())
+
 def get_closed_projets_with_open_sessions():
     p = Project.objects.filter(complete = True)
     cp = []
@@ -373,20 +377,21 @@ def output_windows_report(file):
 
     if len(w[3]):
         file.write("\n%s:\n" % (desc[3]))
-        output_windows(file, w[3])
+        output_windows2(file, w[3])
 
     if len(w[4]):
         file.write("\n%s:\n" % (desc[4]))
 
         for i in w[4]:
-            file.write("\t%s\t%i\t&\t%s\t%i\n" % \
-                       (i[0].session.name, i[0].id, i[1].session.name, i[1].id))
+            file.write("\t%s\t&\t%s\t\n" % \
+                       (i[0].__str__(), i[1].__str__()))
 
     if len(w[5]):
         file.write("\n%s:\n" % (desc[5]))
 
-        for i in w[5]:
-            file.write("\t%s\t%i\n" % (i.session.name, i.id))
+        for p in w[5]:
+        #    file.write("\t%s\t%i\n" % (i.session.name, i.id))
+            file.write("\t%s\n" % p.__str__())
 
     if len(w[6]):
         file.write("\n%s:\n" % (desc[6]))
@@ -408,7 +413,7 @@ def output_windows_report(file):
 
     if len(w[9]):
         file.write("\n%s:\n" % (desc[9]))
-        output_windows(file, w[9])
+        output_windows2(file, w[9])
 
 
 def GenerateReport():
@@ -551,9 +556,9 @@ def GenerateReport():
                 values.append(u)
     print_values(outfile, values)
 
-    outfile.write("\n\nUsers with no username:")
+    outfile.write("\n\nUsers with no PST ID:")
     users  = list(User.objects.order_by("last_name"))
-    values = [u for u in users if u.username is None]
+    values = [u for u in users if u.pst_id is None]
     print_values(outfile, values)
 
     outfile.write("\n\nPeriods Scheduled on blackout dates:")
@@ -594,7 +599,7 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nPeriods with time billed exceeding duration:")
-    values  = [p for p in periods if p.duration < p.accounting.time_billed()]
+    values  = [p.__str__() for p in periods if p.duration < p.accounting.time_billed()]
     print_values(outfile, values)
 
     outfile.write("\n\nPeriods with non-positive durations:")

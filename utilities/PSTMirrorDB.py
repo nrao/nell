@@ -1,6 +1,7 @@
+from PSTInterface import PSTInterface
 import MySQLdb as m
 
-class PSTMirrorDB(object):
+class PSTMirrorDB(PSTInterface):
     """
     This class is responsible for reading user info from the mirror of
     the PST DB available in Green Bank.  This is a read-only, MySql DB,
@@ -8,8 +9,11 @@ class PSTMirrorDB(object):
     into our model.
     Note that the formatting of the resulting profile info does not make
     complete sense; but the format is dictated by being backward compatible
-    with the output form UserInfo.  The excpetion to this is the 'status'
+    with the output from the old method, PSTQueryService.
+    The excpetion to this is the 'status'
     field, which is not displayed, but only used for internal purposes.
+    Note that this is a child of PSTInterface, as is PSTQueryService,
+    but this is the preffered interface, since it's much faster.
     """
 
     def __init__(self, host = "trent.gb.nrao.edu"
@@ -29,10 +33,51 @@ class PSTMirrorDB(object):
     def __del__(self):
         self.cursor.close()
 
-    def getProfileByID(self, user):
+    def getUsername(self, id):
+        "Pull out username, since we no longer keep it in the DSS DB."
+
         try:
-            # Note: our pst_id is their userAuthentication PK.
-            info = self.getStaticContactInfoByID(user.pst_id, use_cache)
+            person_id, username, enabled, fn, ln = self.getBasicInfo(id)
+        except:
+            username = None
+        return username
+
+    def getIdFromUsername(self, username):
+        "Pulls PK to person table, given userAuthentication.personName."
+
+        q = """
+        SELECT p.person_id
+        FROM person as p, userAuthentication as ua
+        WHERE ua.personName = '%s'
+        AND p.personAuthentication_id = ua.userAuthentication_id
+        """ % username
+
+        self.cursor.execute(q)
+        rows = self.cursor.fetchall()
+        return int(rows[0][0])
+
+    def getIdFromUserAuthenticationId(self, userAuth_id):
+        """
+        For those interfaces that might still be using the PK of 
+        the userAuthentication table (like the BOS), convert this
+        to the 'global_id', that is the PK of the person table.
+        """
+
+        q = """
+        SELECT p.person_id
+        FROM person as p, userAuthentication as ua
+        WHERE ua.userAuthentication_id = %d
+        AND p.personAuthentication_id = ua.userAuthentication_id
+        """ % userAuth_id
+
+        self.cursor.execute(q)
+        rows = self.cursor.fetchall()
+        return int(rows[0][0])
+
+    def getProfileByID(self, user, use_cache = True):
+        try:
+            # Note: our pst_id is their person PK.
+            return self.getStaticContactInfoByID(user.pst_id)
         except:
             return dict(emails       = []
                       , emailDescs   = []
@@ -41,15 +86,25 @@ class PSTMirrorDB(object):
                       , postals      = ['Not Available']
                       , affiliations = ['Not Available']
                       , status       = 'Not Available'
-                      , username     = user.username)
+                      , username     = 'Not Available' 
+                      , first_name   = 'Not Available'
+                      , last_name    = 'Not Available'
+                      , person_id    = 'Not Available'
+                      , personAuth_id= 'Not Available'
+                      )
 
-    def getStaticContactInfoByID(self, userAuth_id):
+    def getStaticContactInfoByUserName(self, username, use_cache = True):
+        id = self.getIdFromUsername(username)
+        return self.getStaticContactInfoByID(id)
+
+    def getStaticContactInfoByID(self, person_id, use_cache = True):
         """
-        This returns the same output as the method of the same name in UserInfo.
+        This returns the same output as the method of the same name in 
+        PSTQueryService.
         The excpetion to this is the status field.
         """
 
-        person_id, username, enabled = self.getBasicInfo(userAuth_id)
+        personAuth_id, username, enabled, fn, ln = self.getBasicInfo(person_id)
 
         emails, emailDescs   = self.getEmails(person_id)
         phones, phoneDescs   = self.getPhones(person_id)
@@ -62,22 +117,38 @@ class PSTMirrorDB(object):
                   , phoneDescs = phoneDescs
                   , postals = postalDescs
                   , affiliations = affiliations
+                  , username = username
+                  , person_id = person_id
+                  , personAuth_id = personAuth_id
                   # this field is the only one that differs from UserInfo
                   , status = enabled
-                  , username = username)
+                  # these fields only appear in this mirror class
+                  , first_name = fn
+                  , last_name  = ln
+                  )
 
-    def getBasicInfo(self, userAuth_id):
+    def str2uni(self, value):
+        "Converts type string to unicode - Django is expecting this type."
+        # what is the proper encoding to use?  is this good enough?
+        return unicode(value, encoding = 'latin-1')
+
+    def getBasicInfo(self, person_id):
 
         q = """
-        SELECT p.person_id, ua.personName, p.enabled
+        SELECT p.personAuthentication_id, ua.personName, p.enabled, p.firstName, p.lastName
         FROM person as p, userAuthentication as ua
-        WHERE p.personAuthentication_id = %d
+        WHERE p.person_id = %d
         AND p.personAuthentication_id = ua.userAuthentication_id
-        """ % userAuth_id
+        """ % person_id
 
         self.cursor.execute(q)
         rows = self.cursor.fetchall()
-        return (rows[0][0], rows[0][1], self.oneBitStr2Bool(rows[0][2]))
+        return (rows[0][0]
+              , self.str2uni(rows[0][1])
+              , self.oneBitStr2Bool(rows[0][2])
+              , self.str2uni(rows[0][3])
+              , self.str2uni(rows[0][4])
+              )
 
     def oneBitStr2Bool(self, bstr):
         if '\x00' == bstr:
@@ -99,7 +170,7 @@ class PSTMirrorDB(object):
         return self.getContactInfoWorker(q, self.row2email)
 
     def row2email(self, row):
-        return row[0], row[1]
+        return self.str2uni(row[0]), self.str2uni(row[1])
 
     def getPhones(self, person_id):
 
@@ -115,7 +186,7 @@ class PSTMirrorDB(object):
         return self.getContactInfoWorker(q, self.row2phone)
 
     def row2phone(self, row):
-        return row[0], row[1]
+        return self.str2uni(row[0]), self.str2uni(row[1])
 
     def getPostals(self, person_id):
 
@@ -144,7 +215,7 @@ class PSTMirrorDB(object):
                 streets += s + ", "
 
         address = "%s%s, %s, %s, %s," % (streets, row[4], row[5], row[7], row[6])
-        return address, row[8]
+        return self.str2uni(address), self.str2uni(row[8])
 
     def getAffiliations(self, person_id):
 
@@ -158,7 +229,7 @@ class PSTMirrorDB(object):
         self.cursor.execute(q)
         rows = self.cursor.fetchall()
   
-        return [r[0] for r in rows]
+        return [self.str2uni(r[0]) for r in rows]
             
     def getContactInfoWorker(self, query, fnc ):
         """
@@ -206,7 +277,6 @@ class PSTMirrorDB(object):
 
         info = []
         for r in rows:
-            print r
             pst_id = int(r[0])
             username = r[1]
             enabled = self.oneBitStr2Bool(r[2])

@@ -17,8 +17,8 @@ urlpatterns = patterns(''
    , url(r'^configurations/explorer/columnConfigs/(\d+)$',               column_configurations_explorer)
    , url(r'^configurations/explorer/filterCombos$',                     filter_combinations_explorer)
    , url(r'^configurations/explorer/filterCombos/(\d+)$',               filter_combinations_explorer)
-   , url(r'^profile/(\d+)/blackout/(\d+)/$',               blackout)
-   , url(r'^profile/(\d+)/blackout/$',                     blackout)
+   , url(r'^profile/(\d+)/blackout/(\d+)/$',               user_blackout)
+   , url(r'^profile/(\d+)/blackout/$',                     user_blackout)
    , url(r'^profile/(\d+)/dynamic_contact$',               dynamic_contact)
    , url(r'^profile/(\d+)$',                               profile)
    , url(r'^profile',                                      profile)
@@ -32,6 +32,8 @@ urlpatterns = patterns(''
    , url(r'^project/([^/]+)/investigator/(\d+)/observer$', toggle_observer)
    , url(r'^project/([^/]+)/investigator/(\d+)/priority/([^/]+)$', modify_priority)
    , url(r'^project/([^/]+)/session/(\d+)/enable$',        toggle_session)
+   , url(r'^project/([^/]+)/blackout/(\d+)/$',             project_blackout)
+   , url(r'^project/([^/]+)/blackout/$',                   project_blackout)
    , url(r'^projects$',           ProjectResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^projects/(\d+)$',     ProjectResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^projects/email$',                              projects_email) #
@@ -74,6 +76,7 @@ urlpatterns = patterns(''
    , url(r'^investigator/([^/]+)/clear_cache$',         clear_user_cache)
    , url(r'^investigator/([^/]+)/ical$',                observer_ical)
    , url(r'^investigator/([^/]+)/ical/[A-za-z.]*$',     observer_ical)
+   , url(r'^investigators/qualified$', remotely_qualified)
    , url(r'^investigators$',      InvestigatorResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^investigators/([^/]+)$',InvestigatorResource(permitted_methods=('PUT', 'GET', 'POST')))
    , url(r'^resourcecal_add_activity/$', add_activity)

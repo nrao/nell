@@ -12,6 +12,17 @@ from utilities                      import get_requestor, acknowledge_moc
 import calendar
 
 @login_required
+def remotely_qualified(request, *args, **kws):
+    """
+    Returns all remotely qualified observers.
+    """
+    requestor = get_requestor(request)
+    qualified = User.objects.filter(sanctioned = True).order_by('last_name')
+
+    return render_to_response('sesshuns/remotely_qualified.html'
+                            , dict(requestor = requestor, q = qualified))
+
+@login_required
 def moc_reschedule(request, *args, **kws):
     """
     Allows an operator to acknowledge when the MOC is bad before an observation.
@@ -205,7 +216,7 @@ def summary(request, *args, **kws):
         schedule = {}
         days     = dict([(p.pcode, []) for p in projects])
         hours    = dict([(p.pcode, 0) for p in projects])
-        summary  = dict([(c, 0) for c in Project.get_categories()])
+        summary  = dict([(c, 0) for c in Sesshun.getCategories()])
         for p in periods:
             pstart = TimeAgent.utc2est(p.start)
             pend   = TimeAgent.utc2est(p.end())
@@ -222,7 +233,7 @@ def summary(request, *args, **kws):
             hours[p.session.project.pcode] += hrs
 
             # Tally hours for various categories important to Operations.
-            summary[p.session.project.get_category()] += hrs
+            summary[p.session.getCategory()] += hrs
 
     return render_to_response(
                url

@@ -35,7 +35,6 @@ class UserResource(NellResource):
                 query_set = query_set.filter(
                      Q(first_name__icontains=filterText) |
                      Q(last_name__icontains=filterText) |
-                     Q(username__icontains=filterText) |
                      Q(contact_instructions__icontains=filterText) 
                      )
 

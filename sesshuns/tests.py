@@ -1,5 +1,6 @@
 from copy                import copy
 from datetime            import date, datetime, timedelta
+from time                import mktime
 from django.conf         import settings
 from django.contrib.auth import models as m
 from django.test.client  import Client
@@ -12,6 +13,7 @@ from random import randint
 
 from httpadapters                 import *
 from models                       import *
+from sesshuns.utilities           import *
 from nell.test_utils.NellTestCase import NellTestCase
 from nell.tools                   import DBReporter, ScheduleTools
 from nell.tools                   import IcalAntioch, TimeAccounting
@@ -654,7 +656,7 @@ class TestReceiver(NellTestCase):
 
         s.receiver_group_set.all().delete()
         adapter.save_receivers('L | (X & S)')
-        rgs = s.receiver_group_set.all()
+        rgs = s.receiver_group_set.all().order_by('id')
         #print rgs
         # TBF WTF? now it is S, then it is X??
         #print rgs[0].receivers.all()[1].abbreviation
@@ -663,10 +665,12 @@ class TestReceiver(NellTestCase):
         #print rgs[0].receivers.all()[1].abbreviation
         #print rgs[1].receivers.all()[0].abbreviation
         #print rgs[1].receivers.all()[1].abbreviation
-        self.assertEqual('L', rgs[0].receivers.all()[0].abbreviation)
-        self.assertEqual('X', rgs[0].receivers.all()[1].abbreviation)
-        self.assertEqual('L', rgs[1].receivers.all()[0].abbreviation)
-        self.assertEqual('S', rgs[1].receivers.all()[1].abbreviation)
+        rs = rgs[0].receivers.all().order_by('id')
+        self.assertEqual('L', rs[0].abbreviation)
+        self.assertEqual('X', rs[1].abbreviation)
+        rs = rgs[1].receivers.all().order_by('id')
+        self.assertEqual('L', rs[0].abbreviation)
+        self.assertEqual('S', rs[1].abbreviation)
 
 class TestReceiverSchedule(NellTestCase):
 
@@ -1585,13 +1589,13 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.nighttime(), None)
         self.assertEqual(s.get_LST_exclusion_string(), ldata["lst_ex"])
         self.assertEqual(s.get_min_eff_tsys_factor(), ldata["xi_factor"])
-        self.assertEqual(s.get_elevation_limit(),fdata["el_limit"])
-        rgs = s.receiver_group_set.all()
+        self.assertEqual(s.get_elevation_limit(),fdata["el_limit"]) 
+        rgs = s.receiver_group_set.all().order_by('id')
         self.assertEqual(2, len(rgs))
         self.assertEqual(['K']
-                       , [r.abbreviation for r in rgs[0].receivers.all()])
+                       , [r.abbreviation for r in rgs[0].receivers.all().order_by('id')])
         self.assertEqual(['L', 'C', 'X']
-                       , [r.abbreviation for r in rgs[1].receivers.all()])
+                       , [r.abbreviation for r in rgs[1].receivers.all().order_by('id')])
 
     def test_update_from_post2(self):
         ss = Sesshun.objects.all()
@@ -1628,11 +1632,11 @@ class TestBlackout(NellTestCase):
     def setUp(self):
         super(TestBlackout, self).setUp()
 
-        # create some blackouts
+        # create some user blackouts    
+
         self.u = User(first_name = "Test"
                     , last_name  = "User"
                     , role       = first(Role.objects.all())
-                    , username   = "testuser" #self.auth_user.username
                       )
         self.u.save()
 
@@ -1650,6 +1654,55 @@ class TestBlackout(NellTestCase):
                             , end_date   = datetime(2009, 1, 4, 13)
                             , until      = datetime(2009, 5, 4, 11))
         self.blackout2.save()
+
+        # create some project blackouts
+        semester = first(Semester.objects.filter(semester = "08C"))
+        ptype    = first(Project_Type.objects.filter(type = "science"))
+
+        self.pcode = "GBT08C-01"
+        self.project = Project(semester = semester
+                             , project_type = ptype
+                             , pcode = self.pcode
+                               )
+        self.project.save()                       
+
+        #once = first(Repeat.objects.filter(repeat = 'Once'))
+        self.blackout3 = Blackout(project    = self.project
+                                , repeat     = once 
+                                , start_date = datetime(2008, 10, 1, 11)
+                                , end_date   = datetime(2008, 10, 3, 11))
+        self.blackout3.save()
+        
+    def test_eventjson(self):
+
+        # user blackout
+        calstart = datetime(2009, 1, 1)
+        calend   = datetime(2009, 1, 30)
+        json = self.blackout1.eventjson(mktime(calstart.timetuple())
+                                      , mktime(calend.timetuple()))
+        event = {'className': 'blackout'
+               , 'start': '2009-01-01T11:00:00'
+               , 'end': '2009-01-03T11:00:00'
+               , 'id': 1L
+               , 'title': 'Test User: blackout'
+               }
+        self.assertEqual(event, json[0])       
+
+        # project blackout
+        calstart = datetime(2008, 10, 1)
+        calend   = datetime(2008, 10, 30)
+        json = self.blackout3.eventjson(mktime(calstart.timetuple())
+                                      , mktime(calend.timetuple()))
+        event = {'className': 'blackout'
+               , 'start': '2008-10-01T11:00:00'
+               , 'end': '2008-10-03T11:00:00'
+               , 'id': 3L
+               , 'title': '%s: blackout' % self.pcode
+               }
+        self.assertEqual(event, json[0]) 
+
+    # TBF
+    # test_isActive
 
     def test_generateDates(self):
 
@@ -1689,6 +1742,19 @@ class TestBlackout(NellTestCase):
         gdts = self.blackout2.generateDates(calstart, calend)
         self.assertEquals(0, len(gdts))
 
+        # no repeats are easy ... even for project blackouts
+        dts = [(self.blackout3.start_date, self.blackout3.end_date)]
+        calstart = datetime(2008, 10, 1)
+        calend   = datetime(2008, 10, 30)
+        gdts = self.blackout3.generateDates(calstart, calend)
+        self.assertEquals(dts, gdts)
+
+    def test_projectBlackout(self):
+        "Repeat some of the other tests, but for project blackouts"
+
+        self.assertEquals(self.blackout3.forName(), self.project.pcode)
+        self.assertEquals(self.blackout3.forUrlId(), self.project.pcode)
+
 # Testing Views
 
 class TestViews(NellTestCase):
@@ -1727,14 +1793,102 @@ class TestViews(NellTestCase):
         self.assertTrue(ec is not None)
 
     def test_reservations(self):
+
+        # create a user
+        # Brian Cherinka (pst_id 800) has a reservation in Oct.
+        # let's get that reservation, but make it point to this user.
+        roles = Role.objects.all()
+        u = User(first_name = "delete"
+               , last_name = "me"
+               , role = roles[0]
+               # BOS gives id of 802 -> global id of 800
+               , pst_id = 800
+                 )
+        u.save() 
+        # giv'm a project
+        projs = Project.objects.all()
+        inv = Investigator(user = u, project = projs[0])
+        inv.save()
+
         c = Client()
-        data = {'start' : '6/1/2010'
-              , 'days'  : '61'
+        data = {'start' : '10/10/2010'
+              , 'days'  : '8'
                }
         response = c.get('/reservations', data)
         self.failUnlessEqual(response.status_code, 200)
         r = eval(response.content)
-        self.assertTrue(len(r.get('reservations')) == 0)
+
+        exp = {'reservations': 
+                 [{'pcodes': 'GBT09A-001'
+                 , 'start': '10/05/2010'
+                 , 'end': '10/10/2010'
+                 , 'id': 800
+                 , 'name': 'Brian Cherinka'}]
+               , 'total': 1}
+
+        self.assertEquals(exp, r)
+
+        # cleanup
+        inv.delete()
+        u.delete()
+
+    def test_reservations_from_db(self):
+        
+        # create a user
+        roles = Role.objects.all()
+        u = User(first_name = "delete"
+               , last_name = "me"
+               , role = roles[0]
+                 )
+        u.save() 
+
+        # giv'm a project
+        projs = Project.objects.all()
+        inv = Investigator(user = u, project = projs[0])
+        inv.save()
+
+        # giv'm a reservation
+        start = date(2006, 2, 10)
+        end   = date(2006, 2, 15)
+        res = Reservation(user = u
+                        , start_date = start
+                        , end_date   = end
+                          )
+        res.save()
+
+        frmt = "%m/%d/%Y"
+        rs = getReservationsFromDB(start.strftime(frmt)
+                                 , end.strftime(frmt)
+                                  )
+        exp = [{'pcodes': u'GBT09A-001'
+              , 'start': '02/10/2006'
+              , 'end': '02/15/2006'
+              , 'id': None
+              , 'name': 'delete me'
+               }]
+        self.assertEquals(exp, rs)
+
+        # make sure it still gets picked up two days later
+        start = date(2006, 2, 12)
+        end   = date(2006, 2, 17)
+        rs = getReservationsFromDB(start.strftime(frmt)
+                                 , end.strftime(frmt)
+                                  )
+        self.assertEquals(exp, rs)
+
+        # make sure it is not picked up 
+        start = date(2006, 2, 22)
+        end   = date(2006, 2, 27)
+        rs = getReservationsFromDB(start.strftime(frmt)
+                                 , end.strftime(frmt)
+                                  )
+        self.assertEquals([], rs)
+
+        # cleanup
+        res.delete()
+        inv.delete()
+        u.delete()
+
 
 # Testing View Resources
 
@@ -1990,7 +2144,6 @@ class TestUserResources(NellTestCase):
         self.users = []
         self.users.append(User(original_id = 0
                     , pst_id      = 0
-                    , username    = 'foo'
                     , sanctioned  = False
                     , first_name  = 'Foo'
                     , last_name   = 'Bar'
@@ -2000,7 +2153,6 @@ class TestUserResources(NellTestCase):
         self.users[-1].save()
         self.users.append(User(original_id = 0
                     , pst_id      = 0
-                    , username    = 'mmccarty'
                     , sanctioned  = True
                     , first_name  = 'Mike'
                     , last_name   = 'McCarty'
@@ -2011,13 +2163,13 @@ class TestUserResources(NellTestCase):
 
     def test_create(self):
         fdata = self.fdata
-        fdata.update({"username"   : "foo2"
-                    , "original_id" : "99"
+        fdata.update({"original_id" : "99"
                     , "sanctioned" : "True"
                     , "first_name" : "Foogle"
                     , "last_name"  : "Bar"
                     , "contact_instructions" : "Best to call my mom's house.  Ask for Pooh Bear."
                     , "role": "Observer"
+                    , "username": "dss" # in tests only 
                      })
         response = self.client.post('/users', fdata)
         self.failUnlessEqual(response.status_code, 200)
@@ -2043,12 +2195,12 @@ class TestUserResources(NellTestCase):
         fdata.update({"_method" : "put"
                     , "pst_id"  : "1"
                     , "original_id"  : "12"
-                    , "username" : "foo"
                     , "sanctioned" : "True"
                     , "first_name" : "Foo"
                     , "last_name"  : "Bar"
                     , "contact_instructions" : ""
                     , "role": "Observer"
+                    , "username": "dss" # in tests only
                      })
         response = self.client.post('/users/%s' % self.users[0].id, fdata)
         self.failUnlessEqual(response.status_code, 200)
@@ -2074,7 +2226,6 @@ class TestInvestigatorResource(NellTestCase):
         self.users = []
         self.users.append(User(original_id = 0
                     , pst_id      = 0
-                    , username    = 'foo'
                     , sanctioned  = False
                     , first_name  = 'Foo'
                     , last_name   = 'Bar'
@@ -2084,7 +2235,6 @@ class TestInvestigatorResource(NellTestCase):
         self.users[-1].save()
         self.users.append(User(original_id = 0
                     , pst_id      = 0
-                    , username    = 'mmccarty'
                     , sanctioned  = True
                     , first_name  = 'Mike'
                     , last_name   = 'McCarty'
@@ -2094,7 +2244,6 @@ class TestInvestigatorResource(NellTestCase):
         self.users[-1].save()
         self.users.append(User(original_id = 0
                     , pst_id      = 0
-                    , username    = 'noproject'
                     , sanctioned  = True
                     , first_name  = 'Doless'
                     , last_name   = 'NoProject'
@@ -2284,7 +2433,7 @@ class TestGetOptions(NellTestCase):
         response = c.get('/sessions/options', dict(mode='project_codes'))
         self.assertEquals(response.content,
                           '{"project codes": ["GBT09A-001"], "project ids": [1]}')
-        response = c.get('/sessions/options', dict(mode='session_handles'))
+        response = c.get('/sessions/options', dict(mode='session_handles', notcomplete='true', enabled='true'))
         self.assertEquals(response.content,
                           '{"ids": [1], "session handles": ["Low Frequency With No RFI (GBT09A-001)"]}')
 
@@ -2645,10 +2794,11 @@ class TestObservers(NellTestCase):
         self.auth_user.is_staff = True
         self.auth_user.save()
 
-        self.u = User(first_name = "Test"
-                    , last_name  = "User"
+        self.u = User(first_name = "dss" #"Test"
+                    , last_name  = "account" #"User"
+                    , pst_id     = 3251
                     , role       = first(Role.objects.all())
-                    , username   = self.auth_user.username
+                    #, username   = self.auth_user.username
                       )
         self.u.save()
         self.client.login(username = "dss", password = "asdf5!")
@@ -2705,7 +2855,7 @@ class TestObservers(NellTestCase):
     def test_search(self):
         response = self.post('/search', {'search' : 'Test'})
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue("User" in response.content)
+        self.assertTrue("account" in response.content)
 
     def test_toggle_session(self):
         response = self.post(
@@ -2742,16 +2892,39 @@ class TestObservers(NellTestCase):
         b.save()
         return b
 
+    def create_blackout_for_project(self):
+        b             = Blackout(project = self.p)
+        b.start       = datetime(2009, 1, 1)
+        b.end         = datetime(2009, 12, 31)
+        b.repeat      = first(Repeat.objects.all())
+        b.description = "This is a test blackout for a project."
+        b.save()
+        return b       
+
     def test_blackout_form(self):
+
+        # user blackout
         response = self.get('/profile/%s/blackout/' % self.u.id)
         self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue("Blackout for dss account" in response.content)
 
         b = self.create_blackout()
         response = self.get('/profile/%s/blackout/%s/' % (self.u.id, b.id))
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue(b.description in response.content)
 
+        # project blackout
+        response = self.get('/project/%s/blackout/' % self.p.pcode)
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue("Blackout for mike" in response.content)
+
+        b = self.create_blackout_for_project()
+        response = self.get('/project/%s/blackout/%s/' % (self.p.pcode, b.id))
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue(b.description in response.content)
+
     def test_blackout(self):
+        # create a blackout
         b     = self.create_blackout()
         start = datetime(2009, 1, 1)
         end   = datetime(2009, 1, 31)
@@ -2767,6 +2940,7 @@ class TestObservers(NellTestCase):
               , '_method'     : "PUT"
                 }
 
+        # edit it
         response = self.post(
             '/profile/%s/blackout/%s/' % (self.u.id, b.id), data)
         b = first(Blackout.objects.filter(id = b.id))
@@ -2774,6 +2948,7 @@ class TestObservers(NellTestCase):
         self.assertEqual(b.until.date().strftime("%m/%d/%Y") , data.get('until'))
         self.failUnlessEqual(response.status_code, 302)
 
+        # delete it
         response = self.get(
             '/profile/%s/blackout/%s/' % (self.u.id, b.id)
           , {'_method' : 'DELETE'})
@@ -2782,6 +2957,7 @@ class TestObservers(NellTestCase):
         b = first(Blackout.objects.filter(id = b.id))
         self.assertEqual(None, b)
 
+        # create a new one
         data['end'] = date(2009, 5, 31).strftime("%m/%d/%Y")
         _ = data.pop('_method')
         response    = self.post(
@@ -2791,10 +2967,11 @@ class TestObservers(NellTestCase):
         self.assertEqual(b.end_date.date().strftime("%m/%d/%Y"), data.get('end'))
         b.delete()
 
+        # create another new one?
         data['until'] = ''
         response    = self.post(
-            '/profile/%s/blackout' % self.u.id, data)
-        self.failUnlessEqual(response.status_code, 200)
+            '/profile/%s/blackout/' % self.u.id, data)
+        self.failUnlessEqual(response.status_code, 302)
 
     def test_blackout2(self):
         b     = self.create_blackout()
@@ -2824,6 +3001,51 @@ class TestObservers(NellTestCase):
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue("ERROR" in response.content)
 
+    def test_blackout3(self):
+        "Like test_blackout, but for a project"
+
+        # create an initial blackout
+        b     = self.create_blackout_for_project()
+        start = datetime(2009, 1, 1)
+        end   = datetime(2009, 1, 31)
+        until = datetime(2010, 1, 31)
+        data = {'start'       : start.date().strftime("%m/%d/%Y")
+              , 'start_time'   : start.time().strftime("%H:%M")
+              , 'end'         : end.date().strftime("%m/%d/%Y")
+              , 'end_time'     : end.time().strftime("%H:%M")
+              , 'repeats'      : 'Once'
+              , 'until'       : until.strftime("%m/%d/%Y")
+              , 'until_time'   : until.strftime("%H:%M")
+              , 'description' : "This is a test project blackout."
+              , '_method'     : "PUT"
+                }
+
+        # now edit it
+        response = self.post(
+            '/project/%s/blackout/%s/' % (self.p.pcode, b.id), data)
+        b = first(Blackout.objects.filter(id = b.id))
+        self.assertEqual(b.end_date.date().strftime("%m/%d/%Y") , data.get('end'))
+        self.assertEqual(b.until.date().strftime("%m/%d/%Y") , data.get('until'))
+        self.failUnlessEqual(response.status_code, 302)
+        
+        # now delete it
+        response = self.get(
+            '/project/%s/blackout/%s/' % (self.p.pcode, b.id)
+          , {'_method' : 'DELETE'})
+        self.failUnlessEqual(response.status_code, 302)
+        # shouldn't this delete the blackout?
+        b = first(Blackout.objects.filter(id = b.id))
+        self.assertEqual(None, b)
+
+        # now create one 
+        data['end'] = date(2009, 5, 31).strftime("%m/%d/%Y")
+        _ = data.pop('_method')
+        response    = self.post(
+            '/project/%s/blackout/' % self.p.pcode, data)
+        self.failUnlessEqual(response.status_code, 302)
+        b = first(self.p.blackout_set.all())
+        self.assertEqual(b.end_date.date().strftime("%m/%d/%Y"), data.get('end'))
+        b.delete()
 
     def test_get_period_day_time(self):
 
@@ -2911,6 +3133,24 @@ class TestObservers(NellTestCase):
         p.remove() #delete()
         s.delete()
 
+    def test_create_user(self):
+        "Stick Paul in the DSS DB"
+
+        pauls = User.objects.filter(last_name = "Marganian")
+        self.assertEqual(0, len(pauls))
+
+        create_user('pmargani')
+
+        pauls = User.objects.filter(last_name = "Marganian")
+        self.assertEqual(1, len(pauls))
+        paul = pauls[0]
+        self.assertEqual(821, paul.pst_id)
+
+        paul.delete()
+        pauls = User.objects.filter(last_name = "Marganian")
+        self.assertEqual(0, len(pauls))
+
+      
 # Testing Utilities
 class TestDBReporter(NellTestCase):
 
@@ -2990,7 +3230,7 @@ class TestDSSPrime2DSS(NellTestCase):
         a = allots[0]
         self.assertEquals(5.0, a.total_time)
         self.assertEquals(4.0, a.grade)
-        invs = p.investigator_set.all()
+        invs = p.investigator_set.all().order_by('id')
         self.assertEquals(2, len(invs))
         self.assertEquals("Mangum", invs[0].user.last_name)
         self.assertEquals("Wootten", invs[1].user.last_name)
@@ -3212,8 +3452,9 @@ class TestPSTMirrorDB(NellTestCase):
     def test_getProfileByID(self):
 
         db = PSTMirrorDB()
-        # 823 - pst_id for pmargani
-        info = db.getStaticContactInfoByID(823)
+        # 821 - pst_id for pmargani
+        globalId = 821
+        info = db.getStaticContactInfoByID(globalId)
 
         # expected values
         emails = ['pmargani@nrao.edu'
@@ -3237,24 +3478,87 @@ class TestPSTMirrorDB(NellTestCase):
         self.assertEquals(affiliations, info['affiliations'])
         self.assertEquals('pmargani', info['username'])
         self.assertEquals(True, info['status'])
+        self.assertEquals(globalId, info['person_id'])
+        self.assertEquals(823, info['personAuth_id'])
+
+    def test_getIdFromUserAuthenticationId(self):
+
+        db = PSTMirrorDB()
+        globalId = 821
+        userAuthId = 823
+        username = 'pmargani'
+        id = db.getIdFromUserAuthenticationId(userAuthId)
+        self.assertEquals(globalId, id)
+
+    def test_getBadProfile(self):
+        "Make sure we can handle bogus info."
+
+        db = PSTMirrorDB()
+        username = db.getUsername(0)
+        self.assertEquals(None, username)
 
     # this is even more un "unit" test - we're interface with TWO
     # external systems
     def test_compareProfiles(self):
-        "Compare the outputs from UserInfo & PSTMirrorDB"
+        "Compare the outputs from PSTQueryService & PSTMirrorDB"
 
+        globalId =821
 
         db = PSTMirrorDB()
         # 823 - pst_id for pmargani
-        mirror = db.getStaticContactInfoByID(823)
+        mirror = db.getStaticContactInfoByID(globalId)
 
-        ui = UserInfo()
-        xml = ui.getStaticContactInfoByID(823)
+        ui = PSTQueryService()
+        xml = ui.getStaticContactInfoByID(globalId)
         pst = ui.parseUserDict(xml)
 
         # get rid of any elements that are different
         # by design, status key is different
         mirror.pop('status')
+        mirror.pop('first_name')
+        mirror.pop('last_name')
+        mirror.pop('person_id')
+        mirror.pop('personAuth_id')
+        pst.pop('status')
+    def test_getIdFromUsername(self):
+
+        db = PSTMirrorDB()
+        globalId = 821
+        username = 'pmargani'
+        id = db.getIdFromUsername(username)
+        self.assertEquals(globalId, id)
+        un = db.getUsername(globalId)
+        self.assertEquals(username, un)
+
+    def test_getBadProfile(self):
+        "Make sure we can handle bogus info."
+
+        db = PSTMirrorDB()
+        username = db.getUsername(0)
+        self.assertEquals(None, username)
+
+    # this is even more un "unit" test - we're interface with TWO
+    # external systems
+    def test_compareProfiles(self):
+        "Compare the outputs from PSTQueryService & PSTMirrorDB"
+
+        globalId =821
+
+        db = PSTMirrorDB()
+        # 823 - pst_id for pmargani
+        mirror = db.getStaticContactInfoByID(globalId)
+
+        ui = PSTQueryService()
+        xml = ui.getStaticContactInfoByID(globalId)
+        pst = ui.parseUserDict(xml)
+
+        # get rid of any elements that are different
+        # by design, status key is different
+        mirror.pop('status')
+        mirror.pop('first_name')
+        mirror.pop('last_name')
+        mirror.pop('person_id')
+        mirror.pop('personAuth_id')
         pst.pop('status')
         # for some reason, the XML derived addresses aren't in order
         mirror.pop('postals')
@@ -3262,17 +3566,23 @@ class TestPSTMirrorDB(NellTestCase):
         self.assertEquals(mirror, pst)
 
 
-class TestUserInfo(NellTestCase):
+class TestPSTQueryService(NellTestCase):
 
     def setUp(self):
-        super(TestUserInfo, self).setUp()
+        super(TestPSTQueryService, self).setUp()
 
-        self.ui = UserInfo()
+        self.ui = PSTQueryService()
+
+        self.me = User(first_name = "Paul"
+                     , last_name = "Marganian"
+                     , role_id = 1
+                     , pst_id = 821)
+        self.me.save()
 
         #<?xml version="1.0" encoding="UTF-8"?>
         self.xmlStr =  """
         <nrao:query-result xmlns:nrao="http://www.nrao.edu/namespaces/nrao" >
-        <nrao:user id="823" domestic="true" xmlns:nrao="http://www.nrao.edu/namespaces/nrao">
+        <nrao:user id="823" globalid="821" domestic="true" xmlns:nrao="http://www.nrao.edu/namespaces/nrao">
         <nrao:name>
         <nrao:prefix>Mr</nrao:prefix>
         <nrao:first-name>Paul</nrao:first-name>
@@ -3364,13 +3674,10 @@ class TestUserInfo(NellTestCase):
                      , 'first-name': 'Paul'
                      , 'middle-name': 'Raffi'
                      , 'last-name': 'Marganian'}
-<<<<<<< local
-            , 'account-info': {'account-name': 'pmargani'}
-=======
             , 'account-info': {'account-name': 'pmargani'         
                              , 'entry-status': 'Suspect'}
->>>>>>> other
             , 'id': '823'
+            , 'globalid': '821'
             , 'affiliation-info': [("National Radio Astronomy Observatory ", True)
                              , ("Oregon, University of", False)]
         }
@@ -3404,6 +3711,33 @@ class TestUserInfo(NellTestCase):
         self.assertEquals('pmargani', info['username'])
         self.assertEquals('Suspect', info['status'])
 
+    # THis is NOT a unit -test: it actually interacts w/ the PST service!
+    def test_pstServices(self):
+        
+        globalid = 821
+        userAuthId = 823
+
+        username =  self.ui.getUsername(self.me.pst_id)
+        self.assertEquals('pmargani', username)
+
+        id = self.ui.getIdFromUsername(username)
+        self.assertEquals(globalid, id)
+
+        # TBF: for some reason, the returned info has something trivially
+        # different then self.xmlDict, but I don't know what.
+        info = self.ui.getStaticContactInfoByUserName(username)
+        self.assertEquals(self.xmlDict['name'],info['name'])
+
+        info = self.ui.getStaticContactInfoByID(self.me.pst_id)
+        self.assertEquals(self.xmlDict['name'],info['name'])
+
+        info = self.ui.getProfileByID(self.me)
+        self.assertEquals('pmargani', info['username'])
+
+        id = self.ui.getIdFromUserAuthenticationId(userAuthId)
+        self.assertEquals(globalid, id)
+        
+        
 class TestUpdateEphemeris(NellTestCase):
 
     def testUpdate(self):

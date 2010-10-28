@@ -15,8 +15,8 @@ class UserHttpAdapter(object):
         
     def update_from_post(self, fdata):
         self.user.original_id = int(float(fdata.get('original_id', 0)))
-        self.user.pst_id      = int(float(fdata.get('pst_id', 0)))
-        self.user.username    = fdata.get('username', "")
+        pst_id_str            = fdata.get('pst_id', None)
+        self.user.pst_id      = int(float(pst_id_str)) if pst_id_str is not None else None
         sanctioned            = fdata.get('sanctioned', "")
         self.user.sanctioned  = sanctioned.lower() == 'true' if sanctioned is not None else sanctioned
         self.user.first_name  = fdata.get('first_name', "")
@@ -29,8 +29,12 @@ class UserHttpAdapter(object):
         if self.user.auth_user is None:
             try:
                 from django.contrib.auth.models import User as AuthUser
+                # only in tests will we pass down a username
+                username = fdata.get('username', '')
+                if username == '' and self.user.pst_id is not None:
+                    username = self.user.username()
                 self.user.auth_user = \
-                    AuthUser(username = fdata.get('username', "")
+                    AuthUser(username = username
                            , password = "!"
                             )
                 self.user.auth_user.save()
@@ -50,7 +54,7 @@ class UserHttpAdapter(object):
         return {'id' : self.user.id
               , 'original_id' : self.user.original_id
               , 'pst_id'      : self.user.pst_id
-              , 'username'    : self.user.username
+              , 'username'    : self.user.username() # read-only
               , 'sanctioned'  : self.user.sanctioned
               , 'first_name'  : self.user.first_name
               , 'last_name'   : self.user.last_name

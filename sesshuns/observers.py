@@ -104,7 +104,7 @@ def preferences(request, *args, **kws):
                             })
 
 def adjustBlackoutTZ(tz, blackout):
-    return {'user'        : blackout.user
+    return {'user'        : blackout.user # None for project blackouts
           , 'id'          : blackout.id
           , 'start_date'  : adjustDateTimeTz(tz, blackout.start_date)
           , 'end_date'    : adjustDateTimeTz(tz, blackout.end_date)
@@ -116,7 +116,7 @@ def adjustBlackoutTZ(tz, blackout):
 def checkAuthUser(u):
     if u.auth_user_id is None:
         from django.contrib.auth.models import User as AuthUser
-        au = first(AuthUser.objects.filter(username = u.username))
+        au = first(AuthUser.objects.filter(username = u.username()))
         u.auth_user = au
         u.save()
 
@@ -131,7 +131,8 @@ def profile(request, *args, **kws):
     checkAuthUser(requestor)
     user = first(User.objects.filter(id = args[0])) if args else requestor
     static_info  = user.getStaticContactInfo()
-    reservations = NRAOBosDB().getReservationsByUsername(user.username)
+    username = static_info['username']
+    reservations = NRAOBosDB().getReservationsByUsername(username)
 
     try:
         tz = requestor.preference.timeZone
@@ -200,7 +201,8 @@ def project(request, *args, **kws):
     sess = sorted(project.sesshun_set.all(), lambda x,y: cmp(x.name, y.name))
 
     investigators = project.investigator_set.order_by('priority').all()
-    blackouts     = [adjustBlackoutTZ(tz, b) for i in investigators for b in i.projectBlackouts()]
+    obsBlackouts      = [adjustBlackoutTZ(tz, b) for i in investigators for b in i.projectBlackouts()]
+    projBlackouts     = [adjustBlackoutTZ(tz, b) for b in project.blackout_set.all() if b.isActive()]
     periods = [{'session'    : p.session
               , 'start'      : adjustDateTimeTz(tz, p.start)
               , 'duration'   : p.duration
@@ -217,6 +219,7 @@ def project(request, *args, **kws):
                       , 'start'    : adjustDateTimeTz(tz, pd.start)
                       , 'duration' : pd.duration
                        } for pd in project.getUpcomingPeriods()]
+    res = NRAOBosDB().reservations(project)                   
     return render_to_response(
         "sesshuns/project.html"
       , {'p'           : project
@@ -224,10 +227,11 @@ def project(request, *args, **kws):
        , 'u'           : requestor
        , 'requestor'   : requestor
        , 'v'           : investigators
-       , 'r'           : NRAOBosDB().reservations(project)
+       , 'r'           : res 
        , 'rcvr_blkouts': rcvr_blkouts
        , 'tz'          : tz
-       , 'projectBlackouts' : blackouts
+       , 'observerBlackouts': obsBlackouts
+       , 'projectBlackouts' : projBlackouts
        , 'periods'          : periods
        , 'windows'          : windows
        , 'upcomingPeriods'  : upcomingPeriods
@@ -390,13 +394,36 @@ def clear_user_cache(request, *args, **kwds):
     user = first(User.objects.filter(id = args[0]))
     user.clearCachedInfo()
     return HttpResponseRedirect("/profile/%s" % args[0])
- 
+
+@revision.create_on_success
+@login_required
+@has_project_access
+def project_blackout(request, *args, **kws):
+    """
+    Allows investigators to manage project blackouts.
+    """
+    if len(args) == 1:
+        p_id, = args
+        b_id  = None
+    else:
+        p_id, b_id, = args
+
+    project   = first(Project.objects.filter(pcode = p_id))
+    requestor = get_requestor(request)
+
+    return blackout_worker(request
+                         , "project_blackout"
+                         , project
+                         , b_id
+                         , requestor
+                         , "/project/%s" % p_id) # urlRedirect
+
 @revision.create_on_success
 @login_required
 @has_access
-def blackout(request, *args, **kws):
+def user_blackout(request, *args, **kws):
     """
-    Allows investigators to manage blackouts.
+    Allows investigators to manage user blackouts.
     """
     if len(args) == 1:
         u_id, = args
@@ -407,8 +434,19 @@ def blackout(request, *args, **kws):
     user      = first(User.objects.filter(id = u_id))
     requestor = get_requestor(request)
 
+    return blackout_worker(request
+                         , "user_blackout"
+                         , user
+                         , b_id
+                         , requestor
+                         , "/profile/%s" % u_id) # urlRedirect
+
+def blackout_worker(request, type, forObj, b_id, requestor, urlRedirect):
+    "Does most of the work for processing blackout forms"
+
     try:
-        tz = user.preference.timeZone
+        # TBF: user or requestor?
+        tz = requestor.preference.timeZone
     except ObjectDoesNotExist:
         tz = "UTC"
 
@@ -427,7 +465,10 @@ def blackout(request, *args, **kws):
             if request.POST.get('_method', '') == 'PUT':
                 b = first(Blackout.objects.filter(id = b_id))
             else:
-                b = Blackout(user = user)
+                if type == "project_blackout":
+                    b = Blackout(project = forObj)
+                else:
+                    b = Blackout(user = forObj)
 
             b.start_date  = f.cleaned_start
             b.end_date    = f.cleaned_end
@@ -437,20 +478,33 @@ def blackout(request, *args, **kws):
             b.save()
         
             revision.comment = get_rev_comment(request, b, "blackout")
-            return HttpResponseRedirect("/profile/%s" % u_id)
+            return HttpResponseRedirect(urlRedirect)
     else:
         b = first(Blackout.objects.filter(id = b_id)) if b_id is not None else None
         if request.GET.get('_method', '') == "DELETE" and b is not None:
             b.delete()
-            return HttpResponseRedirect("/profile/%s" % u_id)
+            return HttpResponseRedirect(urlRedirect)
 
         f = BlackoutForm.initialize(b, tz) if b is not None else BlackoutForm()
 
+    blackoutUrl = "%d/" % int(b_id) if b_id is not None else ""
+    # the forms we render have different actions according to whether
+    # these blackouts are for users or projects
+    if type == "project_blackout":
+        for_name = forObj.pcode
+        form_action = "/project/%s/blackout/%s" % (forObj.pcode, blackoutUrl)
+        cancel_action =  "/project/%s" % forObj.pcode
+    else:    
+        for_name = forObj.display_name()
+        form_action = "/profile/%d/blackout/%s" % (forObj.id, blackoutUrl)
+        cancel_action =  "/profile/%d" % forObj.id
+
     return render_to_response("sesshuns/blackout_form.html"
                             , {'form'      : f
-                             , 'requestor' : requestor
-                             , 'u'         : user
                              , 'b_id'      : b_id
+                             , 'action'    : form_action
+                             , 'cancel'    : cancel_action
+                             , 'for_name'  : for_name
                              , 'tz'        : tz
                              , 'tz_form'   : tz_form
                              })
@@ -476,6 +530,12 @@ def events(request, *args, **kws):
     # Each event needs a unique id.  Let's start with 1.
     id          = 1
     jsonobjlist = []
+
+    # Project blackout events
+    blackouts = Set([b for b in project.blackout_set.all()])
+    for b in blackouts:
+        jsonobjlist.extend(b.eventjson(start, end, id, tz))
+        id = id + 1
 
     # Investigator blackout events
     blackouts = Set([b for i in project.investigator_set.all() \

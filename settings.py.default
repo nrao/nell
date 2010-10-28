@@ -38,7 +38,7 @@ DATABASE_PASSWORD = ''  # Not used with sqlite3.
 DATABASE_HOST = 'trent'       #MODIFY#
                               # Set to empty string for localhost. Not used
                               # with sqlite3.
-DATABASE_PORT = ''            # Set to empty string for default. Not used with sqlite3.
+DATABASE_PORT = '5432'        # Set to 5432 for default. Not used with sqlite3.
 
 CACHE_BACKEND = "db://observer_cache/?timeout=3600" # 1 hr timeout
 

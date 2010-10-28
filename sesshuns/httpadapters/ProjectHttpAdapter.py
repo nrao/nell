@@ -19,7 +19,7 @@ class ProjectHttpAdapter (object):
         fsemester  = fdata.get("semester", "09C")
         semester   = first(Semester.objects.filter(semester = fsemester))
         try:
-            f_lname, f_fname = fdata.get("friends", "").split(", ")
+            f_lname, f_fname = fdata.get("friend", "").split(", ")
         except ValueError:
             f_lname, f_fname = ("", "")
         friend = first(User.objects.filter(last_name = f_lname, first_name = f_fname))
@@ -31,6 +31,7 @@ class ProjectHttpAdapter (object):
         self.project.friend           = friend
         self.project.thesis           = fdata.get("thesis", "false") == "true"
         self.project.complete         = fdata.get("complete", "false") == "true"
+        self.project.blackouts        = fdata.get("blackouts", "false") == "true"
         self.project.notes            = fdata.get("notes", "")
         self.project.schedulers_notes = fdata.get("schd_notes", "")
 
@@ -95,6 +96,7 @@ class ProjectHttpAdapter (object):
               , "pcode"        : self.project.pcode
               , "name"         : self.project.name
               , "thesis"       : self.project.thesis
+              , "blackouts"    : self.project.blackouts
               , "complete"     : self.project.complete
               , "pi"           : pi
               , "co_i"         : co_i
