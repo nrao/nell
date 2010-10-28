@@ -80,10 +80,11 @@ urlpatterns = patterns(''
    , url(r'^investigators$',      InvestigatorResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^investigators/([^/]+)$',InvestigatorResource(permitted_methods=('PUT', 'GET', 'POST')))
    , url(r'^resourcecal_add_activity/$', add_activity)
-   , url(r'^resourcecal_add_activity/(\d+)$', add_activity)
+   , url(r'^resourcecal_add_activity/(\d+)/$', add_activity)
+   , url(r'^resourcecal_add_activity/(?P<year>\d{4})/(?P<month>\d{2})/(?P<day>\d{2})/$', add_activity)
    , url(r'^resourcecal_edit_activity/$', edit_activity)
-   , url(r'^resourcecal_edit_activity/(\d+)$', edit_activity)
-   , url(r'^resourcecal_display_activity/(\d+)$', display_maintenance_activity)
+   , url(r'^resourcecal_edit_activity/(\d+)/$', edit_activity)
+   , url(r'^resourcecal_display_activity/(\d+)/$', display_maintenance_activity)
    , (r'^admin/',                 include(admin.site.urls)) #
    , (r'^accounts/login/$', 'django_cas.views.login')
    , (r'^accounts/logout/$', 'django_cas.views.logout')
