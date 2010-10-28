@@ -75,11 +75,15 @@ def gbt_schedule(request, *args, **kws):
             if i < len(periods) - 1:
                 mas = Maintenance_Activity.objects\
                       .filter(start__gte = periods[i].start)\
-                      .filter(start__lt = periods[i + 1].start)
+                      .filter(start__lt = periods[i + 1].start)\
+                      .filter(period = None)\
+                      .filter(deleted = False)
             else:
                 mas = Maintenance_Activity.objects\
                       .filter(start__gte = periods[i].start)\
-                      .filter(start__lt = periods[i].end())
+                      .filter(start__lt = periods[i].end())\
+                      .filter(period = None)\
+                      .filter(deleted = False)
 
         maintenance_activities[periods[i]] = mas
 
@@ -92,19 +96,23 @@ def gbt_schedule(request, *args, **kws):
     except:
         pubdate = None
 
+    # need this for resource calendar use
+    maprj = Project.objects.filter(pcode = "Maintenance")[0]
+
     return render_to_response(
-               'sesshuns/schedule.html'
-             , {'calendar' : sorted(schedule.items())
-              , 'day_list' : range(1, 32)
-              , 'tz_list'  : timezones
-              , 'timezone' : timezone
-              , 'today'    : datetime.now(EST)
-              , 'start'    : start
-              , 'days'     : days
-              , 'rschedule': Receiver_Schedule.extract_schedule(start, days)
-              , 'timezone' : timezone
-              , 'requestor': get_requestor(request)
-              , 'pubdate'  : pubdate
+               'sesshuns/schedule.html',
+               {'calendar'        : sorted(schedule.items()),
+                'day_list'        : range(1, 32),
+                'tz_list'         : timezones,
+                'timezone'        : timezone,
+                'today'           : datetime.now(EST),
+                'start'           : start,
+                'days'            : days,
+                'rschedule'       : Receiver_Schedule.extract_schedule(start, days),
+                'timezone'        : timezone,
+                'requestor'       : get_requestor(request),
+                'pubdate'         : pubdate,
+                'maintenance_prj' : maprj
                })
 
 def rcvr_schedule(request, *args, **kwds):

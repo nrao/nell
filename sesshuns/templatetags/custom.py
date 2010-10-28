@@ -7,6 +7,8 @@ from datetime                import datetime, timedelta
 from sesshuns.models         import first
 from sets                    import Set
 from nell.tools              import TimeAccounting
+from nell.utilities          import TimeAgent
+from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
 
 register = template.Library()
 
@@ -228,7 +230,7 @@ split_over_two_table_columns.is_safe = True
 
 
 @register.filter
-def flag_rc_conflicts(value, maintenance_activity):
+def flag_rc_conflicts(ma, mas):
     """
     Used to flag the summary of a maintenance activity for conflicts.
     Conflicting resources will be output in red.  Resources will be
@@ -239,19 +241,74 @@ def flag_rc_conflicts(value, maintenance_activity):
     # this will check against all other activities in group to see if
     # any resources are in conflict.  A list of resource abbreviations
     # will be returned, over which the filter will iterate.
-    conflicts = maintenance_activity.check_for_conflicting_resources()
+    
+    conflicts = ma.check_for_conflicting_resources(mas)
+    summary = ma.summary()
 
     for i in conflicts:
-        rpos = value.find(i)
+        rpos = summary.find(i)
 
         if rpos != -1:
-            value = value.replace(i, i[:2] + '<font color="red">' + i[2:] + '</font>', 1)
+            summary = summary.replace(i, i[:2] + '<font color="red">' + i[2:] + '</font>', 1)
 
-    value = SafeUnicode(value)
-    return value
+    summary = SafeUnicode(summary)
+    return summary
 flag_rc_conflicts.is_safe = True
 
 @register.filter
-def is_period(item):
-    return type(item) == Period
+def get_first_start(mas, tz):
+    if tz == "ET":
+        r = TimeAgent.utc2est(mas[0].get_start())
+    else:
+        r = mas[0].get_start()
+    return r
 
+@register.filter
+def get_last_end(mas, tz):
+    if tz == "ET":
+        r = TimeAgent.utc2est(mas[-1].get_end())
+    else:
+        r = mas[-1].get_end()
+    return r
+
+@register.filter
+def day_of_week(date, dow):
+    return date.weekday() == dow
+
+
+@register.filter
+def floating_maint_periods(day):
+    """
+    Takes the day (assumes it is Monday) and finds the maintenance
+    periods for that week.  Returns a string representing the
+    *pending* periods for that week.  Period 1 is 'A', Period 2 is
+    'B', Period 3 (if it exists) is 'C' etc.  Thus, assuming two
+    maintenance periods, if 1 is fixed and 2 is pending, returns 'B'.
+    If both are pending, returns 'AB'. etc.  Works for however many
+    periods exist for that week.
+    """
+
+    pend = []
+
+    try:
+        delta = timedelta(days = 7)
+        mp = models.Period.objects\
+             .filter(session__project__pcode = "Maintenance")\
+             .filter(start__gte = day)\
+             .filter(start__lt = day + delta)\
+             .order_by('start')
+
+        for i in range(0, len(mp)):
+            if mp[i].isPending():
+                mas = models.Maintenance_Activity.get_maintenance_activity_set(mp[i])
+                pend.append((chr(i + 65),  # 65 is ASCII 'A'
+                             TimeAgent.utc2est(mp[i].start),
+                             TimeAgent.utc2est(mp[i].end()),
+                             mp[i],
+                             mas))
+
+    except:
+        printException(formatExceptionInfo())
+        pend = []
+
+    return pend

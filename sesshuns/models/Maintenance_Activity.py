@@ -33,20 +33,22 @@ from Receiver                        import Receiver
 from Backend                         import Backend
 from Maintenance_Telescope_Resources import Maintenance_Telescope_Resources
 from Maintenance_Software_Resources  import Maintenance_Software_Resources
+from Maintenance_Other_Resources     import Maintenance_Other_Resources
 from Maintenance_Activity_Change     import Maintenance_Activity_Change
 from Maintenance_Receivers_Swap      import Maintenance_Receivers_Swap
 from datetime                        import datetime, date, time, timedelta
 from nell.utilities                  import TimeAgent
-## from django.contrib.auth.models      import User as djangoUser
+from django.contrib.auth.models      import User as djangoUser
 from Period                          import Period
 
-import re
+import re # regular expressions
 
 class Maintenance_Activity(models.Model):
 
     period             = models.ForeignKey(Period, null = True)
     telescope_resource = models.ForeignKey(Maintenance_Telescope_Resources, null = True)
     software_resource  = models.ForeignKey(Maintenance_Software_Resources, null = True)
+    other_resource     = models.ForeignKey(Maintenance_Other_Resources, null = True)
     receivers          = models.ManyToManyField(Receiver, null = True)
     backends           = models.ManyToManyField(Backend, null = True)
     subject            = models.CharField(max_length = 200)
@@ -65,8 +67,22 @@ class Maintenance_Activity(models.Model):
     receiver_changes   = models.ManyToManyField(Maintenance_Receivers_Swap,
                                                 db_table = "maintenance_activity_receivers_swap",
                                                 null = True)
+    deleted            = models.BooleanField(default = False)
+
+    # The following enable the repeat feature.  Repeat
+    # Maintenance_Activity (MA) objects are distinct objects, based on
+    # an original and subsequent modifying templates.  Thus an entire
+    # sequence of repeats may be deleted/modified, or just one, or all
+    # future ones, etc.  Repeat MAs will point to the original
+    # template via the 'repeat_template' FK.  Modifications downstream
+    # will be accounted for by the 'future_template' FK on the
+    # original and subsequent templates, which will point to a newer
+    # definition of the MA.
+    repeat_template    = models.ForeignKey('self', null = True, related_name = 'repeat_template_instance')
+    future_template    = models.ForeignKey('self', null = True, related_name = 'future_template_instance')
     repeat_interval    = models.IntegerField(null = True) # 0, 1, 7 for none, daily, weekly
-    repeat_end         = models.DateField(null = True)    # repeat until
+    repeat_end         = models.DateField(null = True)    # repeat until this date.
+
 
     class Meta:
         db_table  = "maintenance_activity"
@@ -111,7 +127,9 @@ class Maintenance_Activity(models.Model):
         return ss
 
     def get_resource_summary(self):
-        rs = "[T=%s, S=%s" % (self.telescope_resource.rc_code, self.software_resource.rc_code)
+        rs = "[T=%s, S=%s, O=%s" % (self.telescope_resource.rc_code,
+                                    self.software_resource.rc_code,
+                                    self.other_resource.rc_code)
 
         for r in self.receivers.all():
             rs += ", R=%s" % (r.abbreviation)
@@ -142,8 +160,8 @@ class Maintenance_Activity(models.Model):
 
     def get_start(self):
         if self.period:
-            start = datetime(period.start.year, period.start.month, period.start.day,
-                             self.start.hour, self.start.minute)
+            start = datetime(self.period.start.year, self.period.start.month,
+                             self.period.start.day, self.start.hour, self.start.minute)
         else:
             start = self.start
 
@@ -226,17 +244,137 @@ class Maintenance_Activity(models.Model):
         self.approved = False
         change = Maintenance_Activity_Change()
         change.responsible = user
-        #print "user = %s" % user
-        #print "change.responsible = %s" % change.responsible
+        print "user = %s" % user
+        print "change.responsible = %s" % change.responsible
         change.date = datetime.now()
-        #print "change.date = %s" % change.date
+        print "change.date = %s" % change.date
         change.save()
         self.modifications.add(change)
 
     def get_modifications(self):
         return self.modifications.all()
 
-    def check_for_conflicting_resources(self):
+    def is_repeat_activity(self):
+        return True if self.repeat_template else False
+
+    def is_repeat_template(self):
+        return False if int(self.repeat_interval) == 0 else True
+
+    def is_future_template(self):
+        return True if self.repeat_template.future_template == self else False
+
+    def get_template(self, period):
+        """
+        Walks up the chain of a repeat activity, starting with the
+        template (self).  If the template has a pointer to a more
+        recent template (i.e. the activity was modified for all future
+        activities), it will go to that one.  It will stop when there
+        are no more activities acting as templates, or if the
+        remaining templates start after the given period.
+        """
+
+        rval = self
+        mat  = self.future_template
+
+        while mat:
+            if period.start > mat.get_start():
+                rval = mat
+                mat = mat.future_template
+            else:
+                break
+
+        return rval
+
+    def set_as_new_template(self):
+        mat = self.repeat_template
+        mat.future_template = self
+        mat.save()
+        self.save()
+
+
+    ######################################################################
+    # Copies the basic event data from the provided activity to this
+    # one.
+    ######################################################################
+
+    def copy_data(self, ma):
+        self.telescope_resource = ma.telescope_resource
+        self.software_resource  = ma.software_resource
+        self.other_resource     = ma.other_resource
+        self.subject            = ma.subject
+        self.duration           = ma.duration
+        self.contacts           = ma.contacts
+        self.location           = ma.location
+        self.description        = ma.description
+
+        for j in ma.receivers.all():
+            self.receivers.add(j)
+
+        for j in ma.backends.all():
+            self.backends.add(j)
+
+        for j in ma.receiver_changes.all():
+            self.receiver_changes.add(j)
+
+    ######################################################################
+    # Makes a deep copy of the model instance, creating a new object
+    # in the database.  Since Django does not provide a method to do
+    # such a thing it is attempted here, by making a deep copy of the
+    # orignial object.  Fields that are many-to-many need to be copied
+    # over by looping over the source field's 'all()' list and adding
+    # the items one by one to the destination object's field by using
+    # the 'add()' method for that field. Not every field will be
+    # identical: the 'id' field of the copy will be unique, and if
+    # this is a copy of a repeated maintenance activity template the
+    # repeat fields will not be the same.
+    #
+    # It also makes no sense to copy the approval or modification
+    # history, since this will be a new maintenance activity.
+    ######################################################################
+
+    def clone(self, period = None):
+        """
+        Creates a clone of the template, assigning the 'period' field
+        to the parameter 'period' if this parameter is provided.  The
+        object will not be identical: there will be a different id,
+        for instance.
+        """
+
+        ma = Maintenance_Activity();
+        ma.save()
+        ma.period = self.period # will be overwritten if template and period provided.
+        template = self         # subject to a more recent one being found (see below)
+
+        # If this is a repeat template:
+        if self.repeat_interval:
+            ma.repeat_interval = 0
+            ma.repeat_end = None
+            ma.repeat_template = self.repeat_template if self.repeat_template else self
+
+
+            if period:
+                ma.period = period
+                template = self.get_template(period)
+                start = datetime(period.start.year, period.start.month, period.start.day,
+                                 template.start.hour, template.start.minute)
+
+            # if this is a template, include the original creation
+            # date for the repeat activity.
+            ma.modifications.add(template.modifications.all()[0])
+
+        ma.copy_data(template)
+        ma.start = start if start else template.start
+        ma.save()
+        return ma
+
+    # To check for conflicts, a maintenance activity needs to check
+    # itself against any other maintenance activity that day.  This is
+    # the problem: Some maintenance activities are tied to periods,
+    # and their times are therefore tied to that period in software,
+    # but not in the database.  Further, there are repeating
+    # maintenance activities. TBF.
+
+    def check_for_conflicting_resources(self, mas):
         """
         Checks other maintenance activities on the same day to see
         whether there are maintenance activities whose resource
@@ -245,18 +383,14 @@ class Maintenance_Activity(models.Model):
         does) to a list.
         """
 
-        start = self.start
+        start = TimeAgent.truncateDt(self.get_start())
         end = start + timedelta(days = 1)
-        mas = Maintenance_Activity.objects \
-              .filter(start__gte = start) \
-              .filter(start__lte = end) \
-              .order_by('start')
-
         rval = []
 
         for i in range(0, len(mas)):
             if self.id == mas[i].id:
                 continue
+
             else:
                 my_start = self.start
                 my_end = my_start + timedelta(hours = self.duration)
@@ -285,6 +419,20 @@ class Maintenance_Activity(models.Model):
 
                                     if j[2] not in sr.compatibility:
                                         rval.append(i)
+                        elif 'O=' in i:
+                            other = Maintenance_Other_Resources.objects\
+                                    .filter(rc_code=i[2])[0]  #get resource 'x' in 'O=x'
+
+                            for j in other_summary:
+                                if 'O=' in j and j[2] not in other.compatibility:
+                                    rval.append(i)
+
+                                if 'R=' in j and 'R' not in other.compatibility:
+                                    rval.append(i)
+
+                                if 'B=' in j and 'B' not in other.compatibility:
+                                    rval.append(i)
+
                         else: #everything else: receivers, backends
 
                             # R, U, D (for Receiver, Up and Down) are
@@ -300,6 +448,15 @@ class Maintenance_Activity(models.Model):
                                         rval.append(i)
                                 elif i == j:
                                     rval.append(i)
+
+                                if 'O=' in j:
+                                    other = Maintenance_Other_Resources.objects\
+                                            .filter(rc_code=j[2])[0]  #get resource 'x' in 'O=x'
+                                    print "i[0] =", i[0], "j =", j, "other.compatibility =", other.compatibility
+                                    if i[0] not in other.compatibility:
+                                        rval.append(i)
+
+                                    
         return rval
 
     def _get_receiver(self, rcvr):
@@ -332,6 +489,7 @@ class Maintenance_Activity(models.Model):
         else:
             return None
 
+
     @staticmethod
     def get_maintenance_activity_set(period):
         """
@@ -340,13 +498,27 @@ class Maintenance_Activity(models.Model):
         """
 
         # To handle repeat maintenance activity objects:
-        repeatQ    = (models.Q(repeat_interval = 1) | models.Q(repeat_interval = 7))\
+        repeatQ    = models.Q(deleted = False) & (models.Q(repeat_interval = 1) | models.Q(repeat_interval = 7))\
                      & (models.Q(start__lte = period.end())  & models.Q(repeat_end__gte = period.end()))
         start_endQ = models.Q(start__gte = period.start) & models.Q(start__lte = period.end())
         periodQ    = models.Q(period = period)
-        mas        = Maintenance_Activity.objects.filter(repeatQ | periodQ | start_endQ)
-        r          = [i for i in mas]
-        r.sort(cmp = lambda x, y: cmp(x.start.time(), y.start.time()))
+
+        dbmas        = Maintenance_Activity.objects.filter(periodQ)
+        dbrmas       = Maintenance_Activity.objects.filter(repeatQ)
+        mas          = [i for i in dbmas if not i.is_repeat_template()]
+        rmas         = [i for i in dbrmas]
+
+        # rmas is the list repeating activity templates that may apply
+        # for this period.  We need clones of these to include in mas.
+        # If however there are already clones in mas, we'll want to
+        # skip that template.
+
+        x = []
+
+        for i in rmas:
+            for j in mas:
+                if j.repeat_template == i:
+                    x.append(i)
 
         # Weekly repeats have a problem: what if the repeat falls on a
         # day that is not a maintenance day?  Where should we put it?
@@ -357,13 +529,12 @@ class Maintenance_Activity(models.Model):
         # taking the modulo 7 of start - maintenance_activity.start
         # and mapping it to the values in 'dm'.  Lowest value wins.
 
-        x = []
         dm = {4: 30, 5: 20, 6: 10, 0: 0, 1: 15, 2: 25, 3: 35}
         delta = timedelta(days = 3)
         today = TimeAgent.truncateDt(period.start)
         p = Period.get_periods_by_observing_type(today - delta, today + delta, "maintenance")
 
-        for i in r:
+        for i in rmas:
             if i.repeat_interval == 7:
                 start_date = TimeAgent.truncateDt(i.start)
                 diff = (today - start_date).days % 7
@@ -375,13 +546,25 @@ class Maintenance_Activity(models.Model):
                         if j != period:  # check only other periods
                             mod = (j.start.date() - start_date.date()).days % 7
 
-                            if dm[mod] < dm[diff]: # There is a better fit with another period
-                                x.append(i)        # so don't list it here.  Mark it for deletion.
+                            if dm[mod] < dm[diff]: # It's a better fit in another period.  Don't use here.
+                                x.append(i)
                                 break
 
+        # Now that we have a list of templates that are not suitable,
+        # cull the template list:
         for i in x:
-            if i in r:
-                r.remove(i)
+            if i in rmas:
+                rmas.remove(i)
 
+        # The remaining templates may be used:
+        for i in rmas:
+            ma = i.clone(period)
+            mas.append(ma)
 
-        return r
+        # remove all activities marked deleted.  This must be done
+        # after all the above to prevent a replacement being generated
+        # for a deleted activity.
+        mas = [i for i in mas if not i.deleted]
+        mas.sort(cmp = lambda x, y: cmp(x.start.time(), y.start.time()))
+
+        return mas

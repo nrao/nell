@@ -156,12 +156,16 @@ hold the form controls.
   <div id="header" class="span-24 last">
     <form action="." method="POST">
 
-    {# This is a hidden field, used to stash the period or          #}
+    {# This are hidden fields, used to stash the period or floating #}
     {# maintenance activity ID of the maintenance activity between  #}
     {# the 'GET' and 'POST' calls to the view.                      #}
     <div class="fieldWrapper">
           {{ form.entity_id.errors }}
           {{ form.entity_id }}
+    </div>
+    <div class="fieldWrapper">
+          {{ form.floating.errors }}
+          {{ form.floating }}
     </div>
 
     <div align=center>
@@ -288,6 +292,17 @@ hold the form controls.
             {{ form.backends.errors }}
             {% filter split_over_two_table_columns:'</td><td width="40%" class="table_fields" align="left" valign="top"' %}
             {{ form.backends }}
+            {% endfilter %}
+          </td>
+        </tr>
+      </div>
+
+      <div class="fieldWrapper">
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><b>Other</b></td>
+          <td width="40%" class="table_fields" align="left" valign="top">
+            {{ form.other_resource.errors }}
+            {% filter split_over_two_table_columns:'</td><td width="40%" class="table_fields" align="left" valign="top"' %}
+            {{ form.other_resource }}
             {% endfilter %}
           </td>
         </tr>

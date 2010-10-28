@@ -35,7 +35,6 @@ from django.shortcuts               import render_to_response
 from django                         import forms
 from django.forms                   import ModelForm
 from models                         import *
-from pprint                         import pprint
 from django.utils.safestring        import mark_safe
 from django.utils.encoding          import StrAndUnicode, force_unicode
 from itertools import chain
@@ -44,7 +43,6 @@ from django                         import template
 from nell.utilities                 import TimeAgent
 from datetime                       import date, datetime, time
 from utilities                      import get_requestor
-
 
 ######################################################################
 # This class is a rendering clas for the RadioSelect widget, which is
@@ -157,6 +155,11 @@ class RCAddActivityForm(forms.Form):
     rcvr = [(p.id, p.full_description()) for p in Receiver.objects.all()]
     receivers = forms.MultipleChoiceField(required = receivers_req,
                                           choices = rcvr, widget = MyCheckboxSelectMultiple)
+
+    other_resc = [(p.id, p.resource) for p in Maintenance_Other_Resources.objects.all()]
+    other_resource = forms.ChoiceField(choices = other_resc,
+                                       widget = forms.RadioSelect(renderer = BRRadioRender))
+
     rcvr.insert(0, (-1, ''))
 
     # This is the change receivers UI.  It consists of a checkbox and
@@ -221,16 +224,18 @@ def display_maintenance_activity(request, activity_id = None):
                   'location'           : ma.location,
                   'telescope'          : ma.telescope_resource.resource,
                   'software'           : ma.software_resource.resource,
+                  'other_resource'     : ma.other_resource.resource,
                   'receivers'          : ", ".join([r.full_description() for r in ma.receivers.all()]),
                   'backends'           : ", ".join([b.full_description() for b in ma.backends.all()]),
                   'description'        : ma.description,
                   'activity_id'        : activity_id,
                   'approval'           : 'Yes' if ma.approved else 'No',
-                  'last_modified'      : str(ma.modifications.all()[len(ma.modifications.all()) - 1]),
-                  'created'            : str(ma.modifications.all()[0]),
+                  'last_modified'      : str(ma.modifications.all()[len(ma.modifications.all()) - 1] if ma.modifications.all() else ""),
+                  'created'            : str(ma.modifications.all()[0] if ma.modifications.all() else ""),
                   'receiver_swap'      : ma.receiver_changes.all(),
-                  'supervisor_mode'    : True if (u and u.username == "rcreager") else False,
-                  'maintenance_period' : ma.period_id
+                  'supervisor_mode'    : True if (u and u.username in supervisors) else False,
+                  'maintenance_period' : ma.period_id,
+                  'repeat_activity'    : ma.is_repeat_activity()
                  }
     else:
         params = {}
@@ -249,6 +254,7 @@ def display_maintenance_activity(request, activity_id = None):
 @login_required
 def add_activity(request, period_id = None, year = None, month = None, day = None):
     if request.method == 'POST':
+
         form = RCAddActivityForm(request.POST)
 
         if form.is_valid():
@@ -256,22 +262,26 @@ def add_activity(request, period_id = None, year = None, month = None, day = Non
             ma = Maintenance_Activity()
             ma.save() # needs to have a primary key for many-to-many
                       # relationships to be set.
+
             process_activity(request, ma, form)
 
             if request.POST['ActionEvent'] =="Submit And Continue":
-                if period_id:
-                    redirect_url = '/resourcecal_add_activity/%i/' % (period_id)
+                if form.cleaned_data['entity_id']:
+                    redirect_url = '/resourcecal_add_activity/%s/' % (form.cleaned_data['entity_id'])
                 elif year and month and day:
                     redirect_url = '/resourcecal_add_activity/%s/%s/%s/' % (year, month, day)
                 else:
                     redirect_url = '/resourcecal_add_activity/'
-                    
+
+
+                print "Redirecting to", redirect_url
                 return HttpResponseRedirect(redirect_url)
             else:
                 return HttpResponseRedirect('/schedule/')
     else:
         default_telescope = Maintenance_Telescope_Resources.objects.filter(rc_code = 'N')[0]
-        default_software = Maintenance_Software_Resources.objects.filter(rc_code = 'N')[0]
+        default_software  = Maintenance_Software_Resources.objects.filter(rc_code = 'N')[0]
+        default_other     = Maintenance_Other_Resources.objects.filter(rc_code = 'N')[0]
         u = get_requestor(request)
         user = get_user_name(u)
 
@@ -290,6 +300,7 @@ def add_activity(request, period_id = None, year = None, month = None, day = Non
                         'responsible'       : user,
                         'telescope'         : default_telescope.id,
                         'software'          : default_software.id,
+                        'other_resource'    : default_other.id,
                         'entity_id'         : period_id
                         }
 
@@ -297,6 +308,45 @@ def add_activity(request, period_id = None, year = None, month = None, day = Non
 
     return render_to_response('sesshuns/rc_add_activity_form.html', {'form': form, })
 
+######################################################################
+# This helper function loads up a maintenance activity's data into a
+# form for modification.
+######################################################################
+
+def _modify_activity_form(ma):
+    start = TimeAgent.utc2est(ma.get_start())
+    duration = timedelta(hours = ma.duration)
+    change_receiver = True if len(ma.receiver_changes.all()) else False
+    old_receiver = None if not change_receiver else \
+                   ma.receiver_changes.all()[0].down_receiver_id
+    new_receiver = None if not change_receiver else \
+                   ma.receiver_changes.all()[0].up_receiver_id
+
+    initial_data = {'subject'             : ma.subject,
+                    'date'                : start.date(),
+                    'time_hr'             : start.hour,
+                    'time_min'            : start.minute,
+                    'end_choice'          : "duration",
+                    'end_time_hr'         : duration.seconds / 3600,
+                    'end_time_min'        : duration.seconds % 3600 / 60,
+                    'responsible'         : ma.contacts,
+                    'location'            : ma.location,
+                    'telescope'           : ma.telescope_resource.id,
+                    'software'            : ma.software_resource.id,
+                    'other_resource'      : ma.other_resource.id,
+                    'receivers'           : [r.id for r in ma.receivers.all()],
+                    'change_receiver'     : change_receiver,
+                    'old_receiver'        : old_receiver,
+                    'new_receiver'        : new_receiver,
+                    'backends'            : [b.id for b in ma.backends.all()],
+                    'description'         : ma.description,
+                    'entity_id'           : ma.id,
+                    'recurrency_interval' : ma.repeat_interval,
+                    'recurrency_until'    : ma.repeat_end
+                    }
+
+    form = RCAddActivityForm(initial = initial_data)
+    return form
 
 ######################################################################
 # The edit view.  Like the add_activity() view, this is called twice,
@@ -320,44 +370,61 @@ def edit_activity(request, activity_id = None):
             process_activity(request, ma, form)
             return HttpResponseRedirect('/schedule/')
     else:
-        ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
-
         if request.GET['ActionEvent'] == 'Modify':
-            start = TimeAgent.utc2est(ma.get_start())
-            duration = timedelta(hours = ma.duration)
-            change_receiver = True if len(ma.receiver_changes.all()) else False
-            old_receiver = None if not change_receiver else \
-                           ma.receiver_changes.all()[0].down_receiver_id
-            new_receiver = None if not change_receiver else \
-                           ma.receiver_changes.all()[0].up_receiver_id
+            ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
+            form = _modify_activity_form(ma)
 
-            initial_data = {'subject'             : ma.subject,
-                            'date'                : start.date(),
-                            'time_hr'             : start.hour,
-                            'time_min'            : start.minute,
-                            'end_choice'          : "duration",
-                            'end_time_hr'         : duration.seconds / 3600,
-                            'end_time_min'        : duration.seconds % 3600 / 60,
-                            'responsible'         : ma.contacts,
-                            'location'            : ma.location,
-                            'telescope'           : ma.telescope_resource.id,
-                            'software'            : ma.software_resource.id,
-                            'receivers'           : [r.id for r in ma.receivers.all()],
-                            'change_receiver'     : change_receiver,
-                            'old_receiver'        : old_receiver,
-                            'new_receiver'        : new_receiver,
-                            'backends'            : [b.id for b in ma.backends.all()],
-                            'description'         : ma.description,
-                            'entity_id'           : activity_id,
-                            'recurrency_interval' : ma.repeat_interval,
-                            'recurrency_until'    : ma.repeat_end
-                            }
+        elif request.GET['ActionEvent'] == 'ModifyFuture':
+            # In this case we want to go back to the template, and set
+            # its 'future_template' to this one.
+            ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
+            ma.set_as_new_template()
+            form = _modify_activity_form(ma)
 
-            form = RCAddActivityForm(initial = initial_data)
+        elif request.GET['ActionEvent'] == 'ModifyAll':
+            today = TimeAgent.truncateDt(datetime.now())
+            ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
+            start_ma = Maintenance_Activity.objects\
+                       .filter(repeat_template = ma.repeat_template)\
+                       .filter(start__gte = today)\
+                       .order_by('start')[0]
+            start_ma.set_as_new_template()
+            form = _modify_activity_form(start_ma)
+
         elif request.GET['ActionEvent'] == 'Delete':
-            ma.delete()
+            ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
+            ma.deleted = True
+            ma.save()
             return HttpResponseRedirect('/schedule/')
+
+        elif request.GET['ActionEvent'] == 'DeleteFuture':
+            ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
+            ma.repeat_template.delete = True
+            ma.repeat_template.save()
+            mas = Maintenance_Activity.objects\
+                  .filter(start__gte = TimeAgent.truncateDt(ma.get_start()))\
+                  .filter(repeat_template = ma.repeat_template)
+
+            for i in mas:
+                i.deleted = True
+                i.save()
+
+            return HttpResponseRedirect('/schedule/')
+
+        elif request.GET['ActionEvent'] == 'DeleteAll':
+            ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
+            ma.repeat_template.delete = True
+            ma.repeat_template.save()
+            mas = Maintenance_Activity.objects.filter(repeat_template = ma.repeat_template)
+
+            for i in mas:
+                i.deleted = True
+                i.save()
+
+            return HttpResponseRedirect('/schedule/')
+
         elif request.GET['ActionEvent'] == 'Approve':
+            ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
             u = get_requestor(request)
             user = get_user_name(u)
             ma.add_approval(user)
@@ -431,6 +498,9 @@ def process_activity(request, ma, form):
     ma.software_resource = Maintenance_Software_Resources.objects.filter(id = srid)[0]
     #print "Software:", form.cleaned_data["software"]
 
+    orid = form.cleaned_data["other_resource"]
+    ma.other_resource = Maintenance_Other_Resources.objects.filter(id = orid)[0]
+
     ma.receivers.clear()
 
     for rid in form.cleaned_data["receivers"]:
@@ -475,7 +545,7 @@ def process_activity(request, ma, form):
     ma.description = form.cleaned_data["description"]
     #print "Description:", form.cleaned_data["description"]
     #print "Recurrency selected:", form.cleaned_data["recurrency_interval"]
-    ma.repeat_interval = form.cleaned_data["recurrency_interval"]
+    ma.repeat_interval = int(form.cleaned_data["recurrency_interval"])
     ma.repeat_end = form.cleaned_data["recurrency_until"]
 
     # assign right period for maintenance activity.  If no
@@ -496,6 +566,22 @@ def process_activity(request, ma, form):
     #print "Adding modification by %s" % (modifying_user)
     ma.add_modification(modifying_user)
     ma.save()
+
+    # If this is a template, modify all subsequent activities based on
+    # it.
+
+    if ma.is_repeat_template() or ma.is_future_template():
+        mas = [m for m in Maintenance_Activity.objects\
+               .filter(repeat_template = ma.repeat_template)\
+               .filter(start__gte = ma.start)]
+
+        for i in mas:
+            start = datetime(i.get_start().year, i.get_start().month, i.get_start().day,
+                             ma.start.hour, ma.start.minute)
+
+            i.copy_data(ma)
+            i.start = start
+            i.save()
 
 def get_user_name(u):
     if u:
