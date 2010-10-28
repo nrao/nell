@@ -211,9 +211,13 @@ def project(request, *args, **kws):
     windows = [{'session'   : w.session
               , 'start_date' : w.start_date
               , 'duration'   : w.duration
-              , 'is_scheduled_or_completed' : {'start' : adjustDateTimeTz(tz, w.is_scheduled_or_completed().start)
-                                             , 'duration' : w.is_scheduled_or_completed().duration
-                                               } if w.is_scheduled_or_completed() is not None else None
+              , 'total_time'  : w.total_time
+              , 'time_billed' : w.timeBilled()
+              , 'complete'    : w.complete
+              , 'periods'     : [{'start' : adjustDateTimeTz(tz, p.start)
+                                , 'duration' : p.duration
+                                , 'time_billed' : p.accounting.time_billed()} \
+                                    for p in w.scheduledPeriods()]
                } for w in project.get_active_windows()]
     upcomingPeriods = [{'session'  : pd.session
                       , 'start'    : adjustDateTimeTz(tz, pd.start)

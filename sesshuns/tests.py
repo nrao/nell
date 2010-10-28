@@ -2896,6 +2896,40 @@ class TestObservers(NellTestCase):
         response = self.get('/project/%s' % self.p.pcode)
         self.failUnlessEqual(response.status_code, 200)
 
+    def test_project_windowed(self):
+
+        # make this one windowed
+        windowed = Session_Type.objects.get(type = "windowed")
+        self.s.session_type = windowed
+        self.s.save()
+        now = datetime.utcnow()
+        today = date(now.year, now.month, now.day)
+        wstart = today + timedelta(days = 3)
+        w = Window(session = self.s
+                 , start_date = wstart
+                 , duration = 10
+                 , complete = False)
+        w.save()
+        pa = Period_Accounting(scheduled = 120)
+        pa.save()
+        p = Period(session = self.s
+                 , start = w.end() - timedelta(days =2) 
+                 , duration = 120
+                 , state = Period_State.get_state("S")
+                 , accounting = pa
+                 , window = w)
+        p.save()         
+                 
+        # make sure we set it up right
+        proj = Project.objects.get(id = self.p.id)         
+        w = Window.objects.get(id = w.id)
+        self.assertEqual(len(proj.get_active_windows()), 1)
+        self.assertEqual(len(w.scheduledPeriods()), 1)
+
+        response = self.get('/project/%s' % self.p.pcode)
+        self.failUnlessEqual(response.status_code, 200)
+        #print response.content
+
     def test_search(self):
         response = self.post('/search', {'search' : 'Test'})
         self.failUnlessEqual(response.status_code, 200)

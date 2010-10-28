@@ -111,9 +111,16 @@ class Window(models.Model):
     def periodStates(self):
         return [p.state for p in self.periods.all().order_by("start")]
 
+    def periodsByState(self, s):    
+        "get periods by their state, which is one of ['P', 'D', 'S']"
+        state = Period_State.get_state(s)
+        return [p for p in self.periods.all() if p.state == state]
+
+    def scheduledPeriods(self):
+        return self.periodsByState("S")
+
     def pendingPeriods(self):
-        pending = Period_State.get_state("P")
-        return [p for p in self.periods.all() if p.state == pending]
+        return self.periodsByState("P")
 
     def handle2session(self, h):
         n, p = h.rsplit('(', 1)

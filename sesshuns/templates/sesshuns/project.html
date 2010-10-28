@@ -246,22 +246,41 @@
                 <th>Session</th>
                 <th>Window Start Date</th>
                 <th>Window End Date</th>
-                <th title="Start time of Period ({{tz}})">Period Start Time</th>
-                <th title="How long the Period lasts, in hours.">Period Duration</th>
+                <th>Time (Hrs)</th>
+                <th>Billed (Hrs)</th>
+                <th>Complete?</th>
+                <!--<th title="Start time of Period ({{tz}})">Period Start Time</th>
+                <th title="How long the Period lasts, in hours.">Period Duration</th> -->
               </tr>
                 {% for window in windows %}
+                
                   <tr>
                     <td>{{window.session.name}}</td>
                     <td>{{window.start_date}}</td>
                     <td>{{window.start_date|end_date:window.duration}}</td>
-                    {% if window.is_scheduled_or_completed %}
-                      <td>{{window.is_scheduled_or_completed.start|date_no_secs}}</td>
-                      <td>{{window.is_scheduled_or_completed.duration|hrs2sex}}</td>
-                    {% else %}
-                      <td></td>
-                      <td></td>
+                    <td>{{window.total_time}}</td>
+                    <td>{{window.time_billed}}</td>
+                    <td>{% if window.complete %}Yes{% endif %}</td> 
+                    
+                 </tr> 
+                    {% if window.periods %}
+                    <tr>
+                      <th></th>
+                      <th></th>
+                      <th>Period Start</th>
+                      <th>Duration (Hrs)</th>
+                      <th>Billed (Hrs)</th>
+                    </tr>
                     {% endif %}
-                  </tr>
+                    {% for p in window.periods %}
+                    <tr>
+                      <td></td>
+                      <td></td>
+                      <td>{{p.start|date_no_secs}}</td>
+                      <td>{{p.duration|hrs2sex}}</td>
+                      <td>{{p.time_billed|hrs2sex}}</td>
+                    </tr>
+                    {% endfor %}
                 {% endfor %}
             </table>
         {% endif %}
