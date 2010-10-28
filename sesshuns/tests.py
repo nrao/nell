@@ -256,7 +256,7 @@ class TestWindow(NellTestCase):
                     , "default_state" : pjson['state'] 
                     }
 
-    def xtest_update_from_post(self):
+    def test_update_from_post(self):
         w = Window()
         adapter = WindowHttpAdapter(w)
         adapter.init_from_post(self.fdata)
@@ -264,10 +264,10 @@ class TestWindow(NellTestCase):
         self.assertEqual(w.session, self.sesshun)
         self.assertEqual(w.start_date, date(2009, 6, 1))
         self.assertEqual(w.duration, self.fdata["duration"])
-        self.assertEqual(w.default_period.start, self.default_period.start)
+        self.assertEqual(w.default_period, None)
         self.assertEqual(len(w.periods.all()), 0)
 
-    def xtest_jsondict(self):
+    def test_jsondict(self):
          
         start = datetime(2009, 6, 1)
         startStr = start.strftime("%Y-%m-%d")
@@ -283,6 +283,9 @@ class TestWindow(NellTestCase):
 
         w.save()
 
+        self.default_period.window = w
+        self.default_period.save()
+
         adapter = WindowHttpAdapter(w)
 
         jd = adapter.jsondict()
@@ -290,8 +293,10 @@ class TestWindow(NellTestCase):
         self.assertEqual(jd["duration"], dur)
         self.assertEqual(jd["start"], startStr)
         self.assertEqual(jd["end"], endStr)
-        self.assertEqual(jd["session"], SessionHttpAdapter(self.sesshun).jsondict())
-        #self.assertEqual(jd["num_periods"], 0)
+        # session dict just blots this, so we're not using it
+        #self.assertEqual(jd["session"], SessionHttpAdapter(self.sesshun).jsondict())
+        self.assertEqual(jd["num_periods"], 1)
+        self.assertEqual(len(jd["periods"]), 1)
 
         w.delete()
 

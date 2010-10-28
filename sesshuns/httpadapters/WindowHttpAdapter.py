@@ -25,6 +25,7 @@ class WindowHttpAdapter (object):
               , "time_remaining" : self.window.timeRemaining()
               , "complete"       : self.window.complete
               , "num_periods"    : len(self.window.periods.all())
+              , "periods"        : [PeriodHttpAdapter(p).jsondict('UTC', 0.0) for p in self.window.periods.all()]
               }
         return js    
 
