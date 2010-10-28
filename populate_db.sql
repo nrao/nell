@@ -172,6 +172,10 @@ INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'Partial M&C system 
 INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'No M&C system required ', 'N', 'FUPNA');
 INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'M&C control of antenna only ', 'A', 'PN');
 
+INSERT INTO maintenance_other_resources VALUES (DEFAULT, 'None', 'N', 'NIL');
+INSERT INTO maintenance_other_resources VALUES (DEFAULT, 'LO System', 'L', 'INB');
+INSERT INTO maintenance_other_resources VALUES (DEFAULT, 'IF System', 'I', 'LNR');
+
 INSERT INTO backends VALUES (DEFAULT, 'Caltech Continuum Backend', 'CCB', 'K');
 INSERT INTO backends VALUES (DEFAULT, 'Caltech-Green Bank-Swinbourne Recorder 2', 'CGSR2', 'R');
 INSERT INTO backends VALUES (DEFAULT, 'GBT Digital Continuum Receiver', 'DCR', 'D');
