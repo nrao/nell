@@ -108,6 +108,9 @@ class Window(models.Model):
         self.complete = complete
         self.save()
 
+    def nonDefaultPeriods(self):
+        return [p for p in self.periods.all() if p != self.default_period]
+
     def periodStates(self):
         return [p.state for p in self.periods.all().order_by("start")]
 
