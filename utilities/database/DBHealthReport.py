@@ -102,19 +102,22 @@ def get_win_period_outside():
         ws = i.start_datetime()          # start datetime for window
         we = i.end_datetime()            # end datetime for window
 
-        if i.default_period.state.name != 'Deleted':
-            dps = i.default_period.start # start datetime for period
-            dpe = i.default_period.end() # end datetime for period
+        #if i.default_period.state.name != 'Deleted':
+        #    dps = i.default_period.start # start datetime for period
+        #    dpe = i.default_period.end() # end datetime for period
+        #
+          #    if dps < ws or dpe > we:
+        #       outside = True
 
-            if dps < ws or dpe > we:
-                outside = True
-
-        if i.period and i.period.state.name != 'Deleted':
-            if i.period.start < ws or i.period.end() > we:
-                outside = True
-
-        if outside:
-            badwin.append(i)
+        #if i.period and i.period.state.name != 'Deleted':
+        #    if i.period.start < ws or i.period.end() > we:
+        #        outside = True
+        for p in i.periods.all():
+            if p.state.name != 'Deleted':
+                if p.start < ws or p.end() > we:
+                    badwin.append(i)
+        #if outside:
+        #    badwin.append(i)
 
     return badwin
 
@@ -168,11 +171,13 @@ def get_non_window_periods():
         # whether the non-deleted periods of the session are in this
         # set.  Any deleted periods in this set are harmless.
         for i in win:
-            if i.default_period:
-                winp.add(i.default_period)
+            #if i.default_period:
+            #    winp.add(i.default_period)
 
-            if i.period:
-                winp.add(i.period)
+            #if i.period:
+            #    winp.add(i.period)
+            for p in i.periods.all():
+                winp.add(p)
 
         for i in pds:
             if i not in winp:
@@ -182,12 +187,13 @@ def get_non_window_periods():
 
 # windows with more than one period in the scheduled state
 
-def get_windows_with_scheduled_periods():
-    # need a set of windows with more than one period to start with
-    ws = get_windows()
-    w = ws.exclude(default_period = None).exclude(period = None)
-    w = w.filter(period__state__name = "scheduled").filter(default_period__state__name = "scheduled")
-    return w
+#def get_windows_with_scheduled_periods():
+#    assert False # this is legal now
+#    # need a set of windows with more than one period to start with
+#    ws = get_windows()
+#    w = ws.exclude(default_period = None).exclude(period = None)
+#    w = w.filter(period__state__name = "scheduled").filter(default_period__state__name = "scheduled")
+#    return w
 
 
 # windows of the same session with less than 48 hour inter-window interval
@@ -232,15 +238,15 @@ def get_window_within_48():
 
 # windows whose period is pending
 
-def get_pathological_windows():
-    pathological = []
-    w = get_windows()
+#def get_pathological_windows():
+#    pathological = []
+#    w = get_windows()
 
-    for i in w:
-        if i.state() == None or i.dual_pending_state():
-            pathological.append(i)
-
-    return pathological
+#    for i in w:
+#        if i.state() == None or i.dual_pending_state():
+#            pathological.append(i)
+#
+#    return pathological
 
 
 # windows with periods not represented in its session's period list
@@ -251,16 +257,22 @@ def get_windows_with_rogue_periods():
     rogue = []
 
     for i in w:
-        ps = i.session.period_set.filter(id__exact = i.default_period.id)
 
-        if len(ps) == 0:
-            rogue.append(i)
-
-        if i.period:
-            ps = i.session.period_set.filter(id__exact = i.period.id)
-
+        for p in i.periods.all():
+            ps = i.session.period_set.filter(id__exact = p.id)
             if len(ps) == 0:
                 rogue.append(i)
+
+        #ps = i.session.period_set.filter(id__exact = i.default_period.id)
+
+        #if len(ps) == 0:
+        #    rogue.append(i)
+
+        #if i.period:
+        #    ps = i.session.period_set.filter(id__exact = i.period.id)
+
+        #    if len(ps) == 0:
+        #        rogue.append(i)
     return rogue
 
 def output_windows(file, wins):
@@ -316,9 +328,9 @@ def output_windows_report(file):
     w.append(get_win_period_outside())
     w.append(get_overlapping_windows())
     w.append(get_non_window_periods())
-    w.append(get_windows_with_scheduled_periods())
+# 6    #w.append(get_windows_with_scheduled_periods())
     w.append(get_window_within_48())
-    w.append(get_pathological_windows())
+# 8    #w.append(get_pathological_windows())
     w.append(get_windows_with_rogue_periods())
     
     desc = []
@@ -328,9 +340,9 @@ def output_windows_report(file):
     desc.append("Windows with periods whose duration extends outside window")
     desc.append("Overlapping window pairs")
     desc.append("Periods belonging in windowed sessions but not in windows")
-    desc.append("Windows with more than one period in the scheduled state")
+    #desc.append("Windows with more than one period in the scheduled state")
     desc.append("Windows within same session that come within 48 hours of each other")
-    desc.append("Windows in an illegal state")
+    #desc.append("Windows in an illegal state")
     desc.append("Windows with periods not in their session period set")
     
     file.write("Summary\n")
@@ -342,8 +354,8 @@ def output_windows_report(file):
     file.write("\t%s: %i\n" % (desc[5], len(w[5])))
     file.write("\t%s: %i\n" % (desc[6], len(w[6])))
     file.write("\t%s: %i\n" % (desc[7], len(w[7])))
-    file.write("\t%s: %i\n" % (desc[8], len(w[8])))
-    file.write("\t%s: %i\n" % (desc[9], len(w[9])))
+    #file.write("\t%s: %i\n" % (desc[8], len(w[8])))
+    #file.write("\t%s: %i\n" % (desc[9], len(w[9])))
 
 
     file.write("\n\nWindow Details\n\n")
@@ -393,27 +405,29 @@ def output_windows_report(file):
         #    file.write("\t%s\t%i\n" % (i.session.name, i.id))
             file.write("\t%s\n" % p.__str__())
 
+    #if len(w[6]):
+    #    file.write("\n%s:\n" % (desc[6]))
+    #    output_windows(file, w[6])
+
+    #if len(w[7]):
     if len(w[6]):
-        file.write("\n%s:\n" % (desc[6]))
-        output_windows(file, w[6])
+        file.write("\n%s:\n\n\t(Window, Window, delta(days, seconds))\n" % (desc[6]))
 
-    if len(w[7]):
-        file.write("\n%s:\n\n\t(Window, Window, delta(days, seconds))\n" % (desc[7]))
-
-        for i in w[7]:
+        for i in w[6]:
             #exclude windows that overlap. Those are covered earlier.
             if not (i[2].days < 0 or i[2].seconds < 0):
                 file.write("\t%s\t%i\t&\t%s\t%i\t(%i, %i)\n" % \
                            (i[0].session.name, i[0].id, i[1].session.name,
                             i[1].id, i[2].days, i[2].seconds))
 
-    if len(w[8]):
-        file.write("\n%s:\n" % (desc[8]))
-        output_windows(file, w[8])
+    #if len(w[8]):
+    #    file.write("\n%s:\n" % (desc[8]))
+    #    output_windows(file, w[8])
 
-    if len(w[9]):
-        file.write("\n%s:\n" % (desc[9]))
-        output_windows2(file, w[9])
+    #if len(w[9]):
+    if len(w[7]):
+        file.write("\n%s:\n" % (desc[7]))
+        output_windows2(file, w[7])
 
 
 def GenerateReport():
