@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-import os
+import os, sys
 
 def getdt(db, b):
     try:
@@ -34,17 +34,24 @@ def rmBackups(db_bkup_dir, backups_to_remove):
         os.system(cmd)
 
 if __name__ == "__main__":
+    try:
+        db, = sys.argv[1:]
+    except ValueError:
+        print "Please provide a database name."
+        sys.exit()
+
     N = 2
     db_bkup_dir = "/home/dss/database_backups"
     timestamp   = datetime.now().strftime("%Y-%m-%d_%H:00:00")
 
-    # DSS backups
-    db = "dss"
     doBackup(db, db_bkup_dir, timestamp)
-    rmBackups(db_bkup_dir, [b for b in os.listdir(db_bkup_dir) 
-                   if db in b and ndaysold(N, db, b) and not isMonday(db, b)])
 
-    # Weather Backups
-    db = "weather"
-    doBackup(db, db_bkup_dir, timestamp)
-    rmBackups(db_bkup_dir, [b for b in os.listdir(db_bkup_dir) if db in b and ndaysold(N, db, b)])
+    if db == "dss":
+        # DSS Backups
+        rmBackups(db_bkup_dir, [b for b in os.listdir(db_bkup_dir) 
+                       if db in b and ndaysold(N, db, b) and not isMonday(db, b)])
+    elif db == "weather":
+        # Weather Backups
+        rmBackups(db_bkup_dir, [b for b in os.listdir(db_bkup_dir) if db in b and ndaysold(N, db, b)])
+    else:
+        print "No backup removal supported for %s."  % db

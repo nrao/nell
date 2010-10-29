@@ -75,6 +75,7 @@ urlpatterns = patterns(''
    , url(r'^investigator/([^/]+)/clear_cache$',         clear_user_cache)
    , url(r'^investigator/([^/]+)/ical$',                observer_ical)
    , url(r'^investigator/([^/]+)/ical/[A-za-z.]*$',     observer_ical)
+   , url(r'^investigators/qualified$', remotely_qualified)
    , url(r'^investigators$',      InvestigatorResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^investigators/([^/]+)$',InvestigatorResource(permitted_methods=('PUT', 'GET', 'POST')))
    , (r'^admin/',                 include(admin.site.urls)) #
