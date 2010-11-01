@@ -52,7 +52,7 @@ class Maintenance_Activity(models.Model):
     receivers          = models.ManyToManyField(Receiver, null = True)
     backends           = models.ManyToManyField(Backend, null = True)
     subject            = models.CharField(max_length = 200)
-    start              = models.DateTimeField(null = True)
+    _start             = models.DateTimeField(null = True)
     duration           = models.FloatField(null = True, help_text = "Hours", blank = True)
     contacts           = models.TextField(null = True, blank = True)
     location           = models.TextField(null = True, blank = True)
@@ -97,7 +97,7 @@ class Maintenance_Activity(models.Model):
         receivers     = self.receivers.all() if self.id else 'None'
         backends      = self.backends.all() if self.id else 'None'
         rcvr_ch       = self.receiver_changes.all() if self.id else 'None'
-        start         = self.start if self.start else 'None'
+        start         = self._start if self._start else 'None'
         duration      = self.duration if self.duration else 'None'
         description   = self.description if self.description else 'None'
         approved      = "Yes" if self.approved else "No"
@@ -152,24 +152,30 @@ class Maintenance_Activity(models.Model):
         cannot be passed in.  If the resoure calendar is to be
         displayed in UT this breaks.
         """
-        start = TimeAgent.utc2est(self.start)
+        start = self.get_start('EST')
         delta = timedelta(hours = self.duration)
         end = start + delta
         return "%02i:%02i - %02i:%02i" % (start.time().hour, start.time().minute,
                                           end.time().hour, end.time().minute)
 
-    def get_start(self):
+    def get_start(self, tzname = None):
         if self.period:
             start = datetime(self.period.start.year, self.period.start.month,
-                             self.period.start.day, self.start.hour, self.start.minute)
+                             self.period.start.day, self._start.hour, self._start.minute)
         else:
-            start = self.start
+            start = self._start
 
-        return start
+        return TimeAgent.utc2est(start) if tzname == 'EST' else start
 
-    def get_end(self):
+    def set_start(self, start, tzname = None):
+        if tzname == 'EST':
+            self._start = TimeAgent.est2utc(start)
+        else:
+            self._start = start
+
+    def get_end(self, tzname = None):
         d = timedelta(hours = self.duration)
-        return self.get_start() + d
+        return self.get_start(tzname) + d
 
     def set_telescope_resource(self, resource):
         self.telescope_resource = resource
@@ -244,10 +250,7 @@ class Maintenance_Activity(models.Model):
         self.approved = False
         change = Maintenance_Activity_Change()
         change.responsible = user
-        print "user = %s" % user
-        print "change.responsible = %s" % change.responsible
         change.date = datetime.now()
-        print "change.date = %s" % change.date
         change.save()
         self.modifications.add(change)
 
@@ -261,7 +264,10 @@ class Maintenance_Activity(models.Model):
         return False if int(self.repeat_interval) == 0 else True
 
     def is_future_template(self):
-        return True if self.repeat_template.future_template == self else False
+        if self.repeat_template and self.repeat_template.future_template:
+            return self.repeat_template.future_template == self
+
+        return False
 
     def get_template(self, period):
         """
@@ -355,15 +361,24 @@ class Maintenance_Activity(models.Model):
             if period:
                 ma.period = period
                 template = self.get_template(period)
-                start = datetime(period.start.year, period.start.month, period.start.day,
-                                 template.start.hour, template.start.minute)
+
+                # all maintenance activities are based on local time,
+                # i.e. start 8:00 AM means that regardless of whether
+                # DST is active or not.  To do this, we get ET version
+                # of period and template start so that it can be saved
+                # as the appropriate UTC time to account for DST.
+                t_start = template.get_start('EST')
+                p_start = TimeAgent.utc2est(period.start)
+
+                start = datetime(p_start.year, p_start.month, p_start.day,
+                                 t_start.hour, t_start.minute)
 
             # if this is a template, include the original creation
             # date for the repeat activity.
             ma.modifications.add(template.modifications.all()[0])
 
         ma.copy_data(template)
-        ma.start = start if start else template.start
+        ma.set_start(start if start else template.start, 'EST' if start else None)
         ma.save()
         return ma
 
@@ -392,9 +407,9 @@ class Maintenance_Activity(models.Model):
                 continue
 
             else:
-                my_start = self.start
+                my_start = self.get_start()
                 my_end = my_start + timedelta(hours = self.duration)
-                other_start = mas[i].start
+                other_start = mas[i].get_start()
                 other_end = other_start + timedelta(hours = mas[i].duration)
 
                 #check 'self' for time intersection with mas[i]
@@ -452,11 +467,11 @@ class Maintenance_Activity(models.Model):
                                 if 'O=' in j:
                                     other = Maintenance_Other_Resources.objects\
                                             .filter(rc_code=j[2])[0]  #get resource 'x' in 'O=x'
-                                    print "i[0] =", i[0], "j =", j, "other.compatibility =", other.compatibility
+
                                     if i[0] not in other.compatibility:
                                         rval.append(i)
 
-                                    
+
         return rval
 
     def _get_receiver(self, rcvr):
@@ -499,7 +514,7 @@ class Maintenance_Activity(models.Model):
 
         # To handle repeat maintenance activity objects:
         repeatQ    = models.Q(deleted = False) & (models.Q(repeat_interval = 1) | models.Q(repeat_interval = 7))\
-                     & (models.Q(start__lte = period.end())  & models.Q(repeat_end__gte = period.end()))
+                     & (models.Q(_start__lte = period.end())  & models.Q(repeat_end__gte = period.end()))
         start_endQ = models.Q(start__gte = period.start) & models.Q(start__lte = period.end())
         periodQ    = models.Q(period = period)
 
@@ -536,7 +551,7 @@ class Maintenance_Activity(models.Model):
 
         for i in rmas:
             if i.repeat_interval == 7:
-                start_date = TimeAgent.truncateDt(i.start)
+                start_date = TimeAgent.truncateDt(i.get_start())
                 diff = (today - start_date).days % 7
 
                 if (diff):
@@ -565,6 +580,38 @@ class Maintenance_Activity(models.Model):
         # after all the above to prevent a replacement being generated
         # for a deleted activity.
         mas = [i for i in mas if not i.deleted]
-        mas.sort(cmp = lambda x, y: cmp(x.start.time(), y.start.time()))
+        mas.sort(cmp = lambda x, y: cmp(x.get_start().time(), y.get_start().time()))
 
         return mas
+
+    @staticmethod
+    def list_templates():
+        for i in Maintenance_Activity.objects.all():
+            if i.is_repeat_template():
+                ft = i
+
+                while ft:
+                    print ft.id,
+
+                    if ft.future_template:
+                        print "-->",
+
+                    if ft.deleted:
+                        print "(D)",
+
+                    ft = ft.future_template
+
+                print
+
+
+
+    @staticmethod
+    def list_repeat_activities():
+        for i in Maintenance_Activity.objects.all():
+            if not i.is_repeat_template():
+                print "%s\t%s\t%s" % (i.get_start('EST'), i.id, i.repeat_template.id),
+
+                if i.deleted:
+                    print "\t(D)",
+
+                print

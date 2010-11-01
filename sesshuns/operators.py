@@ -85,14 +85,14 @@ def gbt_schedule(request, *args, **kws):
         else:
             if i < len(periods) - 1:
                 mas = Maintenance_Activity.objects\
-                      .filter(start__gte = periods[i].start)\
-                      .filter(start__lt = periods[i + 1].start)\
+                      .filter(_start__gte = periods[i].start)\
+                      .filter(_start__lt = periods[i + 1].start)\
                       .filter(period = None)\
                       .filter(deleted = False)
             else:
                 mas = Maintenance_Activity.objects\
-                      .filter(start__gte = periods[i].start)\
-                      .filter(start__lt = periods[i].end())\
+                      .filter(_start__gte = periods[i].start)\
+                      .filter(_start__lt = periods[i].end())\
                       .filter(period = None)\
                       .filter(deleted = False)
 

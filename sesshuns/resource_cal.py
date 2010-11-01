@@ -204,16 +204,11 @@ class RCAddActivityForm(forms.Form):
 def display_maintenance_activity(request, activity_id = None):
     if activity_id:
         ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
-        start = TimeAgent.utc2est(ma.get_start())
+        start = ma.get_start('EST')
         duration = timedelta(hours = ma.duration)
         end = start + duration
         u = get_requestor(request)
         supervisors = ["rcreager", "ashelton", "banderso", "mchestnu"]
-
-        if u and u.username in supervisors:
-            supervisor_mode = True
-        else:
-            supervisor_mode = False
 
         params = {'subject'            : ma.subject,
                   'date'               : start.date(),
@@ -233,7 +228,7 @@ def display_maintenance_activity(request, activity_id = None):
                   'last_modified'      : str(ma.modifications.all()[len(ma.modifications.all()) - 1] if ma.modifications.all() else ""),
                   'created'            : str(ma.modifications.all()[0] if ma.modifications.all() else ""),
                   'receiver_swap'      : ma.receiver_changes.all(),
-                  'supervisor_mode'    : True if (u and u.username in supervisors) else False,
+                  'supervisor_mode'    : True if (u and u.username() in supervisors) else False,
                   'maintenance_period' : ma.period_id,
                   'repeat_activity'    : ma.is_repeat_activity()
                  }
@@ -274,7 +269,6 @@ def add_activity(request, period_id = None, year = None, month = None, day = Non
                     redirect_url = '/resourcecal_add_activity/'
 
 
-                print "Redirecting to", redirect_url
                 return HttpResponseRedirect(redirect_url)
             else:
                 return HttpResponseRedirect('/schedule/')
@@ -314,7 +308,7 @@ def add_activity(request, period_id = None, year = None, month = None, day = Non
 ######################################################################
 
 def _modify_activity_form(ma):
-    start = TimeAgent.utc2est(ma.get_start())
+    start = ma.get_start('EST')
     duration = timedelta(hours = ma.duration)
     change_receiver = True if len(ma.receiver_changes.all()) else False
     old_receiver = None if not change_receiver else \
@@ -365,7 +359,6 @@ def edit_activity(request, activity_id = None):
 
         if form.is_valid():
             # process the returned stuff here...
-            #print "Maintenance Activity ID:", form.cleaned_data["entity_id"]
             ma = Maintenance_Activity.objects.filter(id = form.cleaned_data["entity_id"])[0]
             process_activity(request, ma, form)
             return HttpResponseRedirect('/schedule/')
@@ -386,8 +379,8 @@ def edit_activity(request, activity_id = None):
             ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
             start_ma = Maintenance_Activity.objects\
                        .filter(repeat_template = ma.repeat_template)\
-                       .filter(start__gte = today)\
-                       .order_by('start')[0]
+                       .filter(_start__gte = today)\
+                       .order_by('_start')[0]
             start_ma.set_as_new_template()
             form = _modify_activity_form(start_ma)
 
@@ -399,10 +392,10 @@ def edit_activity(request, activity_id = None):
 
         elif request.GET['ActionEvent'] == 'DeleteFuture':
             ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
-            ma.repeat_template.delete = True
+            ma.repeat_template.repeat_end = ma.get_start('EST').date()
             ma.repeat_template.save()
             mas = Maintenance_Activity.objects\
-                  .filter(start__gte = TimeAgent.truncateDt(ma.get_start()))\
+                  .filter(_start__gte = TimeAgent.truncateDt(ma.get_start()))\
                   .filter(repeat_template = ma.repeat_template)
 
             for i in mas:
@@ -462,7 +455,6 @@ def process_activity(request, ma, form):
     """
     # process the returned stuff here...
     ma.subject = form.cleaned_data['subject']
-    #print "Subject:", form.cleaned_data['subject']
 
     # The date and time entered into the form will be ET.  It
     # must be converted to UTC.  The end-time need not be
@@ -470,8 +462,9 @@ def process_activity(request, ma, form):
     # database instead of the end time.
     date = form.cleaned_data['date']
     start = datetime(date.year, date.month, date.day,
-                     hour = int(form.cleaned_data['time_hr']), minute = int(form.cleaned_data['time_min']))
-    ma.start = TimeAgent.est2utc(start)
+                     hour = int(form.cleaned_data['time_hr']),
+                     minute = int(form.cleaned_data['time_min']))
+    ma.set_start(start, 'EST')
 
     if form.cleaned_data["end_choice"] == "end_time":
         end_date = form.cleaned_data['date']
@@ -479,25 +472,15 @@ def process_activity(request, ma, form):
                        hour = int(form.cleaned_data['end_time_hr']), minute = int(form.cleaned_data['end_time_min']))
         delta = end - start
         ma.duration = delta.seconds / 3600.0 # in decimal hours
-        #print "End time:", ma.duration
     else:
         ma.duration = float(form.cleaned_data['end_time_hr']) + float(form.cleaned_data["end_time_min"]) / 60.0
-        #print "Duration:", ma.duration
 
     ma.contacts = form.cleaned_data["responsible"]
-    #print "Responsible:", form.cleaned_data["responsible"]
-
     ma.location = form.cleaned_data["location"]
-    #print "Location:", form.cleaned_data["location"]
-
     trid = form.cleaned_data["telescope"]
     ma.telescope_resource = Maintenance_Telescope_Resources.objects.filter(id = trid)[0]
-    #print "Telescope:", form.cleaned_data["telescope"]
-
     srid = form.cleaned_data["software"]
     ma.software_resource = Maintenance_Software_Resources.objects.filter(id = srid)[0]
-    #print "Software:", form.cleaned_data["software"]
-
     orid = form.cleaned_data["other_resource"]
     ma.other_resource = Maintenance_Other_Resources.objects.filter(id = orid)[0]
 
@@ -506,7 +489,6 @@ def process_activity(request, ma, form):
     for rid in form.cleaned_data["receivers"]:
         rcvr = Receiver.objects.filter(id = rid)[0]
         ma.receivers.add(rcvr)
-    #print "Receivers:", form.cleaned_data["receivers"]
 
     if form.cleaned_data["change_receiver"] == True:
         down_rcvr_id = form.cleaned_data["old_receiver"]
@@ -530,8 +512,6 @@ def process_activity(request, ma, form):
 
         ma.receiver_changes.clear()
         ma.receiver_changes.add(mrs)
-        #print "Changing receiver %s to %s" % (form.cleaned_data["old_receiver"],
-        #                                      form.cleaned_data["new_receiver"])
     else:
         ma.receiver_changes.clear()
 
@@ -540,30 +520,25 @@ def process_activity(request, ma, form):
     for bid in form.cleaned_data["backends"]:
         be = Backend.objects.filter(id = bid)[0]
         ma.backends.add(be)
-    #print "Backends:", form.cleaned_data["backends"]
 
     ma.description = form.cleaned_data["description"]
-    #print "Description:", form.cleaned_data["description"]
-    #print "Recurrency selected:", form.cleaned_data["recurrency_interval"]
     ma.repeat_interval = int(form.cleaned_data["recurrency_interval"])
     ma.repeat_end = form.cleaned_data["recurrency_until"]
 
     # assign right period for maintenance activity.  If no
     # periods, this will remain 'None'
-    start = TimeAgent.truncateDt(ma.get_start())
+    start = TimeAgent.truncateDt(ma._start)
     end = start + timedelta(days = 1)
     periods = Period.get_periods_by_observing_type(start, end, "maintenance")
 
     for p in periods:
-        if ma.get_start() >= p.start and ma.get_start() < p.end():
+        if ma._start >= p.start and ma._start < p.end():
             ma.period = p
-            #print "Assigning to period id %i" % (p.id)
 
     # Now add user and timestamp for modification.  Earliest mod is
     # considered creation.
     u = get_requestor(request)
     modifying_user = get_user_name(u)
-    #print "Adding modification by %s" % (modifying_user)
     ma.add_modification(modifying_user)
     ma.save()
 
@@ -573,14 +548,18 @@ def process_activity(request, ma, form):
     if ma.is_repeat_template() or ma.is_future_template():
         mas = [m for m in Maintenance_Activity.objects\
                .filter(repeat_template = ma.repeat_template)\
-               .filter(start__gte = ma.start)]
+               .filter(_start__gte = ma._start)]
 
+        # times neet to be carried over as ET so that the underlying
+        # UT will compensate for DST.
         for i in mas:
-            start = datetime(i.get_start().year, i.get_start().month, i.get_start().day,
-                             ma.start.hour, ma.start.minute)
+            ma_time = ma.get_start('EST')
+            i_time = i.get_start('EST')
+            start = datetime(i_time.year, i_time.month, i_time.day,
+                             ma_time.hour, ma_time.minute)
 
             i.copy_data(ma)
-            i.start = start
+            i.set_start(start, 'EST')
             i.save()
 
 def get_user_name(u):
@@ -588,7 +567,7 @@ def get_user_name(u):
         if u.first_name and u.last_name:
             user = u.last_name + ", " + u.first_name
         else:
-            user = u.username
+            user = u.username()
     else:
         user = "anonymous"
 
