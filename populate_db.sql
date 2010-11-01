@@ -154,3 +154,37 @@ INSERT INTO parameters VALUES (DEFAULT, 'Transit', 'boolean');
 INSERT INTO parameters VALUES (DEFAULT, 'Transit Before', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Transit After', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'El Limit', 'float');
+
+INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Telescope motion required', 'M', 'N');
+INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'No telescope required ', 'N', 'MNBASDZE');
+INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Tipping structure in Bird Bath positon ', 'B', 'NBZ');
+INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Tipping structure in Access positon', 'A', 'NAZ');
+INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Tipping structure in Survival positon ', 'S', 'NSZ');
+INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Tipping structure in Snow Dump positon ', 'D', 'NDZ');
+INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Azimuth system lockout only or Azimuth is specified', 'Z', 'NBASD');
+INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Elevation axis movement only; Az locked out.', 'E', 'NA');
+
+INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'Full M&C system', 'F', 'PN');
+INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'Full M&C - Not available for others ', 'U', '');
+INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'Partial M&C system without telescope control', 'P', 'PFNA');
+INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'No M&C system required ', 'N', 'FUPNA');
+INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'M&C control of antenna only ', 'A', 'PN');
+
+INSERT INTO maintenance_other_resources VALUES (DEFAULT, 'None', 'N', 'NIL');
+INSERT INTO maintenance_other_resources VALUES (DEFAULT, 'LO System', 'L', 'INB');
+INSERT INTO maintenance_other_resources VALUES (DEFAULT, 'IF System', 'I', 'LNR');
+
+INSERT INTO backends VALUES (DEFAULT, 'Caltech Continuum Backend', 'CCB', 'K');
+INSERT INTO backends VALUES (DEFAULT, 'Caltech-Green Bank-Swinbourne Recorder 2', 'CGSR2', 'R');
+INSERT INTO backends VALUES (DEFAULT, 'GBT Digital Continuum Receiver', 'DCR', 'D');
+INSERT INTO backends VALUES (DEFAULT, 'GBT Spectrometer', 'gbtSpec', 'S');
+INSERT INTO backends VALUES (DEFAULT, 'Green Bank Astronomical Signal Processor', 'GASP', 'Y');
+INSERT INTO backends VALUES (DEFAULT, 'Green bank Ultimate Pulsar Processor', 'GUPPY', 'U');
+INSERT INTO backends VALUES (DEFAULT, 'Haystack Mark 4 High bandwidth (> 1Gb/s)', 'HayMark4', '4');
+INSERT INTO backends VALUES (DEFAULT, 'Mark 5 recorder (disks)', 'Mark5', '5');
+INSERT INTO backends VALUES (DEFAULT, 'Radar backend', 'Radar', 'X');
+INSERT INTO backends VALUES (DEFAULT, 'S2 recorder', 'gbtS2', '2');
+INSERT INTO backends VALUES (DEFAULT, 'Spectral Processor', 'gbtSpecP', 'P');
+INSERT INTO backends VALUES (DEFAULT, 'VLBA recorder and DAR ', 'gbtVLBA', 'V');
+INSERT INTO backends VALUES (DEFAULT, 'Zpectrometer ', 'Zpect', 'Z');
+INSERT INTO backends VALUES (DEFAULT, 'User supplied or new backend ', 'Other', 'O');
