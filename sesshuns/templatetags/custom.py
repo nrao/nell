@@ -1,11 +1,14 @@
 # -*- coding: iso-8859-15 -*-
 
-from django              import template
-from sesshuns            import models
-from datetime            import datetime, timedelta
-from sesshuns.models     import first
-from sets                import Set
-from nell.tools          import TimeAccounting
+from django                  import template
+from django.utils.safestring import SafeUnicode
+from sesshuns                import models
+from datetime                import datetime, timedelta
+from sesshuns.models         import first
+from sets                    import Set
+from nell.tools              import TimeAccounting
+from nell.utilities          import TimeAgent
+from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
 
 register = template.Library()
 
@@ -107,7 +110,7 @@ def project_type(project):
             type = 'K'
         else:
             type = 'T'
-    return type            
+    return type
 
 @register.filter
 def get_projects(user):
@@ -212,3 +215,100 @@ def moc_degraded(period):
         return not period.moc_met()
     else:
         return False
+
+@register.filter
+def split_over_two_table_columns(value, splitter):
+    """
+    Used by the resource calendar to split a bunch of HTML controls
+    that are separated by a '<br>' over two table columns.
+    """
+    a = value.split('<br>')
+    a.insert(len(a)/2 + len(a) % 2, splitter)
+    value = SafeUnicode('<br>'.join(a))
+    return value
+split_over_two_table_columns.is_safe = True
+
+
+@register.filter
+def flag_rc_conflicts(ma, mas):
+    """
+    Used to flag the summary of a maintenance activity for conflicts.
+    Conflicting resources will be output in red.  Resources will be
+    flagged as conflicting if any other activity uses the same
+    mutually exclusive resource during some overlapping time,
+    regardless of who caused the conflict.
+    """
+    # this will check against all other activities in group to see if
+    # any resources are in conflict.  A list of resource abbreviations
+    # will be returned, over which the filter will iterate.
+    
+    conflicts = ma.check_for_conflicting_resources(mas)
+    summary = ma.summary()
+
+    for i in conflicts:
+        rpos = summary.find(i)
+
+        if rpos != -1:
+            summary = summary.replace(i, i[:2] + '<font color="red">' + i[2:] + '</font>', 1)
+
+    summary = SafeUnicode(summary)
+    return summary
+flag_rc_conflicts.is_safe = True
+
+@register.filter
+def get_first_start(mas, tz):
+    if tz == "ET":
+        r = TimeAgent.utc2est(mas[0].get_start())
+    else:
+        r = mas[0].get_start()
+    return r
+
+@register.filter
+def get_last_end(mas, tz):
+    if tz == "ET":
+        r = TimeAgent.utc2est(mas[-1].get_end())
+    else:
+        r = mas[-1].get_end()
+    return r
+
+@register.filter
+def day_of_week(date, dow):
+    return date.weekday() == dow
+
+
+@register.filter
+def floating_maint_periods(day):
+    """
+    Takes the day (assumes it is Monday) and finds the maintenance
+    periods for that week.  Returns a string representing the
+    *pending* periods for that week.  Period 1 is 'A', Period 2 is
+    'B', Period 3 (if it exists) is 'C' etc.  Thus, assuming two
+    maintenance periods, if 1 is fixed and 2 is pending, returns 'B'.
+    If both are pending, returns 'AB'. etc.  Works for however many
+    periods exist for that week.
+    """
+
+    pend = []
+
+    try:
+        delta = timedelta(days = 7)
+        mp = models.Period.objects\
+             .filter(session__project__pcode = "Maintenance")\
+             .filter(start__gte = day)\
+             .filter(start__lt = day + delta)\
+             .order_by('start')
+
+        for i in range(0, len(mp)):
+            if mp[i].isPending():
+                mas = models.Maintenance_Activity.get_maintenance_activity_set(mp[i])
+                pend.append((chr(i + 65),  # 65 is ASCII 'A'
+                             TimeAgent.utc2est(mp[i].start),
+                             TimeAgent.utc2est(mp[i].end()),
+                             mp[i],
+                             mas))
+
+    except:
+        printException(formatExceptionInfo())
+        pend = []
+
+    return pend

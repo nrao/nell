@@ -4,6 +4,7 @@ from sesshuns.views                import *
 from sesshuns.resources            import *
 from sesshuns.observers            import *
 from sesshuns.operators            import *
+from sesshuns.resource_cal         import *
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
@@ -75,8 +76,15 @@ urlpatterns = patterns(''
    , url(r'^investigator/([^/]+)/clear_cache$',         clear_user_cache)
    , url(r'^investigator/([^/]+)/ical$',                observer_ical)
    , url(r'^investigator/([^/]+)/ical/[A-za-z.]*$',     observer_ical)
+   , url(r'^investigators/qualified$', remotely_qualified)
    , url(r'^investigators$',      InvestigatorResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^investigators/([^/]+)$',InvestigatorResource(permitted_methods=('PUT', 'GET', 'POST')))
+   , url(r'^resourcecal_add_activity/$', add_activity)
+   , url(r'^resourcecal_add_activity/(\d+)/$', add_activity)
+   , url(r'^resourcecal_add_activity/(?P<year>\d{4})/(?P<month>\d{2})/(?P<day>\d{2})/$', add_activity)
+   , url(r'^resourcecal_edit_activity/$', edit_activity)
+   , url(r'^resourcecal_edit_activity/(\d+)/$', edit_activity)
+   , url(r'^resourcecal_display_activity/(\d+)/$', display_maintenance_activity)
    , (r'^admin/',                 include(admin.site.urls)) #
    , (r'^accounts/login/$', 'django_cas.views.login')
    , (r'^accounts/logout/$', 'django_cas.views.logout')
