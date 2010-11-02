@@ -55,3 +55,6 @@ if __name__ == "__main__":
         rmBackups(db_bkup_dir, [b for b in os.listdir(db_bkup_dir) if db in b and ndaysold(N, db, b)])
     else:
         print "No backup removal supported for %s."  % db
+
+    print "Cleaning up Cleo forecast files."
+    os.system("rm /home/dss/release/antioch/admin/CleoDBImport*; rm -rf /home/dss/release/antioch/admin/Forecasts*")
