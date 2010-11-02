@@ -1589,7 +1589,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.nighttime(), None)
         self.assertEqual(s.get_LST_exclusion_string(), ldata["lst_ex"])
         self.assertEqual(s.get_min_eff_tsys_factor(), ldata["xi_factor"])
-        self.assertEqual(s.get_elevation_limit(),fdata["el_limit"]) 
+        self.assertEqual(s.get_elevation_limit(),fdata["el_limit"])
         rgs = s.receiver_group_set.all().order_by('id')
         self.assertEqual(2, len(rgs))
         self.assertEqual(['K']
@@ -1632,7 +1632,7 @@ class TestBlackout(NellTestCase):
     def setUp(self):
         super(TestBlackout, self).setUp()
 
-        # create some user blackouts    
+        # create some user blackouts
 
         self.u = User(first_name = "Test"
                     , last_name  = "User"
@@ -1664,15 +1664,15 @@ class TestBlackout(NellTestCase):
                              , project_type = ptype
                              , pcode = self.pcode
                                )
-        self.project.save()                       
+        self.project.save()
 
         #once = first(Repeat.objects.filter(repeat = 'Once'))
         self.blackout3 = Blackout(project    = self.project
-                                , repeat     = once 
+                                , repeat     = once
                                 , start_date = datetime(2008, 10, 1, 11)
                                 , end_date   = datetime(2008, 10, 3, 11))
         self.blackout3.save()
-        
+
     def test_eventjson(self):
 
         # user blackout
@@ -1686,7 +1686,7 @@ class TestBlackout(NellTestCase):
                , 'id': 1L
                , 'title': 'Test User: blackout'
                }
-        self.assertEqual(event, json[0])       
+        self.assertEqual(event, json[0])
 
         # project blackout
         calstart = datetime(2008, 10, 1)
@@ -1699,7 +1699,7 @@ class TestBlackout(NellTestCase):
                , 'id': 3L
                , 'title': '%s: blackout' % self.pcode
                }
-        self.assertEqual(event, json[0]) 
+        self.assertEqual(event, json[0])
 
     # TBF
     # test_isActive
@@ -1804,7 +1804,7 @@ class TestViews(NellTestCase):
                # BOS gives id of 802 -> global id of 800
                , pst_id = 800
                  )
-        u.save() 
+        u.save()
         # giv'm a project
         projs = Project.objects.all()
         inv = Investigator(user = u, project = projs[0])
@@ -1818,7 +1818,7 @@ class TestViews(NellTestCase):
         self.failUnlessEqual(response.status_code, 200)
         r = eval(response.content)
 
-        exp = {'reservations': 
+        exp = {'reservations':
                  [{'pcodes': 'GBT09A-001'
                  , 'start': '10/05/2010'
                  , 'end': '10/10/2010'
@@ -1833,14 +1833,14 @@ class TestViews(NellTestCase):
         u.delete()
 
     def test_reservations_from_db(self):
-        
+
         # create a user
         roles = Role.objects.all()
         u = User(first_name = "delete"
                , last_name = "me"
                , role = roles[0]
                  )
-        u.save() 
+        u.save()
 
         # giv'm a project
         projs = Project.objects.all()
@@ -1876,7 +1876,7 @@ class TestViews(NellTestCase):
                                   )
         self.assertEquals(exp, rs)
 
-        # make sure it is not picked up 
+        # make sure it is not picked up
         start = date(2006, 2, 22)
         end   = date(2006, 2, 27)
         rs = getReservationsFromDB(start.strftime(frmt)
@@ -2169,7 +2169,7 @@ class TestUserResources(NellTestCase):
                     , "last_name"  : "Bar"
                     , "contact_instructions" : "Best to call my mom's house.  Ask for Pooh Bear."
                     , "role": "Observer"
-                    , "username": "dss" # in tests only 
+                    , "username": "dss" # in tests only
                      })
         response = self.client.post('/users', fdata)
         self.failUnlessEqual(response.status_code, 200)
@@ -2899,7 +2899,7 @@ class TestObservers(NellTestCase):
         b.repeat      = first(Repeat.objects.all())
         b.description = "This is a test blackout for a project."
         b.save()
-        return b       
+        return b
 
     def test_blackout_form(self):
 
@@ -3027,7 +3027,7 @@ class TestObservers(NellTestCase):
         self.assertEqual(b.end_date.date().strftime("%m/%d/%Y") , data.get('end'))
         self.assertEqual(b.until.date().strftime("%m/%d/%Y") , data.get('until'))
         self.failUnlessEqual(response.status_code, 302)
-        
+
         # now delete it
         response = self.get(
             '/project/%s/blackout/%s/' % (self.p.pcode, b.id)
@@ -3037,7 +3037,7 @@ class TestObservers(NellTestCase):
         b = first(Blackout.objects.filter(id = b.id))
         self.assertEqual(None, b)
 
-        # now create one 
+        # now create one
         data['end'] = date(2009, 5, 31).strftime("%m/%d/%Y")
         _ = data.pop('_method')
         response    = self.post(
@@ -3065,7 +3065,7 @@ class TestObservers(NellTestCase):
                , 'tz'   : 'UTC' }
         response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(datetime(2009, 9, 9), [(datetime(2009, 9, 9, 12), datetime(2009, 9, 9, 13), False, False, p)])
+        exp = [(datetime(2009, 9, 9), [(datetime(2009, 9, 9, 12), datetime(2009, 9, 9, 13), False, False, p, [])])
              , (datetime(2009, 9, 10), [])
              , (datetime(2009, 9, 11), [])]
 
@@ -3077,7 +3077,7 @@ class TestObservers(NellTestCase):
                , 'tz'   : 'ET' }
         response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(datetime(2009, 9, 9), [(datetime(2009, 9, 9, 8), datetime(2009, 9, 9, 9), False, False, p)])
+        exp = [(datetime(2009, 9, 9), [(datetime(2009, 9, 9, 8), datetime(2009, 9, 9, 9), False, False, p, [])])
              , (datetime(2009, 9, 10), [])
              , (datetime(2009, 9, 11), [])]
         self.assertEqual(exp, calendar)
@@ -3105,7 +3105,7 @@ class TestObservers(NellTestCase):
         response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
         exp = [(datetime(2009, 9, 1), [])
-             , (datetime(2009, 9, 2), [(datetime(2009, 9, 2, 1), datetime(2009, 9, 2, 7), False, False, p)])
+             , (datetime(2009, 9, 2), [(datetime(2009, 9, 2, 1), datetime(2009, 9, 2, 7), False, False, p, [])])
              , (datetime(2009, 9, 3), [])]
         self.assertEqual(exp, calendar)
 
@@ -3115,8 +3115,8 @@ class TestObservers(NellTestCase):
                , 'tz' : 'ET' }
         response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(datetime(2009, 9, 1), [(datetime(2009, 9, 1, 21), datetime(2009, 9, 2), False, False, p)])
-             , (datetime(2009, 9, 2), [(datetime(2009, 9, 2), datetime(2009, 9, 2, 3), False, False, p)])
+        exp = [(datetime(2009, 9, 1), [(datetime(2009, 9, 1, 21), datetime(2009, 9, 2), False, False, p, [])])
+             , (datetime(2009, 9, 2), [(datetime(2009, 9, 2), datetime(2009, 9, 2, 3), False, False, p, [])])
              , (datetime(2009, 9, 3), [])]
         self.assertEqual(exp, calendar)
 
@@ -3126,7 +3126,7 @@ class TestObservers(NellTestCase):
                , 'tz' : 'ET' }
         response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(datetime(2009, 9, 1), [(datetime(2009, 9, 1, 21), datetime(2009, 9, 2), False, True, p)])]
+        exp = [(datetime(2009, 9, 1), [(datetime(2009, 9, 1, 21), datetime(2009, 9, 2), False, True, p, [])])]
         self.assertEqual(exp, calendar)
 
         # clean up
@@ -3150,7 +3150,7 @@ class TestObservers(NellTestCase):
         pauls = User.objects.filter(last_name = "Marganian")
         self.assertEqual(0, len(pauls))
 
-      
+
 # Testing Utilities
 class TestDBReporter(NellTestCase):
 
@@ -3463,15 +3463,15 @@ class TestPSTMirrorDB(NellTestCase):
         emailDescs = ['pmargani@nrao.edu (Work)'
                     , 'paghots@hotmail.com (Other)'
                     , 'pmargani@gmail.com (Personal)']
-        phones = ['304-456-2202', '304-456-2206']        
-        phoneDescs = ['304-456-2202 (Work)', '304-456-2206 (Other)']        
+        phones = ['304-456-2202', '304-456-2206']
+        phoneDescs = ['304-456-2202 (Work)', '304-456-2206 (Other)']
         postals = \
             ['NRAO, PO Box 2, Green Bank, West Virginia, 24944, USA, (Office)'
            , '49 columbus Ave., W. Bridgewater, Massachusetts, 02379, United States, (Other)']
         affiliations = ['National Radio Astronomy Observatory '
                       , 'Oregon, University of']
-        self.assertEquals(emails, info['emails'])        
-        self.assertEquals(emailDescs, info['emailDescs'])        
+        self.assertEquals(emails, info['emails'])
+        self.assertEquals(emailDescs, info['emailDescs'])
         self.assertEquals(phones, info['phones'])
         self.assertEquals(phoneDescs, info['phoneDescs'])
         self.assertEquals(postals, info['postals'])
@@ -3674,7 +3674,7 @@ class TestPSTQueryService(NellTestCase):
                      , 'first-name': 'Paul'
                      , 'middle-name': 'Raffi'
                      , 'last-name': 'Marganian'}
-            , 'account-info': {'account-name': 'pmargani'         
+            , 'account-info': {'account-name': 'pmargani'
                              , 'entry-status': 'Suspect'}
             , 'id': '823'
             , 'globalid': '821'
@@ -3713,7 +3713,7 @@ class TestPSTQueryService(NellTestCase):
 
     # THis is NOT a unit -test: it actually interacts w/ the PST service!
     def test_pstServices(self):
-        
+
         globalid = 821
         userAuthId = 823
 
@@ -3736,8 +3736,8 @@ class TestPSTQueryService(NellTestCase):
 
         id = self.ui.getIdFromUserAuthenticationId(userAuthId)
         self.assertEquals(globalid, id)
-        
-        
+
+
 class TestUpdateEphemeris(NellTestCase):
 
     def testUpdate(self):
@@ -4591,8 +4591,20 @@ class TestMaintenanceActivity(NellTestCase):
         ma.add_backend(zpect_be) # add a backend object
         ma.add_receiver_change(old_receiver, new_receiver)
         ma.set_description(self.desc)
-        ma.add_contact(u)
-        ma.save()        
+        ma.contacts = self.get_user_name(u)
+        ma.save()
+
+    def get_user_name(self, u):
+        if u:
+            if u.first_name and u.last_name:
+                user = u.last_name + ", " + u.first_name
+            else:
+                user = u.username()
+        else:
+            user = "anonymous"
+
+        return user
+        
 
     def tearDown(self):
         super(TestMaintenanceActivity, self).tearDown()
@@ -4645,9 +4657,8 @@ class TestMaintenanceActivity(NellTestCase):
 
     def test_contacts(self):
         ma = Maintenance_Activity.objects.all()[0]
-        contacts = ma.get_contacts()
-        self.assertEqual(len(contacts), 1)
-        self.assertEqual(contacts[0].first_name, "Phaedra")
+        contacts = ma.contacts
+        self.assertEqual(contacts, "Creager, Phaedra")
 
     def _add_approval(self):
         ma = Maintenance_Activity.objects.all()[0]
@@ -4680,7 +4691,7 @@ class TestMaintenanceActivity(NellTestCase):
         self.assertEqual(len(ma.get_modifications()), 1)
 
 class TestIcalAntioch(NellTestCase):
-        
+
     def testWriteSchedule(self):
         #ic = IcalAntioch.IcalAntioch(None, None)
         ic = IcalAntioch(None, None)
