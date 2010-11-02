@@ -21,7 +21,7 @@ from nell.utilities.database      import DSSPrime2DSS
 from nell.utilities.receiver      import ReceiverCompile
 from nell.utilities               import UserInfo, NRAOBosDB, UpdateEphemeris
 from nell.utilities               import SchedulingNotifier
-from nell.utilities               import PSTMirrorDB
+from nell.utilities               import PSTMirrorDB, PSTQueryService
 
 # Test field data
 fdata = {"total_time": "3"
