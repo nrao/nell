@@ -1,5 +1,5 @@
 from datetime                       import datetime, timedelta
-from decorators                     import is_operator
+from decorators                     import is_staff
 from django.contrib.auth.decorators import login_required
 from django.http                    import HttpResponse, HttpResponseRedirect
 from django.shortcuts               import render_to_response
@@ -50,7 +50,7 @@ def moc_degraded(request, *args, **kws):
                             , dict(requestor = requestor, p = period))
 
 @login_required
-@is_operator
+@is_staff
 def gbt_schedule(request, *args, **kws):
     """
     Serves up a GBT schedule page tailored for Operations.

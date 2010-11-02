@@ -439,32 +439,36 @@ class Maintenance_Activity(models.Model):
                                     .filter(rc_code=i[2])[0]  #get resource 'x' in 'O=x'
 
                             for j in other_summary:
-                                if 'O=' in j and j[2] not in other.compatibility:
-                                    rval.append(i)
+                                if 'N' not in i:    # 'None' does not conflict with anything
+                                    if 'O=' in j and j[2] not in other.compatibility:
+                                        rval.append(i)
 
-                                if 'R=' in j and 'R' not in other.compatibility:
-                                    rval.append(i)
+                                    if 'R=' in j and 'R' not in other.compatibility:
+                                        rval.append(i)
 
-                                if 'B=' in j and 'B' not in other.compatibility:
-                                    rval.append(i)
+                                    if 'B=' in j and 'B' not in other.compatibility:
+                                        rval.append(i)
 
                         else: #everything else: receivers, backends
 
                             # R, U, D (for Receiver, Up and Down) are
                             # equivalent.  Flag conflicts if any of
                             # these match, i.e. U=600 matches R=600.
+                            # Also check against 'O=' not N
+                            
                             x = re.match('[RUD]=.', i)
 
                             for j in other_summary:
                                 y = re.match('[RUD]=.', j)
 
                                 if x and y:
-                                    if i[2] == j[2]:
+                                    if i[2:] == j[2:]:
                                         rval.append(i)
                                 elif i == j:
-                                    rval.append(i)
+                                    if not 'T=' in i and not 'S=' in i and not 'O=' in i:
+                                        rval.append(i)
 
-                                if 'O=' in j:
+                                elif 'O=' in j and 'N' not in j:
                                     other = Maintenance_Other_Resources.objects\
                                             .filter(rc_code=j[2])[0]  #get resource 'x' in 'O=x'
 

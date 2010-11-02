@@ -42,6 +42,9 @@ class User(models.Model):
     def isOperator(self):
         return self.role.role == "Operator"
 
+    def isStaff(self):
+        return self.auth_user.is_staff
+
     def getStaticContactInfo(self, use_cache = True):
         return UserInfo().getProfileByID(self, use_cache)
 

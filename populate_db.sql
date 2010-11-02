@@ -174,7 +174,7 @@ INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'M&C control of ante
 
 INSERT INTO maintenance_other_resources VALUES (DEFAULT, 'None', 'N', 'NIL');
 INSERT INTO maintenance_other_resources VALUES (DEFAULT, 'LO System', 'L', 'INB');
-INSERT INTO maintenance_other_resources VALUES (DEFAULT, 'IF System', 'I', 'LNR');
+INSERT INTO maintenance_other_resources VALUES (DEFAULT, 'IF System', 'I', 'LNRUD');
 
 INSERT INTO backends VALUES (DEFAULT, 'Caltech Continuum Backend', 'CCB', 'K');
 INSERT INTO backends VALUES (DEFAULT, 'Caltech-Green Bank-Swinbourne Recorder 2', 'CGSR2', 'R');

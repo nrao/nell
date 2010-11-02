@@ -42,6 +42,19 @@ def is_operator(view_func):
         return view_func(request, *args, **kwds)
     return decorate
 
+def is_staff(view_func):
+    """
+    If the logged in user isn't a staff member, redirect elsewhere.
+    Otherwise, proceed as planned.
+    """
+    redirect_url = '/schedule/public'
+    def decorate(request, *args, **kwds):
+        requestor = get_requestor(request)
+        if not requestor.isStaff():
+            return HttpResponseRedirect(redirect_url)
+        return view_func(request, *args, **kwds)
+    return decorate
+
 def has_access(view_func):
     """
     If the logged in user isn't allowed to see this page and if he/she isn't
