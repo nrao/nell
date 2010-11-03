@@ -3,8 +3,8 @@ from django.db.models import Q
 from pytz             import timezone
 import pytz
 
-from nell.utilities   import UserInfo
 from sesshuns.models  import *
+from nell.utilities   import UserInfo, NRAOBosDB
 
 def getReceivers(names):
     rcvrs = []

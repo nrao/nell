@@ -107,7 +107,7 @@ class WindowHttpAdapter (object):
             if start is not None and duration is not None \
                 and sesshun is not None:
                # create it! reuse the period code!
-               p = PeriodHttpAdapter.create()
+               p = Period.create()
                pfdata = dict(date = date
                            , time = time
                            , duration = duration

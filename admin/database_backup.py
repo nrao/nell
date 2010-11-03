@@ -57,4 +57,4 @@ if __name__ == "__main__":
         print "No backup removal supported for %s."  % db
 
     print "Cleaning up Cleo forecast files."
-    os.system("rm /home/dss/release/antioch/admin/CleoDBImport*; rm -rf /home/dss/release/antioch/admin/Forecasts*")
+    os.system("rm /home/dss/release/antioch/admin/CleoDBImport_*; rm -rf /home/dss/release/antioch/admin/Forecasts*")

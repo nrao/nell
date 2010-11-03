@@ -1,6 +1,5 @@
 from datetime                   import datetime, timedelta
 from sesshuns.models            import *
-from sesshuns.httpadapters      import PeriodHttpAdapter
 from nell.utilities.TimeAgent   import dtDiffHrs, quarter
 from nell.utilities             import Score
 
@@ -122,7 +121,7 @@ class ScheduleTools(object):
                                                )
                 accounting.save()                             
                 pending = first(Period_State.objects.filter(abbreviation = 'P'))
-                period_2cd_half = PeriodHttpAdapter.create(session  = p.session
+                period_2cd_half = Period.create(session  = p.session
                                        , start    = end
                                        , duration = new_dur
                                        , state    = pending
@@ -130,6 +129,7 @@ class ScheduleTools(object):
                                        , forecast = end
                                        , accounting = accounting 
                                          )
+                init_rcvrs_from_session(period_2cd_half.session, period_2cd_half)
                 self.scorePeriod(period_2cd_half)
                 period_2cd_half.save()                         
                 # the original period is really giving up time to the 
@@ -168,13 +168,14 @@ class ScheduleTools(object):
                                  , description  = "") #description)
             pa.save()   
             scheduled = first(Period_State.objects.filter(abbreviation = 'S'))
-            p = PeriodHttpAdapter.create(session    = sesshun
+            p = Period.create(session    = sesshun
                      , start      = start
                      , duration   = duration
                      , score      = 0.0
                      , state      = scheduled
                      , forecast   = start
                      , accounting = pa)
+            init_rcvrs_from_session(p.session, p)
             self.scorePeriod(p)
             p.save()    
             descDct["got_time"].append((p.__str__(),p.duration, p.id))

@@ -1,8 +1,10 @@
+from common                          import *
 from revision_register               import register_for_revision
+from utils                           import *
+
 from Allotment                       import Allotment
 from Blackout                        import Blackout
 from Column                          import Column
-from common                          import *
 from Email                           import Email
 from ExplorerConfiguration           import ExplorerConfiguration
 from Filter                          import Filter

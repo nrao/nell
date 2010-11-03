@@ -1,6 +1,6 @@
 from django.db         import models
 
-from utilities            import adjustDateTimeTz
+from utilities.TimeAgent  import adjustDateTimeTz
 from common               import *
 from Project              import Project
 from Sesshun              import Sesshun
@@ -276,6 +276,20 @@ class Period(models.Model):
             ps = [p for p in ps if p.state.abbreviation != 'D']
         return ps
 
+    @staticmethod
+    def create(*args, **kws):
+        """
+        Recomended way of 'overriding' the constructor.  Here we want to make
+        sure that all new Periods init their rcvrs correctly.
+        """
+        p = Period(**kws)
+        # don't save & init rcvrs unless you can
+        if not kws.has_key("session"):
+            # need the session first!
+            return p
+        p.save()
+        return p
+            
     @staticmethod
     def get_periods_by_observing_type(start, end, ot):
         typeQ = models.Q(session__observing_type__type = ot)

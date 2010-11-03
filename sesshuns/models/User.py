@@ -2,11 +2,12 @@ from datetime                  import datetime
 from django.contrib.auth.models import User as AuthUser
 from django.core.cache         import cache
 from django.db                 import models
-from nell.utilities            import UserInfo, NRAOBosDB
 from sets                      import Set
 
-from Role       import Role
-from common     import first
+from Role              import Role
+from common            import first
+from nell.utilities.UserInfo import UserInfo # Why can't we import this with NRAOBosDB?
+from nell.utilities    import NRAOBosDB
 
 class User(models.Model):
     original_id = models.IntegerField(null = True, blank = True)
