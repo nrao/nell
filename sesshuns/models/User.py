@@ -45,6 +45,13 @@ class User(models.Model):
     def isStaff(self):
         return self.auth_user.is_staff
 
+    def checkAuthUser(self):
+        if self.auth_user_id is None:
+            from django.contrib.auth.models import User as AuthUser
+            au = first(AuthUser.objects.filter(username = self.username()))
+            self.auth_user = au
+            self.save()
+
     def getStaticContactInfo(self, use_cache = True):
         return UserInfo().getProfileByID(self, use_cache)
 

@@ -50,6 +50,7 @@ def is_staff(view_func):
     redirect_url = '/schedule/public'
     def decorate(request, *args, **kwds):
         requestor = get_requestor(request)
+        requestor.checkAuthUser()
         if not requestor.isStaff():
             return HttpResponseRedirect(redirect_url)
         return view_func(request, *args, **kwds)
