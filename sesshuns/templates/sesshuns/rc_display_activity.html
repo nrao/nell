@@ -206,6 +206,30 @@
             {{ maintenance_period }}
           </td>
         </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"<b>Recurrent</b></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ repeat_activity }}
+          </td>
+        </tr>
+
+      {% if repeat_activity %}
+      <tr><td width="15%" class="table_captions" align="right" valign="top"<b>Recurrency interval</b></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ repeat_interval }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"<b>Recurrency end</b></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ repeat_end }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"<b>Template activity</b></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ repeat_template }}
+          </td>
+        </tr>
+      {% endif %}
+
     </table>
 
     <table WIDTH="95%">
