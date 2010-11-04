@@ -80,7 +80,7 @@ class Maintenance_Activity(models.Model):
     # definition of the MA.
     repeat_template    = models.ForeignKey('self', null = True, related_name = 'repeat_template_instance')
     future_template    = models.ForeignKey('self', null = True, related_name = 'future_template_instance')
-    repeat_interval    = models.IntegerField(null = True) # 0, 1, 7 for none, daily, weekly
+    repeat_interval    = models.IntegerField(null = True) # 0, 1, 7, 30 for none, daily, weekly, monthly
     repeat_end         = models.DateField(null = True)    # repeat until this date.
 
 
@@ -97,7 +97,7 @@ class Maintenance_Activity(models.Model):
         receivers     = self.receivers.all() if self.id else 'None'
         backends      = self.backends.all() if self.id else 'None'
         rcvr_ch       = self.receiver_changes.all() if self.id else 'None'
-        start         = self._start if self._start else 'None'
+        start         = self.get_start() if self._start else 'None'
         duration      = self.duration if self.duration else 'None'
         description   = self.description if self.description else 'None'
         approved      = "Yes" if self.approved else "No"
@@ -105,13 +105,32 @@ class Maintenance_Activity(models.Model):
         approvals     = self.approvals.all() if self.id else 'None'
         modifications = self.modifications.all() if self.id else 'None'
 
+        interval_names = {0:"None", 1:"Daily", 7:"Weekly", 30:"Monthly"}
+
+        if self.is_repeat_activity():
+            repeat = "Yes"
+            repeat_template = self.repeat_template.id
+            repeat_interval = interval_names[self.repeat_template.repeat_interval]
+            repeat_end = self.repeat_template.repeat_end
+        elif self.is_repeat_template():
+            repeat = "Template"
+            repeat_template = self.id
+            repeat_interval = interval_names[self.repeat_interval]
+            repeat_end = self.repeat_end
+        else:
+            repeat = "No"
+            repeat_template = "None"
+            repeat_interval = interval_names[self.repeat_interval]
+            repeat_end = self.repeat_end
+
         repstr = "Subject: %s\nLocation: %s\nTelescope Resource: %s\nSoftware Resource: %s\n"
         repstr += "Receivers: %s\nBackends: %s\nReceiver changes: %s\nStart: %s\n"
         repstr += "Description: %s\nApproved: %s\nApprovals: %s\n"
         repstr += "Modifications: %s\nContacts: %s\n"
+        repstr += "Repeat: %s\nRepeat template: %s\nRepeat interval: %s\nRepeat end: %s\n"
         repstr %= (subject, location, tel_resource, soft_resource, receivers,
                    backends, rcvr_ch, start, description, approved, approvals,
-                   modifications, contacts)
+                   modifications, contacts, repeat, repeat_template, repeat_interval, repeat_end)
 
         return repstr
 
@@ -433,6 +452,7 @@ class Maintenance_Activity(models.Model):
                                          .filter(rc_code=i[2])[0]
 
                                     if j[2] not in sr.compatibility:
+                                        print "i =", i, "\tj =", j
                                         rval.append(i)
                         elif 'O=' in i:
                             other = Maintenance_Other_Resources.objects\
@@ -455,7 +475,7 @@ class Maintenance_Activity(models.Model):
                             # equivalent.  Flag conflicts if any of
                             # these match, i.e. U=600 matches R=600.
                             # Also check against 'O=' not N
-                            
+
                             x = re.match('[RUD]=.', i)
 
                             for j in other_summary:
@@ -612,7 +632,7 @@ class Maintenance_Activity(models.Model):
     @staticmethod
     def list_repeat_activities():
         for i in Maintenance_Activity.objects.all():
-            if not i.is_repeat_template():
+            if i.is_repeat_activity():
                 print "%s\t%s\t%s" % (i.get_start('EST'), i.id, i.repeat_template.id),
 
                 if i.deleted:

@@ -28,7 +28,6 @@
 ######################################################################
 
 from django.contrib.auth.decorators import login_required
-#from django.contrib.auth.models     import User as djangoUser
 from django.http                    import HttpResponse, HttpResponseRedirect
 from django.template                import Context, loader
 from django.shortcuts               import render_to_response
@@ -115,6 +114,9 @@ class MyCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
 
 class RCAddActivityForm(forms.Form):
 
+#    error_css_class = 'error'
+    required_css_class = 'required'
+
     subject_req     = True
     date_req        = True
     time_req        = True
@@ -184,7 +186,7 @@ class RCAddActivityForm(forms.Form):
     description = forms.CharField(required = description_req, widget = forms.Textarea)
     intervals = [(0, "None"), (1, "Daily"), (7, "Weekly")]
     recurrency_interval = forms.ChoiceField(choices = intervals)
-    recurrency_until = forms.DateField(required = False)
+    recurrency_until = forms.DateField(required = True)
 
     entity_id = forms.IntegerField(required = False, widget = forms.HiddenInput)
 
@@ -209,6 +211,16 @@ def display_maintenance_activity(request, activity_id = None):
         end = start + duration
         u = get_requestor(request)
         supervisors = ["rcreager", "ashelton", "banderso", "mchestnu"]
+        interval_names = {0:"None", 1:"Daily", 7:"Weekly", 30:"Monthly"}
+
+        if ma.is_repeat_activity():
+            repeat_interval = interval_names[ma.repeat_template.repeat_interval]
+            repeat_end = ma.repeat_template.repeat_end
+            repeat_template = ma.repeat_template.id
+        else:
+            repeat_interval = "None"
+            repeat_end = "None"
+            repeat_template = "None"
 
         params = {'subject'            : ma.subject,
                   'date'               : start.date(),
@@ -230,7 +242,10 @@ def display_maintenance_activity(request, activity_id = None):
                   'receiver_swap'      : ma.receiver_changes.all(),
                   'supervisor_mode'    : True if (u and u.username() in supervisors) else False,
                   'maintenance_period' : ma.period_id,
-                  'repeat_activity'    : ma.is_repeat_activity()
+                  'repeat_activity'    : ma.is_repeat_activity(),
+                  'repeat_interval'    : repeat_interval,
+                  'repeat_end'         : repeat_end,
+                  'repeat_template'    : repeat_template
                  }
     else:
         params = {}
@@ -288,14 +303,15 @@ def add_activity(request, period_id = None, year = None, month = None, day = Non
         initial_data = {'date'              : start.date(),
                         'time_hr'           : start.hour,
                         'time_min'          : start.minute,
-                        'end_choice'        : "duration",
-                        'end_time_hr'       : 1,
+                        'end_choice'        : "end_time",
+                        'end_time_hr'       : start.hour + 1,
                         'end_time_min'      : 0,
                         'responsible'       : user,
                         'telescope'         : default_telescope.id,
                         'software'          : default_software.id,
                         'other_resource'    : default_other.id,
-                        'entity_id'         : period_id
+                        'entity_id'         : period_id,
+                        'recurrency_until'  : start + timedelta(days = 30)
                         }
 
         form = RCAddActivityForm(initial = initial_data)
@@ -309,7 +325,7 @@ def add_activity(request, period_id = None, year = None, month = None, day = Non
 
 def _modify_activity_form(ma):
     start = ma.get_start('EST')
-    duration = timedelta(hours = ma.duration)
+    end = ma.get_end('EST')
     change_receiver = True if len(ma.receiver_changes.all()) else False
     old_receiver = None if not change_receiver else \
                    ma.receiver_changes.all()[0].down_receiver_id
@@ -320,9 +336,9 @@ def _modify_activity_form(ma):
                     'date'                : start.date(),
                     'time_hr'             : start.hour,
                     'time_min'            : start.minute,
-                    'end_choice'          : "duration",
-                    'end_time_hr'         : duration.seconds / 3600,
-                    'end_time_min'        : duration.seconds % 3600 / 60,
+                    'end_choice'          : "end_time",
+                    'end_time_hr'         : end.hour,
+                    'end_time_min'        : end.minute,
                     'responsible'         : ma.contacts,
                     'location'            : ma.location,
                     'telescope'           : ma.telescope_resource.id,
@@ -545,9 +561,17 @@ def process_activity(request, ma, form):
     # If this is a template, modify all subsequent activities based on
     # it.
 
-    if ma.is_repeat_template() or ma.is_future_template():
+    if ma.is_repeat_template():
+        template = ma
+    elif ma.is_future_template():
+        template = ma.repeat_template
+    else:
+        template = None
+
+    if template:
+
         mas = [m for m in Maintenance_Activity.objects\
-               .filter(repeat_template = ma.repeat_template)\
+               .filter(repeat_template = template)\
                .filter(_start__gte = ma._start)]
 
         # times neet to be carried over as ET so that the underlying

@@ -167,7 +167,7 @@ INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Azimuth system loc
 INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Elevation axis movement only; Az locked out.', 'E', 'NA');
 
 INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'Full M&C system', 'F', 'PN');
-INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'Full M&C - Not available for others ', 'U', '');
+INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'Full M&C - Not available for others ', 'U', 'N');
 INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'Partial M&C system without telescope control', 'P', 'PFNA');
 INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'No M&C system required ', 'N', 'FUPNA');
 INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'M&C control of antenna only ', 'A', 'PN');

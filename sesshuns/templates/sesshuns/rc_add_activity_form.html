@@ -63,6 +63,11 @@ hold the form controls.
     color: #000000;
     }
 
+    .errorlist
+    {
+    color: red;
+    font-weight: bold;
+    } 
   </style>
 
   <script language="javascript">
@@ -180,7 +185,7 @@ hold the form controls.
 
       {# The subject field #}
       <div class="fieldWrapper">
-        <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Subject</B></td>
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><font color="red">*</font><B>Subject</B></td>
           <td width="80%" class="table_fields" align="left" valign="top" colspan="2">
             {{ form.subject.errors }}
             {{ form.subject }}
@@ -189,7 +194,7 @@ hold the form controls.
       </div>
 
       <div class="fieldWrapper">
-        <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Start</B></td>
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><font color="red">*</font><B>Start</B></td>
           <td width="80%" class="table_fields" align="left" valign="middle" colspan="2">
             <label><b>Date</b>&nbsp;&nbsp;</label>
             {{ form.date.errors }}
@@ -206,7 +211,7 @@ hold the form controls.
       </div>
 
       <div class="fieldWrapper">
-        <tr><td width="15%" class="table_captions" align="right" valign="top"><b>End</b></td>
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><font color="red">*</font><b>End</b></td>
           <td width="40%" class="table_fields" align="left" valign="top">
             {{ form.end_choice.errors }}
             {{ form.end_choice }}
@@ -222,7 +227,7 @@ hold the form controls.
       </div>
 
       <div class="fieldWrapper">
-        <tr><td width="15%" class="table_captions" align="right" valign="top"><b>Responsible</b></td>
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><font color="red">*</font><b>Responsible</b></td>
           <td width="80%" class="table_fields" align="left" valign="middle" colspan="2">
             {{ form.responsible.errors }}
             {{ form.responsible }}
@@ -287,22 +292,22 @@ hold the form controls.
           </div>
 
       <div class="fieldWrapper">
-        <tr><td width="15%" class="table_captions" align="right" valign="top"><b>Backends</b></td>
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><b>Other</b></td>
           <td width="40%" class="table_fields" align="left" valign="top">
-            {{ form.backends.errors }}
+            {{ form.other_resource.errors }}
             {% filter split_over_two_table_columns:'</td><td width="40%" class="table_fields" align="left" valign="top"' %}
-            {{ form.backends }}
+            {{ form.other_resource }}
             {% endfilter %}
           </td>
         </tr>
       </div>
 
       <div class="fieldWrapper">
-        <tr><td width="15%" class="table_captions" align="right" valign="top"><b>Other</b></td>
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><b>Backends</b></td>
           <td width="40%" class="table_fields" align="left" valign="top">
-            {{ form.other_resource.errors }}
+            {{ form.backends.errors }}
             {% filter split_over_two_table_columns:'</td><td width="40%" class="table_fields" align="left" valign="top"' %}
-            {{ form.other_resource }}
+            {{ form.backends }}
             {% endfilter %}
           </td>
         </tr>
@@ -340,6 +345,8 @@ hold the form controls.
 
   </form>
   </div>
+
+  <font color="red">*</font> denotes required field
 
   {% comment %}
 
