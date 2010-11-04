@@ -19,7 +19,7 @@ class ProjectHttpAdapter (object):
         fsemester  = fdata.get("semester", "09C")
         semester   = first(Semester.objects.filter(semester = fsemester))
         try:
-            f_lname, f_fname = fdata.get("friends", "").split(", ")
+            f_lname, f_fname = fdata.get("friend", "").split(", ")
         except ValueError:
             f_lname, f_fname = ("", "")
         friend = first(User.objects.filter(last_name = f_lname, first_name = f_fname))

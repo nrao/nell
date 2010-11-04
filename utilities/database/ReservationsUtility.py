@@ -51,13 +51,18 @@ class ReservationsUtility(object):
         # but this is the only one that's been tested enough
         users = User.objects.all()
         for user in users:
-            print user
-            if user.username is not None:
+            try:
+                username = user.username()
+            except:
+                print "Error retrieving username."
+                username = None
+            print user, username
+            if username is not None:
                 try:
-                    rs = self.bos.getReservationsByUsername(user.username
+                    rs = self.bos.getReservationsByUsername(username
                                                           , use_cache = False)
                 except:
-                    print "Error retrieving reservations for: ", user, user.username
+                    print "Error retrieving reservations for: ", user, username
                     rs = []
                 if len(rs) != 0:
                     print "!!!!!!!!!!!!!!", rs

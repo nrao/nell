@@ -1,0 +1,354 @@
+{% extends "sesshuns/base.html" %}
+
+{% comment %}
+
+This is the HTML template for the resource calendar 'Add/Edit Record'
+form.  The controls are laid out using a table.  The table attributes
+are defined in the embedded CSS classes 'table.maintenance' for the
+table itself, '.table_header' for the first row in the table,
+'.table_captions' for the first column in the table, which holds the
+captions for the resources, and '.table_fields' for the columns that
+hold the form controls.
+
+{% endcomment %}
+
+  {% block title %}Add/Edit Record{% endblock %}
+
+  {% block scripts %}
+  <link type="text/css" href="/static/css/lib/themes/base/ui.all.css" rel="stylesheet" />
+  <style type="text/css" media="print">
+    body {line-height:1.5;font-family:"Helvetica Neue", Arial, Helvetica,
+              sans-serif;color:#000;background:none;font-size:7pt;}
+  </style>
+
+  <style type="text/css">
+
+    label {font-weight:normal;}
+
+    table.maintenance
+    {
+    border-collapse:collapse;
+    border: 1px solid black;
+    }
+
+    .table_header
+    {
+    text-align:center;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 12px;
+    background-color: #003366;
+    color: #FFFFFF;
+    font-weight: bold;
+    }
+
+    .table_captions
+    {
+    text-align:right;
+    border: 1px solid black;
+    font-size: 12px;
+    font-weight: normal;
+    font-family: Helvetica, Arial, sans-serif;
+    background-color: #DEB887;
+    color: #000000;
+    }
+
+    .table_fields
+    {
+    border: 1px solid black;
+    font-size: 12px;
+    font-weight: normal;
+    font-family: Helvetica,
+    Arial, sans-serif;
+    background-color: #FEFAD8;
+    color: #000000;
+    }
+
+  </style>
+
+  <script language="javascript">
+    /* Found this nice little function at
+    http://www.netlobo.com/javascript_get_element_id.html */
+
+    function returnObjById( id )
+    {
+        if (document.getElementById)
+            var returnVar = document.getElementById(id);
+        else if (document.all)
+            var returnVar = document.all[id];
+        else if (document.layers)
+            var returnVar = document.layers[id];
+        return returnVar;
+    }
+
+    /* This is called when the change receiver checkbox is clicked.
+    If it is checked, it enables the selection widgets for the
+    receiver change. Otherwise, it disables them.  Getting the ids is
+    a bit of a kluge.  Django 1.0 defaults to "id_<html name>".  Until
+    I can discover a nice way to get at the id, I'll have to rely on
+    this - RC */
+
+    function EnableWidget()
+    {
+        var chbx = returnObjById("id_{{ form.change_receiver.html_name }}")
+        var up_rcvr = returnObjById("id_{{ form.new_receiver.html_name }}")
+        var down_rcvr = returnObjById("id_{{ form.old_receiver.html_name }}")
+
+        if (chbx.checked == true)
+        {
+            up_rcvr.disabled = false;
+            down_rcvr.disabled = false;
+        }
+        else
+        {
+            up_rcvr.disabled = true;
+            down_rcvr.disabled = true;
+        }
+    }
+
+{% comment %}
+    function GetResponsible()
+    {
+        var dropdn = returnObjById("id_{{ form.responsible.html_name }}");
+        var resp_field = returnObjById("id_{{ form.responsible_field.html_name }}");
+        var text = resp_field.value;
+        var selection = dropdn.options[dropdn.selectedIndex].text;
+
+        if (text)
+        {
+            resp_field.value = text + ", " + selection;
+        }
+        else
+        {
+            resp_field.value = selection;
+        }
+    }
+
+    function EditResponsibleField()
+    {
+        var dropdn = returnObjById("id_{{ form.responsible.html_name }}");
+        dropdn.selectedIndex = -1;
+    }
+{% endcomment %}
+
+  </script>
+
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"></script>
+
+<!--  
+  <link type="text/css" href="http://jqueryui.com/latest/themes/base/ui.all.css" rel="stylesheet" /> >
+  <script type="text/javascript" src="http://jqueryui.com/latest/jquery-1.3.2.js"></script> 
+  <script type="text/javascript" src="http://jqueryui.com/latest/ui/ui.core.js"></script>
+  <script type="text/javascript" src="http://jqueryui.com/latest/ui/ui.datepicker.js"></script>
+-->  
+  <script type="text/javascript">
+  $(document).ready(function(){
+    $("#id_{{ form.date.html_name }}").datepicker();
+    $("#id_{{ form.recurrency_until.html_name }}").datepicker()
+    setTimeout('document.getCalendar.submit()', 1000*60*5);
+  });
+  </script>
+
+  {% endblock %}
+
+  {% load custom %}
+
+  {% block content %}
+  <div id="header" class="span-24 last">
+    <form action="." method="POST">
+
+    {# This are hidden fields, used to stash the period or floating #}
+    {# maintenance activity ID of the maintenance activity between  #}
+    {# the 'GET' and 'POST' calls to the view.                      #}
+    <div class="fieldWrapper">
+          {{ form.entity_id.errors }}
+          {{ form.entity_id }}
+    </div>
+    <div class="fieldWrapper">
+          {{ form.floating.errors }}
+          {{ form.floating }}
+    </div>
+
+    <div align=center>
+    <p>
+          <input name="ActionEvent" type="submit" value="Submit">
+          <input name="ActionEvent" type="submit" value="Submit And Continue">
+    <INPUT NAME="back" TYPE="button" CLASS="stdfont" ONCLICK="javascript:history.go(-1)" VALUE="Back"></p>
+    </div>
+
+    <table class="maintenance">
+      <tr><td class="table_header" align="center" valign="top" colspan="3"><B>Add/Edit Record</B></td></tr>
+
+      {# The subject field #}
+      <div class="fieldWrapper">
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Subject</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top" colspan="2">
+            {{ form.subject.errors }}
+            {{ form.subject }}
+          </td>
+        </tr>
+      </div>
+
+      <div class="fieldWrapper">
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Start</B></td>
+          <td width="80%" class="table_fields" align="left" valign="middle" colspan="2">
+            <label><b>Date</b>&nbsp;&nbsp;</label>
+            {{ form.date.errors }}
+            {{ form.date }}
+            <label>&nbsp;&nbsp<b>Time</b>&nbsp;&nbsp;</label>
+            <label>&nbsp;&nbsp;Hour&nbsp;&nbsp;</label>
+            {{ form.time_hr.errors }}
+            {{ form.time_hr }}
+            <label>&nbsp;&nbsp;Minutes&nbsp;&nbsp;</label>
+            {{ form.time_min.errors }}
+            {{ form.time_min }}
+          </td>
+        </tr>
+      </div>
+
+      <div class="fieldWrapper">
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><b>End</b></td>
+          <td width="40%" class="table_fields" align="left" valign="top">
+            {{ form.end_choice.errors }}
+            {{ form.end_choice }}
+            <td width="40%" class="table_fields" align="left" valign="top">
+            <label>&nbsp;&nbsp;Hour&nbsp;&nbsp;</label>
+            {{ form.end_time_hr.errors }}
+            {{ form.end_time_hr }}
+            <label>&nbsp;&nbsp;Minutes&nbsp;&nbsp;</label>
+            {{ form.end_time_min.errors }}
+            {{ form.end_time_min }}
+            </td>
+        </tr>
+      </div>
+
+      <div class="fieldWrapper">
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><b>Responsible</b></td>
+          <td width="80%" class="table_fields" align="left" valign="middle" colspan="2">
+            {{ form.responsible.errors }}
+            {{ form.responsible }}
+          </td>
+        </tr>
+      </div>
+
+      <div class="fieldWrapper">
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><b>Location</b></td>
+          <td width="80%" class="table_fields" align="left" valign="middle" colspan="2">
+            {{ form.location.errors }}
+            {{ form.location }}
+          </td>
+        </tr>
+      </div>
+
+      <div class="fieldWrapper">
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><b>Telescope</b></td>
+          <td width="40%" class="table_fields" align="left" valign="top">
+            {{ form.telescope.errors }}
+            {% filter split_over_two_table_columns:'</td><td width="40%" class="table_fields" align="left" valign="top"' %}
+            {{ form.telescope }}
+            {% endfilter %}
+          </td>
+        </tr>
+      </div>
+
+      <div class="fieldWrapper">
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><b>Software</b></td>
+          <td width="40%" class="table_fields" align="left" valign="top">
+            {{ form.software.errors }}
+            {% filter split_over_two_table_columns:'</td><td width="40%" class="table_fields" align="left" valign="top"' %}
+            {{ form.software }}
+            {% endfilter %}
+          </td>
+        </tr>
+      </div>
+
+      <div class="fieldWrapper">
+        <tr><td width="15%" class="table_captions" align="right" valign="top" rowspan="2"><b>Receivers</b></td>
+          <td width="40%" class="table_fields" align="left" valign="top">
+            {{ form.receivers.errors }}
+            {% filter split_over_two_table_columns:'</td><td width="40%" class="table_fields" align="left" valign="top"' %}
+            {{ form.receivers }}
+            {% endfilter %}
+          </td>
+        </tr>
+      </div>
+
+      <div class="fieldWrapper">
+            <tr>
+              <td width="80%" class="table_fields" align="left" valign="middle" colspan="2">
+                <label><b>{{ form.change_receiver.label }}</b></label>
+                {{ form.change_receiver.errors }}
+                {{ form.change_receiver }}
+                <label>&nbsp;&nbsp;<em>{{ form.old_receiver.label }}</em></label>
+                {{ form.old_receiver }}
+                <label>&nbsp;&nbsp;<em>{{ form.new_receiver.label }}</em></label>
+                {{ form.new_receiver }}
+              </td>
+            </tr>
+          </div>
+
+      <div class="fieldWrapper">
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><b>Backends</b></td>
+          <td width="40%" class="table_fields" align="left" valign="top">
+            {{ form.backends.errors }}
+            {% filter split_over_two_table_columns:'</td><td width="40%" class="table_fields" align="left" valign="top"' %}
+            {{ form.backends }}
+            {% endfilter %}
+          </td>
+        </tr>
+      </div>
+
+      <div class="fieldWrapper">
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><b>Other</b></td>
+          <td width="40%" class="table_fields" align="left" valign="top">
+            {{ form.other_resource.errors }}
+            {% filter split_over_two_table_columns:'</td><td width="40%" class="table_fields" align="left" valign="top"' %}
+            {{ form.other_resource }}
+            {% endfilter %}
+          </td>
+        </tr>
+      </div>
+
+      <div class="fieldWrapper">
+        <tr><td width="15%" class="table_captions" align="right" valign="top"><b>Description</b></td>
+          <td width="80%" class="table_fields" align="left" valign="middle" colspan="2">
+            {{ form.description.errors }}
+            {{ form.description }}
+          </td>
+        </tr>
+      </div>
+
+          <div class="fieldWrapper">
+            <tr><td width="15%" class="table_captions" align="right" valign="top"><b>Recurrency</b></td>
+              <td width="80%" class="table_fields" align="left" valign="middle" colspan="2">
+                <label><b>Interval</b>&nbsp;&nbsp;</label>
+                {{ form.recurrency_interval.errors }}
+                {{ form.recurrency_interval }}
+                <label>&nbsp;&nbsp<b>until</b>&nbsp;&nbsp;</label>
+                {{ form.recurrency_until.errors }}
+                {{ form.recurrency_until }}
+              </td>
+            </tr>
+          </div>
+    </table>
+
+    <div align=center>
+    <p>
+          <input name="ActionEvent" type="submit" value="Submit">
+          <input name="ActionEvent" type="submit" value="Submit And Continue">
+    <INPUT NAME="back" TYPE="button" CLASS="stdfont" ONCLICK="javascript:history.go(-1)" VALUE="Back"></p>
+    </div>
+
+  </form>
+  </div>
+
+  {% comment %}
+
+  call the EnableWidget() routine to enable the receiver change widget
+  (disabled by default) if this page is loaded to edit an existing
+  activity with the change receivers check box set.
+
+  {% endcomment %}
+  <script type="text/javascript">
+  EnableWidget()
+  </script>  
+  {% endblock %}

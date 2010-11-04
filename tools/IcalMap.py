@@ -74,7 +74,7 @@ class IcalMap:
         count = 1
         for start, end in reservations:
             self.cal.add_component(
-                IcalMap.createReservationEvent(user.username, count, start, end))
+                IcalMap.createReservationEvent(user.username(), count, start, end))
             count += 1
 
     def writeSchedule(self, filepath):

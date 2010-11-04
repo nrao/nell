@@ -12,7 +12,7 @@
     .top_menu {font-size:120%}
     .day_header {background-color:#c3d9ff}
     .project_type {width:1%; text-align:center}
-    .type_test {background-color:#87CEFA} 
+    .type_test {background-color:#87CEFA}
     .type_astronomy {background-color:#EEEEEE}
     .type_commissioning {background-color:#F0E68C}
     .type_calibration {background-color:#FF9933}
@@ -34,12 +34,12 @@
         text-align: left}
   </style>
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"></script>
-<!--  
+<!--
   <link type="text/css" href="http://jqueryui.com/latest/themes/base/ui.all.css" rel="stylesheet" /> >
   <script type="text/javascript" src="http://jqueryui.com/latest/jquery-1.3.2.js"></script>
   <script type="text/javascript" src="http://jqueryui.com/latest/ui/ui.core.js"></script>
   <script type="text/javascript" src="http://jqueryui.com/latest/ui/ui.datepicker.js"></script>
--->  
+-->
   <script type="text/javascript">
   $(document).ready(function(){
     $("#id_start").datepicker();
@@ -72,7 +72,7 @@
           <option>{{d}}</option>
         {% endifequal %}
       {% endfor %}
-    </select> &nbsp; 
+    </select> &nbsp;
     <input type="submit" value="View Schedule"/>
   </p>
   </form>
@@ -85,9 +85,11 @@
   <a href="https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar" target="Support_Staff_Absences_&_Contact_Info" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar', 'Support_Staff_Absences_&_Contact_Info');return true;">
     Support Staff Absences & Contact Info
   </a>
-  &nbsp;
+  |
   Report Links:
   <a href='/schedule/summary'>Schedule & Project Summaries</a>
+  |
+  <a href='/investigators/qualified'>Remote Observers</a>
   <br/> 
   Helpful Links:
   <a href="https://staff.nrao.edu/wiki/bin/view/GB/BackupProjects" target="Backup_Projects" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/BackupProjects', 'Backup_Projects');return true;">
@@ -117,10 +119,13 @@
   </em>
   </strong>
   </center>
+
+  {# The Calendar Table #}
   <table>
+    {# Loop through for each day in the calendar. #}
     {% for day, ps in calendar %}
-    <tr class="day_header"> 
-      <th title="Start and End times for the start day (ET). '+' indicates that the period continues on in an undisplayed date.">{{day|date:"D Y-m-d"}}</th>
+    <tr class="day_header">
+      <th title="Start and End times for the start day (ET). '+' indicates that the period continues on in an undisplayed date."><a href="/resourcecal_add_activity/{{day|date:"Y/m/d"}}/">{{day|date:"D Y-m-d"}}</a></th>
       <th title="Project Type: 'A' : Astronomy, 'C' : Commissioning, 'K' : Calibration, 'M' : 'Maintenance, 'T' : Test">Type</th>
       <th>Project ID</th>
       <th>Project Title</th>
@@ -129,27 +134,121 @@
       <th>Friend</th>
       <th title="Receivers (Names and frequency ranges in GHz) = (RRI) Rcvr_RRI:  0.10 -  1.60, (342) Rcvr_342:  0.29 -  0.40, (450) Rcvr_450:  0.39 -  0.52, (600) Rcvr_600:  0.51 -  0.69, (800) Rcvr_800:  0.68 -  0.92, (1070) Rcvr_1070:  0.91 -  1.23, (L) Rcvr1_2:  1.15 -  1.73, (S) Rcvr2_3:  1.73 -  2.60, (C) Rcvr4_6:  3.95 -  6.10, (X) Rcvr8_10:  8.00 - 10.00, (Hol) Holography: 11.70 - 12.20, (Ku) Rcvr12_18: 12.00 - 15.40, (KFPA) RcvrArray18_26: 17.00 - 27.50, (K) Rcvr18_26: 18.00 - 26.50, (Ka) Rcvr26_40: 26.00 - 39.50, (Q) Rcvr40_52: 38.20 - 49.80, (MBA) Rcvr_PAR: 80.00 - 100.00">Rcvrs</th>
     </tr>
-    {% for start, end,start_cutoff, end_cutoff, p in ps %}
+
+    {###############################################################################}
+    {# Resource calendar maintenance activity 'A' and 'B' go here if it is Monday, #}
+    {# before anything else is output for that day.                                #}
+    {###############################################################################}
+
+    {% if day|day_of_week:0 %}
+
+      {# Floating maintenance activities #}
+      {% for fmaint, start, end, pper, fmas in day|floating_maint_periods %}
+
+          {# display the maintenance period header #}
+          <tr><td>{{start|date:"H:i"}} - {{end|date:"H:i"}}</td>
+          <td class="project_type type_maintenance">M</td>
+          <td><a href="/project/{{ maintenance_prj.pcode }}">{{ maintenance_prj.pcode }}</a>
+            {% if maintenance_prj.notes %} {# append the '(N)' link for project notes. #}
+              <a href="" class="info">(N)<span><p>Project Notes:</p>{{maintenance_prj.notes|escape|linebreaks}}
+              </span></a>
+            {% endif %}
+          </td>
+
+          <td><a href="/resourcecal_add_activity/{{ pper.id }}/">Maintenance Period {{fmaint}}</a></td>
+          <td><a href="/profile/{{maintenance_prj.principal_investigator.id}}">
+            {{maintenance_prj.principal_investigator.last_name|pretty_none}}
+              </a>
+          </td>
+          <td>
+            {% for o in maintenance_prj.get_sanctioned_observers %}
+              <span title="Phones: {{o.user.getStaticContactInfo.phones|format_list}}, Dynamic: {{o.user.contact_instructions}}, Reservations: {{o.user.getReservations|format_reservations}}">
+                {{forloop.counter}}) <a href="/profile/{{o.user.id}}">{{o.user.last_name|pretty_none}}</a>
+              </span>
+            {% endfor %}
+          </td>
+          <td>
+            {% if maintenance_prj.friend %}
+            <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar', 'Support Staff Absences & Contact Info', 'width=1000, height=700, scrollbars=yes');return true;">
+              {{maintenance_prj.friend.last_name}}
+            </a>
+            {% else %}
+              {{maintenance_prj.friend.last_name|pretty_none}}
+            {% endif %}
+          </td>
+          <td>
+            {{rschedule|get_receivers:day}}
+          </td>
+          </tr>
+          {# Now display maintenance activities, if they exist for this floating period. #}
+          {% if fmas %}
+            <tr>
+              <td></td>
+              <td></td>
+                <td colspan=7>
+                <table border=1 frame=void rules=all cellpadding=3>
+                    <tr class="project_type type_maintenance" align=left><th>Time</th>
+                  <th>Activity</th></tr>
+                {% for ma in fmas %}
+                  {% if ma.approved %}
+                    <tr>
+                      <td>{{ma.time_range}}</td>
+                      <td><a href="/resourcecal_display_activity/{{ma.id}}/">{{ ma|flag_rc_conflicts:fmas }}</a>
+                          &nbsp;&nbsp;<a href="" class="info">Notes<span>
+                          <p>Description:</p>{{ma.description|escape|linebreaks}}</span></a>
+                  {% else %}
+                    <tr>
+                      <td><i>{{ma.time_range}}</i></td>
+                      <td><a href="/resourcecal_display_activity/{{ma.id}}/"><i>{{ ma|flag_rc_conflicts:fmas }}</i></a>
+                          &nbsp;&nbsp;<a href="" class="info"><i>Notes</i><span>
+                          <p>Description:</p>{{ma.description|escape|linebreaks}}</span></a>
+                  {% endif %} {# approved #}
+                {% endfor %}  {# each maintenance activity #}
+                </table>
+              </td>
+          {% endif %}         {# if fmas #}
+      {% endfor %}            {# for fmaint in floating_maint #}
+
+    {% endif %}               {# if day|day_of_week:0 #}
+
+    {####################################################}
+    {# this for-block loops for each period in the day. #}
+    {####################################################}
+
+    {% for start, end, start_cutoff, end_cutoff, p, mas in ps %}
+
+      {# Notify operator of minimum observing condition (MOC) failure #}
       {% if requestor.isOperator and p|moc_reschedule %}
         <script type="text/javascript">
           window.open("/period/{{p.id}}/moc_reschedule", "MOC Failure", "width=1000,height=300");
         </script>
       {% endif %}
+
+      {# Notify operator of MOC degradation #}
       {% if requestor.isOperator and p|moc_degraded %}
         <script type="text/javascript">
           window.open("/period/{{p.id}}/moc_degraded", "MOC Degraded", "width=1000,height=300");
         </script>
       {% endif %}
+
+      {# New table row for the period #}
       <tr class="{{p|moc_class}}">
+
+      {# The Date/Time column #}
+      {# start/end cutoff indicates that the period's start/end occurs before/after day. #}
       {% if start_cutoff or end_cutoff %}
         {%if start_cutoff %}
           <td>+{{start|date:"H:i"}} - {{end|date:"H:i"}}</td>
         {% else %}
           <td>{{start|date:"H:i"}} - {{end|date:"H:i"}}+</td>
         {% endif %}
-      {% else %}    
+      {% else %}
           <td>{{start|date:"H:i"}} - {{end|date:"H:i"}}</td>
-      {% endif %}    
+      {% endif %}
+
+      {# The 'Type' column                                            #}
+      {# Looking at the period type to set the data row class.        #}
+      {# This is what sets the 'Type' background color in the display #}
       {% ifequal p.session.project.project_type.type "non-science" %}
         {% if p.session.project.is_maintenance %}
           <td class="project_type type_maintenance" >{{p.session.project|project_type}}</td>
@@ -163,36 +262,47 @@
       {% else %}
           <td class="project_type type_astronomy">{{p.session.project|project_type}}</td>
       {% endifequal %}
+
+      {# The 'project ID' column. #}
       <td>
-      {% if not p.moc_met and not p.moc_ack %}
+      {% if not p.moc_met and not p.moc_ack %} {# blink if MOC event not acknowledged. #}
         <blink>
       {% endif %}
+
         <a href="/project/{{p.session.project.pcode}}">{{p.session.project.pcode}}</a>
-        {% if p.session.project.notes %}
+        {% if p.session.project.notes %} {# append the '(N)' link for project notes. #}
           <a href="" class="info">(N)<span><p>Project Notes:</p>{{p.session.project.notes|escape|linebreaks}}</span></a>
         {% endif %}
+
       {% if not p.moc_met and p.moc_ack %}
         </blink>
       {% endif %}
+
       </td>
+
+      {# data for 'Project Title' column #}
       {% ifequal p.session.project.project_type.type "science" %}
         <td>
+          {# output the project title as an anchor link to the proposal's page on the rescal #}
           <a href="#" onClick="window.open('http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}', 'Proposal Cover Page', 'width=1000, height=700, scrollbars=yes');return true;">{{p.session.project.name}}</a>
+
           {% if not p.moc_met and p.moc_ack %}
             <img src="/static/images/checked.png" />
           {% endif %}
+
           {% if p|has_lost_time %}
             <br/>
             (Lost Time: {{p|get_lost_time}})
           {% endif %}
         </td>
-      {% else %}
+      {% else %} {# something other than 'science' #}
         {% if p.session.project.is_maintenance %}
           <td>
-            <a href="http://gbrescal.gb.nrao.edu/webcal/webcal.dbw?view=day&date={{p.start|date:"Y-m-d"}}">{{p.session.name}}</a>
+            <a href="/resourcecal_add_activity/{{p.id}}/">{{p.session.name}}</a>
+            {# adds a little message about scheduled receiver change: 'Add: <rx>, Remove: <rx> #}
             {{rschedule|get_receiver_change:day}}
           </td>
-        {% else %}
+        {% else %} {# non-science and non-maintenance #}
           <td>
             {{p.session.name}}
             {% if not p.moc_met and p.moc_ack %}
@@ -203,20 +313,26 @@
               (Lost Time: {{p|get_lost_time}})
             {% endif %}
           </td>
-        {% endif %}
-      {% endifequal %}
+        {% endif %}    {# end of maintenance/other case #}
+      {% endifequal %} {# end of test for science case  #}
+
+      {# 'PI' (principal investigator) column. #}
       <td>
         <a href="/profile/{{p.session.project.principal_investigator.id}}">
           {{p.session.project.principal_investigator.last_name|pretty_none}}
         </a>
       </td>
+
+      {# 'data for 'Observers' column.  May be more than one observer. #}
       <td>
         {% for o in p.session.project.get_sanctioned_observers %}
           <span title="Phones: {{o.user.getStaticContactInfo.phones|format_list}}, Dynamic: {{o.user.contact_instructions}}, Reservations: {{o.user.getReservations|format_reservations}}">
-            {{forloop.counter}}) <a href="/profile/{{o.user.id}}">{{o.user.last_name|pretty_none}}</a> 
+            {{forloop.counter}}) <a href="/profile/{{o.user.id}}">{{o.user.last_name|pretty_none}}</a>
           </span>
         {% endfor %}
       </td>
+
+      {# data for 'Friend' column. #}
       <td>
         {% if p.session.project.friend %}
         <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar', 'Support Staff Absences & Contact Info', 'width=1000, height=700, scrollbars=yes');return true;">
@@ -226,18 +342,111 @@
           {{p.session.project.friend.last_name|pretty_none}}
         {% endif %}
       </td>
+
+      {# data for 'Rcvrs' column. #}
       <td>
+        {# If the period is a science period, gets the period's receiver list   #}
+        {# and outputs them.  If it is a maintenance day, looks at the receiver #}
+        {# schedule and outputs all the receiver for that day.                  #}
         {% if p.session.project.is_maintenance %}
           {{rschedule|get_receivers:day}}
         {% else %}
           {{p.receiver_list}}
         {% endif %}
       </td>
-    </tr>
-    {% endfor %}
-    {% endfor %}
+    </tr>       {# end of one table row #}
+
+    {#####################################################################}
+    {# Now output all the maintenance activities in their own table.     #}
+    {# These will be grouped under a maintenance period if there is one, #}
+    {# or listed right after the non-maintenance period immediately      #}
+    {# preceeding their start times.                                     #}
+    {#####################################################################}
+
+    {% if mas %}
+
+    {################################################################################}
+    {# Output a line containing maintenance contacts, etc. for activities scheduled #}
+    {# *outside* a regular maintenance period. It looks like a regular maintenance  #}
+    {# period, but is not. Those are output above when a maintenance period is      #}
+    {# encountered.                                                                 #}
+    {################################################################################}
+
+        {% if not p.session.project.is_maintenance %}
+          <tr><td>{{mas|get_first_start:"ET"|date:"H:i"}} - {{mas|get_last_end:"ET"|date:"H:i"}}</td>
+              <td class="project_type type_maintenance">M</td>
+              <td><a href="/project/{{ maintenance_prj.pcode }}">{{ maintenance_prj.pcode }}</a>
+                {% if maintenance_prj.notes %} {# append the '(N)' link for project notes. #}
+                  <a href="" class="info">(N)<span><p>Project Notes:</p>{{maintenance_prj.notes|escape|linebreaks}}
+                  </span></a>
+                {% endif %}
+              </td>
+
+              <td><strong>Non-maintenance-period maintenance activity</strong></td>
+              <td><a href="/profile/{{maintenance_prj.principal_investigator.id}}">
+                {{maintenance_prj.principal_investigator.last_name|pretty_none}}
+                  </a>
+              </td>
+              <td>
+                {% for o in maintenance_prj.get_sanctioned_observers %}
+                  <span title="Phones: {{o.user.getStaticContactInfo.phones|format_list}}, Dynamic: {{o.user.contact_instructions}}, Reservations: {{o.user.getReservations|format_reservations}}">
+                    {{forloop.counter}}) <a href="/profile/{{o.user.id}}">{{o.user.last_name|pretty_none}}</a>
+                  </span>
+                {% endfor %}
+              </td>
+              <td>
+                {% if maintenance_prj.friend %}
+                <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar', 'Support Staff Absences & Contact Info', 'width=1000, height=700, scrollbars=yes');return true;">
+                  {{maintenance_prj.friend.last_name}}
+                </a>
+                {% else %}
+                  {{maintenance_prj.friend.last_name|pretty_none}}
+                {% endif %}
+              </td>
+              <td>
+                {{rschedule|get_receivers:day}}
+              </td>
+          </tr>
+        {% endif %}
+
+    {####################################################################}
+    {# Now output the actual maintenance activities in their own table. #}
+    {####################################################################}
+        <tr>
+        <td></td>
+        <td></td>
+        <td colspan=7>
+          <table border=1 frame=void rules=all cellpadding=3>
+            <tr class="project_type type_maintenance" align=left>
+              <th>Time</th>
+              <th>Activity</th>
+            </tr>
+              {% for ma in mas %}
+                {% if ma.approved %}
+                  <tr>
+                  <td>{{ma.time_range}}</td>
+                  <td><a href="/resourcecal_display_activity/{{ma.id}}/">{{ma|flag_rc_conflicts:mas}}</a>
+                      &nbsp;&nbsp;<a href="" class="info">Notes<span>
+                      <p>Description:</p>{{ma.description|escape|linebreaks}}</span></a>
+                  </tr>
+                {% else %}
+                  <tr>
+                  <td><i>{{ma.time_range}}</i></td>
+                  <td><a href="/resourcecal_display_activity/{{ma.id}}/"><i>{{ ma|flag_rc_conflicts:mas }}</i></a>
+                      &nbsp;&nbsp;<a href="" class="info"><i>Notes</i><span>
+                      <p>Description:</p>{{ma.description|escape|linebreaks}}</span></a>
+                  </tr>
+                {% endif %}  {# approved #}
+              {% endfor %} {# each maintenance activity #}
+          </table>
+        </td>
+        </tr>
+    {% endif %}  {# if mas #}
+
+    {% endfor %} {# for p in ps; for each period in the day #}
+    {% endfor %} {# for each day #}
   </table>
-</body>  
+</body>
 
 
 {% endblock %}

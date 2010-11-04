@@ -3,8 +3,8 @@ from django.db.models import Q
 from pytz             import timezone
 import pytz
 
-from nell.utilities   import UserInfo
 from sesshuns.models  import *
+from nell.utilities   import UserInfo, NRAOBosDB
 
 def getReceivers(names):
     rcvrs = []
@@ -90,9 +90,9 @@ def create_user(username):
     """
     info = UserInfo().getStaticContactInfoByUserName(username
                                                    , use_cache = False)
-    user = User(pst_id     = info['id']
-              , first_name = info['name']['first-name']
-              , last_name  = info['name']['last-name']
+    user = User(pst_id     = info['person_id']
+              , first_name = info['first_name']
+              , last_name  = info['last_name']
               , role       = first(Role.objects.filter(role = "Observer")))
     user.save()
 
@@ -180,3 +180,49 @@ def project_search(value):
             projects.append(p)
 
     return projects
+
+def getReservationsFromBOS(start, end):
+    """
+    Returns a dictionary of reservation info that falls within
+    the given dates by querying the BOS.
+    Make sure this creates the same output as getReservationsFromDB.
+    """
+
+    res = NRAOBosDB().reservationsRange(start, end)
+    reservations = []
+    for r in res:
+       # TBF: BOS is still using the wrong ID - we need 'global id'
+       userAuth_id = int(r['id'])
+       pst_id = UserInfo().getIdFromUserAuthenticationId(userAuth_id)
+       user = first(User.objects.filter(pst_id = pst_id))
+       if user is not None:
+           pcodes = ",".join(user.getIncompleteProjects())
+           hasInc = user.hasIncompleteProject()
+       else:
+           pcodes = ""
+           hasInc = False
+       if hasInc:
+           r.update({"pcodes" : pcodes})
+           r.update({"id" : user.pst_id})
+           reservations.append(r)
+    return reservations
+
+def getReservationsFromDB(start, end):
+    """
+    Returns a dictionary of reservation info that falls within the
+    given dates by querying the Reservations table, which is populated
+    daily using the BOS query service.
+    Make sure this creates the same output as getReservationsFromBOS.
+    """
+
+    startDT = datetime.strptime(start, "%m/%d/%Y")
+    endDT   = datetime.strptime(end  , "%m/%d/%Y")
+    resDB = [r for r in Reservation.objects.all() if r.end_date >= startDT and r.start_date <= endDT] 
+    reservations = [{'id'    : r.user.pst_id 
+                   , 'name'  : r.user.display_name()
+                   , 'pcodes': ",".join(r.user.getIncompleteProjects())
+                   , 'start' : r.start_date.strftime("%m/%d/%Y")
+                   , 'end'   : r.end_date.strftime("%m/%d/%Y")
+                   } for r in resDB if r.user is not None and r.user.hasIncompleteProject()] 
+    return reservations
+    

@@ -12,6 +12,9 @@ class PSTInterface(object):
     def getIdFromUsername(self, username):
         pass
 
+    def getIdFromUserAuthenticationId(self, userAuth_id):
+        pass
+
     def getProfileByID(self, user, use_cache = True):
         pass
 

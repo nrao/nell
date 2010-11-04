@@ -2,11 +2,12 @@ from datetime                  import datetime
 from django.contrib.auth.models import User as AuthUser
 from django.core.cache         import cache
 from django.db                 import models
-from nell.utilities            import UserInfo, NRAOBosDB
 from sets                      import Set
 
-from Role       import Role
-from common     import first
+from Role              import Role
+from common            import first
+from nell.utilities.UserInfo import UserInfo # Why can't we import this with NRAOBosDB?
+from nell.utilities    import NRAOBosDB
 
 class User(models.Model):
     original_id = models.IntegerField(null = True, blank = True)
@@ -41,6 +42,16 @@ class User(models.Model):
 
     def isOperator(self):
         return self.role.role == "Operator"
+
+    def isStaff(self):
+        return self.auth_user.is_staff
+
+    def checkAuthUser(self):
+        if self.auth_user_id is None:
+            from django.contrib.auth.models import User as AuthUser
+            au = first(AuthUser.objects.filter(username = self.username()))
+            self.auth_user = au
+            self.save()
 
     def getStaticContactInfo(self, use_cache = True):
         return UserInfo().getProfileByID(self, use_cache)
@@ -101,6 +112,11 @@ class User(models.Model):
         """
         return [i.project.pcode for i in self.investigator_set.all()]
 
+    def getIncompleteProjects(self):
+        "Like getProjects, but only for those that are still not completed."
+        return [i.project.pcode for i in self.investigator_set.all() \
+            if not i.project.complete]
+
     def isInvestigator(self, pcode):
         "Is this user an investigator on the given project?"
         return pcode in [i.project.pcode for i in self.investigator_set.all()]
@@ -128,3 +144,8 @@ class User(models.Model):
     def clearCachedInfo(self):
         cache.delete(self.username())
         cache.delete(str(self.pst_id)) # Keys are strings only.
+
+    def hasIncompleteProject(self): 
+        return any([not i.project.complete \
+            for i in self.investigator_set.all()])
+        

@@ -1,5 +1,5 @@
 from datetime                       import datetime, timedelta
-from decorators                     import is_operator
+from decorators                     import is_staff
 from django.contrib.auth.decorators import login_required
 from django.http                    import HttpResponse, HttpResponseRedirect
 from django.shortcuts               import render_to_response
@@ -10,6 +10,17 @@ from observers                      import project_search
 from sets                           import Set
 from utilities                      import get_requestor, acknowledge_moc
 import calendar
+
+@login_required
+def remotely_qualified(request, *args, **kws):
+    """
+    Returns all remotely qualified observers.
+    """
+    requestor = get_requestor(request)
+    qualified = User.objects.filter(sanctioned = True).order_by('last_name')
+
+    return render_to_response('sesshuns/remotely_qualified.html'
+                            , dict(requestor = requestor, q = qualified))
 
 @login_required
 def moc_reschedule(request, *args, **kws):
@@ -39,7 +50,7 @@ def moc_degraded(request, *args, **kws):
                             , dict(requestor = requestor, p = period))
 
 @login_required
-@is_operator
+@is_staff
 def gbt_schedule(request, *args, **kws):
     """
     Serves up a GBT schedule page tailored for Operations.
@@ -49,14 +60,14 @@ def gbt_schedule(request, *args, **kws):
     timezones = ['ET', 'UTC']
 
     # TBF: error handling
-    if request.method == 'POST': 
+    if request.method == 'POST':
         timezone  = request.POST.get('tz', 'ET')
-        days      = int(request.POST.get('days', 5))    
-        startDate = request.POST.get('start', None) 
-        startDate = datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now() 
+        days      = int(request.POST.get('days', 5))
+        startDate = request.POST.get('start', None)
+        startDate = datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now()
     else: # default time range
         timezone  = 'ET'
-        days      = 7 
+        days      = 7
         startDate = datetime.now()
 
     start   = TimeAgent.truncateDt(startDate)
@@ -66,7 +77,28 @@ def gbt_schedule(request, *args, **kws):
 
     periods  = [p for p in Period.in_time_range(pstart, pend) \
                 if not p.isPending()]
-    schedule = gen_gbt_schedule(start, end, days, 'ET', periods)
+    maintenance_activities = {}
+
+    for i in range(0, len(periods)):
+        if periods[i].session.observing_type.type == "maintenance":
+            mas = Maintenance_Activity.get_maintenance_activity_set(periods[i])
+        else:
+            if i < len(periods) - 1:
+                mas = Maintenance_Activity.objects\
+                      .filter(_start__gte = periods[i].start)\
+                      .filter(_start__lt = periods[i + 1].start)\
+                      .filter(period = None)\
+                      .filter(deleted = False)
+            else:
+                mas = Maintenance_Activity.objects\
+                      .filter(_start__gte = periods[i].start)\
+                      .filter(_start__lt = periods[i].end())\
+                      .filter(period = None)\
+                      .filter(deleted = False)
+
+        maintenance_activities[periods[i]] = mas
+
+    schedule = gen_gbt_schedule(start, end, days, 'ET', periods, maintenance_activities)
 
     try:
         s_n = Schedule_Notification.objects.all()
@@ -75,19 +107,23 @@ def gbt_schedule(request, *args, **kws):
     except:
         pubdate = None
 
+    # need this for resource calendar use
+    maprj = Project.objects.filter(pcode = "Maintenance")[0]
+
     return render_to_response(
-               'sesshuns/schedule.html'
-             , {'calendar' : sorted(schedule.items())
-              , 'day_list' : range(1, 32)
-              , 'tz_list'  : timezones
-              , 'timezone' : timezone
-              , 'today'    : datetime.now(EST)
-              , 'start'    : start
-              , 'days'     : days
-              , 'rschedule': Receiver_Schedule.extract_schedule(start, days)
-              , 'timezone' : timezone
-              , 'requestor': get_requestor(request)
-              , 'pubdate'  : pubdate
+               'sesshuns/schedule.html',
+               {'calendar'        : sorted(schedule.items()),
+                'day_list'        : range(1, 32),
+                'tz_list'         : timezones,
+                'timezone'        : timezone,
+                'today'           : datetime.now(EST),
+                'start'           : start,
+                'days'            : days,
+                'rschedule'       : Receiver_Schedule.extract_schedule(start, days),
+                'timezone'        : timezone,
+                'requestor'       : get_requestor(request),
+                'pubdate'         : pubdate,
+                'maintenance_prj' : maprj
                })
 
 def rcvr_schedule(request, *args, **kwds):
@@ -115,8 +151,8 @@ def summary(request, *args, **kws):
     now        = datetime.now()
     last_month = now - timedelta(days = 31)
 
-    if request.method == 'POST': 
-        summary = request.POST.get('summary', 'schedule') 
+    if request.method == 'POST':
+        summary = request.POST.get('summary', 'schedule')
 
         project = project_search(request.POST.get('project', ''))
         if isinstance(project, list) and len(project) == 1:
@@ -124,7 +160,7 @@ def summary(request, *args, **kws):
         else:
             project = ''
 
-        month = request.POST.get('month', None) 
+        month = request.POST.get('month', None)
         year  = int(request.POST.get('year', None))
         if month and year:
             start = datetime(int(year)
@@ -180,7 +216,7 @@ def summary(request, *args, **kws):
         schedule = {}
         days     = dict([(p.pcode, []) for p in projects])
         hours    = dict([(p.pcode, 0) for p in projects])
-        summary  = dict([(c, 0) for c in Project.get_categories()])
+        summary  = dict([(c, 0) for c in Sesshun.getCategories()])
         for p in periods:
             pstart = TimeAgent.utc2est(p.start)
             pend   = TimeAgent.utc2est(p.end())
@@ -197,7 +233,7 @@ def summary(request, *args, **kws):
             hours[p.session.project.pcode] += hrs
 
             # Tally hours for various categories important to Operations.
-            summary[p.session.project.get_category()] += hrs
+            summary[p.session.getCategory()] += hrs
 
     return render_to_response(
                url
@@ -208,7 +244,7 @@ def summary(request, *args, **kws):
                                     , lambda x, y: cmp(int(x), int(y)))
                              , hours[p.pcode]) for p in projects]
               , 'start'    : start
-              , 'months'   : calendar.month_name 
+              , 'months'   : calendar.month_name
               , 'month'    : month
               , 'years'    : [y for y in xrange(2009, now.year + 2, 1)]
               , 'year'     : year

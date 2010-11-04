@@ -143,7 +143,7 @@ class SchedulingNotifier(Notifier):
         self.flushQueue()     # just in case.  If queue is empty, does nothing.
 
     def createStaffAddresses(self):
-        staff = ["gbtops@gb.nrao.edu", "gbtlocal@gb.nrao.edu", "gbtime@gb.nrao.edu"]
+        staff = ["gbtops@gb.nrao.edu", "gbtinfo@gb.nrao.edu", "gbtime@gb.nrao.edu"]
         self.logMessage("Staff To: %s\n" % staff)
         return staff
 

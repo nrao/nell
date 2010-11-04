@@ -56,6 +56,24 @@ class PSTMirrorDB(PSTInterface):
         rows = self.cursor.fetchall()
         return int(rows[0][0])
 
+    def getIdFromUserAuthenticationId(self, userAuth_id):
+        """
+        For those interfaces that might still be using the PK of 
+        the userAuthentication table (like the BOS), convert this
+        to the 'global_id', that is the PK of the person table.
+        """
+
+        q = """
+        SELECT p.person_id
+        FROM person as p, userAuthentication as ua
+        WHERE ua.userAuthentication_id = %d
+        AND p.personAuthentication_id = ua.userAuthentication_id
+        """ % userAuth_id
+
+        self.cursor.execute(q)
+        rows = self.cursor.fetchall()
+        return int(rows[0][0])
+
     def getProfileByID(self, user, use_cache = True):
         try:
             # Note: our pst_id is their person PK.
@@ -109,6 +127,11 @@ class PSTMirrorDB(PSTInterface):
                   , last_name  = ln
                   )
 
+    def str2uni(self, value):
+        "Converts type string to unicode - Django is expecting this type."
+        # what is the proper encoding to use?  is this good enough?
+        return unicode(value, encoding = 'latin-1')
+
     def getBasicInfo(self, person_id):
 
         q = """
@@ -121,10 +144,10 @@ class PSTMirrorDB(PSTInterface):
         self.cursor.execute(q)
         rows = self.cursor.fetchall()
         return (rows[0][0]
-              , rows[0][1]
+              , self.str2uni(rows[0][1])
               , self.oneBitStr2Bool(rows[0][2])
-              , rows[0][3]
-              , rows[0][4]
+              , self.str2uni(rows[0][3])
+              , self.str2uni(rows[0][4])
               )
 
     def oneBitStr2Bool(self, bstr):
@@ -147,7 +170,7 @@ class PSTMirrorDB(PSTInterface):
         return self.getContactInfoWorker(q, self.row2email)
 
     def row2email(self, row):
-        return row[0], row[1]
+        return self.str2uni(row[0]), self.str2uni(row[1])
 
     def getPhones(self, person_id):
 
@@ -163,7 +186,7 @@ class PSTMirrorDB(PSTInterface):
         return self.getContactInfoWorker(q, self.row2phone)
 
     def row2phone(self, row):
-        return row[0], row[1]
+        return self.str2uni(row[0]), self.str2uni(row[1])
 
     def getPostals(self, person_id):
 
@@ -192,7 +215,7 @@ class PSTMirrorDB(PSTInterface):
                 streets += s + ", "
 
         address = "%s%s, %s, %s, %s," % (streets, row[4], row[5], row[7], row[6])
-        return address, row[8]
+        return self.str2uni(address), self.str2uni(row[8])
 
     def getAffiliations(self, person_id):
 
@@ -206,7 +229,7 @@ class PSTMirrorDB(PSTInterface):
         self.cursor.execute(q)
         rows = self.cursor.fetchall()
   
-        return [r[0] for r in rows]
+        return [self.str2uni(r[0]) for r in rows]
             
     def getContactInfoWorker(self, query, fnc ):
         """

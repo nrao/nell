@@ -570,9 +570,9 @@ def GenerateReport():
                 values.append(u)
     print_values(outfile, values)
 
-    outfile.write("\n\nUsers with no username:")
+    outfile.write("\n\nUsers with no PST ID:")
     users  = list(User.objects.order_by("last_name"))
-    values = [u for u in users if u.username is None]
+    values = [u for u in users if u.pst_id is None]
     print_values(outfile, values)
 
     outfile.write("\n\nPeriods Scheduled on blackout dates:")

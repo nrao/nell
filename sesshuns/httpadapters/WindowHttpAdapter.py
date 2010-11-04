@@ -60,4 +60,3 @@ class WindowHttpAdapter (object):
         self.window.setComplete(fdata.get("complete", "false") == "true")
 
         self.window.save()
-

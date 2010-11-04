@@ -1,8 +1,8 @@
 from datetime               import datetime
-from nell.utilities         import TimeAgent
+from nell.utilities         import TimeAgent, Score
 from sesshuns.models        import Period, Period_Accounting, Period_Receiver, \
                                    Period_State, Project, Receiver, Sesshun
-from sesshuns.models.common import *
+from sesshuns.models.common import first, d2str, dt2str, strStr2dt, t2str
 from SessionHttpAdapter     import SessionHttpAdapter
 
 class PeriodHttpAdapter (object):
@@ -13,21 +13,6 @@ class PeriodHttpAdapter (object):
     def load(self, period):
         self.period = period
 
-    @staticmethod
-    def create(*args, **kws):
-        """
-        Recomended way of 'overriding' the constructor.  Here we want to make
-        sure that all new Periods init their rcvrs correctly.
-        """
-        p = Period(**kws)
-        # don't save & init rcvrs unless you can
-        if not kws.has_key("session"):
-            # need the session first!
-            return p
-        p.save()
-        PeriodHttpAdapter(p).init_rcvrs_from_session()
-        return p
-            
     def jsondict(self, tz, cscore):
         start = self.period.start if tz == 'UTC' else TimeAgent.utc2est(self.period.start)
         w = self.period.window
@@ -172,17 +157,6 @@ class PeriodHttpAdapter (object):
                 rp = Period_Receiver(receiver = rcvr, period = self.period)
                 rp.save()
             
-    def init_rcvrs_from_session(self):
-        "Use the session's rcvrs for the ones associated w/ this period."
-        if self.period.session is None:
-            return
-        rcvrAbbrs = self.period.session.rcvrs_specified()
-        for r in rcvrAbbrs:
-            rcvr = first(Receiver.objects.filter(abbreviation = r.strip()))
-            if rcvr is not None:
-                rp = Period_Receiver(receiver = rcvr, period = self.period)
-                rp.save()
-
     def handle2session(self, h):
         n, p = h.rsplit('(', 1)
         name = n.strip()
