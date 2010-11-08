@@ -231,6 +231,7 @@ class Sesshun(models.Model):
         """
         return self.has_bool_obs_param("Not Guaranteed")
 
+    # TBF: should be spelled: guaranteed
     def gaurenteed(self):
         "True if 'Not Gaurenteed' param is set to F, or None"
         ng = self.not_gauranteed()
