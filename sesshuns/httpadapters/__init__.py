@@ -1,3 +1,4 @@
+from ElectiveHttpAdapter     import ElectiveHttpAdapter
 from InvestigatorHttpAdapter import InvestigatorHttpAdapter
 from PeriodHttpAdapter       import PeriodHttpAdapter
 from ProjectHttpAdapter      import ProjectHttpAdapter

@@ -107,6 +107,12 @@ class PeriodHttpAdapter (object):
         self.period.state = first(Period_State.objects.filter(abbreviation=stateAbbr))
         self.period.moc_ack = fdata.get("moc_ack", self.period.moc_ack)
 
+        # elective? 
+        eId = fdata.get("elective_id", None)
+        if eId is not None:
+            self.period.elective_id = eId
+
+        # window?    
         wId = fdata.get("window_id", None)
         if wId is not None:
             self.period.window_id = wId
