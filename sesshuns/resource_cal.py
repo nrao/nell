@@ -43,6 +43,9 @@ from nell.utilities                 import TimeAgent
 from datetime                       import date, datetime, time
 from utilities                      import get_requestor
 
+supervisors = ["rcreager", "ashelton", "banderso", "mchestnu"]
+interval_names = {0:"None", 1:"Daily", 7:"Weekly", 30:"Monthly"}
+
 ######################################################################
 # This class is a rendering clas for the RadioSelect widget, which is
 # nice enough to let us do this.  It renders the radio buttons without
@@ -117,15 +120,16 @@ class RCAddActivityForm(forms.Form):
 #    error_css_class = 'error'
     required_css_class = 'required'
 
-    subject_req     = True
-    date_req        = True
-    time_req        = True
-    end_time_req    = True
-    responsible_req = True
-    location_req    = False
-    receivers_req   = False
-    backends_req    = False
-    description_req = False
+    subject_req          = True
+    date_req             = True
+    time_req             = True
+    end_time_req         = True
+    responsible_req      = True
+    location_req         = False
+    receivers_req        = False
+    backends_req         = False
+    description_req      = False
+    recurrency_until_req = False
 
 
     hours = [(i, "%02i" % i) for i in range(0, 24)]
@@ -210,8 +214,6 @@ def display_maintenance_activity(request, activity_id = None):
         duration = timedelta(hours = ma.duration)
         end = start + duration
         u = get_requestor(request)
-        supervisors = ["rcreager", "ashelton", "banderso", "mchestnu"]
-        interval_names = {0:"None", 1:"Daily", 7:"Weekly", 30:"Monthly"}
 
         if ma.is_repeat_activity():
             repeat_interval = interval_names[ma.repeat_template.repeat_interval]
@@ -311,7 +313,8 @@ def add_activity(request, period_id = None, year = None, month = None, day = Non
                         'software'          : default_software.id,
                         'other_resource'    : default_other.id,
                         'entity_id'         : period_id,
-                        'recurrency_until'  : start + timedelta(days = 30)
+                        'recurrency_until'  : start + timedelta(days = 30),
+                        'supervisor_mode'   : True if (u and u.username() in supervisors) else False
                         }
 
         form = RCAddActivityForm(initial = initial_data)
@@ -323,7 +326,7 @@ def add_activity(request, period_id = None, year = None, month = None, day = Non
 # form for modification.
 ######################################################################
 
-def _modify_activity_form(ma):
+def _modify_activity_form(ma, request):
     start = ma.get_start('EST')
     end = ma.get_end('EST')
     change_receiver = True if len(ma.receiver_changes.all()) else False
@@ -331,6 +334,7 @@ def _modify_activity_form(ma):
                    ma.receiver_changes.all()[0].down_receiver_id
     new_receiver = None if not change_receiver else \
                    ma.receiver_changes.all()[0].up_receiver_id
+    u = get_requestor(request)
 
     initial_data = {'subject'             : ma.subject,
                     'date'                : start.date(),
@@ -352,8 +356,9 @@ def _modify_activity_form(ma):
                     'description'         : ma.description,
                     'entity_id'           : ma.id,
                     'recurrency_interval' : ma.repeat_interval,
-                    'recurrency_until'    : ma.repeat_end
-                    }
+                    'recurrency_until'    : ma.repeat_end,
+                    'supervisor_mode'     : True if (u and u.username() in supervisors) else False
+                   }
 
     form = RCAddActivityForm(initial = initial_data)
     return form
@@ -381,14 +386,14 @@ def edit_activity(request, activity_id = None):
     else:
         if request.GET['ActionEvent'] == 'Modify':
             ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
-            form = _modify_activity_form(ma)
+            form = _modify_activity_form(ma, request)
 
         elif request.GET['ActionEvent'] == 'ModifyFuture':
             # In this case we want to go back to the template, and set
             # its 'future_template' to this one.
             ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
             ma.set_as_new_template()
-            form = _modify_activity_form(ma)
+            form = _modify_activity_form(ma, request)
 
         elif request.GET['ActionEvent'] == 'ModifyAll':
             today = TimeAgent.truncateDt(datetime.now())
@@ -398,7 +403,7 @@ def edit_activity(request, activity_id = None):
                        .filter(_start__gte = today)\
                        .order_by('_start')[0]
             start_ma.set_as_new_template()
-            form = _modify_activity_form(start_ma)
+            form = _modify_activity_form(start_ma, request)
 
         elif request.GET['ActionEvent'] == 'Delete':
             ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
@@ -539,8 +544,10 @@ def process_activity(request, ma, form):
 
     ma.description = form.cleaned_data["description"]
     ma.repeat_interval = int(form.cleaned_data["recurrency_interval"])
-    ma.repeat_end = form.cleaned_data["recurrency_until"]
 
+    if ma.repeat_interval > 0:
+        ma.repeat_end = form.cleaned_data["recurrency_until"]
+    
     # assign right period for maintenance activity.  If no
     # periods, this will remain 'None'
     start = TimeAgent.truncateDt(ma._start)
