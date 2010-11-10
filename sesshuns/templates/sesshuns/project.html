@@ -280,6 +280,44 @@
                 {% endfor %}
             </table>
         {% endif %}
+
+        {% if electivePeriods %}
+          <h3 class="grey_highlight loud">Opportunities ({{tz}})</h3>
+            <table>
+              <tr>
+                <th>Session</th>
+                <th>Complete?</th>
+              </tr>
+              {% for e in electivePeriods %}
+              <tr>
+                <td>{{e.elective.session.name}}</td>
+                {% if e.elective.complete %}
+                <td>Yes</td>
+                {% else %}
+                <td></td>
+                {% endif %}
+              </tr>  
+              {% if e.periods %}
+              <tr>
+                <th></th>
+                <th>Period Start</th>
+                <th>Duration (Hrs)</th>
+                <th>Billed (Hrs)</th>
+                <th>Scheduled?</th>
+              </tr>
+              {% endif %}
+              {% for p in e.periods %}
+              <tr>
+                <td></td>
+                <td>{{p.start|date_no_secs}}</td>
+                <td>{{p.duration|hrs2sex}}</td>
+                <td>{{p.time_billed|hrs2sex}}</td>
+                <td>{{p.scheduled}}</td>
+              </tr>
+              {% endfor %}
+              {% endfor %}
+            </table>
+         {% endif %}   
         <h3 class="grey_highlight loud">Project Notes (<a href="/project/{{p.pcode}}/notes">edit</a>)</h3>
           <p>
           {{p.notes|pretty_none|escape|linebreaks}}

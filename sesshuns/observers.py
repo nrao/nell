@@ -216,6 +216,13 @@ def project(request, *args, **kws):
                       , 'start'    : adjustDateTimeTz(tz, pd.start)
                       , 'duration' : pd.duration
                        } for pd in project.getUpcomingPeriods()]
+    electivePeriods = [ {'elective' : e
+                       , 'periods' : [{'start' : adjustDateTimeTz(tz, p.start)
+                                     , 'duration' : p.duration
+                                     , 'scheduled' : "Yes" if p.isScheduled() else ""
+                                     , 'time_billed' : p.accounting.time_billed()} \
+                                    for p in e.periodsOrderByDate()]
+                        } for e in project.getActiveElectives()] 
     res = NRAOBosDB().reservations(project)                   
     return render_to_response(
         "sesshuns/project.html"
@@ -232,6 +239,7 @@ def project(request, *args, **kws):
        , 'periods'          : periods
        , 'windows'          : windows
        , 'upcomingPeriods'  : upcomingPeriods
+       , 'electivePeriods'  : electivePeriods
        , 'tzs'              : pytz.common_timezones
        }
     )

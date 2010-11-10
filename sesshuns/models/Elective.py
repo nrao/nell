@@ -1,6 +1,7 @@
 from django.db         import models
 from Sesshun           import Sesshun
 from Period_State      import Period_State
+from Period            import Period
 
 class Elective(models.Model):
     session  = models.ForeignKey(Sesshun)
@@ -50,6 +51,12 @@ class Elective(models.Model):
             p.move_to_deleted_state()
 
         # should we set it as complete?
+
+    def hasPeriodsAfter(self, dt):
+        return len([p for p in self.periods.all() if p.start > dt]) > 0
+
+    def periodsOrderByDate(self):
+        return Period.objects.filter(elective = self).order_by("start")
 
     def periodsByState(self, s):    
         "get periods by their state, which is one of ['P', 'D', 'S']"

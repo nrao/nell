@@ -137,6 +137,23 @@ class Project(models.Model):
         return [p for p in self.getPeriods() if p.start > dt] 
 
 
+    def getActiveElectives(self, dt = datetime.now()):
+        """
+        Retrieves sessions' electives that are either incomplete,
+        or still have a period in the future.
+        """
+        
+        es = []
+        for s in self.sesshun_set.all():
+            if s.session_type.type == "elective":
+                for e in s.elective_set.all():
+                    if not e.complete or e.hasPeriodsAfter(dt):
+                        es.append(e)
+        return es                
+                
+    def hasActiveElectives(self, dt = datetime.now()):
+        return len(self.getActiveElectives(dt)) > 0
+
     def getPastPeriods(self, dt = datetime.now()):
         "What periods are associated with this project in the past?"
         return [p for p in self.getPeriods() if p.start <= dt] 
