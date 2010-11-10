@@ -192,7 +192,7 @@ class RCAddActivityForm(forms.Form):
     description = forms.CharField(required = description_req, widget = forms.Textarea)
     intervals = [(0, "None"), (1, "Daily"), (7, "Weekly"), (30, "Monthly")]
     recurrency_interval = forms.ChoiceField(choices = intervals)
-    recurrency_until = forms.DateField(required = True)
+    recurrency_until = forms.DateField(required = recurrency_until_req)
 
     entity_id = forms.IntegerField(required = False, widget = forms.HiddenInput)
 
