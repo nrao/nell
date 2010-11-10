@@ -537,7 +537,7 @@ class Maintenance_Activity(models.Model):
         """
 
         # To handle repeat maintenance activity objects:
-        repeatQ    = models.Q(deleted = False) & (models.Q(repeat_interval = 1) | models.Q(repeat_interval = 7))\
+        repeatQ    = models.Q(deleted = False) & (models.Q(repeat_interval = 1) | models.Q(repeat_interval = 7) | models.Q(repeat_interval = 30))\
                      & (models.Q(_start__lte = period.end())  & models.Q(repeat_end__gte = period.end()))
         start_endQ = models.Q(start__gte = period.start) & models.Q(start__lte = period.end())
         periodQ    = models.Q(period = period)
@@ -574,20 +574,23 @@ class Maintenance_Activity(models.Model):
         p = Period.get_periods_by_observing_type(today - delta, today + delta, "maintenance")
 
         for i in rmas:
-            if i.repeat_interval == 7:
+            if i.repeat_interval > 1:
                 start_date = TimeAgent.truncateDt(i.get_start())
-                diff = (today - start_date).days % 7
+                diff = (today - start_date).days % i.repeat_interval
 
-                if (diff):
+                if diff:
                     # doesn't fall on this date.  Is this the closest period though?
 
-                    for j in p:
-                        if j != period:  # check only other periods
-                            mod = (j.start.date() - start_date.date()).days % 7
+                    if diff > 6:     # monthly not due
+                        x.append(i)
+                    else:            # weekly or monthly that is due this week
+                        for j in p:
+                            if j != period:  # check only other periods
+                                mod = (j.start.date() - start_date.date()).days % i.repeat_interval
 
-                            if dm[mod] < dm[diff]: # It's a better fit in another period.  Don't use here.
-                                x.append(i)
-                                break
+                                if mod < 7 and dm[mod] < dm[diff]: # It's a better fit in another period.  Don't use here.
+                                    x.append(i)
+                                    break
 
         # Now that we have a list of templates that are not suitable,
         # cull the template list:

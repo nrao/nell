@@ -168,15 +168,13 @@ hold the form controls.
           {{ form.entity_id.errors }}
           {{ form.entity_id }}
     </div>
-    <div class="fieldWrapper">
-          {{ form.floating.errors }}
-          {{ form.floating }}
-    </div>
 
     <div align=center>
     <p>
           <input name="ActionEvent" type="submit" value="Submit">
+{% if add_activity %}
           <input name="ActionEvent" type="submit" value="Submit And Continue">
+{% endif %}
     <INPUT NAME="back" TYPE="button" CLASS="stdfont" ONCLICK="javascript:history.go(-1)" VALUE="Back"></p>
     </div>
 
@@ -267,7 +265,8 @@ hold the form controls.
       </div>
 
       <div class="fieldWrapper">
-        <tr><td width="15%" class="table_captions" align="right" valign="top" rowspan="2"><b>Receivers</b></td>
+        <tr><td width="15%" class="table_captions" align="right" valign="top"
+              {%if supervisor_mode %} rowspan="2" {% endif %} ><b>Receivers</b></td>
           <td width="40%" class="table_fields" align="left" valign="top">
             {{ form.receivers.errors }}
             {% filter split_over_two_table_columns:'</td><td width="40%" class="table_fields" align="left" valign="top"' %}
@@ -277,8 +276,7 @@ hold the form controls.
         </tr>
       </div>
 
-      {% if supervisor_mode %}
-
+{% if supervisor_mode %}
       <div class="fieldWrapper">
             <tr>
               <td width="80%" class="table_fields" align="left" valign="middle" colspan="2">
@@ -292,8 +290,7 @@ hold the form controls.
               </td>
             </tr>
           </div>
-
-       {% endif %}
+{% endif %}
 
       <div class="fieldWrapper">
         <tr><td width="15%" class="table_captions" align="right" valign="top"><b>Other</b></td>
@@ -343,7 +340,9 @@ hold the form controls.
     <div align=center>
     <p>
           <input name="ActionEvent" type="submit" value="Submit">
+{% if add_activity %}
           <input name="ActionEvent" type="submit" value="Submit And Continue">
+{% endif %}
     <INPUT NAME="back" TYPE="button" CLASS="stdfont" ONCLICK="javascript:history.go(-1)" VALUE="Back"></p>
     </div>
 
