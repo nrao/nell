@@ -219,8 +219,40 @@ class Project(models.Model):
     def get_blackout_times(self, start, end):
         """
         A project is 'blacked out' when all of its sanctioned observers
-        are unavailable.  Returns a list of tuples describing the time ranges
+        are unavailable or it is using Project Blackouts.
+        Returns a list of tuples describing the time ranges
         where the project is 'blacked out' in UTC.
+        """
+        user_blackouts = self.get_user_blackout_times(start, end)
+        project_blackouts = self.get_project_blackout_times(start, end) 
+
+        if len(project_blackouts) < 1:
+            return user_blackouts
+        else:    
+            user_blackouts.extend(sorted(project_blackouts))
+            return consolidate_events(user_blackouts)
+
+    def get_project_blackout_times(self, start, end):
+        """
+        A project is 'blacked out' when all of its sanctioned observers
+        are unavailable or it is using Project Blackouts.
+        Returns a list of tuples describing the time ranges
+        where the project is 'blacked out' by project blackouts in UTC.
+        """
+        # we need to 'flatten' out the blackouts so that they can
+        # be combined with user blackouts later
+        project_blackouts = []
+        for b in self.blackout_set.all():
+            project_blackouts.extend(b.generateDates(start, end))
+        return project_blackouts
+
+    def get_user_blackout_times(self, start, end):
+        """
+        A project is 'blacked out' when all of its sanctioned observers
+        are unavailable or it is using Project Blackouts.
+        User blackouts are much more complicated, thus this method.
+        Returns a list of tuples describing the time ranges
+        where the project is 'blacked out' by user blackouts in UTC.
         """
         if not self.has_sanctioned_observers():
             return []
