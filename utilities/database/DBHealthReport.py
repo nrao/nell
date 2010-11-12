@@ -314,6 +314,22 @@ def sessions_with_bad_target():
                            or x.target_set.all()[0].vertical is None]
     return bad_target_sessions
 
+def elective_sessions_no_electives():
+    "Elective Sessions that have no electives"
+    es = Sesshun.objects.filter(session_type__type = "elective")
+    return [s for s in es if len(s.elective_set.all()) == 0]
+
+def non_elective_sessions_electives():
+    "Non-Elective Sessions that have electives"
+    ss = Sesshun.objects.all()
+    return [s for s in ss if s.session_type.type != "elective" and \
+        len(s.elective_set.all()) > 0]
+    
+def electives_no_periods():
+    "Every elective should have at least one period.  Who doesn't?"
+    es = Elective.objects.all()
+    return [e for e in es if len(e.periods.all()) == 0]
+    
 ######################################################################
 # Writes out the Windows reports
 ######################################################################
@@ -650,6 +666,24 @@ def GenerateReport():
 
     outfile.write("\n\nSessions with NULL RA and/or DEC:")
     values = sessions_with_bad_target()
+    print_values(outfile, values)
+
+    #    * (new) Incomplete electives with insufficient opportunities:
+    #* Electives:
+    #      o Elective sessions with no electives:
+    #      o Electives with no opportunities:
+    #      o Non-elective sessions with electives assigned: 
+
+    outfile.write("\n\nElective Sessions with no Electives:")
+    values = elective_sessions_no_electives()
+    print_values(outfile, values)
+    
+    outfile.write("\n\nNon-Elective Sessions with Electives:")
+    values = non_elective_sessions_electives()
+    print_values(outfile, values)
+    
+    outfile.write("\n\nElectives with no Opportunities (Periods):")
+    values = electives_no_periods()
     print_values(outfile, values)
 
     output_windows_report(outfile)
