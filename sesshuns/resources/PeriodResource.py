@@ -31,8 +31,6 @@ class PeriodResource(NellResource):
 
     def read(self, request, *args, **kws):
 
-        print "PeriodResource read: ", request.GET, args, kws
-
         tz = args[0]
         # one or many?
         if len(args) == 1:
@@ -61,9 +59,7 @@ class PeriodResource(NellResource):
                 dt           = str2dt(startPeriods)
                 start        = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
                 duration     = int(daysPeriods) * 24 * 60
-                print start, duration
                 periods      = Period.get_periods(start, duration)
-                print periods
             else:
                 # filter by something else
                 query_set = Period.objects
