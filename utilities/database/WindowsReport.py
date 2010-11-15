@@ -94,6 +94,9 @@ class WindowsReport():
         today = date(now.year, now.month, now.day)
         too_late_wins = [w for w in goodWins if not w.complete and w.end() < today]
 
+        now = datetime.now()
+        futureWins = [w for w in wins if w.end() > now.date()]
+
         # print summary
         self.add("Number of Windowed Sessions: %d\n" % len(wss)) 
         self.add("Number of Fixed Sessions: %d\n" % len(fss)) 
@@ -146,6 +149,10 @@ class WindowsReport():
                       , flags
                         ]
                 self.printData(data, cols)   
+
+        self.add("Number of windows ending in the future: %d\n" % len(futureWins))
+        for fw in futureWins:
+            self.add("    %s (%d)\n" % (fw.session.name, fw.id))
 
         if self.filename is not None:
             f = open(self.filename, 'w')

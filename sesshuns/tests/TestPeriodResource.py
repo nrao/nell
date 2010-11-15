@@ -64,6 +64,17 @@ class TestPeriodResource(NellTestCase):
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(response.content[:11], '{"total": 0')
 
+        # now don't use any keywords: filter should default
+        # to today (circa 2010), so NO periods should be found.
+        response = self.client.get("%s/UTC" % self.rootURL)
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertEqual(response.content[:11], '{"total": 0')
+
+        # fail to find a period for an imaginary window
+        url = "%s/UTC?filterWnd=1" % self.rootURL
+        response = self.client.get(url)
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertEqual(response.content[:11], '{"total": 0')
 
     # If antioch server running requires it contain the appropriate periods
     def test_update(self):

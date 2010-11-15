@@ -39,6 +39,12 @@ class PeriodResource(NellResource):
             order        = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
 
             # Either filter by date, or by something else.
+            filterWnd = request.GET.get("filterWnd", None)
+
+            # make sure we have defaults for dates
+            defStart = datetime.now().strftime("%Y-%m-%d") if filterWnd is None else None
+            defDays = "1" if filterWnd is None else None
+
             # Filtering by date involves a pair of keywords
             filterWnd = request.GET.get("filterWnd", None)
             filterElc = request.GET.get("filterElc", None)

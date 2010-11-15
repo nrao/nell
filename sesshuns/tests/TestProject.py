@@ -20,7 +20,7 @@ class TestProject(NellTestCase):
         }
         self.project_adapter.update_from_post(pdata)
 
-        # Create Investigator1 and his 3 blackouts.
+        # Create the first user (on project) 
         self.user1 = User(sanctioned = True
                         , role = first(Role.objects.filter(role = "Observer"))
                      )
@@ -30,7 +30,8 @@ class TestProject(NellTestCase):
                                          , user     = self.user1
                                          , observer = True)
         self.investigator1.save()
-
+         
+        # Create the second user (on project)
         self.user2 = User(sanctioned = True
                         , role = first(Role.objects.filter(role = "Observer"))
                      )
@@ -41,10 +42,12 @@ class TestProject(NellTestCase):
                                          , observer = True)
         self.investigator2.save()
 
+        # make a session
         self.sesshun = create_sesshun()
         self.sesshun.project = self.project
         self.sesshun.save()
 
+        # make a period for it
         fdata = {'session'  : self.sesshun.id
                , 'date'     : '2009-06-01'
                , 'time'     : '10:00'
@@ -103,6 +106,49 @@ class TestProject(NellTestCase):
 
         today = datetime(2009, 1, 1)
         later = today + timedelta(days = 30)
+        r = self.project.get_blackout_times(today, later)
+        self.assertEquals(expected, r)
+
+        # Now complicate things - add project blackouts
+        pBlackout1 = Blackout(project = self.project
+                            , repeat = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 4, 0)
+                            , end_date   = datetime(2009, 1, 5, 0))
+        pBlackout1.save()                            
+        pBlackout2 = Blackout(project = self.project
+                            , repeat = first(Repeat.objects.all())
+                            , start_date = datetime(2009, 1, 6, 0)
+                            , end_date   = datetime(2009, 1, 8, 0))
+        pBlackout2.save()                            
+
+        # we should see the present result extended by the first 
+        # project blackout, in addition to the second blackout
+        expected = [
+            (datetime(2009, 1, 1, 11), datetime(2009, 1, 5, 0))
+          , (datetime(2009, 1, 6, 0),  datetime(2009, 1, 8, 0))
+        ]
+
+        r = self.project.get_blackout_times(today, later)
+        self.assertEquals(expected, r)
+
+        # complicate things a bit more - use a weekly proj blackout
+        pBlackout2.delete()
+        pBlackout2 = Blackout(project = self.project
+                            , repeat = Repeat.objects.all()[1] # Weekly
+                            , start_date = datetime(2009, 1, 6, 0)
+                            , end_date   = datetime(2009, 1, 8, 0)
+                            , until      = datetime(2010, 1, 1, 0))
+        pBlackout2.save()                            
+
+        # we should see similar results to before, but now the weeklys
+        expected = [
+            (datetime(2009, 1, 1, 11), datetime(2009, 1, 5,  0))
+          , (datetime(2009, 1, 6,  0), datetime(2009, 1, 8,  0))
+          , (datetime(2009, 1, 13, 0), datetime(2009, 1, 15, 0))
+          , (datetime(2009, 1, 20, 0), datetime(2009, 1, 22, 0))
+          , (datetime(2009, 1, 27, 0), datetime(2009, 1, 29, 0))          
+        ]
+
         r = self.project.get_blackout_times(today, later)
         self.assertEquals(expected, r)
 

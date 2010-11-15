@@ -43,6 +43,9 @@ from nell.utilities                 import TimeAgent
 from datetime                       import date, datetime, time
 from utilities                      import get_requestor
 
+supervisors = ["rcreager", "ashelton", "banderso", "mchestnu", "koneil"]
+interval_names = {0:"None", 1:"Daily", 7:"Weekly", 30:"Monthly"}
+
 ######################################################################
 # This class is a rendering clas for the RadioSelect widget, which is
 # nice enough to let us do this.  It renders the radio buttons without
@@ -117,15 +120,16 @@ class RCAddActivityForm(forms.Form):
 #    error_css_class = 'error'
     required_css_class = 'required'
 
-    subject_req     = True
-    date_req        = True
-    time_req        = True
-    end_time_req    = True
-    responsible_req = True
-    location_req    = False
-    receivers_req   = False
-    backends_req    = False
-    description_req = False
+    subject_req          = True
+    date_req             = True
+    time_req             = True
+    end_time_req         = True
+    responsible_req      = True
+    location_req         = False
+    receivers_req        = False
+    backends_req         = False
+    description_req      = False
+    recurrency_until_req = False
 
 
     hours = [(i, "%02i" % i) for i in range(0, 24)]
@@ -169,7 +173,9 @@ class RCAddActivityForm(forms.Form):
     # checkbox is cleared.  To do this requires some JavaScript in the
     # template.  This is provided by the function 'EnableWidget()', as
     # set below.  The function name in the attribute must match the
-    # function name in the template.
+    # function name in the template.  This only should work for
+    # supervisors, so we check the initial data to see if data for the
+    # hidden field 'supervisor_mode' is set.
     change_receiver = forms.BooleanField(
         required = False,
         widget = forms.CheckboxInput(attrs = {'onClick': 'EnableWidget()'}))
@@ -179,14 +185,14 @@ class RCAddActivityForm(forms.Form):
     new_receiver = forms.ChoiceField(
         label = 'up:', required = False, choices = rcvr,
         widget = forms.Select(attrs = {'disabled': 'true'}))
-
+    
     be = [(p.id, p.full_description()) for p in Backend.objects.all()]
     backends = forms.MultipleChoiceField(required = backends_req,
                                          choices = be, widget = MyCheckboxSelectMultiple)
     description = forms.CharField(required = description_req, widget = forms.Textarea)
-    intervals = [(0, "None"), (1, "Daily"), (7, "Weekly")]
+    intervals = [(0, "None"), (1, "Daily"), (7, "Weekly"), (30, "Monthly")]
     recurrency_interval = forms.ChoiceField(choices = intervals)
-    recurrency_until = forms.DateField(required = True)
+    recurrency_until = forms.DateField(required = recurrency_until_req)
 
     entity_id = forms.IntegerField(required = False, widget = forms.HiddenInput)
 
@@ -210,8 +216,6 @@ def display_maintenance_activity(request, activity_id = None):
         duration = timedelta(hours = ma.duration)
         end = start + duration
         u = get_requestor(request)
-        supervisors = ["rcreager", "ashelton", "banderso", "mchestnu"]
-        interval_names = {0:"None", 1:"Daily", 7:"Weekly", 30:"Monthly"}
 
         if ma.is_repeat_activity():
             repeat_interval = interval_names[ma.repeat_template.repeat_interval]
@@ -293,7 +297,8 @@ def add_activity(request, period_id = None, year = None, month = None, day = Non
         default_other     = Maintenance_Other_Resources.objects.filter(rc_code = 'N')[0]
         u = get_requestor(request)
         user = get_user_name(u)
-
+        supervisor_mode = True if (u and u.username() in supervisors) else False
+        
         if period_id:
             p = Period.objects.filter(id = int(period_id))[0]
             start = TimeAgent.utc2est(p.start)
@@ -311,12 +316,15 @@ def add_activity(request, period_id = None, year = None, month = None, day = Non
                         'software'          : default_software.id,
                         'other_resource'    : default_other.id,
                         'entity_id'         : period_id,
-                        'recurrency_until'  : start + timedelta(days = 30)
+                        'recurrency_until'  : start + timedelta(days = 30),
                         }
 
         form = RCAddActivityForm(initial = initial_data)
 
-    return render_to_response('sesshuns/rc_add_activity_form.html', {'form': form, })
+    return render_to_response('sesshuns/rc_add_activity_form.html',
+                              {'form': form,
+                               'supervisor_mode': supervisor_mode,
+                               'add_activity': True })
 
 ######################################################################
 # This helper function loads up a maintenance activity's data into a
@@ -352,9 +360,9 @@ def _modify_activity_form(ma):
                     'description'         : ma.description,
                     'entity_id'           : ma.id,
                     'recurrency_interval' : ma.repeat_interval,
-                    'recurrency_until'    : ma.repeat_end
-                    }
-
+                    'recurrency_until'    : ma.repeat_end,
+                   }
+        
     form = RCAddActivityForm(initial = initial_data)
     return form
 
@@ -379,6 +387,9 @@ def edit_activity(request, activity_id = None):
             process_activity(request, ma, form)
             return HttpResponseRedirect('/schedule/')
     else:
+        u = get_requestor(request)
+        supervisor_mode = True if (u and u.username() in supervisors) else False
+        
         if request.GET['ActionEvent'] == 'Modify':
             ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
             form = _modify_activity_form(ma)
@@ -447,7 +458,10 @@ def edit_activity(request, activity_id = None):
 
             return HttpResponseRedirect('/schedule/')
 
-    return render_to_response('sesshuns/rc_add_activity_form.html', {'form': form, })
+    return render_to_response('sesshuns/rc_add_activity_form.html',
+                              {'form': form,
+                               'supervisor_mode': supervisor_mode,
+                               'add_activity' : False })
 
 ######################################################################
 # def process_activity(request, ma, form)
@@ -539,8 +553,10 @@ def process_activity(request, ma, form):
 
     ma.description = form.cleaned_data["description"]
     ma.repeat_interval = int(form.cleaned_data["recurrency_interval"])
-    ma.repeat_end = form.cleaned_data["recurrency_until"]
 
+    if ma.repeat_interval > 0:
+        ma.repeat_end = form.cleaned_data["recurrency_until"]
+    
     # assign right period for maintenance activity.  If no
     # periods, this will remain 'None'
     start = TimeAgent.truncateDt(ma._start)
