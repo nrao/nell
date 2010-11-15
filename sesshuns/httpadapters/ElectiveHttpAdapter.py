@@ -13,10 +13,13 @@ class ElectiveHttpAdapter (object):
         self.elective = elective
 
     def jsondict(self):
+        minMax = self.elective.periodDateRange()
         js = {  "id"             : self.elective.id
               , "handle"         : self.elective.toHandle()
               , "session"        : SessionHttpAdapter(self.elective.session).jsondict()
               , "complete"       : self.elective.complete
+              , "firstPeriod"    : dt2str(minMax[0])
+              , "lastPeriod"     : dt2str(minMax[1])
               , "periods"        : [PeriodHttpAdapter(p).jsondict('UTC', 0.0) for p in self.elective.periods.all()]
               }
         return js    

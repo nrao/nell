@@ -50,10 +50,20 @@ class Elective(models.Model):
             # TBF: anything we need to check before doing this?
             p.move_to_deleted_state()
 
-        # should we set it as complete?
+        self.setComplete(True)
 
     def hasPeriodsAfter(self, dt):
         return len([p for p in self.periods.all() if p.start > dt]) > 0
+
+    def periodDateRange(self):
+        "Returns the earliest & latest start times of all its periods"
+        min = max = None
+        for p in self.periods.all():
+            if min is None or p.start <= min:
+                min = p.start
+            if max is None or p.start >= max:
+                max = p.start
+        return (min, max)
 
     def periodsOrderByDate(self):
         return Period.objects.filter(elective = self).order_by("start")
