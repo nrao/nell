@@ -90,8 +90,16 @@ class TestBlackout(NellTestCase):
         gdts = self.blackout1.generateDates(calstart, calend)
         self.assertEquals(dts, gdts)
 
+        # should be none in June.
+        calstart = datetime(2009, 6, 1)
+        calend   = datetime(2009, 6, 30)
+        gdts = self.blackout1.generateDates(calstart, calend)
+        self.assertEquals(0, len(gdts))
+
         # repeats are more complicated
         # how does January look?
+        calstart = datetime(2009, 1, 1)
+        calend   = datetime(2009, 1, 30)
         start = self.blackout2.start_date
         end = self.blackout2.end_date
         dts = [(start, end)]
