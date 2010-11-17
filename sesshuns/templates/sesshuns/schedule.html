@@ -92,6 +92,9 @@
   <a href='/investigators/qualified'>Remote Observers</a>
   <br/> 
   Helpful Links:
+  <a href="https://safe.nrao.edu/wiki/bin/view/GB/Software/DSSResourceCalendar" target="_blank">Resource Calendar Help
+  </a>
+  |
   <a href="https://staff.nrao.edu/wiki/bin/view/GB/BackupProjects" target="Backup_Projects" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/BackupProjects', 'Backup_Projects');return true;">
     Backup Projects
   </a>
@@ -232,7 +235,7 @@
       {% endif %}
 
       {# New table row for the period #}
-      <tr class="{{p|moc_class}}">
+      <tr class="{{p|moc_class:requestor}}">
 
       {# The Date/Time column #}
       {# start/end cutoff indicates that the period's start/end occurs before/after day. #}

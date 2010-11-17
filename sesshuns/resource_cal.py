@@ -96,13 +96,15 @@ class MyCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
         # Normalize to strings
         str_values = set([force_unicode(v) for v in value])
 
-        for i, (option_value, option_label) in enumerate(chain(self.choices, choices)):
+        for i, (option_value, option_label) in enumerate(chain(self.choices,
+                                                               choices)):
             # If an ID attribute was given, add a numeric index as a suffix,
             # so that the checkboxes don't all have the same ID attribute.
             if has_id:
                 final_attrs = dict(final_attrs, id='%s_%s' % (attrs['id'], i))
 
-            cb = forms.CheckboxInput(final_attrs, check_test=lambda value: value in str_values)
+            cb = forms.CheckboxInput(final_attrs,
+                                     check_test=lambda value: value in str_values)
             option_value = force_unicode(option_value)
             rendered_cb = cb.render(name, option_value)
             option_label = conditional_escape(force_unicode(option_label))
@@ -143,28 +145,37 @@ class RCAddActivityForm(forms.Form):
     time_min = forms.ChoiceField(required = time_req, choices = minutes)
     end_choice = forms.ChoiceField(choices=[("end_time", "End Time"),
                                             ("duration", "Duration")],
-                                   widget=forms.RadioSelect(renderer = HorizRadioRender))
+                                   widget=forms.RadioSelect(
+            renderer = HorizRadioRender))
     end_time_hr = forms.ChoiceField(required = end_time_req, choices = hours)
     end_time_min = forms.ChoiceField(required = end_time_req, choices = minutes)
     responsible = forms.CharField(required = responsible_req,
                                   max_length = 256,
-                                  widget = forms.TextInput(attrs = {'size': '70'}))
+                                  widget = forms.TextInput(
+            attrs = {'size': '70'}))
 
     location = forms.CharField(required = location_req, max_length = 200,
                                widget = forms.TextInput(attrs = {'size': '80'}))
-    tel_resc = [(p.id, p.resource) for p in Maintenance_Telescope_Resources.objects.all()]
+    tel_resc = [(p.id, p.resource) 
+                for p in Maintenance_Telescope_Resources.objects.all()]
     telescope = forms.ChoiceField(choices = tel_resc,
-                                  widget = forms.RadioSelect(renderer = BRRadioRender))
-    soft_resc = [(p.id, p.resource) for p in Maintenance_Software_Resources.objects.all()]
+                                  widget = forms.RadioSelect(
+            renderer = BRRadioRender))
+    soft_resc = [(p.id, p.resource)
+                 for p in Maintenance_Software_Resources.objects.all()]
     software = forms.ChoiceField(choices = soft_resc,
-                                 widget = forms.RadioSelect(renderer = BRRadioRender))
+                                 widget = forms.RadioSelect(
+            renderer = BRRadioRender))
     rcvr = [(p.id, p.full_description()) for p in Receiver.objects.all()]
     receivers = forms.MultipleChoiceField(required = receivers_req,
-                                          choices = rcvr, widget = MyCheckboxSelectMultiple)
+                                          choices = rcvr,
+                                          widget = MyCheckboxSelectMultiple)
 
-    other_resc = [(p.id, p.resource) for p in Maintenance_Other_Resources.objects.all()]
+    other_resc = [(p.id, p.resource)
+                  for p in Maintenance_Other_Resources.objects.all()]
     other_resource = forms.ChoiceField(choices = other_resc,
-                                       widget = forms.RadioSelect(renderer = BRRadioRender))
+                                       widget = forms.RadioSelect(
+            renderer = BRRadioRender))
 
     rcvr.insert(0, (-1, ''))
 
@@ -188,8 +199,10 @@ class RCAddActivityForm(forms.Form):
     
     be = [(p.id, p.full_description()) for p in Backend.objects.all()]
     backends = forms.MultipleChoiceField(required = backends_req,
-                                         choices = be, widget = MyCheckboxSelectMultiple)
-    description = forms.CharField(required = description_req, widget = forms.Textarea)
+                                         choices = be,
+                                         widget = MyCheckboxSelectMultiple)
+    description = forms.CharField(required = description_req,
+                                  widget = forms.Textarea)
     intervals = [(0, "None"), (1, "Daily"), (7, "Weekly"), (30, "Monthly")]
     recurrency_interval = forms.ChoiceField(choices = intervals)
     recurrency_until = forms.DateField(required = recurrency_until_req)
@@ -226,6 +239,13 @@ def display_maintenance_activity(request, activity_id = None):
             repeat_end = "None"
             repeat_template = "None"
 
+        last_modified = str(ma.modifications.all()
+                            [len(ma.modifications.all()) - 1]
+                            if ma.modifications.all() else "")
+        created = str(ma.modifications.all()[0]
+                      if ma.modifications.all() else ""),
+        supervisor_mode = True if (u and u.username() in supervisors) else False
+
         params = {'subject'            : ma.subject,
                   'date'               : start.date(),
                   'time'               : start.time(),
@@ -236,15 +256,17 @@ def display_maintenance_activity(request, activity_id = None):
                   'telescope'          : ma.telescope_resource.resource,
                   'software'           : ma.software_resource.resource,
                   'other_resource'     : ma.other_resource.resource,
-                  'receivers'          : ", ".join([r.full_description() for r in ma.receivers.all()]),
-                  'backends'           : ", ".join([b.full_description() for b in ma.backends.all()]),
+                  'receivers'          : ", ".join([r.full_description()
+                                                    for r in ma.receivers.all()]),
+                  'backends'           : ", ".join([b.full_description()
+                                                    for b in ma.backends.all()]),
                   'description'        : ma.description,
                   'activity_id'        : activity_id,
                   'approval'           : 'Yes' if ma.approved else 'No',
-                  'last_modified'      : str(ma.modifications.all()[len(ma.modifications.all()) - 1] if ma.modifications.all() else ""),
-                  'created'            : str(ma.modifications.all()[0] if ma.modifications.all() else ""),
+                  'last_modified'      : last_modified,
+                  'created'            : created,
                   'receiver_swap'      : ma.receiver_changes.all(),
-                  'supervisor_mode'    : True if (u and u.username() in supervisors) else False,
+                  'supervisor_mode'    : supervisor_mode,
                   'maintenance_period' : ma.period_id,
                   'repeat_activity'    : ma.is_repeat_activity(),
                   'repeat_interval'    : repeat_interval,
@@ -254,8 +276,7 @@ def display_maintenance_activity(request, activity_id = None):
     else:
         params = {}
 
-    return render_to_response('sesshuns/rc_display_activity.html',
-                              params)
+    return render_to_response('sesshuns/rc_display_activity.html', params)
 
 ######################################################################
 # The view.  This is called twice, by the 'GET' and 'POST' paths.  The
@@ -266,7 +287,8 @@ def display_maintenance_activity(request, activity_id = None):
 ######################################################################
 
 @login_required
-def add_activity(request, period_id = None, year = None, month = None, day = None):
+def add_activity(request, period_id = None, year = None,
+                 month = None, day = None):
     if request.method == 'POST':
 
         form = RCAddActivityForm(request.POST)
@@ -281,9 +303,11 @@ def add_activity(request, period_id = None, year = None, month = None, day = Non
 
             if request.POST['ActionEvent'] =="Submit And Continue":
                 if form.cleaned_data['entity_id']:
-                    redirect_url = '/resourcecal_add_activity/%s/' % (form.cleaned_data['entity_id'])
+                    redirect_url = '/resourcecal_add_activity/%s/' % \
+                        (form.cleaned_data['entity_id'])
                 elif year and month and day:
-                    redirect_url = '/resourcecal_add_activity/%s/%s/%s/' % (year, month, day)
+                    redirect_url = '/resourcecal_add_activity/%s/%s/%s/' % \
+                        (year, month, day)
                 else:
                     redirect_url = '/resourcecal_add_activity/'
 
@@ -292,9 +316,12 @@ def add_activity(request, period_id = None, year = None, month = None, day = Non
             else:
                 return HttpResponseRedirect('/schedule/')
     else:
-        default_telescope = Maintenance_Telescope_Resources.objects.filter(rc_code = 'N')[0]
-        default_software  = Maintenance_Software_Resources.objects.filter(rc_code = 'N')[0]
-        default_other     = Maintenance_Other_Resources.objects.filter(rc_code = 'N')[0]
+        default_telescope = Maintenance_Telescope_Resources.objects \
+            .filter(rc_code = 'N')[0]
+        default_software  = Maintenance_Software_Resources.objects \
+            .filter(rc_code = 'N')[0]
+        default_other     = Maintenance_Other_Resources.objects \
+            .filter(rc_code = 'N')[0]
         u = get_requestor(request)
         user = get_user_name(u)
         supervisor_mode = True if (u and u.username() in supervisors) else False
@@ -383,7 +410,8 @@ def edit_activity(request, activity_id = None):
 
         if form.is_valid():
             # process the returned stuff here...
-            ma = Maintenance_Activity.objects.filter(id = form.cleaned_data["entity_id"])[0]
+            ma = Maintenance_Activity.objects \
+                .filter(id = form.cleaned_data["entity_id"])[0]
             process_activity(request, ma, form)
             return HttpResponseRedirect('/schedule/')
     else:
@@ -435,7 +463,8 @@ def edit_activity(request, activity_id = None):
             ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
             ma.repeat_template.delete = True
             ma.repeat_template.save()
-            mas = Maintenance_Activity.objects.filter(repeat_template = ma.repeat_template)
+            mas = Maintenance_Activity.objects \
+                .filter(repeat_template = ma.repeat_template)
 
             for i in mas:
                 i.deleted = True
@@ -454,7 +483,8 @@ def edit_activity(request, activity_id = None):
             for i in ma.get_receiver_changes():
                 start = ma.get_start()
                 rsched = datetime(start.year, start.month, start.day, 16)
-                Receiver_Schedule.change_schedule(rsched, [i.up_receiver], [i.down_receiver])
+                Receiver_Schedule.change_schedule(rsched, [i.up_receiver],
+                                                  [i.down_receiver])
 
             return HttpResponseRedirect('/schedule/')
 
@@ -498,19 +528,24 @@ def process_activity(request, ma, form):
 
     if form.cleaned_data["end_choice"] == "end_time":
         end_date = form.cleaned_data['date']
-        end = datetime(year = end_date.year, month = end_date.month, day = end_date.day,
-                       hour = int(form.cleaned_data['end_time_hr']), minute = int(form.cleaned_data['end_time_min']))
+        end = datetime(year = end_date.year, month = end_date.month,
+                       day = end_date.day,
+                       hour = int(form.cleaned_data['end_time_hr']),
+                       minute = int(form.cleaned_data['end_time_min']))
         delta = end - start
         ma.duration = delta.seconds / 3600.0 # in decimal hours
     else:
-        ma.duration = float(form.cleaned_data['end_time_hr']) + float(form.cleaned_data["end_time_min"]) / 60.0
+        ma.duration = float(form.cleaned_data['end_time_hr']) \
+            + float(form.cleaned_data["end_time_min"]) / 60.0
 
     ma.contacts = form.cleaned_data["responsible"]
     ma.location = form.cleaned_data["location"]
     trid = form.cleaned_data["telescope"]
-    ma.telescope_resource = Maintenance_Telescope_Resources.objects.filter(id = trid)[0]
+    ma.telescope_resource = Maintenance_Telescope_Resources.objects \
+        .filter(id = trid)[0]
     srid = form.cleaned_data["software"]
-    ma.software_resource = Maintenance_Software_Resources.objects.filter(id = srid)[0]
+    ma.software_resource = Maintenance_Software_Resources.objects \
+        .filter(id = srid)[0]
     orid = form.cleaned_data["other_resource"]
     ma.other_resource = Maintenance_Other_Resources.objects.filter(id = orid)[0]
 
@@ -533,9 +568,12 @@ def process_activity(request, ma, form):
             down_receiver = down_rcvr_id).filter(up_receiver = up_rcvr_id)
 
         if len(mrsg) == 0:
-            down_rcvr = Receiver.objects.filter(id = form.cleaned_data["old_receiver"])[0]
-            up_rcvr = Receiver.objects.filter(id = form.cleaned_data["new_receiver"])[0]
-            mrs = Maintenance_Receivers_Swap(down_receiver = down_rcvr, up_receiver = up_rcvr)
+            down_rcvr = Receiver.objects \
+                .filter(id = form.cleaned_data["old_receiver"])[0]
+            up_rcvr = Receiver.objects \
+                .filter(id = form.cleaned_data["new_receiver"])[0]
+            mrs = Maintenance_Receivers_Swap(down_receiver = down_rcvr,
+                                             up_receiver = up_rcvr)
             mrs.save()
         else:
             mrs = mrsg[0]

@@ -46,27 +46,34 @@ import re # regular expressions
 class Maintenance_Activity(models.Model):
 
     period             = models.ForeignKey(Period, null = True)
-    telescope_resource = models.ForeignKey(Maintenance_Telescope_Resources, null = True)
-    software_resource  = models.ForeignKey(Maintenance_Software_Resources, null = True)
-    other_resource     = models.ForeignKey(Maintenance_Other_Resources, null = True)
+    telescope_resource = models.ForeignKey(Maintenance_Telescope_Resources,
+                                           null = True)
+    software_resource  = models.ForeignKey(Maintenance_Software_Resources,
+                                           null = True)
+    other_resource     = models.ForeignKey(Maintenance_Other_Resources,
+                                           null = True)
     receivers          = models.ManyToManyField(Receiver, null = True)
     backends           = models.ManyToManyField(Backend, null = True)
     subject            = models.CharField(max_length = 200)
     _start             = models.DateTimeField(null = True)
-    duration           = models.FloatField(null = True, help_text = "Hours", blank = True)
+    duration           = models.FloatField(null = True, help_text = "Hours",
+                                           blank = True)
     contacts           = models.TextField(null = True, blank = True)
     location           = models.TextField(null = True, blank = True)
     description        = models.TextField(null = True, blank = True)
     approved           = models.BooleanField(default = False)
-    approvals          = models.ManyToManyField(Maintenance_Activity_Change,
-                                                db_table = "maintenance_activity_approval",
-                                                related_name = "approvals", null = True)
-    modifications      = models.ManyToManyField(Maintenance_Activity_Change,
-                                                db_table = "maintenance_activity_modification",
-                                                related_name = "modifications", null = True)
-    receiver_changes   = models.ManyToManyField(Maintenance_Receivers_Swap,
-                                                db_table = "maintenance_activity_receivers_swap",
-                                                null = True)
+    approvals          = models.ManyToManyField(
+        Maintenance_Activity_Change,
+        db_table = "maintenance_activity_approval",
+        related_name = "approvals", null = True)
+    modifications      = models.ManyToManyField(
+        Maintenance_Activity_Change,
+        db_table = "maintenance_activity_modification",
+        related_name = "modifications", null = True)
+    receiver_changes   = models.ManyToManyField(
+        Maintenance_Receivers_Swap,
+        db_table = "maintenance_activity_receivers_swap",
+        null = True)
     deleted            = models.BooleanField(default = False)
 
     # The following enable the repeat feature.  Repeat
@@ -78,10 +85,14 @@ class Maintenance_Activity(models.Model):
     # will be accounted for by the 'future_template' FK on the
     # original and subsequent templates, which will point to a newer
     # definition of the MA.
-    repeat_template    = models.ForeignKey('self', null = True, related_name = 'repeat_template_instance')
-    future_template    = models.ForeignKey('self', null = True, related_name = 'future_template_instance')
-    repeat_interval    = models.IntegerField(null = True) # 0, 1, 7, 30 for none, daily, weekly, monthly
-    repeat_end         = models.DateField(null = True)    # repeat until this date.
+    repeat_template    = models.ForeignKey(
+        'self', null = True, related_name = 'repeat_template_instance')
+    future_template    = models.ForeignKey(
+        'self', null = True, related_name = 'future_template_instance')
+    # recurrence interval: 0, 1, 7, 30 for none, daily, weekly, monthly
+    repeat_interval    = models.IntegerField(null = True)
+    # recurrence until this date.
+    repeat_end         = models.DateField(null = True)
 
 
     class Meta:
@@ -92,8 +103,10 @@ class Maintenance_Activity(models.Model):
         # these could probably all be used directly except receivers & backends
         subject       = self.subject if self.subject else 'None'
         location      = self.location if self.location else 'None'
-        tel_resource  = self.telescope_resource if self.telescope_resource else 'None'
-        soft_resource = self.software_resource if self.software_resource else 'None'
+        tel_resource  = self.telescope_resource \
+            if self.telescope_resource else 'None'
+        soft_resource = self.software_resource \
+            if self.software_resource else 'None'
         receivers     = self.receivers.all() if self.id else 'None'
         backends      = self.backends.all() if self.id else 'None'
         rcvr_ch       = self.receiver_changes.all() if self.id else 'None'
@@ -123,14 +136,17 @@ class Maintenance_Activity(models.Model):
             repeat_interval = interval_names[self.repeat_interval]
             repeat_end = self.repeat_end
 
-        repstr = "Subject: %s\nLocation: %s\nTelescope Resource: %s\nSoftware Resource: %s\n"
-        repstr += "Receivers: %s\nBackends: %s\nReceiver changes: %s\nStart: %s\n"
-        repstr += "Description: %s\nApproved: %s\nApprovals: %s\n"
-        repstr += "Modifications: %s\nContacts: %s\n"
-        repstr += "Repeat: %s\nRepeat template: %s\nRepeat interval: %s\nRepeat end: %s\n"
-        repstr %= (subject, location, tel_resource, soft_resource, receivers,
+        repstr = ("Subject: %s\nLocation: %s\nTelescope Resource: %s\n"
+                  "Software Resource: %s\nReceivers: %s\nBackends: %s\n"
+                  "Receiver changes: %s\nStart: %s\n"
+                  "Description: %s\nApproved: %s\nApprovals: %s\n"
+                  "Modifications: %s\nContacts: %s\n"
+                  "Repeat: %s\nRepeat template: %s\nRepeat interval: %s\n"
+                  "Repeat end: %s\n") % \
+                  (subject, location, tel_resource, soft_resource, receivers,
                    backends, rcvr_ch, start, description, approved, approvals,
-                   modifications, contacts, repeat, repeat_template, repeat_interval, repeat_end)
+                   modifications, contacts, repeat, repeat_template,
+                   repeat_interval, repeat_end)
 
         return repstr
 
@@ -157,7 +173,8 @@ class Maintenance_Activity(models.Model):
             rs += ", B=%s" % (b.rc_code)
 
         for c in self.receiver_changes.all():
-            rs += ", U=%s, D=%s" % (c.up_receiver.abbreviation, c.down_receiver.abbreviation)
+            rs += ", U=%s, D=%s" % \
+                (c.up_receiver.abbreviation, c.down_receiver.abbreviation)
 
 
         rs += "]"
@@ -180,7 +197,8 @@ class Maintenance_Activity(models.Model):
     def get_start(self, tzname = None):
         if self.period:
             start = datetime(self.period.start.year, self.period.start.month,
-                             self.period.start.day, self._start.hour, self._start.minute)
+                             self.period.start.day,
+                             self._start.hour, self._start.minute)
         else:
             start = self._start
 
@@ -367,15 +385,17 @@ class Maintenance_Activity(models.Model):
 
         ma = Maintenance_Activity();
         ma.save()
-        ma.period = self.period # will be overwritten if template and period provided.
-        template = self         # subject to a more recent one being found (see below)
+        # will be overwritten if template and period provided.
+        ma.period = self.period
+        # subject to a more recent one being found (see below)
+        template = self
 
         # If this is a repeat template:
         if self.repeat_interval:
             ma.repeat_interval = 0
             ma.repeat_end = None
-            ma.repeat_template = self.repeat_template if self.repeat_template else self
-
+            ma.repeat_template = self.repeat_template \
+                if self.repeat_template else self
 
             if period:
                 ma.period = period
@@ -434,7 +454,8 @@ class Maintenance_Activity(models.Model):
                 #check 'self' for time intersection with mas[i]
                 if not (my_start >= other_end or my_end <= other_start):
                     my_summary = self.get_resource_summary()[1:-1].split(', ')
-                    other_summary = mas[i].get_resource_summary()[1:-1].split(', ')
+                    other_summary = mas[i].get_resource_summary()[1:-1] \
+                        .split(', ')
 
                     for i in my_summary:
                         if 'T=' in i:
@@ -455,18 +476,23 @@ class Maintenance_Activity(models.Model):
                                         print "i =", i, "\tj =", j
                                         rval.append(i)
                         elif 'O=' in i:
+                            #get resource 'x' in 'O=x'
                             other = Maintenance_Other_Resources.objects\
-                                    .filter(rc_code=i[2])[0]  #get resource 'x' in 'O=x'
+                                    .filter(rc_code=i[2])[0]
 
                             for j in other_summary:
-                                if 'N' not in i:    # 'None' does not conflict with anything
-                                    if 'O=' in j and j[2] not in other.compatibility:
+                                # 'None' does not conflict with anything
+                                if 'N' not in i:
+                                    if 'O=' in j \
+                                            and j[2] not in other.compatibility:
                                         rval.append(i)
 
-                                    if 'R=' in j and 'R' not in other.compatibility:
+                                    if 'R=' in j \
+                                            and 'R' not in other.compatibility:
                                         rval.append(i)
 
-                                    if 'B=' in j and 'B' not in other.compatibility:
+                                    if 'B=' in j \
+                                            and 'B' not in other.compatibility:
                                         rval.append(i)
 
                         else: #everything else: receivers, backends
@@ -485,12 +511,14 @@ class Maintenance_Activity(models.Model):
                                     if i[2:] == j[2:]:
                                         rval.append(i)
                                 elif i == j:
-                                    if not 'T=' in i and not 'S=' in i and not 'O=' in i:
+                                    if not 'T=' in i \
+                                            and not 'S=' in i and not 'O=' in i:
                                         rval.append(i)
 
                                 elif 'O=' in j and 'N' not in j:
+                                    #get resource 'x' in 'O=x'
                                     other = Maintenance_Other_Resources.objects\
-                                            .filter(rc_code=j[2])[0]  #get resource 'x' in 'O=x'
+                                            .filter(rc_code=j[2])[0]
 
                                     if i[0] not in other.compatibility:
                                         rval.append(i)
@@ -537,15 +565,21 @@ class Maintenance_Activity(models.Model):
         """
 
         # To handle repeat maintenance activity objects:
-        repeatQ    = models.Q(deleted = False) & (models.Q(repeat_interval = 1) | models.Q(repeat_interval = 7) | models.Q(repeat_interval = 30))\
-                     & (models.Q(_start__lte = period.end())  & models.Q(repeat_end__gte = period.end()))
-        start_endQ = models.Q(start__gte = period.start) & models.Q(start__lte = period.end())
-        periodQ    = models.Q(period = period)
+        repeatQ = models.Q(deleted = False) \
+            & (models.Q(repeat_interval = 1) \
+                   | models.Q(repeat_interval = 7) \
+                   | models.Q(repeat_interval = 30)) \
+                   & (models.Q(_start__lte = period.end()) \
+                          & models.Q(repeat_end__gte = period.end()))
 
-        dbmas        = Maintenance_Activity.objects.filter(periodQ)
-        dbrmas       = Maintenance_Activity.objects.filter(repeatQ)
-        mas          = [i for i in dbmas if not i.is_repeat_template()]
-        rmas         = [i for i in dbrmas]
+        start_endQ = models.Q(start__gte = period.start) \
+            & models.Q(start__lte = period.end())
+
+        periodQ = models.Q(period = period)
+        dbmas   = Maintenance_Activity.objects.filter(periodQ)
+        dbrmas  = Maintenance_Activity.objects.filter(repeatQ)
+        mas     = [i for i in dbmas if not i.is_repeat_template()]
+        rmas    = [i for i in dbrmas]
 
         # rmas is the list repeating activity templates that may apply
         # for this period.  We need clones of these to include in mas.
@@ -571,7 +605,9 @@ class Maintenance_Activity(models.Model):
         dm = {4: 30, 5: 20, 6: 10, 0: 0, 1: 15, 2: 25, 3: 35}
         delta = timedelta(days = 3)
         today = TimeAgent.truncateDt(period.start)
-        p = Period.get_periods_by_observing_type(today - delta, today + delta, "maintenance")
+        p = Period.get_periods_by_observing_type(today - delta,
+                                                 today + delta,
+                                                 "maintenance")
 
         for i in rmas:
             if i.repeat_interval > 1:
@@ -579,16 +615,22 @@ class Maintenance_Activity(models.Model):
                 diff = (today - start_date).days % i.repeat_interval
 
                 if diff:
-                    # doesn't fall on this date.  Is this the closest period though?
+                    # doesn't fall on this date.  Is this the closest
+                    # period though?
 
                     if diff > 6:     # monthly not due
                         x.append(i)
                     else:            # weekly or monthly that is due this week
                         for j in p:
                             if j != period:  # check only other periods
-                                mod = (j.start.date() - start_date.date()).days % i.repeat_interval
+                                mod = (j.start.date() \
+                                           - start_date.date()).days \
+                                           % i.repeat_interval
 
-                                if mod < 7 and dm[mod] < dm[diff]: # It's a better fit in another period.  Don't use here.
+                                # Test to see if it's a better fit in
+                                # another period.  and if so, don't
+                                # use here.
+                                if mod < 7 and dm[mod] < dm[diff]:
                                     x.append(i)
                                     break
 
@@ -607,7 +649,8 @@ class Maintenance_Activity(models.Model):
         # after all the above to prevent a replacement being generated
         # for a deleted activity.
         mas = [i for i in mas if not i.deleted]
-        mas.sort(cmp = lambda x, y: cmp(x.get_start().time(), y.get_start().time()))
+        mas.sort(cmp = lambda x, y: cmp(x.get_start().time(),
+                                        y.get_start().time()))
 
         return mas
 
@@ -636,7 +679,9 @@ class Maintenance_Activity(models.Model):
     def list_repeat_activities():
         for i in Maintenance_Activity.objects.all():
             if i.is_repeat_activity():
-                print "%s\t%s\t%s" % (i.get_start('EST'), i.id, i.repeat_template.id),
+                print "%s\t%s\t%s" % (i.get_start('EST'),
+                                      i.id,
+                                      i.repeat_template.id),
 
                 if i.deleted:
                     print "\t(D)",
