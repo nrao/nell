@@ -6,6 +6,7 @@ from Observing_Type import Observing_Type
 from Parameter      import Parameter
 from Project        import Project
 from Receiver       import Receiver
+from Receiver_Schedule import Receiver_Schedule
 from Session_Type   import Session_Type
 from Status         import Status
 from System         import System
@@ -233,6 +234,108 @@ class Sesshun(models.Model):
             return top[0].float_value
         except IndexError:
             return None
+
+    def get_receiver_blackout_ranges(self, start, end):
+        """
+        Returns a list of tuples of the form (start, end) where
+        start and end are datetime objects that denote the 
+        beginning and ending of a period where no receivers are available
+        for this session.  If there is a receiver available
+        at all times an empty list is returned. 
+        """
+
+        # Find all the required receiver sets for this project and schedule.
+        # E.g. for one session:
+        #     [[a, b, c], [x, y, z]] = (a OR b OR c) AND (x OR y OR z)
+        required = [self.receiver_group_set.all()]
+        if required == []:
+            return [] 
+        return Receiver_Schedule.get_receiver_blackout_ranges(required, start, end)
+
+    def get_receiver_blackout_dates(self, start, end):
+        # Change date ranges into individual days.
+        blackouts = []
+        for rstart, rend in self.get_receiver_blackout_ranges(start, end):
+            counter = rstart.replace(hour = 0)
+            while counter < (rend or end):
+                blackouts.append(counter)
+                counter = counter + timedelta(days = 1)
+ 
+        return blackouts
+
+    def get_time_not_schedulable(self, start, end, blackouts = True):
+        """
+        What is the set of time ([(start, end)]) in the given time window
+        where this session is not schedulable?
+        Here we consolidate all events so that we can use them to make
+        calculations of the percentage of time available.
+        """
+    
+        # WTF?
+        if self.project is None:
+            return []
+    
+        dts = Set([])
+        dts = dts.union(self.get_receiver_blackout_ranges(start, end))
+        dts = dts.union(self.project.get_prescheduled_times(start, end))
+        if blackouts:
+            dts = dts.union(self.project.get_blackout_times(start, end))
+        
+        # the call to consolidate_events won't accept the None used
+        # sometimes by get_receiver_blackout_range, so substitue in
+        # the given boundries for these
+        newDts = []
+        for (s, e) in list(dts):
+            if s is None:
+                s = start
+            if e is None:
+                e = end
+            newDts.append((s,e))
+            
+        return consolidate_events(sorted(newDts))
+
+    def getBlackedOutSchedulableTime(self, start, end):
+        """
+        Of the hours in the given range that are schedulable,
+        how many have been blacked out?
+        Returns tuple of hours (scheduble but ignoring blackouts
+                              , scheduable but blacked out)
+        """
+
+        nss1 = self.get_time_not_schedulable( start
+                                           , end
+                                           , blackouts = False)
+
+        nss = trim_events(nss1, start, end)
+
+        # now convert the non-schedulable time ranges to the 
+        # time that IS schedulable:
+        schedulable = compliment_events(nss, start, end)
+ 
+        # how much time is that?
+        hrsSchedulable = sum([TimeAgent.timedelta2minutes(s[1] - s[0])/60.0 \
+            for s in schedulable])
+
+        # now, for each chunk of schedulable time, how much is
+        # blacked out?
+        hrsBlackedOut = 0.0
+        bss = []
+        for s in schedulable:
+            bs = self.project.get_blackout_times(s[0], s[1])
+            # but these blackout times might not match to the schedulable
+            # end points, so we may need to truncate them
+            bs = trim_events(bs, s[0], s[1])
+            if len(bs) != 0:
+                bss.append(bs)
+            bsTime = sum([TimeAgent.timedelta2minutes(b[1] - b[0])/60.0 \
+                for b in bs])
+            hrsBlackedOut += bsTime
+
+        # return a summary of what we've found
+        return (hrsSchedulable
+              , hrsBlackedOut
+              , schedulable
+              , bss)           
 
     class Meta:
         db_table  = "sessions"

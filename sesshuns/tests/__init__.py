@@ -1,5 +1,6 @@
 from utils                     import *
 from TestBlackout              import TestBlackout
+from TestComplimentEvents      import TestComplimentEvents
 from TestConsolidateBlackouts  import TestConsolidateBlackouts
 from TestDBReporter            import TestDBReporter
 from TestDSSPrime2DSS          import TestDSSPrime2DSS
