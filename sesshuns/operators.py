@@ -99,7 +99,15 @@ def gbt_schedule(request, *args, **kws):
 
         maintenance_activities[periods[i]] = mas
 
-    schedule = gen_gbt_schedule(start, end, days, 'ET', periods, maintenance_activities)
+    requestor = get_requestor(request)
+
+    # Ensure only operators or admins trigger costly MOC calculations
+    if requestor.isOperator() or requestor.isAdmin():
+        get_moc = True
+    else:
+        get_moc = False
+
+    schedule = gen_gbt_schedule(start, end, days, 'ET', periods, maintenance_activities, get_moc)
 
     try:
         s_n = Schedule_Notification.objects.all()
@@ -122,7 +130,7 @@ def gbt_schedule(request, *args, **kws):
                 'days'            : days,
                 'rschedule'       : Receiver_Schedule.extract_schedule(start, days),
                 'timezone'        : timezone,
-                'requestor'       : get_requestor(request),
+                'requestor'       : requestor,
                 'pubdate'         : pubdate,
                 'maintenance_prj' : maprj
                })
