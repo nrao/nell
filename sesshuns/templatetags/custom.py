@@ -192,10 +192,8 @@ def format_reservations(reservations):
     return ", ".join([a + " to " + b for a, b in [(x.strftime('%m-%d-%Y'), y.strftime('%m-%d-%Y')) for x, y in reservations]]) if reservations else "None"
 
 @register.filter
-def moc_class(period, requestor):
-    if requestor.isOperator() or requestor.isAdmin():
-        return "" if period.moc_met() else "moc_failure"
-    return ""
+def moc_class(moc_met):
+    return "" if moc_met else "moc_failure"
 
 @register.filter
 def moc_reschedule(period):

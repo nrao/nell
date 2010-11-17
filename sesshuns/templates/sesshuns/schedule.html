@@ -218,7 +218,7 @@
     {# this for-block loops for each period in the day. #}
     {####################################################}
 
-    {% for start, end, start_cutoff, end_cutoff, p, mas in ps %}
+    {% for start, end, start_cutoff, end_cutoff, p, mas, moc_met in ps %}
 
       {# Notify operator of minimum observing condition (MOC) failure #}
       {% if requestor.isOperator and p|moc_reschedule %}
@@ -235,7 +235,7 @@
       {% endif %}
 
       {# New table row for the period #}
-      <tr class="{{p|moc_class:requestor}}">
+      <tr class="{{moc_met|moc_class}}">
 
       {# The Date/Time column #}
       {# start/end cutoff indicates that the period's start/end occurs before/after day. #}
@@ -268,7 +268,7 @@
 
       {# The 'project ID' column. #}
       <td>
-      {% if not p.moc_met and not p.moc_ack %} {# blink if MOC event not acknowledged. #}
+      {% if not moc_met and not p.moc_ack %} {# blink if MOC event not acknowledged. #}
         <blink>
       {% endif %}
 
@@ -277,7 +277,7 @@
           <a href="" class="info">(N)<span><p>Project Notes:</p>{{p.session.project.notes|escape|linebreaks}}</span></a>
         {% endif %}
 
-      {% if not p.moc_met and p.moc_ack %}
+      {% if not moc_met and p.moc_ack %}
         </blink>
       {% endif %}
 
@@ -289,7 +289,7 @@
           {# output the project title as an anchor link to the proposal's page on the rescal #}
           <a href="#" onClick="window.open('http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}', 'Proposal Cover Page', 'width=1000, height=700, scrollbars=yes');return true;">{{p.session.project.name}}</a>
 
-          {% if not p.moc_met and p.moc_ack %}
+          {% if not moc_met and p.moc_ack %}
             <img src="/static/images/checked.png" />
           {% endif %}
 
@@ -308,7 +308,7 @@
         {% else %} {# non-science and non-maintenance #}
           <td>
             {{p.session.name}}
-            {% if not p.moc_met and p.moc_ack %}
+            {% if not moc_met and p.moc_ack %}
               <img src="/static/images/checked.png" />
             {% endif %}
             {% if p|has_lost_time %}
