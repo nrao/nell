@@ -297,7 +297,8 @@ class TestObservers(NellTestCase):
                , 'tz'   : 'UTC' }
         response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(datetime(2009, 9, 9), [(datetime(2009, 9, 9, 12), datetime(2009, 9, 9, 13), False, False, p, [])])
+        exp = [(datetime(2009, 9, 9), [(datetime(2009, 9, 9, 12), datetime(2009, 9, 9, 13),
+                                        False, False, p, [], True)])
              , (datetime(2009, 9, 10), [])
              , (datetime(2009, 9, 11), [])]
 
@@ -309,7 +310,7 @@ class TestObservers(NellTestCase):
                , 'tz'   : 'ET' }
         response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(datetime(2009, 9, 9), [(datetime(2009, 9, 9, 8), datetime(2009, 9, 9, 9), False, False, p, [])])
+        exp = [(datetime(2009, 9, 9), [(datetime(2009, 9, 9, 8), datetime(2009, 9, 9, 9), False, False, p, [], True)])
              , (datetime(2009, 9, 10), [])
              , (datetime(2009, 9, 11), [])]
         self.assertEqual(exp, calendar)
@@ -337,7 +338,8 @@ class TestObservers(NellTestCase):
         response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
         exp = [(datetime(2009, 9, 1), [])
-             , (datetime(2009, 9, 2), [(datetime(2009, 9, 2, 1), datetime(2009, 9, 2, 7), False, False, p, [])])
+             , (datetime(2009, 9, 2), [(datetime(2009, 9, 2, 1), datetime(2009, 9, 2, 7),
+                                        False, False, p, [], True)])
              , (datetime(2009, 9, 3), [])]
         self.assertEqual(exp, calendar)
 
@@ -347,8 +349,8 @@ class TestObservers(NellTestCase):
                , 'tz' : 'ET' }
         response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(datetime(2009, 9, 1), [(datetime(2009, 9, 1, 21), datetime(2009, 9, 2), False, False, p, [])])
-             , (datetime(2009, 9, 2), [(datetime(2009, 9, 2), datetime(2009, 9, 2, 3), False, False, p, [])])
+        exp = [(datetime(2009, 9, 1), [(datetime(2009, 9, 1, 21), datetime(2009, 9, 2), False, False, p, [], True)])
+             , (datetime(2009, 9, 2), [(datetime(2009, 9, 2), datetime(2009, 9, 2, 3), False, False, p, [], True)])
              , (datetime(2009, 9, 3), [])]
         self.assertEqual(exp, calendar)
 
@@ -358,7 +360,7 @@ class TestObservers(NellTestCase):
                , 'tz' : 'ET' }
         response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(datetime(2009, 9, 1), [(datetime(2009, 9, 1, 21), datetime(2009, 9, 2), False, True, p, [])])]
+        exp = [(datetime(2009, 9, 1), [(datetime(2009, 9, 1, 21), datetime(2009, 9, 2), False, True, p, [], True)])]
         self.assertEqual(exp, calendar)
 
         # clean up
