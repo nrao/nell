@@ -107,11 +107,15 @@ class Period(models.Model):
            self.end() < datetime.utcnow():
             return True
 
+        duration = int(self.duration)
+
         url = "%s:%d/" % (ANTIOCH_HOST, PROXY_PORT) + \
               "moc?session_id=" + \
               `self.session.id` + \
               "&start=" + \
-              self.start.isoformat().replace("T", "+").replace(":", "%3A")
+              self.start.isoformat().replace("T", "+").replace(":", "%3A") + \
+              "&duration=" + \
+              `duration`
         try:
             antioch_cnn = urllib2.build_opener().open(url)
             moc = json.loads(antioch_cnn.read(0x4000))['moc']

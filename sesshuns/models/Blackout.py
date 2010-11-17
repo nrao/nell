@@ -93,8 +93,13 @@ class Blackout(models.Model):
         if start is None or end is None:
             return [] # What does it mean to have None in start or end?
 
-        if (start > calend or end < calstart) and until < calstart:
-            return [] # Outside time period - hasn't started or already done
+        # see what other conditions we can reject
+        if periodicity == "Once":
+            if (start > calend or end < calstart):
+                return [] # Outside time period - hasn't started or already done
+        else:    
+            if (start > calend or end < calstart) and until < calstart:
+                return [] # Outside time period - hasn't started or already done
 
         dates = []
         

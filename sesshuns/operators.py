@@ -79,6 +79,7 @@ def gbt_schedule(request, *args, **kws):
                 if not p.isPending()]
     maintenance_activities = {}
 
+    # a comment here would be nice
     for i in range(0, len(periods)):
         if periods[i].session.observing_type.type == "maintenance":
             mas = Maintenance_Activity.get_maintenance_activity_set(periods[i])
