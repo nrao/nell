@@ -107,7 +107,7 @@ class Period(models.Model):
            self.end() < datetime.utcnow():
             return True
 
-        duration = int(self.duration)
+        duration = int(self.duration*60.0)
 
         url = "%s:%d/" % (ANTIOCH_HOST, PROXY_PORT) + \
               "moc?session_id=" + \
