@@ -193,7 +193,7 @@ def format_reservations(reservations):
 
 @register.filter
 def moc_class(period, requestor):
-    if requestor.isOperator():
+    if requestor.isOperator() or requestor.isAdmin():
         return "" if period.moc_met() else "moc_failure"
     return ""
 
