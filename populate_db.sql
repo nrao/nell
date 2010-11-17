@@ -85,6 +85,7 @@ INSERT INTO projects VALUES (DEFAULT, 1, 1, 'GBT09A-001', '', false, false, fals
 INSERT INTO session_types VALUES (DEFAULT, 'open');
 INSERT INTO session_types VALUES (DEFAULT, 'fixed');
 INSERT INTO session_types VALUES (DEFAULT, 'windowed');
+INSERT INTO session_types VALUES (DEFAULT, 'elective');
 INSERT INTO session_types VALUES (DEFAULT, 'vlbi');
 INSERT INTO session_types VALUES (DEFAULT, 'maintenance');
 INSERT INTO session_types VALUES (DEFAULT, 'commissioning');
@@ -156,6 +157,7 @@ INSERT INTO parameters VALUES (DEFAULT, 'Transit', 'boolean');
 INSERT INTO parameters VALUES (DEFAULT, 'Transit Before', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Transit After', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'El Limit', 'float');
+INSERT INTO parameters VALUES (DEFAULT, 'Not Guaranteed', 'boolean');
 
 INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Telescope motion required', 'M', 'N');
 INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'No telescope required ', 'N', 'MNBASDZE');

@@ -76,8 +76,29 @@ class TestSessionResource(NellTestCase):
         self.assertEqual(0.0, r_json["session"]["total_time"])
 
     def test_update(self):
+
         response = self.client.post('/sessions/1', {'_method' : 'put'})
         self.failUnlessEqual(response.status_code, 200)
+        s = Sesshun.objects.get(id = 1)
+        self.assertEquals(True, s.gaurenteed())
+
+        response = self.client.post('/sessions/1', {'_method' : 'put'
+                                                  , 'gaurenteed' : ['true']})
+        self.failUnlessEqual(response.status_code, 200)
+        s = Sesshun.objects.get(id = 1)
+        self.assertEquals(True, s.gaurenteed())
+
+        response = self.client.post('/sessions/1', {'_method' : 'put'
+                                                  , 'gaurenteed' : ['false']})
+        self.failUnlessEqual(response.status_code, 200)
+        s = Sesshun.objects.get(id = 1)
+        self.assertEquals(False, s.gaurenteed())
+
+        response = self.client.post('/sessions/1', {'_method' : 'put'
+                                                  , 'gaurenteed' : ['true']})
+        self.failUnlessEqual(response.status_code, 200)
+        s = Sesshun.objects.get(id = 1)
+        self.assertEquals(True, s.gaurenteed())
 
     def test_delete(self):
         response = self.client.post('/sessions/1', {'_method' : 'delete'})

@@ -20,6 +20,8 @@ class Period(models.Model):
     moc_ack    = models.BooleanField(default = False)
     receivers  = models.ManyToManyField(Receiver, through = "Period_Receiver")
     window     = models.ForeignKey("Window", null=True, related_name = "periods")
+    elective   = models.ForeignKey("Elective", null=True, related_name = "periods")
+
 
     class Meta:
         db_table  = "periods"
@@ -183,15 +185,16 @@ class Period(models.Model):
 
     def publish(self):
         "pending state -> scheduled state: and init the time accounting"
-        # NOTE: it would be ideal to 'publish' a period's associated
-        # window (reconcile it, really).  But we haven't been able to
-        # get that to work properly, so windowed periods must be handled
-        # elsewhere when publishing.
         if self.state.abbreviation == 'P':
             self.move_to_scheduled_state()
+            # if this is part of a window, deal w/ the consequences
             if self.is_windowed() and self.window is not None:
                 self.window.publish() 
                 self.window.save()
+            # if this is part of an elective, deal w/ the consequences
+            if self.is_elective() and self.elective is not None:
+                self.elective.publish()                
+                self.elective.save()
 
 
     def delete(self):
@@ -199,8 +202,6 @@ class Period(models.Model):
         if self.state.abbreviation != 'P':
             self.move_to_deleted_state()
         else:
-            #self.window.clear()
-            #self.default_window.clear()
             models.Model.delete(self)  # pending can really get removed!
 
     def remove(self):
@@ -209,6 +210,9 @@ class Period(models.Model):
 
     def is_windowed(self):
         return self.session.session_type.type == "windowed"
+
+    def is_elective(self):
+        return self.session.session_type.type == "elective"
 
     def get_default_window(self):
         "Get the window this period is a default period for."
@@ -286,34 +290,10 @@ class Period(models.Model):
 
     @staticmethod
     def publish_periods(start, duration):
-        """
-        Due to problems we encountered with the relationship between
-        periods and windows in the DB, we can't reconcile windows
-        from within a period's publish method, we must take this approach.
-        """
 
         periods = Period.get_periods(start, duration)
         for p in periods:
             p.publish()
             p.save()
 
-        # Publishing moves any period whose state is Pending to Scheduled,
-        # and initializes time accounting (scheduled == period duration).
-        #windows = []
-        #for p in periods:
-        #    if p.session.session_type.type != 'windowed':
-        #        p.publish()
-        #        p.save()
-        #    else:
-                # Don't publish this period, instead, find out the window
-                # to which it belongs so we can reconcile it latter.
-        #        window = p.get_window()
-        #        if window is not None and \
-        #           window.id not in [w.id for w in windows]:
-        #            windows.append(window)
-
-        # Now, reconcile any windows.
-        #for w in windows:
-        #    w.reconcile()
-        #    w.save()
 

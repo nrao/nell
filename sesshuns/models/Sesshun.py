@@ -221,6 +221,25 @@ class Sesshun(models.Model):
         """
         return self.has_bool_obs_param("Night-time Flag")
 
+    def not_gauranteed(self):
+        """
+        Returns True or False if it does have the 'Not Gaurenteed'
+        observing parameter, else None if not.
+        Only applies to windowed and elective sessions: if 'Not
+        Gaurentted' is set True, then the window or elective is not 
+        gaurenteed to observe.
+        """
+        return self.has_bool_obs_param("Not Guaranteed")
+
+    # TBF: should be spelled: guaranteed
+    def gaurenteed(self):
+        "True if 'Not Gaurenteed' param is set to F, or None"
+        ng = self.not_gauranteed()
+        if ng is None or not ng:
+            return True
+        else:
+            return False
+
     def has_bool_obs_param(self, name):
         tp = Parameter.objects.filter(name=name)[0]
         top = self.observing_parameter_set.filter(parameter=tp)

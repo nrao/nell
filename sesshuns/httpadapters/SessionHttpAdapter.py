@@ -115,6 +115,8 @@ class SessionHttpAdapter (object):
         self.update_bool_obs_param(fdata, "transit", "Transit", self.sesshun.transit())
         self.update_bool_obs_param(fdata, "nighttime", "Night-time Flag", \
             self.sesshun.nighttime())
+        self.update_gaurenteed(fdata)
+        
         self.update_lst_exclusion(fdata)    
         self.update_xi_obs_param(fdata, self.sesshun.get_min_eff_tsys_factor())
         self.update_el_limit_obs_param(fdata
@@ -219,6 +221,39 @@ class SessionHttpAdapter (object):
             else:
                 obs_param.delete()
 
+    def update_gaurenteed(self, fdata):
+        """
+        Interpreting the gaurenteed flag in the JSON is tedious, because
+        it is the opposite of the boolean Obs. Param. 'Not Guaranteed',
+        and Obs. Param.'s are False if they are not there ...
+        """
+        # gaurenteed
+        gaurenteed = fdata.get("gaurenteed", "true") == "true"
+        
+        param = Parameter.objects.get(name = "Not Guaranteed")
+        old_value = self.sesshun.not_gauranteed()
+        if old_value is None:
+            # The Obs. Param. hasn't been used it, so set it only if
+            # the Obs. Param. will be True
+            if not gaurenteed:
+                # session is not gauranteed, and we're setting this 
+                # for the first time
+                op = Observing_Parameter(session = self.sesshun
+                                       , parameter = param
+                                       , boolean_value = True
+                                         )
+                op.save()
+        else:
+            # The Obs. Param is already in use, so use it.
+            op = self.sesshun.observing_parameter_set.filter(parameter=param)[0]
+            if gaurenteed:
+                # Equivalent to 'Not Gaurenteed' == False
+                op.delete()
+            else:
+                # Not Gaurenteed == True
+                op.boolean_value = True
+                op.save()
+
     def update_lst_exclusion(self, fdata):
         """
         Converts the json representation of the LST exclude flag
@@ -290,6 +325,7 @@ class SessionHttpAdapter (object):
            , "authorized" : self.sesshun.status.authorized
            , "complete"   : self.sesshun.status.complete
            , "backup"     : self.sesshun.status.backup
+           , "gaurenteed" : self.sesshun.gaurenteed()
            , "transit"    : self.sesshun.transit() or False
            , "nighttime"  : self.sesshun.nighttime() or False
            , "lst_ex"     : self.sesshun.get_LST_exclusion_string() or ""

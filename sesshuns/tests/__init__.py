@@ -3,6 +3,8 @@ from TestBlackout              import TestBlackout
 from TestConsolidateBlackouts  import TestConsolidateBlackouts
 from TestDBReporter            import TestDBReporter
 from TestDSSPrime2DSS          import TestDSSPrime2DSS
+from TestElective              import TestElective
+from TestElectiveResource      import TestElectiveResource
 from TestIcalAntioch           import TestIcalAntioch
 from TestInvestigatorResource  import TestInvestigatorResource
 from TestMaintenanceActivity   import TestMaintenanceActivity

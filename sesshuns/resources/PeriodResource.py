@@ -46,6 +46,14 @@ class PeriodResource(NellResource):
             defDays = "1" if filterWnd is None else None
 
             # Filtering by date involves a pair of keywords
+            filterWnd = request.GET.get("filterWnd", None)
+            filterElc = request.GET.get("filterElc", None)
+
+            # make sure we have defaults for dates
+            defStart = datetime.now().strftime("%Y-%m-%d") \
+                if filterWnd is None and filterElc is None else None
+            defDays = "1" if filterWnd is None and filterElc is None else None
+            
             startPeriods = request.GET.get("startPeriods", defStart)
             daysPeriods  = request.GET.get("daysPeriods",  defDays)
 
@@ -63,12 +71,19 @@ class PeriodResource(NellResource):
                 query_set = Period.objects
 
                 # window id
-                filterWnd = request.GET.get("filterWnd", None)
+                #filterWnd = request.GET.get("filterWnd", None)
                 if filterWnd is not None:
                     wId = int(filterWnd)
                     query_set = query_set.filter(window__id = wId)
 
+                # elective id
+                #filterElc = request.GET.get("filterElc", None)
+                if filterElc is not None:
+                    eId = int(filterElc)
+                    query_set = query_set.filter(elective__id = eId)
+
                 periods = query_set.order_by(order + sortField)    
+
             pids         = [p.id for p in periods]
             sd           = self.score_period.periods(pids)
             scores       = [sd.get(pid, 0.0) for pid in pids]
