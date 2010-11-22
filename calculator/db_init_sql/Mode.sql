@@ -1,5 +1,5 @@
-INSERT INTO mode (name) VALUES('Continuum');
-INSERT INTO mode (name) VALUES('Pulsar');
-INSERT INTO mode (name) VALUES('HTR');
-INSERT INTO mode (name) VALUES('Spectral Line');
-INSERT INTO mode (name) VALUES('NA');
+INSERT INTO calculator_mode (name) VALUES('Continuum');
+INSERT INTO calculator_mode (name) VALUES('Pulsar');
+INSERT INTO calculator_mode (name) VALUES('HTR');
+INSERT INTO calculator_mode (name) VALUES('Spectral Line');
+INSERT INTO calculator_mode (name) VALUES('NA');

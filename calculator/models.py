@@ -74,14 +74,14 @@ class Integration(models.Model):
     class Meta:
         db_table = 'calculator_integration'
 
-class Windows(models.Model):
+class SpectralWindows(models.Model):
     name = models.CharField(max_length=200)
 
     def __unicode__(self):
         return self.name
 
     class Meta:
-        db_table = 'calculator_windows'
+        db_table = 'calculator_spectral_windows'
 
 class Polarization(models.Model):
     name = models.CharField(max_length=200)
@@ -170,7 +170,7 @@ class Configuration(models.Model):
     receiver     = models.ForeignKey(Receiver)
     beams        = models.ForeignKey(Beams)
     polarization = models.ForeignKey(Polarization)
-    windows      = models.ForeignKey(Windows)
+    windows      = models.ForeignKey(SpectralWindows)
     switching    = models.ForeignKey(Switching)
     bandwidth    = models.ForeignKey(Bandwidth)
     integration  = models.ForeignKey(Integration)
@@ -203,7 +203,7 @@ def getName(hardware,id):
        'beams': lambda id: Beams.objects.get(pk=id),
        'polarization': lambda id: Polarization.objects.get(pk=id),
        'bandwidth': lambda id: Bandwidth.objects.get(pk=id),
-       'windows': lambda id: Windows.objects.get(pk=id),
+       'windows': lambda id: SpectralWindows.objects.get(pk=id),
        'integration': lambda id: Integration.objects.get(pk=id), 
        'switching': lambda id: Switching.objects.get(pk=id)
        }
