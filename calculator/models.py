@@ -110,13 +110,6 @@ class Switching(models.Model):
     class Meta:
         db_table = 'calculator_switching'
 
-class SensitivitycalcEfficiency0(models.Model):
-    topo_freq = models.FloatField()
-    efficiency_0 = models.FloatField()
-
-    class Meta:
-        db_table = 'calculator_sensitivityCalc_efficiency_0'
-
 class Mode(models.Model):
     name = models.CharField(max_length=200)
 
