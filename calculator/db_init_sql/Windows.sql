@@ -1,0 +1,9 @@
+INSERT INTO windows (name) VALUES('NA');
+INSERT INTO windows (name) VALUES('CF:1');
+INSERT INTO windows (name) VALUES('CF:2');
+INSERT INTO windows (name) VALUES('CF:4');
+INSERT INTO windows (name) VALUES('RF:1');
+INSERT INTO windows (name) VALUES('RF:2');
+INSERT INTO windows (name) VALUES('RF:4');
+INSERT INTO windows (name) VALUES('RF:8');
+INSERT INTO windows (name) VALUES('NA:4');

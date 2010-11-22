@@ -5,7 +5,9 @@
 # set this to True only for production - must be False for unit tests to run
 USE_REVERSION = False #MODIFY#
 
-STATIC_DOC_ROOT='{path to your sandbox}/nell/sesshuns/static' #MODIFY#
+NELL_ROOT        ='{path to your nell sandbox}' #MODIFY#
+STATIC_DOC_ROOT  = NELL_ROOT + '/sesshuns/static'
+SC_EQUATION_DEFS = NELL_ROOT + '/calculator/equations.cfg'
 
 SERVER_EMAIL = 'dss@gb.nrao.edu'
 EMAIL_HOST   = 'smtp.gb.nrao.edu'
@@ -114,8 +116,9 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'nell.sesshuns',
-    'django.contrib.admin',
     'nell.sesshuns.templatetags',
+    'nell.calculator',
+    'django.contrib.admin',
     'reversion'
 )
  

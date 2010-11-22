@@ -1,0 +1,12 @@
+INSERT INTO backend (name, k1, k2) VALUES ('Mustang', 1, 1);
+INSERT INTO backend (name, k1, k2) VALUES('CGSR2', 1, 1);
+INSERT INTO backend (name, k1, k2) VALUES('GASP', 1, 1);
+INSERT INTO backend (name, k1, k2) VALUES('Radar', 1, 1);
+INSERT INTO backend (name, k1, k2) VALUES('CCB', 1, 1);
+INSERT INTO backend (name, k1, k2) VALUES('Mark V', 1, 1);
+INSERT INTO backend (name, k1, k2) VALUES('Spigot', 1, 1);
+INSERT INTO backend (name, k1, k2) VALUES('DCR', 1, 1);
+INSERT INTO backend (name, k1, k2) VALUES('SP', 1, 1);
+INSERT INTO backend (name, k1, k2) VALUES('ACS', 0, 0);
+INSERT INTO backend (name, k1, k2) VALUES('GUPPI', 1, 1);
+INSERT INTO backend (name, k1, k2) VALUES('Other', 1, 1);
