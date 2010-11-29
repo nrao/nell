@@ -80,7 +80,7 @@ def setHardware(request):
             v = None
             if request.POST.has_key(k) and request.session.has_key("SC_" + k):
                 v = request.POST[k]
-                selected[k] = v
+                selected[k] = getRxName(v) if k == 'receiver' else v
             #new change,  stop add this to the filter then stop
             if not newPick and v != request.session.get("SC_" + k):
                 newPick = k

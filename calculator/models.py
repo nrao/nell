@@ -1,5 +1,7 @@
 from django.db import models
 
+from sesshuns import models as smodels
+
 class Calc_Backend(models.Model):
     name = models.CharField(max_length=200)
     k1   = models.FloatField()
@@ -93,10 +95,19 @@ class Polarization(models.Model):
         db_table = 'calculator_polarization'
 
 class Receiver(models.Model):
-    name = models.CharField(max_length=200)
+    name         = models.CharField(max_length=200)
+    dss_receiver = models.ForeignKey(smodels.Receiver, null = True)
+    band_low     = models.FloatField(null = True)
+    band_hi      = models.FloatField(null = True)
 
     def __unicode__(self):
         return self.name
+
+    def getName(self):
+        if self.band_low is not None and self.band_hi is not None:
+            return "%s (%s - %s)" % (self.name, self.band_low, self.band_hi)
+        else:
+            return self.name
 
     class Meta:
         db_table = 'calculator_receiver'
@@ -127,20 +138,6 @@ class NOverlap(models.Model):
 
     class Meta:
         db_table = 'calculator_n_overlap'
-
-class Temp1(models.Model):
-    backend_id                 = models.IntegerField(null=True, blank=True)
-    mode_id                    = models.IntegerField(null=True, blank=True)
-    receiver_id                = models.IntegerField(null=True, blank=True)
-    beams_id                   = models.IntegerField(null=True, blank=True)
-    polarization_id            = models.IntegerField(null=True, blank=True)
-    number_spectral_windows_id = models.IntegerField(null=True, blank=True)
-    switching_mode_id          = models.IntegerField(null=True, blank=True)
-    bandwidth_id               = models.IntegerField(null=True, blank=True)
-    min_integ_time_id          = models.IntegerField(null=True, blank=True)
-
-    class Meta:
-        db_table = 'calculator_temp_1'
 
 class Temperatures(models.Model):
     topo_freq = models.FloatField()
@@ -190,16 +187,16 @@ class Configuration(models.Model):
 
 def getName(hardware,id):
     Dict = {
-       'backend': lambda id: Calc_Backend.objects.get(pk=id),
-       'mode': lambda id: Mode.objects.get(pk=id),
-       'receiver': lambda v: Receiver.objects.get(pk=id),
-       'beams': lambda id: Beams.objects.get(pk=id),
-       'polarization': lambda id: Polarization.objects.get(pk=id),
-       'bandwidth': lambda id: Bandwidth.objects.get(pk=id),
-       'windows': lambda id: SpectralWindows.objects.get(pk=id),
-       'integration': lambda id: Integration.objects.get(pk=id), 
-       'switching': lambda id: Switching.objects.get(pk=id)
+       'backend'     : lambda id: Calc_Backend.objects.get(pk=id).name,
+       'mode'        : lambda id: Mode.objects.get(pk=id).name,
+       'receiver'    : lambda id: Receiver.objects.get(pk=id).getName(),
+       'beams'       : lambda id: Beams.objects.get(pk=id).name,
+       'polarization': lambda id: Polarization.objects.get(pk=id).name,
+       'bandwidth'   : lambda id: Bandwidth.objects.get(pk=id).name,
+       'windows'     : lambda id: SpectralWindows.objects.get(pk=id).name,
+       'integration' : lambda id: Integration.objects.get(pk=id).name, 
+       'switching'   : lambda id: Switching.objects.get(pk=id).name
        }
     #print "getting "+hardware+" with id "+str(id)
-    return str(Dict[hardware](id).name)
+    return str(Dict[hardware](id))
     
