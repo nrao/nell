@@ -119,7 +119,6 @@ class MyCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
 
 class RCAddActivityForm(forms.Form):
 
-#    error_css_class = 'error'
     required_css_class = 'required'
 
     subject_req          = True
@@ -173,9 +172,8 @@ class RCAddActivityForm(forms.Form):
 
     other_resc = [(p.id, p.resource)
                   for p in Maintenance_Other_Resources.objects.all()]
-    other_resource = forms.ChoiceField(choices = other_resc,
-                                       widget = forms.RadioSelect(
-            renderer = BRRadioRender))
+    other_resources = forms.MultipleChoiceField(choices = other_resc,
+                                                widget = MyCheckboxSelectMultiple)
 
     rcvr.insert(0, (-1, ''))
 
@@ -255,7 +253,8 @@ def display_maintenance_activity(request, activity_id = None):
                   'location'           : ma.location,
                   'telescope'          : ma.telescope_resource.resource,
                   'software'           : ma.software_resource.resource,
-                  'other_resource'     : ma.other_resource.resource,
+                  'other_resources'    : ", ".join([o.full_description()
+                                                    for o in ma.other_resources.all()]),
                   'receivers'          : ", ".join([r.full_description()
                                                     for r in ma.receivers.all()]),
                   'backends'           : ", ".join([b.full_description()
@@ -320,8 +319,6 @@ def add_activity(request, period_id = None, year = None,
             .filter(rc_code = 'N')[0]
         default_software  = Maintenance_Software_Resources.objects \
             .filter(rc_code = 'N')[0]
-        default_other     = Maintenance_Other_Resources.objects \
-            .filter(rc_code = 'N')[0]
         u = get_requestor(request)
         user = get_user_name(u)
         supervisor_mode = True if (u and u.username() in supervisors) else False
@@ -341,7 +338,6 @@ def add_activity(request, period_id = None, year = None,
                         'responsible'       : user,
                         'telescope'         : default_telescope.id,
                         'software'          : default_software.id,
-                        'other_resource'    : default_other.id,
                         'entity_id'         : period_id,
                         'recurrency_until'  : start + timedelta(days = 30),
                         }
@@ -378,7 +374,7 @@ def _modify_activity_form(ma):
                     'location'            : ma.location,
                     'telescope'           : ma.telescope_resource.id,
                     'software'            : ma.software_resource.id,
-                    'other_resource'      : ma.other_resource.id,
+                    'other_resources'     : [o.id for o in ma.other_resources.all()],
                     'receivers'           : [r.id for r in ma.receivers.all()],
                     'change_receiver'     : change_receiver,
                     'old_receiver'        : old_receiver,
@@ -546,8 +542,12 @@ def process_activity(request, ma, form):
     srid = form.cleaned_data["software"]
     ma.software_resource = Maintenance_Software_Resources.objects \
         .filter(id = srid)[0]
-    orid = form.cleaned_data["other_resource"]
-    ma.other_resource = Maintenance_Other_Resources.objects.filter(id = orid)[0]
+
+    ma.other_resources.clear()
+
+    for orid in form.cleaned_data["other_resources"]:
+        other_r = Maintenance_Other_Resources.objects.filter(id = orid)[0]
+        ma.other_resources.add(other_r)
 
     ma.receivers.clear()
 

@@ -50,8 +50,9 @@ class Maintenance_Activity(models.Model):
                                            null = True)
     software_resource  = models.ForeignKey(Maintenance_Software_Resources,
                                            null = True)
-    other_resource     = models.ForeignKey(Maintenance_Other_Resources,
-                                           null = True)
+    other_resources    = models.ManyToManyField(Maintenance_Other_Resources,
+                                                db_table = "maintenance_other_resources_map",
+                                                null = True)
     receivers          = models.ManyToManyField(Receiver, null = True)
     backends           = models.ManyToManyField(Backend, null = True)
     subject            = models.CharField(max_length = 200)
@@ -162,9 +163,8 @@ class Maintenance_Activity(models.Model):
         return ss
 
     def get_resource_summary(self):
-        rs = "[T=%s, S=%s, O=%s" % (self.telescope_resource.rc_code,
-                                    self.software_resource.rc_code,
-                                    self.other_resource.rc_code)
+        rs = "[T=%s, S=%s" % (self.telescope_resource.rc_code,
+                                    self.software_resource.rc_code)
 
         for r in self.receivers.all():
             rs += ", R=%s" % (r.abbreviation)
@@ -173,9 +173,10 @@ class Maintenance_Activity(models.Model):
             rs += ", B=%s" % (b.rc_code)
 
         for c in self.receiver_changes.all():
-            rs += ", U=%s, D=%s" % \
-                (c.up_receiver.abbreviation, c.down_receiver.abbreviation)
+            rs += ", U=%s, D=%s" % (c.up_receiver.abbreviation, c.down_receiver.abbreviation)
 
+        for o in self.other_resources.all():
+            rs += ", O=%s" % (o.rc_code)
 
         rs += "]"
         return rs
@@ -343,7 +344,6 @@ class Maintenance_Activity(models.Model):
     def copy_data(self, ma):
         self.telescope_resource = ma.telescope_resource
         self.software_resource  = ma.software_resource
-        self.other_resource     = ma.other_resource
         self.subject            = ma.subject
         self.duration           = ma.duration
         self.contacts           = ma.contacts
@@ -358,6 +358,9 @@ class Maintenance_Activity(models.Model):
 
         for j in ma.receiver_changes.all():
             self.receiver_changes.add(j)
+
+        for j in ma.other_resources.all():
+            self.other_resources.add(j)
 
     ######################################################################
     # Makes a deep copy of the model instance, creating a new object
@@ -454,7 +457,7 @@ class Maintenance_Activity(models.Model):
                 #check 'self' for time intersection with mas[i]
                 if not (my_start >= other_end or my_end <= other_start):
                     my_summary = self.get_resource_summary()[1:-1].split(', ')
-                    other_summary = mas[i].get_resource_summary()[1:-1] \
+                    other_summary = mas[i].get_resource_summary()[1:-1]\
                         .split(', ')
 
                     for i in my_summary:

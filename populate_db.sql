@@ -166,7 +166,7 @@ INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Tipping structure 
 INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Tipping structure in Survival positon ', 'S', 'NSZ');
 INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Tipping structure in Snow Dump positon ', 'D', 'NDZ');
 INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Azimuth system lockout only or Azimuth is specified', 'Z', 'NBASD');
-INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Elevation axis movement only; Az locked out.', 'E', 'NA');
+INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Elevation axis movement only; Az locked out.', 'E', 'N');
 
 INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'Full M&C system', 'F', 'PN');
 INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'Full M&C - Not available for others ', 'U', 'N');
@@ -174,7 +174,6 @@ INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'Partial M&C system 
 INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'No M&C system required ', 'N', 'FUPNA');
 INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'M&C control of antenna only ', 'A', 'PN');
 
-INSERT INTO maintenance_other_resources VALUES (DEFAULT, 'None', 'N', 'NIL');
 INSERT INTO maintenance_other_resources VALUES (DEFAULT, 'LO System', 'L', 'INB');
 INSERT INTO maintenance_other_resources VALUES (DEFAULT, 'IF System', 'I', 'LNRUD');
 
