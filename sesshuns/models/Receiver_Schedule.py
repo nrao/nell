@@ -287,4 +287,35 @@ class Receiver_Schedule(models.Model):
             r.save()
         
         return (True, None)
-        
+
+    @staticmethod
+    def get_receiver_blackout_ranges(required, start, end):
+        """
+        Returns a list of tuples of the form (start, end) where
+        start and end are datetime objects that denote the 
+        beginning and ending of a period where no receivers are available
+        for the required receivers of sessions.  
+        If there is a receiver available
+        at all times for any session, an empty list is returned. 
+        """
+
+        schedule = Receiver_Schedule.extract_schedule(start, (end - start).days)
+        if schedule == {}: # No receiver schedule present!
+           return [(start, None)]
+    
+        # Go through the schedule and determine blackout ranges.
+        ranges = []
+        for date, receivers in sorted(schedule.items()):
+            receivers = Set(receivers)
+            if not any([all([Set(g.receivers.all()).intersection(receivers) \
+                        for g in set]) for set in required]):
+                # No session has receivers available. Begin drought.
+                if not ranges or ranges[-1][1] is not None:
+                    ranges.append((date, None))
+            else:
+                # A session has receivers available. End drought, if present.
+                if ranges and ranges[-1][1] is None:
+                    start, _ = ranges.pop(-1)
+                    ranges.append((start, date))
+        return ranges
+            
