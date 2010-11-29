@@ -296,19 +296,21 @@ class TestSesshun(NellTestCase):
         totalTime = TimeAgent.timedelta2minutes(end - start) / 60.0
         hrsSchedulable = totalTime - hrsNotSchedulable
 
-        bs = self.sesshun.getBlackedOutSchedulableTime(start, end)
-        self.assertEquals((hrsSchedulable, hrsBlackedOut), bs)
+        s, b, ss, bb = self.sesshun.getBlackedOutSchedulableTime(start, end)
+        self.assertEquals(hrsSchedulable, s) 
+        self.assertEquals(hrsBlackedOut, b) 
 
         # test it some more, but in different ranges
         start = datetime(2009, 5, 1)
-        bs = self.sesshun.getBlackedOutSchedulableTime(start, end)
-        self.assertEquals(0.0, bs[1])
+        s, b, ss, bb = self.sesshun.getBlackedOutSchedulableTime(start, end)
+        self.assertEquals(0.0, b)
 
         start = datetime(2009, 4, 22)
         end   = datetime(2009, 4, 26)
         totalTime = TimeAgent.timedelta2minutes(end - start) / 60.0
-        bs = self.sesshun.getBlackedOutSchedulableTime(start, end)
-        self.assertEquals((totalTime, 36.0), bs)
+        s, b, ss, bb = self.sesshun.getBlackedOutSchedulableTime(start, end)
+        self.assertEquals(totalTime, s)
+        self.assertEquals(36.0, b)
 
         # cleanup
         self.sesshun.receiver_group_set.all().delete()    
