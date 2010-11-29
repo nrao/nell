@@ -1,5 +1,6 @@
 from utils                     import *
 from TestBlackout              import TestBlackout
+from TestComplimentEvents      import TestComplimentEvents
 from TestConsolidateBlackouts  import TestConsolidateBlackouts
 from TestDBReporter            import TestDBReporter
 from TestDSSPrime2DSS          import TestDSSPrime2DSS
@@ -31,4 +32,5 @@ from TestUserResource          import TestUserResource
 from TestViews                 import TestViews
 from TestViewsPTC              import TestViewsPTC
 from TestWindow                import TestWindow
+from TestWindowAlerts          import TestWindowAlerts
 from TestWindowResource        import TestWindowResource
