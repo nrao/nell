@@ -15,7 +15,7 @@ class WindowAlerts():
     concerning these issues.
     """
    
-    def __init__(self):
+    def __init__(self, quiet = True, filename = None):
 
         # two stages for alerts; how many days before start of window 
         # to go from stage I to stage II?
@@ -24,6 +24,26 @@ class WindowAlerts():
         self.now = datetime.utcnow()
         
         self.wins = Window.objects.all()
+
+        # for reporting results
+        self.quiet = quiet
+        self.filename = filename if filename is not None else "WinAlerts.txt"
+        self.reportLines = []
+       
+
+    def add(self, lines):
+        "For use with printing reports"
+        if not self.quiet:
+            print lines
+        self.reportLines += lines
+
+    def write(self):        
+        "For use with printing reports"
+        # write it out
+        if self.filename is not None:
+            f = open(self.filename, 'w')
+            f.writelines(self.reportLines)
+            f.close()
 
     def getWindowTimes(self, wins = []):
         """
@@ -34,8 +54,15 @@ class WindowAlerts():
         if len(wins) == 0:
             # we really only care about windows that are not complete
             wins = Window.objects.filter(complete = False)
-        return zip(wins
-                , [w.getBlackedOutSchedulableTime() for w in wins])
+        self.add("Retrieving Times for %d Windows\n" % len(wins))    
+        times = []
+        for w in wins:
+            time = w.getBlackedOutSchedulableTime()
+            times.append((w, time))
+            self.add("Times for (%d) %s\n" % (w.id, w.__str__()))
+            self.add("Schedulable, Blacked Hrs: (%5.2f, %5.2f)\n" % \
+                (time[0], time[1]))
+        return times    
 
     def findAlertLevels(self, wins = []):
         """
@@ -93,15 +120,21 @@ class WindowAlerts():
                   , stage = 1
                   , now = None
                   , test = False
+                  , quiet = True
                   , wins = []):
         """
         Finds problems with windows, determines the proper type of
         emails, then sends the emails.
         """
 
+        self.quiet = quiet
+
         alerts = self.findAlerts(stage, now, wins = wins)
 
         for window, stats, level, stg in alerts:
+            
+            # report this
+            self.add("Alert for Window # %d; level = %d, stage = %d\n" % (window.id, level, stg))
             
             wa = WinAlertNotifier(window = window
                                 , level = level
@@ -111,8 +144,11 @@ class WindowAlerts():
             # for now, *really* play it safe
             if not test:
                 #print wa.email.GetText()
+                if wa.email is not None:
+                    self.add("Notifying for Window # %d: %s\n" % (window.id, wa.email.GetRecipientString()))
                 wa.notify()
-
+        
+        self.write()
 
 # command line interface
 def parseOptions(args, keys):
@@ -141,16 +177,18 @@ def showHelp():
 
     hlp = """
 The arguments to WindowAlerts are:
-   [-pcode=pcode] [-stage=stage]
+   [-pcode=pcode] [-stage=stage] [-test=test] [-quiet=quiet]
 where:
    pcode = project code whose windows will be checked; otherwise, all incomplete windows are checked.
    stage = [1,2]; Stage 1: Emails will be sent to observers once per week (Monday morning) until 15 days before the window start date; Stage 2: 15 days before window start, emails are sent every day.
+   test = if True, no emails are sent.
+   quiet = if True, report is not also sent to stdout.
     """
     print hlp
 
 if __name__ == '__main__':
     msg = None
-    keys = ['pcode', 'stage']
+    keys = ['pcode', 'stage', 'test', 'quiet']
     opts, msg = parseOptions(sys.argv[1:], keys)
     if msg is not None:
         print msg    
@@ -158,7 +196,8 @@ if __name__ == '__main__':
         sys.exit(2)
     pcode = opts['pcode']    
     if pcode:
-        wins = Window.objects.filter(session__project__pcode = pcode)
+        pwins = Window.objects.filter(session__project__pcode = pcode)
+        wins = [w for w in pwins if not w.complete]
         print "Raising Window Alerts for Project: %s" % pcode
     else:
         wins = []
@@ -169,8 +208,19 @@ if __name__ == '__main__':
         print "stage option must be in [1,2]"
         showHelp()
         sys.exit(2)
+    if opts['test'] is not None and opts['test'] not in ['True', 'False']:
+        print "test must be True or False"
+        showHelp()
+        sys.exit(2)
+    test = opts['test'] == 'True' if opts['test'] is not None else True  
+    print "Sending email notifications: %s" % (not test)
+    if opts['quiet'] is not None and opts['quiet'] not in ['True', 'False']:
+        print "quiet must be True or False"
+        showHelp()
+        sys.exit(2)
+    quiet = opts['quiet'] == 'True' if opts['quiet'] is not None else True  
     wa = WindowAlerts()
-    wa.raiseAlerts(stage = stage, wins = wins)
+    wa.raiseAlerts(stage = stage, wins = wins, test = test, quiet = quiet)
 
                 
 
