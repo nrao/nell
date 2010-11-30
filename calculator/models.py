@@ -58,11 +58,12 @@ class Efficiency(models.Model):
 
 class FrequencyResolution(models.Model):
     backend                 = models.ForeignKey(Calc_Backend)
-    min_freq                = models.FloatField()
-    max_freq                = models.FloatField()
-    bw                      = models.FloatField()
-    number_spectral_windows = models.CharField(max_length=200)
-    number_channels         = models.FloatField()
+    bandwidth               = models.FloatField(null = True)
+    max_number_channels     = models.IntegerField()
+
+    def __str__(self):
+        return "%s (bw: %s, max_chan: %s)" % \
+            (self.backend.name, self.bandwidth, self.max_number_channels)
 
     class Meta:
         db_table = 'calculator_frequency_resolution'
