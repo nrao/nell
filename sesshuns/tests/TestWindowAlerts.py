@@ -206,13 +206,13 @@ class TestWindowAlerts(NellTestCase):
         self.assertEquals(exp[0][0], times[0][0])
         self.assertEquals(exp[0][1], times[0][1])
 
-    def testFindAlerts(self):
+    def testFindAlertLevels(self):
 
         wa = WindowAlerts.WindowAlerts()
  
         # we 37/144 = 25% of scheduble time blacked out
         # so we should raise a level 1 alert
-        ns = wa.findAlerts()
+        ns = wa.findAlertLevels()
         
         self.assertEquals(1, len(ns))             
         self.assertEquals(self.window, ns[0][0])
@@ -227,13 +227,13 @@ class TestWindowAlerts(NellTestCase):
                            )
         blackout.save()
 
-        ns = wa.findAlerts()
+        ns = wa.findAlertLevels()
 
         self.assertEquals(1, len(ns))             
         self.assertEquals(self.window, ns[0][0])
         self.assertEquals(2, ns[0][2]) # level two!
 
-    def testRaiseAlerts(self):
+    def testFindAlerts(self):
 
         wa = WindowAlerts.WindowAlerts()
  
@@ -242,29 +242,23 @@ class TestWindowAlerts(NellTestCase):
         # Long before the window starts, the weekly notification
         # will tell about this (stage I):
         now = datetime(2009, 1, 1)
-        ns = wa.raiseAlerts(stage = 1
-                          , now = now
-                          # !!! don't send email !!!
-                          , notify = False 
+        ns = wa.findAlerts(stage = 1
+                         , now = now
                            )
         self.assertEquals(1, len(ns))
         self.assertEquals(self.window, ns[0][0])
         self.assertEquals(1, ns[0][2])
 
         # This would not be sent out in stage II
-        ns = wa.raiseAlerts(stage = 2
-                          , now = now
-                          # !!! don't send email !!!
-                          , notify = False 
+        ns = wa.findAlerts(stage = 2
+                         , now = now
                            )
         self.assertEquals(0, len(ns))
 
         # But would be once we get close enough to the window
         now = self.window.start_datetime() - timedelta(days = 5)
-        ns = wa.raiseAlerts(stage = 2
-                          , now = now
-                          # !!! don't send email !!!
-                          , notify = False 
+        ns = wa.findAlerts(stage = 2
+                         , now = now
                            )
         self.assertEquals(1, len(ns))
         self.assertEquals(self.window, ns[0][0])
