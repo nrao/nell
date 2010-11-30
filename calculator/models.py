@@ -3,12 +3,16 @@ from django.db import models
 from sesshuns import models as smodels
 
 class Calc_Backend(models.Model):
-    name = models.CharField(max_length=200)
-    k1   = models.FloatField()
-    k2   = models.FloatField()
+    dss_backend = models.ForeignKey(smodels.Backend, null = True)
+    name        = models.CharField(max_length=200)
+    k1          = models.FloatField()
+    k2          = models.FloatField()
 
     def __unicode__(self):
         return self.name
+
+    def getName(self):
+        return self.dss_backend.name if self.dss_backend is not None else self.name
 
     class Meta:
         db_table = 'calculator_backend'
@@ -188,7 +192,7 @@ class Configuration(models.Model):
 
 def getName(hardware,id):
     Dict = {
-       'backend'     : lambda id: Calc_Backend.objects.get(pk=id).name,
+       'backend'     : lambda id: Calc_Backend.objects.get(pk=id).getName(),
        'mode'        : lambda id: Mode.objects.get(pk=id).name,
        'receiver'    : lambda id: Receiver.objects.get(pk=id).getName(),
        'beams'       : lambda id: Beams.objects.get(pk=id).name,

@@ -41,10 +41,23 @@ def setHardwareConfig(request, selected, newPick=None):
                 request.session['SC_' + i] = config[i][0]
     return config
 
-def getRxName(rx):
+def getRxValue(value):
     try:
-        name, range = rx.split(" (")
+        name, range = value.split(" (")
     except:
-        name = rx
+        name = value
     return name
+
+def getBackendValue(value):
+    results = Calc_Backend.objects.filter(dss_backend__name = value)
+    if len(results) > 0:
+        return results[0].name
+    return value
+
+def getValue(key, value):
+    if key == 'receiver':
+        return getRxValue(value)
+    elif key == 'backend':
+        return getBackendValue(value)
+    return value
 

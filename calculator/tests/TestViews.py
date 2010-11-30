@@ -67,7 +67,7 @@ class TestViews(unittest.TestCase):
               , 'mode': [u'Spectral Line']
               , 'receiver': [u'L']
               , 'mode-hidden': [u'Spectral Line']
-              , 'backend': [u'SP']
+              , 'backend': [u'Spectral Processor']
               }
         response = c.post('/calculator/set_terms/', data)
         response = c.get('/calculator/get_result/')

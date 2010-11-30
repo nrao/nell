@@ -1,9 +1,12 @@
 from calculator.models import FrequencyResolution
 
 def getMinTopoFreq(backend, bandwidth, windows):
-    if backend == 'SP':
-        fr = FrequencyResolution.objects.filter(backend__name = backend)[0]
-    elif backend == 'ACS':
-        fr = FrequencyResolution.objects.filter(backend__name = backend, bandwidth = bandwidth)[0]
+    if backend == 'Spectral Processor':
+        fr = FrequencyResolution.objects.filter(backend__dss_backend__name = backend)[0]
+    elif backend == 'GBT Spectrometer':
+        fr = FrequencyResolution.objects.filter(
+               backend__dss_backend__name = backend, bandwidth = bandwidth)[0]
+    else:
+        return 1
 
-    return (bandwidth * windows) / fr.max_number_channels * 1000
+    return (bandwidth * windows) / float(fr.max_number_channels) * 1000
