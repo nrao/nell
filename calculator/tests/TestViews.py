@@ -60,10 +60,9 @@ class TestViews(unittest.TestCase):
               , 'integration-hidden': [u'1.00']
               , 'polarization-hidden': [u'(I,Q,U,V)']
               , 'backend-hidden': [u'SP']
-              , 'windows-hidden': [u'RF:1']
+              , 'windows': [u'1']
               , 'switching': [u'TP']
               , 'polarization': [u'(I,Q,U,V)']
-              , 'windows': [u'RF:1']
               , 'bandwidth': [u'0.625']
               , 'mode': [u'Spectral Line']
               , 'receiver': [u'L']
@@ -75,12 +74,12 @@ class TestViews(unittest.TestCase):
         self.failUnlessEqual(response.status_code, 200)
         results = eval(response.content.replace("null", "None"))
         self.assertEqual(results['min_topo_freq']
-             , [1, 'MHz', 'getMinTopoFreq(backend) if mode.lower() == "spectral line" else ""'])
+             , [0.6103515625, 'kHz', 'getMinTopoFreq(backend, bandwidth, windows) if mode.lower() == "spectral line" else ""'])
 
         response = c.post('/calculator/set_terms/', {'mode' : 'DCR'})
         response = c.get('/calculator/get_result/')
         self.failUnlessEqual(response.status_code, 200)
         results = eval(response.content.replace("null", "None"))
         self.assertEqual(results['min_topo_freq']
-             , [None, 'MHz', 'getMinTopoFreq(backend) if mode.lower() == "spectral line" else ""'])
+             , [None, 'kHz', 'getMinTopoFreq(backend, bandwidth, windows) if mode.lower() == "spectral line" else ""'])
 

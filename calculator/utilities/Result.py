@@ -103,4 +103,4 @@ class Result(Thread):
                 self.queue_empty.notify()
 
             self.queue_empty.release()
-            time.sleep(.001)  #  Slow this puppy down a bit.
+            time.sleep(.01)  #  Slow this puppy down a bit.

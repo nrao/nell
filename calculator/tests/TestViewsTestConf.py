@@ -99,6 +99,25 @@ class TestViewsTestConf(CalculatorTestCase):
         self.assertEqual(results['y'], [16, 'Newtons', '3 * x + 1'])
         self.assertEqual(results['theta'], [55.094395102393193, None, '2 * math.pi / 3 + r'])
         
+    def test_shared_dependencies(self):
+        self.addTerm("a = c * 2 + d")
+        self.addTerm("b = c * 3 + d")
+        self.addTerm("c = ")
+        self.addTerm("d = ")
+
+        c = Client()
+        response = c.get('/calculator/initiate_hardware')
+        self.failUnlessEqual(response.status_code, 200)
+        response = c.post('/calculator/set_terms/', {'c' : 2, 'd' : 1})
+        self.failUnlessEqual(response.status_code, 200)
+        response = c.get('/calculator/get_result/')
+        self.failUnlessEqual(response.status_code, 200)
+        results  = eval(response.content.replace("null", "None"))
+        self.assertEqual(results['a'], [5, None, 'c * 2 + d'])
+        self.assertEqual(results['b'], [7, None, 'c * 3 + d'])
+        self.assertEqual(results['c'], [2, None, ''])
+        self.assertEqual(results['d'], [1, None, ''])
+
     def test_setting_different_groups(self):
         self.addTerm("a = ")
         self.addTerm("b = ")

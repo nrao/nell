@@ -13,6 +13,7 @@ def getOptions(filter, result):
             config = config.filter(eval("Q(%s__name__contains='%s')" % (k,v)))
     config  = config.values(result).distinct()
     answers = [getName(result, c[result]) for c in config]
+    answers.sort()
     return answers
 
 def setHardwareConfig(request, selected, newPick=None):
@@ -39,4 +40,11 @@ def setHardwareConfig(request, selected, newPick=None):
                 selected[i] = config[i][0]
                 request.session['SC_' + i] = config[i][0]
     return config
+
+def getRxName(rx):
+    try:
+        name, range = rx.split(" (")
+    except:
+        name = rx
+    return name
 
