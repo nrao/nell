@@ -179,6 +179,22 @@ class Window(models.Model):
             self.start_datetime()
           , self.end_datetime())
 
+    def defaultPeriodBlackedOut(self):
+        """
+        Do any of the times that are not schedulable for this 
+        session due to blackouts overlapping with the default
+        period?
+        """
+
+        # no default, no problem
+        if self.default_period is None:
+            return False
+
+        bs = self.session.project.get_blackout_times(\
+            self.default_period.start
+          , self.default_period.end())
+
+        return len(bs) > 0  
     class Meta:
         db_table  = "windows"
         app_label = "sesshuns"
