@@ -153,6 +153,48 @@ class Window(models.Model):
               , "className": 'window'
         }
  
+    def getWindowTimeNotSchedulable(self, blackouts = True):
+        "How many hours in this window are not schedulable?"
+        ns = self.session.get_time_not_schedulable( \
+            self.start_datetime()
+          , self.end_datetime()
+          , blackouts = blackouts)
+        return sum([TimeAgent.timedelta2minutes(n[1] - n[0])/60.0 \
+            for n in ns])
+        
+    def getWindowTimeBlackedOut(self):
+        "How many hours in this window have been blacked out?"
+        bs = self.session.project.get_blackout_times(\
+            self.start_datetime()
+          , self.end_datetime()) 
+        return sum([TimeAgent.timedelta2minutes(b[1] - b[0])/60.0 \
+            for b in bs])
+
+    def getBlackedOutSchedulableTime(self):
+        """
+        Of the hours in this window that are schedulable, how
+        many have been blacked out?
+        """
+        return self.session.getBlackedOutSchedulableTime( \
+            self.start_datetime()
+          , self.end_datetime())
+
+    def defaultPeriodBlackedOut(self):
+        """
+        Do any of the times that are not schedulable for this 
+        session due to blackouts overlapping with the default
+        period?
+        """
+
+        # no default, no problem
+        if self.default_period is None:
+            return False
+
+        bs = self.session.project.get_blackout_times(\
+            self.default_period.start
+          , self.default_period.end())
+
+        return len(bs) > 0  
     class Meta:
         db_table  = "windows"
         app_label = "sesshuns"

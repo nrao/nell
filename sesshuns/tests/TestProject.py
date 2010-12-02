@@ -99,6 +99,14 @@ class TestProject(NellTestCase):
                             , end_date   = datetime(2009, 1, 4, 13))
         blackout22.save()
 
+
+        # stay out of the blackouts range
+        expected = []
+        today = datetime(2008, 1, 1)
+        later = today + timedelta(days = 30)
+        r = self.project.get_blackout_times(today, later)
+        self.assertEquals(expected, r)
+
         # Now we can finally do our test.
         expected = [
             (datetime(2009, 1, 1, 11), datetime(2009, 1, 4, 13))
@@ -150,6 +158,13 @@ class TestProject(NellTestCase):
         ]
 
         r = self.project.get_blackout_times(today, later)
+        self.assertEquals(expected, r)
+
+        # Q: what is the behavior when blackouts straddle range?
+        # A: returned blackouts are NOT truncated
+        newLater = datetime(2009, 1, 4, 12)
+        r = self.project.get_blackout_times(today, newLater)
+        expected = [(datetime(2009, 1, 1, 11), datetime(2009, 1, 5))]
         self.assertEquals(expected, r)
 
         # Clean up

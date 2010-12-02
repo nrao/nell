@@ -53,6 +53,30 @@ def print_values(file, values):
         for v in values:
             file.write("\n\t%s" % v)
 
+# Windows & Blackouts:
+def get_window_blackout_alerts():
+    """
+    If all observers have blacked out any of the time for the window default period, this will be reported in the DB Health report and handled by the scheduler/head of science ops.
+    If >10% and =>50% of the opportunities possible for the window to be scheduled is blacked out by all project observers, this will be reported in the DB Health report
+    If >50% of the opportunities possible for the window to be scheduled is blacked out by all project observers, this will be reported in the DB Health report
+    """
+
+    # we only care about incomplete windows
+    wins = Window.objects.filter(complete = False)
+    alerts1 = []
+    alerts2 = []
+    alerts3 = []
+    for w in wins:
+        hrsSchd, hrsBlck, schd, bs = w.getBlackedOutSchedulableTime()
+        ratio = hrsBlck/hrsSchd if hrsSchd > 0.0 else 0.0
+        if ratio > .10 and ratio < .50:
+            alerts1.append((w, ratio))
+        elif ratio > .50:
+            alerts2.append((w, ratio))
+        if w.defaultPeriodBlackedOut():
+            alerts3.append(w)
+    return (alerts1, alerts2, alerts3)        
+        
 
 # Windowed Sessions w/ no windows (just give count)
 
@@ -348,6 +372,10 @@ def output_windows_report(file):
     w.append(get_window_within_48())
 # 8    #w.append(get_pathological_windows())
     w.append(get_windows_with_rogue_periods())
+    bs1, bs2, dbs = get_window_blackout_alerts()
+    w.append(bs1)
+    w.append(bs2)
+    w.append(dbs)
     
     desc = []
     desc.append("Windowed sessions with no windows")
@@ -360,6 +388,9 @@ def output_windows_report(file):
     desc.append("Windows within same session that come within 48 hours of each other")
     #desc.append("Windows in an illegal state")
     desc.append("Windows with periods not in their session period set")
+    desc.append("Windows with >10% and =<50% schedulable time blacked out")
+    desc.append("Windows with >50% schedulable time blacked out")
+    desc.append("Windows with default period partially blacked out")
     
     file.write("Summary\n")
     file.write("\t%s: %i\n" % (desc[0], len(w[0])))
@@ -370,8 +401,9 @@ def output_windows_report(file):
     file.write("\t%s: %i\n" % (desc[5], len(w[5])))
     file.write("\t%s: %i\n" % (desc[6], len(w[6])))
     file.write("\t%s: %i\n" % (desc[7], len(w[7])))
-    #file.write("\t%s: %i\n" % (desc[8], len(w[8])))
-    #file.write("\t%s: %i\n" % (desc[9], len(w[9])))
+    file.write("\t%s: %i\n" % (desc[8], len(w[8])))
+    file.write("\t%s: %i\n" % (desc[9], len(w[9])))
+    file.write("\t%s: %i\n" % (desc[10], len(w[10])))
 
 
     file.write("\n\nWindow Details\n\n")
@@ -445,7 +477,20 @@ def output_windows_report(file):
         file.write("\n%s:\n" % (desc[7]))
         output_windows2(file, w[7])
 
-
+    if len(w[8]):
+        file.write("\n%s:\n" % (desc[8]))
+        for win, ratio in w[8]:
+            file.write("%5.2f, %s\n" % (ratio, win.__str__()))
+        
+    if len(w[9]):
+        file.write("\n%s:\n" % (desc[9]))
+        for win, ratio in w[9]:
+            file.write("%5.2f, %s\n" % (ratio, win.__str__()))
+        
+    if len(w[10]):
+        file.write("\n%s:\n" % (desc[10]))
+        output_windows2(file, w[10])
+        
 def GenerateReport():
 
     ta = TimeAccounting()
@@ -687,8 +732,6 @@ def GenerateReport():
     print_values(outfile, values)
 
     output_windows_report(outfile)
-
-
 
 if __name__ == '__main__':
     GenerateReport()
