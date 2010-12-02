@@ -118,7 +118,8 @@ class Receiver(models.Model):
         db_table = 'calculator_receiver'
 
 class Switching(models.Model):
-    name = models.CharField(max_length=200)
+    name         = models.CharField(max_length=200)
+    abbreviation = models.CharField(max_length=200)
 
     def __unicode__(self):
         return self.name
@@ -202,6 +203,5 @@ def getName(hardware,id):
        'integration' : lambda id: Integration.objects.get(pk=id).name, 
        'switching'   : lambda id: Switching.objects.get(pk=id).name
        }
-    #print "getting "+hardware+" with id "+str(id)
     return str(Dict[hardware](id))
     

@@ -22,24 +22,24 @@ SELECT pg_catalog.setval('calculator_switching_id_seq', 17, true);
 -- Data for Name: calculator_switching; Type: TABLE DATA; Schema: public; Owner: dss
 --
 
-COPY calculator_switching (id, name) FROM stdin;
-1	NA
-2	BSW
-3	BSW-PS
-4	BSW-NOD
-5	BSW-SRN
-6	TP
-7	TP-PS
-8	TP-NOD
-9	TP-SRN
-10	IFSW
-11	IFSW-PS
-12	IFSW-NOD
-13	IFSW-SRN
-14	OFSW
-15	OFSW-PS
-16	OFSW-NOD
-17	OFSW-SRN
+COPY calculator_switching (id, name, abbreviation) FROM stdin USING DELIMITERS ',';
+1,NA,NA
+2,Beam switching,BSW
+3,Beam Switching - Position Switching,BSW-PS
+4,Beam Switching - Nodding between beams,BSW-NOD
+5,Beam Switching - Sub-reflector nodding between beams,BSW-SRN
+6,Total Power,TP
+7,Total Power - Position Switching,TP-PS
+8,Total Power - Nodding between beams,TP-NOD
+9,Total Power - Sub-reflector nodding between beams,TP-SRN
+10,In-Band Frequency Switching,IFSW
+11,In-Band Frequency Switching - Position Switching,IFSW-PS
+12,In-Band Frequency Switching - Nodding between beams,IFSW-NOD
+13,In-Band Frequency Switching - Sub-reflector nodding between beams,IFSW-SRN
+14,Out-of-Band Frequency Switching,OFSW
+15,Out-of-Band Frequency Switching - Position Switching,OFSW-PS
+16,Out-of-Band Frequency Switching - Nodding between beams,OFSW-NOD
+17,Out-of-Band Frequency Switching - Sub-reflector nodding between beams,OFSW-SRN
 \.
 
 

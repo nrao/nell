@@ -31,6 +31,9 @@ def set_terms(request, *args, **kwds):
         for key, value in dict(request.POST).items():
             if '-hidden' not in key:
                 info[key] = value[0] 
+            else:
+                new_key, _ = key.split('-')
+                info[new_key] = value[0]
 
         # Process special values.
         for value in SPECIAL_VALUES:
@@ -51,6 +54,7 @@ def set_terms(request, *args, **kwds):
 
         # Squirrel away, send back, and clean up.
         request.session['SC_result'] = result.get()
+        getMinIntegrationTime(request)
         #request.session['SC_result'].update(
         #    dict(trimester = (request.session.get('SC_trimester', ''), '', '')))
         try:

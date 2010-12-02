@@ -3,7 +3,7 @@ from calculator.models        import *
 
 def getHWList():
     return ['backend','mode','receiver','beams','polarization'
-               ,'bandwidth','windows','integration','switching']
+               ,'bandwidth','windows','switching']
 
 def getOptions(filter, result):
     config = Configuration.objects.all()
@@ -61,3 +61,10 @@ def getValue(key, value):
         return getBackendValue(value)
     return value
 
+def getMinIntegrationTime(request):
+    hardware = [(k, v[0]) for k, v in request.session['SC_result'].iteritems() if k in getHWList()]
+    filter = {}
+    for k, v in hardware:
+        filter[k] = getValue(k, v) if k == 'receiver' or k == 'backend' else v
+    min_int = ', '.join(getOptions(filter, 'integration'))
+    request.session['SC_result']['min_integration'] = (min_int, None, '')

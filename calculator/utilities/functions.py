@@ -10,3 +10,4 @@ def getMinTopoFreq(backend, bandwidth, windows):
         return 1
 
     return (bandwidth * windows) / float(fr.max_number_channels) * 1000
+
