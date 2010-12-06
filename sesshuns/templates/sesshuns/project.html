@@ -259,6 +259,22 @@
                     <td>{% if window.complete %}Yes{% endif %}</td> 
                     
                  </tr> 
+                    {% if not window.contigious %}
+                    <tr>
+                      <th></th>
+                      <th>Window Start Date</th>
+                      <th>Window End Date</th>
+                      <th>Duration (Days)</th>
+                    </tr>
+                    {% for wr in window.ranges %}
+                    <tr>
+                      <td></td>
+                      <td>{{wr.start}}</td>
+                      <td>{{wr.end}}</td>
+                      <td>{{wr.duration}}</td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
                     {% if window.periods %}
                     <tr>
                       <th></th>

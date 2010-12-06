@@ -33,10 +33,16 @@ class TestWindow(NellTestCase):
         
         # create window
         self.w = Window()
-        self.w.start_date = start
-        self.w.duration = dur
+        #self.w.start_date = start
+        #self.w.duration = dur
         self.w.session = self.sesshun
         self.w.total_time = self.default_period.duration
+        self.w.save()
+        wr = WindowRange(window = self.w
+                       , start_date = start
+                       , duration = dur
+                        )
+        wr.save()                
 
         # window & default period must both ref. eachother
         self.w.default_period = self.default_period
@@ -59,8 +65,8 @@ class TestWindow(NellTestCase):
 
         pjson = PeriodHttpAdapter(self.default_period).jsondict('UTC', 1.1)
         self.fdata = {"session":  1
-                    , "start":    "2009-06-01"
-                    , "duration": 7
+                    #, "start":    "2009-06-01"
+                    #, "duration": 7
                     , "num_periods": 0
                     , "default_date" : pjson['date'] 
                     , "default_time" : pjson['time'] 
@@ -74,8 +80,8 @@ class TestWindow(NellTestCase):
         adapter.init_from_post(self.fdata)
        
         self.assertEqual(w.session, self.sesshun)
-        self.assertEqual(w.start_date, date(2009, 6, 1))
-        self.assertEqual(w.duration, self.fdata["duration"])
+        #self.assertEqual(w.start_date(), date(2009, 6, 1))
+        #self.assertEqual(w.duration(), self.fdata["duration"])
         self.assertEqual(w.default_period, None)
         self.assertEqual(len(w.periods.all()), 0)
 
@@ -88,12 +94,18 @@ class TestWindow(NellTestCase):
         endStr = end.strftime("%Y-%m-%d")
         
         w = Window()
-        w.start_date = start
-        w.duration = dur
+        #w.start_date = start
+        #w.duration = dur
         w.session = self.sesshun
         w.default_period = self.default_period
 
         w.save()
+
+        wr = WindowRange(window = w
+                       , start_date = start
+                       , duration = dur
+                        )
+        wr.save()
 
         self.default_period.window = w
         self.default_period.save()

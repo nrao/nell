@@ -701,7 +701,7 @@ class DSSPrime2DSS(object):
         # Note: really should only be one per session
         for row in rows:
             windows = self.cadence2windows(row)
-            for w in windows:
+            for wstart, dur in windows:
                 # 2. don't add windows that end before we care (no point!)
                 if ignore_before is not None:
                     if w.last_date() < ignore_before: # start of 10A
@@ -710,11 +710,19 @@ class DSSPrime2DSS(object):
                         # we don't need to delete them because they haven't
                         # been saved yet!
                     else:
-                        w.session = sesshun
+                        w = Window(session = sesshun)
                         w.save()
+                        wr = WindowRange(window = w
+                                       , start_date = wstart
+                                       , duration = dur)
+                        wr.save()               
                 else:
-                    w.session = sesshun
+                    w = Window(session = sesshun)
                     w.save()
+                    wr = WindowRange(window = w
+                                   , start_date = wstart
+                                   , duration = dur)
+                    wr.save()               
                 # NOTE: we can't do this yet, because we don't have
                 # the periods yet.  That comes later, outside of this class
                 # now we have to match up the correct periods to the windows
@@ -771,10 +779,7 @@ class DSSPrime2DSS(object):
                 # but Jules is actually treating the start date as
                 # the midpoint of the window!  so adjust it!
                 wstart = start - timedelta(days = (full_sizes[i]/2))
-                w = Window(start_date = wstart
-                         , duration = full_sizes[i]
-                          )
-                windows.append(w)
+                windows.append((wstart, full_sizes[i]))
                 start += timedelta(days = intervals[i])
 
         return windows

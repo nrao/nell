@@ -358,15 +358,14 @@ class Project(models.Model):
         return sorted([w for s in self.sesshun_set.all()
                          for w in s.window_set.all()
                          if s.session_type.type == 'windowed']
-                     , key = lambda x : x.start_date)
+                     , key = lambda x : x.start_date())
 
-    def get_active_windows(self):
+    def get_active_windows(self, now = None):
         "Returns current and future windows."
         wins = self.get_windows()
-        now = datetime.utcnow()
+        now = now if now is not None else datetime.utcnow()
         today = date(now.year, now.month, now.day)
-        return [ w for w in wins
-                 if today < (w.start_date + timedelta(days = w.duration)) ]
+        return [w for w in wins if today < w.end()]
 
     class Meta:
         db_table  = "projects"

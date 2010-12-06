@@ -31,4 +31,6 @@ from TestUserResource          import TestUserResource
 from TestViews                 import TestViews
 from TestViewsPTC              import TestViewsPTC
 from TestWindow                import TestWindow
+from TestWindowRange           import TestWindowRange
 from TestWindowResource        import TestWindowResource
+from TestWindowRangeResource   import TestWindowRangeResource
