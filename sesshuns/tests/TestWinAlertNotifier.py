@@ -31,11 +31,13 @@ class TestWinAlertNotifier(NellTestCase):
 
         # make the first window
         self.window = Window(session = self.sesshun
-                 , start_date   = date(2009, 4, 5)
-                 , duration    = 7
                  , total_time = 4.0
                  , complete = False)
         self.window.save()
+        wr = WindowRange(window     = self.window
+                       , start_date = date(2009, 4, 5)
+                       , duration   = 7)
+        wr.save()               
 
     def test_setWindow(self):
 
