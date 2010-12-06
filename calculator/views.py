@@ -31,7 +31,7 @@ def set_terms(request, *args, **kwds):
         for key, value in dict(request.POST).items():
             if '-hidden' not in key:
                 info[key] = value[0] 
-            else:
+            elif key in getHWList():
                 new_key, _ = key.split('-')
                 info[new_key] = value[0]
 
@@ -50,6 +50,8 @@ def set_terms(request, *args, **kwds):
                     value = float(raw_value)
                 except ValueError:
                     value = raw_value
+            if value == "NOTHING":
+                value = None
             result.set(term, value)
 
         # Squirrel away, send back, and clean up.

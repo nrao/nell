@@ -11,3 +11,8 @@ def getMinTopoFreq(backend, bandwidth, windows):
 
     return (bandwidth * windows) / float(fr.max_number_channels) * 1000
 
+def getMaxElevation(declination):
+    return 85
+
+def getMinCircumpolarElevation(declination):
+    return -5
