@@ -15,9 +15,6 @@ class Window(models.Model):
                                      , null = True
                                      , blank = True
                                      )
-    #period         = models.ForeignKey(Period, related_name = "window", null = True, blank = True)
-    start_date     = models.DateField(help_text = "yyyy-mm-dd hh:mm:ss")
-    duration       = models.IntegerField(help_text = "Days")
     complete      = models.BooleanField(default = False)
     total_time     = models.FloatField(help_text = "Hours", null = True, default = 0.0)
 
@@ -30,42 +27,81 @@ class Window(models.Model):
         name = self.session.name if self.session is not None else "None"
         return "Window for %s, from %s for %d days, default: %s, # periods: %d" % \
             (name
-           , self.start_date.strftime("%Y-%m-%d")
-           , self.duration
+           , self.start_date().strftime("%Y-%m-%d")
+           , self.duration()
            , self.default_period
-           , len(self.periods.all())) #self.period)
+           , len(self.periods.all())) 
+
+    
+    def isContigious(self):
+        """
+        A non-contigious Window has more then one window range, with 
+        gaps between them.
+        """
+        wrs = self.ranges()
+        if len(wrs) > 1:
+            # if any one end isn't at the next start, then non-cont.
+            for i in range(len(wrs)-1):
+                end = wrs[i].start_date + timedelta(days = wrs[i].duration)
+                nextStart = wrs[i+1].start_date
+                if nextStart != end:
+                    return False
+            # if we get to here, it's contigious
+            return True
+        else:
+            return True
+
+    def ranges(self):
+        return self.windowrange_set.all().order_by("start_date")
+
+    def first_range(self):
+        wrs = self.ranges()
+        return wrs[0] if len(wrs) > 0 else None
+
+    def last_range(self):
+        wrs = self.ranges() 
+        return wrs[len(wrs)-1] if len(wrs) > 0 else None
+
+    # ****** This group of methods below can be used if gaps between
+    # ****** window ranges can be ignored or Window is contigious.
+
+    def start(self):
+        return self.first_range().start_date
+
+    def start_date(self):
+        return self.start()
 
     def end(self):
         return self.last_date()
 
     def last_date(self):
         "Ex: start = 1/10, duration = 2 days, last_date = 1/11"
-        return self.start_date + timedelta(days = self.duration - 1)
-
-    def inWindow(self, date):
-        return (self.start_date <= date) and (date <= self.last_date())
+        start = self.last_range().start_date 
+        days  = timedelta(days = self.last_range().duration - 1)
+        return start + days
 
     def start_datetime(self):
-        return TimeAgent.date2datetime(self.start_date)
+        return TimeAgent.date2datetime(self.start())
 
     def end_datetime(self):
         "We want this to go up to the last second of the last_date"
         dt = TimeAgent.date2datetime(self.last_date())
         return dt.replace(hour = 23, minute = 59, second = 59)
 
+    def duration(self):
+        return (self.last_date() - self.start()).days + 1
+
+    def inWindow(self, date):
+        return (self.start() <= date) and (date <= self.last_date())
+
     def isInWindow(self, period):
         "Does the given period overlap at all in window"
-
-        # need to compare date vs. datetime objs
-        #winStart = datetime(self.start_date.year
-        # with what we have in memory
-        #                  , self.start_date.month
-        #                  , self.start_date.day)
-        #winEnd = winStart + timedelta(days = self.duration)                  
         return overlaps((self.start_datetime(), self.end_datetime())
                       , (period.start, period.end()))
 
         return False
+    
+    # ****** end of group above that ignores window ranges ***
 
     def timeRemaining(self):
         "Total - Billed"
@@ -79,7 +115,7 @@ class Window(models.Model):
         """
         return sum([p.accounting.time_billed() for p in self.periods.all()])
 
-    def publish(self): #Period(self, p_id):
+    def publish(self): 
         "A period was just published, see if we can complete this."
 
         timeRemaining = self.timeRemaining()
@@ -143,13 +179,16 @@ class Window(models.Model):
                              , original_id)
 
     def eventjson(self, id):
-        end = self.start_date + timedelta(days = self.duration)
+        """
+        This is just a summary: if the window is non contigious
+        then this will not include gaps.
+        """
 
         return {
                 "id"   :     id
               , "title":     "".join(["Window ", self.session.name])
-              , "start":     self.start_date.isoformat()
-              , "end"  :     end.isoformat()
+              , "start":     self.start_date().isoformat()
+              , "end"  :     self.end().isoformat()
               , "className": 'window'
         }
  

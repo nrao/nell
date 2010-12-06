@@ -26,14 +26,19 @@ class TestPeriod(NellTestCase):
         start = datetime(2009, 6, 1, 12, 15)
         self.dur = 180
         wstart = (start - timedelta(days = 7)).date()
-        self.w = Window(start_date = wstart
-                 , duration = 10 # days
-                 , session = self.sesshun
+        self.w = Window(session = self.sesshun # = wstart
+                 #, duration = 10 # days
+                 #, session = self.sesshun
                  , total_time = self.dur
                  , complete = False
                  )
         self.w.save()         
         self.w_id = self.w.id
+        wr = WindowRange(window = self.w
+                       , start_date = wstart
+                       , duration = 10 # days
+                        )
+        wr.save()                
 
         # create a period
         self.p = Period(start = start

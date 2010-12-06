@@ -25,13 +25,20 @@ class TestWindowResource(NellTestCase):
         p_adapter = PeriodHttpAdapter(self.default_period)
         pjson = p_adapter.jsondict('UTC', 1.1)
         self.fdata = {"session":  self.sesshun.id
-                    , "start":    "2010-01-01"
-                    , "duration": 7
+                    #, "start":    "2010-01-01"
+                    #, "duration": 7
                     , "num_periods": 0
                     }
         self.w = Window()
         w_adapter = WindowHttpAdapter(self.w)
         w_adapter.init_from_post(self.fdata)
+
+        # go through the back door to set the range
+        wr = WindowRange(window = self.w
+                       , start_date = date(2010, 1, 1)
+                       , duration = 7
+                        )
+        wr.save()                
 
     def tearDown(self):
         super(TestWindowResource, self).tearDown()
@@ -60,6 +67,7 @@ class TestWindowResource(NellTestCase):
                                 , {'filterSession' : self.sesshun.name})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"end": "2010-01-07"' in response.content)
+        self.assertTrue('"total": 1}' in response.content)
 
         response = self.client.get('/windows'
                                 , {'filterSession' : "not_there"})
