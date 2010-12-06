@@ -210,6 +210,75 @@ class TestWindowAlerts(NellTestCase):
         self.assertEquals(exp[0][0], times[0][0])
         self.assertEquals(exp[0][1], times[0][1])
 
+    def testGetWindowTimesNonContigious(self):
+
+        # test
+        wa = WindowAlerts.WindowAlerts()
+        times = wa.getWindowTimes()
+
+        # expected result
+        sch = [(datetime(2009, 4, 6), self.window.end_datetime()) ]
+        bss = [(datetime(2009, 4, 6), datetime(2009, 4, 7, 13, 0))]
+        schHrs = TimeAgent.timedelta2minutes(sch[0][1] - sch[0][0])/60.0
+        bssHrs = TimeAgent.timedelta2minutes(bss[0][1] - bss[0][0])/60.0
+        exp = [(self.window
+              , (schHrs
+               , bssHrs
+               , sch
+               , [bss]))]
+
+        self.assertEquals(exp[0][0], times[0][0])
+        self.assertEquals(exp[0][1], times[0][1])
+
+        # now split up this window into two ranges w/ out changing result
+        # 4/5 -> 4/12 changes to 4/2 - 4/4 and 4/6 - 4/12
+        wr1 = self.window.windowrange_set.all()[0]
+        wr1.start_date = datetime(2009, 4, 6)
+        wr1.duration = 6 # days
+        wr1.save()
+
+        wr2 = WindowRange(window = self.window
+                        , start_date = datetime(2009, 4, 2)
+                        , duration = 2)
+        wr2.save()
+
+        wa = WindowAlerts.WindowAlerts()
+        times = wa.getWindowTimes()
+
+        # expected result
+        sch = [(datetime(2009, 4, 6), self.window.end_datetime()) ]
+        bss = [(datetime(2009, 4, 6), datetime(2009, 4, 7, 13, 0))]
+        schHrs = TimeAgent.timedelta2minutes(sch[0][1] - sch[0][0])/60.0
+        bssHrs = TimeAgent.timedelta2minutes(bss[0][1] - bss[0][0])/60.0
+        exp = [(self.window
+              , (schHrs
+               , bssHrs
+               , sch
+               , [bss]))]
+
+        self.assertEquals(exp[0][0], times[0][0])
+        self.assertEquals(exp[0][1], times[0][1])
+
+        # now change the window ranges to affect the result - change the 
+        # second range so that there is less scheduable time
+        wr1.start_date = datetime(2009, 4, 7)
+        wr1.duration = 5
+        wr1.save()
+
+        wa = WindowAlerts.WindowAlerts()
+        times = wa.getWindowTimes()
+
+        # expected result
+        sch = [(datetime(2009, 4, 7), self.window.end_datetime()) ]
+        bss = [(datetime(2009, 4, 7), datetime(2009, 4, 7, 13, 0))]
+        schHrs = TimeAgent.timedelta2minutes(sch[0][1] - sch[0][0])/60.0
+        bssHrs = TimeAgent.timedelta2minutes(bss[0][1] - bss[0][0])/60.0
+        exp = [(self.window
+              , (schHrs
+               , bssHrs
+               , sch
+               , [bss]))]
+
     def testFindAlertLevels(self):
 
         wa = WindowAlerts.WindowAlerts()

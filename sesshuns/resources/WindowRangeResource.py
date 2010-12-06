@@ -8,6 +8,11 @@ from datetime              import datetime, timedelta, date
 
 import simplejson as json
 
+jsonMap = { "id" : "id"
+          , "start"  : "start_date"
+          , "duration" : "duration"
+          }
+
 class WindowRangeResource(NellResource):
     def __init__(self, *args, **kws):
         super(WindowRangeResource, self).__init__(WindowRange, WindowRangeHttpAdapter, *args, **kws)
@@ -20,9 +25,10 @@ class WindowRangeResource(NellResource):
         # one or many?
         if len(args) == 0:
             # many, use filters
-            sortField = request.GET.get("sortField", "start_date")
+            sortField = jsonMap.get(request.GET.get("sortField", "start_date"), "start_date")
             order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""             
             query_set = WindowRange.objects
+
 
             # filter by window id?
             filterWindowId = request.GET.get("filterWindowId", None)

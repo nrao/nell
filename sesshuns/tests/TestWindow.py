@@ -219,18 +219,44 @@ class TestWindow(NellTestCase):
         self.assertEquals(lost_time, w.default_period.duration)
         self.assertEquals(lost_time, w.timeRemaining())
 
+   
     def test_getWindowTimeBlackedOut(self):
 
-        print self.w.getWindowTimeBlackedOut()
+        bHrs = self.w.getWindowTimeBlackedOut()
+        self.assertEquals(0.0, bHrs)
+
         # make blackout that overlaps this window
         # start = datetime(2009, 6, 1)
         # dur   = 7 # days
         blackout = Blackout(project    = self.w.session.project
-                          , start_date = datetime(2009, 5, 30) 
-                          , end_date   = datetime(2009, 6, 3)
+                          , start_date = datetime(2009, 6, 3) 
+                          , end_date   = datetime(2009, 6, 4)
                           , repeat     = first(Repeat.objects.all())
                            )
         blackout.save()                           
         
-        print self.w.getWindowTimeBlackedOut()
+        # and another that doesn't
+        blackout = Blackout(project    = self.w.session.project
+                          , start_date = datetime(2009, 6, 8, 12) 
+                          , end_date   = datetime(2009, 6, 9, 12)
+                          , repeat     = first(Repeat.objects.all())
+                           )
+        blackout.save()           
+
+        bHrs = self.w.getWindowTimeBlackedOut()
+        self.assertEquals(24.0, bHrs)
+
+        # now extend this window and make it non-contigious
+        # and see how the new blackouts *dont* picked up.
+        wr = WindowRange(window = self.w
+                       , start_date = datetime(2009, 6, 10)
+                       , duration = 2)
+        wr.save()
+
+        # the second window range misses the second blackout out
+        # But it needs to be fresh from the DB
+        w = Window.objects.get(id = self.w.id)
+
+        bHrs = w.getWindowTimeBlackedOut()
+        self.assertEquals(24.0, bHrs)
 

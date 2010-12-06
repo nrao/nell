@@ -194,18 +194,22 @@ class Window(models.Model):
  
     def getWindowTimeNotSchedulable(self, blackouts = True):
         "How many hours in this window are not schedulable?"
-        ns = self.session.get_time_not_schedulable( \
-            self.start_datetime()
-          , self.end_datetime()
-          , blackouts = blackouts)
+        ns = []
+        for wr in self.ranges():
+            ns.extend(self.session.get_time_not_schedulable( \
+                wr.start_datetime()
+              , wr.end_datetime()
+              , blackouts = blackouts))
         return sum([TimeAgent.timedelta2minutes(n[1] - n[0])/60.0 \
             for n in ns])
         
     def getWindowTimeBlackedOut(self):
         "How many hours in this window have been blacked out?"
-        bs = self.session.project.get_blackout_times(\
-            self.start_datetime()
-          , self.end_datetime()) 
+        bs = []
+        for wr in self.ranges():
+            bstart = wr.start_datetime()
+            bend   = wr.end_datetime()
+            bs.extend(self.session.project.get_blackout_times(bstart, bend))
         return sum([TimeAgent.timedelta2minutes(b[1] - b[0])/60.0 \
             for b in bs])
 
@@ -214,9 +218,21 @@ class Window(models.Model):
         Of the hours in this window that are schedulable, how
         many have been blacked out?
         """
-        return self.session.getBlackedOutSchedulableTime( \
-            self.start_datetime()
-          , self.end_datetime())
+        hrsSchedulable = hrsBlackedOut = 0.0
+        schedulable = []
+        blackouts = []
+        for wr in self.ranges():
+            hs, hb, schd, bs = self.session.getBlackedOutSchedulableTime(\
+                wr.start_datetime()
+              , wr.end_datetime())
+            hrsSchedulable += hs  
+            hrsBlackedOut += hb  
+            schedulable.extend(schd)
+            blackouts.extend(bs)
+        return (hrsSchedulable
+              , hrsBlackedOut
+              , schedulable
+              , blackouts)     
 
     def defaultPeriodBlackedOut(self):
         """

@@ -1,5 +1,5 @@
 from datetime               import datetime
-from sesshuns.models        import Period, Sesshun, Period_State
+from sesshuns.models        import Window, Period, Sesshun, Period_State
 from sesshuns.models.common import *
 
 class WindowRangeHttpAdapter (object):
@@ -25,9 +25,9 @@ class WindowRangeHttpAdapter (object):
         self.from_post(fdata)
 
     def from_post(self, fdata):
-        w_id = fdata.get("id", None)
+        w_id = fdata.get("window_id", None)
         if w_id is not None:
-            window = first(Window.objects.filter(id = w_id))
+            window = first(Window.objects.filter(id = int(w_id)))
             self.windowRange.window = window
 
         date = fdata.get("start", datetime.utcnow().strftime("%Y-%m-%d"))
