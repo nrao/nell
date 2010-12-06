@@ -219,3 +219,18 @@ class TestWindow(NellTestCase):
         self.assertEquals(lost_time, w.default_period.duration)
         self.assertEquals(lost_time, w.timeRemaining())
 
+    def test_getWindowTimeBlackedOut(self):
+
+        print self.w.getWindowTimeBlackedOut()
+        # make blackout that overlaps this window
+        # start = datetime(2009, 6, 1)
+        # dur   = 7 # days
+        blackout = Blackout(project    = self.w.session.project
+                          , start_date = datetime(2009, 5, 30) 
+                          , end_date   = datetime(2009, 6, 3)
+                          , repeat     = first(Repeat.objects.all())
+                           )
+        blackout.save()                           
+        
+        print self.w.getWindowTimeBlackedOut()
+
