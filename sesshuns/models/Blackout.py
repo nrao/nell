@@ -103,6 +103,14 @@ class Blackout(models.Model):
 
         dates = []
         
+        def dealWithYearlyWrapAround(dt):
+            if dt.month == 12: # Yearly wrap around
+                month = 1; year = dt.year + 1
+            else:
+                month = dt.month + 1
+                year  = dt.year
+            return month, year
+
         if periodicity == "Once":
             dates.append((start, end))
         elif periodicity == "Weekly":
@@ -117,16 +125,15 @@ class Blackout(models.Model):
                 if start >= calstart:
                     dates.append((start, end))
 
-                if start.month == 12: # Yearly wrap around
-                    start.month = 0; start.year = start.year + 1
-
-                start = datetime(year   = start.year
-                               , month  = start.month + 1
+                month, year = dealWithYearlyWrapAround(start)
+                start = datetime(year   = year
+                               , month  = month
                                , day    = start.day
                                , hour   = start.hour
                                , minute = start.minute)
-                end   = datetime(year   = end.year
-                               , month  = end.month + 1
+                month, year = dealWithYearlyWrapAround(end)
+                end   = datetime(year   = year
+                               , month  = month
                                , day    = end.day
                                , hour   = end.hour
                                , minute = end.minute)
