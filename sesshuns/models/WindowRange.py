@@ -1,7 +1,7 @@
 from django.db  import models
 from datetime   import datetime, timedelta
 
-from nell.utilities import TimeAgent
+from nell.utilities import TimeAgent, SLATimeAgent
 
 from common import *
 from Window import Window
@@ -64,6 +64,31 @@ class WindowRange(models.Model):
               , "className": 'window'
         }
 
+    def lstInRange(self, lst, buffer = 0):
+        "Does a given LST fit in this range?"
+
+        # TBF, WTF: this really only applies to ranges of 1 day,
+        # since any lst (0-24 hrs) will fit in a range of >2 
+        # days, but wtf.
+
+        assert buffer >= 0.0 and buffer <= 24.0
+
+        # Convert the relative lst to the absolute UTC time
+        # for the first day of the window range, and the last
+        lstUTCStart = SLATimeAgent.RelativeLST2AbsoluteTime(lst, now = self.start_datetime())
+        lstUTCEnd = SLATimeAgent.RelativeLST2AbsoluteTime(lst
+            , now = self.start_datetime() + timedelta(days = self.duration - 1) )
+
+        # include the buffer for the range ends
+        utcStart = self.start_datetime() + timedelta(minutes = buffer*60.0)
+        utcEnd   = self.end_datetime()   - timedelta(minutes = buffer*60.0)
+
+        #print "comparing UTCs at start: ", lstUTCStart, utcStart 
+        #print "comparing UTCs at end: ", lstUTCEnd, utcEnd 
+
+        return (lstUTCStart >= utcStart) and (lstUTCEnd <= utcEnd)
+    
+  
     class Meta:
         db_table  = "window_ranges"
         app_label = "sesshuns"

@@ -42,7 +42,8 @@ class TestWindow(NellTestCase):
                        , start_date = start
                        , duration = dur
                         )
-        wr.save()                
+        wr.save() 
+        self.wr1 = wr
 
         # window & default period must both ref. eachother
         self.w.default_period = self.default_period
@@ -259,4 +260,43 @@ class TestWindow(NellTestCase):
 
         bHrs = w.getWindowTimeBlackedOut()
         self.assertEquals(24.0, bHrs)
+
+    def test_lstOutOfRange(self):
+
+        tg = first(self.sesshun.target_set.all())
+        # ra to lst: rads to hours
+        lst = TimeAgent.rad2hr(tg.horizontal)
+
+        # this first window should not have a problem, since
+        # duration > 1 day
+        self.assertEquals(False, self.w.hasLstOutOfRange())
+        self.assertEquals(False, self.w.hasNoLstInRange())
+
+        # now create a one day window range
+        utcStart = datetime(2009, 6, 1)
+        utcEnd   = datetime(2009, 6, 2)
+        wr = WindowRange(window = self.w
+                       , start_date = utcStart
+                       , duration = (utcEnd - utcStart).days)
+        wr.save()
+
+        # any target should be in range, w/ out a big buffer
+        self.assertEquals(False, self.w.hasLstOutOfRange())
+        self.assertEquals(False, self.w.hasNoLstInRange())
+
+        # now, increase the buffer:
+        self.sesshun.min_duration = 12.0
+        self.sesshunmax_duration  = 12.0
+        self.sesshun.save()
+        self.assertEquals(True, self.w.hasLstOutOfRange())
+        self.assertEquals([wr], self.w.lstOutOfRange())
+        self.assertEquals(False, self.w.hasNoLstInRange())
+
+        # now, shrink the original window range so that it 
+        # is too small as well
+        self.wr1.duration = 1
+        self.wr1.save()
+        self.assertEquals(True, self.w.hasLstOutOfRange())
+        self.assertEquals(True, self.w.hasNoLstInRange())
+
 

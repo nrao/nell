@@ -250,6 +250,30 @@ class Window(models.Model):
           , self.default_period.end())
 
         return len(bs) > 0  
+
+    def lstOutOfRange(self):
+        """
+        Are any of the window ranges just one day, with the
+        LST such that the session can't be scheduled?
+        """
+        tg = first(self.session.target_set.all())
+        lst = TimeAgent.rad2hr(tg.horizontal)
+
+        # how close can the lst be to the edges of the range?
+        buffer = (self.session.min_duration + self.session.max_duration) / 2.0
+
+        return [wr for wr in self.windowrange_set.all() \
+            if wr.duration == 1 and \
+                not wr.lstInRange(lst, buffer = buffer)]
+
+    def hasLstOutOfRange(self):
+        return len(self.lstOutOfRange()) > 0
+
+    def hasNoLstInRange(self):
+        numBadRanges = len(self.lstOutOfRange())
+        numRanges = len(self.windowrange_set.all())
+        return numBadRanges == numRanges and numRanges > 0 
+
     class Meta:
         db_table  = "windows"
         app_label = "sesshuns"
