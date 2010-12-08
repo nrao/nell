@@ -299,4 +299,31 @@ class TestWindow(NellTestCase):
         self.assertEquals(True, self.w.hasLstOutOfRange())
         self.assertEquals(True, self.w.hasNoLstInRange())
 
+    def test_overlappingRanges(self):
+
+        # our original window has only one window range
+        self.assertEquals(False, self.w.hasOverlappingRanges())
+
+        # add one that doesn't overlap
+        wr2 = WindowRange(window = self.w
+                        , start_date = self.wr1.last_date() + timedelta(days = 2)
+                        , duration = 7)
+        wr2.save()
+
+        self.assertEquals(False, self.w.hasOverlappingRanges())
+
+        # now make them overlap
+        wr2.start_date = self.wr1.last_date() - timedelta(days = 1) 
+        wr2.save()
+
+        self.assertEquals(True, self.w.hasOverlappingRanges())
+
+        # contigious windows shouldn't overrlap
+        wr2.start_date = self.wr1.last_date()
+        wr2.save()
+
+        self.assertEquals(False, self.w.hasOverlappingRanges())
+
+
+        
 

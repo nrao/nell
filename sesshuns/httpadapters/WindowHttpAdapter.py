@@ -36,6 +36,7 @@ class WindowHttpAdapter (object):
               , "num_periods"    : len(self.window.periods.all())
               , "periods"        : [PeriodHttpAdapter(p).jsondict('UTC', 0.0) for p in self.window.periods.all()]
               , "ranges"         : [WindowRangeHttpAdapter(wr).jsondict() for wr in self.window.ranges()]
+              , "errors"         : self.window.errors()
               }
         return js    
 

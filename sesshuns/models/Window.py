@@ -274,6 +274,48 @@ class Window(models.Model):
         numRanges = len(self.windowrange_set.all())
         return numBadRanges == numRanges and numRanges > 0 
 
+    def hasOverlappingRanges(self):
+        "Window Ranges shouldn't overlap."
+        return True if len(self.overlappingRanges()) > 0 else False
+            
+    def overlappingRanges(self):
+        "What ranges are overlapping?"
+
+        wrs = self.ranges()
+        if len(wrs) <= 1:
+            return []
+
+        overlap = []
+        for i in range(0, len(wrs)):
+            for j in range(i+1, len(wrs)):
+                w1s = wrs[i].start_date
+                w1e = wrs[i].last_date()
+                w2s = wrs[j].start_date
+                w2e = wrs[j].last_date()
+                if overlaps((w1s, w1e), (w2s, w2e)):
+                    overlap.append((wrs[i], wrs[j]))
+        return overlap
+
+    def errors(self):
+        """
+        Collect all possible problems with this window, and put them
+        in a list of strings meant for the scheduler.
+        """
+        # TBF: need to collect many of the checks we're doing in the
+        # DB Health Report and put them in here. For now, we'll just
+        # cover one check:
+        err = []
+        if self.hasLstOutOfRange() and not self.hasNoLstInRange():
+            wrs = [("%s - %s" % (wr.start_date, wr.end())) for wr in self.lstOutOfRange()]
+            ranges = ",".join(wrs)
+            err.append("Window Range(s) %s have out of range LST." % ranges)
+        if self.hasNoLstInRange():
+            err.append("All Window Ranges have out of range LST.")
+        # Add this check now so we can test this easily    
+        if self.hasOverlappingRanges():
+            err.append("Overlapping Window Ranges.")
+        return err    
+
     class Meta:
         db_table  = "windows"
         app_label = "sesshuns"
