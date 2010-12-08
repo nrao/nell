@@ -23,7 +23,7 @@
 # $Id: TimeAgent.py,v 1.4 2007/06/21 14:20:47 mclark Exp $
 
 from TimeAgent  import *
-#import slalib
+import slalib
 
 def dt2tlst(dt):
     "Translates from UT datetime to LST time."
