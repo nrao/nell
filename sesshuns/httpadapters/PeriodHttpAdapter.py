@@ -116,6 +116,12 @@ class PeriodHttpAdapter (object):
         wId = fdata.get("window_id", None)
         if wId is not None:
             self.period.window_id = wId
+        elif self.period.session.isWindowed():
+            # just because the window id wasn't specified doesn't mean
+            # we don't want to assign this a window:
+            # for instance, if this period was created outside of the 
+            # Windowed Period Explorer, we'll have to assign a window
+            self.period.assign_a_window()
 
         # is this period a default period for a window?
         default = fdata.get("wdefault", None)
