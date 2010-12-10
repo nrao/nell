@@ -62,7 +62,8 @@ def get_window_blackout_alerts():
     """
 
     # we only care about incomplete windows
-    wins = Window.objects.filter(complete = False)
+    #wins = Window.objects.filter(complete = False)
+    wins = []
     alerts1 = []
     alerts2 = []
     alerts3 = []
@@ -94,31 +95,37 @@ def get_non_windowed_sessions_with_windows():
     windowed = [x for x in snw if len(x.window_set.all()) > 0]
     return windowed
 
-# helper function returns windows whose start-date + duration
-# (i.e. end date) is >= now and whose start date is < some future
-# date.
+
+
+# TBF: this has been reduced due to the move of start_date & duration from
+# Window to WindowRange.  Now we use filter_current_windows in conjunction
+# with the old calls to filter these windows
 
 def get_windows():
+    return Window.objects.all()
+
+# return only recent windows
+def filter_current_windows(wins):
     gt_date = datetime.now().date() - timedelta(1)
-    lt_date = gt_date + timedelta(62)
-    ws = Window.objects.extra(where = ["(windows.start_date + windows.duration) > date %s"],
-                              params = [gt_date]).filter(start_date__lt = lt_date)
-    return ws
+    lt_date = gt_date + timedelta(62) 
+    return [w for w in wins if w.start_date() < lt_date and w.last_date() > gt_date]
 
 # windows w/ out start, duration, or default_period
 
 def get_incomplete_windows():
+    # TBF: have to fix this to handle window ranges
     ws = get_windows()
-    win_no_start = ws.filter(start_date = None)
-    win_no_dur = ws.filter(duration = None)
-    win_no_period = ws.filter(default_period = None)
-    return (win_no_start, win_no_dur, win_no_period)
+    #win_no_start = filter_current_windows(ws.filter(start_date = None))
+    #win_no_dur = filter_current_windows(ws.filter(duration = None))
+    win_no_period = filter_current_windows(ws.filter(default_period = None))
+    #return (win_no_start, win_no_dur, win_no_period)
+    return ([], [], win_no_period)
 
 # windows w/ any period outside the window range
 
 def get_win_period_outside():
     ws = get_windows()
-    wp = ws.exclude(default_period = None)
+    wp = filter_current_windows(ws.exclude(default_period = None))
     badwin = []
 
     for i in wp:
@@ -156,7 +163,7 @@ def get_overlapping_windows():
         sid.add(i.session_id)
 
     for i in sid:
-        wwsid = w.filter(session__id__exact = i)
+        wwsid = filter_current_windows(w.filter(session__id__exact = i))
         s = len(wwsid)
 
         # Would like to do this in terms of the model/SQL
@@ -220,6 +227,10 @@ def get_non_window_periods():
 #    return w
 
 
+def get_window_out_of_range_lst():
+    return [w for w in get_windows() if w.hasLstOutOfRange()]
+    
+
 # windows of the same session with less than 48 hour inter-window interval
 
 def get_window_within_48():
@@ -231,7 +242,7 @@ def get_window_within_48():
         sid.add(i.session_id)
 
     for i in sid:
-        wwsid = w.filter(session__id__exact = i)
+        wwsid = filter_current_windows(w.filter(session__id__exact = i))
         s = len(wwsid)
 
         # Would like to do this in terms of the model/SQL
@@ -277,7 +288,7 @@ def get_window_within_48():
 
 def get_windows_with_rogue_periods():
     ws = get_windows()
-    w = ws.exclude(default_period = None)
+    w = filter_current_windows(ws.exclude(default_period = None))
     rogue = []
 
     for i in w:
@@ -376,6 +387,7 @@ def output_windows_report(file):
     w.append(bs1)
     w.append(bs2)
     w.append(dbs)
+    w.append(get_window_out_of_range_lst())
     
     desc = []
     desc.append("Windowed sessions with no windows")
@@ -391,6 +403,7 @@ def output_windows_report(file):
     desc.append("Windows with >10% and =<50% schedulable time blacked out")
     desc.append("Windows with >50% schedulable time blacked out")
     desc.append("Windows with default period partially blacked out")
+    desc.append("Windows with LST out of range")
     
     file.write("Summary\n")
     file.write("\t%s: %i\n" % (desc[0], len(w[0])))
@@ -404,6 +417,7 @@ def output_windows_report(file):
     file.write("\t%s: %i\n" % (desc[8], len(w[8])))
     file.write("\t%s: %i\n" % (desc[9], len(w[9])))
     file.write("\t%s: %i\n" % (desc[10], len(w[10])))
+    file.write("\t%s: %i\n" % (desc[11], len(w[11])))
 
 
     file.write("\n\nWindow Details\n\n")
@@ -491,6 +505,10 @@ def output_windows_report(file):
         file.write("\n%s:\n" % (desc[10]))
         output_windows2(file, w[10])
         
+    if len(w[11]):
+        file.write("\n%s:\n" % (desc[11]))
+        output_windows2(file, w[11])
+
 def GenerateReport():
 
     ta = TimeAccounting()

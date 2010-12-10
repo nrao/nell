@@ -33,10 +33,17 @@ class TestWindow(NellTestCase):
         
         # create window
         self.w = Window()
-        self.w.start_date = start
-        self.w.duration = dur
+        #self.w.start_date = start
+        #self.w.duration = dur
         self.w.session = self.sesshun
         self.w.total_time = self.default_period.duration
+        self.w.save()
+        wr = WindowRange(window = self.w
+                       , start_date = start
+                       , duration = dur
+                        )
+        wr.save() 
+        self.wr1 = wr
 
         # window & default period must both ref. eachother
         self.w.default_period = self.default_period
@@ -59,8 +66,8 @@ class TestWindow(NellTestCase):
 
         pjson = PeriodHttpAdapter(self.default_period).jsondict('UTC', 1.1)
         self.fdata = {"session":  1
-                    , "start":    "2009-06-01"
-                    , "duration": 7
+                    #, "start":    "2009-06-01"
+                    #, "duration": 7
                     , "num_periods": 0
                     , "default_date" : pjson['date'] 
                     , "default_time" : pjson['time'] 
@@ -74,8 +81,8 @@ class TestWindow(NellTestCase):
         adapter.init_from_post(self.fdata)
        
         self.assertEqual(w.session, self.sesshun)
-        self.assertEqual(w.start_date, date(2009, 6, 1))
-        self.assertEqual(w.duration, self.fdata["duration"])
+        #self.assertEqual(w.start_date(), date(2009, 6, 1))
+        #self.assertEqual(w.duration(), self.fdata["duration"])
         self.assertEqual(w.default_period, None)
         self.assertEqual(len(w.periods.all()), 0)
 
@@ -88,12 +95,18 @@ class TestWindow(NellTestCase):
         endStr = end.strftime("%Y-%m-%d")
         
         w = Window()
-        w.start_date = start
-        w.duration = dur
+        #w.start_date = start
+        #w.duration = dur
         w.session = self.sesshun
         w.default_period = self.default_period
 
         w.save()
+
+        wr = WindowRange(window = w
+                       , start_date = start
+                       , duration = dur
+                        )
+        wr.save()
 
         self.default_period.window = w
         self.default_period.save()
@@ -206,4 +219,111 @@ class TestWindow(NellTestCase):
         self.assertEquals(self.pending, w.default_period.state)
         self.assertEquals(lost_time, w.default_period.duration)
         self.assertEquals(lost_time, w.timeRemaining())
+
+   
+    def test_getWindowTimeBlackedOut(self):
+
+        bHrs = self.w.getWindowTimeBlackedOut()
+        self.assertEquals(0.0, bHrs)
+
+        # make blackout that overlaps this window
+        # start = datetime(2009, 6, 1)
+        # dur   = 7 # days
+        blackout = Blackout(project    = self.w.session.project
+                          , start_date = datetime(2009, 6, 3) 
+                          , end_date   = datetime(2009, 6, 4)
+                          , repeat     = first(Repeat.objects.all())
+                           )
+        blackout.save()                           
+        
+        # and another that doesn't
+        blackout = Blackout(project    = self.w.session.project
+                          , start_date = datetime(2009, 6, 8, 12) 
+                          , end_date   = datetime(2009, 6, 9, 12)
+                          , repeat     = first(Repeat.objects.all())
+                           )
+        blackout.save()           
+
+        bHrs = self.w.getWindowTimeBlackedOut()
+        self.assertEquals(24.0, bHrs)
+
+        # now extend this window and make it non-contigious
+        # and see how the new blackouts *dont* picked up.
+        wr = WindowRange(window = self.w
+                       , start_date = datetime(2009, 6, 10)
+                       , duration = 2)
+        wr.save()
+
+        # the second window range misses the second blackout out
+        # But it needs to be fresh from the DB
+        w = Window.objects.get(id = self.w.id)
+
+        bHrs = w.getWindowTimeBlackedOut()
+        self.assertEquals(24.0, bHrs)
+
+    def test_lstOutOfRange(self):
+
+        tg = first(self.sesshun.target_set.all())
+        # ra to lst: rads to hours
+        lst = TimeAgent.rad2hr(tg.horizontal)
+
+        # this first window should not have a problem, since
+        # duration > 1 day
+        self.assertEquals(False, self.w.hasLstOutOfRange())
+        self.assertEquals(False, self.w.hasNoLstInRange())
+
+        # now create a one day window range
+        utcStart = datetime(2009, 6, 1)
+        utcEnd   = datetime(2009, 6, 2)
+        wr = WindowRange(window = self.w
+                       , start_date = utcStart
+                       , duration = (utcEnd - utcStart).days)
+        wr.save()
+
+        # any target should be in range, w/ out a big buffer
+        self.assertEquals(False, self.w.hasLstOutOfRange())
+        self.assertEquals(False, self.w.hasNoLstInRange())
+
+        # now, increase the buffer:
+        self.sesshun.min_duration = 12.0
+        self.sesshunmax_duration  = 12.0
+        self.sesshun.save()
+        self.assertEquals(True, self.w.hasLstOutOfRange())
+        self.assertEquals([wr], self.w.lstOutOfRange())
+        self.assertEquals(False, self.w.hasNoLstInRange())
+
+        # now, shrink the original window range so that it 
+        # is too small as well
+        self.wr1.duration = 1
+        self.wr1.save()
+        self.assertEquals(True, self.w.hasLstOutOfRange())
+        self.assertEquals(True, self.w.hasNoLstInRange())
+
+    def test_overlappingRanges(self):
+
+        # our original window has only one window range
+        self.assertEquals(False, self.w.hasOverlappingRanges())
+
+        # add one that doesn't overlap
+        wr2 = WindowRange(window = self.w
+                        , start_date = self.wr1.last_date() + timedelta(days = 2)
+                        , duration = 7)
+        wr2.save()
+
+        self.assertEquals(False, self.w.hasOverlappingRanges())
+
+        # now make them overlap
+        wr2.start_date = self.wr1.last_date() - timedelta(days = 1) 
+        wr2.save()
+
+        self.assertEquals(True, self.w.hasOverlappingRanges())
+
+        # contigious windows shouldn't overrlap
+        wr2.start_date = self.wr1.last_date()
+        wr2.save()
+
+        self.assertEquals(False, self.w.hasOverlappingRanges())
+
+
+        
 

@@ -34,7 +34,7 @@ class PeriodHttpAdapter (object):
               , "windowed"     : True if w is not None else False
               , "wdefault"     : self.period.is_windowed_default() \
                                      if w is not None else None
-              , "wstart"       : d2str(w.start_date) if w is not None else None
+              , "wstart"       : d2str(w.start_date()) if w is not None else None
               , "wend"         : d2str(w.last_date()) if w is not None else None
               , "receivers"    : self.period.get_rcvrs_json()
                 }

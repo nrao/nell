@@ -114,11 +114,16 @@ class TestViewsPTC(PeriodsTestCase):
         p1.session.save()
 
         w1 = Window( session = p1.session
-                   , start_date = p1.start.date() - timedelta(days = 7)
-                   , duration = 10 # days
+                   #, start_date = p1.start.date() - timedelta(days = 7)
+                   #, duration = 10 # days
                    , default_period = p1
                    )
         w1.save()
+        wr = WindowRange(window = w1
+                       , start_date = p1.start.date() - timedelta(days = 7)
+                       , duration = 10 # days
+                        )
+        wr.save()                
 
         p1.window = w1
         p1.save()
@@ -135,11 +140,16 @@ class TestViewsPTC(PeriodsTestCase):
 
         # NOTE: ovelapping windows for same session - shouldn't matter
         w2 = Window( session = p2.session # NOTE: same session for all 3 periods
-                   , start_date = p1.start.date() - timedelta(days = 7)
-                   , duration = 10 # days
+                   #, start_date = p1.start.date() - timedelta(days = 7)
+                   #, duration = 10 # days
                    , default_period = p2
                    )
         w2.save()
+        wr = WindowRange(window = w2
+                       , start_date = p1.start.date() - timedelta(days = 7)
+                       , duration = 10 # days
+                        )
+        wr.save()                
 
         p3.window = w2
         p3.save()
@@ -149,7 +159,7 @@ class TestViewsPTC(PeriodsTestCase):
         self.assertEquals([pending],   w2.periodStates())
 
         # remeber that we publish using the scheduling range
-        dt = w1.start_date - timedelta(days = 1)
+        dt = w1.start_date() - timedelta(days = 1)
         time = dt.strftime("%Y-%m-%d %H:%M:%S")
         tz = "ET"
         duration = 13 #12
@@ -163,7 +173,9 @@ class TestViewsPTC(PeriodsTestCase):
         self.failUnless("ok" in response.content)
 
         # make sure the states are right now
-        for w in Window.objects.order_by("start_date"):
+        #for w in Window.objects.order_by("start_date"):
+        wins1 = Window.objects.all() # TBF: how to order????
+        for w in wins1:
             self.assertEquals([scheduled], w.periodStates())
 
         # Put things back the way we found them.
