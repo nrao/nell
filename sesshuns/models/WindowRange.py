@@ -7,7 +7,7 @@ from common import *
 from Window import Window
 
 class WindowRange(models.Model):
-    window     = models.ForeignKey(Window, null = True)
+    window     = models.ForeignKey(Window) 
     start_date = models.DateField(help_text = "yyyy-mm-dd hh:mm:ss")
     duration   = models.IntegerField(help_text = "Days")
 

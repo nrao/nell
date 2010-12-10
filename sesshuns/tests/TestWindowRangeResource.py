@@ -34,7 +34,7 @@ class TestWindowRangeResource(NellTestCase):
         # go through the back door to set the range
         startDt = date(2010, 1, 1)
         duration = 7
-        self.fdata = {"window" : self.w
+        self.fdata = {"window_id" : self.w.id
                     , "start" : startDt
                     , "duration" : duration }
         self.wr = WindowRange(window = self.w

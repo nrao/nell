@@ -29,6 +29,13 @@ class WindowRangeHttpAdapter (object):
         if w_id is not None:
             window = first(Window.objects.filter(id = int(w_id)))
             self.windowRange.window = window
+        else:
+            # you HAVE to be assigned a window
+            if self.windowRange.window_id is None:
+                window = first(Window.objects.all())
+                self.windowRange.window = window
+                
+
 
         date = fdata.get("start", datetime.utcnow().strftime("%Y-%m-%d"))
         self.windowRange.start_date = datetime.strptime(date, "%Y-%m-%d").date()
