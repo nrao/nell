@@ -116,7 +116,7 @@ class PeriodHttpAdapter (object):
         wId = fdata.get("window_id", None)
         if wId is not None:
             self.period.window_id = wId
-        elif self.period.session.isWindowed():
+        elif self.period.session.isWindowed() and self.period.window_id is None:
             # just because the window id wasn't specified doesn't mean
             # we don't want to assign this a window:
             # for instance, if this period was created outside of the 
@@ -125,12 +125,16 @@ class PeriodHttpAdapter (object):
 
         # is this period a default period for a window?
         default = fdata.get("wdefault", None)
-        if default is not None and default == "true" \
-            and self.period.window is not None:
-            self.period.window.default_period = self.period
-            self.period.window.save()
+        if default is not None: #
+            if default == "true" and self.period.window is not None:
+                # assign this period as a default
+                self.period.window.default_period = self.period
+                self.period.window.save()
+            elif default == "false" and self.period.window is not None:
+                # unassign this period as a default
+                self.period.window.default_period = None
+                self.period.window.save()
             
-
         # how to initialize scheduled time? when they get published!
         # so, only create an accounting object if it needs it.
         if self.period.accounting is None:

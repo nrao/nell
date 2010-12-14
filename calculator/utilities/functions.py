@@ -1,4 +1,5 @@
-from calculator.models import FrequencyResolution
+from calculator.models       import FrequencyResolution
+from utilities.SLATimeAgent  import dec2MaxEl
 
 def getMinTopoFreq(backend, bandwidth, windows):
     if backend == 'Spectral Processor':
@@ -11,8 +12,8 @@ def getMinTopoFreq(backend, bandwidth, windows):
 
     return (bandwidth * windows) / float(fr.max_number_channels) * 1000
 
-def getMaxElevation(declination):
-    return 85
+def getMaxElevation(dec):
+    return dec2MaxEl(dec)
 
 def getMinCircumpolarElevation(declination):
     return -5

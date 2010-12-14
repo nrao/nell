@@ -61,5 +61,20 @@ class TestTerm(unittest.TestCase):
         term.evaluate(term2)
         self.assertEquals((1/2, 'parsecs', 'a / b'), term.get())
 
+    def testReEvaluate(self):
+        term1 = Term('a', 1)
+        term2 = Term('b', 2)
+
+        term = Term('test', equation = 'a + b', units = 'parsecs')
+        self.assertEquals('a + b', term.equation)
+        term.evaluate(term1)
+        term.evaluate(term2)
+        self.assertEquals((3, 'parsecs', 'a + b'), term.get())
+
+        #  Now change a term and see if the dependent gets reevaluated
+        term1.set(2)
+        term.evaluate(term1)
+        self.assertEquals((4, 'parsecs', 'a + b'), term.get())
+
 if __name__== "__main__":
     unittest.main()

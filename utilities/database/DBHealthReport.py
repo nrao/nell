@@ -110,6 +110,11 @@ def filter_current_windows(wins):
     lt_date = gt_date + timedelta(62) 
     return [w for w in wins if w.start_date() < lt_date and w.last_date() > gt_date]
 
+# Windowed Sessions that are gauranteed need default periods.
+def get_missing_default_periods():
+    ws = filter_current_windows(get_windows())
+    return [w for w in ws if w.lacksMandatoryDefaultPeriod()]
+
 # windows w/ out start, duration, or default_period
 
 def get_incomplete_windows():
@@ -388,6 +393,7 @@ def output_windows_report(file):
     w.append(bs2)
     w.append(dbs)
     w.append(get_window_out_of_range_lst())
+    w.append(get_missing_default_periods())
     
     desc = []
     desc.append("Windowed sessions with no windows")
@@ -404,6 +410,9 @@ def output_windows_report(file):
     desc.append("Windows with >50% schedulable time blacked out")
     desc.append("Windows with default period partially blacked out")
     desc.append("Windows with LST out of range")
+    # TBF: toggle this when we release non-guaranteed windows
+    #desc.append("Windows from Guaranteed Sessions that lack a Default Period") 
+    desc.append("Windows that lack a Default Period") 
     
     file.write("Summary\n")
     file.write("\t%s: %i\n" % (desc[0], len(w[0])))
@@ -418,6 +427,7 @@ def output_windows_report(file):
     file.write("\t%s: %i\n" % (desc[9], len(w[9])))
     file.write("\t%s: %i\n" % (desc[10], len(w[10])))
     file.write("\t%s: %i\n" % (desc[11], len(w[11])))
+    file.write("\t%s: %i\n" % (desc[12], len(w[12])))
 
 
     file.write("\n\nWindow Details\n\n")
@@ -508,6 +518,10 @@ def output_windows_report(file):
     if len(w[11]):
         file.write("\n%s:\n" % (desc[11]))
         output_windows2(file, w[11])
+
+    if len(w[12]):
+        file.write("\n%s:\n" % (desc[12]))
+        output_windows2(file, w[12])
 
 def GenerateReport():
 

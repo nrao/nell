@@ -89,3 +89,6 @@ def RelativeLST2AbsoluteTime(lst, now = None):
             return mxDT2dt(option)
     return mxDT2dt(option[-1])
 
+def dec2MaxEl(dec):
+    max_el = dec + 90 - GBTLAT
+    return max_el if max_el <= 90 else 180 - max_el

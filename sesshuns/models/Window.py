@@ -66,7 +66,10 @@ class Window(models.Model):
     # ****** window ranges can be ignored or Window is contigious.
 
     def start(self):
-        return self.first_range().start_date
+        if len(self.ranges()) > 0:
+            return self.first_range().start_date
+        else:
+            None
 
     def start_date(self):
         return self.start()
@@ -76,9 +79,12 @@ class Window(models.Model):
 
     def last_date(self):
         "Ex: start = 1/10, duration = 2 days, last_date = 1/11"
-        start = self.last_range().start_date 
-        days  = timedelta(days = self.last_range().duration - 1)
-        return start + days
+        if len(self.ranges()) > 0:
+            start = self.last_range().start_date 
+            days  = timedelta(days = self.last_range().duration - 1)
+            return start + days
+        else:
+            None
 
     def start_datetime(self):
         return TimeAgent.date2datetime(self.start())
@@ -296,6 +302,16 @@ class Window(models.Model):
                     overlap.append((wrs[i], wrs[j]))
         return overlap
 
+    def lacksMandatoryDefaultPeriod(self):
+        """
+        Windowed Sessions that are gauranteed need default periods.
+        Non-gauranteed can do without a default period, because if
+        a window doesn't get scheduled, oh well, it wasn't gauranteed.
+        """
+        #TBF: once we can release non-gauaranteed windows, we need to toggle this
+        #return self.session.gaurenteed() and self.default_period is None 
+        return self.default_period is None 
+        
     def errors(self):
         """
         Collect all possible problems with this window, and put them
@@ -311,9 +327,14 @@ class Window(models.Model):
             err.append("Window Range(s) %s have out of range LST." % ranges)
         if self.hasNoLstInRange():
             err.append("All Window Ranges have out of range LST.")
-        # Add this check now so we can test this easily    
         if self.hasOverlappingRanges():
             err.append("Overlapping Window Ranges.")
+        if self.lacksMandatoryDefaultPeriod():
+            #TBF: toggle this when releasing non-gauranteed windows
+            #err.append("Default Period mandatory for non-guaranteed Sessions.")
+            err.append("Default Period mandatory for Windowed Sessions.")
+        if len(self.ranges()) == 0:
+            err.append("Window must have at least one Window Range.")
         return err    
 
     class Meta:
