@@ -37,11 +37,10 @@ class Backend(models.Model):
     rc_code = models.CharField(max_length = 1)
 
     def __unicode__(self):
-        return self.full_description()
+        return self.abbreviation
 
     def full_description(self):
         return "%s - %s (%s)" % (self.abbreviation, self.name, self.rc_code)
-
 
     class Meta:
         db_table  = "backends"

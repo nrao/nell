@@ -27,24 +27,28 @@
 #
 ######################################################################
 
-from django.contrib.auth.decorators import login_required
-from django.http                    import HttpResponse, HttpResponseRedirect
-from django.template                import Context, loader
-from django.shortcuts               import render_to_response
-from django                         import forms
-from django.forms                   import ModelForm
-from models                         import *
-from django.utils.safestring        import mark_safe
-from django.utils.encoding          import StrAndUnicode, force_unicode
-from itertools import chain
-from django.utils.html              import escape, conditional_escape
-from django                         import template
-from nell.utilities                 import TimeAgent
-from datetime                       import date, datetime, time
-from utilities                      import get_requestor
+from django.contrib.auth.decorators     import login_required
+from django.http                        import HttpResponse, HttpResponseRedirect
+from django.template                    import Context, loader
+from django.shortcuts                   import render_to_response
+from django                             import forms
+from django.forms                       import ModelForm
+from models                             import *
+from django.utils.safestring            import mark_safe
+from django.utils.encoding              import StrAndUnicode, force_unicode
+from itertools                          import chain
+from django.utils.html                  import escape, conditional_escape
+from django                             import template
+from nell.utilities                     import TimeAgent
+from datetime                           import date, datetime, time
+from utilities                          import get_requestor
+from rescal_notifier                    import RescalNotifier
+from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
 
 supervisors = ["rcreager", "ashelton", "banderso", "mchestnu", "koneil"]
 interval_names = {0:"None", 1:"Daily", 7:"Weekly", 30:"Monthly"}
+
+rc_notifier = RescalNotifier()
 
 ######################################################################
 # This class is a rendering clas for the RadioSelect widget, which is
@@ -155,7 +159,7 @@ class RCAddActivityForm(forms.Form):
 
     location = forms.CharField(required = location_req, max_length = 200,
                                widget = forms.TextInput(attrs = {'size': '80'}))
-    tel_resc = [(p.id, p.resource) 
+    tel_resc = [(p.id, p.resource)
                 for p in Maintenance_Telescope_Resources.objects.all()]
     telescope = forms.ChoiceField(choices = tel_resc,
                                   widget = forms.RadioSelect(
@@ -172,7 +176,8 @@ class RCAddActivityForm(forms.Form):
 
     other_resc = [(p.id, p.resource)
                   for p in Maintenance_Other_Resources.objects.all()]
-    other_resources = forms.MultipleChoiceField(choices = other_resc,
+    other_resources = forms.MultipleChoiceField(required = False,
+                                                choices = other_resc,
                                                 widget = MyCheckboxSelectMultiple)
 
     rcvr.insert(0, (-1, ''))
@@ -194,7 +199,7 @@ class RCAddActivityForm(forms.Form):
     new_receiver = forms.ChoiceField(
         label = 'up:', required = False, choices = rcvr,
         widget = forms.Select(attrs = {'disabled': 'true'}))
-    
+
     be = [(p.id, p.full_description()) for p in Backend.objects.all()]
     backends = forms.MultipleChoiceField(required = backends_req,
                                          choices = be,
@@ -288,8 +293,12 @@ def display_maintenance_activity(request, activity_id = None):
 @login_required
 def add_activity(request, period_id = None, year = None,
                  month = None, day = None):
-    if request.method == 'POST':
 
+    u = get_requestor(request)
+    user = get_user_name(u)
+    supervisor_mode = True if (u and u.username() in supervisors) else False
+
+    if request.method == 'POST':
         form = RCAddActivityForm(request.POST)
 
         if form.is_valid():
@@ -299,6 +308,8 @@ def add_activity(request, period_id = None, year = None,
                       # relationships to be set.
 
             process_activity(request, ma, form)
+            view_url = "http://%s/resourcecal_display_activity/%s/" % (request.get_host(), ma.id)
+            rc_notifier.notify("rcreager@nrao.edu", "new", ma.get_start("EST").date(), view_url)
 
             if request.POST['ActionEvent'] =="Submit And Continue":
                 if form.cleaned_data['entity_id']:
@@ -310,7 +321,6 @@ def add_activity(request, period_id = None, year = None,
                 else:
                     redirect_url = '/resourcecal_add_activity/'
 
-
                 return HttpResponseRedirect(redirect_url)
             else:
                 return HttpResponseRedirect('/schedule/')
@@ -319,10 +329,7 @@ def add_activity(request, period_id = None, year = None,
             .filter(rc_code = 'N')[0]
         default_software  = Maintenance_Software_Resources.objects \
             .filter(rc_code = 'N')[0]
-        u = get_requestor(request)
-        user = get_user_name(u)
-        supervisor_mode = True if (u and u.username() in supervisors) else False
-        
+
         if period_id:
             p = Period.objects.filter(id = int(period_id))[0]
             start = TimeAgent.utc2est(p.start)
@@ -385,7 +392,7 @@ def _modify_activity_form(ma):
                     'recurrency_interval' : ma.repeat_interval,
                     'recurrency_until'    : ma.repeat_end,
                    }
-        
+
     form = RCAddActivityForm(initial = initial_data)
     return form
 
@@ -408,12 +415,23 @@ def edit_activity(request, activity_id = None):
             # process the returned stuff here...
             ma = Maintenance_Activity.objects \
                 .filter(id = form.cleaned_data["entity_id"])[0]
-            process_activity(request, ma, form)
+            approved = ma.approved  # save approval status; process_activity will clear this.
+            diffs = process_activity(request, ma, form)
+            print diffs
+
+            if approved: # Notify supervisor if approved activity is modified
+                view_url = "http://%s/resourcecal_display_activity/%s/" % (request.get_host(), ma.id)
+                rc_notifier.notify("rcreager@nrao.edu",
+                                   "modified",
+                                   ma.get_start("EST").date(),
+                                   view_url,
+                                   changes = diffs)
+
             return HttpResponseRedirect('/schedule/')
     else:
         u = get_requestor(request)
         supervisor_mode = True if (u and u.username() in supervisors) else False
-        
+
         if request.GET['ActionEvent'] == 'Modify':
             ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
             form = _modify_activity_form(ma)
@@ -439,6 +457,12 @@ def edit_activity(request, activity_id = None):
             ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
             ma.deleted = True
             ma.save()
+            view_url = "http://%s/resourcecal_display_activity/%s/" % (request.get_host(), ma.id)
+            rc_notifier.notify("rcreager@nrao.edu",
+                               "deleted",
+                               ma.get_start("EST").date(),
+                               view_url)
+
             return HttpResponseRedirect('/schedule/')
 
         elif request.GET['ActionEvent'] == 'DeleteFuture':
@@ -516,11 +540,14 @@ def process_activity(request, ma, form):
     # must be converted to UTC.  The end-time need not be
     # converted since a duration is computed and stored in the
     # database instead of the end time.
+    diffs = {}
     date = form.cleaned_data['date']
     start = datetime(date.year, date.month, date.day,
                      hour = int(form.cleaned_data['time_hr']),
                      minute = int(form.cleaned_data['time_min']))
+    diffs = record_diffs('start', ma.get_start('EST'), start, diffs)
     ma.set_start(start, 'EST')
+    oldval = ma.duration
 
     if form.cleaned_data["end_choice"] == "end_time":
         end_date = form.cleaned_data['date']
@@ -534,26 +561,43 @@ def process_activity(request, ma, form):
         ma.duration = float(form.cleaned_data['end_time_hr']) \
             + float(form.cleaned_data["end_time_min"]) / 60.0
 
+    diffs = record_diffs('duration', oldval, ma.duration, diffs)
+    oldval = ma.contacts
     ma.contacts = form.cleaned_data["responsible"]
+    diffs = record_diffs('contacts', oldval, ma.contacts, diffs)
+    oldval = ma.location
     ma.location = form.cleaned_data["location"]
+    diffs = record_diffs('location', oldval, ma.location, diffs)
+
+    oldval = ma.telescope_resource
     trid = form.cleaned_data["telescope"]
     ma.telescope_resource = Maintenance_Telescope_Resources.objects \
         .filter(id = trid)[0]
+    diffs = record_diffs('telescope', oldval, ma.telescope_resource, diffs)
+
+    oldval = ma.software_resource
     srid = form.cleaned_data["software"]
     ma.software_resource = Maintenance_Software_Resources.objects \
         .filter(id = srid)[0]
+    diffs = record_diffs('software', oldval, ma.software_resource, diffs)
 
+    oldval = [p for p in ma.other_resources.all()]
     ma.other_resources.clear()
 
     for orid in form.cleaned_data["other_resources"]:
         other_r = Maintenance_Other_Resources.objects.filter(id = orid)[0]
         ma.other_resources.add(other_r)
 
+    diffs = record_m2m_diffs('other', oldval, ma.other_resources.all(), diffs)
+
+    oldval = [p for p in ma.receivers.all()]
     ma.receivers.clear()
 
     for rid in form.cleaned_data["receivers"]:
         rcvr = Receiver.objects.filter(id = rid)[0]
         ma.receivers.add(rcvr)
+
+    diffs = record_m2m_diffs('receivers', oldval, ma.receivers.all(), diffs)
 
     if form.cleaned_data["change_receiver"] == True:
         down_rcvr_id = form.cleaned_data["old_receiver"]
@@ -583,18 +627,22 @@ def process_activity(request, ma, form):
     else:
         ma.receiver_changes.clear()
 
+    oldval = [p for p in ma.backends.all()]
     ma.backends.clear()
 
     for bid in form.cleaned_data["backends"]:
         be = Backend.objects.filter(id = bid)[0]
         ma.backends.add(be)
 
+    diffs = record_m2m_diffs('backends', oldval, ma.backends.all(), diffs)
+    oldval = ma.description
     ma.description = form.cleaned_data["description"]
+    diffs = record_diffs('description', oldval, ma.description, diffs)
     ma.repeat_interval = int(form.cleaned_data["recurrency_interval"])
 
     if ma.repeat_interval > 0:
         ma.repeat_end = form.cleaned_data["recurrency_until"]
-    
+
     # assign right period for maintenance activity.  If no
     # periods, this will remain 'None'
     start = TimeAgent.truncateDt(ma._start)
@@ -640,6 +688,8 @@ def process_activity(request, ma, form):
             i.set_start(start, 'EST')
             i.save()
 
+    return diffs
+
 def get_user_name(u):
     if u:
         if u.first_name and u.last_name:
@@ -650,3 +700,25 @@ def get_user_name(u):
         user = "anonymous"
 
     return user
+
+def record_diffs(key, old, new, diffs):
+    if old != new:
+        diffs[key] = "\t'%s' to '%s'" % (old, new)
+
+    return diffs
+
+def record_m2m_diffs(key, old, new, diffs):
+    old_s = set(old)
+    new_s = set(new)
+    ds = old_s.symmetric_difference(new_s)
+    s = ""
+
+    for i in ds:
+        if i in new_s:
+            s += "\tadded '%s'" % (i)
+        else:
+            s += "\tremoved '%s'" % (i)
+
+    if len(ds):
+        diffs[key] = s
+    return diffs
