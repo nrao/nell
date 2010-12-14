@@ -308,7 +308,9 @@ class Window(models.Model):
         Non-gauranteed can do without a default period, because if
         a window doesn't get scheduled, oh well, it wasn't gauranteed.
         """
-        return self.session.gaurenteed() and self.default_period is None 
+        #TBF: once we can release non-gauaranteed windows, we need to toggle this
+        #return self.session.gaurenteed() and self.default_period is None 
+        return self.default_period is None 
         
     def errors(self):
         """
@@ -328,10 +330,11 @@ class Window(models.Model):
         if self.hasOverlappingRanges():
             err.append("Overlapping Window Ranges.")
         if self.lacksMandatoryDefaultPeriod():
-            err.append("Default Period mandatory for non-guaranteed Sessions.")
+            #TBF: toggle this when releasing non-gauranteed windows
+            #err.append("Default Period mandatory for non-guaranteed Sessions.")
+            err.append("Default Period mandatory for Windowed Sessions.")
         if len(self.ranges()) == 0:
             err.append("Window must have at least one Window Range.")
-        print "errors : ", err
         return err    
 
     class Meta:

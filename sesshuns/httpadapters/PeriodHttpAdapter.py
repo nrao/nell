@@ -57,7 +57,6 @@ class PeriodHttpAdapter (object):
             self.period.accounting.update_from_post(fdata)
 
     def from_post(self, fdata, tz):
-        print "from_post: ", fdata
 
         # only update the score if something in the period has changed
         update_score = False
@@ -107,7 +106,6 @@ class PeriodHttpAdapter (object):
         stateAbbr = fdata.get("state", "P")
         self.period.state = first(Period_State.objects.filter(abbreviation=stateAbbr))
         self.period.moc_ack = fdata.get("moc_ack", self.period.moc_ack)
-        print "c"
 
         # elective? 
         eId = fdata.get("elective_id", None)
