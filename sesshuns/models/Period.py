@@ -317,4 +317,19 @@ class Period(models.Model):
             p.publish()
             p.save()
 
+    @staticmethod
+    def delete_pending(start, duration):
+        """
+        Removes any periods falling in the given time range that are:
+           * from open sessions
+           * from windowed sessions, but are not the default period
+        """
+
+        for p in Period.get_periods(start, duration):
+            if p.isPending() and \
+                (p.session.isOpen() or \
+                    (p.session.isWindowed() and \
+                        not p.is_windowed_default())):
+                p.delete()            
+      
 
