@@ -39,6 +39,7 @@ from System                          import System
 from TimeZone                        import TimeZone
 from User                            import User
 from Window                          import Window
+from WindowRange                     import WindowRange
 from Maintenance_Activity            import Maintenance_Activity
 from Maintenance_Telescope_Resources import Maintenance_Telescope_Resources
 from Maintenance_Software_Resources  import Maintenance_Software_Resources

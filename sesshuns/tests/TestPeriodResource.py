@@ -95,13 +95,19 @@ class TestPeriodResource(NellTestCase):
     def test_windowed_period(self):
         
         # create a window
-        w = Window(start_date = self.p.start - timedelta(days = 10)
-                 , duration = 15
-                 , total_time = self.p.duration
+        #w = Window(start_date = self.p.start - timedelta(days = 10)
+        #         , duration = 15
+        w = Window(total_time = self.p.duration
                  , complete = True
                  , session = self.p.session
                   )
         w.save()
+        wr = WindowRange(window = w
+                       , start_date = self.p.start - timedelta(days = 10)
+                       , duration = 15
+                         )
+        wr.save()
+
         self.p.window = w
         self.p.save()
 

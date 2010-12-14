@@ -95,7 +95,7 @@ Regards,
 The GBT scheduling team 
         """ % ("%" # TBF WTF OMG!!!
              , window.session.project.pcode
-             , window.start_date
+             , window.start_date()
              , window.last_date())
         self.SetBody(body)
 
@@ -130,7 +130,7 @@ Regards,
 The GBT scheduling team 
         """ % ("%" # TBF WTF OMG !!!
              , window.session.project.pcode
-             , window.start_date
+             , window.start_date()
              , window.last_date())
         self.SetBody(body)
 

@@ -47,11 +47,16 @@ class TestSchedulingNotifier(PeriodsTestCase):
                   )
         p.save()
         w1 = Window( session = s
-                   , start_date = p.start.date() - timedelta(days = 7)
-                   , duration = 10 # days
+                   #, start_date = p.start.date() - timedelta(days = 7)
+                   #, duration = 10 # days
                    , default_period = p
                    )
         w1.save()
+        wr = WindowRange(window = w1
+                   , start_date = p.start.date() - timedelta(days = 7)
+                   , duration = 10 # days
+                         )
+        wr.save()                 
 
         ps = [self.ps[0]
             , self.ps[1]

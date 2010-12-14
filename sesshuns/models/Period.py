@@ -237,6 +237,23 @@ class Period(models.Model):
         else:
             return False
 
+    def assign_a_window(self):
+        """
+        For assigning a period belonging to a windowed session a window.
+        Currently this could happen if a period for a win. sess. is 
+        created in the Period Explorer (even via Nominees) in the UI.
+        This is harmless if a window cant' be assigned.
+        """
+        if not self.session.isWindowed() or len(self.session.window_set.all()) == 0:
+            return
+        
+        # look for a window (any) that this period at least starts in 
+        for win in self.session.window_set.all():
+            if self.start >= win.start_datetime() and self.start <= win.end_datetime():
+                self.window = win
+                self.save()
+                return # take the first one you find!
+
     @staticmethod
     def get_periods(start, duration, ignore_deleted = True):
         "Returns all periods that overlap given time interval (start, minutes)"
@@ -300,4 +317,19 @@ class Period(models.Model):
             p.publish()
             p.save()
 
+    @staticmethod
+    def delete_pending(start, duration):
+        """
+        Removes any periods falling in the given time range that are:
+           * from open sessions
+           * from windowed sessions, but are not the default period
+        """
+
+        for p in Period.get_periods(start, duration):
+            if p.isPending() and \
+                (p.session.isOpen() or \
+                    (p.session.isWindowed() and \
+                        not p.is_windowed_default())):
+                p.delete()            
+      
 

@@ -406,9 +406,7 @@ def delete_pending(request, *args, **kwds):
                         , request.POST.get("tz", "UTC")
                         , int(request.POST.get("duration", "1")) - 1)
 
-    for p in Period.get_periods(start, duration):
-        if p.isPending() and p.session.session_type.type == 'open':
-            p.delete()
+    Period.delete_pending(start, duration)
 
     revision.comment = get_rev_comment(request, None, "delete_pending")
 

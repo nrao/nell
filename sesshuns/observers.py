@@ -202,11 +202,16 @@ def project(request, *args, **kws):
               , 'accounting' : p.accounting
                } for p in project.get_observed_periods()]
     windows = [{'session'   : w.session
-              , 'start_date' : w.start_date
-              , 'duration'   : w.duration
+              , 'start_date' : w.start_date()
+              , 'duration'   : w.duration()
               , 'total_time'  : w.total_time
               , 'time_billed' : w.timeBilled()
               , 'complete'    : w.complete
+              , 'contigious'  : w.isContigious()
+              , 'ranges'      : [{'start' : wr.start_date
+                                , 'duration' : wr.duration
+                                , 'end' : wr.end()} \
+                                for wr in w.ranges()]
               , 'periods'     : [{'start' : adjustDateTimeTz(tz, p.start)
                                 , 'duration' : p.duration
                                 , 'time_billed' : p.accounting.time_billed()} \
@@ -565,10 +570,10 @@ def events(request, *args, **kws):
         id = id + 1
 
     # Scheduled telescope windows
-    # TBF trial run, may make calendar too busy
     for w in project.get_windows():
-        jsonobjlist.append(w.eventjson(id))
-        id = id + 1
+        for wr in w.windowrange_set.all():
+            jsonobjlist.append(wr.eventjson(id))
+            id = id + 1
 
     return HttpResponse(json.dumps(jsonobjlist))
 

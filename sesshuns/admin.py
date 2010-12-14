@@ -190,11 +190,8 @@ class WindowAdmin(admin.ModelAdmin):
         return self.inWindow(datetime.utcnow().date())
     get_inWindow.short_description = 'In Window?'
 
-    date_hierarchy = 'start_date'
-    list_display = [get_project_name, get_session_name, 'default_period', get_period_state, 'start_date', 'duration', get_inWindow]
-    list_filter = ['start_date', 'duration']
+    list_display = [get_project_name, get_session_name, 'default_period', get_period_state, get_inWindow]
     search_fields = ['session__name', 'session__project__pcode']
-    #inlines = [OpportunityInline]
 
 class UserAdmin(admin.ModelAdmin):
     list_display = ['last_name', 'first_name', 'sanctioned', 'pst_id', 'original_id']

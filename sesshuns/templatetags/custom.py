@@ -13,6 +13,10 @@ from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printExcepti
 register = template.Library()
 
 @register.filter
+def multipleRowWindow(window):
+    return not window["contigious"] or len(window["periods"]) > 0
+
+@register.filter
 def hrs2sex(value):
     if isinstance(value, str):
         return value
