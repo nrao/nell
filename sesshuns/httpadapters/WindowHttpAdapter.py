@@ -1,5 +1,6 @@
 from datetime               import datetime
 from PeriodHttpAdapter      import PeriodHttpAdapter
+from WindowRangeHttpAdapter import WindowRangeHttpAdapter
 from SessionHttpAdapter     import SessionHttpAdapter
 from sesshuns.models        import Period, Sesshun, Period_State
 from sesshuns.models.common import *
@@ -13,19 +14,29 @@ class WindowHttpAdapter (object):
         self.window = window
 
     def jsondict(self):
+        if len(self.window.ranges()) == 0:
+            start = end = duration = None
+        else:    
+            start = self.window.start_date().strftime("%Y-%m-%d")
+            end = self.window.end().strftime("%Y-%m-%d")
+            duration = self.window.duration()
+            
         js = {  "id"             : self.window.id
               , "handle"         : self.window.toHandle()
               # TBF: this really blots it, do we need the whole thing?
               #, "session"        : SessionHttpAdapter(self.window.session).jsondict()
-              , "start"          : self.window.start_date.strftime("%Y-%m-%d")
-              , "end"            : self.window.end().strftime("%Y-%m-%d")
-              , "duration"       : self.window.duration
+              , "start"          : start
+              , "end"            : end
+              , "duration"       : duration
               , "total_time"     : self.window.total_time
               , "time_billed"    : self.window.timeBilled()
               , "time_remaining" : self.window.timeRemaining()
               , "complete"       : self.window.complete
+              , "contigious"     : self.window.isContigious()
               , "num_periods"    : len(self.window.periods.all())
               , "periods"        : [PeriodHttpAdapter(p).jsondict('UTC', 0.0) for p in self.window.periods.all()]
+              , "ranges"         : [WindowRangeHttpAdapter(wr).jsondict() for wr in self.window.ranges()]
+              , "errors"         : self.window.errors()
               }
         return js    
 
@@ -48,13 +59,6 @@ class WindowHttpAdapter (object):
                 self.window.session = first(Sesshun.objects.filter(project=maintenance))
             except:
                 self.window.session  = Sesshun.objects.get(id=fdata.get("session", 1))
-
-         # get the date
-        date = fdata.get("start", datetime.utcnow().strftime("%Y-%m-%d"))
-        self.window.start_date = datetime.strptime(date, "%Y-%m-%d").date()
-
-        # TBF: why is this going back and forth as a float?
-        self.window.duration = int(float(fdata.get("duration", "1.0")))
 
         self.window.total_time = float(fdata.get("total_time", "0.0"))
         self.window.setComplete(fdata.get("complete", "false") == "true")

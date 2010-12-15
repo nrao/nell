@@ -2,6 +2,7 @@ from django.test.client  import Client
 
 from sesshuns.models  import *
 from PeriodsTestCase   import PeriodsTestCase
+from utils                   import create_sesshun
 
 class TestViewsPTC(PeriodsTestCase):
 
@@ -52,6 +53,76 @@ class TestViewsPTC(PeriodsTestCase):
         exp = [5.0, 4.0]
         self.assertEquals(exp, [p.accounting.scheduled for p in ps])
 
+    def test_delete_pending_2(self):
+        "Similar to previous test, but with a windowed session"
+
+        # windowed session
+        s = create_sesshun()
+        s.name = "win"
+        s.session_type = Session_Type.objects.get(type = "windowed")
+        s.save()
+
+        # a window that covers test scheduling range
+        w = Window(session = s, total_time = 1.0)
+        w.save()
+        wstart = self.ps[0].start - timedelta(days = 3)
+        wr = WindowRange(window = w
+                       , start_date = wstart
+                       , duration = 10 # days)
+                         )
+        wr.save()
+
+        # a non-default period
+        pending = Period_State.get_state("P")
+        pa = Period_Accounting(scheduled = 0)
+        pa.save()
+        p1 = Period(session = s
+                  , window = w
+                  , start = datetime(2000, 1, 1, 12)
+                  , duration = 1.0 # hr
+                  , state = pending
+                  , accounting = pa
+                   )
+        p1.save()
+
+        # a default period
+        pa = Period_Accounting(scheduled = 0)
+        pa.save()
+        p2 = Period(session = s
+                  , window = w
+                  , start = datetime(2000, 1, 1, 13)
+                  , duration = 1.0 # hr
+                  , state = pending
+                  , accounting = pa
+                   )
+        p2.save()
+        w.default_period = p2
+        w.save()
+
+
+        # have to use the scheduling range
+        dt = self.ps[0].start - timedelta(days = 1)
+        time = dt.strftime("%Y-%m-%d %H:%M:%S")
+        tz = "ET"
+        duration = 2 #12
+        url = "/periods/delete_pending"
+
+        response = Client().post(url, dict(start    = time
+                                         , tz       = tz
+                                         , duration = duration
+                                         ))
+        self.failUnless("ok" in response.content)
+
+        # now, p1 should be gone, but p2 is still there
+        ps = Period.objects.order_by("start")
+        exp = ["S", "S", "P"]
+        self.assertEquals(exp, [p.state.abbreviation for p in ps])
+        exp = [5.0, 4.0, 0.0]
+        self.assertEquals(exp, [p.accounting.scheduled for p in ps])
+        self.assertEquals(p2.id, ps[2].id)
+
+
+        
     def test_publish_periods_by_id(self):
         # check current state
         ps = Period.objects.order_by("start")
@@ -114,11 +185,16 @@ class TestViewsPTC(PeriodsTestCase):
         p1.session.save()
 
         w1 = Window( session = p1.session
-                   , start_date = p1.start.date() - timedelta(days = 7)
-                   , duration = 10 # days
+                   #, start_date = p1.start.date() - timedelta(days = 7)
+                   #, duration = 10 # days
                    , default_period = p1
                    )
         w1.save()
+        wr = WindowRange(window = w1
+                       , start_date = p1.start.date() - timedelta(days = 7)
+                       , duration = 10 # days
+                        )
+        wr.save()                
 
         p1.window = w1
         p1.save()
@@ -135,11 +211,16 @@ class TestViewsPTC(PeriodsTestCase):
 
         # NOTE: ovelapping windows for same session - shouldn't matter
         w2 = Window( session = p2.session # NOTE: same session for all 3 periods
-                   , start_date = p1.start.date() - timedelta(days = 7)
-                   , duration = 10 # days
+                   #, start_date = p1.start.date() - timedelta(days = 7)
+                   #, duration = 10 # days
                    , default_period = p2
                    )
         w2.save()
+        wr = WindowRange(window = w2
+                       , start_date = p1.start.date() - timedelta(days = 7)
+                       , duration = 10 # days
+                        )
+        wr.save()                
 
         p3.window = w2
         p3.save()
@@ -149,7 +230,7 @@ class TestViewsPTC(PeriodsTestCase):
         self.assertEquals([pending],   w2.periodStates())
 
         # remeber that we publish using the scheduling range
-        dt = w1.start_date - timedelta(days = 1)
+        dt = w1.start_date() - timedelta(days = 1)
         time = dt.strftime("%Y-%m-%d %H:%M:%S")
         tz = "ET"
         duration = 13 #12
@@ -163,7 +244,9 @@ class TestViewsPTC(PeriodsTestCase):
         self.failUnless("ok" in response.content)
 
         # make sure the states are right now
-        for w in Window.objects.order_by("start_date"):
+        #for w in Window.objects.order_by("start_date"):
+        wins1 = Window.objects.all() # TBF: how to order????
+        for w in wins1:
             self.assertEquals([scheduled], w.periodStates())
 
         # Put things back the way we found them.

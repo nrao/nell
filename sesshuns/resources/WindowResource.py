@@ -56,16 +56,16 @@ class WindowResource(NellResource):
                 days = int(filterDur)
                 days = days if days >= 1 else 1
                 last_day = (start + timedelta(days = days -1))
-                # We really want all the overlapping windows w/ this 
-                # time range, not just the ones that start w/ in it.
-                # So we only do part of the query here, and finish at (2)
-                query_set = query_set.filter(start_date__lte = last_day)
+                # It would be ideal to do the query here, but our query_set
+                # is for Window, but our time info is kept in WindowRange
                 filterByDateRange = True
+
             windows = query_set.order_by(order + sortField)
-            # We can't get overlaps from a pure database query, so 
-            # must finish what we started here (part (2)).
+
+            # if filtering by date range, we have to do this programmatically
             if filterByDateRange:
-                windows = [w for w in windows if w.last_date() >= start]
+                windows = [w for w in windows if w.last_date() >= start \
+                    and w.start() <= last_day]
             total = len(windows)
             offset = int(request.GET.get("offset", 0))
             limit  = int(request.GET.get("limit", -1))

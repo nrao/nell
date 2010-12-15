@@ -13,6 +13,7 @@ admin.autodiscover()
 # Note a blank comment attached to the url denotes local access only
 
 urlpatterns = patterns(''
+   , (r'^calculator/', include('nell.calculator.urls'))
    , url(r'^configurations/explorer/columnConfigs$',                     column_configurations_explorer)
    , url(r'^configurations/explorer/columnConfigs/(\d+)$',               column_configurations_explorer)
    , url(r'^configurations/explorer/filterCombos$',                     filter_combinations_explorer)
@@ -71,6 +72,8 @@ urlpatterns = patterns(''
    , url(r'^periods/(ET)/(\d+)$', PeriodResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^windows$',           WindowResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^windows/(\d+)$',     WindowResource(permitted_methods=('PUT', 'GET', 'POST'))) #
+   , url(r'^windowRanges$',           WindowRangeResource(permitted_methods=('GET', 'PUT', 'POST'))) #
+   , url(r'^windowRanges/(\d+)$',     WindowRangeResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^users$',           UserResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^users/(\d+)$',     UserResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^investigator/([^/]+)/clear_cache$',         clear_user_cache)

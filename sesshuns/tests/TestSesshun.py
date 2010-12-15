@@ -1,14 +1,14 @@
 from test_utils.NellTestCase import NellTestCase
-from utils                   import create_sesshun, fdata
 from sesshuns.models         import *
 from sesshuns.httpadapters   import *
+from utils                   import create_sesshun, fdata
 
 class TestSesshun(NellTestCase):
 
     def setUp(self):
         super(TestSesshun, self).setUp()
         self.sesshun = create_sesshun()
-
+        
     def test_get_ha_limit_blackouts(self):
         # With default target.
         startdate = datetime.utcnow()
@@ -124,3 +124,193 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.status.enabled, True) # "True" -> True
         self.assertEqual(s.original_id, 0) #ldata["orig_ID"]) -- "0.0" -> Int
 
+    def test_get_receiver_blackout_ranges(self):
+        # Schedule = 4/01/2009:   450,   600,  800
+        #            4/06/2009:   600,   800, 1070
+        #            4/11/2009:   800,  1070,  1_2
+        #            4/16/2009:  1070,   1_2,  2_3
+        #            4/21/2009:   1_2,   2_3,  4_6
+        #            4/26/2009:   2_3,   4_6, 8_10
+        #            5/01/2009:   4_6,  8_10, 12_18
+        #            5/06/2009:  8_10, 12_18, 18_26
+        #            5/11/2009: 12_18, 18_26, 26_40
+        start   = datetime(2009, 4, 1, 0)
+        end     = datetime(2009, 6, 1, 0)
+        rcvr_id = 3
+        for i in range(9):
+            start_date = start + timedelta(5*i)
+            for j in range(1, 4):
+                rcvr_id = rcvr_id + 1
+                rs = Receiver_Schedule()
+                rs.start_date = start_date
+                rs.receiver = Receiver.objects.get(id = rcvr_id)
+                rs.save()
+            rcvr_id = rcvr_id - 2
+
+        # no receivers
+        blackouts = self.sesshun.get_receiver_blackout_ranges(start, end)
+        self.assertEquals([], blackouts)
+
+        # Now add some receivers to this session          
+        SessionHttpAdapter(self.sesshun).save_receivers('L | (X & S)')
+        blackouts = self.sesshun.get_receiver_blackout_ranges(start, end)
+        # No available receivers at these times:
+        expected = [(datetime(2009, 4, 1), datetime(2009, 4, 11))
+                  , (datetime(2009, 5, 1), None)]
+        self.assertEquals(expected, blackouts)
+        self.sesshun.receiver_group_set.all().delete()
+
+        # No available receivers at these times:
+        expected = [(datetime(2009, 4, 1), datetime(2009, 4, 26))
+                  , (datetime(2009, 5, 1), datetime(2009, 5, 6))]
+        SessionHttpAdapter(self.sesshun).save_receivers('K | (X & S)')
+
+        blackouts = self.sesshun.get_receiver_blackout_ranges(start, end)
+        self.assertEquals(expected, blackouts)
+        self.sesshun.receiver_group_set.all().delete()
+
+        # No available receivers at these times:
+        expected = [(datetime(2009, 4, 11), None)]
+        SessionHttpAdapter(self.sesshun).save_receivers('600')
+
+        blackouts = self.sesshun.get_receiver_blackout_ranges(start, end)
+        self.assertEquals(expected, blackouts)
+        self.sesshun.receiver_group_set.all().delete()
+
+        # Always an available receiver.
+        SessionHttpAdapter(self.sesshun).save_receivers('(800 | S) | Ku')
+
+        blackouts = self.sesshun.get_receiver_blackout_ranges(start, end)
+        self.assertEquals([], blackouts)
+        self.sesshun.receiver_group_set.all().delete()
+
+        # Clean up.
+        Receiver_Schedule.objects.all().delete()
+
+    def test_get_time_not_schedulable(self):
+        "Test a number of overlapping bad things"
+
+        # First bad thing: a receiver schedule that leaves out our rx
+        # Schedule = 4/01/2009:   450,   600,  800
+        #            4/06/2009:   600,   800, 1070
+        #            4/11/2009:   800,  1070,  1_2
+        #            4/16/2009:  1070,   1_2,  2_3
+        #            4/21/2009:   1_2,   2_3,  4_6
+        #            4/26/2009:   2_3,   4_6, 8_10
+        #            5/01/2009:   4_6,  8_10, 12_18
+        #            5/06/2009:  8_10, 12_18, 18_26
+        #            5/11/2009: 12_18, 18_26, 26_40
+        start   = datetime(2009, 4, 1, 0) # April 1
+        end     = datetime(2009, 6, 1, 0) # June  1
+        rcvr_id = 3
+        for i in range(9):
+            start_date = start + timedelta(5*i)
+            for j in range(1, 4):
+                rcvr_id = rcvr_id + 1
+                rs = Receiver_Schedule()
+                rs.start_date = start_date
+                rs.receiver = Receiver.objects.get(id = rcvr_id)
+                rs.save()
+            rcvr_id = rcvr_id - 2
+
+        # Now add some receivers to this session          
+        SessionHttpAdapter(self.sesshun).save_receivers('L | (X & S)')
+        blackouts = self.sesshun.get_time_not_schedulable(start, end)
+
+        # No available receivers at these times:
+        exp = [(datetime(2009, 4, 1), datetime(2009, 4, 11))
+             , (datetime(2009, 5, 1), end)
+              ]
+        expected = Set(exp)
+        self.assertEquals(exp, blackouts)
+
+        # Now add a project w/ prescheduled times.
+        otherproject = Project()
+        pdata = {"semester"   : "09A"
+               , "type"       : "science"
+               , "total_time" : "10.0"
+               , "PSC_time"   : "10.0"
+               , "sem_time"   : "10.0"
+               , "grade"      : "4.0"
+               , "notes"      : "notes"
+               , "schd_notes" : "scheduler's notes"
+        }
+        adapter = ProjectHttpAdapter(otherproject)
+        adapter.update_from_post(pdata)
+
+        othersesshun = create_sesshun()
+        othersesshun.project = otherproject
+        othersesshun.save()
+
+        fdata = {'session'  : othersesshun.id
+               , 'date'     : '2009-04-20'
+               , 'time'     : '13:00'
+               , 'duration' : 1.0
+               , 'backup'   : False}
+        otherperiod = Period()
+        adapter = PeriodHttpAdapter(otherperiod)
+        adapter.init_from_post(fdata, 'UTC')
+        otherperiod.state = Period_State.objects.filter(abbreviation = 'S')[0]
+        otherperiod.save()
+
+        #exp.append((datetime(2009, 4, 20, 13, 0), datetime(2009, 4, 20, 14, 0)))
+        exp = [(datetime(2009, 4, 1), datetime(2009, 4, 11))
+             , (datetime(2009, 4, 20, 13), datetime(2009, 4, 20, 14))
+             , (datetime(2009, 5, 1), end)
+              ]
+
+        blackouts = self.sesshun.get_time_not_schedulable(start, end)
+        self.assertEquals(exp, blackouts)
+
+        # how much time is that?
+        hrsNotSchedulable = sum([TimeAgent.timedelta2minutes(b[1] - b[0])/60.0\
+            for b in blackouts])
+        self.assertEquals(985.0, hrsNotSchedulable)
+
+        # how does this work when limiting the range?
+        newEnd = datetime(2009, 4, 3)
+        blackouts = self.sesshun.get_time_not_schedulable(start, newEnd)
+        self.assertEquals([(start, newEnd)], blackouts)
+
+        # extend this with a Project Blackout
+        blackout = Blackout(project    = self.sesshun.project
+                          , start_date = datetime(2009, 4, 18, 12)
+                          , end_date   = datetime(2009, 4, 23, 12)
+                          , repeat     = first(Repeat.objects.all())
+                            )
+        blackout.save()
+
+        exp = [(datetime(2009, 4, 1), datetime(2009, 4, 11))
+             , (datetime(2009, 4, 18, 12), datetime(2009, 4, 23, 12))
+             , (datetime(2009, 5, 1), end)
+              ]
+        blackouts = self.sesshun.get_time_not_schedulable(start, end)
+        self.assertEquals(exp, blackouts)
+
+
+        # test the time available blacked out calculations
+        # Calculate the expected result:
+        # it turns out that the project blackout overlaps with all 
+        # schedulable time, except for one hour on 4/20
+        hrsBlackedOut = (TimeAgent.timedelta2minutes(blackout.end_date - blackout.start_date)/60.0) - 1.0
+        totalTime = TimeAgent.timedelta2minutes(end - start) / 60.0
+        hrsSchedulable = totalTime - hrsNotSchedulable
+
+        s, b, ss, bb = self.sesshun.getBlackedOutSchedulableTime(start, end)
+        self.assertEquals(hrsSchedulable, s) 
+        self.assertEquals(hrsBlackedOut, b) 
+
+        # test it some more, but in different ranges
+        start = datetime(2009, 5, 1)
+        s, b, ss, bb = self.sesshun.getBlackedOutSchedulableTime(start, end)
+        self.assertEquals(0.0, b)
+
+        start = datetime(2009, 4, 22)
+        end   = datetime(2009, 4, 26)
+        totalTime = TimeAgent.timedelta2minutes(end - start) / 60.0
+        s, b, ss, bb = self.sesshun.getBlackedOutSchedulableTime(start, end)
+        self.assertEquals(totalTime, s)
+        self.assertEquals(36.0, b)
+
+        # cleanup
+        self.sesshun.receiver_group_set.all().delete()    

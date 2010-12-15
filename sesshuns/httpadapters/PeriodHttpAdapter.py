@@ -34,7 +34,7 @@ class PeriodHttpAdapter (object):
               , "windowed"     : True if w is not None else False
               , "wdefault"     : self.period.is_windowed_default() \
                                      if w is not None else None
-              , "wstart"       : d2str(w.start_date) if w is not None else None
+              , "wstart"       : d2str(w.start_date()) if w is not None else None
               , "wend"         : d2str(w.last_date()) if w is not None else None
               , "receivers"    : self.period.get_rcvrs_json()
                 }
@@ -116,15 +116,25 @@ class PeriodHttpAdapter (object):
         wId = fdata.get("window_id", None)
         if wId is not None:
             self.period.window_id = wId
+        elif self.period.session.isWindowed() and self.period.window_id is None:
+            # just because the window id wasn't specified doesn't mean
+            # we don't want to assign this a window:
+            # for instance, if this period was created outside of the 
+            # Windowed Period Explorer, we'll have to assign a window
+            self.period.assign_a_window()
 
         # is this period a default period for a window?
         default = fdata.get("wdefault", None)
-        if default is not None and default == "true" \
-            and self.period.window is not None:
-            self.period.window.default_period = self.period
-            self.period.window.save()
+        if default is not None: #
+            if default == "true" and self.period.window is not None:
+                # assign this period as a default
+                self.period.window.default_period = self.period
+                self.period.window.save()
+            elif default == "false" and self.period.window is not None:
+                # unassign this period as a default
+                self.period.window.default_period = None
+                self.period.window.save()
             
-
         # how to initialize scheduled time? when they get published!
         # so, only create an accounting object if it needs it.
         if self.period.accounting is None:

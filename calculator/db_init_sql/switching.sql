@@ -1,0 +1,19 @@
+
+INSERT INTO "switching" VALUES(1,'NA');
+INSERT INTO "switching" VALUES(2,'BSW');
+INSERT INTO "switching" VALUES(3,'BSW-PS');
+INSERT INTO "switching" VALUES(4,'BSW-NOD');
+INSERT INTO "switching" VALUES(5,'BSW-SRN');
+INSERT INTO "switching" VALUES(6,'TP');
+INSERT INTO "switching" VALUES(7,'TP-PS');
+INSERT INTO "switching" VALUES(8,'TP-NOD');
+INSERT INTO "switching" VALUES(9,'TP-SRN');
+INSERT INTO "switching" VALUES(10,'IFSW');
+INSERT INTO "switching" VALUES(11,'IFSW-PS');
+INSERT INTO "switching" VALUES(12,'IFSW-NOD');
+INSERT INTO "switching" VALUES(13,'IFSW-SRN');
+INSERT INTO "switching" VALUES(14,'OFSW');
+INSERT INTO "switching" VALUES(15,'OFSW-PS');
+INSERT INTO "switching" VALUES(16,'OFSW-NOD');
+INSERT INTO "switching" VALUES(17,'OFSW-SRN');
+

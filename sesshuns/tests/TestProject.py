@@ -99,6 +99,14 @@ class TestProject(NellTestCase):
                             , end_date   = datetime(2009, 1, 4, 13))
         blackout22.save()
 
+
+        # stay out of the blackouts range
+        expected = []
+        today = datetime(2008, 1, 1)
+        later = today + timedelta(days = 30)
+        r = self.project.get_blackout_times(today, later)
+        self.assertEquals(expected, r)
+
         # Now we can finally do our test.
         expected = [
             (datetime(2009, 1, 1, 11), datetime(2009, 1, 4, 13))
@@ -150,6 +158,13 @@ class TestProject(NellTestCase):
         ]
 
         r = self.project.get_blackout_times(today, later)
+        self.assertEquals(expected, r)
+
+        # Q: what is the behavior when blackouts straddle range?
+        # A: returned blackouts are NOT truncated
+        newLater = datetime(2009, 1, 4, 12)
+        r = self.project.get_blackout_times(today, newLater)
+        expected = [(datetime(2009, 1, 1, 11), datetime(2009, 1, 5))]
         self.assertEquals(expected, r)
 
         # Clean up
@@ -476,6 +491,39 @@ class TestProject(NellTestCase):
         othersesshun.delete()
         otherproject.delete()
 
+    def test_get_active_windows(self):
+
+        s = first(self.project.sesshun_set.all())
+        s.session_type = Session_Type.objects.get(type = "windowed")
+        s.save()
+
+        w = Window(session = s
+                 , total_time = 4.0)
+        w.save()
+        wr1 = WindowRange(start_date = datetime(2006, 10, 1)
+                        , duration = 7
+                        , window = w)
+        wr1.save()                        
+        wr2 = WindowRange(start_date = datetime(2006, 10, 10)
+                        , duration = 20
+                        , window = w)
+        wr2.save()                        
+
+
+        ws = self.project.get_windows()
+        self.assertEquals(1, len(ws))
+
+        # windows aren't over yet
+        now = datetime(2006, 9, 1)
+        ws = self.project.get_active_windows(now = now)
+        self.assertEquals(1, len(ws))
+        self.assertEquals(w, ws[0])
+
+        # windows are over
+        now = datetime(2006, 12, 1)
+        ws = self.project.get_active_windows(now = now)
+        self.assertEquals(0, len(ws))
+                        
     def test_init_from_post(self):
         p1 = Project()
         p2 = Project()

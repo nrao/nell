@@ -134,6 +134,8 @@ class TestBlackout(NellTestCase):
         gdts = self.blackout3.generateDates(calstart, calend)
         self.assertEquals(dts, gdts)
 
+        # TBF: test filter outside of blackouts????
+
     def test_projectBlackout(self):
         "Repeat some of the other tests, but for project blackouts"
 

@@ -249,16 +249,31 @@
                 <th title="How long the Period lasts, in hours.">Period Duration</th> -->
               </tr>
                 {% for window in windows %}
-                
                   <tr>
                     <td>{{window.session.name}}</td>
-                    <td>{{window.start_date}}</td>
-                    <td>{{window.start_date|end_date:window.duration}}</td>
+                    <!-- don't print these dates if we'll print the others -->
+                    {% if window.contigious %}
+                      <td>{{window.start_date}}</td>
+                      <td>{{window.start_date|end_date:window.duration}}</td>
+                    {% else %}
+                      <td></td>
+                      <td></td>
+                    {% endif %}
                     <td>{{window.total_time}}</td>
                     <td>{{window.time_billed}}</td>
                     <td>{% if window.complete %}Yes{% endif %}</td> 
                     
                  </tr> 
+                    <!-- if it uses more then one range, we need to print them -->
+                    {% if not window.contigious %}
+                    {% for wr in window.ranges %}
+                    <tr>
+                      <td></td>
+                      <td>{{wr.start}}</td>
+                      <td>{{wr.end}}</td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
                     {% if window.periods %}
                     <tr>
                       <th></th>
@@ -277,6 +292,12 @@
                       <td>{{p.time_billed|hrs2sex}}</td>
                     </tr>
                     {% endfor %}
+                    <!-- if we used more then one row, use a separator -->
+                    {% if window|multipleRowWindow %}
+                    <tr height = "1px">
+                      <td colspan = 6 style="border-top:solid 1px #000"></td>
+                    </tr>
+                    {% endif %}
                 {% endfor %}
             </table>
         {% endif %}

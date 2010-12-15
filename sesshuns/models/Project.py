@@ -271,6 +271,7 @@ class Project(models.Model):
         Returns a list of tuples describing the time ranges
         where the project is 'blacked out' by user blackouts in UTC.
         """
+
         if not self.has_sanctioned_observers():
             return []
 
@@ -306,27 +307,7 @@ class Project(models.Model):
         required = [s.receiver_group_set.all() for s in self.sesshun_set.all()]
         if required == []:
             return [] # No sessions, no problem
-
-        schedule = Receiver_Schedule.extract_schedule(start, (end - start).days)
-
-        if schedule == {}: # No receiver schedule present!
-            return [(start, None)]
-
-        # Go through the schedule and determine blackout ranges.
-        ranges = []
-        for date, receivers in sorted(schedule.items()):
-            receivers = Set(receivers)
-            if not any([all([Set(g.receivers.all()).intersection(receivers) \
-                        for g in set]) for set in required]):
-                # No session has receivers available. Begin drought.
-                if not ranges or ranges[-1][1] is not None:
-                    ranges.append((date, None))
-            else:
-                # A session has receivers available. End drought, if present.
-                if ranges and ranges[-1][1] is None:
-                    start, _ = ranges.pop(-1)
-                    ranges.append((start, date))
-        return ranges
+        return Receiver_Schedule.get_receiver_blackout_ranges(required, start, end)
 
     def get_receiver_blackout_dates(self, start, end):
         # Change date ranges into individual days.
@@ -358,15 +339,14 @@ class Project(models.Model):
         return sorted([w for s in self.sesshun_set.all()
                          for w in s.window_set.all()
                          if s.session_type.type == 'windowed']
-                     , key = lambda x : x.start_date)
+                     , key = lambda x : x.start_date())
 
-    def get_active_windows(self):
+    def get_active_windows(self, now = None):
         "Returns current and future windows."
         wins = self.get_windows()
-        now = datetime.utcnow()
+        now = now if now is not None else datetime.utcnow()
         today = date(now.year, now.month, now.day)
-        return [ w for w in wins
-                 if today < (w.start_date + timedelta(days = w.duration)) ]
+        return [w for w in wins if today < w.end()]
 
     class Meta:
         db_table  = "projects"
