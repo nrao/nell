@@ -217,6 +217,7 @@ def adjustDateTimeTz(tz_pref, dt, to_utc = False):
     fmt = '%Y-%m-%d %H:%M:%S %Z%z'
     tz  = pytz.timezone(tz_pref)
     utc = pytz.utc
+    # TBF note this argument is never used!?
     if to_utc:
         return tz.localize(dt).astimezone(utc)
     else:
