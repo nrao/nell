@@ -141,6 +141,54 @@ class TestDSSPrime2DSS(NellTestCase):
         self.assertEquals(  0, len(t.old_projects))
         self.assertEquals(121, len(t.new_sessions))
         self.assertEquals(  0, len(t.old_sessions))
-        self.assertEquals(len(new_users), len(t.new_users))
-        self.assertEquals(len(old_users), len(t.old_users))
+        # the enhanement of DSSPrime2DSS.find_user causes this diff
+        self.assertEquals(len(new_users), len(t.new_users) + 1)
+        self.assertEquals(len(old_users), len(t.old_users) - 1)
 
+    def test_find_user(self):
+
+        self.assert_DB_empty()
+
+        # populate into an empty DB: not much of a test, really!
+        t = DSSPrime2DSS(database = 'dss_prime_unit_tests_2')
+        t.quiet = True
+
+        row = (None, 'Paul', 'Marganian', '123', 'pmargani@nrao.edu,paghots@hotmail.com')
+        u = t.find_user(row)
+        self.assertEquals(None, u)
+
+        # now create the user
+        me = User(first_name = 'Paul'
+                , last_name  = 'Marganian'
+                , original_id = 123
+                , pst_id      = 821
+                , role        = first(Role.objects.filter(role = "Observer"))
+                  )
+        me.save()
+
+        u = t.find_user(row)
+        self.assertEquals(me, u)
+        
+        # now make it hard to find
+        me.original_id = 666
+        me.save()
+
+        u = t.find_user(row)
+        self.assertEquals(me, u)
+
+        # now harder
+        me.first_name = 'Pablo'
+        me.save()
+      
+        u = t.find_user(row)
+        self.assertEquals(me, u)
+
+        # no match! first name & email dont match
+        me.pst_id = 822
+        me.save()
+
+        u = t.find_user(row)
+        self.assertEquals(None, u)
+   
+        # cleanup
+        me.delete()

@@ -42,6 +42,8 @@ class DSSPrime2DSS(object):
         self.new_users = []
         self.old_users = []
 
+        self.user_matches = []
+
         self.quiet = False
 
     def __del__(self):
@@ -549,17 +551,86 @@ class DSSPrime2DSS(object):
         for row in self.cursor.fetchall():
             _   = self.create_user(row)
 
-    def create_user(self, row):
+    def find_user(self, row):
+        """
+        Given a row of user info (first, last name, original id, emails),
+        can we find this user in the production DB?
+        First try to match the original id, then use the rest of the
+        info.
+        NOTE: originally, we were only using the original id, and were
+        thus creating lots of new entries for users that were already
+        in the system.  The addition of the other checks has greatly
+        reduced this problem, but matching users between DSS and
+        Carls system is still a pain.
+        """
+
+        # parse the user info first
+        # TBF: we must support outrageous accents
+        try:
+            firstName = unicode(row[1])
+        except:
+            #print "exception with name: ", row[1]
+            firstName = "exception"
+
+        try:
+            lastName = unicode(row[2])
+        except:
+            #print "exception with name: ", row[2]
+            lastName = "exception"
+
+        original_id = int(row[3])
+        emails = [e.replace('\xad', '') for e in row[4].split(',')]
 
         # Check to see if the user is already in the system
-        user = first(User.objects.filter(original_id = int(row[3])).all())
+        # Step 1: use the original id
+        user =  first(User.objects.filter(original_id = int(row[3])).all()) 
+        # make sure we at least have the same last name
+        if user is not None and user.last_name == lastName:
+            return user
+
+        # Step 2: still no match? look for users w/ same last name
+        others = User.objects.filter(last_name = lastName)
+        #others = [o for o in othersMaybe if o.id != u.id]
+        if len(others) == 0:
+           # sorry, no candidates found
+           return None
+        # Step 3: for same last name, look for email OR first name match
+        match = False
+        for o in others:
+            info = o.getStaticContactInfo()
+            otherEmails = info['emails']
+            for existingEmail in otherEmails:
+                for e in emails:
+                    if e.strip() == existingEmail.strip():
+                        match = True
+            # check for first name match
+            if o.first_name == firstName:
+                match = True
+            if match:
+                return o
+                        
+        # if we've gotten this far, none of the users that share the 
+        # same last name provide a clear match
+        return None
+
+
+
+    def create_user(self, row):
+
+        
+        # Check to see if the user is already in the system
+        #user = first(User.objects.filter(original_id = int(row[3])).all())
+        user = self.find_user(row)
 
         # Skip to the next user if this one has been found
         if user is not None:
-            row = self.cursor.fetchone()
             # for reporting
+            if (row, user) not in self.user_matches:
+                self.user_matches.append((row, user))    
             if user not in self.old_users and user not in self.new_users:
                 self.old_users.append(user)
+            # skip to the next one    
+            row = self.cursor.fetchone()
             return user
 
         # TBF: we must support outrageous accents
@@ -586,23 +657,9 @@ class DSSPrime2DSS(object):
                , sanctioned  = False
                , first_name  = firstName #row[1]
                , last_name   = lastName #row[2]
-               , pst_id      = pst_id
                , role        = first(Role.objects.filter(role = "Observer"))
                  )
         u.save()
-
-        for e in row[4].split(','):
-            e = e.replace('\xad', '')
-            # Check to see if the email address already exists.
-            email = first(Email.objects.filter(email = e).all())
-
-            # Create a new email record if email not found.
-            if email is None:
-                new_email = Email(user = u, email = e)
-                #print "created email: ", e
-                #print "for user: ", u
-                #x = raw_input("check: ")
-                new_email.save()
 
         # for reporting
         self.new_users.append(u)
@@ -648,6 +705,17 @@ class DSSPrime2DSS(object):
             for s in project.sesshun_set.all():
                 ls += "    %s\n" % s
 
+        ls += "\nMatched User Info: %d\n" % len(self.user_matches)
+        for r, u in self.user_matches:
+            try:
+                ls += "    Row: %s, %s, %s, %s Matched to User: %s, %d, %s\n" % (r[1], r[2], r[3], r[4], u, u.original_id, u.getStaticContactInfo()['emails']) 
+            except:
+                ls += "Exception in reporting\n"
+
+        ls += "\nNew Users Added: %d\n" % len(self.new_users)
+        for new in self.new_users:
+            ls += "    %s\n" % new
+            
         if not self.quiet:
             print ls
 
