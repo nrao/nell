@@ -5,8 +5,6 @@ from sesshuns import models as smodels
 class Calc_Backend(models.Model):
     dss_backend = models.ForeignKey(smodels.Backend, null = True)
     name        = models.CharField(max_length=200)
-    k1          = models.FloatField()
-    k2          = models.FloatField()
 
     def __unicode__(self):
         return self.name
