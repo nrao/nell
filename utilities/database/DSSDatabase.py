@@ -32,8 +32,6 @@ class DSSDatabase(object):
         "Method for creating a new DSS database "
         # transfer the stuff that is trimester independent
         self.dss_prime.transfer()
-        # user the PST query services to fill in all the user info
-        self.get_user_info()
         # transfer the trimester dependent stuff - schedtime table!
         # order here is important because we need the user info
         # to be all there first
@@ -46,44 +44,9 @@ class DSSDatabase(object):
         "Method for appending new trimester data to existing DSS database"
 
         self.dss_prime.transfer_only_new()
-        print "Getting user information.  This may take several minutes..."
-        self.get_user_info()
         print "Transferring fixed periods for trimester %s..." % (trimester)
         self.schedtime.transfer_fixed_periods(trimester)
         self.schedtime.print_report(trimester)
-
-    def get_user_info(self):
-        """
-        Here's all the hoops you have to jump through to get our User table
-        in sync with the PST.
-        """
-
-        # who's missing that really needs to be in here?
-        self.un.createMissingUsers()
-        self.un.setAdminRoles()
-
-        if self.interactive:
-            # first, what's the status?
-            print "First, check DB vs. PST."
-            print "Are these differences in names acceptable?"
-            self.un.confirmUserInfo()
-            x = raw_input("Continue and get missing IDs/usernames? CtrlX if not.")
-        # I'm commenting this out to make sure that we don't blindly run
-        # this code till it's been checked out.  And it needs to be tested
-        # right before it's run because the OpenSky/PST interfaces it relies
-        # on may change w/ out notification (PRM).
-        #self.un.getUserNamesFromProjects('QueryAgent', 'iBlertFoo')
-
-        # TBF: can't do this if the above line isn't being run
-        #self.un.getUserNamesFromIDs()
-
-        if self.interactive:
-            print "Finally, check DB vs. PST one more time: "
-            self.un.confirmUserInfo()
-
-            print "Fix the rest."
-            print ""
-            self.un.findMissingUsers()
 
     def assign_periods_to_windows(self):
         windows = Window.objects.all()
