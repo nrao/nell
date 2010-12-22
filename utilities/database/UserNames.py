@@ -277,36 +277,82 @@ class UserNames(object):
         noUsernames = User.objects.filter(username = None).all()
         print >> self.out, "num w/ no username still : ", len(noUsernames)
 
-    def assignUserNames(self, username, password):
+    def reconcile_redundant_users(self):
+
+        existing = []
+        matches = []
+        noIds = User.objects.filter(pst_id = None).order_by("id")
+        for u in noIds:
+            match = False
+            othersMaybe = User.objects.filter(last_name = u.last_name)
+            others = [o for o in othersMaybe if o.id != u.id]
+            if len(others) > 0:
+                print ""
+                print "existing for : ", u, [e.email for e in u.email_set.all()]
+                existing.append(u)
+            for o in others:
+                print "    ", o, o.pst_id, o.username()
+                # check for email match
+                info = o.getStaticContactInfo()
+                emails = info['emails']
+                match = False
+                for existingEmail in emails:
+                    for e in u.email_set.all():
+                        if e.email.strip() == existingEmail.strip():
+                            match = True
+                            
+                # check for first name match
+                if o.first_name == u.first_name:
+                    match = True
+                if match:
+                    print "Match!!!!: ", emails, [e.email for e in u.email_set.all()]
+                    matches.append((u, o))
+                    
+                    break
+
+        for bad, old in matches:
+            print "deleting: ", bad, bad.id
+            # delete old investigators
+            invs = Investigator.objects.filter(user = bad)
+            for i in invs:
+                print "    Switching Project observer: ", i.project.pcode
+                n =  Investigator(project = i.project
+                                , user    = old
+                                , principal_contact      = i.principal_contact
+                                , principal_investigator = i.principal_investigator
+                                  )            
+                n.save()                              
+                i.delete()
+    
+            # switch old friends
+            ps = Project.objects.filter(friend = bad)
+            for p in ps:
+                print "    Switching Friend on: ", p.pcode
+                p.friend = old
+                p.save()
+            
+            # delete bad user
+            bad.delete()
+
+        print "Of %d users w/ NO pst_id, %d share last name w/ existing user." % (len(noIds), len(existing))        
+        print "%d matches" % len(matches)
+        noPstStill = User.objects.filter(pst_id = None).order_by("id")
+        print "%d remaining users w/ NO pst_id" % len(noPstStill)
+
+    def assignPstIds(self):
         "Where we can, get usernames for those users who don't have 'em"
 
-        useMirror = True
-
-        # We will query PST using last name where we can.
 
         ui = UserInfo()
 
-        if useMirror:
-            # dont use the PST web service, but our local mirror of the DB
-            mirror = PSTMirrorDB()
-        else:    
-            # use service to get all users with this last name
-            #url = 'https://mirror.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
-            url = 'https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
-            #udb = NRAOUserDB.NRAOUserDB( \
-            udb = NRAOUserDB( \
-                url
-              , username
-              , password
-              , opener=urllib2.build_opener())
-    
-            key = 'usersByLastNameLike'
+        mirror = PSTMirrorDB()
+
 
         users = User.objects.all() 
-        # why would we want to limit this to just these names?
+        # TBF: why would we want to limit this to just these names?
         #self.getUsersUniqueByLastName()
 
-        missing = [u for u in users if (u.pst_id is None and u.username is None)] 
+        missing = [u for u in users if u.pst_id is None] 
         print "num missing users: ", len(missing)
 
         self.match = []
@@ -315,39 +361,21 @@ class UserNames(object):
 
         for user in missing:
             print user
+
+            # skip problem users
             if user.last_name in ['Ivanova', 'Jone']:
                 continue
-
             if "'" in user.last_name:
                 print >> self.out, "SKIP: ", user
                 continue             
 
             infos = []
-            if useMirror:
-                lastNames = mirror.findPeopleByLastName(user.last_name)
-                for pst_id, username, firstName, enabled in lastNames:
-                    if enabled:
-                        infos.append((firstName, username, pst_id))
-                    else:
-                        print "DDDDDDDDDDDDDD disabled: ", user.last_name, firstName
-            else:
-                el = udb.get_data(key, user.last_name)
-                #print >> self.out, ET.tostring(el, pretty_print=True)
-
-                #print "parsing xMl:"
-                xmlUsers = el.getchildren()
-                print "xmlUsers: ", xmlUsers
-                for xmli in range(len(xmlUsers)):
-                    e = xmlUsers[xmli]
-                    print e
-                    info = ui.parseUserXMLWorker(e)
-    
-                    print xmli
-                    print info
-                    first_name = info['name']['first-name']
-                    username = info['account-info']['account-name']
-                    id = int(info['id'])
-                    infos.append((first_name, username, id))
+            lastNames = mirror.findPeopleByLastName(user.last_name)
+            for old_id, username, firstName, enabled, pst_id in lastNames:
+                if enabled:
+                    infos.append((firstName, username, pst_id))
+                else:
+                    print "DDDDDDDDDDDDDD disabled: ", user.last_name, firstName
 
 
             matchingInfo = [i for i in infos if i[0] == user.first_name]
@@ -356,7 +384,6 @@ class UserNames(object):
             if len(matchingInfo) == 1:
                 first_name, username, id = matchingInfo[0]
                 print "got for user: ", user, username, id
-                user.username = username
                 user.pst_id = id
                 user.save()
                 self.match.append((user, username, id))
@@ -380,7 +407,7 @@ class UserNames(object):
             print u, i
 
         users = self.getUsersUniqueByLastName()
-        missing = [u for u in users if (u.pst_id is None and u.username is None)] 
+        missing = [u for u in users if u.pst_id is None] 
         print "NOW num missing users: ", len(missing)
 
 

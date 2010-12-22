@@ -266,7 +266,7 @@ class PSTMirrorDB(PSTInterface):
 
         q = """
         SELECT p.personAuthentication_id, 
-          ua.personName, p.enabled, p.firstName
+          ua.personName, p.enabled, p.firstName, p.person_id
         FROM person as p, userAuthentication as ua
         WHERE p.personAuthentication_id = ua.userAuthentication_id
           AND p.lastName = '%s' %s
@@ -277,11 +277,12 @@ class PSTMirrorDB(PSTInterface):
 
         info = []
         for r in rows:
-            pst_id = int(r[0])
+            old_id = int(r[0])
             username = r[1]
             enabled = self.oneBitStr2Bool(r[2])
             firstName = r[3]
-            info.append((pst_id, username, firstName, enabled))
+            pst_id = int(r[4])
+            info.append((old_id, username, firstName, enabled, pst_id))
         return info 
 
  
