@@ -19,8 +19,8 @@ class Period(models.Model):
     backup     = models.BooleanField()
     moc_ack    = models.BooleanField(default = False)
     receivers  = models.ManyToManyField(Receiver, through = "Period_Receiver")
-    window     = models.ForeignKey("Window", null=True, related_name = "periods")
-    elective   = models.ForeignKey("Elective", null=True, related_name = "periods")
+    window     = models.ForeignKey("Window", blank=True, null=True, related_name = "periods")
+    elective   = models.ForeignKey("Elective", blank=True, null=True, related_name = "periods")
 
 
     class Meta:

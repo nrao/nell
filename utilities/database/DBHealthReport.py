@@ -410,9 +410,7 @@ def output_windows_report(file):
     desc.append("Windows with >50% schedulable time blacked out")
     desc.append("Windows with default period partially blacked out")
     desc.append("Windows with LST out of range")
-    # TBF: toggle this when we release non-guaranteed windows
-    #desc.append("Windows from Guaranteed Sessions that lack a Default Period") 
-    desc.append("Windows that lack a Default Period") 
+    desc.append("Windows from Guaranteed Sessions that lack a Default Period") 
     
     file.write("Summary\n")
     file.write("\t%s: %i\n" % (desc[0], len(w[0])))
