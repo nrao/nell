@@ -51,16 +51,16 @@ class UserHttpAdapter(object):
 
     def jsondict(self):
         projects = ','.join([i.project.pcode for i in self.user.investigator_set.all()])
-        return {'id' : self.user.id
-              , 'original_id' : self.user.original_id
-              , 'pst_id'      : self.user.pst_id
-              , 'username'    : self.user.username() # read-only
-              , 'sanctioned'  : self.user.sanctioned
-              , 'first_name'  : self.user.first_name
-              , 'last_name'   : self.user.last_name
-              , 'contact_instructions'  : self.user.contact_instructions
-              , 'role'        : self.user.role.role
-              , 'staff'       : self.user.auth_user.is_staff if self.user.auth_user is not None else False
-              , 'projects'    : projects
+        return {'id'                   : self.user.id
+              , 'original_id'          : self.user.original_id
+              , 'pst_id'               : self.user.pst_id
+              , 'username'             : self.user.username() # read-only
+              , 'sanctioned'           : self.user.sanctioned
+              , 'first_name'           : self.user.first_name
+              , 'last_name'            : self.user.last_name
+              , 'contact_instructions' : self.user.contact_instructions
+              , 'role'                 : self.user.role.role
+              , 'staff'                : self.user.auth_user.is_staff if self.user.auth_user is not None else False
+              , 'projects'             : projects
                 }
 
