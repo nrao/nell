@@ -42,3 +42,6 @@ class Maintenance_Other_Resources(models.Model):
     class Meta:
         db_table = "maintenance_other_resources"
         app_label = "sesshuns"
+
+    def full_description(self):
+        return "%s (%s)" % (self.resource, self.rc_code)
