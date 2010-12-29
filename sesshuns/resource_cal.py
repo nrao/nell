@@ -45,10 +45,8 @@ from utilities                          import get_requestor
 from rescal_notifier                    import RescalNotifier
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
 
-supervisors = ["rcreager", "ashelton", "banderso", "mchestnu", "koneil"]
 interval_names = {0:"None", 1:"Daily", 7:"Weekly", 30:"Monthly"}
-
-rc_notifier = RescalNotifier()
+rc_notifier    = RescalNotifier()
 
 ######################################################################
 # This class is a rendering clas for the RadioSelect widget, which is
@@ -232,6 +230,7 @@ def display_maintenance_activity(request, activity_id = None):
         duration = timedelta(hours = ma.duration)
         end = start + duration
         u = get_requestor(request)
+        supervisors = _get_supervisors()
 
         if ma.is_repeat_activity():
             repeat_interval = interval_names[ma.repeat_template.repeat_interval]
@@ -247,7 +246,7 @@ def display_maintenance_activity(request, activity_id = None):
                             if ma.modifications.all() else "")
         created = str(ma.modifications.all()[0]
                       if ma.modifications.all() else ""),
-        supervisor_mode = True if (u and u.username() in supervisors) else False
+        supervisor_mode = True if (u  in supervisors) else False
 
         params = {'subject'            : ma.subject,
                   'date'               : start.date(),
@@ -295,8 +294,9 @@ def add_activity(request, period_id = None, year = None,
                  month = None, day = None):
 
     u = get_requestor(request)
-    user = get_user_name(u)
-    supervisor_mode = True if (u and u.username() in supervisors) else False
+    supervisors = _get_supervisors()
+    user = _get_user_name(u)
+    supervisor_mode = True if (u in supervisors) else False
 
     if request.method == 'POST':
         form = RCAddActivityForm(request.POST)
@@ -307,9 +307,9 @@ def add_activity(request, period_id = None, year = None,
             ma.save() # needs to have a primary key for many-to-many
                       # relationships to be set.
 
-            process_activity(request, ma, form)
+            _process_activity(request, ma, form)
             view_url = "http://%s/resourcecal_display_activity/%s/" % (request.get_host(), ma.id)
-            rc_notifier.notify("rcreager@nrao.edu", "new", ma.get_start("EST").date(), view_url)
+            rc_notifier.notify(supervisors, "new", ma.get_start("EST").date(), view_url)
 
             if request.POST['ActionEvent'] =="Submit And Continue":
                 if form.cleaned_data['entity_id']:
@@ -415,13 +415,14 @@ def edit_activity(request, activity_id = None):
             # process the returned stuff here...
             ma = Maintenance_Activity.objects \
                 .filter(id = form.cleaned_data["entity_id"])[0]
-            approved = ma.approved  # save approval status; process_activity will clear this.
-            diffs = process_activity(request, ma, form)
+            approved = ma.approved  # save approval status; _process_activity will clear this.
+            diffs = _process_activity(request, ma, form)
             print diffs
 
             if approved: # Notify supervisor if approved activity is modified
+                supervisors = _get_supervisors()
                 view_url = "http://%s/resourcecal_display_activity/%s/" % (request.get_host(), ma.id)
-                rc_notifier.notify("rcreager@nrao.edu",
+                rc_notifier.notify(supervisors,
                                    "modified",
                                    ma.get_start("EST").date(),
                                    view_url,
@@ -430,7 +431,8 @@ def edit_activity(request, activity_id = None):
             return HttpResponseRedirect('/schedule/')
     else:
         u = get_requestor(request)
-        supervisor_mode = True if (u and u.username() in supervisors) else False
+        supervisors = _get_supervisors()
+        supervisor_mode = True if (u in supervisors) else False
 
         if request.GET['ActionEvent'] == 'Modify':
             ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
@@ -458,7 +460,7 @@ def edit_activity(request, activity_id = None):
             ma.deleted = True
             ma.save()
             view_url = "http://%s/resourcecal_display_activity/%s/" % (request.get_host(), ma.id)
-            rc_notifier.notify("rcreager@nrao.edu",
+            rc_notifier.notify(supervisors,
                                "deleted",
                                ma.get_start("EST").date(),
                                view_url)
@@ -495,7 +497,7 @@ def edit_activity(request, activity_id = None):
         elif request.GET['ActionEvent'] == 'Approve':
             ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
             u = get_requestor(request)
-            user = get_user_name(u)
+            user = _get_user_name(u)
             ma.add_approval(user)
             ma.save()
 
@@ -514,7 +516,7 @@ def edit_activity(request, activity_id = None):
                                'add_activity' : False })
 
 ######################################################################
-# def process_activity(request, ma, form)
+# def _process_activity(request, ma, form)
 #
 # This is a helper function to handle the transfer of data from the
 # form to the database. The only difference between the 'add_activity'
@@ -529,7 +531,7 @@ def edit_activity(request, activity_id = None):
 #
 ######################################################################
 
-def process_activity(request, ma, form):
+def _process_activity(request, ma, form):
     """
     Does some processing in common between the add and the edit views.
     """
@@ -545,7 +547,9 @@ def process_activity(request, ma, form):
     start = datetime(date.year, date.month, date.day,
                      hour = int(form.cleaned_data['time_hr']),
                      minute = int(form.cleaned_data['time_min']))
-    diffs = record_diffs('start', ma.get_start('EST'), start, diffs)
+    print "form start:", start
+    print "ma.get_start()", ma.get_start()
+    diffs = _record_diffs('start', ma.get_start('EST') if ma._start else start, start, diffs)
     ma.set_start(start, 'EST')
     oldval = ma.duration
 
@@ -561,25 +565,25 @@ def process_activity(request, ma, form):
         ma.duration = float(form.cleaned_data['end_time_hr']) \
             + float(form.cleaned_data["end_time_min"]) / 60.0
 
-    diffs = record_diffs('duration', oldval, ma.duration, diffs)
+    diffs = _record_diffs('duration', oldval, ma.duration, diffs)
     oldval = ma.contacts
     ma.contacts = form.cleaned_data["responsible"]
-    diffs = record_diffs('contacts', oldval, ma.contacts, diffs)
+    diffs = _record_diffs('contacts', oldval, ma.contacts, diffs)
     oldval = ma.location
     ma.location = form.cleaned_data["location"]
-    diffs = record_diffs('location', oldval, ma.location, diffs)
+    diffs = _record_diffs('location', oldval, ma.location, diffs)
 
     oldval = ma.telescope_resource
     trid = form.cleaned_data["telescope"]
     ma.telescope_resource = Maintenance_Telescope_Resources.objects \
         .filter(id = trid)[0]
-    diffs = record_diffs('telescope', oldval, ma.telescope_resource, diffs)
+    diffs = _record_diffs('telescope', oldval, ma.telescope_resource, diffs)
 
     oldval = ma.software_resource
     srid = form.cleaned_data["software"]
     ma.software_resource = Maintenance_Software_Resources.objects \
         .filter(id = srid)[0]
-    diffs = record_diffs('software', oldval, ma.software_resource, diffs)
+    diffs = _record_diffs('software', oldval, ma.software_resource, diffs)
 
     oldval = [p for p in ma.other_resources.all()]
     ma.other_resources.clear()
@@ -588,7 +592,7 @@ def process_activity(request, ma, form):
         other_r = Maintenance_Other_Resources.objects.filter(id = orid)[0]
         ma.other_resources.add(other_r)
 
-    diffs = record_m2m_diffs('other', oldval, ma.other_resources.all(), diffs)
+    diffs = _record_m2m_diffs('other', oldval, ma.other_resources.all(), diffs)
 
     oldval = [p for p in ma.receivers.all()]
     ma.receivers.clear()
@@ -597,7 +601,7 @@ def process_activity(request, ma, form):
         rcvr = Receiver.objects.filter(id = rid)[0]
         ma.receivers.add(rcvr)
 
-    diffs = record_m2m_diffs('receivers', oldval, ma.receivers.all(), diffs)
+    diffs = _record_m2m_diffs('receivers', oldval, ma.receivers.all(), diffs)
 
     if form.cleaned_data["change_receiver"] == True:
         down_rcvr_id = form.cleaned_data["old_receiver"]
@@ -634,10 +638,10 @@ def process_activity(request, ma, form):
         be = Backend.objects.filter(id = bid)[0]
         ma.backends.add(be)
 
-    diffs = record_m2m_diffs('backends', oldval, ma.backends.all(), diffs)
+    diffs = _record_m2m_diffs('backends', oldval, ma.backends.all(), diffs)
     oldval = ma.description
     ma.description = form.cleaned_data["description"]
-    diffs = record_diffs('description', oldval, ma.description, diffs)
+    diffs = _record_diffs('description', oldval, ma.description, diffs)
     ma.repeat_interval = int(form.cleaned_data["recurrency_interval"])
 
     if ma.repeat_interval > 0:
@@ -656,7 +660,7 @@ def process_activity(request, ma, form):
     # Now add user and timestamp for modification.  Earliest mod is
     # considered creation.
     u = get_requestor(request)
-    modifying_user = get_user_name(u)
+    modifying_user = _get_user_name(u)
     ma.add_modification(modifying_user)
     ma.save()
 
@@ -690,7 +694,7 @@ def process_activity(request, ma, form):
 
     return diffs
 
-def get_user_name(u):
+def _get_user_name(u):
     if u:
         if u.first_name and u.last_name:
             user = u.last_name + ", " + u.first_name
@@ -701,13 +705,13 @@ def get_user_name(u):
 
     return user
 
-def record_diffs(key, old, new, diffs):
+def _record_diffs(key, old, new, diffs):
     if old != new:
         diffs[key] = "\t'%s' to '%s'" % (old, new)
 
     return diffs
 
-def record_m2m_diffs(key, old, new, diffs):
+def _record_m2m_diffs(key, old, new, diffs):
     old_s = set(old)
     new_s = set(new)
     ds = old_s.symmetric_difference(new_s)
@@ -722,3 +726,11 @@ def record_m2m_diffs(key, old, new, diffs):
     if len(ds):
         diffs[key] = s
     return diffs
+
+def _get_supervisors():
+    # TBF: when roles done, will get these by visiting the roles.
+    s = []
+    s += User.objects.filter(auth_user__username = 'rcreager')
+    s += User.objects.filter(auth_user__username = 'banderso')
+    s += User.objects.filter(auth_user__username = 'mchestnu')
+    return s
