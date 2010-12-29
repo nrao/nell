@@ -417,7 +417,6 @@ def edit_activity(request, activity_id = None):
                 .filter(id = form.cleaned_data["entity_id"])[0]
             approved = ma.approved  # save approval status; _process_activity will clear this.
             diffs = _process_activity(request, ma, form)
-            print diffs
 
             if approved: # Notify supervisor if approved activity is modified
                 supervisors = _get_supervisors()
@@ -547,8 +546,6 @@ def _process_activity(request, ma, form):
     start = datetime(date.year, date.month, date.day,
                      hour = int(form.cleaned_data['time_hr']),
                      minute = int(form.cleaned_data['time_min']))
-    print "form start:", start
-    print "ma.get_start()", ma.get_start()
     diffs = _record_diffs('start', ma.get_start('EST') if ma._start else start, start, diffs)
     ma.set_start(start, 'EST')
     oldval = ma.duration

@@ -476,7 +476,6 @@ class Maintenance_Activity(models.Model):
                                          .filter(rc_code=i[2])[0]
 
                                     if j[2] not in sr.compatibility:
-                                        print "i =", i, "\tj =", j
                                         rval.append(i)
                         elif 'O=' in i:
                             #get resource 'x' in 'O=x'
