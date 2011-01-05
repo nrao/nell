@@ -1,4 +1,4 @@
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import NellTestCase
 from nell.utilities.WinAlertNotifier import WinAlertNotifier
 from utils                   import create_sesshun
 from sesshuns.models         import *

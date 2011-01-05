@@ -2,7 +2,7 @@ import MySQLdb as mysql
 
 from nell.utilities.database import DSSPrime2DSS
 from sesshuns.models         import *
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import NellTestCase
 
 class TestDSSPrime2DSS(NellTestCase):
 
