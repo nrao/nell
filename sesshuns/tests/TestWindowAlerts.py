@@ -242,7 +242,7 @@ class TestWindowAlerts(NellTestCase):
         # Long before the window starts, the weekly notification
         # will tell about this (stage I):
         now = datetime(2009, 1, 1)
-        ns = wa.findAlerts(stage = 1
+        ns = wa.findBlackoutAlerts(stage = 1
                          , now = now
                            )
         self.assertEquals(1, len(ns))
@@ -250,19 +250,74 @@ class TestWindowAlerts(NellTestCase):
         self.assertEquals(1, ns[0][2])
 
         # This would not be sent out in stage II
-        ns = wa.findAlerts(stage = 2
-                         , now = now
-                           )
+        ns = wa.findBlackoutAlerts(stage = 2, now = now)
         self.assertEquals(0, len(ns))
 
         # But would be once we get close enough to the window
         now = self.window.start_datetime() - timedelta(days = 5)
-        ns = wa.findAlerts(stage = 2
-                         , now = now
-                           )
+        ns = wa.findBlackoutAlerts(stage = 2, now = now)
         self.assertEquals(1, len(ns))
         self.assertEquals(self.window, ns[0][0])
         self.assertEquals(1, ns[0][2])
 
-        
+    def testFindDisabledSessionAlerts(self):
+        wa = WindowAlerts.WindowAlerts()
+        w  = first(Window.objects.all())
+        w.session.status.enabled = False
+        w.session.status.save()
 
+        # Find alerts 20 days before window
+        alerts = wa.findDisabledSessionAlerts(now = w.start_datetime() - timedelta(days = 20))
+        self.assertEqual(len(alerts), 0)
+
+        # Find alerts 10 days before window
+        alerts = wa.findDisabledSessionAlerts(now = w.start_datetime() - timedelta(days = 10))
+        self.assertEqual(len(alerts), 1)
+        self.assertEqual(alerts[0].id, 1)
+
+        # Find alerts at the start of the window
+        alerts = wa.findDisabledSessionAlerts(now = w.start_datetime())
+        self.assertEqual(len(alerts), 1)
+        self.assertEqual(alerts[0].id, 1)
+
+        # Find alerts at the default period
+        alerts = wa.findDisabledSessionAlerts(now = w.default_period.start)
+        self.assertEqual(len(alerts), 1)
+        self.assertEqual(alerts[0].id, 1)
+
+        # Find alerts after the default period, should be zero
+        alerts = wa.findDisabledSessionAlerts(now = w.default_period.start + timedelta(days = 10))
+        self.assertEqual(len(alerts), 0)
+
+    def testFindDisabledSessionAlertsCritical(self):
+        """
+            Critical being within 4 days of the window.
+        """
+        wa = WindowAlerts.WindowAlerts()
+        wa.stageBoundary = 4
+        w  = first(Window.objects.all())
+        w.session.status.enabled = False
+        w.session.status.save()
+
+        # Find alerts 10 days before window
+        alerts = wa.findDisabledSessionAlerts(now = w.start_datetime() - timedelta(days = 10))
+        self.assertEqual(len(alerts), 0)
+
+        # Find alerts 4 days before window
+        alerts = wa.findDisabledSessionAlerts(now = w.start_datetime() - timedelta(days = 4))
+        self.assertEqual(len(alerts), 1)
+        self.assertEqual(alerts[0].id, 1)
+
+        # Find alerts at the start of the window
+        alerts = wa.findDisabledSessionAlerts(now = w.start_datetime())
+        self.assertEqual(len(alerts), 1)
+        self.assertEqual(alerts[0].id, 1)
+
+        # Find alerts at the default period
+        alerts = wa.findDisabledSessionAlerts(now = w.default_period.start)
+        self.assertEqual(len(alerts), 1)
+        self.assertEqual(alerts[0].id, 1)
+
+        # Find alerts after the default period, should be zero
+        alerts = wa.findDisabledSessionAlerts(now = w.default_period.start + timedelta(days = 4))
+        self.assertEqual(len(alerts), 0)
