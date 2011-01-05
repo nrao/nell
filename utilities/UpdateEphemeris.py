@@ -48,8 +48,8 @@ class UpdateEphemeris():
     def report(self):
         "Write the results to the specified file"
 
-        self.reportList(self.updates, "Updates")
         self.reportList(self.errors, "Errors")
+        self.reportList(self.updates, "Updates")
 
         if self.filename is not None:
             f = open(self.filename, 'w')
