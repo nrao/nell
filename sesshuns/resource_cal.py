@@ -223,6 +223,7 @@ class RCAddActivityForm(forms.Form):
 #
 ######################################################################
 
+@login_required    
 def display_maintenance_activity(request, activity_id = None):
     if activity_id:
         ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
