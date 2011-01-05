@@ -80,25 +80,25 @@ class TestSessionResource(NellTestCase):
         response = self.client.post('/sessions/1', {'_method' : 'put'})
         self.failUnlessEqual(response.status_code, 200)
         s = Sesshun.objects.get(id = 1)
-        self.assertEquals(True, s.gaurenteed())
+        self.assertEquals(True, s.guaranteed())
 
         response = self.client.post('/sessions/1', {'_method' : 'put'
-                                                  , 'gaurenteed' : ['true']})
+                                                  , 'guaranteed' : ['true']})
         self.failUnlessEqual(response.status_code, 200)
         s = Sesshun.objects.get(id = 1)
-        self.assertEquals(True, s.gaurenteed())
+        self.assertEquals(True, s.guaranteed())
 
         response = self.client.post('/sessions/1', {'_method' : 'put'
-                                                  , 'gaurenteed' : ['false']})
+                                                  , 'guaranteed' : ['false']})
         self.failUnlessEqual(response.status_code, 200)
         s = Sesshun.objects.get(id = 1)
-        self.assertEquals(False, s.gaurenteed())
+        self.assertEquals(False, s.guaranteed())
 
         response = self.client.post('/sessions/1', {'_method' : 'put'
-                                                  , 'gaurenteed' : ['true']})
+                                                  , 'guaranteed' : ['true']})
         self.failUnlessEqual(response.status_code, 200)
         s = Sesshun.objects.get(id = 1)
-        self.assertEquals(True, s.gaurenteed())
+        self.assertEquals(True, s.guaranteed())
 
     def test_delete(self):
         response = self.client.post('/sessions/1', {'_method' : 'delete'})
