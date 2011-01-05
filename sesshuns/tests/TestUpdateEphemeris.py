@@ -1,4 +1,4 @@
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import NellTestCase
 from nell.utilities          import UpdateEphemeris
 from sesshuns.models         import *
 from utils                   import create_sesshun

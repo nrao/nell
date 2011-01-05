@@ -1,6 +1,6 @@
 from django.test.client  import Client
 
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import NellTestCase
 from sesshuns.models         import *
 from sesshuns.utilities      import getReservationsFromDB
 from utils                   import create_sesshun

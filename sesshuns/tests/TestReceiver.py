@@ -1,8 +1,8 @@
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import BenchTestCase, timeIt
 from sesshuns.models         import Sesshun, Receiver
 from sesshuns.httpadapters   import SessionHttpAdapter
 
-class TestReceiver(NellTestCase):
+class TestReceiver(BenchTestCase):
 
     def setUp(self):
         super(TestReceiver, self).setUp()
@@ -11,11 +11,13 @@ class TestReceiver(NellTestCase):
         adapter.init_from_post({})
         s.save()
 
+    @timeIt
     def test_get_abbreviations(self):
         nn = Receiver.get_abbreviations()
         self.assertTrue(len(nn) > 17)
         self.assertEquals([n for n in nn if n == 'Ka'], ['Ka'])
 
+    @timeIt
     def test_save_receivers(self):
         s = Sesshun.objects.all()[0]
         rcvr = ''

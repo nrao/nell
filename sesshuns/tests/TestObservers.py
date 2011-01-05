@@ -3,7 +3,7 @@ from django.test.client  import Client
 from django.conf         import settings
 from django.contrib.auth import models as m
 
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import NellTestCase
 from sesshuns.models         import *
 from sesshuns.httpadapters   import *
 from sesshuns.utilities      import create_user

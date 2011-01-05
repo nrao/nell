@@ -1,6 +1,6 @@
 from django.test.client  import Client
 
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import NellTestCase
 from sesshuns.models         import *
 
 class TestUserResource(NellTestCase):
