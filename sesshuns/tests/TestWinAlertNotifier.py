@@ -48,8 +48,7 @@ class TestWinAlertNotifier(NellTestCase):
                             , log = False
                             )
 
-        email = wn.email
-        txt = email.GetText()
+        txt = wn.email.GetText()
         self.failUnless("Subject: Blackout dates may prevent scheduling WTF" in txt)
         self.failUnless(">10% of the  possible time for scheduling" in txt)
         self.failUnless("2009-04-05 through" in txt)
@@ -64,4 +63,24 @@ class TestWinAlertNotifier(NellTestCase):
         email = wn.email
         txt = email.GetText()
         self.failUnless("Subject: Blackout dates will prevent scheduling WTF" in txt)
-                            
+
+    def test_setWindowDisabledDssTeam(self):
+        wn = WinAlertNotifier(window = self.window
+                            , level  = 1
+                            , stage  = 1
+                            , test   = True
+                            , type   = "disabled_dss_team"
+                            )
+        txt = wn.email.GetText()
+        self.failUnless("Subject: Warning - unenabled windows session(s) about to begin" in txt)
+
+    def test_setWindowDisabledObservers(self):
+        wn = WinAlertNotifier(window = self.window
+                            , level  = 1
+                            , stage  = 1
+                            , test   = True
+                            , type   = "disabled_observers"
+                            )
+        txt = wn.email.GetText()
+        self.failUnless("Subject: Warning, GBT window session Low Frequency With No RFI is not enabled will likely not be scheduled" in txt)
+        self.failUnless("2009-04-05 through 2009-04-11 is not yet enabled" in txt)
