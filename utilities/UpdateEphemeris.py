@@ -6,6 +6,7 @@ setup_environ(settings)
 
 from sesshuns.models import *
 from utilities.ephemerisComets import ephemerisComets
+from utilities.ephemerisAsteroids import ephemerisAsteroids
 
 # this module rocks!
 import ephem
@@ -35,6 +36,7 @@ class UpdateEphemeris():
 
         # make sure we get all the comet info we may need
         self.comets = ephemerisComets
+        self.asteroids = ephemerisAsteroids
 
     def add(self, lines):
         "For use with printing reports"
@@ -113,18 +115,21 @@ class UpdateEphemeris():
         "Make sure we can get the proper object which gives the ra & dec"
 
         # Either the source name is one of the supplied major/minor planets and 
-        # satellites, or it is one in a long list of comets
+        # satellites, or it is one in a number of different 
+        # lists, such comets & asteroids ('special')
         if target.source in self.comets.keys():
-            obj = self.getEphemCometObj(target)
+            obj = self.getEphemSpecialObj(target, self.comets)
+        elif target.source in self.asteroids.keys():
+            obj = self.getEphemSpecialObj(target, self.asteroids)
         else:
             obj = self.getEphemPlanetObj(target)
         return obj    
 
-    def getEphemCometObj(self, target):
-        "Uses the dict of comet ephemeris to calculate ra & dec"
+    def getEphemSpecialObj(self, target, objects):
+        "Uses the given dict of ephemeris to calculate ra & dec"
 
         try:
-            line = self.comets[target.source]
+            line = objects[target.source]
             comet = ephem.readdb(line)
             return comet
         except:
