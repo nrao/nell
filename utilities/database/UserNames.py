@@ -19,6 +19,27 @@ class UserNames(object):
         else:
             self.out = output_file
             
+    def findUserMatches(self):
+        "The latest attempt to match DSS & PST accounts."
+
+        mirror = PSTMirrorDB()
+        users = User.objects.filter(pst_id = None)
+
+        for u in users:
+            invs = Investigator.objects.filter(user = u)
+            projs = ",".join([i.project.pcode for i in invs])
+            print ""
+            print "User: %s, Projects: %s" % (u, projs)
+            # who could we match these up with?
+            others = mirror.findPeopleByLastName(u.last_name)
+            print "%20s %20s %5s %5s %30s" % ('First', 'Username', 'PSTID', 'Enbld', 'Emails')
+            for oldId, username, firstName, enabled, pst_id in others:
+                emails, descs = mirror.getEmails(pst_id)
+                es = ",".join(emails)
+                print "%20s %20s %5s %5s %30s" % (firstName, username, pst_id, enabled, es)
+
+
+
     def findMissingUsers(self, files = None):
         "Interactive method that uses XML dump to find missing users."
 
