@@ -37,8 +37,9 @@ def receivers_schedule(request, *args, **kws):
     jsondiff = Receiver_Schedule.jsondict_diff(diff).get("diff_schedule", None)
 
     maintenance = [PeriodHttpAdapter(p).jsondict('UTC', 0.) \
-                   for p in Period.objects.filter( 
-                       session__name = "Maintenance").order_by("start")]
+                       for p in Period.objects\
+                       .filter(session__observing_type__type = "maintenance")\
+                       .order_by("start")]
 
     rcvrs       = [r.jsondict() for r in Receiver.objects.all() \
                                 if r.abbreviation != "NS"]
