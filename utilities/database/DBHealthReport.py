@@ -650,7 +650,7 @@ def GenerateReport():
     outfile.write("\n\nSessions for which periods are scheduled when none of their receivers are up:")
     now = datetime.utcnow()
     future_ps = [p for p in periods if p.start > now \
-        and p.session.name not in ['Shutdown', 'Maintenance']]
+        and p.session.project.pcode not in ['Shutdown', 'Maintenance']]
     bad_ps = [p for p in future_ps if not p.has_required_receivers()]
     values = ["%s, %s" % (p.__str__(), p.session.receiver_list_simple()) \
         for p in bad_ps]

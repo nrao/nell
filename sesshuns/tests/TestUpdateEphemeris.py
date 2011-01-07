@@ -34,6 +34,13 @@ class TestUpdateEphemeris(NellTestCase):
         self.assertEquals(1, len(up.updates))
         self.assertEquals(0, len(up.errors))
 
+        # now let's observe a famouse asteroid
+        target.source = "Ceres"
+        target.save()
+        up.update()
+        self.assertEquals(1, len(up.updates))
+        self.assertEquals(0, len(up.errors))
+
         # make sure we catch errors!
         target.source = "Mr. Nubbles!"
         target.save()
