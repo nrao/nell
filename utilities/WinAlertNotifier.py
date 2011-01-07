@@ -31,7 +31,7 @@ class WinAlertEmail(Email):
         if len(emails) > 0:            
             self.SetRecipients(emails)
 
-    def createBlackoutMessage(self, window, subject, percent, chance):
+    def createMessage(self, window, subject, percent, chance):
         self.SetSubject(subject)
         body = """
 Dear Observers,  
@@ -51,43 +51,11 @@ Regards,
 The GBT scheduling team 
         """ % (percent
              , window.session.project.pcode
-             , window.start_date
+             , window.start_date()
              , window.last_date()
              , chance
              )
         self.SetBody(body)
-
-    def createDisabledObservers(self, window):
-        "Create email to be sent to observers with disabled, windowed sessions."
-        self.SetSubject(
-           "Warning, GBT window session %s is not enabled will likely not be scheduled" \
-               % window.session.name)
-        self.SetBody("""
-Dear Observers,  GBT window session %s which runs from 
-%s through %s is not yet enabled 
-to be scheduled.   As a result it is nearly certain that this 
-session will not be  observed.  If you do not enable this session, 
-the window  *will not be rescheduled*.
-
-If you have any questions, please contact the GBT scheduling
-team (helpdesk-dss@nrao.edu).  
-
-Thanks very much,  
-
-The GBT scheduling team 
-        """ % (window.session.name
-             , window.start_date
-             , window.last_date()
-             )
-        )
-
-    def createDisabledDssTeam(self, window):
-        "Create email to be sent to the DSS team about disabled, windowed sessions."
-        self.SetSubject("Warning - unenabled windows session(s) about to begin")
-        self.SetBody(
-           "Window session %s begins on %s and is unenabled." % (window.session.name
-                                                               , window.start_datetime()
-                                                               ))
 
 class WinAlertNotifier(Notifier):
 
@@ -101,7 +69,7 @@ class WinAlertNotifier(Notifier):
     email to special email classes.
     """
 
-    def __init__(self, window, level, stage, test = False, log = False, type = "blackout"):
+    def __init__(self, window, level, stage, test = False, log = False):
         Notifier.__init__(self, [], test, log)
 
         self.sender = "helpdesk-dss@gb.nrao.edu"
@@ -119,19 +87,12 @@ class WinAlertNotifier(Notifier):
         self.window = window
 
         self.email = WinAlertEmail(self.sender, window) 
-        if self.type == "blackout":
-            if self.level == 1:
-                subject = "Blackout dates may prevent scheduling %s" % window.session.project.pcode
-                self.email.createBlackoutMessage(window, subject, 10, "very possible")
-            else:
-                subject = "Blackout dates will prevent scheduling %s" % window.session.project.pcode
-                self.email.createBlackoutMessage(window, subject, 50, "nearly certain")
-        elif self.type == "disabled_observers":
-            self.email.createDisabledObservers(window)
-        elif self.type == "disabled_dss_team":
-            self.sender = "dss@gb.nrao.edu"
-            self.email.createDisabledDssTeam(window)
-            self.email.SetRecipients(['gbdyn@nrao.edu'])
+        if self.level == 1:
+            subject = "Blackout dates may prevent scheduling %s" % window.session.project.pcode
+            self.email.createMessage(window, subject, 10, "very possible")
+        else:
+            subject = "Blackout dates will prevent scheduling %s" % window.session.project.pcode
+            self.email.createMessage(window, subject, 50, "nearly certain")
 
     def notify(self):
         "send out all the different emails"

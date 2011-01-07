@@ -110,22 +110,6 @@ class WindowAlerts():
         return [(w, stat, level, stage) for w, stat, level in self.findAlertLevels(wins = wins)
                                         if withinBoundary(w.start_datetime(), stage, now)]
 
-    def findDisabledSessionAlerts(self, now = None, wins = []):
-        def withinBoundary(w, now):
-            now   = now if now is not None else datetime.utcnow()
-            today = datetime(now.year, now.month, now.day)
-
-            daysTillStart   = abs((w.start_datetime() - today).days)
-            return (daysTillStart <= self.stageBoundary and now < w.default_period.start) \
-                   or (now >= w.start_datetime() and now <= w.default_period.start)
-
-        if len(wins) == 0:
-            return [w for w in Window.objects.filter(complete = False
-                                                   , session__status__enabled = False)
-                      if withinBoundary(w, now)]
-        else:
-            return [w for w in wins if w.session.status.enabled == False and withinBoundary(w, now)]
-
     def raiseAlerts(self
                   , stage = 1
                   , now = None
@@ -155,18 +139,6 @@ class WindowAlerts():
                     self.add("Notifying for Window # %d: %s\n" % (window.id, wa.email.GetRecipientString()))
                 wa.notify()
         
-        for window in self.findDisabledSessionAlerts(now = now, winw = wins):
-            self.add("Alert for Window # %d, status = disabled" % window.id)
-            wa = WinAlertNotifier(window = window
-                                , level  = 1
-                                , stage  = 1
-                                , test   = test
-                                , type   = "disabled_observers")
-            if not test:
-                if wa.email is not None:
-                    self.add("Notifying for Window # %d: %s\n" % (window.id, wa.email.GetRecipientString()))
-                wa.notify()
-
         self.write()
 
 # command line interface
