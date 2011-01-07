@@ -1,12 +1,13 @@
 from django.test.client  import Client
 
-from test_utils              import NellTestCase
+from test_utils              import BenchTestCase, timeIt
 from sesshuns.models         import *
 from sesshuns.utilities      import getReservationsFromDB
 from utils                   import create_sesshun
 
-class TestViews(NellTestCase):
+class TestViews(BenchTestCase):
 
+    @timeIt
     def test_change_schedule(self):
         create_sesshun()
         c = Client()
@@ -24,6 +25,7 @@ class TestViews(NellTestCase):
         self.assertEquals(response.content,
                           '{"ids": [1], "session handles": ["Low Frequency With No RFI (GBT09A-001)"]}')
 
+    @timeIt
     def test_column_configurations_explorer_post(self):
         data = {'Thesis?': ['false']               , 'Grade(s)': ['false']
               , 'Name': ['false']                  , 'PSC Time(s)': ['false']
@@ -43,6 +45,7 @@ class TestViews(NellTestCase):
         response = c.get('/configurations/explorer/columnConfigs', {'explorer': '/project'})
         self.failUnlessEqual(response.status_code, 200)
 
+    @timeIt
     def test_filter_combinations_explorer_post(self):
         data = {'Trimester': '08C'
               , 'Project Type': 'science'

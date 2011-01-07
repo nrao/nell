@@ -1,14 +1,15 @@
-CREATE SEQUENCE TestXXX_id_seq
+CREATE SEQUENCE test_id_seq
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
     CACHE 1;
 
-ALTER TABLE public.TestXXX_id_seq OWNER TO dss;
+ALTER TABLE public.test_id_seq OWNER TO dss;
 
-CREATE TABLE TestXXX (
-    id integer DEFAULT nextval('TestXXX_id_seq'::regclass) NOT NULL,
-    test_name          character varying(255)               NOT NULL,
+CREATE TABLE test (
+    id integer DEFAULT nextval('test_id_seq'::regclass) NOT NULL,
+    kase               character varying(255)               NOT NULL,
+    name               character varying(255)               NOT NULL,
     start_time         timestamp without time zone          NOT NULL,
     elapsed_time       float                                NOT NULL,
     username           character varying(255)               NOT NULL,
@@ -17,4 +18,4 @@ CREATE TABLE TestXXX (
     process_info_end   text                                 NOT NULL
 );
 
-ALTER TABLE public.TestXXX OWNER TO dss;
+ALTER TABLE public.test OWNER TO dss;

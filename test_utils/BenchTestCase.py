@@ -72,7 +72,7 @@ class BenchTestCase(NellTestCase):
         """
         
         # Save for posterity.
-        self.saveValue("test_name", name)
+        self.saveValue("name", name)
 
         startTime = self.startTimer()
         func(self, *args)

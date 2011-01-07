@@ -1,10 +1,10 @@
 from django.test.client  import Client
 
-from test_utils              import NellTestCase
+from test_utils              import BenchTestCase, timeIt
 from sesshuns.httpadapters   import *
 from sesshuns.models         import *
 
-class TestInvestigatorResource(NellTestCase):
+class TestInvestigatorResource(BenchTestCase):
 
     def setUp(self):
         super(TestInvestigatorResource, self).setUp()
@@ -77,11 +77,13 @@ class TestInvestigatorResource(NellTestCase):
                     , 'priority'   : 1
                      }
 
+    @timeIt
     def test_create(self):
         response = self.client.post('/investigators'
                                   , self.fdata)
         self.failUnlessEqual(response.status_code, 200)
 
+    @timeIt
     def test_create_empty(self):
         response = self.client.post('/investigators'
                                   , {'project_id' : self.p.id
@@ -104,6 +106,7 @@ class TestInvestigatorResource(NellTestCase):
         self.assertTrue('"total": 1' in response.content)
         self.assertTrue('McCarty' in response.content)
 
+    @timeIt
     def test_update(self):
         fdata = self.fdata
         fdata.update({"_method" : "put"
@@ -122,6 +125,7 @@ class TestInvestigatorResource(NellTestCase):
                                   , fdata2)
         self.failUnlessEqual(response.status_code, 200)
 
+    @timeIt
     def test_delete(self):
         response = self.client.post('/investigators/%s' % self.ins[-1].id
                                   , {"_method" : "delete"})

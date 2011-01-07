@@ -1,11 +1,11 @@
 from django.test.client  import Client
 
-from test_utils              import NellTestCase
+from test_utils              import BenchTestCase, timeIt
 from utils                   import create_sesshun
 from sesshuns.models         import *
 from sesshuns.httpadapters   import *
 
-class TestPeriodResource(NellTestCase):
+class TestPeriodResource(BenchTestCase):
 
     def setUp(self):
         super(TestPeriodResource, self).setUp()
@@ -23,11 +23,13 @@ class TestPeriodResource(NellTestCase):
         self.p.save()
 
     # Requires antioch server
+    @timeIt
     def test_create(self):
         response = self.client.post(self.rootURL + '/UTC', self.fdata)
         self.failUnlessEqual(response.status_code, 200)
 
     # Requires antioch server
+    @timeIt
     def test_create_empty(self):
         response = self.client.post(self.rootURL + '/ET')
         self.failUnlessEqual(response.status_code, 200)
@@ -77,6 +79,7 @@ class TestPeriodResource(NellTestCase):
         self.assertEqual(response.content[:11], '{"total": 0')
 
     # If antioch server running requires it contain the appropriate periods
+    @timeIt
     def test_update(self):
         fdata = self.fdata
         fdata.update({"_method" : "put"})

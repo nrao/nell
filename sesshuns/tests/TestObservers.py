@@ -3,13 +3,13 @@ from django.test.client  import Client
 from django.conf         import settings
 from django.contrib.auth import models as m
 
-from test_utils              import NellTestCase
+from test_utils              import BenchTestCase, timeIt
 from sesshuns.models         import *
 from sesshuns.httpadapters   import *
 from sesshuns.utilities      import create_user
 from utils                   import create_sesshun, fdata
 
-class TestObservers(NellTestCase):
+class TestObservers(BenchTestCase):
 
     def setUp(self):
         super(TestObservers, self).setUp()
@@ -84,11 +84,13 @@ class TestObservers(NellTestCase):
         response = self.get('/project/%s' % self.p.pcode)
         self.failUnlessEqual(response.status_code, 200)
 
+    @timeIt
     def test_search(self):
         response = self.post('/search', {'search' : 'Test'})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue("account" in response.content)
 
+    @timeIt
     def test_toggle_session(self):
         response = self.post(
             '/project/%s/session/%s/enable' % (self.p.pcode, self.s.id))
@@ -96,6 +98,7 @@ class TestObservers(NellTestCase):
         s = first(Sesshun.objects.filter(id = self.s.id))
         self.assertEqual(s.status.enabled, True)
 
+    @timeIt
     def test_toggle_observer(self):
         i_id = first(self.p.investigator_set.all()).id
         response = self.post(
@@ -108,6 +111,7 @@ class TestObservers(NellTestCase):
         response = self.get('/profile/%s/dynamic_contact' % self.u.id)
         self.failUnlessEqual(response.status_code, 200)
 
+    @timeIt
     def test_dynamic_contact_save(self):
         data = {'contact_instructions' : "I'll be at Bob's house."}
         response = self.post('/profile/%s/dynamic_contact' % self.u.id, data)
@@ -155,6 +159,7 @@ class TestObservers(NellTestCase):
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue(b.description in response.content)
 
+    @timeIt
     def test_blackout(self):
         # create a blackout
         b     = self.create_blackout()
@@ -205,6 +210,7 @@ class TestObservers(NellTestCase):
             '/profile/%s/blackout/' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 302)
 
+    @timeIt
     def test_blackout2(self):
         b     = self.create_blackout()
         start = datetime(2009, 1, 1)
@@ -233,6 +239,7 @@ class TestObservers(NellTestCase):
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue("ERROR" in response.content)
 
+    @timeIt
     def test_blackout3(self):
         "Like test_blackout, but for a project"
 
@@ -279,6 +286,7 @@ class TestObservers(NellTestCase):
         self.assertEqual(b.end_date.date().strftime("%m/%d/%Y"), data.get('end'))
         b.delete()
 
+    @timeIt
     def test_get_period_day_time(self):
 
         # create a period
@@ -319,6 +327,7 @@ class TestObservers(NellTestCase):
         p.remove() #delete()
         s.delete()
 
+    @timeIt
     def test_get_period_day_time2(self):
 
         # create a period

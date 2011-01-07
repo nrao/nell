@@ -25,32 +25,28 @@ from   mx        import DateTime
 from   nell      import settings
 import pg
 import os
-import time
 import csv
 
-# If you want to save the timing results to a database via the archiver,
-# you must create the appropriate table named after the testcase, e.g.,
-# testreceiver.  The sql file utilities/database/create_benchmark.sql
-# may be modified for this purpose.
+CNN = pg.connect(dbname = settings.BENCHMARK_DB_NAME
+               , host   = settings.DATABASE_HOST
+               , port   = int(settings.DATABASE_PORT)
+               , user   = settings.DATABASE_USER
+               , passwd = settings.DATABASE_PASSWORD
+                )
+
+# The sql file utilities/database/create_benchmark.sql
+# may used to initiate a benchmark database.
 
 class dbArchiver(Archiver):
 
-    def __init__(self, table):
+    def __init__(self, kase):
         Archiver.__init__(self)
 
-        self.cnn = pg.connect(dbname = settings.BENCHMARK_DB_NAME
-                            , host   = settings.DATABASE_HOST
-                            , port   = int(settings.DATABASE_PORT)
-                            , user   = settings.DATABASE_USER
-                            , passwd = settings.DATABASE_PASSWORD
-                             )
-                             
+        self.cnn = CNN
         if self.cnn == None:
             raise LookupError, "Failed to connect to Benchmark database."
 
-        self.table    = table
-        #self.hostname = None
-        #self.username = None
+        self.kase = kase
 
     def Text2SQLText(self, script):
         return script.replace("\'", r"\'")
@@ -59,9 +55,9 @@ class dbArchiver(Archiver):
         r = self.cnn.query(
             """
             SELECT AVG(elapsed_time)
-            FROM %s
-            WHERE test_name = '%s'
-            """ % (self.table,self.values["test_name"]))
+            FROM test
+            WHERE kase = '%s' AND name = '%s'
+            """ % (self.kase,self.values["name"]))
 
         return r.getresult()[0][0]
 
@@ -77,10 +73,10 @@ class dbArchiver(Archiver):
 
         r = self.cnn.query(
             """
-            INSERT INTO %s (test_name, start_time, elapsed_time, username, hostname, process_info_start, process_info_end)
-            VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s')
-            """ % (self.table
-                 , self.values["test_name"]
+            INSERT INTO test (kase, name, start_time, elapsed_time, username, hostname, process_info_start, process_info_end)
+            VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+            """ % (self.kase
+                 , self.values["name"]
                  , str(DateTime.gmtime(self.values["start_time"]))[0:19]
                  , self.values["elapsed_time"]
                  , self.username
@@ -89,7 +85,6 @@ class dbArchiver(Archiver):
                  , self.Text2SQLText(self.values["process_info_end"])))
 
         return int(r)
-        #return self.cnn.fetchall()
 
     def getTopSummary(self):
         processData = self.getTopData()
@@ -97,8 +92,7 @@ class dbArchiver(Archiver):
         return self.reportTopData(processData)
     
     def getTopData(self):
-        #header = os.popen("top -S -C -b -n 1 2>/dev/null | head -7") #os.popen
-        header = os.popen("top -S -b -n 1 2>/dev/null | head -7") #os.popen
+        header = os.popen("top -S -b -n 1 2>/dev/null | head -7")
         header = csv.reader(header, delimiter = " ", skipinitialspace = True)
         topData = []
         for row in header:
