@@ -81,9 +81,9 @@ class Receiver_Schedule(models.Model):
             rs = Receiver_Schedule.objects.filter(
                                           start_date__gte = prev
                                                  ).filter(
-                                          start_date__lte = enddate)
+                                          start_date__lte = enddate).order_by("receiver")
         else:
-            rs = Receiver_Schedule.objects.filter(start_date__gte = prev)
+            rs = Receiver_Schedule.objects.filter(start_date__gte = prev).order_by("receiver")
 
         for s in rs:
             schedule.setdefault(s.start_date, []).append(s.receiver)
@@ -235,6 +235,64 @@ class Receiver_Schedule(models.Model):
 
         # return success 
         return (True, None)
+    @staticmethod
+    def toggle_rcvr(startDt, rcvr, endDt = None):
+        """
+        Toggles the state of a receiver in the given time range:
+        If a receiver has an entry in the given date range, it's removed,
+        if not, it's put in.
+        """
+
+        endDt = endDt if endDt is not None else startDt
+
+        # first check that the date range is in the schedule (be lazy)
+        for dt in [startDt, endDt]:
+            rs = Receiver_Schedule.objects.filter(start_date = dt)
+            if len(rs) == 0:
+                return (False, "Date not in Receiver Schedule: %s" % dt)
+
+        # get the schedule that just covers this time range
+        days = (endDt - startDt).days + 1
+        schd = Receiver_Schedule.extract_schedule(startdate = startDt
+                                                , days = days)
+        dates = schd.keys()
+        dates.sort()
+        for dt in dates:
+            if dt >= startDt and dt <= endDt:
+                # toggle the given rcvr:
+                if rcvr in schd[dt]:
+                    # remove it
+                    rs = first(Receiver_Schedule.objects.filter(start_date = dt
+                                                        , receiver = rcvr))
+                    rs.delete()                                    
+                else:
+                    # add it
+                    rs = Receiver_Schedule(start_date = dt, receiver = rcvr)
+                    rs.save()
+
+        return (True, None)
+
+    @staticmethod
+    def add_date(date):
+        "Adds new date to the schedule, inited off the previous date"
+
+         # first check that this date is NOT in the schedule
+        rs = Receiver_Schedule.objects.filter(start_date = date)
+        if len(rs) > 0:
+            return (False, "Date is already in Receiver Schedule: %s" % date)
+
+        prevDate = Receiver_Schedule.previousDate(date)
+        if prevDate is None:
+            return (False, "Cannot add date earlier then 2009")
+
+        # the new date in the schedule is identical to the previous one
+        schd = Receiver_Schedule.extract_schedule(startdate=prevDate)
+        rcvrs = schd[prevDate]
+        for r in rcvrs:
+            rs = Receiver_Schedule(start_date = date, receiver = r)
+            rs.save()
+
+        return (True, None)   
 
     @staticmethod
     def delete_date(date):
@@ -247,13 +305,13 @@ class Receiver_Schedule(models.Model):
 
         # we first reconcile the schedule to this change by reversing all
         # the changes that were meant to happen on this day:
-        diff_schedule = Receiver_Schedule.extract_diff_schedule(startdate = date)
-        day, ups, downs = first([d for d in diff_schedule if d[0] == date])
+        #diff_schedule = Receiver_Schedule.extract_diff_schedule(startdate = date)
+        #day, ups, downs = first([d for d in diff_schedule if d[0] == date])
         
         # reverse it!
-        s, msg = Receiver_Schedule.change_schedule(day, downs, ups, end_of_day = True)
-        if not s:
-            return (False, msg)
+        #s, msg = Receiver_Schedule.change_schedule(day, downs, ups, end_of_day = True)
+        #if not s:
+        #    return (False, msg)
 
         # now we can clean up
         rs = Receiver_Schedule.objects.filter(start_date = date)
