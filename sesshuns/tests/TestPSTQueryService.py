@@ -1,6 +1,6 @@
 import lxml.etree as et
 
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import NellTestCase
 from nell.utilities          import PSTMirrorDB, PSTQueryService
 from sesshuns.models         import *
 

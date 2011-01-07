@@ -1,7 +1,7 @@
 from datetime import datetime
 from time     import mktime
 
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import NellTestCase
 from sesshuns.models         import *
 
 class TestBlackout(NellTestCase):

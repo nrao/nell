@@ -1,4 +1,5 @@
 from utils                     import *
+from PeriodsTestCase           import PeriodsTestCase
 from TestBlackout              import TestBlackout
 from TestComplimentEvents      import TestComplimentEvents
 from TestConsolidateBlackouts  import TestConsolidateBlackouts

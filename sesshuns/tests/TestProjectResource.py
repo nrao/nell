@@ -1,10 +1,10 @@
 from django.test.client  import Client
 
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import BenchTestCase, timeIt
 from sesshuns.models         import *
 from sesshuns.httpadapters   import *
 
-class TestProjectResource(NellTestCase):
+class TestProjectResource(BenchTestCase):
 
     def setUp(self):
         super(TestProjectResource, self).setUp()
@@ -21,14 +21,17 @@ class TestProjectResource(NellTestCase):
         ProjectHttpAdapter(self.p).init_from_post(self.fdata)
         self.p.save()
 
+    @timeIt
     def test_create(self):
         response = self.client.post('/projects', self.fdata)
         self.failUnlessEqual(response.status_code, 200)
 
+    @timeIt
     def test_create_empty(self):
         response = self.client.post('/projects')
         self.failUnlessEqual(response.status_code, 200)
 
+    @timeIt
     def test_create_no_allotment(self):
         # Get copy of fdata in local scope to modify for the purposes
         # of this test.
@@ -54,12 +57,14 @@ class TestProjectResource(NellTestCase):
         self.assertTrue('09C' in response.content)
         self.assertTrue('09A' not in response.content)
 
+    @timeIt
     def test_update(self):
         fdata = self.fdata
         fdata.update({"_method" : "put"})
         response = self.client.post('/projects/%s' % self.p.id, fdata)
         self.failUnlessEqual(response.status_code, 200)
 
+    @timeIt
     def test_delete(self):
         response = self.client.post('/projects/%s' % self.p.id, {"_method" : "delete"})
         self.failUnlessEqual(response.status_code, 200)

@@ -1,7 +1,8 @@
 from django.test.client  import Client
 
-from sesshuns.models  import *
-from PeriodsTestCase   import PeriodsTestCase
+from sesshuns.models         import *
+from test_utils              import timeIt
+from PeriodsTestCase         import PeriodsTestCase
 from utils                   import create_sesshun
 
 class TestViewsPTC(PeriodsTestCase):
@@ -25,6 +26,7 @@ class TestViewsPTC(PeriodsTestCase):
         self.failUnless(response.status_code == 200)
         self.failUnless('"PCODES": ["GBT09A-001"]' in response.content)
 
+    @timeIt
     def test_delete_pending(self):
 
         # check current state
@@ -53,6 +55,7 @@ class TestViewsPTC(PeriodsTestCase):
         exp = [5.0, 4.0]
         self.assertEquals(exp, [p.accounting.scheduled for p in ps])
 
+    @timeIt
     def test_delete_pending_2(self):
         "Similar to previous test, but with a windowed session"
 
@@ -123,6 +126,7 @@ class TestViewsPTC(PeriodsTestCase):
 
 
         
+    @timeIt
     def test_publish_periods_by_id(self):
         # check current state
         ps = Period.objects.order_by("start")
@@ -143,6 +147,7 @@ class TestViewsPTC(PeriodsTestCase):
         exp = ["S", "S", "S"]
         self.assertEquals(exp, [p.state.abbreviation for p in ps])
 
+    @timeIt
     def test_publish_periods(self):
         # check current state
         ps = Period.objects.order_by("start")
@@ -171,6 +176,7 @@ class TestViewsPTC(PeriodsTestCase):
         exp = [5.0, 3.0, 4.0]
         self.assertEquals(exp, [p.accounting.scheduled for p in ps])
 
+    @timeIt
     def test_publish_periods_with_windows(self):
         # Assign periods to our windows
         # 1 - scheduled -> window 1

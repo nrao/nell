@@ -1,9 +1,9 @@
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import BenchTestCase, timeIt
 from sesshuns.models         import *
 from sesshuns.httpadapters   import *
 from utils                   import create_sesshun
 
-class TestProject(NellTestCase):
+class TestProject(BenchTestCase):
     def setUp(self):
         super(TestProject, self).setUp()
 
@@ -66,6 +66,7 @@ class TestProject(NellTestCase):
         self.sesshun.delete()
         self.project.delete()
 
+    @timeIt
     def test_get_blackout_times1(self):
         # Create Investigator1's 3 blackouts.
         blackout11 = Blackout(user       = self.user1
@@ -307,6 +308,7 @@ class TestProject(NellTestCase):
         blackout12.delete()
         blackout11.delete()
 
+    @timeIt
     def test_get_receiver_blackout_ranges(self):
         # Schedule = 4/01/2009:   450,   600,  800
         #            4/06/2009:   600,   800, 1070
@@ -491,6 +493,7 @@ class TestProject(NellTestCase):
         othersesshun.delete()
         otherproject.delete()
 
+    @timeIt
     def test_get_active_windows(self):
 
         s = first(self.project.sesshun_set.all())

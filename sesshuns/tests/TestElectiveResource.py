@@ -1,11 +1,11 @@
 from django.test.client  import Client
 
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import BenchTestCase, timeIt
 from utils                   import create_sesshun
 from sesshuns.models         import *
 from sesshuns.httpadapters   import *
 
-class TestElectiveResource(NellTestCase):
+class TestElectiveResource(BenchTestCase):
 
     def setUp(self):
         super(TestElectiveResource, self).setUp()
@@ -63,10 +63,12 @@ class TestElectiveResource(NellTestCase):
     def tearDown(self):
         super(TestElectiveResource, self).tearDown()
 
+    @timeIt
     def test_create(self):
         response = self.client.post('/electives', self.fdata)
         self.failUnlessEqual(response.status_code, 200)
 
+    @timeIt
     def test_create_empty(self):
         response = self.client.post('/electives')
         self.failUnlessEqual(response.status_code, 200)

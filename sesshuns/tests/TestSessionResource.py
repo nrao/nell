@@ -1,10 +1,10 @@
 from django.test.client  import Client
 
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import BenchTestCase, timeIt
 from sesshuns.httpadapters   import SessionHttpAdapter
 from sesshuns.models         import *
 
-class TestSessionResource(NellTestCase):
+class TestSessionResource(BenchTestCase):
 
     def setUp(self):
         super(TestSessionResource, self).setUp()
@@ -14,6 +14,7 @@ class TestSessionResource(NellTestCase):
         s.save()
         self.s = s
 
+    @timeIt
     def test_create(self):
         response = self.client.post('/sessions')
         self.failUnlessEqual(response.status_code, 200)
@@ -75,35 +76,38 @@ class TestSessionResource(NellTestCase):
         r_json = json.loads(response.content)
         self.assertEqual(0.0, r_json["session"]["total_time"])
 
+    @timeIt
     def test_update(self):
 
         response = self.client.post('/sessions/1', {'_method' : 'put'})
         self.failUnlessEqual(response.status_code, 200)
         s = Sesshun.objects.get(id = 1)
-        self.assertEquals(True, s.gaurenteed())
+        self.assertEquals(True, s.guaranteed())
 
         response = self.client.post('/sessions/1', {'_method' : 'put'
-                                                  , 'gaurenteed' : ['true']})
+                                                  , 'guaranteed' : ['true']})
         self.failUnlessEqual(response.status_code, 200)
         s = Sesshun.objects.get(id = 1)
-        self.assertEquals(True, s.gaurenteed())
+        self.assertEquals(True, s.guaranteed())
 
         response = self.client.post('/sessions/1', {'_method' : 'put'
-                                                  , 'gaurenteed' : ['false']})
+                                                  , 'guaranteed' : ['false']})
         self.failUnlessEqual(response.status_code, 200)
         s = Sesshun.objects.get(id = 1)
-        self.assertEquals(False, s.gaurenteed())
+        self.assertEquals(False, s.guaranteed())
 
         response = self.client.post('/sessions/1', {'_method' : 'put'
-                                                  , 'gaurenteed' : ['true']})
+                                                  , 'guaranteed' : ['true']})
         self.failUnlessEqual(response.status_code, 200)
         s = Sesshun.objects.get(id = 1)
-        self.assertEquals(True, s.gaurenteed())
+        self.assertEquals(True, s.guaranteed())
 
+    @timeIt
     def test_delete(self):
         response = self.client.post('/sessions/1', {'_method' : 'delete'})
         self.failUnlessEqual(response.status_code, 200)
 
+    @timeIt
     def test_create_rcvr(self):
         response = self.client.post('/sessions', {'receiver' : 'L'})
         self.failUnlessEqual(response.status_code, 200)
@@ -111,6 +115,7 @@ class TestSessionResource(NellTestCase):
         self.assertTrue(r_json.has_key('receiver'))
         self.assertEquals(r_json['receiver'], 'L')
 
+    @timeIt
     def test_create_rcvrs(self):   # TBF hold until handles multiple rcvrs
         response = self.client.post('/sessions',
                                     {'receiver' : 'K & (L | S)'})

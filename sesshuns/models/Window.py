@@ -308,7 +308,7 @@ class Window(models.Model):
         Non-gauranteed can do without a default period, because if
         a window doesn't get scheduled, oh well, it wasn't gauranteed.
         """
-        return self.session.gaurenteed() and self.default_period is None 
+        return self.session.guaranteed() and self.default_period is None 
         
     def errors(self):
         """

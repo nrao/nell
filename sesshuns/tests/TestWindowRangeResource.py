@@ -1,11 +1,11 @@
 from django.test.client  import Client
 
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import BenchTestCase, timeIt
 from sesshuns.httpadapters   import *
 from sesshuns.models         import *
 from utils                   import *
 
-class TestWindowRangeResource(NellTestCase):
+class TestWindowRangeResource(BenchTestCase):
 
     def setUp(self):
         super(TestWindowRangeResource, self).setUp()
@@ -43,10 +43,12 @@ class TestWindowRangeResource(NellTestCase):
                              )
         self.wr.save()                
 
+    @timeIt
     def test_create(self):
         response = self.client.post('/windowRanges', self.fdata)
         self.failUnlessEqual(response.status_code, 200)
 
+    @timeIt
     def test_create_empty(self):
         response = self.client.post('/windowRanges')
         self.failUnlessEqual(response.status_code, 200)
@@ -69,12 +71,14 @@ class TestWindowRangeResource(NellTestCase):
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"total": 0' in response.content)
 
+    @timeIt
     def test_update(self):
         fdata = self.fdata
         fdata.update({"_method" : "put"})
         response = self.client.post('/windowRanges/%s' % self.wr.id, fdata)
         self.failUnlessEqual(response.status_code, 200)
 
+    @timeIt
     def test_delete(self):
         response = self.client.post('/windowRanges/%s' % self.wr.id, {"_method" : "delete"})
         self.failUnlessEqual(response.status_code, 200)
