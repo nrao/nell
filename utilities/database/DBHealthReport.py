@@ -110,7 +110,7 @@ def filter_current_windows(wins):
     lt_date = gt_date + timedelta(62) 
     return [w for w in wins if w.start_date() < lt_date and w.last_date() > gt_date]
 
-# Windowed Sessions that are gauranteed need default periods.
+# Windowed Sessions that are guaranteed need default periods.
 def get_missing_default_periods():
     ws = filter_current_windows(get_windows())
     return [w for w in ws if w.lacksMandatoryDefaultPeriod()]

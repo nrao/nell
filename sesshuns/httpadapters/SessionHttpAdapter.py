@@ -231,12 +231,12 @@ class SessionHttpAdapter (object):
         guaranteed = fdata.get("guaranteed", "true") == "true"
         
         param = Parameter.objects.get(name = "Not Guaranteed")
-        old_value = self.sesshun.not_gauranteed()
+        old_value = self.sesshun.not_guaranteed()
         if old_value is None:
             # The Obs. Param. hasn't been used it, so set it only if
             # the Obs. Param. will be True
             if not guaranteed:
-                # session is not gauranteed, and we're setting this 
+                # session is not guaranteed, and we're setting this 
                 # for the first time
                 op = Observing_Parameter(session = self.sesshun
                                        , parameter = param
