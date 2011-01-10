@@ -297,10 +297,10 @@ def floating_maint_periods(day):
     try:
         delta = timedelta(days = 7)
         mp = models.Period.objects\
-             .filter(session__project__pcode = "Maintenance")\
-             .filter(start__gte = day)\
-             .filter(start__lt = day + delta)\
-             .order_by('start')
+            .filter(session__project__pcode = "Maintenance")\
+            .filter(start__gte = day)\
+            .filter(start__lt = day + delta)\
+            .order_by('start')
 
         for i in range(0, len(mp)):
             if mp[i].isPending():

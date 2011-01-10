@@ -349,6 +349,7 @@ class Maintenance_Activity(models.Model):
         self.contacts           = ma.contacts
         self.location           = ma.location
         self.description        = ma.description
+        self.repeat_interval    = ma.repeat_interval
 
         for j in ma.receivers.all():
             self.receivers.add(j)
@@ -362,7 +363,7 @@ class Maintenance_Activity(models.Model):
         for j in ma.other_resources.all():
             self.other_resources.add(j)
 
-    ######################################################################
+   ######################################################################
     # Makes a deep copy of the model instance, creating a new object
     # in the database.  Since Django does not provide a method to do
     # such a thing it is attempted here, by making a deep copy of the
@@ -389,7 +390,7 @@ class Maintenance_Activity(models.Model):
         ma = Maintenance_Activity();
         ma.save()
         # will be overwritten if template and period provided.
-        ma.period = self.period
+        ma.period = period if period else self.period
         # subject to a more recent one being found (see below)
         template = self
 
@@ -401,7 +402,6 @@ class Maintenance_Activity(models.Model):
                 if self.repeat_template else self
 
             if period:
-                ma.period = period
                 template = self.get_template(period)
 
                 # all maintenance activities are based on local time,
@@ -418,6 +418,14 @@ class Maintenance_Activity(models.Model):
             # if this is a template, include the original creation
             # date for the repeat activity.
             ma.modifications.add(template.modifications.all()[0])
+        else:
+            # we want the period's date, and the original's time in EST
+            if period:
+                start = datetime(period.start.date().year, period.start.date().month,
+                                 period.start.date().day, self.get_start('EST').hour,
+                                 self.get_start('EST').minute)
+            else:
+                start = self.get_start('EST')
 
         ma.copy_data(template)
         ma.set_start(start if start else template.start, 'EST' if start else None)

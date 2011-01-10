@@ -3,8 +3,6 @@
   {% block title %}GBT Resource Calendar - Event Details{% endblock %}
 
   {% block scripts %}
-    {% if repeat_activity %} {# save loading time if not repeat activity #}
-
     <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
@@ -41,6 +39,35 @@
                                   }
         });
 
+        $('#pickdate').datepicker({
+            dateFormat: 'yy-mm-dd',
+            beforeShowDay: checkAvailability,
+            numberOfMonths: 3,
+	    showButtonPanel: true
+            });
+
+        var $maintenanceDates = {{ copymove_dates|safe }};
+
+	function checkAvailability(mydate){
+	var $return=false;
+	var $returnclass ="unavailable";
+	$checkdate = $.datepicker.formatDate('yy-mm-dd', mydate);
+	for(var i = 0; i < $maintenanceDates.length; i++)
+	    {
+	       if($maintenanceDates[i] == $checkdate)
+	        {
+		$return = true;
+		$returnclass= "available";
+		}
+	    }
+	return [$return,$returnclass];
+	}
+
+	function getCopyMoveDate() {
+	    date = $('#pickdate').val()
+            return date;
+        }
+
         $('#modify').click(function()
         {
             action_url = $('form#editActivity')[0].action + '?' + 'ActionEvent=' + 'Modify';
@@ -57,9 +84,37 @@
             return false;
         });
 
+        $('#move').click(function()
+	{
+	    date = getCopyMoveDate();
+
+	    if (date == '' || date == null)
+	    {
+		return false;
+	    }
+
+            action_url = $('form#editActivity')[0].action + '?' + 'ActionEvent='
+			   + 'Move' + '&' + 'Destination=' + date;
+	    window.location.href = action_url;
+	    return false;
+	});
+
+        $('#copy').click(function()
+	{
+	    date = getCopyMoveDate();
+
+	    if (date == '' || date == null)
+	    {
+		return false;
+	    }
+
+            action_url = $('form#editActivity')[0].action + '?' + 'ActionEvent='
+			   + 'Copy' + '&' + 'Destination=' + date;
+	    window.location.href = action_url;
+	    return false;
+	});
     });
     </script>
-    {% endif %} {# repeat_activity #}
 
   <style type="text/css">
 
@@ -250,6 +305,12 @@
         </TD>
       </TR>
 
+      <tr><td class="table_buttons" width="100%"><hr>
+	  <button type="button" id="move">Move</button>
+          <button type="button" id="copy">Copy</button>
+
+	  <label for="pickdate">&nbsp;&nbsp;<strong>Destination date:</strong></label>
+	  <input type="text" name="destination" id="pickdate" title="Click for calendar of available destination dates" value="{{start|date:'m/d/Y'}}"/>
       <tr><td class="table_buttons" width="100%"><hr>
         <INPUT NAME="back" TYPE="button" CLASS="stdfont" ONCLICK="javascript:history.go(-1)" VALUE="Back">
         </td>
