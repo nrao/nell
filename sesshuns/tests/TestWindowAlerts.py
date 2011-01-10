@@ -1,4 +1,4 @@
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import NellTestCase
 from nell.utilities.database import WindowAlerts
 from sesshuns.models         import *
 from sesshuns.httpadapters   import *

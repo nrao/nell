@@ -3,9 +3,9 @@ from django.test.client  import Client
 
 from sesshuns.httpadapters   import *
 from sesshuns.models         import *
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import BenchTestCase, timeIt
 
-class TestReceiverSchedule(NellTestCase):
+class TestReceiverSchedule(BenchTestCase):
 
     def setUp(self):
         super(TestReceiverSchedule, self).setUp()
@@ -21,6 +21,7 @@ class TestReceiverSchedule(NellTestCase):
                 rs.save()
 
 
+    @timeIt
     def test_extract_diff_schedule(self):
         startdate = datetime(2009, 4, 6, 12)
         duration = 15
@@ -92,6 +93,7 @@ class TestReceiverSchedule(NellTestCase):
                          Receiver_Schedule.previousDate(
                              datetime(2009, 4, 1, 0)))
 
+    @timeIt
     def test_receivers_schedule(self):
         startdate = datetime(2009, 4, 6, 12)
         response = self.client.get('/receivers/schedule',
@@ -103,6 +105,7 @@ class TestReceiverSchedule(NellTestCase):
 
         self.assertEqual(expected, response.content)
 
+    @timeIt
     def test_change_schedule(self):
         "The simplest change: new change date at the end"
 
@@ -246,6 +249,7 @@ class TestReceiverSchedule(NellTestCase):
         self.assertEquals(rcvrs, new_rs)
 
 
+    @timeIt
     def test_change_receiver_schedule(self):
         # last rcvr change:
         # 2009-05-11 00:00:00 [u'S', u'C', u'X']
@@ -324,6 +328,7 @@ class TestReceiverSchedule(NellTestCase):
                 , ['800',  'C',   'X']]
         self.assertEquals(exp_rs, new_rs)
 
+    @timeIt
     def test_shift_date(self):
         startdate = datetime(2009, 4, 6, 12)
         schedule = Receiver_Schedule.extract_schedule(startdate = startdate)

@@ -1,11 +1,11 @@
 from datetime            import datetime, timedelta
 from django.test.client  import Client
 
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import BenchTestCase, timeIt
 from sesshuns.models  import *
 from utils            import *
 
-class TestShiftPeriodBoundaries(NellTestCase):
+class TestShiftPeriodBoundaries(BenchTestCase):
     def setUp(self):
         super(TestShiftPeriodBoundaries, self).setUp()
 
@@ -45,6 +45,7 @@ class TestShiftPeriodBoundaries(NellTestCase):
             p.session.delete()
             p.remove() #delete()
 
+    @timeIt
     def test_shift_period_boundaries(self):
         create_sesshun()
         c = Client()

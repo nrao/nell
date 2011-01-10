@@ -1,9 +1,9 @@
 from datetime                import datetime, timedelta
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import BenchTestCase
 from utils                   import create_sesshun
 from sesshuns.models         import *
 
-class PeriodsTestCase(NellTestCase):
+class PeriodsTestCase(BenchTestCase):
     "Parent class for test cases that need periods to work with."
 
     def setUp(self):

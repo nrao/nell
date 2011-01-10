@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import NellTestCase
 from sesshuns.models         import consolidate_events
 from sesshuns.models         import find_intersections
 

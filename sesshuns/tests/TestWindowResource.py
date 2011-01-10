@@ -1,11 +1,11 @@
 from django.test.client  import Client
 
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import BenchTestCase, timeIt
 from sesshuns.httpadapters   import *
 from sesshuns.models         import *
 from utils                   import *
 
-class TestWindowResource(NellTestCase):
+class TestWindowResource(BenchTestCase):
 
     def setUp(self):
         super(TestWindowResource, self).setUp()
@@ -48,10 +48,12 @@ class TestWindowResource(NellTestCase):
         self.default_period.delete()
         self.sesshun.delete()
 
+    @timeIt
     def test_create(self):
         response = self.client.post('/windows', self.fdata)
         self.failUnlessEqual(response.status_code, 200)
 
+    @timeIt
     def test_create_empty(self):
         response = self.client.post('/windows')
         self.failUnlessEqual(response.status_code, 200)
@@ -94,6 +96,7 @@ class TestWindowResource(NellTestCase):
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('{"windows": [], "total": 0}' in response.content)
 
+    @timeIt
     def test_update(self):
         fdata = self.fdata
         fdata.update({"_method" : "put"})

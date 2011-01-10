@@ -1,9 +1,9 @@
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import BenchTestCase, timeIt
 from sesshuns.models         import *
 from sesshuns.httpadapters   import *
 from utils                   import create_sesshun, fdata
 
-class TestSesshun(NellTestCase):
+class TestSesshun(BenchTestCase):
 
     def setUp(self):
         super(TestSesshun, self).setUp()
@@ -31,6 +31,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(expected.allotment.total_time, float(fdata["total_time"]))
         self.assertEqual(expected.name, fdata["name"])
 
+    @timeIt
     def test_init_from_post(self):
         s = Sesshun()
         fdata["receiver"] = "((K & Ku) & L)"
@@ -50,6 +51,7 @@ class TestSesshun(NellTestCase):
         self.assertEqual(s.target_set.get().source, fdata["source"])
         self.assertEqual(s.status.enabled, fdata["enabled"])
 
+    @timeIt
     def test_update_from_post(self):
         ss = Sesshun.objects.all()
         s = Sesshun()
@@ -187,6 +189,7 @@ class TestSesshun(NellTestCase):
         # Clean up.
         Receiver_Schedule.objects.all().delete()
 
+    @timeIt
     def test_get_time_not_schedulable(self):
         "Test a number of overlapping bad things"
 
