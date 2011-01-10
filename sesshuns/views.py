@@ -5,6 +5,7 @@ from django.contrib.auth.models         import User as AuthUser
 from httpadapters                       import PeriodHttpAdapter
 from models                             import *
 from models                             import User as NellUser
+#from sesshuns.models.common             import d2str, dt2str
 from nell.tools                         import IcalMap, ScheduleTools, TimeAccounting
 from nell.utilities                     import TimeAgent
 from nell.utilities.SchedulingNotifier  import SchedulingNotifier
@@ -33,12 +34,21 @@ def receivers_schedule(request, *args, **kws):
     duration = int(duration) if duration else duration
 
     schedule = Receiver_Schedule.extract_schedule(startdate, duration)
+    for dt in sorted(schedule.keys()):
+        print dt, [r.abbreviation for r in schedule[dt]]
+
     diff     = Receiver_Schedule.diff_schedule(schedule)
+    for dt, up, down in diff:
+        print dt, [r.abbreviation for r in up], [r.abbreviation for r in down] 
+
+
     jsondiff = Receiver_Schedule.jsondict_diff(diff).get("diff_schedule", None)
 
-    maintenance = [PeriodHttpAdapter(p).jsondict('UTC', 0.) \
-                   for p in Period.objects.filter( 
-                       session__name = "Maintenance").order_by("start")]
+    # get the dates for maintenace that cover from the start of this 
+    # rcvr schedule.
+    maintenance = [d2str(p.start) for p in Period.objects.filter( 
+                       session__observing_type__type = "maintenance"
+                     , start__gte = startdate).order_by("start")]
 
     rcvrs       = [r.jsondict() for r in Receiver.objects.all() \
                                 if r.abbreviation != "NS"]
@@ -55,6 +65,7 @@ def change_rcvr_schedule(request, *args, **kws):
     """
     Updates the receiver schedule. Some receivers go 'up'. Others come 'down'.
     """
+    print "change_rcvr_schedule: ", args, kws
     startdate = request.POST.get("startdate", None)
     startdate = datetime.strptime(startdate, '%Y-%m-%d %H:%M:%S') if startdate else None
     error     = "Error Changing Receiver Schedule"
@@ -74,9 +85,10 @@ def change_rcvr_schedule(request, *args, **kws):
     if e:
         return HttpResponse(json.dumps({'error': error, 'message': e})
                           , mimetype = "text/plain")
-
     # Update the schedule.
+    print "calling :"
     success, msg = Receiver_Schedule.change_schedule(startdate, up, down)
+    print success, msg
     revision.comment = get_rev_comment(request, None, "change_rcvr_schedule")
 
     if success:
@@ -88,14 +100,55 @@ def change_rcvr_schedule(request, *args, **kws):
 
 @revision.create_on_success
 @catch_json_parse_errors
-def shift_rcvr_schedule_date(request, *args, **kws):
+def rcvr_schedule_toggle_rcvr(request, *args, **kws):
     """
     Moves an existing receiver change to another date.
     """
-    fromDt = datetime.strptime(request.POST.get("from", None)
-                             , "%m/%d/%Y %H:%M:%S")
-    toDt   = datetime.strptime(request.POST.get("to", None)
-                             , "%m/%d/%Y %H:%M:%S")
+    print "toggle: ", request.POST
+    try:
+        fromDt = datetime.strptime(request.POST.get("from", None)
+                                 , "%m/%d/%Y %H:%M:%S")
+        toDt   = datetime.strptime(request.POST.get("to", None)
+                                 , "%m/%d/%Y %H:%M:%S")
+        rcvr = Receiver.get_rcvr(request.POST.get("rcvr", None))
+    except:
+        error = "Invalid Inputs."
+        msg   = "One of the following are invalid inputs: %s, %s, %s" % \
+            (request.POST.get("from", None)
+           , request.POST.get("to", None)
+           , request.POST.get("rcvr", None))
+        return HttpResponse(json.dumps({'error': error, 'message': msg})
+                           , mimetype = "text/plain")
+        
+    success, msg = Receiver_Schedule.toggle_rcvr(fromDt, rcvr, endDt=toDt)
+    revision.comment = get_rev_comment(request, None, "shift_rcvr_schedule")
+
+    if success:
+        return HttpResponse(json.dumps({'success':'ok'})
+                          , mimetype = "text/plain")
+    else:
+        error = "Error Toggling Receiver."
+        return HttpResponse(json.dumps({'error': error, 'message': msg})
+                           , mimetype = "text/plain")
+
+@revision.create_on_success
+@catch_json_parse_errors
+def rcvr_schedule_shift_date(request, *args, **kws):
+    """
+    Moves an existing receiver change to another date.
+    """
+    try:
+        fromDt = datetime.strptime(request.POST.get("from", None)
+                                 , "%m/%d/%Y %H:%M:%S")
+        toDt   = datetime.strptime(request.POST.get("to", None)
+                                 , "%m/%d/%Y %H:%M:%S")
+    except:
+        error = "Invalid Inputs."
+        msg   = "One of the following are invalid inputs: %s, %s" % \
+            (request.POST.get("from", None)
+           , request.POST.get("to", None))
+        return HttpResponse(json.dumps({'error': error, 'message': msg})
+                           , mimetype = "text/plain")
 
     success, msg = Receiver_Schedule.shift_date(fromDt, toDt)
     revision.comment = get_rev_comment(request, None, "shift_rcvr_schedule")
@@ -110,12 +163,18 @@ def shift_rcvr_schedule_date(request, *args, **kws):
 
 @revision.create_on_success
 @catch_json_parse_errors
-def delete_rcvr_schedule_date(request, *args, **kws):
+def rcvr_schedule_delete_date(request, *args, **kws):
     """
     Removes an existing receiver change from the receiver schedule.
     """
-    dateDt = datetime.strptime(request.POST.get("startdate", None)
-                             , "%m/%d/%Y %H:%M:%S")
+    try:
+        dateDt = datetime.strptime(request.POST.get("startdate", None)
+                                 , "%m/%d/%Y %H:%M:%S")
+    except:
+        error = "Invalid Inputs."
+        msg   = "Invalid date: %s" % request.POST.get("startdate", None)
+        return HttpResponse(json.dumps({'error': error, 'message': msg})
+                           , mimetype = "text/plain")
 
     success, msg = Receiver_Schedule.delete_date(dateDt)
     revision.comment = get_rev_comment(request, None, "delete_rcvr_schedule")
@@ -125,6 +184,32 @@ def delete_rcvr_schedule_date(request, *args, **kws):
                           , mimetype = "text/plain")
     else:
         error = "Error deleting date of Receiver Change."
+        return HttpResponse(json.dumps({'error': error, 'message': msg})
+                           , mimetype = "text/plain")
+
+@revision.create_on_success
+@catch_json_parse_errors
+def rcvr_schedule_add_date(request, *args, **kws):
+    """
+    Adss a receiver change date to the receiver schedule.
+    """
+    try:
+        dateDt = datetime.strptime(request.POST.get("startdate", None)
+                                 , "%m/%d/%Y %H:%M:%S")
+    except:
+        error = "Invalid Inputs."
+        msg   = "Invalid start date: %s" % request.POST.get("startdate", None)
+        return HttpResponse(json.dumps({'error': error, 'message': msg})
+                           , mimetype = "text/plain")
+
+    success, msg = Receiver_Schedule.add_date(dateDt)
+    revision.comment = get_rev_comment(request, None, "add_rcvr_schedule")
+
+    if success:
+        return HttpResponse(json.dumps({'success':'ok'})
+                          , mimetype = "text/plain")
+    else:
+        error = "Error adding date of Receiver Change."
         return HttpResponse(json.dumps({'error': error, 'message': msg})
                            , mimetype = "text/plain")
 

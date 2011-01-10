@@ -131,111 +131,6 @@ class Receiver_Schedule(models.Model):
         return rcvrs    
 
     @staticmethod
-    def change_schedule(date, up, down, end_of_day = False):
-        """
-        Here we change the receiver schedule according to the given rcvrs
-        that go up and down on the given date.  Uses extract schedule to 
-        determine what rcvrs are up on this given date so that the rcvr 
-        schedule can be changed using these deltas.  Raises errors if rcvrs are
-        specified to go up that are already up, or down that aren't up.
-        """
-       
-        # TBF: how to error check before creating new RS entry?
-        # TBF: this code is twice as long as it should be - there
-        # are patterns for up & down params that can be refactored out
-        # TBF: won't remove the commented out prints until we know we're done
-
-        # is this a new date?
-        rss = Receiver_Schedule.objects.filter(start_date = date)
-        if len(rss) == 0:
-            # make a copy of the previous date
-            prev = Receiver_Schedule.previousDate(date)
-            prev_rs = Receiver_Schedule.objects.filter(start_date = prev)
-            for p in prev_rs:
-                rs = Receiver_Schedule(start_date = date
-                                     , receiver   = p.receiver)
-                rs.save()                     
-            rss = Receiver_Schedule.objects.filter(start_date = date)
-
-        # compare old diff to new diff (up and down params)
-        diffs = Receiver_Schedule.extract_diff_schedule(startdate = date)
-        dt, old_ups, old_downs = first([d for d in diffs if d[0] == date])
-        #print "original diff: ", old_ups, old_downs
-
-        # what used to go up, that no longer does?
-        remove_ups = Set(old_ups).difference(Set(up))
-        # what is going up that didn't before?
-        add_ups = Set(up).difference(Set(old_ups))
-        #print "UP Sets: ", remove_ups, add_ups
-
-        # what used to go down, that no longer does?
-        remove_downs = Set(old_downs).difference(Set(down))
-        # what is going down that didn't before?
-        add_downs = Set(down).difference(Set(old_downs))
-        #print "DOWN Sets: ", remove_downs, add_downs
-
-        # convert the sets to two lists of rcvrs: ups & downs
-        ups = [u for u in add_ups]
-        for d in remove_downs:
-            if d not in ups:
-                ups.append(d)
-        #print "UP list: ", ups        
-        downs = [d for d in add_downs]
-        for u in remove_ups:
-            if u not in downs:
-                downs.append(u)
-        #print "DOWN list: ", downs        
-
-
-        # TBF: should we even error check?
-        #for u in up:
-        #    if u in available:
-        #        return (False, "Receiver %s is already up on %s" % (u, date))
-        #for d in down:
-        #    if d not in available:
-        #        return (False
-        #        , "Receiver %s cannot come down on %s, is not up." % (d, date))
-
- 
-        # now alter the subsequent dates on the schedule:
-        schedule = Receiver_Schedule.extract_schedule(date)
-        dates = sorted(schedule.keys())
-        # remove the rcvr(s) we just took down from all subsequent dates, 
-        # until they dissappear on their own
-        for d in downs:
-            #print "d in down: ", d
-            for dt in dates:
-                if dt >= date:
-                    #print "down schd date: ", dt
-                    #, [r.abbreviation for r in schedule[dt]]
-                    if d in schedule[dt]:
-                        # shouldn't be there anymore!
-                        gone =Receiver_Schedule.objects.filter(start_date = dt
-                                                             , receiver = d)
-                        for g in gone:
-                            #print "deleting: ", g
-                            g.delete()
-                    else:
-                        break
-        # add the rcvr(s) we just put up to all subsequent dates, 
-        # until they show up on their own
-        for u in ups:
-            #print "u in up: ", u
-            for dt in dates:
-                if dt >= date:
-                    #print "up schd date: ", dt
-                    #, [r.abbreviation for r in schedule[dt]]
-                    if u not in schedule[dt]:
-                        # should be there now!
-                        new = Receiver_Schedule(start_date = dt, receiver = u)
-                        new.save()
-                        #print "new: ", new
-                    else:
-                        break
-
-        # return success 
-        return (True, None)
-    @staticmethod
     def toggle_rcvr(startDt, rcvr, endDt = None):
         """
         Toggles the state of a receiver in the given time range:
@@ -302,16 +197,6 @@ class Receiver_Schedule(models.Model):
         rs = Receiver_Schedule.objects.filter(start_date = date)
         if len(rs) == 0:
             return (False, "Date is not in Receiver Schedule: %s" % date)
-
-        # we first reconcile the schedule to this change by reversing all
-        # the changes that were meant to happen on this day:
-        #diff_schedule = Receiver_Schedule.extract_diff_schedule(startdate = date)
-        #day, ups, downs = first([d for d in diff_schedule if d[0] == date])
-        
-        # reverse it!
-        #s, msg = Receiver_Schedule.change_schedule(day, downs, ups, end_of_day = True)
-        #if not s:
-        #    return (False, msg)
 
         # now we can clean up
         rs = Receiver_Schedule.objects.filter(start_date = date)
