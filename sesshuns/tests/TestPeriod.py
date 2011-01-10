@@ -1,9 +1,9 @@
 from sesshuns.httpadapters                 import *
 from sesshuns.models                       import *
-from test_utils.NellTestCase               import NellTestCase
+from test_utils                            import BenchTestCase, timeIt
 from utils                                 import *
 
-class TestPeriod(NellTestCase):
+class TestPeriod(BenchTestCase):
 
     def setUp(self):
         super(TestPeriod, self).setUp()
@@ -100,6 +100,7 @@ class TestPeriod(NellTestCase):
         self.assertEqual(p.backup, self.fdata["backup"])
         self.assertEqual(len(p.receivers.all()), 2)
 
+    @timeIt
     def test_jsondict(self):
          
         start = datetime(2009, 6, 1, 12, 15)
@@ -135,6 +136,7 @@ class TestPeriod(NellTestCase):
 
         p.delete()
 
+    @timeIt
     def test_publish_chosen_period(self):
         "test publishing the chosen period"
 
@@ -162,6 +164,7 @@ class TestPeriod(NellTestCase):
         p.delete()
         w.delete()
 
+    @timeIt
     def test_publish_default_period(self):
         
         # initial tests
@@ -209,6 +212,7 @@ class TestPeriod(NellTestCase):
         self.assertEquals(False, w.complete)
         self.assertEquals([self.scheduled, self.pending], w.periodStates())
 
+    @timeIt
     def test_get_periods(self):
 
         # setup some periods
@@ -271,6 +275,7 @@ class TestPeriod(NellTestCase):
         for p in ps:
             p.delete()
 
+    @timeIt
     def test_has_required_receivers(self):
         p = Period.create(session = self.sesshun
                         , start = datetime(2009, 11, 1)
@@ -303,6 +308,7 @@ class TestPeriod(NellTestCase):
         # Receiver now on schedule.
         self.assertEquals(True, p.has_required_receivers())
 
+    @timeIt
     def test_has_observed_rcvrs_in_schedule(self):
         p = Period.create(session = self.sesshun
                         , start = datetime(2009, 11, 1)

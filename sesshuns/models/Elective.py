@@ -13,7 +13,7 @@ class Elective(models.Model):
 
     def __str__(self):
         cmp = "Cmp." if self.complete else "Not Cmp."
-        return "Elective for Session %s with %d periods. Cmp: %s, Grntd: %s" % (self.session.name, len(self.periods.all()), self.complete, self.gaurenteed())
+        return "Elective for Session %s with %d periods. Cmp: %s, Grntd: %s" % (self.session.name, len(self.periods.all()), self.complete, self.guaranteed())
 
     # TBF: cut & past from Window model
     def toHandle(self):
@@ -34,9 +34,9 @@ class Elective(models.Model):
         pcode, _ = p.split(')', 1)
         return Sesshun.objects.filter(project__pcode__exact=pcode).get(name=name)
 
-    def gaurenteed(self):
+    def guaranteed(self):
         "Does the parent session have this flag set?"
-        return self.session.gaurenteed()
+        return self.session.guaranteed()
 
     def publish(self):
         """

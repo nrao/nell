@@ -228,12 +228,11 @@ class Sesshun(models.Model):
         observing parameter, else None if not.
         Only applies to windowed and elective sessions: if 'Not
         Gaurentted' is set True, then the window or elective is not 
-        gaurenteed to observe.
+        guaranteed to observe.
         """
         return self.has_bool_obs_param("Not Guaranteed")
 
-    # TBF: should be spelled: guaranteed
-    def gaurenteed(self):
+    def guaranteed(self):
         "True if 'Not Gaurenteed' param is set to F, or None"
         ng = self.not_gauranteed()
         if ng is None or not ng:

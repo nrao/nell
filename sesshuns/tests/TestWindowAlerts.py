@@ -1,4 +1,4 @@
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import NellTestCase
 from nell.utilities.database import WindowAlerts
 from sesshuns.models         import *
 from sesshuns.httpadapters   import *
@@ -315,7 +315,7 @@ class TestWindowAlerts(NellTestCase):
         # Long before the window starts, the weekly notification
         # will tell about this (stage I):
         now = datetime(2009, 1, 1)
-        ns = wa.findAlerts(stage = 1
+        ns = wa.findBlackoutAlerts(stage = 1
                          , now = now
                            )
         self.assertEquals(1, len(ns))
@@ -323,19 +323,13 @@ class TestWindowAlerts(NellTestCase):
         self.assertEquals(1, ns[0][2])
 
         # This would not be sent out in stage II
-        ns = wa.findAlerts(stage = 2
-                         , now = now
-                           )
+        ns = wa.findBlackoutAlerts(stage = 2, now = now)
         self.assertEquals(0, len(ns))
 
         # But would be once we get close enough to the window
         now = self.window.start_datetime() - timedelta(days = 5)
-        ns = wa.findAlerts(stage = 2
-                         , now = now
-                           )
+        ns = wa.findBlackoutAlerts(stage = 2, now = now)
         self.assertEquals(1, len(ns))
         self.assertEquals(self.window, ns[0][0])
         self.assertEquals(1, ns[0][2])
-
-        
 

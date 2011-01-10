@@ -1,4 +1,5 @@
 from utils                     import *
+from PeriodsTestCase           import PeriodsTestCase
 from TestBlackout              import TestBlackout
 from TestComplimentEvents      import TestComplimentEvents
 from TestConsolidateBlackouts  import TestConsolidateBlackouts
@@ -23,6 +24,8 @@ from TestReceiverSchedule      import TestReceiverSchedule
 from TestSchedulingNotifier    import TestSchedulingNotifier
 from TestScheduleTools         import TestScheduleTools
 from TestSesshun               import TestSesshun
+from TestSessionAlertNotifier  import TestSessionAlertNotifier
+from TestSessionAlerts         import TestSessionAlerts
 from TestSessionResource       import TestSessionResource
 from TestShiftPeriodBoundaries import TestShiftPeriodBoundaries
 from TestTimeAccounting        import TestTimeAccounting

@@ -1,4 +1,4 @@
-from nell.test_utils.NellTestCase import NellTestCase
+from nell.test_utils              import NellTestCase
 from sesshuns.models              import *
 from sesshuns.httpadapters        import *
 from utils                        import create_sesshun

@@ -8,6 +8,7 @@ from sesshuns.models import *
 from sets            import Set
 from datetime        import date, datetime, timedelta
 from nell.tools      import TimeAccounting
+from SessionAlerts   import SessionAlerts
 
 def get_sessions(typ,sessions):
     return [s for s in sessions if s.session_type.type == typ]
@@ -601,6 +602,15 @@ def GenerateReport():
                                          , s.receiver_list_simple()
                                          , s.frequency))
     print_values(outfile, values)
+
+    outfile.write("\n\nUpcomming Windowed, Elective, and Fixed Sessions that are not enabled:")
+    sa = SessionAlerts()
+    print_values(outfile
+               , ["%s session %s which runs %s" % (u.session.session_type.type
+                                                 , u.session.id
+                                                 , sa.getRange(u))
+                   for u in sa.findDisabledSessionAlerts()]
+                   )
 
     outfile.write("\n\nProjects without a friend:")
     values = [p.pcode for p in projects if not p.complete and not p.friend]

@@ -1,43 +1,9 @@
-######################################################################
-#
-#
-#
-#  Copyright (C) 2009 Associated Universities, Inc. Washington DC, USA.
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful, but
-#  WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-#  General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-#
-#  Correspondence concerning GBT software should be addressed as follows:
-#  GBT Operations
-#  National Radio Astronomy Observatory
-#  P. O. Box 2
-#  Green Bank, WV 24944-0002 USA
-#
-#  $Id:$
-#
-######################################################################
-
 from Notifier import Notifier
 from datetime import datetime, timedelta
 from sets     import Set
 from Email    import Email
 
-
 import TimeAgent
-
-# TBF: these Email children are here because no one else uses them.
-# I tried to make them inner to WinAlerNotifier but it wasn't working
 
 class WinAlertEmail(Email):
     """
@@ -48,11 +14,7 @@ class WinAlertEmail(Email):
     def __init__(self, sender, window):
 
         Email.__init__(self, sender = sender, recipients = [])
-        
         self.createRecepients(window)
-        self.createSubject(window)
-        self.createBody(window)
-
         self.date = None
 
     def createRecepients(self, window):
@@ -69,20 +31,14 @@ class WinAlertEmail(Email):
         if len(emails) > 0:            
             self.SetRecipients(emails)
 
-class WinAlertEmailLevelOne(WinAlertEmail):
-
-    def createSubject(self, window):
-        subj = "Blackout dates may prevent scheduling %s" % \
-           window.session.project.pcode
-        self.SetSubject(subj)    
-
-    def createBody(self, window):
+    def createMessage(self, window, subject, percent, chance):
+        self.SetSubject(subject)
         body = """
 Dear Observers,  
 
-There is no observer available for >10%s of the  possible time for scheduling 
+There is no observer available for >%s%% of the  possible time for scheduling 
 %s's windowed session which runs from %s through 
-%s. As a result it is  very possible this project will not be 
+%s. As a result it is %s this project will not be 
 scheduled during the windowed session. At this point three options are available:
      (1) Change the blackout dates for one or more observers of the project
          so that this situation is remedied
@@ -93,45 +49,12 @@ scheduled during the windowed session. At this point three options are available
 
 Regards,
 The GBT scheduling team 
-        """ % ("%" # TBF WTF OMG!!!
+        """ % (percent
              , window.session.project.pcode
              , window.start_date()
-             , window.last_date())
-        self.SetBody(body)
-
-class WinAlertEmailLevelTwo(WinAlertEmail):
-
-    def createSubject(self, window):
-        subj = "Blackout dates will prevent scheduling %s" % \
-           window.session.project.pcode
-        self.SetSubject(subj)    
-
-    def createBody(self, window):
-        body = """
-Dear Observers,  
-
-There is no observer available for >50%s of the  possible time for scheduling 
-%s's windowed session which runs  from %s through 
-%s. As a result it is  nearly certain that this project will not 
-be scheduled during the  windowed session.  
-
-At this point three options are available:     
-
-       (1) Change the blackout dates for one or more observers 
-           of the project so that this situation is remedied     
-       (2) Leave all blackout dates as they are, and accept that your
-           project may not be scheduled.  In this case the window *will
-           not be rescheduled*.
-       (3) Contact the GBT scheduling team (helpdesk-dss@nrao.edu) to
-           determine if the window parameters for this project should be
-           changed.   
-
-Regards, 
-The GBT scheduling team 
-        """ % ("%" # TBF WTF OMG !!!
-             , window.session.project.pcode
-             , window.start_date()
-             , window.last_date())
+             , window.last_date()
+             , chance
+             )
         self.SetBody(body)
 
 class WinAlertNotifier(Notifier):
@@ -150,8 +73,9 @@ class WinAlertNotifier(Notifier):
         Notifier.__init__(self, [], test, log)
 
         self.sender = "helpdesk-dss@gb.nrao.edu"
-        self.level = level
-        self.stage = stage
+        self.level  = level
+        self.stage  = stage
+        self.type   = type
         self.setWindow(window)
  
     def setWindow(self, window):
@@ -162,8 +86,13 @@ class WinAlertNotifier(Notifier):
         
         self.window = window
 
-        self.email = WinAlertEmailLevelOne(self.sender, window) if self.level == 1 else \
-            WinAlertEmailLevelTwo(self.sender, window)
+        self.email = WinAlertEmail(self.sender, window) 
+        if self.level == 1:
+            subject = "Blackout dates may prevent scheduling %s" % window.session.project.pcode
+            self.email.createMessage(window, subject, 10, "very possible")
+        else:
+            subject = "Blackout dates will prevent scheduling %s" % window.session.project.pcode
+            self.email.createMessage(window, subject, 50, "nearly certain")
 
     def notify(self):
         "send out all the different emails"
