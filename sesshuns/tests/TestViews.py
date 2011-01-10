@@ -1,12 +1,11 @@
 from django.test.client  import Client
 
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import BenchTestCase, timeIt
 from sesshuns.models         import *
 from sesshuns.utilities      import getReservationsFromDB
 from utils                   import create_sesshun
 
-class TestViews(NellTestCase):
-
+class TestViews(BenchTestCase):
 
     def setupRxSchedule(self):
         d = datetime(2009, 4, 1, 0)
@@ -17,7 +16,7 @@ class TestViews(NellTestCase):
                 rs.start_date = start_date
                 rs.receiver = Receiver.objects.get(id = i + j)
                 rs.save()
-
+    @timeIt
     def test_receivers_toggle_rcvr(self):
         self.setupRxSchedule()
         client = Client()
@@ -50,6 +49,7 @@ class TestViews(NellTestCase):
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(response.content, '{"message": "One of the following are invalid inputs: dog, 04/11/2009 00:00:00, 342", "error": "Invalid Inputs."}')
 
+    @timeIt
     def test_receivers_schedule(self):
     
         self.setupRxSchedule()
@@ -73,6 +73,7 @@ class TestViews(NellTestCase):
         self.assertEquals(response.content,
                           '{"ids": [1], "session handles": ["Low Frequency With No RFI (GBT09A-001)"]}')
 
+    @timeIt
     def test_column_configurations_explorer_post(self):
         data = {'Thesis?': ['false']               , 'Grade(s)': ['false']
               , 'Name': ['false']                  , 'PSC Time(s)': ['false']
@@ -92,6 +93,7 @@ class TestViews(NellTestCase):
         response = c.get('/configurations/explorer/columnConfigs', {'explorer': '/project'})
         self.failUnlessEqual(response.status_code, 200)
 
+    @timeIt
     def test_filter_combinations_explorer_post(self):
         data = {'Trimester': '08C'
               , 'Project Type': 'science'

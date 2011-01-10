@@ -304,11 +304,11 @@ class Window(models.Model):
 
     def lacksMandatoryDefaultPeriod(self):
         """
-        Windowed Sessions that are gauranteed need default periods.
-        Non-gauranteed can do without a default period, because if
-        a window doesn't get scheduled, oh well, it wasn't gauranteed.
+        Windowed Sessions that are guaranteed need default periods.
+        Non-guaranteed can do without a default period, because if
+        a window doesn't get scheduled, oh well, it wasn't guaranteed.
         """
-        return self.session.gaurenteed() and self.default_period is None 
+        return self.session.guaranteed() and self.default_period is None 
         
     def errors(self):
         """

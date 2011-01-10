@@ -223,7 +223,7 @@ class RCAddActivityForm(forms.Form):
 #
 ######################################################################
 
-@login_required    
+@login_required
 def display_maintenance_activity(request, activity_id = None):
     if activity_id:
         ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
@@ -248,6 +248,16 @@ def display_maintenance_activity(request, activity_id = None):
         created = str(ma.modifications.all()[0]
                       if ma.modifications.all() else ""),
         supervisor_mode = True if (u  in supervisors) else False
+
+        # select all maintenance periods in the future, including
+        # today.  This gives the user the option of moving or copying
+        # the maintenance activity to any date available in the
+        # future, even if it is to a date earlier than the scheduled
+        # date for the activity.
+        mp = Period.objects\
+            .filter(session__observing_type__type = "maintenance")\
+            .filter(start__gte = datetime.now())
+        copymove_dates = [str(p.start.date()) for p in mp]
 
         params = {'subject'            : ma.subject,
                   'date'               : start.date(),
@@ -275,7 +285,8 @@ def display_maintenance_activity(request, activity_id = None):
                   'repeat_activity'    : ma.is_repeat_activity(),
                   'repeat_interval'    : repeat_interval,
                   'repeat_end'         : repeat_end,
-                  'repeat_template'    : repeat_template
+                  'repeat_template'    : repeat_template,
+                  'copymove_dates'     : copymove_dates
                  }
     else:
         params = {}
@@ -510,6 +521,45 @@ def edit_activity(request, activity_id = None):
 
             return HttpResponseRedirect('/schedule/')
 
+        elif request.GET['ActionEvent'] == 'Move':
+            ma = Maintenance_Activity.objects.get(id = activity_id)
+            u = get_requestor(request)
+            user = _get_user_name(u)
+            d = request.GET['Destination'].split('-')
+            date = datetime(int(d[0]), int(d[1]), int(d[2]))
+            delta = timedelta(days=1)
+            mp = Period.objects\
+                .filter(session__observing_type__type = "maintenance")\
+                .filter(start__gte = date)\
+                .filter(start__lt = date + delta)
+
+            if len(mp) > 0:
+                ma.period = mp[0]         # assuming here 1 maintenance period
+                ma.approved = False       # per day.  UI does not support more
+                ma.add_modification(user) # than this.
+                ma.save()
+
+            return HttpResponseRedirect('/schedule/')
+
+        elif request.GET['ActionEvent'] == 'Copy':
+            ma = Maintenance_Activity.objects.get(id = activity_id)
+            u = get_requestor(request)
+            user = _get_user_name(u)
+            d = request.GET['Destination'].split('-')
+            date = datetime(int(d[0]), int(d[1]), int(d[2]))
+            delta = timedelta(days=1)
+            mp = Period.objects\
+                .filter(session__observing_type__type = "maintenance")\
+                .filter(start__gte = date)\
+                .filter(start__lt = date + delta)
+
+            if len(mp) > 0:
+                new_ma = ma.clone(mp[0]) # assuming here 1 maintenance period
+                new_ma.add_modification(user)
+                new_ma.save()
+
+            return HttpResponseRedirect('/schedule/')
+
     return render_to_response('sesshuns/rc_add_activity_form.html',
                               {'form': form,
                                'supervisor_mode': supervisor_mode,
@@ -729,6 +779,6 @@ def _get_supervisors():
     # TBF: when roles done, will get these by visiting the roles.
     s = []
     s += User.objects.filter(auth_user__username = 'rcreager')
-    s += User.objects.filter(auth_user__username = 'banderso')
-    s += User.objects.filter(auth_user__username = 'mchestnu')
+#    s += User.objects.filter(auth_user__username = 'banderso')
+#    s += User.objects.filter(auth_user__username = 'mchestnu')
     return s

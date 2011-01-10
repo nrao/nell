@@ -41,6 +41,9 @@ DATABASE_HOST = 'trent'       #MODIFY#
                               # Set to empty string for localhost. Not used
                               # with sqlite3.
 DATABASE_PORT = '5432'        # Set to 5432 for default. Not used with sqlite3.
+BENCHMARK_DB_NAME = None      # Set to 'benchmark' for nightly unit tests
+                              # or a personal database for your own tests
+                              # or leave as None to not save benchmarks
 
 CACHE_BACKEND = "db://observer_cache/?timeout=3600" # 1 hr timeout
 

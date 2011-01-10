@@ -1,9 +1,9 @@
 from django.test.client  import Client
 
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import BenchTestCase, timeIt
 from sesshuns.models         import *
 
-class TestUserResource(NellTestCase):
+class TestUserResource(BenchTestCase):
 
     def setUp(self):
         super(TestUserResource, self).setUp()
@@ -30,6 +30,7 @@ class TestUserResource(NellTestCase):
                      ))
         self.users[-1].save()
 
+    @timeIt
     def test_create(self):
         fdata = self.fdata
         fdata.update({"original_id" : "99"
@@ -59,6 +60,7 @@ class TestUserResource(NellTestCase):
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"total": 1' in response.content)
 
+    @timeIt
     def test_update(self):
         fdata = self.fdata
         fdata.update({"_method" : "put"

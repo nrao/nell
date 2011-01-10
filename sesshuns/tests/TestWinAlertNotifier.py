@@ -1,4 +1,4 @@
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import NellTestCase
 from nell.utilities.WinAlertNotifier import WinAlertNotifier
 from utils                   import create_sesshun
 from sesshuns.models         import *
@@ -48,8 +48,7 @@ class TestWinAlertNotifier(NellTestCase):
                             , log = False
                             )
 
-        email = wn.email
-        txt = email.GetText()
+        txt = wn.email.GetText()
         self.failUnless("Subject: Blackout dates may prevent scheduling WTF" in txt)
         self.failUnless(">10% of the  possible time for scheduling" in txt)
         self.failUnless("2009-04-05 through" in txt)
@@ -64,4 +63,4 @@ class TestWinAlertNotifier(NellTestCase):
         email = wn.email
         txt = email.GetText()
         self.failUnless("Subject: Blackout dates will prevent scheduling WTF" in txt)
-                            
+

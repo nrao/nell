@@ -3,9 +3,9 @@ from django.test.client  import Client
 
 from sesshuns.httpadapters   import *
 from sesshuns.models         import *
-from test_utils.NellTestCase import NellTestCase
+from test_utils              import BenchTestCase, timeIt
 
-class TestReceiverSchedule(NellTestCase):
+class TestReceiverSchedule(BenchTestCase):
 
     def setUp(self):
         super(TestReceiverSchedule, self).setUp()
@@ -100,6 +100,7 @@ class TestReceiverSchedule(NellTestCase):
         new_schd = Receiver_Schedule.extract_schedule(startdate = startDt)
         self.assertEquals(new_date_rcvrs, new_schd[newDt])
 
+    @timeIt
     def test_extract_diff_schedule(self):
         startdate = datetime(2009, 4, 6, 12)
         duration = 15
@@ -171,8 +172,6 @@ class TestReceiverSchedule(NellTestCase):
                          Receiver_Schedule.previousDate(
                              datetime(2009, 4, 1, 0)))
 
-
-
     def test_delete_date(self):
         # get the current schedule
         startdate = datetime(2009, 4, 6, 12)
@@ -194,6 +193,7 @@ class TestReceiverSchedule(NellTestCase):
             if dt != dates[-3]:
                 self.assertEquals(new_schedule[dt], schedule[dt])
 
+    @timeIt
     def test_shift_date(self):
         startdate = datetime(2009, 4, 6, 12)
         schedule = Receiver_Schedule.extract_schedule(startdate = startdate)

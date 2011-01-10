@@ -8,6 +8,7 @@ from sesshuns.models import *
 from sets            import Set
 from datetime        import date, datetime, timedelta
 from nell.tools      import TimeAccounting
+from SessionAlerts   import SessionAlerts
 
 def get_sessions(typ,sessions):
     return [s for s in sessions if s.session_type.type == typ]
@@ -110,7 +111,7 @@ def filter_current_windows(wins):
     lt_date = gt_date + timedelta(62) 
     return [w for w in wins if w.start_date() < lt_date and w.last_date() > gt_date]
 
-# Windowed Sessions that are gauranteed need default periods.
+# Windowed Sessions that are guaranteed need default periods.
 def get_missing_default_periods():
     ws = filter_current_windows(get_windows())
     return [w for w in ws if w.lacksMandatoryDefaultPeriod()]
@@ -601,6 +602,15 @@ def GenerateReport():
                                          , s.receiver_list_simple()
                                          , s.frequency))
     print_values(outfile, values)
+
+    outfile.write("\n\nUpcomming Windowed, Elective, and Fixed Sessions that are not enabled:")
+    sa = SessionAlerts()
+    print_values(outfile
+               , ["%s session %s which runs %s" % (u.session.session_type.type
+                                                 , u.session.id
+                                                 , sa.getRange(u))
+                   for u in sa.findDisabledSessionAlerts()]
+                   )
 
     outfile.write("\n\nProjects without a friend:")
     values = [p.pcode for p in projects if not p.complete and not p.friend]
