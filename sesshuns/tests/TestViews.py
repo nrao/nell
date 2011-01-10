@@ -7,12 +7,61 @@ from utils                   import create_sesshun
 
 class TestViews(NellTestCase):
 
-    def test_change_schedule(self):
-        create_sesshun()
-        c = Client()
-        response = c.post('/schedule/change_schedule'
-                        , dict(duration = "1.0"
-                             , start    = "2009-10-11 04:00:00"))
+
+    def setupRxSchedule(self):
+        d = datetime(2009, 4, 1, 0)
+        for i in range(9):
+            start_date = d + timedelta(5*i)
+            for j in range(1,4):
+                rs = Receiver_Schedule()
+                rs.start_date = start_date
+                rs.receiver = Receiver.objects.get(id = i + j)
+                rs.save()
+
+    def test_receivers_toggle_rcvr(self):
+        self.setupRxSchedule()
+        client = Client()
+
+        # check initial conditions
+        rs = Receiver_Schedule.objects.filter(start_date = datetime(2009, 4, 11)).order_by("receiver")
+        self.assertEquals(["342", "450", "600"]
+                        , [rd.receiver.abbreviation for rd in rs])
+
+        # toggle a rcvr
+        fromDt = toDt = datetime(2009, 4, 11).strftime("%m/%d/%Y %H:%M:%S")
+        rcvr = "342" 
+        response = client.post('/receivers/toggle_rcvr',
+                                   {"from" : fromDt,
+                                    "to" : toDt,
+                                    "rcvr" : rcvr})
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertEqual(response.content, '{"success": "ok"}')
+   
+        rs = Receiver_Schedule.objects.filter(start_date = \
+            datetime(2009, 4, 11)).order_by("receiver")
+        self.assertEquals(["450", "600"]
+                        , [rd.receiver.abbreviation for rd in rs])
+
+        # check error checking
+        response = client.post('/receivers/toggle_rcvr',
+                                   {"from" : "dog",
+                                    "to" : toDt,
+                                    "rcvr" : rcvr})
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertEqual(response.content, '{"message": "One of the following are invalid inputs: dog, 04/11/2009 00:00:00, 342", "error": "Invalid Inputs."}')
+
+    def test_receivers_schedule(self):
+    
+        self.setupRxSchedule()
+        client = Client()
+
+        startdate = datetime(2009, 4, 6, 12)
+        response = client.get('/receivers/schedule',
+                                   {"startdate" : startdate,
+                                    "duration" : 7})
+        self.failUnlessEqual(response.status_code, 200)
+        expected = '{"diff": [{"down": [], "up": ["RRI", "342", "450"], "day": "04/06/2009"}, {"down": ["RRI"], "up": ["600"], "day": "04/11/2009"}], "receivers": ["RRI", "342", "450", "600", "800", "1070", "L", "S", "C", "X", "Ku", "K", "Ka", "Q", "MBA", "Z", "Hol", "KFPA"], "maintenance": [], "schedule": {"04/11/2009": ["342", "450", "600"], "04/06/2009": ["RRI", "342", "450"]}}'
+        self.assertEqual(expected, response.content)
 
     def test_get_options(self):
         create_sesshun()

@@ -27,21 +27,20 @@ def receivers_schedule(request, *args, **kws):
     all the receiver changes. Receiver changes are aligned with maintenance
     days.
     """
+
+    # interpret the inputs
     startdate = request.GET.get("startdate", None)
     startdate = datetime.strptime(startdate, '%Y-%m-%d %H:%M:%S') if startdate else None
 
     duration = request.GET.get("duration", None)
     duration = int(duration) if duration else duration
 
+    # use the input to get the basic rx schedule
     schedule = Receiver_Schedule.extract_schedule(startdate, duration)
-    for dt in sorted(schedule.keys()):
-        print dt, [r.abbreviation for r in schedule[dt]]
+    jsonschd =  Receiver_Schedule.jsondict(schedule)
 
+    # some clients also need the diff schedule
     diff     = Receiver_Schedule.diff_schedule(schedule)
-    for dt, up, down in diff:
-        print dt, [r.abbreviation for r in up], [r.abbreviation for r in down] 
-
-
     jsondiff = Receiver_Schedule.jsondict_diff(diff).get("diff_schedule", None)
 
     # get the dates for maintenace that cover from the start of this 
@@ -50,10 +49,11 @@ def receivers_schedule(request, *args, **kws):
                        session__observing_type__type = "maintenance"
                      , start__gte = startdate).order_by("start")]
 
+    # clients want to also know all the latest rcvrs
     rcvrs       = [r.jsondict() for r in Receiver.objects.all() \
                                 if r.abbreviation != "NS"]
     return HttpResponse(
-            json.dumps({"schedule" :   Receiver_Schedule.jsondict(schedule)
+            json.dumps({"schedule" :   jsonschd
                       , "diff":        jsondiff
                       , "maintenance": maintenance
                       , "receivers" :  rcvrs})
@@ -61,50 +61,11 @@ def receivers_schedule(request, *args, **kws):
 
 @revision.create_on_success
 @catch_json_parse_errors
-def change_rcvr_schedule(request, *args, **kws):
-    """
-    Updates the receiver schedule. Some receivers go 'up'. Others come 'down'.
-    """
-    print "change_rcvr_schedule: ", args, kws
-    startdate = request.POST.get("startdate", None)
-    startdate = datetime.strptime(startdate, '%Y-%m-%d %H:%M:%S') if startdate else None
-    error     = "Error Changing Receiver Schedule"
-
-    # Going up!
-    upStr   = request.POST.get("up", None)
-    upRcvrs = upStr.strip().split(" ") if upStr != "" else []
-    e, up   = getReceivers(upRcvrs) 
-    if e:
-        return HttpResponse(json.dumps({'error': error, 'message': e})
-                          , mimetype = "text/plain")
-
-    # Coming down!
-    downStr   = request.POST.get("down", None)
-    downRcvrs = downStr.strip().split(" ") if downStr != "" else []
-    e, down   = getReceivers(downRcvrs) 
-    if e:
-        return HttpResponse(json.dumps({'error': error, 'message': e})
-                          , mimetype = "text/plain")
-    # Update the schedule.
-    print "calling :"
-    success, msg = Receiver_Schedule.change_schedule(startdate, up, down)
-    print success, msg
-    revision.comment = get_rev_comment(request, None, "change_rcvr_schedule")
-
-    if success:
-        return HttpResponse(json.dumps({'success':'ok'})
-                          , mimetype = "text/plain")
-    else:
-        return HttpResponse(json.dumps({'error': error, 'message': msg})
-                               , mimetype = "text/plain")
-
-@revision.create_on_success
-@catch_json_parse_errors
 def rcvr_schedule_toggle_rcvr(request, *args, **kws):
     """
-    Moves an existing receiver change to another date.
+    Toggles a rcvr on all the dates in the given date range.
+    For a given date, if a rcvr is up, it goes down and vice versa.
     """
-    print "toggle: ", request.POST
     try:
         fromDt = datetime.strptime(request.POST.get("from", None)
                                  , "%m/%d/%Y %H:%M:%S")
