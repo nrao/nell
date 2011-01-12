@@ -52,6 +52,9 @@ class Sesshun(models.Model):
     def isWindowed(self):
         return self.session_type.type == "windowed"
 
+    def isElective(self):
+        return self.session_type.type == "elective"
+
     def isFixed(self):
         return self.session_type.type == "fixed"
 
