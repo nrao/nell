@@ -96,13 +96,6 @@ class TestSchedulingNotifier(PeriodsTestCase):
         sn = SchedulingNotifier.SchedulingNotifier(test = True)
 
         sn.setPeriods(self.ps)
-        
-        for x in ["observer", "deleted"]:
-            staffEmail = sn.email_templates.getObject(x)
-
-            #print staffEmail.subject
-            #print staffEmail.recipients
-            #print staffEmail.body
 
         # test the staff email
         email = sn.email_templates.getObject("staff")
@@ -152,11 +145,7 @@ Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | Nubbles   |           | three"""
 
         # TBF: make the test flag actually do something!
         sn = SchedulingNotifier.SchedulingNotifier(test = True)
-
         sn.setPeriods(self.ps)
-
-        self.assertEquals([], sn.deletedPeriods)
-        self.assertEquals([p], sn.deletedElectivePeriods)
 
         for x in ["observer", "deleted", "staff"]:
             staffEmail = sn.email_templates.getObject(x)
@@ -165,6 +154,8 @@ Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | Nubbles   |           | three"""
             #print staffEmail.recipients
             #print staffEmail.body
 
+        self.assertEquals([], sn.deletedPeriods)
+        self.assertEquals([p], sn.deletedElectivePeriods)
 
         # test the staff email
         email = sn.email_templates.getObject("staff")

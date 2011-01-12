@@ -215,8 +215,8 @@ class SchedulingNotifier(Notifier):
 
     def createObservingSubject(self):
         subject = "Your GBT project has been scheduled (%s-%s)" % \
-                  (TimeAgent.utc2est(self.startdate).strftime('%b %d'),
-                   TimeAgent.utc2est(self.enddate).strftime('%b %d'))
+                  (self.utc2estDate(self.startdate),
+                   self.utc2estDate(self.enddate))
         self.logMessage("Observing Subject: %s\n" % subject)
         return subject
 
@@ -228,8 +228,8 @@ Dear Colleagues,
 The schedule for the period %s ET through %s ET is fixed and available.
 
 """ \
-        % (TimeAgent.utc2est(self.startdate).strftime('%b %d %H:%M'),
-           TimeAgent.utc2est(self.enddate).strftime('%b %d %H:%M'))
+        % (self.utc2estDT(self.startdate),
+           self.utc2estDT(self.enddate))
         return header
 
     def getStaffBodyFooter(self):
@@ -250,9 +250,9 @@ Happy Observing!
         notes = ""
         # any rejected electives to notify on?
         for p in self.deletedElectivePeriods:
-            l = "Note: Project %s will not be scheduled on %s\n" % \
+            l = "Note: Project %s will not be scheduled on %s (ET)\n" % \
                 (p.session.project.pcode
-               , TimeAgent.utc2est(p.start).strftime('%b %d %H:%M'))
+               , self.utc2estDT(p.start))
             notes += l   
         return notes
 
@@ -310,8 +310,8 @@ to helpdesk-dss@gb.nrao.edu.
 
 Thank You.
 """ \
-        % (TimeAgent.utc2est(self.startdate).strftime('%b %d %H:%M'),
-           TimeAgent.utc2est(self.enddate).strftime('%b %d %H:%M'),
+        % (self.utc2estDT(self.startdate),
+           self.utc2estDT(self.enddate),
            self.getSessionTable(self.deletedPeriods))
 
         self.logMessage("Body: %s\n" % body)
@@ -327,7 +327,7 @@ Thank You.
                 pi = p.session.project.principal_investigator().last_name[:9] if p.session.project.principal_investigator() else "Unknown"
 
             table += "%s | %s | %s | %5s | %-9s | %-9s | %s\n" % (
-                TimeAgent.utc2est(p.start).strftime('%b %d %H:%M')
+                self.utc2estDT(p.start)
               , p.start.strftime('%b %d %H:%M')
               , TimeAgent.dt2tlst(p.start).strftime('%H:%M')
               , "%2.2f" % p.duration
@@ -361,7 +361,7 @@ Thank You.
                     pi = "unknown"
 
             table += "%s | %s | %s | %5s | %-9s | %-9s | %-13s | %s\n" % (
-                TimeAgent.utc2est(p.start).strftime('%b %d %H:%M')
+                self.utc2estDT(p.start)
               , p.start.strftime('%b %d %H:%M')
               , TimeAgent.dt2tlst(p.start).strftime('%H:%M')
               , "%2.2f" % p.duration
