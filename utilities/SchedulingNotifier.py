@@ -66,7 +66,7 @@ class SchedulingNotifier(Notifier):
         self.registerTemplate("observer", Email(self.sender,
                                                 self.createObservingAddresses(),
                                                 self.createObservingSubject(),
-                                                self.createBody()))
+                                                self.createObservingBody()))
         self.registerTemplate("deleted", Email(self.sender,
                                                self.createDeletedAddresses(),
                                                self.createDeletedSubject(),
@@ -74,13 +74,16 @@ class SchedulingNotifier(Notifier):
         self.registerTemplate("staff", Email(self.sender,
                                              self.createStaffAddresses(),
                                              self.createStaffSubject(),
-                                             self.createBody()))     
+                                             self.createStaffBody()))     
 
     def examinePeriods(self, periods):
         """
-        This class must notify observers of imminent observations, *and*
-        remind observers of things that have changed.  Here we filter out
-        the two purposes from our generic list of periods.
+        This class must: 
+           * notify observers of imminent observations
+           * remind observers of things that have changed
+           * notify observers of rejected Elective Periods
+        Here we filter out the many purposes from our generic list 
+        of periods.
         """
 
         self.periods = periods
@@ -92,13 +95,16 @@ class SchedulingNotifier(Notifier):
 
         # the list of periods that we must list to remind obs. of changes:
         self.changedPeriods = sorted([p for p in periods if \
-                             (p.isDeleted() and not p.session.isWindowed()) or \
+                             (p.isDeleted() and (not p.session.isWindowed() and not p.session.isElective())) or \
                                    p.accounting.of_interest()])
 
         # deleted periods must also be tracked separately, because those
         # observers will get an email with a different subject
         self.deletedPeriods = sorted([p for p in periods if p.isDeleted() and \
-                                                   not p.session.isWindowed()])
+                                                   (not p.session.isWindowed() and not p.session.isElective())])
+
+        # deleted electives get special consideration
+        self.deletedElectivePeriods = sorted([p for p in periods if p.isDeleted() and p.session.isElective()])
 
     def notify(self):
         "send out all the different emails"
@@ -144,6 +150,9 @@ class SchedulingNotifier(Notifier):
 
     def createStaffAddresses(self):
         staff = ["gbtops@gb.nrao.edu", "gbtinfo@gb.nrao.edu", "gbtime@gb.nrao.edu"]
+        # any electives that arent getting observed?
+        deletedElecs = self.createAddresses(self.deletedElectivePeriods)
+        staff.extend(deletedElecs)
         self.logMessage("Staff To: %s\n" % staff)
         return staff
 
@@ -183,10 +192,19 @@ class SchedulingNotifier(Notifier):
         self.logMessage("To: %s\n" % eaddr.keys())
         return eaddr
 
+    def utc2est(self, dt, frmt):
+        return TimeAgent.utc2est(dt).strftime(frmt)
+
+    def utc2estDate(self, dt):
+        return self.utc2est(dt, '%b %d')
+
+    def utc2estDT(self, dt):
+        return self.utc2est(dt,'%b %d %H:%M')
+
     def createStaffSubject(self):
         subject = "GBT schedule for %s-%s" % \
-                  (TimeAgent.utc2est(self.startdate).strftime('%b %d'),
-                   TimeAgent.utc2est(self.enddate).strftime('%b %d'))
+                  (self.utc2estDate(self.startdate),
+                   self.utc2estDate(self.enddate))
         self.logMessage("Staff Subject: %s\n" % subject)
         return subject
 
@@ -202,15 +220,21 @@ class SchedulingNotifier(Notifier):
         self.logMessage("Observing Subject: %s\n" % subject)
         return subject
 
-    def createBody(self):
-        body = \
+    def getStaffBodyHeader(self):
+        header = \
 """
 Dear Colleagues,
 
 The schedule for the period %s ET through %s ET is fixed and available.
 
-%s
-%s
+""" \
+        % (TimeAgent.utc2est(self.startdate).strftime('%b %d %H:%M'),
+           TimeAgent.utc2est(self.enddate).strftime('%b %d %H:%M'))
+        return header
+
+    def getStaffBodyFooter(self):
+        footer = \
+"""
 Please log into https://dss.gb.nrao.edu to view your observation
 related information.
 
@@ -219,12 +243,53 @@ to %s.
 
 Happy Observing!
 """ \
-        % (TimeAgent.utc2est(self.startdate).strftime('%b %d %H:%M'),
-           TimeAgent.utc2est(self.enddate).strftime('%b %d %H:%M'),
-           self.getSessionTable(self.observingPeriods),
-           self.getChanges(), self.sender)
+        % self.sender
+        return footer
 
-        self.logMessage("Observing and Staff Body: %s\n" % body)
+    def getStaffBodyNotes(self):
+        notes = ""
+        # any rejected electives to notify on?
+        for p in self.deletedElectivePeriods:
+            l = "Note: Project %s will not be scheduled on %s\n" % \
+                (p.session.project.pcode
+               , TimeAgent.utc2est(p.start).strftime('%b %d %H:%M'))
+            notes += l   
+        return notes
+
+    def createStaffBody(self):
+        """
+        This email body will be based off the generic email, but may
+        have added lines.
+        """
+        body = \
+"""
+%s
+%s
+%s
+%s
+""" \
+        % (self.getStaffBodyHeader()
+         , self.getSessionTable(self.observingPeriods)
+         , self.getStaffBodyNotes()
+         , self.getStaffBodyFooter()
+          )
+        return body
+
+    def createObservingBody(self):
+        """
+        For now, this is identical to the staff body, but without
+        the notes.
+        """
+        body = \
+"""
+%s
+%s
+%s
+""" \
+        % (self.getStaffBodyHeader()
+         , self.getSessionTable(self.observingPeriods)
+         , self.getStaffBodyFooter()
+          )
         return body
 
     def createDeletedBody(self):
