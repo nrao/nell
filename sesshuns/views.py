@@ -427,10 +427,14 @@ def publish_periods(request, *args, **kwds):
     revision.comment = get_rev_comment(request, None, "publish_periods")
 
     if DATABASE_NAME == 'dss' and request.POST.get("tweet", "True") == "True":
-        update = 'GBT Schedule Update - https://dss.gb.nrao.edu/schedule/public'
+        update = 'GBT schedule updated. See https://dss.gb.nrao.edu/schedule/public for details.'
         try:
-            twitter.Api(username = 'GrnBnkTelescope'
-                      , password = 'dYN4m1(').PostUpdate(update)
+            twitter.Api(
+                consumer_key = 'WQyTgOFR6k4ieBdvbELQ'
+              , consumer_secret = 'roxz1TFCSQ9yOTpnwa67EbF3c1S5x8VGpVcjts'
+              , access_token_key = '113465249-yfvjRkQAl2MYyJ5hEjGlEKyr0NNbKfyUehErM7oL'
+              , access_token_secret = '2s9M5vPicohng2zOPICI5cvvgLp2NeMNRgd5bgnEq4'
+            ).PostUpdate(update)
         except: # That's ok, the world doesn't HAVE to know.
             formatExceptionInfo()
 
