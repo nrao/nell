@@ -269,8 +269,8 @@ Happy Observing!
 %s
 """ \
         % (self.getStaffBodyHeader()
-         , self.getSessionTable(self.observingPeriods)
          , self.getStaffBodyNotes()
+         , self.getSessionTable(self.observingPeriods)
          , self.getStaffBodyFooter()
           )
         return body
