@@ -48,4 +48,4 @@ class Archiver:
         pass
 
     def printLatency(self, latency):
-        print latency
+        pass
