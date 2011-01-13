@@ -20,7 +20,7 @@ def remotely_qualified(request, *args, **kws):
     qualified = User.objects.filter(sanctioned = True).order_by('last_name')
 
     return render_to_response('sesshuns/remotely_qualified.html'
-                            , dict(requestor = requestor, q = qualified))
+                              , dict(requestor = requestor, q = qualified))
 
 @login_required
 def moc_reschedule(request, *args, **kws):
@@ -77,28 +77,8 @@ def gbt_schedule(request, *args, **kws):
 
     periods  = [p for p in Period.in_time_range(pstart, pend) \
                 if not p.isPending()]
-    maintenance_activities = {}
 
-    # a comment here would be nice
-    for i in range(0, len(periods)):
-        if periods[i].session.observing_type.type == "maintenance":
-            mas = Maintenance_Activity.get_maintenance_activity_set(periods[i])
-        else:
-            if i < len(periods) - 1:
-                mas = Maintenance_Activity.objects\
-                      .filter(_start__gte = periods[i].start)\
-                      .filter(_start__lt = periods[i + 1].start)\
-                      .filter(period = None)\
-                      .filter(deleted = False)
-            else:
-                mas = Maintenance_Activity.objects\
-                      .filter(_start__gte = periods[i].start)\
-                      .filter(_start__lt = periods[i].end())\
-                      .filter(period = None)\
-                      .filter(deleted = False)
-
-        maintenance_activities[periods[i]] = mas
-
+    maintenance_activities = _map_maintenance_sets_to_periods(periods)
     requestor = get_requestor(request)
 
     # Ensure only operators or admins trigger costly MOC calculations
@@ -260,3 +240,62 @@ def summary(request, *args, **kws):
               , 'summary'  : [(t, summary[t]) for t in sorted(summary)]
               , 'project'  : project
               , 'is_logged_in': request.user.is_authenticated()})
+
+######################################################################
+# Looking for maintenance sets, which will then be atached to a
+# dictionary keyed by period that gets passed into the calendar.
+# Some maintenance sets are non-maintenance-period maintenance
+# activities, and are tied to non-maintenance periods.  This will
+# be fixed with the big refactoring of the calendar, to come.  But
+# first we must reconcile any scheduled electives, whose
+# maintenance sets may be attached to another of that elective's
+# periods and must be transferred.
+######################################################################
+
+def _map_maintenance_sets_to_periods(periods):
+    """
+    Helper function for the GBT Schedule calendar.  This function
+    takes a list of periods and returns a map with the periods passed
+    in as keys, and maintenance activity sets as values.  Most keys
+    with non-empty maintenance activity sets attached as values will
+    be maintenance periods, but some non-maintenance periods will have
+    non-maintenance-period maintenance activity sets attached.
+    """
+
+    maintenance_activities = {}
+
+    for i in range(0, len(periods)):
+        if periods[i].session.observing_type.type == "maintenance":
+            el = periods[i].elective
+            # if this is a maintenance elective, we want to reconcile
+            # the maintenance activity set by detaching it (if
+            # necessary) from a deleted elective period and
+            # reattaching it to the scheduled elective period.
+            if el:
+                for ep in el.periods.all():
+                    mas = ep.maintenance_activity_set.all()
+
+                    if mas:                 # if non-empty we've found the set.
+                        if ep.isDeleted():  # transfer if not scheduled period.
+                            for m in mas:
+                                m.period = periods[i] # periods[i] will be the scheduled one.
+                                m.save()
+            # now that the elective stuff is squared away, treat the period normally
+            mas = Maintenance_Activity.get_maintenance_activity_set(periods[i])
+        else:
+            if i < len(periods) - 1:
+                mas = Maintenance_Activity.objects\
+                      .filter(_start__gte = periods[i].start)\
+                      .filter(_start__lt = periods[i + 1].start)\
+                      .filter(period = None)\
+                      .filter(deleted = False)
+            else:
+                mas = Maintenance_Activity.objects\
+                      .filter(_start__gte = periods[i].start)\
+                      .filter(_start__lt = periods[i].end())\
+                      .filter(period = None)\
+                      .filter(deleted = False)
+
+        maintenance_activities[periods[i]] = mas
+
+    return maintenance_activities

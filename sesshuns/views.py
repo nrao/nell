@@ -466,7 +466,8 @@ def delete_pending(request, *args, **kwds):
 try:
     notifier = SchedulingNotifier()
 except:
-    printException(formatExceptionInfo())
+    # printException(formatExceptionInfo())
+    pass
 
 @catch_json_parse_errors
 def scheduling_email(request, *args, **kwds):

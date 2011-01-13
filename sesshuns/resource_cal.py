@@ -248,16 +248,7 @@ def display_maintenance_activity(request, activity_id = None):
         created = str(ma.modifications.all()[0]
                       if ma.modifications.all() else ""),
         supervisor_mode = True if (u  in supervisors) else False
-
-        # select all maintenance periods in the future, including
-        # today.  This gives the user the option of moving or copying
-        # the maintenance activity to any date available in the
-        # future, even if it is to a date earlier than the scheduled
-        # date for the activity.
-        mp = Period.objects\
-            .filter(session__observing_type__type = "maintenance")\
-            .filter(start__gte = datetime.now())
-        copymove_dates = [str(p.start.date()) for p in mp]
+        copymove_dates = _get_future_maintenance_dates()
 
         params = {'subject'            : ma.subject,
                   'date'               : start.date(),
@@ -779,6 +770,47 @@ def _get_supervisors():
     # TBF: when roles done, will get these by visiting the roles.
     s = []
     s += User.objects.filter(auth_user__username = 'rcreager')
-#    s += User.objects.filter(auth_user__username = 'banderso')
-#    s += User.objects.filter(auth_user__username = 'mchestnu')
+    s += User.objects.filter(auth_user__username = 'banderso')
+    s += User.objects.filter(auth_user__username = 'mchestnu')
     return s
+
+######################################################################
+# Gets all future (from today) maintenance dates.  Note the special
+# treatment of electives.  Each elective itself is only one potential
+# maintenance date, but may contain many periods.  If an elective is
+# not complete and doesn't have scheduled periods, then the first
+# pending period is chosen (arbitrarily).  If however it has a
+# scheduled period, that period is chosen.  Non-elective periods are
+# much more straightforward: any maintenance periods in the future are
+# chosen.
+######################################################################
+
+def _get_future_maintenance_dates():
+    today = TimeAgent.truncateDt(datetime.now())
+    mp = Period.objects\
+        .filter(session__observing_type__type = "maintenance")\
+        .filter(start__gte = today)\
+        .filter(elective = None)
+
+    pds = [p for p in mp]
+
+    electiveQ = models.Q(session__observing_type__type = 'maintenance')
+    per_dateQ = models.Q(periods__start__gte = today)
+    me = Elective.objects.filter(electiveQ & per_dateQ).distinct()
+
+    for i in me:
+        es = i.periodsByState('S')
+
+        if es:
+            pds.append(es[0])     # scheduled period
+        else:
+            ep = i.periodsByState('P')
+
+            if ep:
+                pds.append(ep[0]) # 1st pending period, if no scheduled period
+            else:
+                pass              # they're all deleted!
+
+    pds.sort(cmp = lambda x, y: cmp(x.start, y.start))
+    dates = [str(p.start.date()) for p in pds]
+    return dates
