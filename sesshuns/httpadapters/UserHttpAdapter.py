@@ -43,7 +43,8 @@ class UserHttpAdapter(object):
                 self.user.auth_user_id = self.user.auth_user.id
                 self.user.save()
             except:
-                printException(formatExceptionInfo())
+                pass
+                #printException(formatExceptionInfo())
 
         staff = fdata.get('staff')
         self.user.auth_user.is_staff = staff.lower() == 'true' if staff is not None else False

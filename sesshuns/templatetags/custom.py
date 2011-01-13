@@ -297,22 +297,36 @@ def floating_maint_periods(day):
     try:
         delta = timedelta(days = 7)
         mp = models.Period.objects\
-            .filter(session__project__pcode = "Maintenance")\
+            .filter(session__observing_type__type = "maintenance")\
             .filter(start__gte = day)\
             .filter(start__lt = day + delta)\
-            .order_by('start')
+            .filter(elective = None)
 
-        for i in range(0, len(mp)):
-            if mp[i].isPending():
-                mas = models.Maintenance_Activity.get_maintenance_activity_set(mp[i])
-                pend.append((chr(i + 65),  # 65 is ASCII 'A'
-                             TimeAgent.utc2est(mp[i].start),
-                             TimeAgent.utc2est(mp[i].end()),
-                             mp[i],
-                             mas))
+        pperiods = [p for p in mp if p.isPending()]
+
+        me = models.Elective.objects\
+            .filter(session__observing_type__type = "maintenance")\
+            .filter(complete = False)
+
+        for i in me:
+            dr = i.periodDateRange()
+            
+            if dr[0] >= day and dr[1] < (day + delta):
+                if not i.periodsByState('S'):
+                    pperiods.append(i.periodsByState('P')[0])
+
+        pperiods.sort(cmp = lambda x, y: cmp(x.start, y.start))
+
+        for i in range(0, len(pperiods)):
+            mas = models.Maintenance_Activity.get_maintenance_activity_set(pperiods[i])
+            pend.append((chr(i + 65),  # 65 is ASCII 'A'
+                         TimeAgent.utc2est(pperiods[i].start),
+                         TimeAgent.utc2est(pperiods[i].end()),
+                         pperiods[i],
+                         mas))
 
     except:
-        printException(formatExceptionInfo())
+        # printException(formatExceptionInfo())
         pend = []
 
     return pend

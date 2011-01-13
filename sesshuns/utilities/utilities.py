@@ -74,7 +74,7 @@ def acknowledge_moc(requestor, period):
     Sets acknowledge flag for periods which fail MOC.
     """
     if requestor.isOperator(): # Only operators can acknowledge MOC failures.
-        period.moc_ack = True 
+        period.moc_ack = True
         period.save()
 
 def get_rev_comment(request, obj, method):
@@ -156,7 +156,7 @@ def parse_datetime(fdata, dateName, timeName, tz):
 
     except:
         error = "ERROR: malformed %s date" % dateName
-    return (dt, error)    
+    return (dt, error)
 
 def project_search(value):
     projects = Project.objects.filter(
@@ -217,12 +217,11 @@ def getReservationsFromDB(start, end):
 
     startDT = datetime.strptime(start, "%m/%d/%Y")
     endDT   = datetime.strptime(end  , "%m/%d/%Y")
-    resDB = [r for r in Reservation.objects.all() if r.end_date >= startDT and r.start_date <= endDT] 
-    reservations = [{'id'    : r.user.pst_id 
+    resDB = [r for r in Reservation.objects.all() if r.end_date >= startDT and r.start_date <= endDT]
+    reservations = [{'id'    : r.user.pst_id
                    , 'name'  : r.user.display_name()
                    , 'pcodes': ",".join(r.user.getIncompleteProjects())
                    , 'start' : r.start_date.strftime("%m/%d/%Y")
                    , 'end'   : r.end_date.strftime("%m/%d/%Y")
-                   } for r in resDB if r.user is not None and r.user.hasIncompleteProject()] 
+                   } for r in resDB if r.user is not None and r.user.hasIncompleteProject()]
     return reservations
-    
