@@ -699,7 +699,7 @@ class DSSPrime2DSS(object):
         ls += "\nMatched User Info: %d\n" % len(self.user_matches)
         for r, u in self.user_matches:
             try:
-                ls += "    Row: %s, %s, %s, %s Matched to User: %s, %d, %s\n" % (r[1], r[2], r[3], r[4], u, u.original_id, u.getStaticContactInfo()['emails']) 
+                ls += "    Row: %s, %s, %s, %s Matched to User: %s, %d, %s\n" % (r[1], r[2], r[3], r[4], u, u.original_id, u.getEmails()) 
             except:
                 ls += "Exception in reporting\n"
 

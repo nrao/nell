@@ -52,6 +52,13 @@ class User(models.Model):
             au = first(AuthUser.objects.filter(username = self.username()))
             self.auth_user = au
             self.save()
+    
+    def getEmails(self):
+        """
+        Retrieves the users emails from their contact info from the PST.
+        If you want the official emails for this user, use this function.
+        """
+        return self.getStaticContactInfo()['emails']
 
     def getStaticContactInfo(self, use_cache = True):
         return UserInfo().getProfileByID(self, use_cache)
