@@ -29,7 +29,9 @@ def getInvestigatorEmails(pcodes):
     pi = []
     pc = []
     ci = []
+    ob = []
     try:
+        # TBF: use list comprehension?
         for pcode in pcodes:
             p = Project.objects.filter(pcode = pcode)[0]
             for inv in p.investigator_set.all():
@@ -42,9 +44,12 @@ def getInvestigatorEmails(pcodes):
                 if not inv.principal_investigator and not inv.principal_contact:
                     for email in inv.user.getEmails():
                         ci.append(email)
+                if inv.observer:
+                    for email in inv.user.getEmails():
+                        ob.append(email)
     except IndexError, data:
         pass # in case of blanks at the end of the list.
-    return pi, pc, ci
+    return pi, pc, ci, ob
 
 def getPcodesFromFilter(request):
 

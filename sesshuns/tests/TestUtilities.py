@@ -45,11 +45,12 @@ class TestUtilities(BenchTestCase):
                 
         emails = self.setupInvestigators(invs, proj)
           
-        pi, pc, ci = getInvestigatorEmails([proj.pcode])
+        pi, pc, ci, ob = getInvestigatorEmails([proj.pcode])
         
         self.assertEqual(emails[0], pi)
         self.assertEqual(emails[1], pc)
         self.assertEqual([emails[2][0], emails[3][0]], ci)
+        self.assertEqual([emails[2][0], emails[3][0]], ob)
 
         # try it again, overlapping roles
         for u in User.objects.all():
@@ -64,13 +65,11 @@ class TestUtilities(BenchTestCase):
                 
         emails = self.setupInvestigators(invs, proj)
           
-        pi, pc, ci = getInvestigatorEmails([proj.pcode])
-        print pi
-        print pc
-        print ci
+        pi, pc, ci, ob = getInvestigatorEmails([proj.pcode])
         
         self.assertEqual(emails[0], pi)
         pc_emails = emails[0]
         pc_emails.extend(emails[1])
         self.assertEqual(pc_emails, pc)
         self.assertEqual([emails[2][0], emails[3][0]], ci)
+        self.assertEqual([emails[1][0], emails[2][0]], ob)

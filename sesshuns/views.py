@@ -529,11 +529,12 @@ def projects_email(request, *args, **kwds):
     if request.method == 'GET':
         pcodes = request.GET.get("pcodes", None)
         pcode_list = pcodes.split(" ") if pcodes is not None else getPcodesFromFilter(request)
-        pi_list, pc_list, ci_list = getInvestigatorEmails(pcode_list)
+        pi_list, pc_list, ci_list, ob_list = getInvestigatorEmails(pcode_list)
 
         return HttpResponse(json.dumps({'PI-Addresses':   pi_list
                                       , 'PC-Addresses':   pc_list
                                       , 'CO-I-Addresses': ci_list
+                                      , 'OBS-Addresses':  ob_list
                                       , 'PCODES':         pcode_list})
                           , mimetype = "text/plain")
 
