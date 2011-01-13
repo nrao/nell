@@ -21,7 +21,7 @@ class SessionAlertEmail(Email):
             obs.append(session.project.principal_contact())
         emails = []
         for o in obs:
-            for e in o.getStaticContactInfo()['emails']:
+            for e in o.getEmails():
                 if e not in emails:
                     emails.append(e)
         if len(emails) > 0:            

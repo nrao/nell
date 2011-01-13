@@ -34,13 +34,13 @@ def getInvestigatorEmails(pcodes):
             p = Project.objects.filter(pcode = pcode)[0]
             for inv in p.investigator_set.all():
                 if inv.principal_investigator:
-                    for email in inv.user.getStaticContactInfo()['emails']:
+                    for email in inv.user.getEmails():
                         pi.append(email)
                 if inv.principal_contact:
-                    for email in inv.user.getStaticContactInfo()['emails']:
+                    for email in inv.user.getEmails():
                         pc.append(email)
                 if not inv.principal_investigator and not inv.principal_contact:
-                    for email in inv.user.getStaticContactInfo()['emails']:
+                    for email in inv.user.getEmails():
                         ci.append(email)
     except IndexError, data:
         pass # in case of blanks at the end of the list.

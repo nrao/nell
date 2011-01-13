@@ -89,7 +89,7 @@ def get_lost_time(period):
 
 @register.filter
 def get_email(user):
-    emails = user.getStaticContactInfo()['emails']
+    emails = user.getEmails()
     return emails[0] if emails else ""
 
 @register.filter

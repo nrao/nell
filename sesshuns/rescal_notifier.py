@@ -91,7 +91,7 @@ class RescalNotifier(Notifier):
         Notifier.notify(self)
 
     def __get_reciptients(self, user):
-        eml = user.email_set.all()
+        eml = user.getEmails()
         recipient = []
         # If no contacts listed, assume nrao.edu email address
         # with the given username:

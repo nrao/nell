@@ -183,7 +183,7 @@ class SchedulingNotifier(Notifier):
                 obs.append(p.session.project.principal_contact())
 
             for o in obs:
-                for e in o.getStaticContactInfo()['emails']:
+                for e in o.getEmails():
                     if eaddr.has_key(e):
                         eaddr[e].add(p.session.project.pcode)
                     else:

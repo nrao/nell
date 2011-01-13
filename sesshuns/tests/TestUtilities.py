@@ -26,7 +26,7 @@ class TestUtilities(BenchTestCase):
                              , observer = ob
                               )
             inv.save() 
-            emails.append(u.getStaticContactInfo()['emails'])
+            emails.append(u.getEmails())
         return emails  
        
 
