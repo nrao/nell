@@ -32,6 +32,7 @@ from TestTimeAccounting        import TestTimeAccounting
 from TestUpdateEphemeris       import TestUpdateEphemeris
 from TestUser                  import TestUser
 from TestUserResource          import TestUserResource
+from TestUtilities             import TestUtilities
 from TestViews                 import TestViews
 from TestViewsPTC              import TestViewsPTC
 from TestWindow                import TestWindow
