@@ -1,11 +1,10 @@
-from django.db.models         import Q
+from django.db.models         import Q, Min
 from django.http              import HttpResponse, HttpResponseRedirect
 
 from NellResource import NellResource
 from sesshuns.models       import Elective, first, str2dt
 from sesshuns.httpadapters import ElectiveHttpAdapter
 from datetime              import datetime, timedelta, date
-from django.db.models      import Min
 
 import simplejson as json
 

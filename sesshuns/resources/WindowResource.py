@@ -1,4 +1,4 @@
-from django.db.models         import Q
+from django.db.models         import Q, Min
 from django.http              import HttpResponse, HttpResponseRedirect
 
 from NellResource import NellResource
@@ -13,14 +13,6 @@ jsonMap = { "id" : "id"
           , "start"  : "start_date"
           , "duration" : "duration"
           , "last" : "start_date"
-          #, "default_date" : "default_period__start"
-          #, "default_time" : "default_period__start"
-          #, "default_duration" : "default_period__duration"
-          #, "default_state" : "default_period__state"
-          #, "chosen_date" : "chosen_period__start"
-          #, "chosen_time" : "chosen_period__start"
-          #, "chosen_duration" : "chosen_period__duration"
-          #, "chosen_state" : "chosen_period__state"
           }
     
 class WindowResource(NellResource):
@@ -35,8 +27,6 @@ class WindowResource(NellResource):
         # one or many?
         if len(args) == 0:
             # many, use filters
-            sortField = jsonMap.get(request.GET.get("sortField", "handle"), "start_date")
-            order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""             
             query_set = Window.objects
 
             filterSession = request.GET.get("filterSession", None)
@@ -60,7 +50,14 @@ class WindowResource(NellResource):
                 # is for Window, but our time info is kept in WindowRange
                 filterByDateRange = True
 
-            windows = query_set.order_by(order + sortField)
+            # see if a sort field was passed to us
+            if request.GET.get("sortField", None) is not None:
+                sortField = jsonMap.get(request.GET.get("sortField", "handle"), "start_date")
+                order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""             
+                windows = query_set.order_by(order + sortField)
+            else:
+                # by default, sort by the earliest period's start
+                windows = query_set.annotate(win_start=Min('windowrange__start_date')).order_by('periods__start')
 
             # if filtering by date range, we have to do this programmatically
             if filterByDateRange:
