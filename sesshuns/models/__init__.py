@@ -6,7 +6,6 @@ from Allotment                       import Allotment
 from Blackout                        import Blackout
 from Column                          import Column
 from Elective                        import Elective
-from Email                           import Email
 from ExplorerConfiguration           import ExplorerConfiguration
 from Filter                          import Filter
 from Investigator                    import Investigator

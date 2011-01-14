@@ -2,7 +2,6 @@
 from Allotment              import Allotment
 from Blackout               import Blackout
 from common                 import *
-from Email                  import Email
 from Investigator           import Investigator
 from Observing_Parameter    import Observing_Parameter
 from Observing_Type         import Observing_Type
@@ -35,7 +34,6 @@ from Window                 import Window
 def register_for_revision():
     register_model(Role)
     register_model(User, follow=['role'])
-    register_model(Email, follow=['user'])
     register_model(Semester)
     register_model(Project_Type)
     register_model(Allotment)
