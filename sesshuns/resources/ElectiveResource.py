@@ -27,6 +27,10 @@ class ElectiveResource(NellResource):
             # many, use filters
             query_set = Elective.objects
 
+            filterComplete = request.GET.get("filterComplete", None)
+            if filterComplete is not None:
+                query_set = query_set.filter(complete = (filterComplete == "true"))
+
             filterSession = request.GET.get("filterSession", None)
             if filterSession is not None:
                 query_set = query_set.filter(session__name = filterSession)

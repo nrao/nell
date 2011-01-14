@@ -29,6 +29,9 @@ class WindowResource(NellResource):
             # many, use filters
             query_set = Window.objects
 
+            filterComplete = request.GET.get("filterComplete", None)
+            if filterComplete is not None:
+                query_set = query_set.filter(complete = (filterComplete == "true"))
             filterSession = request.GET.get("filterSession", None)
             if filterSession is not None:
                 query_set = query_set.filter(session__name = filterSession)
