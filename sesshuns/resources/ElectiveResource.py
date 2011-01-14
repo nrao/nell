@@ -5,6 +5,7 @@ from NellResource import NellResource
 from sesshuns.models       import Elective, first, str2dt
 from sesshuns.httpadapters import ElectiveHttpAdapter
 from datetime              import datetime, timedelta, date
+from django.db.models      import Min
 
 import simplejson as json
 
@@ -25,8 +26,6 @@ class ElectiveResource(NellResource):
         # one or many?
         if len(args) == 0:
             # many, use filters
-            sortField = jsonMap.get(request.GET.get("sortField", "handle"), "id")
-            order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""             
             query_set = Elective.objects
 
             filterSession = request.GET.get("filterSession", None)
@@ -37,7 +36,14 @@ class ElectiveResource(NellResource):
             if filterSessionId is not None:
                 query_set = query_set.filter(session__id = filterSessionId)
 
-            elecs = query_set.order_by(order + sortField)
+            # see if there is a sort field passed to us
+            if request.GET.get("sortField", None) is not None:
+                sortField = jsonMap.get(request.GET.get("sortField", "handle"), "id")
+                order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""             
+                elecs = query_set.order_by(order + sortField)
+            else:
+                # by default, sort by the earliest period's start
+                elecs = query_set.annotate(elec_start=Min('periods__start')).order_by('elec_start')
 
             total = len(elecs)
             offset = int(request.GET.get("offset", 0))
