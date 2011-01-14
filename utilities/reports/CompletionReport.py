@@ -9,9 +9,7 @@ from datetime                     import *
 from sesshuns.templatetags.custom import * # TBF: NO! NO!
 import sys
 
-from Report import Report, Line
-
-
+from nell.utilities.reports.Report import Report, Line
 
 project_header = ["pcode",
                   "name",
