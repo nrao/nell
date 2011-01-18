@@ -5,7 +5,7 @@ from sesshuns.models                   import *
 import math
 import MySQLdb as m
 
-from Report import Report, Line
+from nell.utilities.reports.Report import Report, Line
 
 class Schedtime2DSS(object):
 
