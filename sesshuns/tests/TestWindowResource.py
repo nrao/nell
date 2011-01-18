@@ -96,6 +96,65 @@ class TestWindowResource(BenchTestCase):
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('{"windows": [], "total": 0}' in response.content)
 
+    def test_read_filter_2(self):
+
+        #YYYY-MM-DD hh:mm:ss
+        response = self.client.get('/windows'
+                                , {'filterStartDate' : '2009-12-25' # 00:00:00' 
+                                 , 'filterDuration' : 120})
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue('"end": "2010-01-07"' in response.content)
+        self.assertTrue('"total": 1' in response.content)
+ 
+        # now add multiple ranges
+        wr = WindowRange(window = self.w
+                       , start_date = datetime(2010, 3, 1)
+                       , duration = 7)
+        wr.save()
+        wr = WindowRange(window = self.w
+                       , start_date = datetime(2010, 2, 1)
+                       , duration = 7)
+        wr.save()
+
+        # test it
+        response = self.client.get('/windows'
+                                , {'filterStartDate' : '2009-12-25' # 00:00:00' 
+                                 , 'filterDuration' : 120})
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue('"end": "2010-01-07"' in response.content)
+        self.assertTrue('"total": 1' in response.content)
+
+        # create a second window
+        w2 = Window(session = self.sesshun
+                  , total_time = 2.0
+                  , complete = False)
+        w2.save()
+        wr = WindowRange(window = w2 
+                       , start_date = date(2010, 4, 1)
+                       , duration = 7
+                        )
+        wr.save()
+        wr = WindowRange(window = w2 
+                       , start_date = date(2010, 5, 1)
+                       , duration = 7
+                        )
+        wr.save()
+        
+        # test it
+        response = self.client.get('/windows'
+                                , {'filterStartDate' : '2009-12-25' # 00:00:00' 
+                                 , 'filterDuration' : 90})
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue('"end": "2010-01-07"' in response.content)
+        self.assertTrue('"total": 1' in response.content)
+
+        response = self.client.get('/windows'
+                                , {'filterStartDate' : '2009-12-25' # 00:00:00' 
+                                 , 'filterDuration' : 120})
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue('"end": "2010-05-07"' in response.content)
+        self.assertTrue('"total": 2' in response.content)
+
     @timeIt
     def test_update(self):
         fdata = self.fdata

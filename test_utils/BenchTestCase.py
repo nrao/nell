@@ -8,7 +8,7 @@ import time
 def timeIt(f):
     def new_f(self, *args):
         latency = self.timeFunc(f.__name__, f, *args)
-        # actually prints the latency if not being archived
+        # prints to database if defined in settings.py
         self.archiver.printLatency(latency)
     return new_f
 
