@@ -43,10 +43,19 @@ class ElectiveResource(NellResource):
             if request.GET.get("sortField", None) is not None:
                 sortField = jsonMap.get(request.GET.get("sortField", "handle"), "id")
                 order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""             
-                elecs = query_set.order_by(order + sortField)
+                es = query_set.order_by(order + sortField)
             else:
                 # by default, sort by the earliest period's start
-                elecs = query_set.annotate(elec_start=Min('periods__start')).order_by('elec_start')
+                es = query_set.annotate(elec_start=Min('periods__start')).order_by('elec_start')
+
+            # TBF, HACK: finally, ordering by annotation above can return
+            # duplicate objects, so filter these out
+            elecs = []
+            ids = []
+            for e in es:
+                if e.id not in ids:
+                    ids.append(e.id)
+                    elecs.append(e)
 
             total = len(elecs)
             offset = int(request.GET.get("offset", 0))

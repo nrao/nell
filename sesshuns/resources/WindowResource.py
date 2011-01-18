@@ -49,8 +49,11 @@ class WindowResource(NellResource):
                 days = int(filterDur)
                 days = days if days >= 1 else 1
                 last_day = (start + timedelta(days = days -1))
-                # It would be ideal to do the query here, but our query_set
+                # It would be ideal to finish the query here, but our query_set
                 # is for Window, but our time info is kept in WindowRange
+                # and the end point needs to be calculated
+                # TBF: what else can we do to filter more from DB?
+                query_set = query_set.annotate(win_start=Min('windowrange__start_date')).filter(win_start__lte = last_day)
                 filterByDateRange = True
 
             # see if a sort field was passed to us
@@ -60,19 +63,29 @@ class WindowResource(NellResource):
                 windows = query_set.order_by(order + sortField)
             else:
                 # by default, sort by the earliest period's start
-                windows = query_set.annotate(win_start=Min('windowrange__start_date')).order_by('periods__start')
+                windows = query_set.annotate(win_start=Min('windowrange__start_date')).order_by('win_start')
 
-            # if filtering by date range, we have to do this programmatically
+            # if filtering by date range, we have to finish this programmatically
             if filterByDateRange:
                 windows = [w for w in windows if w.last_date() >= start \
                     and w.start() <= last_day]
-            total = len(windows)
+
+            # TBF, HACK: finally, ordering by annotation above can return
+            # duplicate objects, so filter these out
+            wins = []
+            ids = []
+            for w in windows:
+                if w.id not in ids:
+                    ids.append(w.id)
+                    wins.append(w)
+                    
+            total = len(wins)
             offset = int(request.GET.get("offset", 0))
             limit  = int(request.GET.get("limit", -1))
             if limit != -1:
-                windows = windows[offset:offset+limit]
+                windows = wins[offset:offset+limit]
             return HttpResponse(json.dumps(dict(total = total
-                 , windows = [WindowHttpAdapter(w).jsondict() for w in windows]))
+                 , windows = [WindowHttpAdapter(w).jsondict() for w in wins]))
             , content_type = "application/json")
         else:
             # one, identified by id in arg list
