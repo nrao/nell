@@ -41,6 +41,7 @@ class TimeAccounting:
                      , 'other_session_weather'
                      , 'other_session_rfi'
                      , 'other_session_other'
+                     , 'lost_time_bill_project'
                      ]
     
         # for reports
@@ -264,6 +265,7 @@ class TimeAccounting:
                      , 'unaccounted_time' : 'UT'
                      , 'short_notice' : 'SC'
                      , 'not_billable' : 'NB'
+                     , 'lost_time_bill_project' : 'LP'
                      , 'lost_time' : 'LT'
                      , 'lost_time_weather' : 'LTW'
                      , 'lost_time_rfi' : 'LTR'

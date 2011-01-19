@@ -68,6 +68,7 @@ def GenerateReport(start):
     outfile.write("\tweather = %2.2f hr\n" % sum([p.accounting.lost_time_weather for p in observed_periods]))
     outfile.write("\tRFI     = %2.2f hr\n" % sum([p.accounting.lost_time_rfi for p in observed_periods]))
     outfile.write("\tother   = %2.2f hr\n" % sum([p.accounting.lost_time_other for p in observed_periods]))
+    outfile.write("\tLost Time Billed to Project = %2.2f hr\n" % sum([p.accounting.lost_time_bill_project for p in observed_periods]))
 
     outfile.write("\nNext Week\n")
     outfile.write("=========\n")
