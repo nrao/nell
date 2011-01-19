@@ -317,3 +317,16 @@ class TestSesshun(BenchTestCase):
 
         # cleanup
         self.sesshun.receiver_group_set.all().delete()    
+
+    # This test commented out simply because it takes soo long to create
+    # and delete a sufficient number of sesshuns to see a timing difference
+    # in first()
+    #@timeIt
+    #def run_first(self):
+    #    s = first(Sesshun.objects.all())
+
+    #def test_first(self):
+    #    ss = [create_sesshun() for i in range(10000)]
+    #    self.run_first()
+    #    for s in ss:
+    #        s.delete()

@@ -16,7 +16,10 @@ import sys
 import reversion
 
 def first(results, default = None):
-    return default if len(results) == 0 else results[0]
+    try:
+        return results[0]
+    except IndexError:
+        return default
 
 def str2dt(str):
     "'YYYY-MM-DD hh:mm:ss' to datetime object"
