@@ -45,6 +45,8 @@ from utilities                          import get_requestor
 from rescal_notifier                    import RescalNotifier
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
 
+import settings
+
 interval_names = {0:"None", 1:"Daily", 7:"Weekly", 30:"Monthly"}
 rc_notifier    = RescalNotifier()
 
@@ -769,9 +771,15 @@ def _record_m2m_diffs(key, old, new, diffs):
 def _get_supervisors():
     # TBF: when roles done, will get these by visiting the roles.
     s = []
-    s += User.objects.filter(auth_user__username = 'rcreager')
-    s += User.objects.filter(auth_user__username = 'banderso')
-    s += User.objects.filter(auth_user__username = 'mchestnu')
+
+    # don't spam supervisors from test setups
+    if settings.DEBUG == True:
+        s += User.objects.filter(auth_user__username = 'rcreager')
+    else:
+        s += User.objects.filter(auth_user__username = 'rcreager')
+        s += User.objects.filter(auth_user__username = 'banderso')
+        s += User.objects.filter(auth_user__username = 'mchestnu')
+
     return s
 
 ######################################################################
