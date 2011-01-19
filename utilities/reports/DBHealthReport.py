@@ -4,11 +4,11 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from sesshuns.models import *
-from sets            import Set
-from datetime        import date, datetime, timedelta
-from nell.tools      import TimeAccounting
-from SessionAlerts   import SessionAlerts
+from sesshuns.models                       import *
+from sets                                  import Set
+from datetime                              import date, datetime, timedelta
+from nell.tools                            import TimeAccounting
+from nell.utilities.database.SessionAlerts import SessionAlerts
 
 def get_sessions(typ,sessions):
     return [s for s in sessions if s.session_type.type == typ]
