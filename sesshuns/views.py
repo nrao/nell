@@ -376,13 +376,7 @@ def period_time_accounting(request, *args, **kws):
     if request.method == 'POST':
         a = period.accounting
         a.description = request.POST.get("description", None)
-
-        for field in ["scheduled", "not_billable", "short_notice"
-                    , "lost_time_weather", "lost_time_rfi", "lost_time_other"
-                    , "other_session_weather", "other_session_rfi"
-                    , "other_session_other"]:
-            a.set_changed_time(field, float(request.POST.get(field, None)))
-
+        a.update_from_post(request.POST)
         valid, msg = a.validate()
         if not valid:
             title = "Error setting Period Time Accounting"

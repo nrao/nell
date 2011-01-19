@@ -264,3 +264,25 @@ class TestViewsPTC(PeriodsTestCase):
         p3.session.session_type = open
         p3.session.save()
 
+    @timeIt
+    def test_period_time_accounting(self):
+
+        # first see what the period looks like to start with 
+        pid = first(Period.objects.all().order_by("id")).id
+        url = "/periods/UTC/%d" % pid
+        response = Client().get(url)
+        self.assertTrue('"lost_time_bill_project": 0.0' in response.content)
+        period = Period.objects.get(id = pid)
+        self.assertEquals(period.accounting.lost_time_bill_project, 0.0)
+        self.assertEquals(period.accounting.scheduled, 5.0)
+        self.assertEquals(period.accounting.observed(), 5.0)
+
+        # change the time accounting
+        url = "/period/%d/time_accounting" % pid
+        response = Client().post(url, {"lost_time_bill_project" : 1.0})
+        self.assertTrue('"lost_time_bill_project": 1.0' in response.content)
+        period = Period.objects.get(id = pid)
+        self.assertEquals(period.accounting.lost_time_bill_project, 1.0)
+        self.assertEquals(period.accounting.observed(), 5.0)
+
+

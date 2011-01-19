@@ -18,6 +18,8 @@ class Period_Accounting(models.Model):
                                        , default = 0.0) 
     lost_time_other       = models.FloatField(help_text = "Hours"  # LT3
                                        , default = 0.0) 
+    lost_time_bill_project= models.FloatField(help_text = "Hours"  # LP
+                                       , default = 0.0) 
     short_notice          = models.FloatField(help_text = "Hours"  # SN
                                        , default = 0.0) 
     description           = models.TextField(null = True, blank = True)
@@ -35,6 +37,39 @@ class Period_Accounting(models.Model):
            , float(self.other_session())
            , float(self.lost_time())
            , float(self.short_notice))
+
+    def getFloatFields(self):
+        """
+        Simply gets all float fields, both from DB and calculated.
+        """
+        fs = self.getDBFloatFields()
+        fs.extend(["observed"
+                 , "other_session"
+                 , "lost_time"
+                 , "time_billed"])
+        return fs
+
+    def getDBFloatFields(self):
+        """
+        Simply a listing of all the fields that hold actual numbers 
+        that we'll want to change.
+        """
+        # TBF: should we do it this way?
+        #exclude = ["_state", "id", "description"]
+        #return [f for f in self.__dict__.keys() if f not in exclude]
+        # or this way?
+        fields = ['scheduled'
+        , 'not_billable'
+        , 'short_notice'
+        , 'other_session_weather'
+        , 'other_session_rfi'
+        , 'other_session_other'
+        , 'lost_time_weather'
+        , 'lost_time_rfi'
+        , 'lost_time_other'
+        , 'lost_time_bill_project'
+        ]
+        return fields
 
     def observed(self):
         "OT = SC - OS - LT"
@@ -72,21 +107,16 @@ class Period_Accounting(models.Model):
         else:
             return self.__getattribute__(name)()
 
+    # TBF: is this worth its own httpadapter class?
     def update_from_post(self, fdata):    
-        fields = ['not_billable'
-                , 'other_session_weather'
-                , 'other_session_rfi'
-                , 'other_session_other'
-                , 'lost_time_weather'
-                , 'lost_time_rfi'
-                , 'lost_time_other'
-                ]
-        for field in fields:        
+
+        for field in self.getDBFloatFields():        
             value = fdata.get(field, None)
             if value is not None:
-                self.set_changed_time(field, value)
+                self.set_changed_time(field, float(value))
         self.save()
 
+    # TBF: is this worth its own httpadapter class?
     def jsondict(self):
         description = self.description if self.description is not None else ""
         return {"id"                    : self.id
@@ -102,6 +132,7 @@ class Period_Accounting(models.Model):
               , "lost_time_weather"     : self.lost_time_weather
               , "lost_time_rfi"         : self.lost_time_rfi
               , "lost_time_other"       : self.lost_time_other
+              , "lost_time_bill_project": self.lost_time_bill_project
               , "unaccounted_time"      : self.unaccounted_time()
               , "short_notice"          : self.short_notice
               , "description"           : description}
