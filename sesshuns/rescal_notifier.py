@@ -99,6 +99,6 @@ class RescalNotifier(Notifier):
             recipient.append(user.auth_user.username + "@nrao.edu")
         else:
             for i in eml:
-                recipient.append(i.email)
+                recipient.append(i)
 
         return recipient

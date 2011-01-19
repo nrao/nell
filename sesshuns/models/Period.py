@@ -202,8 +202,12 @@ class Period(models.Model):
 
 
     def delete(self):
-        "Keep non-pending periods from being deleted."
-        if self.state.abbreviation != 'P':
+        """
+        Keep non-pending periods from being deleted.  Also prevent any
+        periods with associated maintenance activities from being
+        deleted.
+        """
+        if self.state.abbreviation != 'P' or len(self.maintenance_activity_set.all()) > 0:
             self.move_to_deleted_state()
         else:
             models.Model.delete(self)  # pending can really get removed!
