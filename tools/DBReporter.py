@@ -163,7 +163,7 @@ class DBReporter:
                 type = t[0]
                 if type not in types:
                     types.append(type)
-            numSess = len(p.sesshun_set.all())
+            numSess = p.sesshun_set.count()
             if numSess == 0:
                 aveGrade = 0.0
             else:
@@ -284,7 +284,7 @@ class DBReporter:
 
         self.add("\n*** Problems ***\n")
         # projects w/ out sessions?
-        self.add("Projects w/ out sessions: %d\n" % len([p for p in projs if len(p.sesshun_set.all()) == 0]))
+        self.add("Projects w/ out sessions: %d\n" % len([p for p in projs if not p.sesshun_set.exists()]))
 
         # sessions w/ out projects?
         self.add("Sessions w/ out projects: %d\n" % len([s for s in sess if s.project is None]))
@@ -296,10 +296,10 @@ class DBReporter:
 
         totalProjHrs = sum([self.ta.getProjectTotalTime(p) for p in projs])
         # windowed sessions w/ no windows?
-        self.add("Windowed Sessions /w out windows: %d\n" % len([s for s in sess if (s.session_type.type in ['windowed','vlbi','fixed']) and len(s.window_set.all()) == 0]))
+        self.add("Windowed Sessions /w out windows: %d\n" % len([s for s in sess if (s.session_type.type in ['windowed','vlbi','fixed']) and not s.window_set.exists()]))
 
         # non-windowed sessions w/ a window?
-        self.add("Non-Windowed Sessions /w windows: %d\n" % len([s for s in sess if (s.session_type.type not in ['windowed','vlbi','fixed']) and len(s.window_set.all()) > 0]))
+        self.add("Non-Windowed Sessions /w windows: %d\n" % len([s for s in sess if (s.session_type.type not in ['windowed','vlbi','fixed']) and s.window_set.exists()]))
 
         # windows w/ out sessions?
 
@@ -396,7 +396,7 @@ class DBReporter:
                     # print any details that are getting cutoff:
                     if len(sData[11]) > sessCols[11]:
                         self.add("\nComment Details: %s\n\n" % sData[11])
-                    #if len(s.cadence_set.all()) > 0:    
+                    #if s.cadence_set.exists():    
                     #    ests = [TimeAgent.est2utc(c.start_date) for c in s.cadence_set.all() if c.start_date is not None]
                     #    self.add("Cadences: %s, UTC starts: %s\n\n" % (s.cadence_set.all(), ests))
 
@@ -489,14 +489,14 @@ class DBReporter:
             self.add(("-" * (sum(cols) + len(cols))) + "\n")
 
     def cadenceDetails(self, ss):
-        all = [s for s in ss if  len(s.cadence_set.all()) != 0]
+        all = [s for s in ss if s.cadence_set.exists()]
         # sessions w/ out start dates?
         noStart = [s for s in ss 
-            if len(s.cadence_set.all()) != 0
+            if s.cadence_set.exists()
             and self.getCadenceAttr(s, "start_date") is None]
         # sessions w/ out end dates
         noEnd = [s for s in ss 
-            if len(s.cadence_set.all()) != 0
+            if s.cadence_set.exists()
             and self.getCadenceAttr(s, "end_date") is None]
         # sessions w/ and intervals = 0
         #singles  = [s for s in ss if self.getCadenceAttr(s, "repeats") == 1 \
@@ -517,11 +517,10 @@ class DBReporter:
                    , electives = electives )
 
     def getCadenceAttr(self, s, a):
-        cs = s.cadence_set.all()
-        if len(cs) == 0:
+        try:
+            return s.cadence_set.all()[0].__getattribute__(a)
+        except IndexError:
             return None
-        else:
-            return cs[0].__getattribute__(a)
 
     def printLongLine(self, line, width):
         numLines = (len(line) / width) + 1

@@ -245,7 +245,7 @@ def display_maintenance_activity(request, activity_id = None):
             repeat_template = "None"
 
         last_modified = str(ma.modifications.all()
-                            [len(ma.modifications.all()) - 1]
+                            [ma.modifications.count() - 1]
                             if ma.modifications.all() else "")
         created = str(ma.modifications.all()[0]
                       if ma.modifications.all() else ""),
@@ -369,7 +369,7 @@ def add_activity(request, period_id = None, year = None,
 def _modify_activity_form(ma):
     start = ma.get_start('EST')
     end = ma.get_end('EST')
-    change_receiver = True if len(ma.receiver_changes.all()) else False
+    change_receiver = ma.receiver_changes.exists()
     old_receiver = None if not change_receiver else \
                    ma.receiver_changes.all()[0].down_receiver_id
     new_receiver = None if not change_receiver else \

@@ -38,16 +38,16 @@ class ProjectHttpAdapter (object):
         self.project.save()
 
         totals   = map(float, [t for t in fdata.get("total_time", "0.0").split(', ') if t != ''])
+        num_new = len(totals)
         pscs     = map(float, [p for p in fdata.get("PSC_time", "0.0").split(', ') if p != ''])
         max_sems = map(float, [m for m in fdata.get("sem_time", "0.0").split(', ') if m != ''])
         grades   = map(float, [g for g in fdata.get("grade", "4.0").split(', ') if g != ''])
         
-        assert len(totals) == len(pscs) and \
-               len(totals) == len(max_sems) and \
-               len(totals) == len(grades)
+        assert num_new == len(pscs) and \
+               num_new == len(max_sems) and \
+               num_new == len(grades)
 
-        num_new = len(totals)
-        num_cur = len(self.project.allotments.all())
+        num_cur = self.project.allotments.count()
         if num_new > num_cur:
             for i in range(num_new - num_cur):
                 a = Allotment(psc_time = 0.0

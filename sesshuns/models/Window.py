@@ -30,7 +30,7 @@ class Window(models.Model):
            , self.start_date().strftime("%Y-%m-%d")
            , self.duration()
            , self.default_period
-           , len(self.periods.all())) 
+           , self.periods.count()) 
 
     
     def isContigious(self):
@@ -277,7 +277,7 @@ class Window(models.Model):
 
     def hasNoLstInRange(self):
         numBadRanges = len(self.lstOutOfRange())
-        numRanges = len(self.windowrange_set.all())
+        numRanges = self.windowrange_set.count()
         return numBadRanges == numRanges and numRanges > 0 
 
     def hasOverlappingRanges(self):

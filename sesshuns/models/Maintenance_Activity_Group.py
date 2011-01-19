@@ -41,7 +41,7 @@ class Maintenance_Activity_Group(models.Model):
         app_label = "sesshuns"
 
     def __unicode__(self):
-        if len(self.maintenance_activity_set.all()):
+        if self.maintenance_activity_set.count():
             sr = ", ".join([e.get_subject() for e in self.maintenance_activity_set.all()])
         else:
             sr = "Empty"

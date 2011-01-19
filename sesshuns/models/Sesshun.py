@@ -107,7 +107,7 @@ class Sesshun(models.Model):
     def receiver_list_simple(self):
         "Returns a string representation of the rcvr logic, simplified"
         # ignore rcvr groups that have no rcvrs!  TBF: shouldn't happen!
-        rgs = [ rg for rg in self.receiver_group_set.all() if len(rg.receivers.all()) != 0]
+        rgs = [ rg for rg in self.receiver_group_set.all() if rg.receivers.exists()]
         if len(rgs) == 1:
             # no parens needed
             ls = " OR ".join([r.abbreviation for r in rgs[0].receivers.all()])
@@ -131,7 +131,7 @@ class Sesshun(models.Model):
         return self.allotment.grade
 
     def num_rcvr_groups(self):
-        return len(self.receiver_group_set.all())
+        return self.receiver_group_set.count()
 
     def schedulable(self):
         "A simple check for all explicit flags"

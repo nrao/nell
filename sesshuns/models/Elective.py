@@ -13,7 +13,7 @@ class Elective(models.Model):
 
     def __str__(self):
         cmp = "Cmp." if self.complete else "Not Cmp."
-        return "Elective for Session %s with %d periods. Cmp: %s, Grntd: %s" % (self.session.name, len(self.periods.all()), self.complete, self.guaranteed())
+        return "Elective for Session %s with %d periods. Cmp: %s, Grntd: %s" % (self.session.name, self.periods.count(), self.complete, self.guaranteed())
 
     # TBF: cut & past from Window model
     def toHandle(self):

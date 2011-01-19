@@ -207,7 +207,7 @@ class Period(models.Model):
         periods with associated maintenance activities from being
         deleted.
         """
-        if self.state.abbreviation != 'P' or len(self.maintenance_activity_set.all()) > 0:
+        if self.state.abbreviation != 'P' or self.maintenance_activity_set.count() > 0:
             self.move_to_deleted_state()
         else:
             models.Model.delete(self)  # pending can really get removed!
@@ -236,7 +236,7 @@ class Period(models.Model):
         """
         # assume error checking done before hand
         # self.is_windowed() and self.has_valid_windows()
-        if len(self.default_window.all()) == 1:
+        if self.default_window.count() == 1:
             return True
         else:
             return False
@@ -248,7 +248,7 @@ class Period(models.Model):
         created in the Period Explorer (even via Nominees) in the UI.
         This is harmless if a window cant' be assigned.
         """
-        if not self.session.isWindowed() or len(self.session.window_set.all()) == 0:
+        if not self.session.isWindowed() or not self.session.window_set.exists():
             return
         
         # look for a window (any) that this period at least starts in 
