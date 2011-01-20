@@ -143,4 +143,15 @@ class TestElective(NellTestCase):
         self.assertEqual(jd["complete"], False)
         self.assertEqual(len(jd["periods"]), 3)
 
+    def test_hasPeriodAfter(self):
+        before = datetime(2009, 5, 11, 12, 15)
+        middle = datetime(2009, 6, 3, 12, 15)
+        after  = datetime(2009, 6, 21, 12, 15)
+        self.assertEqual(True, self.elec.hasPeriodsAfter(before))
+        self.assertEqual(True, self.elec.hasPeriodsAfter(middle))
+        self.assertEqual(False, self.elec.hasPeriodsAfter(after))
 
+    def test_periodDateRange(self):
+        self.assertEqual((datetime(2009, 6, 1, 12, 15)
+                        , datetime(2009, 6, 15, 12, 15))
+                       , self.elec.periodDateRange())

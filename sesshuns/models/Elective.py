@@ -53,16 +53,18 @@ class Elective(models.Model):
         self.setComplete(True)
 
     def hasPeriodsAfter(self, dt):
-        return len([p for p in self.periods.all() if p.start > dt]) > 0
+        return self.periods.filter(start__gt=dt).exists()
 
     def periodDateRange(self):
         "Returns the earliest & latest start times of all its periods"
-        min = max = None
-        for p in self.periods.all():
-            if min is None or p.start <= min:
-                min = p.start
-            if max is None or p.start >= max:
-                max = p.start
+        try:
+            min = self.periods.order_by('start')[0].start
+        except IndexError:
+            min = None
+        try:
+            max = self.periods.order_by('-start')[0].start
+        except IndexError:
+            max = None
         return (min, max)
 
     def periodsOrderByDate(self):
@@ -71,7 +73,7 @@ class Elective(models.Model):
     def periodsByState(self, s):    
         "get periods by their state, which is one of ['P', 'D', 'S']"
         state = Period_State.get_state(s)
-        return [p for p in self.periods.all() if p.state == state]
+        return self.periods.filter(state=state)
 
     def deletedPeriods(self):
         return self.periodsByState("D")

@@ -250,8 +250,8 @@ class Receiver_Schedule(models.Model):
         ranges = []
         for date, receivers in sorted(schedule.items()):
             receivers = Set(receivers)
-            if not any([all([Set(g.receivers.all()).intersection(receivers) \
-                        for g in set]) for set in required]):
+            if not any(all(Set(g.receivers.all()).intersection(receivers) \
+                        for g in set) for set in required):
                 # No session has receivers available. Begin drought.
                 if not ranges or ranges[-1][1] is not None:
                     ranges.append((date, None))

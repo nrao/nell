@@ -119,7 +119,7 @@ class Window(models.Model):
         state.  Remember that, in a healthy systme, pending and deleted
         periods should have no time billed.
         """
-        return sum([p.accounting.time_billed() for p in self.periods.all()])
+        return sum(p.accounting.time_billed() for p in self.periods.all())
 
     def publish(self): 
         "A period was just published, see if we can complete this."
@@ -159,7 +159,7 @@ class Window(models.Model):
     def periodsByState(self, s):    
         "get periods by their state, which is one of ['P', 'D', 'S']"
         state = Period_State.get_state(s)
-        return [p for p in self.periods.all() if p.state == state]
+        return self.periods.filter(state=state)
 
     def scheduledPeriods(self):
         return self.periodsByState("S")

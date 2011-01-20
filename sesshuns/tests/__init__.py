@@ -24,6 +24,7 @@ from TestReceiverCompile       import TestReceiverCompile
 from TestReceiverSchedule      import TestReceiverSchedule
 from TestSchedulingNotifier    import TestSchedulingNotifier
 from TestScheduleTools         import TestScheduleTools
+from TestSemester              import TestSemester
 from TestSesshun               import TestSesshun
 from TestSessionAlertNotifier  import TestSessionAlertNotifier
 from TestSessionAlerts         import TestSessionAlerts

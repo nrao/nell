@@ -40,20 +40,20 @@ class Project(models.Model):
         return self.name == 'Shutdown'
 
     def is_maintenance(self):
-        return any([s.observing_type.type == 'maintenance' \
-                    for s in self.sesshun_set.all()])
+        return any(s.observing_type.type == 'maintenance' \
+                    for s in self.sesshun_set.all())
 
     def is_test(self):
-        return any([s.observing_type.type == 'testing' \
-                    for s in self.sesshun_set.all()])
+        return any(s.observing_type.type == 'testing' \
+                    for s in self.sesshun_set.all())
 
     def is_commissioning(self):
-        return any([s.observing_type.type == 'commissioning' \
-                    for s in self.sesshun_set.all()])
+        return any(s.observing_type.type == 'commissioning' \
+                    for s in self.sesshun_set.all())
 
     def is_calibration(self):
-        return any([s.observing_type.type == 'calibration' \
-                    for s in self.sesshun_set.all()])
+        return any(s.observing_type.type == 'calibration' \
+                    for s in self.sesshun_set.all())
 
     @staticmethod
     def get_categories():
@@ -89,6 +89,7 @@ class Project(models.Model):
             # if more then one, it's arbitrary
             if inv.principal_contact:
                 pc = inv.user
+                break
         return pc        
 
     def principal_investigator(self):
@@ -98,6 +99,7 @@ class Project(models.Model):
             # if more then one, it's arbitrary
             if inv.principal_investigator:
                 pc = inv.user
+                break
         return pc    
 
     def normalize_investigators(self):
@@ -129,8 +131,9 @@ class Project(models.Model):
     def getPeriods(self):
         "What are the periods associated with this project, vis. to observer?"
         return sorted([p for s in self.sesshun_set.all()
-                         for p in s.period_set.all()
-                         if p.state.abbreviation not in ['P','D']])
+                         for p in s.period_set.exclude(state__abbreviation='P')
+                                   
+                                             .exclude(state__abbreviation='D')])
 
     def getUpcomingPeriods(self, dt = datetime.now()):
         "What periods are associated with this project in the future?"
