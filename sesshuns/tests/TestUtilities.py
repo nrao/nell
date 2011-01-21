@@ -26,7 +26,7 @@ class TestUtilities(BenchTestCase):
                              , observer = ob
                               )
             inv.save() 
-            emails.append(u.getEmails())
+            emails.append(sorted(u.getEmails()))
         return emails  
        
 
@@ -68,8 +68,8 @@ class TestUtilities(BenchTestCase):
         pi, pc, ci, ob = getInvestigatorEmails([proj.pcode])
         
         self.assertEqual(emails[0], pi)
-        pc_emails = emails[0]
-        pc_emails.extend(emails[1])
+        pc_emails = emails[1]
+        pc_emails.extend(emails[0])
         self.assertEqual(pc_emails, pc)
         self.assertEqual([emails[2][0], emails[3][0]], ci)
         self.assertEqual([emails[1][0], emails[2][0]], ob)

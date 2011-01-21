@@ -49,7 +49,7 @@ def getInvestigatorEmails(pcodes):
                         ob.append(email)
     except IndexError, data:
         pass # in case of blanks at the end of the list.
-    return pi, pc, ci, ob
+    return sorted(pi), sorted(pc), sorted(ci), sorted(ob)
 
 def getPcodesFromFilter(request):
 
