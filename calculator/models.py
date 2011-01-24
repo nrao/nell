@@ -99,6 +99,7 @@ class Polarization(models.Model):
 
 class Receiver(models.Model):
     name         = models.CharField(max_length=200)
+    display_name = models.CharField(max_length=200)
     dss_receiver = models.ForeignKey(smodels.Receiver, null = True)
     band_low     = models.FloatField(null = True)
     band_hi      = models.FloatField(null = True)
@@ -108,7 +109,7 @@ class Receiver(models.Model):
 
     def getName(self):
         if self.band_low is not None and self.band_hi is not None:
-            return "%s (%s - %s)" % (self.name, self.band_low, self.band_hi)
+            return "%s (%s - %s GHz)" % (self.display_name, self.band_low, self.band_hi)
         else:
             return self.name
 
