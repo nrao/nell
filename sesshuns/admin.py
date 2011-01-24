@@ -132,10 +132,10 @@ class Period_AccountingAdmin(admin.ModelAdmin):
     list_display = ['scheduled', 'not_billable', 'short_notice'] 
 
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ['pcode', 'name', 'semester', 'project_type', 'principal_contact', 'thesis', 'complete', 'start_date', 'end_date', 'friend']
+    list_display = ['pcode', 'name', 'semester', 'project_type', 'principal_contact', 'thesis', 'complete', 'start_date', 'end_date']
     actions = [mark_as_completed, mark_as_not_completed]
     ordering = ['pcode']
-    list_filter = ['semester', 'project_type', 'complete', 'thesis', 'friend']
+    list_filter = ['semester', 'project_type', 'complete', 'thesis']
     search_fields = ['pcode']
     date_hierarchy = 'start_date'
     inlines = [SesshunInline]

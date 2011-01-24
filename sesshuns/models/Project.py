@@ -20,7 +20,7 @@ class Project(models.Model):
     blackouts        = models.BooleanField(default = False)
     start_date       = models.DateTimeField(null = True, blank = True)
     end_date         = models.DateTimeField(null = True, blank = True)
-    friend           = models.ForeignKey(User, null = True, blank = True)
+    #friend           = models.ForeignKey(User, null = True, blank = True)
     accounting_notes = models.TextField(null = True, blank = True)
     notes            = models.TextField(null = True, blank = True)
     schedulers_notes = models.TextField(null = True, blank = True)
@@ -178,6 +178,9 @@ class Project(models.Model):
 
     def has_sanctioned_observers(self):
         return True if self.get_sanctioned_observers() != [] else False
+
+    def has_friends(self):
+        return len(self.friend_set.all()) > 0
 
     def transit(self):
         "Returns true if a single one of it's sessions has this flag true"

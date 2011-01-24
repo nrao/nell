@@ -474,19 +474,9 @@ class DSSPrime2DSS(object):
         Note: assumes all friends are in DSS DB already.
         """
 
+        # first the project
         semester = first(Semester.objects.filter(semester = row[12]))
         ptype    = first(Project_Type.objects.filter(type = row[14]))
-
-        # friend_id from DSS' projects table
-        f_id = row[3]
-        if f_id != 0:
-            query = "select * from friends where id = %s" % f_id
-            self.cursor.execute(query)
-            friend_row = self.cursor.fetchone()
-            friend = self.find_user(friend_row)
-        else:
-            friend = None
-
         p = Project(semester     = semester
                   , project_type = ptype
                   , pcode        = row[4]
@@ -495,9 +485,22 @@ class DSSPrime2DSS(object):
                   , complete     = row[7] == 1
                   , start_date   = row[9]
                   , end_date     = row[10]
-                  , friend       = friend
                     )
         p.save()
+
+        # then the related objects:
+        # friends: friend_id from DSS' projects table
+        f_id = row[3]
+        if f_id != 0:
+            query = "select * from friends where id = %s" % f_id
+            self.cursor.execute(query)
+            friend_row = self.cursor.fetchone()
+            friendUser = self.find_user(friend_row)
+            friend = Friend(user = friendUser, project = p)
+            friend.save()
+
+
+        # allotments:
         query = """
                 SELECT projects.pcode, allotment.*
                 FROM `projects`
@@ -687,7 +690,7 @@ class DSSPrime2DSS(object):
             ls += "\nProject: \n"
             project = first(Project.objects.filter(pcode = pcode))
             ls += "%s\n" % project
-            ls += "Friend: %s\n" % project.friend
+            ls += "Friends: %s\n" % ",".join([f.user for f in project.friend_set.all()])
             ls += "Users:\n"
             for inv in project.investigator_set.all():
                 new = inv.user in self.new_users

@@ -1,4 +1,5 @@
 from ElectiveResource     import ElectiveResource
+from FriendResource       import FriendResource
 from PeriodResource       import PeriodResource
 from ProjectResource      import ProjectResource
 from SessionResource      import SessionResource
