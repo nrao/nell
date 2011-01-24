@@ -109,7 +109,7 @@ def get_windows():
 def filter_current_windows(wins):
     gt_date = datetime.now().date() - timedelta(1)
     lt_date = gt_date + timedelta(62) 
-    return [w for w in wins if w.start_date() < lt_date and w.last_date() > gt_date]
+    return [w for w in wins if w.start_date() is not None and w.last_date() is not None and w.start_date() < lt_date and w.last_date() > gt_date]
 
 # Windowed Sessions that are guaranteed need default periods.
 def get_missing_default_periods():
