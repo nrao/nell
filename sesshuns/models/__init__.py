@@ -8,6 +8,7 @@ from Column                          import Column
 from Elective                        import Elective
 from ExplorerConfiguration           import ExplorerConfiguration
 from Filter                          import Filter
+from Friend                          import Friend
 from Investigator                    import Investigator
 from Observing_Parameter             import Observing_Parameter
 from Observing_Type                  import Observing_Type

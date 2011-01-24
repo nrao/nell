@@ -22,13 +22,11 @@ class ProjectHttpAdapter (object):
             f_lname, f_fname = fdata.get("friend", "").split(", ")
         except ValueError:
             f_lname, f_fname = ("", "")
-        friend = first(User.objects.filter(last_name = f_lname, first_name = f_fname))
 
         self.project.semester         = semester
         self.project.project_type     = p_type
         self.project.pcode            = fdata.get("pcode", "")
         self.project.name             = fdata.get("name", "")
-        self.project.friend           = friend
         self.project.thesis           = fdata.get("thesis", "false") == "true"
         self.project.complete         = fdata.get("complete", "false") == "true"
         self.project.blackouts        = fdata.get("blackouts", "false") == "true"
@@ -84,6 +82,7 @@ class ProjectHttpAdapter (object):
                         if i.principal_investigator])
         co_i = '; '.join([i.user.name() for i in self.project.investigator_set.all()
                         if not i.principal_investigator])
+        friends =  "; ".join([f.user.name() for f in self.project.friend_set.all()])
 
         return {"id"           : self.project.id
               , "semester"     : self.project.semester.semester
@@ -100,7 +99,7 @@ class ProjectHttpAdapter (object):
               , "complete"     : self.project.complete
               , "pi"           : pi
               , "co_i"         : co_i
-              , "friend"       : self.project.friend.name() if self.project.friend is not None else ""
+              , "friends"      : friends
               , "notes"        : self.project.notes if self.project.notes is not None else ""
               , "schd_notes"   : self.project.schedulers_notes \
                                  if self.project.schedulers_notes is not None else ""
