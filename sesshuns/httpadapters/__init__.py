@@ -1,4 +1,5 @@
 from ElectiveHttpAdapter     import ElectiveHttpAdapter
+from FriendHttpAdapter       import FriendHttpAdapter
 from InvestigatorHttpAdapter import InvestigatorHttpAdapter
 from PeriodHttpAdapter       import PeriodHttpAdapter
 from ProjectHttpAdapter      import ProjectHttpAdapter
