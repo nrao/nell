@@ -13,7 +13,7 @@ def get_result(request, *args, **kwds):
 
 #@catch_json_parse_errors
 def set_terms(request, *args, **kwds):
-    #SPECIAL_VALUES = ('trimester', 'conversionType', 'units')
+    #SPECIAL_VALUES = ('semester', 'conversionType', 'units')
     SPECIAL_VALUES = ()
     retval         = {}
 
@@ -58,7 +58,7 @@ def set_terms(request, *args, **kwds):
         request.session['SC_result'] = result.get()
         getMinIntegrationTime(request)
         #request.session['SC_result'].update(
-        #    dict(trimester = (request.session.get('SC_trimester', ''), '', '')))
+        #    dict(semester = (request.session.get('SC_semester', ''), '', '')))
         try:
             result.__del__()
         except:

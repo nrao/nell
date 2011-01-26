@@ -5,7 +5,7 @@ from sesshuns.models                     import *
 class DSSDatabase09B(DSSDatabase):
     """
     This class is responsible for adding any additional items to the database
-    that is needed to run the DSS for this trimester.
+    that is needed to run the DSS for this semester.
     NOTE: this really only exists to serve as legacy code.  We won't be 
     creating a database for 09B again (we're in 09C right now).  Don't
     expect this code to work.
@@ -17,7 +17,7 @@ class DSSDatabase09B(DSSDatabase):
         print "09B DB created."
 
     def create_09B_conditions(self):
-        trimester = "09B"
+        semester = "09B"
         self.create_09B_rcvr_schedule()
         #self.set_fixed_projects()
         start = "20090601"

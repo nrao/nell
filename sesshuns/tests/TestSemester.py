@@ -10,7 +10,7 @@ class TestSemester(NellTestCase):
     def test_getFutureSemesters(self):
         dt = datetime(2010, 12, 25, 0, 0, 0)
         future = [s.semester for s in Semester.getFutureSemesters(dt)]
-        self.assertEqual([u'11A', u'11B', u'11C'], future[:3])
+        self.assertEqual([u'11A', u'11B', u'12A', u'12B'], future[:4])
 
     def test_getPreviousSemesters(self):
         dt = datetime(2010, 12, 25, 0, 0, 0)

@@ -13,7 +13,7 @@ class DSSDatabase(object):
     The main tasks are: transferring data from an intermediary DB that
     Carl populates, tranferring raw tables we get from Carl's system, and
     filling in missing information on users (from the PST).
-    To prepare the database for a specific trimester (including things like
+    To prepare the database for a specific semester (including things like
     rcvr schedules), this class should be extended.
     """
 
@@ -28,25 +28,25 @@ class DSSDatabase(object):
         # responsible for filling in info on users using the PST
         self.un = UserNames(sys.stderr)
 
-    def create(self, trimester):
+    def create(self, semester):
         "Method for creating a new DSS database "
-        # transfer the stuff that is trimester independent
+        # transfer the stuff that is semester independent
         self.dss_prime.transfer()
-        # transfer the trimester dependent stuff - schedtime table!
+        # transfer the semester dependent stuff - schedtime table!
         # order here is important because we need the user info
         # to be all there first
         # NOTE: if this fails to find certain users, add them to
         # UserNames.createMissingUsers and run again.
-        self.schedtime.transfer_fixed_periods(trimester)
+        self.schedtime.transfer_fixed_periods(semester)
 
 
-    def append(self, trimester):
-        "Method for appending new trimester data to existing DSS database"
+    def append(self, semester):
+        "Method for appending new semester data to existing DSS database"
 
         self.dss_prime.transfer_only_new()
-        print "Transferring fixed periods for trimester %s..." % (trimester)
-        self.schedtime.transfer_fixed_periods(trimester)
-        self.schedtime.print_report(trimester)
+        print "Transferring fixed periods for semester %s..." % (semester)
+        self.schedtime.transfer_fixed_periods(semester)
+        self.schedtime.print_report(semester)
 
     def assign_periods_to_windows(self):
         windows = Window.objects.all()
@@ -123,7 +123,7 @@ class DSSDatabase(object):
     def check_maintenance_and_rcvrs(self):
         "Are there rcvr changes happening w/ out maintenance days?"
         bad = []
-        # cast a wide enough net to make this trimester agnostic
+        # cast a wide enough net to make this semester agnostic
         start = date(2000, 1, 1)
         days = 365 * 20
         schedule = Receiver_Schedule.extract_schedule(start, days)

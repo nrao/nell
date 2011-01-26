@@ -106,29 +106,29 @@ def GenerateProjectReport():
                 )
             )
 
-    trimester          = Semester.getCurrentSemester()
-    trimester_hrs_left = (trimester.end() - datetime.today()).days * 24.
-    TRIMESTER_HOURS    = (trimester.end() - trimester.start()).days * 24.
+    semester          = Semester.getCurrentSemester()
+    semester_hrs_left = (semester.end() - datetime.today()).days * 24.
+    SEMESTER_HOURS    = (semester.end() - semester.start()).days * 24.
 
-    outfile.write("\nTotal hours in this trimester   = %.1f"% TRIMESTER_HOURS)
-    outfile.write("\nTotal hours left this trimester = %.1f\n" % \
-                  trimester_hrs_left)
+    outfile.write("\nTotal hours in this semester   = %.1f"% SEMESTER_HOURS)
+    outfile.write("\nTotal hours left this semester = %.1f\n" % \
+                  semester_hrs_left)
 
     ta    = TimeAccounting()
     hours = sum([ta.getTimeLeft(p) for p in open_projects])
 
     outfile.write("\nSum of all incomplete projects' hours remaining = %.1f" % hours)
     outfile.write("\nHours remaining / Trimester Hours               = %.1f%%" % 
-                  (hours / TRIMESTER_HOURS * 100.))
+                  (hours / SEMESTER_HOURS * 100.))
     outfile.write("\nHours remaining / Trimester Hours Left          = %.1f%%\n" % 
-                  float(hours / trimester_hrs_left * 100.))
+                  float(hours / semester_hrs_left * 100.))
 
     hours = sum([ta.getProjectSchedulableTotalTime(p) for p in open_projects])
     outfile.write("\nSum of all schedulable time             = %.1f" % \
                   hours)
 
-    outfile.write("\nSchedulable time / Trimester Hours      = %.1f%%" % (hours / TRIMESTER_HOURS * 100.))  
-    outfile.write("\nSchedulable time / Trimester Hours Left = %.1f%%\n" % (hours / trimester_hrs_left * 100.))  
+    outfile.write("\nSchedulable time / Trimester Hours      = %.1f%%" % (hours / SEMESTER_HOURS * 100.))  
+    outfile.write("\nSchedulable time / Trimester Hours Left = %.1f%%\n" % (hours / semester_hrs_left * 100.))  
 
     outfile.close()
 

@@ -6,7 +6,7 @@ class DSSDatabase09C(DSSDatabase):
 
     """
     This class is responsible for adding any additional items to the database
-    that is needed to run the DSS for this trimester.
+    that is needed to run the DSS for this semester.
     """
 
     def create(self):
