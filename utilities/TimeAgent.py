@@ -186,12 +186,22 @@ def DateTime2TimeStamp(dt):
     return (mjd, secs)
 
 def dt2semester(dt):
+    "Warning this code produces a 3.1YK problem!"
     trimesterMonth = [None,'C','A','A','A','A','B','B','B','B','C','C','C']
+    semesterMonth = [None,'B','A','A','A','A','A','A','B','B','B','B','B']
     year = dt.year - 2000
     month = dt.month
     if month == 1:
         year -= 1
-    return "%02d%s" % (year, trimesterMonth[month])
+    if dt >= datetime.datetime(2011, 8, 1, 0, 0, 0):
+        retval = "%02d%s" % (year, semesterMonth[month])
+    elif dt >= datetime.datetime(2011, 7, 1, 0, 0, 0):
+        retval = "11B";
+    elif dt >= datetime.datetime(2011, 6, 1, 0, 0, 0):
+        retval = "11A";
+    else:
+        retval = "%02d%s" % (year, trimesterMonth[month])
+    return retval
 
 def dtDiffHrs(time1, time2):
     "Gives absolute difference between two times in hours."

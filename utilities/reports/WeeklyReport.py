@@ -201,11 +201,11 @@ def GenerateReport(start):
     rest       = total_time - monitoring - vlbi - large
 
     outfile.write("\nTotal time to discharge [hours] = %.1f\n" % total_time)
-    outfile.write("\tIncludes %.1f hours of monitoring projects (not Large) after trimester %s\n" % (monitoring, cSemester))
+    outfile.write("\tIncludes %.1f hours of monitoring projects (not Large) after semester %s\n" % (monitoring, cSemester))
     outfile.write("\t         %.1f hours of Regular & RRS projects\n" % rest)
     outfile.write("\t         %.1f hours of Large projects\n" % large)
     outfile.write("\t         %.1f hours of VLBI projects\n" % vlbi)
-    outfile.write("\n* Includes projects that are on hold for trimester %s\n" % cSemester)
+    outfile.write("\n* Includes projects that are on hold for semester %s\n" % cSemester)
 
     visitors = ["%s - %s - %s [%s] [%s]" % (r.start_date.strftime("%m/%d")
                               , r.end_date.strftime("%m/%d")
