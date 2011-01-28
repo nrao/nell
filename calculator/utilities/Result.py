@@ -77,8 +77,13 @@ class Result(Thread):
             if self.terms.has_key(key):
                 self.terms[key].set(value)
                 for _, term in self.terms.items():
-                    if value is None and term.hasDependencies():
+                    if value is None and term.hasDependencies() and not term.isJustValue():
                         term.set(None) # clear the board
+                        for t in term.variables.keys():
+                            if self.terms[t].isJustValue():
+                                self.terms[t].set(None)
+                            else:
+                                term.variables[t] = None
                     else:
                         term.evaluate(self.terms[key]) # move the ball forward
                 
