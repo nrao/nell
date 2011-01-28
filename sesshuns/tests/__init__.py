@@ -23,6 +23,7 @@ from TestPSTQueryService       import TestPSTQueryService
 from TestReceiver              import TestReceiver
 from TestReceiverCompile       import TestReceiverCompile
 from TestReceiverSchedule      import TestReceiverSchedule
+from TestReports               import TestReports
 from TestSchedulingNotifier    import TestSchedulingNotifier
 from TestScheduleTools         import TestScheduleTools
 from TestSemester              import TestSemester
