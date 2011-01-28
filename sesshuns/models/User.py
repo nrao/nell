@@ -107,10 +107,14 @@ class User(models.Model):
             retval[project] = [p for p in period if p.start < dt]
         return retval
 
-    def getFriends(self):
-        "Returns a list of all the friends that are assisting this user."
+    def getFriendLastNames(self):
+        "Returns a list of all the friends' names that are assisting this user."
         projects = [i.project for i in self.investigator_set.all()]
-        return list(Set([p.friend.last_name if p.friend else "" for p in projects]))
+        # TBF: make it a list comp!
+        friends = []
+        for p in projects:
+            friends.extend([f.user.last_name for f in p.friend_set.all()])
+        return list(Set(friends))    
 
     def getProjects(self):
         """
@@ -118,6 +122,12 @@ class User(models.Model):
         investigator.
         """
         return [i.project.pcode for i in self.investigator_set.all()]
+
+    def getFriendedProjects(self):
+        """
+        Returns a list of all the projects for which this user is a friend.
+        """
+        return [f.project for f in self.friend_set.all()]
 
     def getIncompleteProjects(self):
         "Like getProjects, but only for those that are still not completed."
@@ -130,7 +140,7 @@ class User(models.Model):
 
     def isFriend(self, pcode):
         "Is this user a friend for the given project?"
-        return pcode in [p.pcode for p in self.project_set.all()]
+        return pcode in [f.project.pcode for f in self.friend_set.all()]
 
     def canViewProject(self, pcode):
         "A user can view project info if he's an inv, friend, admin, or op."

@@ -69,7 +69,7 @@ class TestDSSPrime2DSS(NellTestCase):
         p = projects[0]
         self.assertEquals("GBT05C-027", p.pcode)
         self.assertEquals(False, p.thesis)
-        self.assertEquals("Balser", p.friend.last_name)
+        self.assertEquals(["Balser"], [f.user.last_name for f in p.friend_set.all()])
         allots = p.allotments.all()
         self.assertEquals(1, len(allots))
         a = allots[0]

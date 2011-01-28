@@ -10,6 +10,7 @@ class TestUser(NellTestCase):
 
         self.project = Project()
         pdata = {"semester"   : "09A"
+               , "pcode"      : "GBT09A-009"
                , "type"       : "science"
                , "total_time" : "10.0"
                , "PSC_time"   : "10.0"
@@ -60,10 +61,14 @@ class TestUser(NellTestCase):
         self.period2.save()
 
         # add the project friend
-        self.user3 = User(sanctioned = True, role = obsRole)
+        self.user3 = User(sanctioned = True
+                        , role = obsRole
+                        , first_name = "Best"
+                        , last_name = "Friend"
+                         )
         self.user3.save()
-        self.project.friend = self.user3
-        self.project.save()
+        friend = Friend(user = self.user3, project = self.project)
+        friend.save()
 
         # add an unrelated user
         self.user4 = User(sanctioned = True, role = obsRole)
@@ -79,6 +84,32 @@ class TestUser(NellTestCase):
         self.project.delete()
         self.user3.delete()
         self.user4.delete()
+
+    def test_getFriendLastNames(self):
+
+        self.assertEquals(['Friend'], self.user1.getFriendLastNames())
+        self.assertEquals(['Friend'], self.user2.getFriendLastNames())
+        self.assertEquals([], self.user3.getFriendLastNames())
+        self.assertEquals([], self.user4.getFriendLastNames())
+
+    def test_isFriend(self):
+
+        self.assertEquals(self.user1.isFriend('GBT09A-009'), False)
+        self.assertEquals(self.user3.isFriend('GBT09A-009'), True)
+
+    def test_getProjects(self):
+    
+        self.assertEquals(self.user1.getProjects(), ['GBT09A-009'])
+        self.assertEquals(self.user2.getProjects(), ['GBT09A-009'])
+        self.assertEquals(self.user3.getProjects(), [])
+        self.assertEquals(self.user4.getProjects(), [])
+
+    def test_getFriendedProjects(self):
+
+        self.assertEquals(self.user1.getFriendedProjects(), [])
+        self.assertEquals(self.user2.getFriendedProjects(), [])
+        self.assertEquals(self.user3.getFriendedProjects(),[self.project])
+        self.assertEquals(self.user4.getFriendedProjects(), [])
 
     def test_canViewProject(self):
 

@@ -69,7 +69,7 @@ class Schedtime2DSS(object):
         self.session_names = []
 
 
-    def transfer_fixed_periods(self, trimester):
+    def transfer_fixed_periods(self, semester):
         """
         We can dump Carl's DB into MySQL tables and use these to suck
         whatever info we need in addition to what is in the DB that
@@ -92,16 +92,16 @@ class Schedtime2DSS(object):
         testingTypes = ['Tests', 'Calibration', 'Commissioning']
 
         # Only transfer fixed periods from schedtime table that cover
-        start, end = self.get_schedtime_dates(trimester)
+        start, end = self.get_schedtime_dates(semester)
 
         # prepare for transfering over fixed periods by creating the
         # necessary projects & session we know we'll need
-        self.create_project_and_session( trimester
+        self.create_project_and_session( semester
                                        , "Maintenance"
                                        , "non-science"
                                        , "Maintenance"
                                        , "maintenance")
-        self.create_project_and_session( trimester
+        self.create_project_and_session( semester
                                        , "Shutdown"
                                        , "non-science"
                                        , "Shutdown"
@@ -175,7 +175,7 @@ class Schedtime2DSS(object):
 
             # what session to link this to?
             if type in testingTypes:
-                s = self.get_testing_session(row, duration, trimester)
+                s = self.get_testing_session(row, duration, semester)
             elif type == "Maintenance":
                 # Maintenance is simple
                 s = first(Sesshun.objects.filter(name = "Maintenance").all())
@@ -253,7 +253,7 @@ class Schedtime2DSS(object):
               , [i.user for i in p.investigators_set.all()]) for p in ps]
 
 
-    def get_testing_session(self, row, duration, trimester):
+    def get_testing_session(self, row, duration, semester):
         """
         Now for the tricky part.  requirments:
         *  non-science projects & sessions must be imported into the DSS
@@ -264,7 +264,7 @@ class Schedtime2DSS(object):
                     + receiver
         * all project codes created during the transfer must follow the
           following pattern: TGBT$$$_### where:
-              o $$$ - current trimester (e.g. '09C')
+              o $$$ - current semester (e.g. '09C')
               o ### - auto-incrementing integer, starting at 500 for 09C
         """
 
@@ -285,9 +285,9 @@ class Schedtime2DSS(object):
         if sess_name not in self.session_names:
             self.session_names.append(sess_name)
             # create the project & session
-            proj_name = self.get_project_name(trimester, self.proj_counter)
+            proj_name = self.get_project_name(semester, self.proj_counter)
             self.proj_counter += 1
-            proj = self.create_project_and_session( trimester
+            proj = self.create_project_and_session( semester
                                                   , proj_name
                                                   , "non-science"
                                                   , sess_name
@@ -345,17 +345,17 @@ class Schedtime2DSS(object):
             raise "Bad Schedtime.desc_ format.  Blame Mike McCarty."
         return (activity, observerName)
 
-    def get_schedtime_dates(self, trimester):
+    def get_schedtime_dates(self, semester):
         "Schedtime table has a peculiar datetime system."
-        self.semester.semester = trimester
+        self.semester.semester = semester
 
         try:
             startdate = self.semester.start()
             enddate = self.semester.end()
         except KeyError:
-            raise "Invalid trimester designator %s.  Must be A, B, or C" % trimester[2:]
+            raise "Invalid semester designator %s.  Must be A, B, or C" % semester[2:]
         except ValueError:
-            raise "Invalid trimester year %s.  Must be numeric, 00 - 99" % trimester[:2]
+            raise "Invalid semester year %s.  Must be numeric, 00 - 99" % semester[:2]
 
         start = self.date_to_string(startdate)
         end = self.date_to_string(enddate)
@@ -375,8 +375,8 @@ class Schedtime2DSS(object):
 
         return year + month + day
 
-    def get_project_name(self, trimester, counter):
-        return "TGBT%s_%03d" % (trimester, counter)
+    def get_project_name(self, semester, counter):
+        return "TGBT%s_%03d" % (semester, counter)
 
     def get_schedtime_rcvrs(self, bands):
         "Maps entries in schedtime.bands to our receiver objects"
@@ -464,9 +464,9 @@ class Schedtime2DSS(object):
             semesterStart = self.semester.start()
             semesterEnd = self.semester.end()
         except KeyError:
-            raise "Invalid trimester designator %s.  Must be A, B, or C" % trimester[2:]
+            raise "Invalid semester designator %s.  Must be A, B, or C" % semester[2:]
         except ValueError:
-            raise "Invalid trimester year %s.  Must be numeric, 00 - 99" % trimester[:2]
+            raise "Invalid semester year %s.  Must be numeric, 00 - 99" % semester[:2]
 
         semester = first(Semester.objects.filter(semester = semesterName))
         ptype    = first(Project_Type.objects.filter(type = projectType))
@@ -528,14 +528,14 @@ class Schedtime2DSS(object):
         # return the project, which links in the session
         return p
 
-    def report_result(self, trimester, sess_type, periods):
+    def report_result(self, semester, sess_type, periods):
         dss_prime_sql = """select `etdate`, `startet`, `lengthet`, `type`, `desc`
                                from schedtime
                                where `etdate` >= \"%s\" and `etdate` <= \"%s\"
                                and %s order by `etdate`"""
 
 
-        self.semester.semester = trimester;
+        self.semester.semester = semester;
         start_date = self.semester.start()
 
         if sess_type == "Tests":
@@ -543,7 +543,7 @@ class Schedtime2DSS(object):
         else:
             type_clause = "type = \"%s\"" % sess_type
 
-        start, end = self.get_schedtime_dates(trimester)
+        start, end = self.get_schedtime_dates(semester)
         header = ["date", "start (ET)", "length", "type", "desc"]
         dss_header = ["date", "start (UT)", "length", "pcode", "desc"]
 
@@ -568,7 +568,7 @@ class Schedtime2DSS(object):
 
 
         if sess_type == "Tests":
-            pcode = "TGBT" + trimester
+            pcode = "TGBT" + semester
         else:
             pcode = sess_type
 
@@ -592,7 +592,7 @@ class Schedtime2DSS(object):
         return dss_prime_report, dss_report
 
 
-    def print_report(self, trimester):
+    def print_report(self, semester):
 
         self.total_periods_after = Period.objects.all()
         self.period_ids_after = []
@@ -624,10 +624,10 @@ class Schedtime2DSS(object):
 
         new_astronomy = new_periods
 
-        (prime_astronomy, dss_astronomy) = self.report_result(trimester, "Astronomy", new_astronomy)
-        (prime_tests, dss_tests) = self.report_result(trimester, "Tests", new_tests)
-        (prime_maintenance, dss_maintenance) = self.report_result(trimester, "Maintenance", new_maintenance)
-        (prime_shutdown, dss_shutdown) = self.report_result(trimester, "Shutdown", new_shutdown)
+        (prime_astronomy, dss_astronomy) = self.report_result(semester, "Astronomy", new_astronomy)
+        (prime_tests, dss_tests) = self.report_result(semester, "Tests", new_tests)
+        (prime_maintenance, dss_maintenance) = self.report_result(semester, "Maintenance", new_maintenance)
+        (prime_shutdown, dss_shutdown) = self.report_result(semester, "Shutdown", new_shutdown)
 
         print "\nSummary of results:\n"
         print "Astronomy: %i entries found, %i entries transferred." % \

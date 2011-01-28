@@ -103,7 +103,7 @@
             <span style="background-color: #99CCBB">blackouts</span>,
             <span style="background-color: #EEAABB">reservations</span>,
             <span style="background-color: #CCBBDD">windows</span>,
-            <span style="background-color: #FF6666">trimester boundary</span>
+            <span style="background-color: #FF6666">semester boundary</span>
           </p>
           <div id='calendar'>
           </div>
@@ -355,9 +355,11 @@
           <h3 class="caps">Information</h3>
           <div class="box">
             <dl>
-              {% if p.friend %}
-                <dt>Friend</dt>
-                <dd><a href="mailto:{{p.friend|get_email}}">{{p.friend|display_name}}</a></dd>
+              {% if p.has_friends %}
+                <dt>Friends</dt>
+                {% for friend in p.friend_set.all %}
+                    <dd><a href="mailto:{{friend.user|get_email}}">{{friend.user|display_name}}</a></dd>
+                {% endfor %}    
               {% endif %}
               <dt>Trimester</dt>
               <dd>{{p.semester.semester}}</dd>
