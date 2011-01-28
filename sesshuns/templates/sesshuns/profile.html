@@ -28,25 +28,27 @@
                 </tr>
               {% endfor %}
           </table>
+
           {% if u.friend_set.all %}
             <h3 class="loud">Project Friend On</h3>
               <table>
                 <tr>
                   <th>Project ID</th>
+                  <th title="You must be available to observe this Project">Required</th>
                   <th>Title</th>
                 </tr>
-                  {% for p in u.getFriendedProjects|sort_projects %}
+                  {% for f in u.friend_set.all %}
                     <tr>
-                      <!-- if u not in p.investigator_set.user
-                           (not possible as template, nor important -->
-                      <td><a href="/project/{{p.pcode}}">{{p.pcode}}</a></td>
-                      <td>{{p.name}}</td>
+                      <td><a href="/project/{{f.project.pcode}}">{{f.project.pcode}}</a></td>
+                      <td>{% if f.required %}Yes{% endif %}</td>
+                      <td>{{f.project.name}}</td>
                     </tr>
                   {% endfor %}
               </table>
           {% endif %}
           <hr />
         </div>
+
         <div class="span-8 colborder">  
           <h3 class="loud">Dynamic Contact Information</h3>
           <p>{{u.contact_instructions|escape|linebreaks}}</p>

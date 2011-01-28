@@ -193,9 +193,15 @@ def project(request, *args, **kws):
     # sort all the sessions by name
     sess = sorted(project.sesshun_set.all(), lambda x,y: cmp(x.name, y.name))
 
+    # what are the user blackouts we need to display?
     investigators = project.investigator_set.order_by('priority').all()
     obsBlackouts      = [adjustBlackoutTZ(tz, b) for i in investigators for b in i.projectBlackouts()]
+    reqFriendBlackouts = [adjustBlackoutTZ(tz, b) for f in project.friend_set.all() for b in f.projectBlackouts() if f.required ]
+    obsBlackouts.extend(reqFriendBlackouts)
+
+    # and the project blackouts?
     projBlackouts     = [adjustBlackoutTZ(tz, b) for b in project.blackout_set.all() if b.isActive()]
+
     periods = [{'session'    : p.session
               , 'start'      : adjustDateTimeTz(tz, p.start)
               , 'duration'   : p.duration
@@ -278,6 +284,21 @@ def toggle_session(request, *args, **kws):
     s.status.save()
 
     revision.comment = get_rev_comment(request, s, "toggle_session")
+
+    return HttpResponseRedirect("/project/%s" % pcode)
+
+@revision.create_on_success
+@login_required
+def toggle_required_friend(request, *args, **kws):
+    """
+    Allows investigators to designate required friends for a project.
+    """
+    pcode, f_id = args
+    f = first(Friend.objects.filter(project__pcode = pcode, id = f_id))
+    f.required = not f.required
+    f.save()
+
+    revision.comment = get_rev_comment(request, f, "toggle_required_friend")
 
     return HttpResponseRedirect("/project/%s" % pcode)
 
@@ -547,9 +568,16 @@ def events(request, *args, **kws):
         jsonobjlist.extend(b.eventjson(start, end, id, tz))
         id = id + 1
 
-    # Investigator blackout events
-    blackouts = Set([b for i in project.investigator_set.all() \
-                       for b in i.user.blackout_set.all()])
+    # NOTE: here we display ALL investigator blackouts, but
+    # in the Observer Blackout section, we are only displaying blackouts
+    # of observers.  
+    # Investigator blackout & Required Friend events
+    invBlackouts = [b for i in project.investigator_set.all() \
+                      for b in i.user.blackout_set.all()]
+    frdBlackouts = [b for f in project.friend_set.all() \
+                      for b in f.user.blackout_set.all() if f.required]
+    invBlackouts.extend(frdBlackouts)
+    blackouts = Set(invBlackouts)
     for b in blackouts:
         jsonobjlist.extend(b.eventjson(start, end, id, tz))
         id = id + 1

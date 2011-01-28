@@ -35,6 +35,13 @@ class TestObservers(BenchTestCase):
         self.u.save()
         self.client.login(username = "dss", password = "asdf5!")
 
+        self.uFriend = User(first_name = "Best"
+                          , last_name = "Friend"
+                          , pst_id = None
+                          , role = first(Role.objects.all())
+                           )
+        self.uFriend.save()
+
         self.p = Project()
         adapter = ProjectHttpAdapter(self.p)
         adapter.init_from_post({'semester'   : '09C'
@@ -51,6 +58,10 @@ class TestObservers(BenchTestCase):
                          )
         i.save()
 
+        self.friend = Friend(project = self.p
+                 , user = self.uFriend)
+        self.friend.save()         
+                 
         fdata2 = copy(fdata)
         fdata2.update({'source_v' : 1.0
                      , 'source_h' : 1.0
@@ -79,10 +90,12 @@ class TestObservers(BenchTestCase):
     def test_profile(self):
         response = self.get('/profile/%s' % self.u.id)
         self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue("mikes awesome project" in response.content)
 
     def test_project(self):
         response = self.get('/project/%s' % self.p.pcode)
         self.failUnlessEqual(response.status_code, 200)
+        self.assertTrue("Best Friend" in response.content)
 
     @timeIt
     def test_search(self):
@@ -106,6 +119,21 @@ class TestObservers(BenchTestCase):
         self.failUnlessEqual(response.status_code, 302)
         i = first(Investigator.objects.filter(id = i_id))
         self.assertEqual(i.observer, True)
+
+    @timeIt
+    def test_toggle_required_friend(self):
+        f_id = self.friend.id
+        self.assertEquals(self.friend.required, False)
+        response = self.post(
+            '/project/%s/friend/%s/required' % (self.p.pcode, f_id))
+        self.failUnlessEqual(response.status_code, 302)
+        f = Friend.objects.get(id = f_id)
+        self.assertEqual(f.required, True)
+        response = self.post(
+            '/project/%s/friend/%s/required' % (self.p.pcode, f_id))
+        self.failUnlessEqual(response.status_code, 302)
+        f = Friend.objects.get(id = f_id)
+        self.assertEqual(f.required, False)
 
     def test_dynamic_contact_form(self):
         response = self.get('/profile/%s/dynamic_contact' % self.u.id)

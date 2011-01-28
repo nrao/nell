@@ -153,6 +153,32 @@
             </tr>
             {% endfor %}
           </table>
+
+        <h3 class="grey_highlight loud">Project Friends</h3>
+          <table>
+            <tr>
+              <th>Name</th>
+              <th>Email(s)</th>
+              <th title="Observing will not take place unless this Friend is available.">Required</th>
+            </tr>
+            {% for f in p.friend_set.all %}
+            <tr>
+              <td><a href="/profile/{{f.user.id}}">{{f.user|display_name}}</a></td>
+              <td>
+                {{f.user|get_email}}<br/>
+              </td>
+              <td>
+                  {% if f.required %}
+                  <a href="/project/{{p.pcode}}/friend/{{f.id}}/required"><img src="/static/images/checked.png" /></a>
+                  {% else %}
+                  <a href="/project/{{p.pcode}}/friend/{{f.id}}/required"><img src="/static/images/unchecked.png" /></a>
+                  {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+
+
         <h3 class="grey_highlight loud">Observer Blackouts ({{tz}})</h3>
           <table>
             <tr>
@@ -358,7 +384,7 @@
               {% if p.has_friends %}
                 <dt>Friends</dt>
                 {% for friend in p.friend_set.all %}
-                    <dd><a href="mailto:{{friend.user|get_email}}">{{friend.user|display_name}}</a></dd>
+                    <dd><a href="mailto:{{friend.user|get_email}}">{{friend|display_friend_name}}</a></dd>
                 {% endfor %}    
               {% endif %}
               <dt>Trimester</dt>

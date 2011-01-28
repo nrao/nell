@@ -83,6 +83,7 @@ urlpatterns = patterns(''
    , url(r'^investigators/qualified$', remotely_qualified)
    , url(r'^investigators$',      InvestigatorResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^investigators/([^/]+)$',InvestigatorResource(permitted_methods=('PUT', 'GET', 'POST')))
+    , url(r'^project/([^/]+)/friend/(\d+)/required$',       toggle_required_friend)
     , url(r'^friends$',      FriendResource(permitted_methods=('PUT', 'GET', 'POST'))) #
     , url(r'^friends/([^/]+)$', FriendResource(permitted_methods=('PUT', 'GET', 'POST')))
    
