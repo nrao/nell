@@ -34,18 +34,20 @@ class Term(Document):
         return self.value, self.units, self.equation
 
     def set(self, value):
-        if value is None:
-            self.value = None
-            for k in self.variables.keys():
-                self.variables[k] = None
-        elif self.value is not None and self.value != value:
+        if self.value is not None and self.value != value:
             self.changed = True
-        self.value = value
+
+        if value is None and self.isJustValue():
+            self.set(eval(self.equation))
+        elif value is None and not self.isJustValue():
+            self.value = None
+        else:
+            self.value = value
 
     def evaluate(self, term):
         if term.keyword in self.variables.keys():
             self.variables[term.keyword] = term.value
-            if term.value is None:
+            if term.value is None or term.changed:
                 self.value = None # need to recalculate
         else:
             return

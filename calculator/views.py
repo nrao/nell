@@ -31,7 +31,7 @@ def set_terms(request, *args, **kwds):
         for key, value in dict(request.POST).items():
             if '-hidden' not in key:
                 info[key] = value[0] 
-            elif key in getHWList():
+            elif '-' in key and key.split('-')[0] in getHWList():
                 new_key, _ = key.split('-')
                 info[new_key] = value[0]
 
@@ -44,12 +44,9 @@ def set_terms(request, *args, **kwds):
         for term, raw_value in info.items():
 
             try:
-                value = int(raw_value)
+                value = float(raw_value)
             except ValueError:
-                try:
-                    value = float(raw_value)
-                except ValueError:
-                    value = raw_value
+                value = raw_value
             if value == "NOTHING":
                 value = None
             result.set(term, value)

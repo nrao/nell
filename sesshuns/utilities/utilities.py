@@ -25,11 +25,13 @@ def getInvestigatorEmails(pcodes):
        * Principal Contact
        * Co-Investigatrs
        * Observers
+       * Friends
     """   
     pi = []
     pc = []
     ci = []
     ob = []
+    fs = []
     try:
         # TBF: use list comprehension?
         for pcode in pcodes:
@@ -47,9 +49,12 @@ def getInvestigatorEmails(pcodes):
                 if inv.observer:
                     for email in inv.user.getEmails():
                         ob.append(email)
+            for f in p.friend_set.all():                        
+                for email in f.user.getEmails():
+                    fs.append(email)
     except IndexError, data:
         pass # in case of blanks at the end of the list.
-    return sorted(pi), sorted(pc), sorted(ci), sorted(ob)
+    return sorted(pi), sorted(pc), sorted(ci), sorted(ob), sorted(fs)
 
 def getPcodesFromFilter(request):
 

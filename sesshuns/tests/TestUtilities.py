@@ -45,12 +45,13 @@ class TestUtilities(BenchTestCase):
                 
         emails = self.setupInvestigators(invs, proj)
           
-        pi, pc, ci, ob = getInvestigatorEmails([proj.pcode])
+        pi, pc, ci, ob, fs = getInvestigatorEmails([proj.pcode])
         
         self.assertEqual(emails[0], pi)
         self.assertEqual(emails[1], pc)
         self.assertEqual([emails[2][0], emails[3][0]], ci)
         self.assertEqual([emails[2][0], emails[3][0]], ob)
+        self.assertEqual([], fs)
 
         # try it again, overlapping roles
         for u in User.objects.all():
@@ -65,11 +66,29 @@ class TestUtilities(BenchTestCase):
                 
         emails = self.setupInvestigators(invs, proj)
           
-        pi, pc, ci, ob = getInvestigatorEmails([proj.pcode])
+        pi, pc, ci, ob, fs = getInvestigatorEmails([proj.pcode])
         
         self.assertEqual(emails[0], pi)
-        pc_emails = emails[1]
+        pc_emails = list(emails[1])
         pc_emails.extend(emails[0])
         self.assertEqual(pc_emails, pc)
         self.assertEqual([emails[2][0], emails[3][0]], ci)
         self.assertEqual([emails[1][0], emails[2][0]], ob)
+        self.assertEqual([], fs)
+
+        # now make some friends
+        obs = Role.objects.get(role = "Observer")
+        u = User(pst_id = 554, role = obs)
+        u.save()
+        f = Friend(user = u, project = proj)
+        f.save()
+
+        pi, pc, ci, ob, fs = getInvestigatorEmails([proj.pcode])
+        
+        self.assertEqual(emails[0], pi)
+        self.assertEqual(pc_emails, pc)
+        self.assertEqual([emails[2][0], emails[3][0]], ci)
+        self.assertEqual([emails[1][0], emails[2][0]], ob)
+        self.assertEqual(emails[1], fs)
+
+               
