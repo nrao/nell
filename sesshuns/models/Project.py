@@ -344,7 +344,7 @@ class Project(models.Model):
         # TBF no filtering here, ALL windows!
         return sorted([w for s in self.sesshun_set.all()
                          for w in s.window_set.all()
-                         if s.session_type.type == 'windowed']
+                         if s.session_type.type == 'windowed' and w.start_date() is not None]
                      , key = lambda x : x.start_date())
 
     def get_active_windows(self, now = None):
