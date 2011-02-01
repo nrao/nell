@@ -5,6 +5,7 @@ import settings
 setup_environ(settings)
 
 from sesshuns.models      import *
+from django.db.models     import Min
 
 # from PR2Q2:
 #    *  total # of windowed sessions
@@ -43,7 +44,7 @@ class WindowsReport():
             self.add(("-" * (sum(cols) + len(cols))) + "\n")
 
     def isInitialized(self, window):
-        if window.start_date is None or window.duration is None \
+        if window.start_date() is None or window.duration() is None \
             or window.default_period is None or window.session is None:
             return False
         else:
@@ -63,7 +64,7 @@ class WindowsReport():
         scheduled = Period_State.get_state("S")
         deleted   = Period_State.get_state("D")
 
-        wins = Window.objects.all().order_by("start_date")
+        wins = Window.objects.annotate(win_start=Min('windowrange__start_date')).order_by('win_start').distinct()
         wss  = Sesshun.objects.filter(session_type__type = "windowed").order_by("name")
         fss  = Sesshun.objects.filter(session_type__type = "fixed").order_by("name")
         oss  = Sesshun.objects.filter(session_type__type = "open").order_by("name")

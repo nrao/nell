@@ -3,6 +3,18 @@ from test_utils              import NellTestCase
 from nell.utilities.reports  import *
 from utils                   import create_sesshun
 
+from nell.utilities.reports.CompletionReport  import GenerateReport as completionReport
+from nell.utilities.reports.BlackoutReport  import GenerateBlackoutReport
+from nell.utilities.reports.DBHealthReport  import GenerateReport as dbHealth
+#from nell.utilities.reports.NFSReport  import GenerateReport as nsfReport
+from nell.utilities.reports.ProjectReport  import GenerateProjectReport
+from nell.utilities.reports.ProjTimeAcctReport  import GenerateProjectTimeAccountingReport
+from nell.utilities.reports.ScheduleReport import ScheduleReport
+from nell.utilities.reports.SessionReport  import GenerateReport as sessionReport
+from nell.utilities.reports.StartEndReport  import get_projects_between_start_end 
+from nell.utilities.reports.WeeklyReport  import GenerateReport as weeklyReport
+from nell.utilities.reports.WindowsReport  import WindowsReport 
+
 # This breaks the one unit test class per class pattern, since this 
 # is a single test class for all the reports, but wtf.
 
@@ -116,4 +128,94 @@ class TestReports(NellTestCase):
         l = "X      5.00      4.50      0.50      5.00      0.00      0.00"
         self.assertTrue(l in ls)
 
+    def test_windowsReport(self):
 
+        wr = WindowsReport(filename = "WindowsReport.txt")
+        wr.quietReport = True
+        wr.report()
+
+    def test_weeklyReport(self):
+
+        wr = weeklyReport(datetime(2010, 1, 1))
+
+    def test_startEndReport(self):
+        # make it quiet
+        orig = sys.stdout
+        sys.stdout = open("test_completionReport.txt", 'w')
+
+        start = datetime(2010, 1, 1)
+        end   = datetime(2010, 1, 7)
+        results = get_projects_between_start_end(start, end)
+
+        sys.stdout = orig
+
+    def test_sessionReport(self):
+
+        sr = sessionReport(datetime.today())
+
+    def test_blackoutReport(self):
+
+        br = GenerateBlackoutReport()
+
+    def test_completionReport(self):
+
+        # make it quiet
+        orig = sys.stdout
+        sys.stdout = open("test_completionReport.txt", 'w')
+        cr = completionReport(datetime.today())
+        sys.stdout = orig
+
+    def test_dbHealthReport(self):
+
+        db = dbHealth()
+ 
+    def test_projectReport(self):
+
+        pr = GenerateProjectReport()
+
+    def test_projTimeAcctReport(self):
+
+        # make it quiet
+        orig = sys.stdout
+        sys.stdout = open("test_projTimeAcctReport.txt", 'w')
+
+        p = Project.objects.all()[0]
+        tr = GenerateProjectTimeAccountingReport(p.pcode)
+
+        sys.stdout = orig
+ 
+    def test_scheduleReport(self):
+
+        sr = ScheduleReport()
+        sr.quietReport = True
+        start = datetime(2010, 1, 1)
+        days = 30
+        sr.report(start, days)
+        ls = "".join(sr.reportLines)
+
+        result = """Start (ET)   |      UT      |  LST  |  (hr) | T | S |    PI     | Rx        | Session
+--------------------------------------------------------------------------------------
+Dec 31 19:00 | Jan 01 00:00 | 01:20 |  2.00 | O | S | Unknown   | L         | One
+Dec 31 21:00 | Jan 01 02:00 | 03:21 |  3.00 | O | S | Unknown   | X         | Two
+Jan 01 00:00 | Jan 01 05:00 | 06:21 |  1.00 | O | S | Unknown   | L         | One
+Jan 01 01:00 | Jan 01 06:00 | 07:21 |  2.00 | O | S | Unknown   | X         | Two"""
+        self.assertTrue(result in ls)
+
+    def xtest_nsfReport(self):
+        
+        argv = ["program", "1", "2010"]
+        quarters = {
+            1: [10, 11, 12]
+          , 2: [1, 2, 3]
+          , 3: [4, 5, 6]
+          , 4: [7, 8, 9]
+                   }
+
+        quarter     = int(argv[1])
+        fiscal_year = int(argv[2])
+    
+        months = quarters[quarter]
+        year   = fiscal_year if quarter != 1 else fiscal_year - 1
+    
+        #nsfReport('Q%dFY%d' % (quarter, fiscal_year)
+        #             , [datetime(year, m, 1) for m in months])
