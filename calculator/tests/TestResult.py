@@ -20,7 +20,7 @@ class TestResult(CalculatorTestCase):
         self.assertEquals(95, self.results.get('airmass')[0])
 
         self.results.set('size', None)
-        self.assertEquals(None, self.results.get('size')[0])
+        self.assertEquals(5, self.results.get('size')[0])
         self.assertEquals(None, self.results.get('sensitivity')[0])
         self.assertEquals(None, self.results.get('time')[0])
         self.assertEquals(None, self.results.get('airmass')[0])
