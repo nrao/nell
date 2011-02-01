@@ -1,14 +1,17 @@
-from datetime                       import datetime, timedelta
-from decorators                     import is_staff
-from django.contrib.auth.decorators import login_required
-from django.http                    import HttpResponse, HttpResponseRedirect
-from django.shortcuts               import render_to_response
-from models                         import *
-from nell.utilities                 import gen_gbt_schedule
-from nell.utilities.TimeAgent       import EST, UTC
-from observers                      import project_search
-from sets                           import Set
-from utilities                      import get_requestor, acknowledge_moc
+from datetime                           import datetime, timedelta
+from decorators                         import is_staff
+from django.contrib.auth.decorators     import login_required
+from django.http                        import HttpResponse, HttpResponseRedirect
+from django.shortcuts                   import render_to_response
+from models                             import *
+from nell.utilities                     import gen_gbt_schedule
+from nell.utilities.TimeAgent           import EST, UTC
+from observers                          import project_search
+from sets                               import Set
+from utilities                          import get_requestor, acknowledge_moc
+from GBTCalendarEvent                   import CalEventPeriod, CalEventElective, CalEventMaintenanceActivity
+from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
+
 import calendar
 
 @login_required
@@ -72,13 +75,7 @@ def gbt_schedule(request, *args, **kws):
 
     start   = TimeAgent.truncateDt(startDate)
     end     = start + timedelta(days = days)
-    pstart  = TimeAgent.est2utc(start) if timezone == 'ET' else start
-    pend    = TimeAgent.est2utc(end) if timezone == 'ET' else end
 
-    periods  = [p for p in Period.in_time_range(pstart, pend) \
-                if not p.isPending()]
-
-    maintenance_activities = _map_maintenance_sets_to_periods(periods)
     requestor = get_requestor(request)
 
     # Ensure only operators or admins trigger costly MOC calculations
@@ -87,33 +84,27 @@ def gbt_schedule(request, *args, **kws):
     else:
         get_moc = False
 
-    schedule = gen_gbt_schedule(start, end, days, 'ET', periods, maintenance_activities, get_moc)
+    schedule = _get_gbt_schedule_events(start, end, timezone, get_moc)
 
     try:
-        s_n = Schedule_Notification.objects.all()
-        tzutc = s_n[len(s_n)-1].date.replace(tzinfo=UTC)
+        tzutc = Schedule_Notification.objects.latest('date').date.replace(tzinfo=UTC)
         pubdate = tzutc.astimezone(EST)
     except:
         pubdate = None
 
-    # need this for resource calendar use
-    maprj = Project.objects.filter(pcode = "Maintenance")[0]
-
     return render_to_response(
-               'sesshuns/schedule.html',
-               {'calendar'        : sorted(schedule.items()),
-                'day_list'        : range(1, 32),
-                'tz_list'         : timezones,
-                'timezone'        : timezone,
-                'today'           : datetime.now(EST),
-                'start'           : start,
-                'days'            : days,
-                'rschedule'       : Receiver_Schedule.extract_schedule(start, days),
-                'timezone'        : timezone,
-                'requestor'       : requestor,
-                'pubdate'         : pubdate,
-                'maintenance_prj' : maprj
-               })
+        'sesshuns/schedule.html',
+        {'calendar'        : schedule,
+         'day_list'        : range(1, 32),
+         'tz_list'         : timezones,
+         'timezone'        : timezone,
+         'today'           : datetime.now(EST),
+         'start'           : start,
+         'days'            : days,
+         'rschedule'       : Receiver_Schedule.extract_schedule(start, days),
+         'requestor'       : requestor,
+         'pubdate'         : pubdate,
+         })
 
 def rcvr_schedule(request, *args, **kwds):
     """
@@ -241,61 +232,160 @@ def summary(request, *args, **kws):
               , 'project'  : project
               , 'is_logged_in': request.user.is_authenticated()})
 
+
 ######################################################################
-# Looking for maintenance sets, which will then be atached to a
-# dictionary keyed by period that gets passed into the calendar.
-# Some maintenance sets are non-maintenance-period maintenance
-# activities, and are tied to non-maintenance periods.  This will
-# be fixed with the big refactoring of the calendar, to come.  But
-# first we must reconcile any scheduled electives, whose
-# maintenance sets may be attached to another of that elective's
-# periods and must be transferred.
+# Creates a list of events for the date range provided. First, gets
+# all the scheduled periods.  Next, gets the pending maintenance
+# periods.  Finally, collects the non-maintenance-period maintenance
+# events for each day. These are then sorted and added to the day's
+# activities.  For every day there will be a tuple consisting of the
+# datetime for that day, and a list of that day's events.
 ######################################################################
 
-def _map_maintenance_sets_to_periods(periods):
+def _get_gbt_schedule_events(start, end, timezone, get_moc):
     """
-    Helper function for the GBT Schedule calendar.  This function
-    takes a list of periods and returns a map with the periods passed
-    in as keys, and maintenance activity sets as values.  Most keys
-    with non-empty maintenance activity sets attached as values will
-    be maintenance periods, but some non-maintenance periods will have
-    non-maintenance-period maintenance activity sets attached.
+    Generate a list of schedule events.  The list returned consists of
+    tuples: first element is a datetime, the second element is the
+    list of events for that date.
     """
 
-    maintenance_activities = {}
+    days = (end - start).days
+    calendar = []
 
-    for i in range(0, len(periods)):
-        if periods[i].session.observing_type.type == "maintenance":
-            el = periods[i].elective
-            # if this is a maintenance elective, we want to reconcile
-            # the maintenance activity set by detaching it (if
-            # necessary) from a deleted elective period and
-            # reattaching it to the scheduled elective period.
-            if el:
-                for ep in el.periods.all():
-                    mas = ep.maintenance_activity_set.all()
+    for i in range(0, days):
+        daily_events = []
+        today = start + timedelta(days = i)
+        delta = timedelta(days = 1)
+        yesterday = today - delta
+        tomorrow = today + delta
 
-                    if mas:                 # if non-empty we've found the set.
-                        if ep.isDeleted():  # transfer if not scheduled period.
-                            for m in mas:
-                                m.period = periods[i] # periods[i] will be the scheduled one.
-                                m.save()
-            # now that the elective stuff is squared away, treat the period normally
-            mas = Maintenance_Activity.get_maintenance_activity_set(periods[i])
-        else:
-            if i < len(periods) - 1:
-                mas = Maintenance_Activity.objects\
-                      .filter(_start__gte = periods[i].start)\
-                      .filter(_start__lt = periods[i + 1].start)\
-                      .filter(period = None)\
-                      .filter(deleted = False)
-            else:
-                mas = Maintenance_Activity.objects\
-                      .filter(_start__gte = periods[i].start)\
-                      .filter(_start__lt = periods[i].end())\
-                      .filter(period = None)\
-                      .filter(deleted = False)
+        # must use UTC equivalents for database lookups if times given
+        # in Eastern Time
+        utc_today  = TimeAgent.est2utc(today) if timezone == 'ET' else today
+        utc_yesterday = utc_today - delta
+        utc_tomorrow = utc_today + delta
+        
+        # include previous day's periods because last one may end
+        # today.  Perhaps there is a way to do this exclusively via
+        # query, but there aren't that many periods in a day.
+        ps = Period.objects.filter(start__gte = utc_yesterday)\
+            .filter(start__lt = utc_tomorrow).filter(state__name = "Scheduled")
 
-        maintenance_activities[periods[i]] = mas
+        for p in ps:
+            if p.end() > utc_today:
+                ev = CalEventPeriod(p, p.start < utc_today, p.end() > utc_tomorrow,
+                                    p.moc_met() if get_moc else True, timezone)
+                daily_events.append(ev)
 
-    return maintenance_activities
+        # if today is monday, get floating maintenance events for the week
+        if today.weekday() == 0:
+            daily_events += _get_floating_maint_events(today, timezone)
+
+        # finally gather up the non-maintenance-period maintenance events
+        daily_events += _get_non_maint_period_maint_events(today, timezone)
+
+        # now sort the events and add to the calendar list
+        daily_events.sort()
+        calendar.append((today, daily_events))
+
+    return calendar
+
+######################################################################
+# This helper gathers up all the floating maintenance activities
+# Floating activities may come as pending periods, or incomplete
+# electives and have a session type of 'maintenance'.  This helper
+# fetches the pending periods (if any) and the incomplete events (if
+# any) in the date range, packages them in a list of CalEvents, sorts
+# the list and labels each event appropriately ('A', 'B', etc.) and
+# returns the list.
+######################################################################
+
+def _get_floating_maint_events(day, timezone):
+    """
+    _get_floating_maint_events(day, timezone)
+    
+    Takes the day (assumes it is Monday) and finds the maintenance
+    periods for that week.  Returns a list of CalEvent objects
+    consisting of all the floating activities for that Monday's week.
+    """
+
+    pend = []
+    utc_day = TimeAgent.est2utc(day) if timezone == 'ET' else day
+
+    try:
+        delta = timedelta(days = 7)
+        # get maintenance periods for the date span
+        mp = Period.objects\
+            .filter(session__observing_type__type = "maintenance")\
+            .filter(start__gte = utc_day)\
+            .filter(start__lt = utc_day + delta)\
+            .filter(elective = None)\
+            .exclude(state__abbreviation = 'D')
+
+        # get maintenance electives for the date span
+        me = Elective.objects\
+            .filter(session__observing_type__type = 'maintenance')\
+            .filter(periods__start__gte = utc_day)\
+            .filter(periods__start__lt = utc_day + delta)\
+            .distinct()
+
+        # combine both kinds of maintenance events (elective provides
+        # first period as representative), then sort the events by
+        # underlying period's start datetime.
+        maint_events = []
+        next_day = utc_day + timedelta(days = 1)
+
+        for p in mp:
+            ev = CalEventPeriod(p, p.start < utc_day, p.end() >= next_day, True, timezone)
+            maint_events.append(ev)
+
+        for i in me:
+            ev = CalEventElective(i, TZ = timezone)
+            maint_events.append(ev)
+
+        maint_events.sort()
+
+        # ensure that first one gets 'A', second 'B', etc.
+        for i in range(0, len(maint_events)):
+            maint_events[i].set_fm_name(chr(i + 65))
+
+        # now remove those that are scheduled.  Including scheduled
+        # non-elective periods and completed electives in the above
+        # queries ensures that if 'A' has been scheduled, 'B' still
+        # appears as 'B' and not the new 'A', which would happen if we
+        # only consider pending periods or non-complete electives.
+        maint_events = [e for e in maint_events if e.is_floating_maintenance()] 
+    except:
+        if settings.DEBUG == True:
+            printException(formatExceptionInfo())
+
+        maint_events = []
+
+    return maint_events
+
+######################################################################
+# Finds any non-maintenance-period maintenance activities and places
+# them in a CalEvent object.  This object is returned as a list of one
+# CalEvent object, to make it easier to add to other lists of CalEvent
+# objects.
+######################################################################
+
+def _get_non_maint_period_maint_events(today, timezone):
+    """
+    Gathers up all the non-maintenance-period maintenance activities,
+    and returns them in a list of CalEvent objects.
+    """
+
+    utc_today = TimeAgent.est2utc(today) if timezone == 'ET' else today
+
+    mas = Maintenance_Activity.objects.filter(_start__gte = utc_today) \
+        .filter(_start__lt = utc_today + timedelta(days = 1)) \
+        .filter(period = None) \
+        .filter(deleted = False) \
+        .order_by('_start')
+
+    if mas.exists():
+        ev = CalEventMaintenanceActivity(mas, TZ = timezone)
+        return [ev]
+
+    return []

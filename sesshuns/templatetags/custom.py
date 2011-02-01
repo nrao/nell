@@ -10,6 +10,8 @@ from nell.tools              import TimeAccounting
 from nell.utilities          import TimeAgent
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
 
+import settings
+
 register = template.Library()
 
 @register.filter
@@ -71,21 +73,6 @@ def getTimeBilled(obj):
 def getSumTotalTime(project):
     return TimeAccounting().getProjectTotalTime(project)
 
-@register.filter
-def has_lost_time(period):
-    return period.accounting.lost_time() > 0.
-
-@register.filter
-def get_lost_time(period):
-    lt = []
-    if period.accounting.lost_time_weather > 0:
-        lt.append("weather = %2.2f hr" % period.accounting.lost_time_weather)
-    if period.accounting.lost_time_rfi > 0:
-        lt.append("RFI = %2.2f hr" % period.accounting.lost_time_rfi)
-    if period.accounting.lost_time_other > 0:
-        lt.append("other = %2.2f hr" % period.accounting.lost_time_other)
-
-    return ", ".join(lt)
 
 @register.filter
 def get_email(user):
@@ -207,26 +194,6 @@ def format_reservations(reservations):
 def moc_class(moc_met):
     return "" if moc_met else "moc_failure"
 
-@register.filter
-def moc_reschedule(period):
-    "Popups are issued when start <= 30 minutes if moc is False."
-    diff = period.start - datetime.utcnow()
-    if not period.moc_ack and \
-       diff >  timedelta(seconds = 0) and \
-       diff <= timedelta(minutes = 30):
-        return not period.moc_met()
-    else:
-        return False
-
-@register.filter
-def moc_degraded(period):
-    "Popups are issued when a period has started and if moc is False."
-    now = datetime.utcnow()
-    if not period.moc_ack and \
-       now > period.start and now < period.end():
-        return not period.moc_met()
-    else:
-        return False
 
 @register.filter
 def split_over_two_table_columns(value, splitter):
@@ -253,7 +220,7 @@ def flag_rc_conflicts(ma, mas):
     # this will check against all other activities in group to see if
     # any resources are in conflict.  A list of resource abbreviations
     # will be returned, over which the filter will iterate.
-    
+
     conflicts = ma.check_for_conflicting_resources(mas)
     summary = ma.summary()
 
@@ -267,74 +234,4 @@ def flag_rc_conflicts(ma, mas):
     return summary
 flag_rc_conflicts.is_safe = True
 
-@register.filter
-def get_first_start(mas, tz):
-    if tz == "ET":
-        r = TimeAgent.utc2est(mas[0].get_start())
-    else:
-        r = mas[0].get_start()
-    return r
 
-@register.filter
-def get_last_end(mas, tz):
-    if tz == "ET":
-        r = TimeAgent.utc2est(mas[-1].get_end())
-    else:
-        r = mas[-1].get_end()
-    return r
-
-@register.filter
-def day_of_week(date, dow):
-    return date.weekday() == dow
-
-
-@register.filter
-def floating_maint_periods(day):
-    """
-    Takes the day (assumes it is Monday) and finds the maintenance
-    periods for that week.  Returns a string representing the
-    *pending* periods for that week.  Period 1 is 'A', Period 2 is
-    'B', Period 3 (if it exists) is 'C' etc.  Thus, assuming two
-    maintenance periods, if 1 is fixed and 2 is pending, returns 'B'.
-    If both are pending, returns 'AB'. etc.  Works for however many
-    periods exist for that week.
-    """
-
-    pend = []
-
-    try:
-        delta = timedelta(days = 7)
-        mp = models.Period.objects\
-            .filter(session__observing_type__type = "maintenance")\
-            .filter(start__gte = day)\
-            .filter(start__lt = day + delta)\
-            .filter(elective = None)
-
-        pperiods = [p for p in mp if p.isPending()]
-
-        me = models.Elective.objects\
-            .filter(session__observing_type__type = "maintenance")\
-            .filter(complete = False)
-
-        for i in me:
-            dr = i.periodDateRange()
-            
-            if dr[0] >= day and dr[1] < (day + delta):
-                if not i.periodsByState('S'):
-                    pperiods.append(i.periodsByState('P')[0])
-
-        pperiods.sort(cmp = lambda x, y: cmp(x.start, y.start))
-
-        for i in range(0, len(pperiods)):
-            mas = models.Maintenance_Activity.get_maintenance_activity_set(pperiods[i])
-            pend.append((chr(i + 65),  # 65 is ASCII 'A'
-                         TimeAgent.utc2est(pperiods[i].start),
-                         TimeAgent.utc2est(pperiods[i].end()),
-                         pperiods[i],
-                         mas))
-
-    except:
-        # printException(formatExceptionInfo())
-        pend = []
-
-    return pend
