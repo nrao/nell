@@ -20,16 +20,13 @@ class FriendResource(NellResource):
             p_id = request.GET["project_id"]
         except:
             return HttpResponse(json.dumps(dict(total = 0
-                                              , investigators = []))
+                                              , friends = []))
                           , content_type = "application/json")
 
         sortField = request.GET.get("sortField", "id")
         sortField = "id" if sortField == "null" else sortField
         order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
         query_set = Friend.objects.filter(project__id = p_id)
-        #if sortField == "pi":
-        #    sortField = "friend__user__last_name"
-        #    query_set = query_set.filter(Q(f__principal_investigator = True))
     
         filterText = request.GET.get("filterText", None)
         if filterText is not None:
