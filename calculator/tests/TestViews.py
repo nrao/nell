@@ -14,11 +14,6 @@ class TestViews(unittest.TestCase):
         response = c.post('/calculator/set_hardware', selected)
         self.failUnlessEqual(response.status_code, 200)
 
-    def test_reset(self):
-        c = Client()
-        response = c.get('/calculator/reset')
-        self.failUnlessEqual(response.status_code, 200)
-
     def test_set_terms(self):
         c = Client()
         data = {'receiver-hidden'    : ['K2']
@@ -47,7 +42,7 @@ class TestViews(unittest.TestCase):
         response = c.get('/calculator/initiate_hardware')
         data = {u'receiver-hidden': [u'L'], u'beams-hidden': [u'1'], u'switching-hidden': [u'TP'], u'bandwidth-hidden': [u'0.625'], u'integration-hidden': [u'1.00'], u'polarization-hidden': [u'(I,Q,U,V)'], u'backend-hidden': [u'SP'], u'windows-hidden': [u'RF:1'], u'switching': [u'TP'], u'polarization': [u'(I,Q,U,V)'], u'windows': [u'RF:1'], u'bandwidth': [u'0.625'], u'mode': [u'Spectral Line'], u'receiver': [u'L'], u'mode-hidden': [u'Spectral Line'], u'backend': [u'SP']}
         response = c.post('/calculator/set_terms/', data)
-        response = c.get('/calculator/get_result/')
+        response = c.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
 
     def test_spectral_line_mode(self):
@@ -70,16 +65,16 @@ class TestViews(unittest.TestCase):
               , 'backend': [u'Spectral Processor']
               }
         response = c.post('/calculator/set_terms/', data)
-        response = c.get('/calculator/get_result/')
+        response = c.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
         results = eval(response.content.replace("null", "None"))
-        self.assertEqual(results['min_topo_freq']
-             , [0.6103515625, 'kHz', 'getMinTopoFreq(backend, bandwidth, windows) if mode.lower() == "spectral line" else ""'])
+        mtf     = [r for r in results['results'] if r['term'] == 'min_topo_freq']
+        self.assertEqual(mtf, [{'units': 'kHz', 'term': 'min_topo_freq', 'value': 0.6103515625}])
 
         response = c.post('/calculator/set_terms/', {'mode' : 'DCR'})
-        response = c.get('/calculator/get_result/')
+        response = c.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
         results = eval(response.content.replace("null", "None"))
-        self.assertEqual(results['min_topo_freq']
-             , [None, 'kHz', 'getMinTopoFreq(backend, bandwidth, windows) if mode.lower() == "spectral line" else ""'])
+        mtf     = [r for r in results['results'] if r['term'] == 'min_topo_freq']
+        self.assertEqual(mtf, [{'units': 'kHz', 'term': 'min_topo_freq', 'value': None}])
 

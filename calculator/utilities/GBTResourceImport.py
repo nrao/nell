@@ -7,10 +7,12 @@ from calculator.models   import *
 
 class GBTResourceImport(object):
 
-    def __init__(self, filename):
-        self.data = None
-        file      = open(filename)
-        self.raw_data = [[i for n, i in enumerate(l.split('\t')) if n < 11] for l in file.readlines()[0].split('\r') ]
+    def __init__(self, filename, silent = False):
+        self.silent   = silent
+        self.data     = None
+        file          = open(filename)
+        self.raw_data = [[i for n, i in enumerate(l.split('\t')) if n < 11] 
+                            for l in file.readlines()[0].split('\r') ]
         file.close()
         self.processData()
         self.createConfigurations()
@@ -54,21 +56,23 @@ class GBTResourceImport(object):
 
         r = resource_map[k](v)
         if r is not None:
-            if r.id is None:
+            if r.id is None and not self.silent:
                 print "Added:", k, r
             r.save()
         return r
 
     def createConfigurations(self):
-        # Use getResource to get resources from the database and use the
-        # models to build a list of dictionaries representing the
-        # configurations.
+        """
+            Use getResource to get resources from the database and use the
+            models to build a list of dictionaries representing the
+            configurations.
+        """
         self.configs = \
            [dict([(k, [self.getResource(k, v)] if type(v) != list else [self.getResource(k, i)
                    for i in v]) for k, v in d.iteritems()]) for d in self.data]
-        #self.printConfigs()
 
-        print len(Configuration.objects.all()), "hardware configurations initially."
+        if not self.silent:
+            print len(Configuration.objects.all()), "hardware configurations initially."
         for c in self.configs:
             for r in c['Receiver']:
                 for pol in c['Polarization']:
@@ -86,7 +90,8 @@ class GBTResourceImport(object):
                                                    , switching    = switching
                                                    )
                                 conf.save()
-        print len(Configuration.objects.all()), "hardware configurations created."
+        if not self.silent:
+            print len(Configuration.objects.all()), "hardware configurations created."
 
 if __name__ == "__main__":
     resources = GBTResourceImport("calculator/gbt_resources_table.txt")

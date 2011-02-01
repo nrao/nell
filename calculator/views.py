@@ -5,13 +5,18 @@ from utilities.common import *
 
 import simplejson as json
 
-@catch_json_parse_errors
-def get_result(request, *args, **kwds):
-    result = request.session.get('SC_result', {}) or {}
-    result['success'] = 'ok'
-    return HttpResponse(json.dumps(result), mimetype = "text/plain")
+def get_results(request, *args, **kwds):
+    results = [{'term' : k
+              , 'value' : v[0]
+              , 'units' : v[1]
+                } for k, v in request.session.get('SC_result', {}).iteritems()]
+    retval = {'success' : 'ok'
+            , 'results' : results
+            , 'total'   : len(results)
+             }
 
-#@catch_json_parse_errors
+    return HttpResponse(json.dumps(retval), mimetype = "application/json")
+
 def set_terms(request, *args, **kwds):
     #SPECIAL_VALUES = ('semester', 'conversionType', 'units')
     SPECIAL_VALUES = ()
@@ -92,12 +97,4 @@ def setHardware(request):
     result = setHardwareConfig(request, selected, newPick)
     result.update(success = 'ok')
     return HttpResponse(json.dumps(result), mimetype = "text/plain")
-
-def reset(request):
-    #request.session.update(initiate(request))
-    #  TBF:  Temporary
-    for k, v in request.session.items():
-        if 'SC_' in k:
-            request.session.update({k: None})
-    return get_result(request)
 
