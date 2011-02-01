@@ -15,6 +15,9 @@ syntax: glob
 
 *.launch
 
+urls.py
+settings.py
+
 bin/
 client/
 dist/
