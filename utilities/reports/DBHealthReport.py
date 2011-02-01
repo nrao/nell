@@ -613,7 +613,7 @@ def GenerateReport():
                    )
 
     outfile.write("\n\nProjects without a friend:")
-    values = [p.pcode for p in projects if not p.complete and not p.friend]
+    values = [p.pcode for p in projects if not p.complete and len(p.friend_set.all()) == 0]
     print_values(outfile, values)
 
     outfile.write("\n\nProjects without any schedulable sessions:")
