@@ -31,6 +31,10 @@ class WindowRange(models.Model):
     def inWindow(self, date):
         return (self.start_date <= date) and (date <= self.last_date())
 
+    def inWindowDT(self, dt):
+        "Compares datetimes"
+        return (self.start_datetime() <= dt) and (dt <= self.end_datetime())
+
     def start_datetime(self):
         return TimeAgent.date2datetime(self.start_date)
 

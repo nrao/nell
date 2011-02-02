@@ -75,19 +75,101 @@ class TestWindow(NellTestCase):
                     , "default_state" : pjson['state'] 
                     }
 
+    def test_times(self):
+        "Test all the methods that describe the window ranges."
+
+        # the window created in setup is pretty vanilla
+        self.assertEquals(True, self.w.isContigious())
+        self.assertEquals(date(2009, 6, 1), self.w.start())
+        self.assertEquals(date(2009, 6, 1), self.w.start_date())
+        self.assertEquals(datetime(2009, 6, 1), self.w.start_datetime())
+        
+        self.assertEquals(date(2009, 6, 7), self.w.last_date())
+        self.assertEquals(date(2009, 6, 7), self.w.end())
+        self.assertEquals(datetime(2009, 6, 7, 23, 59, 59), self.w.end_datetime())
+
+        self.assertEquals(7, self.w.duration())
+
+        p = Period(session = self.sesshun
+                 , start = datetime(2009, 5, 30, 23)
+                 , duration = 2)
+        p.save()
+
+        self.assertEquals(False, self.w.isInWindow(p))
+        self.assertEquals(False, self.w.isInRanges(p))
+
+        p.start = p.start + timedelta(days = 1)
+        p.save()
+        self.assertEquals(True, self.w.isInWindow(p))
+        self.assertEquals(True, self.w.isInRanges(p))
+
+        p.start = datetime(2009, 6, 7, 23) 
+        p.save()
+        self.assertEquals(True, self.w.isInWindow(p))
+        self.assertEquals(True, self.w.isInRanges(p))
+
+        p.start = p.start + timedelta(days = 1)
+        p.save()
+        self.assertEquals(False, self.w.isInWindow(p))
+        self.assertEquals(False, self.w.isInRanges(p))
+
+        # now give it another range
+        wr = WindowRange(window = self.w
+                       , start_date = date(2009, 6, 15)
+                       , duration = 7 # days
+                         )
+        wr.save()
+
+        self.w = Window.objects.get(id = self.w.id)
+        self.assertEquals(False, self.w.isContigious())
+        self.assertEquals(date(2009, 6, 1), self.w.start())
+        self.assertEquals(date(2009, 6, 1), self.w.start_date())
+        self.assertEquals(datetime(2009, 6, 1), self.w.start_datetime())
+        
+        self.assertEquals(date(2009, 6, 21), self.w.last_date())
+        self.assertEquals(date(2009, 6, 21), self.w.end())
+        self.assertEquals(datetime(2009, 6, 21, 23, 59, 59), self.w.end_datetime())
+
+        self.assertEquals(21, self.w.duration())
+
+        p = Period(session = self.sesshun
+                 , start = datetime(2009, 5, 30, 23)
+                 , duration = 2)
+        p.save()
+
+        self.assertEquals(False, self.w.isInWindow(p))
+        self.assertEquals(False, self.w.isInRanges(p))
+
+        p.start = p.start + timedelta(days = 1)
+        p.save()
+        self.assertEquals(True, self.w.isInWindow(p))
+        self.assertEquals(True, self.w.isInRanges(p))
+
+        p.start = datetime(2009, 6, 7, 23) 
+        p.save()
+        self.assertEquals(True, self.w.isInWindow(p))
+        self.assertEquals(True, self.w.isInRanges(p))
+
+        p.start = p.start + timedelta(days = 1)
+        p.save()
+        # note the difference here between isInWindow and isInRanges
+        # the period falls between the window's endpoints, but is in 
+        # the gap between the window ranges.
+        self.assertEquals(True, self.w.isInWindow(p))
+        self.assertEquals(False, self.w.isInRanges(p))
+
     def test_update_from_post(self):
         w = Window()
         adapter = WindowHttpAdapter(w)
         adapter.init_from_post(self.fdata)
        
         self.assertEqual(w.session, self.sesshun)
-        #self.assertEqual(w.start_date(), date(2009, 6, 1))
-        #self.assertEqual(w.duration(), self.fdata["duration"])
         self.assertEqual(w.default_period, None)
         self.assertEqual(len(w.periods.all()), 0)
 
     def test_jsondict(self):
          
+        wins = Window.objects.all()
         start = datetime(2009, 6, 1)
         startStr = start.strftime("%Y-%m-%d")
         dur   = 7 # days
@@ -118,10 +200,40 @@ class TestWindow(NellTestCase):
         self.assertEqual(jd["duration"], dur)
         self.assertEqual(jd["start"], startStr)
         self.assertEqual(jd["end"], endStr)
-        # session dict just blots this, so we're not using it
+        # session dict just bloats this, so we're not using it
         #self.assertEqual(jd["session"], SessionHttpAdapter(self.sesshun).jsondict())
         self.assertEqual(jd["num_periods"], 1)
         self.assertEqual(len(jd["periods"]), 1)
+        errors = ['Window is overlapping with window ID(s): 1'] 
+        self.assertEqual(jd['errors'], errors)
+
+        # now move the window out of the way
+        origW = Window.objects.get(id = 1)
+        wr.start_date = origW.last_date() + timedelta(days = 1) #origW.end_datetime()
+
+        wr.save()
+        self.default_period.start = wr.start_date + timedelta(days = 3) 
+        self.default_period.save()
+        adapter = WindowHttpAdapter(w)
+        jd = adapter.jsondict()
+        self.assertEqual(jd['errors'], ['Window is within 2 days of window ID(s): 1'])
+
+        # oops, apparently that's not far enough away
+        wr.start_date = origW.last_date() + timedelta(days = 3) 
+
+        wr.save()
+        adapter = WindowHttpAdapter(w)
+        jd = adapter.jsondict()
+        self.assertEqual(jd['errors'], [])
+
+        # now get the period out of range
+        self.default_period.start = datetime(2008, 6, 1)
+        self.default_period.save()
+        
+        adapter = WindowHttpAdapter(w)
+        jd = adapter.jsondict()
+        errors = ['Window has out of range Period(s): 2008-06-01 00:00:00 for  5.00']
+        self.assertEqual(jd['errors'], errors)
 
         w.delete()
 
@@ -318,11 +430,44 @@ class TestWindow(NellTestCase):
         self.assertEquals(True, self.w.hasOverlappingRanges())
 
         # contigious windows shouldn't overrlap
-        wr2.start_date = self.wr1.last_date()
+        wr2.start_date = self.wr1.last_date() + timedelta(days = 1)
         wr2.save()
 
         self.assertEquals(False, self.w.hasOverlappingRanges())
 
+    def test_overlappingWindows(self):
 
-        
+
+        # of course there are none, right now there's only 1 window
+        self.assertEquals([], self.w.overlappingWindows())
+
+        # create a second one
+        w2 = Window(session = self.sesshun)
+        w2.save()
+        wr2 = WindowRange(window = w2
+                       , start_date = self.w.start()
+                       , duration = self.w.duration()
+                        )
+        wr2.save()
+
+        # it had better overlap!
+        self.assertEquals([2], sorted([w.id for w in self.w.overlappingWindows()]))
+        self.assertEquals([1], sorted([w.id for w in w2.overlappingWindows()]))
+
+        # move it well out of range
+        wr2.start_date = self.w.end() + timedelta(days = 1)
+        wr2.save()
+        w2 = Window.objects.get(id = w2.id)
+        self.assertEquals([], sorted([w.id for w in self.w.overlappingWindows()]))
+        self.assertEquals([], sorted([w.id for w in w2.overlappingWindows()]))
+
+        # test the boundary condition:
+        # A window's end() or last_date() is it's last day where a period
+        # is still in the window.
+        # Thus if another window start's on that last date, they overlap
+        wr2.start_date = self.w.end() 
+        wr2.save()
+        w2 = Window.objects.get(id = w2.id)
+        self.assertEquals([2], sorted([w.id for w in self.w.overlappingWindows()]))
+        self.assertEquals([1], sorted([w.id for w in w2.overlappingWindows()]))
 

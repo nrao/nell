@@ -25,10 +25,12 @@ class Window(models.Model):
 
     def __str__(self):
         name = self.session.name if self.session is not None else "None"
-        return "Window for %s, from %s for %d days, default: %s, # periods: %d" % \
+        start = self.start_date().strftime("%Y-%m-%d") if self.start_date() is not None else "?"
+        duration = self.duration() if self.duration() is not None else "?"
+        return "Window for %s, from %s for %s days, default: %s, # periods: %d" % \
             (name
-           , self.start_date().strftime("%Y-%m-%d")
-           , self.duration()
+           , start
+           , duration
            , self.default_period
            , self.periods.count()) 
 
@@ -80,33 +82,44 @@ class Window(models.Model):
     def last_date(self):
         "Ex: start = 1/10, duration = 2 days, last_date = 1/11"
         if len(self.ranges()) > 0:
-            start = self.last_range().start_date 
-            days  = timedelta(days = self.last_range().duration - 1)
-            return start + days
+            return self.last_range().last_date()
         else:
             None
 
     def start_datetime(self):
-        return TimeAgent.date2datetime(self.start())
+        return TimeAgent.date2datetime(self.start()) if self.start() is not None else None
 
     def end_datetime(self):
         "We want this to go up to the last second of the last_date"
-        dt = TimeAgent.date2datetime(self.last_date())
-        return dt.replace(hour = 23, minute = 59, second = 59)
+        return self.last_range().end_datetime() if self.last_range() is not None else None
 
     def duration(self):
-        return (self.last_date() - self.start()).days + 1
+        last = self.last_date() 
+        start = self.start()
+        if last is not None and start is not None:
+            return (self.last_date() - self.start()).days + 1
+        else:
+            return None
 
     def inWindow(self, date):
         return (self.start() <= date) and (date <= self.last_date())
 
     def isInWindow(self, period):
-        "Does the given period overlap at all in window"
+        "Does the given period overlap at all in window (endpoints)"
         return overlaps((self.start_datetime(), self.end_datetime())
                       , (period.start, period.end()))
 
-        return False
-    
+    def isInRanges(self, period):
+        """
+        Does the given period overlap with any of the window ranges?
+        This is more rigourous then isInWindow.
+        """
+        for wr in self.windowrange_set.all():
+            if overlaps((wr.start_datetime(), wr.end_datetime())
+                      , (period.start, period.end())):
+                return True
+        return False # no overlaps at all!        
+
     # ****** end of group above that ignores window ranges ***
 
     def timeRemaining(self):
@@ -298,9 +311,63 @@ class Window(models.Model):
                 w1e = wrs[i].last_date()
                 w2s = wrs[j].start_date
                 w2e = wrs[j].last_date()
-                if overlaps((w1s, w1e), (w2s, w2e)):
+                # don't use common.overlaps because it does not check for <=
+                #if overlaps((w1s, w1e), (w2s, w2e)):
+                if w1s <= w2e and w2s <= w1e:
                     overlap.append((wrs[i], wrs[j]))
         return overlap
+
+    def overlappingWindows(self):
+        "Does this window overlap with any other windows of same session?"
+        wins = self.session.window_set.all().exclude(id = self.id)
+        w1s = self.start()
+        w1e = self.end()
+        overlapping = []
+        if w1s is None or w1e is None:
+            return overlapping
+        for w in wins:
+            w2s = w.start()
+            w2e = w.end()
+            if w2s is None or w2e is None:
+                continue
+            # don't use common.overlaps because it does not check for <=
+            #if overlaps((w1s, w1e), (w2s, w2e)):
+            if w1s <= w2e and w2s <= w1e:
+                overlapping.append(w)
+        return overlapping       
+
+    def bufferDays(self):
+        "How many days need to separate windows of same session?"
+        return 2
+
+    def tooCloseWindows(self):
+        "Is this window too close to other windows of the same session?"
+        w1s = self.start()
+        w1e = self.end()
+        if w1s is None or w1e is None:
+            return []
+        wins = self.session.window_set.all().exclude(id = self.id)
+        tooClose = []
+        for w in wins:
+            w2s = w.start()
+            w2e = w.end()
+            if w2s is None or w2e is None:
+                continue
+            if w1s < w2s:
+                delta = w2s - w1e
+            else:
+                delta = w1s - w2e
+            if delta.days < self.bufferDays():
+                tooClose.append(w)
+        return tooClose       
+
+    def outOfRangePeriods(self, deleted = False):
+        "What periods lie totally outside of ranges?"
+        if deleted:
+            ps = self.periods.all()
+        else:
+            ps = self.periods.exclude(state__abbreviation = "D")
+        return [p for p in ps if not self.isInRanges(p)]
 
     def lacksMandatoryDefaultPeriod(self):
         """
@@ -315,9 +382,6 @@ class Window(models.Model):
         Collect all possible problems with this window, and put them
         in a list of strings meant for the scheduler.
         """
-        # TBF: need to collect many of the checks we're doing in the
-        # DB Health Report and put them in here. For now, we'll just
-        # cover one check:
         err = []
         if self.hasLstOutOfRange() and not self.hasNoLstInRange():
             wrs = [("%s - %s" % (wr.start_date, wr.end())) for wr in self.lstOutOfRange()]
@@ -331,6 +395,23 @@ class Window(models.Model):
             err.append("Default Period mandatory for non-guaranteed Sessions.")
         if len(self.ranges()) == 0:
             err.append("Window must have at least one Window Range.")
+        # out of range periods    
+        outOfRanges = self.outOfRangePeriods()
+        if len(outOfRanges) != 0:
+            ps = ",".join(["%s for %5.2f" % (p.start, p.duration) for p in outOfRanges])
+            err.append("Window has out of range Period(s): %s" % ps)
+            
+        # check for overlaps, if none, check that they're separated enough 
+        overlapping = self.overlappingWindows()
+        if len(overlapping) != 0:
+            wids = ",".join([str(w.id) for w in overlapping])
+            err.append("Window is overlapping with window ID(s): %s" % wids)
+        else:
+            tooClose = self.tooCloseWindows()
+            if len(tooClose) != 0:
+                wids = ",".join([str(w.id) for w in tooClose])
+                err.append("Window is within %d days of window ID(s): %s" % (self.bufferDays(), wids))
+            
         return err    
 
     class Meta:
