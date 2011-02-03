@@ -92,7 +92,7 @@ def GenerateReport(start):
                  , str(p.principal_investigator())[:17].ljust(18)
                  , ",".join(p.rcvrs_specified())[:4].center(5)
                  , first(p.principal_investigator().getEmails())
-                 , p.friend
+                 , ";".join([f.user.name() for f in p.friend_set.all()])
                  )
               for p in projects]
     print_values(outfile, Set(values))
