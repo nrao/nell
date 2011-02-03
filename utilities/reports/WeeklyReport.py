@@ -211,7 +211,7 @@ def GenerateReport(start):
                               , r.end_date.strftime("%m/%d")
                               , r.user.name()
                               , ', '.join(r.user.getProjects())
-                              , ', '.join(r.user.getFriends())) \
+                              , ', '.join(r.user.getFriendLastNames())) \
                 for r in Reservation.objects.filter(
                                       end_date__gte = next_start
                                                    ).filter(
