@@ -4,6 +4,13 @@ import settings
 
 class TestViewsTestConf(CalculatorTestCase):
 
+    def get_data(self, response):
+        content  = response.content.replace("null", "None")
+        results  = eval(content)
+        values = dict([(r['term'], r['value']) for r in results['results']])
+        inputs = dict([(i['term'], i['value']) for i in results['input']])
+        return inputs, values
+
     def test_modify_terms(self):
         """
         Just testing added functionality to modify terms in the config file.
@@ -16,11 +23,12 @@ class TestViewsTestConf(CalculatorTestCase):
         response = c.get('/calculator/initiate_hardware')
         response = c.post('/calculator/set_terms/', {})
         response = c.get('/calculator/get_results')
-        content  = response.content.replace("null", "None")
-        results  = eval(content)
-        self.assertTrue({'units': 'Newtons', 'term': 'y', 'value': 2} in results['results'])
-        self.assertTrue({'units': None, 'term': 'x', 'value': 1} in results['results'])
-        xsys     = [r for r in results['results'] if 'x' in r.values() or 'y' in r.values()]
+
+        inputs, values = self.get_data(response)
+        self.assertEqual(values['y'], 2)
+        self.assertEqual(values['x'], 1)
+
+        xsys     = [k for k, _ in values.items() if k in ('x', 'y')]
         self.assertEqual(len(xsys), 2)
         self.failUnlessEqual(response.status_code, 200)
 
@@ -29,9 +37,9 @@ class TestViewsTestConf(CalculatorTestCase):
         #  Make sure the add terms are really gone.
         response = c.post('/calculator/set_terms/', {})
         response = c.get('/calculator/get_results')
-        content  = response.content.replace("null", "None")
-        results  = eval(content)
-        xsys     = [r for r in results['results'] if 'x' in r.values() or 'y' in r.values()]
+
+        inputs, values = self.get_data(response)
+        xsys     = [k for k, _ in values.items() if k in ('x', 'y')]
         self.assertEqual(len(xsys), 0)
         self.failUnlessEqual(response.status_code, 200)
 
@@ -40,14 +48,16 @@ class TestViewsTestConf(CalculatorTestCase):
         response = c.get('/calculator/initiate_hardware')
         response = c.post('/calculator/set_terms/', {})
         response = c.get('/calculator/get_results')
-        results  = eval(response.content.replace("null", "None"))
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue({'units': None, 'term': 'foo', 'value': None} in results['results'])
+
+        inputs, values = self.get_data(response)
+        self.assertEqual(values['foo'], None)
 
         response = c.post('/calculator/set_terms/', {'bar' : 2})
         response = c.get('/calculator/get_results')
-        results  = eval(response.content.replace("null", "None"))
-        self.assertTrue({'units': None, 'term': 'foo', 'value': 82} in results['results'])
+
+        inputs, values = self.get_data(response)
+        self.assertEqual(values['foo'], 82)
 
     def test_two_dependent_variables(self):
         self.addTerm("x = ")
@@ -60,17 +70,19 @@ class TestViewsTestConf(CalculatorTestCase):
         self.failUnlessEqual(response.status_code, 200)
         response = c.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
-        results  = eval(response.content.replace("null", "None"))
-        self.assertTrue({'units': 'Newtons', 'term': 'y', 'value': None} in results['results'])
-        self.assertTrue({'units': None, 'term': 'x', 'value': None} in results['results'])
-        self.assertTrue({'units': None, 'term': 'foo', 'value': None} in results['results'])
+
+        inputs, values = self.get_data(response)
+        self.assertEqual(inputs['x'], None)
+        self.assertEqual(values['y'], None)
+        self.assertEqual(values['foo'], None)
 
         response = c.post('/calculator/set_terms/', {'bar' : 2, 'x' : 5})
         response = c.get('/calculator/get_results')
-        results  = eval(response.content.replace("null", "None"))
-        self.assertTrue({'units': 'Newtons', 'term': 'y', 'value': 16.0} in results['results'])
-        self.assertTrue({'units': None, 'term': 'x', 'value': 5.0} in results['results'])
-        self.assertTrue({'units': None, 'term': 'foo', 'value': 82.0} in results['results'])
+
+        inputs, values = self.get_data(response)
+        self.assertEqual(inputs['x'], 5.0)
+        self.assertEqual(values['y'], 16.0)
+        self.assertEqual(values['foo'], 82.0)
 
     def test_many_dependents(self):
         self.addTerm("x = ")
@@ -86,21 +98,21 @@ class TestViewsTestConf(CalculatorTestCase):
         self.failUnlessEqual(response.status_code, 200)
         response = c.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
-        content  = response.content.replace("null", "None")
-        results  = eval(content)
-        self.assertTrue({'units': None, 'term': 'x', 'value': None} in results['results'])
-        self.assertTrue({'units': 'Newtons', 'term': 'y', 'value': None} in results['results'])
-        self.assertTrue({'units': None, 'term': 'foo', 'value': None} in results['results'])
+
+        inputs, values = self.get_data(response)
+        self.assertEqual(inputs['x'], None)
+        self.assertEqual(values['y'], None)
+        self.assertEqual(values['foo'], None)
 
         response = c.post('/calculator/set_terms/', {'bar' : 2, 'x' : 5, 'q' : 1})
         response = c.get('/calculator/get_results')
-        content  = response.content.replace("null", "None")
-        results  = eval(content)
-        self.assertTrue({'units': None, 'term': 'foo', 'value': 82.0} in results['results'])
-        self.assertTrue({'units': 'Newtons', 'term': 'y', 'value': 16.0} in results['results'])
-        self.assertTrue({'units': None, 'term': 'x', 'value': 5.0} in results['results'])
-        self.assertTrue({'units': None, 'term': 'theta', 'value': 55.094395102393193})
-        
+
+        inputs, values = self.get_data(response)
+        self.assertEqual(inputs['x'], 5.0)
+        self.assertEqual(values['y'], 16.0)
+        self.assertEqual(values['foo'], 82.0)
+        self.assertEqual(values['theta'], 55.094395102393193)
+
     def test_shared_dependencies(self):
         self.addTerm("a = c * 2 + d")
         self.addTerm("b = c * 3 + d")
@@ -114,11 +126,12 @@ class TestViewsTestConf(CalculatorTestCase):
         self.failUnlessEqual(response.status_code, 200)
         response = c.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
-        results  = eval(response.content.replace("null", "None"))
-        self.assertTrue({'units': None, 'term': 'a', 'value': 5.0} in results['results'])
-        self.assertTrue({'units': None, 'term': 'b', 'value': 7.0} in results['results'])
-        self.assertTrue({'units': None, 'term': 'c', 'value': 2.0} in results['results'])
-        self.assertTrue({'units': None, 'term': 'd', 'value': 1.0} in results['results'])
+
+        inputs, values = self.get_data(response)
+        self.assertEqual(values['a'], 5.0)
+        self.assertEqual(values['b'], 7.0)
+        self.assertEqual(inputs['c'], 2.0)
+        self.assertEqual(inputs['d'], 1.0)
 
     def test_setting_different_groups(self):
         self.addTerm("a = ")
@@ -133,14 +146,13 @@ class TestViewsTestConf(CalculatorTestCase):
         self.failUnlessEqual(response.status_code, 200)
         response = c.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
-        results  = eval(response.content.replace("null", "None"))
         response = c.post('/calculator/set_terms/', {'c' : 1, 'd' : 1})
         self.failUnlessEqual(response.status_code, 200)
         response = c.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
-        results  = eval(response.content.replace("null", "None"))
 
-        self.assertTrue({'units': None, 'term': 'a', 'value': 1.0} in results['results'])
-        self.assertTrue({'units': None, 'term': 'b', 'value': 1.0} in results['results'])
-        self.assertTrue({'units': None, 'term': 'c', 'value': 1.0} in results['results'])
-        self.assertTrue({'units': None, 'term': 'd', 'value': 1.0} in results['results'])
+        inputs, values = self.get_data(response)
+        self.assertEqual(inputs['a'], 1.0)
+        self.assertEqual(inputs['b'], 1.0)
+        self.assertEqual(inputs['c'], 1.0)
+        self.assertEqual(inputs['d'], 1.0)

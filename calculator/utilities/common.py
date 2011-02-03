@@ -75,4 +75,5 @@ def getMinIntegrationTime(request):
     for k, v in hardware:
         filter[k] = getValue(k, v) if k == 'receiver' or k == 'backend' else v
     min_int = ', '.join(getOptions(filter, 'integration'))
-    request.session['SC_result']['min_integration'] = (min_int, None, '')
+    request.session['SC_result']['min_integration'] = (min_int, None, '', '', None)
+

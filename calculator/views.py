@@ -6,30 +6,39 @@ from utilities.common import *
 import simplejson as json
 
 def get_results(request, *args, **kwds):
+    sc_input = request.session.get('SC_input', {}).keys()
     results = [{'term' : k
-              , 'value' : v[0]
-              , 'units' : v[1]
-                } for k, v in request.session.get('SC_result', {}).iteritems()]
-    retval = {'success' : 'ok'
-            , 'results' : results
-            , 'total'   : len(results)
+              , 'value' : v
+              , 'units' : u
+              , 'equation' : e
+              , 'label'    : l
+              , 'display'  : d
+                } for k, (v, u, e, l, d) in request.session.get('SC_result', {}).items() if e != '']
+    input = [{'term' : k
+              , 'value' : v
+              , 'units' : u
+              , 'equation' : e
+              , 'label'    : l
+              , 'display'  : d
+                } for k, (v, u, e, l, d) in request.session.get('SC_result', {}).items() if e == '']
+    retval = {'success'       : 'ok'
+            , 'results'       : results
+            , 'total_results' : len(results)
+            , 'input'         : input
+            , 'total_input'   : len(input)
              }
 
     return HttpResponse(json.dumps(retval), mimetype = "application/json")
 
 def set_terms(request, *args, **kwds):
-    #SPECIAL_VALUES = ('semester', 'conversionType', 'units')
-    SPECIAL_VALUES = ()
     retval         = {}
 
     if request.method == 'POST': 
-
         # Start with what we already know.
         result    = Result('equations')
         sc_result = request.session.get('SC_result', {}) or {}
         for term, value in sc_result.items():
-            if term not in SPECIAL_VALUES:
-                result.set(term, value[0])
+            result.set(term, value[0])
 
         # GXT returns lists for single values for some reason. Eew.
         info = {}
@@ -40,14 +49,13 @@ def set_terms(request, *args, **kwds):
                 new_key, _ = key.split('-')
                 info[new_key] = value[0]
 
-        # Process special values.
-        for value in SPECIAL_VALUES:
-            if info.has_key(value):
-                request.session['SC_' + value] = info.pop(value)
+        if request.session.get('SC_input') is not None:
+            request.session['SC_input'].update(info)
+        else:
+            request.session['SC_input'] = info
 
         # Process terms.
         for term, raw_value in info.items():
-
             try:
                 value = float(raw_value)
             except ValueError:
@@ -58,9 +66,7 @@ def set_terms(request, *args, **kwds):
 
         # Squirrel away, send back, and clean up.
         request.session['SC_result'] = result.get()
-        getMinIntegrationTime(request)
-        #request.session['SC_result'].update(
-        #    dict(semester = (request.session.get('SC_semester', ''), '', '')))
+        #getMinIntegrationTime(request)
         try:
             result.__del__()
         except:

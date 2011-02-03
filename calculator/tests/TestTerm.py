@@ -7,11 +7,11 @@ class TestTerm(unittest.TestCase):
 
     def testInit(self):
         self.assertTrue('test' in self.term.__str__())
-        self.assertEquals((None, 'ohms', ''), self.term.get())
+        self.assertEquals((None, 'ohms', '', 'test', None), self.term.get())
 
         term = Term('stuff', 3)
         self.assertTrue('stuff' in term.__str__())
-        self.assertEquals((3, None, ''), term.get())
+        self.assertEquals((3, None, '', 'stuff', 3), term.get())
 
     def testAddObserver(self):
         self.assertEquals([], self.term.observers)
@@ -19,19 +19,19 @@ class TestTerm(unittest.TestCase):
         self.assertEquals(['1'], self.term.observers)
 
     def testGet(self):
-        self.assertEquals((None, 'ohms', ''), self.term.get())
+        self.assertEquals((None, 'ohms', '', 'test', None), self.term.get())
 
         self.term.value = 'abc'
-        self.assertEquals(('abc', 'ohms', ''), self.term.get())
+        self.assertEquals(('abc', 'ohms', '', 'test', 'abc'), self.term.get())
 
     def testSet(self):
-        self.assertEquals((None, 'ohms', ''), self.term.get())
+        self.assertEquals((None, 'ohms', '', 'test', None), self.term.get())
 
         self.term.set('abc')
-        self.assertEquals(('abc', 'ohms', ''), self.term.get())
+        self.assertEquals(('abc', 'ohms', '', 'test', 'abc'), self.term.get())
 
         self.term.set(None)
-        self.assertEquals((None, 'ohms', ''), self.term.get())
+        self.assertEquals((None, 'ohms', '', 'test', None), self.term.get())
 
     def testEvaluate(self):
         term1 = Term('a', 1)
@@ -41,25 +41,25 @@ class TestTerm(unittest.TestCase):
         self.assertEquals('a + b', term.equation)
         term.evaluate(term1)
         term.evaluate(term2)
-        self.assertEquals((3, 'parsecs', 'a + b'), term.get())
+        self.assertEquals((3, 'parsecs', 'a + b', 'test', 3), term.get())
 
         term = Term('test', equation = 'a * b', units = 'parsecs')
         self.assertEquals('a * b', term.equation)
         term.evaluate(term1)
         term.evaluate(term2)
-        self.assertEquals((2, 'parsecs', 'a * b'), term.get())
+        self.assertEquals((2, 'parsecs', 'a * b', 'test', 2), term.get())
 
         term = Term('test', equation = 'a - b', units = 'parsecs')
         self.assertEquals('a - b', term.equation)
         term.evaluate(term1)
         term.evaluate(term2)
-        self.assertEquals((-1, 'parsecs', 'a - b'), term.get())
+        self.assertEquals((-1, 'parsecs', 'a - b', 'test', -1), term.get())
 
         term = Term('test', equation = 'a / b', units = 'parsecs')
         self.assertEquals('a / b', term.equation)
         term.evaluate(term1)
         term.evaluate(term2)
-        self.assertEquals((1/2, 'parsecs', 'a / b'), term.get())
+        self.assertEquals((1/2, 'parsecs', 'a / b', 'test', 1/2), term.get())
 
     def testReEvaluate(self):
         term1 = Term('a', 1)
@@ -69,12 +69,12 @@ class TestTerm(unittest.TestCase):
         self.assertEquals('a + b', term.equation)
         term.evaluate(term1)
         term.evaluate(term2)
-        self.assertEquals((3, 'parsecs', 'a + b'), term.get())
+        self.assertEquals((3, 'parsecs', 'a + b', 'test', 3), term.get())
 
         #  Now change a term and see if the dependent gets reevaluated
         term1.set(2)
         term.evaluate(term1)
-        self.assertEquals((4, 'parsecs', 'a + b'), term.get())
+        self.assertEquals((4, 'parsecs', 'a + b', 'test', 4), term.get())
 
 if __name__== "__main__":
     unittest.main()

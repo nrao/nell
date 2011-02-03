@@ -13,6 +13,8 @@ bar =
 [units]
 time = sec
 size = meters
+[labels]
+[displays]
 """
 
 class CalculatorTestCase(unittest.TestCase):

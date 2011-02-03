@@ -37,16 +37,16 @@ class TestResult(CalculatorTestCase):
 
         r        = Result('equations')
         results  = r.get()
-        self.assertEqual(results['x'], (None, None, ''))
-        self.assertEqual(results['y'], (None, 'Newtons', '3 * x + 1'))
-        self.assertEqual(results['foo'], (None, None, "size + time + bar"))
+        self.assertEqual(results['x'], (None, None, '', 'x', None))
+        self.assertEqual(results['y'], (None, None, '3 * x + 1', 'y', 'Newtons'))
+        self.assertEqual(results['foo'], (None, None, "size + time + bar", 'foo', None))
 
         r.set('bar', 2)
         r.set('x', 5)
         results  = r.get()
-        self.assertEqual(results['foo'], (82, None, "size + time + bar"))
-        self.assertEqual(results['x'], (5, None, ''))
-        self.assertEqual(results['y'], (16, 'Newtons', '3 * x + 1'))
+        self.assertEqual(results['foo'], (82, None, "size + time + bar", 'foo', 82))
+        self.assertEqual(results['x'], (5, None, '', 'x', 5))
+        self.assertEqual(results['y'], (16, None, '3 * x + 1', 'y', 'Newtons'))
 
         r.__del__()
 

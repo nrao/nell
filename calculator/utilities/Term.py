@@ -5,13 +5,16 @@ from EquationParser import EquationParser
 from functions      import *
 
 class Term(Document):
-    def __init__(self, keyword, value = None, equation = '', units = None):
+    def __init__(
+        self, keyword, value = None, equation = '', units = None, label = None, display = None):
         Document.__init__(self)
 
         self.keyword      = keyword
         self.value        = value
         self.equation     = equation
         self.units        = units
+        self.label        = label
+        self.display      = display
         self.changed      = False
 
         self.variables = {}
@@ -30,8 +33,17 @@ class Term(Document):
     def __repr__(self):
         return self.keyword
 
+    def renderDisplay(self):
+        if self.display is not None and self.display != '':
+            return self.display.replace('[value]', str(self.value)).replace('[units]', str(self.units))
+        else:
+            return self.value
+        
+    def renderLabel(self):
+        return self.label if self.label is not None and self.label != '' else self.keyword
+
     def get(self):
-        return self.value, self.units, self.equation
+        return self.value, self.units, self.equation, self.renderLabel(), self.renderDisplay()
 
     def set(self, value):
         if self.value is not None and self.value != value:

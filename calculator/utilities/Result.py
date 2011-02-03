@@ -18,13 +18,21 @@ class Result(Thread):
 
         equations = {}
         for term, equation in config.items(section):
-            equations[term] = [equation, None]
+            equations[term] = [equation, None, None, None]
 
         for term, unit in config.items('units'):
             if equations.has_key(term):
                 equations[term][1] = unit
 
-        return [(t, e, u) for t, (e, u) in equations.items()]
+        for term, label in config.items('labels'):
+            if equations.has_key(term):
+                equations[term][2] = label
+
+        for term, display in config.items('displays'):
+            if equations.has_key(term):
+                equations[term][3] = display
+
+        return [(t, e, u, l, d) for t, (e, u, l, d) in equations.items()]
 
     def __init__(self, section):
         Thread.__init__(self)
@@ -35,8 +43,8 @@ class Result(Thread):
         self.loop = True
 
         self.terms = {}
-        for t, equation, units in Result.getEquations(section):
-            self.terms[t] = Term(t, None, equation, units)
+        for t, equation, units, label, display in Result.getEquations(section):
+            self.terms[t] = Term(t, None, equation, units, label, display)
             self.terms[t].addObserver(self)
 
         self.start() # Start queue thread
