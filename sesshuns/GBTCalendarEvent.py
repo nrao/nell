@@ -58,6 +58,13 @@ class CalEvent(object):
         self.TZ = TZ
         self.fmname = None
         self._mas = []
+        self.contained = None
+
+    def __eq__(self, other):
+        if type(self) == type(other):
+            return self.contained == other.contained
+        else:
+            return False
 
     # define less-than (<) for sorting purposes
     def __lt__(self, other):
