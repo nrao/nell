@@ -171,12 +171,12 @@
             {% endfor %}
           </td>
           <td>
-            {% if maintenance_prj.friend %}
+            {% if maintenance_prj.has_friends %}
             <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar', 'Support Staff Absences & Contact Info', 'width=1000, height=700, scrollbars=yes');return true;">
-              {{maintenance_prj.friend.last_name}}
+              {{maintenance_prj.friend_set.all|display_friend_last_names}}
             </a>
             {% else %}
-              {{maintenance_prj.friend.last_name|pretty_none}}
+              <p></p>
             {% endif %}
           </td>
           <td>
@@ -337,12 +337,12 @@
 
       {# data for 'Friend' column. #}
       <td>
-        {% if p.session.project.friend %}
+        {% if p.session.project.has_friends %}
         <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar', 'Support Staff Absences & Contact Info', 'width=1000, height=700, scrollbars=yes');return true;">
-          {{p.session.project.friend.last_name}}
+          {{p.session.project.friend_set.all|display_friend_last_names}}
         </a>
         {% else %}
-          {{p.session.project.friend.last_name|pretty_none}}
+          <p></p>
         {% endif %}
       </td>
 
@@ -398,12 +398,12 @@
                 {% endfor %}
               </td>
               <td>
-                {% if maintenance_prj.friend %}
+                {% if maintenance_prj.has_friends %}
                 <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar', 'Support Staff Absences & Contact Info', 'width=1000, height=700, scrollbars=yes');return true;">
-                  {{maintenance_prj.friend.last_name}}
+                  {{maintenance_proj.friend_set.all|display_friend_last_names}} 
                 </a>
                 {% else %}
-                  {{maintenance_prj.friend.last_name|pretty_none}}
+                  <p></p>
                 {% endif %}
               </td>
               <td>

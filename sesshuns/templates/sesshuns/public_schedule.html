@@ -191,7 +191,7 @@
         {% endif %}
       {% endifequal %}
       <td>{{p.session.project.principal_investigator.last_name|pretty_none}}</td>
-      <td>{{p.session.project.friend.last_name|pretty_none}}</a></td>
+      <td>{{p.session.project.friend_set.all|display_friend_last_names}}</a></td>
       <td>
         {% if p.session.project.is_maintenance %}
           {{rschedule|get_receivers:day}}

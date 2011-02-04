@@ -105,6 +105,10 @@ def display_friend_name(friend):
                         )
 
 @register.filter
+def display_friend_last_names(friends):
+    return ",".join([f.user.last_name for f in friends])
+
+@register.filter
 def pretty_none(value):
     return value if value else ""
 
