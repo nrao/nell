@@ -1,14 +1,14 @@
-from datetime                       import datetime, timedelta
-from decorators                     import is_staff
-from django.contrib.auth.decorators import login_required
-from django.http                    import HttpResponse, HttpResponseRedirect
-from django.shortcuts               import render_to_response
-from models                         import *
-from nell.utilities                 import gen_gbt_schedule
-from nell.utilities.TimeAgent       import EST, UTC
-from observers                      import project_search
-from sets                           import Set
-from utilities                      import get_requestor, acknowledge_moc
+from datetime                           import datetime, timedelta
+from decorators                         import is_staff
+from django.contrib.auth.decorators     import login_required
+from django.http                        import HttpResponse, HttpResponseRedirect
+from django.shortcuts                   import render_to_response
+from models                             import *
+from nell.utilities.TimeAgent           import EST, UTC
+from observers                          import project_search
+from sets                               import Set
+from utilities                          import get_requestor, acknowledge_moc, get_gbt_schedule_events
+
 import calendar
 
 @login_required
@@ -72,13 +72,7 @@ def gbt_schedule(request, *args, **kws):
 
     start   = TimeAgent.truncateDt(startDate)
     end     = start + timedelta(days = days)
-    pstart  = TimeAgent.est2utc(start) if timezone == 'ET' else start
-    pend    = TimeAgent.est2utc(end) if timezone == 'ET' else end
 
-    periods  = [p for p in Period.in_time_range(pstart, pend) \
-                if not p.isPending()]
-
-    maintenance_activities = _map_maintenance_sets_to_periods(periods)
     requestor = get_requestor(request)
 
     # Ensure only operators or admins trigger costly MOC calculations
@@ -87,33 +81,27 @@ def gbt_schedule(request, *args, **kws):
     else:
         get_moc = False
 
-    schedule = gen_gbt_schedule(start, end, days, 'ET', periods, maintenance_activities, get_moc)
+    schedule = get_gbt_schedule_events(start, end, timezone, get_moc)
 
     try:
-        s_n = Schedule_Notification.objects.all()
-        tzutc = s_n[len(s_n)-1].date.replace(tzinfo=UTC)
+        tzutc = Schedule_Notification.objects.latest('date').date.replace(tzinfo=UTC)
         pubdate = tzutc.astimezone(EST)
     except:
         pubdate = None
 
-    # need this for resource calendar use
-    maprj = Project.objects.filter(pcode = "Maintenance")[0]
-
     return render_to_response(
-               'sesshuns/schedule.html',
-               {'calendar'        : sorted(schedule.items()),
-                'day_list'        : range(1, 32),
-                'tz_list'         : timezones,
-                'timezone'        : timezone,
-                'today'           : datetime.now(EST),
-                'start'           : start,
-                'days'            : days,
-                'rschedule'       : Receiver_Schedule.extract_schedule(start, days),
-                'timezone'        : timezone,
-                'requestor'       : requestor,
-                'pubdate'         : pubdate,
-                'maintenance_prj' : maprj
-               })
+        'sesshuns/schedule.html',
+        {'calendar'        : schedule,
+         'day_list'        : range(1, 32),
+         'tz_list'         : timezones,
+         'timezone'        : timezone,
+         'today'           : datetime.now(EST),
+         'start'           : start,
+         'days'            : days,
+         'rschedule'       : Receiver_Schedule.extract_schedule(start, days),
+         'requestor'       : requestor,
+         'pubdate'         : pubdate,
+         })
 
 def rcvr_schedule(request, *args, **kwds):
     """
@@ -172,19 +160,14 @@ def summary(request, *args, **kws):
           timedelta(days = 1)
 
     # View is in ET, database is in UTC. Only use scheduled periods.
-    periods = Period.in_time_range(TimeAgent.est2utc(start)
-                                 , TimeAgent.est2utc(end))
-    periods = [p for p in periods if p.isScheduled()]
     if project:
-        periods = [p for p in periods if p.session.project.pcode == project]
+        periods = Period.in_time_range(TimeAgent.est2utc(start)
+                                     , TimeAgent.est2utc(end))
+        periods = [p for p in periods if p.isScheduled() and p.session.project.pcode == project]
 
     # Handle either schedule or project summaries.
     if summary == "schedule":
-        schedule = gen_gbt_schedule(start
-                                  , end
-                                  , (end - start).days
-                                  , "ET"
-                                  , periods)
+        schedule = get_gbt_schedule_events(start, end, "ET")
         url      = 'sesshuns/schedule_summary.html'
         projects = []
         receivers = {}
@@ -226,7 +209,7 @@ def summary(request, *args, **kws):
 
     return render_to_response(
                url
-             , {'calendar' : sorted(schedule.items())
+             , {'calendar' : schedule
               , 'projects' : [(p
                              , sorted(list(Set(receivers[p.pcode])))
                              , sorted(list(Set(days[p.pcode]))
@@ -241,61 +224,3 @@ def summary(request, *args, **kws):
               , 'project'  : project
               , 'is_logged_in': request.user.is_authenticated()})
 
-######################################################################
-# Looking for maintenance sets, which will then be atached to a
-# dictionary keyed by period that gets passed into the calendar.
-# Some maintenance sets are non-maintenance-period maintenance
-# activities, and are tied to non-maintenance periods.  This will
-# be fixed with the big refactoring of the calendar, to come.  But
-# first we must reconcile any scheduled electives, whose
-# maintenance sets may be attached to another of that elective's
-# periods and must be transferred.
-######################################################################
-
-def _map_maintenance_sets_to_periods(periods):
-    """
-    Helper function for the GBT Schedule calendar.  This function
-    takes a list of periods and returns a map with the periods passed
-    in as keys, and maintenance activity sets as values.  Most keys
-    with non-empty maintenance activity sets attached as values will
-    be maintenance periods, but some non-maintenance periods will have
-    non-maintenance-period maintenance activity sets attached.
-    """
-
-    maintenance_activities = {}
-
-    for i in range(0, len(periods)):
-        if periods[i].session.observing_type.type == "maintenance":
-            el = periods[i].elective
-            # if this is a maintenance elective, we want to reconcile
-            # the maintenance activity set by detaching it (if
-            # necessary) from a deleted elective period and
-            # reattaching it to the scheduled elective period.
-            if el:
-                for ep in el.periods.all():
-                    mas = ep.maintenance_activity_set.all()
-
-                    if mas:                 # if non-empty we've found the set.
-                        if ep.isDeleted():  # transfer if not scheduled period.
-                            for m in mas:
-                                m.period = periods[i] # periods[i] will be the scheduled one.
-                                m.save()
-            # now that the elective stuff is squared away, treat the period normally
-            mas = Maintenance_Activity.get_maintenance_activity_set(periods[i])
-        else:
-            if i < len(periods) - 1:
-                mas = Maintenance_Activity.objects\
-                      .filter(_start__gte = periods[i].start)\
-                      .filter(_start__lt = periods[i + 1].start)\
-                      .filter(period = None)\
-                      .filter(deleted = False)
-            else:
-                mas = Maintenance_Activity.objects\
-                      .filter(_start__gte = periods[i].start)\
-                      .filter(_start__lt = periods[i].end())\
-                      .filter(period = None)\
-                      .filter(deleted = False)
-
-        maintenance_activities[periods[i]] = mas
-
-    return maintenance_activities
