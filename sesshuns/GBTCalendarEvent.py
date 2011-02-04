@@ -119,6 +119,10 @@ class CalEvent(object):
     def period_id(self):
         return 0
 
+    # returns true if project is science
+    def is_science(self):
+        return self.project_type() == 'A'
+    
     # returns true if the project is non-science.
     def non_science(self):
         return self.project_type() != 'A'
@@ -153,6 +157,9 @@ class CalEvent(object):
     def receiver_list(self):
         return []
 
+    def get_rcvr_ranges(self):
+        return ""
+    
     def set_fm_name(self, fmname):
         """
         sets the floating maintenance event name: 'A' for the first,
@@ -256,8 +263,8 @@ class CalEventPeriod(CalEvent):
         return self.contained.session.project.get_sanctioned_observers()
 
     def friends(self):
-        fs = self.contained.session.project.friend
-        return [fs] # It will be friends soon.
+        fs = [f.user for f in self.contained.session.project.friend_set.all()]
+        return fs
 
     def period_id(self):
         return self.contained.id
@@ -270,6 +277,7 @@ class CalEventPeriod(CalEvent):
             return not self.contained.moc_met()
         else:
             return False
+
 
     def moc_reschedule(self):
         "Popups are issued when start <= 30 minutes if moc is False."
@@ -328,6 +336,11 @@ class CalEventPeriod(CalEvent):
     def receiver_list(self):
         return self.contained.receiver_list()
 
+    
+    def get_rcvr_ranges(self):
+        return self.contained.get_rcvr_ranges()
+
+    
     def is_floating_maintenance(self):
         return self.contained.session.observing_type.type == 'maintenance'\
             and self.contained.isPending()

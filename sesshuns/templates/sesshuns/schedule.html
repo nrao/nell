@@ -292,7 +292,10 @@
       {# data for 'Friend' column.                                    #}
       <td>
 	{% for f in event.friends %}
-	  {{forloop.counter}}) <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar', 'Support Staff Absences & Contact Info', 'width=1000, height=700, scrollbars=yes');return true;">
+	  {% if forloop.counter > 1 %}
+	  ,
+	  {% endif %}
+          <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar', 'Support Staff Absences & Contact Info', 'width=1000, height=700, scrollbars=yes');return true;">
           {{f.last_name}}
         </a>
 	{% endfor %}

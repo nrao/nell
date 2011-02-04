@@ -3,7 +3,7 @@
     <title>{% block title %}GBT Schedule{% endblock %}</title>
     <!-- load css before javascript! -->
     <link rel="stylesheet" href="/static/css/lib/blueprint/screen.css" type="text/css" media="screen, projection">
-    <link rel="stylesheet" href="/static/css/lib/blueprint/print.css" type="text/css" media="print">    
+    <link rel="stylesheet" href="/static/css/lib/blueprint/print.css" type="text/css" media="print">
     <link rel="stylesheet" href="/static/css/lib/fullcalendar/fullcalendar.css" type="text/css">
     <style type="text/css" media="print">
       body {line-height:1.5;font-family:"Helvetica Neue", Arial, Helvetica, sans-serif;color:#000;background:none;font-size:7pt;}
@@ -14,7 +14,7 @@
     <!--[if lt IE 8]><link rel="stylesheet" href="/static/css/lib/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->
     <!-- <script type="text/javascript" src="/static/javascript/lib/jquery.js"> </script> -->
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"> </script>
-    <!-- Wait until next semester: <script type="text/javascript" src="http://libraryh3lp.com/presence/jid/nrao-dss/chat.libraryh3lp.com/js"></script> 
+    <!-- Wait until next semester: <script type="text/javascript" src="http://libraryh3lp.com/presence/jid/nrao-dss/chat.libraryh3lp.com/js"></script>
     <script type="text/javascript" src="/static/javascript/help.js"></script> -->
 
 {% block scripts %}
@@ -28,7 +28,7 @@
     <style type="text/css">
       .day_header {background-color:#c3d9ff}
       .project_type {width:1%; text-align:center}
-      .type_test {background-color:#87CEFA} 
+      .type_test {background-color:#87CEFA}
       .type_astronomy {background-color:#EEEEEE}
       .type_maintenance {background-color:#98FB98}
     </style>
@@ -103,8 +103,8 @@
           </span>
           <a href="mailto:helpdesk-dss@gb.nrao.edu" class="top_menu" title="Click here to offer suggestions or report bugs">Helpdesk</a> |
           <a href="/static/html/main.html" class="top_menu" title="GBT Dynamic Scheduling System documentation">Docs</a> |
-          <a href="/profile" class="top_menu" title="Click here login to the DSS">DSS Login</a> 
-        </td>  
+          <a href="/profile" class="top_menu" title="Click here login to the DSS">DSS Login</a>
+        </td>
       </tr>
 {% endif %}
       </table>
@@ -128,7 +128,7 @@
           <option>{{d}}</option>
         {% endifequal %}
       {% endfor %}
-    </select> &nbsp; 
+    </select> &nbsp;
     <label for="id_tz">Time Zone:</label>
     <select name="tz" id="id_tz">
       {% for tz in tz_list %}
@@ -137,7 +137,7 @@
         {% else %}
           <option>{{tz}}</option>
         {% endifequal %}
-      {% endfor %}  
+      {% endfor %}
     </select>&nbsp;
     <input type="submit" value="View Schedule"/>
   </p>
@@ -146,8 +146,13 @@
   <hr />
   <p align="center">** The project ID links in the below schedule will bring the user to the appropriate page in the <a href="http://www.gb.nrao.edu/dss/">DSS</a> (login required)**</p>
   <table>
-    {% for day, ps in calendar %}
-    <tr class="day_header"> 
+
+    {#################################################################}
+    {# Loop through for each day in the calendar.                    #}
+    {#################################################################}
+
+    {% for day, events in calendar %}
+    <tr class="day_header">
       <th title="Start and End times for the start day (timezone). '+' indicates that the period continues on in an undisplayed date.">{{day|date:"Y-m-d"}} ({{timezone}})</th>
       <th title="Project Type: 'A' : Astronomy, 'T' : Test, 'M' : Maintenance">Type</th>
       <th>Project ID</th>
@@ -155,60 +160,106 @@
       <th title="Primary Investigator.  To list the observers for this project, click on the Project ID">PI</th>
       <th>Friend</th>
       <th title="Receivers (Names and frequency ranges in GHz) = (RRI) Rcvr_RRI:  0.10 -  1.60, (342) Rcvr_342:  0.29 -  0.40, (450) Rcvr_450:  0.39 -  0.52, (600) Rcvr_600:  0.51 -  0.69, (800) Rcvr_800:  0.68 -  0.92, (1070) Rcvr_1070:  0.91 -  1.23, (L) Rcvr1_2:  1.15 -  1.73, (S) Rcvr2_3:  1.73 -  2.60, (C) Rcvr4_6:  3.95 -  6.10, (X) Rcvr8_10:  8.00 - 10.00, (Hol) Holography: 11.70 - 12.20, (Ku) Rcvr12_18: 12.00 - 15.40, (KFPA) RcvrArray18_26: 17.00 - 27.50, (K) Rcvr18_26: 18.00 - 26.50, (Ka) Rcvr26_40: 26.00 - 39.50, (Q) Rcvr40_52: 38.20 - 49.80, (MBA) Rcvr_PAR: 80.00 - 100.00">Rcvrs</th>
-      <th title="The range of the listed reciever(s), in GHz">Frequency (GHz)</th>
+      <th title="The range of the listed receiver(s), in GHz">Frequency (GHz)</th>
     </tr>
-    {% for start, end,start_cutoff, end_cutoff, p in ps %}
+
+    {####################################################}
+    {# this for-block loops for each period in the day. #}
+    {####################################################}
+
+    {% for event in events %}
+
+    {###################################################################################}
+    {# The Date/Time column                                                            #}
+    {# start/end cutoff indicates that the period's start/end occurs before/after day. #}
     <tr>
-      {% if start_cutoff or end_cutoff %}
-        {%if start_cutoff %}
-          <td>+{{start|date:"H:i"}} - {{end|date:"H:i"}}</td>
+      {% if event.cutoff %}
+        {% if event.start_cutoff %}
+          <td>+{{event.start|date:"H:i"}} - {{event.end|date:"H:i"}}</td>
         {% else %}
-          <td>{{start|date:"H:i"}} - {{end|date:"H:i"}}+</td>
-        {% endif %}
-      {% else %}    
-          <td>{{start|date:"H:i"}} - {{end|date:"H:i"}}</td>
-      {% endif %}    
-      {% ifequal p.session.project.project_type.type "non-science" %}
-        {% if p.session.project.is_maintenance %}
-          <td class="project_type type_maintenance" >{{p.session.project|project_type}}</td>
-        {% else %}
-          <td class="project_type type_test" >{{p.session.project|project_type}}</td>
+          <td>{{event.start|date:"H:i"}} - {{event.end|date:"H:i"}}+</td>
         {% endif %}
       {% else %}
-          <td class="project_type type_astronomy">{{p.session.project|project_type}}</td>
-      {% endifequal %}
-      <td><a href="/project/{{p.session.project.pcode}}">{{p.session.project.pcode}}</a></td>
-      {% ifequal p.session.project.project_type.type "science" %}
-        <td><a href="http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{p.session.project.pcode}}">{{p.session.project.name}}</a></td>
+          <td>{{event.start|date:"H:i"}} - {{event.end|date:"H:i"}}</td>
+      {% endif %}
+
+    {################################################################}
+    {# The 'Type' column                                            #}
+    {# Looking at the period type to set the data row class.        #}
+    {# This is what sets the 'Type' background color in the display #}
+    {# Only one of the following 'if' statements will evaluate true #}
+
+      {% if event.project_type == "A" %}
+          <td class="project_type type_astronomy">{{event.project_type}}</td>
+      {% endif %}
+
+      {% if event.project_type == "M" %}
+          <td class="project_type type_maintenance" >{{event.project_type}}</td>
+      {% endif %}
+
+      {% if event.project_type == "T" %}
+          <td class="project_type type_test" >{{event.project_type}}</td>
+      {% endif %}
+
+    {################################################################}
+    {# The 'project ID' column.                                     #}
+
+      <td><a href="/project/{{event.pcode}}">{{event.pcode}}</a></td>
+
+    {################################################################}
+    {# data for 'Project Title' column                              #}
+
+      {% if event.project_type == "A" %}
+        <td><a href="http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{event.pcode}}">{{event.project_title}}</a></td>
       {% else %}
-        {% if p.session.project.is_maintenance %}
-          <td>
-            <a href="http://gbrescal.gb.nrao.edu/webcal/webcal.dbw?view=day&date={{p.start|date:"Y-m-d"}}">{{p.session.name}}</a>
-            {{rschedule|get_receiver_change:day}}
-          </td>
+        {% if event.project_type == "M" %}
+          <td>{{event.project_title}}{{rschedule|get_receiver_change:day}}</td>
         {% else %}
-          <td>{{p.session.name}}</td>
+          <td>{{event.project_title}}</td>
         {% endif %}
-      {% endifequal %}
-      <td>{{p.session.project.principal_investigator.last_name|pretty_none}}</td>
-      <td>{{p.session.project.friend.last_name|pretty_none}}</a></td>
+      {% endif %}
+
+    {################################################################}
+    {# 'PI' (principal investigator) column.                        #}
+
+      <td>{{event.principal_investigator.last_name|pretty_none}}</td>
+
+    {################################################################}
+    {# data for 'Friend' column.                                    #}
       <td>
-        {% if p.session.project.is_maintenance %}
+	{% for f in event.friends %}
+	  {% if forloop.counter > 1 %}
+	  ,
+	  {% endif %}
+          {{f.last_name|pretty_none}}
+        </a>
+	{% endfor %}
+      </td>
+
+    {################################################################}
+    {# data for 'Rcvrs' column.                                     #}
+      <td>
+        {# If the period is a science period, gets the period's receiver list   #}
+        {# and outputs them.  If it is a maintenance day, looks at the receiver #}
+        {# schedule and outputs all the receiver for that day.                  #}
+        {% if event.project_type == "M" %}
           {{rschedule|get_receivers:day}}
         {% else %}
-          {{p.receiver_list}}
+          {{event.receiver_list}}
         {% endif %}
       </td>
+
+    {################################################################}
+    {# data for 'Frequency (GHz)' column.                           #}
       <td>
-        {% if not p.session.project.is_maintenance %}
-          {{p.get_rcvr_ranges}}
+        {% if event.is_science %}
+          {{event.get_rcvr_ranges}}
         {% endif %}
       </td>
     </tr>
     {% endfor %}
     {% endfor %}
   </table>
-</body>  
-
+</body>
 
 {% endblock %}
