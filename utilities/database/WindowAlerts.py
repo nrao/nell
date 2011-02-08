@@ -53,7 +53,9 @@ class WindowAlerts():
        
         if len(wins) == 0:
             # we really only care about windows that are not complete
+            # and that have ranges
             wins = Window.objects.filter(complete = False)
+            wins = [w for w in wins if len(w.windowrange_set.all()) > 0]
         self.add("Retrieving Times for %d Windows\n" % len(wins))    
         times = []
         for w in wins:
@@ -75,8 +77,10 @@ class WindowAlerts():
         for w, stat in stats:
             hrsSchedulable = stat[0]
             hrsBlacked = stat[1]
-            ratio = hrsBlacked/hrsSchedulable
-
+            if hrsSchedulable == 0.0:
+                ratio = 0.0 # TBF: or 1.0? Depends on details ...
+            else:    
+                ratio = hrsBlacked/hrsSchedulable
             if ratio > .10 and ratio < .50:
                 alerts.append((w, stat, 1))
             elif ratio > .50:
