@@ -530,12 +530,15 @@ def projects_email(request, *args, **kwds):
         pcode_list = pcodes.split(" ") if pcodes is not None else getPcodesFromFilter(request)
         pi_list, pc_list, ci_list, ob_list, fs_list = getInvestigatorEmails(pcode_list)
 
+        templates = EmailTemplate.get_templates(pcode_list)
+
         return HttpResponse(json.dumps({'PI-Addresses':   pi_list
                                       , 'PC-Addresses':   pc_list
                                       , 'CO-I-Addresses': ci_list
                                       , 'OBS-Addresses':  ob_list
                                       , 'Friend-Addresses':  fs_list
-                                      , 'PCODES':         pcode_list})
+                                      , 'PCODES':         pcode_list
+                                      , 'Templates':      templates})
                           , mimetype = "text/plain")
 
     elif request.method == 'POST':

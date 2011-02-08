@@ -7,6 +7,7 @@ from TestDBReporter            import TestDBReporter
 from TestDSSPrime2DSS          import TestDSSPrime2DSS
 from TestElective              import TestElective
 from TestElectiveResource      import TestElectiveResource
+from TestEmailTemplate         import TestEmailTemplate
 from TestFriendResource        import TestFriendResource
 from TestIcalAntioch           import TestIcalAntioch
 from TestInvestigatorResource  import TestInvestigatorResource

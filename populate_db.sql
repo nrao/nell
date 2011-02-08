@@ -193,3 +193,5 @@ INSERT INTO backends VALUES (DEFAULT, 'Spectral Processor', 'gbtSpecP', 'P');
 INSERT INTO backends VALUES (DEFAULT, 'VLBA recorder and DAR ', 'gbtVLBA', 'V');
 INSERT INTO backends VALUES (DEFAULT, 'Zpectrometer ', 'Zpect', 'Z');
 INSERT INTO backends VALUES (DEFAULT, 'User supplied or new backend ', 'Other', 'O');
+
+INSERT INTO email_templates VALUES (DEFAULT, 'Blank', '', '');
