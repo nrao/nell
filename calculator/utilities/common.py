@@ -77,3 +77,16 @@ def getMinIntegrationTime(request):
     min_int = ', '.join(getOptions(filter, 'integration'))
     request.session['SC_result']['min_integration'] = (min_int, None, '', '', None)
 
+def validate(key, value):
+    if value is None or value == '':
+        return value
+    if key in ('declination', 'right_ascension'):
+        values = value.split(":")
+        hour   = values[0]
+        if len(values) == 3:
+            minute = (float(values[1]) + float(values[2]) / 3600.) / 60.
+        else:
+            minute = float(values[1]) / 60.
+        return -1 * (float(hour[1:]) + minute) if '-' in hour else float(hour) + minute
+    else:
+        return value

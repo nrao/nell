@@ -1,5 +1,7 @@
 from Document  import Document
 from Term      import Term
+from utilities.FormatExceptionInfo import formatExceptionInfo
+
 from threading import Condition, Thread, Lock
 from exceptions import RuntimeError
 
@@ -97,6 +99,7 @@ class Result(Thread):
                 
         except:
             print "Caught %s with value %s" % (key, value)
+            print formatExceptionInfo()
         finally:
             self.lock.release()
 

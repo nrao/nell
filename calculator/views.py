@@ -44,10 +44,10 @@ def set_terms(request, *args, **kwds):
         info = {}
         for key, value in dict(request.POST).items():
             if '-hidden' not in key:
-                info[key] = value[0] 
+                info[key] = validate(key, value[0])
             elif '-' in key and key.split('-')[0] in getHWList():
                 new_key, _ = key.split('-')
-                info[new_key] = value[0]
+                info[new_key] = validate(new_key, value[0])
 
         if request.session.get('SC_input') is not None:
             request.session['SC_input'].update(info)
@@ -78,6 +78,7 @@ def set_terms(request, *args, **kwds):
     return HttpResponse(json.dumps(retval), mimetype = "text/plain")
 
 def initiateHardware(request):
+    request.session['SC_result'] = {}
     backends = getOptions({},'backend')
     selected = {'backend' : backends[0] if len(backends) > 0 else None}
     request.session['SC_backend'] = selected['backend']

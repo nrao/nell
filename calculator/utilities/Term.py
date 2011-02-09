@@ -76,3 +76,6 @@ class Term(Document):
 
     def hasDependencies(self):
         return self.variables.keys() != []
+
+    def isDependentOn(self, key):
+        return key in self.variables.keys()
