@@ -14,6 +14,7 @@ from TestMaintenanceActivity   import TestMaintenanceActivity
 from TestNRAOBosDB             import TestNRAOBosDB
 from TestObservers             import TestObservers
 from TestPeriod                import TestPeriod
+from TestPeriodChanges         import TestPeriodChanges
 from TestPeriodAccounting      import TestPeriodAccounting
 from TestPeriodResource        import TestPeriodResource
 from TestProject               import TestProject

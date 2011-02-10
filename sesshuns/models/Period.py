@@ -21,6 +21,7 @@ class Period(models.Model):
     receivers  = models.ManyToManyField(Receiver, through = "Period_Receiver")
     window     = models.ForeignKey("Window", blank=True, null=True, related_name = "periods")
     elective   = models.ForeignKey("Elective", blank=True, null=True, related_name = "periods")
+    last_notification = models.DateTimeField(blank=True, null=True, help_text = "yyyy-mm-dd hh:mm")
 
 
     class Meta:
