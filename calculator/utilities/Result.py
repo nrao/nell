@@ -2,11 +2,13 @@ from Document  import Document
 from Term      import Term
 from utilities.FormatExceptionInfo import formatExceptionInfo
 
-from threading import Condition, Thread, Lock
+from threading import Thread, Lock
+from Queue     import Queue
 from exceptions import RuntimeError
 
 import ConfigParser, time
 import settings
+import sys
 
 class Result(Thread):
 
@@ -40,8 +42,7 @@ class Result(Thread):
         Thread.__init__(self)
 
         self.lock  = Lock()
-        self.queue = []
-        self.queue_empty = Condition()
+        self.queue = Queue()
         self.loop = True
 
         self.terms = {}
@@ -59,30 +60,31 @@ class Result(Thread):
 
     def __del__(self):
         self.loop = False
-        try:
-            self.join()
-        except RuntimeError:
-            pass
 
     def get(self, key = None):
-        self.queue_empty.acquire()
-        if self.queue:
-            self.queue_empty.wait() # make sure all calcuations are complete
+        while True:
+            self.queue.join()
+            self.lock.acquire()
+            if self.queue.empty():
+                try:
 
-        if key and self.terms.has_key(key):
-            term   = self.terms[key]
-            result = term.get()
-        else: # all of it
-            result = {}
-            for key, term in self.terms.items():
-                result[key] = term.get()
-        self.queue_empty.release()
-
-        return result
+                    if key and self.terms.has_key(key):
+                        term   = self.terms[key]
+                        result = term.get()
+                    else: # all of it
+                        result = {}
+                        for key, term in self.terms.items():
+                            result[key] = term.get()
+                except:
+                    print formatExceptionInfo()
+                finally:
+                    self.lock.release()
+                    return result
+            else:
+                self.lock.release()
 
     def set(self, key, value):
         self.lock.acquire()
-
         try:
             if self.terms.has_key(key):
                 self.terms[key].set(value)
@@ -104,19 +106,13 @@ class Result(Thread):
             self.lock.release()
 
     def onNotify(self, key, value):
-        self.queue_empty.acquire()
-        self.queue.append((key, value)) # add to calcuation list, don't block
-        self.queue_empty.release()
+        self.queue.put((key, value))
 
     def run(self):
         while self.loop:
-            self.queue_empty.acquire()
-
-            if self.queue:
-                key, value = self.queue.pop(0)
+            try:
+                key, value = self.queue.get(True, 1)
                 self.set(key, value)
-            else:
-                self.queue_empty.notify()
-
-            self.queue_empty.release()
-            time.sleep(.01)  #  Slow this puppy down a bit.
+                self.queue.task_done()
+            except:
+                pass
