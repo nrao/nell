@@ -697,8 +697,8 @@ def GenerateReport():
     values  = [p for p in ps if p.accounting.scheduled <= 0.0]
     print_values(outfile, values)
 
-    outfile.write("\n\nPending Periods (non-windowed):")
-    values  = [str(p) for p in periods if p.isPending() and not p.is_windowed()]
+    outfile.write("\n\nPending Periods (non-windowed, non-elective):")
+    values  = [str(p) for p in periods if p.isPending() and not p.is_windowed() and not p.is_elective()]
     print_values(outfile, values)
 
     outfile.write("\n\nCompleted projects with non-complete sessions:")
