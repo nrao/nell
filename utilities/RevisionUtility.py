@@ -5,8 +5,12 @@ from VersionDiff import VersionDiff
 
 class RevisionUtility:
 
-    def getVersions(self, obj):
+    """
+    This class cotains utility functions to help working with the reversion library.
+    It's main concern is producing sensible diffs between object versions.
+    """
 
+    def getVersions(self, obj):
         return list(Version.objects.get_for_object(obj))
 
     def getObjectDiffs(self, obj):
@@ -54,7 +58,6 @@ class RevisionUtility:
                                  , value1 = value1
                                  , value2 = value2)
                 diffs.append(diff)                                 
-                #diffs.append((dt, key, value1, value2))
     
         return diffs
 
