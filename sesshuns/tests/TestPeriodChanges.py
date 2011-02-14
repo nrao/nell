@@ -40,10 +40,8 @@ class TestPeriodChanges(BenchTestCase):
                       )
             p.save()
             self.ps.append(p)
-            #revision.comment = "initing DB"
-            print "Created: ", p
 
-    def test_findPeriodsForNotification(self):
+    def test_getChangesForNotification_2(self):
 
         pc = PeriodChanges(test = True)
         
@@ -57,7 +55,7 @@ class TestPeriodChanges(BenchTestCase):
                             , self.ps[0].accounting : []}
 
 
-        pdiffs = pc.findPeriodsForNotification(now = self.start)
+        pdiffs = [(p, pc.getChangesForNotification(p)) for p in self.ps]
 
         self.assertEquals(pdiffs[0][0], self.ps[0])
         self.assertEquals(pdiffs[0][1], [])
@@ -99,7 +97,8 @@ class TestPeriodChanges(BenchTestCase):
                                }             
 
                                
-        pdiffs = pc.findPeriodsForNotification(now = self.start)
+        pdiffs = [(p, pc.getChangesForNotification(p)) for p in self.ps]
+
         self.assertEquals(pdiffs[0][0], self.ps[0])
         self.assertEquals(len(pdiffs[0][1]), 1)
         self.assertEquals(pdiffs[0][1][0], scheduledDiff) 
