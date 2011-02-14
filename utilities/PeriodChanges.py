@@ -106,65 +106,6 @@ class PeriodChanges:
            mostRecentPublishDT = publishDTs[-1]
        return mostRecentPublishDT
 
-    def hasBeenScheduled(self, period):
-       print ""
-       print "hasBeenScheduled: "
-       print period
-
-       vs = self.revisions.getVersions(period)
-       vs.extend(self.revisions.getVersions(period.accounting))
-       # sort by revision date
-       vs.sort(key=lambda x: x.revision.date_created)
-
-       print "hasBeenScheduled versions: ", len(vs)
-       for v in vs:
-           print " ", v
-
-       trackFromDt, states = self.stateHistory(period, vs)
-       if len(states) == 0:
-           return []
-
-       # find the publish (other state -> scheduled) states
-       publishDTs = []
-       prevState = originalState = states[0][1]
-       for dt, state in states:
-           if state == 2 and prevState != 2:
-               publishDTs.append(dt)
-           prevState = state    
-
-       if len(publishDTs) == 0:
-           if originalState == 2:
-               mostRecentPublishDT = states[0][0]
-           else:
-               mostRecentPublishDT = datetime(2100, 1, 1) # next century 
-       else:
-           mostRecentPublishDT = publishDTs[-1]
-           
-       # get pertinent diffs
-       #diffs = [d for d in self.getObjectDiffs(period) if d.dt >= trackFromDt]
-       diffs = self.revisions.getObjectDiffs(period)
-       diffs.extend(self.revisions.getObjectDiffs(period.accounting))
-       diffs.sort(key=lambda x: x.dt)
-       print "hasBeenScheduled diffs: "
-       for d in diffs:
-           print d
-
-       ignore_fields = ['moc_ack', 'score', 'forecast', 'backup', 'window', 'elective', 'description', 'last_notification'] 
-       if trackFromDt is not None:
-           diffs = [d for d in diffs if d.dt >= trackFromDt and d.dt > mostRecentPublishDT and d.field not in ignore_fields]
-       else:
-           diffs = []
-       
-
-       for d in diffs:
-           print d
-
-       #self.reportObject(period)
-       #self.reportObject(period.accounting)
-       #print period
-       #print "number of diffs to report for this period: ", len(diffs)
-       #print ""
-       return diffs
 
     def getNewChangeDate(self, period, vs):
        """
@@ -201,45 +142,4 @@ class PeriodChanges:
 
        return (affectedDT, states)
 
-    def stateHistory(self, period, vs):
 
-       # what is the state history?
-       #states = [(v.revision.date_created, v.field_dict.get("state", None)) for v in vs]
-       states = []
-       currentState = None
-       for v in vs:
-           state = v.field_dict.get("state", None)
-           if state is not None:
-               currentState = state
-           states.append((v.revision.date_created, currentState))    
-
-       for s in states:
-           print s[0], s[1] #, Period_State.objects.get(id = int(s[1]))
-
-       # TBF: fake the last notification time
-       #lastNoticeDT = datetime.now() - timedelta(days = 7)
-       lastNoticeDT = period.last_notification
-       if lastNoticeDT is None:
-           lastNoticeDT = datetime(2000, 1, 1)
-
-       # report on any changes since the last notice that
-       # affected a scheduled period
-       scheduledYet = False
-       i = 0
-       for i in range(len(states)):
-           if states[i][1] == 2:
-               scheduledYet = True
-           if states[i][0] > lastNoticeDT and scheduledYet:
-               break
-           else:
-               i += 1
-       
-       if i < len(states):
-           affectedDT = states[i][0]
-       else:
-           affectedDT = None
-       
-       print "last notificaiton: ", lastNoticeDT
-       print "start tracking at: ", affectedDT
-
-       return (affectedDT, states)
