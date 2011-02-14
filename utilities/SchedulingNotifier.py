@@ -76,10 +76,6 @@ class SchedulingNotifier(Notifier):
                                                 self.createObservingAddresses(),
                                                 self.createObservingSubject(),
                                                 self.createObservingBody()))
-        self.registerTemplate("deleted", Email(self.sender,
-                                               self.createDeletedAddresses(),
-                                               self.createDeletedSubject(),
-                                               self.createDeletedBody()))
         self.registerTemplate("staff", Email(self.sender,
                                              self.createStaffAddresses(),
                                              self.createStaffSubject(),
@@ -189,10 +185,6 @@ class SchedulingNotifier(Notifier):
         "get addresses of only those who are observing"
         return self.emailProjectMap.keys()
 
-    def createDeletedAddresses(self):
-        "get addresses of only those who had periods originally scheduled"
-        return self.createAddresses(self.deletedPeriods).keys()
-
     def createChangedAddresses(self):
         return self.createAddresses(self.changedPeriods).keys()
 
@@ -234,10 +226,7 @@ class SchedulingNotifier(Notifier):
         self.logMessage("Staff Subject: %s\n" % subject)
         return subject
 
-    def createDeletedSubject(self):
-        subject = "Reminder: GBT Schedule has changed."
-        self.logMessage("Deleted Subject: %s\n" % subject)
-        return subject
+
 
     def createObservingSubject(self):
         subject = "Your GBT project has been scheduled (%s-%s)" % \
@@ -359,31 +348,6 @@ Happy Observing!
          , self.getSessionTable(self.observingPeriods)
          , self.getStaffBodyFooter()
           )
-        return body
-
-    def createDeletedBody(self):
-        body = \
-"""
-Dear Colleagues,
-
-This is a reminder that the following projects had been scheduled
-between %s ET through %s ET, but have been removed from the schedule.
-
-%s
-
-Please log into https://dss.gb.nrao.edu to view your observation
-related information.
-
-Any requests or problems with the schedule should be directed
-to helpdesk-dss@gb.nrao.edu.
-
-Thank You.
-""" \
-        % (self.utc2estDT(self.startdate),
-           self.utc2estDT(self.enddate),
-           self.getSessionTable(self.deletedPeriods))
-
-        self.logMessage("Body: %s\n" % body)
         return body
 
     def getSessionTable(self, periods):

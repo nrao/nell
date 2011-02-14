@@ -4,7 +4,7 @@ from PeriodsTestCase import PeriodsTestCase
 from sesshuns.models import *
 #from nell.utilities.ReversionUtilityTester  import VersionDiff
 from nell.utilities.RevisionUtilityTester import VersionTester
-from nell.utilities.reports.VersionDiff import VersionDiff
+from nell.utilities.VersionDiff import VersionDiff
 
 class TestSchedulingNotifier(PeriodsTestCase):
 
@@ -159,13 +159,6 @@ Jan 01 00:00 | Jan 01 05:00 | 06:19 |  3.00 | Nubbles   |           | two
 Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | Nubbles   |           | three"""
         self.assertTrue(partialBody in email.body)       
 
-        # test the deleted email
-        email = self.sn.email_templates.getObject("deleted")
-        self.assertEquals([], email.recipients)
-        self.assertEquals("Reminder: GBT Schedule has changed.", email.subject)
-        partialBody2 = "This is a reminder that the following projects had been scheduled"
-        self.assertTrue(partialBody2 in email.body)       
-
         # test the observer email
         email = self.sn.email_templates.getObject("observer")
         exp = [u'pmargani@nrao.edu', u'pmargani@gmail.com', u'paghots@hotmail.com']
@@ -241,14 +234,6 @@ Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | Nubbles   |           | three"""
         deletedStr = "Dec 31 19:00 | Jan 01 00:00 | 01:18 |  5.00 | Nubbles   |           | one"
         self.assertTrue(deletedStr not in email.body)       
 
-        # test the deleted email
-        email = self.sn.email_templates.getObject("deleted")
-        exp = [u'pmargani@nrao.edu', u'pmargani@gmail.com', u'paghots@hotmail.com']
-        self.assertEquals(exp, email.recipients)
-        self.assertEquals("Reminder: GBT Schedule has changed.", email.subject)
-        partialBody2 = "This is a reminder that the following projects had been scheduled"
-        self.assertTrue(partialBody2 in email.body)       
-
         # test the observer email
         email = self.sn.email_templates.getObject("observer")
         exp = [u'pmargani@nrao.edu', u'pmargani@gmail.com', u'paghots@hotmail.com']
@@ -296,7 +281,7 @@ Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | Nubbles   |           | three"""
         #sn = SchedulingNotifier.SchedulingNotifier(test = True)
         self.sn.setPeriods(self.ps, self.ps)
 
-        for x in ["observer", "deleted", "staff"]:
+        for x in ["observer", "changed", "staff"]:
             staffEmail = self.sn.email_templates.getObject(x)
             #print "!!!!!!!!!!!!!!!!!!: ", x
             #print staffEmail.subject
@@ -322,13 +307,6 @@ Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | Nubbles   |           | three"""
         #print email.body
         self.assertTrue(partialBody in email.body)       
         self.assertTrue("Note: Project GBT09A-001 will not be scheduled on Dec 31 22:00" in email.body)
-
-        # test the deleted email
-        email = self.sn.email_templates.getObject("deleted")
-        self.assertEquals([], email.recipients)
-        self.assertEquals("Reminder: GBT Schedule has changed.", email.subject)
-        partialBody2 = "This is a reminder that the following projects had been scheduled"
-        self.assertTrue(partialBody2 in email.body)       
 
         # test the observer email
         email = self.sn.email_templates.getObject("observer")
