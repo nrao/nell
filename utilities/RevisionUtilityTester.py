@@ -1,8 +1,3 @@
-import reversion
-from reversion.models import Version
-from reversion import revision
-from nell.utilities.reports.VersionDiff import VersionDiff
-
 # The reversion system does not work with unit tests, so, we must
 # fake it: here's how it's done.
 
@@ -33,6 +28,11 @@ class RevisionUtilityTester:
     PeriodChange object's revision's versions and diffs with the 
     approprate dictionaries.
     """
+
+    def __init__(self):
+
+        self.versions = {}
+        self.diffs = {}
 
     def getVersions(self, obj):
         return self.versions[obj]
