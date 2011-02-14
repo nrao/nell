@@ -2,23 +2,47 @@ from nell.utilities  import SchedulingNotifier
 from utils           import create_sesshun
 from PeriodsTestCase import PeriodsTestCase
 from sesshuns.models import *
+#from nell.utilities.ReversionUtilityTester  import VersionDiff
+from nell.utilities.RevisionUtilityTester import VersionTester
+from nell.utilities.reports.VersionDiff import VersionDiff
 
 class TestSchedulingNotifier(PeriodsTestCase):
 
+    def setUp(self):
+        super(TestSchedulingNotifier, self).setUp()
+
+        self.sn = SchedulingNotifier.SchedulingNotifier(test = True)
+
+        # SchedulingNotifier relies on PeriodChanges to know what changes
+        # to notify people about.  PeriodChanges uses the revision system
+        # to track pertinent changes, but that system doesn't work w/
+        # unit tests, so heres how we fake it:
+        for p in self.ps:
+            self.addToTestRevisions(p)
+            self.addToTestRevisions(p.accounting)
+
+    def addToTestRevisions(self, o):
+        "When Unit Testing with PeriodChanges, gotta do this:"
+
+        self.sn.periodChanges.revisions.versions[o] = {} 
+        self.sn.periodChanges.revisions.diffs[o] = {}
+
+    def setVersions(self, o, vs):
+        "When Unit Testing with PeriodChanges, gotta do this:"
+        self.sn.periodChanges.revisions.versions[o] = vs 
+
+    def setDiffs(self, o, diffs):
+        "When Unit Testing with PeriodChanges, gotta do this:"
+        self.sn.periodChanges.revisions.diffs[o] = diffs 
+
     def test_examinePeriods(self):
 
-        # TBF: make the test flag actually do something!
-        sn = SchedulingNotifier.SchedulingNotifier(test = True)
-
-        sn.examinePeriods(self.ps)
-        self.assertEquals(self.ps, sn.observingPeriods)
-        self.assertEquals([], sn.changedPeriods)
-        self.assertEquals([], sn.deletedPeriods)
+        self.sn.examinePeriods(self.ps, self.ps)
+        self.assertEquals(self.ps, self.sn.observingPeriods)
+        self.assertEquals([], self.sn.changedPeriods)
+        self.assertEquals([], self.sn.deletedPeriods)
 
     def test_examinePeriods_2(self):
-
-        # TBF: make the test flag actually do something!
-        sn = SchedulingNotifier.SchedulingNotifier(test = True)
 
         # now delete one of these periods
         #p = self.ps[0]
@@ -26,6 +50,29 @@ class TestSchedulingNotifier(PeriodsTestCase):
         self.ps[0].accounting.lost_time_other = self.ps[0].duration
         self.ps[0].save()
 
+        # The above change must be caught by the scheduling notifier,
+        # but teh revision system that it relies on doesn't work in unit
+        # tests, so we have to fake it here.
+        # What would the revision system look like?
+        dt1 = self.start + timedelta(minutes = 1)
+        dt2 = self.start + timedelta(minutes = 2)
+        versions = [VersionTester(fields = {'state' : 2}
+                                , dt = dt1)
+                  , VersionTester(fields = {'state' : 3}
+                                , dt = dt2)
+                    ]
+        self.setVersions(self.ps[0], versions)
+        stateDiff = VersionDiff(dt = dt2
+                              , field = 'state'
+                              , value1 = 2
+                              , value2 = 3)
+        self.setDiffs(self.ps[0], [stateDiff])                   
+        ltoDiff = VersionDiff(dt = dt2
+                            , field = 'lost_time_other'
+                            , value1 = 0
+                            , value2 = self.ps[0].duration)
+        self.setDiffs(self.ps[0].accounting, [ltoDiff])                   
+                           
         # also create a windowed session with default period that
         # is in the deleted state
         s = create_sesshun()
@@ -58,16 +105,24 @@ class TestSchedulingNotifier(PeriodsTestCase):
                          )
         wr.save()                 
 
+        self.addToTestRevisions(p)
+
         ps = [self.ps[0]
             , self.ps[1]
             , self.ps[2]
             , p
              ]
-        sn.examinePeriods(ps)
+        self.sn.examinePeriods(ps, ps)
+
         obsPeriods = self.ps[1:]
-        self.assertEquals(obsPeriods, sn.observingPeriods)
-        self.assertEquals([self.ps[0]], sn.changedPeriods)
-        self.assertEquals([self.ps[0]], sn.deletedPeriods)
+        self.assertEquals(obsPeriods, self.sn.observingPeriods)
+        self.assertEquals([self.ps[0]], self.sn.changedPeriods)
+        self.assertEquals([self.ps[0]], self.sn.deletedPeriods)
+
+        self.assertEquals(1, len(self.sn.changes.keys()))
+        self.assertEquals(2, len(self.sn.changes[self.ps[0]]))
+        self.assertEquals(stateDiff, self.sn.changes[self.ps[0]][0])
+        self.assertEquals(ltoDiff,   self.sn.changes[self.ps[0]][1])
 
     def setupUser(self):
 
@@ -92,13 +147,10 @@ class TestSchedulingNotifier(PeriodsTestCase):
 
         self.setupUser()
 
-        # TBF: make the test flag actually do something!
-        sn = SchedulingNotifier.SchedulingNotifier(test = True)
-
-        sn.setPeriods(self.ps)
+        self.sn.setPeriods(self.ps, self.ps)
 
         # test the staff email
-        email = sn.email_templates.getObject("staff")
+        email = self.sn.email_templates.getObject("staff")
         self.assertEquals(["gbtops@gb.nrao.edu", "gbtinfo@gb.nrao.edu", "gbtime@gb.nrao.edu"]
                         , email.recipients)
         self.assertEquals(email.subject, "GBT schedule for Dec 31-Jan 01")  
@@ -108,18 +160,109 @@ Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | Nubbles   |           | three"""
         self.assertTrue(partialBody in email.body)       
 
         # test the deleted email
-        email = sn.email_templates.getObject("deleted")
+        email = self.sn.email_templates.getObject("deleted")
         self.assertEquals([], email.recipients)
         self.assertEquals("Reminder: GBT Schedule has changed.", email.subject)
         partialBody2 = "This is a reminder that the following projects had been scheduled"
         self.assertTrue(partialBody2 in email.body)       
 
         # test the observer email
-        email = sn.email_templates.getObject("observer")
+        email = self.sn.email_templates.getObject("observer")
         exp = [u'pmargani@nrao.edu', u'pmargani@gmail.com', u'paghots@hotmail.com']
         self.assertEquals(exp, email.recipients)
         self.assertEquals("Your GBT project has been scheduled (Dec 31-Jan 01)", email.subject)
         self.assertTrue(partialBody in email.body)       
+
+        # test the changed email - no changes, no recipients
+        email = self.sn.email_templates.getObject("changed")
+        self.assertEquals([], email.recipients)
+
+    def test_setPeriods_changes(self):
+
+        self.setupUser()
+
+        # now delete one of these periods
+        self.ps[0].state = Period_State.get_state("D")
+        self.ps[0].accounting.lost_time_other = self.ps[0].duration
+        self.ps[0].save()
+
+        # The above change must be caught by the scheduling notifier,
+        # but teh revision system that it relies on doesn't work in unit
+        # tests, so we have to fake it here.
+        # What would the revision system look like?
+        dt1 = self.start + timedelta(minutes = 1)
+        dt2 = self.start + timedelta(minutes = 2)
+        versions = [VersionTester(fields = {'state' : 2}
+                                , dt = dt1)
+                  , VersionTester(fields = {'state' : 3}
+                                , dt = dt2)
+                    ]
+        self.setVersions(self.ps[0], versions)
+        stateDiff = VersionDiff(dt = dt2
+                              , field = 'state'
+                              , value1 = 2
+                              , value2 = 3)
+        self.setDiffs(self.ps[0], [stateDiff])                   
+        ltoDiff = VersionDiff(dt = dt2
+                            , field = 'lost_time_other'
+                            , value1 = 0
+                            , value2 = self.ps[0].duration)
+        self.setDiffs(self.ps[0].accounting, [ltoDiff])
+
+        # now change one of the periods
+        self.ps[1].duration = self.ps[1].duration - 1
+        self.ps[1].save()
+
+        # What would the revision system look like?
+        #dt1 = self.start + timedelta(minutes = 1)
+        #dt2 = self.start + timedelta(minutes = 2)
+        versions = [VersionTester(fields = {'state' : 2}
+                                , dt = dt1)
+                  , VersionTester(fields = {'state' : 2}
+                                , dt = dt2)
+                    ]
+        self.setVersions(self.ps[1], versions)
+        durDiff = VersionDiff(dt = dt2
+                            , field = 'state'
+                            , value1 = self.ps[1].duration + 1
+                            , value2 = self.ps[1].duration)
+        self.setDiffs(self.ps[1], [durDiff])              
+
+        self.sn.setPeriods(self.ps, self.ps)
+
+        # test the staff email
+        email = self.sn.email_templates.getObject("staff")
+        self.assertEquals(["gbtops@gb.nrao.edu", "gbtinfo@gb.nrao.edu", "gbtime@gb.nrao.edu"]
+                        , email.recipients)
+        self.assertEquals(email.subject, "GBT schedule for Dec 31-Jan 01")  
+        partialBody = """Jan 01 00:00 | Jan 01 05:00 | 06:19 |  2.00 | Nubbles   |           | two
+Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | Nubbles   |           | three"""
+        self.assertTrue(partialBody in email.body)       
+        deletedStr = "Dec 31 19:00 | Jan 01 00:00 | 01:18 |  5.00 | Nubbles   |           | one"
+        self.assertTrue(deletedStr not in email.body)       
+
+        # test the deleted email
+        email = self.sn.email_templates.getObject("deleted")
+        exp = [u'pmargani@nrao.edu', u'pmargani@gmail.com', u'paghots@hotmail.com']
+        self.assertEquals(exp, email.recipients)
+        self.assertEquals("Reminder: GBT Schedule has changed.", email.subject)
+        partialBody2 = "This is a reminder that the following projects had been scheduled"
+        self.assertTrue(partialBody2 in email.body)       
+
+        # test the observer email
+        email = self.sn.email_templates.getObject("observer")
+        exp = [u'pmargani@nrao.edu', u'pmargani@gmail.com', u'paghots@hotmail.com']
+        self.assertEquals(exp, email.recipients)
+        self.assertEquals("Your GBT project has been scheduled (Dec 31-Jan 01)", email.subject)
+        self.assertTrue(partialBody in email.body)       
+
+        # test the changed email - no changes, no recipients
+        email = self.sn.email_templates.getObject("changed")
+        self.assertEquals(exp, email.recipients)
+        deleteLine = "A period for project GBT09A-001 has been deleted."
+        changedLine = "A period for project GBT09A-001 has been changed."
+        self.assertTrue(deleteLine in  email.body)
+        self.assertTrue(changedLine in  email.body)
 
     def test_setPeriods_deletedElective(self):
 
@@ -143,22 +286,28 @@ Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | Nubbles   |           | three"""
 
         self.ps.append(p)
 
+        
+        # now, we have to make these changes show up in the revisions system
+        #self.sn.periodChanges.revisions.versions[p] = {}
+        #self.sn.periodChanges.revisions.diffs[p] = {}
+        self.addToTestRevisions(p)
+
         # TBF: make the test flag actually do something!
-        sn = SchedulingNotifier.SchedulingNotifier(test = True)
-        sn.setPeriods(self.ps)
+        #sn = SchedulingNotifier.SchedulingNotifier(test = True)
+        self.sn.setPeriods(self.ps, self.ps)
 
         for x in ["observer", "deleted", "staff"]:
-            staffEmail = sn.email_templates.getObject(x)
+            staffEmail = self.sn.email_templates.getObject(x)
             #print "!!!!!!!!!!!!!!!!!!: ", x
             #print staffEmail.subject
             #print staffEmail.recipients
             #print staffEmail.body
 
-        self.assertEquals([], sn.deletedPeriods)
-        self.assertEquals([p], sn.deletedElectivePeriods)
+        self.assertEquals([], self.sn.deletedPeriods)
+        self.assertEquals([p], self.sn.deletedElectivePeriods)
 
         # test the staff email
-        email = sn.email_templates.getObject("staff")
+        email = self.sn.email_templates.getObject("staff")
         exp = ["gbtops@gb.nrao.edu"
              , "gbtinfo@gb.nrao.edu"
              , "gbtime@gb.nrao.edu"
@@ -175,16 +324,20 @@ Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | Nubbles   |           | three"""
         self.assertTrue("Note: Project GBT09A-001 will not be scheduled on Dec 31 22:00" in email.body)
 
         # test the deleted email
-        email = sn.email_templates.getObject("deleted")
+        email = self.sn.email_templates.getObject("deleted")
         self.assertEquals([], email.recipients)
         self.assertEquals("Reminder: GBT Schedule has changed.", email.subject)
         partialBody2 = "This is a reminder that the following projects had been scheduled"
         self.assertTrue(partialBody2 in email.body)       
 
         # test the observer email
-        email = sn.email_templates.getObject("observer")
+        email = self.sn.email_templates.getObject("observer")
         exp = [u'pmargani@nrao.edu', u'pmargani@gmail.com', u'paghots@hotmail.com']
         self.assertEquals(exp, email.recipients)
         self.assertEquals("Your GBT project has been scheduled (Dec 31-Jan 01)", email.subject)
         self.assertTrue(partialBody in email.body)       
         
+        # test the changed email - no changes to scheduled period, 
+        # so no recipients
+        email = self.sn.email_templates.getObject("changed")
+        self.assertEquals([], email.recipients)

@@ -28,32 +28,41 @@
 #
 ######################################################################
 
-from Notifier import Notifier
-from datetime import datetime, timedelta
-from sets     import Set
-from Email    import Email
-
+from Notifier      import Notifier
+from Email         import Email
+from PeriodChanges import PeriodChanges
+from datetime      import datetime, timedelta
+from sets          import Set
 
 import TimeAgent
 
 class SchedulingNotifier(Notifier):
 
+    """
+    This class is responsible for both setting up the scheduling emails,
+    and sending them.
+    """
 
     def __init__(self
                , periods    = []
+               , futurePeriods = []
                , skipEmails = []
                , test       = False
-               , log        = False):
+               , log        = False
+                ):
         Notifier.__init__(self, skipEmails, test, log)
 
+        self.periodChanges = PeriodChanges(test = test)
+
         self.sender = "helpdesk-dss@gb.nrao.edu"
-        self.setPeriods(periods)
+        self.setPeriods(periods, futurePeriods)
 
 
-    def setPeriods(self, periods):
+    def setPeriods(self, periods, futurePeriods):
+        "For the given periods, what should the emails looke like?"
 
         periods.sort(lambda x, y: cmp(x.start, y.start))
-        self.examinePeriods(periods)
+        self.examinePeriods(periods, futurePeriods)
 
         if self.periods != []:
             self.startdate = self.periods[0].start
@@ -75,8 +84,12 @@ class SchedulingNotifier(Notifier):
                                              self.createStaffAddresses(),
                                              self.createStaffSubject(),
                                              self.createStaffBody()))     
+        self.registerTemplate("changed", Email(self.sender,
+                                               self.createChangedAddresses(),
+                                               self.createChangedSubject(),
+                                               self.createChangedBody()))
 
-    def examinePeriods(self, periods):
+    def examinePeriods(self, periods, futurePeriods):
         """
         This class must: 
            * notify observers of imminent observations
@@ -93,10 +106,15 @@ class SchedulingNotifier(Notifier):
         self.observingPeriods = \
             sorted([p for p in periods if not p.isDeleted()])
 
-        # the list of periods that we must list to remind obs. of changes:
-        self.changedPeriods = sorted([p for p in periods if \
-                             (p.isDeleted() and (not p.session.isWindowed() and not p.session.isElective())) or \
-                                   p.accounting.of_interest()])
+        self.changes = {} 
+        # maintain this list of periods because of other lists like
+        # observingPeriods, etc.
+        self.changedPeriods = []
+        for p in futurePeriods:
+            diffs = self.periodChanges.getChangesForNotification(p)
+            if len(diffs) > 0:
+                self.changes[p] = diffs
+                self.changedPeriods.append(p)
 
         # deleted periods must also be tracked separately, because those
         # observers will get an email with a different subject
@@ -148,6 +166,17 @@ class SchedulingNotifier(Notifier):
         Notifier.notify(self) # send all the queued messages out!
         self.flushQueue()     # just in case.  If queue is empty, does nothing.
 
+    def utc2est(self, dt, frmt):
+        return TimeAgent.utc2est(dt).strftime(frmt)
+
+    def utc2estDate(self, dt):
+        return self.utc2est(dt, '%b %d')
+
+    def utc2estDT(self, dt):
+        return self.utc2est(dt,'%b %d %H:%M')
+
+    # *** Email Address Methods
+
     def createStaffAddresses(self):
         staff = ["gbtops@gb.nrao.edu", "gbtinfo@gb.nrao.edu", "gbtime@gb.nrao.edu"]
         # any electives that arent getting observed?
@@ -163,6 +192,9 @@ class SchedulingNotifier(Notifier):
     def createDeletedAddresses(self):
         "get addresses of only those who had periods originally scheduled"
         return self.createAddresses(self.deletedPeriods).keys()
+
+    def createChangedAddresses(self):
+        return self.createAddresses(self.changedPeriods).keys()
 
     def createAddresses(self, periods):
         """
@@ -192,14 +224,8 @@ class SchedulingNotifier(Notifier):
         self.logMessage("To: %s\n" % eaddr.keys())
         return eaddr
 
-    def utc2est(self, dt, frmt):
-        return TimeAgent.utc2est(dt).strftime(frmt)
 
-    def utc2estDate(self, dt):
-        return self.utc2est(dt, '%b %d')
-
-    def utc2estDT(self, dt):
-        return self.utc2est(dt,'%b %d %H:%M')
+    # Email Subject Methods
 
     def createStaffSubject(self):
         subject = "GBT schedule for %s-%s" % \
@@ -220,6 +246,47 @@ class SchedulingNotifier(Notifier):
         self.logMessage("Observing Subject: %s\n" % subject)
         return subject
 
+    def createChangedSubject(self):
+        subject = "Reminder: GBT Schedule has changed."
+        self.logMessage("Changed Subject: %s\n" % subject)
+        return subject
+
+    # *** Email Body Methods
+
+    def createChangedBody(self):
+
+        header = "The following periods have changed: "
+        changes = self.getChangedTable() 
+        footer = self.getStaffBodyFooter()
+
+        body = \
+"""
+%s
+%s
+%s
+""" \
+           % (header, changes, footer)
+
+        return body
+
+    def getChangedTable(self):
+        "How to display all the changes made to the schedule?"
+        return "\n".join([self.getChangeLine(p, diffs) for p, diffs in self.changes.items()])
+
+    def getChangeLine(self, p, diffs):
+        "Given all the details about what's happened, what to say?"
+
+        # Easy, either say this period has 'changed', or been deleted.
+        # So, this means seeing if the last state was deleted.
+        states = [d.value2 for d in diffs if d.field == 'state']
+        deleted = True if len(states) > 0 and states[-1] == 3 else False
+        start = "A period for project %s" % p.session.project.pcode
+        if deleted:
+            line = start + " has been deleted.\n"
+        else:
+            line = start + " has been changed.\n"
+        return line    
+           
     def getStaffBodyHeader(self):
         header = \
 """
@@ -254,6 +321,8 @@ Happy Observing!
                 (p.session.project.pcode
                , self.utc2estDT(p.start))
             notes += l   
+        # any changes in the schedule?
+        notes += self.getChangedTable()
         return notes
 
     def createStaffBody(self):
@@ -337,37 +406,3 @@ Thank You.
             )
         return table
 
-    def getChanges(self):
-        if len(self.changedPeriods) == 0:
-            changes = ""
-        else:
-            changes = "Changes made to the schedule:\n%s" % \
-                self.getChangeTable()
-        return changes
-
-    def getChangeTable(self):
-        table  = "Start (ET)   |      UT      |  LST  |  (hr) |    PI     "
-        table += "| Rx        | Session       | Change\n"
-        table += "-------------------------------------------------------"
-        table += "-------------------------------------------\n"
-        
-        for p in self.changedPeriods:
-            if p.session.project.pcode == "Maintenance":
-                pi = ""
-            else:
-                try:
-                    pi = p.session.project.investigator_set.filter(principal_investigator=True)[0].user.last_name[:9]
-                except:
-                    pi = "unknown"
-
-            table += "%s | %s | %s | %5s | %-9s | %-9s | %-13s | %s\n" % (
-                self.utc2estDT(p.start)
-              , p.start.strftime('%b %d %H:%M')
-              , TimeAgent.dt2tlst(p.start).strftime('%H:%M')
-              , "%2.2f" % p.duration
-              , pi
-              , p.session.receiver_list_simple()[:9]
-              , p.session.name
-              , "rescheduled" if not p.isDeleted() else "removed"
-            )
-        return table
