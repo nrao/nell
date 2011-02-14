@@ -16,12 +16,12 @@ class TestResultCalculations(unittest.TestCase):
 
     def test_fwhm(self):
         value, _, _, _, _ = self.results.get('fwhm')
-        self.assertAlmostEqual(4.341, value, 3)
+        self.assertAlmostEqual(8.683, value, 3)
 
     def test_source_diameter(self):
         self.results.set('source_diameter_slider', 2)
         value, _, _, _, _ = self.results.get('source_diameter')
-        self.assertAlmostEqual(0.868, value, 3)
+        self.assertAlmostEqual(1.737, value, 3)
         
     def test_topocentric_wavelength(self):
         value, _, _, _, _ = self.results.get('topocentric_wavelength')
@@ -29,7 +29,7 @@ class TestResultCalculations(unittest.TestCase):
 
     def test_aperture_eff(self):
         value, _, _, _, _ = self.results.get('aperture_eff')
-        self.assertAlmostEqual(0.6997, value, 4)
+        self.assertAlmostEqual(0.6999, value, 3)
 
     def test_extended_source_eff(self):
         self.results.set('source_diameter_slider', 2)
@@ -37,18 +37,20 @@ class TestResultCalculations(unittest.TestCase):
         self.assertAlmostEqual(0.690, value, 3)
 
     def test_confusion_limit(self):
+        self.results.set('backend', 'GBT Spectrometer')
+        self.results.set('declination', 38.43)
         self.results.set('source_diameter_slider', 2)
         self.results.set('units', 'flux')
         value, _, _, _, _ = self.results.get('confusion_limit')
-        self.assertAlmostEqual(0.015, value, 3)
+        self.assertAlmostEqual(0.061, value, 3)
 
         self.results.set('units', 'tr')
         value, _, _, _, _ = self.results.get('confusion_limit')
-        self.assertAlmostEqual(2.9692268088858926e+18, value, 0)
+        self.assertAlmostEqual(0.174, value, 3)
 
         self.results.set('units', 'ta')
         value, _, _, _, _ = self.results.get('confusion_limit')
-        self.assertAlmostEqual(1.2168111723765818e+25, value, 3)
+        self.assertAlmostEqual(0.120, value, 3)
 
     def test_airmass(self):
         def getResults(dec):

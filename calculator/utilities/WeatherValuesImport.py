@@ -22,7 +22,6 @@ class WeatherValuesImport(object):
         for i, d in enumerate(self.data):
             wv = WeatherValues(*([i + 1] + d))
             wv.save()
-            print wv
             
 
 if __name__ == "__main__":

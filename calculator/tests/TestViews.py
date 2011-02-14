@@ -69,12 +69,12 @@ class TestViews(unittest.TestCase):
         self.failUnlessEqual(response.status_code, 200)
         results = eval(response.content.replace("null", "None"))
         mtf     = [r for r in results['results'] if r['term'] == 'min_topo_freq']
-        self.assertEqual(mtf, [{'term': 'min_topo_freq', 'equation': 'getMinTopoFreq(backend, bandwidth, windows) if mode.lower() == "spectral line" else ""', 'value': 0.6103515625, 'label': 'Mininum Topocentric Frequency', 'units': 'kHz', 'display': 0.6103515625}])
+        self.assertAlmostEqual(mtf[0]['value'], 0.610, 3)
 
         response = c.post('/calculator/set_terms/', {'mode' : 'DCR'})
         response = c.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
         results = eval(response.content.replace("null", "None"))
         mtf     = [r for r in results['results'] if r['term'] == 'min_topo_freq']
-        self.assertEqual(mtf, [{'term': 'min_topo_freq', 'equation': 'getMinTopoFreq(backend, bandwidth, windows) if mode.lower() == "spectral line" else ""', 'value': None, 'label': 'Mininum Topocentric Frequency', 'units': 'kHz', 'display': None}])
+        self.assertEqual(mtf[0]['value'], '')
 
