@@ -1,5 +1,6 @@
 from sesshuns.models import *
 import reversion
+import TimeAgent
 from reversion.models import Version
 from reversion import revision
 from VersionDiff import VersionDiff
@@ -35,7 +36,13 @@ class PeriodChanges:
            state = v.field_dict.get("state", None)
            if state is not None:
                currentState = state
-           state = (v.revision.date_created, currentState)   
+           # the revision library saves things in ET - but we deal in UT    
+           if not self.test:
+               dt = TimeAgent.est2utc(v.revision.date_created)    
+           else:
+               # why make setting up the tests anymore complicated?
+               dt = v.revision.date_created
+           state = (dt, currentState)   
            if state not in states:
                states.append(state)
        return states        
@@ -66,8 +73,8 @@ class PeriodChanges:
        #        accounting description field.
        #   * the change happened since the most publication date
        #   * the change happened since the newest changes
-       diffs = [d for d in allDiffs if d.dt >= newChangesDt \
-           and d.dt > mostRecentPublishDate \
+       diffs = [d for d in allDiffs if d.timestamp(self.test) >= newChangesDt \
+           and d.timestamp(self.test) > mostRecentPublishDate \
            and d.field not in self.ignoreFields]
        return diffs
 

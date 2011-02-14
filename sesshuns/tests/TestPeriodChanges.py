@@ -6,7 +6,7 @@ from utils                   import create_sesshun
 from nell.utilities.PeriodChanges import PeriodChanges
 from nell.utilities.RevisionUtilityTester import RevisionUtilityTester
 from nell.utilities.RevisionUtilityTester import VersionTester
-from nell.utilities.reports.VersionDiff import VersionDiff
+from nell.utilities.VersionDiff import VersionDiff
 
 class TestPeriodChanges(BenchTestCase):
 
