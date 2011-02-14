@@ -37,7 +37,7 @@ class ProjectHttpAdapter (object):
 
         totals   = map(float, [t for t in fdata.get("total_time", "0.0").split(', ') if t != ''])
         num_new = len(totals)
-        pscs     = map(float, [p for p in fdata.get("PSC_time", "0.0").split(', ') if p != ''])
+        pscs     = map(float, [p for p in fdata.get("PSC_time", "0.0").replace(' ', '').split(',') if p != ''])
         max_sems = map(float, [m for m in fdata.get("sem_time", "0.0").split(', ') if m != ''])
         grades   = map(float, [g for g in fdata.get("grade", "4.0").split(', ') if g != ''])
         
