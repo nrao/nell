@@ -42,15 +42,15 @@ class TestResultCalculations(unittest.TestCase):
         self.results.set('source_diameter_slider', 2)
         self.results.set('units', 'flux')
         value, _, _, _, _ = self.results.get('confusion_limit')
-        self.assertAlmostEqual(0.061, value, 3)
+        self.assertAlmostEqual(60.904, value, 3)
 
         self.results.set('units', 'tr')
         value, _, _, _, _ = self.results.get('confusion_limit')
-        self.assertAlmostEqual(0.174, value, 3)
+        self.assertAlmostEqual(173.904, value, 3)
 
         self.results.set('units', 'ta')
         value, _, _, _, _ = self.results.get('confusion_limit')
-        self.assertAlmostEqual(0.120, value, 3)
+        self.assertAlmostEqual(119.910, value, 3)
 
     def test_airmass(self):
         def getResults(dec):
