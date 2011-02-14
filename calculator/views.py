@@ -4,6 +4,7 @@ from utilities.Result import Result
 from utilities.common import *
 
 import simplejson as json
+import time
 
 def get_results(request, *args, **kwds):
     sc_input = request.session.get('SC_input', {}).keys()
@@ -59,10 +60,16 @@ def set_terms(request, *args, **kwds):
             try:
                 value = float(raw_value)
             except ValueError:
-                value = raw_value
-            if value == "NOTHING":
+                value = raw_value == 'true' or raw_value
+            if raw_value == "NOTHING" or raw_value == u'':
                 value = None
             result.set(term, value)
+        
+        # Process unchecked checkbox
+        if 'smoothing' in info.keys() and 'avg_pol' not in info.keys():
+            result.set('avg_pol', False)
+        if 'smoothing' in info.keys() and 'diff_signal' not in info.keys():
+            result.set('diff_signal', False)
 
         # Squirrel away, send back, and clean up.
         request.session['SC_result'] = result.get()

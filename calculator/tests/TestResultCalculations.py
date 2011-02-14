@@ -49,3 +49,80 @@ class TestResultCalculations(unittest.TestCase):
         self.results.set('units', 'ta')
         value, _, _, _, _ = self.results.get('confusion_limit')
         self.assertAlmostEqual(1.2168111723765818e+25, value, 3)
+
+    def test_airmass(self):
+        def getResults(dec):
+            self.results.set('declination', dec)
+            min_el   = float(self.results.get('min_elevation')[0])
+            max_el   = float(self.results.get('max_elevation')[0])
+            air_mass = float(self.results.get('air_mass')[0])
+            return min_el, max_el, air_mass
+
+        min_el, max_el, air_mass = getResults(-20)
+        self.assertAlmostEqual(min_el, 5, 2)
+        self.assertAlmostEqual(max_el, 31.57, 2)
+        self.assertAlmostEqual(air_mass, 4.03, 2)
+
+        min_el, max_el, air_mass = getResults(20)
+        self.assertAlmostEqual(min_el, 5, 2)
+        self.assertAlmostEqual(max_el, 71.57, 2)
+        self.assertAlmostEqual(air_mass, 2.41, 2)
+
+        min_el, max_el, air_mass = getResults(38.43)
+        self.assertAlmostEqual(min_el, 5, 2)
+        self.assertAlmostEqual(max_el, 90, 2)
+        self.assertAlmostEqual(air_mass, 2.11, 2)
+
+        min_el, max_el, air_mass = getResults(50)
+        self.assertAlmostEqual(min_el, 5, 2)
+        self.assertAlmostEqual(max_el, 78.43, 2)
+        self.assertAlmostEqual(air_mass, 2.28, 2)
+
+        min_el, max_el, air_mass = getResults(60)
+        self.assertAlmostEqual(min_el, 8.43, 2)
+        self.assertAlmostEqual(max_el, 68.43, 2)
+        self.assertAlmostEqual(air_mass, 2.12, 2)
+
+        min_el, max_el, air_mass = getResults(85)
+        self.assertAlmostEqual(min_el, 33.43, 2)
+        self.assertAlmostEqual(max_el, 43.43, 2)
+        self.assertAlmostEqual(air_mass, 1.62, 2)
+
+    def test_est0(self):
+        self.results.set('backend', 'GBT Spectrometer')
+        self.results.set('declination', 38.43)
+        value = self.results.get('est0')[0]
+        self.assertTrue(value is not None)
+
+        est0 = float(value)
+        self.assertAlmostEqual(est0, 22.004, 3)
+
+    def test_attenuation(self):
+        self.results.set('backend', 'GBT Spectrometer')
+        self.results.set('declination', 38.43)
+        value = self.results.get('attenuation')[0]
+        self.assertTrue(value is not None)
+
+        attenuation = float(value)
+        self.assertAlmostEqual(attenuation, 1.015, 3)
+
+    def test_estTS(self):
+        self.results.set('backend', 'GBT Spectrometer')
+        self.results.set('declination', 38.43)
+        self.results.set('estimated_continuum', 3)
+        value = self.results.get('est_ts')[0]
+        self.assertTrue(value is not None)
+
+        est_ts = float(value)
+        self.assertAlmostEqual(est_ts, 25.292, 3)
+
+    def test_t_sys(self):
+        self.results.set('backend', 'GBT Spectrometer')
+        self.results.set('declination', 38.43)
+        self.results.set('estimated_continuum', 3)
+        value = self.results.get('t_sys')[0]
+        self.assertTrue(value is not None)
+
+        t_sys = float(value)
+        self.assertAlmostEqual(t_sys, 24.913, 3)
+

@@ -85,8 +85,10 @@ def validate(key, value):
         hour   = values[0]
         if len(values) == 3:
             minute = (float(values[1]) + float(values[2]) / 3600.) / 60.
-        else:
+        elif len(values) == 2:
             minute = float(values[1]) / 60.
+        else:
+            return value
         return -1 * (float(hour[1:]) + minute) if '-' in hour else float(hour) + minute
     else:
         return value

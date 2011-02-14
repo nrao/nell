@@ -33,52 +33,6 @@ class Beams(models.Model):
     class Meta:
         db_table = 'calculator_beams'
 
-class Cc(models.Model):
-    topo_freq = models.FloatField()
-    cc        = models.FloatField()
-
-    class Meta:
-        db_table = 'calculator_cc'
-
-class Efficiency(models.Model):
-    topo_freq            = models.FloatField()
-    efficiency_atm_a     = models.FloatField()
-    efficiency_track_a   = models.FloatField()
-    efficiency_surf_a    = models.FloatField()
-    efficiency_atm_b     = models.FloatField()
-    efficiency_track_b   = models.FloatField()
-    efficiency_surf_b    = models.FloatField()
-    efficiency_atm_c     = models.FloatField()
-    efficiency_track_c   = models.FloatField()
-    efficiency_surf_c    = models.FloatField()
-    efficiency_atm_all   = models.FloatField()
-    efficiency_track_all = models.FloatField()
-    efficiency_surf_all  = models.FloatField()
-
-    class Meta:
-        db_table = 'calculator_efficiency'
-
-class FrequencyResolution(models.Model):
-    backend                 = models.ForeignKey(Calc_Backend)
-    bandwidth               = models.FloatField(null = True)
-    max_number_channels     = models.IntegerField()
-
-    def __str__(self):
-        return "%s (bw: %s, max_chan: %s)" % \
-            (self.backend.name, self.bandwidth, self.max_number_channels)
-
-    class Meta:
-        db_table = 'calculator_frequency_resolution'
-
-class Integration(models.Model):
-    name = models.CharField(max_length=200)
-
-    def __unicode__(self):
-        return self.name
-
-    class Meta:
-        db_table = 'calculator_integration'
-
 class SpectralWindows(models.Model):
     name = models.CharField(max_length=200)
 
@@ -135,29 +89,14 @@ class Mode(models.Model):
     class Meta:
         db_table = 'calculator_mode'
 
-class NOverlap(models.Model):
-    backend               = models.CharField(max_length=200)
-    n_overlap             = models.FloatField()
-    level                 = models.FloatField()
-    sensitivity_n_overlap = models.FloatField()
+class Integration(models.Model):
+    name = models.CharField(max_length=200)
+
+    def __unicode__(self):
+        return self.name
 
     class Meta:
-        db_table = 'calculator_n_overlap'
-
-class Temperatures(models.Model):
-    topo_freq = models.FloatField()
-    tau_0_a   = models.FloatField()
-    tau_0_b   = models.FloatField()
-    tau_0_c   = models.FloatField()
-    tau_0_all = models.FloatField()
-    tatm_a    = models.FloatField(db_column=u'tATM_a')
-    tatm_b    = models.FloatField(db_column=u'tATM_b')
-    tatm_c    = models.FloatField(db_column=u'tATM_c') 
-    tatm_all  = models.FloatField(db_column=u'tATM_all') 
-    trcvr     = models.FloatField(db_column=u'tRCVR') 
-
-    class Meta:
-        db_table = 'calculator_temperatures'
+        db_table = 'calculator_integration'
 
 class Configuration(models.Model):
     backend      = models.ForeignKey(Calc_Backend)
@@ -189,6 +128,40 @@ class Configuration(models.Model):
         return self.getConfig()[name]
 
     configuration = property(getConfig)
+
+class FrequencyResolution(models.Model):
+    backend                 = models.ForeignKey(Calc_Backend)
+    bandwidth               = models.FloatField(null = True)
+    max_number_channels     = models.IntegerField()
+
+    def __str__(self):
+        return "%s (bw: %s, max_chan: %s)" % \
+            (self.backend.name, self.bandwidth, self.max_number_channels)
+
+    class Meta:
+        db_table = 'calculator_frequency_resolution'
+
+class WeatherValues(models.Model):
+
+    frequency           = models.IntegerField()
+    eta_dss             = models.FloatField()
+    eta_surf            = models.FloatField()
+    eta_track           = models.FloatField()
+    t_atm               = models.FloatField()
+    t_rcvr              = models.FloatField()
+    tau0                = models.FloatField()
+    est0                = models.FloatField()
+    attenuation         = models.FloatField()
+    eta_track_mustang   = models.FloatField(null = True)
+    t_rcvr_mustang      = models.FloatField(null = True)
+    est0_mustang        = models.FloatField(null = True)
+    attenuation_mustang = models.FloatField(null = True)
+
+    def __str__(self):
+        return "%s %s" % (self.id, self.frequency)
+
+    class Meta:
+        db_table = 'calculator_weather_values'
 
 def getName(hardware,id):
     Dict = {

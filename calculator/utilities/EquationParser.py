@@ -1,5 +1,6 @@
 import compiler, types # WARNING: compiler is deprecated in Python 3k
-from functions import *
+from functions            import *
+from nell.utilities.TimeAgent  import *
 
 def isFunction(dep):
     """

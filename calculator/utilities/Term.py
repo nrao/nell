@@ -1,8 +1,9 @@
 import math
 
-from Document       import Document
-from EquationParser import EquationParser
-from functions      import *
+from Document             import Document
+from EquationParser       import EquationParser
+from functions            import *
+from utilities.TimeAgent  import *
 
 class Term(Document):
     def __init__(
@@ -15,7 +16,6 @@ class Term(Document):
         self.units        = units
         self.label        = label
         self.display      = display
-        self.changed      = False
 
         self.variables = {}
         for keyword in EquationParser()(self.equation):
@@ -46,9 +46,6 @@ class Term(Document):
         return self.value, self.units, self.equation, self.renderLabel(), self.renderDisplay()
 
     def set(self, value):
-        if self.value is not None and self.value != value:
-            self.changed = True
-
         if value is None and self.isJustValue():
             self.set(eval(self.equation))
         elif value is None and not self.isJustValue():
@@ -58,17 +55,15 @@ class Term(Document):
 
     def evaluate(self, term):
         if term.keyword in self.variables.keys():
-            self.variables[term.keyword] = term.value
-            if term.value is None or term.changed:
+            if term.value is None or self.variables[term.keyword] != term.value:
                 self.value = None # need to recalculate
+            self.variables[term.keyword] = term.value
         else:
             return
 
-        if (self.value is None or term.changed) and \
-           self.variables and \
+        if self.value is None and self.variables and \
            None not in self.variables.values():
             self.set(eval(self.equation, globals(), self.variables))
-            term.changed = False
             self.notify(self.keyword, self.value)
 
     def isJustValue(self):
