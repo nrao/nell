@@ -6,12 +6,21 @@ def getHWList():
     return ['backend','mode','receiver','beams','polarization'
                ,'bandwidth','windows','switching']
 
+def getDBName(hw, v):
+    if hw != "receiver":
+        return 'name', v
+    else:
+        value = v.split(" (")
+        return ('display_name', value[0] if len(value) > 0 else v)
+
 def getOptions(filter, result):
     config = Configuration.objects.all()
     if result != 'backend':
         for k,v in filter.items():                                       
             #chain filters
-            config = config.filter(eval("Q(%s__name__contains='%s')" % (k,v)))
+            if v != 'NOTHING':
+                column, value = getDBName(k, v)
+                config = config.filter(eval("Q(%s__%s__contains='%s')" % (k, column, value)))
     config  = config.values(result).distinct()
     if result == 'receiver':
         answers = [getName(result, c[result]) for c in config.order_by('receiver__dss_receiver')]
