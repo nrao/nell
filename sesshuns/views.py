@@ -469,10 +469,10 @@ except:
 
 @catch_json_parse_errors
 def scheduling_email(request, *args, **kwds):
-    address_key = ["observer_address", "deleted_address", "staff_address"]
-    subject_key = ["observer_subject", "deleted_subject", "staff_subject"]
-    body_key    = ["observer_body", "deleted_body", "staff_body"]
-    email_key   = ["observer", "deleted", "staff"]
+    address_key = ["observer_address", "changed_address", "staff_address"]
+    subject_key = ["observer_subject", "changed_subject", "staff_subject"]
+    body_key    = ["observer_body", "changed_body", "staff_body"]
+    email_key   = ["observer", "changed", "staff"]
 
     if request.method == 'GET':
         # Show the schedule from now until 8am eastern 'duration' days from now.
@@ -482,20 +482,26 @@ def scheduling_email(request, *args, **kwds):
                                      .replace(hour = 8, minute = 0, second = 0,
                                               microsecond = 0))
 
-        notifier.setPeriods(list(Period.objects.filter(start__gt = start
-                                                     , start__lt = end)))
+        # The class that sets up the emails needs the periods in the 
+        # scheduling range, and all the periods in the future.
+        currentPs = list(Period.objects.filter(start__gt = start
+                                             , start__lt = end))
+        futurePs  = list(Period.objects.filter(start__gte = start).order_by("start"))                                     
+        notifier.setPeriods(currentPs, futurePs)
 
         return HttpResponse(
             json.dumps({
                 'observer_address' : notifier.getAddresses("observer"),
                 'observer_subject' : notifier.getSubject("observer"),
                 'observer_body'    : notifier.getBody("observer"),
-                'deleted_address'  : notifier.getAddresses("deleted"),
-                'deleted_subject'  : notifier.getSubject("deleted"),
-                'deleted_body'     : notifier.getBody("deleted"),
+                'changed_address'  : notifier.getAddresses("changed"),
+                'changed_subject'  : notifier.getSubject("changed"),
+                'changed_body'     : notifier.getBody("changed"),
                 'staff_address'    : notifier.getAddresses("staff"),
                 'staff_subject'    : notifier.getSubject("staff"),
-                'staff_body'       : notifier.getBody("staff")
+                'staff_body'       : notifier.getBody("staff"),
+                'obs_periods'      : [p.id for p in notifier.observingPeriods],
+                'changed_periods'  : [p.id for p in notifier.changedPeriods]
             })
           , mimetype = "text/plain")
 
@@ -516,12 +522,32 @@ def scheduling_email(request, *args, **kwds):
         sn = Schedule_Notification(date = datetime.utcnow())
         sn.save()
 
+        # Emails for a given period shouldn't be sent more then is 
+        # necessary, so here we set the last_notification timestamp.
+        # TBF, WTF: the client can change the recipients and text of the
+        # 'changes' email - this ignores those changes.
+        now = datetime.utcnow()
+        set_periods_last_notification(now, request, "changed_periods")
+        set_periods_last_notification(now, request, "obs_periods")
+
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
     else:
         return HttpResponse(
                  json.dumps({'error': 'request.method is neither GET or POST!'})
                , mimetype = "text/plain")
+
+def set_periods_last_notification(dt, request, key):
+    pidsStr = request.POST.get(key, "")
+    for pidStr in pidsStr.split(","):
+        try:
+            pid = int(pidStr.strip())
+        except:
+            pid = None
+        if pid is not None:    
+            p = Period.objects.get(id = pid)
+            p.last_notification = dt
+            p.save()
 
 @catch_json_parse_errors
 def projects_email(request, *args, **kwds):
@@ -530,12 +556,15 @@ def projects_email(request, *args, **kwds):
         pcode_list = pcodes.split(" ") if pcodes is not None else getPcodesFromFilter(request)
         pi_list, pc_list, ci_list, ob_list, fs_list = getInvestigatorEmails(pcode_list)
 
+        templates = EmailTemplate.get_templates(pcode_list)
+
         return HttpResponse(json.dumps({'PI-Addresses':   pi_list
                                       , 'PC-Addresses':   pc_list
                                       , 'CO-I-Addresses': ci_list
                                       , 'OBS-Addresses':  ob_list
                                       , 'Friend-Addresses':  fs_list
-                                      , 'PCODES':         pcode_list})
+                                      , 'PCODES':         pcode_list
+                                      , 'Templates':      templates})
                           , mimetype = "text/plain")
 
     elif request.method == 'POST':

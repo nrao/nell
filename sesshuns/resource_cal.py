@@ -229,7 +229,7 @@ class RCAddActivityForm(forms.Form):
 def display_maintenance_activity(request, activity_id = None):
     if activity_id:
         ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
-        start = ma.get_start('EST')
+        start = ma.get_start('ET')
         duration = timedelta(hours = ma.duration)
         end = start + duration
         u = get_requestor(request)
@@ -314,7 +314,7 @@ def add_activity(request, period_id = None, year = None,
 
             _process_activity(request, ma, form)
             view_url = "http://%s/resourcecal_display_activity/%s/" % (request.get_host(), ma.id)
-            rc_notifier.notify(supervisors, "new", ma.get_start("EST").date(), view_url)
+            rc_notifier.notify(supervisors, "new", ma.get_start("ET").date(), view_url)
 
             if request.POST['ActionEvent'] =="Submit And Continue":
                 if form.cleaned_data['entity_id']:
@@ -367,9 +367,9 @@ def add_activity(request, period_id = None, year = None,
 ######################################################################
 
 def _modify_activity_form(ma):
-    start = ma.get_start('EST')
-    end = ma.get_end('EST')
-    change_receiver = ma.receiver_changes.exists()
+    start = ma.get_start('ET')
+    end = ma.get_end('ET')
+    change_receiver = True if len(ma.receiver_changes.all()) else False
     old_receiver = None if not change_receiver else \
                    ma.receiver_changes.all()[0].down_receiver_id
     new_receiver = None if not change_receiver else \
@@ -428,7 +428,7 @@ def edit_activity(request, activity_id = None):
                 view_url = "http://%s/resourcecal_display_activity/%s/" % (request.get_host(), ma.id)
                 rc_notifier.notify(supervisors,
                                    "modified",
-                                   ma.get_start("EST").date(),
+                                   ma.get_start("ET").date(),
                                    view_url,
                                    changes = diffs)
 
@@ -466,14 +466,14 @@ def edit_activity(request, activity_id = None):
             view_url = "http://%s/resourcecal_display_activity/%s/" % (request.get_host(), ma.id)
             rc_notifier.notify(supervisors,
                                "deleted",
-                               ma.get_start("EST").date(),
+                               ma.get_start("ET").date(),
                                view_url)
 
             return HttpResponseRedirect('/schedule/')
 
         elif request.GET['ActionEvent'] == 'DeleteFuture':
             ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
-            ma.repeat_template.repeat_end = ma.get_start('EST').date()
+            ma.repeat_template.repeat_end = ma.get_start('ET').date()
             ma.repeat_template.save()
             mas = Maintenance_Activity.objects\
                   .filter(_start__gte = TimeAgent.truncateDt(ma.get_start()))\
@@ -590,8 +590,8 @@ def _process_activity(request, ma, form):
     start = datetime(date.year, date.month, date.day,
                      hour = int(form.cleaned_data['time_hr']),
                      minute = int(form.cleaned_data['time_min']))
-    diffs = _record_diffs('start', ma.get_start('EST') if ma._start else start, start, diffs)
-    ma.set_start(start, 'EST')
+    diffs = _record_diffs('start', ma.get_start('ET') if ma._start else start, start, diffs)
+    ma.set_start(start, 'ET')
     oldval = ma.duration
 
     if form.cleaned_data["end_choice"] == "end_time":
@@ -724,13 +724,13 @@ def _process_activity(request, ma, form):
         # times neet to be carried over as ET so that the underlying
         # UT will compensate for DST.
         for i in mas:
-            ma_time = ma.get_start('EST')
-            i_time = i.get_start('EST')
+            ma_time = ma.get_start('ET')
+            i_time = i.get_start('ET')
             start = datetime(i_time.year, i_time.month, i_time.day,
                              ma_time.hour, ma_time.minute)
 
             i.copy_data(ma)
-            i.set_start(start, 'EST')
+            i.set_start(start, 'ET')
             i.save()
 
     return diffs

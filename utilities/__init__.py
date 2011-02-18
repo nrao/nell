@@ -1,5 +1,4 @@
 from Borg                 import Borg
-from GbtCalendar          import gen_gbt_schedule
 from TimeAgent            import *
 from NRAOBosDB            import NRAOBosDB
 from NRAOUserDB           import NRAOUserDB
@@ -9,3 +8,4 @@ from PSTMirrorDB          import PSTMirrorDB
 from PSTQueryService      import PSTQueryService
 from PSTInterface         import PSTInterface
 from WinAlertNotifier     import WinAlertNotifier
+from VersionDiff          import VersionDiff

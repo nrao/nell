@@ -4,7 +4,10 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from sesshuns.models      import *
+from sesshuns.models              import *
+from sesshuns.models.Period_State import Period_State
+from sesshuns.models.Period       import Period
+from sesshuns.models.Receiver     import Receiver
 
 # From Story:
 # https://www.pivotaltracker.com/story/show/9267975

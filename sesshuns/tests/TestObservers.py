@@ -1,13 +1,14 @@
-from copy                import copy
-from django.test.client  import Client
-from django.conf         import settings
-from django.contrib.auth import models as m
+from copy                      import copy
+from django.test.client        import Client
+from django.conf               import settings
+from django.contrib.auth       import models as m
 
-from test_utils              import BenchTestCase, timeIt
-from sesshuns.models         import *
-from sesshuns.httpadapters   import *
-from sesshuns.utilities      import create_user
-from utils                   import create_sesshun, fdata
+from test_utils                import BenchTestCase, timeIt
+from sesshuns.models           import *
+from sesshuns.httpadapters     import *
+from sesshuns.utilities        import create_user
+from utils                     import create_sesshun, fdata
+from sesshuns.GBTCalendarEvent import CalEventPeriod
 
 class TestObservers(BenchTestCase):
 
@@ -60,8 +61,8 @@ class TestObservers(BenchTestCase):
 
         self.friend = Friend(project = self.p
                  , user = self.uFriend)
-        self.friend.save()         
-                 
+        self.friend.save()
+
         fdata2 = copy(fdata)
         fdata2.update({'source_v' : 1.0
                      , 'source_h' : 1.0
@@ -333,10 +334,9 @@ class TestObservers(BenchTestCase):
                , 'tz'   : 'UTC' }
         response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(datetime(2009, 9, 9), [(datetime(2009, 9, 9, 12), datetime(2009, 9, 9, 13),
-                                        False, False, p, [], True)])
-             , (datetime(2009, 9, 10), [])
-             , (datetime(2009, 9, 11), [])]
+        exp = [(datetime(2009, 9, 9, 0, 0), [CalEventPeriod(p)]),
+               (datetime(2009, 9, 10, 0, 0), []),
+               (datetime(2009, 9, 11, 0, 0), [])]
 
         self.assertEqual(exp, calendar)
 
@@ -346,9 +346,11 @@ class TestObservers(BenchTestCase):
                , 'tz'   : 'ET' }
         response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(datetime(2009, 9, 9), [(datetime(2009, 9, 9, 8), datetime(2009, 9, 9, 9), False, False, p, [], True)])
-             , (datetime(2009, 9, 10), [])
-             , (datetime(2009, 9, 11), [])]
+
+        exp = [(datetime(2009, 9, 9, 0, 0), [CalEventPeriod(p)]),
+               (datetime(2009, 9, 10, 0, 0), []),
+               (datetime(2009, 9, 11, 0, 0), [])]
+
         self.assertEqual(exp, calendar)
 
         # clean up
@@ -374,10 +376,9 @@ class TestObservers(BenchTestCase):
                , 'tz' : 'UTC' }
         response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(datetime(2009, 9, 1), [])
-             , (datetime(2009, 9, 2), [(datetime(2009, 9, 2, 1), datetime(2009, 9, 2, 7),
-                                        False, False, p, [], True)])
-             , (datetime(2009, 9, 3), [])]
+        exp = [(datetime(2009, 9, 1), []),
+               (datetime(2009, 9, 2), [CalEventPeriod(p)]),
+               (datetime(2009, 9, 3), [])]
         self.assertEqual(exp, calendar)
 
         # make sure it comes back in the correct day for EST
@@ -386,9 +387,13 @@ class TestObservers(BenchTestCase):
                , 'tz' : 'ET' }
         response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(datetime(2009, 9, 1), [(datetime(2009, 9, 1, 21), datetime(2009, 9, 2), False, False, p, [], True)])
-             , (datetime(2009, 9, 2), [(datetime(2009, 9, 2), datetime(2009, 9, 2, 3), False, False, p, [], True)])
-             , (datetime(2009, 9, 3), [])]
+
+        day1 = datetime(2009, 9, 1)
+        day2 = datetime(2009, 9, 2)
+        day3 = datetime(2009, 9, 3)
+        exp  = [(day1, [CalEventPeriod(p, p.start < day1, p.end() > day2, True, 'ET')]),
+                (day2, [CalEventPeriod(p, p.start < day2, p.end() > day3, True, 'ET')]),
+                (day3, [])]
         self.assertEqual(exp, calendar)
 
         # show the cutoff: '(..)'
@@ -397,7 +402,9 @@ class TestObservers(BenchTestCase):
                , 'tz' : 'ET' }
         response = self.post('/schedule/public', data)
         calendar = response.context['calendar']
-        exp = [(datetime(2009, 9, 1), [(datetime(2009, 9, 1, 21), datetime(2009, 9, 2), False, True, p, [], True)])]
+        day1 = datetime(2009, 9, 1)
+        ev1 = CalEventPeriod(p, p.start < day1, p.end() > (day1 + timedelta(1)), True, 'ET')
+        exp = [(day1, [ev1])]
         self.assertEqual(exp, calendar)
 
         # clean up

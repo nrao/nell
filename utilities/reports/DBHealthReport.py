@@ -128,71 +128,33 @@ def get_incomplete_windows():
     return ([], [], win_no_period)
 
 # windows w/ any period outside the window range
-
 def get_win_period_outside():
-    ws = get_windows()
+
+    ws = Window.objects.filter(complete = False)
     wp = filter_current_windows(ws.exclude(default_period = None))
-    badwin = []
-
-    for i in wp:
-        outside = False
-        ws = i.start_datetime()          # start datetime for window
-        we = i.end_datetime()            # end datetime for window
-
-        #if i.default_period.state.name != 'Deleted':
-        #    dps = i.default_period.start # start datetime for period
-        #    dpe = i.default_period.end() # end datetime for period
-        #
-          #    if dps < ws or dpe > we:
-        #       outside = True
-
-        #if i.period and i.period.state.name != 'Deleted':
-        #    if i.period.start < ws or i.period.end() > we:
-        #        outside = True
-        for p in i.periods.all():
-            if p.state.name != 'Deleted':
-                if p.start < ws or p.end() > we:
-                    badwin.append(i)
-        #if outside:
-        #    badwin.append(i)
-
-    return badwin
+    return [w for w in wp if len(w.outOfRangePeriods()) > 0]
 
 # overlapping windows belonging to the same session
-
 def get_overlapping_windows():
-    w = get_windows()
-    sid = Set()
+
+    # we don't care about complete windows
+    wins = Window.objects.filter(complete = False)
+    # we also want to worry only about the present
+    wins = filter_current_windows(wins)
+
     overlap = []
+    dontcheck = []
 
-    for i in w:
-        sid.add(i.session_id)
-
-    for i in sid:
-        wwsid = filter_current_windows(w.filter(session__id__exact = i))
-        s = len(wwsid)
-
-        # Would like to do this in terms of the model/SQL
-
-        for j in range(0, s):
-            for k in range(j + 1, s):
-                w1s = wwsid[j].start_datetime()     # start datetime for window
-                w1e = wwsid[j].end_datetime()       # end datetime for window
-                w2s = wwsid[k].start_datetime()
-                w2e = wwsid[k].end_datetime()
-
-                # Here we check that the windows don't overlap.  To
-                # meet this condition, a window's start *and* end time
-                # must *both* be less than another's start, *or*
-                # greater than another's end time. That would place
-                # the entire window either before or after the other
-                # window.
-                if not ((w2s < w1s and w2e < w1s) or (w2s > w1e and w2e > w1e)):
-                    overlap.append((wwsid[j], wwsid[k]))
+    for w in wins:
+        os = w.overlappingWindows()
+        for wos in os:
+            if wos.id not in dontcheck and w.id not in dontcheck:
+                dontcheck.append(wos.id)
+                dontcheck.append(w.id)
+                overlap.append((w, wos)) 
     return overlap
 
 # periods belonging to windowed sessions that are not assigned to a window.
-
 def get_non_window_periods():
     ws = Sesshun.objects.filter(session_type__type__exact = "windowed")
     non_window_periods = []
@@ -735,8 +697,8 @@ def GenerateReport():
     values  = [p for p in ps if p.accounting.scheduled <= 0.0]
     print_values(outfile, values)
 
-    outfile.write("\n\nPending Periods (non-windowed):")
-    values  = [str(p) for p in periods if p.isPending() and not p.is_windowed()]
+    outfile.write("\n\nPending Periods (non-windowed, non-elective):")
+    values  = [str(p) for p in periods if p.isPending() and not p.is_windowed() and not p.is_elective()]
     print_values(outfile, values)
 
     outfile.write("\n\nCompleted projects with non-complete sessions:")

@@ -19,7 +19,7 @@ class TestWindowRange(NellTestCase):
 
     def test_times(self):
 
-        start = datetime(2009, 6, 1)
+        start = date(2009, 6, 1)
         dur   = 7 # days
         
 
@@ -29,7 +29,37 @@ class TestWindowRange(NellTestCase):
                       , duration = dur)
         w.save()
 
-        self.assertEquals(datetime(2009, 6, 7), w.last_date())
+        self.assertEquals(datetime(2009, 6, 1), w.start_datetime())
+        self.assertEquals(date(2009, 6, 7), w.last_date())
+        self.assertEquals(date(2009, 6, 7), w.end())
+        self.assertEquals(datetime(2009, 6, 7, 23, 59, 59), w.end_datetime())
+        self.assertEquals(False, w.inWindow(date(2009, 5, 31)))
+        self.assertEquals(True,  w.inWindow(date(2009, 6, 1)))
+        self.assertEquals(True,  w.inWindow(date(2009, 6, 7)))
+        self.assertEquals(False, w.inWindow(date(2009, 6, 8)))
+        self.assertEquals(False, w.inWindowDT(datetime(2009, 5, 31, 23, 59, 59)))
+        self.assertEquals(True, w.inWindowDT(datetime(2009, 6, 1)))
+        self.assertEquals(True, w.inWindowDT(datetime(2009, 6, 7, 23)))
+        self.assertEquals(False, w.inWindowDT(datetime(2009, 6, 8)))
+
+        p = Period(session = self.sesshun
+                 , start = datetime(2009, 5, 30, 23)
+                 , duration = 2)
+        p.save()
+
+        self.assertEquals(False, w.isInWindow(p))
+
+        p.start = p.start + timedelta(days = 1)
+        p.save()
+        self.assertEquals(True, w.isInWindow(p))
+
+        p.start = datetime(2009, 6, 7, 23) 
+        p.save()
+        self.assertEquals(True, w.isInWindow(p))
+
+        p.start = p.start + timedelta(days = 1)
+        p.save()
+        self.assertEquals(False, w.isInWindow(p))
 
     def test_lstInRange(self):
 

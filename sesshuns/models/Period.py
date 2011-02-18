@@ -21,6 +21,7 @@ class Period(models.Model):
     receivers  = models.ManyToManyField(Receiver, through = "Period_Receiver")
     window     = models.ForeignKey("Window", blank=True, null=True, related_name = "periods")
     elective   = models.ForeignKey("Elective", blank=True, null=True, related_name = "periods")
+    last_notification = models.DateTimeField(blank=True, null=True, help_text = "yyyy-mm-dd hh:mm")
 
 
     class Meta:
@@ -207,7 +208,8 @@ class Period(models.Model):
         periods with associated maintenance activities from being
         deleted.
         """
-        if self.state.abbreviation != 'P' or self.maintenance_activity_set.count() > 0:
+
+        if self.state.abbreviation != 'P' or self.maintenance_activity_set.exists():
             self.move_to_deleted_state()
         else:
             models.Model.delete(self)  # pending can really get removed!
