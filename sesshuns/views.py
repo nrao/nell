@@ -469,10 +469,10 @@ except:
 
 @catch_json_parse_errors
 def scheduling_email(request, *args, **kwds):
-    address_key = ["observer_address", "deleted_address", "staff_address"]
-    subject_key = ["observer_subject", "deleted_subject", "staff_subject"]
-    body_key    = ["observer_body", "deleted_body", "staff_body"]
-    email_key   = ["observer", "deleted", "staff"]
+    address_key = ["observer_address", "changed_address", "staff_address"]
+    subject_key = ["observer_subject", "changed_subject", "staff_subject"]
+    body_key    = ["observer_body", "changed_body", "staff_body"]
+    email_key   = ["observer", "changed", "staff"]
 
     if request.method == 'GET':
         # Show the schedule from now until 8am eastern 'duration' days from now.
