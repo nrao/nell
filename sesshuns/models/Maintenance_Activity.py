@@ -189,7 +189,7 @@ class Maintenance_Activity(models.Model):
         cannot be passed in.  If the resoure calendar is to be
         displayed in UT this breaks.
         """
-        start = self.get_start('EST')
+        start = self.get_start('ET')
         delta = timedelta(hours = self.duration)
         end = start + delta
         return "%02i:%02i - %02i:%02i" % (start.time().hour, start.time().minute,
@@ -203,10 +203,10 @@ class Maintenance_Activity(models.Model):
         else:
             start = self._start
 
-        return TimeAgent.utc2est(start) if tzname == 'EST' else start
+        return TimeAgent.utc2est(start) if tzname == 'ET' else start
 
     def set_start(self, start, tzname = None):
-        if tzname == 'EST':
+        if tzname == 'ET':
             self._start = TimeAgent.est2utc(start)
         else:
             self._start = start
@@ -409,7 +409,7 @@ class Maintenance_Activity(models.Model):
                 # DST is active or not.  To do this, we get ET version
                 # of period and template start so that it can be saved
                 # as the appropriate UTC time to account for DST.
-                t_start = template.get_start('EST')
+                t_start = template.get_start('ET')
                 p_start = TimeAgent.utc2est(period.start)
 
                 start = datetime(p_start.year, p_start.month, p_start.day,
@@ -419,16 +419,16 @@ class Maintenance_Activity(models.Model):
             # date for the repeat activity.
             ma.modifications.add(template.modifications.all()[0])
         else:
-            # we want the period's date, and the original's time in EST
+            # we want the period's date, and the original's time in ET
             if period:
                 start = datetime(period.start.date().year, period.start.date().month,
-                                 period.start.date().day, self.get_start('EST').hour,
-                                 self.get_start('EST').minute)
+                                 period.start.date().day, self.get_start('ET').hour,
+                                 self.get_start('ET').minute)
             else:
-                start = self.get_start('EST')
+                start = self.get_start('ET')
 
         ma.copy_data(template)
-        ma.set_start(start if start else template.start, 'EST' if start else None)
+        ma.set_start(start if start else template.start, 'ET' if start else None)
         ma.save()
         return ma
 
@@ -689,7 +689,7 @@ class Maintenance_Activity(models.Model):
     def list_repeat_activities():
         for i in Maintenance_Activity.objects.all():
             if i.is_repeat_activity():
-                print "%s\t%s\t%s" % (i.get_start('EST'),
+                print "%s\t%s\t%s" % (i.get_start('ET'),
                                       i.id,
                                       i.repeat_template.id),
 

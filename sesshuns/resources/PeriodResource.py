@@ -31,6 +31,8 @@ class PeriodResource(NellResource):
 
     def read(self, request, *args, **kws):
 
+        print "read: ", request.GET
+
         tz = args[0]
         # one or many?
         if len(args) == 1:
@@ -84,9 +86,14 @@ class PeriodResource(NellResource):
 
                 periods = query_set.order_by(order + sortField)    
 
-            pids         = [p.id for p in periods]
-            sd           = self.score_period.periods(pids)
-            scores       = [sd.get(pid, 0.0) for pid in pids]
+            # do we need scores?
+            computeScores = request.GET.get("scores", "true") == "true"
+            if computeScores:
+                pids         = [p.id for p in periods]
+                sd           = self.score_period.periods(pids)
+                scores       = [sd.get(pid, 0.0) for pid in pids]
+            else:
+                scores = [0.0 for p in periods] 
             return HttpResponse(
                 json.dumps(dict(total   = len(periods)
                               , periods = [PeriodHttpAdapter(p).jsondict(tz, s)

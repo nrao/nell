@@ -9,10 +9,11 @@ from models                         import *
 from sets                           import Set
 from nell.tools                     import IcalMap
 from nell.utilities.TimeAgent       import EST, UTC, adjustDateTimeTz
-from nell.utilities                 import gen_gbt_schedule, NRAOBosDB
+from nell.utilities                 import NRAOBosDB
 from reversion                      import revision
 from utilities                      import *
 from forms                          import BlackoutForm, PreferencesForm
+
 import pytz
 
 def public_schedule(request, *args, **kws):
@@ -44,9 +45,7 @@ def public_schedule(request, *args, **kws):
     pstart   = TimeAgent.est2utc(start) if timezone == 'ET' else start
     pend     = TimeAgent.est2utc(end) if timezone == 'ET' else end
 
-    periods  = [p for p in Period.in_time_range(pstart, pend) \
-                if not p.isPending()]
-    calendar = gen_gbt_schedule(start, end, days, timezone, periods)
+    schedule = get_gbt_schedule_events(start, end, timezone)
 
     try:
         s_n = Schedule_Notification.objects.all()
@@ -58,16 +57,16 @@ def public_schedule(request, *args, **kws):
 
     return render_to_response(
                'sesshuns/public_schedule.html'
-             , {'calendar' :    sorted(calendar.items())
-              , 'day_list' :    range(1, 15)
-              , 'tz_list'  :    timezones
-              , 'timezone' :    timezone
-              , 'start'    :    start
-              , 'days'     :    days
-              , 'rschedule':    Receiver_Schedule.extract_schedule(start, days)
-              , 'timezone' :    timezone
-              , 'is_logged_in': request.user.is_authenticated()
-              , 'pubdate'  :    pubdate
+             , {'calendar'     :    schedule
+              , 'day_list'     :    range(1, 15)
+              , 'tz_list'      :    timezones
+              , 'timezone'     :    timezone
+              , 'start'        :    start
+              , 'days'         :    days
+              , 'rschedule'    :    Receiver_Schedule.extract_schedule(start, days)
+              , 'timezone'     :    timezone
+              , 'is_logged_in' : request.user.is_authenticated()
+              , 'pubdate'      :    pubdate
                })
 
 @revision.create_on_success
