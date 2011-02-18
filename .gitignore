@@ -1,0 +1,10 @@
+*~
+*.pyc
+*.o
+*.prof
+*.swp
+
+urls.py
+settings.py
+
+bin/
