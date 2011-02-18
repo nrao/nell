@@ -149,8 +149,8 @@ class SchedulingNotifier(Notifier):
         # now let the people who aren't observing know, but who
         # might have been in scheduled in the past
 
-        if len(self.getAddresses("deleted")) != 0:
-            email = self.cloneTemplate("deleted")
+        if len(self.getAddresses("changed")) != 0:
+            email = self.cloneTemplate("changed")
             self.post(email)
 
         # now let the staff know - "GBT schedule for ..."
@@ -253,8 +253,12 @@ class SchedulingNotifier(Notifier):
 %s
 %s
 %s
+%s
 """ \
-           % (header, changes, footer)
+           % (header
+           , changes
+           , self.getSessionTable(self.observingPeriods)
+           , footer)
 
         return body
 
