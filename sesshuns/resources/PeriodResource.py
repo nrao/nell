@@ -31,8 +31,6 @@ class PeriodResource(NellResource):
 
     def read(self, request, *args, **kws):
 
-        print "read: ", request.GET
-
         tz = args[0]
         # one or many?
         if len(args) == 1:
