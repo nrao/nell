@@ -2,6 +2,9 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
+import matplotlib
+matplotlib.use('Agg')
+
 from pylab import *
 from dbArchiveReader import dbArchiveReader
 from datetime        import datetime
