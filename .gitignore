@@ -9,3 +9,14 @@ settings.py
 createdb
 
 bin/
+DBReport.xt
+DSSPrime2DSS_report.txt
+DssBlackoutReport.txt
+DssDbHealthReport.txt
+DssProjectReport.txt
+DssSessionReport.txt
+DssWeeklyReport.txt
+GBT09A-001TimeAccounting.txt
+WindowsReport.txt
+test_completionReport.txt
+test_projTimeAcctReport.txt

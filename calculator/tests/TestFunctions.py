@@ -75,5 +75,5 @@ class TestFunctions(unittest.TestCase):
 
     def test_calculateAttenuation(self):
         attenuation = calculateAttenuation(2.11, 1420)
-        self.assertAlmostEqual(attenuation, 0.944, 3)
+        self.assertAlmostEqual(attenuation, 0.961, 3)
 
