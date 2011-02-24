@@ -16,16 +16,16 @@ class TestResultCalculations(unittest.TestCase):
 
     def test_fwhm(self):
         value, _, _, _, _ = self.results.get('fwhm')
-        self.assertAlmostEqual(8.683, value, 3)
+        self.assertAlmostEqual(8.677, value, 3)
 
     def test_source_diameter(self):
         self.results.set('source_diameter_slider', 2)
         value, _, _, _, _ = self.results.get('source_diameter')
-        self.assertAlmostEqual(1.737, value, 3)
+        self.assertAlmostEqual(1.735, value, 3)
         
     def test_topocentric_wavelength(self):
         value, _, _, _, _ = self.results.get('topocentric_wavelength')
-        self.assertAlmostEqual(21.127, value, 3)
+        self.assertAlmostEqual(21.112, value, 3)
 
     def test_aperture_eff(self):
         value, _, _, _, _ = self.results.get('aperture_eff')
@@ -42,15 +42,15 @@ class TestResultCalculations(unittest.TestCase):
         self.results.set('source_diameter_slider', 2)
         self.results.set('units', 'flux')
         value, _, _, _, _ = self.results.get('confusion_limit')
-        self.assertAlmostEqual(60.904, value, 3)
+        self.assertAlmostEqual(60.819, value, 3)
 
         self.results.set('units', 'tr')
         value, _, _, _, _ = self.results.get('confusion_limit')
-        self.assertAlmostEqual(173.904, value, 3)
+        self.assertAlmostEqual(173.663, value, 3)
 
         self.results.set('units', 'ta')
         value, _, _, _, _ = self.results.get('confusion_limit')
-        self.assertAlmostEqual(119.910, value, 3)
+        self.assertAlmostEqual(119.771, value, 3)
 
     def test_airmass(self):
         def getResults(dec):
@@ -97,7 +97,7 @@ class TestResultCalculations(unittest.TestCase):
         self.assertTrue(value is not None)
 
         est0 = float(value)
-        self.assertAlmostEqual(est0, 22.004, 3)
+        self.assertAlmostEqual(est0, 16.634, 3)
 
     def test_attenuation(self):
         self.results.set('backend', 'GBT Spectrometer')
@@ -116,7 +116,7 @@ class TestResultCalculations(unittest.TestCase):
         self.assertTrue(value is not None)
 
         est_ts = float(value)
-        self.assertAlmostEqual(est_ts, 25.292, 3)
+        self.assertAlmostEqual(est_ts, 19.852, 3)
 
     def test_t_sys(self):
         self.results.set('backend', 'GBT Spectrometer')
@@ -126,5 +126,5 @@ class TestResultCalculations(unittest.TestCase):
         self.assertTrue(value is not None)
 
         t_sys = float(value)
-        self.assertAlmostEqual(t_sys, 24.913, 3)
+        self.assertAlmostEqual(t_sys, 19.558, 3)
 
