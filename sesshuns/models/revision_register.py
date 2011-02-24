@@ -30,6 +30,7 @@ from Target                 import Target
 from TimeZone               import TimeZone
 from User                   import User
 from Window                 import Window
+from Elective               import Elective
 
 def register_for_revision():
     register_model(Role)
@@ -61,6 +62,7 @@ def register_for_revision():
     register_model(Period_Receiver, follow=['period', 'receiver'])
     #Project_Blackout_09B
     register_model(Window)
+    register_model(Elective)
     #Reservation
 
 def register_model(model, follow = None):
