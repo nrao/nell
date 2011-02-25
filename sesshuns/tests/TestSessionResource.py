@@ -76,6 +76,10 @@ class TestSessionResource(BenchTestCase):
         r_json = json.loads(response.content)
         self.assertEqual(0.0, r_json["session"]["total_time"])
 
+    def test_read_not_found(self):
+        response = self.client.get('/sessions/4000')
+        self.failUnlessEqual(response.status_code, 404)
+
     @timeIt
     def test_update(self):
 
@@ -101,6 +105,10 @@ class TestSessionResource(BenchTestCase):
         self.failUnlessEqual(response.status_code, 200)
         s = Sesshun.objects.get(id = 1)
         self.assertEquals(True, s.guaranteed())
+
+    def test_update_does_not_exist(self):
+        response = self.client.post('/sessions/1000', {'_method' : 'put'})
+        self.failUnlessEqual(response.status_code, 404)
 
     @timeIt
     def test_delete(self):

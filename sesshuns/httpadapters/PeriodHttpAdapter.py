@@ -15,12 +15,15 @@ class PeriodHttpAdapter (object):
 
     def jsondict(self, tz, cscore):
         start = self.period.start if tz == 'UTC' else TimeAgent.utc2est(self.period.start)
+        end   = self.period.end() if tz == 'UTC' else TimeAgent.utc2est(self.period.end())
         w = self.period.window
         js =   {"id"           : self.period.id
               , "session"      : SessionHttpAdapter(self.period.session).jsondict()
               , "session_name" : self.period.session.name
               , "handle"       : self.period.toHandle()
               , "stype"        : self.period.session.session_type.type[0].swapcase()
+              , "end_date"     : d2str(end)
+              , "end_time"     : t2str(end)
               , "date"         : d2str(start)
               , "time"         : t2str(start)
               , "lst"          : str(TimeAgent.dt2tlst(self.period.start))

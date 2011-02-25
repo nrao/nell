@@ -78,6 +78,10 @@ class TestPeriodResource(BenchTestCase):
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(response.content[:11], '{"total": 0')
 
+    def test_update_does_not_exist(self):
+        response = self.client.post('/period/UTC/1000', {'_method' : 'put'})
+        self.failUnlessEqual(response.status_code, 404)
+
     # If antioch server running requires it contain the appropriate periods
     @timeIt
     def test_update(self):

@@ -1,5 +1,6 @@
 from django_restapi.resource  import Resource
 from django.http              import HttpResponse, HttpResponseRedirect
+from django.shortcuts         import get_object_or_404
 
 from sesshuns.models          import first
 
@@ -45,7 +46,7 @@ class NellResource(Resource):
     @revision.create_on_success 
     def update(self, request, *args, **kws):
         id    = int(args[0])
-        o     = self.dbobject.objects.get(id = id)
+        o     = get_object_or_404(self.dbobject, pk = id)
         self.adapter.load(o)
         self.adapter.update_from_post(request.POST)
 
