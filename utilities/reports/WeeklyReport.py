@@ -165,7 +165,7 @@ def GenerateReport(start):
 
     ta         = TimeAccounting()
     pSemesters = Semester.getPreviousSemesters(start)
-    backlog    = [p for p in Project.objects.all() if p.semester in pSemesters] and all([s.observing_type.type != 'testing' for s in p.sesshun_set.all()])]
+    backlog    = [p for p in Project.objects.all() if p.semester in pSemesters and all([s.observing_type.type != 'testing' for s in p.sesshun_set.all()])]
     outfile.write(
         "\nCurrent backlog of Reg & RSS proposals [hours prior to %s*] = %.1f\n" % \
             (Semester.getCurrentSemester(start)
