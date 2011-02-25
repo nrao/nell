@@ -1,5 +1,6 @@
 from django.http              import HttpResponse, HttpResponseRedirect
 from django.db.models         import Q
+from django.shortcuts         import get_object_or_404
 
 from NellResource import NellResource
 from sesshuns.models       import Sesshun, first, jsonMap
@@ -92,6 +93,7 @@ class SessionResource(NellResource):
                    , content_type = "application/json")
         else:
             s_id  = args[0]
-            s     = first(Sesshun.objects.filter(id = s_id))
+            #s     = first(Sesshun.objects.filter(id = s_id))
+            s     = get_object_or_404(Sesshun, pk = s_id)
             return HttpResponse(json.dumps(dict(session = SessionHttpAdapter(s).jsondict())))
 
