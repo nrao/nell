@@ -128,6 +128,14 @@ def summary(request, *args, **kws):
     now        = datetime.now()
     last_month = now - timedelta(days = 31)
 
+    # init variables
+    projects  = []
+    receivers = {}
+    days      = {}
+    hours     = {}
+    summary   = {}
+    periods   = []
+
     if request.method == 'POST':
         summary = request.POST.get('summary', 'schedule')
 
@@ -138,7 +146,8 @@ def summary(request, *args, **kws):
             project = ''
 
         month = request.POST.get('month', None)
-        year  = int(request.POST.get('year', None))
+        year  = request.POST.get('year', None)
+        year  = int(year) if year else None 
         if month and year:
             start = datetime(int(year)
                            , [m for m in calendar.month_name].index(month)
@@ -174,7 +183,7 @@ def summary(request, *args, **kws):
         days     = {}
         hours    = {}
         summary  = {}
-    else:
+    else: 
         url      = 'sesshuns/project_summary.html'
         projects = list(Set([p.session.project for p in periods]))
         projects.sort(lambda x, y: cmp(x.pcode, y.pcode))
