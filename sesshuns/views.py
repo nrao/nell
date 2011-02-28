@@ -402,13 +402,12 @@ def publish_periods(request, *args, **kwds):
     Note: Supports publishing periods by time range, or a single one by id.
     """
     if len(args) == 1:
-        # Reuse code by using this periods time range
-        p     = first(Period.objects.filter(id = int(args[0])))
-        start = p.start
-        # TBF: Kluge, we don't want to publish the next period as well,
-        # so end a minute early to avoid picking it up.
-        duration = int(p.duration * 60.0) # hrs to minutes
+        # publish a single period specified in args by its ID
+        p = first(Period.objects.filter(id = int(args[0])))
+        p.publish()
+        p.save()
     else:
+        # publish periods identified by time range
         startPeriods = request.POST.get("start", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         startPeriods = datetime.strptime(startPeriods, '%Y-%m-%d %H:%M:%S')
 
@@ -416,8 +415,8 @@ def publish_periods(request, *args, **kwds):
                               startPeriods
                             , request.POST.get("tz", "UTC")
                             , int(request.POST.get("duration", "1")) - 1)
+        Period.publish_periods(start, duration)
 
-    Period.publish_periods(start, duration)
     revision.comment = get_rev_comment(request, None, "publish_periods")
 
     if DATABASE_NAME == 'dss' and request.POST.get("tweet", "True") == "True":

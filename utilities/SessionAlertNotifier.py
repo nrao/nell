@@ -32,7 +32,7 @@ class SessionAlertEmail(Email):
         if unknown.session.session_type.type == "windowed":
             return "from %s through %s" % (unknown.start_date(), unknown.last_date())
         elif unknown.session.session_type.type == "elective":
-            return "on %s" % ", ".join([str(p.start) for p in unknown.periods.all()])
+            return "on %s" % ", ".join([str(p.start) for p in unknown.periods.all().order_by("start")])
         elif unknown.session.session_type.type == "fixed":
             return "on %s" % unknown.start
 
