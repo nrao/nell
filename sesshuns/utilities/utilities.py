@@ -286,8 +286,12 @@ def get_gbt_schedule_events(start, end, timezone, get_moc = False):
 
         for p in ps:
             if p.end() > utc_today:
-                ev = CalEventPeriod(p, p.start < utc_today, p.end() > utc_tomorrow,
-                                    p.moc_met() if get_moc else True, timezone)
+                if p.elective:
+                    ev = CalEventElective(p.elective, p.start < utc_today, p.end() > utc_tomorrow,
+                                          p.moc_met() if get_moc else True, timezone)
+                else:
+                    ev = CalEventPeriod(p, p.start < utc_today, p.end() > utc_tomorrow,
+                                        p.moc_met() if get_moc else True, timezone)
                 daily_events.append(ev)
 
         # if today is monday, get floating maintenance events for the week
