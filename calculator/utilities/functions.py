@@ -57,13 +57,13 @@ def getKs(backend, bandwidth, bw, windows, beams):
     elif backend == 'GBT Spectrometer':
         values = spectrometerK1K2.get(bandwidth)
         sampling = bw / (float(windows) * float(beams))
-        if bandwidth == 50 and sampling < 0.76:
+        if bandwidth == 50 and sampling < 0.00076:
             retval = values[0]
-        elif bandwidth == 50 and sampling >= 0.76:
+        elif bandwidth == 50 and sampling >= 0.00076:
             retval = values[1]
-        elif bandwidth == 12.5 and sampling < 0.19:
+        elif bandwidth == 12.5 and sampling < 0.00019:
             retval = values[0]
-        elif bandwidth == 12.5 and sampling >= 0.19:
+        elif bandwidth == 12.5 and sampling >= 0.00019:
             retval = values[1]
         else:
             retval = values

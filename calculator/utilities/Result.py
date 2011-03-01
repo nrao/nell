@@ -1,5 +1,6 @@
 from Document  import Document
-from Term      import Term
+from Term        import Term
+from OrderedDict import OrderedDict
 from utilities.FormatExceptionInfo import formatExceptionInfo
 
 from threading import Thread, Lock
@@ -34,7 +35,8 @@ class Result(Thread):
 
         for term, display in config.items('displays'):
             if equations.has_key(term):
-                equations[term][3] = display
+                digits, order = map(lambda s: s.strip(), display.split(','))
+                equations[term][3] = digits, int(order)
 
         return [(t, e, u, l, d) for t, (e, u, l, d) in equations.items()]
 

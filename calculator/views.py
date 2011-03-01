@@ -1,13 +1,14 @@
 from decorators       import catch_json_parse_errors
 from django.http      import HttpResponse
+from django.shortcuts               import render_to_response
 from utilities.Result import Result
 from utilities.common import *
 
 import simplejson as json
 import time
 
-def get_results(request, *args, **kwds):
-    sc_input = request.session.get('SC_input', {}).keys()
+def splitResults(request):
+
     results = [{'term' : k
               , 'value' : v
               , 'units' : u
@@ -22,6 +23,26 @@ def get_results(request, *args, **kwds):
               , 'label'    : l
               , 'display'  : d
                 } for k, (v, u, e, l, d) in request.session.get('SC_result', {}).items() if e == '']
+    return results, input
+
+def sanitize(result):
+    v = result.get('value')
+    u = result.get('units')
+    result['value'] = ("%" + result['display'][0]) % float(v) if v is not None else v
+    result['units'] = '' if u is None else u
+    return result
+
+def display_results(request):
+    results, input = splitResults(request)
+    results = [r for r in results if r['display'] is not None]
+    results = [sanitize(r) for r in sorted(results, key = lambda r: r['display'][1]) 
+                      if r['value'] is not None]
+    return render_to_response("results.html", {'results' : results
+                                             , 'input'   : input
+                                             })
+
+def get_results(request, *args, **kwds):
+    results, input = splitResults(request)
     retval = {'success'       : 'ok'
             , 'results'       : results
             , 'total_results' : len(results)

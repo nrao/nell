@@ -43,7 +43,7 @@ class Term(Document):
         return self.label if self.label is not None and self.label != '' else self.keyword
 
     def get(self):
-        return self.value, self.units, self.equation, self.renderLabel(), self.renderDisplay()
+        return self.value, self.units, self.equation, self.renderLabel(), self.display
 
     def set(self, value):
         if value is None and self.isJustValue():

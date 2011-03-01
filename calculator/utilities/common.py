@@ -19,7 +19,9 @@ def getOptions(filter, result):
         for k,v in filter.items():                                       
             #chain filters
             if v != 'NOTHING':
-                column, value = getDBName(k, v)
+                #column, value = getDBName(k, v)
+                column = 'name'
+                value  = v
                 config = config.filter(eval("Q(%s__%s__contains='%s')" % (k, column, value)))
     config  = config.values(result).distinct()
     if result == 'receiver':

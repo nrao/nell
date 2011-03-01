@@ -1,0 +1,25 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <title>Sensitivity Calculator - Results</title>
+  </head>
+  <body>
+  <h2>Results</h2>
+  <hr/>
+  <ul>
+    {% for r in results %}
+    <li>{{r.label}}:  {{r.value}} {{r.units}}</li>
+    {% endfor %}
+  </ul>
+  <hr/>
+  <h2>User Input</h2>
+  <hr/>
+  <ul>
+    {% for i in input %}
+    <li>{{i.label}}:  {{i.value}}</li>
+    {% endfor %}
+  </ul>
+  </body>
+</html>
+
