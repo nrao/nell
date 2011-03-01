@@ -1,6 +1,5 @@
 from Document  import Document
 from Term        import Term
-from OrderedDict import OrderedDict
 from utilities.FormatExceptionInfo import formatExceptionInfo
 
 from threading import Thread, Lock
