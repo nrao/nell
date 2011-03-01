@@ -128,14 +128,6 @@ def summary(request, *args, **kws):
     now        = datetime.now()
     last_month = now - timedelta(days = 31)
 
-    # init variables
-    projects  = []
-    receivers = {}
-    days      = {}
-    hours     = {}
-    summary   = {}
-    periods   = []
-
     if request.method == 'POST':
         summary = request.POST.get('summary', 'schedule')
 
@@ -169,9 +161,9 @@ def summary(request, *args, **kws):
           timedelta(days = 1)
 
     # View is in ET, database is in UTC. Only use scheduled periods.
+    periods = Period.in_time_range(TimeAgent.est2utc(start)
+                                 , TimeAgent.est2utc(end))
     if project:
-        periods = Period.in_time_range(TimeAgent.est2utc(start)
-                                     , TimeAgent.est2utc(end))
         periods = [p for p in periods if p.isScheduled() and p.session.project.pcode == project]
 
     # Handle either schedule or project summaries.

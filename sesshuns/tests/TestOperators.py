@@ -130,12 +130,13 @@ class TestOperators(TestObserversBase):
         self.assertTrue(pcode in response.content)
         self.assertTrue(str(self.dur) in response.content)
 
-        # make sure we can handle a fumble - no pcode given
+        # make sure we can handle all projects 
         response = self.post('/schedule/summary'
                           , {'summary' : 'project'
                            , 'project' : None}
                             )
         self.failUnlessEqual(response.status_code, 200)        
+        print response.content
         self.assertTrue("GBT Project Summary for" in response.content)
-        self.assertTrue(pcode not in response.content)
-        self.assertTrue(str(self.dur) not in response.content)
+        self.assertTrue(pcode in response.content)
+        self.assertTrue(str(self.dur) in response.content)
