@@ -129,7 +129,7 @@ class CalEvent(object):
     # returns true if project is science
     def is_science(self):
         return self.project_type() == 'A'
-    
+
     # returns true if the project is non-science.
     def non_science(self):
         return self.project_type() != 'A'
@@ -175,7 +175,7 @@ class CalEvent(object):
 
     def get_rcvr_ranges(self):
         return ""
-    
+
     def set_fm_name(self, fmname):
         """
         sets the floating maintenance event name: 'A' for the first,
@@ -193,7 +193,7 @@ class CalEvent(object):
 # etc.  Whatever the observing type, the code in this class assumes an
 # underlying period.
 ######################################################################
-    
+
 class CalEventPeriod(CalEvent):
     """
     This calendar event handles periods.
@@ -218,7 +218,7 @@ class CalEventPeriod(CalEvent):
     #
     #   Otherwise, compare events straight-up by start date/time.
     ######################################################################
-        
+
     def __lt__(self, other):
         if self.project_type() == "M" and other.project_type() == "M":
             return self.contained.start < other.contained.start
@@ -322,7 +322,7 @@ class CalEventPeriod(CalEvent):
 
     def has_lost_time(self):
         return self.contained.accounting.lost_time() > 0.
-    
+
 
     # returns the project/observing type.
     # The types: 'A', 'M', 'C', 'K', 'T', for astronomy,
@@ -355,11 +355,11 @@ class CalEventPeriod(CalEvent):
     def receiver_list(self):
         return self.contained.receiver_list()
 
-    
+
     def get_rcvr_ranges(self):
         return self.contained.get_rcvr_ranges()
 
-    
+
     def is_floating_maintenance(self):
         return self.contained.session.observing_type.type == 'maintenance'\
             and self.contained.isPending()
@@ -370,7 +370,7 @@ class CalEventPeriod(CalEvent):
 # periods; thus this class derives from CalEventPeriod, and only
 # contains code that is needed to deal with the elective itself.
 ######################################################################
-    
+
 class CalEventElective(CalEventPeriod):
     """
     This calendar event handles electives.  Nothing specifically about
@@ -386,7 +386,7 @@ class CalEventElective(CalEventPeriod):
             self._get_period(contained), start_cutoff, end_cutoff, moc_met, TZ)
 
 
-    ######################################################################    
+    ######################################################################
     # Returns maintenance activity set associated with this event, if
     # the event is a maintenance event.  If the elective has been
     # scheduled, or the pending period with maintenance activities has
@@ -426,27 +426,15 @@ class CalEventElective(CalEventPeriod):
         deleted, the first deleted period.
         """
         pd = None
+        pds = elective.scheduledPeriods()   # see if any scheduled periods first
 
-        # first look to find any period that already has maintenance
-        # activities attached
-        for p in elective.periods.all():
-            if p.maintenance_activity_set.exists():
-                pd = p
-                break
-
-        # if not, pick one out arbitrarily, giving precedence to
-        # scheduled periods first, then pending, finally deleted (just
-        # for the sake of returning one.)
-        if not pd:
-            pds = elective.scheduledPeriods()   # see if any scheduled periods first
+        if not pds:
+            pds = elective.pendingPeriods() # if not get pending periods
 
             if not pds:
-                pds = elective.pendingPeriods() # if not get pending periods
+                pds = elective.deletedPeriods()
 
-                if not pds:
-                    pds = elective.deletedPeriods()
-
-            pd = pds[0] if pds else None
+        pd = pds[0] if pds else None
 
         return pd
 
