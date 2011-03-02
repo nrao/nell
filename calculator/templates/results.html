@@ -1,25 +1,49 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-  <head>
-    <title>Sensitivity Calculator - Results</title>
-  </head>
-  <body>
-  <h2>Results</h2>
+  <h1>Results</h1>
   <hr/>
-  <ul>
-    {% for r in results %}
-    <li>{{r.label}}:  {{r.value}} {{r.units}}</li>
+  <table>
+    <tr class="odd"> <td>{{e.t_tot.label}}:</td><td>{{e.t_tot.value}} {{e.t_tot.units}}</td></tr>
+    <tr> <td>{{e.sigma.label}}:</td><td>{{e.sigma.value}} {{e.sigma.units}}</td></tr>
+    <tr> <td colspan = 2><hr/></td></tr>
+    <tr class="odd"> <td>{{e.t_sig.label}}:</td><td>{{e.t_sig.value}} {{e.t_sig.units}}</td></tr>
+    <tr> <td>{{e.t_ref.label}}:</td><td>{{e.t_ref.value}} {{e.t_ref.units}}</td></tr>
+    <tr class="odd"> <td>{{e.t_eff.label}}:</td><td>{{e.t_eff.value}} {{e.t_eff.units}}</td></tr>
+    <tr> <td colspan = 2><hr/></td></tr>
+    <tr class="odd"> <td>{{e.fwhm.label}}:</td><td>{{e.fwhm.value}} {{e.fwhm.units}}</td></tr>
+    <tr> <td>{{e.aperture_eff.label}}:</td><td>{{e.aperture_eff.value}} {{e.aperture_eff.units}}</td></tr>
+    <tr class="odd"> <td>{{e.extended_source_eff.label}}:</td><td>{{e.extended_source_eff.value}} {{e.extended_source_eff.units}}</td></tr>
+    <tr> <td>{{e.confusion_limit.label}}:</td><td>{{e.confusion_limit.value}} {{e.confusion_limit.units}}</td></tr>
+    <tr> <td colspan = 2><hr/></td></tr>
+    <tr class="odd"> <td>{{e.topocentric_freq.label}}:</td><td>{{e.topocentric_freq.value}} {{e.topocentric_freq.units}}</td></tr>
+    <tr> <td>{{e.min_topo_freq.label}}:</td><td>{{e.min_topo_freq.value}} {{e.min_topo_freq.units}}</td></tr>
+    <tr class="odd"> <td>{{e.smoothing_resolution.label}}:</td><td>{{e.smoothing_resolution.value}} {{e.smoothing_resolution.units}}</td></tr>
+    <tr> <td colspan = 2><hr/></td></tr>
+    <tr class="odd"> <td>{{e.air_mass.label}}:</td><td>{{e.air_mass.value}} {{e.air_mass.units}}</td></tr>
+    <tr> <td>{{e.attenuation.label}}:</td><td>{{e.attenuation.value}} {{e.attenuation.units}}</td></tr>
+    <tr class="odd"> <td>{{e.t_sys.label}}:</td><td>{{e.t_sys.value}} {{e.t_sys.units}}</td></tr>
+    <tr> <td colspan = 2><hr/></td></tr>
+    <tr class="odd"> <td>{{e.k1.label}}:</td><td>{{e.k1.value}} {{e.k1.units}}</td></tr>
+    <tr> <td>{{e.k2.label}}:</td><td>{{e.k2.value}} {{e.k2.units}}</td></tr>
+  </table>
+  <hr/>
+  {% if leftovers %}
+  <h1>Other Results</h1>
+  <hr/>
+  <table>
+    {% for l in leftovers %}
+    <tr class="{% cycle 'odd' 'even' %}">
+      <td>{{l.label}}:</td><td>{{l.value}} {{l.units}}</td>
+    </tr>
     {% endfor %}
-  </ul>
+  </table>
   <hr/>
-  <h2>User Input</h2>
+  {% endif %}
+  <h1>User Input</h1>
   <hr/>
-  <ul>
+  <table>
     {% for i in input %}
-    <li>{{i.label}}:  {{i.value}}</li>
+    <tr class="{% cycle 'odd' 'even' %}">
+      <td>{{i.label}}:</td><td>{{i.value}}</td>
+    </tr>
     {% endfor %}
-  </ul>
-  </body>
-</html>
+  </table>
 
