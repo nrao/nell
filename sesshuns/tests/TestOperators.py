@@ -136,7 +136,6 @@ class TestOperators(TestObserversBase):
                            , 'project' : None}
                             )
         self.failUnlessEqual(response.status_code, 200)        
-        print response.content
         self.assertTrue("GBT Project Summary for" in response.content)
         self.assertTrue(pcode in response.content)
         self.assertTrue(str(self.dur) in response.content)
