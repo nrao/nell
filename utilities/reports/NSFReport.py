@@ -118,6 +118,8 @@ def GenerateReport(label, months):
                  , ("%.2f" % sum(total[1])).center(8)
                  , ("%.2f" % sum(total[2])).center(8)))
 
+    outfile.close()
+
 def show_help():
     print "\nThe arguments to NSFReport are:"
     print "\t<integer quarter> <integer fiscal year>\n\n"

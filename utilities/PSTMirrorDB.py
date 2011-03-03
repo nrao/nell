@@ -52,9 +52,13 @@ class PSTMirrorDB(PSTInterface):
         AND p.personAuthentication_id = ua.userAuthentication_id
         """ % username
 
-        self.cursor.execute(q)
-        rows = self.cursor.fetchall()
-        return int(rows[0][0])
+        try:
+            self.cursor.execute(q)
+            rows = self.cursor.fetchall()
+            id = int(rows[0][0])
+        except:
+            raise Exception("username not found in PSTMirror: %s" % username )
+        return id    
 
     def getIdFromUserAuthenticationId(self, userAuth_id):
         """

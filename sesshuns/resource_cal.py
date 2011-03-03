@@ -695,7 +695,7 @@ def _process_activity(request, ma, form):
     periods = Period.get_periods_by_observing_type(start, end, "maintenance")
 
     for p in periods:
-        if ma._start >= p.start and ma._start < p.end():
+        if not p.isDeleted() and  ma._start >= p.start and ma._start < p.end():
             ma.period = p
 
     # Now add user and timestamp for modification.  Earliest mod is
