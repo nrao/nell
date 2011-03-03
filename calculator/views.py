@@ -7,10 +7,10 @@ from utilities.common import *
 import simplejson as json
 import time
 
-def splitResults(request):
+def splitResults(request, debug = False):
     exceptions = ('topocentric_freq', 'smoothing_resolution')
 
-    explicit, leftovers, input = [], [], []
+    explicit, leftovers, input, debug_results = [], [], [], []
     for k, (v, u, e, l, d) in request.session.get('SC_result', {}).items(): 
         data = {'term' : k
               , 'value' : v
@@ -19,19 +19,28 @@ def splitResults(request):
               , 'label'    : l
               , 'display'  : d
                 }
-        if (e != '' or k in exceptions) and d[1] == 1:
+        if (e != '' or k in exceptions) and d is not None and d[1] == 1:
             explicit.append(data)
-        elif (e != '' or k in exceptions) and d[1] > 1:
+        elif (e != '' or k in exceptions) and d is not None and d[1] > 1:
             leftovers.append(data)
         elif e == '' and k not in exceptions:
             input.append(data)
+        else:
+            debug_results.append(data)
+
+    if debug:
+        leftovers += debug_results
     return explicit, leftovers, input
 
 def sanitize(result):
     v = result.get('value')
     u = result.get('units')
-    result['value'] = ("%" + result['display'][0]) % float(v) if v is not None else v
+    d = result.get('display')
     result['units'] = '' if u is None else u
+    if v is not None and v != '' and d is not None and d[0] != '':
+        result['value'] = ("%" + d[0]) % float(v)
+    if v is None:
+        result['value'] = ''
     return result
 
 def display_results(request):
@@ -39,18 +48,24 @@ def display_results(request):
     leftovers = [r for r in leftovers if r['display'] is not None]
     leftovers = [sanitize(r) for r in sorted(leftovers, key = lambda r: r['display'][1]) 
                       if r['value'] is not None]
+    input     = map(sanitize, input)
     def splitKey(e):
         k = e.pop('term')
         return k, sanitize(e) 
 
     explicit  = dict([splitKey(e) for e in explicit])
+    # Also make a dict of the inputs for desiding on how to display stuff.
+    ivalues   = dict([splitKey(i) for i in input])
+    units     = 'mJy' if ivalues['units']['value'] == 'flux' else 'mK'
     return render_to_response("results.html", {'e'         : explicit
                                              , 'leftovers' : leftovers
                                              , 'input'     : input
+                                             , 'ivalues'   : ivalues
+                                             , 'units'     : units
                                              })
 
 def get_results(request, *args, **kwds):
-    explicit, leftovers, input = splitResults(request)
+    explicit, leftovers, input = splitResults(request, debug = True)
     results = explicit + leftovers
     retval = {'success'       : 'ok'
             , 'results'       : results

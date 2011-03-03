@@ -27,7 +27,7 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(k2, 1.21)
 
         k1, k2 = getKs('GBT Spectrometer', 50, 1, 8, 1)
-        self.assertEqual(k1, 1.235)
+        self.assertEqual(k1, 1.032)
         self.assertEqual(k2, 1.21)
 
         k1, k2 = getKs('GBT Spectrometer', 12.5, 8, 8, 1)
@@ -35,7 +35,7 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(k2, 1.21)
 
         k1, k2 = getKs('GBT Spectrometer', 12.5, 1, 8, 1)
-        self.assertEqual(k1, 1.235)
+        self.assertEqual(k1, 1.032)
         self.assertEqual(k2, 1.21)
 
     def test_dec2Els(self):
