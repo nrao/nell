@@ -160,9 +160,9 @@ def summary(request, *args, **kws):
           timedelta(days = 1)
 
     # View is in ET, database is in UTC. Only use scheduled periods.
+    periods = Period.in_time_range(TimeAgent.est2utc(start)
+                                 , TimeAgent.est2utc(end))
     if project:
-        periods = Period.in_time_range(TimeAgent.est2utc(start)
-                                     , TimeAgent.est2utc(end))
         periods = [p for p in periods if p.isScheduled() and p.session.project.pcode == project]
 
     # Handle either schedule or project summaries.
