@@ -43,25 +43,70 @@ def sanitize(result):
         result['value'] = ''
     return result
 
+def splitKey(e):
+    k = e.pop('term')
+    return k, sanitize(e) 
+
+def getMessages(request):
+    explicit, leftovers, input = splitResults(request)
+    results = dict([splitKey(r) for r in explicit + leftovers])
+    ivalues = dict([splitKey(i) for i in input])
+
+    messages = []
+    diameter = results.get("source_diameter", {}).get("value", 1)
+    if diameter != '' and float(diameter) > 0:
+        messages.append({'type' : 'Warning', 'msg' : 'Since source is extended, the calculated results are approximations.'})
+    dec = ivalues.get("declination", {}).get("value", 0)
+    if dec != '' and float(dec) < -46:
+        messages.append({'type' : 'Error', 'msg' : 'Source Declination is below -46, the lower limit for the GBT.'})
+    rx        = ivalues.get('receiver', {}).get('value')
+    topo_freq = results.get('topocentric_freq', {}).get('value', 0)
+    if rx is not None and rx != '' and topo_freq != '':
+        _, v = rx.split('(')
+        rx_low, rx_hi = map(float, v.replace(" GHz)", '').split(' - ') )
+        rx_low, rx_hi = float(rx_low), float(rx_hi)
+        topo_freq = round(float(topo_freq) * 1e-3, 3)
+        if not (topo_freq >= rx_low and topo_freq <= rx_hi):
+            messages.append({'type' : 'Warning', 'msg' : 'Topocentric frequnecy is beyond the nominal range for the selected receiver.'})
+
+    sensitivity = results.get("sigma", {}).get("value")
+    confusion_limit = results.get("confusion_limit", {}).get("value")
+    if sensitivity != '' and confusion_limit != '' and sensitivity < confusion_limit:
+        messages.append({'type' : 'Warning', 'msg' : 'Sensitivity is less than the confusion limit.'})
+    backend    = ivalues.get('backend', {}).get('value')
+    bandwidth  = ivalues.get('bandwidth', {}).get('value')
+    time       = ivalues.get('time', {}).get('value')
+    conversion = ivalues.get('conversion', {}).get('value')
+    t_tot      = results.get('t_tot', {}).get('value')
+    msg = {'type' : 'Warning', 'msg' : 'Time*Bandwidth exceeds the suggested limit from 1/F gain variations of . Please justify how you plan on observing beyond that limit.'}
+    if rx != '' and bandwidth != '' and time != '' and t_tot != '' and conversion != '' and None not in (rx, bandwidth, time, t_tot, conversion):
+        limit = float(time) * float(bandwidth) if conversion == 'Time to Sensitivity' else \
+                float(t_tot) * float(bandwidth)
+        if backend == 'Mustang' and limit >= 1e11:
+            messages.append(msg)
+        elif backend == 'Caltech Continuum Backend' and 'Ka' in rx and limit >= 1e11:
+            messages.append(msg)
+        elif limit >= 1e9:
+            messages.append(msg)
+
+    return messages
+
 def display_results(request):
     explicit, leftovers, input = splitResults(request)
     leftovers = [r for r in leftovers if r['display'] is not None]
     leftovers = [sanitize(r) for r in sorted(leftovers, key = lambda r: r['display'][1]) 
                       if r['value'] is not None]
     input     = map(sanitize, input)
-    def splitKey(e):
-        k = e.pop('term')
-        return k, sanitize(e) 
-
     explicit  = dict([splitKey(e) for e in explicit])
     # Also make a dict of the inputs for desiding on how to display stuff.
     ivalues   = dict([splitKey(i) for i in input])
-    units     = 'mJy' if ivalues['units']['value'] == 'flux' else 'mK'
+    units     = 'mJy' if ivalues.get('units', {}).get('value') == 'flux' else 'mK'
     return render_to_response("results.html", {'e'         : explicit
                                              , 'leftovers' : leftovers
                                              , 'input'     : input
                                              , 'ivalues'   : ivalues
                                              , 'units'     : units
+                                             , 'messages'  : getMessages(request)
                                              })
 
 def get_results(request, *args, **kwds):

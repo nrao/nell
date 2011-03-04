@@ -78,3 +78,73 @@ class TestViews(unittest.TestCase):
         mtf     = [r for r in results['results'] if r['term'] == 'min_topo_freq']
         self.assertEqual(mtf[0]['value'], '')
 
+    def test_results(self):
+        c = Client()
+        response = c.get('/calculator/initiate_hardware')
+
+        # General Information
+        data = {'units': [u'tr']
+              , 'conversion': [u'Sensitivity to Time']
+              , 'sensitivity': [u'1']
+              , 'semester': [u'A']
+              , 'time': [u'1']
+              }
+        response = c.post('/calculator/set_terms/', data)
+        self.failUnlessEqual(response.status_code, 200)
+        response = c.get('/calculator/results')
+        self.failUnlessEqual(response.status_code, 200)
+
+        # Hardware Information
+        data = {'receiver-hidden': [u'L (1.15 - 1.73 GHz)']
+              , 'beams-hidden': [u'1']
+              , 'switching-hidden': [u'In-Band Frequency Switching']
+              , 'bandwidth-hidden': [u'12.5']
+              , 'polarization-hidden': [u'Dual']
+              , 'backend-hidden': [u'GBT Spectrometer']
+              , 'windows-hidden': [u'1']
+              , 'switching': [u'In-Band Frequency Switching']
+              , 'polarization': [u'Dual']
+              , 'windows': [u'1']
+              , 'bandwidth': [u'12.5']
+              , 'receiver': [u'L (1.15 - 1.73 GHz)']
+              , 'mode-hidden': [u'Spectral Line']
+              , 'backend': [u'GBT Spectrometer']
+              }
+        response = c.post('/calculator/set_terms/', data)
+        self.failUnlessEqual(response.status_code, 200)
+        response = c.get('/calculator/results')
+        self.failUnlessEqual(response.status_code, 200)
+
+        # Source Information
+        data = {'doppler': [u'Optical']
+              , 'galactic': [u'no_correction']
+              , 'redshift': [u'0']
+              , 'frame': [u'Rest Frame']
+              , 'source_diameter_slider': [u'0']
+              , 'right_ascension': [u'']
+              , 'rest_freq': [u'1440.0']
+              , 'source_velocity': [u'0']
+              , 'declination': [u'38:26']
+              , 'estimated_continuum': [u'0']
+              , 'topocentric_freq': [u'1440.0']
+              , 'doppler-hidden': [u'Optical']
+              }
+        response = c.post('/calculator/set_terms/', data)
+        self.failUnlessEqual(response.status_code, 200)
+        response = c.get('/calculator/results')
+        self.failUnlessEqual(response.status_code, 200)
+
+        # Data Reduction Information
+        data = {'smoothing_resolution': [u'1']
+              , 'diff_signal': [u'true']
+              , 'smoothing': [u'velocity_resolution_rest']
+              , 'r_sig_ref': [u'1']
+              , 'bw': [u'0.004803322970701629']
+              , 'smoothing_factor': [u'1']
+              , 'avg_pol': [u'true']
+              , 'no_avg_ref': [u'1']
+              }
+        response = c.post('/calculator/set_terms/', data)
+        self.failUnlessEqual(response.status_code, 200)
+        response = c.get('/calculator/results')
+        self.failUnlessEqual(response.status_code, 200)
