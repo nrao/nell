@@ -32,12 +32,15 @@ class CalculatorTestCase(unittest.TestCase):
         settings.SC_EQUATION_DEFS = self.old_sc_equation_defs
 
     def addTerm(self, equation, units = None):
-        eqs = "".join(open(settings.SC_EQUATION_DEFS).readlines())
+        f   = open(settings.SC_EQUATION_DEFS)
+        eqs = "".join(f.readlines())
+        f.close()
         fst, snd = eqs.split("[units]")
         fst += equation + "\n"
+        units_section, end = snd.split("[labels]")
         if units is not None:
-            snd += units + "\n"
-        new_equations = fst + "[units]" + snd
+            units_section += units + "\n"
+        new_equations = fst + "[units]" + units_section + "[labels]" + end
         f = open(settings.SC_EQUATION_DEFS, 'w')
         f.write(new_equations)
         f.close()

@@ -1,25 +1,114 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-  <head>
-    <title>Sensitivity Calculator - Results</title>
-  </head>
-  <body>
-  <h2>Results</h2>
+  <h1>Results</h1>
   <hr/>
-  <ul>
-    {% for r in results %}
-    <li>{{r.label}}:  {{r.value}} {{r.units}}</li>
+  {% if e %}
+  <table>
+    {% ifequal ivalues.conversion.value 'Sensitivity to Time' %}
+    <tr> <td>{{e.t_tot.label}}:</td><td>{{e.t_tot.value}} {{e.t_tot.units}}</td></tr>
+    {% else %}
+    <tr> <td>{{e.sigma.label}}:</td><td>{{e.sigma.value}} {{units}}</td></tr>
+    {% endifequal %}
+    <tr> <td colspan = 2><hr/></td></tr>
+    <tr> <td>{{e.t_sig.label}}:</td><td>{{e.t_sig.value}} {{e.t_sig.units}}</td></tr>
+    <tr> <td>{{e.t_ref.label}}:</td><td>{{e.t_ref.value}} {{e.t_ref.units}}</td></tr>
+    <tr> <td>{{e.t_eff.label}}:</td><td>{{e.t_eff.value}} {{e.t_eff.units}}</td></tr>
+    <tr> <td colspan = 2><hr/></td></tr>
+    <tr> <td>{{e.fwhm.label}}:</td><td>{{e.fwhm.value}} {{e.fwhm.units}}</td></tr>
+    <tr> <td>{{e.aperture_eff.label}}:</td><td>{{e.aperture_eff.value}} {{e.aperture_eff.units}}</td></tr>
+    <tr> <td>{{e.extended_source_eff.label}}:</td><td>{{e.extended_source_eff.value}} {{e.extended_source_eff.units}}</td></tr>
+    <tr> <td>{{e.confusion_limit.label}}:</td><td>{{e.confusion_limit.value}} {{e.confusion_limit.units}}</td></tr>
+    <tr> <td colspan = 2><hr/></td></tr>
+    <tr> <td>{{e.topocentric_freq.label}}:</td><td>{{e.topocentric_freq.value}} {{e.topocentric_freq.units}}</td></tr>
+    {% ifequal ivalues.mode.value 'Spectral Line' %}
+    <tr> <td>{{e.min_topo_freq.label}}:</td><td>{{e.min_topo_freq.value}} {{e.min_topo_freq.units}}</td></tr>
+    <tr> <td>{{e.smoothing_resolution.label}}:</td><td>{{e.smoothing_resolution.value}} {{e.smoothing_resolution.units}}</td></tr>
+    {% endifequal %}
+    <tr> <td colspan = 2><hr/></td></tr>
+    <tr> <td>{{e.air_mass.label}}:</td><td>{{e.air_mass.value}} {{e.air_mass.units}}</td></tr>
+    <tr> <td>{{e.attenuation.label}}:</td><td>{{e.attenuation.value}} {{e.attenuation.units}}</td></tr>
+    <tr> <td>{{e.t_sys.label}}:</td><td>{{e.t_sys.value}} {{e.t_sys.units}}</td></tr>
+    <tr> <td colspan = 2><hr/></td></tr>
+    <tr> <td>{{e.k1.label}}:</td><td>{{e.k1.value}} {{e.k1.units}}</td></tr>
+    <tr> <td>{{e.k2.label}}:</td><td>{{e.k2.value}} {{e.k2.units}}</td></tr>
+  </table>
+  <hr/>
+  {% else %}
+  <p>Please fill out the questions to the right to begin.</p>
+  {% endif %}
+  {% if leftovers %}
+  <h1>Other Results</h1>
+  <hr/>
+  <table>
+    {% for l in leftovers %}
+    <tr class="{% cycle 'odd' 'even' %}">
+      <td>{{l.label}}:</td><td>{{l.value}} {{l.units}}</td>
+    </tr>
     {% endfor %}
-  </ul>
+  </table>
   <hr/>
-  <h2>User Input</h2>
+  {% endif %}
+  <h1>User Input</h1>
   <hr/>
-  <ul>
-    {% for i in input %}
-    <li>{{i.label}}:  {{i.value}}</li>
-    {% endfor %}
-  </ul>
-  </body>
-</html>
+  <table>
+    <tr> <td>{{ivalues.conversion.label}}:</td><td>{{ivalues.conversion.value}} {{ivalues.conversion.units}}</td></tr>
+    <tr> <td>{{ivalues.units.label}}:</td><td>{{units}}</td></tr>
+    <tr> <td>{{ivalues.time.label}}:</td><td>{{ivalues.time.value}} {{ivalues.time.units}}</td></tr>
+    <tr> <td>{{ivalues.sensitivity.label}}:</td><td>{{ivalues.sensitivity.value}} {{units}}</td></tr>
+    <tr> <td colspan = 2><hr/></td></tr>
+    <tr> <td>{{ivalues.backend.label}}:</td><td>{{ivalues.backend.value}} {{ivalues.backend.units}}</td></tr>
+    <tr> <td>{{ivalues.mode.label}}:</td><td>{{ivalues.mode.value}} {{ivalues.mode.units}}</td></tr>
+    <tr> <td>{{ivalues.receiver.label}}:</td><td>{{ivalues.receiver.value}} {{ivalues.receiver.units}}</td></tr>
+    <tr> <td>{{ivalues.beams.label}}:</td><td>{{ivalues.beams.value}} {{ivalues.beams.units}}</td></tr>
+    <tr> <td>{{ivalues.polarization.label}}:</td><td>{{ivalues.polarization.value}} {{ivalues.polarization.units}}</td></tr>
+    <tr> <td>{{ivalues.bandwidth.label}}:</td><td>{{ivalues.bandwidth.value}} {{ivalues.bandwidth.units}}</td></tr>
+    <tr> <td>{{ivalues.windows.label}}:</td><td>{{ivalues.windows.value}} {{ivalues.windows.units}}</td></tr>
+    <tr> <td>{{ivalues.switching.label}}:</td><td>{{ivalues.switching.value}} {{ivalues.switching.units}}</td></tr>
+    <tr> <td colspan = 2><hr/></td></tr>
+    <tr> <td>{{ivalues.frame.label}}:</td><td>{{ivalues.frame.value}} {{ivalues.frame.units}}</td></tr>
+    <tr> <td>{{ivalues.rest_freq.label}}:</td><td>{{ivalues.rest_freq.value}} {{ivalues.rest_freq.units}}</td></tr>
+    <tr> <td>{{ivalues.doppler.label}}:</td><td>{{ivalues.doppler.value}} {{ivalues.doppler.units}}</td></tr>
+    <tr> <td>{{ivalues.source_velocity.label}}:</td><td>{{ivalues.source_velocity.value}} {{ivalues.source_velocity.units}}</td></tr>
+    <tr> <td>{{ivalues.redshift.label}}:</td><td>{{ivalues.redshift.value}} {{ivalues.redshift.units}}</td></tr>
+    <tr>
+      <td>{{ivalues.galactic.label}}:</td>
+      <td>
+      {% ifequal ivalues.galactic.value 'no_correction' %}
+        <p>Assume no contribution to Tsys.</p>
+      {% endifequal %}
+      {% ifequal ivalues.galactic.value 'estimated' %}
+        <p>User entered contribution to Tsys.</p>
+      {% endifequal %}
+      {% ifequal ivalues.galactic.value 'model' %}
+        <p>Using model for contribution to Tsys.</p>
+      {% endifequal %}
+      </td>
+    </tr>
+    <tr> <td>{{ivalues.right_ascension.label}}:</td><td>{{ivalues.right_ascension.value}} {{ivalues.right_ascension.units}}</td></tr>
+    <tr> <td>{{ivalues.estimated_continuum.label}}:</td><td>{{ivalues.estimated_continuum.value}} {{ivalues.estimated_continuum.units}}</td></tr>
+    <tr> <td colspan = 2><hr/></td></tr>
+    <tr> <td>{{ivalues.r_sig_ref.label}}:</td><td>{{ivalues.r_sig_ref.value}} of RSigRef</td></tr>
+    <tr> <td>{{ivalues.no_avg_ref.label}}:</td><td>{{ivalues.no_avg_ref.value}} of NAvrgRef</td></tr>
+    <tr> <td>{{ivalues.avg_pol.label}}:</td><td>{{ivalues.avg_pol.value}}</td></tr>
+    <tr> <td>{{ivalues.diff_signal.label}}:</td><td>{{ivalues.diff_signal.value}}</td></tr>
+    <tr>
+      <td>{{ivalues.smoothing.label}}:</td>
+      <td>
+      {% ifequal ivalues.smoothing.value 'velocity_resolution_rest' %}
+        <p>Smooth to a Velocity Resolution in the Rest Frame.</p>
+      {% endifequal %}
+      {% ifequal ivalues.smoothing.value 'frequency_resolution_topo' %}
+        <p>Smooth to a Frequency Resolution in the Topocentric Frame.</p>
+      {% endifequal %}
+      {% ifequal ivalues.smoothing.value 'frequency_resolution_rest' %}
+        <p>Smooth to a Frequency Resolution in the Rest Frame.</p>
+      {% endifequal %}
+      {% ifequal ivalues.smoothing.value 'velocity_resolution_topo' %}
+        <p>Smooth to a Velocity Resolution in the Topocentric Frame.</p>
+      {% endifequal %}
+      {% ifequal ivalues.smoothing.value 'frequency_resolution_topo_frame' %}
+        <p>Smooth to a Frequency Resolution in the Topocentric Frame.</p>
+      {% endifequal %}
+      </td>
+    </tr>
+    <tr> <td>{{ivalues.smoothing_factor.label}}:</td><td>{{ivalues.smoothing_factor.value}}</td></tr>
+  </table>
 
