@@ -34,6 +34,23 @@
   {% else %}
   <p>Please fill out the questions to the right to begin.</p>
   {% endif %}
+  {% if messages %}
+  <h1>Messages</h1>
+  <hr/>
+  <ul>
+    {% for m in messages %}
+    <li>
+      {% ifequal m.type 'Error' %}
+      <span style="color: red; text-decoration: blink">{{m.type}}</span> - 
+      {% else %}
+      <span>{{m.type}}</span> - 
+      {% endifequal %}
+      <span>{{m.msg}}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  <hr/>
+  {% endif %}
   {% if leftovers %}
   <h1>Other Results</h1>
   <hr/>
@@ -46,6 +63,7 @@
   </table>
   <hr/>
   {% endif %}
+  {% if e %}
   <h1>User Input</h1>
   <hr/>
   <table>
@@ -111,4 +129,4 @@
     </tr>
     <tr> <td>{{ivalues.smoothing_factor.label}}:</td><td>{{ivalues.smoothing_factor.value}}</td></tr>
   </table>
-
+  {% endif %}
