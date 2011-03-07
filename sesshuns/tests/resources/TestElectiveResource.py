@@ -1,7 +1,7 @@
 from django.test.client  import Client
 
 from test_utils              import BenchTestCase, timeIt
-from utils                   import create_sesshun
+from sesshuns.tests.utils    import create_sesshun
 from sesshuns.models         import *
 from sesshuns.httpadapters   import *
 

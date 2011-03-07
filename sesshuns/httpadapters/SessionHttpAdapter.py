@@ -143,30 +143,32 @@ class SessionHttpAdapter (object):
 
         self.sesshun.save()
 
+    def update_parameter(self, fdata, old_value, new_value, parameter):
+        if old_value is None:
+            if new_value and new_value != 1.0:
+                obs_param =  Observing_Parameter(session     = self.sesshun
+                                               , parameter   = parameter
+                                                )
+                obs_param.setValue(new_value)
+                obs_param.save()
+        else:
+            obs_param = self.sesshun.observing_parameter_set.filter(parameter=parameter)[0]
+            if new_value and new_value != 1.0:
+                obs_param.setValue(new_value)
+            else:
+                obs_param.delete()
+
     def update_xi_obs_param(self, fdata, old_value):
         """
         For taking a json dict and converting its given
         xi float field into a 'Min Eff TSys' float observing parameter.
         """
-        new_value = self.get_field(fdata, "xi_factor", 1.0, float)
-        tp = Parameter.objects.filter(name="Min Eff TSys")[0]
-        if old_value is None:
-            if new_value and new_value != 1.0:
-                obs_param =  Observing_Parameter(session = self.sesshun
-                                               , parameter = tp
-                                               , float_value = new_value
-                                                )
-                obs_param.save()
-        else:
-            obs_param = self.sesshun.observing_parameter_set.filter(parameter=tp)[0]
-            if new_value and new_value != 1.0:
-                obs_param.float_value = new_value
-                obs_param.save()
-            else:
-                obs_param.delete()
+        self.update_parameter(fdata
+                            , old_value
+                            , self.get_field(fdata, "xi_factor", 1.0, float)
+                            , first(Parameter.objects.filter(name="Min Eff TSys"))
+                            )
 
-    # TBF: opportunities for refactoring and code sharing between this
-    # and update_xi_obs_param
     def update_el_limit_obs_param(self, fdata, old_value):
         """
         For taking a json dict and converting its given
@@ -181,21 +183,8 @@ class SessionHttpAdapter (object):
             except:
                 return # nonsense value
 
-        tp = Parameter.objects.filter(name="El Limit")[0]
-        if old_value is None:
-            if new_value and new_value != "":
-                obs_param =  Observing_Parameter(session = self.sesshun
-                                               , parameter = tp
-                                               , float_value = new_value
-                                                )
-                obs_param.save()
-        else:
-            obs_param = self.sesshun.observing_parameter_set.filter(parameter=tp)[0]
-            if new_value and new_value != "":
-                obs_param.float_value = new_value
-                obs_param.save()
-            else:
-                obs_param.delete()
+        parameter = Parameter.objects.filter(name="El Limit")[0]
+        self.update_parameter(fdata, old_value, new_value, parameter)
 
     def update_bool_obs_param(self, fdata, json_name, name, old_value):
         """
@@ -204,22 +193,8 @@ class SessionHttpAdapter (object):
         """
 
         new_value = self.get_field(fdata, json_name, False, bool)
-        tp = Parameter.objects.filter(name=name)[0]
-        if old_value is None:
-            if new_value:
-                # TBF:  Caused recursion
-                obs_param =  Observing_Parameter(session = self.sesshun
-                                               , parameter = tp
-                                               , boolean_value = True
-                                                )
-                obs_param.save()
-        else:
-            obs_param = self.sesshun.observing_parameter_set.filter(parameter=tp)[0]
-            if new_value:
-                obs_param.boolean_value = True
-                obs_param.save()
-            else:
-                obs_param.delete()
+        parameter = Parameter.objects.filter(name=name)[0]
+        self.update_parameter(fdata, old_value, new_value, parameter)
 
     def update_guaranteed(self, fdata):
         """
@@ -333,7 +308,7 @@ class SessionHttpAdapter (object):
            , "receiver"   : self.sesshun.get_receiver_req()
            , "project_complete" : "Yes" if self.sesshun.project.complete else "No"
            , "xi_factor"  : self.sesshun.get_min_eff_tsys_factor() or 1.0
-           , "el_limit"   : self.sesshun.get_elevation_limit() or None # TBF- default? 
+           , "el_limit"   : self.sesshun.get_elevation_limit() or None # None is default 
             }
 
         target = first(self.sesshun.target_set.all())

@@ -47,3 +47,16 @@ class Observing_Parameter(models.Model):
                                                     , value
                                                     , self.session.id)
 
+    def setValue(self, v):
+        if self.parameter.type == "string":
+            self.string_value = v
+        elif self.parameter.type == "integer":
+            self.integer_value = v
+        elif self.parameter.type == "float":
+            self.float_value = v
+        elif self.parameter.type == "boolean":
+            self.boolean_value = v
+        elif self.parameter.type == "datetime":
+            self.datetime_value = v
+        self.save()
+

@@ -3,7 +3,7 @@ from django.test.client  import Client
 from test_utils              import BenchTestCase, timeIt
 from sesshuns.httpadapters   import *
 from sesshuns.models         import *
-from utils                   import *
+from sesshuns.tests.utils    import *
 
 class TestWindowResource(BenchTestCase):
 
