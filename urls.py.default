@@ -71,6 +71,7 @@ urlpatterns = patterns(''
    , url(r'^periods/(ET)$',       PeriodResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^periods/(UTC)/(\d+)$',PeriodResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^periods/(ET)/(\d+)$', PeriodResource(permitted_methods=('PUT', 'GET', 'POST'))) #
+   , url(r'^window/([^/]+)/copy$',           window_copy) #   
    , url(r'^windows$',           WindowResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^windows/(\d+)$',     WindowResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^windowRanges$',           WindowRangeResource(permitted_methods=('GET', 'PUT', 'POST'))) #
@@ -86,6 +87,7 @@ urlpatterns = patterns(''
     , url(r'^project/([^/]+)/friend/(\d+)/required$',       toggle_required_friend)
     , url(r'^friends$',      FriendResource(permitted_methods=('PUT', 'GET', 'POST'))) #
     , url(r'^friends/([^/]+)$', FriendResource(permitted_methods=('PUT', 'GET', 'POST')))
+   , url(r'^elective/([^/]+)/copy$',           elective_copy) #   
    
    , url(r'^electives$',           ElectiveResource(permitted_methods=('GET', 'PUT', 'POST'))) #
    , url(r'^electives/(\d+)$',     ElectiveResource(permitted_methods=('PUT', 'GET', 'POST'))) #

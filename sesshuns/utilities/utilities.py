@@ -2,9 +2,11 @@ from datetime                           import time
 from django.db.models                   import Q
 from pytz                               import timezone
 from sesshuns.models                    import *
+from sesshuns.httpadapters              import *
 from nell.utilities                     import UserInfo, NRAOBosDB
 from sesshuns.GBTCalendarEvent          import CalEventPeriod, CalEventElective, CalEventMaintenanceActivity
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
+from copy                               import deepcopy
 
 import pytz
 
@@ -406,3 +408,108 @@ def _get_non_maint_period_maint_events(today, timezone):
         return [ev]
 
     return []
+
+def copy_elective(id, num):
+    """
+    Makes copies of the elective identified by the passed id.
+    See copy_window for more.
+    """
+    e = Elective.objects.get(id = id)
+    ej = ElectiveHttpAdapter(e).jsondict()
+    for count in range(num):
+        newE = Elective()
+        WindowHttpAdapter(newE).init_from_post(ej) #Window()
+        for pj in ej['periods']:
+            newP = Period()
+            # TBF: using update_from_post instead of init for accounting?
+            PeriodHttpAdapter(newP).update_from_post(pj, 'UTC')
+            newP.elective = newE
+            newP.save()
+        # it looks like setting the periods & accounting causes
+        # the complete flag to get set somehow, so do it again(TBF)
+        newE.complete = ej['complete']
+        newE.save()
+
+
+def copy_window(id, num):
+    """
+    Makes copies of the window identified by the passed id.
+    Most of the 'copying' of objects that is done in the DSS, is done
+    via the 'duplicate' button in all the explorers, but since
+    we don't have an explorer for windows, we must do this ourselves.
+    However, we use the same strategy: the explorers take the json
+    representation of the current object, and post that to create
+    a new one.
+    Note: not using deepcopy, it can cause issues.
+    """
+    w = Window.objects.get(id = id)
+    wj = WindowHttpAdapter(w).jsondict()
+    for count in range(num):
+        # first the window
+        newW = Window()
+        #newW.save()
+        #print wj["handle"], wj["total_time"], wj['complete']
+        WindowHttpAdapter(newW).init_from_post(wj) #Window()
+        
+        #newW.session = w.session
+        #newW.total_time = w.total_time
+        #newW.complete = w.complete
+        #newW.save()
+        #print "new win id: ", newW.id
+        # now it's associated objects
+        #ranges = w.ranges()
+        #for rg in w.ranges():
+        for wrj in wj['ranges']:
+            newWr = WindowRange()
+            #newWr.save()
+            WindowRangeHttpAdapter(newWr).init_from_post(wrj)
+            newWr.window = newW
+            newWr.save()
+            
+            
+            #wr = WindowRange(window = newW
+            #               , start_date = rg.start_date
+            #               , duration = rg.duration
+            #                )
+            #wr.save()                
+        for pj in wj['periods']:
+            newP = Period()
+            # TBF: using update_from_post instead of init for accounting?
+            PeriodHttpAdapter(newP).update_from_post(pj, 'UTC')
+            newP.window = newW
+            newP.save()
+
+        #periods = w.periods.all()
+        #for p in periods:
+            #pa = deepcopy(p.accounting)
+            #pa.id = None
+            #pa.save()
+            #newP = Period(session = p.session
+            #            , start = p.start
+            #            , duration = p.duration
+            #            , state = p.state
+            #            , window = newW
+            #            , accounting = pa
+            #            , score = p.score
+            #            , forecast = p.forecast
+            #            , backup = p.backup
+            #            , moc_ack = p.moc_ack  
+            #             )
+            #newP.save()
+            # now the rx
+            #for r in p.receivers.all():
+            #    pr = Period_Receiver(receiver = r, period = newP)
+            #    pr.save()
+            #print "newP has window: ", newP.id, newP.window, newP.window.id
+            # is this period the default?
+            if w.default_period.id == pj['id']:
+                newW.default_period = newP
+                newW.save()
+            # it looks like setting the periods & accounting causes
+            # the complete flag to get set somehow, so do it again(TBF)
+        newW.complete = wj['complete']
+        newW.save()
+        #print "    new Window: "
+        #print "    ", newW.id, newW
+
+

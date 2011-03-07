@@ -742,3 +742,31 @@ def filter_combinations_explorer(request, *args, **kws):
             
             return HttpResponse(json.dumps({'filters' : filters})
                                           , mimetype = "text/plain")
+
+@catch_json_parse_errors
+def window_copy(request, *args, **kwds):
+    if len(args) != 1:
+        return HttpResponse(json.dumps({'success':'error'})
+                          , mimetype = "text/plain")
+    # parse variables
+    id = int(args[0])
+    num = int(request.POST.get("number", 1))
+    # copy the window
+    copy_window(id, num)
+    revision.comment = get_rev_comment(request, None, "window_copy")
+    return HttpResponse(json.dumps({'success':'ok'})
+                      , mimetype = "text/plain")
+
+@catch_json_parse_errors
+def elective_copy(request, *args, **kwds):
+    if len(args) != 1:
+        return HttpResponse(json.dumps({'success':'error'})
+                          , mimetype = "text/plain")
+    # parse variables
+    id = int(args[0])
+    num = int(request.POST.get("number", 1))
+    # copy the elective
+    copy_elective(id, num)
+    revision.comment = get_rev_comment(request, None, "elective_copy")
+    return HttpResponse(json.dumps({'success':'ok'})
+                      , mimetype = "text/plain")                                          
