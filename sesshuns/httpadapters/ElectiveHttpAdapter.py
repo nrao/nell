@@ -19,7 +19,7 @@ class ElectiveHttpAdapter (object):
               , "complete"       : self.elective.complete
               , "firstPeriod"    : dt2str(minMax[0])
               , "lastPeriod"     : dt2str(minMax[1])
-              # TBF: these aren't being currently used by a client
+              # Note: these aren't being currently used by a client
               # but taking them out doesn't speed up current clients
               , "session"        : SessionHttpAdapter(self.elective.session).jsondict()
               , "periods"        : [PeriodHttpAdapter(p).jsondict('UTC', 0.0) for p in self.elective.periods.all()]

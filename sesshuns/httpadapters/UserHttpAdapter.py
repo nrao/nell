@@ -39,7 +39,8 @@ class UserHttpAdapter(object):
                             )
                 self.user.auth_user.save()
                 self.user.save()
-                #  TBF  Why is this necessary?
+                #  Note:  Why is this necessary?  Should be able to
+                #  self.user.auth_user = self.user.auth_user?
                 self.user.auth_user_id = self.user.auth_user.id
                 self.user.save()
             except:
