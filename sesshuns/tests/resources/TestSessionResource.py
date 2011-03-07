@@ -110,6 +110,17 @@ class TestSessionResource(BenchTestCase):
         response = self.client.post('/sessions/1000', {'_method' : 'put'})
         self.failUnlessEqual(response.status_code, 404)
 
+    def test_update_bad_receivers(self):
+        response = self.client.post('/sessions/1', {'_method' : 'put'
+                                                  , 'receiver' : ['X $ L']})
+        self.assertTrue('SyntaxError: F1: missing right paren: $' in response.content)
+        self.failUnlessEqual(response.status_code, 200)
+
+        response = self.client.post('/sessions/1', {'_method' : 'put'
+                                                  , 'receiver' : ['X & Y']})
+        self.assertTrue('ValueError: Y not a receiver' in response.content)
+        self.failUnlessEqual(response.status_code, 200)
+
     @timeIt
     def test_delete(self):
         response = self.client.post('/sessions/1', {'_method' : 'delete'})

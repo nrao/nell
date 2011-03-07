@@ -3,6 +3,7 @@ from django.http              import HttpResponse, HttpResponseRedirect
 from django.shortcuts         import get_object_or_404
 
 from sesshuns.models          import first
+from utilities.FormatExceptionInfo import formatExceptionInfo
 
 import simplejson as json
 import reversion
@@ -48,14 +49,20 @@ class NellResource(Resource):
         id    = int(args[0])
         o     = get_object_or_404(self.dbobject, pk = id)
         self.adapter.load(o)
-        self.adapter.update_from_post(request.POST)
+
+        error = None
+        try:
+            self.adapter.update_from_post(request.POST)
+        except:
+            e, m, t = formatExceptionInfo()
+            error = ": ".join((e, m))
 
         revision.comment = self.get_rev_comment(request, o, "update")
 
         # NOTE: this originally returned "", but if we want JSON callbacks
         # to work from GWT, need A response.  This change seems benign
-        #return HttpResponse("")
-        return HttpResponse(json.dumps({"success" : "ok"})
+        return HttpResponse(json.dumps({"success" : "ok"
+                                      , "error"   : error})
                           , mimetype = "text/plain")
 
     @revision.create_on_success 

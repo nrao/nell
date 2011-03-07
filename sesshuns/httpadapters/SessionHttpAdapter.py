@@ -83,9 +83,9 @@ class SessionHttpAdapter (object):
 
     def save_receivers(self, proposition):
         abbreviations = [r.abbreviation for r in Receiver.objects.all()]
-        # TBF catch errors and report to user
         rc = ReceiverCompile(abbreviations)
         ands = rc.normalize(proposition)
+
         for ors in ands:
             rg = Receiver_Group(session = self.sesshun)
             rg.save()
