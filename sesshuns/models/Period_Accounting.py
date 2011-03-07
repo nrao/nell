@@ -107,7 +107,6 @@ class Period_Accounting(models.Model):
         else:
             return self.__getattribute__(name)()
 
-    # TBF: is this worth its own httpadapter class?
     def update_from_post(self, fdata):    
 
         for field in self.getDBFloatFields():        
@@ -116,7 +115,6 @@ class Period_Accounting(models.Model):
                 self.set_changed_time(field, float(value))
         self.save()
 
-    # TBF: is this worth its own httpadapter class?
     def jsondict(self):
         description = self.description if self.description is not None else ""
         return {"id"                    : self.id
