@@ -23,8 +23,6 @@ class WindowHttpAdapter (object):
             
         js = {  "id"             : self.window.id
               , "handle"         : self.window.toHandle()
-              # TBF: this really blots it, do we need the whole thing?
-              #, "session"        : SessionHttpAdapter(self.window.session).jsondict()
               , "start"          : start
               , "end"            : end
               , "duration"       : duration

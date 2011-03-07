@@ -55,7 +55,6 @@ class PeriodHttpAdapter (object):
 
     def update_from_post(self, fdata, tz):
         self.from_post(fdata, tz)
-        # TBF: should we do this?
         if self.period.accounting is not None:
             self.period.accounting.update_from_post(fdata)
 
@@ -144,6 +143,8 @@ class PeriodHttpAdapter (object):
             pa = Period_Accounting(scheduled = 0.0)
             pa.save()
             self.period.accounting = pa
+
+        self.period.accounting.update_from_post(fdata)
 
         self.period.save()
 
