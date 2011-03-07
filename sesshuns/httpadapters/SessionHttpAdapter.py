@@ -143,9 +143,9 @@ class SessionHttpAdapter (object):
 
         self.sesshun.save()
 
-    def update_parameter(self, fdata, old_value, new_value, parameter):
+    def update_parameter(self, old_value, new_value, parameter):
         if old_value is None:
-            if new_value and new_value != 1.0:
+            if new_value:
                 obs_param =  Observing_Parameter(session     = self.sesshun
                                                , parameter   = parameter
                                                 )
@@ -153,7 +153,7 @@ class SessionHttpAdapter (object):
                 obs_param.save()
         else:
             obs_param = self.sesshun.observing_parameter_set.filter(parameter=parameter)[0]
-            if new_value and new_value != 1.0:
+            if new_value:
                 obs_param.setValue(new_value)
             else:
                 obs_param.delete()
@@ -163,8 +163,7 @@ class SessionHttpAdapter (object):
         For taking a json dict and converting its given
         xi float field into a 'Min Eff TSys' float observing parameter.
         """
-        self.update_parameter(fdata
-                            , old_value
+        self.update_parameter(old_value
                             , self.get_field(fdata, "xi_factor", 1.0, float)
                             , first(Parameter.objects.filter(name="Min Eff TSys"))
                             )
@@ -184,7 +183,7 @@ class SessionHttpAdapter (object):
                 return # nonsense value
 
         parameter = Parameter.objects.filter(name="El Limit")[0]
-        self.update_parameter(fdata, old_value, new_value, parameter)
+        self.update_parameter(old_value, new_value, parameter)
 
     def update_bool_obs_param(self, fdata, json_name, name, old_value):
         """
@@ -194,7 +193,7 @@ class SessionHttpAdapter (object):
 
         new_value = self.get_field(fdata, json_name, False, bool)
         parameter = Parameter.objects.filter(name=name)[0]
-        self.update_parameter(fdata, old_value, new_value, parameter)
+        self.update_parameter(old_value, new_value, parameter)
 
     def update_guaranteed(self, fdata):
         """
