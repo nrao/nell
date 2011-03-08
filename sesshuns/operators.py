@@ -168,7 +168,7 @@ def summary(request, *args, **kws):
 
     # Handle either schedule or project summaries.
     if summary == "schedule":
-        schedule = get_gbt_schedule_events(start, end, "ET")
+        schedule = get_gbt_schedule_events(start, end, "ET", False, True)
         url      = 'sesshuns/schedule_summary.html'
         projects = []
         receivers = {}

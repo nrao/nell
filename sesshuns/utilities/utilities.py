@@ -257,7 +257,7 @@ def getReservationsFromDB(start, end):
 # datetime for that day, and a list of that day's events.
 ######################################################################
 
-def get_gbt_schedule_events(start, end, timezone, get_moc = False):
+def get_gbt_schedule_events(start, end, timezone, get_moc = False, ignore_non_maint_period_maint_events = False):
     """
     Generate a list of schedule events.  The list returned consists of
     tuples: first element is a datetime, the second element is the
@@ -301,7 +301,8 @@ def get_gbt_schedule_events(start, end, timezone, get_moc = False):
             daily_events += _get_floating_maint_events(today, timezone)
 
         # finally gather up the non-maintenance-period maintenance events
-        daily_events += _get_non_maint_period_maint_events(today, timezone)
+        if not ignore_non_maint_period_maint_events:
+            daily_events += _get_non_maint_period_maint_events(today, timezone)
 
         # now sort the events and add to the calendar list
         daily_events.sort()
