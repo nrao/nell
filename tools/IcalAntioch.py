@@ -1,6 +1,14 @@
+#!/bin/env python
+
+from django.core.management import setup_environ
+import settings
+setup_environ(settings)
+
+
 from icalendar       import Calendar, Event, UTC
 from datetime        import datetime, timedelta
 from utilities.TimeAgent import dt2semester 
+import sys
 
 class IcalAntioch:
 
@@ -135,4 +143,19 @@ class IcalAntioch:
                              )
                  )            
         return event                             
-        
+
+def show_help(program):
+
+    print "for the program: ", program
+    print "you must give two args: filein fileout"
+    
+if __name__ == '__main__':
+
+    if len(sys.argv) < 3:
+        show_help(sys.argv[0])
+        sys.exit()
+    else:    
+        filein  = sys.argv[1]
+        fileout = sys.argv[2]
+        ical = IcalAntioch(filein, fileout)
+        ical.writeSchedule()
