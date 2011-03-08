@@ -308,7 +308,7 @@ class Period(models.Model):
         # TBF: why doesn't ps.query.group_by = ['start'] work?
         ps = Period.objects.filter(start__gt = begin - timedelta(days = 1)
                                  , start__lt = end).order_by('start')
-        ps = [p for p in ps if p.end() >= begin]
+        ps = [p for p in ps if p.end() > begin]
 
         if ignore_deleted:                      
             ps = [p for p in ps if p.state.abbreviation != 'D']
