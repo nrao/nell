@@ -1,0 +1,72 @@
+Revision Report for Period: Period (543) for Session (1): 2009-10-05 17:30:00 for  8.50 Hrs (S) - Id (540); SC: 8.50 OT: 0.00 NB: 0.00 OS: 0.00 LT: 8.50 SN: 0.00
+
+
+WHEN: 2010-03-29 15:32:09
+Initial version.
+WHAT: Period
+Details:
+score : 0.0
+moc_ack : False
+window : None
+forecast : 2009-09-30 15:30:00
+start : 2009-10-05 17:30:00
+state : 2
+session : 1
+elective : None
+duration : 8.5
+accounting : 540
+backup : False
+id : 543
+
+WHEN: 2010-03-29 15:32:09
+Initial version.
+WHAT: Period_Accounting
+Details:
+scheduled : 8.5
+other_session_rfi : 0.0
+description : VLBA disk failure in GB
+other_session_weather : 0.0
+lost_time_other : 8.5
+short_notice : 0.0
+not_billable : 0.0
+lost_time_weather : 0.0
+other_session_other : 0.0
+id : 540
+lost_time_rfi : 0.0
+
+WHEN: 2010-03-29 15:32:28
+Initial version.
+WHAT: Period
+Details:
+score : 0.0
+moc_ack : False
+window : None
+forecast : 2009-09-30 15:30:00
+start : 2009-10-05 17:30:00
+state : 2
+session : 1
+elective : None
+duration : 8.5
+accounting : 540
+backup : False
+id : 543
+
+WHEN: 2010-03-29 15:32:28
+Initial version.
+WHAT: Period_Accounting
+Details:
+scheduled : 8.5
+other_session_rfi : 0.0
+description : VLBA disk failure in GB
+other_session_weather : 0.0
+lost_time_other : 8.5
+short_notice : 0.0
+not_billable : 0.0
+lost_time_weather : 0.0
+other_session_other : 0.0
+id : 540
+lost_time_rfi : 0.0
+
+Diffs:
+ Differences for Period: Period (543) for Session (1): 2009-10-05 17:30:00 for  8.50 Hrs (S) - Id (540); SC: 8.50 OT: 0.00 NB: 0.00 OS: 0.00 LT: 8.50 SN: 0.00
+

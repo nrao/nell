@@ -1,0 +1,13 @@
+#!/bin/bash
+
+source /home/dss/conundrum/conundrum.bash
+
+export DSS_NELL=/home/dss/release/nell
+# we can't call our method in this traditional manner due to 
+# circular imports that we don't understand invoving NRAOBosDB
+#export PYTHONPATH=$DSS_NELL:$PYTHONPATH
+#python $DSS_NELL/utilities/database/ReservationsUtility.py
+
+# instead, KLUGE!
+cd $DSS_NELL
+python manage.py shell < utilities/database/updateReservations.py
