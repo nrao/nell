@@ -8,7 +8,6 @@ urls.py
 settings.py
 createdb
 
-bin/
 DBReport.xt
 DSSPrime2DSS_report.txt
 DssBlackoutReport.txt
