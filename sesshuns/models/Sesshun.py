@@ -1,15 +1,16 @@
-from django.db import models
+from django.db         import models
 
-from Allotment      import Allotment
-from common         import *
-from Observing_Type import Observing_Type
-from Parameter      import Parameter
-from Project        import Project
-from Receiver       import Receiver
+from Allotment         import Allotment
+from common            import *
+from Observing_Type    import Observing_Type
+from Parameter         import Parameter
+from Project           import Project
+from Receiver          import Receiver
 from Receiver_Schedule import Receiver_Schedule
-from Session_Type   import Session_Type
-from Status         import Status
-from System         import System
+from Period_State      import Period_State
+from Session_Type      import Session_Type
+from Status            import Status
+from System            import System
 
 class Sesshun(models.Model):
     
@@ -321,9 +322,13 @@ class Sesshun(models.Model):
         how many have been blacked out?
         Returns tuple of hours (scheduble but ignoring blackouts
                               , scheduable but blacked out)
+        Returns tuple of (scheduable but ignoring blackouts total
+                        , scheduable but blacked out total
+                        , [2-tuple of scheduable-but-ignoring-blackouts range)]
+                        , [[2-tuple of scheduable-but-blacked-out-range]])
         """
 
-        nss1 = self.get_time_not_schedulable( start
+        nss1 = self.get_time_not_schedulable(start
                                            , end
                                            , blackouts = False)
 
@@ -341,6 +346,7 @@ class Sesshun(models.Model):
         # blacked out?
         hrsBlackedOut = 0.0
         bss = []
+        #print "schedulable loop:"
         for s in schedulable:
             bs = self.project.get_blackout_times(s[0], s[1])
             # but these blackout times might not match to the schedulable
@@ -362,3 +368,36 @@ class Sesshun(models.Model):
         db_table  = "sessions"
         app_label = "sesshuns"
 
+    def getBlackedOutSchedulablePeriods(self):
+        """
+        Of the periods for this session overlapping in the time range
+        that are not deleted or completed, which schedulable ones have
+        been blacked out?  Returns a list of offending periods.
+        """
+        state = Period_State.get_state('D')
+        ps = self.period_set.exclude(state=state).order_by('start')
+        periods = list(ps)
+        if not periods:
+            return []
+        pranges = [(p.start, p.end(), p) for p in periods]
+        _, _, _, brs = \
+            self.getBlackedOutSchedulableTime(pranges[0][0]
+                                            , pranges[-1][1])
+        branges = [r for sublist in brs for r in sublist] # flatten lists
+
+        retval = []
+        for p in pranges:
+            for b in branges:
+                if p[0] < b[1] and b[0] < p[1]:
+                    retval.append(p[2])
+                    break
+        return retval
+
+    def getPeriodRange(self):
+        state = Period_State.get_state('D')
+        ps = self.period_set.exclude(state=state).order_by('start')
+        periods = list(ps)
+        if periods:
+            return [periods[0].start, periods[-1].end()]
+        else:
+            return []

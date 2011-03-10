@@ -90,18 +90,32 @@ def find_intersections(events):
     describing the intersections.  All datetime tuples are assumed to be 
     in the same timezone.
     """
-    start = 0; end = 1
-    intersections = []
-    for b in events[0]:
-        for set in events[1:]:
-            if any([overlaps(b, s) for s in set]):
-                intersections.extend(
-                    [(max([b[start], s[start]]), min([b[end], s[end]])) \
-                     for s in set if overlaps(b, s)])
+    def common(a, b):
+        if a[1] <= b[0] or b[1] <= a[0]:
+            return ()
+        elif b[0] < a[1]:
+            if a[0] < b[0]:
+                return (b[0], a[1])
             else:
-                return [] # No intersections for all sets.
+                return (b[0], b[1])
+        elif a[0] < b[1]:
+            if b[1] < a[1]:
+                return (a[0], b[1])
+            else:
+                return (a[0], a[1])
+        else:
+            return ()
 
-    return intersections
+    retval = events[0]
+    for event in events[1:]:
+        temp = []
+        for r in retval:
+            for e in event:
+                t = common(r, e)
+                if t:
+                    temp.append(t)
+        retval = temp
+    return retval
 
 def consolidate_events(events):
     """

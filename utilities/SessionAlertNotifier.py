@@ -10,10 +10,10 @@ class SessionAlertEmail(Email):
     def __init__(self, sender, unknown):
 
         Email.__init__(self, sender = sender, recipients = [])
-        self.createRecepients(unknown.session)
+        self.createRecipients(unknown.session)
         self.date = None
 
-    def createRecepients(self, session):
+    def createRecipients(self, session):
         "Determine emails from window's project's observers"
         obs = [o.user for o in session.project.get_observers()]
         pc = session.project.principal_contact()

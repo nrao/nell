@@ -14,10 +14,10 @@ class WinAlertEmail(Email):
     def __init__(self, sender, window):
 
         Email.__init__(self, sender = sender, recipients = [])
-        self.createRecepients(window)
+        self.createRecipients(window)
         self.date = None
 
-    def createRecepients(self, window):
+    def createRecipients(self, window):
         "Determine emails from window's project's observers"
         obs = [o.user for o in window.session.project.get_observers()]
         pc = window.session.project.principal_contact()
@@ -34,25 +34,29 @@ class WinAlertEmail(Email):
     def createMessage(self, window, subject, percent, chance):
         self.SetSubject(subject)
         body = """
-Dear Observers,  
+Dear Observers,
 
-There is no observer available for >%s%% of the  possible time for scheduling 
-%s's windowed session which runs from %s through 
-%s. As a result it is %s this project will not be 
-scheduled during the windowed session. At this point three options are available:
-     (1) Change the blackout dates for one or more observers of the project
-         so that this situation is remedied
+%s's windowed session, whose window runs from %s through
+%s, is blacked out for >%s%% of its possible scheduling time.
+As a result it is %s this project will not be scheduled
+during its window.  At this point three options are available:
+
+     (1) Change one or more blackout dates affecting the project
+         so that this situation is remedied.
      (2) Leave all blackout dates as they are, and accept that your project
-         may not be scheduled.  In this case the window *will not be rescheduled*.
+         may not be scheduled.  In this case the window *will not be
+         rescheduled*.
      (3) Contact the GBT scheduling team (helpdesk-dss@nrao.edu) to determine
          if the window parameters for this project should be changed.    
 
 Regards,
+
 The GBT scheduling team 
-        """ % (percent
-             , window.session.project.pcode
+        """ % (
+               window.session.project.pcode
              , window.start_date()
              , window.last_date()
+             , percent
              , chance
              )
         self.SetBody(body)

@@ -8,7 +8,6 @@ class TestConsolidateBlackouts(NellTestCase):
 
     def test_find_intersections(self):
 
-        # test 1
         eventSets = [[(datetime(2009, 1, 1), datetime(2009, 1, 3))]
                    , [(datetime(2009, 1, 2), datetime(2009, 1, 4))]]
         expected = [
@@ -17,6 +16,25 @@ class TestConsolidateBlackouts(NellTestCase):
         r = find_intersections(eventSets)
         self.assertEquals(expected, r)
 
+        eventSets = [[(datetime(2009, 4,  9), datetime(2009, 4, 17))
+                    , (datetime(2009, 4,  5), datetime(2009, 4,  8))]
+                   , [(datetime(2009, 4,  6), datetime(2009, 4,  8))
+                    , (datetime(2009, 4, 13), datetime(2009, 4, 25))]]
+        expected = [
+            (datetime(2009, 4, 13), datetime(2009, 4, 17))
+          , (datetime(2009, 4,  6), datetime(2009, 4,  8))
+        ]
+        r = find_intersections(eventSets)
+        self.assertEquals(expected, r)
+
+        eventSets = [[(datetime(2009, 4, 9), datetime(2009, 4, 17))
+                    , (datetime(2009, 4, 5), datetime(2009, 4, 8))]
+                   , [(datetime(2009, 4, 6), datetime(2009, 4, 8))]]
+        expected = [
+            (datetime(2009, 4, 6), datetime(2009, 4, 8))
+        ]
+        r = find_intersections(eventSets)
+        self.assertEquals(expected, r)
 
     def test_consolidate_events2(self):
 

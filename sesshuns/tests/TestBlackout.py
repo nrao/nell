@@ -10,7 +10,6 @@ class TestBlackout(NellTestCase):
         super(TestBlackout, self).setUp()
 
         # create some user blackouts
-
         self.u = User(first_name = "Test"
                     , last_name  = "User"
                     , role       = first(Role.objects.all())

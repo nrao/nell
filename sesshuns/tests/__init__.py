@@ -6,8 +6,12 @@ from TestConsolidateBlackouts  import TestConsolidateBlackouts
 from TestDBReporter            import TestDBReporter
 from TestDSSPrime2DSS          import TestDSSPrime2DSS
 from TestElective              import TestElective
+from TestElecAlertNotifier     import TestElecAlertNotifier
+from TestElectiveAlerts        import TestElectiveAlerts
 from TestElectiveResource      import TestElectiveResource
 from TestEmailTemplate         import TestEmailTemplate
+from TestFixedAlerts           import TestFixedAlerts
+from TestFixedAlertNotifier    import TestFixedAlertNotifier
 from TestFriendResource        import TestFriendResource
 from TestIcalAntioch           import TestIcalAntioch
 from TestInvestigatorResource  import TestInvestigatorResource

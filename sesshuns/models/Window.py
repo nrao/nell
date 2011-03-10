@@ -236,6 +236,13 @@ class Window(models.Model):
         """
         Of the hours in this window that are schedulable, how
         many have been blacked out?
+        Returns for this window the tuple:
+            (
+             total schedulable time ignoring blacked out
+           , total schedulable time but blacked out
+           , [schedulable ranges ignoring blacked out]
+           , [schedulable ranges but blacked out]
+            )
         """
         hrsSchedulable = hrsBlackedOut = 0.0
         schedulable = []

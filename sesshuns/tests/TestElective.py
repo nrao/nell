@@ -155,3 +155,42 @@ class TestElective(NellTestCase):
         self.assertEqual((datetime(2009, 6, 1, 12, 15)
                         , datetime(2009, 6, 15, 12, 15))
                        , self.elec.periodDateRange())
+
+    def test_getBlackedOutSchedulablePeriods(self):
+        u = User(first_name = "Test"
+               , last_name  = "User"
+               , role       = first(Role.objects.all())
+               , sanctioned = True
+                      )
+        u.save()
+
+        once = first(Repeat.objects.filter(repeat = 'Once'))
+        blackout = Blackout(user       = u
+                          , repeat     = once
+                          , start_date = datetime(2009, 6,  8, 11)
+                          , end_date   = datetime(2009, 6, 10, 8))
+        blackout.save()
+         
+        project = self.elec.session.project
+        investigator = Investigator(project = project
+                                  , user = u
+                                  , observer = True)
+        investigator.save()
+
+        #start = datetime(2009, 6,  1,  8, 30)
+        #end   = datetime(2009, 6, 16, 12, 0)
+
+        # test observer black out
+        self.assertEqual([self.period2]
+                       , self.elec.getBlackedOutSchedulablePeriods())
+        blackout = Blackout(project    = project
+                          , start_date = datetime(2009, 6, 14) 
+                          , end_date   = datetime(2009, 6, 16)
+                          , repeat     = once
+                           )
+        blackout.save()                           
+
+        # test project black out
+        self.assertEqual([self.period2, self.period3]
+                       , self.elec.getBlackedOutSchedulablePeriods())
+

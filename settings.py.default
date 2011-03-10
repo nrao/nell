@@ -1,10 +1,11 @@
 # Django settings for nell project.
 
 # Look for variables marked with #MODIFY# to adapt for a specific installation
-# set this to True only for production - must be False for unit tests to run
+
+# Set this to True only for production - must be False for unit tests to run
 USE_REVERSION = False #MODIFY#
 
-NELL_ROOT        ='{path to your nell sandbox}' #MODIFY#
+NELL_ROOT        = '{path to your nell sandbox}' #MODIFY#
 STATIC_DOC_ROOT  = NELL_ROOT + '/sesshuns/static'
 SC_EQUATION_DEFS = NELL_ROOT + '/calculator/equations.cfg'
 
