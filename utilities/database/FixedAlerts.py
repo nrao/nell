@@ -8,7 +8,7 @@ from datetime import datetime
 
 from sesshuns.models         import Sesshun
 from sesshuns.models         import Session_Type
-#from utilities               import FixedAlertNotifier
+from utilities               import FixedAlertNotifier
 
 class FixedAlerts():
 
@@ -121,14 +121,14 @@ class FixedAlerts():
             # report this
             self.add("Alert for Session # %d; stage = %d\n" % (sess.id, stage))
             
-            #san = ElecAlertNotifier(session = sess
-            #                      , test = test
-            #                      )
+            san = FixedAlertNotifier(session = sess
+                                   , test = test
+                                    )
             #print san.email.GetText()
-            #if not test:
-            #    if san.email is not None:
-            #        self.add("Notifying for Elective # %d: %s\n" % (elective.id, san.email.GetRecipientString()))
-            #    san.notify()
+            if not test:
+                if san.email is not None:
+                    self.add("Notifying for Fixed Sesshun # %d: %s\n" % (sess.id, san.email.GetRecipientString()))
+                san.notify()
         
         self.write()
 
@@ -183,7 +183,7 @@ if __name__ == '__main__':
         fixed = Session_Type.objects.filter(type = 'fixed')
         sessions = Sesshun.objects.filter(project__pcode = pcode
                                         , session_type = fixed)
-        if elecs:
+        if sessions:
             print "Raising Fixed Alerts for Project: %s" % pcode
         else:
             print "Project %s has no fixed sessions" % pcode
