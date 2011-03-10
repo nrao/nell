@@ -104,10 +104,44 @@ class Elective(models.Model):
                 p.move_to_deleted_state()
 
         elif not complete and self.complete:
-            # True -> False:  resurect all deleted
+            # True -> False:  resurrect all deleted
             for p in self.deletedPeriods():
                 p.state = Period_State.get_state("P")        
                 p.save()
 
         self.complete = complete
         self.save()
+
+    def getRange(self):
+        state = Period_State.get_state('D')
+        ps = self.periods.exclude(state=state).order_by('start')
+        periods = list(ps)
+        if periods:
+            return [periods[0].start, periods[-1].end()]
+        else:
+            return []
+
+    def getBlackedOutSchedulablePeriods(self):
+        """
+        Of the periods for this elective overlapping in the time range
+        that are not deleted or completed, which schedulable ones have
+        been blacked out?  Returns a list of offending periods.
+        """
+        state = Period_State.get_state('D')
+        ps = self.periods.exclude(state=state).order_by('start')
+        periods = list(ps)
+        if not periods:
+            return []
+        pranges = [(p.start, p.end(), p) for p in periods]
+        _, _, _, brs = \
+            self.session.getBlackedOutSchedulableTime(pranges[0][0]
+                                                    , pranges[-1][1])
+        branges = [r for sublist in brs for r in sublist] # flatten lists
+
+        retval = []
+        for p in pranges:
+            for b in branges:
+                if p[0] < b[1] and b[0] < p[1]:
+                    retval.append(p[2])
+                    break
+        return retval

@@ -12,7 +12,7 @@ class TestWinAlertNotifier(NellTestCase):
         self.project = Project()
         self.project_adapter = ProjectHttpAdapter(self.project)
         pdata = {"semester"   : "09A"
-               , "pcode"      : "WTF"
+               , "pcode"      : "AGBT09C-047"
                , "type"       : "science"
                , "total_time" : "10.0"
                , "PSC_time"   : "10.0"
@@ -49,8 +49,8 @@ class TestWinAlertNotifier(NellTestCase):
                             )
 
         txt = wn.email.GetText()
-        self.failUnless("Subject: Blackout dates may prevent scheduling WTF" in txt)
-        self.failUnless(">10% of the  possible time for scheduling" in txt)
+        self.failUnless("Subject: Blackout dates may prevent scheduling AGBT09C-047" in txt)
+        self.failUnless(">10% of its possible scheduling time" in txt)
         self.failUnless("2009-04-05 through" in txt)
 
         wn = WinAlertNotifier(window = self.window
@@ -62,5 +62,5 @@ class TestWinAlertNotifier(NellTestCase):
 
         email = wn.email
         txt = email.GetText()
-        self.failUnless("Subject: Blackout dates will prevent scheduling WTF" in txt)
+        self.failUnless("Subject: Blackout dates will prevent scheduling AGBT09C-047" in txt)
 
