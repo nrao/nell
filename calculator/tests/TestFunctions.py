@@ -1,8 +1,8 @@
-import unittest
+from django.test import TestCase
 
 from calculator.utilities.functions import *
 
-class TestFunctions(unittest.TestCase):
+class TestFunctions(TestCase):
 
     def test_sourceSizeCorrection(self):
         correction = sourceSizeCorrection(6, 8)
@@ -76,10 +76,3 @@ class TestFunctions(unittest.TestCase):
     def test_calculateAttenuation(self):
         attenuation = calculateAttenuation(2.11, 1420)
         self.assertAlmostEqual(attenuation, 0.961, 3)
-
-    def test_calcTsky(self):
-        t = calcTsky(0, 0, 1420, 'model')
-        self.assertAlmostEqual(t, 0.6992, 4)
-        t = calcTsky(60, 70, 1420, 'model')
-        self.assertAlmostEqual(t, 0.8164, 4)
-        
