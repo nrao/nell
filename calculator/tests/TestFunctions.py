@@ -77,3 +77,9 @@ class TestFunctions(unittest.TestCase):
         attenuation = calculateAttenuation(2.11, 1420)
         self.assertAlmostEqual(attenuation, 0.961, 3)
 
+    def test_calcTsky(self):
+        t = calcTsky(0, 0, 1420)
+        self.assertAlmostEqual(t, 0.6992, 4)
+        t = calcTsky(60, 70, 1420)
+        self.assertAlmostEqual(t, 0.8164, 4)
+        
