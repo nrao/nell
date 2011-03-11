@@ -78,8 +78,8 @@ class TestFunctions(unittest.TestCase):
         self.assertAlmostEqual(attenuation, 0.961, 3)
 
     def test_calcTsky(self):
-        t = calcTsky(0, 0, 1420)
+        t = calcTsky(0, 0, 1420, 'model')
         self.assertAlmostEqual(t, 0.6992, 4)
-        t = calcTsky(60, 70, 1420)
+        t = calcTsky(60, 70, 1420, 'model')
         self.assertAlmostEqual(t, 0.8164, 4)
         

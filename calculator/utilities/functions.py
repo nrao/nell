@@ -160,7 +160,9 @@ def raDec2thetaPhi(r, d):
     i  = (nl / 4) + 1
     return i, j
 
-def calcTsky(r, d, freq):
+def calcTsky(r, d, freq, gal):
+    if gal != 'model':
+        return 0
     i, j = raDec2thetaPhi(r, d)
     tsky = first(TSky.objects.filter(theta = i - 1, phi = j - 1))
     return tsky.tsky * math.pow(freq / 408., -2.6) if tsky is not None else 0
