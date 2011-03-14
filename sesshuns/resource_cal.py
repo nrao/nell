@@ -724,7 +724,6 @@ def _process_activity(request, ma, form):
         template = None
 
     if template:
-
         mas = [m for m in Maintenance_Activity.objects\
                .filter(repeat_template = template)\
                .filter(_start__gte = ma._start)]
