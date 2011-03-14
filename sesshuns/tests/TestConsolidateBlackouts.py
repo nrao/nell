@@ -2,9 +2,27 @@ from datetime import datetime
 
 from test_utils              import NellTestCase
 from sesshuns.models         import consolidate_events
-from sesshuns.models         import find_intersections
+from sesshuns.models         import find_intersections, intersect
 
 class TestConsolidateBlackouts(NellTestCase):
+
+    def test_intersect(self):
+        d0 = datetime(2009, 1, 1, 0, 0, 0)
+        d1 = datetime(2009, 1, 1, 1, 0, 0)
+        d2 = datetime(2009, 1, 1, 2, 0, 0)
+        d3 = datetime(2009, 1, 1, 3, 0, 0)
+
+        self.assertEquals((),       intersect((d0, d1), (d2, d3)))
+        self.assertEquals((),       intersect((d2, d3), (d0, d1)))
+        self.assertEquals((d0, d1), intersect((d0, d1), (d0, d1)))
+        self.assertEquals((),       intersect((d0, d1), (d1, d2)))
+        self.assertEquals((),       intersect((d1, d2), (d0, d1)))
+        self.assertEquals((d1, d2), intersect((d1, d2), (d0, d3)))
+        self.assertEquals((d1, d2), intersect((d0, d3), (d1, d2)))
+        self.assertEquals((d1, d2), intersect((d0, d2), (d1, d3)))
+        self.assertEquals((d1, d2), intersect((d1, d3), (d0, d2)))
+        self.assertEquals((d1, d2), intersect((d1, d2), (d0, d2)))
+        self.assertEquals((d0, d1), intersect((d0, d2), (d0, d1)))
 
     def test_find_intersections(self):
 

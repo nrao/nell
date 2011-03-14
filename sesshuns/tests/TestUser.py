@@ -75,6 +75,7 @@ class TestUser(NellTestCase):
         self.user4.save()
 
     def tearDown(self):
+        super(TestUser, self).tearDown()
         self.investigator2.delete()
         self.user2.delete()
         self.investigator1.delete()

@@ -58,6 +58,7 @@ class TestProject(BenchTestCase):
         self.period_adapter.init_from_post(fdata, 'UTC')
 
     def tearDown(self):
+        super(TestProject, self).tearDown()
         self.investigator2.delete()
         self.user2.delete()
         self.investigator1.delete()

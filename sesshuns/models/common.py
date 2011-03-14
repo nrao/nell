@@ -82,6 +82,23 @@ def overlaps(dt1, dt2):
     else:
         return False
 
+def intersect(a, b):
+    """
+    Find the intersection between two ranges of values.
+    """
+    if a[1] <= b[0] or b[1] <= a[0]:
+        return ()
+    elif a[0] <= b[0]:
+        if a[1] <= b[1]:
+            return (b[0], a[1])
+        else:
+            return (b[0], b[1])
+    else: # b[0] < a[0]
+        if a[1] <= b[1]:
+            return (a[0], a[1])
+        else:
+            return (a[0], b[1])
+
 def find_intersections(events):
     """
     Takes a list of lists of datetime tuples of the form (start, end) 
@@ -90,28 +107,12 @@ def find_intersections(events):
     describing the intersections.  All datetime tuples are assumed to be 
     in the same timezone.
     """
-    def common(a, b):
-        if a[1] <= b[0] or b[1] <= a[0]:
-            return ()
-        elif b[0] < a[1]:
-            if a[0] < b[0]:
-                return (b[0], a[1])
-            else:
-                return (b[0], b[1])
-        elif a[0] < b[1]:
-            if b[1] < a[1]:
-                return (a[0], b[1])
-            else:
-                return (a[0], a[1])
-        else:
-            return ()
-
     retval = events[0]
     for event in events[1:]:
         temp = []
         for r in retval:
             for e in event:
-                t = common(r, e)
+                t = intersect(r, e)
                 if t:
                     temp.append(t)
         retval = temp
