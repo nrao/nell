@@ -163,6 +163,15 @@ class WeatherValues(models.Model):
     class Meta:
         db_table = 'calculator_weather_values'
 
+class TSky(models.Model):
+
+    theta = models.IntegerField()
+    phi   = models.IntegerField()
+    tsky  = models.FloatField()
+
+    class Meta:
+        db_table = 'calculator_tsky_values'
+
 def getName(hardware,id):
     Dict = {
        'backend'     : lambda id: Calc_Backend.objects.get(pk=id).getName(),

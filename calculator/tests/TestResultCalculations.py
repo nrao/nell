@@ -1,6 +1,23 @@
 from calculator.utilities.Result import Result
-
+from django.test import TestCase
 import unittest
+
+class TestGalacticModel(TestCase):
+    fixtures = ['tsky_data.json']
+
+    def test_galactic_model(self):
+        self.results = Result('equations')
+        self.results.set('frame', 'topocentric frame')
+        self.results.set('topocentric_freq', 1420)
+        self.results.set('declination', 38.43)
+        self.results.set('right_ascension', 10.25)
+        self.results.set('galactic', 'model')
+
+        value, _, _, _, _ = self.results.get('t_galactic_model')
+        self.assertTrue(value is not None)
+        self.assertAlmostEqual(value, 0.5586, 4)
+
+        self.results.__del__()
 
 class TestResultCalculations(unittest.TestCase):
 
@@ -111,6 +128,8 @@ class TestResultCalculations(unittest.TestCase):
     def test_estTS(self):
         self.results.set('backend', 'GBT Spectrometer')
         self.results.set('declination', 38.43)
+        self.results.set('right_ascension', 0.0)
+        self.results.set('galactic', 'no_correction')
         self.results.set('estimated_continuum', 3)
         value = self.results.get('est_ts')[0]
         self.assertTrue(value is not None)
@@ -121,6 +140,8 @@ class TestResultCalculations(unittest.TestCase):
     def test_t_sys(self):
         self.results.set('backend', 'GBT Spectrometer')
         self.results.set('declination', 38.43)
+        self.results.set('right_ascension', 0.0)
+        self.results.set('galactic', 'no_correction')
         self.results.set('estimated_continuum', 3)
         value = self.results.get('t_sys')[0]
         self.assertTrue(value is not None)

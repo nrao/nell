@@ -61,8 +61,10 @@ class NellResource(Resource):
 
         # NOTE: this originally returned "", but if we want JSON callbacks
         # to work from GWT, need A response.  This change seems benign
-        return HttpResponse(json.dumps({"success" : "ok"
-                                      , "error"   : error})
+        response = {"success" : "ok"}
+        if error:
+            response.update({"error" : error})
+        return HttpResponse(json.dumps(response)
                           , mimetype = "text/plain")
 
     @revision.create_on_success 

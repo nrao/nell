@@ -309,9 +309,12 @@ def add_activity(request, period_id = None, year = None,
         if form.is_valid():
             # process the returned stuff here...
             ma = Maintenance_Activity()
+
+            if period_id:
+                ma.period = Period.objects.get(id = period_id)
+                
             ma.save() # needs to have a primary key for many-to-many
                       # relationships to be set.
-
             _process_activity(request, ma, form)
             view_url = "http://%s/resourcecal_display_activity/%s/" % (request.get_host(), ma.id)
             rc_notifier.notify(supervisors, "new", ma.get_start("ET").date(), view_url)
@@ -688,15 +691,20 @@ def _process_activity(request, ma, form):
     if ma.repeat_interval > 0:
         ma.repeat_end = form.cleaned_data["recurrency_until"]
 
-    # assign right period for maintenance activity.  If no
-    # periods, this will remain 'None'
-    start = TimeAgent.truncateDt(ma._start)
-    end = start + timedelta(days = 1)
-    periods = Period.get_periods_by_observing_type(start, end, "maintenance")
 
-    for p in periods:
-        if not p.isDeleted() and  ma._start >= p.start and ma._start < p.end():
-            ma.period = p
+    # Normally a maintenance activity comes with a period assigned.
+    # But it is possible to add a maintenance activity without a
+    # period.  In this case, assign right period for maintenance
+    # activity, if the activity occurs during a scheduled maintenance
+    # period.  If no periods, this will remain 'None'
+    if not ma.period:
+        start = TimeAgent.truncateDt(ma._start)
+        end = start + timedelta(days = 1)
+        periods = Period.get_periods_by_observing_type(start, end, "maintenance")
+
+        for p in periods:
+            if p.isScheduled() and ma._start >= p.start and ma._start < p.end():
+                ma.period = p
 
     # Now add user and timestamp for modification.  Earliest mod is
     # considered creation.
@@ -716,7 +724,6 @@ def _process_activity(request, ma, form):
         template = None
 
     if template:
-
         mas = [m for m in Maintenance_Activity.objects\
                .filter(repeat_template = template)\
                .filter(_start__gte = ma._start)]

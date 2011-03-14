@@ -1,7 +1,7 @@
-from calculator.models import WeatherValues
+from calculator.models import WeatherValues, TSky
 from sesshuns.models   import first
 
-import math
+import math, slalib
 
 freqRes = {800  : 8192
          , 200  : 32768
@@ -147,3 +147,22 @@ def calculateESTTS(freq, t_bg, t_gal_bg, est0, backend = None):
     eta_track = wv.eta_track_mustang if backend == 'Mustang' else wv.eta_track
     return (t_bg + t_gal_bg) / math.sqrt(eta_track * wv.eta_surf) + est0 / math.sqrt(wv.eta_dss)
     
+def raDec2thetaPhi(r, d):
+    ra   = r * 15 * math.pi / 180
+    dec  = d * math.pi / 180
+    l, b = slalib.sla_eqgal(ra, dec)
+    l *= 180 / math.pi
+    b *= 180 / math.pi
+    j = int(b + 91.5)
+    j = 180 if j > 180 else j
+    nl = int(l - 0.5)
+    nl = 359 if l < 0.5 else nl
+    i  = (nl / 4) + 1
+    return i, j
+
+def calcTsky(r, d, freq, gal):
+    if gal != 'model':
+        return 0
+    i, j = raDec2thetaPhi(r, d)
+    tsky = first(TSky.objects.filter(theta = i - 1, phi = j - 1))
+    return tsky.tsky * math.pow(freq / 408., -2.6) if tsky is not None else 0

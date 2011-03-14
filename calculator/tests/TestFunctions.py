@@ -1,8 +1,8 @@
-import unittest
+from django.test import TestCase
 
 from calculator.utilities.functions import *
 
-class TestFunctions(unittest.TestCase):
+class TestFunctions(TestCase):
 
     def test_sourceSizeCorrection(self):
         correction = sourceSizeCorrection(6, 8)
@@ -76,4 +76,3 @@ class TestFunctions(unittest.TestCase):
     def test_calculateAttenuation(self):
         attenuation = calculateAttenuation(2.11, 1420)
         self.assertAlmostEqual(attenuation, 0.961, 3)
-
