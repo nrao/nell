@@ -6,7 +6,7 @@ from django.contrib.auth       import models as m
 from test_utils                import BenchTestCase, timeIt
 from sesshuns.models           import *
 from sesshuns.httpadapters     import *
-from sesshuns.utilities        import create_user
+from sesshuns.utilities        import create_user, TimeAgent
 from utils                     import create_sesshun, fdata
 from sesshuns.GBTCalendarEvent import CalEventPeriod
 from TestObserversBase         import TestObserversBase
@@ -83,7 +83,7 @@ class TestOperators(TestObserversBase):
     def test_summary(self):
         # setup a period for a month before
         lastMonth = self.start - timedelta(days = 30)
-        lastMonthEst = self.estStart - timedelta(days = 30)
+        lastMonthEst = TimeAgent.utc2est(lastMonth)
         pa = Period_Accounting(scheduled = self.dur)
         pa.save()
         p = Period( session = self.s
