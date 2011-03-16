@@ -4,7 +4,8 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from sesshuns.models                       import *
+from scheduler.models                       import *
+from sesshuns.models                        import overlaps
 from sets                                  import Set
 from datetime                              import date, datetime, timedelta
 from nell.tools                            import TimeAccounting

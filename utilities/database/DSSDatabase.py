@@ -2,7 +2,7 @@ from datetime                              import date, datetime, timedelta
 from nell.utilities.database.DSSPrime2DSS  import DSSPrime2DSS
 from nell.utilities.database.Schedtime2DSS import Schedtime2DSS
 from nell.utilities.database.UserNames     import UserNames
-from sesshuns.models                       import *
+from scheduler.models                       import *
 
 class DSSDatabase(object):
 

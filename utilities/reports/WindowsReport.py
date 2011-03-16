@@ -1,10 +1,11 @@
 #! /usr/bin/env python
 
+from datetime               import datetime, date
 from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from sesshuns.models      import *
+from scheduler.models      import *
 from django.db.models     import Min
 
 # from PR2Q2:

@@ -1,7 +1,9 @@
+from datetime   import datetime, timedelta
+
 from nell.utilities  import SchedulingNotifier
-from utils           import create_sesshun
+from scheduler.tests.utils           import create_sesshun
 from PeriodsTestCase import PeriodsTestCase
-from sesshuns.models import *
+from scheduler.models import *
 #from nell.utilities.ReversionUtilityTester  import VersionDiff
 from nell.utilities.RevisionUtilityTester import VersionTester
 from nell.utilities.VersionDiff import VersionDiff

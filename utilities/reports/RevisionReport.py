@@ -1,4 +1,4 @@
-from sesshuns.models import *
+from scheduler.models import *
 import reversion
 from reversion.models import Version
 from reversion import revision

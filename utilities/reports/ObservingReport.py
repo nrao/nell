@@ -3,7 +3,7 @@ import settings
 setup_environ(settings)
 
 from datetime        import datetime
-from sesshuns.models import Period
+from scheduler.models import Period
 from sets            import Set
 
 import calendar

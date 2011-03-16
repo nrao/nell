@@ -4,7 +4,8 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from sesshuns.models      import *
+from scheduler.models      import *
+from utilities             import TimeAgent
 
 class ScheduleReport():
 

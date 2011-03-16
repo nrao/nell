@@ -1,5 +1,6 @@
 from datetime                   import datetime, timedelta
-from sesshuns.models            import *
+from utilities               import TimeAgent
+from scheduler.models            import *
 from nell.utilities.TimeAgent   import dtDiffHrs, quarter
 from nell.utilities             import Score
 

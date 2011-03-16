@@ -3,6 +3,7 @@ from django.contrib    import admin
 from django.http       import HttpResponse
 from django.utils.html import escape
 from sesshuns.models   import * 
+from scheduler.models   import * 
 
 # Inlines
 

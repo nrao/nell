@@ -1,8 +1,8 @@
 from test_utils              import NellTestCase
+from scheduler.tests.utils   import create_sesshun
 from nell.utilities.ElecAlertNotifier import ElecAlertNotifier
-from utils                   import create_sesshun
-from sesshuns.models         import *
-from sesshuns.httpadapters   import *
+from scheduler.models         import *
+from scheduler.httpadapters   import *
 
 class TestElecAlertNotifier(NellTestCase):
 

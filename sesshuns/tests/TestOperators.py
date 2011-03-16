@@ -2,13 +2,15 @@ from copy                      import copy
 from django.test.client        import Client
 from django.conf               import settings
 from django.contrib.auth       import models as m
+from datetime                  import datetime, timedelta
 
 from test_utils                import BenchTestCase, timeIt
-from sesshuns.models           import *
-from sesshuns.httpadapters     import *
-from sesshuns.utilities        import create_user, TimeAgent
-from utils                     import create_sesshun, fdata
-from sesshuns.GBTCalendarEvent import CalEventPeriod
+from scheduler.models           import *
+from scheduler.httpadapters     import *
+from sesshuns.utilities        import create_user
+from utilities                  import TimeAgent
+from scheduler.tests.utils                     import create_sesshun, fdata
+from scheduler.GBTCalendarEvent import CalEventPeriod
 from TestObserversBase         import TestObserversBase
 
 class TestOperators(TestObserversBase):

@@ -1,4 +1,5 @@
-from sesshuns.models import *
+from datetime import datetime
+from scheduler.models import *
 import reversion
 import TimeAgent
 from reversion.models import Version

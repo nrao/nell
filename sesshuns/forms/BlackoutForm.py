@@ -1,6 +1,6 @@
 from datetime import time
 from django   import forms
-from sesshuns.models    import Repeat
+from scheduler.models    import Repeat
 from sesshuns.utilities import *
 
 times = [time(h, m).strftime("%H:%M") for h in range(0, 24) for m in range(0, 60, 15)]

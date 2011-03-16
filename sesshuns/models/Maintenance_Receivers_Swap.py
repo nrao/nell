@@ -28,8 +28,8 @@
 #
 ######################################################################
 
-from django.db import models
-from Receiver  import Receiver
+from django.db         import models
+from scheduler.models  import Receiver
 
 class Maintenance_Receivers_Swap(models.Model):
 

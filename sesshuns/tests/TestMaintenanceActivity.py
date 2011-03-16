@@ -1,5 +1,6 @@
 from test_utils              import NellTestCase
 from sesshuns.models         import *
+from scheduler.models        import *
 
 
 class TestMaintenanceActivity(NellTestCase):

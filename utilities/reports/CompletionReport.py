@@ -2,7 +2,7 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from sesshuns.models              import *
+from scheduler.models              import *
 from nell.tools.TimeAccounting    import TimeAccounting
 from sets                         import Set
 from datetime                     import *

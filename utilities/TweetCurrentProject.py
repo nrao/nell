@@ -4,7 +4,7 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from sesshuns.models import *
+from scheduler.models import Period
 from datetime        import datetime, timedelta
 import tinyurl
 import twitter

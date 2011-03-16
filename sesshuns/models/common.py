@@ -1,6 +1,5 @@
 from datetime                  import datetime, timedelta, date
 from math                      import asin, acos, cos, sin
-from django.conf               import settings
 from django.db                 import models
 from django.http               import QueryDict
 from nell.utilities            import TimeAgent, UserInfo, NRAOBosDB, Score
@@ -13,7 +12,6 @@ from sets                      import Set
 import urllib2
 import simplejson as json
 import sys
-import reversion
 
 def first(results, default = None):
     try:

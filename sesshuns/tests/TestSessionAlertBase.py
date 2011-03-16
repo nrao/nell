@@ -1,7 +1,8 @@
+from datetime  import date
 from test_utils.NellTestCase import NellTestCase
-from utils                   import create_sesshun
-from sesshuns.httpadapters   import *
-from sesshuns.models  import *
+from scheduler.tests.utils                   import create_sesshun
+from scheduler.httpadapters   import *
+from scheduler.models  import *
 
 class TestSessionAlertBase(NellTestCase):
 

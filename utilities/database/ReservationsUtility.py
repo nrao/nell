@@ -1,6 +1,6 @@
 from datetime           import datetime, timedelta
 from nell.utilities     import NRAOBosDB
-from sesshuns.models    import *
+from scheduler.models    import *
 
 class ReservationsUtility(object):
 

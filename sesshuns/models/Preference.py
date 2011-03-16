@@ -1,6 +1,5 @@
-from django.db   import models
-from User        import User
-from TimeZone    import TimeZone
+from django.db         import models
+from scheduler.models  import User, TimeZone
 
 class Preference(models.Model):
 

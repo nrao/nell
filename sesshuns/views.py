@@ -2,9 +2,9 @@ from datetime                           import date, datetime, timedelta
 from decorators                         import catch_json_parse_errors
 from django.http                        import HttpResponse
 from django.contrib.auth.models         import User as AuthUser
-from httpadapters                       import PeriodHttpAdapter
+from scheduler.httpadapters             import PeriodHttpAdapter
 from models                             import *
-from models                             import User as NellUser
+from scheduler.models                             import User as NellUser
 #from sesshuns.models.common             import d2str, dt2str
 from nell.tools                         import IcalMap, ScheduleTools, TimeAccounting
 from nell.utilities                     import TimeAgent

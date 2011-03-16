@@ -3,6 +3,7 @@ from decorators                         import is_staff
 from django.contrib.auth.decorators     import login_required
 from django.http                        import HttpResponse, HttpResponseRedirect
 from django.shortcuts                   import render_to_response
+from scheduler.models                   import *
 from models                             import *
 from nell.utilities.TimeAgent           import EST, UTC
 from observers                          import project_search

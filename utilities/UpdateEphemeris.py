@@ -3,8 +3,9 @@
 from django.core.management import setup_environ
 import settings
 setup_environ(settings)
+from datetime   import datetime
 
-from sesshuns.models import *
+from scheduler.models import *
 from utilities.ephemerisComets import ephemerisComets
 from utilities.ephemerisAsteroids import ephemerisAsteroids
 

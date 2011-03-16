@@ -6,7 +6,7 @@ setup_environ(settings)
 
 from datetime import datetime
 
-from sesshuns.models         import Elective
+from scheduler.models         import Elective
 from utilities               import ElecAlertNotifier
 
 class ElectiveAlerts():

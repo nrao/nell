@@ -1,10 +1,11 @@
 from django.test.client  import Client
+from datetime            import datetime, timedelta
 
 from test_utils              import BenchTestCase, timeIt
-from sesshuns.models         import *
-from sesshuns.httpadapters   import *
+from scheduler.models         import *
+from scheduler.httpadapters   import *
 from sesshuns.utilities      import *
-from utils                   import create_sesshun
+from scheduler.tests.utils                   import create_sesshun
 
 class TestUtilities(BenchTestCase):
 

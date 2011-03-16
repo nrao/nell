@@ -1,4 +1,4 @@
-from sesshuns.models import *
+from scheduler.models import *
 from TimeAccounting  import TimeAccounting
 from nell.utilities  import TimeAgent
 

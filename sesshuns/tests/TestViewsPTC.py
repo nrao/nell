@@ -1,9 +1,10 @@
 from django.test.client  import Client
 
 from sesshuns.models         import *
+from scheduler.models        import *
 from test_utils              import timeIt
 from PeriodsTestCase         import PeriodsTestCase
-from utils                   import create_sesshun
+from scheduler.tests.utils                   import create_sesshun
 
 class TestViewsPTC(PeriodsTestCase):
 

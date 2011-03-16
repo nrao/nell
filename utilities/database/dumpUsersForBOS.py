@@ -11,7 +11,7 @@ saveout = sys.stderr
 fsock = open('/users/dss/out.log', 'w')
 sys.stderr = fsock
 
-from sesshuns.models import *
+from scheduler.models import *
 
 sys.stderr = saveout
 
