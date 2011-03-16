@@ -118,6 +118,7 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
+    'nell.scheduler',
     'nell.sesshuns',
     'nell.sesshuns.templatetags',
     'nell.calculator',
