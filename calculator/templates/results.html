@@ -31,9 +31,6 @@
     <tr> <td>{{e.k2.label}}:</td><td>{{e.k2.value}} {{e.k2.units}}</td></tr>
   </table>
   <hr/>
-  {% else %}
-  <p>Please fill out the questions to the right to begin.</p>
-  {% endif %}
   {% if messages %}
   <h1>Messages</h1>
   <hr/>
@@ -63,13 +60,16 @@
   </table>
   <hr/>
   {% endif %}
+  {% else %}
+  <p>Please fill out the questions to the left to begin.</p>
+  {% endif %}
   {% if e %}
   <h1>User Input</h1>
   <hr/>
   <table>
     <tr> <td>{{ivalues.conversion.label}}:</td><td>{{ivalues.conversion.value}} {{ivalues.conversion.units}}</td></tr>
     <tr> <td>{{ivalues.units.label}}:</td><td>{{units}}</td></tr>
-    <tr> <td>{{ivalues.time.label}}:</td><td>{{ivalues.time.value}} {{ivalues.time.units}}</td></tr>
+    <tr> <td>{{ivalues.time.label}}:</td><td>{{ivalues.time.value}}</td></tr>
     <tr> <td>{{ivalues.sensitivity.label}}:</td><td>{{ivalues.sensitivity.value}} {{units}}</td></tr>
     <tr> <td colspan = 2><hr/></td></tr>
     <tr> <td>{{ivalues.backend.label}}:</td><td>{{ivalues.backend.value}} {{ivalues.backend.units}}</td></tr>

@@ -36,11 +36,27 @@ def sanitize(result):
     v = result.get('value')
     u = result.get('units')
     d = result.get('display')
+    t = result.get('term')
     result['units'] = '' if u is None else u
     if v is not None and v != '' and d is not None and d[0] != '':
         result['value'] = ("%" + d[0]) % float(v)
     if v is None:
         result['value'] = ''
+    if t == 'time':
+        time = float(v)
+        if time > 3600:
+            hr = time / 3600.
+            mi = (hr - int(hr)) * 60
+            hr = int(hr)
+            sec = (mi - int(mi)) * 60
+            mi  = int(mi)
+            result['value'] = "%s:%s:%.3f" % (hr, mi, sec)
+        elif time >= 60:
+            mi = time / 60.
+            sec = (mi - int(mi)) * 60
+            mi  = int(mi)
+            result['value'] = "%s:%.3f" % (mi, sec)
+
     return result
 
 def splitKey(e):
