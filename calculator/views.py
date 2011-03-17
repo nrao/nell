@@ -39,10 +39,13 @@ def sanitize(result):
     t = result.get('term')
     result['units'] = '' if u is None else u
     if v is not None and v != '' and d is not None and d[0] != '':
-        result['value'] = ("%" + d[0]) % float(v)
+        try:
+            result['value'] = ("%" + d[0]) % float(v)
+        except:
+            pass
     if v is None:
         result['value'] = ''
-    if t == 'time':
+    if v is not None and (t == 'time' or t == 't_tot'):
         time = float(v)
         if time > 3600:
             hr = time / 3600.
@@ -61,7 +64,7 @@ def sanitize(result):
 
 def splitKey(e):
     k = e.pop('term')
-    return k, sanitize(e) 
+    return k, sanitize(e)
 
 def getMessages(request):
     explicit, leftovers, input = splitResults(request)
@@ -113,6 +116,7 @@ def display_results(request):
     leftovers = [sanitize(r) for r in sorted(leftovers, key = lambda r: r['display'][1]) 
                       if r['value'] is not None]
     input     = map(sanitize, input)
+    explicit  = map(sanitize, explicit)
     explicit  = dict([splitKey(e) for e in explicit])
     # Also make a dict of the inputs for desiding on how to display stuff.
     ivalues   = dict([splitKey(i) for i in input])

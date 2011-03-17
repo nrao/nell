@@ -3,7 +3,7 @@
   {% if e %}
   <table>
     {% ifequal ivalues.conversion.value 'Sensitivity to Time' %}
-    <tr> <td>{{e.t_tot.label}}:</td><td>{{e.t_tot.value}} {{e.t_tot.units}}</td></tr>
+    <tr> <td>{{e.t_tot.label}}:</td><td>{{e.t_tot.value}}</td></tr>
     {% else %}
     <tr> <td>{{e.sigma.label}}:</td><td>{{e.sigma.value}} {{units}}</td></tr>
     {% endifequal %}
