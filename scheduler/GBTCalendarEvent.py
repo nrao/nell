@@ -32,6 +32,7 @@
 
 from django.core.exceptions import ObjectDoesNotExist
 from models                 import *
+from sesshuns.models        import *
 from datetime               import datetime, timedelta
 
 import inspect
