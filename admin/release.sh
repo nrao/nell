@@ -13,16 +13,21 @@ CONUNDRUMENV=/home/dss/conundrum/conundrum.bash
 # WEBHOME is the location of the second Nell installation, which
 # servers the DSS User interface (as opposed to the Scheduler
 # interface).
+#
+# INTEGRATIONHOME is the location of the DSS integration directory
 
-RESTARTSERVERS=1
-RELEASEHOME=/home/dss/release
-WEBHOME=/home/dss.gb.nrao.edu/active/python/
-#RELEASEHOME=~/temp
-#WEBHOME=~/temp
+RESTARTSERVERS=0
+#RELEASEHOME=/home/dss/release
+#WEBHOME=/home/dss.gb.nrao.edu/active/python/
+#INTEGRATIONHOME=/home/dss/integration
+
+RELEASEHOME=/home/sandboxes/rcreager/temp/release
+WEBHOME=/home/sandboxes/rcreager/temp/release
+INTEGRATIONHOME=/home/sandboxes/rcreager/temp/integration
 
 ######################################################################
 
-INTEGRATIONHOME=/home/dss/integration
+
 NGNIXPIDFILE=/home/dss/conundrum/logs/nginx.pid
 PSQLHOME=/home/dss/conundrum/pgsql
 DSSHOST=trent
@@ -298,9 +303,8 @@ check_default_settings_file ()
 # assumed to exist on $RELEASEHOME (such as /home/dss/release).  This
 # first tests for modified files.  If it finds any it will print a
 # warning and exit the script.  These should be handled manually.
-# Next, it prints a list of changes that will be pulled in and asks
-# whether it should pull them.  If the response is "y" then it will do
-# so and run an 'hg update', or warn that an 'hg merge' is required.
+# Next, it fetches the latest from the 'release' branch of integration
+# <repository>-bare, lists the changes, and merges them in.
 #
 ######################################################################
 
@@ -310,14 +314,13 @@ update_release_directory()
     cd $2/$1
     pwd
     MODIFIED_FILES="1"
-    TEMPFILE=`mktemp`
 
     while test "$MODIFIED_FILES" == "1"
     do
         echo "Checking for modified files..."
-        MODFILES=`hg status | grep "^M "`
+        MODFILES=`git status --porcelain --untracked-files=no`
 
-        if test "$?" == "0"
+        if test -n "$MODFILES"
         then
             printf "%s\n" $MODFILES
             echo "Modified files exist! Please resolve manually before continuing."
@@ -325,11 +328,6 @@ update_release_directory()
 
             if test "$?" == "1"
             then
-                if test -e $TEMPFILE
-                then
-                    rm $TEMPFILE
-                fi
-
                 die 1
             fi
         else
@@ -338,41 +336,16 @@ update_release_directory()
     done
 
     echo "No modified files!"
-    echo "The following updates exist:"
-    hg incoming $INTEGRATIONHOME/$1
-
     get_response "Do you wish to pull from integration? y/n [y]" "y" "n"
 
     if test "$?" == "0"
     then
         echo "Pulling from integration..."
-        hg pull $INTEGRATIONHOME/$1 2>&1 | tee $TEMPFILE
-        cat $TEMPFILE | grep "'hg merge' to merge" > /dev/null
-
-        if test "$?" == "0"
-        then
-            get_response "'hg' is requesting a merge.  Press 'c' when done merging, or\n'q' to quit this script" "c" "q"
-
-            if test "$?" == "1"
-            then
-                if test -e $TEMPFILE
-                then
-                    rm $TEMPFILE
-                fi
-
-                die 1
-            fi
-        else
-            echo "hg update"
-            hg update
-        fi
-    else
-        printf "%s release not updated.\n" $1
-    fi
-
-    if test -e $TEMPFILE
-    then
-        rm $TEMPFILE
+        # fetch and merge is the same as pull.  Using fetch/merge
+        # allows the intermediate step of listing the changes that
+        # have been fetched.
+	git fetch origin release && git log ..origin/release
+	git merge origin/release
     fi
 }
 
@@ -392,7 +365,7 @@ check_nell_urls()
     then
         echo "'urls.py.default' differes from 'urls.py'. Copy 'urls.py.default' to 'urls.py',"
         echo "then edit 'urls.py'."
-        get_response "Press 'c' when done, 'q' to quit this script." "c" "q" 
+        get_response "Press 'c' when done, 'q' to quit this script." "c" "q"
 
         if test "$?" == "1"
         then
@@ -436,7 +409,11 @@ restart_apache()
 {
     # Restart Apache on Gollum
     echo "Restarting the Apache server on Gollum"
-    ssh root@gollum "/etc/init.d/nrao-apache restart" 2> /dev/null
+
+    if test "$RESTARTSERVERS" == "1"
+    then
+        ssh root@gollum "/etc/init.d/nrao-apache restart" 2> /dev/null
+    fi
 }
 
 ######################################################################
@@ -451,7 +428,11 @@ stop_apache()
 {
     # Restart Apache on Gollum
     echo "Stop the Apache server on Gollum"
-    ssh root@gollum "/etc/init.d/nrao-apache stop" 2> /dev/null
+
+    if test "$RESTARTSERVERS" == "1"
+    then
+        ssh root@gollum "/etc/init.d/nrao-apache stop" 2> /dev/null
+    fi
 }
 
 ######################################################################
@@ -916,5 +897,5 @@ then
 else
     printf "This script should be run under your personal account.  You are\nlogged in as user 'dss'\n"
 fi
-    
+
 printf "$BLACK"
