@@ -16,5 +16,8 @@ from TestSesshun               import TestSesshun
 from TestShiftPeriodBoundaries import TestShiftPeriodBoundaries
 from TestTimeAccounting        import TestTimeAccounting
 from TestUser                  import TestUser
+from TestUtilities             import TestUtilities
+from TestViews                 import TestViews
+from TestViewsPTC              import TestViewsPTC
 from TestWindow                import TestWindow
 from TestWindowRange           import TestWindowRange

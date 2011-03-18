@@ -1,19 +1,6 @@
 from django.http                        import HttpResponseRedirect
-from nell.utilities.FormatExceptionInfo import JSONExceptionInfo
 from sesshuns.models                    import *
 from sesshuns.utilities                 import *
-
-def catch_json_parse_errors(view_func):
-    """
-    Wrapper for functions that may generate a JSON parse error. Allows
-    for graceful debugging. :-)
-    """
-    def decorate(request, *args, **kwds):
-        try:
-            return view_func(request, *args, **kwds)
-        except:
-            return JSONExceptionInfo()
-    return decorate
 
 def admin_only(view_func):
     """

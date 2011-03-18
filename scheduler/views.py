@@ -4,8 +4,9 @@ from django.http                        import HttpResponse
 from django.contrib.auth.models         import User as AuthUser
 from scheduler.httpadapters             import PeriodHttpAdapter
 from models                             import *
-from scheduler.models                             import User as NellUser
-#from sesshuns.models.common             import d2str, dt2str
+from utilities                          import get_rev_comment, getInvestigatorEmails
+from sesshuns.utilities                 import getReservationsFromBOS
+from scheduler.models                   import User as NellUser
 from nell.tools                         import IcalMap, ScheduleTools, TimeAccounting
 from nell.utilities                     import TimeAgent
 from nell.utilities.SchedulingNotifier  import SchedulingNotifier
@@ -14,7 +15,6 @@ from nell.utilities.Notifier            import Notifier
 from nell.utilities.Email               import Email as EmailMessage  #name clash with models
 from reversion                          import revision
 from settings                           import PROXY_PORT, DATABASE_NAME
-from utilities                          import *
 
 import simplejson as json
 import twitter

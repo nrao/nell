@@ -37,7 +37,7 @@ from datetime               import datetime, timedelta
 
 import inspect
 
-from utilities   import TimeAgent
+from nell.utilities   import TimeAgent
 
 ######################################################################
 # CalEvent(object)

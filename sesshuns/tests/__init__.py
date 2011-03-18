@@ -20,7 +20,5 @@ from TestSessionAlertNotifier  import TestSessionAlertNotifier
 from TestSessionAlerts         import TestSessionAlerts
 from TestUpdateEphemeris       import TestUpdateEphemeris
 from TestUtilities             import TestUtilities
-from TestViews                 import TestViews
-from TestViewsPTC              import TestViewsPTC
 from TestWinAlertNotifier      import TestWinAlertNotifier
 from TestWindowAlerts          import TestWindowAlerts

@@ -6,7 +6,7 @@ from Blackout                        import Blackout
 from Column                          import Column
 from Elective                        import Elective
 from EmailTemplate                   import EmailTemplate
-from ExplorerConfiguration           import ExplorerConfiguration
+from ExplorerConfiguration           import *
 from Filter                          import Filter
 from Friend                          import Friend
 from Investigator                    import Investigator

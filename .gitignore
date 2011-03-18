@@ -5,6 +5,7 @@
 *.swp
 
 settings.py
+urls.py
 createdb
 
 DBReport.xt
