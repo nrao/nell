@@ -1,3 +1,5 @@
+from datetime            import datetime, timedelta
+
 from scheduler.httpadapters                 import *
 from scheduler.models                       import *
 from test_utils                            import BenchTestCase, timeIt

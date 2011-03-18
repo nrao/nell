@@ -1,4 +1,5 @@
 from django.test.client  import Client
+from datetime            import datetime, date
 
 from test_utils              import BenchTestCase, timeIt
 from scheduler.httpadapters   import *

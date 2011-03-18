@@ -4,8 +4,7 @@ from django.http                        import HttpResponse
 from django.contrib.auth.models         import User as AuthUser
 from scheduler.httpadapters             import PeriodHttpAdapter
 from models                             import *
-from utilities                          import get_rev_comment, getInvestigatorEmails
-from sesshuns.utilities                 import getReservationsFromBOS
+from utilities                          import *
 from scheduler.models                   import User as NellUser
 from nell.tools                         import IcalMap, ScheduleTools, TimeAccounting
 from nell.utilities                     import TimeAgent

@@ -1,6 +1,5 @@
 from scheduler.httpadapters        import *
 from scheduler.models              import *
-from sesshuns.utilities           import *
 
 # Test field data
 fdata = {"total_time": "3"

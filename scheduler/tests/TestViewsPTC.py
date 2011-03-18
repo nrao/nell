@@ -27,6 +27,10 @@ class TestViewsPTC(PeriodsTestCase):
         self.failUnless(response.status_code == 200)
         self.failUnless('"PCODES": ["GBT09A-001"]' in response.content)
 
+        response = Client().get(url, {})
+        self.failUnless(response.status_code == 200)
+        self.failUnless('"PCODES": ["GBT09A-001"]' in response.content)
+
     @timeIt
     def test_delete_pending(self):
 

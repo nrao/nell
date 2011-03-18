@@ -3,7 +3,7 @@ from django.test.client  import Client
 from test_utils              import BenchTestCase, timeIt
 from sesshuns.models         import *
 from scheduler.models         import *
-from sesshuns.utilities      import getReservationsFromDB
+from scheduler.utilities      import getReservationsFromDB
 from scheduler.tests.utils                   import create_sesshun
 
 class TestViews(BenchTestCase):
