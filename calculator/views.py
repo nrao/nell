@@ -53,12 +53,12 @@ def sanitize(result):
             hr = int(hr)
             sec = (mi - int(mi)) * 60
             mi  = int(mi)
-            result['value'] = "%s:%s:%.3f" % (hr, mi, sec)
+            result['value'] = "%02d:%02d:%04.1f" % (hr, mi, sec)
         elif time >= 60:
             mi = time / 60.
             sec = (mi - int(mi)) * 60
             mi  = int(mi)
-            result['value'] = "%s:%.3f" % (mi, sec)
+            result['value'] = "%02d:%04.1f" % (mi, sec)
 
     return result
 
@@ -120,7 +120,9 @@ def display_results(request):
     explicit  = dict([splitKey(e) for e in explicit])
     # Also make a dict of the inputs for desiding on how to display stuff.
     ivalues   = dict([splitKey(i) for i in input])
-    units     = 'mJy' if ivalues.get('units', {}).get('value') == 'flux' else 'mK'
+    units     = {}
+    units['sigma']       = 'mJy' if ivalues.get('units', {}).get('value') == 'flux' else 'mK'
+    units['t_tot_units'] = 's' if ':' not in explicit.get('t_tot', {}).get('value', '') else 'HH:MM:SS.S'
     return render_to_response("results.html", {'e'         : explicit
                                              , 'leftovers' : leftovers
                                              , 'input'     : input

@@ -3,9 +3,9 @@
   {% if e %}
   <table>
     {% ifequal ivalues.conversion.value 'Sensitivity to Time' %}
-    <tr> <td>{{e.t_tot.label}}:</td><td>{{e.t_tot.value}}</td></tr>
+    <tr> <td>{{e.t_tot.label}}:</td><td>{{e.t_tot.value}} {{units.t_tot_units}}</td></tr>
     {% else %}
-    <tr> <td>{{e.sigma.label}}:</td><td>{{e.sigma.value}} {{units}}</td></tr>
+    <tr> <td>{{e.sigma.label}}:</td><td>{{e.sigma.value}} {{units.sigma}}</td></tr>
     {% endifequal %}
     <tr> <td colspan = 2><hr/></td></tr>
     <tr> <td>{{e.t_sig.label}}:</td><td>{{e.t_sig.value}} {{e.t_sig.units}}</td></tr>
