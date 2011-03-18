@@ -1,6 +1,6 @@
 from django.conf.urls.defaults     import *
 from django.conf                   import settings
-from sesshuns.views                import *
+from scheduler.views                import *
 from scheduler.resources            import *
 from sesshuns.observers            import *
 from sesshuns.operators            import *
