@@ -349,6 +349,7 @@ class Maintenance_Activity(models.Model):
         self.contacts           = ma.contacts
         self.location           = ma.location
         self.description        = ma.description
+        self.repeat_interval    = 0
 
         for j in ma.receivers.all():
             self.receivers.add(j)
