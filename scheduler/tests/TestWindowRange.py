@@ -65,9 +65,8 @@ class TestWindowRange(NellTestCase):
 
     def test_lstInRange(self):
 
-        tg = first(self.sesshun.target_set.all())
         # ra to lst: rads to hours
-        lst = TimeAgent.rad2hr(tg.horizontal)
+        lst = TimeAgent.rad2hr(self.sesshun.target.horizontal)
 
         # create the window range
         utcStart = datetime(2009, 6, 1)

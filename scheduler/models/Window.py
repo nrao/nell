@@ -10,11 +10,7 @@ from Period_State  import Period_State
 
 class Window(models.Model):
     session        = models.ForeignKey(Sesshun)
-    default_period = models.ForeignKey(Period
-                                     , related_name = "default_window"
-                                     , null = True
-                                     , blank = True
-                                     )
+    default_period = models.OneToOneField(Period, null = True, related_name = "default_window")
     complete      = models.BooleanField(default = False)
     total_time     = models.FloatField(help_text = "Hours", null = True, default = 0.0)
 
@@ -282,8 +278,7 @@ class Window(models.Model):
         Are any of the window ranges just one day, with the
         LST such that the session can't be scheduled?
         """
-        tg = first(self.session.target_set.all())
-        lst = TimeAgent.rad2hr(tg.horizontal)
+        lst = TimeAgent.rad2hr(self.session.target.horizontal)
 
         # how close can the lst be to the edges of the range?
         buffer = (self.session.min_duration + self.session.max_duration) / 2.0

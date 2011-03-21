@@ -80,7 +80,7 @@ def GenerateReport(start):
                             , lambda x,y:cmp(x.name, y.name))
             for s in sessions:
 
-                target = first(s.target_set.all())
+                target = s.getTarget()
 
                 outfile.write(dataFormat % \
                     (ljust(bl(s.status.complete),        scs[0])

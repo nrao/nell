@@ -135,7 +135,7 @@ class SessionHttpAdapter (object):
         v_axis = fdata.get("source_v", None)
         h_axis = fdata.get("source_h", None)
 
-        t            = first(self.sesshun.target_set.all())
+        t            = self.sesshun.target
         t.system     = system
         t.source     = fdata.get("source", None)
         t.vertical   = v_axis if v_axis is not None else t.vertical
@@ -311,8 +311,11 @@ class SessionHttpAdapter (object):
            , "el_limit"   : self.sesshun.get_elevation_limit() or None # None is default 
             }
 
-        target = first(self.sesshun.target_set.all())
-        if target is not None:
+        try:
+            target = self.sesshun.target
+        except Target.DoesNotExist:
+            pass
+        else:
             d.update({"source"     : target.source
                     , "coord_mode" : target.system.name
                     , "source_h"   : target.horizontal

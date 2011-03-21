@@ -303,7 +303,7 @@ def get_closed_projets_with_open_sessions():
 
 def sessions_with_null_or_multiple_targets():
     ss = Sesshun.objects.all()
-    s = [x for x in ss if len(x.target_set.all()) is not 1]
+    s = [x for x in ss if x.getTarget() is None]
     return s
 
 ######################################################################
@@ -313,9 +313,9 @@ def sessions_with_null_or_multiple_targets():
 
 def sessions_with_bad_target():
     ss = Sesshun.objects.all()
-    s = [x for x in ss if len(x.target_set.all()) is 1]
-    bad_target_sessions = [x for x in s if x.target_set.all()[0].horizontal is None
-                           or x.target_set.all()[0].vertical is None]
+    s = [x for x in ss if x.getTarget() is not None]
+    bad_target_sessions = [x for x in s if x.target.horizontal is None
+                           or x.target.vertical is None]
     return bad_target_sessions
 
 def elective_sessions_no_electives():
@@ -547,8 +547,8 @@ def GenerateReport():
 
     outfile.write("\n\nSessions with RA and Dec equal to zero:")
     values = [s.name for s in sessions \
-                     for t in s.target_set.all() \
-                     if t.vertical == 0.0 and t.horizontal == 0.0]
+                     if s.getTarget() is not None and s.target.vertical == 0.0 \
+                        and s.target.horizontal == 0.0]
     print_values(outfile, values)
 
     outfile.write("\n\nSessions with frequency (GHz) out of all Rcvr bands")

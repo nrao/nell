@@ -13,23 +13,6 @@ class TestSesshun(BenchTestCase):
         super(TestSesshun, self).setUp()
         self.sesshun = create_sesshun()
         
-    def test_get_ha_limit_blackouts(self):
-        # With default target.
-        startdate = datetime.utcnow()
-        days      = 5
-        r = self.sesshun.get_ha_limit_blackouts(startdate, days)
-
-        t = Target(session    = self.sesshun
-                 , system     = first(System.objects.filter(name = "J2000"))
-                 , source     = "test source"
-                 , vertical   = 2.3
-                 , horizontal = 1.0)
-        t.save()
-
-        # TBF: Need to write test.
-
-        t.delete()
-
     def test_create(self):
         expected = first(Sesshun.objects.filter(id = self.sesshun.id))
         self.assertEqual(expected.allotment.total_time, float(fdata["total_time"]))
@@ -42,7 +25,7 @@ class TestSesshun(BenchTestCase):
         SessionHttpAdapter(s).init_from_post(fdata)
 
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
-        self.assertEqual(s.target_set.get().source, fdata["source"])
+        self.assertEqual(s.target.source, fdata["source"])
         self.assertEqual(s.status.enabled, fdata["enabled"])
         self.assertEqual(s.get_LST_exclusion_string(),fdata["lst_ex"])
 
@@ -52,7 +35,7 @@ class TestSesshun(BenchTestCase):
         s = ss[1]
         # notice the change in type when we compare this way!
         self.assertEqual(s.allotment.total_time, float(fdata["total_time"]))
-        self.assertEqual(s.target_set.get().source, fdata["source"])
+        self.assertEqual(s.target.source, fdata["source"])
         self.assertEqual(s.status.enabled, fdata["enabled"])
 
     @timeIt
@@ -64,7 +47,7 @@ class TestSesshun(BenchTestCase):
 
         self.assertEqual(s.frequency, fdata["freq"])
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
-        self.assertEqual(s.target_set.get().source, fdata["source"])
+        self.assertEqual(s.target.source, fdata["source"])
         self.assertEqual(s.status.enabled, fdata["enabled"])
         self.assertEqual(s.get_LST_exclusion_string(), fdata["lst_ex"])
 
@@ -86,7 +69,7 @@ class TestSesshun(BenchTestCase):
         s = ss[1]
         self.assertEqual(s.frequency, float(ldata["freq"]))
         self.assertEqual(s.allotment.total_time, float(ldata["total_time"]))
-        self.assertEqual(s.target_set.get().source, ldata["source"])
+        self.assertEqual(s.target.source, ldata["source"])
         self.assertEqual(s.status.enabled, ldata["enabled"] == "true")
         self.assertEqual(s.transit(), ldata["transit"] == "true")
         self.assertEqual(s.nighttime(), None)
@@ -108,7 +91,7 @@ class TestSesshun(BenchTestCase):
 
         self.assertEqual(s.frequency, fdata["freq"])
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
-        self.assertEqual(s.target_set.get().source, fdata["source"])
+        self.assertEqual(s.target.source, fdata["source"])
         self.assertEqual(s.status.enabled, fdata["enabled"])
         self.assertEqual(s.original_id, int(fdata["orig_ID"]))
 
@@ -126,7 +109,7 @@ class TestSesshun(BenchTestCase):
         s = ss[1]
         self.assertEqual(s.frequency, float(ldata["freq"]))
         self.assertEqual(s.allotment.total_time, float(ldata["total_time"]))
-        self.assertEqual(s.target_set.get().source, ldata["source"])
+        self.assertEqual(s.target.source, ldata["source"])
         self.assertEqual(s.status.enabled, True) # "True" -> True
         self.assertEqual(s.original_id, 0) #ldata["orig_ID"]) -- "0.0" -> Int
 

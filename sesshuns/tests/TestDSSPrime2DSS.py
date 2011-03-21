@@ -90,9 +90,9 @@ class TestDSSPrime2DSS(NellTestCase):
         self.assertEquals(False, s.status.complete)
         self.assertEquals(5.0, s.allotment.total_time)
         self.assertEquals(4.0, s.allotment.grade)
-        tgs = s.target_set.all()
-        self.assertEquals(1, len(tgs))
-        target = tgs[0]
+        tg = s.getTarget()
+        self.assertTrue(tg is not None)
+        target = tg
         self.assertEqual("G34.3,S68N,DR21OH", target.source)
         self.assertAlmostEqual(0.022, target.vertical, 3)
         self.assertAlmostEqual(4.84, target.horizontal, 2)

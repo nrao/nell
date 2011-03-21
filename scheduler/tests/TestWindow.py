@@ -178,11 +178,22 @@ class TestWindow(NellTestCase):
         end = start + timedelta(days = dur - 1)
         endStr = end.strftime("%Y-%m-%d")
         
+        dt = datetime(2009, 6, 1, 12, 15)
+        #pending = first(Period_State.objects.filter(abbreviation = "P"))
+        pa = Period_Accounting(scheduled = 0.0)
+        pa.save()
+        default_period = Period(session = self.sesshun
+                              , start = dt
+                              , duration = 5.0
+                              , state = self.pending
+                              , accounting = pa
+                              )
+        default_period.save()    
         w = Window()
         #w.start_date = start
         #w.duration = dur
         w.session = self.sesshun
-        w.default_period = self.default_period
+        w.default_period = default_period
 
         w.save()
 
@@ -376,9 +387,8 @@ class TestWindow(NellTestCase):
 
     def test_lstOutOfRange(self):
 
-        tg = first(self.sesshun.target_set.all())
         # ra to lst: rads to hours
-        lst = TimeAgent.rad2hr(tg.horizontal)
+        lst = TimeAgent.rad2hr(self.sesshun.target.horizontal)
 
         # this first window should not have a problem, since
         # duration > 1 day

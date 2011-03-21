@@ -31,13 +31,13 @@ def dt2sex(value):
 
 @register.filter
 def target_horz(value):
-    t = first(value.target_set.all())
+    t = value.getTarget()
     tag = "*" if t.isEphemeris() else ""
     return t.get_horizontal() + tag
 
 @register.filter
 def target_vert(value):
-    t = first(value.target_set.all())
+    t = value.getTarget()
     tag = "*"  if t.isEphemeris() else ""
     return t.get_vertical() + tag
 

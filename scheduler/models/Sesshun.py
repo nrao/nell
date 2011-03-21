@@ -1,4 +1,4 @@
-from django.db         import models
+from django.db                import models
 
 from Allotment         import Allotment
 from sesshuns.models.common            import *
@@ -163,40 +163,31 @@ class Sesshun(models.Model):
         high = first(highs)
         return "%.2f-%.2f" % (low.float_value, high.float_value)
 
+    def getTarget(self):
+        try:
+            return self.target
+        except Target.DoesNotExist:
+            return None
+
     def get_ra_dec(self):
-        target = first(self.target_set.all())
+        target = self.getTarget()
         if target is None:
             return None, None
         return target.vertical, target.horizontal
 
     def set_dec(self, new_dec):
-        target = first(self.target_set.all())
+        target = self.getTarget()
         if target is None:
             return
         target.horizontal = new_dec
         target.save()
 
-    def get_ignore_ha(self):
-        # TBF:  Need specification of ignore_ha
-        return False
-        
     def get_receiver_req(self):
         rcvrs = [[r.abbreviation \
                      for r in rg.receivers.all().order_by('id')] \
                          for rg in self.receiver_group_set.all().order_by('id')]
         rc = ReceiverCompile(Receiver.get_abbreviations())
         return rc.denormalize(rcvrs)
-
-    def get_ha_limit_blackouts(self, startdate, days):
-        # TBF: Not complete or even correct yet.
-
-        targets = [(t.horizontal, t.vertical) for t in self.target_set.all()]
-
-        # startdate, days, self.frequency, targets
-        #url       = "?"
-        #blackouts = json.load(urlllib.urlopen(url))['blackouts']
-
-        #return consolidate_events(find_intersections(blackouts))
 
     def get_min_eff_tsys_factor(self):
         """
