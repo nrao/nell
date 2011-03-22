@@ -1,6 +1,6 @@
 from datetime                            import datetime
 from nell.utilities.database.DSSDatabase import DSSDatabase
-from sesshuns.models                     import *
+from scheduler.models                     import *
 
 class DSSDatabase09C(DSSDatabase):
 

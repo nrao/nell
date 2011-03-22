@@ -4,7 +4,9 @@ setup_environ(settings)
 
 from datetime        import date,datetime,timedelta
 from nell.tools      import TimeAccounting
-from sesshuns.models import *
+from scheduler.models import *
+from sesshuns.models  import overlaps
+from utilities        import TimeAgent
 from sets            import Set
 
 import calendar

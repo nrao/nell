@@ -27,9 +27,8 @@
 #
 ######################################################################
 
-from django.db import models
-from Period    import Period
-from Window    import Window
+from django.db         import models
+from scheduler.models  import Period, Window
 
 class Maintenance_Activity_Group(models.Model):
 

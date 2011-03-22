@@ -34,6 +34,7 @@ from django.shortcuts                   import render_to_response
 from django                             import forms
 from django.forms                       import ModelForm
 from models                             import *
+from scheduler.models                   import *
 from django.utils.safestring            import mark_safe
 from django.utils.encoding              import StrAndUnicode, force_unicode
 from itertools                          import chain

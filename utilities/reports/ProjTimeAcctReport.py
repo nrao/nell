@@ -5,7 +5,7 @@ import settings
 setup_environ(settings)
 
 from nell.tools.TimeAccounting import TimeAccounting
-from sesshuns.models           import Project, first
+from scheduler.models           import Project, first
 import sys
 
 def GenerateProjectTimeAccountingReport(pcode):

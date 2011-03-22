@@ -1,6 +1,7 @@
 from django.db import models
 
-from sesshuns import models as smodels
+from sesshuns  import models as smodels
+from scheduler import models as sched_models
 
 class Calc_Backend(models.Model):
     dss_backend = models.ForeignKey(smodels.Backend, null = True)
@@ -54,7 +55,7 @@ class Polarization(models.Model):
 class Receiver(models.Model):
     name         = models.CharField(max_length=200)
     display_name = models.CharField(max_length=200)
-    dss_receiver = models.ForeignKey(smodels.Receiver, null = True)
+    dss_receiver = models.ForeignKey(sched_models.Receiver, null = True)
     band_low     = models.FloatField(null = True)
     band_hi      = models.FloatField(null = True)
 

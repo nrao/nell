@@ -5,7 +5,7 @@ import settings
 setup_environ(settings)
 
 
-from sesshuns.models import *
+from scheduler.models import *
 
 
 def reconcileUser(user):

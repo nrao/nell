@@ -4,8 +4,8 @@
 *.prof
 *.swp
 
-urls.py
 settings.py
+urls.py
 createdb
 
 DBReport.xt

@@ -1,4 +1,4 @@
-from sesshuns.models    import *
+from scheduler.models    import *
 from datetime           import datetime, timedelta
 import math
 import MySQLdb as m

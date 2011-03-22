@@ -1,7 +1,9 @@
-from sesshuns.models         import *
+from datetime                import datetime
+from scheduler.models        import *
 from test_utils              import NellTestCase
 from nell.utilities.reports  import *
-from utils                   import create_sesshun
+from scheduler.tests.utils                   import create_sesshun
+import sys
 
 from nell.utilities.reports.CompletionReport  import GenerateReport as completionReport
 from nell.utilities.reports.BlackoutReport  import GenerateBlackoutReport

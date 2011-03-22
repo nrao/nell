@@ -28,9 +28,8 @@
 ######################################################################
 
 from django.db                       import models
-from User                            import User
-from Receiver                        import Receiver
 from Backend                         import Backend
+from scheduler.models                import Period, Receiver, User
 from Maintenance_Telescope_Resources import Maintenance_Telescope_Resources
 from Maintenance_Software_Resources  import Maintenance_Software_Resources
 from Maintenance_Other_Resources     import Maintenance_Other_Resources
@@ -39,7 +38,6 @@ from Maintenance_Receivers_Swap      import Maintenance_Receivers_Swap
 from datetime                        import datetime, date, time, timedelta
 from nell.utilities                  import TimeAgent
 from django.contrib.auth.models      import User as djangoUser
-from Period                          import Period
 
 import re # regular expressions
 

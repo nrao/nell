@@ -5,6 +5,7 @@ from django.db.models               import Q
 from django.core.exceptions         import ObjectDoesNotExist
 from django.http                    import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts               import render_to_response
+from scheduler.utilities            import get_rev_comment
 from models                         import *
 from sets                           import Set
 from nell.tools                     import IcalMap

@@ -1,6 +1,8 @@
+from datetime  import date
+
 from test_utils.NellTestCase import NellTestCase
 from nell.utilities.SessionAlertNotifier import SessionAlertNotifier
-from sesshuns.models         import *
+from scheduler.models         import *
 from TestSessionAlertBase    import TestSessionAlertBase
 
 class TestSessionAlertNotifier(TestSessionAlertBase):

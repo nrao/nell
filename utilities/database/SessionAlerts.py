@@ -2,7 +2,7 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from sesshuns.models         import Window, Elective, Period
+from scheduler.models         import Window, Elective, Period
 from utilities.SessionAlertNotifier import *
 
 class SessionAlerts(object):

@@ -36,16 +36,35 @@ def sanitize(result):
     v = result.get('value')
     u = result.get('units')
     d = result.get('display')
+    t = result.get('term')
     result['units'] = '' if u is None else u
     if v is not None and v != '' and d is not None and d[0] != '':
-        result['value'] = ("%" + d[0]) % float(v)
+        try:
+            result['value'] = ("%" + d[0]) % float(v)
+        except:
+            pass
     if v is None:
         result['value'] = ''
+    if v is not None and (t == 'time' or t == 't_tot'):
+        time = float(v)
+        if time > 3600:
+            hr = time / 3600.
+            mi = (hr - int(hr)) * 60
+            hr = int(hr)
+            sec = (mi - int(mi)) * 60
+            mi  = int(mi)
+            result['value'] = "%02d:%02d:%04.1f" % (hr, mi, sec)
+        elif time >= 60:
+            mi = time / 60.
+            sec = (mi - int(mi)) * 60
+            mi  = int(mi)
+            result['value'] = "%02d:%04.1f" % (mi, sec)
+
     return result
 
 def splitKey(e):
     k = e.pop('term')
-    return k, sanitize(e) 
+    return k, sanitize(e)
 
 def getMessages(request):
     explicit, leftovers, input = splitResults(request)
@@ -97,10 +116,13 @@ def display_results(request):
     leftovers = [sanitize(r) for r in sorted(leftovers, key = lambda r: r['display'][1]) 
                       if r['value'] is not None]
     input     = map(sanitize, input)
+    explicit  = map(sanitize, explicit)
     explicit  = dict([splitKey(e) for e in explicit])
     # Also make a dict of the inputs for desiding on how to display stuff.
     ivalues   = dict([splitKey(i) for i in input])
-    units     = 'mJy' if ivalues.get('units', {}).get('value') == 'flux' else 'mK'
+    units     = {}
+    units['sigma']       = 'mJy' if ivalues.get('units', {}).get('value') == 'flux' else 'mK'
+    units['t_tot_units'] = 's' if ':' not in explicit.get('t_tot', {}).get('value', '') else 'HH:MM:SS.S'
     return render_to_response("results.html", {'e'         : explicit
                                              , 'leftovers' : leftovers
                                              , 'input'     : input

@@ -1,7 +1,7 @@
 from datetime                          import datetime, timedelta
 from nell.utilities.database.UserNames import UserNames
 from nell.utilities                    import TimeAgent
-from sesshuns.models                   import *
+from scheduler.models                   import *
 import math
 import MySQLdb as m
 

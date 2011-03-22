@@ -5,7 +5,7 @@ import settings
 setup_environ(settings)
 
 from datetime        import datetime, timedelta
-from sesshuns.models import *
+from scheduler.models import *
 from nell.utilities  import TimeAgent
 
 def GenerateBlackoutReport():
