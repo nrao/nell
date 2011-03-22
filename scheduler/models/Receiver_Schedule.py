@@ -157,8 +157,7 @@ class Receiver_Schedule(models.Model):
                 # toggle the given rcvr:
                 if rcvr in schd[dt]:
                     # remove it
-                    rs = first(Receiver_Schedule.objects.filter(start_date = dt
-                                                        , receiver = rcvr))
+                    rs = Receiver_Schedule.objects.get(start_date = dt, receiver = rcvr)
                     rs.delete()                                    
                 else:
                     # add it

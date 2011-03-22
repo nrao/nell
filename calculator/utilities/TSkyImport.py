@@ -3,7 +3,6 @@ import settings
 setup_environ(settings)
 
 from calculator.models import TSky
-from sesshuns.models   import first
 import math, slalib
 
 class TSkyImport(object):

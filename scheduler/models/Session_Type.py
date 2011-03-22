@@ -1,5 +1,4 @@
 from django.db  import models
-from sesshuns.models.common     import first
 
 class Session_Type(models.Model):
     type = models.CharField(max_length = 64)
@@ -13,5 +12,5 @@ class Session_Type(models.Model):
 
     @staticmethod
     def get_type(type):
-        return first(Session_Type.objects.filter(type = type))
+        return Session_Type.objects.get(type = type)
 

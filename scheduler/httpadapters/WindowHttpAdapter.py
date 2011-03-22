@@ -3,7 +3,6 @@ from PeriodHttpAdapter      import PeriodHttpAdapter
 from WindowRangeHttpAdapter import WindowRangeHttpAdapter
 from SessionHttpAdapter     import SessionHttpAdapter
 from scheduler.models        import Period, Sesshun, Period_State
-from sesshuns.models.common import *
 
 class WindowHttpAdapter (object):
 
@@ -53,8 +52,8 @@ class WindowHttpAdapter (object):
             self.window.session = self.window.handle2session(handle)
         else:
             try:
-                maintenance = first(Project.objects.filter(pcode='Maintenance'))
-                self.window.session = first(Sesshun.objects.filter(project=maintenance))
+                maintenance = Project.objects.get(pcode='Maintenance')
+                self.window.session = Sesshun.objects.get(project=maintenance)
             except:
                 self.window.session  = Sesshun.objects.get(id=fdata.get("session", 1))
 

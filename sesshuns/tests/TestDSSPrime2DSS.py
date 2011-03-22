@@ -38,8 +38,9 @@ class TestDSSPrime2DSS(NellTestCase):
         for row in cursor.fetchall():
             idcol = 3 if table == "friends" else 4
             id = int(row[idcol])
-            user = first(User.objects.filter(original_id = id).all())
-            if user is None:
+            try:
+                user = User.objects.get(original_id = id)
+            except User.DoesNotExist:
                 if id not in new_users:
                     new_users.append(id)
             else:
@@ -162,7 +163,7 @@ class TestDSSPrime2DSS(NellTestCase):
                 , last_name  = 'Marganian'
                 , original_id = 123
                 , pst_id      = 821
-                , role        = first(Role.objects.filter(role = "Observer"))
+                , role        = Role.objects.get(role = "Observer")
                   )
         me.save()
 

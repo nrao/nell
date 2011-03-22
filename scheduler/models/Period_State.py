@@ -1,5 +1,4 @@
 from django.db   import models
-from sesshuns.models.common      import first
 
 class Period_State(models.Model):
     name         = models.CharField(max_length = 32)
@@ -26,6 +25,6 @@ class Period_State(models.Model):
     @staticmethod
     def get_state(abbr):
         "Short hand for getting state by abbreviation"
-        return first(Period_State.objects.filter(abbreviation = abbr))
+        return Period_State.objects.get(abbreviation = abbr)
 
 

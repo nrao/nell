@@ -40,7 +40,7 @@ def create_user(username):
     user = User(pst_id     = info['person_id']
               , first_name = info['first_name']
               , last_name  = info['last_name']
-              , role       = first(Role.objects.filter(role = "Observer")))
+              , role       = Role.objects.get(role = "Observer"))
     user.save()
 
     p = Preference(user = user, timeZone = "UTC")
@@ -57,7 +57,7 @@ def get_requestor(request):
     """
     loginUser = request.user.username
     pst_id = UserInfo().getIdFromUsername(loginUser)
-    requestor = first(User.objects.filter(pst_id = pst_id))
+    requestor = User.objects.get(pst_id = pst_id)
 
     if requestor is None:
         requestor = create_user(loginUser)

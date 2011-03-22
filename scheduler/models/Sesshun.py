@@ -1,7 +1,10 @@
 from django.db                import models
+from sets                     import Set
 
+from sesshuns.models.common   import consolidate_events, trim_events, compliment_events
+from nell.utilities           import TimeAgent
+from nell.utilities.receiver  import ReceiverCompile
 from Allotment         import Allotment
-from sesshuns.models.common            import *
 from Observing_Type    import Observing_Type
 from Parameter         import Parameter
 from Project           import Project
@@ -147,8 +150,8 @@ class Sesshun(models.Model):
 
     def get_LST_exclusion_string(self):
         "Converts pair of observing parameters into low-high string"
-        lowParam = first(Parameter.objects.filter(name="LST Exclude Low"))
-        hiParam  = first(Parameter.objects.filter(name="LST Exclude Hi"))
+        lowParam = Parameter.objects.get(name="LST Exclude Low")
+        hiParam  = Parameter.objects.get(name="LST Exclude Hi")
         lows  = self.observing_parameter_set.filter(parameter=lowParam)
         highs = self.observing_parameter_set.filter(parameter=hiParam)
         # make sure there aren't more then 1
@@ -159,9 +162,7 @@ class Sesshun(models.Model):
         # LST Exlcusion isn't set?
         if len(lows) == 0 and len(highs) == 0:
             return ""
-        low = first(lows)
-        high = first(highs)
-        return "%.2f-%.2f" % (low.float_value, high.float_value)
+        return "%.2f-%.2f" % (lows[0].float_value, highs[0].float_value)
 
     def getTarget(self):
         try:

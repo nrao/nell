@@ -2,6 +2,7 @@ from django.test.client  import Client
 
 from test_utils              import BenchTestCase, timeIt
 from scheduler.models         import *
+from scheduler.tests.utils    import create_users
 
 class TestUserResource(BenchTestCase):
 
@@ -10,25 +11,7 @@ class TestUserResource(BenchTestCase):
         self.client = Client()
         self.fdata = {
                       }
-        self.users = []
-        self.users.append(User(original_id = 0
-                    , pst_id      = 0
-                    , sanctioned  = False
-                    , first_name  = 'Foo'
-                    , last_name   = 'Bar'
-                    , contact_instructions = ""
-                    , role  = first(Role.objects.all())
-                     ))
-        self.users[-1].save()
-        self.users.append(User(original_id = 0
-                    , pst_id      = 0
-                    , sanctioned  = True
-                    , first_name  = 'Mike'
-                    , last_name   = 'McCarty'
-                    , contact_instructions = ""
-                    , role  = first(Role.objects.all())
-                     ))
-        self.users[-1].save()
+        self.users = create_users()
 
     @timeIt
     def test_create(self):
@@ -44,7 +27,7 @@ class TestUserResource(BenchTestCase):
         response = self.client.post('/users', fdata)
         self.failUnlessEqual(response.status_code, 200)
 
-        u = first(User.objects.filter(original_id = fdata['original_id']))
+        u = User.objects.get(original_id = fdata['original_id'])
         self.assertTrue(u is not None)
 
         response = self.client.post('/users', {})
@@ -53,7 +36,7 @@ class TestUserResource(BenchTestCase):
     def test_read(self):
         response = self.client.get('/users')
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue('"total": 2' in response.content)
+        self.assertTrue('"total": 3' in response.content)
 
     def test_read_with_filter(self):
         response = self.client.get('/users?filterText=foo')

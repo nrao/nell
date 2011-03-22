@@ -17,7 +17,7 @@ class TestUpdateEphemeris(NellTestCase):
 
         # let's observe Mars!
         s = create_sesshun()
-        s.target.system = first(System.objects.filter(name = "Ephemeris"))
+        s.target.system = System.objects.get(name = "Ephemeris")
         s.target.source = "Mars"
         s.target.save()
 

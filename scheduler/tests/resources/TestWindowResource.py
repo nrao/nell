@@ -13,7 +13,7 @@ class TestWindowResource(BenchTestCase):
         self.client = Client()
         self.sesshun = create_sesshun()
         dt = datetime(2010, 1, 1, 12, 15)
-        pending = first(Period_State.objects.filter(abbreviation = "P"))
+        pending = Period_State.objects.get(abbreviation = "P")
         pa = Period_Accounting(scheduled = 0)
         pa.save()
         self.default_period = Period(session = self.sesshun

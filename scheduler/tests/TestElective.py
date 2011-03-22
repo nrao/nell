@@ -160,12 +160,12 @@ class TestElective(NellTestCase):
     def test_getBlackedOutSchedulablePeriods(self):
         u = User(first_name = "Test"
                , last_name  = "User"
-               , role       = first(Role.objects.all())
+               , role       = Role.objects.all()[0]
                , sanctioned = True
                       )
         u.save()
 
-        once = first(Repeat.objects.filter(repeat = 'Once'))
+        once = Repeat.objects.get(repeat = 'Once')
         blackout = Blackout(user       = u
                           , repeat     = once
                           , start_date = datetime(2009, 6,  8, 11)

@@ -106,7 +106,7 @@ class TestViews(BenchTestCase):
         response = c.post('/configurations/explorer/filterCombos', data)
         self.failUnlessEqual(response.status_code, 200)
         r = eval(response.content)
-        ec = first(ExplorerConfiguration.objects.filter(id = r['id']))
+        ec = ExplorerConfiguration.objects.get(id = r['id'])
         self.assertTrue(ec is not None)
 
     def test_reservations(self):

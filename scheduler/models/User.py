@@ -5,7 +5,6 @@ from django.db                 import models
 from sets                      import Set
 
 from Role              import Role
-from sesshuns.models.common            import first
 from nell.utilities.UserInfo import UserInfo # Why can't we import this with NRAOBosDB?
 from nell.utilities    import NRAOBosDB
 
@@ -49,9 +48,12 @@ class User(models.Model):
     def checkAuthUser(self):
         if self.auth_user_id is None:
             from django.contrib.auth.models import User as AuthUser
-            au = first(AuthUser.objects.filter(username = self.username()))
-            self.auth_user = au
-            self.save()
+            try:
+                au = AuthUser.objects.get(username = self.username())
+                self.auth_user = au
+                self.save()
+            except AuthUser.DoesNotExist:
+                pass
     
     def getEmails(self):
         """

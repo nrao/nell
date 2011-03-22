@@ -19,8 +19,8 @@ class BenchTestCase(NellTestCase):
     measurments of perfomance time of desired test.
     """
 
-    def __init__(self, methodName = 'runTest', archiver = Archiver()):
-        super(BenchTestCase, self).__init__(methodName)
+    def __init__(self, *args, **kws):
+        super(BenchTestCase, self).__init__(*args, **kws)
 
         self.archiver    = Archiver() if settings.BENCHMARK_DB_NAME is None else dbArchiver(self.__class__.__name__)
         self.elapsedTime = 0.0

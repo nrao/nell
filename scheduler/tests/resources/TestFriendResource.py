@@ -3,6 +3,7 @@ from django.test.client  import Client
 from test_utils              import BenchTestCase, timeIt
 from scheduler.httpadapters   import *
 from scheduler.models         import *
+from scheduler.tests.utils    import create_users
 
 class TestFriendResource(BenchTestCase):
 
@@ -22,34 +23,7 @@ class TestFriendResource(BenchTestCase):
         p_adapter.init_from_post(p_fdata)
         self.p.save()
 
-        self.users = []
-        self.users.append(User(original_id = 0
-                    , pst_id      = 0
-                    , sanctioned  = False
-                    , first_name  = 'Foo'
-                    , last_name   = 'Bar'
-                    , contact_instructions = ""
-                    , role  = first(Role.objects.all())
-                     ))
-        self.users[-1].save()
-        self.users.append(User(original_id = 0
-                    , pst_id      = 0
-                    , sanctioned  = True
-                    , first_name  = 'Mike'
-                    , last_name   = 'McCarty'
-                    , contact_instructions = ""
-                    , role  = first(Role.objects.all())
-                     ))
-        self.users[-1].save()
-        self.users.append(User(original_id = 0
-                    , pst_id      = 0
-                    , sanctioned  = True
-                    , first_name  = 'Doless'
-                    , last_name   = 'NoProject'
-                    , contact_instructions = ""
-                    , role  = first(Role.objects.all())
-                     ))
-        self.users[-1].save()
+        self.users = create_users()
 
         self.friends = []
         # first user is a friend to the project

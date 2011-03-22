@@ -1,6 +1,5 @@
 from nell.tools             import TimeAccounting
 from scheduler.models        import Allotment, Project_Allotment, Project_Type, Semester, User
-from sesshuns.models.common import first
 
 class ProjectHttpAdapter (object):
 
@@ -15,9 +14,9 @@ class ProjectHttpAdapter (object):
 
     def update_from_post(self, fdata):
         fproj_type = fdata.get("type", "science")
-        p_type     = first(Project_Type.objects.filter(type = fproj_type))
+        p_type     = Project_Type.objects.get(type = fproj_type)
         fsemester  = fdata.get("semester", "09C")
-        semester   = first(Semester.objects.filter(semester = fsemester))
+        semester   = Semester.objects.get(semester = fsemester)
         try:
             f_lname, f_fname = fdata.get("friend", "").split(", ")
         except ValueError:

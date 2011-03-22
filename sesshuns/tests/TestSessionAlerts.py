@@ -18,7 +18,7 @@ class TestSessionAlerts(TestSessionAlertBase):
                                 )
 
         sa = SessionAlerts.SessionAlerts()
-        w  = first(Window.objects.all())
+        w  = Window.objects.all()[0]
         w.session.status.enabled = False
         w.session.status.save()
 
@@ -55,7 +55,7 @@ class TestSessionAlerts(TestSessionAlertBase):
 
         sa = SessionAlerts.SessionAlerts()
         sa.stageBoundary = 4
-        w  = first(Window.objects.all())
+        w  = Window.objects.all()[0]
         w.session.status.enabled = False
         w.session.status.save()
 
@@ -86,7 +86,7 @@ class TestSessionAlerts(TestSessionAlertBase):
         self.makeElectiveSession() 
 
         sa = SessionAlerts.SessionAlerts()
-        e  = first(Elective.objects.all())
+        e  = Elective.objects.all()[0]
         e.session.status.enabled = False
         e.session.status.save()
         start, end = e.periodDateRange()
@@ -122,7 +122,7 @@ class TestSessionAlerts(TestSessionAlertBase):
 
         sa = SessionAlerts.SessionAlerts()
         sa.stageBoundary = 4
-        e  = first(Elective.objects.all())
+        e  = Elective.objects.all()[0]
         e.session.status.enabled = False
         e.session.status.save()
         start, end = e.periodDateRange()
@@ -154,7 +154,7 @@ class TestSessionAlerts(TestSessionAlertBase):
         self.makeFixedSession() 
 
         sa = SessionAlerts.SessionAlerts()
-        p  = first(Period.objects.filter(session__session_type__type = 'fixed'))
+        p  = Period.objects.filter(session__session_type__type = 'fixed')[0]
         p.session.status.enabled = False
         p.session.status.save()
         start = p.start
@@ -182,7 +182,7 @@ class TestSessionAlerts(TestSessionAlertBase):
 
         sa = SessionAlerts.SessionAlerts()
         sa.stageBoundary = 4
-        p  = first(Period.objects.filter(session__session_type__type = 'fixed'))
+        p  = Period.objects.filter(session__session_type__type = 'fixed')[0]
         p.session.status.enabled = False
         p.session.status.save()
         start = p.start
@@ -209,7 +209,7 @@ class TestSessionAlerts(TestSessionAlertBase):
         self.makeFixedSession() 
 
         sa = SessionAlerts.SessionAlerts(stageBoundary = 4)
-        p  = first(Period.objects.filter(session__session_type__type = 'fixed'))
+        p  = Period.objects.filter(session__session_type__type = 'fixed')[0]
         p.session.status.enabled = False
         p.session.status.save()
         start = p.start

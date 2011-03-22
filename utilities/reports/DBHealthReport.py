@@ -556,7 +556,7 @@ def GenerateReport():
     for s in sessions:
         out_of_band = False
         # freq. must be out of band for ALL rcvrs to be reported
-        rcvrs = [first(Receiver.objects.filter(abbreviation = rname)) \
+        rcvrs = [Receiver.objects.get(abbreviation = rname) \
             for rname in s.rcvrs_specified()]
         in_bands = [r for r in rcvrs if r.in_band(s.frequency)]
         # don't report sessions w/ out rcvrs: we do that above

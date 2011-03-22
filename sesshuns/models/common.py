@@ -13,12 +13,6 @@ import urllib2
 import simplejson as json
 import sys
 
-def first(results, default = None):
-    try:
-        return results[0]
-    except IndexError:
-        return default
-
 def str2dt(str):
     "'YYYY-MM-DD hh:mm:ss' to datetime object"
     if str is None:

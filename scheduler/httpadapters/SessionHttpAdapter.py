@@ -1,7 +1,7 @@
 from nell.utilities  import TimeAgent
+from nell.utilities.receiver  import ReceiverCompile
 from nell.tools      import TimeAccounting
 from scheduler.models import *
-from sesshuns.models import *
 
 class SessionHttpAdapter (object):
 
@@ -16,16 +16,14 @@ class SessionHttpAdapter (object):
         fobstype = fdata.get("science", "testing")
         proj_code = fdata.get("pcode", "GBT09A-001")
 
-        p  = first(Project.objects.filter(pcode = proj_code).all()
-                 , Project.objects.all()[0])
-        st = first(Session_Type.objects.filter(type = fsestype).all()
-                 , Session_Type.objects.all()[0])
-        ot = first(Observing_Type.objects.filter(type = fobstype).all()
-                 , Observing_Type.objects.all()[0])
+        try:
+            p  = Project.objects.get(pcode = proj_code)
+        except Project.DoesNotExist:
+            p = Project.objects.all()[0]
 
         self.sesshun.project          = p
-        self.sesshun.session_type     = st
-        self.sesshun.observing_type   = ot
+        self.sesshun.session_type     = Session_Type.objects.get(type = fsestype)
+        self.sesshun.observing_type   = Observing_Type.objects.get(type = fobstype)
         self.sesshun.original_id      = \
             self.get_field(fdata, "orig_ID", None, lambda x: int(float(x)))
         self.sesshun.name             = fdata.get("name", None)
@@ -67,8 +65,7 @@ class SessionHttpAdapter (object):
         self.save_receivers(proposition)
         
         systemName = fdata.get("coord_mode", "J2000")
-        system = first(System.objects.filter(name = systemName).all()
-                     , System.objects.all()[0])
+        system = System.objects.get(name = systemName)
 
         v_axis = fdata.get("source_v", 0.0)
         h_axis = fdata.get("source_h", 0.0)
@@ -129,8 +126,7 @@ class SessionHttpAdapter (object):
             self.save_receivers(proposition)
 
         systemName = fdata.get("coord_mode", "J2000")
-        system = first(System.objects.filter(name = systemName).all()
-                     , System.objects.all()[0])
+        system = System.objects.get(name = systemName)
 
         v_axis = fdata.get("source_v", None)
         h_axis = fdata.get("source_h", None)
@@ -166,7 +162,7 @@ class SessionHttpAdapter (object):
         """
         self.update_parameter(old_value
                             , self.get_field(fdata, "xi_factor", 1.0, float)
-                            , first(Parameter.objects.filter(name="Min Eff TSys"))
+                            , Parameter.objects.get(name="Min Eff TSys")
                             )
 
     def update_el_limit_obs_param(self, fdata, old_value):
@@ -234,8 +230,8 @@ class SessionHttpAdapter (object):
         Converts the json representation of the LST exclude flag
         to the model representation.
         """
-        lowParam = first(Parameter.objects.filter(name="LST Exclude Low"))
-        hiParam  = first(Parameter.objects.filter(name="LST Exclude Hi"))
+        lowParam = Parameter.objects.get(name="LST Exclude Low")
+        hiParam  = Parameter.objects.get(name="LST Exclude Hi")
         
         # json dict string representation
         lst_ex_string = fdata.get("lst_ex", None)
@@ -268,9 +264,9 @@ class SessionHttpAdapter (object):
         else:
             # get the current model representation (NOT the string) 
             lowObsParam = \
-                first(self.sesshun.observing_parameter_set.filter(parameter=lowParam))
+                self.sesshun.observing_parameter_set.get(parameter=lowParam)
             highObsParam = \
-                first(self.sesshun.observing_parameter_set.filter(parameter=hiParam))
+                self.sesshun.observing_parameter_set.get(parameter=hiParam)
             if lst_ex_string:
                 lowObsParam.float_value = low
                 lowObsParam.save()

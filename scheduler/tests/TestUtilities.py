@@ -33,7 +33,7 @@ class TestUtilities(BenchTestCase):
     def test_getInvestigators(self):
 
         # get the project we assume is already in the DB
-        proj = first(Project.objects.all())
+        proj = Project.objects.all()[0]
 
         # create a bunch of investigators for it:
         invs = [("PI", "PI", True, False, False, 821) # Paul
@@ -176,7 +176,6 @@ class TestUtilities(BenchTestCase):
         self.sesshun.session_type = Session_Type.get_type("windowed")
         self.sesshun.save()
         dt = datetime(2009, 6, 1, 12, 15)
-        #pending = first(Period_State.objects.filter(abbreviation = "P"))
         pa = Period_Accounting(scheduled = 0.0)
         pa.save()
         self.default_period = Period(session = self.sesshun

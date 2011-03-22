@@ -14,7 +14,7 @@ class TestSesshun(BenchTestCase):
         self.sesshun = create_sesshun()
         
     def test_create(self):
-        expected = first(Sesshun.objects.filter(id = self.sesshun.id))
+        expected = Sesshun.objects.get(id = self.sesshun.id)
         self.assertEqual(expected.allotment.total_time, float(fdata["total_time"]))
         self.assertEqual(expected.name, fdata["name"])
 
@@ -266,7 +266,7 @@ class TestSesshun(BenchTestCase):
         blackout = Blackout(project    = self.sesshun.project
                           , start_date = datetime(2009, 4, 18, 12)
                           , end_date   = datetime(2009, 4, 23, 12)
-                          , repeat     = first(Repeat.objects.all())
+                          , repeat     = Repeat.objects.all()[0]
                             )
         blackout.save()
 
@@ -310,7 +310,7 @@ class TestSesshun(BenchTestCase):
     # in first()
     #@timeIt
     #def run_first(self):
-    #    s = first(Sesshun.objects.all())
+    #    s = Sesshun.objects.all()[0]
 
     #def test_first(self):
     #    ss = [create_sesshun() for i in range(10000)]

@@ -1,6 +1,5 @@
 from django.db.models import Q
 from calculator.models        import *
-from sesshuns.models          import first
 
 def getHWList():
     return ['backend','mode','receiver','beams','polarization'
@@ -61,7 +60,7 @@ def setHardwareConfig(request, selected, newPick=None):
 def getRxValue(value):
     try:
         name, range = value.split(" (")
-        rx          = first(Receiver.objects.filter(display_name = name))
+        rx          = Receiver.objects.get(display_name = name)
         name        = rx.name
     except:
         name = value

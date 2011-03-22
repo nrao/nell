@@ -19,7 +19,7 @@ class ProjectRevReport(RevisionReport):
 
     def reportProject(self, pcode, time = None, field = None):
         self.add("Revision Report for Project: %s\n\n" % pcode)
-        p = first(Project.objects.filter(pcode = pcode))
+        p = Project.objects.get(pcode = pcode)
         self.reportObject(p, time, field)
         self.add("\nDiffs:\n")
         self.reportProjectDiffs(pcode)
@@ -27,12 +27,12 @@ class ProjectRevReport(RevisionReport):
 
     def reportProjectForTime(self, pcode, timeStr):
         self.add("Project: %s at %s\n\n" % (pcode, timeStr))
-        p = first(Project.objects.filter(pcode = pcode))
+        p = Project.objects.get(pcode = pcode)
         self.reportObjectForTime(p, timeStr)
         self.write()    
 
     #def reportAllotments(self, pcode, time = None, field = None):
-    #    p = first(Project.objects.filter(pcode = pcode))
+    #    p = Project.objects.get(pcode = pcode)
     #    for a in p.allotments.all():
     #        self.reportObject(a, time, field)
     #        #reportObjectDiffs(a)
@@ -41,7 +41,7 @@ class ProjectRevReport(RevisionReport):
 
         self.add("Differences for Project: %s \n\n" % pcode)
         diffs = []
-        p = first(Project.objects.filter(pcode = pcode))
+        p = Project.objects.get(pcode = pcode)
         diffs.extend(self.getObjectDiffs(p)) 
         for a in p.allotments.all():
             diffs.extend(self.getObjectDiffs(a))

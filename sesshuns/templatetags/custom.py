@@ -4,7 +4,6 @@ from django                  import template
 from django.utils.safestring import SafeUnicode
 from sesshuns                import models
 from datetime                import datetime, timedelta
-from sesshuns.models         import first
 from sets                    import Set
 from nell.tools              import TimeAccounting
 from nell.utilities          import TimeAgent

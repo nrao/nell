@@ -2,7 +2,7 @@ from datetime               import datetime
 from nell.utilities         import TimeAgent, Score
 from scheduler.models        import Period, Period_Accounting, Period_Receiver, \
                                    Period_State, Project, Receiver, Sesshun
-from sesshuns.models.common import first, d2str, dt2str, strStr2dt, t2str
+from sesshuns.models.common import d2str, dt2str, strStr2dt, t2str
 from SessionHttpAdapter     import SessionHttpAdapter
 
 class PeriodHttpAdapter (object):
@@ -76,8 +76,8 @@ class PeriodHttpAdapter (object):
             self.period.session = new_session
         else:
             try:
-                maintenance = first(Project.objects.filter(pcode='Maintenance'))
-                self.period.session = first(Sesshun.objects.filter(project=maintenance))
+                maintenance = Project.objects.get(pcode='Maintenance')
+                self.period.session = Sesshun.objects.get(project=maintenance)
             except:
                 self.period.session  = Sesshun.objects.get(id=fdata.get("session", 1))
         now           = TimeAgent.quarter(datetime.utcnow())
@@ -106,7 +106,7 @@ class PeriodHttpAdapter (object):
             scorer.clear()
         self.period.backup   = True if fdata.get("backup", None) == 'true' else False
         stateAbbr = fdata.get("state", "P")
-        self.period.state = first(Period_State.objects.filter(abbreviation=stateAbbr))
+        self.period.state = Period_State.objects.get(abbreviation=stateAbbr)
         self.period.moc_ack = fdata.get("moc_ack", self.period.moc_ack)
 
         # elective? 
@@ -172,7 +172,7 @@ class PeriodHttpAdapter (object):
 
         # now that we have their names, put them in the DB    
         for r in rcvrAbbrs:
-            rcvr = first(Receiver.objects.filter(abbreviation = r.strip()))
+            rcvr = Receiver.objects.get(abbreviation = r.strip())
             if rcvr is not None:
                 rp = Period_Receiver(receiver = rcvr, period = self.period)
                 rp.save()

@@ -127,7 +127,7 @@ class DSSDatabase09C(DSSDatabase):
         for dt, rcvrs in rcvrChanges:
             print dt, rcvrs
             for rcvr in rcvrs:
-                r = first(Receiver.objects.filter(abbreviation = rcvr))
+                r = Receiver.objects.get(abbreviation = rcvr)
                 print "    ", r
                 rs = Receiver_Schedule(receiver = r, start_date = dt)
                 rs.save()
