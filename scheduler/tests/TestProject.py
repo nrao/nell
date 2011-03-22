@@ -23,7 +23,7 @@ class TestProject(BenchTestCase):
 
         # Create the first user (on project) 
         self.user1 = User(sanctioned = True
-                        , role = first(Role.objects.filter(role = "Observer"))
+                        , role = Role.objects.get(role = "Observer")
                      )
         self.user1.save()
 
@@ -34,7 +34,7 @@ class TestProject(BenchTestCase):
          
         # Create the second user (on project)
         self.user2 = User(sanctioned = True
-                        , role = first(Role.objects.filter(role = "Observer"))
+                        , role = Role.objects.get(role = "Observer")
                      )
         self.user2.save()
 
@@ -72,32 +72,32 @@ class TestProject(BenchTestCase):
     def test_get_blackout_times1(self):
         # Create Investigator1's 3 blackouts.
         blackout11 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 1, 11)
                             , end_date   = datetime(2009, 1, 3, 11))
         blackout11.save()
 
         blackout12 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 1, 18)
                             , end_date   = datetime(2009, 1, 4, 18))
         blackout12.save()
 
         blackout13 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 2, 12)
                             , end_date   = datetime(2009, 1, 4, 20))
         blackout13.save()
 
         # Create Investigator2's 2 blackouts.
         blackout21 = Blackout(user       = self.user2
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 1, 11)
                             , end_date   = datetime(2009, 1, 3, 11))
         blackout21.save()
 
         blackout22 = Blackout(user       = self.user2
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 1, 18)
                             , end_date   = datetime(2009, 1, 4, 13))
         blackout22.save()
@@ -122,12 +122,12 @@ class TestProject(BenchTestCase):
 
         # Now complicate things - add project blackouts
         pBlackout1 = Blackout(project = self.project
-                            , repeat = first(Repeat.objects.all())
+                            , repeat = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 4, 0)
                             , end_date   = datetime(2009, 1, 5, 0))
         pBlackout1.save()                            
         pBlackout2 = Blackout(project = self.project
-                            , repeat = first(Repeat.objects.all())
+                            , repeat = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 6, 0)
                             , end_date   = datetime(2009, 1, 8, 0))
         pBlackout2.save()                            
@@ -183,19 +183,19 @@ class TestProject(BenchTestCase):
         self.investigator1.save()
 
         blackout11 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 1, 11)
                             , end_date   = datetime(2009, 1, 3, 11))
         blackout11.save()
 
         blackout12 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 1, 18)
                             , end_date   = datetime(2009, 1, 4, 18))
         blackout12.save()
 
         blackout13 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 2, 12)
                             , end_date   = datetime(2009, 1, 4, 20))
         blackout13.save()
@@ -205,13 +205,13 @@ class TestProject(BenchTestCase):
         self.investigator2.save()
 
         blackout21 = Blackout(user       = self.user2
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 1, 11)
                             , end_date   = datetime(2009, 1, 3, 11))
         blackout21.save()
 
         blackout22 = Blackout(user       = self.user2
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 1, 18)
                             , end_date   = datetime(2009, 1, 4, 13))
         blackout22.save()
@@ -236,19 +236,19 @@ class TestProject(BenchTestCase):
     def test_get_blackout_times3(self):
         # Create Investigator1's 3 blackouts.
         blackout11 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 1, 11)
                             , end_date   = datetime(2009, 1, 3, 11))
         blackout11.save()
 
         blackout12 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 1, 18)
                             , end_date   = datetime(2009, 1, 4, 18))
         blackout12.save()
 
         blackout13 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 2, 12)
                             , end_date   = datetime(2009, 1, 4, 20))
         blackout13.save()
@@ -268,32 +268,32 @@ class TestProject(BenchTestCase):
     def test_get_blackout_times4(self):
         # Create Investigator1's 3 blackouts.
         blackout11 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 1, 11)
                             , end_date   = datetime(2009, 1, 3, 11))
         blackout11.save()
 
         blackout12 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 1, 18)
                             , end_date   = datetime(2009, 1, 4, 18))
         blackout12.save()
 
         blackout13 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 1, 2, 12)
                             , end_date   = datetime(2009, 1, 4, 20))
         blackout13.save()
 
         # Create Investigator2's 2 blackouts.
         blackout21 = Blackout(user       = self.user2
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 2, 1, 11)
                             , end_date   = datetime(2009, 2, 3, 11))
         blackout21.save()
 
         blackout22 = Blackout(user       = self.user2
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 3, 1, 18)
                             , end_date   = datetime(2009, 3, 4, 13))
         blackout22.save()
@@ -498,7 +498,7 @@ class TestProject(BenchTestCase):
     @timeIt
     def test_get_active_windows(self):
 
-        s = first(self.project.sesshun_set.all())
+        s = self.project.sesshun_set.all()[0]
         s.session_type = Session_Type.objects.get(type = "windowed")
         s.save()
 

@@ -5,7 +5,7 @@ from Sesshun        import Sesshun
 from System         import System
 
 class Target(models.Model):
-    session    = models.ForeignKey(Sesshun)
+    session    = models.OneToOneField(Sesshun, null = True, related_name = "target")
     system     = models.ForeignKey(System)
     source     = models.CharField(null = True, max_length = 32, blank = True)
     vertical   = models.FloatField(null = True, blank = True)

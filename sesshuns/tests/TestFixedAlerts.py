@@ -43,7 +43,7 @@ class TestFixedAlerts(NellTestCase):
 
         # Create the first user (on project) 
         self.user1 = User(sanctioned = True
-                        , role = first(Role.objects.filter(role = "Observer"))
+                        , role = Role.objects.get(role = "Observer")
                      )
         self.user1.save()
 
@@ -54,7 +54,7 @@ class TestFixedAlerts(NellTestCase):
          
         # Create the second user (on project)
         self.user2 = User(sanctioned = True
-                        , role = first(Role.objects.filter(role = "Observer"))
+                        , role = Role.objects.get(role = "Observer")
                      )
         self.user2.save()
 
@@ -65,38 +65,38 @@ class TestFixedAlerts(NellTestCase):
 
         # Create Investigator1's blackouts.
         blackout11 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 4, 1, 11)
                             , end_date   = datetime(2009, 4, 4, 20))
         blackout11.save()
 
         blackout12 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 4, 5, 18)
                             , end_date   = datetime(2009, 4, 8,  9))
         blackout12.save()
 
         blackout13 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 4,  9,  2)
                             , end_date   = datetime(2009, 4, 17,  9))
         blackout13.save()
 
         # Create Investigator2's blackouts.
         blackout21 = Blackout(user       = self.user2
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 4, 1, 11)
                             , end_date   = datetime(2009, 4, 5, 11))
         blackout21.save()
 
         blackout22 = Blackout(user       = self.user2
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 4, 6, 18)
                             , end_date   = datetime(2009, 4, 8, 10))
         blackout22.save()
 
         blackout23 = Blackout(user       = self.user2
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 4, 13, 18)
                             , end_date   = datetime(2009, 4, 25, 13))
         blackout23.save()

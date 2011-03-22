@@ -23,7 +23,7 @@ class TestShiftPeriodBoundaries(BenchTestCase):
             s.save()
             pa = Period_Accounting(scheduled = dur)
             pa.save()
-            state = first(Period_State.objects.filter(abbreviation = 'S'))
+            state = Period_State.objects.get(abbreviation = 'S')
             p = Period( session    = s
                       , start      = start
                       , duration   = dur

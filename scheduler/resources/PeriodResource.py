@@ -3,7 +3,7 @@ from django.http              import HttpResponse, HttpResponseRedirect
 
 from NellResource    import NellResource
 from scheduler.models import Period
-from sesshuns.models   import first, jsonMap, str2dt
+from sesshuns.models   import jsonMap, str2dt
 from scheduler.httpadapters import PeriodHttpAdapter
 from nell.utilities        import TimeAgent, Score #, formatExceptionInfo
 
@@ -102,7 +102,7 @@ class PeriodResource(NellResource):
         else:
             # we're getting a single period as specified by ID
             p_id    = int(args[1])
-            p       = first(Period.objects.filter(id = p_id))
+            p       = Period.objects.get(id = p_id)
             score   = self.score_period.periods([p_id]).get(p_id, 0.0)
             adapter = PeriodHttpAdapter(p)
             return HttpResponse(
@@ -117,7 +117,7 @@ class PeriodResource(NellResource):
         adapter = PeriodHttpAdapter(o)
         adapter.init_from_post(request.POST, tz)
         # Query the database to insure data is in the correct data type
-        o = first(self.dbobject.objects.filter(id = o.id))
+        o = self.dbobject.objects.get(id = o.id)
         score = self.score_period.periods([o.id]).get(o.id, 0.0)
         
         revision.comment = self.get_rev_comment(request, o, "create_worker")

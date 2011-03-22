@@ -19,7 +19,6 @@ class TestWindow(NellTestCase):
         self.sesshun.session_type = Session_Type.get_type("windowed")
         self.sesshun.save()
         dt = datetime(2009, 6, 1, 12, 15)
-        #pending = first(Period_State.objects.filter(abbreviation = "P"))
         pa = Period_Accounting(scheduled = 0.0)
         pa.save()
         self.default_period = Period(session = self.sesshun
@@ -178,11 +177,21 @@ class TestWindow(NellTestCase):
         end = start + timedelta(days = dur - 1)
         endStr = end.strftime("%Y-%m-%d")
         
+        dt = datetime(2009, 6, 1, 12, 15)
+        pa = Period_Accounting(scheduled = 0.0)
+        pa.save()
+        default_period = Period(session = self.sesshun
+                              , start = dt
+                              , duration = 5.0
+                              , state = self.pending
+                              , accounting = pa
+                              )
+        default_period.save()    
         w = Window()
         #w.start_date = start
         #w.duration = dur
         w.session = self.sesshun
-        w.default_period = self.default_period
+        w.default_period = default_period
 
         w.save()
 
@@ -261,7 +270,7 @@ class TestWindow(NellTestCase):
         w.publish()
 
         # get it fresh from the DB
-        w = first(Window.objects.filter(id = self.w_id)) 
+        w = Window.objects.get(id = self.w_id) 
         self.assertEquals(w.default_period.state, self.scheduled) 
         self.assertTrue(len(w.periods.all()) == 1)
         self.assertEquals(w.periodStates(), [self.scheduled]) 
@@ -290,7 +299,7 @@ class TestWindow(NellTestCase):
 
         # test
         # get it fresh from the DB
-        w = first(Window.objects.filter(id = self.w_id)) 
+        w = Window.objects.get(id = self.w_id)
         self.assertEquals(w.default_period.state, self.deleted) 
         self.assertTrue(len(w.periods.all()) == 2)
         self.assertEquals(w.periodStates(), [self.scheduled, self.deleted]) 
@@ -345,7 +354,7 @@ class TestWindow(NellTestCase):
         blackout = Blackout(project    = self.w.session.project
                           , start_date = datetime(2009, 6, 3) 
                           , end_date   = datetime(2009, 6, 4)
-                          , repeat     = first(Repeat.objects.all())
+                          , repeat     = Repeat.objects.all()[0]
                            )
         blackout.save()                           
         
@@ -353,7 +362,7 @@ class TestWindow(NellTestCase):
         blackout = Blackout(project    = self.w.session.project
                           , start_date = datetime(2009, 6, 8, 12) 
                           , end_date   = datetime(2009, 6, 9, 12)
-                          , repeat     = first(Repeat.objects.all())
+                          , repeat     = Repeat.objects.all()[0]
                            )
         blackout.save()           
 
@@ -376,9 +385,8 @@ class TestWindow(NellTestCase):
 
     def test_lstOutOfRange(self):
 
-        tg = first(self.sesshun.target_set.all())
         # ra to lst: rads to hours
-        lst = TimeAgent.rad2hr(tg.horizontal)
+        lst = TimeAgent.rad2hr(self.sesshun.target.horizontal)
 
         # this first window should not have a problem, since
         # duration > 1 day

@@ -3,7 +3,6 @@ from django.http              import HttpResponse, HttpResponseRedirect
 
 from NellResource import NellResource
 from scheduler.models       import Project
-from sesshuns.models        import first
 from scheduler.httpadapters import ProjectHttpAdapter
 
 import simplejson as json
@@ -65,7 +64,7 @@ class ProjectResource(NellResource):
         else:
             # one, identified by id
             p_id = args[0]
-            proj = first(Project.objects.filter(id = p_id))
+            proj = Project.objects.get(id = p_id)
             return HttpResponse(json.dumps(dict(project = ProjectHttpAdapter(proj).jsondict()))
                               , content_type = "application/json")
 

@@ -10,7 +10,7 @@ class TestUtilities(BenchTestCase):
     def test_project_search(self):
 
         # create some projects
-        pt = first(Project_Type.objects.all())
+        pt = Project_Type.objects.all()[0]
         sem10a = Semester.objects.get(semester = "10A")
         p1 = Project(pcode = "GBT10A-001"
                    , semester = sem10a

@@ -42,9 +42,13 @@ class NellTestCase(unittest.TestCase):
               """
         r = c.query(sql)
         
+        #  Exceptions are tables that we don't want to truncated, because they're 
+        #  initialization has been moved to scheduler/fixtures/initial_data.json
+        exceptions = ['receivers']
+
         # Filter out information not needed
         tables = [i["Name"] for i in r.dictresult()
-                     if '_id_seq' not in i["Name"]]
+                     if '_id_seq' not in i["Name"] and i["Name"] not in exceptions]
 
         #  Commit any outstanding db transactions before truncating tables
         transaction.commit()

@@ -244,8 +244,7 @@ def get_options(request, *args, **kws):
         # return period descriptions for unique combo: pcode + sess name
         pcode   = request.GET.get("pcode", None)
         name    = request.GET.get("session_name", None)
-        ss      = Sesshun.objects.filter(name = name)
-        s       = first([s for s in ss if s.project.pcode == pcode])
+        s       = Sesshun.objects.get(name = name, project__pcode = pcode)
         periods = Period.objects.filter(session = s).order_by('start')
         return HttpResponse(
             json.dumps({'periods': ["%s" % p.__str__() for p in periods]
@@ -278,7 +277,11 @@ def change_schedule(request, *args, **kws):
     duration = float(duration) if duration else duration
 
     sess_name = request.POST.get("session", "").split("(")[0].strip()
-    s         = first(Sesshun.objects.filter(name = sess_name))
+    try:
+        s         = Sesshun.objects.get(name = sess_name)
+    except Sesshun.DoesNotExist:
+        return HttpResponse(json.dumps({'error' : "Session not found."})
+                          , mimetype = "text/plain")
 
     reason = request.POST.get("reason", "other_session_other")
     desc   = request.POST.get("description", "")
@@ -311,11 +314,13 @@ def shift_period_boundaries(request, *args, **kws):
     desc           = request.POST.get("description", "")
 
     period_id = int(request.POST.get("period_id", None))
-    period    = first(Period.objects.filter(id = period_id))
+    period    = Period.objects.get(id = period_id)
 
     original_time = period.start if start_boundary else period.end()
-    ps = Period.get_periods(original_time - timedelta(minutes = 1), 15.0)
-    neighbor = first([p for p in ps if p.id != period_id])
+    for p in Period.get_periods(original_time - timedelta(minutes = 1), 15.0):
+        if p.id != period_id:
+            neighbor = p
+            break
 
     success, msg = ScheduleTools().shiftPeriodBoundaries(period, start_boundary, time, neighbor, reason, desc)
     if success:
@@ -335,7 +340,7 @@ def time_accounting(request, *args, **kws):
     POST: Sets Project time accounting.
     GET: Serves up json for time accounting from periods up to the project
     """
-    project = first(Project.objects.filter(pcode = args[0]))
+    project = Project.objects.get(pcode = args[0])
     if request.method == 'POST':
         a = project.get_allotment(float(request.POST.get("grade", None)))
         a.total_time = float(request.POST.get("total_time", None))
@@ -355,7 +360,7 @@ def session_time_accounting(request, *args, **kws):
     """
     Sets some time accounting variables for given period.
     """
-    s = first(Sesshun.objects.filter(name = args[0]))
+    s = Sesshun.objects.get(name = args[0])
     if request.method == 'POST':
         s.allotment.total_time = request.POST.get("total_time", None)
         s.allotment.save()
@@ -371,7 +376,7 @@ def session_time_accounting(request, *args, **kws):
 @catch_json_parse_errors
 def period_time_accounting(request, *args, **kws):
     "Sets some time accounting variables for given period"
-    period = first(Period.objects.filter(id = args[0]))
+    period = Period.objects.get(id = args[0])
     if request.method == 'POST':
         a = period.accounting
         a.description = request.POST.get("description", None)
@@ -402,7 +407,7 @@ def publish_periods(request, *args, **kwds):
     """
     if len(args) == 1:
         # publish a single period specified in args by its ID
-        p = first(Period.objects.filter(id = int(args[0])))
+        p = Period.objects.get(id = int(args[0]))
         p.publish()
         p.save()
     else:
@@ -597,8 +602,9 @@ def window_assign_period(request, *args, **kwds):
                           , mimetype = "text/plain")
 
     # Get the window & assign the period
-    win = first(Window.objects.filter(id = int(args[0])))
-    if win is None:
+    try:
+        win = Window.objects.get(id = int(args[0]))
+    except Window.DoesNotExist:
         return HttpResponse(json.dumps({'success': 'error'})
                           , mimetype = "text/plain")
     win.assignPeriod(int(args[1]), request.POST.get("default", True))
@@ -614,7 +620,7 @@ def toggle_moc(request, *args, **kwds):
         return HttpResponse(json.dumps({'success':'error'})
                           , mimetype = "text/plain")
 
-    period = first(Period.objects.filter(id = args[0]))
+    period = Period.objects.get(id = args[0])
     period.moc_ack = not period.moc_ack
     period.save()
 
@@ -647,23 +653,20 @@ tab_map = {
           }
 
 def updateExplorerConfig(name, type, tab):
-    ec = first(ExplorerConfiguration.objects.filter(name = name, type = type, tab  = tab))
-    if ec is not None:
-        # Clear out old values if we're updated an existing config
-        for c in ec.column_set.all():
-            c.delete()
-        for f in ec.filter_set.all():
-            f.delete()
-    else:
-        ec = ExplorerConfiguration(name = name
-                                 , type = type
-                                 , tab  = tab)
-        ec.save()
+    ec, _ = ExplorerConfiguration.objects.get_or_create(name = name, type = type, tab  = tab)
+    # Clear out old values if we're updated an existing config
+    for c in ec.column_set.all():
+        c.delete()
+    for f in ec.filter_set.all():
+        f.delete()
     return ec
 
 def deleteExplorerConfig(id):
-    ec = first(ExplorerConfiguration.objects.filter(id = id))
-    if ec is not None:
+    try:
+        ec = ExplorerConfiguration.objects.get(id = id)
+    except ExplorerConfiguration.DoesNotExist:
+        pass
+    else:
         ec.delete()
     return HttpResponse(json.dumps({'success':'ok'})
                       , mimetype = "text/plain")
@@ -697,9 +700,9 @@ def column_configurations_explorer(request, *args, **kws):
     
             return HttpResponse(json.dumps({'configs' : configs})
                               , mimetype = "text/plain")
-        config = first(ExplorerConfiguration.objects.filter(id = id
-                                                          , type = EXPLORER_CONFIG_TYPE_COLUMN
-                                                           ))
+        config = ExplorerConfiguration.objects.get(id = id
+                                                 , type = EXPLORER_CONFIG_TYPE_COLUMN
+                                                   )
         if config is not None:
             return HttpResponse(json.dumps({'columns' : [c.name for c in config.column_set.all()]})
                                           , mimetype = "text/plain")
@@ -731,9 +734,9 @@ def filter_combinations_explorer(request, *args, **kws):
 
             return HttpResponse(json.dumps({'configs' : configs})
                               , mimetype = "text/plain")
-        config = first(ExplorerConfiguration.objects.filter(id = id
-                                                          , type = EXPLORER_CONFIG_TYPE_FILTER
-                                                           ))
+        config = ExplorerConfiguration.objects.get(id = id
+                                                 , type = EXPLORER_CONFIG_TYPE_FILTER
+                                                  )
         if config is not None:
             filters = {}
             for f in config.filter_set.all():

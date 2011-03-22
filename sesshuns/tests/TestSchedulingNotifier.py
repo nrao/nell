@@ -78,7 +78,7 @@ class TestSchedulingNotifier(PeriodsTestCase):
         # also create a windowed session with default period that
         # is in the deleted state
         s = create_sesshun()
-        s.session_type = first(Session_Type.objects.filter(type = "windowed"))
+        s.session_type = Session_Type.objects.get(type = "windowed")
         s.save()
 
         # new default period for a window that is after the original periods
@@ -87,7 +87,7 @@ class TestSchedulingNotifier(PeriodsTestCase):
 
         pa = Period_Accounting(scheduled = 0)
         pa.save()
-        state = first(Period_State.objects.filter(abbreviation = "D"))
+        state = Period_State.objects.get(abbreviation = "D")
         p = Period( session    = s
                   , start      = start_time
                   , duration   = dur

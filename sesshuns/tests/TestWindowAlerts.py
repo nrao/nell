@@ -50,7 +50,7 @@ class TestWindowAlerts(NellTestCase):
 
         # Create the first user (on project) 
         self.user1 = User(sanctioned = True
-                        , role = first(Role.objects.filter(role = "Observer"))
+                        , role = Role.objects.get(role = "Observer")
                      )
         self.user1.save()
 
@@ -61,7 +61,7 @@ class TestWindowAlerts(NellTestCase):
          
         # Create the second user (on project)
         self.user2 = User(sanctioned = True
-                        , role = first(Role.objects.filter(role = "Observer"))
+                        , role = Role.objects.get(role = "Observer")
                      )
         self.user2.save()
 
@@ -72,32 +72,32 @@ class TestWindowAlerts(NellTestCase):
 
         # Create Investigator1's 3 blackouts.
         blackout11 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 4, 1, 11)
                             , end_date   = datetime(2009, 4, 3, 11))
         blackout11.save()
 
         blackout12 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 4, 1, 18)
                             , end_date   = datetime(2009, 4, 7, 18))
         blackout12.save()
 
         blackout13 = Blackout(user       = self.user1
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 4, 2, 12)
                             , end_date   = datetime(2009, 4, 7, 20))
         blackout13.save()
 
         # Create Investigator2's 2 blackouts.
         blackout21 = Blackout(user       = self.user2
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 4, 1, 11)
                             , end_date   = datetime(2009, 4, 3, 11))
         blackout21.save()
 
         blackout22 = Blackout(user       = self.user2
-                            , repeat     = first(Repeat.objects.all())
+                            , repeat     = Repeat.objects.all()[0]
                             , start_date = datetime(2009, 4, 1, 18)
                             , end_date   = datetime(2009, 4, 7, 13))
         blackout22.save()
@@ -196,7 +196,7 @@ class TestWindowAlerts(NellTestCase):
         blackout = Blackout(project    = self.project
                           , start_date = bsStart
                           , end_date   = bsEnd
-                          , repeat     = first(Repeat.objects.all())
+                          , repeat     = Repeat.objects.all()[0]
                            )
         blackout.save()
         bss.append((bsStart, bsEnd))
@@ -299,8 +299,8 @@ class TestWindowAlerts(NellTestCase):
         blackout = Blackout(project    = self.project
                           , start_date = datetime(2009, 4, 8)
                           , end_date   = datetime(2009, 4, 11)
-                          , repeat     = first(Repeat.objects.all())
-                           )
+                          , repeat     = Repeat.objects.all()[0]
+                          )
         blackout.save()
 
         ns = wa.findAlertLevels()

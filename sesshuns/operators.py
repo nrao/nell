@@ -29,7 +29,7 @@ def moc_reschedule(request, *args, **kws):
     Allows an operator to acknowledge when the MOC is bad before an observation.
     """
     requestor = get_requestor(request)
-    period    = first(Period.objects.filter(id = args[0]))
+    period    = Period.objects.get(id = args[0])
 
     acknowledge_moc(requestor, period)
 
@@ -43,7 +43,7 @@ def moc_degraded(request, *args, **kws):
     has begun.
     """
     requestor = get_requestor(request)
-    period    = first(Period.objects.filter(id = args[0]))
+    period    = Period.objects.get(id = args[0])
 
     acknowledge_moc(requestor, period)
 

@@ -1,6 +1,5 @@
 from Receiver        import Receiver
 from Period_Receiver import Period_Receiver
-from sesshuns.models.common          import first
 
 """
     Why isn't this stuff in common.py?  Because the stuff in common.py is used by the models and
@@ -15,8 +14,10 @@ def init_rcvrs_from_session(session, period):
         return
     rcvrAbbrs = session.rcvrs_specified()
     for r in rcvrAbbrs:
-        rcvr = first(Receiver.objects.filter(abbreviation = r.strip()))
-        if rcvr is not None:
+        try:
+            rcvr = Receiver.objects.get(abbreviation = r.strip())
+        except Receiver.DoesNotExist:
+            pass
+        else:
             rp = Period_Receiver(receiver = rcvr, period = period)
             rp.save()
-

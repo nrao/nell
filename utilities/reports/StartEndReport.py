@@ -9,7 +9,6 @@ setup_environ(settings)
 
 from nell.tools.TimeAccounting import TimeAccounting
 from scheduler.models           import Project
-from sesshuns.models           import first
 
 def delta_to_hours(delta):
     return delta.days * 24 + delta.seconds / 3600.0

@@ -147,7 +147,7 @@ class RevisionReport(object):
                 self.add("%s\n" % info)
     
     def getRcvr(self, rcvrId):
-        return first(Receiver.objects.filter(id = rcvrId))
+        return Receiver.objects.get(id = rcvrId)
     
     def getRcvrAbbr(self, rcvrId):
         return self.getRcvr(rcvrId).abbreviation
@@ -163,9 +163,7 @@ class RevisionReport(object):
         return [self.getRcvrAbbr(r) for r in rg]
 
     def getSession(self, pcode, name):
-        ss = Sesshun.objects.filter(name = name)
-        s = first([s for s in ss if s.project.pcode == pcode])
-        return s
+        return Sesshun.objects.get(name = name, project__pcode = pcode)
 
     def runFromCommandLine(self, args):
         """

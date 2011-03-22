@@ -3,7 +3,7 @@ from django.http              import HttpResponse, HttpResponseRedirect
 
 from NellResource import NellResource
 from scheduler.models       import Window
-from sesshuns.models        import first, str2dt
+from sesshuns.models        import str2dt
 from scheduler.httpadapters import WindowHttpAdapter
 from datetime              import datetime, timedelta, date
 
@@ -91,7 +91,7 @@ class WindowResource(NellResource):
         else:
             # one, identified by id in arg list
             w_id = args[0]
-            window = first(Window.objects.filter(id = w_id))
+            window = Window.objects.get(id = w_id)
             return HttpResponse(json.dumps(dict(window = WindowHttpAdapter(window).jsondict()))
                               , content_type = "application/json")
 

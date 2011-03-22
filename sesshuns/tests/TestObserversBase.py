@@ -31,7 +31,7 @@ class TestObserversBase(BenchTestCase):
         self.u = User(first_name = "dss" #"Test"
                     , last_name  = "account" #"User"
                     , pst_id     = 3251
-                    , role       = first(Role.objects.all())
+                    , role       = Role.objects.all()[0]
                     #, username   = self.auth_user.username
                       )
         self.u.save()
@@ -41,7 +41,7 @@ class TestObserversBase(BenchTestCase):
         self.uFriend = User(first_name = "Best"
                           , last_name = "Friend"
                           , pst_id = None
-                          , role = first(Role.objects.all())
+                          , role = Role.objects.all()[0]
                            )
         self.uFriend.save()
 

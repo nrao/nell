@@ -50,7 +50,7 @@ def has_access(view_func):
     """
     redirect_url = '/profile'
     def decorate(request, *args, **kwds):
-        user      = first(User.objects.filter(id = args[0]))
+        user      = User.objects.get(id = args[0])
         requestor = get_requestor(request)
 
         if user != requestor and not requestor.isAdmin():
@@ -67,7 +67,7 @@ def has_user_access(view_func):
     redirect_url = '/profile'
     def decorate(request, *args, **kwds):
         if len(args) > 0:
-            user = first(User.objects.filter(id = args[0]))
+            user = User.objects.get(id = args[0])
             if user is None or not get_requestor(request).canViewUser(user):
                 return HttpResponseRedirect(redirect_url)
         return view_func(request, *args, **kwds)

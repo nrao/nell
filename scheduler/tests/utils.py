@@ -48,7 +48,7 @@ def create_sesshun():
     s.save()
 
     t = Target(session    = s
-             , system     = first(System.objects.filter(name = "J2000"))
+             , system     = System.objects.get(name = "J2000")
              , source     = "test source"
              , vertical   = 2.3
              , horizontal = 1.0
@@ -56,3 +56,30 @@ def create_sesshun():
     t.save()
     return s
 
+def create_users():
+    users = []
+    users.append(User.objects.create(original_id = 0
+                , pst_id      = 0
+                , sanctioned  = False
+                , first_name  = 'Foo'
+                , last_name   = 'Bar'
+                , contact_instructions = ""
+                , role  = Role.objects.all()[0]
+                 ))
+    users.append(User.objects.create(original_id = 0
+                , pst_id      = 0
+                , sanctioned  = True
+                , first_name  = 'Mike'
+                , last_name   = 'McCarty'
+                , contact_instructions = ""
+                , role  = Role.objects.all()[0]
+                 ))
+    users.append(User.objects.create(original_id = 0
+                , pst_id      = 0
+                , sanctioned  = True
+                , first_name  = 'Doless'
+                , last_name   = 'NoProject'
+                , contact_instructions = ""
+                , role  = Role.objects.all()[0]
+                 ))
+    return users

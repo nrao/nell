@@ -121,7 +121,7 @@ class ScheduleTools(object):
                                              , description = "" #description
                                                )
                 accounting.save()                             
-                pending = first(Period_State.objects.filter(abbreviation = 'P'))
+                pending = Period_State.objects.get(abbreviation = 'P')
                 period_2cd_half = Period.create(session  = p.session
                                        , start    = end
                                        , duration = new_dur
@@ -168,7 +168,7 @@ class ScheduleTools(object):
                                  , short_notice = duration
                                  , description  = "") #description)
             pa.save()   
-            scheduled = first(Period_State.objects.filter(abbreviation = 'S'))
+            scheduled = Period_State.objects.get(abbreviation = 'S')
             p = Period.create(session    = sesshun
                      , start      = start
                      , duration   = duration
@@ -209,7 +209,7 @@ class ScheduleTools(object):
         # now assign the description to all affected periods
         for who in ["got_time", "gave_time"]:
             for pname, hrs, pid in descDct[who]:
-                p = first(Period.objects.filter(id = pid))
+                p = Period.objects.get(id = pid)
                 old = p.accounting.description \
                     if p.accounting.description is not None else ""
                 p.accounting.description = old + description

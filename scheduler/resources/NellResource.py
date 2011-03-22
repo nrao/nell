@@ -2,7 +2,6 @@ from django_restapi.resource  import Resource
 from django.http              import HttpResponse, HttpResponseRedirect
 from django.shortcuts         import get_object_or_404
 
-from sesshuns.models          import first
 from utilities.FormatExceptionInfo import formatExceptionInfo
 
 import simplejson as json
@@ -36,7 +35,7 @@ class NellResource(Resource):
         self.adapter.load(o)
         self.adapter.init_from_post(request.POST)
         # Query the database to insure data is in the correct data type
-        o = first(self.dbobject.objects.filter(id = o.id))
+        o = self.dbobject.objects.get(id = o.id)
         self.adapter.load(o)
     
         revision.comment = self.get_rev_comment(request, o, "create_worker")

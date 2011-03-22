@@ -2,7 +2,6 @@ from django.db.models         import Q
 from django.http              import HttpResponse, HttpResponseRedirect
 from django_restapi.resource  import Resource
 from scheduler.models       import User
-from sesshuns.models        import first
 from scheduler.httpadapters import UserHttpAdapter
 from NellResource import NellResource
 
@@ -51,7 +50,7 @@ class UserResource(NellResource):
         else:
             # one, identified by id
             u_id, = args
-            user  = first(User.objects.filter(id = u_id))
+            user  = User.objects.get(id = u_id)
             adapter = UserHttpAdapter(user)
             return HttpResponse(json.dumps(dict(user = adapter.jsondict()))
                               , content_type = "application/json")

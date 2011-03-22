@@ -273,7 +273,7 @@ class TestViewsPTC(PeriodsTestCase):
     def test_period_time_accounting(self):
 
         # first see what the period looks like to start with 
-        pid = first(Period.objects.all().order_by("id")).id
+        pid = Period.objects.all().order_by("id")[0].id
         url = "/periods/UTC/%d" % pid
         response = Client().get(url)
         self.assertTrue('"lost_time_bill_project": 0.0' in response.content)
