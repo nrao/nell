@@ -252,20 +252,37 @@ def _get_calendar_defaults(request):
 
     where 'request' is a Django HttpRequest object.
     """
-    
+
     date = datetime.now()
     day = 7
     tz_str = 'ET'
     storage = messages.get_messages(request)
-    
+
     for message in storage:
         if message.message.find('GBT_SCHEDULE_INFO') == 0:
-            # message.message will be like this: 'GBT_SCHEDULE_INFO 2011-03-22 7 ET'
+            # message.message will be like this: 'GBT_SCHEDULE_INFO
+            # 2011-03-22 7 ET (timestamp)', where (timestamp) is a
+            # datetime printout, YYYY-MM-DD HH:MM:SS.ssssss.'  The
+            # timestamp is used to put a freshness date on the
+            # message.  Messages older than 12 hours are ignored,
+            # allowing the calendar to track today's date.  If no time
+            # limit were put on the message, the calendar would always
+            # start with the last start day used, which could be
+            # annoying as the days go by.
             part = message.message.split()
-            day = int(part[2])
-            tz_str = part[3]
-            date_parts = part[1].split('-')
-            date = datetime(int(date_parts[0]), int(date_parts[1]), int(date_parts[2]))
+            date_parts = part[4].split('-')
+            time_parts = part[5].split(':')
+            seconds = time_parts[2].split('.')
+            timestamp = datetime(int(date_parts[0]), int(date_parts[1]), int(date_parts[2]),
+                                 int(time_parts[0]), int(time_parts[1]),
+                                 int(seconds[0]), int(seconds[1]))
+            delta = datetime.now() - timestamp
+
+            if delta.seconds < 43200:
+                day = int(part[2])
+                tz_str = part[3]
+                date_parts = part[1].split('-')
+                date = datetime(int(date_parts[0]), int(date_parts[1]), int(date_parts[2]))
 
     return date, day, tz_str
 
@@ -277,7 +294,8 @@ def _save_calendar_defaults(request, start, days, timezone):
 
     _save_calendar_defaults(request, start, days, timezone)
     """
-    
+
     messages.add_message(request, messages.INFO,
-                         "GBT_SCHEDULE_INFO %s %s %s" % (start.date(), days, timezone),
+                         "GBT_SCHEDULE_INFO %s %s %s %s" % \
+                             (start.date(), days, timezone, datetime.now()),
                          fail_silently = True)
