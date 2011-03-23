@@ -1,5 +1,4 @@
 from django.db  import models
-from sesshuns.models.common     import first
 
 class Receiver(models.Model):
     name         = models.CharField(max_length = 32)
@@ -34,11 +33,5 @@ class Receiver(models.Model):
     @staticmethod
     def get_rcvr(abbreviation):
         "Convenience method for getting a receiver object by abbreviation"
-        return first(Receiver.objects.filter(abbreviation = abbreviation))
-
-    #@staticmethod
-    #def get_rcvr_by_name(name):
-    #    "Convenience method for getting a receiver object by abbreviation"
-    #    return first(Receiver.objects.filter(name = name))
-
+        return Receiver.objects.get(abbreviation = abbreviation)
 

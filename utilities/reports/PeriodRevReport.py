@@ -46,7 +46,7 @@ class PeriodRevReport(RevisionReport):
         return ps
 
     def reportPeriod(self, id, time = None, field = None):
-        p = first(Period.objects.filter(id = id))
+        p = Period.objects.get(id = id)
         self.add("Revision Report for Period: %s\n\n" % p)
         self.reportObject(p, time, field)
         self.add("\nDiffs:\n ")
@@ -55,7 +55,7 @@ class PeriodRevReport(RevisionReport):
     
     def reportPeriodDiffs(self, id):
         diffs = []
-        p = first(Period.objects.filter(id = id))
+        p = Period.objects.get(id = id)
         self.add("Differences for Period: %s\n\n" % p)
         diffs.extend(self.getObjectDiffs(p)) 
         diffs.extend(self.getObjectDiffs(p.accounting)) 
@@ -69,7 +69,7 @@ class PeriodRevReport(RevisionReport):
         self.write()    
 
     def reportPeriodForTime(self, id, timeStr):
-        p = first(Period.objects.filter(id = id))
+        p = Period.objects.get(id = id)
         self.add("Period: %s at %s\n\n" % (p, timeStr))
         self.reportObjectForTime(p, timeStr)
         self.write() 

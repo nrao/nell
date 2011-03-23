@@ -3,7 +3,7 @@ from django.http              import HttpResponse, HttpResponseRedirect
 
 from NellResource import NellResource
 from scheduler.models       import Elective
-from sesshuns.models        import first, str2dt
+from sesshuns.models        import str2dt
 from scheduler.httpadapters import ElectiveHttpAdapter
 from datetime              import datetime, timedelta, date
 
@@ -69,7 +69,7 @@ class ElectiveResource(NellResource):
         else:
             # one, identified by id in arg list
             e_id = args[0]
-            elective = first(Elective.objects.filter(id = e_id))
+            elective = Elective.objects.get(id = e_id)
             return HttpResponse(json.dumps(dict(elective = ElectiveHttpAdapter(elective).jsondict()))
                               , content_type = "application/json")
 

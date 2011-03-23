@@ -2,7 +2,6 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from sesshuns.models     import first
 from calculator.models   import *
 
 class GBTResourceImport(object):
@@ -37,21 +36,15 @@ class GBTResourceImport(object):
 
     def getResource(self, k, v):
         resource_map = {
-        'Backend'                : lambda v: first(Calc_Backend.objects.filter(name = v)) or \
-                                             Calc_Backend(name = v)
-      , 'Mode'                   : lambda v: first(Mode.objects.filter(name = v)) or Mode(name = v)
-      , 'Receiver'               : lambda v: first(Receiver.objects.filter(name = v))
-      , '# beams'                : lambda v: first(Beams.objects.filter(name = v)) or Beams(name = v)
-      , 'Polarization'           : lambda v: first(Polarization.objects.filter(name = v)) or \
-                                             Polarization(name = v)
-      , 'Bandwidth (MHz)'        : lambda v: first(Bandwidth.objects.filter(name = v)) or \
-                                             Bandwidth(name = v)
-      , 'Number spectral windows': lambda v: first(SpectralWindows.objects.filter(name = v)) or \
-                                             SpectralWindows(name = v)
-      , 'Min integ time'         : lambda v: first(Integration.objects.filter(name = v)) or \
-                                             Integration(name = v)
-      , 'Switching mode'         : lambda v: first(Switching.objects.filter(abbreviation = v)) or \
-                                             Switching(name = v, abbreviation = v)
+        'Backend'                : lambda v: Calc_Backend.objects.get_or_create(name = v)[0]
+      , 'Mode'                   : lambda v: Mode.objects.get_or_create(name = v)[0]
+      , 'Receiver'               : lambda v: Receiver.objects.get_or_create(name = v)[0]
+      , '# beams'                : lambda v: Beams.objects.get_or_create(name = v)[0]
+      , 'Polarization'           : lambda v: Polarization.objects.get_or_create(name = v)[0]
+      , 'Bandwidth (MHz)'        : lambda v: Bandwidth.objects.get_or_create(name = v)[0]
+      , 'Number spectral windows': lambda v: SpectralWindows.objects.filter(name = v)[0]
+      , 'Min integ time'         : lambda v: Integration.objects.get_or_create(name = v)[0]
+      , 'Switching mode'         : lambda v: Switching.objects.get_or_create(name = v, abbreviation = v)[0]
       }
 
         r = resource_map[k](v)

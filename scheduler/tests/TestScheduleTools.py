@@ -20,7 +20,7 @@ class TestScheduleTools(NellTestCase):
                ]
         self.ps = []
         # init them as Scheduled, so that 'deleting' them just changes state
-        state = first(Period_State.objects.filter(abbreviation = 'S'))
+        state = Period_State.objects.get(abbreviation = 'S')
         for start, dur, name in times:
             s = create_sesshun()
             s.name = name
@@ -244,7 +244,7 @@ class TestScheduleTools(NellTestCase):
             self.assertEquals(scheduled[i], p.accounting.scheduled)
             self.assertEquals(observed[i] , p.accounting.observed())
         # check affected periods
-        canceled = first(Period.objects.filter(state__abbreviation = 'D'))
+        canceled = Period.objects.get(state__abbreviation = 'D')
         backup   = ps[0]
         self.assertEquals(self.start, canceled.start)
         self.assertEquals(5.0, canceled.duration)
@@ -286,7 +286,7 @@ class TestScheduleTools(NellTestCase):
             self.assertEquals(oso[i] , p.accounting.other_session())
             self.assertEquals(observed[i] , p.accounting.observed())
         # check affected periods
-        canceled = first(Period.objects.filter(state__abbreviation = 'D'))
+        canceled = Period.objects.get(state__abbreviation = 'D')
         self.assertEquals(canceled.start, self.ps[2].start)
 
     def test_changeSchedule_ultimate_chaos(self):
@@ -326,7 +326,7 @@ class TestScheduleTools(NellTestCase):
             self.assertEquals(oso[i],       p.accounting.other_session())
             self.assertEquals(observed[i],  p.accounting.observed())
         # check affected periods
-        canceled = first(Period.objects.filter(state__abbreviation = 'D'))
+        canceled = Period.objects.get(state__abbreviation = 'D')
         self.assertEquals(canceled.start, self.ps[1].start)
 
     def test_changeSchedule_bisect(self):

@@ -35,16 +35,16 @@ class TestObservers(TestObserversBase):
         response = self.post(
             '/project/%s/session/%s/enable' % (self.p.pcode, self.s.id))
         self.failUnlessEqual(response.status_code, 302)
-        s = first(Sesshun.objects.filter(id = self.s.id))
+        s = Sesshun.objects.get(id = self.s.id)
         self.assertEqual(s.status.enabled, True)
 
     @timeIt
     def test_toggle_observer(self):
-        i_id = first(self.p.investigator_set.all()).id
+        i_id = self.p.investigator_set.all()[0].id
         response = self.post(
             '/project/%s/investigator/%s/observer' % (self.p.pcode, i_id))
         self.failUnlessEqual(response.status_code, 302)
-        i = first(Investigator.objects.filter(id = i_id))
+        i = Investigator.objects.get(id = i_id)
         self.assertEqual(i.observer, True)
 
     @timeIt
@@ -71,14 +71,14 @@ class TestObservers(TestObserversBase):
         data = {'contact_instructions' : "I'll be at Bob's house."}
         response = self.post('/profile/%s/dynamic_contact' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 302)
-        u = first(User.objects.filter(id = self.u.id))
+        u = User.objects.get(id = self.u.id)
         self.assertEqual(u.contact_instructions, data.get('contact_instructions'))
 
     def create_blackout(self):
         b             = Blackout(user = self.u)
         b.start       = datetime(2009, 1, 1)
         b.end         = datetime(2009, 12, 31)
-        b.repeat      = first(Repeat.objects.all())
+        b.repeat      = Repeat.objects.all()[0]
         b.description = "This is a test blackout."
         b.save()
         return b
@@ -87,7 +87,7 @@ class TestObservers(TestObserversBase):
         b             = Blackout(project = self.p)
         b.start       = datetime(2009, 1, 1)
         b.end         = datetime(2009, 12, 31)
-        b.repeat      = first(Repeat.objects.all())
+        b.repeat      = Repeat.objects.all()[0]
         b.description = "This is a test blackout for a project."
         b.save()
         return b
@@ -135,7 +135,7 @@ class TestObservers(TestObserversBase):
         # edit it
         response = self.post(
             '/profile/%s/blackout/%s/' % (self.u.id, b.id), data)
-        b = first(Blackout.objects.filter(id = b.id))
+        b = Blackout.objects.get(id = b.id)
         self.assertEqual(b.end_date.date().strftime("%m/%d/%Y") , data.get('end'))
         self.assertEqual(b.until.date().strftime("%m/%d/%Y") , data.get('until'))
         self.failUnlessEqual(response.status_code, 302)
@@ -146,7 +146,10 @@ class TestObservers(TestObserversBase):
           , {'_method' : 'DELETE'})
         self.failUnlessEqual(response.status_code, 302)
         # shouldn't this delete the blackout?
-        b = first(Blackout.objects.filter(id = b.id))
+        try:
+            b = Blackout.objects.get(id = b.id)
+        except Blackout.DoesNotExist:
+            b = None
         self.assertEqual(None, b)
 
         # create a new one
@@ -155,7 +158,7 @@ class TestObservers(TestObserversBase):
         response    = self.post(
             '/profile/%s/blackout/' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 302)
-        b = first(self.u.blackout_set.all())
+        b = self.u.blackout_set.all()[0]
         self.assertEqual(b.end_date.date().strftime("%m/%d/%Y"), data.get('end'))
         b.delete()
 
@@ -217,7 +220,7 @@ class TestObservers(TestObserversBase):
         # now edit it
         response = self.post(
             '/project/%s/blackout/%s/' % (self.p.pcode, b.id), data)
-        b = first(Blackout.objects.filter(id = b.id))
+        b = Blackout.objects.get(id = b.id)
         self.assertEqual(b.end_date.date().strftime("%m/%d/%Y") , data.get('end'))
         self.assertEqual(b.until.date().strftime("%m/%d/%Y") , data.get('until'))
         self.failUnlessEqual(response.status_code, 302)
@@ -228,7 +231,10 @@ class TestObservers(TestObserversBase):
           , {'_method' : 'DELETE'})
         self.failUnlessEqual(response.status_code, 302)
         # shouldn't this delete the blackout?
-        b = first(Blackout.objects.filter(id = b.id))
+        try:
+            b = Blackout.objects.get(id = b.id)
+        except Blackout.DoesNotExist:
+            b = None
         self.assertEqual(None, b)
 
         # now create one
@@ -237,7 +243,7 @@ class TestObservers(TestObserversBase):
         response    = self.post(
             '/project/%s/blackout/' % self.p.pcode, data)
         self.failUnlessEqual(response.status_code, 302)
-        b = first(self.p.blackout_set.all())
+        b = self.p.blackout_set.all()[0]
         self.assertEqual(b.end_date.date().strftime("%m/%d/%Y"), data.get('end'))
         b.delete()
 
@@ -246,7 +252,7 @@ class TestObservers(TestObserversBase):
 
         # create a period
         s = create_sesshun()
-        state = first(Period_State.objects.filter(abbreviation = 'S'))
+        state = Period_State.objects.get(abbreviation = 'S')
         p = Period(session = s
                  , start = datetime(2009, 9, 9, 12)
                  , duration = 1.0
@@ -288,7 +294,7 @@ class TestObservers(TestObserversBase):
 
         # create a period
         s = create_sesshun()
-        state = first(Period_State.objects.filter(abbreviation = 'S'))
+        state = Period_State.objects.get(abbreviation = 'S')
         p = Period(session = s
                  , start = datetime(2009, 9, 2, 1)
                  , duration = 6.0

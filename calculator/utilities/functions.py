@@ -1,5 +1,4 @@
 from calculator.models import WeatherValues, TSky
-from sesshuns.models   import first
 
 import math, slalib
 
@@ -75,42 +74,42 @@ def getK2(backend):
     return 1.21 if backend == 'Spectral Processor' or backend == 'GBT Spectrometer' else 1
 
 def getEtaTrack(freq, backend):
-    wv = first(WeatherValues.objects.filter(frequency = round(freq) / 1000))
+    wv = WeatherValues.objects.get(frequency = round(freq) / 1000)
     if wv is None:
         return None
 
     return wv.eta_track_mustang if backend == 'Mustang' else wv.eta_track
 
 def getEtaDSS(freq):
-    wv = first(WeatherValues.objects.filter(frequency = round(freq) / 1000))
+    wv = WeatherValues.objects.get(frequency = round(freq) / 1000)
     if wv is None:
         return None
 
     return wv.eta_dss
 
 def getEtaSurf(freq):
-    wv = first(WeatherValues.objects.filter(frequency = round(freq) / 1000))
+    wv = WeatherValues.objects.get(frequency = round(freq) / 1000)
     if wv is None:
         return None
 
     return wv.eta_surf
 
 def getTrcvr(freq, backend):
-    wv = first(WeatherValues.objects.filter(frequency = round(freq) / 1000))
+    wv = WeatherValues.objects.get(frequency = round(freq) / 1000)
     if wv is None:
         return None
 
     return wv.t_rcvr_mustang if backend == 'Mustang' else wv.t_rcvr
 
 def getTatm(freq):
-    wv = first(WeatherValues.objects.filter(frequency = round(freq) / 1000))
+    wv = WeatherValues.objects.get(frequency = round(freq) / 1000)
     if wv is None:
         return None
 
     return wv.t_atm
 
 def getTau0(freq):
-    wv = first(WeatherValues.objects.filter(frequency = round(freq) / 1000))
+    wv = WeatherValues.objects.get(frequency = round(freq) / 1000)
     if wv is None:
         return None
 
@@ -118,7 +117,7 @@ def getTau0(freq):
 
 def calculateEST0(freq, airmass, backend = None):
     """ Deprecated """
-    wv = first(WeatherValues.objects.filter(frequency = round(freq) / 1000))
+    wv = WeatherValues.objects.get(frequency = round(freq) / 1000)
     if wv is None:
         return None
 
@@ -128,7 +127,7 @@ def calculateEST0(freq, airmass, backend = None):
 
 def calculateAttenuation(est0, freq, backend = None):
     """ Deprecated """
-    wv = first(WeatherValues.objects.filter(frequency = round(freq) / 1000))
+    wv = WeatherValues.objects.get(frequency = round(freq) / 1000)
     if wv is None:
         return None
 
@@ -140,7 +139,7 @@ def calculateAttenuation(est0, freq, backend = None):
 
 def calculateESTTS(freq, t_bg, t_gal_bg, est0, backend = None):
     """ Deprecated """
-    wv = first(WeatherValues.objects.filter(frequency = round(freq) / 1000))
+    wv = WeatherValues.objects.get(frequency = round(freq) / 1000)
     if wv is None:
         return None
 
@@ -164,5 +163,5 @@ def calcTsky(r, d, freq, gal):
     if gal != 'model':
         return 0
     i, j = raDec2thetaPhi(r, d)
-    tsky = first(TSky.objects.filter(theta = i - 1, phi = j - 1))
+    tsky = TSky.objects.get(theta = i - 1, phi = j - 1)
     return tsky.tsky * math.pow(freq / 408., -2.6) if tsky is not None else 0

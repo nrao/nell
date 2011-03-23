@@ -1,5 +1,4 @@
 from django.db import models
-from sesshuns.models.common    import *
 from Project   import Project
 from User      import User
 

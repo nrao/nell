@@ -178,20 +178,20 @@ class Schedtime2DSS(object):
                 s = self.get_testing_session(row, duration, semester)
             elif type == "Maintenance":
                 # Maintenance is simple
-                s = first(Sesshun.objects.filter(name = "Maintenance").all())
+                s = Sesshun.objects.filter(name = "Maintenance")[0]
             elif type == "Shutdown":
                 # Shutdown is simple - not a whole lot going on
-                s = first(Sesshun.objects.filter(name = "Shutdown").all())
+                s = Sesshun.objects.filter(name = "Shutdown")[0]
             elif type == "Astronomy":
                 # Astronomy is only complicated if something's not right
                 # can we use the vpkey?
                 if original_id is not None and original_id != 0:
                     # simple case - we're done
-                    s = first(Sesshun.objects.filter(original_id = original_id).all())
+                    s = Sesshun.objects.filter(original_id = original_id)[0]
                 elif pcode is not None and pcode != "":
                     # try getting a session from the project - we rarely see it
 #                    print "Getting Session from pcode: ", pcode
-                    p = first(Project.objects.filter(pcode = pcode).all())
+                    p = Project.objects.get(pcode = pcode)
                     s = p.sesshun_set.all()[0] # TBF: arbitrary!
                 else:
                     # failure: this will raise an alarm
@@ -316,7 +316,7 @@ class Schedtime2DSS(object):
             s.save()
         else:
             # we've already created this proj/sess
-            s = first(Sesshun.objects.filter(name = sess_name))
+            s = Sesshun.objects.filter(name = sess_name)[0]
             # update it's alloted time to take into account
             # this new period
             s.allotment.total_time += duration
@@ -383,11 +383,9 @@ class Schedtime2DSS(object):
          # TBF, WTF, please be consistent!
         #print "bands", bands
         if bands in ['RRI', 'PF1*3', 'PF1*4', 'PF1*6', 'PF1*8', 'PF2']:
-            return [first(Receiver.objects.filter(
-                                abbreviation = self.rcvrMap[bands]))]
+            return [Receiver.objects.get(abbreviation = self.rcvrMap[bands])]
         else:
-            return [first(Receiver.objects.filter(
-                                abbreviation = self.rcvrMap[b])) for b in bands]
+            return [Receiver.objects.get(abbreviation = self.rcvrMap[b]) for b in bands]
 
     def get_schedtime_observers(self, names):
         "Maps entries in schedtime.observers to our user objects"
@@ -418,8 +416,8 @@ class Schedtime2DSS(object):
             # we could look at their PST affiliation to figure this out?
             if last_name == "Ford":
 #                print "SHIT: using John Ford for: ", users
-                return first(User.objects.filter(last_name = last_name
-                                               , first_name = "John").all())
+                return User.objects.filter(last_name = last_name
+                                               , first_name = "John")[0]
             else:
                 return users[0]
         else:
@@ -468,8 +466,8 @@ class Schedtime2DSS(object):
         except ValueError:
             raise "Invalid semester year %s.  Must be numeric, 00 - 99" % semester[:2]
 
-        semester = first(Semester.objects.filter(semester = semesterName))
-        ptype    = first(Project_Type.objects.filter(type = projectType))
+        semester = Semester.objects.get(semester = semesterName)
+        ptype    = Project_Type.objects.get(type = projectType)
 
         p = Project(semester     = semester
                   , project_type = ptype
@@ -499,8 +497,8 @@ class Schedtime2DSS(object):
                       , backup     = False
                         )
         status.save()
-        otype    = first(Observing_Type.objects.filter(type = observingType))
-        stype    = first(Session_Type.objects.filter(type = "fixed"))
+        otype    = Observing_Type.objects.get(type = observingType)
+        stype    = Session_Type.objects.get(type = "fixed")
         s = Sesshun(project        = p
                   , session_type   = stype
                   , observing_type = otype
@@ -516,7 +514,7 @@ class Schedtime2DSS(object):
         s.save()
 
         # TBF: put in a dummy target so that Antioch can pick it up!
-        system = first(System.objects.filter(name = "J2000"))
+        system = System.objects.get(name = "J2000")
         target = Target(session    = s
                       , system     = system
                       , source     = sessionName

@@ -1,6 +1,5 @@
 from datetime               import datetime
 from scheduler.models        import Window, Period, Sesshun, Period_State
-from sesshuns.models.common import *
 
 class WindowRangeHttpAdapter (object):
 
@@ -27,12 +26,12 @@ class WindowRangeHttpAdapter (object):
     def from_post(self, fdata):
         w_id = fdata.get("window_id", None)
         if w_id is not None:
-            window = first(Window.objects.filter(id = int(w_id)))
+            window = Window.objects.get(id = int(w_id))
             self.windowRange.window = window
         else:
             # you HAVE to be assigned a window
             if self.windowRange.window_id is None:
-                window = first(Window.objects.all())
+                window = Window.objects.all()[0]
                 self.windowRange.window = window
                 
 

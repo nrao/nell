@@ -4,7 +4,7 @@ from django.shortcuts         import get_object_or_404
 
 from NellResource import NellResource
 from scheduler.models       import Sesshun
-from sesshuns.models        import first, jsonMap
+from sesshuns.models        import jsonMap
 from scheduler.httpadapters import SessionHttpAdapter
 
 import simplejson as json
@@ -94,7 +94,6 @@ class SessionResource(NellResource):
                    , content_type = "application/json")
         else:
             s_id  = args[0]
-            #s     = first(Sesshun.objects.filter(id = s_id))
             s     = get_object_or_404(Sesshun, pk = s_id)
             return HttpResponse(json.dumps(dict(session = SessionHttpAdapter(s).jsondict())))
 

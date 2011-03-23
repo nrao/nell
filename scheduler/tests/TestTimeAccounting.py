@@ -20,7 +20,7 @@ class TestTimeAccounting(NellTestCase):
                , (datetime(2000, 1, 1, 8), 4.0, "three")
                ]
         self.ps = []
-        state = first(Period_State.objects.filter(abbreviation = 'P'))
+        state = Period_State.objects.get(abbreviation = 'P')
         for start, dur, name in times:
             s = create_sesshun()
             s.name = name

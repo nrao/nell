@@ -21,7 +21,7 @@ class TestUser(NellTestCase):
         adapter = ProjectHttpAdapter(self.project)
         adapter.update_from_post(pdata)
 
-        obsRole = first(Role.objects.filter(role = "Observer"))
+        obsRole = Role.objects.get(role = "Observer")
 
         # Create Investigator1 and his 3 blackouts.
         self.user1 = User(sanctioned = True, role = obsRole)
@@ -47,7 +47,7 @@ class TestUser(NellTestCase):
         # TBF: end of redundant code, now add periods
         #period_data = {"session" : self.sesshun
         #             , "date"
-        state = first(Period_State.objects.filter(abbreviation = 'S'))
+        state = Period_State.objects.get(abbreviation = 'S')
         self.period1 = Period(session  = self.sesshun
                             , start    = datetime(2010, 10, 1, 0, 0, 0)
                             , duration = 1.0

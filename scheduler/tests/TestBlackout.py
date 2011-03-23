@@ -12,18 +12,18 @@ class TestBlackout(NellTestCase):
         # create some user blackouts
         self.u = User(first_name = "Test"
                     , last_name  = "User"
-                    , role       = first(Role.objects.all())
+                    , role       = Role.objects.all()[0]
                       )
         self.u.save()
 
-        once = first(Repeat.objects.filter(repeat = 'Once'))
+        once = Repeat.objects.get(repeat = 'Once')
         self.blackout1 = Blackout(user       = self.u
                             , repeat     = once
                             , start_date = datetime(2009, 1, 1, 11)
                             , end_date   = datetime(2009, 1, 3, 11))
         self.blackout1.save()
 
-        weekly = first(Repeat.objects.filter(repeat = 'Weekly'))
+        weekly = Repeat.objects.get(repeat = 'Weekly')
         self.blackout2 = Blackout(user       = self.u
                             , repeat     = weekly
                             , start_date = datetime(2009, 1, 4, 11)
@@ -32,8 +32,8 @@ class TestBlackout(NellTestCase):
         self.blackout2.save()
 
         # create some project blackouts
-        semester = first(Semester.objects.filter(semester = "08C"))
-        ptype    = first(Project_Type.objects.filter(type = "science"))
+        semester = Semester.objects.get(semester = "08C")
+        ptype    = Project_Type.objects.get(type = "science")
 
         self.pcode = "GBT08C-01"
         self.project = Project(semester = semester
@@ -42,7 +42,6 @@ class TestBlackout(NellTestCase):
                                )
         self.project.save()
 
-        #once = first(Repeat.objects.filter(repeat = 'Once'))
         self.blackout3 = Blackout(project    = self.project
                                 , repeat     = once
                                 , start_date = datetime(2008, 10, 1, 11)

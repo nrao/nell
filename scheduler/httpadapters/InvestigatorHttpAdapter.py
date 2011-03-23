@@ -1,4 +1,3 @@
-from sesshuns.models import first
 from scheduler.models import Project, User, Investigator
 
 class InvestigatorHttpAdapter (object):
@@ -24,8 +23,14 @@ class InvestigatorHttpAdapter (object):
     def init_from_post(self, fdata):
         p_id    = int(float(fdata.get("project_id")))
         u_id    = int(float(fdata.get("user_id")))
-        project = first(Project.objects.filter(id = p_id)) or first(Project.objects.all())
-        user    = first(User.objects.filter(id = u_id)) or first(User.objects.all())
+        try:
+            project = Project.objects.get(id = p_id)
+        except Project.DoesNotExist:
+            project = Project.objects.all()[0]
+        try:
+            user    = User.objects.get(id = u_id)
+        except User.DoesNotExist:
+            user    = User.objects.all()[0]
         pi      = fdata.get('pi', 'false').lower() == 'true'
         if pi:
             # Reset any other PIs to False

@@ -1,5 +1,4 @@
 from scheduler.models                    import Role
-from sesshuns.models.common             import first
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
 
 class UserHttpAdapter(object):
@@ -22,7 +21,7 @@ class UserHttpAdapter(object):
         self.user.first_name  = fdata.get('first_name', "")
         self.user.last_name   = fdata.get('last_name', "")
         self.user.contact_instructions   = fdata.get('contact_instructions', "")
-        role                  = first(Role.objects.filter(role = fdata.get('role', 'Observer')))
+        role                  = Role.objects.get(role = fdata.get('role', 'Observer'))
         self.user.role        = role
         self.user.save()
 

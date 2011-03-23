@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models               import Q
 from django.core.exceptions         import ObjectDoesNotExist
 from django.http                    import HttpResponse, HttpResponseRedirect, Http404
-from django.shortcuts               import render_to_response
+from django.shortcuts               import render_to_response, get_object_or_404
 from scheduler.utilities            import get_rev_comment
 from models                         import *
 from sets                           import Set
@@ -122,7 +122,7 @@ def profile(request, *args, **kws):
     """
     requestor = get_requestor(request)
     requestor.checkAuthUser()
-    user = first(User.objects.filter(id = args[0])) if args else requestor
+    user = User.objects.get(id = args[0]) if args else requestor
     static_info  = user.getStaticContactInfo()
     username = static_info['username']
     reservations = NRAOBosDB().getReservationsByUsername(username)
@@ -177,9 +177,7 @@ def project(request, *args, **kws):
     except ObjectDoesNotExist:
         tz = "UTC"
 
-    project   = first(Project.objects.filter(pcode = args[0]))
-    if project is None:
-        raise Http404 # Bum pcode
+    project   = get_object_or_404(Project, pcode = args[0])
 
     now          = datetime.utcnow().replace(hour = 0, minute = 0, second = 0)
     later        = now + timedelta(days = 180)
@@ -279,7 +277,7 @@ def toggle_session(request, *args, **kws):
     Allows investigators to enables or disable a session for a project.
     """
     pcode, sid = args
-    s = first(Sesshun.objects.filter(project__pcode = pcode, id = sid))
+    s = Sesshun.objects.get(project__pcode = pcode, id = sid)
     s.status.enabled = not s.status.enabled
     s.status.save()
 
@@ -294,7 +292,7 @@ def toggle_required_friend(request, *args, **kws):
     Allows investigators to designate required friends for a project.
     """
     pcode, f_id = args
-    f = first(Friend.objects.filter(project__pcode = pcode, id = f_id))
+    f = Friend.objects.get(project__pcode = pcode, id = f_id)
     f.required = not f.required
     f.save()
 
@@ -309,7 +307,7 @@ def toggle_observer(request, *args, **kws):
     Allows investigators to designate observers for a project.
     """
     pcode, i_id = args
-    i = first(Investigator.objects.filter(project__pcode = pcode, id = i_id))
+    i = Investigator.objects.get(project__pcode = pcode, id = i_id)
     i.observer = not i.observer
     i.save()
 
@@ -331,7 +329,7 @@ def modify_priority(request, *args, **kws):
     project = Project.objects.filter(pcode = pcode)[0]
     project.normalize_investigators()
 
-    I   = first(project.investigator_set.filter(id = i_id))
+    I   = project.investigator_set.get(id = i_id)
     key = 'priority' if dir == "down" else '-priority'
     t   = None
     for i in project.investigator_set.order_by(key):
@@ -356,9 +354,7 @@ def project_notes(request, *args, **kwds):
     Allows investigators to attach notes to one of their projects.
     """
     pcode,  = args
-    project = first(Project.objects.filter(pcode = pcode))
-    if project is None:
-        raise Http404 # Bum pcode
+    project = get_object_or_404(Project, pcode = pcode)
 
     if request.method == 'GET':
         return render_to_response("sesshuns/project_notes_form.html"
@@ -377,9 +373,7 @@ def project_snotes(request, *args, **kwds):
     """
     Allows schedulers to attach a note to a project.
     """
-    project = first(Project.objects.filter(pcode = args[0]))
-    if project is None:
-        raise Http404 # Bum pcode
+    project = get_object_or_404(Project, pcode = args[0])
 
     if request.method == 'GET':
         return render_to_response("sesshuns/project_snotes_form.html"
@@ -398,7 +392,7 @@ def dynamic_contact(request, *args, **kws):
     """
     Allows investigators to update their dynamic contact information.
     """
-    user = first(User.objects.filter(id = args[0]))
+    user = User.objects.get(id = args[0])
     if request.method == 'GET':
         return render_to_response("sesshuns/dynamic_contact_form.html"
                                 , {'u':         user
@@ -413,7 +407,7 @@ def observer_ical(request, *args, **kws):
     """
     Serves up an investigator-centric iCalendar.
     """
-    user     = first(User.objects.filter(id = args[0]))
+    user     = User.objects.get(id = args[0])
     response = HttpResponse(IcalMap(user).getSchedule(), mimetype='text/calendar')
     response['Content-Type'] = 'text/calendar'
     response['Content-Disposition'] = 'attachment; filename=GBTschedule.ics'
@@ -422,7 +416,7 @@ def observer_ical(request, *args, **kws):
 @login_required
 @has_access
 def clear_user_cache(request, *args, **kwds):
-    user = first(User.objects.filter(id = args[0]))
+    user = User.objects.get(id = args[0])
     user.clearCachedInfo()
     return HttpResponseRedirect("/profile/%s" % args[0])
 
@@ -439,7 +433,7 @@ def project_blackout(request, *args, **kws):
     else:
         p_id, b_id, = args
 
-    project   = first(Project.objects.filter(pcode = p_id))
+    project   = Project.objects.get(pcode = p_id)
     requestor = get_requestor(request)
 
     return blackout_worker(request
@@ -462,7 +456,7 @@ def user_blackout(request, *args, **kws):
     else:
         u_id, b_id, = args
 
-    user      = first(User.objects.filter(id = u_id))
+    user      = User.objects.get(id = u_id)
     requestor = get_requestor(request)
 
     return blackout_worker(request
@@ -494,7 +488,7 @@ def blackout_worker(request, type, forObj, b_id, requestor, urlRedirect):
         f.format_dates(tzp, request.POST)
         if f.is_valid():
             if request.POST.get('_method', '') == 'PUT':
-                b = first(Blackout.objects.filter(id = b_id))
+                b = Blackout.objects.get(id = b_id)
             else:
                 if type == "project_blackout":
                     b = Blackout(project = forObj)
@@ -511,7 +505,7 @@ def blackout_worker(request, type, forObj, b_id, requestor, urlRedirect):
             revision.comment = get_rev_comment(request, b, "blackout")
             return HttpResponseRedirect(urlRedirect)
     else:
-        b = first(Blackout.objects.filter(id = b_id)) if b_id is not None else None
+        b = Blackout.objects.get(id = b_id) if b_id is not None else None
         if request.GET.get('_method', '') == "DELETE" and b is not None:
             b.delete()
             return HttpResponseRedirect(urlRedirect)
@@ -550,7 +544,7 @@ def events(request, *args, **kws):
     pcode     = args[0]
     start     = request.GET.get('start', '')
     end       = request.GET.get('end', '')
-    project   = first(Project.objects.filter(pcode = pcode).all())
+    project   = Project.objects.get(pcode = pcode)
     requestor = get_requestor(request)
 
     try:
@@ -614,7 +608,7 @@ def dates_not_schedulable(request, *args, **kws):
     pcode     = args[0]
     start     = datetime.fromtimestamp(float(request.GET.get('start', '')))
     end       = datetime.fromtimestamp(float(request.GET.get('end', '')))
-    project   = first(Project.objects.filter(pcode = pcode).all())
+    project   = Project.objects.get(pcode = pcode)
     period    = (end - start).days
 
     dates = Set([])

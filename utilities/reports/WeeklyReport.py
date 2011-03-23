@@ -93,7 +93,7 @@ def GenerateReport(start):
                   (p.pcode.ljust(11)
                  , str(p.principal_investigator())[:17].ljust(18)
                  , ",".join(p.rcvrs_specified())[:4].center(5)
-                 , first(p.principal_investigator().getEmails())
+                 , p.principal_investigator().getEmails()[0]
                  , ";".join([f.user.name() for f in p.friend_set.all()])
                  )
               for p in projects]

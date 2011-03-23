@@ -113,7 +113,7 @@ class DSSDatabase09B(DSSDatabase):
 
         for dt, rcvrs in rcvrChanges:
             for rcvr in rcvrs:
-                r = first(Receiver.objects.filter(abbreviation = rcvr))
+                r = Receiver.objects.get(abbreviation = rcvr)
                 rs = Receiver_Schedule(receiver = r, start_date = dt)
                 rs.save()
                 #print rs
@@ -129,7 +129,7 @@ class DSSDatabase09B(DSSDatabase):
         with these - they should be managed by hand.
         """
 
-        s = first(Sesshun.objects.filter(name = "Fixed Summer Maintenance"))
+        s = Sesshun.objects.get(name = "Fixed Summer Maintenance")
 
         # now create entries in Windows and Opportunities that can be
         # translated into Periods for this fixed session
@@ -218,7 +218,7 @@ class DSSDatabase09B(DSSDatabase):
 
     def create_other_fixed_opts(self):
 
-        s = first(Sesshun.objects.fitler(name = "testing").all())
+        s = Sesshun.objects.fitler(name = "testing")[0]
         print "session: ", s
 
         # project, session, date time, dur (Hrs)
@@ -289,9 +289,8 @@ class DSSDatabase09B(DSSDatabase):
         ]
 
         for pName, sName, start, durHrs in fixed:
-            #p = first(Project.objects.filter( name = pName )
             print pName, sName, start, durHrs
-            s = first(Sesshun.objects.filter( name = sName ))
+            s = Sesshun.objects.filter( name = sName )[0]
             print "window for session: ", s
             
             win = Window(session = s, required = True)
@@ -330,9 +329,8 @@ class DSSDatabase09B(DSSDatabase):
         ]
 
         for pName, sName, start, durHrs in fixed:
-            #p = first(Project.objects.filter( name = pName )
             print pName, sName, start, durHrs
-            s = first(Sesshun.objects.filter( name = sName ))
+            s = Sesshun.objects.filter( name = sName )[0]
             print "period for session: ", s
             p = Period( session = s
                       , start = start
@@ -343,7 +341,7 @@ class DSSDatabase09B(DSSDatabase):
     def set_fixed_projects(self):
         "temporary fix until carl's DB gets these as fixed."
 
-        stype    = first(Session_Type.objects.filter(type = "fixed"))
+        stype    = Session_Type.objects.get(type = "fixed")
         pcodes = ["GBT09A-092"
                 , "GBT09A-093"
                 , "GBT09A-094"
@@ -353,7 +351,7 @@ class DSSDatabase09B(DSSDatabase):
                 , "GBT09B-031"
                 , "GBT09B-029"]            
         for pcode in pcodes:
-            p = first(Project.objects.filter(pcode = pcode).all())
+            p = Project.objects.filter(pcode = pcode)[0]
             print p
             ss = p.sesshun_set.all()
             for s in ss:
@@ -397,7 +395,7 @@ class DSSDatabase09B(DSSDatabase):
             pcodeList = pcodes.split(",")
             for pcode in pcodes.split(","):
                 # each project gets its own project blackout!
-                p = first(Project.objects.filter(pcode = pcode.strip()))
+                p = Project.objects.filter(pcode = pcode.strip())[0]
                 if p is not None:
                     pb = Project_Blackout_09B(
                         project     = p

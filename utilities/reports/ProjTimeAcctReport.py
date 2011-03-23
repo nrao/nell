@@ -5,12 +5,12 @@ import settings
 setup_environ(settings)
 
 from nell.tools.TimeAccounting import TimeAccounting
-from scheduler.models           import Project, first
+from scheduler.models           import Project
 import sys
 
 def GenerateProjectTimeAccountingReport(pcode):
 
-    project = first(Project.objects.filter(pcode = pcode)) 
+    project = Project.objects.get(pcode = pcode)
     if project is None:
         print "cannot find project: ", pcode
         return

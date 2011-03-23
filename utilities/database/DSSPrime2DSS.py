@@ -208,9 +208,9 @@ class DSSPrime2DSS(object):
         from the sql used in get_session().
         """
 
-        otype = first(Observing_Type.objects.filter(type = row[23]))
-        stype = first(Session_Type.objects.filter(type = row[24]))
-        project = first(Project.objects.filter(pcode = row[12]))
+        otype = Observing_Type.objects.get(type = row[23])
+        stype = Session_Type.objects.get(type = row[24])
+        project = Project.objects.get(pcode = row[12])
 
         if project is None:
             print "*********Transfer Sessions Error: no project for pcode: ", row[12]
@@ -255,7 +255,7 @@ class DSSPrime2DSS(object):
         self.cursor.execute(query)
 
         # All Systems J2000!
-        system = first(System.objects.filter(name = "J2000"))
+        system = System.objects.get(name = "J2000")
 
         for t in self.cursor.fetchall():
             try:
@@ -313,7 +313,7 @@ class DSSPrime2DSS(object):
             self.cursor.execute(query)
 
             for r_name in self.cursor.fetchall():
-                rcvr = first(Receiver.objects.filter(name = r_name[0]))
+                rcvr = Receiver.objects.get(name = r_name[0])
                 rg.receivers.add(rcvr)
             rg.save()
 
@@ -333,7 +333,7 @@ class DSSPrime2DSS(object):
         #      o[5] = parameters.name
 
         for o in self.cursor.fetchall():
-            p  = first(Parameter.objects.filter(name = o[5]))
+            p  = Parameter.objects.get(name = o[5])
             if p.name == 'Instruments' and o[0] == "None":
                 #print "Not passing over Observing Parameter = Instruments(None)"
                 pass
@@ -402,23 +402,17 @@ class DSSPrime2DSS(object):
         query = "SELECT pcode FROM projects WHERE id = %s" % p_id
         self.cursor.execute(query)
         pcode = self.cursor.fetchone()[0]
-        p     = first(Project.objects.filter(pcode = pcode).all())
+        p     = Project.objects.get(pcode = pcode)
 
         if p is None:
             print "*****ERROR: project absent for pcode: ", pcode
             return
 
         # create the Investigator relation w/ the project & user
-        i = first(Investigator.objects.filter(project=p, user=u))
+        i, _ = Investigator.objects.get_or_create(project=p, user=u)
         if i:
             i.principal_contact      = row[6] == 1
             i.principal_investigator = row[5] == 1
-        else:
-            i =  Investigator(project = p
-                            , user    = u
-                            , principal_contact      = row[6] == 1
-                            , principal_investigator = row[5] == 1
-                              )
         i.save()
 
     def transfer_projects(self):
@@ -460,8 +454,9 @@ class DSSPrime2DSS(object):
         for row in rows:
             # TBF: check pcode - if we have it, don't transfer it.
             pcode = row[4]
-            p = first(Project.objects.filter(pcode = pcode))
-            if p is None:
+            try:
+                p = Project.objects.get(pcode = pcode)
+            except Project.DoesNotExist:
                 self.add_project(row)
                 self.new_projects.append(pcode)
             else:
@@ -475,8 +470,8 @@ class DSSPrime2DSS(object):
         """
 
         # first the project
-        semester = first(Semester.objects.filter(semester = row[12]))
-        ptype    = first(Project_Type.objects.filter(type = row[14]))
+        semester = Semester.objects.get(semester = row[12])
+        ptype    = Project_Type.objects.get(type = row[14])
         p = Project(semester     = semester
                   , project_type = ptype
                   , pcode        = row[4]
@@ -577,7 +572,10 @@ class DSSPrime2DSS(object):
 
         # Check to see if the user is already in the system
         # Step 1: use the original id
-        user =  first(User.objects.filter(original_id = int(row[3])).all()) 
+        try:
+            user = User.objects.get(original_id = int(row[3]))
+        except User.DoesNotExist:
+            user = None
         # make sure we at least have the same last name
         if user is not None and user.last_name == lastName:
             return user
@@ -613,7 +611,7 @@ class DSSPrime2DSS(object):
 
         
         # Check to see if the user is already in the system
-        #user = first(User.objects.filter(original_id = int(row[3])).all())
+        #user = User.objects.filter(original_id = int(row[3]))[0]
         user = self.find_user(row)
 
         # Skip to the next user if this one has been found
@@ -651,7 +649,7 @@ class DSSPrime2DSS(object):
                , sanctioned  = False
                , first_name  = firstName #row[1]
                , last_name   = lastName #row[2]
-               , role        = first(Role.objects.filter(role = "Observer"))
+               , role        = Role.objects.get(role = "Observer")
                  )
         u.save()
 
@@ -688,7 +686,7 @@ class DSSPrime2DSS(object):
         # TBF: put this in a file
         for pcode in self.new_projects:
             ls += "\nProject: \n"
-            project = first(Project.objects.filter(pcode = pcode))
+            project = Project.objects.get(pcode = pcode)
             ls += "%s\n" % project
             ls += "Friends: %s\n" % ",".join([f.user for f in project.friend_set.all()])
             ls += "Users:\n"
@@ -740,7 +738,7 @@ class DSSPrime2DSS(object):
             assert len(rows) == 1
             original_id = int(rows[0][0])
             # get our DSS session
-            sesshun = first(Sesshun.objects.filter(original_id = original_id))
+            sesshun = Sesshun.objects.get(original_id = original_id)
             # finally, transfer the windows
             if sesshun is not None:
                 self.create_windows(sesshun

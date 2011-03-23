@@ -190,7 +190,7 @@ class UserNames(object):
         mismatched = []
         missing = []
 
-        observer = first(Role.objects.filter(role = "Observer"))
+        observer = Role.objects.get(role = "Observer")
 
         for line in lines:
             parts = line.split('\t')
@@ -202,7 +202,7 @@ class UserNames(object):
             first_name  = parts[5]
             last_name   = parts[6]
             # use the original id to map
-            ourUser = first(User.objects.filter(original_id=original_id).all())
+            ourUser = User.objects.filter(original_id=original_id)[0]
             # does this make sense?
             if ourUser is None:
                 print >> self.out, "missing user: ", line
@@ -569,7 +569,7 @@ class UserNames(object):
                 u = User( sanctioned = False 
                         , first_name  = first_name 
                         , last_name   = last_name #row[2]
-                        , role        = first(Role.objects.filter(role = "Observer"))
+                        , role        = Role.objects.get(role = "Observer")
                  )
                 u.save()   
                 print >> self.out, "Added User: ", u
@@ -667,7 +667,7 @@ class UserNames(object):
                                           , last_name = last_name).all()
                 # if that failed, try email:
                 if len(users) == 0:
-                    email = first(Email.objects.filter(email = emailStr).all())
+                    email = Email.objects.filter(email = emailStr)[0]
                     if email is not None:
                         #print "Using email %s for user %s, last: %s, first: %s" % (email.email, email.user, last_name, first_name)
                         users = [email.user]
@@ -776,8 +776,8 @@ class UserNames(object):
 
         for first_name, last, user, id in admins:
             # don't make'm unless you have to
-            u = first(User.objects.filter(first_name = first_name
-                                        , last_name  = last)) 
+            u = User.objects.filter(first_name = first_name
+                                        , last_name  = last)[0]
             if u is not None:
                 continue
             # you have to
@@ -787,8 +787,8 @@ class UserNames(object):
                , last_name   = last 
                , username    = user
                , pst_id      = id 
-               #, role        = first(Role.objects.filter(role = "Administrator"))
-               , role        = first(Role.objects.filter(role = "Observer"))
+               #, role        = Role.objects.get(role = "Administrator")
+               , role        = Role.objects.get(role = "Observer")
                  )
             u.save()
 
@@ -810,7 +810,7 @@ class UserNames(object):
                , "Sessoms"
                ]
 
-        admin = first(Role.objects.filter(role = "Administrator"))
+        admin = Role.objects.get(role = "Administrator")
 
         # set them!
         users = User.objects.all()
@@ -821,7 +821,7 @@ class UserNames(object):
 
     def setUserName(self, username, userLastName):
         "This is for testing only: if username is in PST but not in DSS, the use username for given user"
-        victim = first(User.objects.filter(last_name = userLastName).all())
+        victim = User.objects.filter(last_name = userLastName)[0]
         victim.username = username
         victim.save()
         print >> self.out, "User %s now has username: %s" % (victim, username)
@@ -843,7 +843,7 @@ class UserNames(object):
 
     def create_dss_user(self):
 
-        role = first(Role.objects.filter(role = "Administrator"))
+        role = Role.objects.get(role = "Administrator")
         u = User(first_name = 'dss'
                , last_name  = 'account'
                , username   = 'dss'

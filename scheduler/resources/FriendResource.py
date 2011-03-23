@@ -3,7 +3,6 @@ from django.http              import HttpResponse, HttpResponseRedirect, Http404
 
 from NellResource          import NellResource
 from scheduler.models       import Friend
-from sesshuns.models        import first
 from scheduler.httpadapters import FriendHttpAdapter
 
 import simplejson as json

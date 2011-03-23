@@ -2,7 +2,6 @@ from datetime                import datetime, timedelta
 from test_utils              import BenchTestCase
 from scheduler.tests.utils                   import create_sesshun
 from scheduler.models        import Period_Accounting, Period_State, Period
-from sesshuns.models.common  import first
 
 class PeriodsTestCase(BenchTestCase):
     "Parent class for test cases that need periods to work with."
@@ -25,7 +24,7 @@ class PeriodsTestCase(BenchTestCase):
             scheduled = dur if st == "S" else 0.0
             pa = Period_Accounting(scheduled = scheduled)
             pa.save()
-            state = first(Period_State.objects.filter(abbreviation = st))
+            state = Period_State.objects.get(abbreviation = st)
             p = Period( session    = s
                       , start      = start
                       , duration   = dur

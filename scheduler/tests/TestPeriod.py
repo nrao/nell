@@ -116,7 +116,7 @@ class TestPeriod(BenchTestCase):
         p.duration = dur
         p.session = self.sesshun
         p.backup = True
-        p.state = first(Period_State.objects.filter(abbreviation = 'P'))
+        p.state = Period_State.objects.get(abbreviation = 'P')
         p.accounting = pa
 
         p.save()
@@ -223,7 +223,7 @@ class TestPeriod(BenchTestCase):
                , (datetime(2000, 1, 1, 8), 4.0)
                ]
         ps = []
-        state = first(Period_State.objects.filter(abbreviation = 'P'))
+        state = Period_State.objects.get(abbreviation = 'P')
         for start, dur in times:
             pa = Period_Accounting(scheduled = dur)
             pa.save()

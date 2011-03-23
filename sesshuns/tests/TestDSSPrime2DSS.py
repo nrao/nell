@@ -38,8 +38,9 @@ class TestDSSPrime2DSS(NellTestCase):
         for row in cursor.fetchall():
             idcol = 3 if table == "friends" else 4
             id = int(row[idcol])
-            user = first(User.objects.filter(original_id = id).all())
-            if user is None:
+            try:
+                user = User.objects.get(original_id = id)
+            except User.DoesNotExist:
                 if id not in new_users:
                     new_users.append(id)
             else:
@@ -90,9 +91,9 @@ class TestDSSPrime2DSS(NellTestCase):
         self.assertEquals(False, s.status.complete)
         self.assertEquals(5.0, s.allotment.total_time)
         self.assertEquals(4.0, s.allotment.grade)
-        tgs = s.target_set.all()
-        self.assertEquals(1, len(tgs))
-        target = tgs[0]
+        tg = s.getTarget()
+        self.assertTrue(tg is not None)
+        target = tg
         self.assertEqual("G34.3,S68N,DR21OH", target.source)
         self.assertAlmostEqual(0.022, target.vertical, 3)
         self.assertAlmostEqual(4.84, target.horizontal, 2)
@@ -162,7 +163,7 @@ class TestDSSPrime2DSS(NellTestCase):
                 , last_name  = 'Marganian'
                 , original_id = 123
                 , pst_id      = 821
-                , role        = first(Role.objects.filter(role = "Observer"))
+                , role        = Role.objects.get(role = "Observer")
                   )
         me.save()
 

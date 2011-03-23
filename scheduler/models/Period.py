@@ -1,4 +1,6 @@
-from django.db            import models
+from django.db              import models
+from django.core.exceptions import ObjectDoesNotExist
+
 from utilities.TimeAgent  import adjustDateTimeTz
 from sesshuns.models.common               import *
 from Project              import Project
@@ -183,7 +185,7 @@ class Period(models.Model):
     def move_to_scheduled_state(self):
         "worker for publish method: pending -> scheduled, and init time accnt."
         if self.state.abbreviation == "P":
-            self.state = first(Period_State.objects.filter(abbreviation = 'S'))
+            self.state = Period_State.objects.get(abbreviation = 'S')
             self.accounting.scheduled = self.duration
             self.accounting.save()
             self.save()
@@ -226,9 +228,9 @@ class Period(models.Model):
 
     def get_default_window(self):
         "Get the window this period is a default period for."
-        if self.is_windowed() and self.has_valid_windows():
-            return first(self.default_window.all())
-        else:
+        try:
+            return self.default_window
+        except ObjectDoesNotExist:
             return None
 
     def is_windowed_default(self):
@@ -236,12 +238,7 @@ class Period(models.Model):
         Is this period the default period for a window?
         If not, is it the chosen"
         """
-        # assume error checking done before hand
-        # self.is_windowed() and self.has_valid_windows()
-        if self.default_window.count() == 1:
-            return True
-        else:
-            return False
+        return self.get_default_window() is not None
 
     def assign_a_window(self):
         """

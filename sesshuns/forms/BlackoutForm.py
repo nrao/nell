@@ -54,7 +54,7 @@ class BlackoutForm(forms.Form):
             return self.cleaned_data
 
         cleaned_data                     = self.cleaned_data
-        self.cleaned_data['repeat']      = first(Repeat.objects.filter(repeat = cleaned_data['repeats']))
+        self.cleaned_data['repeat']      = Repeat.objects.get(repeat = cleaned_data['repeats'])
         self.cleaned_data['description'] = cleaned_data['description']
 
         start, end, until = self.cleaned_start, self.cleaned_end, self.cleaned_until

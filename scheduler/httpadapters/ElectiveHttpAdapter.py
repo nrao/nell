@@ -41,8 +41,8 @@ class ElectiveHttpAdapter (object):
             self.elective.session = self.elective.handle2session(handle)
         else:
             try:
-                maintenance = first(Project.objects.filter(pcode='Maintenance'))
-                self.elective.session = first(Sesshun.objects.filter(project=maintenance))
+                maintenance = Project.objects.get(pcode='Maintenance')
+                self.elective.session = Sesshun.objects.get(project=maintenance)
             except:
                 self.elective.session  = Sesshun.objects.get(id=fdata.get("session", 1))
 
