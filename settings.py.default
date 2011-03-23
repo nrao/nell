@@ -12,7 +12,7 @@ SC_EQUATION_DEFS = NELL_ROOT + '/calculator/equations.cfg'
 SERVER_EMAIL = 'dss@gb.nrao.edu'
 EMAIL_HOST   = 'smtp.gb.nrao.edu'
 
-DEBUG = True # Set to False for production TBF really? we don't!  #MODIFY#
+DEBUG = True # Set to False for production #MODIFY#
 SEND_BROKEN_LINK_EMAILS = False # Set to True for production #MODIFY#
 
 TEMPLATE_DEBUG = DEBUG
@@ -95,6 +95,7 @@ MIDDLEWARE_CLASSES = (
     'django_cas.middleware.CASMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
     'reversion.middleware.RevisionMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
 )
 
 AUTHENTICATION_BACKENDS = (
@@ -113,19 +114,27 @@ TEMPLATE_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
 )
 
+TEMPLATE_CONTEXT_PROCESSORS = (
+    'django.contrib.messages.context_processors.messages',
+    'django.contrib.auth.context_processors.auth'
+    )
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
+
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
+    'django.contrib.messages',
+    'django.contrib.admin',
     'nell.scheduler',
     'nell.sesshuns',
     'nell.sesshuns.templatetags',
     'nell.calculator',
-    'django.contrib.admin',
     'reversion'
 )
- 
+
 # this is needed for making direct calls to the Antioch server
 # via the proxy.  Use your port specified in
 # /home/dss/conundrum/conf/nginx.conf
