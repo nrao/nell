@@ -147,6 +147,9 @@ class CalEvent(object):
     def is_comissioning(self):
         return self.project_type() == 'C'
 
+    def is_concurrent(self):
+        return self.project_type() == 'R'
+
     # returns True if MOC degraded after period started. Should be
     # overrided if contained object cares about MOC.
     def moc_degraded(self):
@@ -175,7 +178,7 @@ class CalEvent(object):
 
     # returns a list of receivers involved with this event
     def receiver_list(self):
-        return []
+        return ""
 
     def get_rcvr_ranges(self):
         return ""
@@ -508,21 +511,20 @@ class CalEventMaintenanceActivity(CalEvent):
 
         return observers
 
+
     def friends(self):
-        try:
-            prj = Project.objects.get(pcode = "Maintenance")
-            f = [prj.friend]       # TBF will be friend_s_ soon
-        except ObjectDoesNotExist: # return something.
-            f = []
+        prj = Project.objects.get(pcode = "Maintenance")
+        fs = [f for f in prj.friend_set.all()]
+        return fs
 
-        return f
-
-
-    # returns 'M', as maintenance is the only possibility.
+    # returns 'R', for concuRrent activity.  If this event
+    # (CalEventMaintenanceActivity) is used, it is used to denote
+    # Maintenance Activities that are not attached to a Period.  This
+    # is always for an activity that is concurrent with normal
+    # observations and not part of regularly scheduled maintenance.
     def project_type(self):
-        return 'M'
+        return 'R'
 
 
     def mas(self):
         return self.contained
-
