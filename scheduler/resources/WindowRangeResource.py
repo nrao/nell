@@ -3,7 +3,6 @@ from django.http              import HttpResponse, HttpResponseRedirect
 
 from NellResource import NellResource
 from scheduler.models       import WindowRange
-from sesshuns.models        import str2dt
 from scheduler.httpadapters import WindowRangeHttpAdapter
 from datetime              import datetime, timedelta, date
 

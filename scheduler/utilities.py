@@ -229,4 +229,27 @@ def copy_window(id, num):
         #print "    new Window: "
         #print "    ", newW.id, newW
 
-
+jsonMap = {"authorized"     : "status__authorized"
+         , "between"        : "time_between"
+         , "backup"         : "status__backup"
+         , "pcode"          : "project__pcode"
+         , "complete"       : "status__complete"
+         , "coord_mode"     : "target__system__name"
+         , "enabled"        : "status__enabled"
+         , "freq"           : "frequency"
+         , "grade"          : "allotment__grade"
+         , "id"             : "id"
+         , "name"           : "name"
+         , "orig_ID"        : "original_id"
+         , "receiver"       : "receiver_group__receivers__abbreviation"
+         , "PSC_time"       : "allotment__psc_time"
+         , "req_max"        : "max_duration"
+         , "req_min"        : "min_duration"
+         , "science"        : "observing_type__type"
+         , "sem_time"       : "allotment__max_semester_time"
+         , "source"         : "target__source"
+         , "source_h"       : "target__horizontal"
+         , "source_v"       : "target__vertical"
+         , "total_time"     : "allotment__total_time"
+         , "type"           : "session_type__type"
+               }
