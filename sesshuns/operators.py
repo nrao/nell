@@ -9,6 +9,7 @@ from nell.utilities.TimeAgent           import EST, UTC
 from observers                          import project_search
 from sets                               import Set
 from utilities                          import get_requestor, acknowledge_moc, get_gbt_schedule_events
+from django.contrib                     import messages
 
 import calendar
 
@@ -66,14 +67,16 @@ def gbt_schedule(request, *args, **kws):
         days      = int(request.POST.get('days', 5))
         startDate = request.POST.get('start', None)
         startDate = datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now()
-    else: # default time range
-        timezone  = 'ET'
-        days      = 7
-        startDate = datetime.now()
+    else: # request.method == 'GET'
+        # Default date, days, and timezone.  Loaded from the values
+        # saved below, or from defaults if no values were saved.
+        startDate, days, timezone = _get_calendar_defaults(request)
 
     start   = TimeAgent.truncateDt(startDate)
     end     = start + timedelta(days = days)
 
+    # save these values for use in 'GET' above.
+    _save_calendar_defaults(request, start, days, timezone)
     requestor = get_requestor(request)
 
     # Ensure only operators or admins trigger costly MOC calculations
@@ -140,7 +143,7 @@ def summary(request, *args, **kws):
 
         month = request.POST.get('month', None)
         year  = request.POST.get('year', None)
-        year  = int(year) if year else None 
+        year  = int(year) if year else None
         if month and year:
             start = datetime(int(year)
                            , [m for m in calendar.month_name].index(month)
@@ -176,7 +179,7 @@ def summary(request, *args, **kws):
         days     = {}
         hours    = {}
         summary  = {}
-    else: 
+    else:
         url      = 'sesshuns/project_summary.html'
         projects = list(Set([p.session.project for p in periods]))
         projects.sort(lambda x, y: cmp(x.pcode, y.pcode))
@@ -226,3 +229,73 @@ def summary(request, *args, **kws):
               , 'project'  : project
               , 'is_logged_in': request.user.is_authenticated()})
 
+
+######################################################################
+# _get_calendar_defaults(request)
+#
+# Returns defaults for the GBT Schedule calendar: start date, number
+# of days, and time zone.  The function tries to read it from the
+# django message framework.  If that doesn't work, sets hard defaults
+# of Today, 7, 'ET' for date, days, timezone.
+#
+# 'request' is the HttpRequest object.
+#
+# Returns date, days, timezone.
+#
+######################################################################
+
+def _get_calendar_defaults(request):
+    """
+    Returns default date/time values for the GBT Schedule calendar:
+
+    date, days, timezone = _get_calendar_defaults(request)
+
+    where 'request' is a Django HttpRequest object.
+    """
+
+    date = datetime.now()
+    day = 7
+    tz_str = 'ET'
+    storage = messages.get_messages(request)
+
+    for message in storage:
+        if message.message.find('GBT_SCHEDULE_INFO') == 0:
+            # message.message will be like this: 'GBT_SCHEDULE_INFO
+            # 2011-03-22 7 ET (timestamp)', where (timestamp) is a
+            # datetime printout, YYYY-MM-DD HH:MM:SS.ssssss.'  The
+            # timestamp is used to put a freshness date on the
+            # message.  Messages older than 12 hours are ignored,
+            # allowing the calendar to track today's date.  If no time
+            # limit were put on the message, the calendar would always
+            # start with the last start day used, which could be
+            # annoying as the days go by.
+            part = message.message.split()
+            date_parts = part[4].split('-')
+            time_parts = part[5].split(':')
+            seconds = time_parts[2].split('.')
+            timestamp = datetime(int(date_parts[0]), int(date_parts[1]), int(date_parts[2]),
+                                 int(time_parts[0]), int(time_parts[1]),
+                                 int(seconds[0]), int(seconds[1]))
+            delta = datetime.now() - timestamp
+
+            if delta.seconds < 43200:
+                day = int(part[2])
+                tz_str = part[3]
+                date_parts = part[1].split('-')
+                date = datetime(int(date_parts[0]), int(date_parts[1]), int(date_parts[2]))
+
+    return date, day, tz_str
+
+def _save_calendar_defaults(request, start, days, timezone):
+    """
+    Saves the start date, days, and timezone values using the Django
+    message framework.  These can then be retrieved using
+    _get_calendar_defaults().
+
+    _save_calendar_defaults(request, start, days, timezone)
+    """
+
+    messages.add_message(request, messages.INFO,
+                         "GBT_SCHEDULE_INFO %s %s %s %s" % \
+                             (start.date(), days, timezone, datetime.now()),
+                         fail_silently = True)
