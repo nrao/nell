@@ -182,9 +182,9 @@ class Maintenance_Activity(models.Model):
     def time_range(self):
         """
         returns a string with the time range of the activity: 08:05 -
-        09:30, in ET.  TBF: will always output in ET; this is called
-        from a template and a parameter indicating time-zone display
-        cannot be passed in.  If the resoure calendar is to be
+        09:30, in ET.  Note: this will always output in ET; this is
+        called from a template and a parameter indicating time-zone
+        display cannot be passed in.  If the resoure calendar is to be
         displayed in UT this breaks.
         """
         start = self.get_start('ET')

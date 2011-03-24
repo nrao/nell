@@ -5,7 +5,7 @@ from copy                               import deepcopy
 import pytz
 
 from scheduler.models                   import *
-from sesshuns.models                   import *
+from sesshuns.models                    import *
 from scheduler.httpadapters             import *
 from nell.utilities                     import UserInfo, TimeAgent
 from scheduler.GBTCalendarEvent         import CalEventPeriod, CalEventElective, CalEventMaintenanceActivity
