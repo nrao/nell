@@ -10,7 +10,7 @@ from scheduler.tests.utils    import create_sesshun, create_maintenance_period
 class TestViews(BenchTestCase):
 
     def setupRxSchedule(self):
-        d = datetime(2009, 4, 1, 1)
+        d = datetime(2009, 4, 1, 0)
         for i in range(9):
             start_date = d + timedelta(5*i)
             for j in range(1,4):
