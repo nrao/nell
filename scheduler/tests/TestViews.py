@@ -1,15 +1,16 @@
 from django.test.client  import Client
+from datetime            import datetime, timedelta
 
 from test_utils              import BenchTestCase, timeIt
 from sesshuns.models         import *
 from scheduler.models         import *
 from scheduler.utilities      import getReservationsFromDB
-from scheduler.tests.utils                   import create_sesshun
+from scheduler.tests.utils    import create_sesshun, create_maintenance_period
 
 class TestViews(BenchTestCase):
 
     def setupRxSchedule(self):
-        d = datetime(2009, 4, 1, 0)
+        d = datetime(2009, 4, 1, 1)
         for i in range(9):
             start_date = d + timedelta(5*i)
             for j in range(1,4):
@@ -54,15 +55,22 @@ class TestViews(BenchTestCase):
     def test_receivers_schedule(self):
     
         self.setupRxSchedule()
+        startdate = datetime(2009, 4, 6, 12)
+        p = create_maintenance_period(start = startdate + timedelta(days = 1)
+                      , duration = 8
+                       )
+        p.save()
         client = Client()
 
-        startdate = datetime(2009, 4, 6, 12)
         response = client.get('/receivers/schedule',
                                    {"startdate" : startdate,
                                     "duration" : 7})
         self.failUnlessEqual(response.status_code, 200)
-        expected = '{"diff": [{"down": [], "up": ["RRI", "342", "450"], "day": "04/06/2009"}, {"down": ["RRI"], "up": ["600"], "day": "04/11/2009"}], "receivers": ["RRI", "342", "450", "600", "800", "1070", "L", "S", "C", "X", "Ku", "K", "Ka", "Q", "MBA", "Z", "Hol", "KFPA", "W"], "maintenance": [], "schedule": {"04/11/2009": ["342", "450", "600"], "04/06/2009": ["RRI", "342", "450"]}}'
+        self.assertTrue('error' not in response.content)
+        expected = '{"diff": [{"down": [], "up": ["RRI", "342", "450"], "day": "04/06/2009"}, {"down": ["RRI"], "up": ["600"], "day": "04/11/2009"}], "receivers": ["RRI", "342", "450", "600", "800", "1070", "L", "S", "C", "X", "Ku", "K", "Ka", "Q", "MBA", "Z", "Hol", "KFPA", "W"], "maintenance": ["2009-04-07"], "schedule": {"04/11/2009": ["342", "450", "600"], "04/06/2009": ["RRI", "342", "450"]}}'
         self.assertEqual(expected, response.content)
+
+        self.failUnlessEqual(response.status_code, 200)
 
     def test_get_options(self):
         create_sesshun()
