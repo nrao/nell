@@ -1,4 +1,4 @@
-from nell.tools             import TimeAccounting
+from nell.utilities             import TimeAccounting
 from scheduler.models        import Allotment, Project_Allotment, Project_Type, Semester, User
 
 class ProjectHttpAdapter (object):

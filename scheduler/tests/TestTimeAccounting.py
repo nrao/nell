@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from test_utils              import NellTestCase
 from scheduler.models         import *
 from utils                   import create_sesshun
-from nell.tools              import TimeAccounting
+from nell.utilities              import TimeAccounting
 
 class TestTimeAccounting(NellTestCase):
 

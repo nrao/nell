@@ -7,7 +7,7 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from nell.tools.TimeAccounting import TimeAccounting
+from nell.utilities.TimeAccounting import TimeAccounting
 from scheduler.models           import Project
 
 def delta_to_hours(delta):

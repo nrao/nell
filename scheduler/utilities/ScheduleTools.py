@@ -1,7 +1,6 @@
 from datetime                   import datetime, timedelta
-from nell.utilities               import TimeAgent
-from nell.scheduler.models            import *
-from nell.utilities             import Score
+from scheduler.models           import *
+from nell.utilities             import Score, TimeAgent
 
 class ScheduleTools(object):
 

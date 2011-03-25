@@ -8,7 +8,7 @@ from scheduler.models                       import *
 from sesshuns.models                        import overlaps
 from sets                                  import Set
 from datetime                              import date, datetime, timedelta
-from nell.tools                            import TimeAccounting
+from nell.utilities                            import TimeAccounting
 from nell.utilities.notifiers              import SessionAlerts
 
 def get_sessions(typ,sessions):

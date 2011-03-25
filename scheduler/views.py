@@ -3,11 +3,12 @@ from decorators                         import catch_json_parse_errors
 from django.http                        import HttpResponse
 from django.contrib.auth.models         import User as AuthUser
 from scheduler.httpadapters             import PeriodHttpAdapter
+from scheduler.utilities                import ScheduleTools
 from models                             import *
 from sesshuns.models.common             import *
 from utilities                          import *
 from scheduler.models                   import User as NellUser
-from nell.tools                         import IcalMap, ScheduleTools, TimeAccounting
+from nell.utilities                     import IcalMap, TimeAccounting
 from nell.utilities                     import TimeAgent
 from nell.utilities.notifiers           import SchedulingNotifier, Notifier, Email as EmailMessage 
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException, JSONExceptionInfo
