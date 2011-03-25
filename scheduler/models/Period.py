@@ -1,6 +1,8 @@
 from django.db              import models
 from django.core.exceptions import ObjectDoesNotExist
+from sets                   import Set
 
+from settings             import ANTIOCH_HOST, PROXY_PORT
 from utilities.TimeAgent  import adjustDateTimeTz
 from sesshuns.models.common               import *
 from Project              import Project

@@ -1,5 +1,5 @@
-from scheduler.models import *
-from TimeAccounting  import TimeAccounting
+from nell.scheduler.models import *
+from nell.tools.TimeAccounting  import TimeAccounting
 from nell.utilities  import TimeAgent
 
 class DBReporter:

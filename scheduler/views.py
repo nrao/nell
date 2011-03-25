@@ -9,10 +9,8 @@ from utilities                          import *
 from scheduler.models                   import User as NellUser
 from nell.tools                         import IcalMap, ScheduleTools, TimeAccounting
 from nell.utilities                     import TimeAgent
-from nell.utilities.SchedulingNotifier  import SchedulingNotifier
+from nell.utilities.notifiers           import SchedulingNotifier, Notifier, Email as EmailMessage 
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException, JSONExceptionInfo
-from nell.utilities.Notifier            import Notifier
-from nell.utilities.Email               import Email as EmailMessage  #name clash with models
 from reversion                          import revision
 from settings                           import PROXY_PORT, DATABASE_NAME
 

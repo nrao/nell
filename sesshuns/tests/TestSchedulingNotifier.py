@@ -1,6 +1,6 @@
 from datetime   import datetime, timedelta
 
-from nell.utilities  import SchedulingNotifier
+from nell.utilities.notifiers  import SchedulingNotifier
 from scheduler.tests.utils           import create_sesshun
 from scheduler.tests.PeriodsTestCase import PeriodsTestCase
 from scheduler.models import *

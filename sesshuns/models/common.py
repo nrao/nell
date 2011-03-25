@@ -1,17 +1,4 @@
 from datetime                  import datetime, timedelta, date
-from math                      import asin, acos, cos, sin
-from django.db                 import models
-from django.http               import QueryDict
-from nell.utilities            import TimeAgent, UserInfo, NRAOBosDB, Score
-from nell.utilities.receiver   import ReceiverCompile
-from settings                  import ANTIOCH_HOST, PROXY_PORT
-
-import calendar
-import pg
-from sets                      import Set
-import urllib2
-import simplejson as json
-import sys
 
 def overlaps(dt1, dt2):
     start1, end1 = dt1

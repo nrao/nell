@@ -10,7 +10,7 @@ from models                         import *
 from sets                           import Set
 from nell.tools                     import IcalMap
 from nell.utilities.TimeAgent       import EST, UTC, adjustDateTimeTz
-from nell.utilities                 import NRAOBosDB
+from nell.utilities.database.external import NRAOBosDB
 from reversion                      import revision
 from utilities                      import *
 from forms                          import BlackoutForm, PreferencesForm
