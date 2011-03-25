@@ -9,7 +9,7 @@ from sesshuns.models                    import *
 from scheduler.httpadapters             import *
 from nell.utilities.database.external   import UserInfo
 from nell.utilities                     import TimeAgent
-from scheduler.GBTCalendarEvent         import CalEventPeriod, CalEventElective, CalEventMaintenanceActivity
+from sesshuns.GBTCalendarEvent         import CalEventPeriod, CalEventElective, CalEventMaintenanceActivity
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
 
 def getReceivers(names):
