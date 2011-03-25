@@ -83,3 +83,54 @@ def create_users():
                 , role  = Role.objects.all()[0]
                  ))
     return users
+
+
+def create_maintenance_period(start, duration):
+    # Test field data
+    fdata = {"total_time": "3"
+           , "req_max": "6"
+           , "name": "Maintenance"
+           , "grade": 4.0
+           , "science": "maintenance"
+           , "orig_ID": "0"
+           , "between": "0"
+           , "proj_code": "Maintenance"
+           , "PSC_time": "2"
+           , "sem_time": 0.0
+           , "req_min": "2"
+           , "freq": 6.0
+           , "type": "fixed"
+           , "source" : "blah"
+           , "enabled" : True
+           , "authorized" : True
+           , "complete" : False
+           , "backup" : False
+             }
+
+    s = Sesshun()
+    s_adapter = SessionHttpAdapter(s)
+    s_adapter.set_base_fields(fdata)
+    allot = Allotment(psc_time          = float(fdata.get("PSC_time", 0.0))
+                    , total_time        = float(fdata.get("total_time", 0.0))
+                    , max_semester_time = float(fdata.get("sem_time", 0.0))
+                    , grade             = 4.0
+                      )
+    allot.save()
+    s.allotment        = allot
+    status = Status(
+               enabled    = True
+             , authorized = True
+             , complete   = False
+             , backup     = False
+                        )
+    status.save()
+    s.status = status
+    s.save()
+
+    p = Period(start = start
+             , duration = duration
+             , session = s
+             , state   = Period_State.objects.get(name = 'Scheduled')
+              )
+    return p
+

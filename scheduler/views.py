@@ -4,6 +4,7 @@ from django.http                        import HttpResponse
 from django.contrib.auth.models         import User as AuthUser
 from scheduler.httpadapters             import PeriodHttpAdapter
 from models                             import *
+from sesshuns.models.common             import *
 from utilities                          import *
 from scheduler.models                   import User as NellUser
 from nell.tools                         import IcalMap, ScheduleTools, TimeAccounting
@@ -44,7 +45,7 @@ def receivers_schedule(request, *args, **kws):
 
     # get the dates for maintenace that cover from the start of this 
     # rcvr schedule.
-    maintenance = [d2str(p.start) for p in Period.objects.filter( 
+    maintenance = [TimeAgent.dt2str(p.start) for p in Period.objects.filter( 
                        session__observing_type__type = "maintenance"
                      , start__gte = startdate).order_by("start")]
 

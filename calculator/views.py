@@ -58,7 +58,7 @@ def sanitize(result):
             mi = time / 60.
             sec = (mi - int(mi)) * 60
             mi  = int(mi)
-            result['value'] = "%02d:%04.1f" % (mi, sec)
+            result['value'] = "00:%02d:%04.1f" % (mi, sec)
 
     return result
 

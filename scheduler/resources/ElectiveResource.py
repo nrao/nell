@@ -3,7 +3,7 @@ from django.http              import HttpResponse, HttpResponseRedirect
 
 from NellResource import NellResource
 from scheduler.models       import Elective
-from sesshuns.models        import str2dt
+from utilities.TimeAgent        import str2dt
 from scheduler.httpadapters import ElectiveHttpAdapter
 from datetime              import datetime, timedelta, date
 

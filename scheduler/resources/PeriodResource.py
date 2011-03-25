@@ -3,7 +3,7 @@ from django.http              import HttpResponse, HttpResponseRedirect
 
 from NellResource    import NellResource
 from scheduler.models import Period
-from sesshuns.models   import jsonMap, str2dt
+from scheduler.utilities    import jsonMap
 from scheduler.httpadapters import PeriodHttpAdapter
 from nell.utilities        import TimeAgent, Score #, formatExceptionInfo
 
@@ -63,7 +63,7 @@ class PeriodResource(NellResource):
                     startPeriods = datetime.now().strftime("%Y-%m-%d")
                 if daysPeriods is None:
                     daysPeriods = "1"        
-                dt           = str2dt(startPeriods)
+                dt           = TimeAgent.str2dt(startPeriods)
                 start        = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
                 duration     = int(daysPeriods) * 24 * 60
                 periods      = Period.get_periods(start, duration)

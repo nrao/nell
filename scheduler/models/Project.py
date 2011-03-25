@@ -1,8 +1,8 @@
 from datetime   import datetime
 from django.db  import models
 
-#models
 from sesshuns.models.common            import *
+from utilities.TimeAgent  import range_to_days
 from Allotment         import Allotment
 from Project_Type      import Project_Type
 from Receiver_Schedule import Receiver_Schedule

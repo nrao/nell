@@ -233,3 +233,55 @@ def adjustDateTimeTz(tz_pref, dt, to_utc = False):
     else:
         return utc.localize(dt).astimezone(tz)
 
+def str2dt(str):
+    "'YYYY-MM-DD hh:mm:ss' to datetime object"
+    if str is None:
+        return None
+
+    if ' ' in str:
+        dstr, tstr = str.split(' ')
+        y, m, d    = map(int, dstr.split('-'))
+        time       = tstr.split(':')
+        h, mm, ss  = map(int, map(float, time))
+        return datetime.datetime(y, m, d, h, mm, ss)
+
+    y, m, d   = map(int, str.split('-'))
+    return datetime.datetime(y, m, d)
+
+def strStr2dt(dstr, tstr):
+    return str2dt(dstr + ' ' + tstr) if tstr else str2dt(dstr)
+        
+def dt2str(dt):
+    "datetime object to YYYY-MM-DD hh:mm:ss string"
+    if dt is None:
+        return None
+    else:    
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
+
+def d2str(dt):
+    "datetime object to YYYY-MM-DD string"
+    if dt is None:
+        return None
+    else:    
+        return dt.strftime("%Y-%m-%d")
+
+def t2str(dt):
+    "datetime object to hh:mm string"
+    if dt is None:
+        return None
+    else:    
+        return dt.strftime("%H:%M")
+
+def range_to_days(ranges):
+    dates = []
+    for rstart, rend in ranges:
+        if rend - rstart > datetime.timedelta(days = 1):
+            start = rstart
+            end   = rstart.replace(hour = 0, minute = 0, second = 0) + datetime.timedelta(days = 1)
+            while start < rend and end < rend:
+                if end - start >= datetime.timedelta(days = 1):
+                    dates.append(start)
+                start = end
+                end   = end + datetime.timedelta(days = 1)
+    return dates
+
