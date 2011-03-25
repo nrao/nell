@@ -1,7 +1,7 @@
 import lxml.etree as et
 
 from test_utils              import NellTestCase
-from nell.utilities          import PSTMirrorDB, PSTQueryService
+from nell.utilities.database.external          import PSTMirrorDB, PSTQueryService
 from scheduler.models         import *
 
 class TestPSTQueryService(NellTestCase):

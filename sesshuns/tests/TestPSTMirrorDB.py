@@ -1,5 +1,5 @@
 from test_utils              import NellTestCase
-from nell.utilities          import PSTMirrorDB, PSTQueryService
+from nell.utilities.database.external          import PSTMirrorDB, PSTQueryService
 
 class TestPSTMirrorDB(NellTestCase):
 

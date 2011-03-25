@@ -1,7 +1,7 @@
 from datetime                          import datetime, timedelta
-from nell.utilities.database.UserNames import UserNames
-from nell.tools.DBReporter             import DBReporter
-from scheduler.models                   import *
+from UserNames   import UserNames
+from DBReporter  import DBReporter
+from nell.scheduler.models                   import *
 import math
 import MySQLdb as m
 

@@ -1,7 +1,7 @@
 from datetime  import datetime, timedelta
 
-from nell.tools              import ScheduleTools, TimeAccounting
-from utilities               import TimeAgent
+from scheduler.utilities     import ScheduleTools
+from nell.utilities          import TimeAgent, TimeAccounting
 from test_utils              import NellTestCase
 from scheduler.models         import *
 from utils                   import create_sesshun

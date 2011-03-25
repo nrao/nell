@@ -1,4 +1,3 @@
-from sesshuns.models import *
 from icalendar       import Calendar, Event, UTC
 from datetime        import datetime, timedelta
 

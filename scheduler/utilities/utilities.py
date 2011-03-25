@@ -1,7 +1,7 @@
 from datetime   import datetime
 from django.db.models                   import Q
 
-from nell.utilities                     import UserInfo, NRAOBosDB
+from nell.utilities.database.external  import UserInfo, NRAOBosDB
 from scheduler.models       import *
 from scheduler.httpadapters import *
 

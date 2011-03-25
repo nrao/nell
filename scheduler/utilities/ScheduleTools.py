@@ -1,8 +1,6 @@
 from datetime                   import datetime, timedelta
-from utilities               import TimeAgent
-from scheduler.models            import *
-from nell.utilities.TimeAgent   import dtDiffHrs, quarter
-from nell.utilities             import Score
+from scheduler.models           import *
+from nell.utilities             import Score, TimeAgent
 
 class ScheduleTools(object):
 
@@ -242,7 +240,7 @@ class ScheduleTools(object):
             return (False, "Affected Periods should be in the Scheduled State")   
         # get the time range affected
         original_time = period.start if start_boundary else period.end()
-        diff_hrs = dtDiffHrs(original_time, time) #self.get_time_diff_hours(original_time, time)
+        diff_hrs = TimeAgent.dtDiffHrs(original_time, time) #self.get_time_diff_hours(original_time, time)
 
         # check for the no-op
         if original_time == time:
@@ -293,7 +291,7 @@ class ScheduleTools(object):
                 else:
                     # give part of this periods time to the affecting period
                     other_time_point = p.end() if start_boundary else p.start
-                    other_time = dtDiffHrs(other_time_point, time)
+                    other_time = TimeAgent.dtDiffHrs(other_time_point, time)
                     descDct["gave_time"].append((p.__str__(), other_time, p.id))
                     value = p.accounting.get_time(reason)
                     p.accounting.set_changed_time(reason, value + other_time)
@@ -338,7 +336,7 @@ class ScheduleTools(object):
         return (True, None)
         
     def scorePeriod(self, period):
-        now = quarter(datetime.utcnow())
+        now = TimeAgent.quarter(datetime.utcnow())
         if now < period.start:
             period.score = self.score.session(period.session.id
                                             , period.start

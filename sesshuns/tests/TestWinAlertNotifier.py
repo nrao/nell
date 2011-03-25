@@ -1,7 +1,7 @@
 from datetime                import date
 
 from test_utils              import NellTestCase
-from nell.utilities.WinAlertNotifier import WinAlertNotifier
+from nell.utilities.notifiers import WinAlertNotifier
 from scheduler.tests.utils                   import create_sesshun
 from scheduler.models         import *
 from scheduler.httpadapters   import *

@@ -1,7 +1,7 @@
 from datetime                import datetime, timedelta
 
 from test_utils              import NellTestCase
-from nell.utilities.database import ElectiveAlerts
+from nell.utilities.notifiers import ElectiveAlerts
 from scheduler.models         import *
 from scheduler.httpadapters   import *
 from scheduler.tests.utils                   import create_sesshun

@@ -5,8 +5,7 @@ from django.db                 import models
 from sets                      import Set
 
 from Role              import Role
-from nell.utilities.UserInfo import UserInfo # Why can't we import this with NRAOBosDB?
-from nell.utilities    import NRAOBosDB
+from nell.utilities.database.external    import NRAOBosDB, UserInfo
 
 class User(models.Model):
     original_id = models.IntegerField(null = True, blank = True)

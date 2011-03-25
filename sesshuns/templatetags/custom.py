@@ -5,7 +5,7 @@ from django.utils.safestring import SafeUnicode
 from sesshuns                import models
 from datetime                import datetime, timedelta
 from sets                    import Set
-from nell.tools              import TimeAccounting
+from nell.utilities          import TimeAccounting
 from nell.utilities          import TimeAgent
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
 

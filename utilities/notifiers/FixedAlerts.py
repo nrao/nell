@@ -7,7 +7,7 @@ setup_environ(settings)
 from datetime import datetime
 
 from scheduler.models         import Sesshun, Session_Type
-from utilities               import FixedAlertNotifier
+from FixedAlertNotifier       import FixedAlertNotifier
 
 class FixedAlerts():
 

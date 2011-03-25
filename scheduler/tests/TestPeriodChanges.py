@@ -5,7 +5,7 @@ from scheduler.models                       import *
 from test_utils                            import BenchTestCase, timeIt
 from utils                                 import *
 from utils                   import create_sesshun
-from nell.utilities.PeriodChanges import PeriodChanges
+from nell.utilities.notifiers.PeriodChanges import PeriodChanges
 from nell.utilities.RevisionUtilityTester import RevisionUtilityTester
 from nell.utilities.RevisionUtilityTester import VersionTester
 from nell.utilities.VersionDiff import VersionDiff
