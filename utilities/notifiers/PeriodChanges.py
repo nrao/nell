@@ -1,12 +1,12 @@
 from datetime import datetime
 from scheduler.models import *
 import reversion
-import TimeAgent
 from reversion.models import Version
 from reversion import revision
-from VersionDiff import VersionDiff
-from RevisionUtility import RevisionUtility
-from RevisionUtilityTester import RevisionUtilityTester
+from utilities.VersionDiff import VersionDiff
+from utilities.RevisionUtility import RevisionUtility
+from utilities.RevisionUtilityTester import RevisionUtilityTester
+from utilities   import TimeAgent
 
 class PeriodChanges:
 

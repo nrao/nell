@@ -3,7 +3,7 @@ import settings
 setup_environ(settings)
 
 from scheduler.models         import Window, Elective, Period
-from utilities.SessionAlertNotifier import *
+from SessionAlertNotifier import *
 
 class SessionAlerts(object):
 

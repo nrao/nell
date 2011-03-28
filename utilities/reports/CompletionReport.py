@@ -3,7 +3,7 @@ import settings
 setup_environ(settings)
 
 from scheduler.models              import *
-from nell.tools.TimeAccounting    import TimeAccounting
+from nell.utilities.TimeAccounting    import TimeAccounting
 from sets                         import Set
 from datetime                     import *
 from sesshuns.templatetags.custom import * # TBF: NO! NO!

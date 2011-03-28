@@ -1,4 +1,5 @@
 from django.db  import models
+from sets       import Set
 
 from Receiver import Receiver
 from sesshuns.models.common            import *

@@ -9,6 +9,7 @@ from nell.utilities.TimeAgent           import EST, UTC
 from observers                          import project_search
 from sets                               import Set
 from utilities                          import get_requestor, acknowledge_moc, get_gbt_schedule_events
+from utilities                          import TimeAgent
 from django.contrib                     import messages
 
 import calendar

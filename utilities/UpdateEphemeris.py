@@ -151,6 +151,6 @@ class UpdateEphemeris():
             self.errors.append("Unknown Error with: %s\n" % className)
             return None
 
-# TBF: does not work - import errors when trying to call this way
 if __name__ == '__main__':
-    up = UpdateEphemeris(filename = "updateEphemeris.txt")
+    #up = UpdateEphemeris(filename = "updateEphemeris.txt")
+    UpdateEphemeris().update()

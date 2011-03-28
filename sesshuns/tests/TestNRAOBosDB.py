@@ -2,7 +2,7 @@ from datetime import datetime
 import lxml.etree as et
 
 from test_utils              import NellTestCase
-from nell.utilities          import NRAOBosDB
+from nell.utilities.database.external          import NRAOBosDB
 
 class TestNRAOBosDB(NellTestCase):
 

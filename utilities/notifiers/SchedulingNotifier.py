@@ -34,7 +34,7 @@ from PeriodChanges import PeriodChanges
 from datetime      import datetime, timedelta
 from sets          import Set
 
-import TimeAgent
+from utilities import TimeAgent
 
 class SchedulingNotifier(Notifier):
 

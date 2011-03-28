@@ -1,7 +1,7 @@
 from datetime                          import datetime, timedelta
-from nell.utilities.database.UserNames import UserNames
-from nell.tools.DBReporter             import DBReporter
-from scheduler.models                   import *
+from UserNames   import UserNames
+from DBReporter  import DBReporter
+from nell.scheduler.models                   import *
 import math
 import MySQLdb as m
 
@@ -106,7 +106,7 @@ class DSSPrime2DSS(object):
         self.report_transfer_only_new()
 
         # also print out the mimic of carl's report
-        dbr = DBReporter(filename = "DBReport.xt", quiet = self.quiet)
+        dbr = DBReporter(filename = "DBReport.txt", quiet = self.quiet)
         dbr.reportProjectSummaryByPcode(self.new_projects)
 
     def set_sanctioned_flags(self):

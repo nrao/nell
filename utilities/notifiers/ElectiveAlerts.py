@@ -1,36 +1,35 @@
 #! /usr/bin/env python
 
 from django.core.management import setup_environ
-import settings
+import settings, sys
 setup_environ(settings)
+
 from datetime import datetime
 
-from scheduler.models            import *
-from utilities.WinAlertNotifier import WinAlertNotifier
+from scheduler.models         import Elective
+from ElecAlertNotifier        import ElecAlertNotifier
 
-class WindowAlerts():
+class ElectiveAlerts():
 
     """
-    This class is responsible for both finding issues with windows and
+    This class is responsible for both finding issues with electives and
     constraints (enable flag, blackouts, etc.), and sending notifications
     concerning these issues.
     """
    
     def __init__(self, quiet = True, filename = None):
 
-        # two stages for alerts; how many days before start of window 
+        # two stages for alerts; how many days before start of elective 
         # to go from stage I to stage II?
         self.stageBoundary = 15
  
         self.now = datetime.utcnow()
         
-        self.wins = Window.objects.all()
-
         # for reporting results
         self.quiet = quiet
-        self.filename = filename if filename is not None else "WinAlerts.txt"
+        self.filename = filename if filename is not None else "ElecAlerts.txt"
         self.reportLines = []
-        self.lostWindowTime = 0
+        self.lostPeriodCount = 0
        
 
     def add(self, lines):
@@ -47,58 +46,43 @@ class WindowAlerts():
             f.writelines(self.reportLines)
             f.close()
 
-    def getWindowTimes(self, wins = []):
+    def getBlackedOutElectivePeriods(self, elecs = []):
         """
-        Returns the stats on windows.
-        For use in determining if alerts are raised.
+        Returns the stats on electives.  For use in determining
+        if alerts are raised.  Returns a list of electives and their
+        offending blacked-out periods, i.e.,
+        [(elective, [blacked out period])]
+        where the list of periods are sorted by start times.
         """
        
-        if len(wins) == 0:
-            # we really only care about windows that are not complete
-            # and that have ranges
-            wins = Window.objects.filter(complete = False)
-            wins = [w for w in wins if len(w.windowrange_set.all()) > 0]
-        self.add("Retrieving Times for %d Windows\n" % len(wins))    
-        times = []
-        for w in wins:
-            time = w.getBlackedOutSchedulableTime()
-            times.append((w, time))
-            self.add("Times for (%d) %s\n" % (w.id, w.__str__()))
-            self.add("Schedulable, Blacked Hrs: (%5.2f, %5.2f)\n" % \
-                (time[0], time[1]))
-            self.lostWindowTime += time[1] > 0.0
-        return times    
+        if len(elecs) == 0:
+            # we really only care about electives that are not complete
+            elecs = Elective.objects.filter(complete = False)
+        self.add("Retrieving periods for %d Electives\n" % len(elecs))    
+        injured = []
+        for e in elecs:
+            self.add("Periods for (%d) %s\n" % (e.id, e.__str__()))
+            periods = e.getBlackedOutSchedulablePeriods()
+            cnt = len(periods)
+            self.add("%d schedulable blacked-out periods\n" % cnt)
+            self.lostPeriodCount += cnt
+            if periods:
+                injured.append((e, periods))
+                self.add("Blacked-out periods for (%d) %s\n" % (e.id, e.__str__()))
+                pstr = '; '.join(str(p) for p in periods)
+                for p in periods:
+                    self.add("%s" % pstr)
+                self.add("\n")
+        return injured    
 
-    def findAlertLevels(self, wins = []):
+    def findBlackoutAlerts(self, stage = 1, now = None, elecs = []):
         """
-        Gets the stats on windows, and examines them to see if
-        an alarm needs to be raised.
-        """
-
-        stats = self.getWindowTimes(wins = wins)
-        alerts = []
-        for w, stat in stats:
-            hrsSchedulable = stat[0]
-            hrsBlacked = stat[1]
-            if hrsSchedulable == 0.0:
-                ratio = 0.0 # TBF: or 1.0? Depends on details ...
-            else:    
-                ratio = hrsBlacked/hrsSchedulable
-            if ratio > .10 and ratio < .50:
-                alerts.append((w, stat, 1))
-            elif ratio > .50:
-                alerts.append((w, stat, 2))
-            else:
-                pass
-        return alerts 
-
-    def findBlackoutAlerts(self, stage = 1, now = None, wins = []):
-        """
-        Finds problems with windows, and returns the proper response.
+        Finds problems with electives, and returns the proper response.
+        Stage is determined by the earliest offending period.
         Emails will be sent to observers once per week (Monday morning)
-        until 15 days before the window start date. (Stage I)
+        until 15 days before the elective start date. (Stage I)
         Emails will be sent daily to all project investigators =< 15 
-        days before the window end date. (Stage II)
+        days before the elective end date. (Stage II)
         """
 
         # Just two stages (see comment above)
@@ -114,42 +98,39 @@ class WindowAlerts():
             else:
                 return daysTillStart <= self.stageBoundary
 
-        return [(w, stat, level, stage)
-                for w, stat, level in self.findAlertLevels(wins = wins)
-                    if withinBoundary(w.start_datetime(), stage, now)
-               ]
+        return [(e, ps, stage)
+                for e, ps in self.getBlackedOutElectivePeriods(elecs)
+                    if withinBoundary(ps[0].start, stage, now)]
 
     def raiseAlerts(self
                   , stage = 1
                   , now = None
                   , test = False
                   , quiet = True
-                  , wins = []):
+                  , elecs = []):
         """
-        Finds problems with windows, determines the proper type of
+        Finds problems with electives, determines the proper type of
         emails, then sends the emails.
         """
 
         self.quiet = quiet
-        for window, stats, level, stg in  self.findBlackoutAlerts(stage, now, wins = wins):
+        for elective, periods, stage in self.findBlackoutAlerts(stage, now, elecs = elecs):
             
             # report this
-            self.add("Alert for Window # %d; level = %d, stage = %d\n" % (window.id, level, stg))
+            self.add("Alert for Elective # %d; stage = %d\n" % (elective.id, stage))
             
-            wa = WinAlertNotifier(window = window
-                                , level = level
-                                , stage = stg
-                                , test = test)
-            
+            ean = ElecAlertNotifier(elective = elective
+                                 , test = test
+                                  )
             #print ean.email.GetText()
             if not test:
-                if wa.email is not None:
-                    self.add("Notifying for Window # %d: %s\n" % (window.id, wa.email.GetRecipientString()))
-                wa.notify()
+                if ean.email is not None:
+                    self.add("Notifying for Elective # %d: %s\n" % (elective.id, ean.email.GetRecipientString()))
+                ean.notify()
         
         self.write()
 
-        return self.lostWindowTime
+        return self.lostPeriodCount
 
 # command line interface
 def parseOptions(args, keys):
@@ -177,11 +158,11 @@ def showHelp():
     "How do I use this command line?"
 
     hlp = """
-The arguments to WindowAlerts are:
+The arguments to ElectiveAlerts are:
    [-pcode=pcode] [-stage=stage] [-test=test] [-quiet=quiet]
 where:
-   pcode = project code whose windows will be checked; otherwise, all incomplete windows are checked.
-   stage = [1,2]; Stage 1: Emails will be sent to observers once per week (Monday morning) until 15 days before the window start date; Stage 2: 15 days before window start, emails are sent every day.
+   pcode = project code whose electives will be checked; otherwise, all incomplete electives are checked.
+   stage = [1,2]; Stage 1: Emails will be sent to observers once per week (Monday morning) until 15 days before the elective start date; Stage 2: 15 days before elective start, emails are sent every day.
    test = if True, no emails are sent.
    quiet = if True, report is not sent to stdout.
     """
@@ -197,16 +178,16 @@ if __name__ == '__main__':
         sys.exit(2)
     pcode = opts['pcode']    
     if pcode:
-        pwins = Window.objects.filter(session__project__pcode = pcode)
-        wins = [w for w in pwins if not w.complete]
+        pelecs = Elective.objects.filter(session__project__pcode = pcode)
+        elecs = [e for e in pelecs if not e.complete]
         if elecs:
-            print "Raising Window Alerts for Project: %s" % pcode
+            print "Raising Elective Alerts for Project: %s" % pcode
         else:
-            print "Project %s has no non-complete windows\n" % pcode
+            print "Project %s has no non-complete electives" % pcode
             sys.exit(3)
     else:
-        wins = []
-        print "Raising Window Alerts for all Projects"
+        elecs = []
+        print "Raising Elective Alerts for all Projects"
     stage = int(opts['stage']) if opts['stage'] is not None else 1    
     print "Alerts at Stage %d" % stage
     if stage not in [1,2]:
@@ -224,11 +205,7 @@ if __name__ == '__main__':
         showHelp()
         sys.exit(2)
     quiet = opts['quiet'] == 'True' if opts['quiet'] is not None else True  
-    wa = WindowAlerts()
-    wa.raiseAlerts(stage = stage, wins = wins, test = test, quiet = quiet)
+    wa = ElectiveAlerts()
+    cnt = wa.raiseAlerts(stage = stage, elecs = elecs, test = test, quiet = quiet)
+    sys.exit(cnt)
 
-                
-
-
-
-       

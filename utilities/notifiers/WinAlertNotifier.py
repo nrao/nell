@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from sets     import Set
 from Email    import Email
 
-import TimeAgent
+from utilities import TimeAgent
 
 class WinAlertEmail(Email):
     """

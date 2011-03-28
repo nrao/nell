@@ -4,11 +4,11 @@ from django.conf               import settings
 from django.contrib.auth       import models as m
 
 from test_utils                import BenchTestCase, timeIt
-from scheduler.models           import *
-from scheduler.httpadapters     import *
+from scheduler.models          import *
+from scheduler.httpadapters    import *
+from scheduler.tests.utils     import create_sesshun, fdata
 from sesshuns.utilities        import create_user
-from scheduler.tests.utils                     import create_sesshun, fdata
-from scheduler.GBTCalendarEvent import CalEventPeriod
+from sesshuns.GBTCalendarEvent import CalEventPeriod
 
 class TestObserversBase(BenchTestCase):
 

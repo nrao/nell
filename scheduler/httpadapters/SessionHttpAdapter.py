@@ -1,6 +1,6 @@
 from nell.utilities  import TimeAgent
 from nell.utilities.receiver  import ReceiverCompile
-from nell.tools      import TimeAccounting
+from nell.utilities      import TimeAccounting
 from scheduler.models import *
 
 class SessionHttpAdapter (object):
