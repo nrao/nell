@@ -3,7 +3,7 @@ import settings
 setup_environ(settings)
 
 from datetime        import date,datetime,timedelta
-from nell.tools      import TimeAccounting
+from nell.utilities      import TimeAccounting
 from scheduler.models import *
 from sesshuns.models  import overlaps
 from utilities        import TimeAgent

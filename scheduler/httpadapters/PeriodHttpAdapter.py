@@ -2,7 +2,8 @@ from datetime               import datetime
 from nell.utilities         import TimeAgent, Score
 from scheduler.models        import Period, Period_Accounting, Period_Receiver, \
                                    Period_State, Project, Receiver, Sesshun
-from sesshuns.models.common import d2str, dt2str, strStr2dt, t2str
+#from sesshuns.models.common import d2str, dt2str, strStr2dt, t2str
+from utilities.TimeAgent import d2str, dt2str, strStr2dt, t2str
 from SessionHttpAdapter     import SessionHttpAdapter
 
 class PeriodHttpAdapter (object):

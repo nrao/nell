@@ -18,7 +18,6 @@ def getOptions(filter, result):
         for k,v in filter.items():                                       
             #chain filters
             if v != 'NOTHING':
-                #column, value = getDBName(k, v)
                 column = 'name'
                 value  = v
                 config = config.filter(eval("Q(%s__%s__contains='%s')" % (k, column, value)))
@@ -59,9 +58,10 @@ def setHardwareConfig(request, selected, newPick=None):
 
 def getRxValue(value):
     try:
-        name, range = value.split(" (")
-        rx          = Receiver.objects.get(display_name = name)
-        name        = rx.name
+        name, raw_range = value.split(" (")
+        low, hi         = map(float, raw_range.replace(" GHz)", "").split(" - "))
+        rx              = Receiver.objects.get(display_name = name, band_low = low, band_hi = hi)
+        name            = rx.name
     except:
         name = value
     return name

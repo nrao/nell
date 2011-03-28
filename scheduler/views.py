@@ -3,15 +3,15 @@ from decorators                         import catch_json_parse_errors
 from django.http                        import HttpResponse
 from django.contrib.auth.models         import User as AuthUser
 from scheduler.httpadapters             import PeriodHttpAdapter
+from scheduler.utilities                import ScheduleTools
 from models                             import *
+from sesshuns.models.common             import *
 from utilities                          import *
 from scheduler.models                   import User as NellUser
-from nell.tools                         import IcalMap, ScheduleTools, TimeAccounting
+from nell.utilities                     import IcalMap, TimeAccounting
 from nell.utilities                     import TimeAgent
-from nell.utilities.SchedulingNotifier  import SchedulingNotifier
+from nell.utilities.notifiers           import SchedulingNotifier, Notifier, Email as EmailMessage 
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException, JSONExceptionInfo
-from nell.utilities.Notifier            import Notifier
-from nell.utilities.Email               import Email as EmailMessage  #name clash with models
 from reversion                          import revision
 from settings                           import PROXY_PORT, DATABASE_NAME
 
@@ -44,7 +44,7 @@ def receivers_schedule(request, *args, **kws):
 
     # get the dates for maintenace that cover from the start of this 
     # rcvr schedule.
-    maintenance = [d2str(p.start) for p in Period.objects.filter( 
+    maintenance = [TimeAgent.dt2str(p.start) for p in Period.objects.filter( 
                        session__observing_type__type = "maintenance"
                      , start__gte = startdate).order_by("start")]
 

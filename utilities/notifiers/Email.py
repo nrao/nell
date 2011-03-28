@@ -30,7 +30,7 @@
 ######################################################################
 
 from datetime import datetime
-import TimeAgent
+from utilities import TimeAgent
 
 class Email:
 

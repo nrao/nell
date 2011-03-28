@@ -1,5 +1,5 @@
 from test_utils              import NellTestCase
-from nell.tools              import IcalAntioch
+from nell.utilities          import IcalAntioch
 
 class TestIcalAntioch(NellTestCase):
 

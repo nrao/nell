@@ -4,7 +4,7 @@ from django.shortcuts         import get_object_or_404
 
 from NellResource import NellResource
 from scheduler.models       import Sesshun
-from sesshuns.models        import jsonMap
+from scheduler.utilities    import jsonMap
 from scheduler.httpadapters import SessionHttpAdapter
 
 import simplejson as json

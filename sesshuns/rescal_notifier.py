@@ -27,10 +27,9 @@
 #
 ######################################################################
 
-from nell.utilities.Notifier import Notifier
 from datetime                import datetime, timedelta
 from sets                    import Set
-from nell.utilities.Email    import Email as EmailMessage
+from nell.utilities.notifiers  import Notifier, Email as EmailMessage
 from nell.utilities          import TimeAgent
 
 class RescalNotifier(Notifier):

@@ -2,7 +2,7 @@ from datetime               import datetime
 from PeriodHttpAdapter      import PeriodHttpAdapter
 from SessionHttpAdapter     import SessionHttpAdapter
 from scheduler.models        import Period, Sesshun
-from sesshuns.models.common import *
+from utilities.TimeAgent     import *
 
 class ElectiveHttpAdapter (object):
 
