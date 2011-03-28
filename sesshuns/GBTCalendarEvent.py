@@ -31,7 +31,7 @@
 ######################################################################
 
 from django.core.exceptions import ObjectDoesNotExist
-from models                 import *
+from scheduler.models       import *
 from sesshuns.models        import *
 from datetime               import datetime, timedelta
 
@@ -148,7 +148,7 @@ class CalEvent(object):
         return self.project_type() == 'C'
 
     def is_concurrent(self):
-        return self.project_type() == 'R'
+        return self.project_type() == 'I'
 
     # returns True if MOC degraded after period started. Should be
     # overrided if contained object cares about MOC.
@@ -517,13 +517,14 @@ class CalEventMaintenanceActivity(CalEvent):
         fs = [f for f in prj.friend_set.all()]
         return fs
 
-    # returns 'R', for concuRrent activity.  If this event
-    # (CalEventMaintenanceActivity) is used, it is used to denote
-    # Maintenance Activities that are not attached to a Period.  This
-    # is always for an activity that is concurrent with normal
-    # observations and not part of regularly scheduled maintenance.
+    # returns 'I', for Incidental activity concurrent with other
+    # observations.  If this event (CalEventMaintenanceActivity) is
+    # used, it is used to denote Maintenance Activities that are not
+    # attached to a Period.  This is always for an activity that is
+    # concurrent with normal observations and not part of regularly
+    # scheduled maintenance.
     def project_type(self):
-        return 'R'
+        return 'I'
 
 
     def mas(self):

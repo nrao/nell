@@ -135,9 +135,10 @@ INSTALLED_APPS = (
     'reversion'
 )
 
-# this is needed for making direct calls to the Antioch server
-# via the proxy.  Use your port specified in
-# /home/dss/conundrum/conf/nginx.conf
+# this is needed for making direct calls to the Antioch server via the
+# nginx proxy.  Use your port and host specified in
+# /home/dss/conundrum/conf/nginx.conf.  Note that 'ANTIOCH_HOST is not
+# really the Antioch host, but the nginx host.
 
 PROXY_PORT = 8001       #MODIFY#
 ANTIOCH_HOST =  "http://trent.gb.nrao.edu"    #MODIFY#

@@ -313,7 +313,7 @@ def add_activity(request, period_id = None, year = None,
 
             if period_id:
                 ma.period = Period.objects.get(id = period_id)
-                
+
             ma.save() # needs to have a primary key for many-to-many
                       # relationships to be set.
             _process_activity(request, ma, form)
@@ -467,8 +467,15 @@ def edit_activity(request, activity_id = None):
             ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
             ma.deleted = True
             ma.save()
+            creator = _get_ma_creator(ma)
+
+            if creator:
+                recipients = supervisors + [creator]
+            else:
+                recipients = supervisors
+                
             view_url = "http://%s/resourcecal_display_activity/%s/" % (request.get_host(), ma.id)
-            rc_notifier.notify(supervisors,
+            rc_notifier.notify(recipients,
                                "deleted",
                                ma.get_start("ET").date(),
                                view_url)
@@ -515,6 +522,15 @@ def edit_activity(request, activity_id = None):
                 rsched = datetime(start.year, start.month, start.day, 16)
                 Receiver_Schedule.change_schedule(rsched, [i.up_receiver],
                                                   [i.down_receiver])
+            creator = _get_ma_creator(ma)
+
+            if creator:
+                view_url = "http://%s/resourcecal_display_activity/%s/" % \
+                    (request.get_host(), ma.id)
+                rc_notifier.notify(creator,
+                                   "approved",
+                                   ma.get_start("ET").date(),
+                                   view_url)
 
             return HttpResponseRedirect('/schedule/')
 
@@ -755,6 +771,10 @@ def _get_user_name(u):
     return user
 
 def _record_diffs(key, old, new, diffs):
+    if type(old).__name__ == 'float' and type(new).__name__ == 'float':
+        old = "%.2f" % old
+        new = "%.2f" % new
+
     if old != new:
         diffs[key] = "\t'%s' to '%s'" % (old, new)
 
@@ -830,3 +850,39 @@ def _get_future_maintenance_dates():
     pds.sort(cmp = lambda x, y: cmp(x.start, y.start))
     dates = [str(p.start.date()) for p in pds]
     return dates
+
+
+def _get_ma_creator(ma):
+    """
+    Attempts to return the user that created the maintenance activity.
+    """
+    name = ma.modifications.all()[0].responsible
+    # name has 3 possibilities: 'Lastname, Firstname', or 'username',
+    # or 'anonymous'
+
+    if name == "anonymous": # get rid of this possibility
+        return None
+
+    names = name.split(', ')
+
+    # If no objects returned, or if multiple objects returned, from
+    # the Last-name/First-name combo or from username, then don't
+    # return an email address, can't recover.  This points to the need
+    # for an actual User ID to be attached to the
+    # Maintenance_Activity.
+    try:
+        if len(names) == 2:
+            u = User.objects.filter(last_name = names[0]).get(first_name = names[1])
+        elif len(names) == 1:
+            u = User.objects.get(auth_user__username = names[0])
+        else:
+            return None
+
+        if settings.DEBUG == True:
+            return u if u.username() == "rcreager" else None # don't spam users during testing
+        else:
+            return u
+    except Model.DoesNotExist:
+        return None
+    except Model.MultipleObjectsReturned:
+        return None
