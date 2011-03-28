@@ -73,9 +73,15 @@ class RescalNotifier(Notifier):
         
         try:
             for i in who:
-                recipients += self.__get_reciptients(i)
+                e = self.__get_recipient(i)
+
+                if e:
+                    recipients += [e]
         except TypeError: # 'who' is not a list, but a single user
-            recipients += self.__get_recipients(who)
+            e = self.__get_recipient(who)
+
+            if e:
+                recipients += [e]
                                  
         email = self.cloneTemplate(what)
         email.SetRecipients(recipients)
@@ -90,15 +96,21 @@ class RescalNotifier(Notifier):
         self.post(email)
         Notifier.notify(self)
 
-    def __get_reciptients(self, user):
-        eml = user.getEmails()
-        recipient = []
-        # If no contacts listed, assume nrao.edu email address
-        # with the given username:
-        if len(eml) == 0:
-            recipient.append(user.auth_user.username + "@nrao.edu")
-        else:
-            for i in eml:
-                recipient.append(i)
 
-        return recipient
+    def __get_recipient(self, user):
+
+        info = user.getStaticContactInfo()
+        emails = info['emailDescs']
+        email = None
+
+        for e in emails:
+            if "(Work)" in e:             # use the work email
+                email = e.split()[0]
+
+        if email == None:                 # couldn't find a work email
+            try:                          # use the first in the list
+                email = info['emails'][0] # if the list is empty,
+            except IndexError:            # return 'None'
+                return None
+
+        return email
