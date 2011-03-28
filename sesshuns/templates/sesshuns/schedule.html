@@ -17,6 +17,7 @@
     .type_commissioning {background-color:#F0E68C}
     .type_calibration {background-color:#FF9933}
     .type_maintenance {background-color:#98FB98}
+    .type_concurrent_activity {background-color:#FF99FF}
     .moc_failure {background-color:#FF0000}
     .info{
         position:relative; /*this is the key*/
@@ -207,6 +208,10 @@
           <td class="project_type type_test" >{{event.project_type}}</td>
       {% endif %}
 
+      {% if event.project_type == "I" %}
+          <td class="project_type type_concurrent_activity" >{{event.project_type}}</td>
+      {% endif %}
+
 
       {################################################################}
       {# The 'project ID' column.                                     #}
@@ -326,7 +331,12 @@
     <td></td>
     <td colspan=7>
       <table border=1 frame=void rules=all cellpadding=3>
-	<tr class="project_type type_maintenance" align=left>
+
+      {% if event.project_type == "M" %}
+          <tr class="project_type type_maintenance" align=left>
+      {% else %}
+          <tr class="project_type type_concurrent_activity" align=left>
+      {% endif %}
 	  <th>Time</th>
 	  <th>Activity</th>
 	</tr>

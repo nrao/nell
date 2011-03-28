@@ -71,7 +71,7 @@ def gbt_schedule(request, *args, **kws):
     else: # request.method == 'GET'
         # Default date, days, and timezone.  Loaded from the values
         # saved below, or from defaults if no values were saved.
-        startDate, days, timezone = _get_calendar_defaults(request)
+        startDate, days, timezone, timestamp = _get_calendar_defaults(request)
 
     start   = TimeAgent.truncateDt(startDate)
     end     = start + timedelta(days = days)
@@ -258,6 +258,7 @@ def _get_calendar_defaults(request):
     day = 7
     tz_str = 'ET'
     storage = messages.get_messages(request)
+    timestamp = datetime.now()
 
     for message in storage:
         if message.message.find('GBT_SCHEDULE_INFO') == 0:
@@ -278,14 +279,18 @@ def _get_calendar_defaults(request):
                                  int(time_parts[0]), int(time_parts[1]),
                                  int(seconds[0]), int(seconds[1]))
             delta = datetime.now() - timestamp
+            day = int(part[2])
+            tz_str = part[3]
 
+            # if the message expired keep the user-selected days and
+            # timezone, but use the default start date, which is
+            # datetime.now().  This allows the calendar to advance
+            # with the days.
             if delta.seconds < 43200:
-                day = int(part[2])
-                tz_str = part[3]
                 date_parts = part[1].split('-')
                 date = datetime(int(date_parts[0]), int(date_parts[1]), int(date_parts[2]))
 
-    return date, day, tz_str
+    return date, day, tz_str, timestamp
 
 def _save_calendar_defaults(request, start, days, timezone):
     """
@@ -296,7 +301,19 @@ def _save_calendar_defaults(request, start, days, timezone):
     _save_calendar_defaults(request, start, days, timezone)
     """
 
-    messages.add_message(request, messages.INFO,
-                         "GBT_SCHEDULE_INFO %s %s %s %s" % \
-                             (start.date(), days, timezone, datetime.now()),
-                         fail_silently = True)
+     # NOTE: clear out old messages before adding new one.  According
+     # to the Django docs, if the messages exceed 4096 bytes the
+     # oldest messages will drop off the end.  Experience shows
+     # however that instead you get a "ValueError: Not all temporary
+     # messages could be stored." from
+     # '"/home/dss/robin/django-1.2.3/django/contrib/messages/middleware.py",
+     # line 25, in process_response'.
+    old_start, old_days, old_tz, old_ts = _get_calendar_defaults(request)
+
+    if old_start == start and old_days == days and old_tz == timezone:
+        ts = old_ts  # preserve freshness dating if no change.
+    else:
+        ts = datetime.now()
+
+    msg = "GBT_SCHEDULE_INFO %s %s %s %s" % (start.date(), days, timezone, ts)
+    messages.add_message(request, messages.INFO, msg, fail_silently = True)

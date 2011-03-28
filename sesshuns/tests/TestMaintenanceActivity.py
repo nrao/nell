@@ -61,6 +61,7 @@ class TestMaintenanceActivity(NellTestCase):
         ma = Maintenance_Activity.objects.all()[0]
         subject = ma.get_subject()
         self.assertEqual(subject, self.subject)
+        new_subject = "New Maintenance Subject"
 
     def test_location(self):
         ma = Maintenance_Activity.objects.all()[0]
