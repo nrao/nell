@@ -10,12 +10,27 @@ class TestViewsPTC(PeriodsTestCase):
 
     def test_scheduling_email(self):
 
-        # TBF: this is a dumb test, since email is always generated for NOW;
         # we need to create some periods for NOW to show up in the email
+        now = datetime.utcnow() + timedelta(hours = 1)
+        dur = 2.0
+        pa = Period_Accounting(scheduled = dur)
+        pa.save()
+        s = self.ps[0].session
+        s.name = "Look for this"
+        s.save()
+        p = Period(session = self.ps[0].session
+                 , start = now
+                 , duration = dur
+                 , state = Period_State.get_state("S")
+                 , accounting = pa
+                  )
+        p.save()          
+        
         url = "/schedule/email"
         response = Client().get(url, dict(duration = 2))
 
         self.failUnless(response.status_code == 200)
+        self.failUnless(s.name in response.content)
 
     def test_projects_email(self):
         pcodes = "GBT09A-001"
