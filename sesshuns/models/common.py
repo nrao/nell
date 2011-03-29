@@ -3,8 +3,9 @@ from math                      import asin, acos, cos, sin
 from django.conf               import settings
 from django.db                 import models
 from django.http               import QueryDict
-from nell.utilities            import TimeAgent, UserInfo, NRAOBosDB, Score
-from nell.utilities.receiver   import ReceiverCompile
+from utilities                 import TimeAgent, UserInfo
+from utilities                 import NRAOBosDB, Score, AnalogSet
+from utilities.receiver        import ReceiverCompile
 from settings                  import ANTIOCH_HOST, PROXY_PORT
 
 import calendar
@@ -73,51 +74,6 @@ def range_to_days(ranges):
                 end   = end + timedelta(days = 1)
     return dates
 
-def overlaps(dt1, dt2):
-    start1, end1 = dt1
-    start2, end2 = dt2
-
-    if start1 < end2 and start2 < end1:
-        return True
-    else:
-        return False
-
-def intersect(a, b):
-    """
-    Find the intersection between two ranges of values.
-    """
-    if a[1] <= b[0] or b[1] <= a[0]:
-        return ()
-    elif a[0] <= b[0]:
-        if a[1] <= b[1]:
-            return (b[0], a[1])
-        else:
-            return (b[0], b[1])
-    else: # b[0] < a[0]
-        if a[1] <= b[1]:
-            return (a[0], a[1])
-        else:
-            return (a[0], b[1])
-
-def find_intersections(events):
-    """
-    Takes a list of lists of datetime tuples of the form (start, end) 
-    representing sets of events, finds the intersections of all the
-    sets, and returns a list of datetime tuples of the form (start, end)
-    describing the intersections.  All datetime tuples are assumed to be 
-    in the same timezone.
-    """
-    retval = events[0]
-    for event in events[1:]:
-        temp = []
-        for r in retval:
-            for e in event:
-                t = intersect(r, e)
-                if t:
-                    temp.append(t)
-        retval = temp
-    return retval
-
 def consolidate_events(events):
     """
     Takes a list of datetime tuples of the form (start, end) and
@@ -141,13 +97,13 @@ def consolidate_overlaps(events):
                 end   = max([end, end1, end2])
         if (begin, end) not in reduced:
             # if it doesn't overlap w/ any of the others, we can add it 
-            intersections = find_intersections([reduced, [(begin, end)]])
+            intersections = AnalogSet.intersects([reduced, [(begin, end)]])
             if len(intersections) == 0:
                 reduced.append((begin, end))
             else:
                 # merge with the current reduction
                 for i, r in enumerate(reduced):
-                    if overlaps(r, (begin, end)):
+                    if AnalogSet.overlaps(r, (begin, end)):
                         reduced[i] = (min([r[0], begin])
                                     , max([r[1], end  ]))     
 

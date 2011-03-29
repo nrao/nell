@@ -189,14 +189,15 @@ class Sesshun(models.Model):
 
     def get_ha_limit_blackouts(self, startdate, days):
         # TBF: Not complete or even correct yet.
+        pass
 
-        targets = [(t.horizontal, t.vertical) for t in self.target_set.all()]
+        #targets = [(t.horizontal, t.vertical) for t in self.target_set.all()]
 
         # startdate, days, self.frequency, targets
         #url       = "?"
         #blackouts = json.load(urlllib.urlopen(url))['blackouts']
 
-        #return consolidate_events(find_intersections(blackouts))
+        #return consolidate_events(AnalogSet.intersects(blackouts))
 
     def get_min_eff_tsys_factor(self):
         """
@@ -327,7 +328,6 @@ class Sesshun(models.Model):
                         , [2-tuple of scheduable-but-ignoring-blackouts range)]
                         , [[2-tuple of scheduable-but-blacked-out-range]])
         """
-
         nss1 = self.get_time_not_schedulable(start
                                            , end
                                            , blackouts = False)
@@ -354,8 +354,8 @@ class Sesshun(models.Model):
             bs = trim_events(bs, s[0], s[1])
             if len(bs) != 0:
                 bss.append(bs)
-            bsTime = sum([TimeAgent.timedelta2minutes(b[1] - b[0])/60.0 \
-                for b in bs])
+            bsTime = sum([TimeAgent.timedelta2minutes(b[1] - b[0])/60.0
+                          for b in bs])
             hrsBlackedOut += bsTime
 
         # return a summary of what we've found

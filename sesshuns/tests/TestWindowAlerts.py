@@ -196,7 +196,7 @@ class TestWindowAlerts(NellTestCase):
                           , repeat     = first(Repeat.objects.all())
                            )
         blackout.save()
-        bss.append((bsStart, bsEnd))
+        bss.insert(0, (bsStart, bsEnd))
         bssHrs += 3*24
 
         times = wa.getWindowTimes()

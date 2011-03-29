@@ -20,8 +20,6 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-# $Id: TimeAgent.py,v 1.4 2007/06/21 14:20:47 mclark Exp $
-
 from mx       import DateTime
 import math
 import datetime

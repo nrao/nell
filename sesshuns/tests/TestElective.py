@@ -177,9 +177,6 @@ class TestElective(NellTestCase):
                                   , observer = True)
         investigator.save()
 
-        #start = datetime(2009, 6,  1,  8, 30)
-        #end   = datetime(2009, 6, 16, 12, 0)
-
         # test observer black out
         self.assertEqual([self.period2]
                        , self.elec.getBlackedOutSchedulablePeriods())

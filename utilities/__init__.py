@@ -1,3 +1,4 @@
+from AnalogSet            import *
 from Borg                 import Borg
 from TimeAgent            import *
 from NRAOBosDB            import NRAOBosDB

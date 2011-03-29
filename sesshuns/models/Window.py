@@ -1,11 +1,11 @@
-from django.db  import models
-from datetime   import datetime, timedelta
+from django.db     import models
+from datetime      import datetime, timedelta
 
-from nell.utilities import TimeAgent
+from utilities     import TimeAgent, AnalogSet
 
-from common  import *
-from Sesshun import Sesshun
-from Period  import Period
+from common        import first
+from Sesshun       import Sesshun
+from Period        import Period
 from Period_State  import Period_State
 
 class Window(models.Model):
@@ -106,8 +106,8 @@ class Window(models.Model):
 
     def isInWindow(self, period):
         "Does the given period overlap at all in window (endpoints)"
-        return overlaps((self.start_datetime(), self.end_datetime())
-                      , (period.start, period.end()))
+        return AnalogSet.overlaps((self.start_datetime(), self.end_datetime())
+                                , (period.start, period.end()))
 
     def isInRanges(self, period):
         """
@@ -115,8 +115,8 @@ class Window(models.Model):
         This is more rigourous then isInWindow.
         """
         for wr in self.windowrange_set.all():
-            if overlaps((wr.start_datetime(), wr.end_datetime())
-                      , (period.start, period.end())):
+            if AnalogSet.overlaps((wr.start_datetime(), wr.end_datetime())
+                                , (period.start, period.end())):
                 return True
         return False # no overlaps at all!        
 

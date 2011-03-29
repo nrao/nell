@@ -1,11 +1,13 @@
 from datetime   import datetime
 from django.db  import models
+from utilities  import AnalogSet
 
 #models
 from common            import *
 from Allotment         import Allotment
 from Project_Type      import Project_Type
 from Receiver_Schedule import Receiver_Schedule
+from Reservation       import Reservation
 from Semester          import Semester
 from User              import User
 
@@ -228,7 +230,7 @@ class Project(models.Model):
                  for d in p.getPeriods() \
                  if p != self and \
                     d.state.abbreviation == 'S' and \
-                    overlaps((d.start, d.end()), (start, end))]
+                    AnalogSet.overlaps((d.start, d.end()), (start, end))]
         return consolidate_events(times)
 
     def get_blackout_dates(self, start, end):
@@ -241,19 +243,15 @@ class Project(models.Model):
 
     def get_blackout_times(self, start, end):
         """
-        A project is 'blacked out' when all of its sanctioned observers
-        are unavailable or it is using Project Blackouts.
+        A project is 'blacked out' when all of its sanctioned and
+        unsanctioned, on-site observers are unavailable, or it is
+        using Project Blackouts.
         Returns a list of tuples describing the time ranges
         where the project is 'blacked out' in UTC.
         """
-        user_blackouts = self.get_user_blackout_times(start, end)
-        project_blackouts = self.get_project_blackout_times(start, end) 
-
-        if len(project_blackouts) < 1:
-            return user_blackouts
-        else:    
-            user_blackouts.extend(sorted(project_blackouts))
-            return consolidate_events(user_blackouts)
+        blackouts = self.get_project_blackout_times(start, end)
+        blackouts.extend(self.get_users_blackout_times(start, end))
+        return AnalogSet.unions(blackouts)
 
     def get_project_blackout_times(self, start, end):
         """
@@ -269,7 +267,39 @@ class Project(models.Model):
             project_blackouts.extend(b.generateDates(start, end))
         return project_blackouts
 
-    def get_user_blackout_times(self, start, end):
+    def get_unsanctioned_users_blackout_times(self, start, end):
+        universe = (start, end)
+        all_blackout_ranges = [[(start, end)]]
+        # for all un-sanctioned observers
+        one_day = timedelta(days=1)
+        for o in self.investigator_set \
+                     .exclude(user__sanctioned=True) \
+                     .exclude(observer=False):
+            # Get reservation times
+            reservation_sets =  \
+                Reservation.objects.filter(user=o) \
+                                   .exclude(start_date__gte=end) \
+                                   .exclude(end_date__lte=start)
+            # add a day to end_date (check-out day) because we
+            # assume they are available all that day just like
+            # they are available all day on check-in day
+            onsite_ranges = [(rs.start_date, rs.end_date + one_day)
+                             for rs in reservation_sets]
+
+            # Get black-out ranges
+            blackout_ranges = []
+            for b in o.user.blackout_set.all():
+                blackout_ranges.extend(b.generateDates(start, end))
+
+            # Get available ranges
+            available_ranges = AnalogSet.diffs(onsite_ranges, blackout_ranges)
+
+            # Get this observer's blackout times
+            all_blackout_ranges.append(
+                AnalogSet.diffs([universe], available_ranges))
+        return AnalogSet.intersects(all_blackout_ranges)
+
+    def get_sanctioned_users_blackout_times(self, start, end): #renamed get_sanctioned_users_blackout_times
         """
         A project is 'blacked out' when all of its sanctioned observers
         are unavailable or it is using Project Blackouts.
@@ -295,7 +325,15 @@ class Project(models.Model):
         if len(utcBlackouts) == 1: # One observer runs the show.
             return sorted(utcBlackouts[0])
 
-        return consolidate_events(find_intersections(utcBlackouts))
+        return consolidate_events(AnalogSet.intersects(utcBlackouts))
+
+    def get_users_blackout_times(self, start, end):
+        """
+        Returns the intersection of all users blackout times.
+        """
+        sanctioned    = self.get_sanctioned_users_blackout_times(start, end)
+        unsanctioned  = self.get_unsanctioned_users_blackout_times(start, end)
+        return AnalogSet.intersects([sanctioned, unsanctioned])
 
     def get_receiver_blackout_ranges(self, start, end):
         """
