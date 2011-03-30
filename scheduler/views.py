@@ -465,7 +465,7 @@ def delete_pending(request, *args, **kwds):
 ######################################################################
 
 try:
-    notifier = SchedulingNotifier()
+    notifier = SchedulingNotifier.SchedulingNotifier()
 except:
     # printException(formatExceptionInfo())
     pass
