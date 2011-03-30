@@ -4,8 +4,8 @@ import reversion
 from reversion.models import Version
 from reversion import revision
 from utilities.VersionDiff import VersionDiff
-from utilities.RevisionUtility import RevisionUtility
-from utilities.RevisionUtilityTester import RevisionUtilityTester
+from tools.RevisionUtility import RevisionUtility
+from tools.RevisionUtilityTester import RevisionUtilityTester
 from utilities   import TimeAgent
 
 class PeriodChanges:

@@ -1,7 +1,7 @@
 from datetime import datetime, date, timedelta
 
 from test_utils              import NellTestCase
-from nell.utilities.notifiers import WindowAlerts
+from tools.alerts import WindowAlerts
 from utilities               import TimeAgent
 from scheduler.models         import *
 from scheduler.httpadapters   import *

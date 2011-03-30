@@ -1,6 +1,3 @@
-from utils                           import *
-from revision_register               import register_for_revision
-
 from Allotment                       import Allotment
 from Blackout                        import Blackout
 from Column                          import Column

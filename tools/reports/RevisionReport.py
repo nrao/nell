@@ -3,7 +3,7 @@ import reversion
 from reversion.models import Version
 from reversion import revision
 #from VersionDiff import VersionDiff
-from nell.utilities.RevisionUtility import RevisionUtility
+from tools.RevisionUtility import RevisionUtility
 
 class RevisionReport(object):
 

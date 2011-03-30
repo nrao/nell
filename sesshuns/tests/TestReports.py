@@ -1,21 +1,21 @@
 from datetime                import datetime
 from scheduler.models        import *
 from test_utils              import NellTestCase
-from nell.utilities.reports  import *
+from tools.reports  import *
 from scheduler.tests.utils                   import create_sesshun
 import sys
 
-from nell.utilities.reports.CompletionReport  import GenerateReport as completionReport
-from nell.utilities.reports.BlackoutReport  import GenerateBlackoutReport
-from nell.utilities.reports.DBHealthReport  import GenerateReport as dbHealth
-#from nell.utilities.reports.NFSReport  import GenerateReport as nsfReport
-from nell.utilities.reports.ProjectReport  import GenerateProjectReport
-from nell.utilities.reports.ProjTimeAcctReport  import GenerateProjectTimeAccountingReport
-from nell.utilities.reports.ScheduleReport import ScheduleReport
-from nell.utilities.reports.SessionReport  import GenerateReport as sessionReport
-from nell.utilities.reports.StartEndReport  import get_projects_between_start_end 
-from nell.utilities.reports.WeeklyReport  import GenerateReport as weeklyReport
-from nell.utilities.reports.WindowsReport  import WindowsReport 
+from tools.reports.CompletionReport  import GenerateReport as completionReport
+from tools.reports.BlackoutReport  import GenerateBlackoutReport
+from tools.reports.DBHealthReport  import GenerateReport as dbHealth
+#from tools.reports.NFSReport  import GenerateReport as nsfReport
+from tools.reports.ProjectReport  import GenerateProjectReport
+from tools.reports.ProjTimeAcctReport  import GenerateProjectTimeAccountingReport
+from tools.reports.ScheduleReport import ScheduleReport
+from tools.reports.SessionReport  import GenerateReport as sessionReport
+from tools.reports.StartEndReport  import get_projects_between_start_end 
+from tools.reports.WeeklyReport  import GenerateReport as weeklyReport
+from tools.reports.WindowsReport  import WindowsReport 
 
 # This breaks the one unit test class per class pattern, since this 
 # is a single test class for all the reports, but wtf.
