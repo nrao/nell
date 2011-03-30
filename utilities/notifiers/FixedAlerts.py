@@ -56,8 +56,8 @@ class FixedAlerts():
         """
        
         if len(sessions) == 0:
-            sessions = Sesshun.objects.filter(project__pcode = pcode
-                                            , session_type = fixed)
+            fixed = Session_Type.objects.filter(type = 'fixed')
+            sessions = Sesshun.objects.filter(session_type = fixed)
         self.add("Retrieving periods for %d Fixed Sessions\n" % len(sessions))    
         injured = []
         for s in sessions:

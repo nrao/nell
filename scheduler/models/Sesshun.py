@@ -319,7 +319,6 @@ class Sesshun(models.Model):
                         , [2-tuple of scheduable-but-ignoring-blackouts range)]
                         , [[2-tuple of scheduable-but-blacked-out-range]])
         """
-
         nss1 = self.get_time_not_schedulable(start
                                            , end
                                            , blackouts = False)
@@ -346,8 +345,8 @@ class Sesshun(models.Model):
             bs = trim_events(bs, s[0], s[1])
             if len(bs) != 0:
                 bss.append(bs)
-            bsTime = sum([TimeAgent.timedelta2minutes(b[1] - b[0])/60.0 \
-                for b in bs])
+            bsTime = sum([TimeAgent.timedelta2minutes(b[1] - b[0])/60.0
+                          for b in bs])
             hrsBlackedOut += bsTime
 
         # return a summary of what we've found
