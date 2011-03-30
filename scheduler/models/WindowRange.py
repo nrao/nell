@@ -1,8 +1,7 @@
 from django.db  import models
 from datetime   import datetime, timedelta
 
-from nell.utilities         import TimeAgent, SLATimeAgent
-from sesshuns.models.common import *
+from nell.utilities         import TimeAgent, SLATimeAgent, AnalogSet
 from Window                 import Window
 
 class WindowRange(models.Model):

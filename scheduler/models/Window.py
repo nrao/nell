@@ -3,8 +3,6 @@ from datetime      import datetime, timedelta
 
 from utilities     import TimeAgent, AnalogSet
 
-from sesshuns.models.common  import *
-#from common                  import first
 from Sesshun                 import Sesshun
 from Period                  import Period
 from Period_State            import Period_State
@@ -314,8 +312,6 @@ class Window(models.Model):
                 w1e = wrs[i].last_date()
                 w2s = wrs[j].start_date
                 w2e = wrs[j].last_date()
-                # don't use common.overlaps because it does not check for <=
-                #if overlaps((w1s, w1e), (w2s, w2e)):
                 if w1s <= w2e and w2s <= w1e:
                     overlap.append((wrs[i], wrs[j]))
         return overlap
@@ -333,8 +329,6 @@ class Window(models.Model):
             w2e = w.end()
             if w2s is None or w2e is None:
                 continue
-            # don't use common.overlaps because it does not check for <=
-            #if overlaps((w1s, w1e), (w2s, w2e)):
             if w1s <= w2e and w2s <= w1e:
                 overlapping.append(w)
         return overlapping       

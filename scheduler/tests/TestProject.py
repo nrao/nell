@@ -194,11 +194,6 @@ class TestProject(BenchTestCase):
                          , end_date   = datetime(2009, 1, 2, 0)
                           )
         res1.save()
-        #res2 = Reservation(user = self.user3
-        #                 , start_date = datetime(2009, 1, 21, 0)
-        #                 , end_date   = datetime(2009, 1, 28, 0)
-        #                  )
-        #res2.save()
 
         expected = [(today, datetime(2009, 1, 1, 9))
                   , (datetime(2009, 1, 2, 16), later)]
@@ -228,7 +223,6 @@ class TestProject(BenchTestCase):
 
         # Clean up
         res1.delete()
-        #res2.delete()
         blackout32.delete()
         blackout31.delete()
         blackout22.delete()

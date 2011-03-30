@@ -22,19 +22,23 @@
 
 """
 Contains set functions as they pertain to continuous ranges as opposed to
-discrete sets of values, e.g, line segments or more relevant time ranges.
+discrete collections of values, e.g, line segments or more relevantly,
+time ranges.  When results consist of a list of ranges, the order is not
+sorted.
 Simply a means for providing one location for such functionality.
-Still cannot believe this is the only available implementation.
+This list of functions does not attempt to be exhaustive, only what
+was needed by nell.
+(Still cannot believe I could not find another implementation.)
 
-Throughout this code define a range as a tuple (x, y) where x <= y.
+Throughout this code define a range is a tuple (x, y) where x <= y.
 """
 
 def overlaps(a, b):
-    "Determines if the two ranges intersect."
+    "Determines whether two ranges intersect."
     return a[0] < b[1] and b[0] < a[1]
 
 def intersect(a, b):
-    "Find the intersection between the two ranges."
+    "Find the intersection of two ranges."
     if a[1] <= b[0] or b[1] <= a[0]:
         return ()
     elif a[0] <= b[0]:
@@ -50,9 +54,21 @@ def intersect(a, b):
 
 def intersects(ranges):
     """
-    Takes a list of lists of ranges, i.e., [[range]], finds the
+    Takes a list of list of ranges, i.e., [[range]], finds the
     intersections among the list of ranges, and returns a list of
-    ranges describing the intersections.
+    ranges describing the intersections. For example, ranges x, y,
+    and z yield r:
+    123456 ...
+      xxxx   xxxxx  xxxx  xxxxx   
+    yyyyyy     yyyyyyyyyy         
+       zzzz     zzzzzz     zzzzzzz
+       rrr      rr  rr            
+    i.e.,
+    intersects([[(3,6), (10,14), (17,20), (23,27)],
+                [(1,6), (12,21)],
+                [(4,7), (13,18), (24,29)])
+        yields:
+                [(4,6), (13,14), (17,18)]]
     """
     if not ranges:
         return ranges
@@ -89,7 +105,20 @@ def union(a, b):
 def unions(ranges, complete = None):
     """
     Given a list of ranges, combine as many of the ranges as possible
-    using union to generate a shorter list of longer ranges.
+    using union to generate a shorter list of longer ranges. For example,
+    the ranges u, v, w, x, y, and z yields r.
+    123456 ...
+      wwww
+                          xxxxx
+                    yyyy
+             uuuuu
+                vvvvvv
+       zzzz
+      rrrrr  rrrrrrrrrrr  rrrrr   
+    i.e.,
+    unions([(3,6), (23,27), (17,20), (10,14), (23,28), (4,7)])
+        yields:
+                [(3,7), (10,20), (23,27)]
     """
     if not complete:
         complete = []
@@ -113,14 +142,14 @@ def diff(a, b):
     Find the remainder(s) of the a range after the b range is removed.
     Note that since the answer may not be contiguous, this returns
     a list of ranges.
-    Also this can be used for complement, i.e., if range a is assumed
+    Note this can be used for complement, i.e., if range a is assumed
     to be the universal set, then it returns all non-b range(s) in
     range a.
     """
     if a[1] <= b[0] or b[1] <= a[0]:
         return [(a[0], a[1])]
     elif a[0] < b[0]:
-        if a[1] < b[1]:
+        if a[1] <= b[1]:
             return [(a[0], b[0])]
         elif a[1] > b[1]:
             return[(a[0],b[0]), (b[1], a[1])]
@@ -143,7 +172,17 @@ def diffs(ranges_a, ranges_b):
     """
     Given two lists of ranges, returns a single list of ranges
     consisting of removing all portions from the first list that
-    intersect with any range from the second list.
+    intersect with any range from the second list.  For example,
+    ranges x and y yield r.
+    123456 ...
+      xxxx   xxxxx  xxxx  xxxxx   
+    yyyyyy     yyyyyyyyyy         
+             rr           rrrrr   
+    i.e.,
+    diffs([(3,6), (10,14), (17,20), (23,27)],
+          [(1,6), (12,21)])
+        yields:
+                [(10,11), (23,27)]
     """
     if not ranges_b or not ranges_a:
         return ranges_a

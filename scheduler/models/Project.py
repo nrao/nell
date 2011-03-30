@@ -1,8 +1,7 @@
-from datetime   import datetime
+from datetime   import datetime, timedelta, date
 from django.db  import models
 from utilities  import AnalogSet
 
-from sesshuns.models.common            import *
 from utilities.TimeAgent  import range_to_days
 from Allotment         import Allotment
 from Project_Type      import Project_Type
@@ -231,7 +230,7 @@ class Project(models.Model):
                  if p != self and \
                     d.state.abbreviation == 'S' and \
                     AnalogSet.overlaps((d.start, d.end()), (start, end))]
-        return consolidate_events(times)
+        return AnalogSet.unions(times)
 
     def get_blackout_dates(self, start, end):
         """
@@ -325,7 +324,7 @@ class Project(models.Model):
         if len(utcBlackouts) == 1: # One observer runs the show.
             return sorted(utcBlackouts[0])
 
-        return consolidate_events(AnalogSet.intersects(utcBlackouts))
+        return AnalogSet.unions(AnalogSet.intersects(utcBlackouts))
 
     def get_users_blackout_times(self, start, end):
         """

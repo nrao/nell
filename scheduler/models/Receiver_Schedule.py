@@ -1,8 +1,8 @@
 from django.db  import models
 from sets       import Set
+from datetime   import datetime, timedelta
 
 from Receiver import Receiver
-from sesshuns.models.common            import *
 
 class Receiver_Schedule(models.Model):
     receiver   = models.ForeignKey(Receiver)

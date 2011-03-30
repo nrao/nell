@@ -1,8 +1,8 @@
 from django.test.client  import Client
-from datetime            import datetime, timedelta
+from datetime            import datetime, timedelta, date
 
-from test_utils              import BenchTestCase, timeIt
-from sesshuns.models         import *
+from test_utils               import BenchTestCase, timeIt
+from sesshuns.models          import *
 from scheduler.models         import *
 from scheduler.utilities      import getReservationsFromDB
 from scheduler.tests.utils    import create_sesshun, create_maintenance_period
