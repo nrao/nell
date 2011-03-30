@@ -1,5 +1,5 @@
 from test_utils              import NellTestCase
-from nell.utilities          import UpdateEphemeris
+from tools          import UpdateEphemeris
 from scheduler.models         import *
 from scheduler.tests.utils                   import create_sesshun
 

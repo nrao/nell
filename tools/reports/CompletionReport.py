@@ -3,13 +3,13 @@ import settings
 setup_environ(settings)
 
 from scheduler.models              import *
-from nell.utilities.TimeAccounting    import TimeAccounting
+from utilities.TimeAccounting    import TimeAccounting
 from sets                         import Set
 from datetime                     import *
 from sesshuns.templatetags.custom import * # TBF: NO! NO!
 import sys
 
-from nell.utilities.reports.Report import Report, Line
+from tools.reports.Report import Report, Line
 
 project_header = ["pcode",
                   "name",

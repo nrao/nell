@@ -1,6 +1,6 @@
 import MySQLdb as mysql
 
-from nell.utilities.database import DSSPrime2DSS
+from tools.database import DSSPrime2DSS
 from scheduler.models         import *
 from test_utils              import NellTestCase
 

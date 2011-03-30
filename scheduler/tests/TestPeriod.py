@@ -1,7 +1,8 @@
 from datetime            import datetime, timedelta
 
-from scheduler.httpadapters                 import *
-from scheduler.models                       import *
+from scheduler.httpadapters                import *
+from scheduler.models                      import *
+from scheduler.models.utils                import *
 from test_utils                            import BenchTestCase, timeIt
 from utils                                 import *
 

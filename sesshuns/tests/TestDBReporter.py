@@ -1,5 +1,5 @@
 from test_utils              import NellTestCase
-from nell.utilities.database              import DBReporter
+from nell.tools.database              import DBReporter
 
 class TestDBReporter(NellTestCase):
 

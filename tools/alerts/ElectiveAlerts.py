@@ -7,7 +7,7 @@ setup_environ(settings)
 from datetime import datetime
 
 from scheduler.models         import Elective
-from ElecAlertNotifier        import ElecAlertNotifier
+from utilities.notifiers.ElecAlertNotifier        import ElecAlertNotifier
 
 class ElectiveAlerts():
 

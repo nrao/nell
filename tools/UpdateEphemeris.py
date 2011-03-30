@@ -6,8 +6,8 @@ setup_environ(settings)
 from datetime   import datetime
 
 from scheduler.models import *
-from utilities.ephemerisComets import ephemerisComets
-from utilities.ephemerisAsteroids import ephemerisAsteroids
+from ephemerisComets import ephemerisComets
+from ephemerisAsteroids import ephemerisAsteroids
 
 # this module rocks!
 import ephem
