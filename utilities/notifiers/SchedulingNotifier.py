@@ -30,7 +30,7 @@
 
 from Notifier      import Notifier
 from Email         import Email
-from PeriodChanges import PeriodChanges
+from tools.alerts.PeriodChanges import PeriodChanges
 from datetime      import datetime, timedelta
 from sets          import Set
 

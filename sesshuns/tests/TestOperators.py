@@ -84,7 +84,7 @@ class TestOperators(TestObserversBase):
 
     def test_summary(self):
         # setup a period for a month before
-        lastMonth = self.start - timedelta(days = 30)
+        lastMonth = self.start - timedelta(days = 31)
         lastMonthEst = TimeAgent.utc2est(lastMonth)
         pa = Period_Accounting(scheduled = self.dur)
         pa.save()

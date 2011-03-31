@@ -1,12 +1,12 @@
 from datetime   import datetime, timedelta
 
-from nell.utilities.notifiers  import SchedulingNotifier
+from utilities.notifiers  import SchedulingNotifier
 from scheduler.tests.utils           import create_sesshun
 from scheduler.tests.PeriodsTestCase import PeriodsTestCase
 from scheduler.models import *
 #from nell.utilities.ReversionUtilityTester  import VersionDiff
-from nell.utilities.RevisionUtilityTester import VersionTester
-from nell.utilities.VersionDiff import VersionDiff
+from tools.RevisionUtilityTester import VersionTester
+from utilities.VersionDiff import VersionDiff
 
 class TestSchedulingNotifier(PeriodsTestCase):
 

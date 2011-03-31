@@ -1,5 +1,3 @@
-from common                          import *
-
 from Backend                         import Backend
 from Preference                      import Preference
 from Maintenance_Activity            import Maintenance_Activity

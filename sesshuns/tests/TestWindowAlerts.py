@@ -1,7 +1,7 @@
 from datetime import datetime, date, timedelta
 
 from test_utils              import NellTestCase
-from nell.utilities.notifiers import WindowAlerts
+from tools.alerts import WindowAlerts
 from utilities               import TimeAgent
 from scheduler.models         import *
 from scheduler.httpadapters   import *
@@ -199,7 +199,7 @@ class TestWindowAlerts(NellTestCase):
                           , repeat     = Repeat.objects.all()[0]
                            )
         blackout.save()
-        bss.append((bsStart, bsEnd))
+        bss.insert(0, (bsStart, bsEnd))
         bssHrs += 3*24
 
         times = wa.getWindowTimes()

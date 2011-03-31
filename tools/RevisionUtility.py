@@ -1,7 +1,7 @@
 import reversion
 from reversion.models import Version
 from reversion import revision
-from VersionDiff import VersionDiff
+from utilities.VersionDiff import VersionDiff
 
 class RevisionUtility:
 

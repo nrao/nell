@@ -1,8 +1,7 @@
 from django.db                import models
 from sets                     import Set
 
-from sesshuns.models.common   import consolidate_events, trim_events, compliment_events
-from nell.utilities           import TimeAgent
+from nell.utilities           import TimeAgent, AnalogSet
 from nell.utilities.receiver  import ReceiverCompile
 from Allotment         import Allotment
 from Observing_Type    import Observing_Type
@@ -295,7 +294,7 @@ class Sesshun(models.Model):
         if blackouts:
             dts = dts.union(self.project.get_blackout_times(start, end))
         
-        # the call to consolidate_events won't accept the None used
+        # the call to unions won't accept the None used
         # sometimes by get_receiver_blackout_range, so substitue in
         # the given boundries for these
         newDts = []
@@ -306,8 +305,35 @@ class Sesshun(models.Model):
                 e = end
             newDts.append((s,e))
             
-        return consolidate_events(sorted(newDts))
+        return sorted(AnalogSet.unions(newDts))
 
+    def trim_events(self, events, start, end):
+        """
+        Events is a list of datetime tuples [(start, end)].
+        Many of the functions that return these events will return 
+        events that overlap with the given start, end boundries.  Here
+        we trim any of these overlaps so that no events returned go beyond
+        the given start, end.
+        """
+        if len(events) == 0:
+            return []
+
+        if events[0][0] < start:
+            events[0] = (start, events[0][1])
+        if events[-1][1] > end:
+            events[-1] = (events[-1][0], end)
+        return events    
+
+    def compliment_events(self, events, start, end):
+        """
+        For a given set of datetime tuples of the form (start, end) which
+        falls in the range of the given start, end, what is the
+        complimentary set of events.  That is, what are the other events,
+        togethor with the given events, which completely cover the given
+        start, end range?
+        """
+        return AnalogSet.diffs([(start, end)], events)
+    
     def getBlackedOutSchedulableTime(self, start, end):
         """
         Of the hours in the given range that are schedulable,
@@ -319,16 +345,15 @@ class Sesshun(models.Model):
                         , [2-tuple of scheduable-but-ignoring-blackouts range)]
                         , [[2-tuple of scheduable-but-blacked-out-range]])
         """
-
         nss1 = self.get_time_not_schedulable(start
                                            , end
                                            , blackouts = False)
 
-        nss = trim_events(nss1, start, end)
+        nss = self.trim_events(nss1, start, end)
 
         # now convert the non-schedulable time ranges to the 
         # time that IS schedulable:
-        schedulable = compliment_events(nss, start, end)
+        schedulable = self.compliment_events(nss, start, end)
  
         # how much time is that?
         hrsSchedulable = sum([TimeAgent.timedelta2minutes(s[1] - s[0])/60.0 \
@@ -343,11 +368,11 @@ class Sesshun(models.Model):
             bs = self.project.get_blackout_times(s[0], s[1])
             # but these blackout times might not match to the schedulable
             # end points, so we may need to truncate them
-            bs = trim_events(bs, s[0], s[1])
+            bs = self.trim_events(bs, s[0], s[1])
             if len(bs) != 0:
                 bss.append(bs)
-            bsTime = sum([TimeAgent.timedelta2minutes(b[1] - b[0])/60.0 \
-                for b in bs])
+            bsTime = sum([TimeAgent.timedelta2minutes(b[1] - b[0])/60.0
+                          for b in bs])
             hrsBlackedOut += bsTime
 
         # return a summary of what we've found

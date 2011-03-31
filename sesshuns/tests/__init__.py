@@ -1,5 +1,3 @@
-from TestComplimentEvents      import TestComplimentEvents
-from TestConsolidateBlackouts  import TestConsolidateBlackouts
 from TestDBReporter            import TestDBReporter
 from TestDSSPrime2DSS          import TestDSSPrime2DSS
 from TestElecAlertNotifier     import TestElecAlertNotifier

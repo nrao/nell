@@ -6,7 +6,7 @@ setup_environ(settings)
 from datetime import datetime
 
 from scheduler.models            import *
-from WinAlertNotifier import WinAlertNotifier
+from utilities.notifiers.WinAlertNotifier import WinAlertNotifier
 
 class WindowAlerts():
 
