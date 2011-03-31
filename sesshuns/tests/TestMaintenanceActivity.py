@@ -52,7 +52,7 @@ class TestMaintenanceActivity(NellTestCase):
             user = "anonymous"
 
         return user
-        
+
 
     def tearDown(self):
         super(TestMaintenanceActivity, self).tearDown()
@@ -62,11 +62,26 @@ class TestMaintenanceActivity(NellTestCase):
         subject = ma.get_subject()
         self.assertEqual(subject, self.subject)
         new_subject = "New Maintenance Subject"
+        ma.set_subject(new_subject)
+        ma2 = Maintenance_Activity.objects.get(id = ma.id)
+        # subject should still be old subject, 'set_subject' doesn't save
+        self.assertEqual(ma2.get_subject(), self.subject)
+        ma.save()
+        ma2 = Maintenance_Activity.objects.get(id = ma.id)
+        self.assertEqual(ma2.get_subject(), new_subject)
 
     def test_location(self):
         ma = Maintenance_Activity.objects.all()[0]
         location = ma.get_location()
         self.assertEqual(location, self.location)
+        new_location = "attic"
+        ma.set_location(new_location)
+        ma2 = Maintenance_Activity.objects.get(id = ma.id)
+        # location should still be old location, 'set_location' doesn't save
+        self.assertEqual(ma2.get_location(), self.location)
+        ma.save()
+        ma2 = Maintenance_Activity.objects.get(id = ma.id)
+        self.assertEqual(ma2.get_location(), new_location)
 
     def test_telescope_resource(self):
         ma = Maintenance_Activity.objects.all()[0]
