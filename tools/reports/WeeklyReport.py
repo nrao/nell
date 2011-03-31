@@ -2,12 +2,12 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from datetime        import date,datetime,timedelta
-from nell.utilities      import TimeAccounting
+from datetime         import date,datetime,timedelta
+from nell.utilities   import TimeAccounting
 from scheduler.models import *
-from sesshuns.models  import overlaps
 from utilities        import TimeAgent
-from sets            import Set
+from utilities        import AnalogSet
+from sets             import Set
 
 import calendar
 
@@ -51,10 +51,10 @@ def GenerateReport(start):
 
     observed_periods = \
         sorted(Set([p for p in periods \
-                      if overlaps((p.start, p.end()), (start, end))]))
+                      if AnalogSet.overlaps((p.start, p.end()), (start, end))]))
     upcoming_periods = \
         sorted(Set([p for p in periods \
-                      if overlaps((p.start, p.end())
+                      if AnalogSet.overlaps((p.start, p.end())
                                 , (next_start, next_end))]))
 
     outfile.write("Observations for proposals\n")

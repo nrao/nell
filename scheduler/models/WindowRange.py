@@ -1,10 +1,8 @@
 from django.db  import models
 from datetime   import datetime, timedelta
 
-from nell.utilities import TimeAgent, SLATimeAgent
-
-from sesshuns.models.common import *
-from Window import Window
+from nell.utilities         import TimeAgent, SLATimeAgent, AnalogSet
+from Window                 import Window
 
 class WindowRange(models.Model):
     window     = models.ForeignKey(Window) 
@@ -52,8 +50,8 @@ class WindowRange(models.Model):
         #                  , self.start_date.month
         #                  , self.start_date.day)
         #winEnd = winStart + timedelta(days = self.duration)                  
-        return overlaps((self.start_datetime(), self.end_datetime())
-                      , (period.start, period.end()))
+        return AnalogSet.overlaps((self.start_datetime(), self.end_datetime())
+                                , (period.start, period.end()))
 
         return False
 

@@ -5,7 +5,6 @@ from django.contrib.auth.models         import User as AuthUser
 from scheduler.httpadapters             import PeriodHttpAdapter
 from scheduler.utilities                import ScheduleTools
 from models                             import *
-from sesshuns.models.common             import *
 from utilities                          import *
 from scheduler.models                   import User as NellUser
 from nell.utilities                     import IcalMap, TimeAccounting

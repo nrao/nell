@@ -5,6 +5,7 @@ from scheduler.httpadapters   import *
 from utils                   import create_sesshun
 
 class TestProject(BenchTestCase):
+
     def setUp(self):
         super(TestProject, self).setUp()
 
@@ -43,6 +44,17 @@ class TestProject(BenchTestCase):
                                          , observer = True)
         self.investigator2.save()
 
+        # Create the third unsanctioned user (on project)
+        self.user3 = User(sanctioned = False
+                        , role = Role.objects.get(role = "Observer")
+                     )
+        self.user3.save()
+
+        self.investigator3 =  Investigator(project  = self.project
+                                         , user     = self.user3
+                                         , observer = True)
+        self.investigator3.save()
+
         # make a session
         self.sesshun = create_sesshun()
         self.sesshun.project = self.project
@@ -60,6 +72,8 @@ class TestProject(BenchTestCase):
 
     def tearDown(self):
         super(TestProject, self).tearDown()
+        self.investigator3.delete()
+        self.user3.delete()
         self.investigator2.delete()
         self.user2.delete()
         self.investigator1.delete()
@@ -102,6 +116,17 @@ class TestProject(BenchTestCase):
                             , end_date   = datetime(2009, 1, 4, 13))
         blackout22.save()
 
+        # Create Investigator 3's blackouts.
+        blackout31 = Blackout(user       = self.user3
+                            , repeat     = Repeat.objects.all()[0]
+                            , start_date = datetime(2008, 12, 31, 11)
+                            , end_date   = datetime(2009,  1,  1,  9))
+        blackout31.save()
+        blackout32 = Blackout(user       = self.user3
+                            , repeat     = Repeat.objects.all()[0]
+                            , start_date = datetime(2009,  1,  2, 16)
+                            , end_date   = datetime(2009,  1,  3, 12))
+        blackout32.save()
 
         # stay out of the blackouts range
         expected = []
@@ -135,8 +160,8 @@ class TestProject(BenchTestCase):
         # we should see the present result extended by the first 
         # project blackout, in addition to the second blackout
         expected = [
-            (datetime(2009, 1, 1, 11), datetime(2009, 1, 5, 0))
-          , (datetime(2009, 1, 6, 0),  datetime(2009, 1, 8, 0))
+            (datetime(2009, 1, 6, 0),  datetime(2009, 1, 8, 0))
+          , (datetime(2009, 1, 1, 11), datetime(2009, 1, 5, 0))
         ]
 
         r = self.project.get_blackout_times(today, later)
@@ -153,13 +178,39 @@ class TestProject(BenchTestCase):
 
         # we should see similar results to before, but now the weeklys
         expected = [
-            (datetime(2009, 1, 1, 11), datetime(2009, 1, 5,  0))
-          , (datetime(2009, 1, 6,  0), datetime(2009, 1, 8,  0))
+            (datetime(2009, 1, 6,  0), datetime(2009, 1, 8,  0))
           , (datetime(2009, 1, 13, 0), datetime(2009, 1, 15, 0))
           , (datetime(2009, 1, 20, 0), datetime(2009, 1, 22, 0))
-          , (datetime(2009, 1, 27, 0), datetime(2009, 1, 29, 0))          
+          , (datetime(2009, 1, 27, 0), datetime(2009, 1, 29, 0))
+          , (datetime(2009, 1, 1, 11), datetime(2009, 1, 5,  0))
         ]
 
+        r = self.project.get_blackout_times(today, later)
+        self.assertEquals(expected, r)
+
+        # but what if the investigators show up on site?
+        res1 = Reservation(user = self.user3
+                         , start_date = datetime(2009, 1, 1, 0)
+                         , end_date   = datetime(2009, 1, 2, 0)
+                          )
+        res1.save()
+
+        expected = [(today, datetime(2009, 1, 1, 9))
+                  , (datetime(2009, 1, 2, 16), later)]
+        r = self.project.get_unsanctioned_users_blackout_times(today, later)
+        self.assertEquals(expected, r)
+
+        expected = [(datetime(2009, 1, 2, 16), datetime(2009, 1, 4, 13))]
+        r = self.project.get_users_blackout_times(today, later)
+        self.assertEquals(expected, r)
+
+        expected = [
+            (datetime(2009, 1, 6,  0), datetime(2009, 1, 8,  0))
+          , (datetime(2009, 1, 13, 0), datetime(2009, 1, 15, 0))
+          , (datetime(2009, 1, 20, 0), datetime(2009, 1, 22, 0))
+          , (datetime(2009, 1, 27, 0), datetime(2009, 1, 29, 0))
+          , (datetime(2009, 1, 2, 16), datetime(2009, 1, 5,  0))
+        ]
         r = self.project.get_blackout_times(today, later)
         self.assertEquals(expected, r)
 
@@ -167,10 +218,13 @@ class TestProject(BenchTestCase):
         # A: returned blackouts are NOT truncated
         newLater = datetime(2009, 1, 4, 12)
         r = self.project.get_blackout_times(today, newLater)
-        expected = [(datetime(2009, 1, 1, 11), datetime(2009, 1, 5))]
+        expected = [(datetime(2009, 1, 2, 16), datetime(2009, 1, 5))]
         self.assertEquals(expected, r)
 
         # Clean up
+        res1.delete()
+        blackout32.delete()
+        blackout31.delete()
         blackout22.delete()
         blackout21.delete()
         blackout13.delete()
@@ -220,6 +274,9 @@ class TestProject(BenchTestCase):
         later = today + timedelta(days = 30)
         r = self.project.get_blackout_times(today, later)
         self.assertEquals([], r)
+
+        r = self.project.get_unsanctioned_users_blackout_times(today, later)
+        self.assertEquals([(today, later)], r)
 
         # Clean up
         blackout22.delete()

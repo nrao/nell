@@ -1,3 +1,4 @@
+from AnalogSet            import *
 from Borg                 import Borg
 from Score                import Score
 from VersionDiff          import VersionDiff

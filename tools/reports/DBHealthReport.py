@@ -4,11 +4,12 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from datetime                              import date, datetime, timedelta
-from sets                                  import Set
-from nell.scheduler.models                       import *
-from sesshuns.models                        import overlaps
-from utilities                            import TimeAccounting
+from sets                      import Set
+from datetime                  import date, datetime, timedelta
+
+from scheduler.models          import *
+from utilities                 import TimeAccounting
+from utilities                 import AnalogSet
 from tools.alerts              import SessionAlerts
 
 def get_sessions(typ,sessions):
@@ -658,7 +659,7 @@ def GenerateReport():
         for p2 in not_deleted_periods:
             start2, end2 = p2.start, p2.end()
             if p1 != p2 and p1 not in overlap and p2 not in overlap:
-                if overlaps((start1, end1), (start2, end2)):
+                if AnalogSet.overlaps((start1, end1), (start2, end2)):
                     values.append("%s and %s" % (str(p1), str(p2)))
                     overlap.extend([p1, p2])
     print_values(outfile, values)
