@@ -54,7 +54,7 @@ class TestShiftPeriodBoundaries(BenchTestCase):
         new_time = self.ps[1].start + timedelta(hours = 1)
         time = new_time.strftime("%Y-%m-%d %H:%M:%S")
 
-        response = c.post('/schedule/shift_period_boundaries'
+        response = c.post('/scheduler/schedule/shift_period_boundaries'
                         , dict(period_id = period_id
                              , start_boundary = 1
                              , description = "test"

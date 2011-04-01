@@ -46,28 +46,28 @@ class TestWindowRangeResource(BenchTestCase):
 
     @timeIt
     def test_create(self):
-        response = self.client.post('/windowRanges', self.fdata)
+        response = self.client.post('/scheduler/windowRanges', self.fdata)
         self.failUnlessEqual(response.status_code, 200)
 
     @timeIt
     def test_create_empty(self):
-        response = self.client.post('/windowRanges')
+        response = self.client.post('/scheduler/windowRanges')
         self.failUnlessEqual(response.status_code, 200)
 
     def test_read_one(self):
-        response = self.client.get('/windowRanges/%d' % self.wr.id)
+        response = self.client.get('/scheduler/windowRanges/%d' % self.wr.id)
         self.failUnlessEqual(response.status_code, 200)
 
         self.assertTrue('"end": "2010-01-07"' in response.content)
 
     def test_read_filter(self):
-        response = self.client.get('/windowRanges'
+        response = self.client.get('/scheduler/windowRanges'
                                 , {'filterWindowId' : self.w.id})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"end": "2010-01-07"' in response.content)
         self.assertTrue('"total": 1' in response.content)
 
-        response = self.client.get('/windowRanges'
+        response = self.client.get('/scheduler/windowRanges'
                                 , {'filterWindowId' : "666"})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"total": 0' in response.content)
@@ -76,11 +76,11 @@ class TestWindowRangeResource(BenchTestCase):
     def test_update(self):
         fdata = self.fdata
         fdata.update({"_method" : "put"})
-        response = self.client.post('/windowRanges/%s' % self.wr.id, fdata)
+        response = self.client.post('/scheduler/windowRanges/%s' % self.wr.id, fdata)
         self.failUnlessEqual(response.status_code, 200)
 
     @timeIt
     def test_delete(self):
-        response = self.client.post('/windowRanges/%s' % self.wr.id, {"_method" : "delete"})
+        response = self.client.post('/scheduler/windowRanges/%s' % self.wr.id, {"_method" : "delete"})
         self.failUnlessEqual(response.status_code, 200)
 

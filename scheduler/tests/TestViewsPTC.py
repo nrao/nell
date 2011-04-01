@@ -27,7 +27,7 @@ class TestViewsPTC(PeriodsTestCase):
                   )
         p.save()          
         
-        url = "/schedule/email"
+        url = "/scheduler/schedule/email"
         response = Client().get(url, dict(duration = 2))
 
         self.failUnless(response.status_code == 200)
@@ -36,7 +36,7 @@ class TestViewsPTC(PeriodsTestCase):
     def test_projects_email(self):
         pcodes = "GBT09A-001"
 
-        url = "/projects/email"
+        url = "/scheduler/projects/email"
 
         response = Client().get(url, dict(pcodes = pcodes))
 
@@ -62,7 +62,7 @@ class TestViewsPTC(PeriodsTestCase):
         time = dt.strftime("%Y-%m-%d %H:%M:%S")
         tz = "ET"
         duration = 2 #12
-        url = "/periods/delete_pending"
+        url = "/scheduler/periods/delete_pending"
 
         response = Client().post(url, dict(start    = time
                                          , tz       = tz
@@ -129,7 +129,7 @@ class TestViewsPTC(PeriodsTestCase):
         time = dt.strftime("%Y-%m-%d %H:%M:%S")
         tz = "ET"
         duration = 2 #12
-        url = "/periods/delete_pending"
+        url = "/scheduler/periods/delete_pending"
 
         response = Client().post(url, dict(start    = time
                                          , tz       = tz
@@ -158,7 +158,7 @@ class TestViewsPTC(PeriodsTestCase):
 
         time = self.ps[0].start.strftime("%Y-%m-%d %H:%M:%S")
 
-        url = "/periods/publish/%d" % self.ps[1].id
+        url = "/scheduler/periods/publish/%d" % self.ps[1].id
 
         # Remember not to embarrass ourselves by tweeting! tweet == False
         response = Client().post(url, dict(tweet = False))
@@ -182,7 +182,7 @@ class TestViewsPTC(PeriodsTestCase):
         time = dt.strftime("%Y-%m-%d %H:%M:%S")
         tz = "ET"
         duration = 2 #12
-        url = "/periods/publish"
+        url = "/scheduler/periods/publish"
 
         # Remember not to embarrass ourselves by tweeting! tweet == False
         response = Client().post(url, dict(start    = time
@@ -261,7 +261,7 @@ class TestViewsPTC(PeriodsTestCase):
         time = dt.strftime("%Y-%m-%d %H:%M:%S")
         tz = "ET"
         duration = 13 #12
-        url = "/periods/publish"
+        url = "/scheduler/periods/publish"
 
         # Remember not to embarrass ourselves by tweeting! tweet == False
         response = Client().post(url, dict(start    = time
@@ -290,7 +290,7 @@ class TestViewsPTC(PeriodsTestCase):
 
         # first see what the period looks like to start with 
         pid = Period.objects.all().order_by("id")[0].id
-        url = "/periods/UTC/%d" % pid
+        url = "/scheduler/periods/UTC/%d" % pid
         response = Client().get(url)
         self.assertTrue('"lost_time_bill_project": 0.0' in response.content)
         period = Period.objects.get(id = pid)
@@ -299,7 +299,7 @@ class TestViewsPTC(PeriodsTestCase):
         self.assertEquals(period.accounting.observed(), 5.0)
 
         # change the time accounting
-        url = "/period/%d/time_accounting" % pid
+        url = "/scheduler/period/%d/time_accounting" % pid
         response = Client().post(url, {"lost_time_bill_project" : 1.0})
         self.assertTrue('"lost_time_bill_project": 1.0' in response.content)
         period = Period.objects.get(id = pid)
