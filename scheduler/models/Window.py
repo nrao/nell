@@ -1,12 +1,11 @@
-from django.db  import models
-from datetime   import datetime, timedelta
+from django.db     import models
+from datetime      import datetime, timedelta
 
-from nell.utilities import TimeAgent
+from utilities     import TimeAgent, AnalogSet
 
-from sesshuns.models.common  import *
-from Sesshun import Sesshun
-from Period  import Period
-from Period_State  import Period_State
+from Sesshun                 import Sesshun
+from Period                  import Period
+from Period_State            import Period_State
 
 class Window(models.Model):
     session        = models.ForeignKey(Sesshun)
@@ -102,8 +101,8 @@ class Window(models.Model):
 
     def isInWindow(self, period):
         "Does the given period overlap at all in window (endpoints)"
-        return overlaps((self.start_datetime(), self.end_datetime())
-                      , (period.start, period.end()))
+        return AnalogSet.overlaps((self.start_datetime(), self.end_datetime())
+                                , (period.start, period.end()))
 
     def isInRanges(self, period):
         """
@@ -111,8 +110,8 @@ class Window(models.Model):
         This is more rigourous then isInWindow.
         """
         for wr in self.windowrange_set.all():
-            if overlaps((wr.start_datetime(), wr.end_datetime())
-                      , (period.start, period.end())):
+            if AnalogSet.overlaps((wr.start_datetime(), wr.end_datetime())
+                                , (period.start, period.end())):
                 return True
         return False # no overlaps at all!        
 
@@ -313,8 +312,6 @@ class Window(models.Model):
                 w1e = wrs[i].last_date()
                 w2s = wrs[j].start_date
                 w2e = wrs[j].last_date()
-                # don't use common.overlaps because it does not check for <=
-                #if overlaps((w1s, w1e), (w2s, w2e)):
                 if w1s <= w2e and w2s <= w1e:
                     overlap.append((wrs[i], wrs[j]))
         return overlap
@@ -332,8 +329,6 @@ class Window(models.Model):
             w2e = w.end()
             if w2s is None or w2e is None:
                 continue
-            # don't use common.overlaps because it does not check for <=
-            #if overlaps((w1s, w1e), (w2s, w2e)):
             if w1s <= w2e and w2s <= w1e:
                 overlapping.append(w)
         return overlapping       

@@ -41,7 +41,7 @@ from itertools                          import chain
 from django.utils.html                  import escape, conditional_escape
 from django                             import template
 from nell.utilities                     import TimeAgent
-from datetime                           import date, datetime, time
+from datetime                           import date, datetime, time, timedelta
 from utilities                          import get_requestor
 from rescal_notifier                    import RescalNotifier
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
@@ -473,7 +473,7 @@ def edit_activity(request, activity_id = None):
                 recipients = supervisors + [creator]
             else:
                 recipients = supervisors
-                
+
             view_url = "http://%s/resourcecal_display_activity/%s/" % (request.get_host(), ma.id)
             rc_notifier.notify(recipients,
                                "deleted",

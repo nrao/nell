@@ -1,7 +1,6 @@
 from django.db  import models
 
 from Receiver import Receiver
-from sesshuns.models.common            import *
 
 class Receiver_Temperature(models.Model):
     receiver    = models.ForeignKey(Receiver)
