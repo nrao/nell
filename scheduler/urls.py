@@ -27,7 +27,7 @@ urlpatterns = patterns(''
    , url(r'^periods/delete_pending',                       delete_pending)
    , url(r'^projects$',               ProjectResource(permitted_methods=('GET', 'PUT', 'POST')))
    , url(r'^projects/(\d+)$',         ProjectResource(permitted_methods=('PUT', 'GET', 'POST')))
-   , url(r'^sessions $',              SessionResource(permitted_methods=('GET', 'PUT', 'POST')))
+   , url(r'^sessions$',               SessionResource(permitted_methods=('GET', 'PUT', 'POST')))
    , url(r'^sessions/(\d+)$',         SessionResource(permitted_methods=('PUT', 'GET', 'POST')))
    , url(r'^periods/(UTC)$',          PeriodResource(permitted_methods=('GET', 'PUT', 'POST')))
    , url(r'^periods/(ET)$',           PeriodResource(permitted_methods=('GET', 'PUT', 'POST')))
