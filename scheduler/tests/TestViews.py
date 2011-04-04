@@ -31,7 +31,7 @@ class TestViews(BenchTestCase):
         # toggle a rcvr
         fromDt = toDt = datetime(2009, 4, 11).strftime("%m/%d/%Y %H:%M:%S")
         rcvr = "342" 
-        response = client.post('/receivers/toggle_rcvr',
+        response = client.post('/scheduler/receivers/toggle_rcvr',
                                    {"from" : fromDt,
                                     "to" : toDt,
                                     "rcvr" : rcvr})
@@ -44,7 +44,7 @@ class TestViews(BenchTestCase):
                         , [rd.receiver.abbreviation for rd in rs])
 
         # check error checking
-        response = client.post('/receivers/toggle_rcvr',
+        response = client.post('/scheduler/receivers/toggle_rcvr',
                                    {"from" : "dog",
                                     "to" : toDt,
                                     "rcvr" : rcvr})
@@ -62,7 +62,7 @@ class TestViews(BenchTestCase):
         p.save()
         client = Client()
 
-        response = client.get('/receivers/schedule',
+        response = client.get('/scheduler/receivers/schedule',
                                    {"startdate" : startdate,
                                     "duration" : 7})
         self.failUnlessEqual(response.status_code, 200)
@@ -76,10 +76,10 @@ class TestViews(BenchTestCase):
     def test_get_options(self):
         create_sesshun()
         c = Client()
-        response = c.get('/sessions/options', dict(mode='project_codes'))
+        response = c.get('/scheduler/sessions/options', dict(mode='project_codes'))
         self.assertEquals(response.content,
                           '{"project codes": ["GBT09A-001"], "project ids": [1]}')
-        response = c.get('/sessions/options', dict(mode='session_handles', notcomplete='true', enabled='true'))
+        response = c.get('/scheduler/sessions/options', dict(mode='session_handles', notcomplete='true', enabled='true'))
         self.assertEquals(response.content,
                           '{"ids": [1], "session handles": ["Low Frequency With No RFI (GBT09A-001)"]}')
 
@@ -95,12 +95,12 @@ class TestViews(BenchTestCase):
               , 'Total Time(s)': ['false']         , 'explorer': ['/projects']
               }
         c = Client()
-        response = c.post('/configurations/explorer/columnConfigs', data)
+        response = c.post('/scheduler/configurations/explorer/columnConfigs', data)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_column_configurations_explorer_get(self):
         c = Client()
-        response = c.get('/configurations/explorer/columnConfigs', {'explorer': '/project'})
+        response = c.get('/scheduler/configurations/explorer/columnConfigs', {'explorer': '/project'})
         self.failUnlessEqual(response.status_code, 200)
 
     @timeIt
@@ -112,7 +112,7 @@ class TestViews(BenchTestCase):
               , 'name': 'test'
               }
         c = Client()
-        response = c.post('/configurations/explorer/filterCombos', data)
+        response = c.post('/scheduler/configurations/explorer/filterCombos', data)
         self.failUnlessEqual(response.status_code, 200)
         r = eval(response.content)
         ec = ExplorerConfiguration.objects.get(id = r['id'])
@@ -140,7 +140,7 @@ class TestViews(BenchTestCase):
         data = {'start' : '10/10/2010'
               , 'days'  : '8'
                }
-        response = c.get('/reservations', data)
+        response = c.get('/scheduler/reservations', data)
         self.failUnlessEqual(response.status_code, 200)
         r = eval(response.content)
 

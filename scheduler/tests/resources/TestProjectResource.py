@@ -23,12 +23,12 @@ class TestProjectResource(BenchTestCase):
 
     @timeIt
     def test_create(self):
-        response = self.client.post('/projects', self.fdata)
+        response = self.client.post('/scheduler/projects', self.fdata)
         self.failUnlessEqual(response.status_code, 200)
 
     @timeIt
     def test_create_empty(self):
-        response = self.client.post('/projects')
+        response = self.client.post('/scheduler/projects')
         self.failUnlessEqual(response.status_code, 200)
 
     @timeIt
@@ -42,16 +42,16 @@ class TestProjectResource(BenchTestCase):
                     , 'grade'      : ''
                       })
 
-        response = self.client.post('/projects', fdata)
+        response = self.client.post('/scheduler/projects', fdata)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_read(self):
-        response = self.client.get('/projects')
+        response = self.client.get('/scheduler/projects')
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"total": 2' in response.content)
 
     def test_read_with_filter(self):
-        response = self.client.get('/projects?filterText=09C')
+        response = self.client.get('/scheduler/projects?filterText=09C')
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"total": 1' in response.content)
         self.assertTrue('09C' in response.content)
@@ -61,12 +61,12 @@ class TestProjectResource(BenchTestCase):
     def test_update(self):
         fdata = self.fdata
         fdata.update({"_method" : "put"})
-        response = self.client.post('/projects/%s' % self.p.id, fdata)
+        response = self.client.post('/scheduler/projects/%s' % self.p.id, fdata)
         self.failUnlessEqual(response.status_code, 200)
 
     @timeIt
     def test_delete(self):
-        response = self.client.post('/projects/%s' % self.p.id, {"_method" : "delete"})
+        response = self.client.post('/scheduler/projects/%s' % self.p.id, {"_method" : "delete"})
         self.failUnlessEqual(response.status_code, 200)
 
 

@@ -51,47 +51,47 @@ class TestWindowResource(BenchTestCase):
 
     @timeIt
     def test_create(self):
-        response = self.client.post('/windows', self.fdata)
+        response = self.client.post('/scheduler/windows', self.fdata)
         self.failUnlessEqual(response.status_code, 200)
 
     @timeIt
     def test_create_empty(self):
-        response = self.client.post('/windows')
+        response = self.client.post('/scheduler/windows')
         self.failUnlessEqual(response.status_code, 200)
 
     def test_read_one(self):
-        response = self.client.get('/windows/%d' % self.w.id)
+        response = self.client.get('/scheduler/windows/%d' % self.w.id)
         self.failUnlessEqual(response.status_code, 200)
 
         self.assertTrue('"end": "2010-01-07"' in response.content)
 
     def test_read_filter(self):
-        response = self.client.get('/windows'
+        response = self.client.get('/scheduler/windows'
                                 , {'filterSession' : self.sesshun.name})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"end": "2010-01-07"' in response.content)
         self.assertTrue('"total": 1}' in response.content)
 
-        response = self.client.get('/windows'
+        response = self.client.get('/scheduler/windows'
                                 , {'filterSession' : "not_there"})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('{"windows": [], "total": 0}' in response.content)
 
         #YYYY-MM-DD hh:mm:ss
-        response = self.client.get('/windows'
+        response = self.client.get('/scheduler/windows'
                                 , {'filterStartDate' : '2009-12-25' # 00:00:00' 
                                  , 'filterDuration' : 30})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"end": "2010-01-07"' in response.content)
 
         # make sure we catch overlaps
-        response = self.client.get('/windows'
+        response = self.client.get('/scheduler/windows'
                                 , {'filterStartDate' : '2010-01-07' # 00:00:00' 
                                  , 'filterDuration' : 30})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"end": "2010-01-07"' in response.content)
 
-        response = self.client.get('/windows'
+        response = self.client.get('/scheduler/windows'
                                 , {'filterStartDate' : '2011-05-25' # 00:00:00' 
                                  , 'filterDuration' : 30})
         self.failUnlessEqual(response.status_code, 200)
@@ -100,7 +100,7 @@ class TestWindowResource(BenchTestCase):
     def test_read_filter_2(self):
 
         #YYYY-MM-DD hh:mm:ss
-        response = self.client.get('/windows'
+        response = self.client.get('/scheduler/windows'
                                 , {'filterStartDate' : '2009-12-25' # 00:00:00' 
                                  , 'filterDuration' : 120})
         self.failUnlessEqual(response.status_code, 200)
@@ -118,7 +118,7 @@ class TestWindowResource(BenchTestCase):
         wr.save()
 
         # test it
-        response = self.client.get('/windows'
+        response = self.client.get('/scheduler/windows'
                                 , {'filterStartDate' : '2009-12-25' # 00:00:00' 
                                  , 'filterDuration' : 120})
         self.failUnlessEqual(response.status_code, 200)
@@ -142,14 +142,14 @@ class TestWindowResource(BenchTestCase):
         wr.save()
         
         # test it
-        response = self.client.get('/windows'
+        response = self.client.get('/scheduler/windows'
                                 , {'filterStartDate' : '2009-12-25' # 00:00:00' 
                                  , 'filterDuration' : 90})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"end": "2010-01-07"' in response.content)
         self.assertTrue('"total": 1' in response.content)
 
-        response = self.client.get('/windows'
+        response = self.client.get('/scheduler/windows'
                                 , {'filterStartDate' : '2009-12-25' # 00:00:00' 
                                  , 'filterDuration' : 120})
         self.failUnlessEqual(response.status_code, 200)
@@ -160,11 +160,11 @@ class TestWindowResource(BenchTestCase):
     def test_update(self):
         fdata = self.fdata
         fdata.update({"_method" : "put"})
-        response = self.client.post('/windows/%s' % self.w.id, fdata)
+        response = self.client.post('/scheduler/windows/%s' % self.w.id, fdata)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_delete(self):
-        response = self.client.post('/windows/%s' % self.w.id, {"_method" : "delete"})
+        response = self.client.post('/scheduler/windows/%s' % self.w.id, {"_method" : "delete"})
         self.failUnlessEqual(response.status_code, 200)
         
 

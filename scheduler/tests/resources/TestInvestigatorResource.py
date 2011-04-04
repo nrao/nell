@@ -53,26 +53,26 @@ class TestInvestigatorResource(BenchTestCase):
 
     @timeIt
     def test_create(self):
-        response = self.client.post('/investigators'
+        response = self.client.post('/scheduler/investigators'
                                   , self.fdata)
         self.failUnlessEqual(response.status_code, 200)
 
     @timeIt
     def test_create_empty(self):
-        response = self.client.post('/investigators'
+        response = self.client.post('/scheduler/investigators'
                                   , {'project_id' : self.p.id
                                    , 'user_id': self.users[-1].id})
         self.failUnlessEqual(response.status_code, 200)
 
     def test_read(self):
-        response = self.client.get('/investigators'
+        response = self.client.get('/scheduler/investigators'
                                  , {'project_id' : self.p.id})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"total": 2' in response.content)
 
     def test_read_with_filter(self):
         response = self.client.get(
-              '/investigators'
+              '/scheduler/investigators'
             , {'project_id' : self.p.id
             ,  'filterText' : 'Mike'
             })
@@ -86,7 +86,7 @@ class TestInvestigatorResource(BenchTestCase):
         fdata.update({"_method" : "put"
                     , "remote"  : "True"
                     })
-        response = self.client.post('/investigators/%s' % self.ins[-1].id
+        response = self.client.post('/scheduler/investigators/%s' % self.ins[-1].id
                                   , fdata)
         self.failUnlessEqual(response.status_code, 200)
 
@@ -95,13 +95,13 @@ class TestInvestigatorResource(BenchTestCase):
                 , u'priority': [u'1.0'], u'contact': [u'false']
                 , u'remote': [u'true'], u'project_id': [u'5.0']
                 , u'id': [u'995.0'], u'_method': [u'put']}
-        response = self.client.post('/investigators/%s' % self.ins[-1].id
+        response = self.client.post('/scheduler/investigators/%s' % self.ins[-1].id
                                   , fdata2)
         self.failUnlessEqual(response.status_code, 200)
 
     @timeIt
     def test_delete(self):
-        response = self.client.post('/investigators/%s' % self.ins[-1].id
+        response = self.client.post('/scheduler/investigators/%s' % self.ins[-1].id
                                   , {"_method" : "delete"})
         self.failUnlessEqual(response.status_code, 200)
 

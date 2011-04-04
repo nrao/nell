@@ -24,22 +24,22 @@ class TestUserResource(BenchTestCase):
                     , "role": "Observer"
                     , "username": "dss" # in tests only
                      })
-        response = self.client.post('/users', fdata)
+        response = self.client.post('/scheduler/users', fdata)
         self.failUnlessEqual(response.status_code, 200)
 
         u = User.objects.get(original_id = fdata['original_id'])
         self.assertTrue(u is not None)
 
-        response = self.client.post('/users', {})
+        response = self.client.post('/scheduler/users', {})
         self.failUnlessEqual(response.status_code, 200)
 
     def test_read(self):
-        response = self.client.get('/users')
+        response = self.client.get('/scheduler/users')
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"total": 3' in response.content)
 
     def test_read_with_filter(self):
-        response = self.client.get('/users?filterText=foo')
+        response = self.client.get('/scheduler/users?filterText=foo')
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"total": 1' in response.content)
 
@@ -56,6 +56,6 @@ class TestUserResource(BenchTestCase):
                     , "role": "Observer"
                     , "username": "dss" # in tests only
                      })
-        response = self.client.post('/users/%s' % self.users[0].id, fdata)
+        response = self.client.post('/scheduler/users/%s' % self.users[0].id, fdata)
         self.failUnlessEqual(response.status_code, 200)
 
