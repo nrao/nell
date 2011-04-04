@@ -16,6 +16,7 @@ from utilities                      import *
 from forms                          import BlackoutForm, PreferencesForm
 
 import pytz
+import simplejson as json
 
 def public_schedule(request, *args, **kws):
     """
