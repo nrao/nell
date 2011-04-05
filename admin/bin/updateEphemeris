@@ -10,4 +10,4 @@ export DSS_NELL=/home/dss/release/nell
 
 # instead, KLUGE!
 cd $DSS_NELL
-python manage.py shell < utilities/runUpdateEphemeris.py 
+python manage.py shell < tools/runUpdateEphemeris.py 
