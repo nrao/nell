@@ -8,7 +8,7 @@ from django.shortcuts               import render_to_response, get_object_or_404
 from scheduler.utilities            import get_rev_comment
 from models                         import *
 from sets                           import Set
-from nell.utilities                 import IcalMap
+from nell.tools                     import IcalMap
 from nell.utilities.TimeAgent       import EST, UTC, adjustDateTimeTz
 from nell.utilities.database.external import NRAOBosDB
 from reversion                      import revision
@@ -16,6 +16,7 @@ from utilities                      import *
 from forms                          import BlackoutForm, PreferencesForm
 
 import pytz
+import simplejson as json
 
 def public_schedule(request, *args, **kws):
     """

@@ -7,8 +7,8 @@ from scheduler.utilities                import ScheduleTools
 from models                             import *
 from utilities                          import *
 from scheduler.models                   import User as NellUser
-from nell.utilities                     import IcalMap, TimeAccounting
-from nell.utilities                     import TimeAgent
+from nell.tools                         import IcalMap
+from nell.utilities                     import TimeAccounting, TimeAgent
 from nell.utilities.notifiers           import SchedulingNotifier, Notifier, Email as EmailMessage 
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException, JSONExceptionInfo
 from reversion                          import revision
