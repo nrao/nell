@@ -1,3 +1,5 @@
+#!/bin/env python
+
 ######################################################################
 #
 #  DSS2TP-to-ST.py.  Transfers time-accounting information from the
@@ -26,9 +28,8 @@
 #  P. O. Box 2
 #  Green Bank, WV 24944-0002 USA
 #
-#  $Id:$
-#
 ######################################################################
+
 from django.core.management import setup_environ
 import settings
 setup_environ(settings)
