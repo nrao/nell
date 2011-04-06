@@ -158,6 +158,7 @@ class TestElective(NellTestCase):
                        , self.elec.periodDateRange())
 
     def test_getBlackedOutSchedulablePeriods(self):
+        now = datetime(2009, 6, 1, 12, 15)
         u = User(first_name = "Test"
                , last_name  = "User"
                , role       = Role.objects.all()[0]
@@ -180,7 +181,7 @@ class TestElective(NellTestCase):
 
         # test observer black out
         self.assertEqual([self.period2]
-                       , self.elec.getBlackedOutSchedulablePeriods())
+                       , self.elec.getBlackedOutSchedulablePeriods(now))
         blackout = Blackout(project    = project
                           , start_date = datetime(2009, 6, 14) 
                           , end_date   = datetime(2009, 6, 16)
@@ -190,5 +191,5 @@ class TestElective(NellTestCase):
 
         # test project black out
         self.assertEqual([self.period2, self.period3]
-                       , self.elec.getBlackedOutSchedulablePeriods())
+                       , self.elec.getBlackedOutSchedulablePeriods(now))
 

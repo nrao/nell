@@ -227,10 +227,10 @@ class Window(models.Model):
         return sum([TimeAgent.timedelta2minutes(b[1] - b[0])/60.0 \
             for b in bs])
 
-    def getBlackedOutSchedulableTime(self):
+    def getBlackedOutSchedulableTime(self, now):
         """
         Of the hours in this window that are schedulable, how
-        many have been blacked out?
+        many future ones have been blacked out?
         Returns for this window the tuple:
             (
              total schedulable time ignoring blacked out
@@ -243,13 +243,15 @@ class Window(models.Model):
         schedulable = []
         blackouts = []
         for wr in self.ranges():
-            hs, hb, schd, bs = self.session.getBlackedOutSchedulableTime(\
-                wr.start_datetime()
-              , wr.end_datetime())
-            hrsSchedulable += hs  
-            hrsBlackedOut += hb  
-            schedulable.extend(schd)
-            blackouts.extend(bs)
+            endTime = wr.end_datetime()
+            if now < endTime:
+                startTime = max(now, wr.start_datetime())
+                hs, hb, schd, bs = self.session.getBlackedOutSchedulableTime(
+                    startTime, endTime)
+                hrsSchedulable += hs  
+                hrsBlackedOut += hb  
+                schedulable.extend(schd)
+                blackouts.extend(bs)
         return (hrsSchedulable
               , hrsBlackedOut
               , schedulable

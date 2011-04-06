@@ -121,11 +121,11 @@ class Elective(models.Model):
         else:
             return []
 
-    def getBlackedOutSchedulablePeriods(self):
+    def getBlackedOutSchedulablePeriods(self, now):
         """
-        Of the periods for this elective overlapping in the time range
-        that are not deleted or completed, which schedulable ones have
-        been blacked out?  Returns a list of offending periods.
+        Of the future periods for this elective overlapping in the time
+        range that are not deleted or completed, which schedulable ones
+        have been blacked out?  Returns a list of offending periods.
         """
         state = Period_State.get_state('D')
         ps = self.periods.exclude(state=state).order_by('start')
@@ -133,8 +133,9 @@ class Elective(models.Model):
         if not periods:
             return []
         pranges = [(p.start, p.end(), p) for p in periods]
+        start = max(now, pranges[0][0])
         _, _, _, brs = \
-            self.session.getBlackedOutSchedulableTime(pranges[0][0]
+            self.session.getBlackedOutSchedulableTime(start
                                                     , pranges[-1][1])
         branges = [r for sublist in brs for r in sublist] # flatten lists
 
