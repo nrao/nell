@@ -31,25 +31,17 @@ class WindowRange(models.Model):
 
     def inWindowDT(self, dt):
         "Compares datetimes"
-        return (self.start_datetime() <= dt) and (dt <= self.end_datetime())
+        return self.start_datetime() <= dt and dt < self.end_datetime()
 
     def start_datetime(self):
         return TimeAgent.date2datetime(self.start_date)
 
     def end_datetime(self):
-        "We want this to go up to the last second of the last_date"
-        dt = TimeAgent.date2datetime(self.last_date())
-        return dt.replace(hour = 23, minute = 59, second = 59)
+        "We want this to go up to the end of the last_date day"
+        return TimeAgent.date2datetime(self.start_date) + timedelta(days = self.duration)
 
     def isInWindow(self, period):
         "Does the given period overlap at all in window"
-
-        # need to compare date vs. datetime objs
-        #winStart = datetime(self.start_date.year
-        # with what we have in memory
-        #                  , self.start_date.month
-        #                  , self.start_date.day)
-        #winEnd = winStart + timedelta(days = self.duration)                  
         return AnalogSet.overlaps((self.start_datetime(), self.end_datetime())
                                 , (period.start, period.end()))
 

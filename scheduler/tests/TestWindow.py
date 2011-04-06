@@ -87,7 +87,7 @@ class TestWindow(NellTestCase):
         
         self.assertEquals(date(2009, 6, 7), self.w.last_date())
         self.assertEquals(date(2009, 6, 7), self.w.end())
-        self.assertEquals(datetime(2009, 6, 7, 23, 59, 59), self.w.end_datetime())
+        self.assertEquals(datetime(2009, 6, 8, 0), self.w.end_datetime())
 
         self.assertEquals(7, self.w.duration())
 
@@ -129,7 +129,7 @@ class TestWindow(NellTestCase):
         
         self.assertEquals(date(2009, 6, 21), self.w.last_date())
         self.assertEquals(date(2009, 6, 21), self.w.end())
-        self.assertEquals(datetime(2009, 6, 21, 23, 59, 59), self.w.end_datetime())
+        self.assertEquals(datetime(2009, 6, 22, 0), self.w.end_datetime())
 
         self.assertEquals(21, self.w.duration())
 

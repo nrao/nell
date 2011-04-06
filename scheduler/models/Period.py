@@ -255,7 +255,7 @@ class Period(models.Model):
         # look for a window (any) that this period at least starts in 
         for win in self.session.window_set.all():
             if self.start >= win.start_datetime() and \
-               self.start <= win.end_datetime():
+               self.start <  win.end_datetime():
                 self.window = win
                 self.save()
                 return # take the first one you find!
