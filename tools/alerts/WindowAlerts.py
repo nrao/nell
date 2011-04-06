@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 from django.core.management import setup_environ
-import settings
+import settings, sys
 setup_environ(settings)
 from datetime import datetime
 
