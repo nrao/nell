@@ -34,7 +34,7 @@ class TestObservers(TestObserversBase):
     def test_toggle_session(self):
         response = self.post(
             '/project/%s/session/%s/enable' % (self.p.pcode, self.s.id))
-        self.failUnlessEqual(response.status_code, 302)
+        self.failUnlessEqual(response.status_code, 200)
         s = Sesshun.objects.get(id = self.s.id)
         self.assertEqual(s.status.enabled, True)
 
@@ -43,7 +43,7 @@ class TestObservers(TestObserversBase):
         i_id = self.p.investigator_set.all()[0].id
         response = self.post(
             '/project/%s/investigator/%s/observer' % (self.p.pcode, i_id))
-        self.failUnlessEqual(response.status_code, 302)
+        self.failUnlessEqual(response.status_code, 200)
         i = Investigator.objects.get(id = i_id)
         self.assertEqual(i.observer, True)
 
@@ -53,12 +53,12 @@ class TestObservers(TestObserversBase):
         self.assertEquals(self.friend.required, False)
         response = self.post(
             '/project/%s/friend/%s/required' % (self.p.pcode, f_id))
-        self.failUnlessEqual(response.status_code, 302)
+        self.failUnlessEqual(response.status_code, 200)
         f = Friend.objects.get(id = f_id)
         self.assertEqual(f.required, True)
         response = self.post(
             '/project/%s/friend/%s/required' % (self.p.pcode, f_id))
-        self.failUnlessEqual(response.status_code, 302)
+        self.failUnlessEqual(response.status_code, 200)
         f = Friend.objects.get(id = f_id)
         self.assertEqual(f.required, False)
 
