@@ -20,12 +20,8 @@
 #     P. O. Box 2
 #     Green Bank, WV 24944-0002 USA
 
-if __name__ == "__main__":
-    import sys
-    sys.path[1:1] = [".."]
-
-from   datetime           import datetime
-from   SchedulingNotifier import SchedulingNotifier 
+from   nell.utilities.notifiers import SchedulingNotifier 
+from   datetime            import datetime
 import unittest
 
 class DummyPeriod:
@@ -175,4 +171,6 @@ class TestSchedulingNotifier(unittest.TestCase):
         self.assertTrue('pmargani@nrao.edu' in addresses)
 
 if __name__ == "__main__":
+    import sys
+    sys.path[1:1] = [".."]
     unittest.main()

@@ -23,8 +23,9 @@
 if __name__ == "__main__":
     import sys
     sys.path[1:1] = [".."]
+    sys.path[1:1] = ["../.."]
 
-from   emailNotifier import emailNotifier 
+from   utilities.notifiers.emailNotifier import emailNotifier 
 import os
 import unittest
 
