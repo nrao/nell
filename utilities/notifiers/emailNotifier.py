@@ -30,7 +30,6 @@
 
 import smtplib
 from datetime import datetime
-from Email import Email
 
 class emailNotifier:
 
@@ -66,6 +65,7 @@ class emailNotifier:
         
         if recp is not None:
             for address in recp:
+                print "sending"
                 self.failed = self.server.sendmail(email.GetSender(), address, email.GetText())
 
             if len(self.failed) > 0:

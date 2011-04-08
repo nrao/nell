@@ -24,8 +24,7 @@ if __name__ == "__main__":
     import sys
     sys.path[1:1] = [".."]
 
-from   Notifier import Notifier 
-import nose
+from  utilities.notifiers import Notifier 
 import os
 import unittest
 

@@ -13,7 +13,7 @@ class TestSchedulingNotifier(PeriodsTestCase):
     def setUp(self):
         super(TestSchedulingNotifier, self).setUp()
 
-        self.sn = SchedulingNotifier.SchedulingNotifier(test = True)
+        self.sn = SchedulingNotifier(test = True)
 
         # SchedulingNotifier relies on PeriodChanges to know what changes
         # to notify people about.  PeriodChanges uses the revision system
@@ -280,7 +280,7 @@ Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | Nubbles   |           | three"""
         self.addToTestRevisions(p)
 
         # TBF: make the test flag actually do something!
-        #sn = SchedulingNotifier.SchedulingNotifier(test = True)
+        #sn = SchedulingNotifier(test = True)
         self.sn.setPeriods(self.ps, self.ps)
 
         for x in ["observer", "changed", "staff"]:

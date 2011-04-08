@@ -1,3 +1,5 @@
+from nell_utilities           import *
+
 from TestDBReporter            import TestDBReporter
 from TestDSSPrime2DSS          import TestDSSPrime2DSS
 from TestElecAlertNotifier     import TestElecAlertNotifier
