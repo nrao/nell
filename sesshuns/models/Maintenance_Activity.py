@@ -34,6 +34,7 @@ from Maintenance_Telescope_Resources import Maintenance_Telescope_Resources
 from Maintenance_Software_Resources  import Maintenance_Software_Resources
 from Maintenance_Other_Resources     import Maintenance_Other_Resources
 from Maintenance_Activity_Change     import Maintenance_Activity_Change
+from Maintenance_Activity_Group      import Maintenance_Activity_Group
 from Maintenance_Receivers_Swap      import Maintenance_Receivers_Swap
 from datetime                        import datetime, date, time, timedelta
 from nell.utilities                  import TimeAgent
@@ -44,6 +45,7 @@ import re # regular expressions
 class Maintenance_Activity(models.Model):
 
     period             = models.ForeignKey(Period, null = True)
+    group              = models.ForeignKey(Maintenance_Activity_Group, null = True)
     telescope_resource = models.ForeignKey(Maintenance_Telescope_Resources,
                                            null = True)
     software_resource  = models.ForeignKey(Maintenance_Software_Resources,
@@ -572,95 +574,100 @@ class Maintenance_Activity(models.Model):
         period's duration, in time order.
         """
 
-        # To handle repeat maintenance activity objects:
-        repeatQ = models.Q(deleted = False) \
-            & (models.Q(repeat_interval = 1) \
-                   | models.Q(repeat_interval = 7) \
-                   | models.Q(repeat_interval = 30)) \
-                   & (models.Q(_start__lte = period.end()) \
-                          & models.Q(repeat_end__gte = period.end()))
+        # must have a maintenance activity group.
+        if period.maintenance_activity_group_set.count() > 0:
+            mag = period.maintenance_activity_group_set.all()[0]
+            
+            # To handle repeat maintenance activity objects:
+            repeatQ = models.Q(deleted = False) \
+                & (models.Q(repeat_interval = 1) \
+                       | models.Q(repeat_interval = 7) \
+                       | models.Q(repeat_interval = 30)) \
+                       & (models.Q(_start__lte = period.end()) \
+                              & models.Q(repeat_end__gte = period.end()))
 
-        start_endQ = models.Q(start__gte = period.start) \
-            & models.Q(start__lte = period.end())
+            start_endQ = models.Q(start__gte = period.start) \
+                & models.Q(start__lte = period.end())
 
-        periodQ = models.Q(period = period)
-        dbmas   = Maintenance_Activity.objects.filter(periodQ)
-        dbrmas  = Maintenance_Activity.objects.filter(repeatQ)
-        mas     = [i for i in dbmas if not i.is_repeat_template()]
-        rmas    = [i for i in dbrmas]
+            groupQ  = models.Q(group = mag)
+            dbmas   = Maintenance_Activity.objects.filter(groupQ)
+            dbrmas  = Maintenance_Activity.objects.filter(repeatQ)
+            mas     = [i for i in dbmas if not i.is_repeat_template()]
+            rmas    = [i for i in dbrmas]
 
-        # rmas is the list repeating activity templates that may apply
-        # for this period.  We need clones of these to include in mas.
-        # If however there are already clones in mas, we'll want to
-        # skip that template.
+            # rmas is the list repeating activity templates that may apply
+            # for this period.  We need clones of these to include in mas.
+            # If however there are already clones in mas, we'll want to
+            # skip that template.
 
-        x = []
+            x = []
 
-        for i in rmas:
-            for j in mas:
-                if j.repeat_template == i:
-                    x.append(i)
-
-        # Weekly repeats have a problem: what if the repeat falls on a
-        # day that is not a maintenance day?  Where should we put it?
-        # One strategy is to examine the maintenance periods from 3
-        # days in the past to 3 days into the future.  if none of
-        # those is more suitable, we keep the weekly activity here. If
-        # there is a tie, we favor the earlier date. This is done by
-        # taking the modulo 7 of start - maintenance_activity.start
-        # and mapping it to the values in 'dm'.  Lowest value wins.
-
-        dm = {4: 30, 5: 20, 6: 10, 0: 0, 1: 15, 2: 25, 3: 35}
-        delta = timedelta(days = 3)
-        today = TimeAgent.truncateDt(period.start)
-        p = Period.get_periods_by_observing_type(today - delta,
-                                                 today + delta,
-                                                 "maintenance")
-
-        for i in rmas:
-            if i.repeat_interval > 1:
-                start_date = TimeAgent.truncateDt(i.get_start())
-                diff = (today - start_date).days % i.repeat_interval
-
-                if diff:
-                    # doesn't fall on this date.  Is this the closest
-                    # period though?
-
-                    if diff > 6:     # monthly not due
+            for i in rmas:
+                for j in mas:
+                    if j.repeat_template == i:
                         x.append(i)
-                    else:            # weekly or monthly that is due this week
-                        for j in p:
-                            if j != period:  # check only other periods
-                                mod = (j.start.date() \
-                                           - start_date.date()).days \
-                                           % i.repeat_interval
 
-                                # Test to see if it's a better fit in
-                                # another period.  and if so, don't
-                                # use here.
-                                if mod < 7 and dm[mod] < dm[diff]:
-                                    x.append(i)
-                                    break
+            # Weekly repeats have a problem: what if the repeat falls on a
+            # day that is not a maintenance day?  Where should we put it?
+            # One strategy is to examine the maintenance periods from 3
+            # days in the past to 3 days into the future.  if none of
+            # those is more suitable, we keep the weekly activity here. If
+            # there is a tie, we favor the earlier date. This is done by
+            # taking the modulo 7 of start - maintenance_activity.start
+            # and mapping it to the values in 'dm'.  Lowest value wins.
 
-        # Now that we have a list of templates that are not suitable,
-        # cull the template list:
-        for i in x:
-            if i in rmas:
-                rmas.remove(i)
+            dm = {4: 30, 5: 20, 6: 10, 0: 0, 1: 15, 2: 25, 3: 35}
+            delta = timedelta(days = 3)
+            today = TimeAgent.truncateDt(period.start)
+            p = Period.get_periods_by_observing_type(today - delta,
+                                                     today + delta,
+                                                     "maintenance")
 
-        # The remaining templates may be used:
-        for i in rmas:
-            ma = i.clone(period)
-            mas.append(ma)
+            for i in rmas:
+                if i.repeat_interval > 1:
+                    start_date = TimeAgent.truncateDt(i.get_start())
+                    diff = (today - start_date).days % i.repeat_interval
 
-        # remove all activities marked deleted.  This must be done
-        # after all the above to prevent a replacement being generated
-        # for a deleted activity.
-        mas = [i for i in mas if not i.deleted]
-        mas.sort(cmp = lambda x, y: cmp(x.get_start().time(),
-                                        y.get_start().time()))
+                    if diff:
+                        # doesn't fall on this date.  Is this the closest
+                        # period though?
 
-        return mas
+                        if diff > 6:     # monthly not due
+                            x.append(i)
+                        else:            # weekly or monthly that is due this week
+                            for j in p:
+                                if j != period:  # check only other periods
+                                    mod = (j.start.date() \
+                                               - start_date.date()).days \
+                                               % i.repeat_interval
+
+                                    # Test to see if it's a better fit in
+                                    # another period.  and if so, don't
+                                    # use here.
+                                    if mod < 7 and dm[mod] < dm[diff]:
+                                        x.append(i)
+                                        break
+
+            # Now that we have a list of templates that are not suitable,
+            # cull the template list:
+            for i in x:
+                if i in rmas:
+                    rmas.remove(i)
+
+            # The remaining templates may be used:
+            for i in rmas:
+                ma = i.clone(period)
+                mas.append(ma)
+
+            # remove all activities marked deleted.  This must be done
+            # after all the above to prevent a replacement being generated
+            # for a deleted activity.
+            mas = [i for i in mas if not i.deleted]
+            mas.sort(cmp = lambda x, y: cmp(x.get_start().time(),
+                                            y.get_start().time()))
+
+            return mas
+        return None
 
     @staticmethod
     def list_templates():

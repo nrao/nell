@@ -9,8 +9,11 @@ from sesshuns.models                    import *
 from scheduler.httpadapters             import *
 from nell.utilities.database.external   import UserInfo
 from nell.utilities                     import TimeAgent
-from sesshuns.GBTCalendarEvent         import CalEventPeriod, CalEventElective, CalEventMaintenanceActivity
+from sesshuns.GBTCalendarEvent          import CalEventPeriod, CalEventMaintenanceActivity
+from sesshuns.GBTCalendarEvent          import CalEventMaintenanceActivityGroup
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
+
+import settings
 
 def getReceivers(names):
     rcvrs = []
@@ -160,7 +163,7 @@ def get_gbt_schedule_events(start, end, timezone, get_moc = False, ignore_non_ma
         utc_today  = TimeAgent.est2utc(today) if timezone == 'ET' else today
         utc_yesterday = utc_today - delta
         utc_tomorrow = utc_today + delta
-        
+
         # include previous day's periods because last one may end
         # today.  Perhaps there is a way to do this exclusively via
         # query, but there aren't that many periods in a day.
@@ -169,17 +172,13 @@ def get_gbt_schedule_events(start, end, timezone, get_moc = False, ignore_non_ma
 
         for p in ps:
             if p.end() > utc_today:
-                if p.elective:
-                    ev = CalEventElective(p.elective, p.start < utc_today, p.end() > utc_tomorrow,
-                                          p.moc_met() if get_moc else True, timezone)
-                else:
-                    ev = CalEventPeriod(p, p.start < utc_today, p.end() > utc_tomorrow,
-                                        p.moc_met() if get_moc else True, timezone)
+                ev = CalEventPeriod(p, p.start < utc_today, p.end() > utc_tomorrow,
+                                    p.moc_met() if get_moc else True, timezone)
                 daily_events.append(ev)
 
         # if today is monday, get floating maintenance events for the week
-        if today.weekday() == 0:
-            daily_events += _get_floating_maint_events(today, timezone)
+        # if today.weekday() == 0:
+        #     daily_events += _get_floating_maint_events(today, timezone)
 
         # finally gather up the non-maintenance-period maintenance events
         if not ignore_non_maint_period_maint_events:
@@ -204,7 +203,7 @@ def get_gbt_schedule_events(start, end, timezone, get_moc = False, ignore_non_ma
 def _get_floating_maint_events(day, timezone):
     """
     _get_floating_maint_events(day, timezone)
-    
+
     Takes the day (assumes it is Monday) and finds the maintenance
     periods for that week.  Returns a list of CalEvent objects
     consisting of all the floating activities for that Monday's week.
@@ -244,18 +243,9 @@ def _get_floating_maint_events(day, timezone):
             ev = CalEventElective(i, TZ = timezone)
             maint_events.append(ev)
 
-        maint_events.sort()
-
         # ensure that first one gets 'A', second 'B', etc.
-        for i in range(0, len(maint_events)):
-            maint_events[i].set_fm_name(chr(i + 65))
+        maint_events = _assign_floating_maintenance_activities(maint_events)
 
-        # now remove those that are scheduled.  Including scheduled
-        # non-elective periods and completed electives in the above
-        # queries ensures that if 'A' has been scheduled, 'B' still
-        # appears as 'B' and not the new 'A', which would happen if we
-        # only consider pending periods or non-complete electives.
-        maint_events = [e for e in maint_events if e.is_floating_maintenance()] 
     except:
         if settings.DEBUG == True:
             printException(formatExceptionInfo())
@@ -281,7 +271,7 @@ def _get_non_maint_period_maint_events(today, timezone):
 
     mas = Maintenance_Activity.objects.filter(_start__gte = utc_today) \
         .filter(_start__lt = utc_today + timedelta(days = 1)) \
-        .filter(period = None) \
+        .filter(group = None) \
         .filter(deleted = False) \
         .order_by('_start')
 
@@ -291,3 +281,26 @@ def _get_non_maint_period_maint_events(today, timezone):
 
     return []
 
+######################################################################
+# _assign_floating_maintenance_activities()
+#
+# Floating maintenance periods/electives must have an order so that
+# maintenance personnel can enter activities with the knowledge that
+# the period they are signing up for is the first, second,
+# etc. contemplated for that week.  The days are labeled 'A' for the
+# first, 'B' for the second, etc.
+#
+# Periods are ordered by their start date.  Electives are ordered by
+# their ID: lower ID is first, next higher ID is next, etc.  If a
+# floating period is scheduled out of order (i.e. 'B' before 'A') then
+# their order is swapped.
+######################################################################
+
+def _assign_floating_maintenance_activities(maint_events):
+    maint_events.sort()
+
+    for i in range(0, len(maint_events)):
+        maint_events[i].set_fm_name(chr(i + 65))
+
+    maint_events = [e for e in maint_events if e.is_floating_maintenance()]
+    return maint_events
