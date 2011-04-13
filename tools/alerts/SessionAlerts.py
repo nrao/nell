@@ -51,6 +51,40 @@ class SessionAlerts(object):
 
         return retval
 
+    def findUnauthorizedSessionAlerts(self, now = None):
+        now   = now if now is not None else datetime.utcnow()
+        today = datetime(now.year, now.month, now.day)
+
+        def withinWindowBoundary(w):
+            daysTillStart   = abs((w.start_datetime() - today).days)
+            return (daysTillStart <= self.stageBoundary and now < w.default_period.start) \
+                   or (now >= w.start_datetime() and now <= w.default_period.start)
+
+        retval  = [w for w in Window.objects.filter(complete = False
+                                                  , session__status__authorized = False)
+                     if withinWindowBoundary(w)]
+
+        def withinElectiveBoundary(e):
+            start, end    = e.periodDateRange()
+            daysTillStart = abs((start - today).days)
+            return (daysTillStart <= self.stageBoundary and now <= end)
+
+        retval.extend([e for e in Elective.objects.filter(complete = False
+                                                        , session__status__authorized = False)
+                         if withinElectiveBoundary(e)])
+
+        def withinFixedBoundary(p):
+            start = p.start
+            daysTillStart = abs((start - today).days)
+            return daysTillStart <= self.stageBoundary and now <= start
+
+        retval.extend([p for p in Period.objects.filter(session__session_type__type = 'fixed'
+                                                      , state__name = 'Pending'
+                                                      , session__status__authorized = False)
+                         if withinFixedBoundary(p)])
+
+        return retval
+
     def getRange(self, unknown):
         return SessionAlertEmail.getRange(unknown)
 
