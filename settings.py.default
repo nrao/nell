@@ -45,7 +45,12 @@ BENCHMARK_DB_NAME = None      # Set to 'benchmark' for nightly unit tests
                               # or a personal database for your own tests
                               # or leave as None to not save benchmarks
 
-CACHE_BACKEND = "db://observer_cache/?timeout=3600" # 1 hr timeout
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake'
+    }
+}
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

@@ -13,7 +13,6 @@ from TestObservers             import TestObservers
 from TestObserversBase         import TestObserversBase
 from TestOperators             import TestOperators
 from TestPSTMirrorDB           import TestPSTMirrorDB
-from TestPSTQueryService       import TestPSTQueryService
 from TestReports               import TestReports
 from TestSchedulingNotifier    import TestSchedulingNotifier
 from TestSessionAlertNotifier  import TestSessionAlertNotifier
