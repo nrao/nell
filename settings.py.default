@@ -5,9 +5,10 @@
 # Set this to True only for production - must be False for unit tests to run
 USE_REVERSION = False #MODIFY#
 
-NELL_ROOT        = '{path to your nell sandbox}' #MODIFY#
-STATIC_DOC_ROOT  = NELL_ROOT + '/sesshuns/static'
-SC_EQUATION_DEFS = NELL_ROOT + '/calculator/equations.cfg'
+NELL_ROOT         = '{path to your nell sandbox}' #MODIFY#
+CALCULATOR_UI_DIR = '/home/dss.gb.nrao.edu/active/calculator-ui'
+STATIC_DOC_ROOT   = NELL_ROOT + '/sesshuns/static'
+SC_EQUATION_DEFS  = NELL_ROOT + '/calculator/equations.cfg'
 
 SERVER_EMAIL = 'dss@gb.nrao.edu'
 EMAIL_HOST   = 'smtp.gb.nrao.edu'
@@ -115,6 +116,9 @@ ROOT_URLCONF = 'nell.urls'
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     "/home/dss/integration/nell/templates"    #MODIFY#
+  , "/home/dss/integration/nell/calculator/templates"
+  , "/home/dss/integration/nell/sesshuns/templates"
+  , CALCULATOR_UI_DIR
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
 )
