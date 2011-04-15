@@ -3,11 +3,13 @@
 *.o
 *.prof
 *.swp
+*.log
 
 settings.py
 urls.py
 createdb
 
+nell_pid
 DBReport.txt
 DSSPrime2DSS_report.txt
 DssBlackoutReport.txt
