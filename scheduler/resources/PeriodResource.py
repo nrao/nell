@@ -1,5 +1,6 @@
 from datetime                 import datetime, timedelta
 from django.http              import HttpResponse, HttpResponseRedirect
+from django.shortcuts         import get_object_or_404
 
 from NellResource    import NellResource
 from scheduler.models import Period
@@ -102,7 +103,8 @@ class PeriodResource(NellResource):
         else:
             # we're getting a single period as specified by ID
             p_id    = int(args[1])
-            p       = Period.objects.get(id = p_id)
+            #p       = Period.objects.get(id = p_id)
+            p       = get_object_or_404(Period, id = p_id)
             score   = self.score_period.periods([p_id]).get(p_id, 0.0)
             adapter = PeriodHttpAdapter(p)
             return HttpResponse(

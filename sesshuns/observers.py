@@ -284,7 +284,9 @@ def toggle_session(request, *args, **kws):
 
     revision.comment = get_rev_comment(request, s, "toggle_session")
 
-    return HttpResponseRedirect("/project/%s" % pcode)
+    return HttpResponse(
+            json.dumps({"success" :   "ok"})
+          , mimetype = "text/plain")
 
 @revision.create_on_success
 @login_required
@@ -299,7 +301,9 @@ def toggle_required_friend(request, *args, **kws):
 
     revision.comment = get_rev_comment(request, f, "toggle_required_friend")
 
-    return HttpResponseRedirect("/project/%s" % pcode)
+    return HttpResponse(
+            json.dumps({"success" :   "ok"})
+          , mimetype = "text/plain")
 
 @revision.create_on_success
 @login_required
@@ -317,7 +321,9 @@ def toggle_observer(request, *args, **kws):
 
     revision.comment = get_rev_comment(request, i, "toggle_observer")
 
-    return HttpResponseRedirect("/project/%s" % pcode)
+    return HttpResponse(
+            json.dumps({"success" :   "ok"})
+          , mimetype = "text/plain")
 
 @revision.create_on_success
 @login_required
