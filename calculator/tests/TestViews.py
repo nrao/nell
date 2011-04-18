@@ -1,21 +1,17 @@
-from django.test.client  import Client
-import unittest
+from TestViewsBase       import TestViewsBase
 
-class TestViews(unittest.TestCase):
+class TestViews(TestViewsBase):
 
     def test_initiateHardware(self):
-        c        = Client()
-        response = c.get('/calculator/initiate_hardware')
+        response = self.client.get('/calculator/initiate_hardware')
         self.failUnlessEqual(response.status_code, 200)
 
     def test_setHardware(self):
-        c  = Client()
         selected = {'mode': 1}
-        response = c.post('/calculator/set_hardware', selected)
+        response = self.client.post('/calculator/set_hardware', selected)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_set_terms(self):
-        c = Client()
         data = {'receiver-hidden'    : ['K2']
               , 'beams-hidden'       : ['1']
               , 'switching-hidden'   : ['BSW-NOD']
@@ -30,24 +26,22 @@ class TestViews(unittest.TestCase):
               , 'mode-hidden'        : ['HTR']
               , 'backend'            : ['Mark V']
               }
-        response = c.post('/calculator/set_terms/', data)
+        response = self.client.post('/calculator/set_terms/', data)
         self.failUnlessEqual(response.status_code, 200)
 
         data = {u'receiver-hidden': [u'L'], u'beams-hidden': [u'1'], u'switching-hidden': [u'TP'], u'bandwidth-hidden': [u'0.625'], u'integration-hidden': [u'1.00'], u'polarization-hidden': [u'(I,Q,U,V)'], u'backend-hidden': [u'SP'], u'windows-hidden': [u'RF:1'], u'switching': [u'TP'], u'polarization': [u'(I,Q,U,V)'], u'windows': [u'RF:1'], u'bandwidth': [u'0.625'], u'mode': [u'Spectral Line'], u'receiver': [u'L'], u'mode-hidden': [u'Spectral Line'], u'backend': [u'SP']}
-        response = c.post('/calculator/set_terms/', data)
+        response = self.client.post('/calculator/set_terms/', data)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_get_result(self):
-        c = Client()
-        response = c.get('/calculator/initiate_hardware')
+        response = self.client.get('/calculator/initiate_hardware')
         data = {u'receiver-hidden': [u'L'], u'beams-hidden': [u'1'], u'switching-hidden': [u'TP'], u'bandwidth-hidden': [u'0.625'], u'integration-hidden': [u'1.00'], u'polarization-hidden': [u'(I,Q,U,V)'], u'backend-hidden': [u'SP'], u'windows-hidden': [u'RF:1'], u'switching': [u'TP'], u'polarization': [u'(I,Q,U,V)'], u'windows': [u'RF:1'], u'bandwidth': [u'0.625'], u'mode': [u'Spectral Line'], u'receiver': [u'L'], u'mode-hidden': [u'Spectral Line'], u'backend': [u'SP']}
-        response = c.post('/calculator/set_terms/', data)
-        response = c.get('/calculator/get_results')
+        response = self.client.post('/calculator/set_terms/', data)
+        response = self.client.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
 
     def test_spectral_line_mode(self):
-        c = Client()
-        response = c.get('/calculator/initiate_hardware')
+        response = self.client.get('/calculator/initiate_hardware')
         data = {'receiver': ['L']
               , 'beams-hidden': [u'1']
               , 'switching-hidden': [u'TP']
@@ -64,23 +58,22 @@ class TestViews(unittest.TestCase):
               , 'mode-hidden': [u'Spectral Line']
               , 'backend': [u'Spectral Processor']
               }
-        response = c.post('/calculator/set_terms/', data)
-        response = c.get('/calculator/get_results')
+        response = self.client.post('/calculator/set_terms/', data)
+        response = self.client.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
         results = eval(response.content.replace("null", "None"))
         mtf     = [r for r in results['results'] if r['term'] == 'min_topo_freq']
         self.assertAlmostEqual(mtf[0]['value'], 0.610, 3)
 
-        response = c.post('/calculator/set_terms/', {'mode' : 'DCR'})
-        response = c.get('/calculator/get_results')
+        response = self.client.post('/calculator/set_terms/', {'mode' : 'DCR'})
+        response = self.client.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
         results = eval(response.content.replace("null", "None"))
         mtf     = [r for r in results['results'] if r['term'] == 'min_topo_freq']
         self.assertEqual(mtf[0]['value'], '')
 
     def test_results(self):
-        c = Client()
-        response = c.get('/calculator/initiate_hardware')
+        response = self.client.get('/calculator/initiate_hardware')
 
         # General Information
         data = {'units': [u'tr']
@@ -89,9 +82,9 @@ class TestViews(unittest.TestCase):
               , 'semester': [u'A']
               , 'time': [u'1']
               }
-        response = c.post('/calculator/set_terms/', data)
+        response = self.client.post('/calculator/set_terms/', data)
         self.failUnlessEqual(response.status_code, 200)
-        response = c.get('/calculator/results')
+        response = self.client.get('/calculator/results')
         self.failUnlessEqual(response.status_code, 200)
 
         # Hardware Information
@@ -110,9 +103,9 @@ class TestViews(unittest.TestCase):
               , 'mode-hidden': [u'Spectral Line']
               , 'backend': [u'GBT Spectrometer']
               }
-        response = c.post('/calculator/set_terms/', data)
+        response = self.client.post('/calculator/set_terms/', data)
         self.failUnlessEqual(response.status_code, 200)
-        response = c.get('/calculator/results')
+        response = self.client.get('/calculator/results')
         self.failUnlessEqual(response.status_code, 200)
 
         # Source Information
@@ -129,9 +122,9 @@ class TestViews(unittest.TestCase):
               , 'topocentric_freq': [u'1440.0']
               , 'doppler-hidden': [u'Optical']
               }
-        response = c.post('/calculator/set_terms/', data)
+        response = self.client.post('/calculator/set_terms/', data)
         self.failUnlessEqual(response.status_code, 200)
-        response = c.get('/calculator/results')
+        response = self.client.get('/calculator/results')
         self.failUnlessEqual(response.status_code, 200)
 
         # Data Reduction Information
@@ -144,7 +137,7 @@ class TestViews(unittest.TestCase):
               , 'avg_pol': [u'true']
               , 'no_avg_ref': [u'1']
               }
-        response = c.post('/calculator/set_terms/', data)
+        response = self.client.post('/calculator/set_terms/', data)
         self.failUnlessEqual(response.status_code, 200)
-        response = c.get('/calculator/results')
+        response = self.client.get('/calculator/results')
         self.failUnlessEqual(response.status_code, 200)
