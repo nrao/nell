@@ -34,12 +34,13 @@ from utilities import TimeAgent
 
 class Email:
 
-    def __init__(self, sender = None, recipients = None, subject = None, body = None, date = None):
+    def __init__(self, sender = None, recipients = [], subject = None, body = None, date = None):
 
         self.SetSender(sender)
         self.SetRecipients(recipients)
         self.SetSubject(subject)
         self.SetBody(body)
+        self.SetDate(date)
 
     def SetSender(self, sender):
         """
@@ -98,32 +99,39 @@ class Email:
         return self.subject
 
     def SetDate(self, date):
-        weekdays = {"0" : "Sun",
-                    "1" : "Mon",
-                    "2" : "Tue",
-                    "3" : "Wed",
-                    "4" : "Thu",
-                    "5" : "Fri",
-                    "6" : "Sat"}
+        if date:
+            weekdays = {"0" : "Sun",
+                        "1" : "Mon",
+                        "2" : "Tue",
+                        "3" : "Wed",
+                        "4" : "Thu",
+                        "5" : "Fri",
+                        "6" : "Sat"}
 
-        months = {"1"  : "Jan",
-                  "2"  : "Feb",
-                  "3"  : "Mar",
-                  "4"  : "Apr",
-                  "5"  : "May",
-                  "6"  : "Jun",
-                  "7"  : "Jul",
-                  "8"  : "Aug",
-                  "9"  : "Sep",
-                  "10" : "Oct",
-                  "11" : "Nov",
-                  "12" : "Dec"}
+            months = {"1"  : "Jan",
+                      "2"  : "Feb",
+                      "3"  : "Mar",
+                      "4"  : "Apr",
+                      "5"  : "May",
+                      "6"  : "Jun",
+                      "7"  : "Jul",
+                      "8"  : "Aug",
+                      "9"  : "Sep",
+                      "10" : "Oct",
+                      "11" : "Nov",
+                      "12" : "Dec"}
 
-        self.date = "%s, %s %s %s -0%d00" % (weekdays[date.strftime("%w")],
-                                             date.strftime("%d"),
-                                             months[str(int(date.strftime("%m")))],
-                                             date.strftime("%Y %H:%M:%S"),
-                                             TimeAgent.utcoffset())
+            self.date = "%s, %s %s %s -0%d00" % (weekdays[date.strftime("%w")],
+                                                 date.strftime("%d"),
+                                                 months[str(int(date.strftime("%m")))],
+                                                 date.strftime("%Y %H:%M:%S"),
+                                                 TimeAgent.utcoffset())
+        else:
+            self.date = None
+
+
+    def GetDate(self):
+        return self.date
 
 
     def SetBody(self, body):
