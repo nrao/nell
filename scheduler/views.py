@@ -9,10 +9,10 @@ from utilities                          import *
 from scheduler.models                   import User as NellUser
 from nell.tools                         import IcalMap
 from nell.utilities                     import TimeAccounting, TimeAgent
-from nell.utilities.notifiers           import SchedulingNotifier, Notifier, Email as EmailMessage 
+from nell.utilities.notifiers           import SchedulingNotifier, Notifier, Email as EmailMessage
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException, JSONExceptionInfo
 from reversion                          import revision
-from settings                           import PROXY_PORT, DATABASE_NAME
+from settings                           import PROXY_PORT, DATABASE_NAME, DEBUG
 
 import simplejson as json
 import twitter
@@ -41,9 +41,9 @@ def receivers_schedule(request, *args, **kws):
     diff     = Receiver_Schedule.diff_schedule(schedule)
     jsondiff = Receiver_Schedule.jsondict_diff(diff).get("diff_schedule", None)
 
-    # get the dates for maintenace that cover from the start of this 
+    # get the dates for maintenace that cover from the start of this
     # rcvr schedule.
-    maintenance = [TimeAgent.dt2str(p.start) for p in Period.objects.filter( 
+    maintenance = [TimeAgent.dt2str(p.start) for p in Period.objects.filter(
                        session__observing_type__type = "maintenance"
                      , start__gte = startdate).order_by("start")]
 
@@ -78,7 +78,7 @@ def rcvr_schedule_toggle_rcvr(request, *args, **kws):
            , request.POST.get("rcvr", None))
         return HttpResponse(json.dumps({'error': error, 'message': msg})
                            , mimetype = "text/plain")
-        
+
     success, msg = Receiver_Schedule.toggle_rcvr(fromDt, rcvr, endDt=toDt)
     revision.comment = get_rev_comment(request, None, "shift_rcvr_schedule")
 
@@ -196,7 +196,7 @@ def get_options(request, *args, **kws):
           , mimetype = "text/plain")
 
     elif mode == "friends":
-        users = [u for u in User.objects.all().order_by('last_name') 
+        users = [u for u in User.objects.all().order_by('last_name')
                    if isFriend(u)]
         return HttpResponse(
             json.dumps({'friends': ["%s, %s" % (u.last_name, u.first_name) \
@@ -290,7 +290,7 @@ def change_schedule(request, *args, **kws):
         revision.comment = get_rev_comment(request, None, "change_schedule")
         return HttpResponse(json.dumps({'success':'ok'})
                           , mimetype = "text/plain")
-    else:                      
+    else:
         return HttpResponse(
             json.dumps({'error':'Error Inserting Period', 'message':msg})
           , mimetype = "text/plain")
@@ -464,10 +464,11 @@ def delete_pending(request, *args, **kwds):
 ######################################################################
 
 try:
-    notifier = SchedulingNotifier.SchedulingNotifier()
+    notifier = SchedulingNotifier()
 except:
-    # printException(formatExceptionInfo())
-    pass
+    if DEBUG:
+        printException(formatExceptionInfo())
+
 
 @catch_json_parse_errors
 def scheduling_email(request, *args, **kwds):
@@ -484,11 +485,11 @@ def scheduling_email(request, *args, **kwds):
                                      .replace(hour = 8, minute = 0, second = 0,
                                               microsecond = 0))
 
-        # The class that sets up the emails needs the periods in the 
+        # The class that sets up the emails needs the periods in the
         # scheduling range, and all the periods in the future.
         currentPs = list(Period.objects.filter(start__gt = start
                                              , start__lt = end))
-        futurePs  = list(Period.objects.filter(start__gte = start).order_by("start"))                                     
+        futurePs  = list(Period.objects.filter(start__gte = start).order_by("start"))
         notifier.setPeriods(currentPs, futurePs)
 
         return HttpResponse(
@@ -524,7 +525,7 @@ def scheduling_email(request, *args, **kwds):
         sn = Schedule_Notification(date = datetime.utcnow())
         sn.save()
 
-        # Emails for a given period shouldn't be sent more then is 
+        # Emails for a given period shouldn't be sent more then is
         # necessary, so here we set the last_notification timestamp.
         # TBF, WTF: the client can change the recipients and text of the
         # 'changes' email - this ignores those changes.
@@ -546,7 +547,7 @@ def set_periods_last_notification(dt, request, key):
             pid = int(pidStr.strip())
         except:
             pid = None
-        if pid is not None:    
+        if pid is not None:
             p = Period.objects.get(id = pid)
             p.last_notification = dt
             p.save()
@@ -635,7 +636,7 @@ def reservations(request, *args, **kws):
     useBos       = True
     if useBos:
         reservations = getReservationsFromBOS(start, end)
-    else:    
+    else:
         reservations = getReservationsFromDB(start, end)
 
     return HttpResponse(json.dumps({'reservations' : reservations
@@ -681,7 +682,7 @@ def column_configurations_explorer(request, *args, **kws):
 
         # Get all values that look like they might be true, hidden
         columns = [k for k, v in request.POST.iteritems() if v in ('true', ['true'] )]
-    
+
         # Save the columns that belong to this configuration
         for name in columns:
             c = Column(name = name, explorer_configuration = ec)
@@ -694,9 +695,9 @@ def column_configurations_explorer(request, *args, **kws):
         except ValueError:
             # If the id isn't there then get all configurations.
             tab     = tab_map.get(request.GET.get('explorer'))
-            configs = [(ec.name, ec.id) 
+            configs = [(ec.name, ec.id)
                  for ec in ExplorerConfiguration.objects.filter(tab = tab, type = EXPLORER_CONFIG_TYPE_COLUMN)]
-    
+
             return HttpResponse(json.dumps({'configs' : configs})
                               , mimetype = "text/plain")
         config = ExplorerConfiguration.objects.get(id = id
@@ -728,7 +729,7 @@ def filter_combinations_explorer(request, *args, **kws):
         except ValueError:
             # If the id isn't there then get all configurations.
             tab     = tab_map.get(request.GET.get('explorer'))
-            configs = [(ec.name, ec.id) 
+            configs = [(ec.name, ec.id)
                  for ec in ExplorerConfiguration.objects.filter(tab = tab, type = EXPLORER_CONFIG_TYPE_FILTER)]
 
             return HttpResponse(json.dumps({'configs' : configs})
@@ -740,7 +741,7 @@ def filter_combinations_explorer(request, *args, **kws):
             filters = {}
             for f in config.filter_set.all():
                 filters.update({f.name : f.value})
-            
+
             return HttpResponse(json.dumps({'filters' : filters})
                                           , mimetype = "text/plain")
 
@@ -770,4 +771,4 @@ def elective_copy(request, *args, **kwds):
     copy_elective(id, num)
     revision.comment = get_rev_comment(request, None, "elective_copy")
     return HttpResponse(json.dumps({'success':'ok'})
-                      , mimetype = "text/plain")                                          
+                      , mimetype = "text/plain")

@@ -20,73 +20,25 @@
 #     P. O. Box 2
 #     Green Bank, WV 24944-0002 USA
 
-if __name__ == "__main__":
-    import sys
-    sys.path[1:1] = [".."]
-    sys.path[1:1] = ["../.."]
+from utilities.notifiers.emailNotifier import emailNotifier
+from test_utils                        import NellTestCase
+from datetime                          import datetime
+from nell.utilities                    import TimeAgent
 
-from   utilities.notifiers.emailNotifier import emailNotifier 
-import os
-import unittest
-
-class TestEmailNotifier(unittest.TestCase):
+class TestEmailNotifier(NellTestCase):
 
     def setUp(self):
+        super(TestEmailNotifier, self).setUp()
         self.notifier = emailNotifier()
 
     def tearDown(self):
+        super(TestEmailNotifier, self).tearDown()
         self.notifier = None
 
     def test_SetSmtp(self):
         self.notifier.SetSmtp("stuff")
         self.assertEquals("stuff", self.notifier.smtp)
 
-    def test_SetFrom(self):
-        self.notifier.SetFrom("stuff")
-        self.assertEquals("stuff", self.notifier.frm)
-
-    def test_SetTo(self):
-        to = "ashelton@nrao.edu, dora@explorer.com"
-        self.notifier.SetTo(to)
-        self.assertEquals(["ashelton@nrao.edu", "dora@explorer.com"]
-                        , self.notifier.to)
-
-        to = "ashelton@nrao.edu; dora@explorer.com"
-        self.notifier.SetTo(to)
-        self.assertEquals(["ashelton@nrao.edu", "dora@explorer.com"]
-                        , self.notifier.to)
-
-        to = "ashelton@nrao.edu dora@explorer.com"
-        self.notifier.SetTo(to)
-        self.assertEquals(["ashelton@nrao.edu", "dora@explorer.com"]
-                        , self.notifier.to)
-
-        to = ["ashelton@nrao.edu", "dora@explorer.com"]
-        self.notifier.SetTo(to)
-        self.assertEquals(to, self.notifier.to)
-
-        to = "ashelton@nrao.edu"
-        self.notifier.SetTo(to)
-        self.assertEquals([to], self.notifier.to)
-
-    def test_SetSubject(self):
-        self.notifier.SetSubject("stuff")
-        self.assertEquals("stuff", self.notifier.subject)
-
-    def test_SetDate(self):
-        self.notifier.SetDate("stuff")
-        self.assertEquals("stuff", self.notifier.date)
-
-    def test_SetMessage(self):
-        self.notifier.SetMessage("stuff")
-        self.assertEquals("stuff", self.notifier.msg)
-
-    def test_SetText(self):
-        self.notifier.SetText("stuff")
-        self.assertEquals("stuff", self.notifier.text)
-
     def test_GetFailures(self):
         self.assertEquals({}, self.notifier.GetFailures())
 
-if __name__ == "__main__":
-    unittest.main()

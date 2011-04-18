@@ -20,15 +20,15 @@
 #     P. O. Box 2
 #     Green Bank, WV 24944-0002 USA
 
-if __name__ == "__main__":
-    import sys
-    sys.path[1:1] = [".."]
+from utilities.notifiers               import Notifier
+from utilities.notifiers               import Email
+from test_utils                        import NellTestCase
+from datetime                          import datetime
+from nell.utilities                    import TimeAgent
 
-from  utilities.notifiers import Notifier 
 import os
-import unittest
 
-class TestNotifier(unittest.TestCase):
+class TestNotifier(NellTestCase):
 
     def test_enabledLogging(self):
         # Don't send emails, but write out the log file.
@@ -61,33 +61,69 @@ class TestNotifier(unittest.TestCase):
                            , test       = True
                            , log        = False)
         addresses = ["ashelton@nrao.edu", "dora@explorer.com"]
-
-        notifier.setAddresses(addresses)
-        results = notifier.getAddresses()
-
+        e1 = Email()
+        e2 = Email()
+        notifier.registerTemplate("test", e1)
+        notifier.registerTemplate("frog", e2)
+        notifier.setAddresses("test", addresses)
+        notifier.setAddresses("frog", ["frog@pond", "toad@toadstool"])
+        results = notifier.getAddresses("test")
         self.assertEquals(results, ["dora@explorer.com"])
+        results = notifier.getAddresses("frog")
+        self.assertEquals(results, ["frog@pond", "toad@toadstool"])
 
     def test_getAndSetSubject(self):
         notifier  = Notifier(test = True, log = False)
-        subject   = "Send cash now!"
-
-        notifier.setSubject(subject)
-        results = notifier.getSubject()
-
-        self.assertEquals(results, subject)
+        subject1  = "Send cash now!"
+        subject2  = "Flies are so yummy!"
+        e1 = Email()
+        e2 = Email()
+        notifier.registerTemplate("test", e1)
+        notifier.registerTemplate("frog", e2)
+        notifier.setSubject("test", subject1)
+        notifier.setSubject("frog", subject2)
+        results = notifier.getSubject("test")
+        self.assertEquals(results, subject1)
+        results = notifier.getSubject("frog")
+        self.assertEquals(results, subject2)
 
     def test_getAndSetBody(self):
         notifier  = Notifier(test = True, log = False)
-        body      = "Yadda yadda yadda"
+        body1     = "Yadda yadda yadda"
+        body2     = "Aren't they, though?"
+        e1 = Email()
+        e2 = Email()
+        notifier.registerTemplate("test", e1)
+        notifier.registerTemplate("frog", e2)
+        notifier.setBody("test", body1)
+        notifier.setBody("frog", body2)
+        results = notifier.getBody("test")
+        self.assertEquals(results, body1)
+        results = notifier.getBody("frog")
+        self.assertEquals(results, body2)
 
-        notifier.setBody(body)
-        results = notifier.getBody()
+    def test_email_templates(self):
+        notifier = Notifier(test = True, log = False)
+        sender = "frog@pond"
+        recipients = ["toad@toadstool", "salamander@leafpile"]
+        subject = "Life is good!"
+        body = "Living in the pond is heaven!"
+        e1 = Email(sender = sender,
+                   recipients = recipients,
+                   subject = subject,
+                   body = body)
+        notifier.registerTemplate("pond", e1)
+        e2 = notifier.cloneTemplate("pond")
 
-        self.assertEquals(results, body)
+        self.assertEquals(e2.GetSender(), sender)
+        self.assertEquals(e2.GetRecipientList(), recipients)
+        self.assertEquals(e2.GetSubject(), subject)
+        self.assertEquals(e2.GetBody(), body)
+
+        notifier.unregisterTemplate("pond")
+        self.assertRaises(KeyError, notifier.cloneTemplate, "pond")
 
     def test_notify(self):
         # Not much to test, just make sure it doesn't barf.
         Notifier(test = True, log = False).notify()
 
-if __name__ == "__main__":
-    unittest.main()
