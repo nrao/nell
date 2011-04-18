@@ -1,5 +1,9 @@
+from django.core.management import setup_environ
+import settings
+setup_environ(settings)
+
 from datetime           import datetime, timedelta
-from nell.utilities     import NRAOBosDB
+from nell.utilities.database.external     import NRAOBosDB
 from scheduler.models    import *
 
 class ReservationsUtility(object):
@@ -70,4 +74,5 @@ class ReservationsUtility(object):
         print res            
         return res            
 
-
+if __name__ == "__main__":
+    ReservationsUtility().updateReservations()

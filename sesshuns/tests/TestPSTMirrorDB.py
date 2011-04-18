@@ -1,5 +1,5 @@
 from test_utils              import NellTestCase
-from nell.utilities.database.external          import PSTMirrorDB, PSTQueryService
+from nell.utilities.database.external          import PSTMirrorDB
 
 class TestPSTMirrorDB(NellTestCase):
 
@@ -53,29 +53,6 @@ class TestPSTMirrorDB(NellTestCase):
         username = db.getUsername(0)
         self.assertEquals(None, username)
 
-    # this is even more un "unit" test - we're interface with TWO
-    # external systems
-    def test_compareProfiles(self):
-        "Compare the outputs from PSTQueryService & PSTMirrorDB"
-
-        globalId =821
-
-        db = PSTMirrorDB()
-        # 823 - pst_id for pmargani
-        mirror = db.getStaticContactInfoByID(globalId)
-
-        ui = PSTQueryService()
-        xml = ui.getStaticContactInfoByID(globalId)
-        pst = ui.parseUserDict(xml)
-
-        # get rid of any elements that are different
-        # by design, status key is different
-        mirror.pop('status')
-        mirror.pop('first_name')
-        mirror.pop('last_name')
-        mirror.pop('person_id')
-        mirror.pop('personAuth_id')
-        pst.pop('status')
     def test_getIdFromUsername(self):
 
         db = PSTMirrorDB()
@@ -92,32 +69,4 @@ class TestPSTMirrorDB(NellTestCase):
         db = PSTMirrorDB()
         username = db.getUsername(0)
         self.assertEquals(None, username)
-
-    # this is even more un "unit" test - we're interface with TWO
-    # external systems
-    def test_compareProfiles(self):
-        "Compare the outputs from PSTQueryService & PSTMirrorDB"
-
-        globalId =821
-
-        db = PSTMirrorDB()
-        # 823 - pst_id for pmargani
-        mirror = db.getStaticContactInfoByID(globalId)
-
-        ui = PSTQueryService()
-        xml = ui.getStaticContactInfoByID(globalId)
-        pst = ui.parseUserDict(xml)
-
-        # get rid of any elements that are different
-        # by design, status key is different
-        mirror.pop('status')
-        mirror.pop('first_name')
-        mirror.pop('last_name')
-        mirror.pop('person_id')
-        mirror.pop('personAuth_id')
-        pst.pop('status')
-        # for some reason, the XML derived addresses aren't in order
-        mirror.pop('postals')
-        pst.pop('postals')
-        self.assertEquals(mirror, pst)
 

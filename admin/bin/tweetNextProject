@@ -5,4 +5,4 @@ source /home/dss/conundrum/conundrum.bash
 export DSS_NELL=/home/dss/release/nell
 export PYTHONPATH=$DSS_NELL:$PYTHONPATH
 
-python $DSS_NELL/utilities/TweetCurrentProject.py
+python $DSS_NELL/tools/TweetCurrentProject.py

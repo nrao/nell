@@ -5,6 +5,7 @@ setup_environ(settings)
 from datetime        import date, datetime, timedelta
 from scheduler.models import *
 from sets            import Set
+from utilities       import TimeAgent
 
 import calendar
 
