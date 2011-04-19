@@ -165,7 +165,6 @@ class Notifier(object):
         except Empty:
             pass
         except:
-            print "Error: Could not send mail!"
             self.logMessage("Error: Could not send mail!\n")
 
         self.stopLogging()
