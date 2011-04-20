@@ -1,0 +1,29 @@
+#!/bin/bash
+
+PWD=`pwd`
+start_fcgi ()
+{
+    manage.py runfcgi host=0.0.0.0 port=$1 pidfile=$PWD/nell_pid outlog=$PWD/output.log errlog=$PWD/error.log deamonize=true
+}
+
+stop_fcgi()
+{
+    cat $PWD/nell_pid | xargs kill
+}
+
+restart_fcgi()
+{
+    stop_fcgi
+    start_fcgi $1
+}
+
+if test "$1" == "restart"
+then
+    restart_fcgi $2
+elif test "$1" == "start"
+then
+    start_fcgi $2
+elif test "$1" == "stop"
+then
+    stop_fcgi
+fi

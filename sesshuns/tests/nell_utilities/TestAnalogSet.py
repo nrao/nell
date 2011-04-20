@@ -24,7 +24,7 @@ if __name__ == "__main__":
     import sys
     sys.path[1:1] = [".."]
 
-from AnalogSet      import *
+from utilities.AnalogSet      import *
 from datetime       import datetime
 import unittest
 
