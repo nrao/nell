@@ -1,3 +1,5 @@
+from nell_utilities           import *
+
 from TestDBReporter            import TestDBReporter
 from TestDSSPrime2DSS          import TestDSSPrime2DSS
 from TestElecAlertNotifier     import TestElecAlertNotifier
@@ -11,7 +13,6 @@ from TestObservers             import TestObservers
 from TestObserversBase         import TestObserversBase
 from TestOperators             import TestOperators
 from TestPSTMirrorDB           import TestPSTMirrorDB
-from TestPSTQueryService       import TestPSTQueryService
 from TestReports               import TestReports
 from TestSchedulingNotifier    import TestSchedulingNotifier
 from TestSessionAlertNotifier  import TestSessionAlertNotifier

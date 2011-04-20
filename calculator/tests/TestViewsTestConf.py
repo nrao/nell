@@ -19,10 +19,9 @@ class TestViewsTestConf(CalculatorTestCase):
         self.addTerm("y = x + 1", "y = Newtons")
 
         #  Make sure the new terms are loaded.
-        c = Client()
-        response = c.get('/calculator/initiate_hardware')
-        response = c.post('/calculator/set_terms/', {})
-        response = c.get('/calculator/get_results')
+        response = self.client.get('/calculator/initiate_hardware')
+        response = self.client.post('/calculator/set_terms/', {})
+        response = self.client.get('/calculator/get_results')
 
         inputs, values = self.get_data(response)
         self.assertEqual(values['y'], 2)
@@ -35,8 +34,8 @@ class TestViewsTestConf(CalculatorTestCase):
         self.resetTerms()
 
         #  Make sure the add terms are really gone.
-        response = c.post('/calculator/set_terms/', {})
-        response = c.get('/calculator/get_results')
+        response = self.client.post('/calculator/set_terms/', {})
+        response = self.client.get('/calculator/get_results')
 
         inputs, values = self.get_data(response)
         xsys     = [k for k, _ in values.items() if k in ('x', 'y')]
@@ -44,17 +43,16 @@ class TestViewsTestConf(CalculatorTestCase):
         self.failUnlessEqual(response.status_code, 200)
 
     def test_one_dependent_variable(self):
-        c = Client()
-        response = c.get('/calculator/initiate_hardware')
-        response = c.post('/calculator/set_terms/', {})
-        response = c.get('/calculator/get_results')
+        response = self.client.get('/calculator/initiate_hardware')
+        response = self.client.post('/calculator/set_terms/', {})
+        response = self.client.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
 
         inputs, values = self.get_data(response)
         self.assertEqual(values['foo'], None)
 
-        response = c.post('/calculator/set_terms/', {'bar' : 2})
-        response = c.get('/calculator/get_results')
+        response = self.client.post('/calculator/set_terms/', {'bar' : 2})
+        response = self.client.get('/calculator/get_results')
 
         inputs, values = self.get_data(response)
         self.assertEqual(values['foo'], 82)
@@ -63,12 +61,11 @@ class TestViewsTestConf(CalculatorTestCase):
         self.addTerm("x = ")
         self.addTerm("y = 3 * x + 1", "y = Newtons")
 
-        c = Client()
-        response = c.get('/calculator/initiate_hardware')
+        response = self.client.get('/calculator/initiate_hardware')
         self.failUnlessEqual(response.status_code, 200)
-        response = c.post('/calculator/set_terms/', {})
+        response = self.client.post('/calculator/set_terms/', {})
         self.failUnlessEqual(response.status_code, 200)
-        response = c.get('/calculator/get_results')
+        response = self.client.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
 
         inputs, values = self.get_data(response)
@@ -76,8 +73,8 @@ class TestViewsTestConf(CalculatorTestCase):
         self.assertEqual(values['y'], None)
         self.assertEqual(values['foo'], None)
 
-        response = c.post('/calculator/set_terms/', {'bar' : 2, 'x' : 5})
-        response = c.get('/calculator/get_results')
+        response = self.client.post('/calculator/set_terms/', {'bar' : 2, 'x' : 5})
+        response = self.client.get('/calculator/get_results')
 
         inputs, values = self.get_data(response)
         self.assertEqual(inputs['x'], 5.0)
@@ -91,12 +88,11 @@ class TestViewsTestConf(CalculatorTestCase):
         self.addTerm("theta = 2 * math.pi / 3 + r")
         self.addTerm("r = 3 * y + x")
 
-        c = Client()
-        response = c.get('/calculator/initiate_hardware')
+        response = self.client.get('/calculator/initiate_hardware')
         self.failUnlessEqual(response.status_code, 200)
-        response = c.post('/calculator/set_terms/', {})
+        response = self.client.post('/calculator/set_terms/', {})
         self.failUnlessEqual(response.status_code, 200)
-        response = c.get('/calculator/get_results')
+        response = self.client.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
 
         inputs, values = self.get_data(response)
@@ -104,8 +100,8 @@ class TestViewsTestConf(CalculatorTestCase):
         self.assertEqual(values['y'], None)
         self.assertEqual(values['foo'], None)
 
-        response = c.post('/calculator/set_terms/', {'bar' : 2, 'x' : 5, 'q' : 1})
-        response = c.get('/calculator/get_results')
+        response = self.client.post('/calculator/set_terms/', {'bar' : 2, 'x' : 5, 'q' : 1})
+        response = self.client.get('/calculator/get_results')
 
         inputs, values = self.get_data(response)
         self.assertEqual(inputs['x'], 5.0)
@@ -119,12 +115,11 @@ class TestViewsTestConf(CalculatorTestCase):
         self.addTerm("c = ")
         self.addTerm("d = ")
 
-        c = Client()
-        response = c.get('/calculator/initiate_hardware')
+        response = self.client.get('/calculator/initiate_hardware')
         self.failUnlessEqual(response.status_code, 200)
-        response = c.post('/calculator/set_terms/', {'c' : 2, 'd' : 1})
+        response = self.client.post('/calculator/set_terms/', {'c' : 2, 'd' : 1})
         self.failUnlessEqual(response.status_code, 200)
-        response = c.get('/calculator/get_results')
+        response = self.client.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
 
         inputs, values = self.get_data(response)
@@ -139,16 +134,15 @@ class TestViewsTestConf(CalculatorTestCase):
         self.addTerm("c = ")
         self.addTerm("d = ")
 
-        c = Client()
-        response = c.get('/calculator/initiate_hardware')
+        response = self.client.get('/calculator/initiate_hardware')
         self.failUnlessEqual(response.status_code, 200)
-        response = c.post('/calculator/set_terms/', {'a' : 1, 'b' : 1})
+        response = self.client.post('/calculator/set_terms/', {'a' : 1, 'b' : 1})
         self.failUnlessEqual(response.status_code, 200)
-        response = c.get('/calculator/get_results')
+        response = self.client.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
-        response = c.post('/calculator/set_terms/', {'c' : 1, 'd' : 1})
+        response = self.client.post('/calculator/set_terms/', {'c' : 1, 'd' : 1})
         self.failUnlessEqual(response.status_code, 200)
-        response = c.get('/calculator/get_results')
+        response = self.client.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
 
         inputs, values = self.get_data(response)
