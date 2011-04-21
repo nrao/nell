@@ -7,7 +7,9 @@ USE_REVERSION = False #MODIFY#
 
 NELL_ROOT         = '{path to your nell sandbox}' #MODIFY#
 CALCULATOR_UI_DIR = '/home/dss.gb.nrao.edu/active/calculator-ui'
+NUBBLES_DIR       = '/home/dss/release/nubbles'
 STATIC_DOC_ROOT   = NELL_ROOT + '/sesshuns/static'
+MEDIA             = '/home/dss.gb.nrao.edu/active/python/lib/python2.5/site-packages/django/contrib/admin/media' 
 SC_EQUATION_DEFS  = NELL_ROOT + '/calculator/equations.cfg'
 
 SERVER_EMAIL = 'dss@gb.nrao.edu'

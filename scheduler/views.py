@@ -1,6 +1,6 @@
 from datetime                           import date, datetime, timedelta
 from decorators                         import catch_json_parse_errors
-from django.http                        import HttpResponse
+from django.http                        import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.models         import User as AuthUser
 from django.contrib.auth.decorators     import login_required
 from django.shortcuts               import render_to_response
@@ -11,6 +11,7 @@ from utilities                          import *
 from scheduler.models                   import User as NellUser
 from nell.tools                         import IcalMap
 from nell.utilities                     import TimeAccounting, TimeAgent
+from sesshuns.utilities                 import get_requestor
 from nell.utilities.notifiers           import SchedulingNotifier, Notifier, Email as EmailMessage
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException, JSONExceptionInfo
 from reversion                          import revision
@@ -21,7 +22,11 @@ import twitter
 
 @login_required
 def load_nubbles(request):
-    return render_to_response("war/Nubbles.html", {})
+    requestor = get_requestor(request)
+    if requestor.isAdmin():
+        return render_to_response("war/Nubbles.html", {})
+    else:
+        HttpResponseRedirect('/profile')
 
 @revision.create_on_success
 @catch_json_parse_errors
