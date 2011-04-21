@@ -102,10 +102,8 @@ class SessionAlerts(object):
             f.writelines(self.reportLines)
             f.close()
 
-    def raiseAlertsDSSTeam(self, now = None, test = False, quiet = True):
-
+    def raiseAlertsDSSTeam(self, now = None, test = False):
         self.stageBoundary = 4
-        self.quiet = quiet
         for unknown in self.findDisabledSessionAlerts(now):
             
             # report this
@@ -113,7 +111,9 @@ class SessionAlerts(object):
                                                     , unknown.session.id))
             
             sa = SessionAlertNotifier(unknown = unknown
-                                    , test = test)
+                                    , test = test
+                                    , flag = "enabled"
+                                     )
             
             # for now, *really* play it safe
             if not test:
@@ -124,13 +124,32 @@ class SessionAlerts(object):
                         , sa.email.GetRecipientString()))
                 #print sa.email.GetText()
                 sa.notify()
-
+        self.write()
+        for unknown in self.findUnauthorizedSessionAlerts(now):
+            
+            # report this
+            self.add("Alert for %s session # %d\n" % (unknown.session.session_type.type
+                                                    , unknown.session.id))
+            
+            sa = SessionAlertNotifier(unknown = unknown
+                                    , test = test
+                                    , flag = "authorized"
+                                     )
+            
+            # for now, *really* play it safe
+            if not test:
+                if sa.email is not None:
+                    self.add("Notifying DSS Team about unauthorized %s session # %d: %s\n" % \
+                         (unknown.session.session_type.type
+                        , unknown.session.id
+                        , sa.email.GetRecipientString()))
+                #print sa.email.GetText()
+                sa.notify()
         self.write()
         self.stageBoundary = 15
 
-    def raiseAlerts(self, now = None, test = False, quiet = True):
+    def raiseAlerts(self, now = None, test = False):
 
-        self.quiet = quiet
         for unknown in self.findDisabledSessionAlerts(now):
             
             # report this
@@ -139,7 +158,9 @@ class SessionAlerts(object):
             
             sa = SessionAlertNotifier(unknown = unknown
                                     , test = test
-                                    , type = "disabled_observers")
+                                    , type = "observers"
+                                    , flag = "enabled"
+                                     )
             
             # for now, *really* play it safe
             if not test:
@@ -150,7 +171,6 @@ class SessionAlerts(object):
                         , sa.email.GetRecipientString()))
                 #print sa.email.GetText()
                 sa.notify()
-        
         self.write()
 
 if __name__ == "__main__":
