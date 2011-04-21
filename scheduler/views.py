@@ -2,6 +2,8 @@ from datetime                           import date, datetime, timedelta
 from decorators                         import catch_json_parse_errors
 from django.http                        import HttpResponse
 from django.contrib.auth.models         import User as AuthUser
+from django.contrib.auth.decorators     import login_required
+from django.shortcuts               import render_to_response
 from scheduler.httpadapters             import PeriodHttpAdapter
 from scheduler.utilities                import ScheduleTools
 from models                             import *
@@ -16,6 +18,10 @@ from settings                           import PROXY_PORT, DATABASE_NAME, DEBUG
 
 import simplejson as json
 import twitter
+
+@login_required
+def load_nubbles(request):
+    return render_to_response("war/Nubbles.html", {})
 
 @revision.create_on_success
 @catch_json_parse_errors
@@ -644,12 +650,12 @@ def reservations(request, *args, **kws):
                                    }))
 
 tab_map = {
-           '/investigators' : 'Investigator'
-         , '/periods'       : 'Period'
-         , '/projects'      : 'Project'
-         , '/sessions'      : 'Session'
-         , '/users'         : 'User'
-         , '/windows'       : 'Window'
+           '/scheduler/investigators' : 'Investigator'
+         , '/scheduler/periods'       : 'Period'
+         , '/scheduler/projects'      : 'Project'
+         , '/scheduler/sessions'      : 'Session'
+         , '/scheduler/users'         : 'User'
+         , '/scheduler/windows'       : 'Window'
           }
 
 def updateExplorerConfig(name, type, tab):
