@@ -2,42 +2,69 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from datetime        import datetime
-from scheduler.models import Period
+from datetime        import date, datetime, timedelta
+from scheduler.models import *
 from sets            import Set
+from utilities       import TimeAgent
 
 import calendar
 
-def getScienceObservations(start, end, projects):
-    "Returns observing between two given dates."
-    periods  = [p for p in Period.in_time_range(start, end) \
-                  if p.session.isScience()]
-    for p in periods:
-        project = p.session.project.pcode
-        if not projects.has_key(project):
-            scheduled = 0
-            observed  = 0
-        else:
-            scheduled, observed = projects[project]
+ALL_PERIODS = [p for p in Period.objects.all() if p.session.project.is_science() and (p.isScheduled() or p.isCompleted())]
 
-        scheduled += p.accounting.scheduled
-        observed  += p.accounting.observed()
+def getPeriods():
+    return ALL_PERIODS
 
-        projects[project] = (scheduled, observed)
+def normalizePeriodStartStop(period, dt):
+    """
+    Returns the start/stop time for a period ensuring it stays within the 
+    given month.
+    """
+    start = TimeAgent.utc2est(period.start)
+    if start.month != dt.month:
+        start = datetime(dt.year, dt.month, 1, 0, 0, 0)
 
-    return projects
+    stop = TimeAgent.utc2est(period.end())
+    if stop.month != dt.month:
+        _, day = calendar.monthrange(dt.year, dt.month)
+        stop = datetime(dt.year, dt.month, day, 23, 59, 59)
 
-def generateReport(quarter, fiscal_year, projects):
+    return start, stop
+
+def filterPeriodsByDate(start):
+    "Returns the periods within a given month and year."
+    _, day = calendar.monthrange(start.year, start.month)
+    stop   = datetime(start.year, start.month, day, 23, 59, 59)
+    ustart = TimeAgent.est2utc(start)
+    ustop  = TimeAgent.est2utc(stop)
+
+    periods = []
+    for p in ALL_PERIODS:
+        if (p.start >= ustart or p.end() > ustart) and p.start < ustop:
+            start, stop = normalizePeriodStartStop(p, start)
+            periods.append([p, start, stop])
+
+    return periods
+
+def generateReport(label, periods):
     outfile = open("./GBTObservingReport.txt", 'w')
 
-    outfile.write("GBT observing report for Q%d FY%d\n" % (quarter, fiscal_year))
+    outfile.write("GBT observing report for %s\n" % label)
     outfile.write("Project ID\tScheduled (hrs)\tObserved (hrs)\n")
 
-    projectNames = projects.keys()
+    scheduled = {}
+    observed  = {}
+    for p in periods:
+        period, start, stop = p
+        pcode = period.session.project.pcode
+        scheduled[pcode] = scheduled.get(pcode, 0) + (stop - start).seconds / 3600.
+        observed[pcode] = observed.get(pcode, 0) + (stop - start).seconds / 3600. - period.accounting.lost_time()
+
+    projectNames = scheduled.keys()
     projectNames.sort()
     for p in projectNames:
-        s, o = projects[p]
-        outfile.write("%s\t%f\t%f\n" % (p, s, o))
+        s, o = scheduled[p], observed[p]
+        outfile.write("%s\t%.2f\t%.2f\n" % (p, s, o))
+    outfile.write("Total\t%.2f\t%.2f\n" % (sum([scheduled[p] for p in scheduled.keys()]), sum([observed[p] for p in observed.keys()])))
 
     outfile.close()
 
@@ -65,11 +92,8 @@ if __name__=='__main__':
     months = quarters[quarter]
     year   = fiscal_year if quarter != 1 else fiscal_year - 1
 
-    projects = {}
+    periods = []
     for m in months:
-        start  = datetime(year, m, 1) 
-        _, day = calendar.monthrange(start.year, start.month)
-        end    = datetime(start.year, start.month, day, 23, 59, 59)
-        getScienceObservations(start, end, projects)
+        periods.extend(filterPeriodsByDate(datetime(year, m, 1)))
 
-    generateReport(quarter, fiscal_year, projects)
+    generateReport('Q%d FY %d' % (quarter, fiscal_year), periods)
