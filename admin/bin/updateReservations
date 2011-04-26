@@ -2,7 +2,6 @@
 
 source /home/dss/conundrum/conundrum.bash
 
-#export DSS_NELL=/home/dss/release/nell
-export DSS_NELL=/home/sandboxes/mclark/temp/nell
+export DSS_NELL=/home/dss/release/nell
 cd $DSS_NELL
 python tools/database/ReservationsUtility.py

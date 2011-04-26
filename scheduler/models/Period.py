@@ -5,6 +5,7 @@ from datetime               import datetime, timedelta
 
 from settings             import ANTIOCH_HOST, PROXY_PORT
 from utilities.TimeAgent  import adjustDateTimeTz
+from Observing_Type       import Observing_Type
 from Project              import Project
 from Sesshun              import Sesshun
 from Period_Accounting    import Period_Accounting
@@ -319,8 +320,9 @@ class Period(models.Model):
 
         periods = Period.get_periods(start, duration)
         for p in periods:
-            p.publish()
-            p.save()
+            if p.session.observing_type != Observing_Type.objects.get(type = "maintenance"):
+                p.publish()
+                p.save()
 
     @staticmethod
     def delete_pending(start, duration):
