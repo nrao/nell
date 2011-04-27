@@ -111,7 +111,8 @@ AUTHENTICATION_BACKENDS = (
     'django_cas.backends.CASBackend',
 )
 
-CAS_SERVER_URL="https://my.nrao.edu/cas/login"
+# use "https://mirror.nrao.edu/cas/login" for development
+CAS_SERVER_URL="https://my.nrao.edu/cas/login"   #MODIFY#
 
 ROOT_URLCONF = 'nell.urls'
 
