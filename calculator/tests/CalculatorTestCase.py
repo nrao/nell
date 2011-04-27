@@ -1,5 +1,6 @@
+from TestViewsBase import TestViewsBase
 import settings
-import os, unittest
+import os
 
 equations = """
 [equations]
@@ -17,9 +18,10 @@ size = meters
 [displays]
 """
 
-class CalculatorTestCase(unittest.TestCase):
+class CalculatorTestCase(TestViewsBase):
 
     def setUp(self):
+        super(CalculatorTestCase, self).setUp()
         self.old_sc_equation_defs = settings.SC_EQUATION_DEFS
         settings.SC_EQUATION_DEFS = 'test.cfg'
 
@@ -28,6 +30,7 @@ class CalculatorTestCase(unittest.TestCase):
         f.close()
 
     def tearDown(self):
+        super(CalculatorTestCase, self).tearDown()
         os.remove(settings.SC_EQUATION_DEFS)
         settings.SC_EQUATION_DEFS = self.old_sc_equation_defs
 

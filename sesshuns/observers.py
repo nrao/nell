@@ -8,7 +8,7 @@ from django.shortcuts               import render_to_response, get_object_or_404
 from scheduler.utilities            import get_rev_comment
 from models                         import *
 from sets                           import Set
-from nell.utilities                 import IcalMap
+from nell.tools                     import IcalMap
 from nell.utilities.TimeAgent       import EST, UTC, adjustDateTimeTz
 from nell.utilities.database.external import NRAOBosDB
 from reversion                      import revision
@@ -16,6 +16,7 @@ from utilities                      import *
 from forms                          import BlackoutForm, PreferencesForm
 
 import pytz
+import simplejson as json
 
 def public_schedule(request, *args, **kws):
     """
@@ -283,7 +284,9 @@ def toggle_session(request, *args, **kws):
 
     revision.comment = get_rev_comment(request, s, "toggle_session")
 
-    return HttpResponseRedirect("/project/%s" % pcode)
+    return HttpResponse(
+            json.dumps({"success" :   "ok"})
+          , mimetype = "text/plain")
 
 @revision.create_on_success
 @login_required
@@ -298,7 +301,9 @@ def toggle_required_friend(request, *args, **kws):
 
     revision.comment = get_rev_comment(request, f, "toggle_required_friend")
 
-    return HttpResponseRedirect("/project/%s" % pcode)
+    return HttpResponse(
+            json.dumps({"success" :   "ok"})
+          , mimetype = "text/plain")
 
 @revision.create_on_success
 @login_required
@@ -316,7 +321,9 @@ def toggle_observer(request, *args, **kws):
 
     revision.comment = get_rev_comment(request, i, "toggle_observer")
 
-    return HttpResponseRedirect("/project/%s" % pcode)
+    return HttpResponse(
+            json.dumps({"success" :   "ok"})
+          , mimetype = "text/plain")
 
 @revision.create_on_success
 @login_required

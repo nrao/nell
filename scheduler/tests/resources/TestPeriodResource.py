@@ -10,7 +10,7 @@ class TestPeriodResource(BenchTestCase):
 
     def setUp(self):
         super(TestPeriodResource, self).setUp()
-        self.rootURL = '/periods'
+        self.rootURL = '/scheduler/periods'
         self.sess = create_sesshun()
         self.client = Client()
         self.fdata = {'session'  : self.sess.id

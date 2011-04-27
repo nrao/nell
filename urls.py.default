@@ -1,7 +1,7 @@
 from django.conf.urls.defaults     import *
 from django.conf                   import settings
-from scheduler.views                import *
-from scheduler.resources            import *
+from scheduler.views               import *
+from calculator.views              import load_ui
 from sesshuns.observers            import *
 from sesshuns.operators            import *
 from sesshuns.resource_cal         import *
@@ -13,11 +13,9 @@ admin.autodiscover()
 # Note a blank comment attached to the url denotes local access only
 
 urlpatterns = patterns(''
-   , (r'^calculator/', include('nell.calculator.urls'))
-   , url(r'^configurations/explorer/columnConfigs$',                     column_configurations_explorer)
-   , url(r'^configurations/explorer/columnConfigs/(\d+)$',               column_configurations_explorer)
-   , url(r'^configurations/explorer/filterCombos$',                     filter_combinations_explorer)
-   , url(r'^configurations/explorer/filterCombos/(\d+)$',               filter_combinations_explorer)
+   , (r'^calculator/', include('nell.calculator.urls')) #
+   , (r'^scheduler/',  include('nell.scheduler.urls'))  #
+   , (r'^admin/',      include(admin.site.urls))        #
    , url(r'^profile/(\d+)/blackout/(\d+)/$',               user_blackout)
    , url(r'^profile/(\d+)/blackout/$',                     user_blackout)
    , url(r'^profile/(\d+)/dynamic_contact$',               dynamic_contact)
@@ -35,69 +33,28 @@ urlpatterns = patterns(''
    , url(r'^project/([^/]+)/session/(\d+)/enable$',        toggle_session)
    , url(r'^project/([^/]+)/blackout/(\d+)/$',             project_blackout)
    , url(r'^project/([^/]+)/blackout/$',                   project_blackout)
-   , url(r'^projects$',           ProjectResource(permitted_methods=('GET', 'PUT', 'POST'))) #
-   , url(r'^projects/(\d+)$',     ProjectResource(permitted_methods=('PUT', 'GET', 'POST'))) #
-   , url(r'^projects/email$',                              projects_email) #
    , url(r'^projects/ical$',                               get_ical)
    , url(r'^projects/ical/[A-za-z.]*$',                    get_ical)
-   , url(r'^projects/time_accounting/([^/]+)$',            time_accounting) #
+   , url(r'^schedule/$',                                   gbt_schedule)
    , url(r'^schedule/public',                              public_schedule)
    , url(r'^schedule/summary$',                            summary)
-   , url(r'^schedule/email$',                              scheduling_email)
-   , url(r'^schedule/$',                                   gbt_schedule)
    , url(r'^search$',                                      search)
-   , url(r'^sessions/options$',   get_options) #
-   , url(r'^sessions/time_accounting/([^/]+)$',   session_time_accounting) #
-   , url(r'^schedule/change_schedule$', change_schedule) #
-   , url(r'^schedule/shift_period_boundaries$', shift_period_boundaries) #
-   , url(r'^sessions$',           SessionResource(permitted_methods=('GET', 'PUT', 'POST'))) #
-   , url(r'^sessions/(\d+)$',     SessionResource(permitted_methods=('PUT', 'GET', 'POST'))) #
-   , url(r'^reservations$',       reservations)
    , url(r'^receivers$',          rcvr_schedule)
-   , url(r'^receivers/schedule$', receivers_schedule) #
-   , url(r'^receivers/shift_date$', rcvr_schedule_shift_date) #
-   , url(r'^receivers/add_date$', rcvr_schedule_add_date) #
-   , url(r'^receivers/toggle_rcvr$', rcvr_schedule_toggle_rcvr) #
-   , url(r'^receivers/delete_date$', rcvr_schedule_delete_date) #
    , url(r'^period/([^/]+)/toggle_moc$', toggle_moc)
    , url(r'^period/([^/]+)/moc_reschedule$', moc_reschedule)
    , url(r'^period/([^/]+)/moc_degraded$', moc_degraded)
-   , url(r'^period/([^/]+)/time_accounting$', period_time_accounting) #
-   , url(r'^periods/publish$',     publish_periods) #
-   , url(r'^periods/publish/(\d+)$',     publish_periods) #
-   , url(r'^periods/delete_pending', delete_pending) #
    , url(r'^window/([^/]+)/assign_period/(\d+)$', window_assign_period)
-   , url(r'^periods/(UTC)$',      PeriodResource(permitted_methods=('GET', 'PUT', 'POST'))) #
-   , url(r'^periods/(ET)$',       PeriodResource(permitted_methods=('GET', 'PUT', 'POST'))) #
-   , url(r'^periods/(UTC)/(\d+)$',PeriodResource(permitted_methods=('PUT', 'GET', 'POST'))) #
-   , url(r'^periods/(ET)/(\d+)$', PeriodResource(permitted_methods=('PUT', 'GET', 'POST'))) #
-   , url(r'^window/([^/]+)/copy$',           window_copy) #   
-   , url(r'^windows$',           WindowResource(permitted_methods=('GET', 'PUT', 'POST'))) #
-   , url(r'^windows/(\d+)$',     WindowResource(permitted_methods=('PUT', 'GET', 'POST'))) #
-   , url(r'^windowRanges$',           WindowRangeResource(permitted_methods=('GET', 'PUT', 'POST'))) #
-   , url(r'^windowRanges/(\d+)$',     WindowRangeResource(permitted_methods=('PUT', 'GET', 'POST'))) #
-   , url(r'^users$',           UserResource(permitted_methods=('GET', 'PUT', 'POST'))) #
-   , url(r'^users/(\d+)$',     UserResource(permitted_methods=('PUT', 'GET', 'POST'))) #
    , url(r'^investigator/([^/]+)/clear_cache$',         clear_user_cache)
    , url(r'^investigator/([^/]+)/ical$',                observer_ical)
    , url(r'^investigator/([^/]+)/ical/[A-za-z.]*$',     observer_ical)
    , url(r'^investigators/qualified$', remotely_qualified)
-   , url(r'^investigators$',      InvestigatorResource(permitted_methods=('PUT', 'GET', 'POST'))) #
-   , url(r'^investigators/([^/]+)$',InvestigatorResource(permitted_methods=('PUT', 'GET', 'POST')))
-    , url(r'^project/([^/]+)/friend/(\d+)/required$',       toggle_required_friend)
-    , url(r'^friends$',      FriendResource(permitted_methods=('PUT', 'GET', 'POST'))) #
-    , url(r'^friends/([^/]+)$', FriendResource(permitted_methods=('PUT', 'GET', 'POST')))
-   , url(r'^elective/([^/]+)/copy$',           elective_copy) #   
-   
-   , url(r'^electives$',           ElectiveResource(permitted_methods=('GET', 'PUT', 'POST'))) #
-   , url(r'^electives/(\d+)$',     ElectiveResource(permitted_methods=('PUT', 'GET', 'POST'))) #
+   , url(r'^project/([^/]+)/friend/(\d+)/required$',       toggle_required_friend)
    , url(r'^resourcecal_add_activity/$', add_activity)
    , url(r'^resourcecal_add_activity/(\d+)/$', add_activity)
    , url(r'^resourcecal_add_activity/(?P<year>\d{4})/(?P<month>\d{2})/(?P<day>\d{2})/$', add_activity)
    , url(r'^resourcecal_edit_activity/$', edit_activity)
    , url(r'^resourcecal_edit_activity/(\d+)/$', edit_activity)
    , url(r'^resourcecal_display_activity/(\d+)/$', display_maintenance_activity)
-   , (r'^admin/',                 include(admin.site.urls)) #
    , (r'^accounts/login/$', 'django_cas.views.login')
    , (r'^accounts/logout/$', 'django_cas.views.logout')
    , (r'^robots.txt$', 'django.views.static.serve',
@@ -105,4 +62,6 @@ urlpatterns = patterns(''
         , 'document_root': settings.STATIC_DOC_ROOT
         , 'show_indexes' : False})
    , (r'^static/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.STATIC_DOC_ROOT})
+   , (r'^calculator-ui/war/Calculator_ui.html', load_ui)
+   , (r'^calculator-ui/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.CALCULATOR_UI_DIR})
 )

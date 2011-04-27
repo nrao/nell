@@ -66,26 +66,26 @@ class TestElectiveResource(BenchTestCase):
 
     @timeIt
     def test_create(self):
-        response = self.client.post('/electives', self.fdata)
+        response = self.client.post('/scheduler/electives', self.fdata)
         self.failUnlessEqual(response.status_code, 200)
 
     @timeIt
     def test_create_empty(self):
-        response = self.client.post('/electives')
+        response = self.client.post('/scheduler/electives')
         self.failUnlessEqual(response.status_code, 200)
 
     def test_read_one(self):
-        response = self.client.get('/electives/%d' % self.elec.id)
+        response = self.client.get('/scheduler/electives/%d' % self.elec.id)
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('"complete": false' in response.content)
 
     def test_read_filter(self):
-        response = self.client.get('/electives'
+        response = self.client.get('/scheduler/electives'
                                 , {'filterSession' : self.sesshun.name})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue(self.sesshun.name in response.content)
 
-        response = self.client.get('/electives'
+        response = self.client.get('/scheduler/electives'
                                 , {'filterSession' : "not_there"})
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue('{"total": 0, "electives": []}' in response.content)
@@ -93,11 +93,11 @@ class TestElectiveResource(BenchTestCase):
     def test_update(self):
         fdata = self.fdata
         fdata.update({"_method" : "put"})
-        response = self.client.post('/electives/%s' % self.elec.id, fdata)
+        response = self.client.post('/scheduler/electives/%s' % self.elec.id, fdata)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_delete(self):
-        response = self.client.post('/electives/%s' % self.elec.id, {"_method" : "delete"})
+        response = self.client.post('/scheduler/electives/%s' % self.elec.id, {"_method" : "delete"})
         self.failUnlessEqual(response.status_code, 200)
         
 
