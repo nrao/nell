@@ -87,24 +87,15 @@ def create_users():
 
 def create_maintenance_period(start, duration):
     # Test field data
-    fdata = {"total_time": "3"
-           , "req_max": "6"
+    fdata = {"req_max": "6"
+           , "req_min": "2"
+           , "proj_code": "Maintenance"
            , "name": "Maintenance"
-           , "grade": 4.0
            , "science": "maintenance"
            , "orig_ID": "0"
            , "between": "0"
-           , "proj_code": "Maintenance"
-           , "PSC_time": "2"
-           , "sem_time": 0.0
-           , "req_min": "2"
            , "freq": 6.0
            , "type": "fixed"
-           , "source" : "blah"
-           , "enabled" : True
-           , "authorized" : True
-           , "complete" : False
-           , "backup" : False
              }
 
     s = Sesshun()
@@ -132,5 +123,6 @@ def create_maintenance_period(start, duration):
              , session = s
              , state   = Period_State.objects.get(name = 'Scheduled')
               )
+    p.accounting = Period_Accounting.objects.create(scheduled = 0.0)
     return p
 

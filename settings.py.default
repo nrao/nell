@@ -7,7 +7,9 @@ USE_REVERSION = False #MODIFY#
 
 NELL_ROOT         = '{path to your nell sandbox}' #MODIFY#
 CALCULATOR_UI_DIR = '/home/dss.gb.nrao.edu/active/calculator-ui'
+NUBBLES_DIR       = '/home/dss/release/nubbles'
 STATIC_DOC_ROOT   = NELL_ROOT + '/sesshuns/static'
+MEDIA             = '/home/dss.gb.nrao.edu/active/python/lib/python2.5/site-packages/django/contrib/admin/media' 
 SC_EQUATION_DEFS  = NELL_ROOT + '/calculator/equations.cfg'
 
 SERVER_EMAIL = 'dss@gb.nrao.edu'
@@ -109,7 +111,8 @@ AUTHENTICATION_BACKENDS = (
     'django_cas.backends.CASBackend',
 )
 
-CAS_SERVER_URL="https://my.nrao.edu/cas/login"
+# use "https://mirror.nrao.edu/cas/login" for development
+CAS_SERVER_URL="https://my.nrao.edu/cas/login"   #MODIFY#
 
 ROOT_URLCONF = 'nell.urls'
 

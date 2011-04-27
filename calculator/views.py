@@ -9,7 +9,7 @@ import simplejson as json
 import time
 
 @login_required
-def load_ui(request):
+def load_calc_ui(request):
     return render_to_response("war/Calculator_ui.html", {})
 
 @login_required

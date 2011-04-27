@@ -36,3 +36,4 @@ from TimeZone                        import TimeZone
 from User                            import User
 from Window                          import Window
 from WindowRange                     import WindowRange
+from revision_register               import *
