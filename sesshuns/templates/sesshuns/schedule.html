@@ -253,7 +253,7 @@
 	  {# Maintenance periods will provide a period id.  Non-standard          #}
 	  {# maintenance events will not provide a period id, and thus no anchor. #}
 	  {% if event.period_id != 0 %}
-	    <a href="/resourcecal_add_activity/{{event.period_id}}/">{{event.project_title}}</a>
+	    <a href="/resourcecal_add_activity/{{event.contained_id}}/">{{event.project_title}}</a>
 	    {# adds a little message about scheduled receiver change: 'Add: <rx>, Remove: <rx> #}
 	    {{rschedule|get_receiver_change:day}}
 	  {% else %}

@@ -9,8 +9,8 @@ from sesshuns.models                    import *
 from scheduler.httpadapters             import *
 from nell.utilities.database.external   import UserInfo
 from nell.utilities                     import TimeAgent
-from sesshuns.GBTCalendarEvent          import CalEventPeriod, CalEventMaintenanceActivity
-from sesshuns.GBTCalendarEvent          import CalEventMaintenanceActivityGroup
+from sesshuns.GBTCalendarEvent          import CalEventPeriod, CalEventFixedMaintenance
+from sesshuns.GBTCalendarEvent          import CalEventFloatingMaintenance, CalEventIncidental
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
 
 import settings
@@ -150,6 +150,7 @@ def get_gbt_schedule_events(start, end, timezone, get_moc = False, ignore_non_ma
 
     days = (end - start).days
     calendar = []
+    old_monday = None
 
     for i in range(0, days):
         daily_events = []
@@ -164,25 +165,39 @@ def get_gbt_schedule_events(start, end, timezone, get_moc = False, ignore_non_ma
         utc_yesterday = utc_today - delta
         utc_tomorrow = utc_today + delta
 
+        # get the Monday for the week.  The maintenance activity
+        # groups are retrieved for the entire week, so we do this only
+        # once per week.
+        monday = utc_today - timedelta(utc_today.weekday())
+
+        if monday != old_monday:
+            mags = Maintenance_Activity_Group.get_maintenance_activity_groups(monday)
+            old_monday = monday
+
         # include previous day's periods because last one may end
         # today.  Perhaps there is a way to do this exclusively via
-        # query, but there aren't that many periods in a day.
+        # query, but there aren't that many periods in a day.  Exclude
+        # the maintenance periods, because they are obtained above.
         ps = Period.objects.filter(start__gte = utc_yesterday)\
-            .filter(start__lt = utc_tomorrow).filter(state__name = "Scheduled")
+            .filter(start__lt = utc_tomorrow).filter(state__name = "Scheduled")\
+            .exclude(session__observing_type__type = "maintenance")
 
         for p in ps:
             if p.end() > utc_today:
+                # periods can be everything non-maintenance
                 ev = CalEventPeriod(p, p.start < utc_today, p.end() > utc_tomorrow,
                                     p.moc_met() if get_moc else True, timezone)
                 daily_events.append(ev)
 
+        daily_events += _get_fixed_maint_events(mags, today, timezone)
+
         # if today is monday, get floating maintenance events for the week
-        # if today.weekday() == 0:
-        #     daily_events += _get_floating_maint_events(today, timezone)
+        if today.weekday() == 0:
+            daily_events += _get_floating_maint_events(mags, timezone)
 
         # finally gather up the non-maintenance-period maintenance events
         if not ignore_non_maint_period_maint_events:
-            daily_events += _get_non_maint_period_maint_events(today, timezone)
+            daily_events += _get_incidental_events(today, timezone)
 
         # now sort the events and add to the calendar list
         daily_events.sort()
@@ -191,68 +206,50 @@ def get_gbt_schedule_events(start, end, timezone, get_moc = False, ignore_non_ma
     return calendar
 
 ######################################################################
-# This helper gathers up all the floating maintenance activities
-# Floating activities may come as pending periods, or incomplete
-# electives and have a session type of 'maintenance'.  This helper
-# fetches the pending periods (if any) and the incomplete events (if
-# any) in the date range, packages them in a list of CalEvents, sorts
-# the list and labels each event appropriately ('A', 'B', etc.) and
-# returns the list.
+# This helper returns this day's fixed maintenance periods.
 ######################################################################
 
-def _get_floating_maint_events(day, timezone):
+def _get_fixed_maint_events(mags, day, timezone):
     """
-    _get_floating_maint_events(day, timezone)
+    _get_fixed_maint_events(mags, day, timezone)
 
-    Takes the day (assumes it is Monday) and finds the maintenance
-    periods for that week.  Returns a list of CalEvent objects
-    consisting of all the floating activities for that Monday's week.
+    Takes a set of maintenance activity groups and returns the one for
+    'day' if there is a fixed one for 'day'.
     """
 
-    pend = []
-    utc_day = TimeAgent.est2utc(day) if timezone == 'ET' else day
+    evs = []
+    day = TimeAgent.truncateDt(day)
+    tomorrow = day + timedelta(1)
 
-    try:
-        delta = timedelta(days = 7)
-        # get maintenance periods for the date span
-        mp = Period.objects\
-            .filter(session__observing_type__type = "maintenance")\
-            .filter(start__gte = utc_day)\
-            .filter(start__lt = utc_day + delta)\
-            .filter(elective = None)\
-            .exclude(state__abbreviation = 'D')
+    for mag in mags:
+        if mag.period:        # fixed if period is set
+            if TimeAgent.truncateDt(mag.get_start()) == day:
+                ev = CalEventFixedMaintenance(mag, mag.get_start() < day,
+                                              mag.get_end() > tomorrow,
+                                              True, timezone)
+                evs.append(ev)
+    return evs
 
-        # get maintenance electives for the date span
-        me = Elective.objects\
-            .filter(session__observing_type__type = 'maintenance')\
-            .filter(periods__start__gte = utc_day)\
-            .filter(periods__start__lt = utc_day + delta)\
-            .distinct()
+######################################################################
+# This helper returns the floating maintenance activities.
+######################################################################
 
-        # combine both kinds of maintenance events (elective provides
-        # first period as representative), then sort the events by
-        # underlying period's start datetime.
-        maint_events = []
-        next_day = utc_day + timedelta(days = 1)
+def _get_floating_maint_events(mags, timezone):
+    """
+    _get_floating_maint_events(mags, timezone)
 
-        for p in mp:
-            ev = CalEventPeriod(p, p.start < utc_day, p.end() >= next_day, True, timezone)
-            maint_events.append(ev)
+    Given a list of maintenance groups, returns CalEvents for the
+    floating ones.
+    """
 
-        for i in me:
-            ev = CalEventElective(i, TZ = timezone)
-            maint_events.append(ev)
+    evs = []
 
-        # ensure that first one gets 'A', second 'B', etc.
-        maint_events = _assign_floating_maintenance_activities(maint_events)
+    for mag in mags:
+        if not mag.period:
+            ev = CalEventFloatingMaintenance(contained = mag, TZ = timezone)
+            evs.append(ev)
 
-    except:
-        if settings.DEBUG == True:
-            printException(formatExceptionInfo())
-
-        maint_events = []
-
-    return maint_events
+    return evs
 
 ######################################################################
 # Finds any non-maintenance-period maintenance activities and places
@@ -261,7 +258,7 @@ def _get_floating_maint_events(day, timezone):
 # objects.
 ######################################################################
 
-def _get_non_maint_period_maint_events(today, timezone):
+def _get_incidental_events(today, timezone):
     """
     Gathers up all the non-maintenance-period maintenance activities,
     and returns them in a list of CalEvent objects.
@@ -276,31 +273,7 @@ def _get_non_maint_period_maint_events(today, timezone):
         .order_by('_start')
 
     if mas.exists():
-        ev = CalEventMaintenanceActivity(mas, TZ = timezone)
+        ev = CalEventIncidental(mas, TZ = timezone)
         return [ev]
 
     return []
-
-######################################################################
-# _assign_floating_maintenance_activities()
-#
-# Floating maintenance periods/electives must have an order so that
-# maintenance personnel can enter activities with the knowledge that
-# the period they are signing up for is the first, second,
-# etc. contemplated for that week.  The days are labeled 'A' for the
-# first, 'B' for the second, etc.
-#
-# Periods are ordered by their start date.  Electives are ordered by
-# their ID: lower ID is first, next higher ID is next, etc.  If a
-# floating period is scheduled out of order (i.e. 'B' before 'A') then
-# their order is swapped.
-######################################################################
-
-def _assign_floating_maintenance_activities(maint_events):
-    maint_events.sort()
-
-    for i in range(0, len(maint_events)):
-        maint_events[i].set_fm_name(chr(i + 65))
-
-    maint_events = [e for e in maint_events if e.is_floating_maintenance()]
-    return maint_events

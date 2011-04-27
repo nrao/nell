@@ -27,10 +27,14 @@
 #
 ######################################################################
 
-from django.db        import models
-from scheduler.models import Period, Window
-from datetime         import datetime, timedelta
-from nell.utilities   import TimeAgent
+from django.db                          import models, transaction
+from scheduler.models                   import Period, Window, Elective
+from Maintenance_Activity               import Maintenance_Activity
+from datetime                           import datetime, timedelta
+from nell.utilities                     import TimeAgent
+from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
+
+import settings
 
 ######################################################################
 # Maintenance_Activity_Group is a collection points for all
@@ -95,18 +99,263 @@ class Maintenance_Activity_Group(models.Model):
     # maintenance activity groups can be queried by the week of
     # interest.
     week    = models.DateTimeField(null = True)
-    
+
     class Meta:
         db_table  = "maintenance_activity_group"
         app_label = "sesshuns"
 
     def __unicode__(self):
+        sr = "%i -- %s; (%s); %s; %s; " % (self.id, self.week.date(), self.get_start().date(),
+                                           self.rank, "deleted" if self.deleted else "active")
+        
         if self.maintenance_activity_set.count():
-            sr = ", ".join([e.get_subject() for e in self.maintenance_activity_set.all()])
+            sr += ", ".join([e.get_subject() for e in self.maintenance_activity_set.all()])
         else:
-            sr = "Empty"
+            sr += "Empty"
         return sr
 
     def get_week(self):
+        """
+        Returns the start-of-week date of the week this activity will
+        take place in.
+        """
         return TimeAgent.truncateDt(self.week)
+
+    def get_start(self):
+        """
+        If this is a fixed maintenance period there will have been a
+        period assigned.  If so, return this period's start.  If not,
+        return the start-of-week date.
+        """
+        if self.period:
+            return self.period.start
+        else:
+            return self.get_week()
+
+    def get_end(self):
+        """
+        If this is a fixed maintenance period then return the period's
+        end, if not return the end of the week.
+        """
+
+        if self.period:
+            return self.period.end()
+        else:
+            return self.get_week() + timedelta(7)
+
+    ######################################################################
+    # The model already has a 'maintenance_activity_set' attribute
+    # wich can be used to access the Maintenance_Activity objects
+    # associated with this group.  However, when a group is assigned
+    # to a scheduled period--i.e. goes from 'floating' to 'fixed',
+    # with a firm date and time--is is then possible to go through the
+    # repeat templates to see if any should be instantiated for the
+    # date of the scheduled period.  If so this function does this and
+    # folds them into the existing maintenance activity set and
+    # returns it.
+    ######################################################################
+
+    def get_maintenance_activity_set(self):
+        """
+        Returns a set of maintenance activities occuring during this
+        group's duration, in time order.
+        """
+
+        if not self.period:
+            mas = self.maintenance_activity_set.all()
+        else:
+            period = self.period
+            # To handle repeat maintenance activity objects:
+            repeatQ = models.Q(deleted = False) \
+                & (models.Q(repeat_interval = 1) \
+                       | models.Q(repeat_interval = 7) \
+                       | models.Q(repeat_interval = 30)) \
+                       & (models.Q(_start__lte = period.end()) \
+                              & models.Q(repeat_end__gte = period.end()))
+
+            start_endQ = models.Q(start__gte = period.start) \
+                & models.Q(start__lte = period.end())
+
+            groupQ  = models.Q(group = self)
+            dbmas   = Maintenance_Activity.objects.filter(groupQ)
+            dbrmas  = Maintenance_Activity.objects.filter(repeatQ)
+            mas     = [i for i in dbmas if not i.is_repeat_template()]
+            rmas    = [i for i in dbrmas]
+
+            # rmas is the list repeating activity templates that may apply
+            # for this period.  We need clones of these to include in mas.
+            # If however there are already clones in mas, we'll want to
+            # skip that template.
+
+            x = []
+
+            for i in rmas:
+                for j in mas:
+                    if j.repeat_template == i:
+                        x.append(i)
+
+            # Weekly repeats have a problem: what if the repeat falls on a
+            # day that is not a maintenance day?  Where should we put it?
+            # One strategy is to examine the maintenance periods from 3
+            # days in the past to 3 days into the future.  if none of
+            # those is more suitable, we keep the weekly activity here. If
+            # there is a tie, we favor the earlier date. This is done by
+            # taking the modulo 7 of start - maintenance_activity.start
+            # and mapping it to the values in 'dm'.  Lowest value wins.
+
+            dm = {4: 30, 5: 20, 6: 10, 0: 0, 1: 15, 2: 25, 3: 35}
+            delta = timedelta(days = 3)
+            today = TimeAgent.truncateDt(period.start)
+            p = Period.get_periods_by_observing_type(today - delta,
+                                                     today + delta,
+                                                     "maintenance")
+
+            for i in rmas:
+                if i.repeat_interval > 1:
+                    start_date = TimeAgent.truncateDt(i.get_start())
+                    diff = (today - start_date).days % i.repeat_interval
+
+                    if diff:
+                        # doesn't fall on this date.  Is this the closest
+                        # period though?
+
+                        if diff > 6:     # monthly not due
+                            x.append(i)
+                        else:            # weekly or monthly that is due this week
+                            for j in p:
+                                if j != period:  # check only other periods
+                                    mod = (j.start.date() \
+                                               - start_date.date()).days \
+                                               % i.repeat_interval
+
+                                    # Test to see if it's a better fit in
+                                    # another period.  and if so, don't
+                                    # use here.
+                                    if mod < 7 and dm[mod] < dm[diff]:
+                                        x.append(i)
+                                        break
+
+            # Now that we have a list of templates that are not suitable,
+            # cull the template list:
+            for i in x:
+                if i in rmas:
+                    rmas.remove(i)
+
+            # The remaining templates may be used:
+            for i in rmas:
+                ma = i.clone(self)
+                mas.append(ma)
+
+        # remove all activities marked deleted.  This must be done
+        # after all the above to prevent a replacement being generated
+        # for a deleted activity, for repeat activities.
+        mas = [i for i in mas if not i.deleted]
+        mas.sort(cmp = lambda x, y: cmp(x.get_start().time(),
+                                        y.get_start().time()))
+
+        return mas
+
+    @staticmethod
+    @transaction.commit_on_success
+    def get_maintenance_activity_groups(utc_day, include_deleted = False):
+        """
+        Returns a list of maintenance activity groups for the week
+        starting on 'utc_day'.  This list will be sorted by rank, and
+        each group will have been assigned to the correct maintenance
+        period, should any of those be scheduled.
+        """
+        utc_day = TimeAgent.truncateDt(utc_day)
+        mags = []
+
+        try:
+            delta = timedelta(days = 7)
+            # get maintenance periods for the date span
+            mp = Period.objects\
+                .filter(session__observing_type__type = "maintenance")\
+                .filter(start__gte = utc_day)\
+                .filter(start__lt = utc_day + delta)\
+                .filter(elective = None)\
+                .exclude(state__abbreviation = 'D')
+
+            # get maintenance electives for the date span
+            me = Elective.objects\
+                .filter(session__observing_type__type = 'maintenance')\
+                .filter(periods__start__gte = utc_day)\
+                .filter(periods__start__lt = utc_day + delta)\
+                .distinct()
+
+            # need as many groups as there are maintenance days
+            # (floating or fixed).  First, count up the maintenance
+            # days, then the groups.  If not equal, we must either
+            # truncate the groups or add to them.  Finally any groups
+            # within the tally must be marked not deleted (in case
+            # they were deleted earlier), and any outside the tally
+            # must be marked deleted.
+            maintenance_periods = mp.count() + me.count()
+            dbmags = Maintenance_Activity_Group.objects\
+                .filter(week__gte = utc_day)\
+                .filter(week__lt = utc_day + delta)\
+                .order_by("rank")
+            mags = [mag for mag in dbmags]
+
+            if maintenance_periods != len(mags):
+                if len(mags) > maintenance_periods:
+                    for i in range(maintenance_periods, len(mags)):
+                        mag = mags[i]
+                        mag.deleted = True
+                        mag.save()
+                if len(mags) < maintenance_periods:
+                    for i in range(len(mags), maintenance_periods):
+                        mag = Maintenance_Activity_Group()
+                        mag.week = utc_day
+                        mag.deleted = False
+                        mag.rank = chr(65 + i)
+                        mag.save()
+                        mags.append(mag)
+
+            for i in range(0, maintenance_periods):
+                mag = mags[i]
+                if mag.deleted:
+                    mag.deleted = False
+                    mag.save()
+
+            # now make sure scheduled periods/electives get assigned
+            # the correct group.
+            sched_periods = []
+
+            # start with non-elective periods
+            for i in mp:
+                if i.isScheduled():
+                    sched_periods.append(i)
+
+            # add any elective's scheduled periods
+            for i in me:
+                sched_periods += i.periodsByState('S')
+
+            # sort periods by start, groups by rank.  Makes them easy
+            # to match up.  Any previous matchups will be undone.
+            sched_periods.sort(key = lambda x: x.start)
+            mags.sort(key = lambda x: x.rank)
+
+            for i in range(0, len(mags)):
+                mag = mags[i]
+
+                if i < len(sched_periods):
+                    p = sched_periods[i]
+
+                    if mag.period != p:
+                        mag.period = p
+                        mag.save()
+                else:
+                    if mag.period:
+                        mag.period = None
+                        mag.save()
+        except:
+            if settings.DEBUG == True:
+                printException(formatExceptionInfo())
+
+        if not include_deleted:
+            mags = [m for m in mags if not m.deleted]
+
+        return mags
 

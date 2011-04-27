@@ -1,5 +1,6 @@
 from scheduler.httpadapters        import *
 from scheduler.models              import *
+from nell.utilities                import TimeAgent
 
 # Test field data
 fdata = {"total_time": "3"
@@ -84,8 +85,7 @@ def create_users():
                  ))
     return users
 
-
-def create_maintenance_period(start, duration):
+def create_maintenance_sesshun():
     # Test field data
     fdata = {"total_time": "3"
            , "req_max": "6"
@@ -127,10 +127,50 @@ def create_maintenance_period(start, duration):
     s.status = status
     s.save()
 
-    p = Period(start = start
-             , duration = duration
-             , session = s
-             , state   = Period_State.objects.get(name = 'Scheduled')
+    return s
+
+    
+def create_maintenance_period(start, duration, state = 'Scheduled'):
+    s = create_maintenance_sesshun()
+    state = Period_State.objects.get(name = state)
+    pa = Period_Accounting(scheduled = 0.0)
+    pa.save()
+    p = Period(start = TimeAgent.est2utc(start),
+               duration = duration,
+               session = s,
+               state   = state,
+               accounting = pa
               )
+    p.save()
     return p
 
+def create_maintenance_elective(periods):
+    """
+    Creates an elective belonging to a maintenance session.  This
+    elective will have as many periods as there are items in the
+    'periods' parameter.  This is a tuple of tuples: ((date,
+    duration), (date, duration), ...).  Because this is a maintenance
+    period the dates given are assumed to be ET, and are converted to
+    UT before storing in the database.
+    """
+    s = create_maintenance_sesshun()
+    ste = Session_Type.objects.get(type = 'elective')
+    s.session_type = ste
+    s.save()
+    e = Elective(session = s, complete = False)
+    pend = Period_State.objects.get(name = 'Pending')
+    e.save()
+
+    for p in periods:
+        pa = Period_Accounting(scheduled = 0.0)
+        pa.save()
+        per = Period(session = s,
+                     start = TimeAgent.est2utc(p[0]),
+                     duration = p[1],
+                     state = pend,
+                     accounting = pa,
+                     elective = e
+                     )
+        per.save()    
+
+    return e
