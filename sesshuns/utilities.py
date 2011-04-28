@@ -57,6 +57,8 @@ def get_requestor(request):
     Note: CAS (used by PST) has case-insensitive usernames.
     """
     loginUser = request.user.username
+    if loginUser is None or loginUser == '':
+        return
     pst_id = UserInfo().getIdFromUsername(loginUser)
     requestor = User.objects.get(pst_id = pst_id)
 
