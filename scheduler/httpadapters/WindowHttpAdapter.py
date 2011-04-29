@@ -49,7 +49,7 @@ class WindowHttpAdapter (object):
         # manner as we do for periods
         handle = fdata.get("handle", "")
         if handle:
-            self.window.session = self.window.handle2session(handle)
+            self.window.session = Sesshun.handle2session(handle)
         else:
             try:
                 maintenance = Project.objects.get(pcode='Maintenance')

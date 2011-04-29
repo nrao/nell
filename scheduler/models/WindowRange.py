@@ -69,7 +69,7 @@ class WindowRange(models.Model):
     def lstInRange(self, lst, buffer = 0):
         "Does a given LST fit in this range?"
 
-        # TBF, WTF: this really only applies to ranges of 1 day,
+        # Note, WTF: this really only applies to ranges of 1 day,
         # since any lst (0-24 hrs) will fit in a range of >2 
         # days, but wtf.
 
