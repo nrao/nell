@@ -3,7 +3,7 @@ from datetime                import timedelta
 from test_utils              import BenchTestCase, timeIt
 from scheduler.models        import *
 from scheduler.utilities     import *
-from utils                   import create_sesshun
+from utils                   import create_sesshun, setupElectives, setupWindows
 
 class TestUtilities(BenchTestCase):
 
@@ -91,56 +91,8 @@ class TestUtilities(BenchTestCase):
         self.assertEqual([emails[1][0], emails[2][0]], ob)
         self.assertEqual(emails[1], fs)
 
+    @setupElectives
     def test_copy_elective(self):
-
-        # setup the test:
-        # TBF: this was cut and paste from TestElective
-        self.sesshun = create_sesshun()
-        self.sesshun.session_type = Session_Type.get_type("elective")
-        self.sesshun.save()
-        dt = datetime(2009, 6, 1, 12, 15)
-        dur = 5.0
-        self.deleted   = Period_State.get_state("D")
-        self.pending   = Period_State.get_state("P")
-        self.scheduled = Period_State.get_state("S")
-
-        # create an elective to group the periods by
-        self.elec = Elective(session = self.sesshun, complete = False)
-        self.elec.save()
-        
-        # create 3 periods separated by a week
-        pa = Period_Accounting(scheduled = 0.0)
-        pa.save()
-        self.period1 = Period(session = self.sesshun
-                            , start = dt 
-                            , duration = dur
-                            , state = self.pending
-                            , accounting = pa
-                            , elective = self.elec
-                              )
-        self.period1.save()    
-
-        pa = Period_Accounting(scheduled = 0.0)
-        pa.save()
-        self.period2 = Period(session = self.sesshun
-                            , start = dt + timedelta(days = 7)
-                            , duration = dur
-                            , state = self.pending
-                            , accounting = pa
-                            , elective = self.elec
-                              )
-        self.period2.save() 
-
-        pa = Period_Accounting(scheduled = 0.0)
-        pa.save()
-        self.period3 = Period(session = self.sesshun
-                            , start = dt + timedelta(days = 2*7)
-                            , duration = dur
-                            , state = self.pending
-                            , accounting = pa
-                            , elective = self.elec
-                              )
-        self.period3.save() 
 
         # finally, done with setup
         origNumWins = len(Elective.objects.all())
@@ -163,77 +115,9 @@ class TestUtilities(BenchTestCase):
                         , [p.session.id for p in ne.periods.all()])
 
 
+    @setupWindows
     def test_copy_window(self):
 
-        self.deleted   = Period_State.get_state("D")
-        self.pending   = Period_State.get_state("P")
-        self.scheduled = Period_State.get_state("S")
-
-        # TBF: surely I should be able to pull this into some 
-        # common code - there are other unit tests that need windows?
-        # TBF: cut & paste from TestWindow
-        self.sesshun = create_sesshun()
-        self.sesshun.session_type = Session_Type.get_type("windowed")
-        self.sesshun.save()
-        dt = datetime(2009, 6, 1, 12, 15)
-        pa = Period_Accounting(scheduled = 0.0)
-        pa.save()
-        self.default_period = Period(session = self.sesshun
-                                   , start = dt
-                                   , duration = 5.0
-                                   , state = self.pending
-                                   , accounting = pa
-                                   )
-        self.default_period.save()    
-
-        start = datetime(2009, 6, 1)
-        dur   = 7 # days
-        
-        # create window
-        self.w = Window()
-        #self.w.start_date = start
-        #self.w.duration = dur
-        self.w.session = self.sesshun
-        self.w.total_time = self.default_period.duration
-        self.w.save()
-        wr = WindowRange(window = self.w
-                       , start_date = start
-                       , duration = dur
-                        )
-        wr.save() 
-        self.wr1 = wr
-
-        # window & default period must both ref. eachother
-        self.w.default_period = self.default_period
-        self.w.save()
-        self.default_period.window = self.w
-        self.default_period.save()
-        self.w_id = self.w.id
-
-        # a chosen period
-        pa = Period_Accounting(scheduled = 0.0)
-        pa.save()
-        dt = self.default_period.start - timedelta(days = 2)
-        self.period = Period(session = self.sesshun
-                                   , start = dt
-                                   , duration = 5.0
-                                   , state = self.pending
-                                   , accounting = pa
-                                   )
-        self.period.save()    
-
-        pjson = PeriodHttpAdapter(self.default_period).jsondict('UTC', 1.1)
-        self.fdata = {"session":  1
-                    #, "start":    "2009-06-01"
-                    #, "duration": 7
-                    , "num_periods": 0
-                    , "default_date" : pjson['date'] 
-                    , "default_time" : pjson['time'] 
-                    , "default_duration" : pjson['duration'] 
-                    , "default_state" : pjson['state'] 
-                    }
-
-        # finally, done with setup
         origNumWins = len(Window.objects.all())
 
         # actually copy the window for testing
