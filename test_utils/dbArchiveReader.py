@@ -35,12 +35,12 @@ class dbArchiveReader(Archiver):
     def __init__(self):
         Archiver.__init__(self)
 
-        self.host = settings.DATABASE_HOST
+        self.host = settings.DATABASES['default']['HOST']
         self.cnn = pg.connect(dbname = settings.BENCHMARK_DB_NAME
                             , host   = self.host
-                            , port   = int(settings.DATABASE_PORT)
-                            , user   = settings.DATABASE_USER
-                            , passwd = settings.DATABASE_PASSWORD
+                            , port   = int(settings.DATABASES['default']['PORT'])
+                            , user   = settings.DATABASES['default']['USER']
+                            , passwd = settings.DATABASES['default']['PASSWORD']
                              )
                              
         if self.cnn == None:

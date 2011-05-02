@@ -28,22 +28,18 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-#DATABASE_ENGINE = 'mysql'
-# TBF should use engine 'postgresql2' for deployment
-DATABASE_ENGINE = 'postgresql' #MODIFY#
-                               # 'postgresql_psycopg2', 'postgresql', 'mysql',
-                               # 'sqlite3' or 'oracle'.
-DATABASE_NAME = 'dss_prime'   #MODIFY#
-                              # Modify to your database name or path to
-                              # database file if using sqlite3.
-DATABASE_USER = 'dss'         # Not used with sqlite3.
-DATABASE_PASSWORD = ''  # Not used with sqlite3.
-#DATABASE_PASSWORD = 'asdf5!'  # Not used with sqlite3.
-# TBF needs specific machine for deployment
-DATABASE_HOST = 'trent'       #MODIFY#
-                              # Set to empty string for localhost. Not used
-                              # with sqlite3.
-DATABASE_PORT = '5432'        # Set to 5432 for default. Not used with sqlite3.
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        #'ENGINE': 'django.db.backends.postgresql_psycopg2', # Deployment
+        'NAME': 'dss',                   # Or path to database file if using sqlite3.
+        'USER': 'dss',                   # Not used with sqlite3.
+        'PASSWORD': '',                  # Not used with sqlite3.
+        'HOST': 'trent',                 # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '5432',                  # Set to empty string for default. Not used with sqlite3.
+    }
+}
+
 BENCHMARK_DB_NAME = None      # Set to 'benchmark' for nightly unit tests
                               # or a personal database for your own tests
                               # or leave as None to not save benchmarks
@@ -92,7 +88,7 @@ SECRET_KEY = '=e3g42_zv8*b2@ivmr*ll%m2g&8alj_d$k2x44mm0scupht$-4'
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.load_template_source',
+    'django.template.loaders.app_directories.Loader',
     'django.template.loaders.eggs.load_template_source',  # TBF commented out in release?!
 )
 

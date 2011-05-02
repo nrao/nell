@@ -11,13 +11,14 @@ class NellTestCase(unittest.TestCase):
         self.c = None
 
     def connect(self):
-        dbname = "test_" + settings.DATABASE_NAME
-        port   = int(settings.DATABASE_PORT) if settings.DATABASE_PORT != '' else 5432
-        return pg.connect(host   = settings.DATABASE_HOST
-                     , user   = settings.DATABASE_USER
-                     , passwd = settings.DATABASE_PASSWORD
-                     , port   = port
-                     , dbname = dbname)
+        dbname = "test_" + settings.DATABASES['default']['NAME']
+        port   = int(settings.DATABASES['default']['PORT']) \
+             if settings.DATABASES['default']['PORT'] != '' else 5432
+        return pg.connect(host   = settings.DATABASES['default']['HOST']
+                        , user   = settings.DATABASES['default']['USER']
+                        , passwd = settings.DATABASES['default']['PASSWORD']
+                        , port   = port
+                        , dbname = dbname)
 
     def setUp(self):
         if hasattr(settings, "CACHE_BACKEND"):
