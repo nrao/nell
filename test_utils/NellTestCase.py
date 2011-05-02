@@ -70,3 +70,4 @@ class NellTestCase(unittest.TestCase):
                 c.query(reseq_cmd)
 
         c.close()
+

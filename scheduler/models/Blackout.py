@@ -41,6 +41,7 @@ class Blackout(models.Model):
            * project - pcode
         """
         return self.user.display_name() if self.forUser() else self.project.pcode  
+
     def isActive(self, date = datetime.utcnow()):
         """
         Takes a UTC datetime object and returns a Boolean indicating whether
