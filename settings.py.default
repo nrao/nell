@@ -32,7 +32,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
         #'ENGINE': 'django.db.backends.postgresql_psycopg2', # Deployment
-        'NAME': 'dss',                   # Or path to database file if using sqlite3.
+        'NAME': 'dss',                   # Or path to database file if using sqlite3.  #MODIFY#
         'USER': 'dss',                   # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
         'HOST': 'trent',                 # Set to empty string for localhost. Not used with sqlite3.
@@ -115,8 +115,8 @@ ROOT_URLCONF = 'nell.urls'
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     "/home/dss/integration/nell/templates"    #MODIFY#
-  , "/home/dss/integration/nell/calculator/templates"
-  , "/home/dss/integration/nell/sesshuns/templates"
+  , "/home/dss/integration/nell/calculator/templates"  #MODIFY#
+  , "/home/dss/integration/nell/sesshuns/templates"  #MODIFY#
   , CALCULATOR_UI_DIR
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
