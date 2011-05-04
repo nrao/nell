@@ -76,8 +76,11 @@ class TestBlackout(NellTestCase):
                }
         self.assertEqual(event, json[0])
 
-    # TBF
-    # test_isActive
+    def test_isActive(self):
+        results = [(b.isActive(b.start_date + timedelta(hours = 2))
+                  , b.isActive(b.end_date + timedelta(hours = 2)))
+                   for b in Blackout.objects.all()]
+        self.assertEqual(results, [(True, False), (True, True), (True, False)])
 
     def test_generateDates(self):
 

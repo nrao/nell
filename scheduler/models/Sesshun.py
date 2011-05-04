@@ -32,8 +32,6 @@ class Sesshun(models.Model):
     accounting_notes   = models.TextField(null = True, blank = True)
     notes              = models.TextField(null = True, blank = True)
 
-    restrictions = "Unrestricted" # TBF Do we still need restrictions?
-
     base_url = "/sesshuns/sesshun/"
 
     def __unicode__(self):
@@ -48,6 +46,22 @@ class Sesshun(models.Model):
 
     def get_absolute_url(self):
         return "/sesshuns/sesshun/%i/" % self.id
+
+    def toHandle(self):
+        if self.original_id is None:
+            original_id = ""
+        else:
+            original_id = str(self.original_id)
+        return "%s (%s) %s" % (self.name
+                             , self.project.pcode
+                             , original_id)
+
+    @staticmethod
+    def handle2session(h):
+        n, p = h.rsplit('(', 1)
+        name = n.strip()
+        pcode, _ = p.split(')', 1)
+        return Sesshun.objects.filter(project__pcode__exact=pcode).get(name=name)
 
     def isOpen(self):
         return self.session_type.type == "open"
@@ -109,7 +123,6 @@ class Sesshun(models.Model):
 
     def receiver_list_simple(self):
         "Returns a string representation of the rcvr logic, simplified"
-        # ignore rcvr groups that have no rcvrs!  TBF: shouldn't happen!
         rgs = [rg for rg in self.receiver_group_set.all() if rg.receivers.exists()]
         if len(rgs) == 1:
             # no parens needed

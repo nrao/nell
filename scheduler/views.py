@@ -15,7 +15,7 @@ from sesshuns.utilities                 import get_requestor
 from nell.utilities.notifiers           import SchedulingNotifier, Notifier, Email as EmailMessage
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException, JSONExceptionInfo
 from reversion                          import revision
-from settings                           import PROXY_PORT, DATABASE_NAME, DEBUG
+from settings                           import PROXY_PORT, DATABASES, DEBUG
 
 import simplejson as json
 import twitter
@@ -433,7 +433,7 @@ def publish_periods(request, *args, **kwds):
 
     revision.comment = get_rev_comment(request, None, "publish_periods")
 
-    if DATABASE_NAME == 'dss' and request.POST.get("tweet", "True") == "True":
+    if DATABASES['default']['NAME'] == 'dss' and request.POST.get("tweet", "True") == "True":
         update = 'GBT schedule updated. See https://dss.gb.nrao.edu/schedule/public for details.'
         try:
             twitter.Api(

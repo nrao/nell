@@ -271,8 +271,7 @@ class TestViewsPTC(PeriodsTestCase):
         self.failUnless("ok" in response.content)
 
         # make sure the states are right now
-        #for w in Window.objects.order_by("start_date"):
-        wins1 = Window.objects.all() # TBF: how to order????
+        wins1 = Window.objects.all() 
         for w in wins1:
             self.assertEquals([scheduled], w.periodStates())
 

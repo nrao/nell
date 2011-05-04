@@ -15,24 +15,10 @@ class Elective(models.Model):
         cmp = "Cmp." if self.complete else "Not Cmp."
         return "Elective for Session %s with %d periods. Cmp: %s, Grntd: %s" % (self.session.name, self.periods.count(), self.complete, self.guaranteed())
 
-    # TBF: cut & past from Window model
     def toHandle(self):
         if self.session is None:
             return ""
-        if self.session.original_id is None:
-            original_id = ""
-        else:
-            original_id = str(self.session.original_id)
-        return "%s (%s) %s" % (self.session.name
-                             , self.session.project.pcode
-                             , original_id)
-
-    # TBF: cut & past from Window model
-    def handle2session(self, h):
-        n, p = h.rsplit('(', 1)
-        name = n.strip()
-        pcode, _ = p.split(')', 1)
-        return Sesshun.objects.filter(project__pcode__exact=pcode).get(name=name)
+        return self.session.toHandle()
 
     def guaranteed(self):
         "Does the parent session have this flag set?"
@@ -47,7 +33,7 @@ class Elective(models.Model):
         """
 
         for p in self.pendingPeriods():
-            # TBF: anything we need to check before doing this?
+            # Note: anything we need to check before doing this?
             p.move_to_deleted_state()
 
         self.setComplete(True)

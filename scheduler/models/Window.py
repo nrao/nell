@@ -175,22 +175,10 @@ class Window(models.Model):
     def pendingPeriods(self):
         return self.periodsByState("P")
 
-    def handle2session(self, h):
-        n, p = h.rsplit('(', 1)
-        name = n.strip()
-        pcode, _ = p.split(')', 1)
-        return Sesshun.objects.filter(project__pcode__exact=pcode).get(name=name)
-
     def toHandle(self):
         if self.session is None:
             return ""
-        if self.session.original_id is None:
-            original_id = ""
-        else:
-            original_id = str(self.session.original_id)
-        return "%s (%s) %s" % (self.session.name
-                             , self.session.project.pcode
-                             , original_id)
+        return self.session.toHandle()
 
     def eventjson(self, id):
         """

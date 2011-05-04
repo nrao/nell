@@ -28,10 +28,10 @@ import os
 import csv
 
 CNN = pg.connect(dbname = settings.BENCHMARK_DB_NAME
-               , host   = settings.DATABASE_HOST
-               , port   = int(settings.DATABASE_PORT)
-               , user   = settings.DATABASE_USER
-               , passwd = settings.DATABASE_PASSWORD
+               , host   = settings.DATABASES['default']['HOST']
+               , port   = int(settings.DATABASES['default']['PORT'])
+               , user   = settings.DATABASES['default']['USER']
+               , passwd = settings.DATABASES['default']['PASSWORD']
                 )
 
 # The sql file utilities/database/create_benchmark.sql

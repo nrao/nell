@@ -22,7 +22,6 @@ class Blackout(models.Model):
                (self.repeat.repeat, self.forName(), self.start_date, self.end_date)
 
     def checkValidUser(self):
-        # TBF: better way of checking for these?
         assert ((self.project is not None) or (self.user is not None))
         assert (not ((self.project is None) and (self.user is None)))
     
@@ -30,12 +29,6 @@ class Blackout(models.Model):
         "Assumes one of [user,project] is NULL"
         self.checkValidUser()
         return self.project is None
-
-    #def forWhom(self):
-    #    """
-    #    Who is this blackout for?  Assumes one of [user,project] is NULL.
-    #    """
-    #    return self.user if self.forUser() else self.project
 
     def forUrlId(self):
         "Returns the url id for whom this blackout is for"
@@ -48,6 +41,7 @@ class Blackout(models.Model):
            * project - pcode
         """
         return self.user.display_name() if self.forUser() else self.project.pcode  
+
     def isActive(self, date = datetime.utcnow()):
         """
         Takes a UTC datetime object and returns a Boolean indicating whether
