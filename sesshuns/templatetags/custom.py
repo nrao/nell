@@ -3,6 +3,7 @@
 from django                  import template
 from django.utils.safestring import SafeUnicode
 from sesshuns                import models
+from sesshuns.utilities      import *
 from datetime                import datetime, timedelta
 from sets                    import Set
 from nell.utilities          import TimeAccounting
@@ -30,15 +31,11 @@ def dt2sex(value):
 
 @register.filter
 def target_horz(value):
-    t = value.getTarget()
-    tag = "*" if t.isEphemeris() else ""
-    return t.get_horizontal() + tag
+    return target_hv(value)[0]
 
 @register.filter
 def target_vert(value):
-    t = value.getTarget()
-    tag = "*"  if t.isEphemeris() else ""
-    return t.get_vertical() + tag
+    return target_hv(value)[1]
 
 @register.inclusion_tag('flatten.html')
 def edit_allotment(sesshun_id):
