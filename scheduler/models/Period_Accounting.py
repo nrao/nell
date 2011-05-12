@@ -54,22 +54,17 @@ class Period_Accounting(models.Model):
         Simply a listing of all the fields that hold actual numbers 
         that we'll want to change.
         """
-        # TBF: should we do it this way?
-        #exclude = ["_state", "id", "description"]
-        #return [f for f in self.__dict__.keys() if f not in exclude]
-        # or this way?
-        fields = ['scheduled'
-        , 'not_billable'
-        , 'short_notice'
-        , 'other_session_weather'
-        , 'other_session_rfi'
-        , 'other_session_other'
-        , 'lost_time_weather'
-        , 'lost_time_rfi'
-        , 'lost_time_other'
-        , 'lost_time_bill_project'
-        ]
-        return fields
+        return ['scheduled'
+              , 'not_billable'
+              , 'short_notice'
+              , 'other_session_weather'
+              , 'other_session_rfi'
+              , 'other_session_other'
+              , 'lost_time_weather'
+              , 'lost_time_rfi'
+              , 'lost_time_other'
+              , 'lost_time_bill_project'
+              ]
 
     def observed(self):
         "OT = SC - OS - LT"

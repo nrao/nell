@@ -34,8 +34,6 @@ class TestReceiver(BenchTestCase):
         s.receiver_group_set.all().delete()
         adapter.save_receivers('L | (X & S)')
         rgs = s.receiver_group_set.all().order_by('id')
-        #print rgs
-        # TBF WTF? now it is S, then it is X??
         #print rgs[0].receivers.all()[1].abbreviation
         self.assertEqual(2, len(rgs))
         #print rgs[0].receivers.all()[0].abbreviation

@@ -92,7 +92,7 @@ class TestViews(BenchTestCase):
               , 'PCode': ['false']                 , 'Friend': ['false']
               , 'Max. Trimester Time(s)': ['false'], 'Trimester': ['false']
               , 'PI': ['false']                    , 'Type': ['false']
-              , 'Total Time(s)': ['false']         , 'explorer': ['/projects']
+              , 'Total Time(s)': ['false']         , 'explorer': ['/scheduler/projects']
               }
         c = Client()
         response = c.post('/scheduler/configurations/explorer/columnConfigs', data)
@@ -108,7 +108,7 @@ class TestViews(BenchTestCase):
         data = {'Trimester': '08C'
               , 'Project Type': 'science'
               , 'Complete': 'True'
-              , 'explorer': '/projects'
+              , 'explorer': '/scheduler/projects'
               , 'name': 'test'
               }
         c = Client()

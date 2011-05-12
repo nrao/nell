@@ -136,7 +136,7 @@ class TestSessionResource(BenchTestCase):
         self.assertEquals(r_json['receiver'], 'L')
 
     @timeIt
-    def test_create_rcvrs(self):   # TBF hold until handles multiple rcvrs
+    def test_create_rcvrs(self):
         response = self.client.post('/scheduler/sessions',
                                     {'receiver' : 'K & (L | S)'})
         self.failUnlessEqual(response.status_code, 200)

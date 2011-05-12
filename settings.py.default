@@ -7,7 +7,9 @@ USE_REVERSION = False #MODIFY#
 
 NELL_ROOT         = '{path to your nell sandbox}' #MODIFY#
 CALCULATOR_UI_DIR = '/home/dss.gb.nrao.edu/active/calculator-ui'
+NUBBLES_DIR       = '/home/dss/release/nubbles'
 STATIC_DOC_ROOT   = NELL_ROOT + '/sesshuns/static'
+MEDIA             = '/home/dss.gb.nrao.edu/active/python/lib/python2.5/site-packages/django/contrib/admin/media' 
 SC_EQUATION_DEFS  = NELL_ROOT + '/calculator/equations.cfg'
 
 SERVER_EMAIL = 'dss@gb.nrao.edu'
@@ -26,22 +28,18 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-#DATABASE_ENGINE = 'mysql'
-# TBF should use engine 'postgresql2' for deployment
-DATABASE_ENGINE = 'postgresql' #MODIFY#
-                               # 'postgresql_psycopg2', 'postgresql', 'mysql',
-                               # 'sqlite3' or 'oracle'.
-DATABASE_NAME = 'dss_prime'   #MODIFY#
-                              # Modify to your database name or path to
-                              # database file if using sqlite3.
-DATABASE_USER = 'dss'         # Not used with sqlite3.
-DATABASE_PASSWORD = ''  # Not used with sqlite3.
-#DATABASE_PASSWORD = 'asdf5!'  # Not used with sqlite3.
-# TBF needs specific machine for deployment
-DATABASE_HOST = 'trent'       #MODIFY#
-                              # Set to empty string for localhost. Not used
-                              # with sqlite3.
-DATABASE_PORT = '5432'        # Set to 5432 for default. Not used with sqlite3.
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        #'ENGINE': 'django.db.backends.postgresql_psycopg2', # Deployment
+        'NAME': 'dss',                   # Or path to database file if using sqlite3.  #MODIFY#
+        'USER': 'dss',                   # Not used with sqlite3.
+        'PASSWORD': '',                  # Not used with sqlite3.
+        'HOST': 'trent',                 # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '5432',                  # Set to empty string for default. Not used with sqlite3.
+    }
+}
+
 BENCHMARK_DB_NAME = None      # Set to 'benchmark' for nightly unit tests
                               # or a personal database for your own tests
                               # or leave as None to not save benchmarks
@@ -89,8 +87,8 @@ SECRET_KEY = '=e3g42_zv8*b2@ivmr*ll%m2g&8alj_d$k2x44mm0scupht$-4'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
-    'django.template.loaders.app_directories.load_template_source',
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader',
     'django.template.loaders.eggs.load_template_source',  # TBF commented out in release?!
 )
 
@@ -109,15 +107,16 @@ AUTHENTICATION_BACKENDS = (
     'django_cas.backends.CASBackend',
 )
 
-CAS_SERVER_URL="https://my.nrao.edu/cas/login"
+# use "https://mirror.nrao.edu/cas/login" for development
+CAS_SERVER_URL="https://my.nrao.edu/cas/login"   #MODIFY#
 
 ROOT_URLCONF = 'nell.urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     "/home/dss/integration/nell/templates"    #MODIFY#
-  , "/home/dss/integration/nell/calculator/templates"
-  , "/home/dss/integration/nell/sesshuns/templates"
+  , "/home/dss/integration/nell/calculator/templates"  #MODIFY#
+  , "/home/dss/integration/nell/sesshuns/templates"  #MODIFY#
   , CALCULATOR_UI_DIR
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.

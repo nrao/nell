@@ -49,7 +49,7 @@ class WindowHttpAdapter (object):
         # manner as we do for periods
         handle = fdata.get("handle", "")
         if handle:
-            self.window.session = self.window.handle2session(handle)
+            self.window.session = Sesshun.handle2session(handle)
         else:
             try:
                 maintenance = Project.objects.get(pcode='Maintenance')
@@ -58,6 +58,7 @@ class WindowHttpAdapter (object):
                 self.window.session  = Sesshun.objects.get(id=fdata.get("session", 1))
 
         self.window.total_time = float(fdata.get("total_time", "0.0"))
-        self.window.setComplete(fdata.get("complete", "false") == "true")
+        complete = fdata.get("complete", "false")
+        self.window.setComplete(complete == "true" or complete == True)
 
         self.window.save()

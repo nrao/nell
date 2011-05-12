@@ -47,24 +47,16 @@ class ElectiveResource(NellResource):
                 es = query_set.order_by(order + sortField)
             else:
                 # by default, sort by the earliest period's start
-                es = query_set.annotate(elec_start=Min('periods__start')).order_by('elec_start')
+                es = query_set.annotate(elec_start=Min('periods__start')).\
+                      order_by('elec_start').distinct()
 
-            # TBF, HACK: finally, ordering by annotation above can return
-            # duplicate objects, so filter these out
-            elecs = []
-            ids = []
-            for e in es:
-                if e.id not in ids:
-                    ids.append(e.id)
-                    elecs.append(e)
-
-            total = len(elecs)
+            total = len(es)
             offset = int(request.GET.get("offset", 0))
             limit  = int(request.GET.get("limit", -1))
             if limit != -1:
-                elecs = elecs[offset:offset+limit]
+                es = es[offset:offset+limit]
             return HttpResponse(json.dumps(dict(total = total
-                 , electives = [ElectiveHttpAdapter(e).jsondict() for e in elecs]))
+                 , electives = [ElectiveHttpAdapter(e).jsondict() for e in es]))
             , content_type = "application/json")
         else:
             # one, identified by id in arg list

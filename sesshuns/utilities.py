@@ -13,7 +13,10 @@ from sesshuns.GBTCalendarEvent          import CalEventPeriod, CalEventFixedMain
 from sesshuns.GBTCalendarEvent          import CalEventFloatingMaintenance, CalEventIncidental
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
 
-import settings
+def target_hv(value):
+    t = value.getTarget()
+    tag = "*" if t.isEphemeris() else ""
+    return t.get_horizontal() + tag, t.get_vertical() + tag
 
 def getReceivers(names):
     rcvrs = []
@@ -60,6 +63,8 @@ def get_requestor(request):
     Note: CAS (used by PST) has case-insensitive usernames.
     """
     loginUser = request.user.username
+    if loginUser is None or loginUser == '':
+        return
     pst_id = UserInfo().getIdFromUsername(loginUser)
     requestor = User.objects.get(pst_id = pst_id)
 

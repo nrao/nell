@@ -58,7 +58,6 @@ def getInvestigatorEmails(pcodes):
     ob = []
     fs = []
     try:
-        # TBF: use list comprehension?
         for pcode in pcodes:
             p = Project.objects.filter(pcode = pcode)[0]
             for inv in p.investigator_set.all():
@@ -138,15 +137,10 @@ def copy_elective(id, num):
         WindowHttpAdapter(newE).init_from_post(ej) #Window()
         for pj in ej['periods']:
             newP = Period()
-            # TBF: using update_from_post instead of init for accounting?
+            # Note: using update_from_post instead of init for accounting?
             PeriodHttpAdapter(newP).update_from_post(pj, 'UTC')
             newP.elective = newE
             newP.save()
-        # it looks like setting the periods & accounting causes
-        # the complete flag to get set somehow, so do it again(TBF)
-        newE.complete = ej['complete']
-        newE.save()
-
 
 def copy_window(id, num):
     """
@@ -191,7 +185,7 @@ def copy_window(id, num):
             #wr.save()                
         for pj in wj['periods']:
             newP = Period()
-            # TBF: using update_from_post instead of init for accounting?
+            # Note: using update_from_post instead of init for accounting?
             PeriodHttpAdapter(newP).update_from_post(pj, 'UTC')
             newP.window = newW
             newP.save()
@@ -222,10 +216,6 @@ def copy_window(id, num):
             if w.default_period.id == pj['id']:
                 newW.default_period = newP
                 newW.save()
-            # it looks like setting the periods & accounting causes
-            # the complete flag to get set somehow, so do it again(TBF)
-        newW.complete = wj['complete']
-        newW.save()
         #print "    new Window: "
         #print "    ", newW.id, newW
 
