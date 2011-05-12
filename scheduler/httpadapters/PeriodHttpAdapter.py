@@ -70,7 +70,7 @@ class PeriodHttpAdapter (object):
             self.period.forecast = TimeAgent.quarter(datetime.utcnow())
         handle = fdata.get("handle", "")
         if handle:
-            new_session = self.handle2session(handle)
+            new_session = Sesshun.handle2session(handle)
             if not update_score:
                 update_score = self.period.session != new_session
             self.period.session = new_session
@@ -176,10 +176,3 @@ class PeriodHttpAdapter (object):
             if rcvr is not None:
                 rp = Period_Receiver(receiver = rcvr, period = self.period)
                 rp.save()
-            
-    def handle2session(self, h):
-        n, p = h.rsplit('(', 1)
-        name = n.strip()
-        pcode, _ = p.split(')', 1)
-        return Sesshun.objects.filter(project__pcode__exact=pcode).get(name=name)
-

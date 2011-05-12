@@ -6,7 +6,7 @@ from scheduler.models              import *
 from utilities.TimeAccounting    import TimeAccounting
 from sets                         import Set
 from datetime                     import *
-from sesshuns.templatetags.custom import * # TBF: NO! NO!
+from sesshuns.utilities           import target_hv
 import sys
 
 from tools.reports.Report import Report, Line
@@ -109,8 +109,9 @@ def GenerateReport(start):
                     line.add(s.observing_type.type)
                     line.add(s.session_type.type[0])
                     line.add(s.frequency)
-                    line.add(target_horz(s))
-                    line.add(target_vert(s))
+                    th, tv = target_hv(s)
+                    line.add(th)
+                    line.add(tv)
                     line.add(s.allotment.total_time)
                     line.add(ta.getCompletedTimeBilled(s, start), fptype)
                     line.add(ta.getUpcomingTimeBilled(s, start), fptype)

@@ -6,7 +6,6 @@ from utils                        import create_sesshun
 
 class TestUser(NellTestCase):
     def setUp(self):
-        # TBF: From here down, till noted, is the same code as TestProject
         super(TestUser, self).setUp()
 
         self.project = Project()
@@ -44,7 +43,6 @@ class TestUser(NellTestCase):
         self.sesshun.project = self.project
         self.sesshun.save()
 
-        # TBF: end of redundant code, now add periods
         #period_data = {"session" : self.sesshun
         #             , "date"
         state = Period_State.objects.get(abbreviation = 'S')

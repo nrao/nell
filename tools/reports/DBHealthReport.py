@@ -6,6 +6,7 @@ setup_environ(settings)
 
 from sets                      import Set
 from datetime                  import date, datetime, timedelta
+from django.db.models          import Q
 
 from scheduler.models          import *
 from utilities                 import TimeAccounting
@@ -103,6 +104,7 @@ def get_non_windowed_sessions_with_windows():
 # TBF: this has been reduced due to the move of start_date & duration from
 # Window to WindowRange.  Now we use filter_current_windows in conjunction
 # with the old calls to filter these windows
+#  Huh?  - mtm
 
 def get_windows():
     return Window.objects.all()
@@ -122,6 +124,7 @@ def get_missing_default_periods():
 
 def get_incomplete_windows():
     # TBF: have to fix this to handle window ranges
+    #  Huh?  - mtm
     ws = get_windows()
     #win_no_start = filter_current_windows(ws.filter(start_date = None))
     #win_no_dur = filter_current_windows(ws.filter(duration = None))
@@ -666,13 +669,14 @@ def GenerateReport():
 
     outfile.write("\n\nGaps in historical schedule:")
     now = datetime.utcnow()
-    ps_all = Period.objects.filter(start__lt = now).order_by("start")
-    ps = [p for p in ps_all if not p.isDeleted()] # TBF: use filter?
+    ps_all = Period.objects.filter(start__lt = now)\
+      .filter(~Q(state__abbreviation = 'D')).order_by("start")
+    ps = ps_all
     values = []
     previous = ps[0]
     for p in ps[1:]:
-        # periods should be head to tail - TBF: this catches overlaps too!
-        if p.start != previous.end():
+        # periods should be head to tail 
+        if p.start != previous.end() and p.start > previous.end():
             values.append("Gap between: %s and %s" % (previous, p))
         previous = p
     print_values(outfile, values)

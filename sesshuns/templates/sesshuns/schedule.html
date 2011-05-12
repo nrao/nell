@@ -286,7 +286,7 @@
       {# data for 'Observers' column.  May be more than one observer. #}
       <td>
         {% for o in event.sanctioned_observers %}
-          <span title="Phones: {{o.user.getStaticContactInfo.phones|format_list}}, Dynamic: {{o.user.contact_instructions}}, Reservations: {{o.user.getReservations|format_reservations}}">
+          <span title="Phones: {{o.user.getStaticContactInfo.phones|format_list}}, Dynamic: {{o.user.contact_instructions}}, Click on this link to view reservations in the observer's profile.">
             {{forloop.counter}}) <a href="/profile/{{o.user.id}}">{{o.user.last_name|pretty_none}}</a>
           </span>
         {% endfor %}

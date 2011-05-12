@@ -3,6 +3,7 @@ from django.http              import HttpResponse, HttpResponseRedirect
 from django.shortcuts         import get_object_or_404
 
 from utilities.FormatExceptionInfo import formatExceptionInfo
+from sesshuns.utilities            import get_requestor
 
 import simplejson as json
 import reversion
@@ -26,7 +27,7 @@ class NellResource(Resource):
     def get_rev_comment(self, request, obj, method):
        
         where = "%s %s" % (obj.__class__.__name__, method)
-        who = "nell" # TBF: see if a user is logged in
+        who   = get_requestor(request)
         return "WHO: %s, WHERE: %s" % (who, where)
 
     @revision.create_on_success 
