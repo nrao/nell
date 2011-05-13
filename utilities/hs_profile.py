@@ -1,3 +1,13 @@
+######################################################################
+# This code provides a profiling decorator that uses the hotshot
+# (http://docs.python.org/library/hotshot.html) profiler.  The source
+# of this code is the Django code wiki:
+# http://code.djangoproject.com/wiki/ProfilingDjango The only
+# modifications made here were to the decorator's name, changed from
+# 'profile' to 'hs_profile' ('hs' for hotshot) to avoid name clashes,
+# in case another profiler is used.
+######################################################################
+
 import hotshot
 import os
 import time
