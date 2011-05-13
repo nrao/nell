@@ -303,6 +303,7 @@ class Maintenance_Activity_Group(models.Model):
                     for i in range(maintenance_periods, len(mags)):
                         mag = mags[i]
                         mag.deleted = True
+                        mag.period = None
                         mag.save()
                 if len(mags) < maintenance_periods:
                     for i in range(len(mags), maintenance_periods):

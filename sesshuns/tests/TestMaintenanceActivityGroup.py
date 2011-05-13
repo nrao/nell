@@ -160,7 +160,7 @@ class TestMaintenanceActivityGroup(NellTestCase):
         self.assertEqual(mags[2].period.id, p1.id)
 
         # Now move the already scheduled self.mp1 to Wednesday.  It
-        # should now get 'B', and the rpevious 'B' holder should get
+        # should now get 'B', and the previous 'B' holder should get
         # 'A'.  'C' should remain the same.
         
         self.mp1.start = datetime(2011, 04, 13, 8)
@@ -188,3 +188,27 @@ class TestMaintenanceActivityGroup(NellTestCase):
         self.assertEqual('C', mags[2].rank)
         self.assertEqual(mags[2].deleted, True)
         
+        # now revive 'self.mp1'.  C should reappear.
+        self.mp1.state = self.pending
+        self.mp1.save()
+        mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
+        self.assertEqual('A', mags[0].rank)
+        self.assertEqual(mags[0].period.id, p2.id)
+        self.assertEqual('B', mags[1].rank)
+        self.assertEqual(mags[1].period.id, p1.id)
+        self.assertEqual('C', mags[2].rank)
+        self.assertEqual(mags[2].deleted, False)
+        self.assertEqual(mags[2].period, None)
+
+        # and finally re-schedule 'self.mp1'.  'B' should be assigned to
+        # it, since it is still Wednesday.
+        self.mp1.state = self.scheduled
+        self.mp1.save()
+        mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
+        self.assertEqual('A', mags[0].rank)
+        self.assertEqual(mags[0].period.id, p2.id)
+        self.assertEqual('B', mags[1].rank)
+        self.assertEqual(mags[1].period.id, self.mp1.id)
+        self.assertEqual('C', mags[2].rank)
+        self.assertEqual(mags[2].deleted, False)
+        self.assertEqual(mags[2].period.id, p1.id)
