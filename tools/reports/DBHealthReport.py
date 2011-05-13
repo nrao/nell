@@ -9,6 +9,7 @@ from datetime                  import date, datetime, timedelta
 from django.db.models          import Q
 
 from scheduler.models          import *
+from scheduler.httpadapters    import SessionHttpAdapter
 from utilities                 import TimeAccounting
 from utilities                 import AnalogSet
 from tools.alerts              import SessionAlerts
@@ -23,15 +24,41 @@ def get_obs_hours(sessions, typ):
     ta = TimeAccounting()
     return sum([ta.getTime("observed", s) for s in get_sessions(session, typ)])
 
-def missing_observer_parameter_pairs(sessions):
-    pairs = [
-        Set(["LST Exclude Hi", "LST Exclude Low"])
-      , Set(["LST Include Hi", "LST Include Low"])
-    ]
+def invalidLSTParameters(sessions):
+    "Checks for invalid LST Exclusion/Inclusion Parameters."
 
-    return [s.name for s in sessions \
-        if len(pairs[0].intersection(s.observing_parameter_set.all())) == 1 or \
-           len(pairs[1].intersection(s.observing_parameter_set.all())) == 1]
+    def invalidLST(s):
+        try:
+            params  = s.get_lst_parameters()
+            exclude = [(low, hi) for low, hi in params['LST Exclude']]
+            include = [(low, hi) for low, hi in params['LST Include']]
+        except:
+            return True
+        else:
+            return False
+
+    return [s.name for s in sessions if invalidLST(s)]
+
+def repeatedObservingParameters(sessions):
+    def repeatedParam(s):
+        params = [op.parameter.name 
+          for op in s.observing_parameter_set.filter(
+            ~Q(parameter__name__contains = 'LST Exclude') & 
+            ~Q(parameter__name__contains = 'LST Include'))]
+        repeats = [p for p in params if params.count(p) > 1]
+        return len(repeats) > 0
+
+    return [s.name for s in sessions if repeatedParam(s)]
+
+#def missing_observer_parameter_pairs(sessions):
+#    pairs = [
+#        Set(["LST Exclude Hi", "LST Exclude Low"])
+#      , Set(["LST Include Hi", "LST Include Low"])
+#    ]
+#
+#    return [s.name for s in sessions \
+#        if len(pairs[0].intersection(s.observing_parameter_set.all())) == 1 or \
+#           len(pairs[1].intersection(s.observing_parameter_set.all())) == 1]
 
 def check_maintenance_and_rcvrs():
     "Are there rcvr changes happening w/ out maintenance days?"
@@ -545,9 +572,17 @@ def GenerateReport():
               if s.session_type.type == "open" and s.frequency == 0.0]
     print_values(outfile, values)
 
-    outfile.write("\n\nSessions with unmatched observer parameter pairs:")
-    values = [s.name for s in missing_observer_parameter_pairs(sessions)]
+    outfile.write("\n\nSessions with invalid LST Exclusion/Inclusion parameters:")
+    values = invalidLSTParameters(sessions)
     print_values(outfile, values)
+
+    outfile.write("\n\nSessions with repeated observing parameters:")
+    values = repeatedObservingParameters(sessions)
+    print_values(outfile, values)
+
+    #outfile.write("\n\nSessions with unmatched observer parameter pairs:")
+    #values = [s.name for s in missing_observer_parameter_pairs(sessions)]
+    #print_values(outfile, values)
 
     outfile.write("\n\nSessions with RA and Dec equal to zero:")
     values = [s.name for s in sessions \
