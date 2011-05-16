@@ -124,7 +124,7 @@ class Window(models.Model):
     def timeBilled(self):
         """
         Simply the sum of all the periods' time billed, regardless of
-        state.  Remember that, in a healthy systme, pending and deleted
+        state.  Remember that, in a healthy system, pending and deleted
         periods should have no time billed.
         """
         return sum(p.accounting.time_billed() for p in self.periods.all())
@@ -159,7 +159,8 @@ class Window(models.Model):
         self.save()
 
     def nonDefaultPeriods(self):
-        return [p for p in self.periods.all() if p != self.default_period]
+        deleted = Period_State.get_state('D')
+        return [p for p in self.periods.exclude(state=deleted).all() if p != self.default_period]
 
     def periodStates(self):
         return [p.state for p in self.periods.all().order_by("start")]
