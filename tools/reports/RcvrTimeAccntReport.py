@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 
+from datetime import datetime
 from django.core.management import setup_environ
-import settings
+import settings, sys
 setup_environ(settings)
 
 from scheduler.models              import *
