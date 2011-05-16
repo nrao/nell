@@ -116,7 +116,7 @@ def GenerateReport(label, months):
     printSummary(outfile, "Test        ", testing)
     printSummary(outfile, "Shutdown    ", shutdown)
 
-    total = zip(scheduled, maintenance, testing, shutdown)
+    total = zip(scheduled, maintenance, testing)
     outfile.write("%s %s %s %s %s\n" % \
                   ('Total Hours '
                  , ("%.2f" % sum([sum(t) for t in total])).center(8)
