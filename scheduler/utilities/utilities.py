@@ -93,13 +93,13 @@ def getReservationsFromBOS(start, end):
        # TBF: BOS is still using the wrong ID - we need 'global id'
        userAuth_id = int(r['id'])
        pst_id = UserInfo().getIdFromUserAuthenticationId(userAuth_id)
-       user = User.objects.get(pst_id = pst_id)
-       if user is not None:
+       try: 
+           user = User.objects.get(pst_id = pst_id)
            pcodes = ",".join(user.getIncompleteProjects())
            hasInc = user.hasIncompleteProject()
-       else:
+       except User.DoesNotExist:
            pcodes = ""
-           hasInc = False
+           hasInc = False       
        if hasInc:
            r.update({"pcodes" : pcodes})
            r.update({"id" : user.pst_id})
