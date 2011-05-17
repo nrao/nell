@@ -14,13 +14,13 @@ class TestSessionHttpAdapter(NellTestCase):
         error = False
         try:
             self.adapter.update_lst_parameters('lst_ex', '14.0-10')
-        except AssertionError:
+        except NameError:
             error = True
         self.assertTrue(error)
 
         try:
             self.adapter.update_lst_parameters('lst_ex', '2.0 - 8.0, 4.0 - 10.0')
-        except AssertionError:
+        except NameError:
             error = True
         self.assertTrue(error)
 

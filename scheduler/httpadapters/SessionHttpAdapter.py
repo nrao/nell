@@ -234,27 +234,33 @@ class SessionHttpAdapter (object):
         to the model representation.
         """
 
-        if param is None or ranges is None:
+        if param is None:
             return
         
         pName    = "Exclude" if param == 'lst_ex' else "Include"
         lowParam = Parameter.objects.get(name="LST %s Low" % pName)
         hiParam  = Parameter.objects.get(name="LST %s Hi" % pName)
-        ranges   = [map(float, r.split('-')) for r in ranges.split(',') if r != '']
-
-        def checkRange(range):
-            low, hi = range
-            assert low <= hi
-        map(checkRange, ranges)
-
-        # Check for overlaps.
-        assert not any([(low >= low2 and low <= hi2) or (hi <= hi2 and hi >= low2) 
-           for low, hi in ranges for low2, hi2 in ranges if low != low2 and hi != hi2])
-
         for op in self.sesshun.observing_parameter_set.filter(parameter = lowParam):
             op.delete()
         for op in self.sesshun.observing_parameter_set.filter(parameter = hiParam):
             op.delete()
+
+        if ranges is None:
+            return
+
+        ranges   = [map(float, r.split('-')) for r in ranges.split(',') if r != '']
+
+        def checkRange(range):
+            low, hi = range
+            if low >= hi:
+                raise NameError("Range not supported: %s >= %s" % (low, hi))
+        map(checkRange, ranges)
+
+        # Check for overlaps.
+        if any([(low >= low2 and low <= hi2) or (hi <= hi2 and hi >= low2) 
+           for low, hi in ranges for low2, hi2 in ranges if low != low2 and hi != hi2]):
+           raise NameError("Overlaping ranges are not supported.")
+
         for low, hi in ranges:
             low_p = Observing_Parameter.objects.create(session     = self.sesshun
                                                      , parameter   = lowParam
