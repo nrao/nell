@@ -107,6 +107,19 @@ class TestSessionResource(BenchTestCase):
         s = Sesshun.objects.get(id = 1)
         self.assertEquals(True, s.guaranteed())
 
+    def test_update_lst_exclude(self):
+        response = self.client.post('/scheduler/sessions/1', {'_method' : 'put'
+                                                  , 'lst_ex' : ['2.0-4.0']})
+        self.failUnlessEqual(response.status_code, 200)
+        s = Sesshun.objects.get(id = 1)
+        print s.observing_parameter_set.filter(parameter__name__contains = 'LST Exclude')
+
+        response = self.client.post('/scheduler/sessions/1', {'_method' : 'put'
+                                                  , 'lst_ex' : ['2.0-4.0, 6.0-10.0']})
+        self.failUnlessEqual(response.status_code, 200)
+        s = Sesshun.objects.get(id = 1)
+        print s.observing_parameter_set.filter(parameter__name__contains = 'LST Exclude')
+
     def test_update_does_not_exist(self):
         response = self.client.post('/scheduler/sessions/1000', {'_method' : 'put'})
         self.failUnlessEqual(response.status_code, 404)

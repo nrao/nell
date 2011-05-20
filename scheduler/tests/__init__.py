@@ -1,5 +1,6 @@
 from utils                     import *
 from resources                 import *
+from httpadapters              import *
 from TestBlackout              import TestBlackout
 from TestElective              import TestElective
 from TestEmailTemplate         import TestEmailTemplate
