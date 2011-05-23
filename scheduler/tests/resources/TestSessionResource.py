@@ -121,8 +121,8 @@ class TestSessionResource(BenchTestCase):
         self.failUnlessEqual(response.status_code, 200)
         s = Sesshun.objects.get(id = 1)
         exclude = [op.float_value 
-          for op in s.observing_parameter_set.filter(parameter__name__contains = 'LST Exclude')]
-        self.assertEqual(exclude, [2.0, 6.0, 4.0, 10.0])
+          for op in s.observing_parameter_set.filter(parameter__name__contains = 'LST Exclude').order_by('id')]
+        self.assertEqual(exclude, [2.0, 4.0, 6.0, 10.0])
 
     def test_update_does_not_exist(self):
         response = self.client.post('/scheduler/sessions/1000', {'_method' : 'put'})
