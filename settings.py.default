@@ -12,6 +12,16 @@ STATIC_DOC_ROOT   = NELL_ROOT + '/sesshuns/static'
 MEDIA             = '/home/dss.gb.nrao.edu/active/python/lib/python2.5/site-packages/django/contrib/admin/media' 
 SC_EQUATION_DEFS  = NELL_ROOT + '/calculator/equations.cfg'
 
+# Twitter Stuff
+TWITTER_CONF = '/home/dss/release/conf/twitter.cfg'
+config = ConfigParser.RawConfigParser()
+config.read(TWITTER_CONF)
+TWITTER = {'consumer_key'        : config.get('keys', 'consumer_key')
+         , 'consumer_secret'     : config.get('keys', 'consumer_secret')
+         , 'access_token_key'    : config.get('keys', 'access_token_key')
+         , 'access_token_secret' : config.get('keys', 'access_token_secret')
+         }
+
 SERVER_EMAIL = 'dss@gb.nrao.edu'
 EMAIL_HOST   = 'smtp.gb.nrao.edu'
 
