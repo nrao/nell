@@ -1,4 +1,5 @@
 # Django settings for nell project.
+import ConfigParser
 
 # Look for variables marked with #MODIFY# to adapt for a specific installation
 
