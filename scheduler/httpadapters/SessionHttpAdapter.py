@@ -115,7 +115,10 @@ class SessionHttpAdapter (object):
             self.sesshun.nighttime())
         self.update_guaranteed(fdata)
         
-        self.update_lst_exclusion(fdata)    
+        #self.update_lst_exclusion(fdata)    
+        self.update_lst_parameters('lst_ex', fdata.get('lst_ex'))
+        self.update_lst_parameters('lst_in', fdata.get('lst_in'))
+
         self.update_xi_obs_param(fdata, self.sesshun.get_min_eff_tsys_factor())
         self.update_el_limit_obs_param(fdata
                                      , self.sesshun.get_elevation_limit())
@@ -225,56 +228,48 @@ class SessionHttpAdapter (object):
                 op.boolean_value = True
                 op.save()
 
-    def update_lst_exclusion(self, fdata):
+    def update_lst_parameters(self, param, ranges):
         """
-        Converts the json representation of the LST exclude flag
+        Converts the json representation of the LST include/exclude ranges
         to the model representation.
         """
-        lowParam = Parameter.objects.get(name="LST Exclude Low")
-        hiParam  = Parameter.objects.get(name="LST Exclude Hi")
+
+        if param is None:
+            return
         
-        # json dict string representation
-        lst_ex_string = fdata.get("lst_ex", None)
-        if lst_ex_string:
-            # unwrap and get the float values
-            lowStr, highStr = lst_ex_string.split("-")
-            low = float(lowStr)
-            high = float(highStr)
-            assert low <= high
+        pName    = "Exclude" if param == 'lst_ex' else "Include"
+        lowParam = Parameter.objects.get(name="LST %s Low" % pName)
+        hiParam  = Parameter.objects.get(name="LST %s Hi" % pName)
+        for op in self.sesshun.observing_parameter_set.filter(parameter = lowParam):
+            op.delete()
+        for op in self.sesshun.observing_parameter_set.filter(parameter = hiParam):
+            op.delete()
 
-        # get the model's string representation
-        current_lst_ex_string = self.sesshun.get_LST_exclusion_string()
+        if ranges is None:
+            return
 
-        if current_lst_ex_string == "":
-            if lst_ex_string:
-                # create a new LST Exlusion range
-                obs_param =  Observing_Parameter(session = self.sesshun
-                                               , parameter = lowParam
-                                               , float_value = low 
-                                                )
-                obs_param.save()
-                obs_param =  Observing_Parameter(session = self.sesshun
-                                               , parameter = hiParam
-                                               , float_value = high 
-                                                )
-                obs_param.save()
-            else:
-                # they are both none, nothing to do
-                pass
-        else:
-            # get the current model representation (NOT the string) 
-            lowObsParam = \
-                self.sesshun.observing_parameter_set.get(parameter=lowParam)
-            highObsParam = \
-                self.sesshun.observing_parameter_set.get(parameter=hiParam)
-            if lst_ex_string:
-                lowObsParam.float_value = low
-                lowObsParam.save()
-                highObsParam.float_value = high
-                highObsParam.save()
-            else:
-                lowObsParam.delete()
-                highObsParam.delete()
+        ranges   = [map(float, r.split('-')) for r in ranges.split(',') if r != '']
+
+        def checkRange(range):
+            low, hi = range
+            if low >= hi:
+                raise NameError("Range not supported: %s >= %s" % (low, hi))
+        map(checkRange, ranges)
+
+        # Check for overlaps.
+        if any([(low >= low2 and low <= hi2) or (hi <= hi2 and hi >= low2) 
+           for low, hi in ranges for low2, hi2 in ranges if low != low2 and hi != hi2]):
+           raise NameError("Overlaping ranges are not supported.")
+
+        for low, hi in ranges:
+            low_p = Observing_Parameter.objects.create(session     = self.sesshun
+                                                     , parameter   = lowParam
+                                                     , float_value = low
+                                                     )
+            hi_p  = Observing_Parameter.objects.create(session     = self.sesshun
+                                                     , parameter   = hiParam
+                                                     , float_value = hi
+                                                     )
 
     def jsondict(self):
         d = {"id"         : self.sesshun.id
@@ -300,7 +295,8 @@ class SessionHttpAdapter (object):
            , "guaranteed" : self.sesshun.guaranteed()
            , "transit"    : self.sesshun.transit() or False
            , "nighttime"  : self.sesshun.nighttime() or False
-           , "lst_ex"     : self.sesshun.get_LST_exclusion_string() or ""
+           , "lst_ex"     : self.sesshun.get_lst_string('LST Exclude') or ""
+           , "lst_in"     : self.sesshun.get_lst_string('LST Include') or ""
            , "receiver"   : self.sesshun.get_receiver_req()
            , "project_complete" : "Yes" if self.sesshun.project.complete else "No"
            , "xi_factor"  : self.sesshun.get_min_eff_tsys_factor() or 1.0

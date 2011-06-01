@@ -7,7 +7,7 @@ from System         import System
 class Target(models.Model):
     session    = models.OneToOneField(Sesshun, null = True, related_name = "target")
     system     = models.ForeignKey(System)
-    source     = models.CharField(null = True, max_length = 32, blank = True)
+    source     = models.CharField(null = True, max_length = 256, blank = True)
     vertical   = models.FloatField(null = True, blank = True)
     horizontal = models.FloatField(null = True, blank = True)
 

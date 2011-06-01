@@ -13,7 +13,6 @@ class Observing_Parameter(models.Model):
 
     class Meta:
         db_table        = "observing_parameters"
-        unique_together = ("session", "parameter")
         app_label       = "scheduler"
 
     def value(self):

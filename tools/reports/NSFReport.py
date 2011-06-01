@@ -61,7 +61,7 @@ def getDowntime(periods, month):
                                      , 'p.session.project.is_science()')])
 
 def getMaintenance(periods, month):
-    return getTime(filterPeriods(periods, 'p.session.project.is_maintenance()')
+    return getTime(filterPeriods(periods, 'p.session.project.is_maintenance() and not p.session.project.is_shutdown()')
                  , month)
 
 def getTesting(periods, month):
