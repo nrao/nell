@@ -133,7 +133,7 @@ class Maintenance_Activity(models.Model):
         else:
             repeat = "No"
             repeat_template = "None"
-            repeat_interval = interval_names[self.repeat_interval]
+            repeat_interval = interval_names.get(self.repeat_interval, 0)
             repeat_end = self.repeat_end
 
         repstr = ("Subject: %s\nLocation: %s\nTelescope Resource: %s\n"
@@ -298,7 +298,9 @@ class Maintenance_Activity(models.Model):
         return True if self.repeat_template else False
 
     def is_repeat_template(self):
-        return False if int(self.repeat_interval) == 0 else True
+        if self.repeat_interval:
+            return False if int(self.repeat_interval) == 0 else True
+        return False
 
     def is_future_template(self):
         if self.repeat_template and self.repeat_template.future_template:
