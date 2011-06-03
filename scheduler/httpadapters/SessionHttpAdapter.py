@@ -67,8 +67,12 @@ class SessionHttpAdapter (object):
         systemName = fdata.get("coord_mode", "J2000")
         system = System.objects.get(name = systemName)
 
-        v_axis = fdata.get("source_v", 0.0)
-        h_axis = fdata.get("source_h", 0.0)
+        if systemName == 'Galactic':
+            h_axis = fdata.get("source_lat", 0.0)
+            v_axis = fdata.get("source_long", 0.0)
+        else:
+            h_axis = fdata.get("source_ra", 0.0)
+            v_axis = fdata.get("source_dec", 0.0)
         
         target = Target(session    = self.sesshun
                       , system     = system
@@ -131,8 +135,12 @@ class SessionHttpAdapter (object):
         systemName = fdata.get("coord_mode", "J2000")
         system = System.objects.get(name = systemName)
 
-        v_axis = fdata.get("source_v", None)
-        h_axis = fdata.get("source_h", None)
+        if systemName == 'Galactic':
+            h_axis = fdata.get("source_lat", None)
+            v_axis = fdata.get("source_long", None)
+        else:
+            h_axis = fdata.get("source_ra", None)
+            v_axis = fdata.get("source_dec", None)
 
         t            = self.sesshun.target
         t.system     = system
@@ -310,9 +318,16 @@ class SessionHttpAdapter (object):
         else:
             d.update({"source"     : target.source
                     , "coord_mode" : target.system.name
-                    , "source_h"   : target.horizontal
-                    , "source_v"   : target.vertical
-                      })
+                    })
+
+            if target.system.name == 'Galactic':
+                d.update({"source_lat"   : target.horizontal
+                        , "source_long"  : target.vertical
+                       })
+            else:
+                d.update({"source_ra"    : target.horizontal
+                        , "source_dec"   : target.vertical
+                       })
 
         #  Remove all None values
         for k, v in d.items():

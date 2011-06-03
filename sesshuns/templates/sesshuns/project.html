@@ -27,12 +27,14 @@
           <table>
             <tr>
               <th style="{width: 100px;}">Name</th>
-              <th title="The target right ascension in J2000.  A '*' indicates that the position of this target is updated each day by the DSS.">RA</th>
-              <th title="The target declination in J2000. A '*' indicates that the position of this target is updated each day by the DSS.">Dec</th>
+              <th title="The target coordinate systems.">Coord.</th>
+              <th title="The target RA(J200) or latitude.  A '*' indicates that the position of this target is updated each day by the DSS.">RA/Lat</th>
+              <th title="The target declination(J200) or longitude. A '*' indicates that the position of this target is updated each day by the DSS.">Dec/Long</th>
               <th title="The target frequency in GHz.">Freq</th>
               <th title="The required receiver(s).">Rcvr</th>
               <th title="The billed and the allotted time in hours.">Time billed</th>
-              <th title="The requested minimum and maximum duration (in hours) of a telescope period.  To change these values, send an email to the helpdesk.">Min/Max Durations</th>
+              <th title="The requested minimum and maximum duration (in hours) of a telescope period.  To change these values, send an email to the helpdesk.">Min/Max Dur.
+              </th>
               <th title="The classified observing type.">Type</th>
               <th title="Session is authorized to observe by GBT staff.">Authorized</th>
               <th title="Select this box to enable the session.">Enabled</th>
@@ -54,6 +56,7 @@
             {% for s in sess %}
             <tr>
               <td>{{s.name}}</td>
+              <td>{{s|target_system}}</td>
               <td>{{s|target_horz}}</td>
               <td>{{s|target_vert}}</td>
               <td>{{s.frequency}}</td>
