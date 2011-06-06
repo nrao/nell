@@ -204,7 +204,7 @@ class Period(models.Model):
         deleted.
         """
 
-        if self.state.abbreviation != 'P' or self.maintenance_activity_set.exists():
+        if self.state.abbreviation != 'P' or self.maintenance_activity_group_set.exists():
             self.move_to_deleted_state()
         else:
             models.Model.delete(self)  # pending can really get removed!
