@@ -42,7 +42,7 @@ from django.utils.html                  import escape, conditional_escape
 from django                             import template
 from nell.utilities                     import TimeAgent
 from datetime                           import date, datetime, time, timedelta
-from utilities                          import get_requestor
+from utilities                          import get_requestor, get_rescal_supervisors
 from rescal_notifier                    import RescalNotifier
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
 
@@ -234,7 +234,7 @@ def display_maintenance_activity(request, activity_id = None):
         duration = timedelta(hours = ma.duration)
         end = start + duration
         u = get_requestor(request)
-        supervisors = _get_supervisors()
+        supervisors = get_rescal_supervisors()
 
         if ma.is_repeat_activity():
             repeat_interval = interval_names[ma.repeat_template.repeat_interval]
@@ -301,7 +301,7 @@ def add_activity(request, group_id = None, year = None,
                  month = None, day = None):
 
     u = get_requestor(request)
-    supervisors = _get_supervisors()
+    supervisors = get_rescal_supervisors()
     user = _get_user_name(u)
     supervisor_mode = True if (u in supervisors) else False
 
@@ -429,7 +429,7 @@ def edit_activity(request, activity_id = None):
             diffs = _process_activity(request, ma, form)
 
             if approved: # Notify supervisor if approved activity is modified
-                supervisors = _get_supervisors()
+                supervisors = get_rescal_supervisors()
                 view_url = "http://%s/resourcecal_display_activity/%s/" % (request.get_host(), ma.id)
                 rc_notifier.notify(supervisors,
                                    "modified",
@@ -440,7 +440,7 @@ def edit_activity(request, activity_id = None):
             return HttpResponseRedirect('/schedule/')
     else:
         u = get_requestor(request)
-        supervisors = _get_supervisors()
+        supervisors = get_rescal_supervisors()
         supervisor_mode = True if (u in supervisors) else False
 
         if request.GET['ActionEvent'] == 'Modify':
@@ -825,20 +825,6 @@ def _record_m2m_diffs(key, old, new, diffs):
     if len(ds):
         diffs[key] = s
     return diffs
-
-def _get_supervisors():
-    # TBF: when roles done, will get these by visiting the roles.
-    s = []
-
-    # don't spam supervisors from test setups
-    if settings.DEBUG == True:
-        s += User.objects.filter(auth_user__username = 'rcreager')
-    else:
-        s += User.objects.filter(auth_user__username = 'rcreager')
-        s += User.objects.filter(auth_user__username = 'banderso')
-        s += User.objects.filter(auth_user__username = 'mchestnu')
-
-    return s
 
 ######################################################################
 # Gets all future (from today) maintenance dates.  Note the special

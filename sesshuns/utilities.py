@@ -13,6 +13,9 @@ from sesshuns.GBTCalendarEvent          import CalEventPeriod, CalEventFixedMain
 from sesshuns.GBTCalendarEvent          import CalEventFloatingMaintenance, CalEventIncidental
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
 
+import settings
+
+
 def target_hv(value):
     t = value.getTarget()
     tag = "*" if t.isEphemeris() else ""
@@ -283,3 +286,17 @@ def _get_incidental_events(today, timezone):
         return [ev]
 
     return []
+
+def get_rescal_supervisors():
+    # TBF: when roles done, will get these by visiting the roles.
+    s = []
+
+    # don't spam supervisors from test setups
+    if settings.DEBUG == True:
+        s += User.objects.filter(auth_user__username = 'rcreager')
+    else:
+        s += User.objects.filter(auth_user__username = 'rcreager')
+        s += User.objects.filter(auth_user__username = 'banderso')
+        s += User.objects.filter(auth_user__username = 'mchestnu')
+
+    return s
