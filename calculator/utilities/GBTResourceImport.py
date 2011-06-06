@@ -36,22 +36,20 @@ class GBTResourceImport(object):
 
     def getResource(self, k, v):
         resource_map = {
-        'Backend'                : lambda v: Calc_Backend.objects.get_or_create(name = v)[0]
-      , 'Mode'                   : lambda v: Mode.objects.get_or_create(name = v)[0]
-      , 'Receiver'               : lambda v: Receiver.objects.get_or_create(name = v)[0]
-      , '# beams'                : lambda v: Beams.objects.get_or_create(name = v)[0]
-      , 'Polarization'           : lambda v: Polarization.objects.get_or_create(name = v)[0]
-      , 'Bandwidth (MHz)'        : lambda v: Bandwidth.objects.get_or_create(name = v)[0]
-      , 'Number spectral windows': lambda v: SpectralWindows.objects.filter(name = v)[0]
-      , 'Min integ time'         : lambda v: Integration.objects.get_or_create(name = v)[0]
-      , 'Switching mode'         : lambda v: Switching.objects.get_or_create(name = v, abbreviation = v)[0]
+        'Backend'                : lambda v: Calc_Backend.objects.get_or_create(name = v)
+      , 'Mode'                   : lambda v: Mode.objects.get_or_create(name = v)
+      , 'Receiver'               : lambda v: Receiver.objects.get_or_create(name = v)
+      , '# beams'                : lambda v: Beams.objects.get_or_create(name = v)
+      , 'Polarization'           : lambda v: Polarization.objects.get_or_create(name = v)
+      , 'Bandwidth (MHz)'        : lambda v: Bandwidth.objects.get_or_create(name = v)
+      , 'Number spectral windows': lambda v: SpectralWindows.objects.get_or_create(name = v)
+      , 'Min integ time'         : lambda v: Integration.objects.get_or_create(name = v)
+      , 'Switching mode'         : lambda v: Switching.objects.get_or_create(abbreviation = v)
       }
 
-        r = resource_map[k](v)
-        if r is not None:
-            if r.id is None and not self.silent:
-                print "Added:", k, r
-            r.save()
+        r, created = resource_map[k](v)
+        if created and not self.silent:
+            print "Added:", k, r
         return r
 
     def createConfigurations(self):
