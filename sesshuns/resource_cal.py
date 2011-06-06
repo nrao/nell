@@ -252,7 +252,6 @@ def display_maintenance_activity(request, activity_id = None):
                       if ma.modifications.all() else ""),
         supervisor_mode = True if (u  in supervisors) else False
         copymove_dates = _get_future_maintenance_dates2()
-        print copymove_dates
 
         params = {'subject'            : ma.subject,
                   'date'               : start.date(),
