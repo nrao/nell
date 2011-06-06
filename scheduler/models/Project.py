@@ -42,7 +42,8 @@ class Project(models.Model):
 
     def is_maintenance(self):
         return any(s.observing_type.type == 'maintenance' \
-                    for s in self.sesshun_set.all())
+                    for s in self.sesshun_set.all()) and \
+               not self.is_shutdown()
 
     def is_test(self):
         return any(s.observing_type.type == 'testing' \
