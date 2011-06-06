@@ -150,6 +150,9 @@ class CalEvent(object):
     def is_concurrent(self):
         return self.project_type() == 'I'
 
+    def is_shutdown(self):
+        return self.project_type() == 'D'
+
     # returns True if MOC degraded after period started. Should be
     # overrided if contained object cares about MOC.
     def moc_degraded(self):
@@ -346,6 +349,8 @@ class CalEventPeriod(CalEvent):
                 p_type = 'C'
             elif project.is_calibration():
                 p_type = 'K'
+            elif project.is_shutdown():
+                p_type = 'D'
             else:
                 p_type = 'T'
         return p_type

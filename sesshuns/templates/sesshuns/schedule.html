@@ -17,6 +17,7 @@
     .type_commissioning {background-color:#F0E68C}
     .type_calibration {background-color:#FF9933}
     .type_maintenance {background-color:#98FB98}
+    .type_shutdown {background-color:red}
     .type_concurrent_activity {background-color:#FF99FF}
     .moc_failure {background-color:#FF0000}
     .info{
@@ -192,7 +193,11 @@
           <td class="project_type type_astronomy">{{event.project_type}}</td>
       {% endif %}
 
-      {% if event.project_type == "M" %}
+      {% if event.project_type == "D" %}
+          <td class="project_type type_shutdown" >{{event.project_type}}</td>
+      {% endif %}
+
+      {% if event.project_type == "M" and not event.pcode == "Shutdown" %}
           <td class="project_type type_maintenance" >{{event.project_type}}</td>
       {% endif %}
 
