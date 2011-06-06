@@ -1,0 +1,80 @@
+------------------------------------------------------------------------------------------------
+Results
+------------------------------------------------------------------------------------------------
+  {% if e %}
+    {% ifequal ivalues.conversion.value 'Sensitivity to Time' %}{{e.t_tot.label}}: {{e.t_tot.value}} {{units.t_tot_units}}{% else %}{{e.sigma.label}}: {{e.sigma.value}} {{units.sigma}}{% endifequal %}
+    --------------------------------------------------------------------------------------------
+    {{e.t_sig.label}}: {{e.t_sig.value}} {{e.t_sig.units}}
+    {{e.t_ref.label}}: {{e.t_ref.value}} {{e.t_ref.units}}
+    {{e.t_eff.label}}: {{e.t_eff.value}} {{e.t_eff.units}}
+    --------------------------------------------------------------------------------------------
+    {{e.fwhm.label}}: {{e.fwhm.value}} {{e.fwhm.units}}
+    {{e.aperture_eff.label}}: {{e.aperture_eff.value}} {{e.aperture_eff.units}}
+    {{e.extended_source_eff.label}}: {{e.extended_source_eff.value}} {{e.extended_source_eff.units}}
+    {{e.confusion_limit.label}}: {{e.confusion_limit.value}} {{e.confusion_limit.units}}
+    --------------------------------------------------------------------------------------------
+    {{e.topocentric_freq.label}}: {{e.topocentric_freq.value}} {{e.topocentric_freq.units}}
+    {% ifequal ivalues.mode.value 'Spectral Line' %}
+    {{e.min_topo_freq.label}}: {{e.min_topo_freq.value}} {{e.min_topo_freq.units}}
+    {{e.smoothing_resolution.label}}: {{e.smoothing_resolution.value}} {{e.smoothing_resolution.units}}
+    {% endifequal %}
+    --------------------------------------------------------------------------------------------
+    {{e.air_mass.label}}: {{e.air_mass.value}} {{e.air_mass.units}}
+    {{e.attenuation.label}}: {{e.attenuation.value}} {{e.attenuation.units}}
+    {{e.t_sys.label}}: {{e.t_sys.value}} {{e.t_sys.units}}
+    --------------------------------------------------------------------------------------------
+    {{e.k1.label}}: {{e.k1.value}} {{e.k1.units}}
+    {{e.k2.label}}: {{e.k2.value}} {{e.k2.units}}
+  {% endif %}
+  {% if messages %}
+------------------------------------------------------------------------------------------------
+Messages
+------------------------------------------------------------------------------------------------
+
+    {% for m in messages %} {{m.type}} - {{m.msg}}
+    {% endfor %}
+  {% endif %}
+  {% if leftovers %}
+------------------------------------------------------------------------------------------------
+Other Results
+------------------------------------------------------------------------------------------------
+
+    {% for l in leftovers %} {{l.label}}: {{l.value}} {{l.units}}
+    {% endfor %}
+  {% endif %}
+  {% if e %}
+------------------------------------------------------------------------------------------------
+User Input
+------------------------------------------------------------------------------------------------
+    
+    {{ivalues.conversion.label}}: {{ivalues.conversion.value}} {{ivalues.conversion.units}}
+    {{ivalues.units.label}}: {{units.sigma}}
+    {{ivalues.time.label}}: {{ivalues.time.value}}
+    {{ivalues.sensitivity.label}}: {{ivalues.sensitivity.value}} {{units.sigma}}
+    --------------------------------------------------------------------------------------------
+    {{ivalues.backend.label}}: {{ivalues.backend.value}} {{ivalues.backend.units}}
+    {{ivalues.mode.label}}: {{ivalues.mode.value}} {{ivalues.mode.units}}
+    {{ivalues.receiver.label}}: {{ivalues.receiver.value}} {{ivalues.receiver.units}}
+    {{ivalues.beams.label}}: {{ivalues.beams.value}} {{ivalues.beams.units}}
+    {{ivalues.polarization.label}}: {{ivalues.polarization.value}} {{ivalues.polarization.units}}
+    {{ivalues.bandwidth.label}}: {{ivalues.bandwidth.value}} {{ivalues.bandwidth.units}}
+    {{ivalues.windows.label}}: {{ivalues.windows.value}} {{ivalues.windows.units}}
+    {{ivalues.switching.label}}: {{ivalues.switching.value}} {{ivalues.switching.units}}
+    --------------------------------------------------------------------------------------------
+    {{ivalues.frame.label}}: {{ivalues.frame.value}} {{ivalues.frame.units}}
+    {{ivalues.rest_freq.label}}: {{ivalues.rest_freq.value}} {{ivalues.rest_freq.units}}
+    {{ivalues.doppler.label}}: {{ivalues.doppler.value}} {{ivalues.doppler.units}}
+    {{ivalues.source_velocity.label}}: {{ivalues.source_velocity.value}} {{ivalues.source_velocity.units}}
+    {{ivalues.redshift.label}}: {{ivalues.redshift.value}} {{ivalues.redshift.units}}
+    {{ivalues.galactic.label}}: {% ifequal ivalues.galactic.value 'no_correction' %} Assume no contribution to Tsys.  {% endifequal %}{% ifequal ivalues.galactic.value 'estimated' %} User entered contribution to Tsys.  {% endifequal %}{% ifequal ivalues.galactic.value 'model' %} Using model for contribution to Tsys.  {% endifequal %}
+    {{ivalues.right_ascension.label}}: {{ivalues.right_ascension.value}} {{ivalues.right_ascension.units}}
+    {{ivalues.estimated_continuum.label}}: {{ivalues.estimated_continuum.value}} {{ivalues.estimated_continuum.units}}
+    {{ivalues.declination.label}}: {{ivalues.declination.value}} {{ivalues.declination.units}}
+    --------------------------------------------------------------------------------------------
+    {{ivalues.r_sig_ref.label}}: {{ivalues.r_sig_ref.value}} of RSigRef
+    {{ivalues.no_avg_ref.label}}: {{ivalues.no_avg_ref.value}} of NAvrgRef
+    {{ivalues.avg_pol.label}}: {{ivalues.avg_pol.value}}
+    {{ivalues.diff_signal.label}}: {{ivalues.diff_signal.value}}
+    {{ivalues.smoothing.label}}: {% ifequal ivalues.smoothing.value 'velocity_resolution_rest' %} Smooth to a Velocity Resolution in the Rest Frame.  {% endifequal %}{% ifequal ivalues.smoothing.value 'frequency_resolution_topo' %} Smooth to a Frequency Resolution in the Topocentric Frame.  {% endifequal %}{% ifequal ivalues.smoothing.value 'frequency_resolution_rest' %} Smooth to a Frequency Resolution in the Rest Frame.  {% endifequal %}{% ifequal ivalues.smoothing.value 'velocity_resolution_topo' %} Smooth to a Velocity Resolution in the Topocentric Frame.  {% endifequal %}{% ifequal ivalues.smoothing.value 'frequency_resolution_topo_frame' %} Smooth to a Frequency Resolution in the Topocentric Frame.  {% endifequal %}
+    {{ivalues.smoothing_factor.label}}: {{ivalues.smoothing_factor.value}}
+  {% endif %}

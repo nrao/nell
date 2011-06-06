@@ -6,4 +6,5 @@ urlpatterns = patterns('calculator.views',
     (r'^initiate_hardware$','initiateHardware'),
     (r'^set_hardware$','setHardware'),
     (r'^results$','display_results'),
+    (r'^results/text$','text_results'),
 )
