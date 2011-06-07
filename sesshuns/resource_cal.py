@@ -170,7 +170,7 @@ class RCAddActivityForm(forms.Form):
     software = forms.ChoiceField(choices = soft_resc,
                                  widget = forms.RadioSelect(
             renderer = BRRadioRender))
-    rcvr = [(p.id, p.full_description()) for p in Receiver.objects.all()]
+    rcvr = [(p.id, p.full_description()) for p in Receiver.objects.exclude(deleted = True)]
     receivers = forms.MultipleChoiceField(required = receivers_req,
                                           choices = rcvr,
                                           widget = MyCheckboxSelectMultiple)
@@ -201,7 +201,7 @@ class RCAddActivityForm(forms.Form):
         label = 'up:', required = False, choices = rcvr,
         widget = forms.Select(attrs = {'disabled': 'true'}))
 
-    be = [(p.id, p.full_description()) for p in Backend.objects.all()]
+    be = [(p.id, p.full_description()) for p in Backend.objects.exclude(deleted = True)]
     backends = forms.MultipleChoiceField(required = backends_req,
                                          choices = be,
                                          widget = MyCheckboxSelectMultiple)

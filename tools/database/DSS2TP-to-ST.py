@@ -167,7 +167,7 @@ def transfer_session_receivers():
 
 
 def transfer_receivers():
-    for i in Receiver.objects.all():
+    for i in Receiver.objects.exclude(deleted = True):
         cursor.execute("INSERT INTO `receivers` (`id`, `name`) VALUES (%d, \"%s\")" \
                        % (i.id, i.name))
 

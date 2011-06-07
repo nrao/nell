@@ -5,6 +5,7 @@ class Receiver(models.Model):
     abbreviation = models.CharField(max_length = 32)
     freq_low     = models.FloatField(help_text = "GHz")
     freq_hi      = models.FloatField(help_text = "GHz")
+    deleted      = models.BooleanField(default = False)
 
     class Meta:
         db_table  = "receivers"
@@ -28,7 +29,7 @@ class Receiver(models.Model):
 
     @staticmethod
     def get_abbreviations():
-        return [r.abbreviation for r in Receiver.objects.all()]
+        return [r.abbreviation for r in Receiver.objects.exclude(deleted = True)]
 
     @staticmethod
     def get_rcvr(abbreviation):

@@ -80,7 +80,7 @@ class SessionHttpAdapter (object):
         self.sesshun.save()
 
     def save_receivers(self, proposition):
-        abbreviations = [r.abbreviation for r in Receiver.objects.all()]
+        abbreviations = [r.abbreviation for r in Receiver.objects.exclude(deleted = True)]
         rc = ReceiverCompile(abbreviations)
         ands = rc.normalize(proposition)
 

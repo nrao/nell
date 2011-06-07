@@ -116,7 +116,7 @@ def rcvr_schedule(request, *args, **kwds):
     Serves up a page showing the upcoming receiver change schedule, viewable
     by anyone.
     """
-    receivers = [r for r in Receiver.objects.all() if r.abbreviation != 'NS']
+    receivers = [r for r in Receiver.objects.exclude(deleted = True) if r.abbreviation != 'NS']
     schedule  = {}
     for day, rcvrs in Receiver_Schedule.extract_schedule(datetime.utcnow(), 180).items():
         schedule[day] = [r in rcvrs for r in receivers]
