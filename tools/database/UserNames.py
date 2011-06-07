@@ -5,6 +5,7 @@ import MySQLdb as m
 import logging, urllib2
 from nell.utilities.database.external import NRAOUserDB, UserInfo, PSTMirrorDB
 import lxml.etree as ET
+import sys
 
 class UserNames(object):
 
@@ -14,88 +15,44 @@ class UserNames(object):
     """
 
     def __init__(self, output_file = None):
+
+        # should print outs go to the screen, or a file?
         if output_file == None:
             self.out = sys.stdout
         else:
             self.out = output_file
             
     def findUserMatches(self):
-        "The latest attempt to match DSS & PST accounts."
+        """
+        Lists all DSS users who do not currently have a pst_id, and lists possible candidates
+        from the PST.  This report can be used to make decisions manually on how to assign
+        the pst_id.
+        """
 
         mirror = PSTMirrorDB()
+
+        # get all users who don't have a pst_id
         users = User.objects.filter(pst_id = None)
 
         for u in users:
+            # what DSS user is this, and what projects are they on?
             invs = Investigator.objects.filter(user = u)
             projs = ",".join([i.project.pcode for i in invs])
-            print ""
-            print "User: %s, Projects: %s" % (u, projs)
+            print >> self.out, ""
+            print >> self.out, "User: %s, Projects: %s" % (u, projs)
             # who could we match these up with?
             others = mirror.findPeopleByLastName(u.last_name)
-            print "%20s %20s %5s %5s %30s" % ('First', 'Username', 'PSTID', 'Enbld', 'Emails')
+            print >> self.out, "%20s %20s %5s %5s %30s" % ('First', 'Username', 'PSTID', 'Enbld', 'Emails')
             for oldId, username, firstName, enabled, pst_id in others:
                 emails, descs = mirror.getEmails(pst_id)
                 es = ",".join(emails)
-                print "%20s %20s %5s %5s %30s" % (firstName, username, pst_id, enabled, es)
+                print >> self.out, "%20s %20s %5s %5s %30s" % (firstName, username, pst_id, enabled, es)
 
 
+    def reportUserInfo(self):
+        "Checks contents of User table against info from PST service w/ pst ID and reports diffs."
 
-    def findMissingUsers(self, files = None):
-        "Interactive method that uses XML dump to find missing users."
-
-        users = User.objects.filter(pst_id = None).all()
-        print >> self.out, "num missing users to find: ", len(users) 
-        print >> self.out, ""
-        
-        infos = self.loadUserInfoFromDump(files)
-        print >> self.out, "loaded user xml dump"
-
-        for user in users:
-            print >> self.out, "looking for user: ", user
-            print >> self.out, ""
-            self.findUser(user.last_name, infos)
-            id = raw_input("What id to use: ")
-            username = raw_input("What username to use: ")
-            try:
-                user.pst_id = int(id)
-                user.username = username
-            except:
-                user.pst_id = None
-                user.username = None
-            user.save()
-            print >> self.out, ""
-
-
-            
-    def loadUserInfoFromDump(self, files = None):
-        "Uses a textual xml dump of PST to assign usernames/ids"
-        if files is None:
-            files = ["nrao.xml"]
-        users = []
-        for f in files:        
-            parsed = ET.parse(f)
-            elements = parsed.getroot()
-            for element in elements:
-                users.append(UserInfo().parseUserXML(element))
-        return users
-
-    def findUser(self, last_name, users):
-
-        for user in users:
-           userInfo = UserInfo().parseUserDict(user)
-           if user['name']['last-name'] == last_name:
-               first_name = user['name']['last-name']
-               last       = user['name']['first-name']
-               username = user['account-info']['account-name']
-               id       = user['id']
-               print >> self.out, "Found user of name: %s %s" % (first_name, last)
-               print >> self.out, "Emails: ", userInfo['emails']
-               print >> self.out, "username: %s, ID: %s" % (username, id)
-               print >> self.out, ""
-               
-
-    def confirmUserInfo(self):
-        "Checks contents of User table against info from PST service w/ pst ID."
+        print >> self.out, "Comparing DSS Users to their info (first, last names) in the PST"
 
         users = User.objects.all()
 
@@ -103,71 +60,75 @@ class UserNames(object):
         noPstId = []
         matched = []
         mismatched = []
-        lastNames = []
-        badIds = []
-        badUsernames = []
+        badBothNames = []
+        justBadFirstNames = []
+        justBadLastNames = []
 
         ui = UserInfo()
-        assert ui.useMirror
         
         for i, u  in enumerate(users):
-            #debug
-            #print "confirming %d of %d users." % (i, len(users))
+
+            # if the DSS user doesn't have a PST id, we can't check it against the PST
             if u.pst_id is not None:
+
+                # what does the PST think of the owner of this pst_id?
                 info = ui.getProfileByID(u)
-            
-                # extract what the PST thinks about this user
-                pstId        = u.pst_id # WTF? #int(info['id'])
-                pstUsername  = info['username'] #info['account-info']['account-name'].strip()
+                pstId        = u.pst_id 
+                pstUsername  = info['username'] 
+                # catch excpetions having to do with bad characters
                 try:
-                    pstFirstName = unicode(info['first_name']) #info['name']['first-name'].strip()
+                    pstFirstName = unicode(info['first_name']) 
                 except:
                     pstFirstName = "UnicodeExp"
                 try:
-                    pstLastName  = unicode(info['last_name']) #info['name']['last-name'].strip()
+                    pstLastName  = unicode(info['last_name']) 
                 except:
                     pstLastName = "UnicodeExp"
 
-                if (pstId != u.pst_id):
-                    badIds.append((u, u.pst_id, pstId))
-                #if (u.username is not None) and (pstUsername.lower() != u.username.lower()):
-                #    badUsernames.append((u, u.username, pstUsername))
-                # just check for names
-                #if pstId != u.pst_id or pstUsername != u.username or \
+                # if the names match up exactly, it's a match, if not,
+                # what kind of mismatch is it?
                 if pstFirstName != u.first_name or \
                    pstLastName != u.last_name:
-                    print >> self.out, "PST: %s %s vs. DSS: %s %s" % (pstFirstName
-                                                       , pstLastName
-                                                       , u.first_name
-                                                       , u.last_name)
-                    if u.last_name != pstLastName:
-                        lastNames.append((u, pstFirstName, pstLastName))
+                    #print >> self.out, "PST: %s %s vs. DSS: %s %s" % (pstFirstName
+                    #                                   , pstLastName
+                    #                                   , u.first_name
+                    #                                   , u.last_name)
+
+                    # get more specific                                   
+                    if u.last_name != pstLastName and u.first_name != pstFirstName:
+                        badBothNames.append((u, pstFirstName, pstLastName))
+                    if u.last_name != pstLastName and u.first_name == pstFirstName:
+                        justBadLastNames.append((u, pstFirstName, pstLastName))
+                    if u.last_name == pstLastName and u.first_name != pstFirstName:
+                        justBadFirstNames.append((u, pstFirstName, pstLastName))
+
+                    # be more general    
                     mismatched.append((u, pstFirstName, pstLastName))
                 else:
                     matched.append(u)
             else:
+                # not much to do here
                 noPstId.append(u)
 
-        print >> self.out, "badIds: "
-        for b in badIds:
+        print >> self.out, "Both names bad: "
+        for b in badBothNames:
+            print >> self.out, b
+        print >> self.out, "First names bad: "
+        for b in justBadFirstNames:
+            print >> self.out, b
+        print >> self.out, "Last names bad: "
+        for b in justBadLastNames:
             print >> self.out, b
 
-        print >> self.out, "badUsernames: "
-        print >> self.out, "user | DSS username | PST username"
-        for b in badUsernames:
-            print >> self.out, b
-
-        print >> self.out, "bad last names: "
-        for b in lastNames:
-            print >> self.out, b
         # report
+        print >> self.out, "Summary: "
         print >> self.out, "len(users): ", len(users)
         print >> self.out, "len(noPstId): ", len(noPstId)
         print >> self.out, "len(matched): ", len(matched)
         print >> self.out, "len(mismatched): ", len(mismatched)
-        print >> self.out, "len(lastNames): ", len(lastNames)
-        print >> self.out, "len(badIds): ", len(badIds)
-        print >> self.out, "len(badUsernames): ", len(badUsernames)
+        print >> self.out, "len(badBothNames): ", len(badBothNames)
+        print >> self.out, "len(justBadFirstNames): ", len(justBadFirstNames)
+        print >> self.out, "len(justBadLastNames): ", len(justBadLastNames)
 
     def transferUserNamesByOriginalID(self):
         """
@@ -238,81 +199,37 @@ class UserNames(object):
         print >> self.out, "len(missing): ", len(missing)
         print >> self.out, "len(ourUsers): ", len(User.objects.all())
 
-    def getUserNamesFromIDs(self):
 
-        # get rid of this banner once other print statements are gone
-        print >> self.out, "********** Retrieving usernames using PST IDs. *********"
-
-        noUsernames = User.objects.filter(username = None).all()
-        print >> self.out, "num w/ no username  now : ", len(noUsernames)
-
-        # get all users
-        users = User.objects.all()
-
-        missing = []
-        saved = []
-        agree = []
-
-        # for each user, get their static contact info
-        for user in users:
-
-            id = user.pst_id
-
-            if id is None:
-                print >> self.out, "skipping user, no pst_id: ", user
-                missing.append(user)
-                continue
-
-            # save off the username
-            #print "getting id for: ", user, id
-            ##<<<<<<< local
-            #info = UserInfo().getStaticContactInfoByID(id, use_cache = False)
-            #print info
-            #username = info['account-info']['account-name']
-            #=======
-            info = user.getStaticContactInfo(use_cache = False) #UserInfo().getStaticContactInfoByID(id)
-            print >> self.out, id, info
-            username = info['username'] #info['account-info']['account-name']getStaticContactInfo
-
-            if user.username is not None:
-                if user.username == username:
-                    #no-op
-                    #print "usernames agree for: ", user
-                    agree.append(user)
-                else:
-                    usernameStr = username if username is not None else ""
-                    print >> self.out, "user.username != username! " + user.username + "!=" + usernameStr
-            else:
-                saved.append(user)
-                #print "saving username: ", user, username
-                user.username = username
-                user.save()
-        
-        print >> self.out, "saved: ", saved
-        print >> self.out, "missing: ", missing
-
-        print >> self.out, "num agreed: ", len(agree)
-        print >> self.out, "num saved: ", len(saved)
-        print >> self.out, "num no pst_id: ", len(missing)
-
-        noUsernames = User.objects.filter(username = None).all()
-        print >> self.out, "num w/ no username still : ", len(noUsernames)
-
-    def reconcile_redundant_users(self):
+    def reconcileRedundantUsers(self):
+        """
+        This method is only needed if something very bad happens: users are entered duplicate times,
+        and reconciliation needs to be done.
+        """
 
         existing = []
         matches = []
+
+        # get all users w/ out a pst_id
         noIds = User.objects.filter(pst_id = None).order_by("id")
+
+        # look for duplicates: users w/ the same last name and email
         for u in noIds:
             match = False
             othersMaybe = User.objects.filter(last_name = u.last_name)
+
+            # here's the other users that share the same last name
             others = [o for o in othersMaybe if o.id != u.id]
+
+            # if there are any users that share the same last name for this user
+            # record this user
             if len(others) > 0:
-                print ""
-                print "existing for : ", u, [e.email for e in u.email_set.all()]
+                print >> self.out, ""
+                print >> self.out, "existing for : ", u, [e.email for e in u.email_set.all()]
                 existing.append(u)
+
+            # for each one of these other users that share the same last name    
             for o in others:
-                print "    ", o, o.pst_id, o.username()
+                print >> self.out, "    ", o, o.pst_id, o.username()
                 # check for email match
                 info = o.getStaticContactInfo()
                 emails = info['emails']
@@ -320,23 +237,25 @@ class UserNames(object):
                 for existingEmail in emails:
                     for e in u.email_set.all():
                         if e.email.strip() == existingEmail.strip():
-                            match = True
-                            
+                            match = True # emails match!
                 # check for first name match
                 if o.first_name == u.first_name:
                     match = True
+                # if we found a match, record this    
                 if match:
-                    print "Match!!!!: ", emails, [e.email for e in u.email_set.all()]
+                    print >> self.out, "Match!!!!: ", emails, [e.email for e in u.email_set.all()]
                     matches.append((u, o))
                     
                     break
 
+        # for each pair of duplicates, make sure the projects get transfered over
+        # and that one of the duplicates gets nuked
         for bad, old in matches:
-            print "deleting: ", bad, bad.id
+            print >> self.out, "deleting: ", bad, bad.id
             # delete old investigators
             invs = Investigator.objects.filter(user = bad)
             for i in invs:
-                print "    Switching Project observer: ", i.project.pcode
+                print >> self.out, "    Switching Project observer: ", i.project.pcode
                 n =  Investigator(project = i.project
                                 , user    = old
                                 , principal_contact      = i.principal_contact
@@ -355,501 +274,83 @@ class UserNames(object):
             # delete bad user
             bad.delete()
 
-        print "Of %d users w/ NO pst_id, %d share last name w/ existing user." % (len(noIds), len(existing))        
-        print "%d matches" % len(matches)
+        print >> self.out, "Of %d users w/ NO pst_id, %d share last name w/ existing user." % (len(noIds), len(existing))        
+        print >> self.out, "%d matches" % len(matches)
         noPstStill = User.objects.filter(pst_id = None).order_by("id")
         print "%d remaining users w/ NO pst_id" % len(noPstStill)
 
     def assignPstIds(self):
-        "Where we can, get usernames for those users who don't have 'em"
-
+        """
+        This method's goal is to find DSS Users w/ out PST id's (probably newly added to the DSS),
+        and assign them one.  It does this by finding a PST user with the same last and first name
+        as the DSS user, and using this PST id.
+        It also reports on these matches and the users who could not get assigned a PST id.
+        """
 
         ui = UserInfo()
-
         mirror = PSTMirrorDB()
-
-
         users = User.objects.all() 
-        # TBF: why would we want to limit this to just these names?
-        #self.getUsersUniqueByLastName()
 
         missing = [u for u in users if u.pst_id is None] 
-        print "num missing users: ", len(missing)
 
         self.match = []
         self.noMatch = []
         self.duplicates = []
 
         for user in missing:
-            print user
+            print >> self.out, "Looking for matches for DSS user: %s" % user
 
-            # skip problem users
-            if user.last_name in ['Ivanova', 'Jone']:
+            # skip problem users - this can be added to if problems arise
+            if user.last_name in ['Ivanova', 'Jone'] or "'" in user.last_name:
+                print >> self.out, "Skipping DSS user: %s" % user
                 continue
-            if "'" in user.last_name:
-                print >> self.out, "SKIP: ", user
-                continue             
 
+            # find all the PST users that are enabled and share the same last name as
+            # our DSS user
             infos = []
             lastNames = mirror.findPeopleByLastName(user.last_name)
             for old_id, username, firstName, enabled, pst_id in lastNames:
                 if enabled:
                     infos.append((firstName, username, pst_id))
                 else:
-                    print "DDDDDDDDDDDDDD disabled: ", user.last_name, firstName
-
-
+                    print >> self.out, "Disabled PST user: ", user.last_name, firstName
             matchingInfo = [i for i in infos if i[0] == user.first_name]
 
-            #if first_name == user.first_name:
+            # if we found just one PST user that shares names w/ our DSS user, then
+            # we have found our pst_id
             if len(matchingInfo) == 1:
                 first_name, username, id = matchingInfo[0]
-                print "got for user: ", user, username, id
+                print >> self.out, "Found pst_id for user: ", user, username, id
                 user.pst_id = id
                 user.save()
                 self.match.append((user, username, id))
             elif len(matchingInfo) > 1:
-                print "duplicate PST entry", user
+                # we found more then one PST user for our DSS user; there could possibly
+                # be duplicates in the PST
+                print >> self.out, "Duplicate PST entry for user: ", user
                 self.duplicates.append((user, matchingInfo))
             else:
-                print "no match!", user
+                # no matches were found!
+                print >> self.out, "Did NOT find pst_id for user: ", user
                 self.noMatch.append((user, infos))
 
-
-
-        print "matches: ", len(self.match)
+        # report the results
+        print >> self.out, "Results: "
+        print >> self.out, "Number of DSS users originally missing pst_id: ", len(missing)
+        print >> self.out, "Matches found (pst_id assigned): ", len(self.match)
         for u, un, id in self.match:
-            print u, un, id
-        print "no matches: ", len(self.noMatch)
+            print >> self.out, "    ", u, un, id
+        print >> self.out, "No matches found (no pst_id assigned): ", len(self.noMatch)
         for u, i in self.noMatch:
-            print u, i
-        print "duplicates: ", len(self.duplicates)
+            print >> self.out, "    ", u, i
+        print >> self.out, "Duplicate PST entries? (no pst_id assigned): ", len(self.duplicates)
         for u, i in self.duplicates:
-            print u, i
+            print >> self.out, "    ", u, i
 
-        users = self.getUsersUniqueByLastName()
+        # now see how many users still need pst_ids
+        users = User.objects.all() 
         missing = [u for u in users if u.pst_id is None] 
-        print "NOW num missing users: ", len(missing)
+        print >> self.out, "NOW number of DSS users missing pst_id: ", len(missing)
 
-
-    def getUserNames(self, username, password):
-        "DEPRECATED: but may be useful for testing query services"
-
-        #ui = UserInfo.UserInfo()
-        ui = UserInfo()
-
-        skipping = []
-
-        # use service to get all users with this last name
-        #url = 'https://mirror.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
-        url = 'https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm'
-        #udb = NRAOUserDB.NRAOUserDB( \
-        udb = NRAOUserDB( \
-            url
-          , username
-          , password
-          , opener=urllib2.build_opener())
-
-        key = 'usersByLastNameLike'
-
-        users = self.getUsersUniqueByLastName()
-
-        #users =  User.objects.all()
-        for user in users:
-
-            # users not in PST
-            if user.last_name in ['Ivanova']:
-                continue
-
-            if user.pst_id is not None:
-                print >> self.out, "users has pst_id: ", user
-                continue
-
-            print >> self.out, user.last_name
-
-            if "'" in user.last_name:
-                skipping.append(user)
-                print >> self.out, "SKIP: ", user
-                continue
-
-            el = udb.get_data(key, user.last_name)
-            print >> self.out, ET.tostring(el, pretty_print=True)
-
-            print "parsing xMl:"
-            print ui.parseUserXML(el)
             
-            #els = el.getchildren()
-            #assert len(els) == 1
-            #el = els[0]
-
-            #items = el.items()
-            #id = [int(i[1]) for i in items if i[0] == 'id'][0]
-            #print >> self.out, "pst_id: ", id
-
-            # name
-            #first_name  = el[0][1].text
-            #middle_name = el[0][2].text
-            #last_name   = el[0][3].text
-            #assert (last_name == user.last_name)
-
-            # account name
-            #accountName = el[4][0].text
-
-            # pst id
-
-            # save it off!
-            #user.username = accountName
-            #print >> self.out, accountName
-        
-        print >> self.out, "skipped: ", skipping
-
-    def getUsersUniqueByLastName(self):
-        
-        users = User.objects.all()
-        uniques = []
-        notUniques = []
-
-        for user in users:
-            sameLastName = User.objects.filter(last_name = user.last_name).all()
-            if len(sameLastName) == 1:
-                uniques.append(user)
-            else:
-                notUniques.append(user)
-        
-        print >> self.out, "num Users that share the same last name: "
-        print >> self.out, len(notUniques)
-        print >> self.out, "out of a total of: " 
-        print >> self.out, len(users)
-
-        return uniques
-
-    def addNewUsersFromProject(self, pcode, username, password):
-        """
-        Here, for the given project code, get it's authors list, and simply
-        create the basic User entries for these authors.
-        """
-
-        ps = Project.objects.filter(pcode = pcode)
-        assert len(ps) == 1
-        p = ps[0]
-
-        url = "https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm"
-        udb = NRAOUserDB( \
-            url  
-          , username
-          , password
-          , opener=urllib2.build_opener())
-
-        key = 'authorsByProposalId'
-
-        id = "%s/%s" % (p.pcode[:3], p.pcode[3:])
-
-        el = udb.get_data(key, id)
-
-        subel = el.getchildren()
-        authors = subel[0].getchildren()
-        numAuthors = len(authors)
-
-        # for each author, try to use the info we got
-        for i in range(numAuthors):
-            # get an author
-            a = authors[i]
-            # get it's info
-            last_name  = self.findTag(a, "last_name")
-            first_name = self.findTag(a, "first_name")
-            unique_id  = int(self.findTag(a, "unique_id"))
-            accnt_name = self.findTag(a, "account-name")
-            emailStr   = self.findTag(a, "email")
-            # find this author in OUR DB
-            users = User.objects.filter(first_name = first_name
-                                          , last_name = last_name).all()
-
-            if len(users) == 0:
-                # add new user!
-                u = User( sanctioned = False 
-                        , first_name  = first_name 
-                        , last_name   = last_name #row[2]
-                        , role        = Role.objects.get(role = "Observer")
-                 )
-                u.save()   
-                print >> self.out, "Added User: ", u
-            else:
-                print >> self.out, "User already in DB?: "
-                for u in users:
-                    print >> self.out, u
-            
-    def getUserNamesFromProjects(self, username, password):
-        """
-        Here is a method for getting all usernames by first getting
-        author information from the proposal web services.
-        """
-
-        # get rid of this banner once other print statements are gone
-        print >> self.out, "********** Retrieving usernames from project authors. *********"
-
-        # get all projects
-        ps = Project.objects.all()
-
-        # use service to get all users with this last name
-        #url = "https://mirror.nrao.edu/nrao-2.0/secure/QueryFilter.htm"
-        url = "https://my.nrao.edu/nrao-2.0/secure/QueryFilter.htm"
-        udb = NRAOUserDB( \
-            url  
-          , username
-          , password
-          , opener=urllib2.build_opener())
-
-        key = 'authorsByProposalId'
-        global_id_key = 'userByGlobalId'
-
-        ui = UserInfo()
-
-        # for keeping track of our progess
-        failures = []
-        notInPST = []
-        usersAbsent = []
-        usersMultiple = []
-        usersFound = []
-        badIds = []
-
-        # for each project, try to retrieve author info:
-        # NOTE - not all projects are available
-        for p in ps:
-
-            # format project name
-            id = "%s/%s" % (p.pcode[:3], p.pcode[3:])
-
-            # use the service!
-            try:
-                el = udb.get_data(key, id)
-            except:
-                print >> self.out, "EXCEPTION w/ id: ", id
-                failures.append(p)
-                continue
-            #print ET.tostring(el, pretty_print=True)
-
-            subel = el.getchildren()
-            authors = subel[0].getchildren()
-            numAuthors = len(authors)
-
-            # a bunch of our proposals aren't in the PST
-            if numAuthors == 0:
-                notInPST.append(p)
-
-            # for each author, try to use the info we got
-            for i in range(numAuthors):
-                # get an author
-                a = authors[i]
-                # get it's info
-                last_name  = self.findTag(a, "last_name")
-                first_name = self.findTag(a, "first_name")
-                # TBF WTF!
-                # This 'unique_id' is really the global_id, not the 'id'
-                # that we are using throughout our code!
-                # That means this is not a suitable way of setting the
-                # pst_id anymore! so save it and move on.
-                global_id  = int(self.findTag(a, "unique_id"))
-                accnt_name = self.findTag(a, "account-name")
-                emailStr   = self.findTag(a, "email")
-
-                # now, turn around and get OUR id from the global_id
-                try:
-                    el = udb.get_data(global_id_key, global_id)
-                    globalInfo = ui.parseUserXML(el)
-                    pst_id = globalInfo['id']
-                except:
-                    print >> self.out, "EXCEPTION w/ global_id: ", global_id  
-                    failures.append(p)
-                    continue
-
-                # find this author in OUR DB
-                users = User.objects.filter(first_name = first_name
-                                          , last_name = last_name).all()
-                # if that failed, try email:
-                if len(users) == 0:
-                    email = Email.objects.filter(email = emailStr)[0]
-                    if email is not None:
-                        #print "Using email %s for user %s, last: %s, first: %s" % (email.email, email.user, last_name, first_name)
-                        users = [email.user]
-
-                #print "tried to match: ", first_name, last_name, emailStr
-                #print "users: ", users
-                #x = raw_input("hold on.")
-
-                numUsers = len(users)
-                entry = (first_name, last_name, emailStr, numUsers)
-
-                # Only save to the DB if we got one unique user                 
-                if numUsers == 1:
-                    u = users[0]        
-                    if (u, pst_id, accnt_name) not in usersFound:
-                            usersFound.append((u, pst_id, accnt_name))
-                    if u.pst_id is not None:
-                        if u.pst_id != pst_id:
-                            badIds.append((u, u.pst_id, pst_id))
-                            print >> self.out, "BAD ID!!!!!!!!!!!!!!!!!!!"
-                            print >> self.out, u.pst_id, pst_id
-                            continue
-                    # save what we've learned to the DB!!!        
-                    if u.pst_id is None:
-                        print >> self.out, "Saving to: ", u
-                        print >> self.out, accnt_name, pst_id
-                        u.username = accnt_name
-                        u.pst_id = pst_id
-                        u.save()
-                elif numUsers == 0:
-                    # no users - do we care if what's in the PST isn't all
-                    # in our system?
-                    if entry not in usersAbsent:
-                        usersAbsent.append(entry)
-                else:
-                    # multiplies!
-                    if entry not in usersMultiple:
-                        usersMultiple.append(entry)
-            
-        # who has been left out?
-        
-        # print list of problems    
-        print >> self.out, "USERS found: "
-        for user in usersFound:
-            print >> self.out, user
-
-        print >> self.out, "Users Absent: "
-        for user in usersAbsent:
-            print >> self.out, user
-
-        print >> self.out, "Projects NOT in PST:"
-        for p in notInPST:
-            print >> self.out, p
-
-        uniqueUsers = []
-        redundantUsers = []
-        for user, id, username in usersFound:
-            if user not in uniqueUsers:
-                uniqueUsers.append(user)
-            else:
-                redundantUsers.append((user, id, username))
-
-        print >> self.out, "redundant users: "
-        for r in redundantUsers:
-            print >> self.out, r
-
-        print >> self.out, "bad ids users: "
-        for r in badIds:
-            print >> self.out, r
-
-        # print summary
-        print >> self.out, "total # of projects: %d" % len(ps)
-        print >> self.out, "total # of projects that were NOT in PST: %d" % len(notInPST)
-        print >> self.out, "total # of project that caused exceptions: %d" % len(failures)
-        print >> self.out, ""
-        print >> self.out, "total # of users found: %d" % len(usersFound)
-        print >> self.out, "total # of users not in our DB: %d" % len(usersAbsent)
-        print >> self.out, "total # of users in our DB that share first & last name: %d" % len(usersMultiple)
-        print >> self.out, "total # of bad Ids: %d" % len(badIds)
-
-    def findTag(self, node, tag):
-        value = None
-        value_tag = node.find(tag)
-        if value_tag is not None:
-            value = value_tag.text
-        return value    
-
-    def createMissingUsers(self):
-        "Creates users who probably aren't on a GBT proposal in the PST"
-
-        # add this to the list whenever you come across users who aren't
-        # in the DB, but you know they should be
-        # first, last name, username, pst_id
-        admins = [("Paul", "Marganian", "pmargani",   823)
-                , ("Mark", "Clark",     "windyclark", 1063)
-                , ("Amy",  "Shelton",   "ashelton",   556 )
-                , ("Dan",  "Perera",    'dperera',    2705)
-                , ("Todd", "Hunter",    'trhunter',   495)
-                , ("Glen", "Langston",  'glangsto',   45)
-                # TBF: these folks in the schedtime table, so WTF?
-                , ("Steve", "White",     None,        None) 
-                , ("Galen", "Watts",     None,        None) 
-                , ("John",  "Ford",      None,        None) 
-                # who else?
-                 ]
-
-        for first_name, last, user, id in admins:
-            # don't make'm unless you have to
-            u = User.objects.filter(first_name = first_name
-                                        , last_name  = last)[0]
-            if u is not None:
-                continue
-            # you have to
-            u = User(original_id = 0
-               , sanctioned  = True
-               , first_name  = first_name 
-               , last_name   = last 
-               , username    = user
-               , pst_id      = id 
-               #, role        = Role.objects.get(role = "Administrator")
-               , role        = Role.objects.get(role = "Observer")
-                 )
-            u.save()
-
-    def setAdminRoles(self):
-        "Simply set the given list of staff as admins."
-
-        # list of last names
-        staff = ["Braatz"  # first astronomers
-               , "Balser"
-               , "O'Neil"
-               , "Minter"
-               , "Harnett"
-               , "Maddalena"
-               , "Ghigo"
-               , "Marganian" # then the real smart people
-               , "Clark"
-               , "Shelton"
-               , "McCarty"
-               , "Sessoms"
-               ]
-
-        admin = Role.objects.get(role = "Administrator")
-
-        # set them!
-        users = User.objects.all()
-        for u in users:
-            if u.last_name in staff:
-                u.role = admin
-                u.save()
-
-    def setUserName(self, username, userLastName):
-        "This is for testing only: if username is in PST but not in DSS, the use username for given user"
-        victim = User.objects.filter(last_name = userLastName)[0]
-        victim.username = username
-        victim.save()
-        print >> self.out, "User %s now has username: %s" % (victim, username)
-
-    def save_project_observers(self):
-
-        f = open('observers.txt', 'w')
-        lines = []
-        ps = Project.objects.order_by('pcode').all()
-        for p in ps:
-            users = [inv.user for inv in p.investigator_set.all()]
-            names = [u.last_name for u in users]
-            names.sort()
-            nameStr = ','.join(names)
-            line = "%s:%s\n" % (p.pcode, nameStr)
-            lines.append(line)
-        f.writelines(lines)    
-        f.close()
-
-    def create_dss_user(self):
-
-        role = Role.objects.get(role = "Administrator")
-        u = User(first_name = 'dss'
-               , last_name  = 'account'
-               , username   = 'dss'
-               , pst_id     = 3259
-               , role       = role
-               )
-        u.save()  
-
 
