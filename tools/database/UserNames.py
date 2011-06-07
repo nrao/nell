@@ -110,17 +110,21 @@ class UserNames(object):
                 # not much to do here
                 noPstId.append(u)
 
-        print >> self.out, "Both names bad: "
+        # report details
+        if len(badBothNames) > 0:
+            print >> self.out, "Both names bad: "
         for b in badBothNames:
             print >> self.out, b
-        print >> self.out, "First names bad: "
+        if len(justBadFirstNames) > 0:
+            print >> self.out, "First names bad: "
         for b in justBadFirstNames:
             print >> self.out, b
-        print >> self.out, "Last names bad: "
+        if len(justBadLastNames) > 0:
+            print >> self.out, "Last names bad: "
         for b in justBadLastNames:
             print >> self.out, b
 
-        # report
+        # report summary
         print >> self.out, "Summary: "
         print >> self.out, "len(users): ", len(users)
         print >> self.out, "len(noPstId): ", len(noPstId)
