@@ -7,7 +7,7 @@ from nell.utilities.database.external import NRAOUserDB, UserInfo, PSTMirrorDB
 import lxml.etree as ET
 import sys
 
-class UserNames(object):
+class UserInfoTools(object):
 
     """
     This class is simply a collection of different methods for managing

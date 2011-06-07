@@ -1,8 +1,8 @@
-from tools.database import UserNames
+from tools.database import UserInfoTools
 from scheduler.models         import *
 from test_utils              import NellTestCase
 
-class TestUserNames(NellTestCase):
+class TestUserInfoTools(NellTestCase):
 
     def test_findUserMatches(self):
 
@@ -15,13 +15,13 @@ class TestUserNames(NellTestCase):
         hacker.save()
  
         # write results to a file
-        f = open("TestUserNames.txt", 'w')
-        un = UserNames.UserNames(output_file = f)
+        f = open("TestUserInfoTools.txt", 'w')
+        un = UserInfoTools.UserInfoTools(output_file = f)
         un.findUserMatches()
         f.close()
 
         # check file for results
-        f = open("TestUserNames.txt", 'r')
+        f = open("TestUserInfoTools.txt", 'r')
         lines = f.readlines()
         self.assertEqual(4, len(lines))
         self.assertTrue("User: Marganian, Paul, Projects:" in lines[1])
@@ -48,13 +48,13 @@ class TestUserNames(NellTestCase):
         professional_software_engineer.save()                                             
         
         # write results to a file
-        f = open("TestUserNames.txt", 'w')
-        un = UserNames.UserNames(output_file = f)
+        f = open("TestUserInfoTools.txt", 'w')
+        un = UserInfoTools.UserInfoTools(output_file = f)
         un.reportUserInfo()
         f.close()
 
         # check file for results
-        f = open("TestUserNames.txt", 'r')
+        f = open("TestUserInfoTools.txt", 'r')
         lines = f.readlines()
         self.assertEqual(9, len(lines))
         self.assertTrue("len(users):  2" in lines[2])
@@ -84,13 +84,13 @@ class TestUserNames(NellTestCase):
         professional_software_engineer.save()                                             
         
         # write results to a file
-        f = open("TestUserNames.txt", 'w')
-        un = UserNames.UserNames(output_file = f)
+        f = open("TestUserInfoTools.txt", 'w')
+        un = UserInfoTools.UserInfoTools(output_file = f)
         un.assignPstIds()
         f.close()
 
         # check file for results
-        f = open("TestUserNames.txt", 'r')
+        f = open("TestUserInfoTools.txt", 'r')
         lines = f.readlines()
         self.assertEqual(12, len(lines))
         self.assertTrue("Found pst_id for user:  Marganian, Paul pmargani 821" in lines[1])
