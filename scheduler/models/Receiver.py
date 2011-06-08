@@ -29,7 +29,7 @@ class Receiver(models.Model):
 
     @staticmethod
     def get_abbreviations():
-        return [r.abbreviation for r in Receiver.objects.exclude(deleted = True)]
+        return [r.abbreviation for r in Receiver.objects.all()]
 
     @staticmethod
     def get_rcvr(abbreviation):

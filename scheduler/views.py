@@ -59,7 +59,7 @@ def receivers_schedule(request, *args, **kws):
                      , start__gte = startdate).order_by("start")]
 
     # clients want to also know all the latest rcvrs
-    rcvrs       = [r.jsondict() for r in Receiver.objects.exclude(deleted = True) \
+    rcvrs       = [r.jsondict() for r in Receiver.objects.all() \
                        if r.abbreviation != "NS"]
     return HttpResponse(
             json.dumps({"schedule" :   jsonschd
