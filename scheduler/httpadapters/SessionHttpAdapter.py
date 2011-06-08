@@ -80,7 +80,7 @@ class SessionHttpAdapter (object):
         self.sesshun.save()
 
     def save_receivers(self, proposition):
-        abbreviations = [r.abbreviation for r in Receiver.objects.exclude(deleted = True)]
+        abbreviations = [r.abbreviation for r in Receiver.objects.all()]
         rc = ReceiverCompile(abbreviations)
         ands = rc.normalize(proposition)
 
@@ -274,6 +274,7 @@ class SessionHttpAdapter (object):
     def jsondict(self):
         d = {"id"         : self.sesshun.id
            , "pcode"      : self.sesshun.project.pcode
+           , "handle"     : self.sesshun.toHandle()
            , "type"       : self.sesshun.session_type.type
            , "science"    : self.sesshun.observing_type.type
            , "total_time" : self.sesshun.allotment.total_time

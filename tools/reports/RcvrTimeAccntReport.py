@@ -69,7 +69,7 @@ class RcvrTimeAccntReport():
         #    print "Period (%s): %s-%s, %5.2f hrs, Rcvrs: %s" % (p.state, p.start, p.end(), p.duration, p.receiver_list())
         #    print p.accounting
 
-        rx = Receiver.objects.exclude(deleted = True)
+        rx = Receiver.objects.all()
 
         glossary = {
             "SC" : "Scheduled"
