@@ -3,6 +3,27 @@ from calculator.models        import *
 
 # View utility functions go here.
 
+def get_results_dict(request):
+    explicit, leftovers, input = splitResults(request)
+    leftovers = [r for r in leftovers if r['display'] is not None]
+    leftovers = [sanitize(r) for r in sorted(leftovers, key = lambda r: r['display'][1]) 
+                      if r['value'] is not None]
+    input     = map(sanitize, input)
+    explicit  = map(sanitize, explicit)
+    explicit  = dict([splitKey(e) for e in explicit])
+    # Also make a dict of the inputs for desiding on how to display stuff.
+    ivalues   = dict([splitKey(i) for i in input])
+    units     = {}
+    units['sigma']       = 'mJy' if ivalues.get('units', {}).get('value') == 'flux' else 'mK'
+    units['t_tot_units'] = 's' if ':' not in explicit.get('t_tot', {}).get('value', '') else 'HH:MM:SS.S'
+    return {'e'         : explicit
+          , 'leftovers' : leftovers
+          , 'input'     : input
+          , 'ivalues'   : ivalues
+          , 'units'     : units
+          , 'messages'  : getMessages(request)
+          }
+
 def splitResults(request, debug = False):
     exceptions = ('topocentric_freq', 'smoothing_resolution')
 

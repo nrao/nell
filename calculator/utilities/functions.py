@@ -17,7 +17,7 @@ spectrometerK1K2  = {800  : (1.235, 1.21)
 GBT_LAT = 38 + 26 / 60.
 LAT     = 51.57
 
-def getMinTopoFreq(backend, bandwidth, windows, beams):
+def getMinTopoFreq(backend, bandwidth, windows, receiver, beams):
     if backend == 'Spectral Processor':
         channels = 1024
     elif backend == 'GBT Spectrometer':
@@ -25,6 +25,8 @@ def getMinTopoFreq(backend, bandwidth, windows, beams):
     else:
         return 1
 
+    # Note: KFPA is a 7 beam rx, but we want to use 8 beams for calculations.
+    beams = 8 if receiver == 'KFPA' and beams == 7 else beams
     retval = (bandwidth / float(channels)) * windows  * beams * 1000 if channels is not None else 0.0
     return retval
 
@@ -50,7 +52,9 @@ def sourceSizeCorrection(diameter, fwhm):
         return 1
     return correction
 
-def getKs(backend, bandwidth, bw, windows, beams):
+def getKs(backend, bandwidth, bw, windows, receiver, beams):
+    # Note: KFPA is a 7 beam rx, but we want to use 8 beams for calculations.
+    beams = 8 if receiver == 'KFPA' and beams == 7 else beams
     if backend == 'Spectral Processor':
         retval = 1.3, 1.21
     elif backend == 'GBT Spectrometer':
