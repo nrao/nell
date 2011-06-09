@@ -274,6 +274,7 @@ class SessionHttpAdapter (object):
     def jsondict(self):
         d = {"id"         : self.sesshun.id
            , "pcode"      : self.sesshun.project.pcode
+           , "handle"     : self.sesshun.toHandle()
            , "type"       : self.sesshun.session_type.type
            , "science"    : self.sesshun.observing_type.type
            , "total_time" : self.sesshun.allotment.total_time

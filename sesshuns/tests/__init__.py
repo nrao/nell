@@ -21,3 +21,4 @@ from TestUpdateEphemeris       import TestUpdateEphemeris
 from TestUtilities             import TestUtilities
 from TestWinAlertNotifier      import TestWinAlertNotifier
 from TestWindowAlerts          import TestWindowAlerts
+from TestUserInfoTools         import TestUserInfoTools
