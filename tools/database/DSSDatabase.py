@@ -1,7 +1,6 @@
 from datetime                              import date, datetime, timedelta
-from nell.utilities.database.DSSPrime2DSS  import DSSPrime2DSS
+from nell.tools.database.DSSPrime2DSS      import DSSPrime2DSS
 from nell.tools.database.Schedtime2DSS     import Schedtime2DSS
-from nell.utilities.database.UserNames     import UserNames
 from scheduler.models                      import *
 
 import sys
@@ -27,18 +26,14 @@ class DSSDatabase(object):
         self.dss_prime = DSSPrime2DSS(database = database)
         self.schedtime = Schedtime2DSS(database = database)
 
-        # responsible for filling in info on users using the PST
-        self.un = UserNames(sys.stderr)
-
     def create(self, semester):
         "Method for creating a new DSS database "
-        # transfer the stuff that is semester independent
+        # Transfer the stuff that is semester independent
         self.dss_prime.transfer()
-        # transfer the semester dependent stuff - schedtime table!
-        # order here is important because we need the user info
-        # to be all there first
-        # NOTE: if this fails to find certain users, add them to
-        # UserNames.createMissingUsers and run again.
+        # Note: we could automatically reconcile the new DSS Users 
+        # with PST accounts here (using UserInfoTools), but we'd like
+        # to keep this step manual.
+        # Transfer the semester dependent stuff - schedtime table!
         self.schedtime.transfer_fixed_periods(semester)
 
 
