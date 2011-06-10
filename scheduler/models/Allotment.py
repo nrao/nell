@@ -5,7 +5,6 @@ class Allotment(models.Model):
     total_time        = models.FloatField(help_text = "Hours")
     max_semester_time = models.FloatField(help_text = "Hours")
     grade             = models.FloatField(help_text = "0.0 - 4.0")
-    ignore_grade      = models.NullBooleanField(null = True, default = False, blank = True)
 
     base_url = "/sesshuns/allotment/"
 

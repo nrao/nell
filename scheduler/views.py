@@ -437,10 +437,10 @@ def publish_periods(request, *args, **kwds):
         update = 'GBT schedule updated. See https://dss.gb.nrao.edu/schedule/public for details.'
         try:
             twitter.Api(
-                consumer_key = 'WQyTgOFR6k4ieBdvbELQ'
-              , consumer_secret = 'roxz1TFCSQ9yOTpnwa67EbF3c1S5x8VGpVcjts'
-              , access_token_key = '113465249-yfvjRkQAl2MYyJ5hEjGlEKyr0NNbKfyUehErM7oL'
-              , access_token_secret = '2s9M5vPicohng2zOPICI5cvvgLp2NeMNRgd5bgnEq4'
+                consumer_key        = settings.TWITTER['consumer_key']
+              , consumer_secret     = settings.TWITTER['consumer_secret']
+              , access_token_key    = settings.TWITTER['access_token_key']
+              , access_token_secret = settings.TWITTER['access_token_secret']
             ).PostUpdate(update)
         except: # That's ok, the world doesn't HAVE to know.
             formatExceptionInfo()

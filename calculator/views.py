@@ -1,40 +1,31 @@
 from django.contrib.auth.decorators import login_required
 from django.http      import HttpResponse
-from django.shortcuts               import render_to_response
+from django.shortcuts               import render_to_response, render
 from decorators       import catch_json_parse_errors
 from utilities.Result import Result
 from utilities.common import *
+import settings
 
 import simplejson as json
 import time
+
+def text_results(request):
+    response = render(request
+                    , "results.txt"
+                    , get_results_dict(request)
+                    , content_type = 'text/plain')
+    response['Content-Disposition'] = 'attachment; filename=results.txt'
+    return response
 
 @login_required
 def load_calc_ui(request):
     return render_to_response("war/Calculator_ui.html", {})
 
-@login_required
+#@login_required
 def display_results(request):
-    explicit, leftovers, input = splitResults(request)
-    leftovers = [r for r in leftovers if r['display'] is not None]
-    leftovers = [sanitize(r) for r in sorted(leftovers, key = lambda r: r['display'][1]) 
-                      if r['value'] is not None]
-    input     = map(sanitize, input)
-    explicit  = map(sanitize, explicit)
-    explicit  = dict([splitKey(e) for e in explicit])
-    # Also make a dict of the inputs for desiding on how to display stuff.
-    ivalues   = dict([splitKey(i) for i in input])
-    units     = {}
-    units['sigma']       = 'mJy' if ivalues.get('units', {}).get('value') == 'flux' else 'mK'
-    units['t_tot_units'] = 's' if ':' not in explicit.get('t_tot', {}).get('value', '') else 'HH:MM:SS.S'
-    return render_to_response("results.html", {'e'         : explicit
-                                             , 'leftovers' : leftovers
-                                             , 'input'     : input
-                                             , 'ivalues'   : ivalues
-                                             , 'units'     : units
-                                             , 'messages'  : getMessages(request)
-                                             })
+    return render_to_response("results.html", get_results_dict(request))
 
-@login_required
+#@login_required
 def get_results(request, *args, **kwds):
     explicit, leftovers, input = splitResults(request, debug = True)
     results = explicit + leftovers
@@ -47,7 +38,7 @@ def get_results(request, *args, **kwds):
 
     return HttpResponse(json.dumps(retval), mimetype = "application/json")
 
-@login_required
+#@login_required
 def set_terms(request, *args, **kwds):
     retval         = {}
 
@@ -101,7 +92,7 @@ def set_terms(request, *args, **kwds):
 
     return HttpResponse(json.dumps(retval), mimetype = "text/plain")
 
-@login_required
+#@login_required
 def initiateHardware(request):
     request.session['SC_result'] = {}
     backends = getOptions({},'backend')
@@ -111,7 +102,7 @@ def initiateHardware(request):
     result.update(backend = backends, success = 'ok')
     return HttpResponse(json.dumps(result), mimetype = "text/plain")
 
-@login_required
+#@login_required
 def setHardware(request):
     selected = {}
     newPick = None  

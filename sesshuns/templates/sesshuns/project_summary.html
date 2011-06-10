@@ -112,6 +112,24 @@
   </tr>
   {% endfor %}
   </table>
+  {% if project %}
+  <table>
+  <tr class="day_header"> 
+    <th> Date </th>
+    <th> Start (ET) </th>
+    <th> Len (hrs) </th>
+    <th> Receivers </th>
+  </tr>
+  {% for dt, len, rcvrs in psummary %}
+  <tr>
+    <td>{{ dt|date:"d M Y D" }}</td>
+    <td>{{ dt|date:"H:i" }}</td>
+    <td>{{ len }}</td>
+    <td>{{ rcvrs }}</td>
+  </tr>
+  {% endfor %}
+  </table>
+  {% endif %}
   </center>
 
 </body>  

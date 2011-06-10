@@ -12,6 +12,11 @@ from nell.utilities                     import TimeAgent
 from sesshuns.GBTCalendarEvent         import CalEventPeriod, CalEventElective, CalEventMaintenanceActivity
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
 
+def target_hv(value):
+    t = value.getTarget()
+    tag = "*" if t.isEphemeris() else ""
+    return t.get_horizontal() + tag, t.get_vertical() + tag
+
 def getReceivers(names):
     rcvrs = []
     error = None

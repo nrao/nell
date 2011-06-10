@@ -1,11 +1,10 @@
 from datetime                          import datetime, timedelta
-from nell.utilities.database.UserNames import UserNames
 from nell.utilities                    import TimeAgent
 from scheduler.models                   import *
 import math
 import MySQLdb as m
 
-from nell.utilities.reports.Report import Report, Line
+from nell.tools.reports.Report import Report, Line
 
 class Schedtime2DSS(object):
 

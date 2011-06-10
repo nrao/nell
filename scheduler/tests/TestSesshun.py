@@ -27,7 +27,7 @@ class TestSesshun(BenchTestCase):
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.target.source, fdata["source"])
         self.assertEqual(s.status.enabled, fdata["enabled"])
-        self.assertEqual(s.get_LST_exclusion_string(),fdata["lst_ex"])
+        self.assertEqual(s.get_lst_string('LST Exclude'),fdata["lst_ex"])
 
         # does this still work if you requery the DB?
         ss = Sesshun.objects.all()
@@ -49,7 +49,7 @@ class TestSesshun(BenchTestCase):
         self.assertEqual(s.allotment.total_time, fdata["total_time"])
         self.assertEqual(s.target.source, fdata["source"])
         self.assertEqual(s.status.enabled, fdata["enabled"])
-        self.assertEqual(s.get_LST_exclusion_string(), fdata["lst_ex"])
+        self.assertEqual(s.get_lst_string('LST Exclude'),fdata["lst_ex"])
 
         # change a number of things and see if it catches it
         ldata = dict(fdata)
@@ -73,7 +73,7 @@ class TestSesshun(BenchTestCase):
         self.assertEqual(s.status.enabled, ldata["enabled"] == "true")
         self.assertEqual(s.transit(), ldata["transit"] == "true")
         self.assertEqual(s.nighttime(), None)
-        self.assertEqual(s.get_LST_exclusion_string(), ldata["lst_ex"])
+        self.assertEqual(s.get_lst_string('LST Exclude'), ldata["lst_ex"])
         self.assertEqual(s.get_min_eff_tsys_factor(), ldata["xi_factor"])
         self.assertEqual(s.get_elevation_limit(),fdata["el_limit"])
         rgs = s.receiver_group_set.all().order_by('id')

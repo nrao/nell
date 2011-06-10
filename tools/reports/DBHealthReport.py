@@ -6,8 +6,10 @@ setup_environ(settings)
 
 from sets                      import Set
 from datetime                  import date, datetime, timedelta
+from django.db.models          import Q
 
 from scheduler.models          import *
+from scheduler.httpadapters    import SessionHttpAdapter
 from utilities                 import TimeAccounting
 from utilities                 import AnalogSet
 from tools.alerts              import SessionAlerts
@@ -22,15 +24,41 @@ def get_obs_hours(sessions, typ):
     ta = TimeAccounting()
     return sum([ta.getTime("observed", s) for s in get_sessions(session, typ)])
 
-def missing_observer_parameter_pairs(sessions):
-    pairs = [
-        Set(["LST Exclude Hi", "LST Exclude Low"])
-      , Set(["LST Include Hi", "LST Include Low"])
-    ]
+def invalidLSTParameters(sessions):
+    "Checks for invalid LST Exclusion/Inclusion Parameters."
 
-    return [s.name for s in sessions \
-        if len(pairs[0].intersection(s.observing_parameter_set.all())) == 1 or \
-           len(pairs[1].intersection(s.observing_parameter_set.all())) == 1]
+    def invalidLST(s):
+        try:
+            params  = s.get_lst_parameters()
+            exclude = [(low, hi) for low, hi in params['LST Exclude']]
+            include = [(low, hi) for low, hi in params['LST Include']]
+        except:
+            return True
+        else:
+            return False
+
+    return [s.name for s in sessions if invalidLST(s)]
+
+def repeatedObservingParameters(sessions):
+    def repeatedParam(s):
+        params = [op.parameter.name 
+          for op in s.observing_parameter_set.filter(
+            ~Q(parameter__name__contains = 'LST Exclude') & 
+            ~Q(parameter__name__contains = 'LST Include'))]
+        repeats = [p for p in params if params.count(p) > 1]
+        return len(repeats) > 0
+
+    return [s.name for s in sessions if repeatedParam(s)]
+
+#def missing_observer_parameter_pairs(sessions):
+#    pairs = [
+#        Set(["LST Exclude Hi", "LST Exclude Low"])
+#      , Set(["LST Include Hi", "LST Include Low"])
+#    ]
+#
+#    return [s.name for s in sessions \
+#        if len(pairs[0].intersection(s.observing_parameter_set.all())) == 1 or \
+#           len(pairs[1].intersection(s.observing_parameter_set.all())) == 1]
 
 def check_maintenance_and_rcvrs():
     "Are there rcvr changes happening w/ out maintenance days?"
@@ -103,6 +131,7 @@ def get_non_windowed_sessions_with_windows():
 # TBF: this has been reduced due to the move of start_date & duration from
 # Window to WindowRange.  Now we use filter_current_windows in conjunction
 # with the old calls to filter these windows
+#  Huh?  - mtm
 
 def get_windows():
     return Window.objects.all()
@@ -122,6 +151,7 @@ def get_missing_default_periods():
 
 def get_incomplete_windows():
     # TBF: have to fix this to handle window ranges
+    #  Huh?  - mtm
     ws = get_windows()
     #win_no_start = filter_current_windows(ws.filter(start_date = None))
     #win_no_dur = filter_current_windows(ws.filter(duration = None))
@@ -542,9 +572,17 @@ def GenerateReport():
               if s.session_type.type == "open" and s.frequency == 0.0]
     print_values(outfile, values)
 
-    outfile.write("\n\nSessions with unmatched observer parameter pairs:")
-    values = [s.name for s in missing_observer_parameter_pairs(sessions)]
+    outfile.write("\n\nSessions with invalid LST Exclusion/Inclusion parameters:")
+    values = invalidLSTParameters(sessions)
     print_values(outfile, values)
+
+    outfile.write("\n\nSessions with repeated observing parameters:")
+    values = repeatedObservingParameters(sessions)
+    print_values(outfile, values)
+
+    #outfile.write("\n\nSessions with unmatched observer parameter pairs:")
+    #values = [s.name for s in missing_observer_parameter_pairs(sessions)]
+    #print_values(outfile, values)
 
     outfile.write("\n\nSessions with RA and Dec equal to zero:")
     values = [s.name for s in sessions \
@@ -692,13 +730,13 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nGaps in historical schedule:")
-    ps_all = Period.objects.filter(start__lt = now).order_by("start")
-    ps = [p for p in ps_all if not p.isDeleted()] # TBF: use filter?
+    ps = Period.objects.filter(start__lt = now)\
+             .filter(~Q(state__abbreviation = 'D')).order_by("start")
     values = []
     previous = ps[0]
     for p in ps[1:]:
-        # periods should be head to tail - TBF: this catches overlaps too!
-        if p.start != previous.end():
+        # periods should be head to tail 
+        if p.start != previous.end() and p.start > previous.end():
             values.append("Gap between: %s and %s" % (previous, p))
         previous = p
     print_values(outfile, values)

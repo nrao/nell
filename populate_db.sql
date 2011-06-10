@@ -1,8 +1,6 @@
 -- we don't want time zones in the DB
 alter table projects alter column start_date type timestamp without time zone;
 alter table projects alter column end_date type timestamp without time zone;
-alter table project_blackouts_09b alter column start_date type timestamp without time zone;
-alter table project_blackouts_09b alter column end_date type timestamp without time zone;
 alter table receiver_schedule alter column start_date type timestamp without time zone;
 alter table observing_parameters alter column datetime_value type timestamp without time zone;
 -- alter table opportunities alter column start_time type timestamp without time zone;
