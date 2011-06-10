@@ -60,9 +60,10 @@ def get_requestor(request):
     if loginUser is None or loginUser == '':
         return
     pst_id = UserInfo().getIdFromUsername(loginUser)
-    requestor = User.objects.get(pst_id = pst_id)
 
-    if requestor is None:
+    try:
+        requestor = User.objects.get(pst_id = pst_id)
+    except User.DoesNotExist:
         requestor = create_user(loginUser)
 
     return requestor
