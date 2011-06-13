@@ -204,6 +204,55 @@ class UserInfoTools(object):
         print >> self.out, "len(ourUsers): ", len(User.objects.all())
 
 
+    def reconcileUsersWithSamePstId(self, sharedPstId, finalUserId):
+        """
+        Distinct from reconcileRedundantUsers.  Here we aren't searching
+        for redundancies, we already know what they are, we just want
+        this function to do all the dirty work for us.
+        Use the given PST id to find all the redundant user, and move all
+        info to the given final user.
+        """
+
+        # normally, this would return just one user
+        us = User.objects.filter(pst_id = sharedPstId)
+        assert len(us) > 1
+
+        # only one of these user objects will be kept
+        assert finalUserId in [u.id for u in us]
+
+        finalUser = User.objects.get(id = finalUserId)
+
+        print >> self.out, "Final User originally looks like: ", finalUser, finalUser.id
+        print >> self.out,  "Projects: ", finalUser.getProjects()
+        print >> self.out, "Blackouts: ", finalUser.blackout_set.all()
+
+        usersToDelete = [u for u in us if u.id != finalUserId]
+
+        # before deleting each redundant user record, copy over
+        # their projects and blackouts
+        for u in usersToDelete:
+            # projects
+            invs = u.investigator_set.all()
+            for inv in invs:
+                print >> self.out, "    Moving project: ", inv.project
+                inv.user = finalUser
+                inv.save()
+            # blackouts
+            for b in u.blackout_set.all():
+                print >> self.out, "    Moving Blackout: ", b
+                b.user = finalUser
+                b.save()
+            # now we can delete
+            print >> self.out, "Deleting User Record: ", u, u.id
+            u.delete()
+            
+        print >> self.out, "Final User finally looks like: ", finalUser, finalUser.id
+        print >> self.out, "Projects: ", finalUser.getProjects()
+        print >> self.out, "Blackouts: ", finalUser.blackout_set.all()
+        
+        us = User.objects.filter(pst_id = sharedPstId)
+        assert len(us) == 1
+
     def reconcileRedundantUsers(self):
         """
         This method is only needed if something very bad happens: users are entered duplicate times,
