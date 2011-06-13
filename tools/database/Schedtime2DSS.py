@@ -35,7 +35,7 @@ class Schedtime2DSS(object):
         self.total_periods_after = None
 
         # Map Carl's rcvr abbreviations to ours:
-        # TBF: eventually should we move this into the DB?
+        # should we eventually move this into the DB? nope.
         # Carl -> DSS
         self.rcvrMap = { 'R' : 'RRI'
                        , '3' : '342'
@@ -53,7 +53,7 @@ class Schedtime2DSS(object):
                        , 'Q' : 'Q'
                        , 'M' : 'MBA'
                        , 'H' : 'Hol'
-                       , 'PF2'   : '1070' # TBF, WTF, make up your minds!
+                       , 'PF2'   : '1070' # inconsistent!
                        , 'PF1*3' : '342'
                        , 'PF1*4' : '450'
                        , 'PF1*6' : '600'
@@ -191,7 +191,7 @@ class Schedtime2DSS(object):
                     # try getting a session from the project - we rarely see it
 #                    print "Getting Session from pcode: ", pcode
                     p = Project.objects.get(pcode = pcode)
-                    s = p.sesshun_set.all()[0] # TBF: arbitrary!
+                    s = p.sesshun_set.all()[0] # totally arbitrary!
                 else:
                     # failure: this will raise an alarm
                     s = None
@@ -380,8 +380,7 @@ class Schedtime2DSS(object):
 
     def get_schedtime_rcvrs(self, bands):
         "Maps entries in schedtime.bands to our receiver objects"
-         # TBF, WTF, please be consistent!
-        #print "bands", bands
+        # this is so inconsistent!
         if bands in ['RRI', 'PF1*3', 'PF1*4', 'PF1*6', 'PF1*8', 'PF2']:
             return [Receiver.objects.get(abbreviation = self.rcvrMap[bands])]
         else:
@@ -498,12 +497,16 @@ class Schedtime2DSS(object):
         status.save()
         otype    = Observing_Type.objects.get(type = observingType)
         stype    = Session_Type.objects.get(type = "fixed")
+        # original_id is meaningless here, since we don't have this
+        # record from Carl's system.  Just use something distinctive,
+        # like the number of the beast, say.
+        ourId = 666
         s = Sesshun(project        = p
                   , session_type   = stype
                   , observing_type = otype
                   , allotment      = allot
                   , status         = status
-                  , original_id    = 666 # TBF?
+                  , original_id    = ourId 
                   , name           = sessionName
                   , frequency      = 0.0 #None
                   , max_duration   = 12.0 #None
@@ -512,7 +515,7 @@ class Schedtime2DSS(object):
                     )
         s.save()
 
-        # TBF: put in a dummy target so that Antioch can pick it up!
+        # put in a dummy target so that Antioch can pick it up!
         system = System.objects.get(name = "J2000")
         target = Target(session    = s
                       , system     = system
