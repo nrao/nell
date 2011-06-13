@@ -209,7 +209,6 @@ class DSSPrime2DSS(object):
         Note: the given info is in the form of raw sql results, derived
         from the sql used in get_session().
         """
-
         otype = Observing_Type.objects.get(type = row[23])
         stype = Session_Type.objects.get(type = row[24])
         project = Project.objects.get(pcode = row[12])
@@ -259,7 +258,18 @@ class DSSPrime2DSS(object):
         # All Systems J2000!
         system = System.objects.get(name = "J2000")
 
-        for t in self.cursor.fetchall():
+        # The DSS database now enforces only one target per session.
+        # however this code exists so we can run unit tests w/ DB's
+        # where this was not enforced.
+        rows = self.cursor.fetchall()
+        if len(rows) > 0:
+            #if len(rows) > 1:
+            #    print "Too many target rows for session: ", s_id_prime
+            t = rows[0]
+        else:
+            t = None
+
+        if t is not None:
             try:
                 vertical = float(t[4])
             except:
