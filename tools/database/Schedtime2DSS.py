@@ -3,6 +3,7 @@ from nell.utilities                    import TimeAgent
 from scheduler.models                   import *
 import math
 import MySQLdb as m
+import sys
 
 from nell.tools.reports.Report import Report, Line
 
@@ -117,8 +118,6 @@ class Schedtime2DSS(object):
 
         self.cursor.execute(query)
         rows = self.cursor.fetchall()
-        print "Schedtime2DSS: start = %s, end = %s" % (start, end)
-        print "Schedtime2DSS query rows:", rows
 
         for row in rows:
             #print row
@@ -186,6 +185,7 @@ class Schedtime2DSS(object):
                 # can we use the vpkey?
                 if original_id is not None and original_id != 0:
                     # simple case - we're done
+                    #print "looking for original_id: ", original_id
                     s = Sesshun.objects.filter(original_id = original_id)[0]
                 elif pcode is not None and pcode != "":
                     # try getting a session from the project - we rarely see it
@@ -266,7 +266,6 @@ class Schedtime2DSS(object):
               o $$$ - current semester (e.g. '09C')
               o ### - auto-incrementing integer, starting at 500 for 09C
         """
-
         # get the additional info from the row we'll need
         description = row[7].strip()
         receivers = self.get_schedtime_rcvrs(row[8].strip())
@@ -305,6 +304,7 @@ class Schedtime2DSS(object):
             # assign session rcvrs, allotetd time ...
             s = proj.sesshun_set.all()[0]
             s.allotment.total_time = duration
+            s.allotment.save()
             s.save()
             # assume just one rcvr group
             rg = Receiver_Group(session = s)
@@ -319,6 +319,7 @@ class Schedtime2DSS(object):
             # update it's alloted time to take into account
             # this new period
             s.allotment.total_time += duration
+            s.allotment.save()
             s.save()
 
         return s
@@ -404,17 +405,16 @@ class Schedtime2DSS(object):
 
     def get_unique_user(self, last_name):
         "This last name you give me better be unique or I'm taking my ball home"
+        # fundamental flaw here: all we've got are last names.  We
+        # have to make assumptions that this means certain staff members
         users = User.objects.filter(last_name = last_name).all()
-        #TBF: assert (len(users) == 1)
         if len(users) == 0:
-            #print "SHIT! last_name not in DB: ", last_name
             return None
         elif len(users) > 1:
-            #print "SHIT: too many last_names: ", users
-            # TBF, WTF: handle this case by case:
-            # we could look at their PST affiliation to figure this out?
+            # Nothing to do here but make some assumptions.
+            # Who else?
             if last_name == "Ford":
-#                print "SHIT: using John Ford for: ", users
+                # assume it's John and not Pam!
                 return User.objects.filter(last_name = last_name
                                                , first_name = "John")[0]
             else:
