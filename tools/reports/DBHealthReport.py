@@ -10,6 +10,7 @@ from django.db.models          import Q
 
 from scheduler.models          import *
 from scheduler.httpadapters    import SessionHttpAdapter
+from tools.database.UserInfoTools import UserInfoTools
 from utilities                 import TimeAccounting
 from utilities                 import AnalogSet
 from tools.alerts              import SessionAlerts
@@ -519,6 +520,7 @@ def output_windows_report(file):
 def GenerateReport():
 
     ta = TimeAccounting()
+    ui = UserInfoTools()
 
     outfile = open("./DssDbHealthReport.txt",'w')
 
@@ -663,15 +665,22 @@ def GenerateReport():
     values = [p for p, n in names if len(Set(n)) != len(n)]
     print_values(outfile, values)
 
-    outfile.write("\n\nUsers with duplicate accounts:")
-    users  = list(User.objects.order_by("last_name"))
-    values = []
-    for u in users:
-        users.remove(u)
-        for i in users:
-            if i.last_name == u.last_name and i.first_name == u.first_name:
-                values.append(u)
+    outfile.write("\n\nUsers with duplicate accounts by name:")
+    values = ui.findUsersWithSameNames()
     print_values(outfile, values)
+
+    outfile.write("\n\nUsers with shared PST accounts:\n")
+    sharedPstIds = ui.findUsersWithSamePstId(quiet = True)
+    # print out useful format
+    if len(sharedPstIds) > 0:
+        for pst_id, us in sharedPstIds:
+            outfile.write("PST ID: %d\n" % pst_id)
+            for u in us:
+                outfile.write("    %s, %d\n" % (u, u.id))
+                outfile.write("    Projects: %s\n" % u.getProjects())
+                outfile.write("    Blackouts: %s\n" % u.blackout_set.all())
+    else:
+        outfile.write("    None\n")
 
     outfile.write("\n\nUsers with no PST ID:")
     users  = list(User.objects.order_by("last_name"))

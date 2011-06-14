@@ -203,6 +203,50 @@ class UserInfoTools(object):
         print >> self.out, "len(missing): ", len(missing)
         print >> self.out, "len(ourUsers): ", len(User.objects.all())
 
+    def findUsersWithSameNames(self, quiet = False):
+        """
+        Looks at both first, last names, ignoreing case.
+        """
+        users  = list(User.objects.order_by("last_name"))
+        result = []
+        for u in users:
+            users.remove(u)
+            for i in users:
+                if i.last_name.lower() == u.last_name.lower() \
+                and i.first_name.lower() == u.first_name.lower():
+                    # save it
+                    result.append(u)
+                    # report it
+                    if not quiet:
+                        print >> self.out, "Duplicate by name: ", u
+        return result
+        
+    def findUsersWithSamePstId(self, quiet = False):
+        """
+        Finds all users that share the same PST ID (nobody should), reports
+        them in a format that one could use to decide how to reconcile them,
+        and also returns the results.
+        """
+
+        all = User.objects.all().order_by("id")
+
+        result = []
+        dupPstIds = []
+        for u in all:
+            # for each user, are there >1 users that share this pst_id?
+            samePstId = User.objects.filter(pst_id = u.pst_id).order_by("id")
+            if len(samePstId) > 1 and u.pst_id not in dupPstIds:
+                # save it
+                dupPstIds.append(u.pst_id)
+                result.append((u.pst_id, samePstId))
+                # report it
+                if not quiet:
+                    print >> self.out, "PST ID: %d" % u.pst_id
+                    for uu in samePstId:
+                        print >> self.out, uu, uu.id
+                        print >> self.out, "    Projects: ", uu.getProjects()
+                        print >> self.out, "    Blackouts: ", uu.blackout_set.all()
+        return result
 
     def reconcileUsersWithSamePstId(self, sharedPstId, finalUserId):
         """
