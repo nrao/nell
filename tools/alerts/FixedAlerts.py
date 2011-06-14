@@ -46,15 +46,14 @@ class FixedAlerts():
             f.writelines(self.reportLines)
             f.close()
 
-    def getBlackedOutFixedPeriods(self, sessions = []):
+    def getBlackedOutFixedPeriods(self, now, sessions = []):
         """
-        Returns the stats on fixed sessions.  For use in determining
-        if alerts are raised.  Returns a list of offending
-        blacked-out periods, i.e.,
+        Returns the stats on future fixed sessions. For use in
+        determining if alerts are raised.  Returns a list of
+        offending blacked-out periods, i.e.,
         [(session, [blacked out period])]
         where the list of periods are sorted by start times.
         """
-       
         if len(sessions) == 0:
             fixed = Session_Type.objects.filter(type = 'fixed')
             sessions = Sesshun.objects.filter(session_type = fixed)
@@ -62,7 +61,7 @@ class FixedAlerts():
         injured = []
         for s in sessions:
             self.add("Periods for (%d) %s\n" % (s.id, s.__str__()))
-            periods = s.getBlackedOutSchedulablePeriods()
+            periods = s.getBlackedOutSchedulablePeriods(now)
             cnt = len(periods)
             self.add("%d schedulable blacked-out periods\n" % cnt)
             self.lostPeriodCount += cnt
@@ -100,7 +99,7 @@ class FixedAlerts():
                 return daysTillStart <= self.stageBoundary
 
         return [(s, ps, stage)
-                for s, ps in self.getBlackedOutFixedPeriods(sessions)
+                for s, ps in self.getBlackedOutFixedPeriods(now, sessions)
                     if withinBoundary(ps[0].start, stage, now)]
 
     def raiseAlerts(self
@@ -208,7 +207,10 @@ if __name__ == '__main__':
         sys.exit(2)
     quiet = opts['quiet'] == 'True' if opts['quiet'] is not None else True  
     wa = FixedAlerts()
-    cnt = wa.raiseAlerts(stage = stage, sessions = sessions
-                       , test = test, quiet = quiet)
+    cnt = wa.raiseAlerts(stage = stage
+                       , sessions = sessions
+                       , test = test
+                       , now = datetime.utcnow()
+                       , quiet = quiet)
     sys.exit(cnt)
 

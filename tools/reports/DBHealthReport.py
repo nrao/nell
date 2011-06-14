@@ -594,13 +594,22 @@ def GenerateReport():
                                          , s.frequency))
     print_values(outfile, values)
 
-    outfile.write("\n\nUpcomming Windowed, Elective, and Fixed Sessions that are not enabled:")
+    outfile.write("\n\nUpcoming Windowed, Elective, and Fixed Sessions that are not enabled:")
     sa = SessionAlerts()
     print_values(outfile
                , ["%s session %s which runs %s" % (u.session.session_type.type
                                                  , u.session.id
                                                  , sa.getRange(u))
                    for u in sa.findDisabledSessionAlerts()]
+                   )
+
+    outfile.write("\n\nUpcoming Windowed, Elective, and Fixed Sessions that are not authorized:")
+    sa = SessionAlerts()
+    print_values(outfile
+               , ["%s session %s which runs %s" % (u.session.session_type.type
+                                                 , u.session.id
+                                                 , sa.getRange(u))
+                   for u in sa.findUnauthorizedSessionAlerts()]
                    )
 
     outfile.write("\n\nProjects without a friend:")
@@ -648,7 +657,8 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nProjects that contain non-unique session names:")
-    names  = [(p.pcode, [s.name for s in p.sesshun_set.all()]) for p in projects]
+    names  = [(p.pcode, [s.name for s in p.sesshun_set.all()])
+                                    for p in projects]
     values = [p for p, n in names if len(Set(n)) != len(n)]
     print_values(outfile, values)
 
@@ -681,8 +691,25 @@ def GenerateReport():
                                                    and not p.isDeleted()]:
             blackouts = s.project.get_blackout_times(p.start, p.end())
             if blackouts:
-                values.append("%s on %s" % (s.name, p.start.strftime("%m/%d/%Y %H:%M")))
+                values.append("%s on %s" % (s.name
+                                          , p.start.strftime("%m/%d/%Y %H:%M")))
     print_values(outfile, values)
+
+    outfile.write("\n\nElective and Fixed pending periods scheduled on blackout dates:")
+    values = []
+    opened = Session_Type.objects.get(type="open")
+    windowed = Session_Type.objects.get(type="windowed")
+    pending = Period_State.objects.get(name="Pending")
+    for p in Period.objects \
+                   .exclude(session__session_type=opened) \
+                   .exclude(session__session_type=windowed) \
+                   .filter(start__gte=now) \
+                   .filter(state=pending).order_by("start"):
+        blackouts = p.session.project.get_blackout_times(p.start, p.end())
+        if blackouts:
+            values.append("%s" % p)
+    print_values(outfile, values)
+        
 
     outfile.write("\n\nOverlapping periods:")
     values  = []
@@ -699,10 +726,8 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nGaps in historical schedule:")
-    now = datetime.utcnow()
-    ps_all = Period.objects.filter(start__lt = now)\
-      .filter(~Q(state__abbreviation = 'D')).order_by("start")
-    ps = ps_all
+    ps = Period.objects.filter(start__lt = now)\
+             .filter(~Q(state__abbreviation = 'D')).order_by("start")
     values = []
     previous = ps[0]
     for p in ps[1:]:

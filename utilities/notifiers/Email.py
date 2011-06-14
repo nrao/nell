@@ -25,8 +25,6 @@
 #  P. O. Box 2
 #  Green Bank, WV 24944-0002 USA
 #
-#  $Id:$
-#
 ######################################################################
 
 from datetime import datetime
@@ -34,12 +32,13 @@ from utilities import TimeAgent
 
 class Email:
 
-    def __init__(self, sender = None, recipients = [], subject = None, body = None, date = None):
+    def __init__(self, sender = None, recipients = None, subject = None, body = None, date = None, bcc = None):
 
         self.SetSender(sender)
         self.SetRecipients(recipients)
         self.SetSubject(subject)
         self.SetBody(body)
+        self.SetBcc(bcc)
         self.SetDate(date)
 
     def SetSender(self, sender):
@@ -63,8 +62,9 @@ class Email:
         empty.
         """
 
-        # Note: no error checking (valid email)
-        if type(recipients) == str:
+        if recipients is None:
+            self.recipients = []
+        elif type(recipients) == str:
             if recipients == "":
                 self.recipients = []
             else:
@@ -142,12 +142,20 @@ class Email:
     def GetBody(self):
         return self.body
 
+    def SetBcc(self, bcc):
+        self.bcc = bcc
+
+    def GetBcc(self):
+        return self.bcc
+
     def GetText(self):
         """Returns the entire text of the email, including the To:,
         From:, Date: etc. fields"""
 
-        text =  'From: %s\r\nTo: %s\r\nDate: %s\r\nSubject: %s\r\n\r\n%s\r\n' \
-               % (self.sender, self.GetRecipientString(), self.date, self.subject, self.body)
+        bccStr = "" if self.bcc is None else "Bcc: %s\r\n" % self.bcc
+        text =  'From: %s\r\nTo: %s\r\n%sDate: %s\r\nSubject: %s\r\n\r\n%s\r\n' \
+               % (self.sender, self.GetRecipientString(), bccStr, self.date
+                , self.subject, self.body)
 
         return text
 
