@@ -112,7 +112,6 @@ class NRAOBosDB:
         data = ET.fromstring(str)
         reservations = []
         for i in range(len(data)):
-            # TBF: why can't I use self.findTag?
             res = data[i].getchildren()
             assert 'startDate' in res[1].tag
             user_id = res[0].attrib.get('id')
@@ -127,7 +126,6 @@ class NRAOBosDB:
         data = ET.fromstring(str)
         reservations = []
         for i in range(len(data)):
-            # TBF: why can't I use self.findTag?
             dates = data[i].getchildren()
             assert 'startDate' in dates[0].tag
             start = self.str2dt(dates[0].text)
@@ -138,10 +136,4 @@ class NRAOBosDB:
     def str2dt(self, str):
         "YYYY-MM-DD -> DateTime"
         return datetime.strptime(str, "%Y-%m-%d")
-
-    def findTag(self, node, tag):
-        value = None
-        value_tag = node.find(tag)
-        if value_tag is not None:
-            value = value_tag.text
-        return value  
+ 
