@@ -97,7 +97,7 @@ class WindowsReport():
         too_late_wins = [w for w in goodWins if not w.complete and w.end() < today]
 
         now = datetime.now()
-        futureWins = [w for w in wins if w.end() > now.date()]
+        futureWins = [w for w in wins if w.end() is not None and w.end() > now.date()]
 
         # print summary
         self.add("Number of Windowed Sessions: %d\n" % len(wss)) 
@@ -118,7 +118,7 @@ class WindowsReport():
             # session header
             self.add("\nSession: %s, type: %s, # windows: %d\n" % \
                 (ws.name, ws.session_type.type, numWins))
-            # TBF: any bad periods? 
+            # any bad periods? 
             ps = ws.period_set.order_by("start")
             badPs = [p for p in ps if p.window is None]
             if len(badPs) != 0:
@@ -144,8 +144,8 @@ class WindowsReport():
                         flags += " Period %d ~in." % p.id \
                             if not win.isInWindow(p) else ""
                 data = [str(win.id)
-                      , win.start_date.strftime("%Y-%m-%d")
-                      , str(win.duration)
+                      , "None" if win.start_date() is None else win.start_date().strftime("%Y-%m-%d")
+                      , str(win.duration())
                       , self.periodStr(win.default_period) 
                       , ";".join([self.periodStr(p) for p in win.nonDefaultPeriods()]) 
                       , flags
