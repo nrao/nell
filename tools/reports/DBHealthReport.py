@@ -127,13 +127,6 @@ def get_non_windowed_sessions_with_windows():
     windowed = [x for x in snw if len(x.window_set.all()) > 0]
     return windowed
 
-
-
-# TBF: this has been reduced due to the move of start_date & duration from
-# Window to WindowRange.  Now we use filter_current_windows in conjunction
-# with the old calls to filter these windows
-#  Huh?  - mtm
-
 def get_windows():
     return Window.objects.all()
 
@@ -149,16 +142,14 @@ def get_missing_default_periods():
     return [w for w in ws if w.lacksMandatoryDefaultPeriod()]
 
 # windows w/ out start, duration, or default_period
-
 def get_incomplete_windows():
-    # TBF: have to fix this to handle window ranges
-    #  Huh?  - mtm
     ws = get_windows()
-    #win_no_start = filter_current_windows(ws.filter(start_date = None))
-    #win_no_dur = filter_current_windows(ws.filter(duration = None))
+    # no periods
     win_no_period = filter_current_windows(ws.filter(default_period = None))
+    # no ranges
+    win_no_ranges = [w for w in ws if len(w.ranges()) == 0]
     #return (win_no_start, win_no_dur, win_no_period)
-    return ([], [], win_no_period)
+    return (win_no_ranges, win_no_period)
 
 # windows w/ any period outside the window range
 def get_win_period_outside():
@@ -394,7 +385,7 @@ def output_windows_report(file):
     desc = []
     desc.append("Windowed sessions with no windows")
     desc.append("Non-windowed sessions with windows assigned")
-    desc.append("Incomplete windows (missing data: start, duration, period)")
+    desc.append("Incomplete windows (missing data: ranges, period)")
     desc.append("Windows with periods whose duration extends outside window")
     desc.append("Overlapping window pairs")
     desc.append("Periods belonging in windowed sessions but not in windows")
@@ -411,7 +402,7 @@ def output_windows_report(file):
     file.write("Summary\n")
     file.write("\t%s: %i\n" % (desc[0], len(w[0])))
     file.write("\t%s: %i\n" % (desc[1], len(w[1])))
-    file.write("\t%s: (%i, %i, %i)\n" % (desc[2], len(w[2][0]), len(w[2][1]), len(w[2][2])))
+    file.write("\t%s: (%i, %i)\n" % (desc[2], len(w[2][0]), len(w[2][1])))
     file.write("\t%s: %i\n" % (desc[3], len(w[3])))
     file.write("\t%s: %i\n" % (desc[4], len(w[4])))
     file.write("\t%s: %i\n" % (desc[5], len(w[5])))
@@ -442,16 +433,12 @@ def output_windows_report(file):
         file.write("\n%s:\n" % (desc[2]))
 
         if len(w[2][0]):
-            file.write("\n\tWith no start date:\n")
+            file.write("\n\tWith no range:\n")
             output_windows(file, w[2][0])
 
         if len(w[2][1]):
-            file.write("\n\tWith no duration:\n")
-            output_windows(file, w[2][1])
-
-        if len(w[2][2]):
             file.write("\n\tWith no period:\n")
-            output_windows(file, w[2][2])
+            output_windows(file, w[2][1])
 
     if len(w[3]):
         file.write("\n%s:\n" % (desc[3]))
