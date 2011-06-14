@@ -23,8 +23,6 @@ class ElectiveAlerts():
         # to go from stage I to stage II?
         self.stageBoundary = 15
  
-        self.now = datetime.utcnow()
-        
         # for reporting results
         self.quiet = quiet
         self.filename = filename if filename is not None else "ElecAlerts.txt"
@@ -46,9 +44,9 @@ class ElectiveAlerts():
             f.writelines(self.reportLines)
             f.close()
 
-    def getBlackedOutElectivePeriods(self, elecs = []):
+    def getBlackedOutElectivePeriods(self, now, elecs = []):
         """
-        Returns the stats on electives.  For use in determining
+        Returns the stats on future electives.  For use in determining
         if alerts are raised.  Returns a list of electives and their
         offending blacked-out periods, i.e.,
         [(elective, [blacked out period])]
@@ -62,7 +60,7 @@ class ElectiveAlerts():
         injured = []
         for e in elecs:
             self.add("Periods for (%d) %s\n" % (e.id, e.__str__()))
-            periods = e.getBlackedOutSchedulablePeriods()
+            periods = e.getBlackedOutSchedulablePeriods(now)
             cnt = len(periods)
             self.add("%d schedulable blacked-out periods\n" % cnt)
             self.lostPeriodCount += cnt
@@ -99,7 +97,7 @@ class ElectiveAlerts():
                 return daysTillStart <= self.stageBoundary
 
         return [(e, ps, stage)
-                for e, ps in self.getBlackedOutElectivePeriods(elecs)
+                for e, ps in self.getBlackedOutElectivePeriods(now, elecs)
                     if withinBoundary(ps[0].start, stage, now)]
 
     def raiseAlerts(self
@@ -206,6 +204,10 @@ if __name__ == '__main__':
         sys.exit(2)
     quiet = opts['quiet'] == 'True' if opts['quiet'] is not None else True  
     wa = ElectiveAlerts()
-    cnt = wa.raiseAlerts(stage = stage, elecs = elecs, test = test, quiet = quiet)
+    cnt = wa.raiseAlerts(stage = stage
+           , elecs = elecs
+           , now = datetime.utcnow()
+           , test = test
+           , quiet = quiet)
     sys.exit(cnt)
 
