@@ -44,8 +44,9 @@ class Email:
 
     def SetSender(self, sender):
         """
-        SetSender() is simple.  Only one sender.  Could verify that the
-        email address is constructed correctly, TBF for now."""
+        SetSender() is simple.  Only one sender.  
+        """
+        # Note: no error checking (valid email)
         self.sender = sender
 
     def GetSender(self):
@@ -62,6 +63,7 @@ class Email:
         empty.
         """
 
+        # Note: no error checking (valid email)
         if type(recipients) == str:
             if recipients == "":
                 self.recipients = []
