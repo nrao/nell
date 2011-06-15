@@ -154,9 +154,69 @@ class TestReports(NellTestCase):
 
     def test_windowsReport(self):
 
+        # first, nothing much to report
         wr = WindowsReport(filename = "WindowsReport.txt")
         wr.quietReport = True
         wr.report()
+        report = "".join(wr.reportLines)
+        self.assertEquals(468, len(report))
+        self.assertTrue("Number of Windowed Sessions w/ out Windows (VERY BAD): 0" in report)
+
+        # now create a Windowed sesssion
+        s = create_sesshun()
+        s.session_type = Session_Type.objects.get(type = "windowed")
+        s.name = "Win"
+        s.save()
+
+        # test
+        wr.reportLines = []
+        wr.report()
+        report = "".join(wr.reportLines)
+        self.assertEquals(468, len(report))
+        self.assertTrue("Number of Windowed Sessions w/ out Windows (VERY BAD): 1" in report)
+
+        # now create a window for it
+        w = Window(session = s)
+        w.save()
+
+        # test
+        wr.reportLines = []
+        wr.report()
+        report = "".join(wr.reportLines)
+        self.assertEquals(897, len(report))
+        self.assertTrue("Number of Windowed Sessions w/ out Windows (VERY BAD): 0" in report)
+
+
+        # now create a period for it
+        rg = Receiver_Group(session = s)
+        L = (Receiver.get_rcvr('L'))
+        rg.save()
+        rg.receivers.add(L)
+        rg.save()
+        dt1 = datetime(2010, 1, 1, 0)
+        scheduled = Period_State.get_state("S")
+        dur = 2.0
+        pa = Period_Accounting(scheduled = dur)
+        pa.save()
+        p = Period(session = s
+                 , start = dt1
+                 , duration = dur
+                 , state = scheduled
+                 , accounting = pa
+                  )
+        p.save()
+        pg = Period_Receiver(period = p, receiver = L)
+        pg.save()
+
+        w.default_period = p
+        w.save()
+
+        # test
+        wr.reportLines = []
+        wr.report()
+        report = "".join(wr.reportLines)
+        self.assertEquals(988, len(report))
+        self.assertTrue("Number of Windowed Sessions w/ out Windows (VERY BAD): 0" in report)
 
     def test_weeklyReport(self):
 

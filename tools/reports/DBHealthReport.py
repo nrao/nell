@@ -10,6 +10,7 @@ from django.db.models          import Q
 
 from scheduler.models          import *
 from scheduler.httpadapters    import SessionHttpAdapter
+from tools.database.UserInfoTools import UserInfoTools
 from utilities                 import TimeAccounting
 from utilities                 import AnalogSet
 from tools.alerts              import SessionAlerts
@@ -126,13 +127,6 @@ def get_non_windowed_sessions_with_windows():
     windowed = [x for x in snw if len(x.window_set.all()) > 0]
     return windowed
 
-
-
-# TBF: this has been reduced due to the move of start_date & duration from
-# Window to WindowRange.  Now we use filter_current_windows in conjunction
-# with the old calls to filter these windows
-#  Huh?  - mtm
-
 def get_windows():
     return Window.objects.all()
 
@@ -148,16 +142,14 @@ def get_missing_default_periods():
     return [w for w in ws if w.lacksMandatoryDefaultPeriod()]
 
 # windows w/ out start, duration, or default_period
-
 def get_incomplete_windows():
-    # TBF: have to fix this to handle window ranges
-    #  Huh?  - mtm
     ws = get_windows()
-    #win_no_start = filter_current_windows(ws.filter(start_date = None))
-    #win_no_dur = filter_current_windows(ws.filter(duration = None))
+    # no periods
     win_no_period = filter_current_windows(ws.filter(default_period = None))
+    # no ranges
+    win_no_ranges = [w for w in ws if len(w.ranges()) == 0]
     #return (win_no_start, win_no_dur, win_no_period)
-    return ([], [], win_no_period)
+    return (win_no_ranges, win_no_period)
 
 # windows w/ any period outside the window range
 def get_win_period_outside():
@@ -393,7 +385,7 @@ def output_windows_report(file):
     desc = []
     desc.append("Windowed sessions with no windows")
     desc.append("Non-windowed sessions with windows assigned")
-    desc.append("Incomplete windows (missing data: start, duration, period)")
+    desc.append("Incomplete windows (missing data: ranges, period)")
     desc.append("Windows with periods whose duration extends outside window")
     desc.append("Overlapping window pairs")
     desc.append("Periods belonging in windowed sessions but not in windows")
@@ -410,7 +402,7 @@ def output_windows_report(file):
     file.write("Summary\n")
     file.write("\t%s: %i\n" % (desc[0], len(w[0])))
     file.write("\t%s: %i\n" % (desc[1], len(w[1])))
-    file.write("\t%s: (%i, %i, %i)\n" % (desc[2], len(w[2][0]), len(w[2][1]), len(w[2][2])))
+    file.write("\t%s: (%i, %i)\n" % (desc[2], len(w[2][0]), len(w[2][1])))
     file.write("\t%s: %i\n" % (desc[3], len(w[3])))
     file.write("\t%s: %i\n" % (desc[4], len(w[4])))
     file.write("\t%s: %i\n" % (desc[5], len(w[5])))
@@ -441,16 +433,12 @@ def output_windows_report(file):
         file.write("\n%s:\n" % (desc[2]))
 
         if len(w[2][0]):
-            file.write("\n\tWith no start date:\n")
+            file.write("\n\tWith no range:\n")
             output_windows(file, w[2][0])
 
         if len(w[2][1]):
-            file.write("\n\tWith no duration:\n")
-            output_windows(file, w[2][1])
-
-        if len(w[2][2]):
             file.write("\n\tWith no period:\n")
-            output_windows(file, w[2][2])
+            output_windows(file, w[2][1])
 
     if len(w[3]):
         file.write("\n%s:\n" % (desc[3]))
@@ -519,6 +507,7 @@ def output_windows_report(file):
 def GenerateReport():
 
     ta = TimeAccounting()
+    ui = UserInfoTools()
 
     outfile = open("./DssDbHealthReport.txt",'w')
 
@@ -605,13 +594,22 @@ def GenerateReport():
                                          , s.frequency))
     print_values(outfile, values)
 
-    outfile.write("\n\nUpcomming Windowed, Elective, and Fixed Sessions that are not enabled:")
+    outfile.write("\n\nUpcoming Windowed, Elective, and Fixed Sessions that are not enabled:")
     sa = SessionAlerts()
     print_values(outfile
                , ["%s session %s which runs %s" % (u.session.session_type.type
                                                  , u.session.id
                                                  , sa.getRange(u))
                    for u in sa.findDisabledSessionAlerts()]
+                   )
+
+    outfile.write("\n\nUpcoming Windowed, Elective, and Fixed Sessions that are not authorized:")
+    sa = SessionAlerts()
+    print_values(outfile
+               , ["%s session %s which runs %s" % (u.session.session_type.type
+                                                 , u.session.id
+                                                 , sa.getRange(u))
+                   for u in sa.findUnauthorizedSessionAlerts()]
                    )
 
     outfile.write("\n\nProjects without a friend:")
@@ -659,19 +657,27 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nProjects that contain non-unique session names:")
-    names  = [(p.pcode, [s.name for s in p.sesshun_set.all()]) for p in projects]
+    names  = [(p.pcode, [s.name for s in p.sesshun_set.all()])
+                                    for p in projects]
     values = [p for p, n in names if len(Set(n)) != len(n)]
     print_values(outfile, values)
 
-    outfile.write("\n\nUsers with duplicate accounts:")
-    users  = list(User.objects.order_by("last_name"))
-    values = []
-    for u in users:
-        users.remove(u)
-        for i in users:
-            if i.last_name == u.last_name and i.first_name == u.first_name:
-                values.append(u)
+    outfile.write("\n\nUsers with duplicate accounts by name:")
+    values = ui.findUsersWithSameNames()
     print_values(outfile, values)
+
+    outfile.write("\n\nUsers with shared PST accounts:\n")
+    sharedPstIds = ui.findUsersWithSamePstId(quiet = True)
+    # print out useful format
+    if len(sharedPstIds) > 0:
+        for pst_id, us in sharedPstIds:
+            outfile.write("PST ID: %d\n" % pst_id)
+            for u in us:
+                outfile.write("    %s, %d\n" % (u, u.id))
+                outfile.write("    Projects: %s\n" % u.getProjects())
+                outfile.write("    Blackouts: %s\n" % u.blackout_set.all())
+    else:
+        outfile.write("    None\n")
 
     outfile.write("\n\nUsers with no PST ID:")
     users  = list(User.objects.order_by("last_name"))
@@ -685,8 +691,25 @@ def GenerateReport():
                                                    and not p.isDeleted()]:
             blackouts = s.project.get_blackout_times(p.start, p.end())
             if blackouts:
-                values.append("%s on %s" % (s.name, p.start.strftime("%m/%d/%Y %H:%M")))
+                values.append("%s on %s" % (s.name
+                                          , p.start.strftime("%m/%d/%Y %H:%M")))
     print_values(outfile, values)
+
+    outfile.write("\n\nElective and Fixed pending periods scheduled on blackout dates:")
+    values = []
+    opened = Session_Type.objects.get(type="open")
+    windowed = Session_Type.objects.get(type="windowed")
+    pending = Period_State.objects.get(name="Pending")
+    for p in Period.objects \
+                   .exclude(session__session_type=opened) \
+                   .exclude(session__session_type=windowed) \
+                   .filter(start__gte=now) \
+                   .filter(state=pending).order_by("start"):
+        blackouts = p.session.project.get_blackout_times(p.start, p.end())
+        if blackouts:
+            values.append("%s" % p)
+    print_values(outfile, values)
+        
 
     outfile.write("\n\nOverlapping periods:")
     values  = []
@@ -703,10 +726,8 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nGaps in historical schedule:")
-    now = datetime.utcnow()
-    ps_all = Period.objects.filter(start__lt = now)\
-      .filter(~Q(state__abbreviation = 'D')).order_by("start")
-    ps = ps_all
+    ps = Period.objects.filter(start__lt = now)\
+             .filter(~Q(state__abbreviation = 'D')).order_by("start")
     values = []
     previous = ps[0]
     for p in ps[1:]:

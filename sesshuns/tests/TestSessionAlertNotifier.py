@@ -36,7 +36,7 @@ class TestSessionAlertNotifier(TestSessionAlertBase):
         self.makeWindowedSession(start_date = date(2009, 4, 5), duration = 7)
         sn = SessionAlertNotifier(unknown = self.window
                                 , test   = True
-                                , type   = "disabled_dss_team"
+                                , type   = "dss_team"
                                 )
         txt = sn.email.GetText()
         self.failUnless("Subject: Warning - unenabled windowed session(s) about to begin" in txt)
@@ -45,7 +45,7 @@ class TestSessionAlertNotifier(TestSessionAlertBase):
         self.makeWindowedSession(start_date = date(2009, 4, 5), duration = 7)
         sn = SessionAlertNotifier(unknown = self.window
                                 , test   = True
-                                , type   = "disabled_observers"
+                                , type   = "observers"
                                 )
         txt = sn.email.GetText()
         self.failUnless("Subject: Warning, GBT windowed session Low Frequency With No RFI is not enabled will likely not be scheduled" in txt)
@@ -55,16 +55,23 @@ class TestSessionAlertNotifier(TestSessionAlertBase):
         self.makeElectiveSession()
         sn = SessionAlertNotifier(unknown = self.elective
                                 , test   = True
-                                , type   = "disabled_dss_team"
+                                , type   = "dss_team"
                                 )
         txt = sn.email.GetText()
         self.failUnless("Subject: Warning - unenabled elective session(s) about to begin" in txt)
+        sn = SessionAlertNotifier(unknown = self.elective
+                                , test   = True
+                                , type   = "dss_team"
+                                , flag   = "authorized"
+                                )
+        txt = sn.email.GetText()
+        self.failUnless("Subject: Warning - unauthorized elective session(s) about to begin" in txt)
 
     def test_setElectiveDisabledObservers(self):
         self.makeElectiveSession()
         sn = SessionAlertNotifier(unknown = self.elective
                                 , test   = True
-                                , type   = "disabled_observers"
+                                , type   = "observers"
                                 )
         txt = sn.email.GetText()
         self.failUnless("Subject: Warning, GBT elective session Low Frequency With No RFI is not enabled will likely not be scheduled" in txt)
@@ -74,7 +81,7 @@ class TestSessionAlertNotifier(TestSessionAlertBase):
         self.makeFixedSession()
         sn = SessionAlertNotifier(unknown = self.fixed
                                 , test    = True
-                                , type    = "disabled_dss_team"
+                                , type    = "dss_team"
                                 )
         txt = sn.email.GetText()
         self.failUnless("Subject: Warning - unenabled fixed session(s) about to begin" in txt)
@@ -83,7 +90,7 @@ class TestSessionAlertNotifier(TestSessionAlertBase):
         self.makeFixedSession()
         sn = SessionAlertNotifier(unknown = self.fixed
                                 , test    = True
-                                , type    = "disabled_observers"
+                                , type    = "observers"
                                 )
         txt = sn.email.GetText()
         self.failUnless("Subject: Warning, GBT fixed session Low Frequency With No RFI is not enabled will likely not be scheduled" in txt)

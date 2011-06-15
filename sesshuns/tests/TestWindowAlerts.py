@@ -196,7 +196,8 @@ class TestWindowAlerts(NellTestCase):
 
         # test
         wa = WindowAlerts.WindowAlerts()
-        times = wa.getWindowTimes()
+        now = datetime(2009, 1, 1)
+        times = wa.getWindowTimes(now)
 
         # expected result
         sch = [(datetime(2009, 4, 6), self.window.end_datetime()) ]
@@ -224,8 +225,25 @@ class TestWindowAlerts(NellTestCase):
         bss.insert(0, (bsStart, bsEnd))
         bssHrs += 3*24
 
-        times = wa.getWindowTimes()
+        times = wa.getWindowTimes(now)
 
+        exp = [(self.window
+              , (schHrs
+               , bssHrs
+               , sch
+               , [bss]))]
+
+        self.assertEquals(exp[0][0], times[0][0])
+        self.assertEquals(exp[0][1], times[0][1])
+
+        # move the current time forward
+        now = datetime(2009, 4, 9, 12, 15, 0)
+        times = wa.getWindowTimes(now)
+
+        sch = [(now, self.window.end_datetime()) ]
+        bss = [(now, bsEnd)]
+        schHrs = TimeAgent.timedelta2minutes(sch[0][1] - sch[0][0])/60.0
+        bssHrs = TimeAgent.timedelta2minutes(bss[0][1] - bss[0][0])/60.0
         exp = [(self.window
               , (schHrs
                , bssHrs
@@ -238,8 +256,9 @@ class TestWindowAlerts(NellTestCase):
     def testGetWindowTimesNonContigious(self):
 
         # test
+        now = datetime(2009, 1, 1)
         wa = WindowAlerts.WindowAlerts()
-        times = wa.getWindowTimes()
+        times = wa.getWindowTimes(now)
 
         # expected result
         sch = [(datetime(2009, 4, 6), self.window.end_datetime()) ]
@@ -268,7 +287,7 @@ class TestWindowAlerts(NellTestCase):
         wr2.save()
 
         wa = WindowAlerts.WindowAlerts()
-        times = wa.getWindowTimes()
+        times = wa.getWindowTimes(now)
 
         # expected result
         sch = [(datetime(2009, 4, 6), self.window.end_datetime()) ]
@@ -291,7 +310,7 @@ class TestWindowAlerts(NellTestCase):
         wr1.save()
 
         wa = WindowAlerts.WindowAlerts()
-        times = wa.getWindowTimes()
+        times = wa.getWindowTimes(now)
 
         # expected result
         sch = [(datetime(2009, 4, 7), self.window.end_datetime()) ]
@@ -307,10 +326,11 @@ class TestWindowAlerts(NellTestCase):
     def testFindAlertLevels(self):
 
         wa = WindowAlerts.WindowAlerts()
+        now = datetime(2009, 1, 1)
  
         # we 37/144 = 25% of scheduble time blacked out
         # so we should raise a level 1 alert
-        ns = wa.findAlertLevels()
+        ns = wa.findAlertLevels(now)
         
         self.assertEquals(1, len(ns))             
         self.assertEquals(self.window, ns[0][0])
@@ -325,7 +345,7 @@ class TestWindowAlerts(NellTestCase):
                           )
         blackout.save()
 
-        ns = wa.findAlertLevels()
+        ns = wa.findAlertLevels(now)
 
         self.assertEquals(1, len(ns))             
         self.assertEquals(self.window, ns[0][0])

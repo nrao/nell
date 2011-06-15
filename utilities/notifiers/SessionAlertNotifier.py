@@ -58,15 +58,17 @@ The GBT scheduling team
              )
         )
 
-    def createDisabledDssTeam(self, unknown):
-        "Create email to be sent to the DSS team about disabled sessions."
+    def createDisabledDssTeam(self, unknown, flag):
+        "Create email to be sent to the DSS team about inactive sessions."
         self.SetSubject(
-           "Warning - unenabled %s session(s) about to begin" % unknown.session.session_type.type)
+           "Warning - un%s %s session(s) about to begin" % (flag, unknown.session.session_type.type))
         self.SetBody(
-           "%s session %s runs %s and is unenabled." % (unknown.session.session_type.type
-                                                      , unknown.session.name
-                                                      , SessionAlertEmail.getRange(unknown)
-                                                      ))
+           "%s session %s runs %s and is un%s." % (
+                                       unknown.session.session_type.type
+                                     , unknown.session.name
+                                     , SessionAlertEmail.getRange(unknown)
+                                     , flag
+                                                  ))
 
 class SessionAlertNotifier(Notifier):
 
@@ -80,23 +82,23 @@ class SessionAlertNotifier(Notifier):
     email to special email classes.
     """
 
-    def __init__(self, unknown, test = False, log = False, type = "disabled_dss_team"):
+    def __init__(self, unknown, test = False, log = False, type = "dss_team", flag = "enabled"):
         Notifier.__init__(self, [], test, log)
 
         self.sender = "helpdesk-dss@gb.nrao.edu"
         self.type   = type
-        self.setUnknown(unknown)
+        self.setUnknown(unknown, flag)
  
-    def setUnknown(self, unknown):
+    def setUnknown(self, unknown, flag):
         
         self.unknown = unknown
 
         self.email = SessionAlertEmail(self.sender, unknown) 
-        if self.type == "disabled_observers":
+        if self.type == "observers":
             self.email.createDisabledObservers(unknown)
-        elif self.type == "disabled_dss_team":
+        elif self.type == "dss_team":
             self.sender = "dss@gb.nrao.edu"
-            self.email.createDisabledDssTeam(unknown)
+            self.email.createDisabledDssTeam(unknown, flag)
             self.email.SetRecipients(['gbdyn@nrao.edu'])
 
     def notify(self):

@@ -11,7 +11,8 @@ class FixedAlertEmail(Email):
     """
     def __init__(self, sender, sess):
 
-        Email.__init__(self, sender = sender, recipients = [])
+        Email.__init__(self, sender = sender, recipients = []
+                     , bcc = "gbdyn@nrao.edu")
         self.createRecipients(sess)
         self.date = None
 

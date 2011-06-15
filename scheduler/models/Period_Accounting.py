@@ -118,7 +118,7 @@ class Period_Accounting(models.Model):
         self.__setattr__(reason, time)
 
     def get_time(self, name):
-        # method or attribute?  TBF: how to REALLY do this?
+        # method or attribute? Note: better way to do this? 
         if self.__dict__.has_key(name):
             return self.__getattribute__(name)
         else:

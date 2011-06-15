@@ -199,6 +199,18 @@ def setupElectives(f):
                             , elective = self.elec
                               )
         self.period3.save() 
+
+        pa = Period_Accounting(scheduled = 0.0)
+        pa.save()
+        self.period4 = Period(session = self.sesshun
+                            , start = dt + timedelta(days = 3*7)
+                            , duration = dur
+                            , state = self.deleted
+                            , accounting = pa
+                            , elective = self.elec
+                              )
+        self.period4.save() 
+
         if f.__name__ != "setUp":
             f(self, *args)
     return setup

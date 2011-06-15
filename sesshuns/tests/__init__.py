@@ -37,6 +37,7 @@ from TestOperators             import TestOperators
 from TestPSTMirrorDB           import TestPSTMirrorDB
 from TestReports               import TestReports
 from TestSchedulingNotifier    import TestSchedulingNotifier
+from TestSchedtime2DSS         import TestSchedtime2DSS
 from TestSessionAlertNotifier  import TestSessionAlertNotifier
 from TestSessionAlerts         import TestSessionAlerts
 from TestUpdateEphemeris       import TestUpdateEphemeris

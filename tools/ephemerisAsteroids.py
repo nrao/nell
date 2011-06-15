@@ -3,8 +3,8 @@
 # it can be used with pyephem to create objects which can give the
 # position of these objects for any date 
 # For specific use with UpdateEphemeris
-# NOTE, TBF, WTF, OMG: this is for 2010, so we'll need a way
-# to autoupdate this?
+# This is for 2010, so we'll need a way to autoupdate this?
+# See Story: https://www.pivotaltracker.com/story/show/8254649
 
 ephemerisAsteroids = {'Alexandra': 'Alexandra,e,11.8070,313.4363,345.8050,2.710965,0.2208097,0.19693015,346.3726,01/04.0/2010,2000,H 7.66,0.15\n',
  'Amphitrite': 'Amphitrite,e,6.0967,356.4867,63.0125,2.553755,0.2415101,0.07326953,183.9269,01/04.0/2010,2000,H 5.85,0.20\n',

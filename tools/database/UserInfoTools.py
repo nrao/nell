@@ -3,7 +3,7 @@ from datetime           import datetime, timedelta
 import math
 import MySQLdb as m
 import logging, urllib2
-from nell.utilities.database.external import NRAOUserDB, UserInfo, PSTMirrorDB
+from nell.utilities.database.external import UserInfo, PSTMirrorDB
 import lxml.etree as ET
 import sys
 
@@ -203,6 +203,99 @@ class UserInfoTools(object):
         print >> self.out, "len(missing): ", len(missing)
         print >> self.out, "len(ourUsers): ", len(User.objects.all())
 
+    def findUsersWithSameNames(self, quiet = False):
+        """
+        Looks at both first, last names, ignoreing case.
+        """
+        users  = list(User.objects.order_by("last_name"))
+        result = []
+        for u in users:
+            users.remove(u)
+            for i in users:
+                if i.last_name.lower() == u.last_name.lower() \
+                and i.first_name.lower() == u.first_name.lower():
+                    # save it
+                    result.append(u)
+                    # report it
+                    if not quiet:
+                        print >> self.out, "Duplicate by name: ", u
+        return result
+        
+    def findUsersWithSamePstId(self, quiet = False):
+        """
+        Finds all users that share the same PST ID (nobody should), reports
+        them in a format that one could use to decide how to reconcile them,
+        and also returns the results.
+        """
+
+        all = User.objects.all().order_by("id")
+
+        result = []
+        dupPstIds = []
+        for u in all:
+            # for each user, are there >1 users that share this pst_id?
+            samePstId = User.objects.filter(pst_id = u.pst_id).order_by("id")
+            if len(samePstId) > 1 and u.pst_id not in dupPstIds:
+                # save it
+                dupPstIds.append(u.pst_id)
+                result.append((u.pst_id, samePstId))
+                # report it
+                if not quiet:
+                    print >> self.out, "PST ID: %d" % u.pst_id
+                    for uu in samePstId:
+                        print >> self.out, uu, uu.id
+                        print >> self.out, "    Projects: ", uu.getProjects()
+                        print >> self.out, "    Blackouts: ", uu.blackout_set.all()
+        return result
+
+    def reconcileUsersWithSamePstId(self, sharedPstId, finalUserId):
+        """
+        Distinct from reconcileRedundantUsers.  Here we aren't searching
+        for redundancies, we already know what they are, we just want
+        this function to do all the dirty work for us.
+        Use the given PST id to find all the redundant user, and move all
+        info to the given final user.
+        """
+
+        # normally, this would return just one user
+        us = User.objects.filter(pst_id = sharedPstId)
+        assert len(us) > 1
+
+        # only one of these user objects will be kept
+        assert finalUserId in [u.id for u in us]
+
+        finalUser = User.objects.get(id = finalUserId)
+
+        print >> self.out, "Final User originally looks like: ", finalUser, finalUser.id
+        print >> self.out,  "Projects: ", finalUser.getProjects()
+        print >> self.out, "Blackouts: ", finalUser.blackout_set.all()
+
+        usersToDelete = [u for u in us if u.id != finalUserId]
+
+        # before deleting each redundant user record, copy over
+        # their projects and blackouts
+        for u in usersToDelete:
+            # projects
+            invs = u.investigator_set.all()
+            for inv in invs:
+                print >> self.out, "    Moving project: ", inv.project
+                inv.user = finalUser
+                inv.save()
+            # blackouts
+            for b in u.blackout_set.all():
+                print >> self.out, "    Moving Blackout: ", b
+                b.user = finalUser
+                b.save()
+            # now we can delete
+            print >> self.out, "Deleting User Record: ", u, u.id
+            u.delete()
+            
+        print >> self.out, "Final User finally looks like: ", finalUser, finalUser.id
+        print >> self.out, "Projects: ", finalUser.getProjects()
+        print >> self.out, "Blackouts: ", finalUser.blackout_set.all()
+        
+        us = User.objects.filter(pst_id = sharedPstId)
+        assert len(us) == 1
 
     def reconcileRedundantUsers(self):
         """

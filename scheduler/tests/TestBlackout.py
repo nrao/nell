@@ -157,7 +157,15 @@ class TestBlackout(NellTestCase):
         gdts = self.blackout3.generateDates(calstart, calend)
         self.assertEquals(dts, gdts)
 
-        # TBF: test filter outside of blackouts????
+        # test filter outside of blackouts
+        calstart = datetime(2011, 10, 1)
+        calend   = datetime(211, 10, 30)
+        gdts = self.blackout1.generateDates(calstart, calend)
+        self.assertEquals(0, len(gdts))
+        gdts = self.blackout2.generateDates(calstart, calend)
+        self.assertEquals(0, len(gdts))
+        gdts = self.blackout3.generateDates(calstart, calend)
+        self.assertEquals(0, len(gdts))
 
     def test_projectBlackout(self):
         "Repeat some of the other tests, but for project blackouts"

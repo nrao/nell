@@ -421,20 +421,21 @@ class Sesshun(models.Model):
         db_table  = "sessions"
         app_label = "scheduler"
 
-    def getBlackedOutSchedulablePeriods(self):
+    def getBlackedOutSchedulablePeriods(self, now):
         """
-        Of the periods for this session overlapping in the time range
-        that are not deleted or completed, which schedulable ones have
-        been blacked out?  Returns a list of offending periods.
+        Of the future periods for this session overlapping in the time
+        range that are not deleted or completed, which schedulable ones
+        have been blacked out?  Returns a list of offending periods.
         """
         state = Period_State.get_state('D')
-        ps = self.period_set.exclude(state=state).order_by('start')
+        ps = self.period_set.exclude(state=state).filter(start__gte=now).order_by('start')
         periods = list(ps)
         if not periods:
             return []
         pranges = [(p.start, p.end(), p) for p in periods]
+        start = max(now, pranges[0][0])
         _, _, _, brs = \
-            self.getBlackedOutSchedulableTime(pranges[0][0]
+            self.getBlackedOutSchedulableTime(start
                                             , pranges[-1][1])
         branges = [r for sublist in brs for r in sublist] # flatten lists
 

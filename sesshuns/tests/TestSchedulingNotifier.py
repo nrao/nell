@@ -301,8 +301,6 @@ Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | Nubbles   |           | three"""
         #self.sn.periodChanges.revisions.diffs[p] = {}
         self.addToTestRevisions(p)
 
-        # TBF: make the test flag actually do something!
-        #sn = SchedulingNotifier(test = True)
         self.sn.setPeriods(self.ps, self.ps)
 
         for x in ["observer", "changed", "staff"]:

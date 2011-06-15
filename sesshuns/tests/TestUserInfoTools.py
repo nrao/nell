@@ -26,6 +26,35 @@ from test_utils              import NellTestCase
 
 class TestUserInfoTools(NellTestCase):
 
+    def test_reconcileUsersWithSamePstId(self):
+        # This is the story of Dr. Jekyl and Mr. Jive
+        pst_id = 823
+        drJekyl = User(last_name = "Jekyl"
+                    , first_name = "Dr."
+                    , role = Role.objects.all()[0]
+                    , pst_id = pst_id
+                     )
+        drJekyl.save()
+
+        mrJive = User(last_name = "Jive"
+                    , first_name = "Mr."
+                    , role = Role.objects.all()[0]
+                    , pst_id = pst_id
+                     )
+        mrJive.save()
+        inv = Investigator(user = mrJive
+                         , project = Project.objects.all()[0])
+        inv.save()
+
+        self.assertEquals(2, len(User.objects.filter(pst_id = pst_id)))
+
+        f = open("TestUserInfoTools.txt", 'w')
+        un = UserInfoTools.UserInfoTools(output_file = f)
+        un.reconcileUsersWithSamePstId(pst_id, drJekyl.id)
+        f.close()
+
+        self.assertEquals(1, len(User.objects.filter(pst_id = pst_id)))
+
     def test_findUserMatches(self):
 
         # setup - create a DSS user that matches someone you KNOW

@@ -49,7 +49,9 @@ def public_schedule(request, *args, **kws):
     """
     timezones = ['ET', 'UTC']
 
-    # TBF: error handling
+    # Note: we probably should have better error handling here,
+    # but since the forms are Date Pickers and drop downs, it seems
+    # impossible for the user to send us malformed params.
     if request.method == 'POST': 
         timezone  = request.POST.get('tz', 'ET')
         days      = int(request.POST.get('days', 5))    
@@ -499,7 +501,8 @@ def blackout_worker(request, type, forObj, b_id, requestor, urlRedirect):
     "Does most of the work for processing blackout forms"
 
     try:
-        # TBF: user or requestor?
+        # use the requestor's time zone preference - not the users,
+        # since this could be for a project blackout.
         tz = requestor.preference.timeZone
     except ObjectDoesNotExist:
         tz = "UTC"
