@@ -179,12 +179,19 @@ class TestFixedAlerts(NellTestCase):
 
     def testGetBlackedOutFixedPeriods(self):
         fa = FixedAlerts()
-        stats = fa.getBlackedOutFixedPeriods(self.sesshuns)
         periods = []
         periods.extend(self.sesshun1.period_set.all())
         periods.extend(self.sesshun2.period_set.all())
+
+        now   = datetime(2009, 3, 24, 0)
+        stats = fa.getBlackedOutFixedPeriods(now, self.sesshuns)
         exp = [(self.sesshun1, [periods[2]])
              , (self.sesshun2, [periods[5]])]
+        self.assertEquals(exp, stats)
+
+        now   = datetime(2009, 4, 7, 14)
+        stats = fa.getBlackedOutFixedPeriods(now, self.sesshuns)
+        exp = [(self.sesshun2, [periods[5]])]
         self.assertEquals(exp, stats)
 
     def testFindBlackoutAlerts(self):

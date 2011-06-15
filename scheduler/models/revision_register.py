@@ -11,7 +11,6 @@ from Period_Accounting      import Period_Accounting
 from Period                 import Period
 from Period_Receiver        import Period_Receiver
 from Period_State           import Period_State
-from Project_Blackout_09B   import Project_Blackout_09B
 from Project                import Project
 from Project_Allotment      import Project_Allotment
 from Project_Type           import Project_Type
@@ -61,7 +60,6 @@ def register_for_revision():
     register_model(Period_State)
     register_model(Period, follow=['accounting', 'state', 'receivers'])
     register_model(Period_Receiver, follow=['period', 'receiver'])
-    #Project_Blackout_09B
     register_model(Window)
     register_model(Elective)
     #Reservation

@@ -63,12 +63,17 @@ def gbt_schedule(request, *args, **kws):
     """
     timezones = ['ET', 'UTC']
 
-    # TBF: error handling
+    # Note: we probably should have better error handling here,
+    # but since the forms are Date Pickers and drop downs, it seems
+    # difficult for the user to send us malformed params.
     if request.method == 'POST':
         timezone  = request.POST.get('tz', 'ET')
         days      = int(request.POST.get('days', 5))
         startDate = request.POST.get('start', None)
-        startDate = datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now()
+        try:
+            startDate = datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now()
+        except: # Bad input?    
+            startDate = datetime.now()
     else: # request.method == 'GET'
         # Default date, days, and timezone.  Loaded from the values
         # saved below, or from defaults if no values were saved.

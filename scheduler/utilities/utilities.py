@@ -90,7 +90,8 @@ def getReservationsFromBOS(start, end):
     res = NRAOBosDB().reservationsRange(start, end)
     reservations = []
     for r in res:
-       # TBF: BOS is still using the wrong ID - we need 'global id'
+       # BOS is still using the wrong ID - we need 'global id'
+       # See Story: https://www.pivotaltracker.com/story/show/14549863
        userAuth_id = int(r['id'])
        pst_id = UserInfo().getIdFromUserAuthenticationId(userAuth_id)
        try: 

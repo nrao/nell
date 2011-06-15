@@ -521,9 +521,7 @@ def scheduling_email(request, *args, **kwds):
 
     elif request.method == 'POST':
         # here we are overriding what/who gets sent for the first round
-        # of emails, but because we setup the object with Periods (above)
-        # we aren't controlling who gets the 'change schedule' emails (TBF)
-
+        # of emails
         for i in xrange(3):
             addr = str(request.POST.get(address_key[i], "")).replace(" ", "").split(",")
             notifier.setAddresses(email_key[i], addr)
@@ -538,8 +536,9 @@ def scheduling_email(request, *args, **kwds):
 
         # Emails for a given period shouldn't be sent more then is
         # necessary, so here we set the last_notification timestamp.
-        # TBF, WTF: the client can change the recipients and text of the
+        # However, the client can change the recipients and text of the
         # 'changes' email - this ignores those changes.
+        # See Story: https://www.pivotaltracker.com/story/show/14550249
         now = datetime.utcnow()
         set_periods_last_notification(now, request, "changed_periods")
         set_periods_last_notification(now, request, "obs_periods")

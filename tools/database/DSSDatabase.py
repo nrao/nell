@@ -1,8 +1,8 @@
-from datetime                              import date, datetime, timedelta
+from datetime                     import date, datetime, timedelta
 from tools.database.DSSPrime2DSS  import DSSPrime2DSS
-from nell.tools.database.Schedtime2DSS     import Schedtime2DSS
+from tools.database.Schedtime2DSS import Schedtime2DSS
 from tools.database.UserNames     import UserNames
-from scheduler.models                      import *
+from scheduler.models             import *
 
 import sys
 
@@ -13,8 +13,7 @@ class DSSDatabase(object):
     been primed with static information (observing types table, etc.) with
     the data necessary for running the DSS for a semester.
     The main tasks are: transferring data from an intermediary DB that
-    Carl populates, tranferring raw tables we get from Carl's system, and
-    filling in missing information on users (from the PST).
+    Carl populates, tranferring raw tables we get from Carl's system.
     To prepare the database for a specific semester (including things like
     rcvr schedules), this class should be extended.
     """
@@ -27,18 +26,14 @@ class DSSDatabase(object):
         self.dss_prime = DSSPrime2DSS(database = database)
         self.schedtime = Schedtime2DSS(database = database)
 
-        # responsible for filling in info on users using the PST
-        self.un = UserNames(sys.stderr)
-
     def create(self, semester):
         "Method for creating a new DSS database "
-        # transfer the stuff that is semester independent
+        # Transfer the stuff that is semester independent
         self.dss_prime.transfer()
-        # transfer the semester dependent stuff - schedtime table!
-        # order here is important because we need the user info
-        # to be all there first
-        # NOTE: if this fails to find certain users, add them to
-        # UserNames.createMissingUsers and run again.
+        # Note: we could automatically reconcile the new DSS Users 
+        # with PST accounts here (using UserInfoTools), but we'd like
+        # to keep this step manual.
+        # Transfer the semester dependent stuff - schedtime table!
         self.schedtime.transfer_fixed_periods(semester)
 
 
@@ -51,6 +46,10 @@ class DSSDatabase(object):
         self.schedtime.print_report(semester)
 
     def assign_periods_to_windows(self):
+        # This function is currently not being called.  It looks like it
+        # works fine, but we're looking at ALL Windows & Periods - seems
+        # like we just limit this to the new Windows & Periods.
+        # Story: https://www.pivotaltracker.com/story/show/14431567
         windows = Window.objects.all()
         for w in windows:
             self.assign_periods_to_window(w)
@@ -63,6 +62,8 @@ class DSSDatabase(object):
         exists in DSS, not in Carl's tools.  So, we have to try and match
         up periods from this session that fall into each window.
         """
+
+        # this funciton isn't being called.  See Story above.
 
         # nothing to do if this window already has one
         if window.default_period is not None:
@@ -88,11 +89,9 @@ class DSSDatabase(object):
             window.default_period = sps[0]
             window.save()
         elif len(sps) == 0:
-            # TBF: report un-initialized window
             print "NO PERIOD for window: ", window
             pass
         else:
-            # TBF: report multiple periods for window
             print "> 1 PERIOD for window: ", window, sps
             pass
 
