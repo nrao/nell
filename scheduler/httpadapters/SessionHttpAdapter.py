@@ -122,6 +122,8 @@ class SessionHttpAdapter (object):
         self.update_xi_obs_param(fdata, self.sesshun.get_min_eff_tsys_factor())
         self.update_el_limit_obs_param(fdata
                                      , self.sesshun.get_elevation_limit())
+        self.update_source_size_obs_param(fdata
+                                     , self.sesshun.get_source_size())
         # here if the param is not being used, we don't want the default
         # values used, but rather None for the 'old_value'
         self.update_tr_err_threshold_obs_param(fdata
@@ -187,6 +189,24 @@ class SessionHttpAdapter (object):
                 return # nonsense value
 
         parameter = Parameter.objects.get(name="Tr Err Limit")
+        self.update_parameter(old_value, new_value, parameter)
+
+    def update_source_size_obs_param(self, fdata, old_value):
+        """
+        For taking a json dict and converting its given
+        source size float field into a 'Source Size' float 
+        observing parameter.
+        """
+        new_value = self.get_field(fdata, "src_size", None, float)
+        if new_value is not None: # make sure it's in a legal range
+            try:
+                fv = float(new_value)
+                if fv < 0.0:
+                    return # value out of range
+            except:
+                return # nonsense value
+
+        parameter = Parameter.objects.get(name="Source Size")
         self.update_parameter(old_value, new_value, parameter)
 
     def update_el_limit_obs_param(self, fdata, old_value):
@@ -324,6 +344,7 @@ class SessionHttpAdapter (object):
            , "xi_factor"  : self.sesshun.get_min_eff_tsys_factor() or 1.0
            , "el_limit"   : self.sesshun.get_elevation_limit() or None # None is default 
            , "trk_err_threshold"   : self.sesshun.get_tracking_error_threshold()
+           , "src_size"   : self.sesshun.get_source_size()
             }
 
         try:

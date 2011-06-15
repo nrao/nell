@@ -243,6 +243,13 @@ class Sesshun(models.Model):
         """
         return self.has_float_obs_param("Tr Err Limit") 
 
+    def get_source_size(self):
+        """
+        Returns factor if has 'Source Size' observing parameter,
+        else None.
+        """
+        return self.has_float_obs_param("Source Size")
+
     def get_min_eff_tsys_factor(self):
         """
         Returns factor if has 'Min Eff TSys' observing parameter,

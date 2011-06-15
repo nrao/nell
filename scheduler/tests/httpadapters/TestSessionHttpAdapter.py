@@ -77,6 +77,33 @@ class TestSessionHttpAdapter(NellTestCase):
         th = self.adapter.sesshun.get_tracking_error_threshold()
         self.assertAlmostEquals(0.6, th, 1)
 
+    def test_udpate_source_size_obs_param(self):
+
+        # check inital state
+        old_value = self.adapter.sesshun.get_source_size()
+        self.assertEquals(None, old_value)
+
+        # no-op
+        fdata = {}
+        old_value = self.adapter.sesshun.get_source_size()
+        self.adapter.update_source_size_obs_param(fdata, old_value)
+        new_value = self.adapter.sesshun.get_source_size()
+        self.assertEquals(None, new_value)
+
+        # add the new param
+        fdata = {'src_size' : 500.0}
+        old_value = self.adapter.sesshun.get_source_size()
+        self.adapter.update_source_size_obs_param(fdata, old_value)
+        new_value = self.adapter.sesshun.get_source_size()
+        self.assertEquals(500.0, new_value)
+
+        # change the param
+        fdata = {'src_size' : 600.0}
+        old_value = self.adapter.sesshun.get_source_size()
+        self.adapter.update_source_size_obs_param(fdata, old_value)
+        new_value = self.adapter.sesshun.get_source_size()
+        self.assertEquals(600.0, new_value)
+
     def test_update_lst_parameters(self):
         error = False
         try:
