@@ -38,7 +38,7 @@ class ElectiveHttpAdapter (object):
         # manner as we do for periods
         handle = fdata.get("handle", "")
         if handle:
-            self.elective.session = self.elective.handle2session(handle)
+            self.elective.session = Sesshun.handle2session(handle)
         else:
             try:
                 maintenance = Project.objects.get(pcode='Maintenance')

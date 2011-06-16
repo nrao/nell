@@ -1,8 +1,5 @@
-from   PSTQueryService    import PSTQueryService
 from   PSTMirrorDB        import PSTMirrorDB
-from   PSTInterface       import PSTInterface
 
-#class UserInfo(PSTQueryService):
 class UserInfo(PSTMirrorDB):
 
     """

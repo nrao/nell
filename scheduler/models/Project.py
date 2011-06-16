@@ -42,7 +42,8 @@ class Project(models.Model):
 
     def is_maintenance(self):
         return any(s.observing_type.type == 'maintenance' \
-                    for s in self.sesshun_set.all())
+                    for s in self.sesshun_set.all()) and \
+               not self.is_shutdown()
 
     def is_test(self):
         return any(s.observing_type.type == 'testing' \
@@ -368,7 +369,7 @@ class Project(models.Model):
 
     def get_allotment(self, grade):
         "Returns the allotment that matches the specified grade"
-        # TBF watch out - this is a float!
+        # Note: watch out - this is a float!
         epsilon = 1e-3
         for a in self.allotments.all():
             diff = abs(a.grade - grade)
@@ -377,10 +378,9 @@ class Project(models.Model):
         return None # uh-oh
 
     def get_windows(self):
-        # TBF no filtering here, ALL windows!
-        return sorted([w for s in self.sesshun_set.all()
+        return sorted([w for s in self.sesshun_set.filter(session_type__type = 'windowed')
                          for w in s.window_set.all()
-                         if s.session_type.type == 'windowed' and w.start_date() is not None]
+                         if w.start_date() is not None]
                      , key = lambda x : x.start_date())
 
     def get_active_windows(self, now = None):

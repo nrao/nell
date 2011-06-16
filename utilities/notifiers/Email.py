@@ -25,8 +25,6 @@
 #  P. O. Box 2
 #  Green Bank, WV 24944-0002 USA
 #
-#  $Id:$
-#
 ######################################################################
 
 from datetime import datetime
@@ -34,17 +32,20 @@ from utilities import TimeAgent
 
 class Email:
 
-    def __init__(self, sender = None, recipients = None, subject = None, body = None, date = None):
+    def __init__(self, sender = None, recipients = None, subject = None, body = None, date = None, bcc = None):
 
         self.SetSender(sender)
         self.SetRecipients(recipients)
         self.SetSubject(subject)
         self.SetBody(body)
+        self.SetBcc(bcc)
+        self.SetDate(date)
 
     def SetSender(self, sender):
         """
-        SetSender() is simple.  Only one sender.  Could verify that the
-        email address is constructed correctly, TBF for now."""
+        SetSender() is simple.  Only one sender.  
+        """
+        # Note: no error checking (valid email)
         self.sender = sender
 
     def GetSender(self):
@@ -61,7 +62,9 @@ class Email:
         empty.
         """
 
-        if type(recipients) == str:
+        if recipients is None:
+            self.recipients = []
+        elif type(recipients) == str:
             if recipients == "":
                 self.recipients = []
             else:
@@ -98,32 +101,39 @@ class Email:
         return self.subject
 
     def SetDate(self, date):
-        weekdays = {"0" : "Sun",
-                    "1" : "Mon",
-                    "2" : "Tue",
-                    "3" : "Wed",
-                    "4" : "Thu",
-                    "5" : "Fri",
-                    "6" : "Sat"}
+        if date:
+            weekdays = {"0" : "Sun",
+                        "1" : "Mon",
+                        "2" : "Tue",
+                        "3" : "Wed",
+                        "4" : "Thu",
+                        "5" : "Fri",
+                        "6" : "Sat"}
 
-        months = {"1"  : "Jan",
-                  "2"  : "Feb",
-                  "3"  : "Mar",
-                  "4"  : "Apr",
-                  "5"  : "May",
-                  "6"  : "Jun",
-                  "7"  : "Jul",
-                  "8"  : "Aug",
-                  "9"  : "Sep",
-                  "10" : "Oct",
-                  "11" : "Nov",
-                  "12" : "Dec"}
+            months = {"1"  : "Jan",
+                      "2"  : "Feb",
+                      "3"  : "Mar",
+                      "4"  : "Apr",
+                      "5"  : "May",
+                      "6"  : "Jun",
+                      "7"  : "Jul",
+                      "8"  : "Aug",
+                      "9"  : "Sep",
+                      "10" : "Oct",
+                      "11" : "Nov",
+                      "12" : "Dec"}
 
-        self.date = "%s, %s %s %s -0%d00" % (weekdays[date.strftime("%w")],
-                                             date.strftime("%d"),
-                                             months[str(int(date.strftime("%m")))],
-                                             date.strftime("%Y %H:%M:%S"),
-                                             TimeAgent.utcoffset())
+            self.date = "%s, %s %s %s -0%d00" % (weekdays[date.strftime("%w")],
+                                                 date.strftime("%d"),
+                                                 months[str(int(date.strftime("%m")))],
+                                                 date.strftime("%Y %H:%M:%S"),
+                                                 TimeAgent.utcoffset())
+        else:
+            self.date = None
+
+
+    def GetDate(self):
+        return self.date
 
 
     def SetBody(self, body):
@@ -132,12 +142,20 @@ class Email:
     def GetBody(self):
         return self.body
 
+    def SetBcc(self, bcc):
+        self.bcc = bcc
+
+    def GetBcc(self):
+        return self.bcc
+
     def GetText(self):
         """Returns the entire text of the email, including the To:,
         From:, Date: etc. fields"""
 
-        text =  'From: %s\r\nTo: %s\r\nDate: %s\r\nSubject: %s\r\n\r\n%s\r\n' \
-               % (self.sender, self.GetRecipientString(), self.date, self.subject, self.body)
+        bccStr = "" if self.bcc is None else "Bcc: %s\r\n" % self.bcc
+        text =  'From: %s\r\nTo: %s\r\n%sDate: %s\r\nSubject: %s\r\n\r\n%s\r\n' \
+               % (self.sender, self.GetRecipientString(), bccStr, self.date
+                , self.subject, self.body)
 
         return text
 

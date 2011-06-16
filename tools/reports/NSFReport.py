@@ -5,10 +5,11 @@ setup_environ(settings)
 from datetime        import date, datetime, timedelta
 from scheduler.models import *
 from sets            import Set
+from utilities       import TimeAgent
 
 import calendar
 
-ALL_PERIODS = [p for p in Period.objects.all() if p.state.abbreviation in ("S", "C")]
+ALL_PERIODS = [p for p in Period.objects.all() if p.isScheduled() or p.isCompleted()]
 
 def getPeriods():
     return ALL_PERIODS
@@ -17,13 +18,14 @@ def filterPeriods(periods, condition):
     "Filters periods according to some critia, e.g. is science?"
     return [p for p in periods if eval(condition)]
 
-def filterPeriodsByDate(periods, start):
+def filterPeriodsByDate(start):
     "Returns the periods within a given month and year."
     _, day = calendar.monthrange(start.year, start.month)
     stop  = datetime(start.year, start.month, day, 23, 59, 59)
     ustart = TimeAgent.est2utc(start)
     ustop  = TimeAgent.est2utc(stop)
-    return [p for p in periods if (p.start >= ustart or p.end() > ustart) and p.start < ustop]
+    return [p for p in ALL_PERIODS \
+            if (p.start >= ustart or p.end() > ustart) and p.start < ustop]
 
 def normalizePeriodStartStop(period, dt):
     """
@@ -44,34 +46,32 @@ def normalizePeriodStartStop(period, dt):
 def getTime(periods, month):
     periods.sort(key = lambda x: x.start)
     ss = [(stop - start).seconds / 3600. for start, stop in [normalizePeriodStartStop(p, month) for p in periods]]
-    #f = open("stuff%d.txt" % month.month, "w")
-    #for p, s in zip(periods, ss):
-    #    f.write("%s, %s, %s\n" % (p.session.project.pcode, p.start, s))
-    #f.close()
     return sum([(stop - start).seconds / 3600. \
                  for start, stop in [normalizePeriodStartStop(p, month) \
                                      for p in periods]])
 
-def getScheduledTime(month):
+def getScheduledTime(periods, month):
     "Returns scheduled astronomy time for this month."
-    periods = filterPeriodsByDate(filterPeriods(getPeriods(), 'p.session.project.is_science()'), month)
-    return getTime(periods, month)
-    
-def getDowntime(month):
-    periods = filterPeriodsByDate(filterPeriods(getPeriods(), 'p.session.project.is_science()'), month)
-    return sum([p.accounting.lost_time() for p in periods])
+    return getTime(filterPeriods(periods, 'p.session.project.is_science()')
+                 , month)
 
-def getMaintenance(month):
-    periods = filterPeriodsByDate(filterPeriods(getPeriods(), 'p.session.project.is_maintenance()'), month)
-    return getTime(periods, month)
+def getDowntime(periods, month):
+    return sum([p.accounting.lost_time() \
+                for p in filterPeriods(periods
+                                     , 'p.session.project.is_science()')])
 
-def getTesting(month):
-    periods = filterPeriodsByDate(filterPeriods(getPeriods(), 'p.session.project.is_test() or p.session.project.is_commissioning() or p.session.project.is_calibration()'), month)
-    return getTime(periods, month)
+def getMaintenance(periods, month):
+    return getTime(filterPeriods(periods, 'p.session.project.is_maintenance() and not p.session.project.is_shutdown()')
+                 , month)
 
-def getShutdown(month):
-    periods = filterPeriodsByDate(filterPeriods(getPeriods(), 'p.session.project.pcode == "Shutdown"'), month)
-    return getTime(periods, month)
+def getTesting(periods, month):
+    return getTime(filterPeriods(periods
+                              , 'p.session.project.is_test() or p.session.project.is_commissioning() or p.session.project.is_calibration()')
+                 , month)
+
+def getShutdown(periods, month):
+    return getTime(filterPeriods(periods, 'p.session.project.is_shutdown()')
+                 , month)
 
 def printSummary(outfile, label, items):
     outfile.write("%s %s %s %s %s\n" % \
@@ -93,21 +93,27 @@ def GenerateReport(label, months):
                  , months[1].strftime("%B").center(8)
                  , months[2].strftime("%B").center(8)))
 
-    scheduled = [getScheduledTime(m) for m in months]
-    downtime  = [getDowntime(m) for m in months]
-    astronomy = [s - d for s, d in zip(scheduled, downtime)]
+    scheduled   = []
+    downtime    = []
+    astronomy   = []
+    maintenance = []
+    testing     = []
+    shutdown    = []
 
-    printSummary(outfile, "Scheduled   ",   scheduled)
-    printSummary(outfile, "   Astronomy",   astronomy)
-    printSummary(outfile, "   Downtime",    downtime)
+    for m in months:
+        ps = filterPeriodsByDate(m)
+        scheduled.append(getScheduledTime(ps, m))
+        downtime.append(getDowntime(ps, m))
+        astronomy.append(scheduled[-1] - downtime[-1])
+        maintenance.append(getMaintenance(ps, m))
+        testing.append(getTesting(ps, m))
+        shutdown.append(getShutdown(ps, m))
 
-    maintenance = [getMaintenance(m) for m in months]
+    printSummary(outfile, "Scheduled   ", scheduled)
+    printSummary(outfile, "   Astronomy", astronomy)
+    printSummary(outfile, "   Downtime ", downtime)
     printSummary(outfile, "Maintenance ", maintenance)
-
-    testing = [getTesting(m) for m in months]
     printSummary(outfile, "Test        ", testing)
-
-    shutdown = [getShutdown(m) for m in months]
     printSummary(outfile, "Shutdown    ", shutdown)
 
     total = zip(scheduled, maintenance, testing, shutdown)

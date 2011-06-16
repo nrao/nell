@@ -11,7 +11,6 @@ class SessionRevReport(RevisionReport):
 
     def __init__(self, filename = None):
         super(SessionRevReport, self).__init__(filename)
-        #RevisionReport.__init__(self)
        
         self.relatedClasses = ['Receiver_Group'
                              , 'Receiver'
@@ -39,7 +38,7 @@ class SessionRevReport(RevisionReport):
         """
         diffs = []
         s = self.getSession(pcode, name)
-        # TBF: get current recievrs for last check
+        # get current recievrs for last check
         currentRgs = s.receiver_group_set.all()
         # get all the deleted Rcvr_Groups for this session
         id = s.id
@@ -48,10 +47,8 @@ class SessionRevReport(RevisionReport):
         for v in vs:
             if v.field_dict['session'] == id:
                 svs.append(v)
-                #print v.revision.date_created
                 #print v.field_dict['receivers']
     
-        #print "svs: ", svs
         # Now get the diffs, but keep only those that pertain to receivers
         if len(svs) < 2:
            return diffs
@@ -63,9 +60,9 @@ class SessionRevReport(RevisionReport):
                     diffs.append(self.interpretRcvrGrpDiff(d))
             vprev = v
     
-        # TBF: see if the last diff is different then our current rcvrs
+        # see if the last diff is different then our current rcvrs
         if len(currentRgs) == 1 and len(diffs) > 0:
-            # anything else is too complicated (TBF)
+            # anything else is too complicated 
             rcvrs = [r.abbreviation for r in currentRgs[0].receivers.all()]
             rcvrs.sort()
             lastRs = diffs[-1][3]
@@ -77,7 +74,6 @@ class SessionRevReport(RevisionReport):
                                  , value2 = rcvrs
                                   )
                 diffs.append(diff)
-                #diffs.append((datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "receivers", lastRs, rcvrs))
     
         return diffs             
     

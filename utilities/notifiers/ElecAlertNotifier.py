@@ -11,7 +11,8 @@ class ElecAlertEmail(Email):
     """
     def __init__(self, sender, elective):
 
-        Email.__init__(self, sender = sender, recipients = [])
+        Email.__init__(self, sender = sender, recipients = []
+                     , bcc = "gbdyn@nrao.edu")
         self.createRecipients(elective)
         self.date = None
 

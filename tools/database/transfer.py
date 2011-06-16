@@ -11,7 +11,7 @@ from sets                      import Set
 import sys
 
 if len(sys.argv) > 1:
-    from nell.utilities.database.DSSDatabase import DSSDatabase
+    from nell.tools.database.DSSDatabase import DSSDatabase
     db = DSSDatabase(database = 'dss_prime')
     db.append(sys.argv[1])
 else:

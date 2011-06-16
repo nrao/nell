@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 from django.core.management import setup_environ
-import settings
+import settings, sys
 setup_environ(settings)
 from datetime import datetime
 
@@ -22,10 +22,6 @@ class WindowAlerts():
         # to go from stage I to stage II?
         self.stageBoundary = 15
  
-        self.now = datetime.utcnow()
-        
-        self.wins = Window.objects.all()
-
         # for reporting results
         self.quiet = quiet
         self.filename = filename if filename is not None else "WinAlerts.txt"
@@ -47,12 +43,19 @@ class WindowAlerts():
             f.writelines(self.reportLines)
             f.close()
 
-    def getWindowTimes(self, wins = []):
+    def getWindowTimes(self, now, wins = []):
         """
         Returns the stats on windows.
         For use in determining if alerts are raised.
+        stat = (Window, (
+            (
+             total schedulable time ignoring blacked out
+           , total schedulable time but blacked out
+           , [schedulable ranges ignoring blacked out]
+           , [schedulable ranges but blacked out]
+            )
+                        )
         """
-       
         if len(wins) == 0:
             # we really only care about windows that are not complete
             # and that have ranges
@@ -61,7 +64,7 @@ class WindowAlerts():
         self.add("Retrieving Times for %d Windows\n" % len(wins))    
         times = []
         for w in wins:
-            time = w.getBlackedOutSchedulableTime()
+            time = w.getBlackedOutSchedulableTime(now)
             times.append((w, time))
             self.add("Times for (%d) %s\n" % (w.id, w.__str__()))
             self.add("Schedulable, Blacked Hrs: (%5.2f, %5.2f)\n" % \
@@ -69,13 +72,13 @@ class WindowAlerts():
             self.lostWindowTime += time[1] > 0.0
         return times    
 
-    def findAlertLevels(self, wins = []):
+    def findAlertLevels(self, now, wins = []):
         """
         Gets the stats on windows, and examines them to see if
         an alarm needs to be raised.
         """
 
-        stats = self.getWindowTimes(wins = wins)
+        stats = self.getWindowTimes(now, wins = wins)
         alerts = []
         for w, stat in stats:
             hrsSchedulable = stat[0]
@@ -115,7 +118,7 @@ class WindowAlerts():
                 return daysTillStart <= self.stageBoundary
 
         return [(w, stat, level, stage)
-                for w, stat, level in self.findAlertLevels(wins = wins)
+                for w, stat, level in self.findAlertLevels(now, wins = wins)
                     if withinBoundary(w.start_datetime(), stage, now)
                ]
 
@@ -225,7 +228,11 @@ if __name__ == '__main__':
         sys.exit(2)
     quiet = opts['quiet'] == 'True' if opts['quiet'] is not None else True  
     wa = WindowAlerts()
-    wa.raiseAlerts(stage = stage, wins = wins, test = test, quiet = quiet)
+    wa.raiseAlerts(stage = stage
+                 , wins = wins
+                 , now = datetime.utcnow()
+                 , test = test
+                 , quiet = quiet)
 
                 
 

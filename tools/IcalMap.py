@@ -1,6 +1,6 @@
 from icalendar       import Calendar, Event, UTC
 from datetime        import datetime, timedelta
-from nell.scheduler.models import *
+from scheduler.models import *
 
 class IcalMap:
 

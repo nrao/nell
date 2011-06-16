@@ -1,80 +1,15 @@
 from datetime                import datetime, timedelta, date
 from utilities               import TimeAgent
 from test_utils              import NellTestCase
-from utils                   import create_sesshun
+from utils                   import create_sesshun, setupWindows
 from scheduler.models         import *
 from scheduler.httpadapters   import *
 
 class TestWindow(NellTestCase):
 
+    @setupWindows
     def setUp(self):
         super(TestWindow, self).setUp()
-
-        self.deleted   = Period_State.get_state("D")
-        self.pending   = Period_State.get_state("P")
-        self.scheduled = Period_State.get_state("S")
-
-
-        self.sesshun = create_sesshun()
-        self.sesshun.session_type = Session_Type.get_type("windowed")
-        self.sesshun.save()
-        dt = datetime(2009, 6, 1, 12, 15)
-        pa = Period_Accounting(scheduled = 0.0)
-        pa.save()
-        self.default_period = Period(session = self.sesshun
-                                   , start = dt
-                                   , duration = 5.0
-                                   , state = self.pending
-                                   , accounting = pa
-                                   )
-        self.default_period.save()    
-
-        start = datetime(2009, 6, 1)
-        dur   = 7 # days
-        
-        # create window
-        self.w = Window()
-        #self.w.start_date = start
-        #self.w.duration = dur
-        self.w.session = self.sesshun
-        self.w.total_time = self.default_period.duration
-        self.w.save()
-        wr = WindowRange(window = self.w
-                       , start_date = start
-                       , duration = dur
-                        )
-        wr.save() 
-        self.wr1 = wr
-
-        # window & default period must both ref. eachother
-        self.w.default_period = self.default_period
-        self.w.save()
-        self.default_period.window = self.w
-        self.default_period.save()
-        self.w_id = self.w.id
-
-        # a chosen period
-        pa = Period_Accounting(scheduled = 0.0)
-        pa.save()
-        dt = self.default_period.start - timedelta(days = 2)
-        self.period = Period(session = self.sesshun
-                                   , start = dt
-                                   , duration = 5.0
-                                   , state = self.pending
-                                   , accounting = pa
-                                   )
-        self.period.save()    
-
-        pjson = PeriodHttpAdapter(self.default_period).jsondict('UTC', 1.1)
-        self.fdata = {"session":  1
-                    #, "start":    "2009-06-01"
-                    #, "duration": 7
-                    , "num_periods": 0
-                    , "default_date" : pjson['date'] 
-                    , "default_time" : pjson['time'] 
-                    , "default_duration" : pjson['duration'] 
-                    , "default_state" : pjson['state'] 
-                    }
 
     def test_times(self):
         "Test all the methods that describe the window ranges."
@@ -87,7 +22,7 @@ class TestWindow(NellTestCase):
         
         self.assertEquals(date(2009, 6, 7), self.w.last_date())
         self.assertEquals(date(2009, 6, 7), self.w.end())
-        self.assertEquals(datetime(2009, 6, 7, 23, 59, 59), self.w.end_datetime())
+        self.assertEquals(datetime(2009, 6, 8, 0), self.w.end_datetime())
 
         self.assertEquals(7, self.w.duration())
 
@@ -129,7 +64,7 @@ class TestWindow(NellTestCase):
         
         self.assertEquals(date(2009, 6, 21), self.w.last_date())
         self.assertEquals(date(2009, 6, 21), self.w.end())
-        self.assertEquals(datetime(2009, 6, 21, 23, 59, 59), self.w.end_datetime())
+        self.assertEquals(datetime(2009, 6, 22, 0), self.w.end_datetime())
 
         self.assertEquals(21, self.w.duration())
 

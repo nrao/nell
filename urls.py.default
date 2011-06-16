@@ -1,6 +1,7 @@
 from django.conf.urls.defaults     import *
 from django.conf                   import settings
 from scheduler.views               import *
+from calculator.views              import load_calc_ui
 from sesshuns.observers            import *
 from sesshuns.operators            import *
 from sesshuns.resource_cal         import *
@@ -61,4 +62,9 @@ urlpatterns = patterns(''
         , 'document_root': settings.STATIC_DOC_ROOT
         , 'show_indexes' : False})
    , (r'^static/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.STATIC_DOC_ROOT})
+   , (r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA})
+   , (r'^calculator-ui/war/Calculator_ui.html', load_calc_ui)
+   , (r'^calculator-ui/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.CALCULATOR_UI_DIR})
+   , (r'^nubbles/war/Nubbles.html', load_nubbles)
+   , (r'^nubbles/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.NUBBLES_DIR})
 )

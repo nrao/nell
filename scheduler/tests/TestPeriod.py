@@ -215,6 +215,44 @@ class TestPeriod(BenchTestCase):
         self.assertEquals(False, w.complete)
         self.assertEquals([self.scheduled, self.pending], w.periodStates())
 
+    def test_publish_periods_maintenance(self):
+        "Tests to make sure the publish_periods does not publish maintenance periods"
+        publish_start      = datetime(2011, 4, 1)
+        publish_duration   = 24 * 60
+        pending_state      = Period_State.objects.get(name = 'Pending')
+        maintenance_period = create_maintenance_period(publish_start + timedelta(hours = 7), 8)
+        maintenance_period.state = pending_state
+        maintenance_period.save()
+
+        session = create_sesshun()
+        period1 = Period.objects.create(start = publish_start
+                                      , duration = 7
+                                      , session  = session
+                                      , state    = pending_state
+                                      )
+        
+        period1.accounting = Period_Accounting.objects.create(scheduled = 0.0)
+        period1.save()
+        period2 = Period.objects.create(start = publish_start + timedelta(hours = 15)
+                                      , duration = 7
+                                      , session  = session
+                                      , state    = pending_state
+                                      )
+        period2.accounting = Period_Accounting.objects.create(scheduled = 0.0)
+        period2.save()
+        scheduled_state    = Period_State.objects.get(name = 'Scheduled')
+
+        Period.publish_periods(publish_start, publish_duration)
+        periods = [p for p in Period.get_periods(publish_start, publish_duration) 
+                         if p.state == scheduled_state]
+        self.assertTrue(maintenance_period not in periods)
+        self.assertEqual(periods, [period1, period2])
+
+        maintenance_period.delete()
+        period1.delete()
+        period2.delete()
+        session.delete()
+
     @timeIt
     def test_get_periods(self):
 

@@ -5,6 +5,7 @@ from datetime               import datetime, timedelta
 
 from settings             import ANTIOCH_HOST, PROXY_PORT
 from utilities.TimeAgent  import adjustDateTimeTz
+from Observing_Type       import Observing_Type
 from Project              import Project
 from Sesshun              import Sesshun
 from Period_Accounting    import Period_Accounting
@@ -162,10 +163,7 @@ class Period(models.Model):
             return False # no schedule, no required rcvrs!
 
         # should return a single date w/ rcvr list
-        items = schedule.items()
-        # TBF: figure out how to deal with this
-        #assert len(items) == 1
-        dt, receivers = items[0]
+        dt, receivers = schedule.items()[0]
 
         receivers = Set(receivers)
         if not any([all([Set(g.receivers.all()).intersection(receivers) \
@@ -186,10 +184,7 @@ class Period(models.Model):
             return False # no schedule, no required rcvrs!
 
         # should return a single date w/ rcvr list
-        items = schedule.items()
-        # TBF: figure out how to deal with this
-        #assert len(items) == 1
-        dt, receivers = items[0]
+        dt, receivers = schedule.items()[0]
 
         for r in obs_rcvrs:
             if r not in receivers:
@@ -272,7 +267,8 @@ class Period(models.Model):
         
         # look for a window (any) that this period at least starts in 
         for win in self.session.window_set.all():
-            if self.start >= win.start_datetime() and self.start <= win.end_datetime():
+            if self.start >= win.start_datetime() and \
+               self.start <  win.end_datetime():
                 self.window = win
                 self.save()
                 return # take the first one you find!
@@ -322,7 +318,6 @@ class Period(models.Model):
         Returns all periods in a time range, taking into account that periods
         can overlap into the first day.
         """
-        # TBF: why doesn't ps.query.group_by = ['start'] work?
         ps = Period.objects.filter(start__gt = begin - timedelta(days = 1)
                                  , start__lt = end).order_by('start')
         ps = [p for p in ps if p.end() > begin]
@@ -337,8 +332,9 @@ class Period(models.Model):
 
         periods = Period.get_periods(start, duration)
         for p in periods:
-            p.publish()
-            p.save()
+            if p.session.observing_type != Observing_Type.objects.get(type = "maintenance"):
+                p.publish()
+                p.save()
 
     @staticmethod
     def delete_pending(start, duration):

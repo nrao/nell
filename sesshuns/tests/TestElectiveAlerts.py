@@ -180,10 +180,17 @@ class TestElectiveAlerts(NellTestCase):
 
     def testGetBlackedOutElectivePeriods(self):
         wa = ElectiveAlerts()
-        stats = wa.getBlackedOutElectivePeriods(self.sesshun.elective_set.all())
         periods = self.sesshun.period_set.all()
+
+        now   = datetime(2009, 4, 7, 12)
+        stats = wa.getBlackedOutElectivePeriods(now, self.sesshun.elective_set.all())
         exp = [(self.elective1, [periods[2]])
              , (self.elective2, [periods[5]])]
+        self.assertEquals(exp, stats)
+
+        now   = datetime(2009, 4, 8, 12)
+        stats = wa.getBlackedOutElectivePeriods(now, self.sesshun.elective_set.all())
+        exp = [(self.elective2, [periods[5]])]
         self.assertEquals(exp, stats)
 
     def testFindBlackoutAlerts(self):

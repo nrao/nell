@@ -1,4 +1,5 @@
 from django.db                import models
+from django.db.models         import Q
 from sets                     import Set
 
 from nell.utilities           import TimeAgent, AnalogSet
@@ -32,8 +33,6 @@ class Sesshun(models.Model):
     accounting_notes   = models.TextField(null = True, blank = True)
     notes              = models.TextField(null = True, blank = True)
 
-    restrictions = "Unrestricted" # TBF Do we still need restrictions?
-
     base_url = "/sesshuns/sesshun/"
 
     def __unicode__(self):
@@ -48,6 +47,22 @@ class Sesshun(models.Model):
 
     def get_absolute_url(self):
         return "/sesshuns/sesshun/%i/" % self.id
+
+    def toHandle(self):
+        if self.original_id is None:
+            original_id = ""
+        else:
+            original_id = str(self.original_id)
+        return "%s (%s) %s" % (self.name
+                             , self.project.pcode
+                             , original_id)
+
+    @staticmethod
+    def handle2session(h):
+        n, p = h.rsplit('(', 1)
+        name = n.strip()
+        pcode, _ = p.split(')', 1)
+        return Sesshun.objects.filter(project__pcode__exact=pcode).get(name=name)
 
     def isOpen(self):
         return self.session_type.type == "open"
@@ -109,7 +124,6 @@ class Sesshun(models.Model):
 
     def receiver_list_simple(self):
         "Returns a string representation of the rcvr logic, simplified"
-        # ignore rcvr groups that have no rcvrs!  TBF: shouldn't happen!
         rgs = [rg for rg in self.receiver_group_set.all() if rg.receivers.exists()]
         if len(rgs) == 1:
             # no parens needed
@@ -147,21 +161,21 @@ class Sesshun(models.Model):
         self.allotment.delete()
         super(Sesshun, self).delete()
 
-    def get_LST_exclusion_string(self):
-        "Converts pair of observing parameters into low-high string"
-        lowParam = Parameter.objects.get(name="LST Exclude Low")
-        hiParam  = Parameter.objects.get(name="LST Exclude Hi")
-        lows  = self.observing_parameter_set.filter(parameter=lowParam)
-        highs = self.observing_parameter_set.filter(parameter=hiParam)
-        # make sure there aren't more then 1
-        assert len(lows) < 2
-        assert len(highs) < 2
-        # make sure they make a pair, or none at all
-        assert len(lows) == len(highs)
-        # LST Exlcusion isn't set?
-        if len(lows) == 0 and len(highs) == 0:
-            return ""
-        return "%.2f-%.2f" % (lows[0].float_value, highs[0].float_value)
+    def get_lst_parameters(self):
+        params = {'LST Exclude' : [], 'LST Include' : []}
+        for lst_type in params.keys():
+            for op in self.observing_parameter_set.filter(
+              parameter__name = '%s Low' % lst_type).order_by('id'):
+               params[op.parameter.name.replace(' Low', '')].append([op.float_value])
+            for i, op in enumerate(self.observing_parameter_set.filter(
+              parameter__name = '%s Hi' % lst_type).order_by('id')):
+               params[op.parameter.name.replace(' Hi', '')][i].append(op.float_value)
+        return params
+
+    def get_lst_string(self, lst_type):
+        "Converts pair of LST Exclude/Include observing parameters into low-high string"
+        return ', '.join(
+          ["%.2f-%.2f" % (low, hi) for low, hi in self.get_lst_parameters()[lst_type]])
 
     def getTarget(self):
         try:
@@ -385,20 +399,21 @@ class Sesshun(models.Model):
         db_table  = "sessions"
         app_label = "scheduler"
 
-    def getBlackedOutSchedulablePeriods(self):
+    def getBlackedOutSchedulablePeriods(self, now):
         """
-        Of the periods for this session overlapping in the time range
-        that are not deleted or completed, which schedulable ones have
-        been blacked out?  Returns a list of offending periods.
+        Of the future periods for this session overlapping in the time
+        range that are not deleted or completed, which schedulable ones
+        have been blacked out?  Returns a list of offending periods.
         """
         state = Period_State.get_state('D')
-        ps = self.period_set.exclude(state=state).order_by('start')
+        ps = self.period_set.exclude(state=state).filter(start__gte=now).order_by('start')
         periods = list(ps)
         if not periods:
             return []
         pranges = [(p.start, p.end(), p) for p in periods]
+        start = max(now, pranges[0][0])
         _, _, _, brs = \
-            self.getBlackedOutSchedulableTime(pranges[0][0]
+            self.getBlackedOutSchedulableTime(start
                                             , pranges[-1][1])
         branges = [r for sublist in brs for r in sublist] # flatten lists
 

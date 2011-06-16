@@ -124,7 +124,7 @@ class Window(models.Model):
     def timeBilled(self):
         """
         Simply the sum of all the periods' time billed, regardless of
-        state.  Remember that, in a healthy systme, pending and deleted
+        state.  Remember that, in a healthy system, pending and deleted
         periods should have no time billed.
         """
         return sum(p.accounting.time_billed() for p in self.periods.all())
@@ -159,7 +159,8 @@ class Window(models.Model):
         self.save()
 
     def nonDefaultPeriods(self):
-        return [p for p in self.periods.all() if p != self.default_period]
+        deleted = Period_State.get_state('D')
+        return [p for p in self.periods.exclude(state=deleted).all() if p != self.default_period]
 
     def periodStates(self):
         return [p.state for p in self.periods.all().order_by("start")]
@@ -175,22 +176,10 @@ class Window(models.Model):
     def pendingPeriods(self):
         return self.periodsByState("P")
 
-    def handle2session(self, h):
-        n, p = h.rsplit('(', 1)
-        name = n.strip()
-        pcode, _ = p.split(')', 1)
-        return Sesshun.objects.filter(project__pcode__exact=pcode).get(name=name)
-
     def toHandle(self):
         if self.session is None:
             return ""
-        if self.session.original_id is None:
-            original_id = ""
-        else:
-            original_id = str(self.session.original_id)
-        return "%s (%s) %s" % (self.session.name
-                             , self.session.project.pcode
-                             , original_id)
+        return self.session.toHandle()
 
     def eventjson(self, id):
         """
@@ -227,10 +216,10 @@ class Window(models.Model):
         return sum([TimeAgent.timedelta2minutes(b[1] - b[0])/60.0 \
             for b in bs])
 
-    def getBlackedOutSchedulableTime(self):
+    def getBlackedOutSchedulableTime(self, now):
         """
         Of the hours in this window that are schedulable, how
-        many have been blacked out?
+        many future ones have been blacked out?
         Returns for this window the tuple:
             (
              total schedulable time ignoring blacked out
@@ -243,13 +232,15 @@ class Window(models.Model):
         schedulable = []
         blackouts = []
         for wr in self.ranges():
-            hs, hb, schd, bs = self.session.getBlackedOutSchedulableTime(\
-                wr.start_datetime()
-              , wr.end_datetime())
-            hrsSchedulable += hs  
-            hrsBlackedOut += hb  
-            schedulable.extend(schd)
-            blackouts.extend(bs)
+            endTime = wr.end_datetime()
+            if now < endTime:
+                startTime = max(now, wr.start_datetime())
+                hs, hb, schd, bs = self.session.getBlackedOutSchedulableTime(
+                    startTime, endTime)
+                hrsSchedulable += hs  
+                hrsBlackedOut += hb  
+                schedulable.extend(schd)
+                blackouts.extend(bs)
         return (hrsSchedulable
               , hrsBlackedOut
               , schedulable

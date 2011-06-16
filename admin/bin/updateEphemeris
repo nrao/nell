@@ -3,11 +3,6 @@
 source /home/dss/conundrum/conundrum.bash
 
 export DSS_NELL=/home/dss/release/nell
-# we can't call our method in this traditional manner due to 
-# circular imports that we don't understand invoving NRAOBosDB
-#export PYTHONPATH=$DSS_NELL:$PYTHONPATH
-#python $DSS_NELL/utilities/UpdateEphemeris.py
-
-# instead, KLUGE!
+export PYTHONPATH=$DSS_NELL:$PYTHONPATH
 cd $DSS_NELL
-python manage.py shell < utilities/runUpdateEphemeris.py 
+python tools/UpdateEphemeris.py

@@ -76,8 +76,11 @@ class TestBlackout(NellTestCase):
                }
         self.assertEqual(event, json[0])
 
-    # TBF
-    # test_isActive
+    def test_isActive(self):
+        results = [(b.isActive(b.start_date + timedelta(hours = 2))
+                  , b.isActive(b.end_date + timedelta(hours = 2)))
+                   for b in Blackout.objects.all()]
+        self.assertEqual(results, [(True, False), (True, True), (True, False)])
 
     def test_generateDates(self):
 
@@ -132,7 +135,15 @@ class TestBlackout(NellTestCase):
         gdts = self.blackout3.generateDates(calstart, calend)
         self.assertEquals(dts, gdts)
 
-        # TBF: test filter outside of blackouts????
+        # test filter outside of blackouts
+        calstart = datetime(2011, 10, 1)
+        calend   = datetime(211, 10, 30)
+        gdts = self.blackout1.generateDates(calstart, calend)
+        self.assertEquals(0, len(gdts))
+        gdts = self.blackout2.generateDates(calstart, calend)
+        self.assertEquals(0, len(gdts))
+        gdts = self.blackout3.generateDates(calstart, calend)
+        self.assertEquals(0, len(gdts))
 
     def test_projectBlackout(self):
         "Repeat some of the other tests, but for project blackouts"

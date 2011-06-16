@@ -3,5 +3,5 @@ from Borg                 import Borg
 from Score                import Score
 from VersionDiff          import VersionDiff
 from TimeAccounting       import TimeAccounting
-from IcalMap              import IcalMap
 from IcalAntioch          import IcalAntioch
+from hs_profile           import hs_profile

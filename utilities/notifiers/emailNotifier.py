@@ -30,7 +30,6 @@
 
 import smtplib
 from datetime import datetime
-from Email import Email
 
 class emailNotifier:
 

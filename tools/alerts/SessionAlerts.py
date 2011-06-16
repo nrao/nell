@@ -51,6 +51,40 @@ class SessionAlerts(object):
 
         return retval
 
+    def findUnauthorizedSessionAlerts(self, now = None):
+        now   = now if now is not None else datetime.utcnow()
+        today = datetime(now.year, now.month, now.day)
+
+        def withinWindowBoundary(w):
+            daysTillStart   = abs((w.start_datetime() - today).days)
+            return (daysTillStart <= self.stageBoundary and now < w.default_period.start) \
+                   or (now >= w.start_datetime() and now <= w.default_period.start)
+
+        retval  = [w for w in Window.objects.filter(complete = False
+                                                  , session__status__authorized = False)
+                     if withinWindowBoundary(w)]
+
+        def withinElectiveBoundary(e):
+            start, end    = e.periodDateRange()
+            daysTillStart = abs((start - today).days)
+            return (daysTillStart <= self.stageBoundary and now <= end)
+
+        retval.extend([e for e in Elective.objects.filter(complete = False
+                                                        , session__status__authorized = False)
+                         if withinElectiveBoundary(e)])
+
+        def withinFixedBoundary(p):
+            start = p.start
+            daysTillStart = abs((start - today).days)
+            return daysTillStart <= self.stageBoundary and now <= start
+
+        retval.extend([p for p in Period.objects.filter(session__session_type__type = 'fixed'
+                                                      , state__name = 'Pending'
+                                                      , session__status__authorized = False)
+                         if withinFixedBoundary(p)])
+
+        return retval
+
     def getRange(self, unknown):
         return SessionAlertEmail.getRange(unknown)
 
@@ -68,10 +102,8 @@ class SessionAlerts(object):
             f.writelines(self.reportLines)
             f.close()
 
-    def raiseAlertsDSSTeam(self, now = None, test = False, quiet = True):
-
+    def raiseAlertsDSSTeam(self, now = None, test = False):
         self.stageBoundary = 4
-        self.quiet = quiet
         for unknown in self.findDisabledSessionAlerts(now):
             
             # report this
@@ -79,7 +111,9 @@ class SessionAlerts(object):
                                                     , unknown.session.id))
             
             sa = SessionAlertNotifier(unknown = unknown
-                                    , test = test)
+                                    , test = test
+                                    , flag = "enabled"
+                                     )
             
             # for now, *really* play it safe
             if not test:
@@ -90,13 +124,32 @@ class SessionAlerts(object):
                         , sa.email.GetRecipientString()))
                 #print sa.email.GetText()
                 sa.notify()
-
+        self.write()
+        for unknown in self.findUnauthorizedSessionAlerts(now):
+            
+            # report this
+            self.add("Alert for %s session # %d\n" % (unknown.session.session_type.type
+                                                    , unknown.session.id))
+            
+            sa = SessionAlertNotifier(unknown = unknown
+                                    , test = test
+                                    , flag = "authorized"
+                                     )
+            
+            # for now, *really* play it safe
+            if not test:
+                if sa.email is not None:
+                    self.add("Notifying DSS Team about unauthorized %s session # %d: %s\n" % \
+                         (unknown.session.session_type.type
+                        , unknown.session.id
+                        , sa.email.GetRecipientString()))
+                #print sa.email.GetText()
+                sa.notify()
         self.write()
         self.stageBoundary = 15
 
-    def raiseAlerts(self, now = None, test = False, quiet = True):
+    def raiseAlerts(self, now = None, test = False):
 
-        self.quiet = quiet
         for unknown in self.findDisabledSessionAlerts(now):
             
             # report this
@@ -105,7 +158,9 @@ class SessionAlerts(object):
             
             sa = SessionAlertNotifier(unknown = unknown
                                     , test = test
-                                    , type = "disabled_observers")
+                                    , type = "observers"
+                                    , flag = "enabled"
+                                     )
             
             # for now, *really* play it safe
             if not test:
@@ -116,7 +171,6 @@ class SessionAlerts(object):
                         , sa.email.GetRecipientString()))
                 #print sa.email.GetText()
                 sa.notify()
-        
         self.write()
 
 if __name__ == "__main__":

@@ -15,24 +15,10 @@ class Elective(models.Model):
         cmp = "Cmp." if self.complete else "Not Cmp."
         return "Elective for Session %s with %d periods. Cmp: %s, Grntd: %s" % (self.session.name, self.periods.count(), self.complete, self.guaranteed())
 
-    # TBF: cut & past from Window model
     def toHandle(self):
         if self.session is None:
             return ""
-        if self.session.original_id is None:
-            original_id = ""
-        else:
-            original_id = str(self.session.original_id)
-        return "%s (%s) %s" % (self.session.name
-                             , self.session.project.pcode
-                             , original_id)
-
-    # TBF: cut & past from Window model
-    def handle2session(self, h):
-        n, p = h.rsplit('(', 1)
-        name = n.strip()
-        pcode, _ = p.split(')', 1)
-        return Sesshun.objects.filter(project__pcode__exact=pcode).get(name=name)
+        return self.session.toHandle()
 
     def guaranteed(self):
         "Does the parent session have this flag set?"
@@ -47,22 +33,27 @@ class Elective(models.Model):
         """
 
         for p in self.pendingPeriods():
-            # TBF: anything we need to check before doing this?
+            # Note: anything we need to check before doing this?
             p.move_to_deleted_state()
 
         self.setComplete(True)
 
     def hasPeriodsAfter(self, dt):
-        return self.periods.filter(start__gt=dt).exists()
+        deleted = Period_State.get_state('D')
+        return self.periods.exclude(state=deleted).filter(start__gt=dt).exists()
 
     def periodDateRange(self):
-        "Returns the earliest & latest start times of all its periods"
+        """
+        Returns the earliest & latest start times
+        of all its non-deleted periods
+        """
+        deleted = Period_State.get_state('D')
         try:
-            min = self.periods.order_by('start')[0].start
+            min = self.periods.exclude(state=deleted).order_by('start')[0].start
         except IndexError:
             min = None
         try:
-            max = self.periods.order_by('-start')[0].start
+            max = self.periods.exclude(state=deleted).order_by('-start')[0].start
         except IndexError:
             max = None
         return (min, max)
@@ -121,11 +112,11 @@ class Elective(models.Model):
         else:
             return []
 
-    def getBlackedOutSchedulablePeriods(self):
+    def getBlackedOutSchedulablePeriods(self, now):
         """
-        Of the periods for this elective overlapping in the time range
-        that are not deleted or completed, which schedulable ones have
-        been blacked out?  Returns a list of offending periods.
+        Of the future periods for this elective overlapping in the time
+        range that are not deleted or completed, which schedulable ones
+        have been blacked out?  Returns a list of offending periods.
         """
         state = Period_State.get_state('D')
         ps = self.periods.exclude(state=state).order_by('start')
@@ -133,8 +124,9 @@ class Elective(models.Model):
         if not periods:
             return []
         pranges = [(p.start, p.end(), p) for p in periods]
+        start = max(now, pranges[0][0])
         _, _, _, brs = \
-            self.session.getBlackedOutSchedulableTime(pranges[0][0]
+            self.session.getBlackedOutSchedulableTime(start
                                                     , pranges[-1][1])
         branges = [r for sublist in brs for r in sublist] # flatten lists
 

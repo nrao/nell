@@ -32,7 +32,6 @@ class User(models.Model):
 
     def username(self):
         "This is no longer stored in the DB, but is pulled"
-        # TBF: use a simple cache?
         return UserInfo().getUsername(self.pst_id)
 
     def isAdmin(self):
@@ -111,11 +110,8 @@ class User(models.Model):
     def getFriendLastNames(self):
         "Returns a list of all the friends' names that are assisting this user."
         projects = [i.project for i in self.investigator_set.all()]
-        # TBF: make it a list comp!
-        friends = []
-        for p in projects:
-            friends.extend([f.user.last_name for f in p.friend_set.all()])
-        return list(Set(friends))    
+        return list(Set([f.user.last_name for p in projects
+                                    for f in p.friend_set.all()]))
 
     def getProjects(self):
         """

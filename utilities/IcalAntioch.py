@@ -89,7 +89,7 @@ class IcalAntioch:
         grade: 4.0
         """
 
-        # TBF: this is not very robust - is completely dependent on Antioch's
+        # Note: this is not very robust - is completely dependent on Antioch's
         # Show function for a Period in Types.lhs
 
         # parse the string - this is not very robust, but we're are trying

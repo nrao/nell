@@ -132,6 +132,7 @@ def summary(request, *args, **kws):
     """
     now        = datetime.now()
     last_month = now - timedelta(days = 31)
+    psummary = []
 
     if request.method == 'POST':
         summary = request.POST.get('summary', 'schedule')
@@ -213,6 +214,10 @@ def summary(request, *args, **kws):
             # Tally hours for various categories important to Operations.
             summary[p.session.getCategory()] += hrs
 
+            # If just for one project, create a more detailed summary.
+            if project:
+                psummary.append((pstart, hrs, p.receiver_list))
+
     return render_to_response(
                url
              , {'calendar' : schedule
@@ -228,6 +233,7 @@ def summary(request, *args, **kws):
               , 'year'     : year
               , 'summary'  : [(t, summary[t]) for t in sorted(summary)]
               , 'project'  : project
+              , 'psummary' : psummary
               , 'is_logged_in': request.user.is_authenticated()})
 
 

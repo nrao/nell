@@ -16,7 +16,6 @@ from Period_Receiver                 import Period_Receiver
 from Period_State                    import Period_State
 from Project                         import Project
 from Project_Allotment               import Project_Allotment
-from Project_Blackout_09B            import Project_Blackout_09B
 from Project_Type                    import Project_Type
 from Receiver                        import Receiver
 from Receiver_Group                  import Receiver_Group
@@ -36,3 +35,4 @@ from TimeZone                        import TimeZone
 from User                            import User
 from Window                          import Window
 from WindowRange                     import WindowRange
+from revision_register               import *

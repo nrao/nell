@@ -1,11 +1,11 @@
 from datetime                          import datetime, timedelta
-from nell.utilities.database.UserNames import UserNames
 from nell.utilities                    import TimeAgent
 from scheduler.models                   import *
 import math
 import MySQLdb as m
+import sys
 
-from nell.utilities.reports.Report import Report, Line
+from nell.tools.reports.Report import Report, Line
 
 class Schedtime2DSS(object):
 
@@ -35,7 +35,7 @@ class Schedtime2DSS(object):
         self.total_periods_after = None
 
         # Map Carl's rcvr abbreviations to ours:
-        # TBF: eventually should we move this into the DB?
+        # should we eventually move this into the DB? nope.
         # Carl -> DSS
         self.rcvrMap = { 'R' : 'RRI'
                        , '3' : '342'
@@ -53,7 +53,7 @@ class Schedtime2DSS(object):
                        , 'Q' : 'Q'
                        , 'M' : 'MBA'
                        , 'H' : 'Hol'
-                       , 'PF2'   : '1070' # TBF, WTF, make up your minds!
+                       , 'PF2'   : '1070' # inconsistent!
                        , 'PF1*3' : '342'
                        , 'PF1*4' : '450'
                        , 'PF1*6' : '600'
@@ -118,8 +118,6 @@ class Schedtime2DSS(object):
 
         self.cursor.execute(query)
         rows = self.cursor.fetchall()
-        print "Schedtime2DSS: start = %s, end = %s" % (start, end)
-        print "Schedtime2DSS query rows:", rows
 
         for row in rows:
             #print row
@@ -187,12 +185,13 @@ class Schedtime2DSS(object):
                 # can we use the vpkey?
                 if original_id is not None and original_id != 0:
                     # simple case - we're done
+                    #print "looking for original_id: ", original_id
                     s = Sesshun.objects.filter(original_id = original_id)[0]
                 elif pcode is not None and pcode != "":
                     # try getting a session from the project - we rarely see it
 #                    print "Getting Session from pcode: ", pcode
                     p = Project.objects.get(pcode = pcode)
-                    s = p.sesshun_set.all()[0] # TBF: arbitrary!
+                    s = p.sesshun_set.all()[0] # totally arbitrary!
                 else:
                     # failure: this will raise an alarm
                     s = None
@@ -267,7 +266,6 @@ class Schedtime2DSS(object):
               o $$$ - current semester (e.g. '09C')
               o ### - auto-incrementing integer, starting at 500 for 09C
         """
-
         # get the additional info from the row we'll need
         description = row[7].strip()
         receivers = self.get_schedtime_rcvrs(row[8].strip())
@@ -306,6 +304,7 @@ class Schedtime2DSS(object):
             # assign session rcvrs, allotetd time ...
             s = proj.sesshun_set.all()[0]
             s.allotment.total_time = duration
+            s.allotment.save()
             s.save()
             # assume just one rcvr group
             rg = Receiver_Group(session = s)
@@ -320,6 +319,7 @@ class Schedtime2DSS(object):
             # update it's alloted time to take into account
             # this new period
             s.allotment.total_time += duration
+            s.allotment.save()
             s.save()
 
         return s
@@ -380,8 +380,7 @@ class Schedtime2DSS(object):
 
     def get_schedtime_rcvrs(self, bands):
         "Maps entries in schedtime.bands to our receiver objects"
-         # TBF, WTF, please be consistent!
-        #print "bands", bands
+        # this is so inconsistent!
         if bands in ['RRI', 'PF1*3', 'PF1*4', 'PF1*6', 'PF1*8', 'PF2']:
             return [Receiver.objects.get(abbreviation = self.rcvrMap[bands])]
         else:
@@ -405,17 +404,16 @@ class Schedtime2DSS(object):
 
     def get_unique_user(self, last_name):
         "This last name you give me better be unique or I'm taking my ball home"
+        # fundamental flaw here: all we've got are last names.  We
+        # have to make assumptions that this means certain staff members
         users = User.objects.filter(last_name = last_name).all()
-        #TBF: assert (len(users) == 1)
         if len(users) == 0:
-            #print "SHIT! last_name not in DB: ", last_name
             return None
         elif len(users) > 1:
-            #print "SHIT: too many last_names: ", users
-            # TBF, WTF: handle this case by case:
-            # we could look at their PST affiliation to figure this out?
+            # Nothing to do here but make some assumptions.
+            # Who else?
             if last_name == "Ford":
-#                print "SHIT: using John Ford for: ", users
+                # assume it's John and not Pam!
                 return User.objects.filter(last_name = last_name
                                                , first_name = "John")[0]
             else:
@@ -499,12 +497,16 @@ class Schedtime2DSS(object):
         status.save()
         otype    = Observing_Type.objects.get(type = observingType)
         stype    = Session_Type.objects.get(type = "fixed")
+        # original_id is meaningless here, since we don't have this
+        # record from Carl's system.  Just use something distinctive,
+        # like the number of the beast, say.
+        ourId = 666
         s = Sesshun(project        = p
                   , session_type   = stype
                   , observing_type = otype
                   , allotment      = allot
                   , status         = status
-                  , original_id    = 666 # TBF?
+                  , original_id    = ourId 
                   , name           = sessionName
                   , frequency      = 0.0 #None
                   , max_duration   = 12.0 #None
@@ -513,7 +515,7 @@ class Schedtime2DSS(object):
                     )
         s.save()
 
-        # TBF: put in a dummy target so that Antioch can pick it up!
+        # put in a dummy target so that Antioch can pick it up!
         system = System.objects.get(name = "J2000")
         target = Target(session    = s
                       , system     = system
