@@ -150,7 +150,8 @@ def project_search(value):
 # datetime for that day, and a list of that day's events.
 ######################################################################
 
-def get_gbt_schedule_events(start, end, timezone, get_moc = False, ignore_non_maint_period_maint_events = False):
+def get_gbt_schedule_events(start, end, timezone, get_moc = False,
+                            ignore_non_maint_period_maint_events = False):
     """
     Generate a list of schedule events.  The list returned consists of
     tuples: first element is a datetime, the second element is the
@@ -232,7 +233,8 @@ def _get_fixed_maint_events(mags, day, timezone):
 
     for mag in mags:
         if mag.period:        # fixed if period is set
-            if TimeAgent.truncateDt(mag.get_start()) == day:
+            if TimeAgent.truncateDt(mag.get_start()) == day or \
+                    TimeAgent.truncateDt(mag.get_end()) == day:
                 ev = CalEventFixedMaintenance(mag, mag.get_start() < day,
                                               mag.get_end() > tomorrow,
                                               True, timezone)
