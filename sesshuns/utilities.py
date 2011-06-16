@@ -144,22 +144,26 @@ def get_gbt_schedule_events(start, end, timezone, get_moc = False, ignore_non_ma
     tuples: first element is a datetime, the second element is the
     list of events for that date.
     """
-
     days = (end - start).days
     calendar = []
+    one_day = timedelta(days = 1)
+    utc_start  = TimeAgent.est2utc(start) if timezone == 'ET' else start
+    # find ids of all periods that failed the MOC criteria
+    # in the scheduling range
+    if get_moc:
+        moc_failures = Period.moc_failures(utc_start - one_day, days + 1)
+    else:
+        moc_failures = []
 
     for i in range(0, days):
         daily_events = []
-        today = start + timedelta(days = i)
-        delta = timedelta(days = 1)
-        yesterday = today - delta
-        tomorrow = today + delta
 
         # must use UTC equivalents for database lookups if times given
         # in Eastern Time
+        today = start + timedelta(days = i)
         utc_today  = TimeAgent.est2utc(today) if timezone == 'ET' else today
-        utc_yesterday = utc_today - delta
-        utc_tomorrow = utc_today + delta
+        utc_yesterday = utc_today - one_day
+        utc_tomorrow = utc_today + one_day
         
         # include previous day's periods because last one may end
         # today.  Perhaps there is a way to do this exclusively via
@@ -169,12 +173,19 @@ def get_gbt_schedule_events(start, end, timezone, get_moc = False, ignore_non_ma
 
         for p in ps:
             if p.end() > utc_today:
+                moc_met = p.id not in moc_failures
                 if p.elective:
-                    ev = CalEventElective(p.elective, p.start < utc_today, p.end() > utc_tomorrow,
-                                          p.moc_met() if get_moc else True, timezone)
+                    ev = CalEventElective(p.elective
+                                        , p.start < utc_today
+                                        , p.end() > utc_tomorrow
+                                        , moc_met
+                                        , timezone)
                 else:
-                    ev = CalEventPeriod(p, p.start < utc_today, p.end() > utc_tomorrow,
-                                        p.moc_met() if get_moc else True, timezone)
+                    ev = CalEventPeriod(p
+                                      , p.start < utc_today
+                                      , p.end() > utc_tomorrow
+                                      , moc_met
+                                      , timezone)
                 daily_events.append(ev)
 
         # if today is monday, get floating maintenance events for the week
