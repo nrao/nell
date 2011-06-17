@@ -296,6 +296,7 @@ class CalEventPeriod(CalEvent):
                 p_type = 'D'
             else:
                 p_type = 'T'
+
         return p_type
 
     def receiver_list(self):
@@ -553,8 +554,10 @@ class CalEventFixedMaintenance(CalEvent):
         return fs
 
     # returns the project/observing type, which is 'M' for
-    # maintenance.
+    # maintenance or 'D' for shutdown.
     def project_type(self):
+        if self.contained.period.session.project.is_shutdown():
+            return 'D'
         return 'M'
 
     # returns a list of maintenance activities.  self._mas caches

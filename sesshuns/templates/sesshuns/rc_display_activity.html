@@ -47,6 +47,7 @@
             });
 
         var $maintenanceDates = {{ copymove_dates|safe }};
+        var $maintenanceGroups = {{ copymove_groups|safe }};
 
 	function checkAvailability(mydate){
 	var $return=false;
@@ -66,6 +67,19 @@
 	function getCopyMoveDate() {
 	    date = $('#pickdate').val()
             return date;
+        }
+
+	function getRank(date) {
+	    ranks = $maintenanceGroups[date];
+
+	    if (ranks.length > 1)
+	    {
+	        var rank = prompt(
+	           "There is more than one maintenance period on this date.  Enter "
+	           + ranks, ranks[0]);
+	    }
+
+	    return rank;
         }
 
         $('#modify').click(function()
@@ -93,8 +107,9 @@
 		return false;
 	    }
 
+            rank = getRank(date);
             action_url = $('form#editActivity')[0].action + '?' + 'ActionEvent='
-			   + 'Move' + '&' + 'Destination=' + date;
+			   + 'Move' + '&' + 'Destination=' + date + '&' + 'Rank=' + rank;
 	    window.location.href = action_url;
 	    return false;
 	});
@@ -108,8 +123,9 @@
 		return false;
 	    }
 
+            rank = getRank(date);
             action_url = $('form#editActivity')[0].action + '?' + 'ActionEvent='
-			   + 'Copy' + '&' + 'Destination=' + date;
+			   + 'Copy' + '&' + 'Destination=' + date + '&' + 'Rank=' + rank;
 	    window.location.href = action_url;
 	    return false;
 	});

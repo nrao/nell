@@ -251,8 +251,9 @@ def display_maintenance_activity(request, activity_id = None):
         created = str(ma.modifications.all()[0]
                       if ma.modifications.all() else ""),
         supervisor_mode = True if (u  in supervisors) else False
-        copymove_dates = _get_future_maintenance_dates2()
-
+        copymove_groups = _get_future_maintenance_dates3()
+        copymove_dates = copymove_groups.keys()
+        
         params = {'subject'            : ma.subject,
                   'date'               : start.date(),
                   'time'               : start.time(),
@@ -280,7 +281,8 @@ def display_maintenance_activity(request, activity_id = None):
                   'repeat_interval'    : repeat_interval,
                   'repeat_end'         : repeat_end,
                   'repeat_template'    : repeat_template,
-                  'copymove_dates'     : copymove_dates
+                  'copymove_dates'     : copymove_dates,
+                  'copymove_groups'    : copymove_groups
                  }
     else:
         params = {}
@@ -535,12 +537,13 @@ def edit_activity(request, activity_id = None):
             return HttpResponseRedirect('/schedule/')
 
         elif request.GET['ActionEvent'] == 'Move':
+            rank = request.GET['Rank']
             ma = Maintenance_Activity.objects.get(id = activity_id)
             u = get_requestor(request)
             user = _get_user_name(u)
             d = request.GET['Destination'].split('-')
             date = datetime(int(d[0]), int(d[1]), int(d[2]))
-            group = _get_maintenance_activity_group_by_date(date)
+            group = _get_maintenance_activity_group_by_date(date, rank)
 
             if group:
                 ma.group = group          # assuming here 1 maintenance period
@@ -551,12 +554,13 @@ def edit_activity(request, activity_id = None):
             return HttpResponseRedirect('/schedule/')
 
         elif request.GET['ActionEvent'] == 'Copy':
+            rank = request.GET['Rank']
             ma = Maintenance_Activity.objects.get(id = activity_id)
             u = get_requestor(request)
             user = _get_user_name(u)
             d = request.GET['Destination'].split('-')
             date = datetime(int(d[0]), int(d[1]), int(d[2]))
-            group = _get_maintenance_activity_group_by_date(date)
+            group = _get_maintenance_activity_group_by_date(date, rank)
 
             if group:
                 new_ma = ma.clone(group)
@@ -572,37 +576,26 @@ def edit_activity(request, activity_id = None):
 
 
 ######################################################################
-# def _get_maintenance_activity_group_by_date(date)
+# def _get_maintenance_activity_group_by_date(date, rank)
 #
-# This function takes a date and returns a Maintenance_Activity_Group
-# based on that date.  Since Maintenance_Activity_Groups don't
-# necessarily have a specific date, this date is code for which
-# maintenance group is desired.  Monday for the week of 'date' means
-# group 'A', Tuesday 'B', etc.  So if the date given evaluates to a
-# Wednesday then 'C', which is the third group for that week, is
-# returned.
+# This function takes a date and rank and returns a
+# Maintenance_Activity_Group based on that date and rank.  For
+# example, if there are 3 floating maintenance days, their dates will
+# all be on the Monday of the week, but the rank ('A', 'B', 'C') would
+# differentiate them.
 #
-# The called above gets 'date' from a date picker wich has been
-# pre-loaded with the proper dates, so one could assume this date to
-# be valid.  Nevertheless the function checks for errors, returning
-# the last group if there is an index error accessing the vector of
-# groups, or returning 'None' if there are no groups.
 ######################################################################
 
-def _get_maintenance_activity_group_by_date(date):
+def _get_maintenance_activity_group_by_date(date, rank):
     week = date - timedelta(date.weekday())
     groups = Maintenance_Activity_Group.get_maintenance_activity_groups(week)
     group = None
 
     if len(groups):
-        try:
-            group = groups[date.weekday()] # 0 is 'A', 1 is 'B', etc.
-        except IndexError:
-            group = groups[-1] # put it somewhere this week.
-
-        return group
-
-    return None
+        for i in groups:
+            if i.rank == rank.upper():
+                group = i
+    return group
 
 ######################################################################
 # def _process_activity(request, ma, form)
@@ -836,45 +829,18 @@ def _record_m2m_diffs(key, old, new, diffs):
 # chosen.
 ######################################################################
 
-def _get_future_maintenance_dates():
-    today = TimeAgent.truncateDt(datetime.now())
-    mp = Period.objects\
-        .filter(session__observing_type__type = "maintenance")\
-        .filter(start__gte = today)\
-        .filter(elective = None)
-
-    pds = [p for p in mp]
-
-    electiveQ = models.Q(session__observing_type__type = 'maintenance')
-    per_dateQ = models.Q(periods__start__gte = today)
-    me = Elective.objects.filter(electiveQ & per_dateQ).distinct()
-
-    for i in me:
-        es = i.periodsByState('S')
-
-        if es:
-            pds.append(es[0])     # scheduled period
-        else:
-            ep = i.periodsByState('P')
-
-            if ep:
-                pds.append(ep[0]) # 1st pending period, if no scheduled period
-            else:
-                pass              # they're all deleted!
-
-    pds.sort(cmp = lambda x, y: cmp(x.start, y.start))
-    dates = [str(p.start.date()) for p in pds]
-    return dates
-
-
 def _get_future_maintenance_dates2():
     today = TimeAgent.truncateDt(datetime.now())
+    # TBF, exclude shutdowns until I can find a way to do more than
+    # one per day.
     mp = Period.objects\
         .filter(session__observing_type__type = "maintenance")\
+        .exclude(session__project__name = "Shutdown")\
         .latest("start")
 
     last_date = mp.start
-    week = today - timedelta(today.weekday()) # get the date of the Monday of this week.
+    # get the date of the Monday of this week.
+    week = today - timedelta(today.weekday())
     dates = []
 
     # now loop, one week at a time, until that last date, gathering
@@ -885,7 +851,42 @@ def _get_future_maintenance_dates2():
 
     while week < last_date:
         groups = Maintenance_Activity_Group.get_maintenance_activity_groups(week)
-        dates += [str((g.get_week() + timedelta(ord(g.rank) - 65)).date()) for g in groups]
+        dates += [str((g.get_week() + timedelta(ord(g.rank) -
+                  65)).date()) for g in groups]
+        week += timedelta(7)
+
+    return dates
+
+
+def _get_future_maintenance_dates3():
+    today = TimeAgent.truncateDt(datetime.now())
+     # TBF, exclude shutdowns until I can find a way to do more than
+     # one per day.
+    mp = Period.objects\
+        .filter(session__observing_type__type = "maintenance")\
+        .latest("start")
+
+    last_date = mp.start
+    week = today - timedelta(today.weekday()) # get the date of the Monday of this week.
+    dates = {}
+
+    # now loop, one week at a time, until that last date, gathering
+    # all the maintenance periods.  Each group will be represented as
+    # a day of the week: 'A' = 0 (Monday), 'B' = 1 (Tuesday), etc.
+    # These dates are then entered into the list of possible future
+    # dates.
+    
+    while week < last_date:
+        groups = Maintenance_Activity_Group.get_maintenance_activity_groups(week)
+
+        for i in groups:
+            d = str(i.get_start().date())
+            
+            if not dates.has_key(d):
+                dates[d] = []
+                
+            dates[d].append(str(i.rank))
+            
         week += timedelta(7)
 
     return dates

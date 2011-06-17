@@ -139,7 +139,7 @@
 
     <tr class="day_header">
       <th title="Start and End times for the start day (ET). '+' indicates that the period continues on in an undisplayed date."><a href="/resourcecal_add_activity/{{day|date:"Y/m/d"}}/">{{day|date:"D Y-m-d"}}</a></th>
-      <th title="Project Type: 'A' : Astronomy, 'C' : Commissioning, 'K' : Calibration, 'M' : Maintenance, 'T' : Test, 'I' : Incidental activity">Type</th>
+      <th title="Project Type: 'A' : Astronomy, 'C' : Commissioning, 'D' : Shutdown, 'I' : Incidental activity, 'K' : Calibration, 'M' : Maintenance, 'T' : Test">Type</th>
       <th>Project ID</th>
       <th>Project Title</th>
       <th>PI</th>
@@ -256,7 +256,7 @@
           {% endif %}
         </td>
       {% endif %}
-      {% if event.project_type == "M" %} {# Maintenance #}
+      {% if event.project_type == "M" or event.project_type == "D" %} {# Maintenance #}
 	<td>
 	  {# Maintenance periods will provide a period id.  Non-standard          #}
 	  {# maintenance events will not provide a period id, and thus no anchor. #}
@@ -340,7 +340,7 @@
     <td colspan=7>
       <table border=1 frame=void rules=all cellpadding=3>
 
-      {% if event.project_type == "M" %}
+      {% if event.project_type == "M" or event.project_type == "D" %}
           <tr class="project_type type_maintenance" align=left>
       {% else %}
           <tr class="project_type type_concurrent_activity" align=left>
