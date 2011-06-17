@@ -101,8 +101,13 @@ class Window(models.Model):
 
     def isInWindow(self, period):
         "Does the given period overlap at all in window (endpoints)"
-        return AnalogSet.overlaps((self.start_datetime(), self.end_datetime())
-                                , (period.start, period.end()))
+        if len(self.ranges()) > 0:
+            return AnalogSet.overlaps((self.start_datetime(), self.end_datetime())
+                                    , (period.start, period.end()))
+        else:
+            # how can the period be in the window, when the window isn't
+            # properly defined?
+            return False
 
     def isInRanges(self, period):
         """

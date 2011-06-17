@@ -60,7 +60,6 @@ class CalEvent(object):
         self.end_cutoff = end_cutoff
         self.moc_met = moc_met
         self.TZ = TZ
-        self.fmname = None
         self._mas = []
         self.contained = None
 
@@ -90,18 +89,15 @@ class CalEvent(object):
 
     # returns a string (pcode)
     def pcode(self):
-        raise TypeError('Abstract method \'' + self.__class__.__name__ \
-                            + '.' + inspect.stack()[0][3] + '\' called')
+        return ""
 
     # returns a string (project notes)
     def project_notes(self):
-        raise TypeError('Abstract method \'' + self.__class__.__name__ \
-                            + '.' + inspect.stack()[0][3] + '\' called')
-
+        return ""
+    
     # returns a string (project title)
     def project_title(self):
-        raise TypeError('Abstract method \'' + self.__class__.__name__ \
-                            + '.' + inspect.stack()[0][3] + '\' called')
+        return ""
 
     # the responsible person, a User object
     def principal_investigator(self):
@@ -115,20 +111,16 @@ class CalEvent(object):
 
     # friends
     def friends(self):
-        raise TypeError('Abstract method \'' + self.__class__.__name__ \
-                            + '.' + inspect.stack()[0][3] + '\' called')
+        return []
 
     # returns the project/observing type.  This one must be
     # implemented, as there is no reasonable default.
     def project_type(self):
-        raise TypeError('Abstract method \'' + self.__class__.__name__ \
-                            + '.' + inspect.stack()[0][3] + '\' called')
+        return ''
 
-    # returns the contained period's database ID.  This is always
-    # either the Period's ID, or 0 if the contained object is not a
-    # period.
-    def period_id(self):
-        return 0
+    # returns the contained object's database ID.
+    def contained_id(self):
+        return self.contained.id
 
     # returns true if project is science
     def is_science(self):
@@ -177,7 +169,7 @@ class CalEvent(object):
 
     # returns a list of maintenance activities.
     def mas(self):
-        self._mas
+        return None
 
     # returns a list of receivers involved with this event
     def receiver_list(self):
@@ -186,22 +178,13 @@ class CalEvent(object):
     def get_rcvr_ranges(self):
         return ""
 
-    def set_fm_name(self, fmname):
-        """
-        sets the floating maintenance event name: 'A' for the first,
-        'B' for second, etc.
-        """
-        self.fmname = fmname
-
-    def is_floating_maintenance(self):
-        return False
-
 ######################################################################
 # CalEventPeriod.  A CalEvent that wraps a DSS Period object.  Usually
 # the periods are science periods, but this class deals with
-# non-science periods as well, such as calibration, maintenance, test,
-# etc.  Whatever the observing type, the code in this class assumes an
-# underlying period.
+# non-science periods as well, such as calibration, test, etc.
+# Whatever the observing type, the code in this class assumes an
+# underlying period.  (For maintenance, use either
+# CalEventFixedMaintenance or CalEventFloatingMaintenance.)
 ######################################################################
 
 class CalEventPeriod(CalEvent):
@@ -210,41 +193,13 @@ class CalEventPeriod(CalEvent):
     """
 
     def __init__(self, contained,  start_cutoff = False, end_cutoff = False,
-                 moc_met = True, TZ = 'ETC'):
+                 moc_met = True, TZ = 'ET'):
         super(CalEventPeriod, self).__init__(start_cutoff, end_cutoff, moc_met, TZ)
         self.contained = contained
 
-    ######################################################################
-    # Sorting rules:
-    #
-    #   All maintenance events are directly compared, regardless of
-    #   whether they are floating or not (see 'start()' for floating
-    #   case).  This is to keep the floating designations ('A', 'B',
-    #   'C', etc.) correct even after 'A' gets scheduled.
-    #
-    #   Any floating maintenance event comes before any other kind of
-    #   event for that day. (Usually Monday.  This is by convention,
-    #   as the event really isn't really happening on that day)
-    #
-    #   Otherwise, compare events straight-up by start date/time.
-    ######################################################################
-
-    def __lt__(self, other):
-        if self.project_type() == "M" and other.project_type() == "M":
-            return self.contained.start < other.contained.start
-        elif self.is_floating_maintenance() and not other.is_floating_maintenance() \
-                and TimeAgent.truncateDt(self.start()) == TimeAgent.truncateDt(other.start()):
-            return True
-        else:
-            return super(CalEventPeriod, self).__lt__(other)
-
 
     def start(self):
-        if self.is_floating_maintenance():
-            delta = timedelta(days = self.contained.start.weekday()) # Monday = 0, Tuesday = 1, etc.
-            start = self.contained.start - delta
-        else:
-            start = self.contained.start
+        start = self.contained.start
 
         if self.TZ == 'ET':
             start = TimeAgent.utc2est(start)
@@ -255,13 +210,10 @@ class CalEventPeriod(CalEvent):
         return start
 
     def end(self):
-        if self.is_floating_maintenance():
-            end = self.start() + timedelta(hours = self.contained.duration)
-        else:
-            end = self.contained.end()
-            end = TimeAgent.utc2est(end) if self.TZ == 'ET' else end
-            end = datetime(end.year, end.month, end.day, 0, 0) + timedelta(days = 1)\
-                if self.end_cutoff else end
+        end = self.contained.end()
+        end = TimeAgent.utc2est(end) if self.TZ == 'ET' else end
+        end = datetime(end.year, end.month, end.day, 0, 0) + timedelta(days = 1)\
+            if self.end_cutoff else end
 
         return end
 
@@ -276,9 +228,6 @@ class CalEventPeriod(CalEvent):
 
     # returns a string (project title)
     def project_title(self):
-        if self.is_floating_maintenance():
-            return "Maintenance Period %s" % (self.fmname)
-
         if self.is_science():
             return self.contained.session.project.name
 
@@ -294,9 +243,6 @@ class CalEventPeriod(CalEvent):
     def friends(self):
         fs = [f for f in self.contained.session.project.friend_set.all()]
         return fs
-
-    def period_id(self):
-        return self.contained.id
 
     def moc_degraded(self):
         "Popups are issued when a period has started and if moc is False."
@@ -334,18 +280,15 @@ class CalEventPeriod(CalEvent):
         return self.contained.accounting.lost_time() > 0.
 
 
-    # returns the project/observing type.
-    # The types: 'A', 'M', 'C', 'K', 'T', for astronomy,
-    # maintenance, commissioning, calibration, and test
+    # returns the project/observing type.  The types: 'A', 'C', 'K',
+    # 'T', for astronomy, commissioning, calibration, and test
     def project_type(self):
         project = self.contained.session.project
 
         if project.project_type.type == 'science':
             p_type = 'A'
         else:
-            if project.is_maintenance():
-                p_type = 'M'
-            elif project.is_commissioning():
+            if project.is_commissioning():
                 p_type = 'C'
             elif project.is_calibration():
                 p_type = 'K'
@@ -355,15 +298,6 @@ class CalEventPeriod(CalEvent):
                 p_type = 'T'
         return p_type
 
-    # returns a list of maintenance activities.  self._mas caches
-    # results, thus the code used to obtain the maintenance activity
-    # set is executed only on the first call of this function, whereas
-    # the template may call this several times.
-    def mas(self):
-        if self.contained.session.observing_type.type == "maintenance" and not self._mas:
-            self._mas = Maintenance_Activity.get_maintenance_activity_set(self.contained)
-        return self._mas
-
     def receiver_list(self):
         return self.contained.receiver_list()
 
@@ -372,93 +306,15 @@ class CalEventPeriod(CalEvent):
         return self.contained.get_rcvr_ranges()
 
 
-    def is_floating_maintenance(self):
-        return self.contained.session.observing_type.type == 'maintenance'\
-            and self.contained.isPending()
-
 ######################################################################
-# CalEventElective.  A CalEvent object that wraps an elective.
-# Electives are a way to eventually elect a period from a list of many
-# periods; thus this class derives from CalEventPeriod, and only
-# contains code that is needed to deal with the elective itself.
-######################################################################
-
-class CalEventElective(CalEventPeriod):
-    """
-    This calendar event handles electives.  Nothing specifically about
-    the elective needs to be known by the calendar, so this class
-    inherits from the CalEventPeriod class, extracts the period from
-    the elective and initializes its base class with the period.  Most
-    of the functionality is thus provided by CalEventPeriod.
-    """
-
-    def __init__(self, contained,  start_cutoff = False, end_cutoff = False,
-                 moc_met = True, TZ = 'ETC'):
-        super(CalEventElective, self).__init__(
-            self._get_period(contained), start_cutoff, end_cutoff, moc_met, TZ)
-
-
-    ######################################################################
-    # Returns maintenance activity set associated with this event, if
-    # the event is a maintenance event.  If the elective has been
-    # scheduled, or the pending period with maintenance activities has
-    # been deleted, we want to reconcile the maintenance activity set
-    # by detaching it (if necessary) from a deleted elective period
-    # and reattaching it to the scheduled or next pending elective
-    # period.
-    ######################################################################
-    def mas(self):
-        el = self.contained.elective
-
-        # self._mas caches results, thus this is done only once.
-        if el.session.observing_type.type == "maintenance" and not self._mas:
-            for ep in el.periods.all():
-                if ep.maintenance_activity_set.exists():
-                    mas = ep.maintenance_activity_set.all()
-
-                    if ep.isDeleted():
-                        if el.complete:
-                            destination_period = el.scheduledPeriods()
-                        else:
-                            destination_period = el.pendingPeriods()
-
-                        if destination_period:
-                            for m in mas:
-                                m.period = destination_period[0]
-                                m.save()
-
-        return super(CalEventElective, self).mas()
-
-    def _get_period(self, elective):
-        """
-        Helper function for class CalEventElective retrieves a period
-        from the elective.  If the elective is complete (scheduled),
-        it returns the scheduled period.  If it is still pending, it
-        returns the first pending period from the list of periods.  If
-        deleted, the first deleted period.
-        """
-        pd = None
-        pds = elective.scheduledPeriods()   # see if any scheduled periods first
-
-        if not pds:
-            pds = elective.pendingPeriods() # if not get pending periods
-
-            if not pds:
-                pds = elective.deletedPeriods()
-
-        pd = pds[0] if pds else None
-
-        return pd
-
-######################################################################
-# CalEventMaintenanceActivity. A CalEvent that wraps a
+# CalEventIncidental. A CalEvent that wraps a
 # Maintenance_Activity, a list of Maintenance_Activity, or a QuerySet
 # of Maintenance_Activity.  This allows Maintenance_Activity objects
 # not associated with any periods to be displayed by the calnedar.
 # The calendar doesn't care that there is no period behind this set.
 ######################################################################
 
-class CalEventMaintenanceActivity(CalEvent):
+class CalEventIncidental(CalEvent):
     """
     This calendar event handles one or more maintenance activities on
     their own. Maintenance_Activity objects are normally associated
@@ -469,8 +325,8 @@ class CalEventMaintenanceActivity(CalEvent):
     Maintenance_Activity.
     """
 
-    def __init__(self, contained, start_cutoff = False, end_cutoff = False, moc_met = True, TZ = 'ETC'):
-        super(CalEventMaintenanceActivity, self).__init__(start_cutoff, end_cutoff, moc_met, TZ)
+    def __init__(self, contained, start_cutoff = False, end_cutoff = False, moc_met = True, TZ = 'ET'):
+        super(CalEventIncidental, self).__init__(start_cutoff, end_cutoff, moc_met, TZ)
         if type(contained).__name__ == 'list':
             self.contained = contained
         elif type(contained).__name__ == 'QuerySet':
@@ -492,7 +348,7 @@ class CalEventMaintenanceActivity(CalEvent):
 
     # returns a string (project title)
     def project_title(self):
-        return 'Non-maintenance-period maintenance activity'
+        return 'Incidental non-observational activity'
 
     # returns the name of the responsible person.  In the case of
     # unattached maintenance activities, it is presumed to be the same
@@ -523,14 +379,197 @@ class CalEventMaintenanceActivity(CalEvent):
         return fs
 
     # returns 'I', for Incidental activity concurrent with other
-    # observations.  If this event (CalEventMaintenanceActivity) is
-    # used, it is used to denote Maintenance Activities that are not
-    # attached to a Period.  This is always for an activity that is
-    # concurrent with normal observations and not part of regularly
-    # scheduled maintenance.
+    # observations.  If this event (CalEventIncidental) is used, it is
+    # used to denote Maintenance Activities that are not attached to a
+    # Period.  This is always for an activity that is concurrent with
+    # normal observations and not part of regularly scheduled
+    # maintenance.
     def project_type(self):
         return 'I'
 
 
     def mas(self):
         return self.contained
+
+######################################################################
+# CalEventFloatingMaintenance.  A CalEvent that wraps a DSS floating
+# maintenance event.  There is one of these for every maintenance
+# Elective in a given week.  They are not attached to the Elective or
+# to a Period, but stand alone, so some assumptions are made: that it
+# is a maintenance event; that it is floating; that it starts on
+# Monday of that week.
+#
+# Fixed maintenance events should be represented by
+# CalEventFixedMaintenance.
+######################################################################
+
+class CalEventFloatingMaintenance(CalEvent):
+    """
+    This calendar event handles floating maintenance events.
+    """
+
+    def __init__(self, contained,  start_cutoff = False, end_cutoff = False,
+                 moc_met = True, TZ = 'ET'):
+        super(CalEventFloatingMaintenance, self).__init__(start_cutoff, end_cutoff, moc_met, TZ)
+        self.contained = contained
+
+    ######################################################################
+    # Sorting rules:
+    #
+    # If this is being compared to another floating maintenance
+    # activity group event, and they have the same start time
+    # (i.e. they belong to the same week), then sort by rank: 'A' is
+    # less than 'B' etc.  Otherwise sort by start time.
+    ######################################################################
+
+    def __lt__(self, other):
+        if type(other).__name__ == 'CalEventFloatingMaintenance':
+            if self.start() == other.start():  # same week
+                return self.contained.rank < other.contained.rank
+        else:
+            return super(CalEventFloatingMaintenance, self).__lt__(other)
+
+
+    def start(self):
+        w = self.contained.get_week()
+        # assume start time of 8:00 ET, to be converted to UT below,
+        # if necessary.
+        dt = datetime(w.year, w.month, w.day, 8)
+
+        if self.TZ != 'ET':
+            dt = TimeAgent.etc2utc(dt)
+            
+        return dt 
+
+    def end(self):
+        return self.start() + timedelta(seconds = (8.5 * 3600))
+
+    # returns a string (pcode)
+    def pcode(self):
+        return "Maintenance"
+
+    # returns a string (project title)
+    def project_title(self):
+        return "Maintenance Period %s" % (self.contained.rank)
+
+    def principal_investigator(self):
+        try:
+            prj = Project.objects.get(pcode = "Maintenance")
+            user = prj.principal_investigator()
+        except ObjectDoesNotExist: # return something.
+            user = User.objects.get(last_name__contains = "account")
+
+        return user
+
+
+    def sanctioned_observers(self):
+        try:
+            prj = Project.objects.get(pcode = "Maintenance")
+            observers = prj.get_sanctioned_observers()
+        except ObjectDoesNotExist: # return something.
+            observers = []
+
+        return observers
+
+
+    def friends(self):
+        prj = Project.objects.get(pcode = "Maintenance")
+        fs = [f for f in prj.friend_set.all()]
+        return fs
+
+    # returns the project/observing type.
+    # The types: 'A', 'M', 'C', 'K', 'T', for astronomy,
+    # maintenance, commissioning, calibration, and test
+    def project_type(self):
+        return 'M'
+
+    # returns a list of maintenance activities.  self._mas caches
+    # results, thus the code used to obtain the maintenance activity
+    # set is executed only on the first call of this function, whereas
+    # the template may call this several times.
+    def mas(self):
+        if not self._mas:
+            self._mas = self.contained.get_maintenance_activity_set()
+        return self._mas
+
+######################################################################
+# CalEventFixedMaintenance.  A CalEvent that wraps a DSS fixed
+# maintenance period.  The underlying object is a maintenance activity
+# group.
+######################################################################
+
+class CalEventFixedMaintenance(CalEvent):
+    """
+    This calendar event handles fixed maintenance periods.
+    """
+
+    def __init__(self, contained,  start_cutoff = False, end_cutoff = False,
+                 moc_met = True, TZ = 'ET'):
+        super(CalEventFixedMaintenance, self).__init__(start_cutoff, end_cutoff, moc_met, TZ)
+        self.contained = contained
+
+
+    def start(self):
+        start = self.contained.period.start
+
+        if self.TZ == 'ET':
+            start = TimeAgent.utc2est(start)
+
+        if self.start_cutoff:
+            start = datetime(start.year, start.month, start.day) + timedelta(days = 1)
+
+        return start
+
+    def end(self):
+        end = self.contained.period.end()
+        end = TimeAgent.utc2est(end) if self.TZ == 'ET' else end
+        end = datetime(end.year, end.month, end.day, 0, 0) + timedelta(days = 1)\
+            if self.end_cutoff else end
+
+        return end
+
+
+    # returns a string (pcode)
+    def pcode(self):
+        return self.contained.period.session.project.pcode
+
+    # returns a string (project notes)
+    def project_notes(self):
+        return self.contained.period.session.project.notes
+
+    # returns a string (project title)
+    def project_title(self):
+        return self.contained.period.session.name
+
+    # returns the name of the responsible person
+    def principal_investigator(self):
+        return self.contained.period.session.project.principal_investigator()
+
+    def sanctioned_observers(self):
+        return self.contained.period.session.project.get_sanctioned_observers()
+
+    def friends(self):
+        fs = [f for f in self.contained.period.session.project.friend_set.all()]
+        return fs
+
+    # returns the project/observing type, which is 'M' for
+    # maintenance.
+    def project_type(self):
+        return 'M'
+
+    # returns a list of maintenance activities.  self._mas caches
+    # results, thus the code used to obtain the maintenance activity
+    # set is executed only on the first call of this function, whereas
+    # the template may call this several times.
+    def mas(self):
+        if self.contained.period.session.observing_type.type == "maintenance" and not self._mas:
+            self._mas = self.contained.get_maintenance_activity_set()
+        return self._mas
+
+    def receiver_list(self):
+        return self.contained.period.receiver_list()
+
+
+    def get_rcvr_ranges(self):
+        return self.contained.get_rcvr_ranges()
+

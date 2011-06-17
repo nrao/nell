@@ -1,7 +1,8 @@
-from datetime                              import date, datetime, timedelta
-from nell.tools.database.DSSPrime2DSS      import DSSPrime2DSS
-from nell.tools.database.Schedtime2DSS     import Schedtime2DSS
-from scheduler.models                      import *
+from datetime                     import date, datetime, timedelta
+from tools.database.DSSPrime2DSS  import DSSPrime2DSS
+from tools.database.Schedtime2DSS import Schedtime2DSS
+from tools.database.UserNames     import UserNames
+from scheduler.models             import *
 
 import sys
 

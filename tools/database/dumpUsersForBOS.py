@@ -7,7 +7,8 @@ import sys
 
 # supress the stderr coming from the following import
 saveout = sys.stderr
-# TBF: where to write this that has permissions? 
+# We need to save to this path due to permission's:
+# but that means we have to run this as user 'dss'
 fsock = open('/users/dss/out.log', 'w')
 sys.stderr = fsock
 

@@ -3,7 +3,7 @@ from datetime           import datetime, timedelta
 import math
 import MySQLdb as m
 import logging, urllib2
-from nell.utilities.database.external import NRAOUserDB, UserInfo, PSTMirrorDB
+from nell.utilities.database.external import UserInfo, PSTMirrorDB
 import lxml.etree as ET
 import sys
 

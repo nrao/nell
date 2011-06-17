@@ -47,7 +47,7 @@ class RcvrTimeAccntReport():
             f = open(self.filename, 'w')
             f.writelines(self.reportLines)
 
-    # TBF: this does the logic AND the reporting.  We need to 
+    # Note: this does the logic AND the reporting.  It would be nice 
     # seperate out the logic so that we can unit test it easier
     def report(self, start, end):
 

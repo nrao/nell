@@ -5,6 +5,7 @@ class Receiver(models.Model):
     abbreviation = models.CharField(max_length = 32)
     freq_low     = models.FloatField(help_text = "GHz")
     freq_hi      = models.FloatField(help_text = "GHz")
+    deleted      = models.BooleanField(default = False)
 
     class Meta:
         db_table  = "receivers"
