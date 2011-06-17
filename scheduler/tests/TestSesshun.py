@@ -18,6 +18,31 @@ class TestSesshun(BenchTestCase):
         self.assertEqual(expected.allotment.total_time, float(fdata["total_time"]))
         self.assertEqual(expected.name, fdata["name"])
 
+    def test_get_tracking_error_threshold(self):
+
+        # should give the default value for a sparse array
+        th = self.sesshun.get_tracking_error_threshold()
+        self.assertEquals(0.2, th)
+
+        # now make it use Mustang - a filled array
+        rg =  Receiver_Group(session = self.sesshun)
+        rg.save()
+        mba = Receiver.objects.get(abbreviation = "MBA")
+        rg.receivers.add(mba)
+        rg.save()
+        th = self.sesshun.get_tracking_error_threshold()
+        self.assertEquals(0.4, th)
+
+        # now give change it via the obs param
+        parameter = Parameter.objects.get(name="Tr Err Limit")
+        obs = Observing_Parameter(session = self.sesshun
+                                , parameter = parameter)
+        obs.setValue(0.5)
+        obs.save()
+        th = self.sesshun.get_tracking_error_threshold()
+        self.assertEquals(0.5, th)
+        
+
     @timeIt
     def test_init_from_post(self):
         s = Sesshun()

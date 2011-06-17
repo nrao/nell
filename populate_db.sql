@@ -159,6 +159,7 @@ INSERT INTO parameters VALUES (DEFAULT, 'Transit Before', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Transit After', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'El Limit', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Not Guaranteed', 'boolean');
+INSERT INTO parameters VALUES (DEFAULT, 'Source Size', 'float');
 
 INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Telescope motion required', 'M', 'N');
 INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'No telescope required ', 'N', 'MNBASDZE');
