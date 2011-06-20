@@ -12,6 +12,10 @@
     <style type="text/css">
       .grey_highlight {background-color:#EEEEEE; width:100%}
       .checkable {cursor:pointer}
+      .even {background: #E5ECF9;}
+      .odd {background: white;}
+      td {white-space:nowrap; vertical-align: text-top}
+      th {white-space:nowrap}
     </style>
 {% endblock %}
 {% block content %}
@@ -27,44 +31,34 @@
           <table>
             <tr>
               <th style="{width: 100px;}">Name</th>
-              <th title="The target coordinate systems.">Coord.</th>
-              <th title="The target RA(J200) or latitude.  A '*' indicates that the position of this target is updated each day by the DSS.">RA/Lat</th>
-              <th title="The target declination(J200) or longitude. A '*' indicates that the position of this target is updated each day by the DSS.">Dec/Long</th>
+              <th title="The target coordinate systems.  The target RA(J200) or latitude.  A '*' indicates that the position of this target is updated each day by the DSS.  The target declination(J200) or longitude. A '*' indicates that the position of this target is updated each day by the DSS.">Coordinates</th>
               <th title="The target frequency in GHz.">Freq</th>
               <th title="The required receiver(s).">Rcvr</th>
               <th title="The billed and the allotted time in hours.">Time billed</th>
               <th title="The requested minimum and maximum duration (in hours) of a telescope period.  To change these values, send an email to the helpdesk.">Min/Max Dur.
               </th>
               <th title="The classified observing type.">Type</th>
-              <th title="Session is authorized to observe by GBT staff.">Authorized</th>
               <th title="Select this box to enable the session.">Enabled</th>
-              {% if p.transit %}
-              <th title="Session RA must pass through transit">Transit</th>
-              {% endif %}
-              {% if p.nighttime %}
-              <th title="Require night-time observing for RFI avoidance.">RFI/Night</th>
-              {% endif %}
-              {% if p.anyCompleteSessions %}
-              <th title="Session has been marked as complete.">Complete</th>
-              {% endif %}
-              {% if p.anyNonOneXiSessions %}
-              <th title="Scaling factor applied to min effective Tsys to enable observations in degraded atmospheric conditions.">Xi</th>
-              {% endif %}
-              {% if p.anyElevationLimits %}
-              <th title="Minimum elevation (degrees) considered for scheduling by the DSS.  Setting this value can be used to enable observations at low elevations.  You are seeing this column because you chose to override the DSS default. ">Min Elev</th>
-              {% endif %}
+              <th>Other Parameters</th>
             {% for s in sess %}
-            <tr>
-              <td>{{s.name}}</td>
-              <td>{{s|target_system}}</td>
-              <td>{{s|target_horz}}</td>
-              <td>{{s|target_vert}}</td>
+            <tr class="{% cycle 'odd' 'even' %}">
+              <td>
+              {% if s.status.isNotSchedulable %}
+                <p style="text-decoration:line-through; cursor: pointer" title="Enabled: {{s.status.enabled}} Authorized: {{s.status.authorized}} Complete: {{s.status.complete}}">
+              {% else %}
+                <p>
+              {% endif %}
+                  {{s.name}}
+              </p></td>
+              <td>
+                {% ifequal s|target_system 'Galactic' %}Lat{% else %}RA{% endifequal %}: {{s|target_horz}}<br/>
+                {% ifequal s|target_system 'Galactic' %}Long{% else %}Dec{% endifequal %}: {{s|target_vert}}<br/>
+              </td>
               <td>{{s.frequency}}</td>
               <td>{{s.receiver_list_simple}}</td>
               <td>{{s|getTimeBilled}} / {{s.allotment.total_time}}</td>
               <td>{{s.min_duration}} - {{s.max_duration}}</td>
               <td>{{s.observing_type.type}}</td>
-              <td>{% if s.status.authorized %}Yes{% endif %}</td>
               <td>
                   {% if s.status.enabled %}
                   <img class="checkable" 
@@ -78,31 +72,24 @@
                        src="/static/images/unchecked.png" />
                   {% endif %}
               </td>
-              {% if p.transit %}
-              <td>{% if s.transit %}Yes{% endif %}</td>
+              <td>
+              {% if s.transit %}
+              <span title="Session RA must pass through transit">Transit</span><br/>
               {% endif %}
-              {% if p.nighttime %}
-              <td>{% if s.nighttime %}Yes{% endif %}</td>
+              {% if s.nighttime %}
+              <span title="Require night-time observing for RFI avoidance.">RFI/Night</span><br/>
               {% endif %}
-              {% if p.anyCompleteSessions %}
-              <td>{% if s.status.complete %}Yes{% endif %}</td>
+              {% if s.get_min_eff_tsys_factor %}
+              <span title="Scaling factor applied to min effective Tsys to enable observations in degraded atmospheric conditions.">Xi: </span>
+                  {{s.get_min_eff_tsys_factor}}<br/>
               {% endif %}
-              {% if p.anyNonOneXiSessions %}
-                {% if s.get_min_eff_tsys_factor %}
-                  <td>{{s.get_min_eff_tsys_factor}}</td>
-                {% else %}
-                  <td>1.0</td>
-                {% endif %}
+              {% if s.get_elevation_limit %}
+              <span title="Minimum elevation (degrees) considered for scheduling by the DSS.  Setting this value can be used to enable observations at low elevations.  You are seeing this column because you chose to override the DSS default. ">Min Elev</span>
+                  {{s.get_elevation_limit}}<br/>
               {% endif %}
-              {% if p.anyElevationLimits %}
-                {% if s.get_elevation_limit %}
-                  <td>{{s.get_elevation_limit}}</td>
-                {% else %}
-                  <td></td>
-                {% endif %}
-              {% endif %}
+              </td>
+            </tr>
               
-            <tr>
             {% endfor %}
           </table>
 

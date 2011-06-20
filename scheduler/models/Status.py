@@ -14,3 +14,5 @@ class Status(models.Model):
         db_table  = "status"
         app_label = "scheduler"
     
+    def isNotSchedulable(self):
+        return not self.enabled or not self.authorized or self.complete
