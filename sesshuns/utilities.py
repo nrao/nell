@@ -157,24 +157,28 @@ def get_gbt_schedule_events(start, end, timezone, get_moc = False,
     tuples: first element is a datetime, the second element is the
     list of events for that date.
     """
-
     days = (end - start).days
     calendar = []
+    one_day = timedelta(days = 1)
+    utc_start  = TimeAgent.est2utc(start) if timezone == 'ET' else start
+    # find ids of all periods that failed the MOC criteria
+    # in the scheduling range
+    if get_moc:
+        moc_failures = Period.moc_failures(utc_start - one_day, days + 1)
+    else:
+        moc_failures = []
     old_monday = None
 
     for i in range(0, days):
         daily_events = []
-        today = start + timedelta(days = i)
-        delta = timedelta(days = 1)
-        yesterday = today - delta
-        tomorrow = today + delta
 
         # must use UTC equivalents for database lookups if times given
         # in Eastern Time
+        today = start + timedelta(days = i)
         utc_today  = TimeAgent.est2utc(today) if timezone == 'ET' else today
-        utc_yesterday = utc_today - delta
-        utc_tomorrow = utc_today + delta
-
+        utc_yesterday = utc_today - one_day
+        utc_tomorrow = utc_today + one_day
+        
         # get the Monday for the week.  The maintenance activity
         # groups are retrieved for the entire week, so we do this only
         # once per week.
@@ -184,7 +188,7 @@ def get_gbt_schedule_events(start, end, timezone, get_moc = False,
             mags = Maintenance_Activity_Group.get_maintenance_activity_groups(monday)
             old_monday = monday
 
-        # include previous day's periods because last one may end
+        # Include previous day's periods because last one may end
         # today.  Perhaps there is a way to do this exclusively via
         # query, but there aren't that many periods in a day.  Exclude
         # the maintenance periods, because they are obtained above.
@@ -195,8 +199,11 @@ def get_gbt_schedule_events(start, end, timezone, get_moc = False,
         for p in ps:
             if p.end() > utc_today:
                 # periods can be everything non-maintenance
-                ev = CalEventPeriod(p, p.start < utc_today, p.end() > utc_tomorrow,
-                                    p.moc_met() if get_moc else True, timezone)
+                ev = CalEventPeriod(p
+                                  , p.start < utc_today
+                                  , p.end() > utc_tomorrow
+                                  , p.id not in moc_failures
+                                  , timezone)
                 daily_events.append(ev)
 
         daily_events += _get_fixed_maint_events(mags, today, timezone)
