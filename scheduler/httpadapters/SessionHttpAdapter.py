@@ -114,7 +114,9 @@ class SessionHttpAdapter (object):
         self.sesshun.status.save()
         self.sesshun.save()
 
-        self.update_bool_obs_param(fdata, "gas", "Good Atmospheric Stability", self.sesshun.good_atmospheric_stability())
+        self.update_bool_obs_param(fdata, "gas"
+                                 , "Good Atmospheric Stability"
+                                 , self.sesshun.good_atmospheric_stability())
         self.update_bool_obs_param(fdata, "transit", "Transit", self.sesshun.transit())
         self.update_bool_obs_param(fdata, "nighttime", "Night-time Flag", \
             self.sesshun.nighttime())
@@ -166,6 +168,7 @@ class SessionHttpAdapter (object):
                                                 )
                 obs_param.setValue(new_value)
                 obs_param.save()
+
         else:
             obs_param = self.sesshun.observing_parameter_set.filter(parameter=parameter)[0]
             if new_value:
