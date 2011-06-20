@@ -234,8 +234,11 @@ class TestScheduleTools(NellTestCase):
 
         # get the periods from the DB again for updated values
         ps = Period.get_periods(self.start, 12.0*60.0, ignore_deleted = False)
-        # TBF: how to handle these Periods that r compleletly replaced?
+        # what was canceled?
         canceled_ps = [p for p in ps if p.state.abbreviation == 'D']
+        self.assertEquals(1, len(canceled_ps))
+        canceled = canceled_ps[0]
+        # what wasn't?
         ps = [p for p in ps if p.state.abbreviation != 'D']
         # check accounting after changing schedule
         scheduled = [5.0, 3.0, 4.0]
@@ -244,7 +247,6 @@ class TestScheduleTools(NellTestCase):
             self.assertEquals(scheduled[i], p.accounting.scheduled)
             self.assertEquals(observed[i] , p.accounting.observed())
         # check affected periods
-        canceled = Period.objects.get(state__abbreviation = 'D')
         backup   = ps[0]
         self.assertEquals(self.start, canceled.start)
         self.assertEquals(5.0, canceled.duration)

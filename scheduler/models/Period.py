@@ -13,6 +13,9 @@ from Period_State         import Period_State
 from Receiver             import Receiver
 from Receiver_Schedule    import Receiver_Schedule
 
+import urllib2
+import simplejson as json
+
 class Period(models.Model):
     session    = models.ForeignKey(Sesshun)
     accounting = models.ForeignKey(Period_Accounting, null=True)
@@ -98,13 +101,32 @@ class Period(models.Model):
         rcvrs = [r.abbreviation for r in self.receivers.all()]
         return ", ".join(rcvrs)
 
+    @staticmethod
+    def moc_failures(start, days):
+        """
+        Returns the list of ids of those open and windowed periods
+        in the given scheduling range that do not satisfy the MOC criteria.
+        """
+        url = "%s:%d/" % (ANTIOCH_HOST, PROXY_PORT) + \
+              "mocs?start=" + \
+              start.isoformat().replace("T", "+").replace(":", "%3A") + \
+              "&duration=" + \
+              `days`
+        try:
+            antioch_cnn = urllib2.build_opener().open(url)
+            mocs = json.loads(antioch_cnn.read(0x4000))['mocFailures']
+        except:
+            mocs = []
+
+        return mocs
+
+
     def moc_met(self):
         """
         Returns a Boolean indicated if MOC are met (True) or not (False).
         Only bothers to calculate MOC for open and windowed sessions whose
         end time is not already past.
         """
-
         if self.session.session_type.type not in ("open", "windowed") or \
            self.end() < datetime.utcnow():
             return True
@@ -204,7 +226,7 @@ class Period(models.Model):
         deleted.
         """
 
-        if self.state.abbreviation != 'P' or self.maintenance_activity_set.exists():
+        if self.state.abbreviation != 'P' or self.maintenance_activity_group_set.exists():
             self.move_to_deleted_state()
         else:
             models.Model.delete(self)  # pending can really get removed!
@@ -245,7 +267,8 @@ class Period(models.Model):
         
         # look for a window (any) that this period at least starts in 
         for win in self.session.window_set.all():
-            if self.start >= win.start_datetime() and self.start <= win.end_datetime():
+            if self.start >= win.start_datetime() and \
+               self.start <  win.end_datetime():
                 self.window = win
                 self.save()
                 return # take the first one you find!

@@ -87,6 +87,13 @@
               <span title="Minimum elevation (degrees) considered for scheduling by the DSS.  Setting this value can be used to enable observations at low elevations.  You are seeing this column because you chose to override the DSS default. ">Min Elev</span>
                   {{s.get_elevation_limit}}<br/>
               {% endif %}
+              {% if s.get_tracking_error_threshold_param %}
+              <span title="Source Size in units of arcsec">Source Size</span>
+                  {{s.get_tracking_error_threshold}}<br/>
+                {% if s.get_source_size %}
+                  {{s.get_source_size}}<br/>
+                {% endif %}
+              {% endif %}
               </td>
             </tr>
               

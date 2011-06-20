@@ -94,6 +94,9 @@ class Sesshun(models.Model):
     def isCalibration(self):
         return self.observing_type.type == 'calibration' 
 
+    def isContinuum(self):
+        return self.observing_type.type == 'continuum' 
+
     @staticmethod
     def getCategories():
         "Return all possible categories of interest to Operations."
@@ -143,6 +146,13 @@ class Sesshun(models.Model):
                 if r not in rcvrs:
                     rcvrs.append(r)
         return rcvrs        
+
+    def usesMustang(self):
+        """
+        Mustang is our only filled array.  The scheduling aglorithms make distinctions between
+        filled arrays and sparsely filled arrays.  
+        """
+        return "MBA" in self.rcvrs_specified()
 
     def grade(self):
         return self.allotment.grade
@@ -202,6 +212,43 @@ class Sesshun(models.Model):
                          for rg in self.receiver_group_set.all().order_by('id')]
         rc = ReceiverCompile(Receiver.get_abbreviations())
         return rc.denormalize(rcvrs)
+
+    def getTrErrThresholdDefault(self):
+        """
+        The default value to use for the Tracking Error Threshold depends on 
+        the type of receiver being used.
+        """
+        return 0.4 if self.usesMustang() else 0.2 
+
+    def get_source_size(self):
+        """
+        Returns value of 'Source Size' observing parameter, if it exists,
+        if not, the default value is returned.
+        """
+        size = self.has_float_obs_param("Source Size") 
+        return size if size is not None else 0.0 # arcsec
+
+    def get_tracking_error_threshold(self):
+        """
+        Returns value of 'Tr Err Limit' observing parameter, if it exists,
+        if not, the default value is returned.
+        """
+        size = self.has_float_obs_param("Tr Err Limit") 
+        return size if size is not None else self.getTrErrThresholdDefault()
+
+    def get_tracking_error_threshold_param(self):
+        """
+        Returns value of 'Tr Err Limit' observing parameter, if it exists,
+        if not, returns None.
+        """
+        return self.has_float_obs_param("Tr Err Limit") 
+
+    def get_source_size(self):
+        """
+        Returns factor if has 'Source Size' observing parameter,
+        else None.
+        """
+        return self.has_float_obs_param("Source Size")
 
     def get_min_eff_tsys_factor(self):
         """
@@ -406,20 +453,21 @@ class Sesshun(models.Model):
         db_table  = "sessions"
         app_label = "scheduler"
 
-    def getBlackedOutSchedulablePeriods(self):
+    def getBlackedOutSchedulablePeriods(self, now):
         """
-        Of the periods for this session overlapping in the time range
-        that are not deleted or completed, which schedulable ones have
-        been blacked out?  Returns a list of offending periods.
+        Of the future periods for this session overlapping in the time
+        range that are not deleted or completed, which schedulable ones
+        have been blacked out?  Returns a list of offending periods.
         """
         state = Period_State.get_state('D')
-        ps = self.period_set.exclude(state=state).order_by('start')
+        ps = self.period_set.exclude(state=state).filter(start__gte=now).order_by('start')
         periods = list(ps)
         if not periods:
             return []
         pranges = [(p.start, p.end(), p) for p in periods]
+        start = max(now, pranges[0][0])
         _, _, _, brs = \
-            self.getBlackedOutSchedulableTime(pranges[0][0]
+            self.getBlackedOutSchedulableTime(start
                                             , pranges[-1][1])
         branges = [r for sublist in brs for r in sublist] # flatten lists
 

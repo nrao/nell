@@ -17,6 +17,7 @@
     .type_commissioning {background-color:#F0E68C}
     .type_calibration {background-color:#FF9933}
     .type_maintenance {background-color:#98FB98}
+    .type_shutdown {background-color:red}
     .type_concurrent_activity {background-color:#FF99FF}
     .moc_failure {background-color:#FF0000}
     .info{
@@ -93,6 +94,9 @@
   <a href='/investigators/qualified'>Remote Observers</a>
   <br/>
   Helpful Links:
+  {% if supervisor_mode %}
+  <a href="../../rescal_admin/" target="_blank">Admin</a>
+  {% endif %}
   <a href="https://safe.nrao.edu/wiki/bin/view/GB/Software/DSSResourceCalendar" target="_blank">Resource Calendar Help
   </a>
   |
@@ -135,7 +139,7 @@
 
     <tr class="day_header">
       <th title="Start and End times for the start day (ET). '+' indicates that the period continues on in an undisplayed date."><a href="/resourcecal_add_activity/{{day|date:"Y/m/d"}}/">{{day|date:"D Y-m-d"}}</a></th>
-      <th title="Project Type: 'A' : Astronomy, 'C' : Commissioning, 'K' : Calibration, 'M' : Maintenance, 'T' : Test, 'I' : Incidental activity">Type</th>
+      <th title="Project Type: 'A' : Astronomy, 'C' : Commissioning, 'D' : Shutdown, 'I' : Incidental activity, 'K' : Calibration, 'M' : Maintenance, 'T' : Test">Type</th>
       <th>Project ID</th>
       <th>Project Title</th>
       <th>PI</th>
@@ -192,7 +196,11 @@
           <td class="project_type type_astronomy">{{event.project_type}}</td>
       {% endif %}
 
-      {% if event.project_type == "M" %}
+      {% if event.project_type == "D" %}
+          <td class="project_type type_shutdown" >{{event.project_type}}</td>
+      {% endif %}
+
+      {% if event.project_type == "M" and not event.pcode == "Shutdown" %}
           <td class="project_type type_maintenance" >{{event.project_type}}</td>
       {% endif %}
 
@@ -248,12 +256,12 @@
           {% endif %}
         </td>
       {% endif %}
-      {% if event.project_type == "M" %} {# Maintenance #}
+      {% if event.project_type == "M" or event.project_type == "D" %} {# Maintenance #}
 	<td>
 	  {# Maintenance periods will provide a period id.  Non-standard          #}
 	  {# maintenance events will not provide a period id, and thus no anchor. #}
 	  {% if event.period_id != 0 %}
-	    <a href="/resourcecal_add_activity/{{event.period_id}}/">{{event.project_title}}</a>
+	    <a href="/resourcecal_add_activity/{{event.contained_id}}/">{{event.project_title}}</a>
 	    {# adds a little message about scheduled receiver change: 'Add: <rx>, Remove: <rx> #}
 	    {{rschedule|get_receiver_change:day}}
 	  {% else %}
@@ -332,7 +340,7 @@
     <td colspan=7>
       <table border=1 frame=void rules=all cellpadding=3>
 
-      {% if event.project_type == "M" %}
+      {% if event.project_type == "M" or event.project_type == "D" %}
           <tr class="project_type type_maintenance" align=left>
       {% else %}
           <tr class="project_type type_concurrent_activity" align=left>

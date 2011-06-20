@@ -42,7 +42,7 @@ from django.utils.html                  import escape, conditional_escape
 from django                             import template
 from nell.utilities                     import TimeAgent
 from datetime                           import date, datetime, time, timedelta
-from utilities                          import get_requestor
+from utilities                          import get_requestor, get_rescal_supervisors
 from rescal_notifier                    import RescalNotifier
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
 
@@ -170,7 +170,7 @@ class RCAddActivityForm(forms.Form):
     software = forms.ChoiceField(choices = soft_resc,
                                  widget = forms.RadioSelect(
             renderer = BRRadioRender))
-    rcvr = [(p.id, p.full_description()) for p in Receiver.objects.all()]
+    rcvr = [(p.id, p.full_description()) for p in Receiver.objects.exclude(deleted = True)]
     receivers = forms.MultipleChoiceField(required = receivers_req,
                                           choices = rcvr,
                                           widget = MyCheckboxSelectMultiple)
@@ -201,7 +201,7 @@ class RCAddActivityForm(forms.Form):
         label = 'up:', required = False, choices = rcvr,
         widget = forms.Select(attrs = {'disabled': 'true'}))
 
-    be = [(p.id, p.full_description()) for p in Backend.objects.all()]
+    be = [(p.id, p.full_description()) for p in Backend.objects.exclude(deleted = True)]
     backends = forms.MultipleChoiceField(required = backends_req,
                                          choices = be,
                                          widget = MyCheckboxSelectMultiple)
@@ -234,7 +234,7 @@ def display_maintenance_activity(request, activity_id = None):
         duration = timedelta(hours = ma.duration)
         end = start + duration
         u = get_requestor(request)
-        supervisors = _get_supervisors()
+        supervisors = get_rescal_supervisors()
 
         if ma.is_repeat_activity():
             repeat_interval = interval_names[ma.repeat_template.repeat_interval]
@@ -251,8 +251,9 @@ def display_maintenance_activity(request, activity_id = None):
         created = str(ma.modifications.all()[0]
                       if ma.modifications.all() else ""),
         supervisor_mode = True if (u  in supervisors) else False
-        copymove_dates = _get_future_maintenance_dates()
-
+        copymove_groups = _get_future_maintenance_dates3()
+        copymove_dates = copymove_groups.keys()
+        
         params = {'subject'            : ma.subject,
                   'date'               : start.date(),
                   'time'               : start.time(),
@@ -275,12 +276,13 @@ def display_maintenance_activity(request, activity_id = None):
                   'created'            : created,
                   'receiver_swap'      : ma.receiver_changes.all(),
                   'supervisor_mode'    : supervisor_mode,
-                  'maintenance_period' : ma.period_id,
+                  'maintenance_group'  : ma.group_id,
                   'repeat_activity'    : ma.is_repeat_activity(),
                   'repeat_interval'    : repeat_interval,
                   'repeat_end'         : repeat_end,
                   'repeat_template'    : repeat_template,
-                  'copymove_dates'     : copymove_dates
+                  'copymove_dates'     : copymove_dates,
+                  'copymove_groups'    : copymove_groups
                  }
     else:
         params = {}
@@ -289,18 +291,18 @@ def display_maintenance_activity(request, activity_id = None):
 
 ######################################################################
 # The view.  This is called twice, by the 'GET' and 'POST' paths.  The
-# period ID is needed by both the 'GET' and 'POST' paths.  It is
-# provided to the 'GET' via the URL.  The 'GET' portion then stashes it
-# into a hidden field, from which it can then be retrieved by the
-# 'POST' portion.
+# maintenance group ID is needed by both the 'GET' and 'POST' paths.
+# It is provided to the 'GET' via the URL.  The 'GET' portion then
+# stashes it into a hidden field, from which it can then be retrieved
+# by the 'POST' portion.
 ######################################################################
 
 @login_required
-def add_activity(request, period_id = None, year = None,
+def add_activity(request, group_id = None, year = None,
                  month = None, day = None):
 
     u = get_requestor(request)
-    supervisors = _get_supervisors()
+    supervisors = get_rescal_supervisors()
     user = _get_user_name(u)
     supervisor_mode = True if (u in supervisors) else False
 
@@ -311,8 +313,8 @@ def add_activity(request, period_id = None, year = None,
             # process the returned stuff here...
             ma = Maintenance_Activity()
 
-            if period_id:
-                ma.period = Period.objects.get(id = period_id)
+            if group_id:
+                ma.group = Maintenance_Activity_Group.objects.get(id = group_id)
 
             ma.save() # needs to have a primary key for many-to-many
                       # relationships to be set.
@@ -339,9 +341,9 @@ def add_activity(request, period_id = None, year = None,
         default_software  = Maintenance_Software_Resources.objects \
             .filter(rc_code = 'N')[0]
 
-        if period_id:
-            p = Period.objects.filter(id = int(period_id))[0]
-            start = TimeAgent.utc2est(p.start)
+        if group_id:
+            g = Maintenance_Activity_Group.objects.get(id = group_id)
+            start = TimeAgent.utc2est(g.get_start())
         elif year and month and day:
             start = datetime(int(year), int(month), int(day))
 
@@ -354,7 +356,7 @@ def add_activity(request, period_id = None, year = None,
                         'responsible'       : user,
                         'telescope'         : default_telescope.id,
                         'software'          : default_software.id,
-                        'entity_id'         : period_id,
+                        'entity_id'         : group_id,
                         'recurrency_until'  : start + timedelta(days = 30),
                         }
 
@@ -428,7 +430,7 @@ def edit_activity(request, activity_id = None):
             diffs = _process_activity(request, ma, form)
 
             if approved: # Notify supervisor if approved activity is modified
-                supervisors = _get_supervisors()
+                supervisors = get_rescal_supervisors()
                 view_url = "http://%s/resourcecal_display_activity/%s/" % (request.get_host(), ma.id)
                 rc_notifier.notify(supervisors,
                                    "modified",
@@ -439,7 +441,7 @@ def edit_activity(request, activity_id = None):
             return HttpResponseRedirect('/schedule/')
     else:
         u = get_requestor(request)
-        supervisors = _get_supervisors()
+        supervisors = get_rescal_supervisors()
         supervisor_mode = True if (u in supervisors) else False
 
         if request.GET['ActionEvent'] == 'Modify':
@@ -535,19 +537,16 @@ def edit_activity(request, activity_id = None):
             return HttpResponseRedirect('/schedule/')
 
         elif request.GET['ActionEvent'] == 'Move':
+            rank = request.GET['Rank']
             ma = Maintenance_Activity.objects.get(id = activity_id)
             u = get_requestor(request)
             user = _get_user_name(u)
             d = request.GET['Destination'].split('-')
             date = datetime(int(d[0]), int(d[1]), int(d[2]))
-            delta = timedelta(days=1)
-            mp = Period.objects\
-                .filter(session__observing_type__type = "maintenance")\
-                .filter(start__gte = date)\
-                .filter(start__lt = date + delta)
+            group = _get_maintenance_activity_group_by_date(date, rank)
 
-            if len(mp) > 0:
-                ma.period = mp[0]         # assuming here 1 maintenance period
+            if group:
+                ma.group = group          # assuming here 1 maintenance period
                 ma.approved = False       # per day.  UI does not support more
                 ma.add_modification(user) # than this.
                 ma.save()
@@ -555,19 +554,16 @@ def edit_activity(request, activity_id = None):
             return HttpResponseRedirect('/schedule/')
 
         elif request.GET['ActionEvent'] == 'Copy':
+            rank = request.GET['Rank']
             ma = Maintenance_Activity.objects.get(id = activity_id)
             u = get_requestor(request)
             user = _get_user_name(u)
             d = request.GET['Destination'].split('-')
             date = datetime(int(d[0]), int(d[1]), int(d[2]))
-            delta = timedelta(days=1)
-            mp = Period.objects\
-                .filter(session__observing_type__type = "maintenance")\
-                .filter(start__gte = date)\
-                .filter(start__lt = date + delta)
+            group = _get_maintenance_activity_group_by_date(date, rank)
 
-            if len(mp) > 0:
-                new_ma = ma.clone(mp[0]) # assuming here 1 maintenance period
+            if group:
+                new_ma = ma.clone(group)
                 new_ma.add_modification(user)
                 new_ma.save()
 
@@ -577,6 +573,29 @@ def edit_activity(request, activity_id = None):
                               {'form': form,
                                'supervisor_mode': supervisor_mode,
                                'add_activity' : False })
+
+
+######################################################################
+# def _get_maintenance_activity_group_by_date(date, rank)
+#
+# This function takes a date and rank and returns a
+# Maintenance_Activity_Group based on that date and rank.  For
+# example, if there are 3 floating maintenance days, their dates will
+# all be on the Monday of the week, but the rank ('A', 'B', 'C') would
+# differentiate them.
+#
+######################################################################
+
+def _get_maintenance_activity_group_by_date(date, rank):
+    week = date - timedelta(date.weekday())
+    groups = Maintenance_Activity_Group.get_maintenance_activity_groups(week)
+    group = None
+
+    if len(groups):
+        for i in groups:
+            if i.rank == rank.upper():
+                group = i
+    return group
 
 ######################################################################
 # def _process_activity(request, ma, form)
@@ -709,19 +728,22 @@ def _process_activity(request, ma, form):
         ma.repeat_end = form.cleaned_data["recurrency_until"]
 
 
-    # Normally a maintenance activity comes with a period assigned.
+    # Normally a maintenance activity comes with a group assigned.
     # But it is possible to add a maintenance activity without a
-    # period.  In this case, assign right period for maintenance
+    # group.  In this case, assign right period for maintenance
     # activity, if the activity occurs during a scheduled maintenance
-    # period.  If no periods, this will remain 'None'
-    if not ma.period:
+    # group.  If no group, this will remain 'None'
+    if not ma.group:
         start = TimeAgent.truncateDt(ma._start)
         end = start + timedelta(days = 1)
         periods = Period.get_periods_by_observing_type(start, end, "maintenance")
 
         for p in periods:
             if p.isScheduled() and ma._start >= p.start and ma._start < p.end():
-                ma.period = p
+                g = Maintenance_Activity_Group.objects.filter(period = p)
+
+                if g.count():
+                    ma.group = g[0]
 
     # Now add user and timestamp for modification.  Earliest mod is
     # considered creation.
@@ -796,20 +818,6 @@ def _record_m2m_diffs(key, old, new, diffs):
         diffs[key] = s
     return diffs
 
-def _get_supervisors():
-    # TBF: when roles done, will get these by visiting the roles.
-    s = []
-
-    # don't spam supervisors from test setups
-    if settings.DEBUG == True:
-        s += User.objects.filter(auth_user__username = 'rcreager')
-    else:
-        s += User.objects.filter(auth_user__username = 'rcreager')
-        s += User.objects.filter(auth_user__username = 'banderso')
-        s += User.objects.filter(auth_user__username = 'mchestnu')
-
-    return s
-
 ######################################################################
 # Gets all future (from today) maintenance dates.  Note the special
 # treatment of electives.  Each elective itself is only one potential
@@ -821,34 +829,66 @@ def _get_supervisors():
 # chosen.
 ######################################################################
 
-def _get_future_maintenance_dates():
+def _get_future_maintenance_dates2():
     today = TimeAgent.truncateDt(datetime.now())
+    # TBF, exclude shutdowns until I can find a way to do more than
+    # one per day.
     mp = Period.objects\
         .filter(session__observing_type__type = "maintenance")\
-        .filter(start__gte = today)\
-        .filter(elective = None)
+        .exclude(session__project__name = "Shutdown")\
+        .latest("start")
 
-    pds = [p for p in mp]
+    last_date = mp.start
+    # get the date of the Monday of this week.
+    week = today - timedelta(today.weekday())
+    dates = []
 
-    electiveQ = models.Q(session__observing_type__type = 'maintenance')
-    per_dateQ = models.Q(periods__start__gte = today)
-    me = Elective.objects.filter(electiveQ & per_dateQ).distinct()
+    # now loop, one week at a time, until that last date, gathering
+    # all the maintenance periods.  Each group will be represented as
+    # a day of the week: 'A' = 0 (Monday), 'B' = 1 (Tuesday), etc.
+    # These dates are then entered into the list of possible future
+    # dates.
 
-    for i in me:
-        es = i.periodsByState('S')
+    while week < last_date:
+        groups = Maintenance_Activity_Group.get_maintenance_activity_groups(week)
+        dates += [str((g.get_week() + timedelta(ord(g.rank) -
+                  65)).date()) for g in groups]
+        week += timedelta(7)
 
-        if es:
-            pds.append(es[0])     # scheduled period
-        else:
-            ep = i.periodsByState('P')
+    return dates
 
-            if ep:
-                pds.append(ep[0]) # 1st pending period, if no scheduled period
-            else:
-                pass              # they're all deleted!
 
-    pds.sort(cmp = lambda x, y: cmp(x.start, y.start))
-    dates = [str(p.start.date()) for p in pds]
+def _get_future_maintenance_dates3():
+    today = TimeAgent.truncateDt(datetime.now())
+     # TBF, exclude shutdowns until I can find a way to do more than
+     # one per day.
+    mp = Period.objects\
+        .filter(session__observing_type__type = "maintenance")\
+        .latest("start")
+
+    last_date = mp.start
+    week = today - timedelta(today.weekday()) # get the date of the Monday of this week.
+    dates = {}
+
+    # now loop, one week at a time, until that last date, gathering
+    # all the maintenance periods.  Each group will be represented as
+    # a day of the week: 'A' = 0 (Monday), 'B' = 1 (Tuesday), etc.
+    # These dates are then entered into the list of possible future
+    # dates.
+    
+    while week < last_date:
+        groups = Maintenance_Activity_Group.get_maintenance_activity_groups(week)
+
+        for i in groups:
+            d = str(i.get_start().date())
+            
+            if not dates.has_key(d):
+                dates[d] = []
+                
+            dates[d].append(str(i.rank))
+            
+        week += timedelta(7)
+
     return dates
 
 

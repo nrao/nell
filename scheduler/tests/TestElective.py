@@ -1,6 +1,6 @@
-from datetime                   import datetime, timedelta
-from test_utils              import NellTestCase
-from utils                   import create_sesshun, setupElectives
+from datetime                 import datetime, timedelta
+from test_utils               import NellTestCase
+from utils                    import create_sesshun, setupElectives
 from scheduler.models         import *
 from scheduler.httpadapters   import *
 
@@ -13,7 +13,7 @@ class TestElective(NellTestCase):
     def test_publish(self):
 
         # test the inital state
-        self.assertEqual(['P','P','P']
+        self.assertEqual(['P','P','P','D']
             , [p.state.abbreviation for p in self.elec.periods.all()])
 
         # publish the first one
@@ -30,7 +30,7 @@ class TestElective(NellTestCase):
     def test_setComplete(self):
 
         # test the inital state
-        self.assertEqual(['P','P','P']
+        self.assertEqual(['P','P','P','D']
             , [p.state.abbreviation for p in self.elec.periods.all()])
 
         # publish the first one
@@ -76,7 +76,7 @@ class TestElective(NellTestCase):
                , "complete": "true" 
                }        
         adapter.init_from_post(fdata)
-       
+
         self.assertEqual(adapter.elective.session, self.sesshun)
         self.assertEqual(adapter.elective.complete, True)
         self.assertEqual(len(adapter.elective.periods.all()), 0)
@@ -96,7 +96,7 @@ class TestElective(NellTestCase):
 
         self.assertEqual(jd["session"]["pcode"], "GBT09A-001")
         self.assertEqual(jd["complete"], False)
-        self.assertEqual(len(jd["periods"]), 3)
+        self.assertEqual(len(jd["periods"]), 4)
 
     def test_hasPeriodAfter(self):
         before = datetime(2009, 5, 11, 12, 15)
@@ -112,6 +112,7 @@ class TestElective(NellTestCase):
                        , self.elec.periodDateRange())
 
     def test_getBlackedOutSchedulablePeriods(self):
+        now = datetime(2009, 6, 1, 12, 15)
         u = User(first_name = "Test"
                , last_name  = "User"
                , role       = Role.objects.all()[0]
@@ -134,7 +135,7 @@ class TestElective(NellTestCase):
 
         # test observer black out
         self.assertEqual([self.period2]
-                       , self.elec.getBlackedOutSchedulablePeriods())
+                       , self.elec.getBlackedOutSchedulablePeriods(now))
         blackout = Blackout(project    = project
                           , start_date = datetime(2009, 6, 14) 
                           , end_date   = datetime(2009, 6, 16)
@@ -144,5 +145,5 @@ class TestElective(NellTestCase):
 
         # test project black out
         self.assertEqual([self.period2, self.period3]
-                       , self.elec.getBlackedOutSchedulablePeriods())
+                       , self.elec.getBlackedOutSchedulablePeriods(now))
 

@@ -51,8 +51,10 @@ class ReservationsUtility(object):
         "Use the query service to get all reservations for DSS users."
 
         res = []
-        # TBF: there may be better query services to use,
+        # Note: there may be better query services to use,
         # but this is the only one that's been tested enough
+        # If this starts taking to long we can move to more 
+        # efficient queries.
         users = User.objects.all()
         for user in users:
             try:

@@ -1,7 +1,6 @@
 from datetime                          import datetime, timedelta
-from UserNames   import UserNames
-from DBReporter  import DBReporter
-from nell.scheduler.models                   import *
+from DBReporter                        import DBReporter
+from nell.scheduler.models             import *
 import math
 import MySQLdb as m
 
@@ -27,9 +26,12 @@ class DSSPrime2DSS(object):
         self.cursor = self.db.cursor()
         self.silent = silent
 
-        # Carl transferred only Astronomy Windows & Opportunities.
-        # set this to false if you are to ignore these and instead want
-        # to use our self.create_09B_opportunities
+        # How are we to handle transferring windows?
+        # Currently this code supports two ways of transferring window
+        # info from DSSPrime; but the 'windows' table doesn't seem to
+        # get used anymore.  Thus the default below is False.  
+        # However, we need to resolve this.
+        # Story: https://www.pivotaltracker.com/story/show/14428941
         self.use_transferred_windows = False
 
         # for gathering information during the transfer
@@ -110,7 +112,7 @@ class DSSPrime2DSS(object):
         dbr.reportProjectSummaryByPcode(self.new_projects)
 
     def set_sanctioned_flags(self):
-        # Get the list of sanctioned users from 09B
+        # Get the list of sanctioned users 
         f = open("/home/dss/data/sanctioned_users.txt", "r")
         sanctioned = []
         for line in f:
@@ -207,7 +209,6 @@ class DSSPrime2DSS(object):
         Note: the given info is in the form of raw sql results, derived
         from the sql used in get_session().
         """
-
         otype = Observing_Type.objects.get(type = row[23])
         stype = Session_Type.objects.get(type = row[24])
         project = Project.objects.get(pcode = row[12])
@@ -257,7 +258,18 @@ class DSSPrime2DSS(object):
         # All Systems J2000!
         system = System.objects.get(name = "J2000")
 
-        for t in self.cursor.fetchall():
+        # The DSS database now enforces only one target per session.
+        # however this code exists so we can run unit tests w/ DB's
+        # where this was not enforced.
+        rows = self.cursor.fetchall()
+        if len(rows) > 0:
+            #if len(rows) > 1:
+            #    print "Too many target rows for session: ", s_id_prime
+            t = rows[0]
+        else:
+            t = None
+
+        if t is not None:
             try:
                 vertical = float(t[4])
             except:
@@ -277,9 +289,6 @@ class DSSPrime2DSS(object):
                             )
                 target.save()
 
-        # now get the windows & opportunities
-        # TBF: initially, we thought there would be none of these, and
-        # they'd all be determined via the Cadences!
         if self.use_transferred_windows:
             query = "SELECT * FROM windows WHERE session_id = %s" % s_id_prime
             self.cursor.execute(query)
@@ -452,7 +461,7 @@ class DSSPrime2DSS(object):
         # to be use when making incremental updates
         rows = self.get_all_pushed_projects()
         for row in rows:
-            # TBF: check pcode - if we have it, don't transfer it.
+            # check pcode - if we have it, don't transfer it.
             pcode = row[4]
             try:
                 p = Project.objects.get(pcode = pcode)
@@ -554,17 +563,15 @@ class DSSPrime2DSS(object):
         """
 
         # parse the user info first
-        # TBF: we must support outrageous accents
+        # we must support outrageous accents
         try:
             firstName = unicode(row[1])
         except:
-            #print "exception with name: ", row[1]
             firstName = "exception"
 
         try:
             lastName = unicode(row[2])
         except:
-            #print "exception with name: ", row[2]
             lastName = "exception"
 
         original_id = int(row[3])
@@ -625,17 +632,14 @@ class DSSPrime2DSS(object):
             row = self.cursor.fetchone()
             return user
 
-        # TBF: we must support outrageous accents
         try:
             firstName = unicode(row[1])
         except:
-            #print "exception with name: ", row[1]
             firstName = "exception"
 
         try:
             lastName = unicode(row[2])
         except:
-            #print "exception with name: ", row[2]
             lastName = "exception"
 
         if len(row) > 7:
@@ -683,12 +687,11 @@ class DSSPrime2DSS(object):
 
 
         # project level details
-        # TBF: put this in a file
         for pcode in self.new_projects:
             ls += "\nProject: \n"
             project = Project.objects.get(pcode = pcode)
             ls += "%s\n" % project
-            ls += "Friends: %s\n" % ",".join([f.user for f in project.friend_set.all()])
+            ls += "Friends: %s\n" % ",".join([f.user.name() for f in project.friend_set.all()])
             ls += "Users:\n"
             for inv in project.investigator_set.all():
                 new = inv.user in self.new_users
@@ -707,7 +710,15 @@ class DSSPrime2DSS(object):
         ls += "\nNew Users Added: %d\n" % len(self.new_users)
         for new in self.new_users:
             ls += "    %s\n" % new
-            
+           
+        # report on any problems reading names of these users   
+        outrageousAccents = [u for u in self.new_users \
+            if u.last_name == "exception" or u.first_name == "exception"]
+        if len(outrageousAccents) > 0:
+            ls += "\nNew Users whos names could not be read:\n"
+            for u in outrageousAccents:
+                ls += "    %s\n" % u
+
         if not self.quiet:
             print ls
 

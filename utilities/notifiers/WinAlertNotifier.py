@@ -13,7 +13,8 @@ class WinAlertEmail(Email):
     """
     def __init__(self, sender, window):
 
-        Email.__init__(self, sender = sender, recipients = [])
+        Email.__init__(self, sender = sender, recipients = []
+                     , bcc = "gbdyn@nrao.edu")
         self.createRecipients(window)
         self.date = None
 

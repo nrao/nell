@@ -8,7 +8,8 @@ from models                             import *
 from nell.utilities.TimeAgent           import EST, UTC
 from observers                          import project_search
 from sets                               import Set
-from utilities                          import get_requestor, acknowledge_moc, get_gbt_schedule_events
+from utilities                          import get_requestor, acknowledge_moc
+from utilities                          import get_rescal_supervisors, get_gbt_schedule_events
 from utilities                          import TimeAgent
 from django.contrib                     import messages
 
@@ -62,12 +63,17 @@ def gbt_schedule(request, *args, **kws):
     """
     timezones = ['ET', 'UTC']
 
-    # TBF: error handling
+    # Note: we probably should have better error handling here,
+    # but since the forms are Date Pickers and drop downs, it seems
+    # difficult for the user to send us malformed params.
     if request.method == 'POST':
         timezone  = request.POST.get('tz', 'ET')
         days      = int(request.POST.get('days', 5))
         startDate = request.POST.get('start', None)
-        startDate = datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now()
+        try:
+            startDate = datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now()
+        except: # Bad input?    
+            startDate = datetime.now()
     else: # request.method == 'GET'
         # Default date, days, and timezone.  Loaded from the values
         # saved below, or from defaults if no values were saved.
@@ -79,6 +85,7 @@ def gbt_schedule(request, *args, **kws):
     # save these values for use in 'GET' above.
     _save_calendar_defaults(request, start, days, timezone)
     requestor = get_requestor(request)
+    supervisor_mode = True if (requestor in get_rescal_supervisors()) else False
 
     # Ensure only operators or admins trigger costly MOC calculations
     if requestor.isOperator() or requestor.isAdmin():
@@ -105,6 +112,7 @@ def gbt_schedule(request, *args, **kws):
          'days'            : days,
          'rschedule'       : Receiver_Schedule.extract_schedule(start, days),
          'requestor'       : requestor,
+         'supervisor_mode' : supervisor_mode,
          'pubdate'         : pubdate,
          })
 
@@ -113,7 +121,7 @@ def rcvr_schedule(request, *args, **kwds):
     Serves up a page showing the upcoming receiver change schedule, viewable
     by anyone.
     """
-    receivers = [r for r in Receiver.objects.all() if r.abbreviation != 'NS']
+    receivers = [r for r in Receiver.objects.exclude(deleted = True) if r.abbreviation != 'NS']
     schedule  = {}
     for day, rcvrs in Receiver_Schedule.extract_schedule(datetime.utcnow(), 180).items():
         schedule[day] = [r in rcvrs for r in receivers]
@@ -132,6 +140,7 @@ def summary(request, *args, **kws):
     """
     now        = datetime.now()
     last_month = now - timedelta(days = 31)
+    psummary = []
 
     if request.method == 'POST':
         summary = request.POST.get('summary', 'schedule')
@@ -213,6 +222,10 @@ def summary(request, *args, **kws):
             # Tally hours for various categories important to Operations.
             summary[p.session.getCategory()] += hrs
 
+            # If just for one project, create a more detailed summary.
+            if project:
+                psummary.append((pstart, hrs, p.receiver_list))
+
     return render_to_response(
                url
              , {'calendar' : schedule
@@ -228,6 +241,7 @@ def summary(request, *args, **kws):
               , 'year'     : year
               , 'summary'  : [(t, summary[t]) for t in sorted(summary)]
               , 'project'  : project
+              , 'psummary' : psummary
               , 'is_logged_in': request.user.is_authenticated()})
 
 

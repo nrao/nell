@@ -32,6 +32,20 @@ import unittest
 
 class TestTimeAgent(unittest.TestCase):
 
+    def test_adjustDateTimeTz(self):
+        dt =  datetime(2010,  6,  1,  12,  0,  0)        
+        r = adjustDateTimeTz("UTC", dt)
+        self.assertEquals("2010-06-01 12:00:00+00:00", "%s" % r)
+        r = adjustDateTimeTz("EST", dt)
+        self.assertEquals("2010-06-01 07:00:00-05:00", "%s" % r)
+        r = adjustDateTimeTz("PST8PDT", dt)
+        self.assertEquals("2010-06-01 05:00:00-07:00", "%s" % r)
+        # see what the UTC flag does
+        r = adjustDateTimeTz("UTC", dt, to_utc = True)
+        self.assertEquals("2010-06-01 12:00:00+00:00", "%s" % r)
+        r = adjustDateTimeTz("EST", dt, to_utc = True)
+        self.assertEquals("2010-06-01 17:00:00+00:00", "%s" % r)
+
     def test_dt2tlst(self):
         self.assertEquals(time(6, 46, 3)
                         , dt2tlst(datetime(2009, 9, 30, 11, 30)))

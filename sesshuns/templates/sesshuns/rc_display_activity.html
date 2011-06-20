@@ -47,6 +47,7 @@
             });
 
         var $maintenanceDates = {{ copymove_dates|safe }};
+        var $maintenanceGroups = {{ copymove_groups|safe }};
 
 	function checkAvailability(mydate){
 	var $return=false;
@@ -66,6 +67,19 @@
 	function getCopyMoveDate() {
 	    date = $('#pickdate').val()
             return date;
+        }
+
+	function getRank(date) {
+	    ranks = $maintenanceGroups[date];
+
+	    if (ranks.length > 1)
+	    {
+	        var rank = prompt(
+	           "There is more than one maintenance period on this date.  Enter "
+	           + ranks, ranks[0]);
+	    }
+
+	    return rank;
         }
 
         $('#modify').click(function()
@@ -93,9 +107,15 @@
 		return false;
 	    }
 
-            action_url = $('form#editActivity')[0].action + '?' + 'ActionEvent='
-			   + 'Move' + '&' + 'Destination=' + date;
-	    window.location.href = action_url;
+            rank = getRank(date);
+
+	    if (rank != null)
+	    {
+                action_url = $('form#editActivity')[0].action + '?' + 'ActionEvent='
+		               + 'Move' + '&' + 'Destination=' + date + '&' + 'Rank=' + rank;
+	        window.location.href = action_url;
+	    }
+	
 	    return false;
 	});
 
@@ -108,9 +128,15 @@
 		return false;
 	    }
 
-            action_url = $('form#editActivity')[0].action + '?' + 'ActionEvent='
-			   + 'Copy' + '&' + 'Destination=' + date;
-	    window.location.href = action_url;
+            rank = getRank(date);
+
+	    if (rank != null)
+	    {
+                action_url = $('form#editActivity')[0].action + '?' + 'ActionEvent='
+		               + 'Copy' + '&' + 'Destination=' + date + '&' + 'Rank=' + rank;
+	        window.location.href = action_url;
+	    }
+	
 	    return false;
 	});
     });
@@ -256,9 +282,9 @@
             {{ created }}
           </td>
         </tr>
-      <tr><td width="15%" class="table_captions" align="right" valign="top"<b>period id</b></td>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"<b>group id</b></td>
           <td width="80%" class="table_fields" align="left" valign="top">
-            {{ maintenance_period }}
+            {{ maintenance_group }}
           </td>
         </tr>
       <tr><td width="15%" class="table_captions" align="right" valign="top"<b>Recurrent</b></td>
