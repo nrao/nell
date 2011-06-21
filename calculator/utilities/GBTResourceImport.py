@@ -107,4 +107,4 @@ class GBTResourceImport(object):
             print len(Configuration.objects.all()), "hardware configurations created."
 
 if __name__ == "__main__":
-    resources = GBTResourceImport("calculator/gbt_resources_table.txt")
+    resources = GBTResourceImport("calculator/data/gbt_resources_table.txt")
