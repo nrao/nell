@@ -47,4 +47,4 @@ class WeatherValuesImport(object):
             
 
 if __name__ == "__main__":
-    wvi = WeatherValuesImport('calculator/utilities/SensCalcWeatherValues.csv')
+    wvi = WeatherValuesImport('calculator/data/SensCalcWeatherValues.csv')
