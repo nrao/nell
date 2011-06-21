@@ -20,7 +20,7 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from calculator.models import WeatherValues, TSky
+from calculator.models import FrequencyResolution, WeatherValues, TSky
 
 import math, slalib
 
@@ -38,19 +38,27 @@ spectrometerK1K2  = {800  : (1.235, 1.21)
 
 GBT_LAT = 38 + 26 / 60.
 LAT     = 51.57
+backendsWithKnownRes = ('Spectral Processor', 'GBT Spectrometer', 'FPGA Spectrometer')
 
 def getMinTopoFreq(backend, bandwidth, windows, receiver, beams):
-    if backend == 'Spectral Processor':
-        channels = 1024
-    elif backend == 'GBT Spectrometer':
-        channels = freqRes.get(bandwidth)
+    if backend in backendsWithKnownRes:
+        qBandwidth = None if backend == 'Spectral Processor' else bandwidth
+        fr         = FrequencyResolution.objects.filter(backend__dss_backend__name = backend
+                                                      , bandwidth = qBandwidth)
+        if backend == 'FPGA Spectrometer' and windows in (8, 16):
+            fr = fr.filter(windows__name = int(windows))
+        if len(fr) == 0:
+            return 1
+        channels = fr[0].max_number_channels
     else:
         return 1
 
-    # Note: KFPA is a 7 beam rx, but we want to use 8 beams for calculations.
-    beams = 8 if receiver == 'KFPA' and beams == 7 else beams
-    retval = (bandwidth / float(channels)) * windows  * beams * 1000 if channels is not None else 0.0
-    return retval
+    if backend == 'FPGA Spectrometer':
+        return bandwidth * 1e3 / float(channels) # kHz
+    else:
+        # Note: KFPA is a 7 beam rx, but we want to use 8 beams for calculations.
+        beams = 8 if receiver == 'KFPA' and beams == 7 else beams
+        return (bandwidth / float(channels)) * windows  * beams * 1000 if channels is not None else 0.0
 
 def dec2Els(dec):
     if dec <= GBT_LAT:

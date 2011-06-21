@@ -713,7 +713,7 @@ class DSSPrime2DSS(object):
             ls += "\nProject: \n"
             project = Project.objects.get(pcode = pcode)
             ls += "%s\n" % project
-            ls += "Friends: %s\n" % ",".join([f.user for f in project.friend_set.all()])
+            ls += "Friends: %s\n" % ",".join([f.user.name() for f in project.friend_set.all()])
             ls += "Users:\n"
             for inv in project.investigator_set.all():
                 new = inv.user in self.new_users

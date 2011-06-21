@@ -32,9 +32,10 @@ from django.db import models
 
 class Backend(models.Model):
 
-    name = models.CharField(max_length = 80)
+    name         = models.CharField(max_length = 80)
     abbreviation = models.CharField(max_length = 20)
-    rc_code = models.CharField(max_length = 1)
+    rc_code      = models.CharField(max_length = 1)
+    deleted      = models.BooleanField(default = False)
 
     def __unicode__(self):
         return self.abbreviation

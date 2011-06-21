@@ -5,6 +5,7 @@ from calculator.views              import load_calc_ui
 from sesshuns.observers            import *
 from sesshuns.operators            import *
 from sesshuns.resource_cal         import *
+from sesshuns.admin                import rescal_admin
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
@@ -16,6 +17,7 @@ urlpatterns = patterns(''
    , (r'^calculator/', include('nell.calculator.urls')) #
    , (r'^scheduler/',  include('nell.scheduler.urls'))  #
    , (r'^admin/',      include(admin.site.urls))        #
+   , (r'^rescal_admin/', include(rescal_admin.urls))
    , url(r'^profile/(\d+)/blackout/(\d+)/$',               user_blackout)
    , url(r'^profile/(\d+)/blackout/$',                     user_blackout)
    , url(r'^profile/(\d+)/dynamic_contact$',               dynamic_contact)

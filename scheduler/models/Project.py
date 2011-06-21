@@ -226,6 +226,17 @@ class Project(models.Model):
         sessions = [s for s in self.sesshun_set.all() if s.get_elevation_limit() is not None]
         return sessions != []
 
+    def anySourceSizes(self):
+        "Returns true if a single session has the Source Size obs param set."
+        sessions = [s for s in self.sesshun_set.all() if s.get_source_size() is not None]
+        return sessions != []
+
+    def anyTrkErrThresholds(self):
+        "Returns true if a single session has the Tr Err Limit obs param set."
+        sessions = [s for s in self.sesshun_set.all() if s.get_tracking_error_threshold_param() is not None]
+        return sessions != []
+
+    
     def anyCompleteSessions(self):
         "Returns true if a single session has been set as complete"
         sessions = [s for s in self.sesshun_set.all() if s.status.complete]

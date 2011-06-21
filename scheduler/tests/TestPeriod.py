@@ -412,3 +412,8 @@ class TestPeriod(BenchTestCase):
         adapter.update_rcvrs_from_post({"receivers" : "L, S"})
         self.assertEquals(False, p.has_observed_rcvrs_in_schedule())
 
+    def test_moc_failures(self):
+        start = datetime(2009, 6, 1, 0, 0)
+        days = 4
+        mfs = Period.moc_failures(start, days)
+        self.assertEquals([], mfs)

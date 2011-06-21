@@ -90,7 +90,12 @@ class TestViews(BenchTestCase):
         self.failUnlessEqual(response.status_code, 200)
 
         self.assertTrue('error' not in response.content)
-        expected = '{"diff": [{"down": [], "up": ["RRI", "342", "450"], "day": "04/06/2009"}, {"down": ["RRI"], "up": ["600"], "day": "04/11/2009"}], "receivers": ["RRI", "342", "450", "600", "800", "1070", "L", "S", "C", "X", "Ku", "K", "Ka", "Q", "MBA", "Z", "Hol", "KFPA", "W"], "maintenance": ["2009-04-07 12:00:00"], "schedule": {"04/11/2009": ["342", "450", "600"], "04/06/2009": ["RRI", "342", "450"]}}'
+        # NOTE: time in 'maintenance' key's time stamp should be taken
+        # from the period 'p' created above rather than be hardcoded,
+        # since the 'create_maintenance_period' utility converts from
+        # ET to UTC and this test would fail depending on whether
+        # we're in dailight or standard time.
+        expected = '{"diff": [{"down": [], "up": ["RRI", "342", "450"], "day": "04/06/2009"}, {"down": ["RRI"], "up": ["600"], "day": "04/11/2009"}], "receivers": ["RRI", "342", "450", "600", "800", "1070", "L", "S", "C", "X", "Ku", "K", "Ka", "Q", "MBA", "Z", "Hol", "KFPA", "W"], "maintenance": ["%s"], "schedule": {"04/11/2009": ["342", "450", "600"], "04/06/2009": ["RRI", "342", "450"]}}' % (p.start)
         self.assertEqual(expected, response.content)
 
         self.failUnlessEqual(response.status_code, 200)

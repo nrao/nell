@@ -159,6 +159,7 @@ INSERT INTO parameters VALUES (DEFAULT, 'Transit Before', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Transit After', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'El Limit', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Not Guaranteed', 'boolean');
+INSERT INTO parameters VALUES (DEFAULT, 'Source Size', 'float');
 
 INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Telescope motion required', 'M', 'N');
 INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'No telescope required ', 'N', 'MNBASDZE');
@@ -178,19 +179,19 @@ INSERT INTO maintenance_software_resources VALUES (DEFAULT, 'M&C control of ante
 INSERT INTO maintenance_other_resources VALUES (DEFAULT, 'LO System', 'L', 'INB');
 INSERT INTO maintenance_other_resources VALUES (DEFAULT, 'IF System', 'I', 'LNRUD');
 
-INSERT INTO backends VALUES (DEFAULT, 'Caltech Continuum Backend', 'CCB', 'K');
-INSERT INTO backends VALUES (DEFAULT, 'Caltech-Green Bank-Swinbourne Recorder 2', 'CGSR2', 'R');
-INSERT INTO backends VALUES (DEFAULT, 'GBT Digital Continuum Receiver', 'DCR', 'D');
-INSERT INTO backends VALUES (DEFAULT, 'GBT Spectrometer', 'gbtSpec', 'S');
-INSERT INTO backends VALUES (DEFAULT, 'Green Bank Astronomical Signal Processor', 'GASP', 'Y');
-INSERT INTO backends VALUES (DEFAULT, 'Green bank Ultimate Pulsar Processor', 'GUPPY', 'U');
-INSERT INTO backends VALUES (DEFAULT, 'Haystack Mark 4 High bandwidth (> 1Gb/s)', 'HayMark4', '4');
-INSERT INTO backends VALUES (DEFAULT, 'Mark 5 recorder (disks)', 'Mark5', '5');
-INSERT INTO backends VALUES (DEFAULT, 'Radar backend', 'Radar', 'X');
-INSERT INTO backends VALUES (DEFAULT, 'S2 recorder', 'gbtS2', '2');
-INSERT INTO backends VALUES (DEFAULT, 'Spectral Processor', 'gbtSpecP', 'P');
-INSERT INTO backends VALUES (DEFAULT, 'VLBA recorder and DAR ', 'gbtVLBA', 'V');
-INSERT INTO backends VALUES (DEFAULT, 'Zpectrometer ', 'Zpect', 'Z');
-INSERT INTO backends VALUES (DEFAULT, 'User supplied or new backend ', 'Other', 'O');
+INSERT INTO backends VALUES (DEFAULT, 'Caltech Continuum Backend', 'CCB', 'K', 'false');
+INSERT INTO backends VALUES (DEFAULT, 'Caltech-Green Bank-Swinbourne Recorder 2', 'CGSR2', 'R', 'false');
+INSERT INTO backends VALUES (DEFAULT, 'GBT Digital Continuum Receiver', 'DCR', 'D', 'false');
+INSERT INTO backends VALUES (DEFAULT, 'GBT Spectrometer', 'gbtSpec', 'S', 'false');
+INSERT INTO backends VALUES (DEFAULT, 'Green Bank Astronomical Signal Processor', 'GASP', 'Y', 'false');
+INSERT INTO backends VALUES (DEFAULT, 'Green bank Ultimate Pulsar Processor', 'GUPPY', 'U', 'false');
+INSERT INTO backends VALUES (DEFAULT, 'Haystack Mark 4 High bandwidth (> 1Gb/s)', 'HayMark4', '4', 'false');
+INSERT INTO backends VALUES (DEFAULT, 'Mark 5 recorder (disks)', 'Mark5', '5', 'false');
+INSERT INTO backends VALUES (DEFAULT, 'Radar backend', 'Radar', 'X', 'false');
+INSERT INTO backends VALUES (DEFAULT, 'S2 recorder', 'gbtS2', '2', 'false');
+INSERT INTO backends VALUES (DEFAULT, 'Spectral Processor', 'gbtSpecP', 'P', 'false');
+INSERT INTO backends VALUES (DEFAULT, 'VLBA recorder and DAR ', 'gbtVLBA', 'V', 'false');
+INSERT INTO backends VALUES (DEFAULT, 'Zpectrometer ', 'Zpect', 'Z', 'false');
+INSERT INTO backends VALUES (DEFAULT, 'User supplied or new backend ', 'Other', 'O', 'false');
 
 INSERT INTO email_templates VALUES (DEFAULT, 'Blank', '', '');

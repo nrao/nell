@@ -132,6 +132,7 @@ class Configuration(models.Model):
 
 class FrequencyResolution(models.Model):
     backend                 = models.ForeignKey(Calc_Backend)
+    windows                 = models.ManyToManyField(SpectralWindows)
     bandwidth               = models.FloatField(null = True)
     max_number_channels     = models.IntegerField()
 

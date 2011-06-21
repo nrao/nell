@@ -82,7 +82,7 @@ def receivers_schedule(request, *args, **kws):
 
     # clients want to also know all the latest rcvrs
     rcvrs       = [r.jsondict() for r in Receiver.objects.all() \
-                                if r.abbreviation != "NS"]
+                       if r.abbreviation != "NS"]
     return HttpResponse(
             json.dumps({"schedule" :   jsonschd
                       , "diff":        jsondiff

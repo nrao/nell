@@ -51,6 +51,12 @@
               {% if p.anyElevationLimits %}
               <th title="Minimum elevation (degrees) considered for scheduling by the DSS.  Setting this value can be used to enable observations at low elevations.  You are seeing this column because you chose to override the DSS default. ">Min Elev</th>
               {% endif %}
+              {% if p.anyTrkErrThresholds %}
+              <th title="Largest acceptable tracking error in units relative to the beam size">Trk Error Threshold</th>
+              {% endif %}              
+              {% if p.anySourceSizes %}
+              <th title="Source Size in units of arcsec">Source Size</th>
+              {% endif %}              
             {% for s in sess %}
             <tr>
               <td>{{s.name}}</td>
@@ -98,7 +104,20 @@
                   <td></td>
                 {% endif %}
               {% endif %}
-              
+              {% if p.anyTrkErrThresholds %}
+                {% if s.get_tracking_error_threshold_param %}
+                  <td>{{s.get_tracking_error_threshold}}</td>
+                {% else %}
+                  <td></td>
+                {% endif %}
+              {% endif %}              
+              {% if p.anySourceSizes %}
+                {% if s.get_source_size %}
+                  <td>{{s.get_source_size}}</td>
+                {% else %}
+                  <td></td>
+                {% endif %}
+              {% endif %}              
             <tr>
             {% endfor %}
           </table>
