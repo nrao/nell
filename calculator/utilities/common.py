@@ -174,6 +174,10 @@ def getOptions(filter, result):
         answers = [getName(result, c[result]) for c in config.order_by('receiver__dss_receiver')]
     else:
         answers = [getName(result, c[result]) for c in config]
+        try:
+            answers = map(int, answers)
+        except:
+            pass
         answers.sort()
     if result == "mode" and 'Spectral Line' in answers:
         answers.reverse()
