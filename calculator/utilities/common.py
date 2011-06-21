@@ -171,7 +171,7 @@ def getOptions(filter, result):
                 config = config.filter(eval("Q(%s__%s__contains='%s')" % (k, column, value)))
     config  = config.values(result).distinct()
     if result == 'receiver':
-        answers = [getName(result, c[result]) for c in config.order_by('receiver__dss_receiver')]
+        answers = [getName(result, c[result]) for c in config.order_by('receiver__band_low')]
     else:
         answers = [getName(result, c[result]) for c in config]
         try:
