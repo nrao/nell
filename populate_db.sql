@@ -161,6 +161,7 @@ INSERT INTO parameters VALUES (DEFAULT, 'El Limit', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Not Guaranteed', 'boolean');
 INSERT INTO parameters VALUES (DEFAULT, 'Source Size', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Keyhole', 'boolean');
+INSERT INTO parameters VALUES (DEFAULT, 'Good Atmospheric Stability', 'boolean');
 
 INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'Telescope motion required', 'M', 'N');
 INSERT INTO maintenance_telescope_resources VALUES (DEFAULT, 'No telescope required ', 'N', 'MNBASDZE');

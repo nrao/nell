@@ -89,8 +89,12 @@ class SessionHttpAdapter (object):
         systemName = fdata.get("coord_mode", "J2000")
         system = System.objects.get(name = systemName)
 
-        v_axis = fdata.get("source_v", 0.0)
-        h_axis = fdata.get("source_h", 0.0)
+        if systemName == 'Galactic':
+            h_axis = fdata.get("source_lat", 0.0)
+            v_axis = fdata.get("source_long", 0.0)
+        else:
+            h_axis = fdata.get("source_ra", 0.0)
+            v_axis = fdata.get("source_dec", 0.0)
         
         target = Target(session    = self.sesshun
                       , system     = system
@@ -132,6 +136,9 @@ class SessionHttpAdapter (object):
         self.sesshun.status.save()
         self.sesshun.save()
 
+        self.update_bool_obs_param(fdata, "gas"
+                                 , "Good Atmospheric Stability"
+                                 , self.sesshun.good_atmospheric_stability())
         self.update_bool_obs_param(fdata, "transit", "Transit", self.sesshun.transit())
         self.update_bool_obs_param(fdata, "nighttime", "Night-time Flag", \
             self.sesshun.nighttime())
@@ -160,8 +167,12 @@ class SessionHttpAdapter (object):
         systemName = fdata.get("coord_mode", "J2000")
         system = System.objects.get(name = systemName)
 
-        v_axis = fdata.get("source_v", None)
-        h_axis = fdata.get("source_h", None)
+        if systemName == 'Galactic':
+            h_axis = fdata.get("source_lat", None)
+            v_axis = fdata.get("source_long", None)
+        else:
+            h_axis = fdata.get("source_ra", None)
+            v_axis = fdata.get("source_dec", None)
 
         t            = self.sesshun.target
         t.system     = system
@@ -180,6 +191,7 @@ class SessionHttpAdapter (object):
                                                 )
                 obs_param.setValue(new_value)
                 obs_param.save()
+
         else:
             obs_param = self.sesshun.observing_parameter_set.filter(parameter=parameter)[0]
             if new_value:
@@ -358,6 +370,7 @@ class SessionHttpAdapter (object):
            , "complete"   : self.sesshun.status.complete
            , "backup"     : self.sesshun.status.backup
            , "guaranteed" : self.sesshun.guaranteed()
+           , "gas"        : self.sesshun.good_atmospheric_stability() or False
            , "transit"    : self.sesshun.transit() or False
            , "nighttime"  : self.sesshun.nighttime() or False
            , "lst_ex"     : self.sesshun.get_lst_string('LST Exclude') or ""
@@ -378,9 +391,16 @@ class SessionHttpAdapter (object):
         else:
             d.update({"source"     : target.source
                     , "coord_mode" : target.system.name
-                    , "source_h"   : target.horizontal
-                    , "source_v"   : target.vertical
-                      })
+                    })
+
+            if target.system.name == 'Galactic':
+                d.update({"source_lat"   : target.horizontal
+                        , "source_long"  : target.vertical
+                       })
+            else:
+                d.update({"source_ra"    : target.horizontal
+                        , "source_dec"   : target.vertical
+                       })
 
         #  Remove all None values
         for k, v in d.items():

@@ -55,8 +55,8 @@ class TestSessionHttpAdapter(NellTestCase):
              , 'handle': u'Low Frequency With No RFI (GBT09A-001) 0'
              , 'complete': False
              , 'project_complete': 'No'
-             , 'source_h': 1.0
-             , 'source_v': 2.2999999999999998
+             , 'source_ra': 1.0
+             , 'source_dec': 2.2999999999999998
              , 'trk_err_threshold': 0.20000000000000001
              , 'PSC_time': 2.0
              , 'freq': 6.0
@@ -66,6 +66,7 @@ class TestSessionHttpAdapter(NellTestCase):
              , 'enabled': True
              , 'remaining': 3.0
              , 'xi_factor': 1.0
+             , 'gas': False
              , 'receiver': ''
              , 'backup': False}
         self.assertEquals(exp, json)
