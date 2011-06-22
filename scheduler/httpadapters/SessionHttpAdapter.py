@@ -135,6 +135,7 @@ class SessionHttpAdapter (object):
         self.update_bool_obs_param(fdata, "transit", "Transit", self.sesshun.transit())
         self.update_bool_obs_param(fdata, "nighttime", "Night-time Flag", \
             self.sesshun.nighttime())
+        self.update_bool_obs_param(fdata, "keyhole", "Keyhole", self.sesshun.keyhole())
         self.update_guaranteed(fdata)
         
         #self.update_lst_exclusion(fdata)    
@@ -367,6 +368,7 @@ class SessionHttpAdapter (object):
            , "el_limit"   : self.sesshun.get_elevation_limit() or None # None is default 
            , "trk_err_threshold"   : self.sesshun.get_tracking_error_threshold()
            , "src_size"   : self.sesshun.get_source_size()
+           , "keyhole"    : self.sesshun.keyhole()
             }
 
         try:
