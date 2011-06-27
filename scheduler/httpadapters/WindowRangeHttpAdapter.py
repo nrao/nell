@@ -34,7 +34,7 @@ class WindowRangeHttpAdapter (object):
     def jsondict(self):
         js = {"id"       : self.windowRange.id
             , "start"    : self.windowRange.start_date.strftime("%Y-%m-%d")
-            , "end"      : self.windowRange.end().strftime("%Y-%m-%d")
+            , "end"      : self.windowRange.last_date().strftime("%Y-%m-%d")
             , "duration" : self.windowRange.duration
              }
         return js                     

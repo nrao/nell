@@ -41,9 +41,6 @@ class WindowRange(models.Model):
         return "WindowRange for %s, from %s for %d days" % \
             (name, self.start_date, self.duration)
 
-    def end(self):
-        return self.last_date()
-
     def last_date(self):
         "Ex: start = 1/10, duration = 2 days, last_date = 1/11"
         return self.start_date + timedelta(days = self.duration - 1)
@@ -76,7 +73,7 @@ class WindowRange(models.Model):
                 "id"   :     id
               , "title":     "".join(["Window ", self.window.session.name])
               , "start":     self.start_date.isoformat()
-              , "end"  :     self.end().isoformat()
+              , "end"  :     self.last_date().isoformat()
               , "className": 'window'
         }
 

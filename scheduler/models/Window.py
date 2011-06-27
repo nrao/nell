@@ -93,9 +93,6 @@ class Window(models.Model):
     def start_date(self):
         return self.start()
 
-    def end(self):
-        return self.last_date()
-
     def last_date(self):
         "Ex: start = 1/10, duration = 2 days, last_date = 1/11"
         if len(self.ranges()) > 0:
@@ -218,7 +215,7 @@ class Window(models.Model):
                 "id"   :     id
               , "title":     "".join(["Window ", self.session.name])
               , "start":     self.start_date().isoformat()
-              , "end"  :     self.end().isoformat()
+              , "end"  :     self.last_date().isoformat()
               , "className": 'window'
         }
  
@@ -338,13 +335,13 @@ class Window(models.Model):
         "Does this window overlap with any other windows of same session?"
         wins = self.session.window_set.all().exclude(id = self.id)
         w1s = self.start()
-        w1e = self.end()
+        w1e = self.last_date()
         overlapping = []
         if w1s is None or w1e is None:
             return overlapping
         for w in wins:
             w2s = w.start()
-            w2e = w.end()
+            w2e = w.last_date()
             if w2s is None or w2e is None:
                 continue
             if w1s <= w2e and w2s <= w1e:
@@ -358,14 +355,14 @@ class Window(models.Model):
     def tooCloseWindows(self):
         "Is this window too close to other windows of the same session?"
         w1s = self.start()
-        w1e = self.end()
+        w1e = self.last_date()
         if w1s is None or w1e is None:
             return []
         wins = self.session.window_set.all().exclude(id = self.id)
         tooClose = []
         for w in wins:
             w2s = w.start()
-            w2e = w.end()
+            w2e = w.last_date()
             if w2s is None or w2e is None:
                 continue
             if w1s < w2s:
@@ -399,7 +396,7 @@ class Window(models.Model):
         """
         err = []
         if self.hasLstOutOfRange() and not self.hasNoLstInRange():
-            wrs = [("%s - %s" % (wr.start_date, wr.end())) for wr in self.lstOutOfRange()]
+            wrs = [("%s - %s" % (wr.start_date, wr.last_date())) for wr in self.lstOutOfRange()]
             ranges = ",".join(wrs)
             err.append("Window Range(s) %s have out of range LST." % ranges)
         if self.hasNoLstInRange():

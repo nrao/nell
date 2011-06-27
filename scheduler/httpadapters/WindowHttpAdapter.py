@@ -36,16 +36,16 @@ class WindowHttpAdapter (object):
 
     def jsondict(self):
         if len(self.window.ranges()) == 0:
-            start = end = duration = None
+            start = last_date = duration = None
         else:    
             start = self.window.start_date().strftime("%Y-%m-%d")
-            end = self.window.end().strftime("%Y-%m-%d")
+            last_date = self.window.last_date().strftime("%Y-%m-%d")
             duration = self.window.duration()
             
         js = {  "id"             : self.window.id
               , "handle"         : self.window.toHandle()
               , "start"          : start
-              , "end"            : end
+              , "end"            : last_date
               , "duration"       : duration
               , "total_time"     : self.window.total_time
               , "time_billed"    : self.window.timeBilled()

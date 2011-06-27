@@ -55,7 +55,6 @@ class TestWindowRange(NellTestCase):
 
         self.assertEquals(datetime(2009, 6, 1), w.start_datetime())
         self.assertEquals(date(2009, 6, 7), w.last_date())
-        self.assertEquals(date(2009, 6, 7), w.end())
         self.assertEquals(datetime(2009, 6, 8, 0), w.end_datetime())
         self.assertEquals(False, w.inWindow(date(2009, 5, 31)))
         self.assertEquals(True,  w.inWindow(date(2009, 6, 1)))

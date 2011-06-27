@@ -156,7 +156,7 @@ class TestUtilities(BenchTestCase):
         self.assertEquals(self.w.total_time, nw.total_time)
         self.assertEquals(self.w.timeRemaining(), nw.timeRemaining())
         self.assertEquals(self.w.start(), nw.start())
-        self.assertEquals(self.w.end(), nw.end())
+        self.assertEquals(self.w.last_date(), nw.last_date())
         self.assertNotEqual(self.w.ranges(),nw.ranges())
         self.assertEquals(self.w.default_period.start
                         , nw.default_period.start)
@@ -190,7 +190,7 @@ class TestUtilities(BenchTestCase):
         self.assertEquals(self.w.total_time, nw.total_time)
         self.assertEquals(self.w.timeRemaining(), nw.timeRemaining())
         self.assertEquals(self.w.start(), nw.start())
-        self.assertEquals(self.w.end(), nw.end())
+        self.assertEquals(self.w.last_date(), nw.last_date())
         self.assertNotEqual(self.w.ranges(),nw.ranges())
         self.assertEquals(self.w.default_period.start
                         , nw.default_period.start)

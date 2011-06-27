@@ -421,7 +421,7 @@ class Project(models.Model):
         wins = self.get_windows()
         now = now if now is not None else datetime.utcnow()
         today = date(now.year, now.month, now.day)
-        return [w for w in wins if today < w.end()]
+        return [w for w in wins if today < w.last_date()]
 
     class Meta:
         db_table  = "projects"

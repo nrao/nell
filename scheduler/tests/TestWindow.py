@@ -43,7 +43,6 @@ class TestWindow(NellTestCase):
         self.assertEquals(datetime(2009, 6, 1), self.w.start_datetime())
         
         self.assertEquals(date(2009, 6, 7), self.w.last_date())
-        self.assertEquals(date(2009, 6, 7), self.w.end())
         self.assertEquals(datetime(2009, 6, 8, 0), self.w.end_datetime())
 
         self.assertEquals(7, self.w.duration())
@@ -85,7 +84,6 @@ class TestWindow(NellTestCase):
         self.assertEquals(datetime(2009, 6, 1), self.w.start_datetime())
         
         self.assertEquals(date(2009, 6, 21), self.w.last_date())
-        self.assertEquals(date(2009, 6, 21), self.w.end())
         self.assertEquals(datetime(2009, 6, 22, 0), self.w.end_datetime())
 
         self.assertEquals(21, self.w.duration())
@@ -422,7 +420,7 @@ class TestWindow(NellTestCase):
         self.assertEquals([1], sorted([w.id for w in w2.overlappingWindows()]))
 
         # move it well out of range
-        wr2.start_date = self.w.end() + timedelta(days = 1)
+        wr2.start_date = self.w.last_date() + timedelta(days = 1)
         wr2.save()
         w2 = Window.objects.get(id = w2.id)
         self.assertEquals([], sorted([w.id for w in self.w.overlappingWindows()]))
@@ -432,7 +430,7 @@ class TestWindow(NellTestCase):
         # A window's end() or last_date() is it's last day where a period
         # is still in the window.
         # Thus if another window start's on that last date, they overlap
-        wr2.start_date = self.w.end() 
+        wr2.start_date = self.w.last_date() 
         wr2.save()
         w2 = Window.objects.get(id = w2.id)
         self.assertEquals([2], sorted([w.id for w in self.w.overlappingWindows()]))

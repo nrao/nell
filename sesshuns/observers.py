@@ -233,13 +233,14 @@ def project(request, *args, **kws):
     windows = [{'session'   : w.session
               , 'start_date' : w.start_date()
               , 'duration'   : w.duration()
+              , 'last_date'  : w.last_date()
               , 'total_time'  : w.total_time
               , 'time_billed' : w.timeBilled()
               , 'complete'    : w.complete
               , 'contigious'  : w.isContigious()
               , 'ranges'      : [{'start' : wr.start_date
                                 , 'duration' : wr.duration
-                                , 'end' : wr.end()} \
+                                , 'end' : wr.last_date()} \
                                 for wr in w.ranges()]
               , 'periods'     : [{'start' : adjustDateTimeTz(tz, p.start)
                                 , 'duration' : p.duration

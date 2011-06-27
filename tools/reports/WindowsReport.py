@@ -116,10 +116,10 @@ class WindowsReport():
         # who hasn't gotten completed yet, and it's too late?
         now = datetime.utcnow()
         today = date(now.year, now.month, now.day)
-        too_late_wins = [w for w in goodWins if not w.complete and w.end() < today]
+        too_late_wins = [w for w in goodWins if not w.complete and w.last_date() < today]
 
         now = datetime.now()
-        futureWins = [w for w in wins if w.end() is not None and w.end() > now.date()]
+        futureWins = [w for w in wins if w.last_date() is not None and w.last_date() > now.date()]
 
         # print summary
         self.add("Number of Windowed Sessions: %d\n" % len(wss)) 
