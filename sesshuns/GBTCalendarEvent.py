@@ -94,7 +94,7 @@ class CalEvent(object):
     # returns a string (project notes)
     def project_notes(self):
         return ""
-    
+
     # returns a string (project title)
     def project_title(self):
         return ""
@@ -439,8 +439,8 @@ class CalEventFloatingMaintenance(CalEvent):
 
         if self.TZ != 'ET':
             dt = TimeAgent.etc2utc(dt)
-            
-        return dt 
+
+        return dt
 
     def end(self):
         return self.start() + timedelta(seconds = (8.5 * 3600))
@@ -566,7 +566,27 @@ class CalEventFixedMaintenance(CalEvent):
     # the template may call this several times.
     def mas(self):
         if self.contained.period.session.observing_type.type == "maintenance" and not self._mas:
-            self._mas = self.contained.get_maintenance_activity_set()
+            mas = self.contained.get_maintenance_activity_set()
+
+            if self.end_cutoff or self.start_cutoff:
+                curtailed_mas = []
+                midnight = self.contained.get_start(self.TZ).date() + timedelta(1)
+
+                if self.end_cutoff:
+                    for i in mas:
+                        if i.get_start(self.TZ).date() < midnight:
+                            curtailed_mas.append(i)
+
+                if self.start_cutoff:
+                    for i in mas:
+                        if i.get_start(self.TZ).date() >= midnight \
+                                or i.get_end(self.TZ).date() >= midnight:
+                            curtailed_mas.append(i)
+
+                self._mas = curtailed_mas
+            else:
+                self._mas = mas
+
         return self._mas
 
     def receiver_list(self):

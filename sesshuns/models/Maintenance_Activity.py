@@ -196,8 +196,13 @@ class Maintenance_Activity(models.Model):
 
     def get_start(self, tzname = None):
         if self.group:
-            start = datetime(self.group.get_start().year, self.group.get_start().month,
-                             self.group.get_start().day,
+            date = self.group.get_start().date()
+
+            if self._start.hour < self.group.get_start().hour and \
+                    self._start.hour < self.group.get_end().hour:
+                date = date + timedelta(1)
+            
+            start = datetime(date.year, date.month, date.day,
                              self._start.hour, self._start.minute)
         else:
             start = self._start
