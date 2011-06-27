@@ -240,10 +240,10 @@ def _get_fixed_maint_events(mags, day, timezone):
 
     for mag in mags:
         if mag.period:        # fixed if period is set
-            if TimeAgent.truncateDt(mag.get_start()) == day or \
-                    TimeAgent.truncateDt(mag.get_end()) == day:
-                ev = CalEventFixedMaintenance(mag, mag.get_start() < day,
-                                              mag.get_end() > tomorrow,
+            if TimeAgent.truncateDt(mag.get_start(timezone)) == day or \
+                    TimeAgent.truncateDt(mag.get_end(timezone)) == day:
+                ev = CalEventFixedMaintenance(mag, mag.get_start(timezone) < day,
+                                              mag.get_end(timezone) >= tomorrow,
                                               True, timezone)
                 evs.append(ev)
     return evs

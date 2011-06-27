@@ -121,25 +121,27 @@ class Maintenance_Activity_Group(models.Model):
         """
         return TimeAgent.truncateDt(self.week)
 
-    def get_start(self):
+    def get_start(self, tzname = None):
         """
         If this is a fixed maintenance period there will have been a
         period assigned.  If so, return this period's start.  If not,
         return the start-of-week date.
         """
         if self.period:
-            return self.period.start
+            start = self.period.start
+            return TimeAgent.utc2est(start) if tzname == 'ET' else start
         else:
             return self.get_week()
 
-    def get_end(self):
+    def get_end(self, tzname = None):
         """
         If this is a fixed maintenance period then return the period's
         end, if not return the end of the week.
         """
 
         if self.period:
-            return self.period.end()
+            end = self.period.end()
+            return TimeAgent.utc2est(end) if tzname == 'ET' else end
         else:
             return self.get_week() + timedelta(7)
 
@@ -250,8 +252,8 @@ class Maintenance_Activity_Group(models.Model):
         # after all the above to prevent a replacement being generated
         # for a deleted activity, for repeat activities.
         mas = [i for i in mas if not i.deleted]
-        mas.sort(cmp = lambda x, y: cmp(x.get_start().time(),
-                                        y.get_start().time()))
+        mas.sort(cmp = lambda x, y: cmp(x.get_start(),
+                                        y.get_start()))
 
         return mas
 
