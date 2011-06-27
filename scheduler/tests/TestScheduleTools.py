@@ -47,6 +47,11 @@ class TestScheduleTools(NellTestCase):
             s = create_sesshun()
             s.name = name
             s.save()
+            rg = Receiver_Group(session = s)
+            rg.save()
+            rcvr = Receiver.objects.get(abbreviation = "L")
+            rg.receivers.add(rcvr)
+            rg.save()
             pa = Period_Accounting(scheduled = dur)
             pa.save()
             p = Period( session    = s
@@ -56,6 +61,8 @@ class TestScheduleTools(NellTestCase):
                       , accounting = pa
                       )
             p.save()
+            pr = Period_Receiver(receiver = rcvr, period = p)
+            pr.save()
             self.ps.append(p)
 
         self.backup = create_sesshun()
