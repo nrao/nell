@@ -309,7 +309,7 @@
               <tr>
                 <th>Session</th>
                 <th>Window Start Date</th>
-                <th>Window End Date</th>
+                <th>Window Last Date</th>
                 <th>Time (Hrs)</th>
                 <th>Billed (Hrs)</th>
                 <th>Complete?</th>
@@ -322,7 +322,7 @@
                     <!-- don't print these dates if we'll print the others -->
                     {% if window.contigious %}
                       <td>{{window.start_date}}</td>
-                      <td>{{window.start_date|end_date:window.duration}}</td>
+                      <td>{{window.last_date}}</td> 
                     {% else %}
                       <td></td>
                       <td></td>
@@ -338,7 +338,7 @@
                     <tr>
                       <td></td>
                       <td>{{wr.start}}</td>
-                      <td>{{wr.end}}</td>
+                      <td>{{wr.last_date}}</td>
                     </tr>
                     {% endfor %}
                     {% endif %}

@@ -1,3 +1,25 @@
+# Copyright (C) 2011 Associated Universities, Inc. Washington DC, USA.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+# 
+# Correspondence concerning GBT software should be addressed as follows:
+#       GBT Operations
+#       National Radio Astronomy Observatory
+#       P. O. Box 2
+#       Green Bank, WV 24944-0002 USA
+
 from datetime                import timedelta
 
 from test_utils              import BenchTestCase, timeIt
@@ -134,7 +156,7 @@ class TestUtilities(BenchTestCase):
         self.assertEquals(self.w.total_time, nw.total_time)
         self.assertEquals(self.w.timeRemaining(), nw.timeRemaining())
         self.assertEquals(self.w.start(), nw.start())
-        self.assertEquals(self.w.end(), nw.end())
+        self.assertEquals(self.w.last_date(), nw.last_date())
         self.assertNotEqual(self.w.ranges(),nw.ranges())
         self.assertEquals(self.w.default_period.start
                         , nw.default_period.start)
@@ -168,7 +190,7 @@ class TestUtilities(BenchTestCase):
         self.assertEquals(self.w.total_time, nw.total_time)
         self.assertEquals(self.w.timeRemaining(), nw.timeRemaining())
         self.assertEquals(self.w.start(), nw.start())
-        self.assertEquals(self.w.end(), nw.end())
+        self.assertEquals(self.w.last_date(), nw.last_date())
         self.assertNotEqual(self.w.ranges(),nw.ranges())
         self.assertEquals(self.w.default_period.start
                         , nw.default_period.start)

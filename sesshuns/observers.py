@@ -1,3 +1,25 @@
+# Copyright (C) 2011 Associated Universities, Inc. Washington DC, USA.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+# 
+# Correspondence concerning GBT software should be addressed as follows:
+#       GBT Operations
+#       National Radio Astronomy Observatory
+#       P. O. Box 2
+#       Green Bank, WV 24944-0002 USA
+
 from datetime                       import datetime, time, timedelta
 from decorators                     import *
 from django.contrib.auth.decorators import login_required
@@ -211,13 +233,14 @@ def project(request, *args, **kws):
     windows = [{'session'   : w.session
               , 'start_date' : w.start_date()
               , 'duration'   : w.duration()
+              , 'last_date'  : w.last_date()
               , 'total_time'  : w.total_time
               , 'time_billed' : w.timeBilled()
               , 'complete'    : w.complete
               , 'contigious'  : w.isContigious()
               , 'ranges'      : [{'start' : wr.start_date
                                 , 'duration' : wr.duration
-                                , 'end' : wr.end()} \
+                                , 'end' : wr.last_date()} \
                                 for wr in w.ranges()]
               , 'periods'     : [{'start' : adjustDateTimeTz(tz, p.start)
                                 , 'duration' : p.duration

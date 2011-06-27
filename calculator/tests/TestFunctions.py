@@ -1,3 +1,25 @@
+# Copyright (C) 2011 Associated Universities, Inc. Washington DC, USA.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+# 
+# Correspondence concerning GBT software should be addressed as follows:
+#       GBT Operations
+#       National Radio Astronomy Observatory
+#       P. O. Box 2
+#       Green Bank, WV 24944-0002 USA
+
 from django.test import TestCase
 
 from calculator.utilities.functions import *
@@ -9,32 +31,32 @@ class TestFunctions(TestCase):
         self.assertAlmostEqual(correction, 0.828, 3)
 
     def test_getKs(self):
-        k1, k2 = getKs('Spectral Processor', 1, 1, 1, 1)  #  bandwidth, bw, windows, and beams not used
+        k1, k2 = getKs('Spectral Processor', 1, 1, 1, 1, 1)  #  bandwidth, bw, windows, and beams not used
         self.assertEqual(k1, 1.3)
         self.assertEqual(k2, 1.21)
 
-        k1, k2 = getKs('GBT Spectrometer', 200, 1, 1, 1)  #  bw, windows, and beams not used
+        k1, k2 = getKs('GBT Spectrometer', 200, 1, 1, 1, 1)  #  bw, windows, and beams not used
         self.assertEqual(k1, 1.235)
         self.assertEqual(k2, 1.21)
 
-        k1, k2 = getKs('GBT Spectrometer', 800, 1, 1, 1)  #  bw, windows, and beams not used
+        k1, k2 = getKs('GBT Spectrometer', 800, 1, 1, 1, 1)  #  bw, windows, and beams not used
         self.assertEqual(k1, 1.235)
         self.assertEqual(k2, 1.21)
 
         
-        k1, k2 = getKs('GBT Spectrometer', 50, 8, 8, 1)
+        k1, k2 = getKs('GBT Spectrometer', 50, 8, 8, 1, 1)
         self.assertEqual(k1, 1.032)
         self.assertEqual(k2, 1.21)
 
-        k1, k2 = getKs('GBT Spectrometer', 50, 1, 8, 1)
+        k1, k2 = getKs('GBT Spectrometer', 50, 1, 8, 1, 1)
         self.assertEqual(k1, 1.032)
         self.assertEqual(k2, 1.21)
 
-        k1, k2 = getKs('GBT Spectrometer', 12.5, 8, 8, 1)
+        k1, k2 = getKs('GBT Spectrometer', 12.5, 8, 8, 1, 1)
         self.assertEqual(k1, 1.032)
         self.assertEqual(k2, 1.21)
 
-        k1, k2 = getKs('GBT Spectrometer', 12.5, 1, 8, 1)
+        k1, k2 = getKs('GBT Spectrometer', 12.5, 1, 8, 1, 1)
         self.assertEqual(k1, 1.032)
         self.assertEqual(k2, 1.21)
 

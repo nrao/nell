@@ -1,3 +1,25 @@
+# Copyright (C) 2011 Associated Universities, Inc. Washington DC, USA.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+# 
+# Correspondence concerning GBT software should be addressed as follows:
+#       GBT Operations
+#       National Radio Astronomy Observatory
+#       P. O. Box 2
+#       Green Bank, WV 24944-0002 USA
+
 from datetime  import datetime, timedelta
 
 from scheduler.utilities     import ScheduleTools
@@ -25,6 +47,11 @@ class TestScheduleTools(NellTestCase):
             s = create_sesshun()
             s.name = name
             s.save()
+            rg = Receiver_Group(session = s)
+            rg.save()
+            rcvr = Receiver.objects.get(abbreviation = "L")
+            rg.receivers.add(rcvr)
+            rg.save()
             pa = Period_Accounting(scheduled = dur)
             pa.save()
             p = Period( session    = s
@@ -34,6 +61,8 @@ class TestScheduleTools(NellTestCase):
                       , accounting = pa
                       )
             p.save()
+            pr = Period_Receiver(receiver = rcvr, period = p)
+            pr.save()
             self.ps.append(p)
 
         self.backup = create_sesshun()
@@ -92,6 +121,35 @@ class TestScheduleTools(NellTestCase):
         start, dur = ScheduleTools().getSchedulingRange(dt, 'ET', days)
         self.assertEquals(expStart, start)
         self.assertEquals(expDur, dur)
+
+    def test_changeScheduleReplaceWithSelf(self):
+
+        # check accounting before changing schedule
+        scheduled = [5.0, 3.0, 4.0]
+        for i, p in enumerate(self.ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(scheduled[i], p.accounting.observed())
+
+        # replace most of the first period with a new period from
+        # *the same session*.
+        change_start = self.ps[0].start 
+        change_dur = self.ps[0].duration - 2.0
+        s = self.ps[0].session
+        ScheduleTools().changeSchedule(change_start
+                                    , change_dur 
+                                    , s
+                                    , "other_session_other"
+                                    , "replacing with self.")
+
+        # get the periods from the DB again for updated values
+        ps = Period.get_periods(self.start, 12.0*60.0)
+        # check accounting after changing schedule
+        scheduled = [3.0, 5.0, 3.0, 4.0]
+        observed  = [3.0, 2.0, 3.0, 4.0]
+        for i, p in enumerate(ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(observed[i] , p.accounting.observed())
+
 
     def test_changeSchedule1(self):
 

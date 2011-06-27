@@ -1,3 +1,25 @@
+# Copyright (C) 2011 Associated Universities, Inc. Washington DC, USA.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+# 
+# Correspondence concerning GBT software should be addressed as follows:
+#       GBT Operations
+#       National Radio Astronomy Observatory
+#       P. O. Box 2
+#       Green Bank, WV 24944-0002 USA
+
 from django.db.models import Q
 from calculator.models        import *
 
@@ -149,9 +171,13 @@ def getOptions(filter, result):
                 config = config.filter(eval("Q(%s__%s__contains='%s')" % (k, column, value)))
     config  = config.values(result).distinct()
     if result == 'receiver':
-        answers = [getName(result, c[result]) for c in config.order_by('receiver__dss_receiver')]
+        answers = [getName(result, c[result]) for c in config.order_by('receiver__band_low')]
     else:
         answers = [getName(result, c[result]) for c in config]
+        try:
+            answers = map(int, answers)
+        except:
+            pass
         answers.sort()
     if result == "mode" and 'Spectral Line' in answers:
         answers.reverse()

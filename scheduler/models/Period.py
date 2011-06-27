@@ -1,3 +1,25 @@
+# Copyright (C) 2011 Associated Universities, Inc. Washington DC, USA.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+# 
+# Correspondence concerning GBT software should be addressed as follows:
+#       GBT Operations
+#       National Radio Astronomy Observatory
+#       P. O. Box 2
+#       Green Bank, WV 24944-0002 USA
+
 from django.db              import models
 from django.core.exceptions import ObjectDoesNotExist
 from sets                   import Set
@@ -267,8 +289,10 @@ class Period(models.Model):
         
         # look for a window (any) that this period at least starts in 
         for win in self.session.window_set.all():
-            if self.start >= win.start_datetime() and \
-               self.start <  win.end_datetime():
+            start = win.start_datetime()
+            end   = win.end_datetime()
+            if start is not None and end is not None and \
+                self.start >= start and self.start < end:
                 self.window = win
                 self.save()
                 return # take the first one you find!

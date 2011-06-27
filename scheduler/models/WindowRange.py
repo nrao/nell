@@ -1,3 +1,25 @@
+# Copyright (C) 2011 Associated Universities, Inc. Washington DC, USA.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+# 
+# Correspondence concerning GBT software should be addressed as follows:
+#       GBT Operations
+#       National Radio Astronomy Observatory
+#       P. O. Box 2
+#       Green Bank, WV 24944-0002 USA
+
 from django.db  import models
 from datetime   import datetime, timedelta
 
@@ -18,9 +40,6 @@ class WindowRange(models.Model):
         name = self.window.session.name if (self.window is not None and self.window.session is not None) else "None"
         return "WindowRange for %s, from %s for %d days" % \
             (name, self.start_date, self.duration)
-
-    def end(self):
-        return self.last_date()
 
     def last_date(self):
         "Ex: start = 1/10, duration = 2 days, last_date = 1/11"
@@ -54,7 +73,7 @@ class WindowRange(models.Model):
                 "id"   :     id
               , "title":     "".join(["Window ", self.window.session.name])
               , "start":     self.start_date.isoformat()
-              , "end"  :     self.end().isoformat()
+              , "end"  :     self.last_date().isoformat()
               , "className": 'window'
         }
 

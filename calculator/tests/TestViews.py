@@ -1,3 +1,25 @@
+# Copyright (C) 2011 Associated Universities, Inc. Washington DC, USA.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+# 
+# Correspondence concerning GBT software should be addressed as follows:
+#       GBT Operations
+#       National Radio Astronomy Observatory
+#       P. O. Box 2
+#       Green Bank, WV 24944-0002 USA
+
 from TestViewsBase       import TestViewsBase
 
 class TestViews(TestViewsBase):
@@ -39,6 +61,56 @@ class TestViews(TestViewsBase):
         response = self.client.post('/calculator/set_terms/', data)
         response = self.client.get('/calculator/get_results')
         self.failUnlessEqual(response.status_code, 200)
+
+    def test_vegas(self):
+        response = self.client.get('/calculator/initiate_hardware')
+        data = {'receiver': ['L']
+              , 'beams-hidden': [u'1']
+              , 'switching-hidden': [u'TP']
+              , 'bandwidth-hidden': [u'1500']
+              , 'integration-hidden': [u'1.00']
+              , 'polarization-hidden': [u'(I,Q,U,V)']
+              , 'backend-hidden': [u'SP']
+              , 'windows': [u'1']
+              , 'switching': [u'TP']
+              , 'polarization': [u'(I,Q,U,V)']
+              , 'bandwidth': [u'1500']
+              , 'mode': [u'Spectral Line']
+              , 'receiver': [u'L']
+              , 'mode-hidden': [u'Spectral Line']
+              , 'backend': [u'FPGA Spectrometer']
+              }
+        response = self.client.post('/calculator/set_terms/', data)
+        response = self.client.get('/calculator/get_results')
+        self.failUnlessEqual(response.status_code, 200)
+        results = eval(response.content.replace("null", "None"))
+        mtf     = [r for r in results['results'] if r['term'] == 'min_topo_freq']
+        self.assertAlmostEqual(mtf[0]['value'], 1464.844, 3)
+
+    def test_vegas2(self):
+        response = self.client.get('/calculator/initiate_hardware')
+        data = {'receiver': ['L']
+              , 'beams-hidden': [u'1']
+              , 'switching-hidden': [u'TP']
+              , 'bandwidth-hidden': [u'5']
+              , 'integration-hidden': [u'1.00']
+              , 'polarization-hidden': [u'(I,Q,U,V)']
+              , 'backend-hidden': [u'SP']
+              , 'windows': [u'8']
+              , 'switching': [u'TP']
+              , 'polarization': [u'(I,Q,U,V)']
+              , 'bandwidth': [u'5']
+              , 'mode': [u'Spectral Line']
+              , 'receiver': [u'L']
+              , 'mode-hidden': [u'Spectral Line']
+              , 'backend': [u'FPGA Spectrometer']
+              }
+        response = self.client.post('/calculator/set_terms/', data)
+        response = self.client.get('/calculator/get_results')
+        self.failUnlessEqual(response.status_code, 200)
+        results = eval(response.content.replace("null", "None"))
+        mtf     = [r for r in results['results'] if r['term'] == 'min_topo_freq']
+        self.assertAlmostEqual(mtf[0]['value'], 1.221, 3)
 
     def test_spectral_line_mode(self):
         response = self.client.get('/calculator/initiate_hardware')
