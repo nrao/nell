@@ -115,6 +115,35 @@ class TestScheduleTools(NellTestCase):
         self.assertEquals(expStart, start)
         self.assertEquals(expDur, dur)
 
+    def test_changeScheduleReplaceWithSelf(self):
+
+        # check accounting before changing schedule
+        scheduled = [5.0, 3.0, 4.0]
+        for i, p in enumerate(self.ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(scheduled[i], p.accounting.observed())
+
+        # replace most of the first period with a new period from
+        # *the same session*.
+        change_start = self.ps[0].start 
+        change_dur = self.ps[0].duration - 2.0
+        s = self.ps[0].session
+        ScheduleTools().changeSchedule(change_start
+                                    , change_dur 
+                                    , s
+                                    , "other_session_other"
+                                    , "replacing with self.")
+
+        # get the periods from the DB again for updated values
+        ps = Period.get_periods(self.start, 12.0*60.0)
+        # check accounting after changing schedule
+        scheduled = [3.0, 5.0, 3.0, 4.0]
+        observed  = [3.0, 2.0, 3.0, 4.0]
+        for i, p in enumerate(ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(observed[i] , p.accounting.observed())
+
+
     def test_changeSchedule1(self):
 
         # check accounting before changing schedule
