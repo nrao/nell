@@ -354,15 +354,15 @@ class Window(models.Model):
 
     def tooCloseWindows(self):
         "Is this window too close to other windows of the same session?"
-        w1s = self.start()
-        w1e = self.last_date()
+        w1s = self.start_datetime()
+        w1e = self.end_datetime()
         if w1s is None or w1e is None:
             return []
         wins = self.session.window_set.all().exclude(id = self.id)
         tooClose = []
         for w in wins:
-            w2s = w.start()
-            w2e = w.last_date()
+            w2s = w.start_datetime()
+            w2e = w.end_datetime()
             if w2s is None or w2e is None:
                 continue
             if w1s < w2s:
