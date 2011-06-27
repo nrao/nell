@@ -829,39 +829,8 @@ def _record_m2m_diffs(key, old, new, diffs):
 # chosen.
 ######################################################################
 
-def _get_future_maintenance_dates2():
-    today = TimeAgent.truncateDt(datetime.now())
-    # TBF, exclude shutdowns until I can find a way to do more than
-    # one per day.
-    mp = Period.objects\
-        .filter(session__observing_type__type = "maintenance")\
-        .exclude(session__project__name = "Shutdown")\
-        .latest("start")
-
-    last_date = mp.start
-    # get the date of the Monday of this week.
-    week = today - timedelta(today.weekday())
-    dates = []
-
-    # now loop, one week at a time, until that last date, gathering
-    # all the maintenance periods.  Each group will be represented as
-    # a day of the week: 'A' = 0 (Monday), 'B' = 1 (Tuesday), etc.
-    # These dates are then entered into the list of possible future
-    # dates.
-
-    while week < last_date:
-        groups = Maintenance_Activity_Group.get_maintenance_activity_groups(week)
-        dates += [str((g.get_week() + timedelta(ord(g.rank) -
-                  65)).date()) for g in groups]
-        week += timedelta(7)
-
-    return dates
-
-
 def _get_future_maintenance_dates3():
     today = TimeAgent.truncateDt(datetime.now())
-     # TBF, exclude shutdowns until I can find a way to do more than
-     # one per day.
     mp = Period.objects\
         .filter(session__observing_type__type = "maintenance")\
         .latest("start")
