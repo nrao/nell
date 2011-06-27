@@ -48,7 +48,7 @@ class TestViewsPTC(PeriodsTestCase):
         self.failUnless('"PCODES": ["GBT09A-001"]' in response.content)
 
     @timeIt
-    def test_delete_pending(self):
+    def test_restore_schedule(self):
 
         # check current state
         ps = Period.objects.order_by("start")
@@ -62,7 +62,7 @@ class TestViewsPTC(PeriodsTestCase):
         time = dt.strftime("%Y-%m-%d %H:%M:%S")
         tz = "ET"
         duration = 2 #12
-        url = "/scheduler/periods/delete_pending"
+        url = "/scheduler/periods/restore_schedule"
 
         response = Client().post(url, dict(start    = time
                                          , tz       = tz
@@ -77,7 +77,7 @@ class TestViewsPTC(PeriodsTestCase):
         self.assertEquals(exp, [p.accounting.scheduled for p in ps])
 
     @timeIt
-    def test_delete_pending_2(self):
+    def test_restore_schedule_windows(self):
         "Similar to previous test, but with a windowed session"
 
         # windowed session
@@ -85,6 +85,12 @@ class TestViewsPTC(PeriodsTestCase):
         s.name = "win"
         s.session_type = Session_Type.objects.get(type = "windowed")
         s.save()
+        # make this session not guaranteed
+        notGuaranteed = Parameter.objects.get(name = "Not Guaranteed")
+        op = Observing_Parameter(session = s, parameter = notGuaranteed)
+        op.save()
+        op.setValue(True)
+        op.save()
 
         # a window that covers test scheduling range
         w = Window(session = s, total_time = 1.0)
@@ -128,8 +134,8 @@ class TestViewsPTC(PeriodsTestCase):
         dt = self.ps[0].start - timedelta(days = 1)
         time = dt.strftime("%Y-%m-%d %H:%M:%S")
         tz = "ET"
-        duration = 2 #12
-        url = "/scheduler/periods/delete_pending"
+        duration = 3 # days
+        url = "/scheduler/periods/restore_schedule"
 
         response = Client().post(url, dict(start    = time
                                          , tz       = tz
@@ -145,8 +151,96 @@ class TestViewsPTC(PeriodsTestCase):
         self.assertEquals(exp, [p.accounting.scheduled for p in ps])
         self.assertEquals(p2.id, ps[2].id)
 
+        # now, put p2 in the deleted state, and watch it come back!
+        deleted = Period_State.get_state("D")
+        p2.state = deleted
+        p2.save()
+        ps = Period.objects.order_by("start")
+        exp = ["S", "S", "D"]
+        self.assertEquals(exp, [p.state.abbreviation for p in ps])
 
-        
+        # restore the schedule
+        response = Client().post(url, dict(start    = time
+                                         , tz       = tz
+                                         , duration = duration
+                                         ))
+        self.failUnless("ok" in response.content)        
+
+        # the default windowed period came back!
+        ps = Period.objects.order_by("start")
+        exp = ["S", "S", "P"]
+        self.assertEquals(exp, [p.state.abbreviation for p in ps])
+        exp = [5.0, 4.0, 0.0]
+        self.assertEquals(exp, [p.accounting.scheduled for p in ps])
+        self.assertEquals(p2.id, ps[2].id)
+
+    @timeIt
+    def test_restore_schedule_electives(self):
+        "Similar to previous test, but with an elective session"
+
+        # elective session
+        s = create_sesshun()
+        s.name = "elec"
+        s.session_type = Session_Type.objects.get(type = "elective")
+        s.save()
+
+        # a window that covers test scheduling range
+        e = Elective(session = s) #, total_time = 1.0)
+        e.save()
+
+        # a deleted elective period
+        pending = Period_State.get_state("P")
+        deleted = Period_State.get_state("D")
+        pa = Period_Accounting(scheduled = 0)
+        pa.save()
+        p1 = Period(session = s
+                  , elective = e
+                  , start = datetime(2000, 1, 1, 12)
+                  , duration = 1.0 # hr
+                  , state = deleted
+                  , accounting = pa
+                   )
+        p1.save()
+
+        # a pending elective period
+        pa = Period_Accounting(scheduled = 0)
+        pa.save()
+        p2 = Period(session = s
+                  , elective = e
+                  , start = datetime(2000, 1, 1, 13)
+                  , duration = 1.0 # hr
+                  , state = pending
+                  , accounting = pa
+                   )
+        p2.save()
+
+        # check the initial state
+        ps = Period.objects.order_by("start")
+        exp = ["S", "P", "S", "D", "P"]
+        self.assertEquals(exp, [p.state.abbreviation for p in ps])
+
+        # have to use the scheduling range
+        dt = self.ps[0].start - timedelta(days = 1)
+        time = dt.strftime("%Y-%m-%d %H:%M:%S")
+        tz = "ET"
+        duration = 3 # days
+        url = "/scheduler/periods/restore_schedule"
+
+        response = Client().post(url, dict(start    = time
+                                         , tz       = tz
+                                         , duration = duration
+                                         ))
+        self.failUnless("ok" in response.content)
+
+        # now, p1 should be gone, but p2 is still there
+        ps = Period.objects.order_by("start")
+        exp = ["S", "S", "P", "P"]
+        self.assertEquals(exp, [p.state.abbreviation for p in ps])
+        exp = [5.0, 4.0, 0.0, 0.0]
+        self.assertEquals(exp, [p.accounting.scheduled for p in ps])
+        self.assertEquals(p1.id, ps[2].id)
+        self.assertEquals(p2.id, ps[3].id)
+
     @timeIt
     def test_publish_periods_by_id(self):
         # check current state

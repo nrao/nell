@@ -25,7 +25,7 @@ urlpatterns = patterns(''
    , url(r'^period/([^/]+)/time_accounting$',              period_time_accounting)
    , url(r'^periods/publish$',                             publish_periods)
    , url(r'^periods/publish/(\d+)$',                       publish_periods)
-   , url(r'^periods/delete_pending',                       delete_pending)
+   , url(r'^periods/restore_schedule',                     restore_schedule)
    , url(r'^window/([^/]+)/copy$',                         window_copy)
    , url(r'^projects$',               ProjectResource(permitted_methods=('GET', 'PUT', 'POST')))
    , url(r'^projects/(\d+)$',         ProjectResource(permitted_methods=('PUT', 'GET', 'POST')))
