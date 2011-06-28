@@ -150,6 +150,36 @@ class TestScheduleTools(NellTestCase):
             self.assertEquals(scheduled[i], p.accounting.scheduled)
             self.assertEquals(observed[i] , p.accounting.observed())
 
+    def test_changeScheduleBigPeriod(self):
+
+        # make the last period > 24 hours
+        p = self.ps[2] 
+        p.duration = 40.0
+        p.save()
+        p.accounting.scheduled = 40.0
+        p.accounting.save()
+
+        # check accounting before changing schedule
+        scheduled = [5.0, 3.0, 40.0]
+        for i, p in enumerate(self.ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(scheduled[i], p.accounting.observed())
+        # now replace the start of it with the backup
+        ScheduleTools().changeSchedule(p.start
+                                    , 3.0
+                                    , p.session 
+                                    , "other_session_other"
+                                    , "Possum on track")
+
+        # get the periods from the DB again for updated values
+        ps = Period.get_periods(self.start, 12.0*60.0)
+        # check accounting after changing schedule
+        scheduled = [5.0, 3.0, 3.0, 40.0]
+        observed  = [5.0, 3.0, 3.0, 37.0]
+        for i, p in enumerate(ps):
+            self.assertEquals(observed[i] , p.duration)
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(observed[i] , p.accounting.observed())
 
     def test_changeSchedule1(self):
 
