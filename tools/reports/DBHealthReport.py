@@ -678,6 +678,12 @@ def GenerateReport():
         for p in bad_ps]
     print_values(outfile, values)
 
+    # note that here we use the session's rcvrs, *not* the periods'
+    # rcvrs because we are looking into the future.
+    outfile.write("\n\nPeriods in the future that are using retired hardware:")
+    values = [p for p in periods if p.state != deleted and p.start > now and p.session.usesDeletedReceiver()] 
+    print_values(outfile, values)
+
     outfile.write("\n\nProjects that contain non-unique session names:")
     names  = [(p.pcode, [s.name for s in p.sesshun_set.all()])
                                     for p in projects]
@@ -693,7 +699,7 @@ def GenerateReport():
     # print out useful format
     if len(sharedPstIds) > 0:
         for pst_id, us in sharedPstIds:
-            outfile.write("PST ID: %d\n" % pst_id)
+            outfile.write("PST ID: %s\n" % pst_id)
             for u in us:
                 outfile.write("    %s, %d\n" % (u, u.id))
                 outfile.write("    Projects: %s\n" % u.getProjects())
