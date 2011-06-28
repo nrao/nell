@@ -99,7 +99,8 @@ class Result(Thread):
                         for key, term in self.terms.items():
                             result[key] = term.get()
                 except:
-                    print formatExceptionInfo()
+                    #print formatExceptionInfo()
+                    pass
                 finally:
                     self.lock.release()
                     return result
@@ -118,8 +119,9 @@ class Result(Thread):
                     else:
                         term.evaluate(self.terms[key]) # move the ball forward
         except:
-            print "Caught %s with value %s" % (key, value)
-            print formatExceptionInfo()
+            #print "Caught %s with value %s" % (key, value)
+            #print formatExceptionInfo()
+            pass
         finally:
             self.lock.release()
 
