@@ -443,7 +443,7 @@ class Maintenance_Activity(models.Model):
     # the problem: Some maintenance activities are tied to groups,
     # and their times are therefore tied to that group in software,
     # but not in the database.  Further, there are repeating
-    # maintenance activities. TBF.
+    # maintenance activities.
 
     def check_for_conflicting_resources(self, mas):
         """
