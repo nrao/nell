@@ -106,7 +106,7 @@ class WindowAlerts():
             hrsSchedulable = stat[0]
             hrsBlacked = stat[1]
             if hrsSchedulable == 0.0:
-                ratio = 0.0 # TBF: or 1.0? Depends on details ...
+                ratio = 0.0 
             else:    
                 ratio = hrsBlacked/hrsSchedulable
             if ratio > .10 and ratio < .50:

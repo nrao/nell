@@ -35,6 +35,30 @@ class TestSesshun(BenchTestCase):
         super(TestSesshun, self).setUp()
         self.sesshun = create_sesshun()
         
+    def test_usesDeletedReceiver(self):
+
+        # setup
+        L = Receiver.get_rcvr("L")
+        S = Receiver.get_rcvr("S")
+        X = Receiver.get_rcvr("X")
+        rg = Receiver_Group(session = self.sesshun)
+        rg.save()
+        rg.receivers.add(L)
+        rg.receivers.add(S)
+
+        # start w/ no deleted rcvrs
+        self.assertEqual(False, self.sesshun.usesDeletedReceiver())
+
+        # delete a rcvr
+        X.deleted = True
+        X.save()
+        self.assertEqual(False, self.sesshun.usesDeletedReceiver())
+
+        # delete another rcvr
+        S.deleted = True
+        S.save()
+        self.assertEqual(True, self.sesshun.usesDeletedReceiver())
+
     def test_create(self):
         expected = Sesshun.objects.get(id = self.sesshun.id)
         self.assertEqual(expected.allotment.total_time, float(fdata["total_time"]))

@@ -210,12 +210,11 @@ class Window(models.Model):
         This is just a summary: if the window is non contigious
         then this will not include gaps.
         """
-
         return {
                 "id"   :     id
               , "title":     "".join(["Window ", self.session.name])
-              , "start":     self.start_date().isoformat()
-              , "end"  :     self.last_date().isoformat()
+              , "start":     self.start_datetime().isoformat()
+              , "end"  :     self.end_datetime().isoformat()
               , "className": 'window'
         }
  

@@ -176,6 +176,19 @@ class Sesshun(models.Model):
         """
         return "MBA" in self.rcvrs_specified()
 
+    def usesDeletedReceiver(self):
+        """
+        Receivers (like all hardware) can be retired, though we
+        only 'soft' delete them in the DB for historical purposes.
+        """
+        deletedRx = [r.abbreviation for r in Receiver.objects.filter(deleted = True)]
+        if len(deletedRx) == 0:
+            return False # there are no deleted rcvrs
+        for r in self.rcvrs_specified():
+            if r in deletedRx:
+                return True
+        return False # 
+
     def grade(self):
         return self.allotment.grade
 
