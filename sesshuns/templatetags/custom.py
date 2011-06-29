@@ -52,6 +52,14 @@ def dt2sex(value):
     return str(value)[:-3]
 
 @register.filter
+def target_system(session):
+    try:
+        ts = session.target
+        return ts.system.name
+    except models.Target.DoesNotExist:
+        return ""
+
+@register.filter
 def target_horz(value):
     return target_hv(value)[0]
 
