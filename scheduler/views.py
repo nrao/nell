@@ -471,7 +471,7 @@ def publish_periods(request, *args, **kwds):
 
 @revision.create_on_success
 @catch_json_parse_errors
-def delete_pending(request, *args, **kwds):
+def restore_schedule(request, *args, **kwds):
     """
     Removes pending periods of open sessions for the specified time range,
     given by a start time and duration.
@@ -484,10 +484,16 @@ def delete_pending(request, *args, **kwds):
                           startPeriods
                         , request.POST.get("tz", "UTC")
                         , int(request.POST.get("duration", "1")) - 1)
-
+    # here's the steps we take to restore the schedule:
+    # 1. get rid of most periods in the pending stat
     Period.delete_pending(start, duration)
+    # 2. bring back any elective periods that may have been deleted
+    Period.restore_electives(start, duration)
+    # 3. bring back certain windowed periods that may have been deleted
+    Period.restore_windows(start, duration)
 
-    revision.comment = get_rev_comment(request, None, "delete_pending")
+
+    revision.comment = get_rev_comment(request, None, "restore_schedule")
 
     return HttpResponse(json.dumps({'success':'ok'}), mimetype = "text/plain")
 
