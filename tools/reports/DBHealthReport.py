@@ -659,6 +659,10 @@ def GenerateReport():
     values = [str(s) for s in check_maintenance_and_rcvrs()]
     print_values(outfile, values)
 
+    outfile.write("\n\nPeriods longer then 24 hours:")
+    values = Period.objects.filter(duration__gt = 24.0)
+    print_values(outfile, values)
+
     outfile.write("\n\nPeriods which have been observed when none of their receivers were up:")
     start = datetime(2009, 10, 10) # don't bother looking before this
     end = datetime.utcnow() - timedelta(days=1) # leave a day buffer
