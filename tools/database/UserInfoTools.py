@@ -44,6 +44,20 @@ class UserInfoTools(object):
         else:
             self.out = output_file
             
+    def report(self):
+        """
+        High level function for calling other report methods.
+        """
+
+        print >> self.out, "Report User Info: "
+        self.reportUserInfo()
+        print >> self.out, "Users with duplicate accounts by name:"
+        self.findUsersWithSameNames()
+        print >> self.out, "Users with shared PST accounts:\n"
+        self.findUsersWithSamePstId(quiet = True)
+        print >> self.out, "Find User Matches for users with no PST ID: "
+        self.findUserMatches()
+
     def findUserMatches(self):
         """
         Lists all DSS users who do not currently have a pst_id, and lists possible candidates
