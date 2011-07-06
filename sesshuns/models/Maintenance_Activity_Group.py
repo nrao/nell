@@ -206,7 +206,7 @@ class Maintenance_Activity_Group(models.Model):
 
                 for g in other_groups_today:
                     if i.get_start().time() >= g.get_start().time() \
-                            and i.get_end().time() <= g.get_end().time():
+                            and i.get_start().time() < g.get_end().time():
                         x.append(i)
                 
 
