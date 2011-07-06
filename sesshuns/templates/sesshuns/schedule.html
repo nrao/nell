@@ -233,7 +233,7 @@
           <a href="" class="info">(N)<span><p>Project Notes:</p>{{event.project_notes|escape|linebreaks}}</span></a>
         {% endif %}
 
-      {% if not event.moc_met and event.moc_ack %}
+      {% if not event.moc_met and not event.moc_ack %}
         </blink>
       {% endif %}
 
