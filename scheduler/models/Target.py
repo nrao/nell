@@ -54,6 +54,9 @@ class Target(models.Model):
         if self.horizontal is None:
             return ""
 
+        if self.system.name == 'Galactic':
+            return self.get_deg(self.horizontal)
+
         horz = TimeAgent.rad2hr(self.horizontal)
         mins = (horz - int(horz)) * 60
         secs = (mins - int(mins)) * 60
@@ -69,7 +72,10 @@ class Target(models.Model):
         if self.vertical is None:
             return ""
 
-        degs = TimeAgent.rad2deg(self.vertical)
+        return self.get_deg(self.vertical)
+
+    def get_deg(self, value):
+        degs = TimeAgent.rad2deg(value)
 
         if degs < 0:
             degs = abs(degs)

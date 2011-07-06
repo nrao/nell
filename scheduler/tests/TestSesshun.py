@@ -59,6 +59,12 @@ class TestSesshun(BenchTestCase):
         S.save()
         self.assertEqual(True, self.sesshun.usesDeletedReceiver())
 
+        # clean up
+        X.deleted = False
+        X.save()
+        S.deleted = False
+        X.save()
+
     def test_create(self):
         expected = Sesshun.objects.get(id = self.sesshun.id)
         self.assertEqual(expected.allotment.total_time, float(fdata["total_time"]))

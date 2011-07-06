@@ -174,6 +174,9 @@ class ReceiverAdmin(admin.ModelAdmin):
 class SemesterAdmin(admin.ModelAdmin):
     list_display = ['semester']
 
+class EmailTemplateAdmin(admin.ModelAdmin):
+    list_display = ['name', 'subject', 'body']
+
 class SesshunAdmin(admin.ModelAdmin):
     list_display = ['name', 'project', 'grade', 'frequency', 'allotment', 'receiver_list', 'session_type', 'observing_type', 'status', 'schedulable']
     list_filter = ['session_type', 'observing_type', 'frequency']
@@ -259,6 +262,7 @@ admin.site.register(System)
 admin.site.register(Target, TargetAdmin)
 admin.site.register(User, UserAdmin)
 admin.site.register(Window, WindowAdmin)
+admin.site.register(EmailTemplate, EmailTemplateAdmin)
 
 ######################################################################
 # Resource Calendar Admin Site

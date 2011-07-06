@@ -306,12 +306,26 @@ class Sesshun(models.Model):
         """
         return self.has_bool_obs_param("Transit")
 
+    def keyhole(self):
+        """
+        Returns True or False if has 'Keyhole Flag' observing parameter,
+        else None if not.
+        """
+        return self.has_bool_obs_param("Keyhole")
+
     def nighttime(self):
         """
         Returns True or False if has 'Night-time Flag' observing parameter,
         else None if not.
         """
         return self.has_bool_obs_param("Night-time Flag")
+
+    def good_atmospheric_stability(self):
+        """
+        Returns True or False if has 'Good Atmospheric Stability' observing parameter,
+        else None if not.
+        """
+        return self.has_bool_obs_param("Good Atmospheric Stability")
 
     def not_guaranteed(self):
         """

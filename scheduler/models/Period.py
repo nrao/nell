@@ -368,6 +368,7 @@ class Period(models.Model):
            * from windowed sessions, but are not the default period
         """
 
+
         for p in Period.get_periods(start, duration):
             if p.isPending() and \
                 (p.session.isOpen() or \
@@ -375,4 +376,34 @@ class Period(models.Model):
                         not p.is_windowed_default())):
                 p.delete()            
       
+    @staticmethod
+    def restore_electives(start, duration):
+        """
+        Looks for any elective periods in the deleted state, 
+        and brings them back to pending.
+        """
 
+        for p in Period.get_periods(start
+                                  , duration
+                                  , ignore_deleted = False):
+            if p.isDeleted() and p.session.isElective():
+                p.state = Period_State.get_state("P") 
+                p.save()
+
+    @staticmethod
+    def restore_windows(start, duration):
+        """
+        Looks for any windowed periods in the deleted state, 
+        and brings them back to pending if:
+            * a default period 
+            * from a non-gauranteed window
+        """
+
+        for p in Period.get_periods(start
+                                  , duration
+                                  , ignore_deleted = False):
+
+            if p.isDeleted() and p.session.isWindowed() and \
+                p.is_windowed_default() and not p.session.guaranteed():
+                    p.state = Period_State.get_state("P") 
+                    p.save()                

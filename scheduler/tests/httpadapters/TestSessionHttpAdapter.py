@@ -31,11 +31,7 @@ class TestSessionHttpAdapter(NellTestCase):
         super(TestSessionHttpAdapter, self).setUp()
         self.s       = create_sesshun()
         self.adapter = SessionHttpAdapter(self.s)
-
-    def test_jsondict(self):
-
-        json = self.adapter.jsondict()
-        exp = {'req_max': 6.0
+        self.exp = {'req_max': 6.0
              , 'grade': 4.0
              , 'nighttime': False
              , 'transit': False
@@ -55,8 +51,8 @@ class TestSessionHttpAdapter(NellTestCase):
              , 'handle': u'Low Frequency With No RFI (GBT09A-001) 0'
              , 'complete': False
              , 'project_complete': 'No'
-             , 'source_h': 1.0
-             , 'source_v': 2.2999999999999998
+             , 'source_h': 3.8197186342054881
+             , 'source_v': 131.78029288008932
              , 'trk_err_threshold': 0.20000000000000001
              , 'PSC_time': 2.0
              , 'freq': 6.0
@@ -66,9 +62,23 @@ class TestSessionHttpAdapter(NellTestCase):
              , 'enabled': True
              , 'remaining': 3.0
              , 'xi_factor': 1.0
+             , 'gas': False
              , 'receiver': ''
              , 'backup': False}
-        self.assertEquals(exp, json)
+
+    def test_jsondict(self):
+        json = self.adapter.jsondict()
+        self.assertEquals(self.exp, json)
+
+    def test_update_from_post(self):
+        fdata = self.exp.copy()
+        fdata.update({'source_h': '23.533333333333331'
+                    , 'source_v': '142.99999999989163'
+                    })
+        self.adapter.update_from_post(fdata)
+        json = self.adapter.jsondict()
+        self.assertEquals(float(fdata['source_h']), json['source_h'])
+        self.assertEquals(float(fdata['source_v']), json['source_v'])
 
     def test_udpate_tr_err_threshold_obs_param(self):
 
