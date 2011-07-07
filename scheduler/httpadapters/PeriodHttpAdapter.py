@@ -21,7 +21,7 @@
 #       Green Bank, WV 24944-0002 USA
 
 from datetime               import datetime
-from nell.utilities         import TimeAgent, Score
+from nell.utilities         import TimeAgent
 from scheduler.models        import Period, Period_Accounting, Period_Receiver, \
                                    Period_State, Project, Receiver, Sesshun
 from utilities.TimeAgent import d2str, dt2str, strStr2dt, t2str
@@ -35,7 +35,7 @@ class PeriodHttpAdapter (object):
     def load(self, period):
         self.period = period
 
-    def jsondict(self, tz, cscore):
+    def jsondict(self, tz):
         start = self.period.start if tz == 'UTC' else TimeAgent.utc2est(self.period.start)
         end   = self.period.end() if tz == 'UTC' else TimeAgent.utc2est(self.period.end())
         w = self.period.window
@@ -51,7 +51,7 @@ class PeriodHttpAdapter (object):
               , "lst"          : str(TimeAgent.dt2tlst(self.period.start))
               , "duration"     : self.period.duration
               , "sscore"       : self.period.score       # scheduling score
-              , "cscore"       : cscore           # current score
+              , "cscore"       : -1.0                    # current score
               , "forecast"     : dt2str(self.period.forecast)
               , "backup"       : self.period.backup
               , "moc_ack"      : self.period.moc_ack if self.period.moc_ack is not None else False
@@ -86,10 +86,9 @@ class PeriodHttpAdapter (object):
         update_score = False
         if not update_score:
             update_score = self.period.id is None
-        # if newly created then start with a default of zero
+        # if newly created then start with a default 
         if update_score:
-            self.period.score = 0.0
-            self.period.forecast = TimeAgent.quarter(datetime.utcnow())
+            self.period.reinit_score()
         handle = fdata.get("handle", "")
         if handle:
             new_session = Sesshun.handle2session(handle)
@@ -118,14 +117,10 @@ class PeriodHttpAdapter (object):
         if not update_score:
             update_score = self.period.duration != new_duration
         self.period.duration = new_duration
-        scorer = Score()
+        
+        # if the score needs to be updated, then prepare it for this
         if update_score and now < self.period.start:
-            self.period.score = scorer.session(self.period.session.id
-                                       , self.period.start
-                                       , self.period.duration)
-            self.period.forecast = TimeAgent.quarter(datetime.utcnow())
-        else:
-            scorer.clear()
+            self.period.reinit_score()
         self.period.backup   = True if fdata.get("backup", None) == 'true' else False
         stateAbbr = fdata.get("state", "P")
         self.period.state = Period_State.objects.get(abbreviation=stateAbbr)

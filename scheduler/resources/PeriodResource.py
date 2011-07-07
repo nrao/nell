@@ -28,7 +28,7 @@ from NellResource    import NellResource
 from scheduler.models import Period
 from scheduler.utilities    import jsonMap
 from scheduler.httpadapters import PeriodHttpAdapter
-from nell.utilities        import TimeAgent, Score #, formatExceptionInfo
+from nell.utilities        import TimeAgent
 
 import simplejson as json
 import reversion
@@ -51,7 +51,6 @@ def formatExceptionInfo(maxTBlevel=5):
 class PeriodResource(NellResource):
     def __init__(self, *args, **kws):
         super(PeriodResource, self).__init__(Period, PeriodHttpAdapter, *args, **kws)
-        self.score_period = Score()
 
     def read(self, request, *args, **kws):
 
@@ -108,18 +107,10 @@ class PeriodResource(NellResource):
 
                 periods = query_set.order_by(order + sortField)    
 
-            # do we need scores?
-            computeScores = request.GET.get("scores", "true") == "true"
-            if computeScores:
-                pids         = [p.id for p in periods]
-                sd           = self.score_period.periods(pids)
-                scores       = [sd.get(pid, 0.0) for pid in pids]
-            else:
-                scores = [0.0 for p in periods] 
+
             return HttpResponse(
                 json.dumps(dict(total   = len(periods)
-                              , periods = [PeriodHttpAdapter(p).jsondict(tz, s)
-                                           for (p, s) in zip(periods, scores)]
+                              , periods = [PeriodHttpAdapter(p).jsondict(tz) for p in periods]
                               , success = 'ok'))
               , content_type = "application/json")
         else:
@@ -127,10 +118,9 @@ class PeriodResource(NellResource):
             p_id    = int(args[1])
             #p       = Period.objects.get(id = p_id)
             p       = get_object_or_404(Period, id = p_id)
-            score   = self.score_period.periods([p_id]).get(p_id, 0.0)
             adapter = PeriodHttpAdapter(p)
             return HttpResponse(
-                json.dumps(dict(period  = adapter.jsondict(tz, score)
+                json.dumps(dict(period  = adapter.jsondict(tz)
                               , success = 'ok'))
               , content_type = "application/json")
 
@@ -142,11 +132,10 @@ class PeriodResource(NellResource):
         adapter.init_from_post(request.POST, tz)
         # Query the database to insure data is in the correct data type
         o = self.dbobject.objects.get(id = o.id)
-        score = self.score_period.periods([o.id]).get(o.id, 0.0)
         
         revision.comment = self.get_rev_comment(request, o, "create_worker")
 
-        return HttpResponse(json.dumps(adapter.jsondict(tz, score))
+        return HttpResponse(json.dumps(adapter.jsondict(tz))
                           , mimetype = "text/plain")
 
     @revision.create_on_success
