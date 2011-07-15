@@ -26,6 +26,7 @@ from sets                   import Set
 from datetime               import datetime, timedelta
 
 from utilities.TimeAgent  import adjustDateTimeTz
+from utilities.AnalogSet  import overlaps
 from Observing_Type       import Observing_Type
 from Project              import Project
 from Sesshun              import Sesshun
@@ -258,6 +259,31 @@ class Period(models.Model):
         """
         self.score = -1.0
         self.forecast = None
+        if self.in_moc_range():
+            self.moc = None
+
+    def in_moc_range(self):
+        """
+        A period should get it's MOC evaluated only when it's 
+        in the near future or at the start of it's observations.
+        """
+        start, end = Period.get_moc_time_range()
+        if self.start and self.duration:
+            return overlaps((start, end), (self.start, self.end())) 
+        else:
+            False
+        
+    @staticmethod
+    def get_moc_time_range():
+        """
+        When should a period get it's MOC evaluated?
+        Within the first 30 minutes of it's observations, and up to
+        2 days in the future.
+        """    
+        now = datetime.utcnow()
+        start = now - timedelta(minutes = 30)
+        end = now + timedelta(days = 2)    
+        return (start, end)        
 
     @staticmethod
     def get_periods(start, duration, ignore_deleted = True):
