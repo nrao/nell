@@ -141,7 +141,7 @@ class SessionHttpAdapter (object):
         self.update_bool_obs_param(fdata, "keyhole", "Keyhole", self.sesshun.keyhole())
         self.update_guaranteed(fdata)
         
-        #self.update_lst_exclusion(fdata)    
+        self.update_irradiance_threshold(fdata, self.sesshun.irradiance())
         self.update_lst_parameters('lst_ex', fdata.get('lst_ex'))
         self.update_lst_parameters('lst_in', fdata.get('lst_in'))
 
@@ -193,6 +193,14 @@ class SessionHttpAdapter (object):
                 obs_param.setValue(new_value)
             else:
                 obs_param.delete()
+
+    def update_irradiance_threshold(self, fdata, old_value):
+        ir = fdata.get('irradiance')
+        if self.sesshun.observing_type.type != 'continuum' and ir is not None:
+            raise Exception("Irradiance Threshold can only be set for a Continuum session.")
+        else:
+            self.update_parameter(old_value, ir
+                                , Parameter.objects.get(name="Irradiance Threshold"))
 
     def update_xi_obs_param(self, fdata, old_value):
         """
@@ -377,6 +385,7 @@ class SessionHttpAdapter (object):
            , "trk_err_threshold"   : self.sesshun.get_tracking_error_threshold()
            , "src_size"   : self.sesshun.get_source_size()
            , "keyhole"    : self.sesshun.keyhole()
+           , "irradiance" : self.sesshun.irradiance()
             }
 
         try:
