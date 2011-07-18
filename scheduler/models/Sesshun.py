@@ -304,7 +304,8 @@ class Sesshun(models.Model):
         Returns factor if has 'Irradiance Threshold' observing 
         parameter, else None.
         """
-        return self.has_float_obs_param("Irradiance Threshold")
+        irradiance = self.has_float_obs_param("Irradiance Threshold")
+        return 300 if irradiance is None and self.observing_type.type == 'continuum' else irradiance
 
     def transit(self):
         """
