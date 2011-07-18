@@ -36,7 +36,7 @@ from tools.reports.ProjTimeAcctReport  import GenerateProjectTimeAccountingRepor
 from tools.reports.ScheduleReport import ScheduleReport
 from tools.reports.SessionReport  import GenerateReport as sessionReport
 from tools.reports.StartEndReport  import get_projects_between_start_end 
-from tools.reports.WeeklyReport  import GenerateReport as weeklyReport
+from tools.reports.WeeklyReport  import WeeklyReport
 from tools.reports.WindowsReport  import WindowsReport 
 
 # This breaks the one unit test class per class pattern, since this 
@@ -220,7 +220,8 @@ class TestReports(NellTestCase):
 
     def test_weeklyReport(self):
 
-        wr = weeklyReport(datetime(2010, 1, 1))
+        wr = WeeklyReport(datetime(2010, 1, 1))
+        wr.report()
 
     def test_startEndReport(self):
         # make it quiet
