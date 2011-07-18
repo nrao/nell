@@ -33,217 +33,250 @@ from sets             import Set
 
 import calendar
 
-def print_values(file, values):
-    if values == []:
-        file.write("\tNone\n")
-    else:
-        for v in values:
-            file.write("\t%s\n" % v)
+class WeeklyReport:
 
-def get_observed_time(month, periods, condition):
-    duration = 0
-    for i in [p for p in periods if eval(condition)]:
-        pstart = TimeAgent.utc2est(i.start)
-        pend   = TimeAgent.utc2est(i.end())
+    def print_values(self, file, values):
+        if values == []:
+            file.write("\tNone\n")
+        else:
+            for v in values:
+                file.write("\t%s\n" % v)
 
-        # Limit ourselves to time actually in the desired month.
-        start = pstart
-        if pstart.month != month:
-            start = datetime(pstart.year, month, 1)
+    def get_observed_time(self, month, periods, condition):
+        duration = 0
+        for i in [p for p in periods if eval(condition)]:
+            pstart = TimeAgent.utc2est(i.start)
+            pend   = TimeAgent.utc2est(i.end())
+    
+            # Limit ourselves to time actually in the desired month.
+            start = pstart
+            if pstart.month != month:
+                start = datetime(pstart.year, month, 1)
+    
+            end = pend
+            if pend.month != month:
+                _, day = calendar.monthrange(pend.year, month)
+                end = datetime(pend.year, month, day, 23, 59, 59)
+    
+            duration += (end - start).seconds / 3600.
+    
+        return duration
 
-        end = pend
-        if pend.month != month:
-            _, day = calendar.monthrange(pend.year, month)
-            end = datetime(pend.year, month, day, 23, 59, 59)
+    def get_obs_time_tuple(self, condition):
+        past = self.get_observed_time(
+                            self.last_month.month
+                          , self.last_periods
+                          , condition) 
+        present = self.get_observed_time(
+                            self.start.month
+                          , self.this_periods
+                          , condition)
+        return (past, present)                  
 
-        duration += (end - start).seconds / 3600.
 
-    return duration
+    def __init__(self, start):
 
-def GenerateReport(start):
-    outfile    = open("./DssWeeklyReport.txt", 'w')
-    end        = start + timedelta(days = 7)
-    next_start = end + timedelta(days = 1)
-    next_end   = end + timedelta(days = 7)
-    periods    = [p for p in Period.objects.all() if p.state.abbreviation in ("S", "C")]
+        self.start      = start
+        self.outfile    = open("./DssWeeklyReport.txt", 'w')
+        self.end        = start + timedelta(days = 7)
+        self.next_start = self.end + timedelta(days = 1)
+        self.next_end   = self.end + timedelta(days = 7)
+        self.periods    = [p for p in Period.objects.all() if p.state.abbreviation in ("S", "C")]
 
-    outfile.write("Last 7 days (%s to %s)\n" % (start.strftime("%m/%d/%Y")
-                                              , end.strftime("%m/%d/%Y")))
-    outfile.write("======================================\n")
+        self.ta         = TimeAccounting()
+        self.pSemesters = Semester.getPreviousSemesters(start)
 
-    observed_periods = \
-        sorted(Set([p for p in periods \
-                      if AnalogSet.overlaps((p.start, p.end()), (start, end))]))
-    upcoming_periods = \
-        sorted(Set([p for p in periods \
-                      if AnalogSet.overlaps((p.start, p.end())
-                                , (next_start, next_end))]))
+        # quantities to calculate
+        self.lost_hours = {}
+        self.scheduled_hours ={}
+        self.backlog_hours = {}
+        self.discharge_hours = {}
 
-    outfile.write("Observations for proposals\n")
-    print_values(outfile
-               , Set([p.session.project.pcode for p in observed_periods]))
+    def report(self):
+        "Calculate all time accounting needed, then print it to report file."
 
-    outfile.write("\nCompleted proposals\n")
-    print_values(outfile, Set([p.session.project.pcode \
-                               for p in observed_periods \
-                               if p.session.project.complete]))
+        self.calculate()
+        self.output()
 
-    outfile.write("\nTotal Lost Time was %2.2f hr\n" % sum([p.accounting.lost_time() for p in observed_periods]))
-    outfile.write("\tweather = %2.2f hr\n" % sum([p.accounting.lost_time_weather for p in observed_periods]))
-    outfile.write("\tRFI     = %2.2f hr\n" % sum([p.accounting.lost_time_rfi for p in observed_periods]))
-    outfile.write("\tother   = %2.2f hr\n" % sum([p.accounting.lost_time_other for p in observed_periods]))
-    outfile.write("\tLost Time Billed to Project = %2.2f hr\n" % sum([p.accounting.lost_time_bill_project for p in observed_periods]))
+    def calculate(self):
+        "Calculate all the quantities needed for this report."
 
-    outfile.write("\nNext Week\n")
-    outfile.write("=========\n")
-    outfile.write("Observations scheduled for %s - %s (note this only includes pre-scheduled projects):\n" % (next_start.strftime("%m/%d/%Y"), next_end.strftime("%m/%d/%Y")))
-    values = ["%s, [%s], PI: %s\n\t\t%s\n\t\t%s" % \
-              (p.session.project.pcode
-             , p.session.observing_type.type
-             , p.session.project.principal_investigator()
-             , p.session.project.name
-             , p.__str__())
-              for p in upcoming_periods]
-    print_values(outfile, Set(values))
+        self.observed_periods = \
+            sorted(Set([p for p in self.periods \
+                          if AnalogSet.overlaps((p.start, p.end()), (self.start, self.end))]))
+        self.upcoming_periods = \
+            sorted(Set([p for p in self.periods \
+                          if AnalogSet.overlaps((p.start, p.end())
+                                    , (self.next_start, self.next_end))]))
 
-    projects = Set([p.session.project for p in upcoming_periods])
-    outfile.write("\nContact Information for pre-scheduled projects for %s - %s\n" % (next_start.strftime("%m/%d/%Y"), next_end.strftime("%m/%d/%Y")))
-    outfile.write("==========================================================================\n")
-    outfile.write("\tProject     PI                 Bands Email [NRAO contact]\n")
-    outfile.write("\t----------- ------------------ ----- --------------------\n")
-    values = ["%s %s %s %s [%s]" % \
-                  (p.pcode.ljust(11)
-                 , str(p.principal_investigator())[:17].ljust(18)
-                 , ",".join(p.rcvrs_specified())[:4].center(5)
-                 , p.principal_investigator().getEmails()[0]
-                 , ";".join([f.user.name() for f in p.friend_set.all()])
-                 )
-              for p in projects]
-    print_values(outfile, Set(values))
+        self.last_month   = self.start - timedelta(days = 31)
+        self.last_periods = [p for p in self.periods \
+                          if p.start.month == self.last_month.month and \
+                             p.start.year  == self.last_month.year]
+        self.this_periods = [p for p in self.periods \
+                          if p.start.month == self.start.month and \
+                             p.start.year  == self.start.year]  
 
-    last_month   = start - timedelta(days = 31)
-    last_periods = [p for p in periods \
-                      if p.start.month == last_month.month and \
-                         p.start.year  == last_month.year]
-    this_periods = [p for p in periods \
-                      if p.start.month == start.month and \
-                         p.start.year  == start.year]
+        self.lost_hours["total_time"] = sum([p.accounting.lost_time() for p in self.observed_periods])
+        self.lost_hours["weather" ] = sum([p.accounting.lost_time_weather for p in self.observed_periods])
+        self.lost_hours["RFI" ] = sum([p.accounting.lost_time_rfi for p in self.observed_periods])
+        self.lost_hours["other" ] = sum([p.accounting.lost_time_other for p in self.observed_periods])
+        self.lost_hours["billed_to_project" ] = sum([p.accounting.lost_time_bill_project for p in self.observed_periods])
 
-    outfile.write("\nScheduled Hours [backup]\n")
-    outfile.write("========================\n")
-    outfile.write("Category/Month -> %s %s\n" % \
-                  (last_month.strftime("%B").center(8)
-                 , start.strftime("%B").center(8)))
-    outfile.write("     Astronomy ~  %s %s\n" % \
-                  (("%.1f" % \
-                    get_observed_time(
-                        last_month.month
-                      , last_periods
-                      , 'p.session.project.project_type.type == "science"')
-                   ).center(8)
-                 , ("%.1f" % \
-                     get_observed_time(
-                        start.month
-                      , this_periods
-                      , 'p.session.project.project_type.type == "science"')
-                   ).center(8)))
-    outfile.write("   Maintenance ~  %s %s\n" % \
-                  (("%.1f" % \
-                    get_observed_time(
-                        last_month.month
-                      , last_periods
-                      , 'p.session.project.pcode == "Maintenance"')
-                   ).center(8)
-                ,  ("%.1f" % \
-                    get_observed_time(
-                        start.month
-                      , this_periods
-                      , 'p.session.project.pcode == "Maintenance"')
-                   ).center(8)))
-    outfile.write("   Test & Comm ~  %s %s\n" % \
-                  (("%.1f" % \
-                    get_observed_time(
-                        last_month.month
-                      , last_periods
-                      , 'p.session.project.pcode[0] == "T"')
-                   ).center(8)
-                 , ("%.1f" % \
-                    get_observed_time(
-                        start.month
-                      , this_periods
-                      , 'p.session.project.pcode[0] == "T"')
-                   ).center(8)))
-    outfile.write("      Shutdown ~  %s %s\n" % \
-                  (("%.1f" % \
-                    get_observed_time(
-                        last_month.month
-                      , last_periods
-                      , 'p.session.project.pcode == "Shutdown"')
-                   ).center(8)
-                 , ("%.1f" % \
-                    get_observed_time(
-                        start.month
-                      , this_periods
-                      , 'p.session.project.pcode == "Shutdown"')
-                   ).center(8)))
+        self.scheduled_hours["astronomy"] = self.get_obs_time_tuple('p.session.project.project_type.type == "science"')
+        self.scheduled_hours["maintenance"] = self.get_obs_time_tuple('p.session.project.pcode == "Maintenance"')
+        self.scheduled_hours["test_comm"] = self.get_obs_time_tuple('p.session.project.pcode[0] == "T"')
+        self.scheduled_hours["shutdown"] = self.get_obs_time_tuple('p.session.project.pcode == "Shutdown"')
 
-    ta         = TimeAccounting()
-    pSemesters = Semester.getPreviousSemesters(start)
-    backlog    = [p for p in Project.objects.all() if p.semester in pSemesters and 
-                 all([s.observing_type.type != 'testing' for s in p.sesshun_set.all()])]
-    outfile.write(
-        "\nCurrent backlog of Reg & RSS proposals [hours prior to %s*] = %.1f\n" % \
-            (Semester.getCurrentSemester(start)
-           , sum([ta.getTimeLeft(p) for p in backlog])))
-    outfile.write("\t[")
-    outfile.write(", ".join(["%s: %.1f (%d)" % \
-       (y 
-      , sum([ta.getTimeLeft(p) for p in backlog if p.semester.start().year == y])
-      , len([p for p in backlog if p.semester.start().year == y]))
-        for y in sorted(list(Set([s.start().year for s in Semester.getPreviousSemesters(start)])))]))
-    outfile.write("]\n")
-    outfile.write("\tBacklog includes %.1f hours of monitoring projects\n" % \
-                  sum([ta.getTimeLeft(p) for p in backlog \
-                       if any([s.session_type.type == "windowed" \
-                               for s in p.sesshun_set.all()])]))
-    outfile.write("\t                 %.1f hours of vlbi projects\n" % \
-                  sum([ta.getTimeLeft(p) for p in backlog \
-                       if any([s.observing_type.type == "vlbi" \
-                               for s in p.sesshun_set.all()])]))
+        self.backlog    = [p for p in Project.objects.all() if p.semester in self.pSemesters and 
+                     all([s.observing_type.type != 'testing' for s in p.sesshun_set.all()])]
 
-    cSemester  = Semester.getCurrentSemester(start)
-    fSemesters = Semester.getFutureSemesters(start)
-    total_time = sum([ta.getTimeLeft(p) for p in Project.objects.all()])
-    monitoring = sum([ta.getTimeLeft(p) for p in backlog \
-                       if any([s.session_type.type == "windowed" \
-                               for s in p.sesshun_set.all()]) and \
-                          ta.getProjectTotalTime(p) <= 200.])
-    vlbi       = sum([ta.getTimeLeft(p) for p in backlog \
-                       if any([s.observing_type.type == "vlbi" \
-                               for s in p.sesshun_set.all()])])
-    large      = sum([ta.getTimeLeft(p) for p in backlog \
-                      if ta.getProjectTotalTime(p) > 200.])
-    rest       = total_time - monitoring - vlbi - large
+        self.currentSemester   = Semester.getCurrentSemester(self.start)
+        self.previousSemesters = Semester.getPreviousSemesters(self.start)
+        self.futureSemesters   = Semester.getFutureSemesters(self.start)
 
-    outfile.write("\nTotal time to discharge [hours] = %.1f\n" % total_time)
-    outfile.write("\tIncludes %.1f hours of monitoring projects (not Large) after semester %s\n" % (monitoring, cSemester))
-    outfile.write("\t         %.1f hours of Regular & RRS projects\n" % rest)
-    outfile.write("\t         %.1f hours of Large projects\n" % large)
-    outfile.write("\t         %.1f hours of VLBI projects\n" % vlbi)
-    outfile.write("\n* Includes projects that are on hold for semester %s\n" % cSemester)
+        self.backlog_hours["total_time"] = sum([self.ta.getTimeLeft(p) for p in self.backlog])
+        self.backlog_hours["years"] = {}
+        for y in sorted(list(Set([s.start().year for s in self.previousSemesters]))):
+            projs = [p for p in self.backlog if p.semester.start().year == y]
+            self.backlog_hours["years"]["%d" % y] = (sum([self.ta.getTimeLeft(p) for p in projs]), len(projs))
+        self.backlog_hours["monitoring"] = sum([self.ta.getTimeLeft(p) for p in self.backlog \
+                           if any([s.session_type.type == "windowed" \
+                                   for s in p.sesshun_set.all()])])
+        self.backlog_hours["vlbi"] = sum([self.ta.getTimeLeft(p) for p in self.backlog \
+                           if any([s.observing_type.type == "vlbi" \
+                                   for s in p.sesshun_set.all()])])                           
 
-    visitors = ["%s - %s - %s [%s] [%s]" % (r.start_date.strftime("%m/%d")
-                              , r.end_date.strftime("%m/%d")
-                              , r.user.name()
-                              , ', '.join(r.user.getProjects())
-                              , ', '.join(r.user.getFriendLastNames())) \
-                for r in Reservation.objects.filter(
-                                      end_date__gte = next_start
-                                                   ).filter(
-                                      start_date__lte = next_end)]
+        total_time = sum([self.ta.getTimeLeft(p) for p in Project.objects.all()])
+        monitoring = sum([self.ta.getTimeLeft(p) for p in self.backlog \
+                           if any([s.session_type.type == "windowed" \
+                                   for s in p.sesshun_set.all()]) and \
+                              self.ta.getProjectTotalTime(p) <= 200.])
+        vlbi       = sum([self.ta.getTimeLeft(p) for p in self.backlog \
+                           if any([s.observing_type.type == "vlbi" \
+                                   for s in p.sesshun_set.all()])])
+        large      = sum([self.ta.getTimeLeft(p) for p in self.backlog \
+                          if self.ta.getProjectTotalTime(p) > 200.])
+        self.discharge_hours['total_time'] = total_time                  
+        self.discharge_hours['monitoring'] = monitoring                  
+        self.discharge_hours['vlbi']       = vlbi                  
+        self.discharge_hours['large']      = large                  
+        self.discharge_hours['rest']       = total_time - monitoring - vlbi - large
 
-    outfile.write("\nVisitors coming for %s - %s:\n" % (next_start.strftime("%m/%d/%Y"), next_end.strftime("%m/%d/%Y")))
-    print_values(outfile, visitors)
+
+        self.nextWeekReservations = Reservation.objects.filter(
+                                          end_date__gte = self.next_start
+                                                       ).filter(
+                                          start_date__lte = self.next_end)
+
+    def output(self):
+        "Format all the calculated quantities and print to report file."
+
+        self.outfile.write("Last 7 days (%s to %s)\n" % (self.start.strftime("%m/%d/%Y")
+                                              , self.end.strftime("%m/%d/%Y")))
+        self.outfile.write("======================================\n")
+    
+
+    
+        self.outfile.write("Observations for proposals\n")
+        self.print_values(self.outfile
+                   , Set([p.session.project.pcode for p in self.observed_periods]))
+    
+        self.outfile.write("\nCompleted proposals\n")
+        self.print_values(self.outfile, Set([p.session.project.pcode \
+                                   for p in self.observed_periods \
+                                   if p.session.project.complete]))
+    
+        self.outfile.write("\nTotal Lost Time was %2.2f hr\n" % self.lost_hours["total_time"]) 
+        self.outfile.write("\tweather = %2.2f hr\n" % self.lost_hours["weather"]) 
+        self.outfile.write("\tRFI     = %2.2f hr\n" % self.lost_hours["RFI"]) 
+        self.outfile.write("\tother   = %2.2f hr\n" % self.lost_hours["other"]) 
+        self.outfile.write("\tLost Time Billed to Project = %2.2f hr\n" % self.lost_hours["billed_to_project"]) 
+    
+        self.outfile.write("\nNext Week\n")
+        self.outfile.write("=========\n")
+        self.outfile.write("Observations scheduled for %s - %s (note this only includes pre-scheduled projects):\n" % (self.next_start.strftime("%m/%d/%Y"), self.next_end.strftime("%m/%d/%Y")))
+        values = ["%s, [%s], PI: %s\n\t\t%s\n\t\t%s" % \
+                  (p.session.project.pcode
+                 , p.session.observing_type.type
+                 , p.session.project.principal_investigator()
+                 , p.session.project.name
+                 , p.__str__())
+                  for p in self.upcoming_periods]
+        self.print_values(self.outfile, Set(values))
+    
+        projects = Set([p.session.project for p in self.upcoming_periods])
+        self.outfile.write("\nContact Information for pre-scheduled projects for %s - %s\n" % (self.next_start.strftime("%m/%d/%Y"), self.next_end.strftime("%m/%d/%Y")))
+        self.outfile.write("==========================================================================\n")
+        self.outfile.write("\tProject     PI                 Bands Email [NRAO contact]\n")
+        self.outfile.write("\t----------- ------------------ ----- --------------------\n")
+        values = ["%s %s %s %s [%s]" % \
+                      (p.pcode.ljust(11)
+                     , str(p.principal_investigator())[:17].ljust(18)
+                     , ",".join(p.rcvrs_specified())[:4].center(5)
+                     , p.principal_investigator().getEmails()[0]
+                     , ";".join([f.user.name() for f in p.friend_set.all()])
+                     )
+                  for p in projects]
+        self.print_values(self.outfile, Set(values))
+    
+
+    
+        self.outfile.write("\nScheduled Hours [backup]\n")
+        self.outfile.write("========================\n")
+        self.outfile.write("Category/Month -> %s %s\n" % \
+                      (self.last_month.strftime("%B").center(8)
+
+                     , self.start.strftime("%B").center(8)))
+
+        last, this = self.scheduled_hours['astronomy']             
+        self.outfile.write("     Astronomy ~  %s %s\n" % \
+                      (("%.1f" % last).center(8), ("%.1f" % this).center(8)))
+        last, this = self.scheduled_hours['maintenance']             
+        self.outfile.write("   Maintenance ~  %s %s\n" % \
+                      (("%.1f" % last).center(8), ("%.1f" % this).center(8)))
+        last, this = self.scheduled_hours['test_comm']             
+        self.outfile.write("   Test & Comm ~  %s %s\n" % \
+                      (("%.1f" % last).center(8), ("%.1f" % this).center(8)))
+        last, this = self.scheduled_hours['shutdown']             
+        self.outfile.write("      Shutdown ~  %s %s\n" % \
+                      (("%.1f" % last).center(8), ("%.1f" % this).center(8)))
+
+        self.outfile.write(
+            "\nCurrent backlog of Reg & RSS proposals [hours prior to %s*] = %.1f\n" % \
+                (self.currentSemester, self.backlog_hours["total_time"])) 
+ 
+        self.outfile.write("\t[")
+        years = sorted(self.backlog_hours["years"].keys())
+        self.outfile.write(", ".join(["%s: %.1f (%d)" % \
+            (y, self.backlog_hours["years"][y][0], self.backlog_hours["years"][y][1]) for y in years]))
+
+
+        self.outfile.write("]\n")
+        self.outfile.write("\tBacklog includes %.1f hours of monitoring projects\n" % \
+                      self.backlog_hours["monitoring"])
+
+        self.outfile.write("\t                 %.1f hours of vlbi projects\n" % \
+                      self.backlog_hours["vlbi"])
+
+    
+        self.outfile.write("\nTotal time to discharge [hours] = %.1f\n" % self.discharge_hours['total_time'])
+        self.outfile.write("\tIncludes %.1f hours of monitoring projects (not Large) after semester %s\n" % \
+            (self.discharge_hours['monitoring'], self.currentSemester))
+        self.outfile.write("\t         %.1f hours of Regular & RRS projects\n" % self.discharge_hours['rest'])
+        self.outfile.write("\t         %.1f hours of Large projects\n" % self.discharge_hours['large'])
+        self.outfile.write("\t         %.1f hours of VLBI projects\n" % self.discharge_hours['vlbi'])
+        self.outfile.write("\n* Includes projects that are on hold for semester %s\n" % self.currentSemester)
+    
+        visitors = ["%s - %s - %s [%s] [%s]" % (r.start_date.strftime("%m/%d")
+                                  , r.end_date.strftime("%m/%d")
+                                  , r.user.name()
+                                  , ', '.join(r.user.getProjects())
+                                  , ', '.join(r.user.getFriendLastNames())) \
+                    for r in self.nextWeekReservations]              
+    
+        self.outfile.write("\nVisitors coming for %s - %s:\n" % (self.next_start.strftime("%m/%d/%Y"), self.next_end.strftime("%m/%d/%Y")))
+        self.print_values(self.outfile, visitors)
 
 def show_help(program):
     print "\nThe arguments to", program, "are:"
@@ -276,4 +309,6 @@ if __name__=='__main__':
     if len(sys.argv) >= 4:
         start = datetime(int(sys.argv[3]), int(sys.argv[2]), int(sys.argv[1]))
 
-    GenerateReport(start)
+    #GenerateReport(start)
+    r = WeeklyReport(start)
+    r.report()
