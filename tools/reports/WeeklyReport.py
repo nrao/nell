@@ -81,10 +81,11 @@ class WeeklyReport:
         self.end        = start + timedelta(days = 7)
         self.next_start = self.end + timedelta(days = 1)
         self.next_end   = self.end + timedelta(days = 7)
+
+        # all scheduled or completed periods
         self.periods    = [p for p in Period.objects.all() if p.state.abbreviation in ("S", "C")]
 
         self.ta         = TimeAccounting()
-        self.pSemesters = Semester.getPreviousSemesters(start)
 
         # quantities to calculate
         self.lost_hours = {}
@@ -101,39 +102,46 @@ class WeeklyReport:
     def calculate(self):
         "Calculate all the quantities needed for this report."
 
+        self.currentSemester   = Semester.getCurrentSemester(self.start)
+        self.previousSemesters = Semester.getPreviousSemesters(self.start)
+        self.futureSemesters   = Semester.getFutureSemesters(self.start)
+
+        # just those scheduled periods in the current week
         self.observed_periods = \
             sorted(Set([p for p in self.periods \
                           if AnalogSet.overlaps((p.start, p.end()), (self.start, self.end))]))
+        # just those scheduled periods in the upcoming week                  
         self.upcoming_periods = \
             sorted(Set([p for p in self.periods \
                           if AnalogSet.overlaps((p.start, p.end())
                                     , (self.next_start, self.next_end))]))
 
         self.last_month   = self.start - timedelta(days = 31)
+        # scheduled periods from last month
         self.last_periods = [p for p in self.periods \
                           if p.start.month == self.last_month.month and \
                              p.start.year  == self.last_month.year]
+        # scheduled periods from this month                     
         self.this_periods = [p for p in self.periods \
                           if p.start.month == self.start.month and \
                              p.start.year  == self.start.year]  
 
+        # how does the lost time break down for all the scheduled periods in the current week?
         self.lost_hours["total_time"] = sum([p.accounting.lost_time() for p in self.observed_periods])
         self.lost_hours["weather" ] = sum([p.accounting.lost_time_weather for p in self.observed_periods])
         self.lost_hours["RFI" ] = sum([p.accounting.lost_time_rfi for p in self.observed_periods])
         self.lost_hours["other" ] = sum([p.accounting.lost_time_other for p in self.observed_periods])
         self.lost_hours["billed_to_project" ] = sum([p.accounting.lost_time_bill_project for p in self.observed_periods])
 
+        # TBF WTF BBQ: we have no requirements for these numbers!!!!
         self.scheduled_hours["astronomy"] = self.get_obs_time_tuple('p.session.project.project_type.type == "science"')
         self.scheduled_hours["maintenance"] = self.get_obs_time_tuple('p.session.project.pcode == "Maintenance"')
+        # TBF: is this the most robust way to determine if a project is a test or commisioning project?
         self.scheduled_hours["test_comm"] = self.get_obs_time_tuple('p.session.project.pcode[0] == "T"')
         self.scheduled_hours["shutdown"] = self.get_obs_time_tuple('p.session.project.pcode == "Shutdown"')
 
-        self.backlog    = [p for p in Project.objects.all() if p.semester in self.pSemesters and 
+        self.backlog    = [p for p in Project.objects.all() if p.semester in self.previousSemesters and 
                      all([s.observing_type.type != 'testing' for s in p.sesshun_set.all()])]
-
-        self.currentSemester   = Semester.getCurrentSemester(self.start)
-        self.previousSemesters = Semester.getPreviousSemesters(self.start)
-        self.futureSemesters   = Semester.getFutureSemesters(self.start)
 
         self.backlog_hours["total_time"] = sum([self.ta.getTimeLeft(p) for p in self.backlog])
         self.backlog_hours["years"] = {}
