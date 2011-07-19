@@ -199,7 +199,8 @@ class SessionHttpAdapter (object):
         if self.sesshun.observing_type.type != 'continuum' and ir is not None:
             raise Exception("Irradiance Threshold can only be set for a Continuum session.")
         else:
-            self.update_parameter(old_value, ir
+            self.update_parameter(old_value
+                                , None if ir == '300.0' else ir
                                 , Parameter.objects.get(name="Irradiance Threshold"))
 
     def update_xi_obs_param(self, fdata, old_value):
