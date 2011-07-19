@@ -351,6 +351,7 @@ class SessionHttpAdapter (object):
                                                      )
 
     def jsondict(self):
+        irradiance = self.sesshun.irradiance()
         d = {"id"         : self.sesshun.id
            , "pcode"      : self.sesshun.project.pcode
            , "handle"     : self.sesshun.toHandle()
@@ -385,9 +386,10 @@ class SessionHttpAdapter (object):
            , "trk_err_threshold"   : self.sesshun.get_tracking_error_threshold()
            , "src_size"   : self.sesshun.get_source_size()
            , "keyhole"    : self.sesshun.keyhole()
-           , "irradiance" : self.sesshun.irradiance()
+           , "irradiance" : 300 if irradiance is None and 
+                                   self.sesshun.observing_type.type == 'continuum' 
+                                else irradiance
             }
-
         try:
             target = self.sesshun.target
         except Target.DoesNotExist:
