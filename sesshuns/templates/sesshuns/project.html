@@ -88,17 +88,18 @@
                   {{s.get_elevation_limit}}<br/>
               {% endif %}
               {% if s.get_tracking_error_threshold_param %}
-              <span title="Source Size in units of arcsec">Source Size</span>
+              <span title="Tracking Error Threshold">Tracking Error Threshold</span>
                   {{s.get_tracking_error_threshold}}<br/>
-                {% if s.get_source_size %}
+              {% endif %}
+              {% if s.get_source_size %}
+                <span title="Source Size in units of arcsec">Source Size</span>
                   {{s.get_source_size}}<br/>
-                {% endif %}
               {% endif %}
               {% if s.good_atmospheric_stability %}
-              <span title="Use good atmospheric_stability">Require Good Atmospheric Stability</span><br/>
+                <span title="Use good atmospheric_stability">Require Good Atmospheric Stability</span><br/>
               {% endif %}
               {% if s.keyhole %}
-              <span title="Applies the keyhole limit to this session.">Apply Keyhole Limit</span><br/>
+                <span title="Applies the keyhole limit to this session.">Apply Keyhole Limit</span><br/>
               {% endif %}
               {% if s.irradiance %}
               <span title="Applies the irradiance threshold to this session.">Irradiance Threshold: </span>{{s.irradiance}}<br/>
