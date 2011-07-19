@@ -183,7 +183,7 @@ class SchedulingNotifier(Notifier):
 
     def createObservingAddresses(self):
         "get addresses of only those who are observing"
-        return self.emailProjectMap.keys()
+        return self.createAddresses(self.observingPeriods).keys()
 
     def createChangedAddresses(self):
         return self.createAddresses(self.changedPeriods).keys()
