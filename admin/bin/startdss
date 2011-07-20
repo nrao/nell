@@ -1,0 +1,12 @@
+#!/binbash
+
+start ()
+{
+   release.sh restart-nginx
+   release.sh restart-antioch
+   release.sh restart-weather
+   cd /home/dss/release/nell
+   runfcgi start 9005
+}
+
+start
