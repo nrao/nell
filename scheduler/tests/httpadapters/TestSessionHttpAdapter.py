@@ -80,6 +80,19 @@ class TestSessionHttpAdapter(NellTestCase):
         self.assertEquals(float(fdata['source_h']), json['source_h'])
         self.assertEquals(float(fdata['source_v']), json['source_v'])
 
+    def test_update_irradiance(self):
+        fdata = self.exp.copy()
+        fdata.update({'irradiance': 310})
+        # Make sure we raise an error when we set irradiance for a
+        # non-continuum session.
+        self.assertRaises(Exception, self.adapter.update_from_post, fdata)
+
+        # Make it grooving and try again.
+        fdata.update({'science': 'continuum'})
+        self.adapter.update_from_post(fdata)
+        json = self.adapter.jsondict()
+        self.assertEquals(float(fdata['irradiance']), json['irradiance'])
+
     def test_udpate_tr_err_threshold_obs_param(self):
 
         # check inital state

@@ -101,6 +101,9 @@
               {% if s.keyhole %}
                 <span title="Applies the keyhole limit to this session.">Apply Keyhole Limit</span><br/>
               {% endif %}
+              {% if s.irradiance %}
+              <span title="Applies the irradiance threshold to this session.">Irradiance Threshold: </span>{{s.irradiance}}<br/>
+              {% endif %}
               </td>
             </tr>
               
