@@ -220,8 +220,44 @@ class TestReports(NellTestCase):
 
     def test_weeklyReport(self):
 
+        # make sure the project has some alloted time!
+        p =  Project.objects.all()[0]
+        a = Allotment.objects.all()[0]
+        pa = Project_Allotment(project = p, allotment = a)
+        pa.save()
+
         wr = WeeklyReport(datetime(2010, 1, 1))
+
+        # first unit test some helper methods
+        ps = Period.objects.all().order_by('start')
+        # last period is in 2010-01-01, whichever timezone
+        time = wr.get_observed_time(1, [ps[3]], "True")
+        self.assertEquals(2.0, time)
+        # WTF?  this period isn't in Dec. at all!
+        #time = wr.get_observed_time(12, [ps[3]], "True")
+        #self.assertEquals(0.0, time)
+
         wr.report()
+
+        for key in ["weather", "other", "billed_to_project"]:
+            self.assertEquals(wr.lost_hours[key], 0.0)
+        for key in ["total_time", "RFI"]:
+            self.assertEquals(wr.lost_hours[key], 0.5)
+        
+        # WTF: this is all screwed up.
+        #print wr.scheduled_hours
+        self.assertEquals([p], wr.backlog)
+        backlog = {'total_time': 93.5
+                 , 'monitoring': 0 
+                 , 'vlbi': 0
+                 , 'years': {'2006': (0, 0)
+                           , '2007': (0, 0)
+                           , '2004': (0, 0)
+                           , '2005': (0, 0)
+                           , '2008': (0, 0)
+                           , '2009': (93.5, 1)}
+                  }
+        self.assertEquals(backlog, wr.backlog_hours)          
 
     def test_startEndReport(self):
         # make it quiet

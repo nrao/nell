@@ -128,7 +128,7 @@ class RevisionReport(object):
         return vs
 
     def getObjectDiffs(self, obj):
-        self.revUtil.getObjectDiffs(obj)    
+        return self.revUtil.getObjectDiffs(obj)    
   
     
     def reportObjectDiffs(self, obj):
@@ -142,7 +142,7 @@ class RevisionReport(object):
         self.revUtil.areEqual(v1, v2)
     
     def diffVersions(self, v1, v2):
-        self.revUtil.diffVersions(v1, v2)
+        return self.revUtil.diffVersions(v1, v2)
     
     def reportVersion(self, v, field = None):
         "Prints out all the details for a given version."
