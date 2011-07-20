@@ -25,8 +25,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from sets                   import Set
 from datetime               import datetime, timedelta
 
-from settings             import ANTIOCH_HOST, PROXY_PORT
 from utilities.TimeAgent  import adjustDateTimeTz
+from utilities.AnalogSet  import overlaps
 from Observing_Type       import Observing_Type
 from Project              import Project
 from Sesshun              import Sesshun
@@ -47,6 +47,7 @@ class Period(models.Model):
     score      = models.FloatField(null = True, editable=False, blank = True)
     forecast   = models.DateTimeField(null = True, editable=False, blank = True)
     backup     = models.BooleanField()
+    moc        = models.BooleanField(default = True)
     moc_ack    = models.BooleanField(default = False)
     receivers  = models.ManyToManyField(Receiver, through = "Period_Receiver")
     window     = models.ForeignKey("Window", blank=True, null=True, related_name = "periods")
@@ -122,53 +123,6 @@ class Period(models.Model):
     def get_rcvrs_json(self):
         rcvrs = [r.abbreviation for r in self.receivers.all()]
         return ", ".join(rcvrs)
-
-    @staticmethod
-    def moc_failures(start, days):
-        """
-        Returns the list of ids of those open and windowed periods
-        in the given scheduling range that do not satisfy the MOC criteria.
-        """
-        url = "%s:%d/" % (ANTIOCH_HOST, PROXY_PORT) + \
-              "mocs?start=" + \
-              start.isoformat().replace("T", "+").replace(":", "%3A") + \
-              "&duration=" + \
-              `days`
-        try:
-            antioch_cnn = urllib2.build_opener().open(url)
-            mocs = json.loads(antioch_cnn.read(0x4000))['mocFailures']
-        except:
-            mocs = []
-
-        return mocs
-
-
-    def moc_met(self):
-        """
-        Returns a Boolean indicated if MOC are met (True) or not (False).
-        Only bothers to calculate MOC for open and windowed sessions whose
-        end time is not already past.
-        """
-        if self.session.session_type.type not in ("open", "windowed") or \
-           self.end() < datetime.utcnow():
-            return True
-
-        duration = int(self.duration*60.0)
-
-        url = "%s:%d/" % (ANTIOCH_HOST, PROXY_PORT) + \
-              "moc?session_id=" + \
-              `self.session.id` + \
-              "&start=" + \
-              self.start.isoformat().replace("T", "+").replace(":", "%3A") + \
-              "&duration=" + \
-              `duration`
-        try:
-            antioch_cnn = urllib2.build_opener().open(url)
-            moc = json.loads(antioch_cnn.read(0x4000))['moc']
-        except:
-            moc = True
-
-        return moc
 
     def has_required_receivers(self):
 
@@ -297,6 +251,40 @@ class Period(models.Model):
                 self.save()
                 return # take the first one you find!
 
+    def reinit_score(self):
+        """
+        If the Period has changed in certain ways (ex: time range)
+        it will need to be rescored; but nell doesn't score, so just
+        prepare it to be rescored.
+        """
+        self.score = -1.0
+        self.forecast = None
+        if self.in_moc_range():
+            self.moc = None
+
+    def in_moc_range(self):
+        """
+        A period should get it's MOC evaluated only when it's 
+        in the near future or at the start of it's observations.
+        """
+        start, end = Period.get_moc_time_range()
+        if self.start and self.duration:
+            return overlaps((start, end), (self.start, self.end())) 
+        else:
+            False
+        
+    @staticmethod
+    def get_moc_time_range():
+        """
+        When should a period get it's MOC evaluated?
+        Within the first 30 minutes of it's observations, and up to
+        2 days in the future.
+        """    
+        now = datetime.utcnow()
+        start = now - timedelta(minutes = 30)
+        end = now + timedelta(days = 2)    
+        return (start, end)        
+
     @staticmethod
     def get_periods(start, duration, ignore_deleted = True):
         "Returns all periods that overlap given time interval (start, minutes)"
@@ -356,6 +344,7 @@ class Period(models.Model):
 
         periods = Period.get_periods(start, duration)
         for p in periods:
+            
             if p.session.observing_type != Observing_Type.objects.get(type = "maintenance"):
                 p.publish()
                 p.save()

@@ -151,7 +151,7 @@ class TestPeriod(BenchTestCase):
         pr = Period_Receiver(period = p, receiver = X)
         pr.save()
 
-        jd = PeriodHttpAdapter(p).jsondict('UTC', 1.1)
+        jd = PeriodHttpAdapter(p).jsondict('UTC')
 
         self.assertEqual(jd["duration"], dur)
         self.assertEqual(jd["date"], "2009-06-01")
@@ -412,8 +412,4 @@ class TestPeriod(BenchTestCase):
         adapter.update_rcvrs_from_post({"receivers" : "L, S"})
         self.assertEquals(False, p.has_observed_rcvrs_in_schedule())
 
-    def test_moc_failures(self):
-        start = datetime(2009, 6, 1, 0, 0)
-        days = 4
-        mfs = Period.moc_failures(start, days)
-        self.assertEquals([], mfs)
+

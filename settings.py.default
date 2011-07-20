@@ -183,5 +183,5 @@ INSTALLED_APPS = (
 # /home/dss/conundrum/conf/nginx.conf.  Note that 'ANTIOCH_HOST is not
 # really the Antioch host, but the nginx host.
 
-PROXY_PORT = 8001       #MODIFY#
-ANTIOCH_HOST =  "http://trent.gb.nrao.edu"    #MODIFY#
+#PROXY_PORT = 8001       #MODIFY#
+#ANTIOCH_HOST =  "http://trent.gb.nrao.edu"    #MODIFY#
