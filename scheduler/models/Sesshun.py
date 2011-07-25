@@ -299,6 +299,13 @@ class Sesshun(models.Model):
         """
         return self.has_float_obs_param("El Limit")
 
+    def irradiance(self):
+        """
+        Returns factor if has 'Irradiance Threshold' observing 
+        parameter, else None.
+        """
+        return self.has_float_obs_param("Irradiance Threshold")
+
     def transit(self):
         """
         Returns True or False if has 'Transit' observing parameter,

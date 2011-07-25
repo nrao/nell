@@ -36,6 +36,7 @@ from TestObserversBase            import TestObserversBase
 from TestOperators                import TestOperators
 from TestPSTMirrorDB              import TestPSTMirrorDB
 from TestReports                  import TestReports
+from TestRevisionUtility          import TestRevisionUtility
 from TestSchedulingNotifier       import TestSchedulingNotifier
 from TestSessionAlertNotifier     import TestSessionAlertNotifier
 from TestSessionAlerts            import TestSessionAlerts

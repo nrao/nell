@@ -47,8 +47,7 @@ class SessionRevReport(RevisionReport):
         vs = []
         vs.extend(Version.objects.get_for_object(sesshun.status))
         vs.extend(Version.objects.get_for_object(sesshun.allotment))
-        for t in sesshun.target_set.all():
-            vs.extend(Version.objects.get_for_object(t))
+        vs.extend(Version.objects.get_for_object(sesshun.target))
         return vs    
 
          
@@ -133,8 +132,7 @@ class SessionRevReport(RevisionReport):
             return
         diffs.extend(self.getObjectDiffs(s)) 
         diffs.extend(self.getObjectDiffs(s.allotment))
-        for t in s.target_set.all():
-            diffs.extend(self.getObjectDiffs(t))
+        diffs.extend(self.getObjectDiffs(s.target))
         diffs.extend(self.getObjectDiffs(s.status))
         diffs.extend(self.getSessionRcvrDiffs(pcode, name))
         diffs.sort(key=lambda v: v.dt)
@@ -215,6 +213,8 @@ def show_help(program):
     print "\nAll required arguments are required.  Anything else is optional :)"
 
 if __name__ == '__main__':
+
+    import sys
 
     if len(sys.argv) < 2:
         show_help(sys.argv[0])

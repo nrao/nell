@@ -64,7 +64,7 @@ class ProjectRevReport(RevisionReport):
         self.add("Differences for Project: %s \n\n" % pcode)
         diffs = []
         p = Project.objects.get(pcode = pcode)
-        diffs.extend(self.getObjectDiffs(p)) 
+        diffs.extend(self.getObjectDiffs(p))
         for a in p.allotments.all():
             diffs.extend(self.getObjectDiffs(a))
         for i in p.investigator_set.all():
@@ -123,6 +123,8 @@ def show_help(program):
     print "\nAll required arguments are required.  Anything else is optional :)"
 
 if __name__ == '__main__':
+
+    import sys
 
     if len(sys.argv) < 2:
         show_help(sys.argv[0])
