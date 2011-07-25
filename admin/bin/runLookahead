@@ -5,10 +5,10 @@ initDB ()
 {
     echo "Initializing database for lookahead simulations."
     cd $LOOKAHEADDIR/nell
-    pg_dump -U dss dss > dss_lookahead.sql
-    createdb -U dss dss_lookahead
-    psql dss_lookahead dss -f dss.sql > /dev/null
-    rm dss_lookaheahd.sql
+    pg_dump -U dss dss > dss_lookahead_$USER.sql
+    createdb -U dss dss_lookahead_$USER
+    psql dss_lookahead_$USER dss -f dss.sql > /dev/null
+    rm dss_lookahead_$USER.sql
     echo "Database initialization complete."
 }
 
