@@ -126,7 +126,7 @@ class ScheduleTools(object):
                 if debug:
                     print "start period later"
                 # we're chopping off the beginning of this period
-                new_duration = TimeAgent.timedelta2hours(p.end() - end)
+                new_duration = TimeAgent.timedelta2frachours(p.end() - end)
                 other_sess_time = p.duration - new_duration
                 descDct["gave_time"].append((p.__str__(),other_sess_time, p.id))
                 p.duration = new_duration
@@ -140,9 +140,9 @@ class ScheduleTools(object):
                 descDct["gave_time"].append((p.__str__(), duration, p.id))
                 original_duration = p.duration
                 original_end      = p.end()
-                p.duration = TimeAgent.timedelta2hours(start - p.start)
+                p.duration = TimeAgent.timedelta2frachours(start - p.start)
                 # the new one
-                new_dur = TimeAgent.timedelta2hours(original_end - end)
+                new_dur = TimeAgent.timedelta2frachours(original_end - end)
                 accounting = Period_Accounting(scheduled = new_dur
                                              , short_notice = new_dur
                                              , description = "" #description
@@ -168,7 +168,7 @@ class ScheduleTools(object):
                 if debug:
                     print "shorten period"
                 # we're chopping off the end of this period
-                new_duration = TimeAgent.timedelta2hours(start - p.start)
+                new_duration = TimeAgent.timedelta2frachours(start - p.start)
                 other_sess_time = p.duration - new_duration
                 descDct["gave_time"].append((p.__str__(),other_sess_time, p.id))
                 p.duration = new_duration
