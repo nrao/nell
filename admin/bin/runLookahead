@@ -15,6 +15,7 @@ initDB ()
 prepDB ()
 {
     echo "Preparing database."
+    python tools/database/ResolveOverlaps.py
     echo "Database preparation complete."
 }
 
