@@ -155,6 +155,9 @@ class CalEvent(object):
     def moc_reschedule(self):
         return False
 
+    def moc_ack(self):
+        return False
+
     # returns boolean True if the event is cut off (crosses midnight)
     def cutoff(self):
         return self.start_cutoff or self.end_cutoff
@@ -264,6 +267,8 @@ class CalEventPeriod(CalEvent):
         else:
             return False
 
+    def moc_ack(self):
+        return contained.moc_ack
 
     def get_lost_time(self):
         lt = []

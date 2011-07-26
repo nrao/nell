@@ -177,6 +177,11 @@ class Maintenance_Activity_Group(models.Model):
 
             start_endQ = models.Q(start__gte = period.start) \
                 & models.Q(start__lte = period.end())
+            today = TimeAgent.truncateDt(period.start)
+            other_groups_today = Maintenance_Activity_Group.objects\
+                .filter(period__start__gte = today)\
+                .filter(period__start__lt = today + timedelta(1))\
+                .exclude(id = self.id)
 
             groupQ  = models.Q(group = self)
             dbmas   = Maintenance_Activity.objects.filter(groupQ)
@@ -184,10 +189,15 @@ class Maintenance_Activity_Group(models.Model):
             mas     = [i for i in dbmas if not i.is_repeat_template()]
             rmas    = [i for i in dbrmas]
 
-            # rmas is the list repeating activity templates that may apply
-            # for this period.  We need clones of these to include in mas.
-            # If however there are already clones in mas, we'll want to
-            # skip that template.
+            # rmas is the list repeating activity templates that may
+            # apply for this period.  We need clones of these to
+            # include in mas.  If however there are already clones in
+            # mas, we'll want to skip that template.  We will also
+            # skip the template if there is a better candidate
+            # maintenance activity group on this day (by better, a
+            # better match in time, defined by the activity's start
+            # time being within the maintenance activity group's time
+            # span).
 
             x = []
 
@@ -195,6 +205,12 @@ class Maintenance_Activity_Group(models.Model):
                 for j in mas:
                     if j.repeat_template == i:
                         x.append(i)
+
+                for g in other_groups_today:
+                    if i.get_start().time() >= g.get_start().time() \
+                            and i.get_start().time() < g.get_end().time():
+                        x.append(i)
+                
 
             # Weekly repeats have a problem: what if the repeat falls on a
             # day that is not a maintenance day?  Where should we put it?

@@ -83,4 +83,78 @@ class RevisionUtility:
     
         return diffs
 
+    def removeFieldFromVersions(self, modelName, field):
+        """
+        A major flaw with the revision library: when a model changes
+        there can be trouble interpreting the historical versions.
+        Specifically, when a model drops a field, the old versions
+        containing that field cause an excpetion when trying to 
+        use some of the more useful methods.
+        One can use this method to remove those legacy fields, but 
+        of course, the history of that field is then lost.
+        Note: model name should be of the form 'scheduler.allotment'.
+        """
 
+        count = 0
+        vs = Version.objects.filter(serialized_data__contains = modelName)
+        for v in vs:
+            new_data = self.removeFieldName(v.serialized_data, field)
+            if new_data is not None:
+                v.serialized_data = new_data 
+                v.save()
+                count += 1
+        print "Removed %d occurances of %s for model %s" % (count, field, modelName)
+
+    def removeFieldName(self, serialized_data, field):
+        return self.substituteFieldName(serialized_data, field, "")
+
+    def substituteFieldName(self, serialized_data, field, substitute):
+        """
+        Ex: [{"pk": 504, "model": "scheduler.allotment",
+             "fields": {"total_time": "42", "max_semester_time": "42",
+             "ignore_grade": false, "psc_time": "42", "grade": "4"}}]
+        May need  '"ignore_grade": false,' removed, because the 
+        Allotment model no longer has that field.
+        """
+        # isolate the inner 'fields' dictionary
+        fieldInd = serialized_data.find('fields')
+        justFields = serialized_data[(fieldInd+10):-3]
+        # split up the key value pairs of this dict
+        keyValues = justFields.split(",")
+        replace = None
+        # look for the key we want to replace, and find what
+        # i't key-value looks like
+        for keyValue in keyValues:
+            parts = keyValue.split(":")
+            key = parts[0].strip()[1:-1]
+            if key == field:
+                replace = keyValue + ","
+        if replace is not None:
+            return serialized_data.replace(replace, substitute)
+        else:    
+            return replace    
+
+    def changeModelNameInVersions(self, content_type_id, bad_name, good_name):
+        """
+        Ex: select * from reversion_version where id = 66415;
+        66415 |       18992 | 678       |              62 | json   | [{"pk": 678, "mode
+l": "auth.user", "fields": {"username": "jhewitt", "first_name": "John", "last_n
+ame": "Hewitt", "sanctioned": false, "pst_id": 264, "original_id": null, "auth_u
+ser": 216, "role": 2, "contact_instructions": null}}] | Hewitt, John |    1
+
+        That model, auth.user is wrong! it should be changed to scheduler.user.
+        """
+        vs = Version.objects.filter(serialized_data__contains = bad_name
+                                  , content_type = content_type_id
+                                   )
+        count = 0                           
+        for v in vs:
+            bad_field  = '"model": "%s"' % bad_name
+            good_field = '"model": "%s"' % good_name
+            new_serialized_data = v.serialized_data.replace(bad_field, good_field)
+            if new_serialized_data is not None:
+                v.serialized_data = new_serialized_data
+                v.save()
+                count += 1
+        print "Updated %d model names for content_type_id %d" % (count, content_type_id)        
+            

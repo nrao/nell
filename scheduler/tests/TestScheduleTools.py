@@ -181,6 +181,46 @@ class TestScheduleTools(NellTestCase):
             self.assertEquals(scheduled[i], p.accounting.scheduled)
             self.assertEquals(observed[i] , p.accounting.observed())
 
+    def test_changeSchedule1_2(self):
+
+        # here we make sure that everything can handle
+        # fractional hours.
+
+        # check accounting before changing schedule
+        scheduled = [5.0, 3.0, 4.0]
+        for i, p in enumerate(self.ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(scheduled[i], p.accounting.observed())
+
+        change_start = self.ps[0].start + timedelta(hours = 2) + timedelta(minutes = 15)
+        ScheduleTools().changeSchedule(change_start
+                                    , 2.75
+                                    , self.backup
+                                    , "other_session_other"
+                                    , "SP broke.")
+
+        # get the periods from the DB again for updated values
+        ps = Period.get_periods(self.start, 12.0*60.0)
+        # check accounting after changing schedule
+        scheduled = [5.0,  2.75, 3.0, 4.0]
+        observed  = [2.25, 2.75, 3.0, 4.0]
+        for i, p in enumerate(ps):
+            self.assertEquals(scheduled[i], p.accounting.scheduled)
+            self.assertEquals(observed[i] , p.accounting.observed())
+        # check affected periods
+        canceled = ps[0]
+        backup   = ps[1]
+        self.assertEquals(self.start, canceled.start)
+        self.assertEquals(2.25, canceled.duration)
+        self.assertEquals(2.75, canceled.accounting.other_session_other)
+        self.assertTrue("SP broke." in canceled.accounting.description)
+        self.assertEquals(2.75, backup.accounting.short_notice)
+        self.assertTrue("SP broke." in backup.accounting.description)
+
+        tag = "Period backup: 2000-01-01 02:15:00 for  2.75 Hrs got  2.75 hours from: one: 2000-01-01 00:00:00 for  5.00 Hrs ( 2.75 hours)"
+        self.assertTrue(tag in backup.accounting.description)
+        self.assertTrue(tag in canceled.accounting.description)
+
     def test_changeSchedule1(self):
 
         # check accounting before changing schedule

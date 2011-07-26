@@ -17,7 +17,7 @@
     .type_commissioning {background-color:#F0E68C}
     .type_calibration {background-color:#FF9933}
     .type_maintenance {background-color:#98FB98}
-    .type_shutdown {background-color:red}
+    .type_shutdown {background-color:#508416}
     .type_concurrent_activity {background-color:#FF99FF}
     .moc_failure {background-color:#FF0000}
     .info{
@@ -87,9 +87,11 @@
   <a href="https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar" target="Support_Staff_Absences_&_Contact_Info" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar', 'Support_Staff_Absences_&_Contact_Info');return true;">
     Support Staff Absences & Contact Info
   </a>
-  |
+  <br \>
   Report Links:
   <a href='/schedule/summary'>Schedule & Project Summaries</a>
+  |
+  <a href='http://www.gb.nrao.edu/php/shp/index.php'>Historical Schedules</a>
   |
   <a href='/investigators/qualified'>Remote Observers</a>
   <br/>
@@ -109,15 +111,17 @@
   <a href="http://www.gb.nrao.edu/~rmaddale/Weather/DSSOverview.html" target="High_Frequency_Forecasts" onClick="window.open('http://www.gb.nrao.edu/~rmaddale/Weather/', 'High_Frequency_Forecasts');return true;">
     High Frequency Forecasts
   </a>
-  | Ground Weather Forecasts (
+  |
+  <a href="https://bos.nrao.edu/resReports/roomChart?Start+Date={{calendar|get_cal_start|date:'m/d/Y'}}&End+Date={{calendar|get_cal_end|date:'m/d/Y'}}&Site=1" target="Room_Reservations" onClick="window.open('https://bos.nrao.edu/resReports/roomChart?Start+Date={{calendar|get_cal_start|date:'m/d/Y'}}&End+Date={{calendar|get_cal_end|date:'m/d/Y'}}&Site=1', 'Room_Reservations');return true;">
+    Room Reservations
+  <br \>
+  Ground Weather Forecasts (
   <a href="http://www.gb.nrao.edu/~rmaddale/WeatherNAM/ground.html" target="Ground_Weather_Forecasts_(3.5_day)" onClick="window.open('http://www.gb.nrao.edu/~rmaddale/WeatherNAM/ground.html', 'Ground_Weather_Forecasts_(3.5_day)');return true;">
     3.5 day</a>
   ) (
   <a href="http://www.gb.nrao.edu/~rmaddale/WeatherGFS3/ground.html" target="Ground_Weather_Forecasts_(7.5_day)" onClick="window.open('http://www.gb.nrao.edu/~rmaddale/WeatherGFS3/ground.html', 'Ground_Weather_Forecasts_(7.5_day)');return true;">
     7.5 day</a>
-  ) |
-  <a href="https://bos.nrao.edu/resReports/roomChart?Start+Date={{calendar|get_cal_start|date:'m/d/Y'}}&End+Date={{calendar|get_cal_end|date:'m/d/Y'}}&Site=1" target="Room_Reservations" onClick="window.open('https://bos.nrao.edu/resReports/roomChart?Start+Date={{calendar|get_cal_start|date:'m/d/Y'}}&End+Date={{calendar|get_cal_end|date:'m/d/Y'}}&Site=1', 'Room_Reservations');return true;">
-    Room Reservations
+  )
   </a>
   </strong>
   <br />
@@ -233,7 +237,7 @@
           <a href="" class="info">(N)<span><p>Project Notes:</p>{{event.project_notes|escape|linebreaks}}</span></a>
         {% endif %}
 
-      {% if not event.moc_met and event.moc_ack %}
+      {% if not event.moc_met and not event.moc_ack %}
         </blink>
       {% endif %}
 

@@ -194,6 +194,16 @@ Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | Nubbles   |           | three"""
         email = self.sn.email_templates.getObject("changed")
         self.assertEquals([], email.recipients)
 
+        # now delete these periods, and make sure no observers get emails 
+        for p in self.ps:
+            p.state = Period_State.get_state("D")
+            p.save()
+        self.sn.setPeriods(self.ps, self.ps)
+
+        # test the staff email
+        email = self.sn.email_templates.getObject("observer")
+        self.assertEquals(0, len(email.recipients))
+
     def test_setPeriods_changes(self):
 
         self.setupUser()
