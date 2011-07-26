@@ -35,6 +35,8 @@ runReports ()
 }
 
 echo ""
+echo "Running lookahead simulations"
+echo ""
 echo "    Going to the fortune teller's was just as good as going to the "
 echo "    opera, and the cost scarcely a trifle more - ergo, I will disguise "
 echo "    myself and go again, one of these days, when other amusements fail."

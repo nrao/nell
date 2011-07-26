@@ -7,6 +7,14 @@ from datetime import datetime
 from utilities                 import AnalogSet
 
 class ResolveOverlaps:
+
+    def __init__(self):
+        self.output = open('resolve_overlaps.txt', 'w')
+
+    def __del__(self):
+        self.output.close()
+        super("ResolveOverlaps").__del__()
+
     def findOverlaps(self, periods):
         values = []
         overlap = []
@@ -32,11 +40,15 @@ class ResolveOverlaps:
                                                , p.duration
                                                  )
     
+    def annotate(self, subject):
+        print "%s" % subject
+        self.output.write("%s" % subject + '\n')
+
     def electivesResolvable(self, p1, p2):
     
         # must be electives
         if not p1.session.isElective() or not p2.session.isElective():
-            print "Not electives: ", p1, p2
+            self.annotate( "Not electives: %s %s" % (p1, p2))
             return False
     
         # one of their elective groups must have another period we can choose
@@ -44,7 +56,7 @@ class ResolveOverlaps:
         p2total = len(p2.elective.periods.all())
         if p1total + p2total < 3:
             # no options!
-            print "Not enough periods in elective groups: ", p1, p2
+            self.annotate( "Not enough periods in elective groups: %s %s" % (p1, p2))
             return False
     
         # Okay, so, one of the elective groups must choose it's first period,
@@ -110,18 +122,17 @@ class ResolveOverlaps:
             
             
     def showPair(self, p1, p2):
-        #print "Overlap between %s and %s" % (p1, p2)
-        print ""
-        print "%s" % self.showPeriod(p1)
+        #self.annotate( "Overlap between %s and %s" % (p1, p2))
+        self.annotate( "\n%s" % self.showPeriod(p1))
         if p1.session.isElective() and p1.elective is not None:
             for ep in p1.elective.periods.all().order_by("start"):
                 if ep.id != p1.id:
-                    print "    %s" % self.showPeriod(ep)
-        print "%s" % self.showPeriod(p2)
+                    self.annotate( "    %s" % self.showPeriod(ep))
+        self.annotate( "%s" % self.showPeriod(p2))
         if p2.session.isElective() and p2.elective is not None:
             for ep in p2.elective.periods.all().order_by("start"):
                 if ep.id != p2.id:
-                    print "    %s" % self.showPeriod(ep)
+                    self.annotate( "    %s" % self.showPeriod(ep))
     
     def resolve(self, period):
         if not self.hasOptions(period):
@@ -142,7 +153,7 @@ class ResolveOverlaps:
 
     def resolveOverlaps(self):    
         def printPairs(pairs):
-            print "Overlaps: "
+            self.annotate( "Overlaps: ")
             for p1, p2 in pairs:
                 self.showPair(p1, p2)
         
@@ -151,19 +162,19 @@ class ResolveOverlaps:
             [p for p in Period.objects.filter(start__gt = now).exclude(state__abbreviation = "D")])
         numOverlaps     = len(pairs)
 
-        print "Number of overlapping pairs: ", numOverlaps
+        self.annotate( "Number of overlapping pairs: %s" % numOverlaps)
         printPairs(pairs)
 
         elec_pairs = [self.electivesResolvable(p1, p2) for p1, p2 in pairs if p1.session.isElective() and p2.session.isElective()]
 
-        print "Number of overlapping elective pairs: ", len(elec_pairs)
-        print elec_pairs
+        self.annotate( "Number of overlapping elective pairs: %s" % len(elec_pairs))
+        self.annotate( elec_pairs)
         
         # resolve overlaps!  After each resolution, we should query DB
         # again, to make sure the resolution's affects are taken into account
         removed = []
         while numOverlaps > 0:
-            print "Number of overlaps: ", numOverlaps
+            self.annotate( "Number of overlaps: %s" % numOverlaps)
             # resolve the first pair
             p1, p2 = pairs[0]
             newP1, newP2, resolvable = self.overlapResolvable(p1, p2)
@@ -171,10 +182,9 @@ class ResolveOverlaps:
             chosenPeriod  = p1 if newP1 is not None else p2
             assert resolvePeriod.id != chosenPeriod.id
             if resolvable:
-               msg = "Found resolution using %s" % self.showPeriod(resolvePeriod)
+               self.annotate("Found resolution using %s" % self.showPeriod(resolvePeriod))
             else:
-               msg = "NO resolutin found, deleting %s" % self.showPeriod(resolvePeriod)
-            print msg
+               self.annotate("NO resolutin found, deleting %s" % self.showPeriod(resolvePeriod))
             removed.append((resolvePeriod, resolvable))
             # publish one
             chosenPeriod.publish()
@@ -192,10 +202,10 @@ class ResolveOverlaps:
             # avoid an infinite loop
             assert numOverlaps < prevNum
 
-        print "Overlaps resolved!!!"
+        self.annotate( "Overlaps resolved!!!")
         
         for rm, problem in removed:
-            print "Period %s deleted; %s" % (self.showPeriod(rm), problem)
+            self.annotate( "Period %s deleted; %s" % (self.showPeriod(rm), problem))
 
 if __name__ == "__main__":
     ResolveOverlaps().resolveOverlaps()
