@@ -195,7 +195,9 @@ class Maintenance_Activity_Group(models.Model):
             # mas, we'll want to skip that template.  We will also
             # skip the template if there is a better candidate
             # maintenance activity group on this day (by better, a
-            # better match in time).
+            # better match in time, defined by the activity's start
+            # time being within the maintenance activity group's time
+            # span).
 
             x = []
 
