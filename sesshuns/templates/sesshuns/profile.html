@@ -14,15 +14,15 @@
       </div>
       <hr />
       <div class="span-17 colborder" id="content">
-        <h3 class="loud">Projects</h3>
+        <h3 class="loud">Active Projects</h3>
         <div>
           <table>
             <tr>
               <th>Project ID</th>
               <th>Title</th>
             </tr>
-              {% for p in u|get_projects %}
-                <tr>
+              {% for p in u|get_incomplete_projects %}
+                <tr class="{% cycle 'odd' 'even' %}">
                   <td><a href="/project/{{p.pcode}}">{{p.pcode}}</a></td>
                   <td>{{p.name}}</td>
                 </tr>
@@ -30,15 +30,15 @@
           </table>
 
           {% if u.friend_set.all %}
-            <h3 class="loud">Project Friend On</h3>
+            <h3 class="loud">Assigned as Friend</h3>
               <table>
                 <tr>
                   <th>Project ID</th>
                   <th title="You must be available to observe this Project">Required</th>
                   <th>Title</th>
                 </tr>
-                  {% for f in u.friend_set.all %}
-                    <tr>
+                  {% for f in u|get_incomplete_friends %}
+                    <tr class="{% cycle 'odd' 'even' %}">
                       <td><a href="/project/{{f.project.pcode}}">{{f.project.pcode}}</a></td>
                       <td>{% if f.required %}Yes{% endif %}</td>
                       <td>{{f.project.name}}</td>
@@ -138,6 +138,40 @@
           <br/>
           <br/>
           <br/>
+        </div>
+        <h3 class="loud">Completed Projects</h3>
+        <div>
+          <table>
+            <tr>
+              <th>Project ID</th>
+              <th>Title</th>
+            </tr>
+              {% for p in u|get_incomplete_projects %}
+                <tr class="{% cycle 'odd' 'even' %}">
+                  <td><a href="/project/{{p.pcode}}">{{p.pcode}}</a></td>
+                  <td>{{p.name}}</td>
+                </tr>
+              {% endfor %}
+          </table>
+
+          {% if u.friend_set.all %}
+            <h3 class="loud">Historically Assigned as Friend</h3>
+              <table>
+                <tr>
+                  <th>Project ID</th>
+                  <th title="You must be available to observe this Project">Required</th>
+                  <th>Title</th>
+                </tr>
+                  {% for f in u|get_incomplete_friends %}
+                    <tr class="{% cycle 'odd' 'even' %}">
+                      <td><a href="/project/{{f.project.pcode}}">{{f.project.pcode}}</a></td>
+                      <td>{% if f.required %}Yes{% endif %}</td>
+                      <td>{{f.project.name}}</td>
+                    </tr>
+                  {% endfor %}
+              </table>
+          {% endif %}
+          <hr />
         </div>
       </div>
       <div class="span-6 last" id="sidebar">
