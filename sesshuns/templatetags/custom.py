@@ -99,6 +99,13 @@ def getTimeBilled(obj):
 def getSumTotalTime(project):
     return TimeAccounting().getProjectTotalTime(project)
 
+@register.filter
+def getGrade(sess):
+    # keep it simple
+    def grade2letter(g):
+        g2l = {4 : 'A', 3 : 'B', 2 : 'C', 1 : 'D', 0 : 'F'}
+        return g2l[int(round(g))]
+    return grade2letter(sess.allotment.grade)
 
 @register.filter
 def get_email(user):
