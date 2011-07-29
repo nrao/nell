@@ -13,7 +13,6 @@ class ResolveOverlaps:
 
     def __del__(self):
         self.output.close()
-        super("ResolveOverlaps").__del__()
 
     def findOverlaps(self, periods):
         values = []
