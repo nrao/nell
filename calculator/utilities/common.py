@@ -140,11 +140,11 @@ def getMessages(request):
     if rx != '' and bandwidth != '' and time != '' and t_tot != '' and conversion != '' and None not in (rx, bandwidth, time, t_tot, conversion):
         limit = float(time) * float(bandwidth) if conversion == 'Time to Sensitivity' else \
                 float(t_tot) * float(bandwidth)
-        if backend == 'Mustang' and limit >= 1e11:
+        if backend == 'Mustang' and limit >= 1e5:
             messages.append(msg)
-        elif backend == 'Caltech Continuum Backend' and 'Ka' in rx and limit >= 1e11:
+        elif backend == 'Caltech Continuum Backend' and 'Ka' in rx and limit >= 1e5:
             messages.append(msg)
-        elif limit >= 1e9:
+        elif limit >= 1e3:
             messages.append(msg)
 
     return messages
