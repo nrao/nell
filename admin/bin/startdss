@@ -1,10 +1,13 @@
-#!/binbash
+#!/bin/bash
 
 start ()
 {
-   release.sh restart-nginx
-   release.sh restart-antioch
-   release.sh restart-weather
+   source /home/dss/conundrum/conundrum.bash
+   nginx
+   cd /home/dss/release/antioch
+   ./serve </dev/null >~/antioch.out 2>&1 &
+   cd admin
+   python forecasts/daemonCleoDBImport.py </dev/null >~/dss_weather.out 2>&1 &
    cd /home/dss/release/nell
    runfcgi start 9005
 }
