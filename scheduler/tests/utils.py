@@ -88,7 +88,6 @@ def create_users():
                 , first_name  = 'Foo'
                 , last_name   = 'Bar'
                 , contact_instructions = ""
-                , role  = Role.objects.all()[0]
                  ))
     users.append(User.objects.create(original_id = 0
                 , pst_id      = 0
@@ -96,7 +95,6 @@ def create_users():
                 , first_name  = 'Mike'
                 , last_name   = 'McCarty'
                 , contact_instructions = ""
-                , role  = Role.objects.all()[0]
                  ))
     users.append(User.objects.create(original_id = 0
                 , pst_id      = 0
@@ -104,7 +102,6 @@ def create_users():
                 , first_name  = 'Doless'
                 , last_name   = 'NoProject'
                 , contact_instructions = ""
-                , role  = Role.objects.all()[0]
                  ))
     return users
 

@@ -82,8 +82,8 @@ class UserHttpAdapter(object):
               , 'first_name'           : self.user.first_name
               , 'last_name'            : self.user.last_name
               , 'contact_instructions' : self.user.contact_instructions
-              , 'role'                 : self.user.role.role
-              , 'staff'                : self.user.auth_user.is_staff if self.user.auth_user is not None else False
+              , 'roles'                : [r.role for r in self.user.roles.all()]
+              , 'staff'                : self.user.isStaff()
               , 'projects'             : projects
                 }
 

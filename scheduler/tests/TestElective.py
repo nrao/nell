@@ -137,7 +137,6 @@ class TestElective(NellTestCase):
         now = datetime(2009, 6, 1, 12, 15)
         u = User(first_name = "Test"
                , last_name  = "User"
-               , role       = Role.objects.all()[0]
                , sanctioned = True
                       )
         u.save()
