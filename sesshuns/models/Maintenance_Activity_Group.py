@@ -107,7 +107,7 @@ class Maintenance_Activity_Group(models.Model):
     def __unicode__(self):
         sr = "%i -- %s; (%s); %s; %s; " % (self.id, self.week.date(), self.get_start().date(),
                                            self.rank, "deleted" if self.deleted else "active")
-        
+
         if self.maintenance_activity_set.count():
             sr += ", ".join([e.get_subject() for e in self.maintenance_activity_set.all()])
         else:
@@ -210,7 +210,7 @@ class Maintenance_Activity_Group(models.Model):
                     if i.get_start().time() >= g.get_start().time() \
                             and i.get_start().time() < g.get_end().time():
                         x.append(i)
-                
+
 
             # Weekly repeats have a problem: what if the repeat falls on a
             # day that is not a maintenance day?  Where should we put it?
@@ -302,6 +302,9 @@ class Maintenance_Activity_Group(models.Model):
                 .filter(periods__start__lt = utc_day + delta)\
                 .distinct()
 
+            # don't care about elective with all deleted periods.
+            me = [e for e in me if e.periods.count() > e.deletedPeriods().count()]
+
             # need as many groups as there are maintenance days
             # (floating or fixed).  First, count up the maintenance
             # days, then the groups.  If not equal, we must either
@@ -309,7 +312,7 @@ class Maintenance_Activity_Group(models.Model):
             # within the tally must be marked not deleted (in case
             # they were deleted earlier), and any outside the tally
             # must be marked deleted.
-            maintenance_periods = mp.count() + me.count()
+            maintenance_periods = mp.count() + len(me)
             dbmags = Maintenance_Activity_Group.objects\
                 .filter(week__gte = utc_day)\
                 .filter(week__lt = utc_day + delta)\
