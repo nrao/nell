@@ -93,7 +93,7 @@ class TestSessionHttpAdapter(NellTestCase):
         json = self.adapter.jsondict()
         self.assertEquals(float(fdata['irradiance']), json['irradiance'])
 
-    def test_udpate_tr_err_threshold_obs_param(self):
+    def test_update_tr_err_threshold_obs_param(self):
 
         # check inital state
         th = self.adapter.sesshun.get_tracking_error_threshold_param()
@@ -122,7 +122,15 @@ class TestSessionHttpAdapter(NellTestCase):
         th = self.adapter.sesshun.get_tracking_error_threshold()
         self.assertAlmostEquals(0.6, th, 1)
 
-    def test_udpate_source_size_obs_param(self):
+        # change the param to default
+        fdata = {'trk_err_threshold' : 0.2}
+        old_value = self.adapter.sesshun.get_tracking_error_threshold_param()
+        self.adapter.update_tr_err_threshold_obs_param(fdata, old_value)
+        th = self.adapter.sesshun.get_tracking_error_threshold()
+        self.assertAlmostEquals(0.2, th, 1)
+        self.assertTrue(len(self.adapter.sesshun.observing_parameter_set.filter(parameter__name = 'Tr Err Limit')) == 0)
+
+    def test_update_source_size_obs_param(self):
 
         # check inital state
         old_value = self.adapter.sesshun.get_source_size()

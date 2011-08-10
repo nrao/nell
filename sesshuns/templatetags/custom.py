@@ -99,6 +99,13 @@ def getTimeBilled(obj):
 def getSumTotalTime(project):
     return TimeAccounting().getProjectTotalTime(project)
 
+@register.filter
+def getGrade(sess):
+    # keep it simple
+    def grade2letter(g):
+        g2l = {4 : 'A', 3 : 'B', 2 : 'C', 1 : 'D', 0 : 'F'}
+        return g2l[int(round(g))]
+    return grade2letter(sess.allotment.grade)
 
 @register.filter
 def get_email(user):
@@ -127,9 +134,24 @@ def pretty_none(value):
 
 
 @register.filter
-def get_projects(user):
-    return sorted([i.project for i in user.investigator_set.all()]
+def get_incomplete_projects(user):
+    return sorted([i.project for i in user.investigator_set.all() if not i.project.complete]
                 , lambda x, y: cmp(x.pcode, y.pcode))
+
+@register.filter
+def get_complete_projects(user):
+    return sorted([i.project for i in user.investigator_set.all() if i.project.complete]
+                , lambda x, y: cmp(x.pcode, y.pcode))
+
+@register.filter
+def get_incomplete_friends(user):
+    return sorted([f for f in user.friend_set.all() if not f.project.complete]
+                , lambda x, y: cmp(x.project.pcode, y.project.pcode))
+
+@register.filter
+def get_complete_friends(user):
+    return sorted([f for f in user.friend_set.all() if f.project.complete]
+                , lambda x, y: cmp(x.project.pcode, y.project.pcode))
 
 @register.filter
 def sort_projects(projects):

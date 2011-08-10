@@ -208,8 +208,9 @@ class SessionHttpAdapter (object):
         For taking a json dict and converting its given
         xi float field into a 'Min Eff TSys' float observing parameter.
         """
+        xi = self.get_field(fdata, "xi_factor", 1.0, float)
         self.update_parameter(old_value
-                            , self.get_field(fdata, "xi_factor", 1.0, float)
+                            , None if xi == 1.0 else xi
                             , Parameter.objects.get(name="Min Eff TSys")
                             )
 
@@ -228,7 +229,9 @@ class SessionHttpAdapter (object):
                 return # nonsense value
 
         parameter = Parameter.objects.get(name="Tr Err Limit")
-        self.update_parameter(old_value, new_value, parameter)
+        self.update_parameter(old_value
+                            , None if new_value == 0.2 else new_value
+                            , parameter)
 
     def update_source_size_obs_param(self, fdata, old_value):
         """
