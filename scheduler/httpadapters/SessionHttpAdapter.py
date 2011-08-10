@@ -200,7 +200,8 @@ class SessionHttpAdapter (object):
             raise Exception("Irradiance Threshold can only be set for a Continuum session.")
         else:
             self.update_parameter(old_value
-                                , None if float(ir) == 300.0 else ir
+                                #, None if float(ir) == 300.0 else ir
+                                , None if ir == '300.0' else ir
                                 , Parameter.objects.get(name="Irradiance Threshold"))
 
     def update_xi_obs_param(self, fdata, old_value):
