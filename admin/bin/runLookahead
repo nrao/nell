@@ -1,0 +1,54 @@
+#!/bin/bash
+
+LOOKAHEADDIR=/home/sandboxes/mmccarty/dss
+initDB ()
+{
+    echo "Initializing database for lookahead simulations."
+    cd $LOOKAHEADDIR/nell
+    pg_dump -U dss dss > dss_lookahead_$USER.sql
+    createdb -U dss dss_lookahead_$USER
+    psql dss_lookahead_$USER dss -f dss.sql > /dev/null
+    rm dss_lookahead_$USER.sql
+    echo "Database initialization complete."
+}
+
+prepDB ()
+{
+    echo "Preparing database."
+    python tools/database/ResolveOverlaps.py
+    echo "Publishing periods."
+    python tools/database/PeriodPublisher.py
+    echo "Database preparation complete."
+}
+
+runSim ()
+{
+    echo "Running simulations."
+}
+
+cleanUp ()
+{
+    echo "Cleaning up database."
+}
+
+runReports ()
+{
+    echo "Running reports."
+}
+
+echo ""
+echo "Running lookahead simulations"
+echo ""
+echo "    Going to the fortune teller's was just as good as going to the "
+echo "    opera, and the cost scarcely a trifle more - ergo, I will disguise "
+echo "    myself and go again, one of these days, when other amusements fail."
+echo ""
+echo "                                  - S. L. Clemens"
+echo ""
+echo "Actual results may vary."
+echo ""
+initDB
+prepDB
+runSim
+cleanUp
+runReports
