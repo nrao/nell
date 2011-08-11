@@ -1,5 +1,5 @@
 # Copyright (C) 2011 Associated Universities, Inc. Washington DC, USA.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
@@ -9,11 +9,11 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-# 
+#
 # Correspondence concerning GBT software should be addressed as follows:
 #       GBT Operations
 #       National Radio Astronomy Observatory
@@ -63,7 +63,10 @@ class User(models.Model):
         return self.role.role == "Operator"
 
     def isStaff(self):
-        return self.auth_user.is_staff
+        if self.auth_user:
+            return self.auth_user.is_staff
+        else:
+            return False
 
     def checkAuthUser(self):
         if self.auth_user_id is None:
@@ -74,7 +77,7 @@ class User(models.Model):
                 self.save()
             except AuthUser.DoesNotExist:
                 pass
-    
+
     def getEmails(self):
         """
         Retrieves the users emails from their contact info from the PST.
@@ -176,12 +179,12 @@ class User(models.Model):
         upcodes = [i.project.pcode for i in user.investigator_set.all()]
         shared_projects = [p for p in upcodes if self.isFriend(p) \
                                               or self.isInvestigator(p)]
-        return shared_projects != [] or self.isAdmin() or self.isOperator()               
+        return shared_projects != [] or self.isAdmin() or self.isOperator()
     def clearCachedInfo(self):
         cache.delete(self.username())
         cache.delete(str(self.pst_id)) # Keys are strings only.
 
-    def hasIncompleteProject(self): 
+    def hasIncompleteProject(self):
         return any([not i.project.complete \
             for i in self.investigator_set.all()])
-        
+
