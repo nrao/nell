@@ -1,6 +1,14 @@
 #!/bin/bash
 
-LOOKAHEADDIR=/home/sandboxes/pmargani/dss
+LOOKAHEADDIR=
+
+die () {
+    echo >&2 "$@"
+    echo "Usage: runLookahead [# of days]"
+    exit 1
+}
+
+
 
 initDB ()
 {
@@ -52,6 +60,9 @@ runReports ()
     echo "    $2.txt"
 
 }
+
+[ "$#" -eq 1 ] || die "1 argument required, $# provided"
+echo $1 | grep -E -q '^[0-9]+$' || die "Numeric argument required, $1 provided"
 
 echo ""
 echo "Running lookahead simulations, starting today, for $1 days."
