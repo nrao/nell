@@ -43,23 +43,29 @@ class WeeklyReport:
                 file.write("\t%s\n" % v)
 
     def get_observed_time(self, month, periods, condition):
+        """
+        Returns the total time that the given periods which
+        match the given condition lie within the given month.
+        """
+
         duration = 0
-        for i in [p for p in periods if eval(condition)]:
-            pstart = TimeAgent.utc2est(i.start)
-            pend   = TimeAgent.utc2est(i.end())
-    
-            # Limit ourselves to time actually in the desired month.
-            start = pstart
-            if pstart.month != month:
-                start = datetime(pstart.year, month, 1)
-    
-            end = pend
-            if pend.month != month:
-                _, day = calendar.monthrange(pend.year, month)
-                end = datetime(pend.year, month, day, 23, 59, 59)
-    
-            duration += (end - start).seconds / 3600.
-    
+        for pd in [p for p in periods if eval(condition)]:
+            pstart = pd.start 
+            pend   = pd.end() 
+            # check typical case - don't overlap the month
+            if pstart.month == pend.month:
+                if pstart.month == month:
+                    duration += (pend - pstart).seconds / 3600.0
+            else:
+                # our period spans more then a month, see if any
+                # of them cover our month
+                if pstart.month == month:
+                    _, lastday = calendar.monthrange(pstart.year, month)
+                    monthEnd = datetime(pstart.year, month, lastday) + timedelta(days = 1)
+                    duration += (monthEnd - pstart).seconds / 3600.0
+                if pend.month == month:
+                    monthStart = datetime(pend.year, pend.month, 1)
+                    duration += (pend - monthStart).seconds / 3600.0
         return duration
 
     def get_obs_time_tuple(self, condition):
@@ -133,16 +139,20 @@ class WeeklyReport:
         self.lost_hours["other" ] = sum([p.accounting.lost_time_other for p in self.observed_periods])
         self.lost_hours["billed_to_project" ] = sum([p.accounting.lost_time_bill_project for p in self.observed_periods])
 
-        # TBF WTF BBQ: we have no requirements for these numbers!!!!
+        # how do the scheduled periods break down by type and this
+        # and the previous month?
         self.scheduled_hours["astronomy"] = self.get_obs_time_tuple('p.session.project.project_type.type == "science"')
         self.scheduled_hours["maintenance"] = self.get_obs_time_tuple('p.session.project.pcode == "Maintenance"')
-        # TBF: is this the most robust way to determine if a project is a test or commisioning project?
+        # NOTE: is this the most robust way to determine if a project is a test or commisioning project?
         self.scheduled_hours["test_comm"] = self.get_obs_time_tuple('p.session.project.pcode[0] == "T"')
         self.scheduled_hours["shutdown"] = self.get_obs_time_tuple('p.session.project.pcode == "Shutdown"')
 
-        self.backlog    = [p for p in Project.objects.all() if p.semester in self.previousSemesters and 
-                     all([s.observing_type.type != 'testing' for s in p.sesshun_set.all()])]
-
+        # how do the incomplete projects breakdown?
+        self.backlog    = [p for p in Project.objects.all() \
+            if p.semester in self.previousSemesters \
+            and not p.complete \
+            and p.get_category() == "Astronomy"] 
+                       
         self.backlog_hours["total_time"] = sum([self.ta.getTimeLeft(p) for p in self.backlog])
         self.backlog_hours["years"] = {}
         for y in sorted(list(Set([s.start().year for s in self.previousSemesters]))):
