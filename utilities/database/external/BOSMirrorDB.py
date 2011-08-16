@@ -62,13 +62,10 @@ class BOSMirrorDB:
     def reservationsRange(self, start, end):
         "A simple reformat of getReservationsByDateRange."
         res = self.getReservationsByDateRange(start, end)
-        print "reservatinosRange: ", res
         return [{'id'    : id
                , 'name'  : u
                , 'start' : s.strftime("%m/%d/%Y")
-               , 'end'   : e.strftime("%m/%d/%Y")} for id, u, s, e in res] #self.getReservationsByDateRange(start, end)]
-               #, 'start' : self.str2dt(s).strftime("%m/%d/%Y")
-               #, 'end'   : self.str2dt(e).strftime("%m/%d/%Y")} for id, u, s, e in res] #self.getReservationsByDateRange(start, end)]
+               , 'end'   : e.strftime("%m/%d/%Y")} for id, u, s, e in res]
  
     def getReservationsByDateRange(self, start, end):
         """
@@ -143,14 +140,9 @@ class BOSMirrorDB:
         ORDER BY reservation.startDate;
         """ % (sinceStr, tillStr, userAuthId)
 
-        print q
         self.cursor.execute(q)
         rows = self.cursor.fetchall()
-        print rows
         return rows
-        #reservations = [(self.str2dt(r[0]), self.str2dt(r[1])) for r in rows] 
-        #print "reservations: ", reservations
-        #return reservations
 
     def str2dt(self, str):
         "YYYY-MM-DD -> DateTime"

@@ -21,5 +21,6 @@
 #       Green Bank, WV 24944-0002 USA
 
 from NRAOBosDB            import NRAOBosDB
+from BOSMirrorDB          import BOSMirrorDB
 from PSTMirrorDB          import PSTMirrorDB
 from UserInfo             import UserInfo

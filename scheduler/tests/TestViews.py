@@ -164,7 +164,7 @@ class TestViews(BenchTestCase):
         inv.save()
 
         c = Client()
-        data = {'start' : '10/10/2010'
+        data = {'start' : '10/09/2010'
               , 'days'  : '8'
                }
         response = c.get('/scheduler/reservations', data)
