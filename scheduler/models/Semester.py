@@ -1,5 +1,5 @@
 # Copyright (C) 2011 Associated Universities, Inc. Washington DC, USA.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
@@ -9,11 +9,11 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-# 
+#
 # Correspondence concerning GBT software should be addressed as follows:
 #       GBT Operations
 #       National Radio Astronomy Observatory
@@ -31,20 +31,45 @@ class Semester(models.Model):
         return self.semester
 
     def start(self):
-        # A starts in February, B in June, C in October
-        start_months = {"A": 2, "B": 6, "C": 10}
+        # special transition cases from trimesters (prior to '11) to
+        # semesters (during '11):
 
-        year  = 2000 + int(self.semester[:2])
+        if self.semester == "11A":
+            return datetime(2011,2,1)
+
+        if self.semester == "11B":
+            return datetime(2011,7,1)
+
+        year = 2000 + int(self.semester[:2])
+
+        if year <= 2010: # old trimesters; some db objects will have these
+            # A starts in February, B in June, C in October
+            start_months = {"A": 2, "B": 6, "C": 10}
+        else:          # new semesters
+            # A starts in February, B in August.
+            start_months = {"A": 2, "B": 8}
+
         month = start_months[self.semester[-1]]
-
         return datetime(year, month, 1)
 
     def end(self):
-        # A ends in May, B in September, C in January
-        end_months = {"A": 5, "B": 9, "C": 1}
+        # special transition cases from trimesters (prior to '11) to
+        # semesters (during '11):
 
-        year   = 2000 + int(self.semester[:2])
-        if self.semester[-1] == "C":
+        if self.semester == "11A":
+            return datetime(2011,6,30)
+
+        if self.semester == "11B":
+            return datetime(2012,1,31)
+
+        year = 2000 + int(self.semester[:2])
+
+        if year <= 2010: # old trimesters; some db objects will have these
+            end_months = {"A": 5, "B": 9, "C": 1}
+        else:          # new semesters
+            end_months = {"A": 7, "B": 1}
+        
+        if self.semester[-1] == "B":
             year += 1
         month  = end_months[self.semester[-1]]
         _, day = calendar.monthrange(year, month)

@@ -36,8 +36,7 @@
 #     Run: psql -U dss new_dss_unit_tests <populate_db.sql
 # 3) In directory antioch/src:
 #     Run: updateRcvrTemps new_dss_unit_tests
-# 4) In directory nell:
-#     Copy: cp antioch/admin/genDssTestDatabase.py admin
+# 4) Make modifications to this file and run it.
 #     Run: python admin/genDssTestDatabase.py
 # 5) In directory antioch:
 #     Modify src/Antioch/Settings.lhs such that hardwareScheduleDB and
@@ -521,6 +520,35 @@ def populate_project1():
       , source_h   = 5.861688
       , source     = "Sag A"
       , lst_ex     = "2.00-4.00"
+      )
+    create_session(sess, proj, fdata)
+    # set GAS flag for this session
+    obs_param =  Observing_Parameter(session = sess
+                                   , parameter = Parameter.objects.get(name = 'Good Atmospheric Stability')
+                                   , boolean_value = True 
+                                    )
+    obs_param.save()
+
+    #  W Band Session
+    sess = Sesshun(project = proj)
+    fdata = dict(
+        type       = "open"
+      , science    = "spectral line"
+      , name       = "GBT09A-001-W"
+      , freq       = 70.0
+      , req_max    =  3.5
+      , req_min    =  3.0
+      , between    = None
+      , PSC_time   = 3.5
+      , total_time = 3.5
+      , sem_time   = 2.0
+      , grade      = 3.0
+      , receiver   = u'W'
+      , coord_mode = "J2000"
+      , source_v   = 1.5
+      , source_h   = 0.0
+      , source     = "always up"
+      , lst_ex     = None
       )
     create_session(sess, proj, fdata)
 

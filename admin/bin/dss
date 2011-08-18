@@ -1,0 +1,39 @@
+#!/bin/bash
+
+start ()
+{
+   source /home/dss/conundrum/conundrum.bash
+   nginx
+   cd /home/dss/release/antioch
+   ./serve </dev/null >~/antioch.out 2>&1 &
+   cd admin
+   python forecasts/daemonCleoDBImport.py </dev/null >~/dss_weather.out 2>&1 &
+   cd /home/dss/release/nell
+   runfcgi start 9005
+}
+
+stop ()
+{
+   source /home/dss/conundrum/conundrum.bash
+   kill `cat /home/dss/conundrum/logs/nginx.pid`
+   cd /home/dss/release/nell
+   runfcgi stop
+}
+
+restart()
+{
+   stop
+   start
+}
+
+start
+if test "$1" == "restart"
+then
+    restart
+elif test "$1" == "start"
+then
+    start
+elif test "$1" == "stop"
+then
+    stop
+fi

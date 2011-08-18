@@ -112,6 +112,10 @@ def timedelta2hours(td):
     "Returns a timedelta to the nearest integer hour."
     return int(round(24*td.days + td.seconds/3600.))
 
+def timedelta2frachours(td):
+    "Returns a timedelta to float hour."
+    return 24*td.days + td.seconds/3600.
+
 def timedelta2minutes(td):
     "Returns a timedelta to the nearest integer minute."
     return int(round(24*60*td.days + td.seconds/60.))

@@ -20,7 +20,7 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from datetime                import datetime
+from datetime                import datetime, timedelta
 from scheduler.models        import *
 from test_utils              import NellTestCase
 from tools.reports  import *
@@ -233,9 +233,13 @@ class TestReports(NellTestCase):
         # last period is in 2010-01-01, whichever timezone
         time = wr.get_observed_time(1, [ps[3]], "True")
         self.assertEquals(2.0, time)
-        # WTF?  this period isn't in Dec. at all!
-        #time = wr.get_observed_time(12, [ps[3]], "True")
-        #self.assertEquals(0.0, time)
+        time = wr.get_observed_time(12, [ps[3]], "True")
+        self.assertEquals(0.0, time)
+        # the next one is still in 2010-01-01, both timezones`
+        time = wr.get_observed_time(1, [ps[2]], "True")
+        self.assertEquals(1.0, time)
+        time = wr.get_observed_time(12, [ps[2]], "True")
+        self.assertEquals(0.0, time)
 
         wr.report()
 
@@ -244,8 +248,11 @@ class TestReports(NellTestCase):
         for key in ["total_time", "RFI"]:
             self.assertEquals(wr.lost_hours[key], 0.5)
         
-        # WTF: this is all screwed up.
-        #print wr.scheduled_hours
+        scheduled_hours = {'shutdown': (0, 0)
+                         , 'astronomy': (0, 8.0)
+                         , 'test_comm': (0, 0)
+                         , 'maintenance': (0, 0)}
+        self.assertEquals(scheduled_hours, wr.scheduled_hours)
         self.assertEquals([p], wr.backlog)
         backlog = {'total_time': 93.5
                  , 'monitoring': 0 
@@ -258,6 +265,77 @@ class TestReports(NellTestCase):
                            , '2009': (93.5, 1)}
                   }
         self.assertEquals(backlog, wr.backlog_hours)          
+
+        # now do the report for the following week:
+        # nothing should change but the lost time calcs
+        wr = WeeklyReport(datetime(2010, 1, 1) + timedelta(days = 7))
+        wr.report()
+        self.assertEquals(scheduled_hours, wr.scheduled_hours)
+        self.assertEquals(backlog, wr.backlog_hours)          
+        for key in wr.lost_hours.keys(): 
+            self.assertEquals(wr.lost_hours[key], 0.0)
+
+        
+        # now do it for the previous week:
+        wr = WeeklyReport(datetime(2010, 1, 1) - timedelta(days = 7))
+        wr.report()
+        # there are no scheduled hours, because the months covered
+        # are 11 and 12!
+        for key in wr.scheduled_hours.keys():
+            self.assertEquals(wr.scheduled_hours[key], (0,0))
+
+        self.assertEquals(backlog, wr.backlog_hours)          
+        for key in wr.lost_hours.keys(): 
+            self.assertEquals(wr.lost_hours[key], 0.0)
+
+        # now, introduce a new period that stradles Jan & Feb
+        dur = 23.0
+        pa = Period_Accounting(scheduled = dur)
+        pa.save()
+        dt5 = datetime(2010, 1, 31, 12)
+        p = Period(session = self.s1
+                 , start = dt5
+                 , duration = dur
+                 , state = Period_State.get_state('S')
+                 , accounting = pa
+                  )
+        p.save()
+        L = Receiver.get_rcvr('L')
+        pg = Period_Receiver(period = p, receiver = L)
+        pg.save()        
+
+        # and see how the report does when reporting in January.
+        wr = WeeklyReport(datetime(2010, 1, 28))
+        wr.report()
+        scheduled_hours = {'shutdown': (0, 0)
+                         , 'astronomy': (0, (8.0+12.0)) 
+
+                         , 'test_comm': (0, 0)
+                         , 'maintenance': (0, 0)}
+        self.assertEquals(scheduled_hours, wr.scheduled_hours)
+        backlog = {'total_time': (93.5 - dur)
+                 , 'monitoring': 0 
+                 , 'vlbi': 0
+                 , 'years': {'2006': (0, 0)
+                           , '2007': (0, 0)
+                           , '2004': (0, 0)
+                           , '2005': (0, 0)
+                           , '2008': (0, 0)
+                           , '2009': ((93.5-dur), 1)}
+                  }
+        self.assertEquals(backlog, wr.backlog_hours)
+        for key in wr.lost_hours.keys(): 
+            self.assertEquals(wr.lost_hours[key], 0.0)
+
+        # now see how the report does when reporting in Feb.
+        wr = WeeklyReport(datetime(2010, 2, 1))
+        wr.report()
+        scheduled_hours['astronomy'] = ((8.0+12.0), 0)
+        backlog['years']['2010'] = (0,0)
+        self.assertEquals(scheduled_hours, wr.scheduled_hours)
+        self.assertEquals(backlog, wr.backlog_hours)
+        for key in wr.lost_hours.keys(): 
+            self.assertEquals(wr.lost_hours[key], 0.0)
 
     def test_startEndReport(self):
         # make it quiet

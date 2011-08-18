@@ -20,7 +20,7 @@
 {% block content %}
 <center>
 <h1>Receiver Schedule</h1>
-<em>** Cells shaded in <span class="available">gray</span> indicate receiver installed on GBT **</em>
+<em>** Cells shaded in <span class="available">gray</span> and containing 'X' indicate receiver installed on GBT **</em>
 </center>
 
 <table class="grid">
@@ -35,7 +35,7 @@
     <td class="grid">{{d|date:'Y-m-d'}}</td>
     {% for a in available %}
       {% if a %}
-        <td class="available grid"></td>
+        <td class="available grid">X</td>
       {% else %}
         <td class="grid"></td>
       {% endif %}
