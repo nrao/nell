@@ -320,12 +320,30 @@ class Sesshun(models.Model):
         """
         return self.has_bool_obs_param("Keyhole")
 
-    def nighttime(self):
+#    def nighttime(self):
+#        """
+#        Returns True or False if has 'Night-time Flag' observing parameter,
+#        else None if not.
+#        """
+#        return self.has_bool_obs_param("Night-time Flag")
+
+    def any_time_of_day(self):
+        "Ture if this parameter is set this way, or is not set at all"
+        return self.time_of_day() == "AnyTimeOfDay" if self.time_of_day() is not None else True
+
+    def get_time_of_day(self):
         """
-        Returns True or False if has 'Night-time Flag' observing parameter,
-        else None if not.
+        If we assume any time of day if this parameter isn't set,
+        what time of day can the session observe?
         """
-        return self.has_bool_obs_param("Night-time Flag")
+        return self.time_of_day() if not None else "AnyTimeOfDay"
+
+    def time_of_day(self):
+        """
+        Returns the value of the Time Of Day observing parameter,
+        if it's set (a string), or None if it's not.
+        """
+        return self.has_string_obs_param("Time Of Day")
 
     def good_atmospheric_stability(self):
         """
@@ -351,6 +369,14 @@ class Sesshun(models.Model):
             return True
         else:
             return False
+
+    def has_string_obs_param(self, name):
+        try:
+            tp = Parameter.objects.filter(name=name)[0]
+            top = self.observing_parameter_set.filter(parameter=tp)
+            return top[0].string_value
+        except IndexError:
+            return None
 
     def has_bool_obs_param(self, name):
         tp = Parameter.objects.filter(name=name)[0]

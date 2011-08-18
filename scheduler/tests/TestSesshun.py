@@ -135,7 +135,7 @@ class TestSesshun(BenchTestCase):
         ldata["total_time"] = "99"
         ldata["enabled"] = "true"
         ldata["transit"] = "true"
-        ldata["nighttime"] = "false"
+        ldata["time_of_day"] = "RfiNight"
         ldata["lst_ex"] = "2.00-4.00"
         ldata["receiver"] = "(K & (X | (L | C)))"
         ldata["xi_factor"] = 1.76
@@ -149,7 +149,7 @@ class TestSesshun(BenchTestCase):
         self.assertEqual(s.target.source, ldata["source"])
         self.assertEqual(s.status.enabled, ldata["enabled"] == "true")
         self.assertEqual(s.transit(), ldata["transit"] == "true")
-        self.assertEqual(s.nighttime(), None)
+        self.assertEqual(s.time_of_day(), ldata["time_of_day"])
         self.assertEqual(s.get_lst_string('LST Exclude'), ldata["lst_ex"])
         self.assertEqual(s.get_min_eff_tsys_factor(), ldata["xi_factor"])
         self.assertEqual(s.get_elevation_limit(),fdata["el_limit"])

@@ -136,10 +136,11 @@ class SessionHttpAdapter (object):
                                  , "Good Atmospheric Stability"
                                  , self.sesshun.good_atmospheric_stability())
         self.update_bool_obs_param(fdata, "transit", "Transit", self.sesshun.transit())
-        self.update_bool_obs_param(fdata, "nighttime", "Night-time Flag", \
-            self.sesshun.nighttime())
+        #self.update_bool_obs_param(fdata, "nighttime", "Night-time Flag", \
+        #    self.sesshun.nighttime())
         self.update_bool_obs_param(fdata, "keyhole", "Keyhole", self.sesshun.keyhole())
         self.update_guaranteed(fdata)
+        self.update_time_of_day(fdata, self.sesshun.time_of_day())
         
         self.update_irradiance_threshold(fdata, self.sesshun.irradiance())
         self.update_lst_parameters('lst_ex', fdata.get('lst_ex'))
@@ -194,6 +195,18 @@ class SessionHttpAdapter (object):
             else:
                 obs_param.delete()
 
+    def update_time_of_day(self, fdata, old_value):
+        time_of_day = fdata.get('time_of_day')
+        enumeration = ["AnyTimeOfDay"
+                     , "RfiNight"
+                     , "PtcsNight"
+                      ]
+        if time_of_day is not None and time_of_day not in enumeration:
+            raise Exception("Time Of Day must be one of: %s" % ", ".joine(enumeration))
+        else:
+            p = Parameter.objects.get(name="Time Of Day")
+            self.update_parameter(old_value, time_of_day, p)
+            
     def update_irradiance_threshold(self, fdata, old_value):
         ir = fdata.get('irradiance')
         if self.sesshun.observing_type.type != 'continuum' and ir is not None:
@@ -381,7 +394,8 @@ class SessionHttpAdapter (object):
            , "guaranteed" : self.sesshun.guaranteed()
            , "gas"        : self.sesshun.good_atmospheric_stability() or False
            , "transit"    : self.sesshun.transit() or False
-           , "nighttime"  : self.sesshun.nighttime() or False
+           #, "nighttime"  : self.sesshun.nighttime() or False
+           , "time_of_day": self.sesshun.get_time_of_day()
            , "lst_ex"     : self.sesshun.get_lst_string('LST Exclude') or ""
            , "lst_in"     : self.sesshun.get_lst_string('LST Include') or ""
            , "receiver"   : self.sesshun.get_receiver_req()
