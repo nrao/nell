@@ -336,7 +336,7 @@ class Sesshun(models.Model):
         If we assume any time of day if this parameter isn't set,
         what time of day can the session observe?
         """
-        return self.time_of_day() if not None else "AnyTimeOfDay"
+        return self.time_of_day() if self.time_of_day() is not None else "AnyTimeOfDay"
 
     def time_of_day(self):
         """
