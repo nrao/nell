@@ -27,6 +27,8 @@ from scheduler.tests.utils                   import create_sesshun
 
 class TestUpdateEphemeris(NellTestCase):
 
+    # These aren't unit tests technically speaking - they interact
+    # with websites to get some of the ephemeris
     def testUpdate(self):
 
         up = UpdateEphemeris.UpdateEphemeris()
@@ -72,3 +74,24 @@ class TestUpdateEphemeris(NellTestCase):
         # cleanup
         s.delete()
 
+    def testUpdateResources(self):
+        up = UpdateEphemeris.UpdateEphemeris()
+        up.quietReport = True
+
+        self.assertEquals(len(up.specialObjs.keys()), 0)
+
+        up.updateResources()
+
+        # this number may vary when the contents of this website varies
+        #self.assertEquals(len(up.specialObjs.keys()), 256)
+        self.assertTrue(len(up.specialObjs) > 0)
+
+        # make sure we have something of both types
+        types = []
+        for key, value in up.specialObjs.items():
+            if value[1] not in types:
+                types.append(value[1])
+
+        self.assertEquals(len(types), 2)
+        self.assertTrue("Comets" in types)
+        self.assertTrue("Asteroids" in types)
