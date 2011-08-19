@@ -136,8 +136,6 @@ class SessionHttpAdapter (object):
                                  , "Good Atmospheric Stability"
                                  , self.sesshun.good_atmospheric_stability())
         self.update_bool_obs_param(fdata, "transit", "Transit", self.sesshun.transit())
-        #self.update_bool_obs_param(fdata, "nighttime", "Night-time Flag", \
-        #    self.sesshun.nighttime())
         self.update_bool_obs_param(fdata, "keyhole", "Keyhole", self.sesshun.keyhole())
         self.update_guaranteed(fdata)
         self.update_time_of_day(fdata, self.sesshun.time_of_day())

@@ -320,16 +320,17 @@ class Sesshun(models.Model):
         """
         return self.has_bool_obs_param("Keyhole")
 
-#    def nighttime(self):
-#        """
-#        Returns True or False if has 'Night-time Flag' observing parameter,
-#        else None if not.
-#        """
-#        return self.has_bool_obs_param("Night-time Flag")
-
     def any_time_of_day(self):
         "Ture if this parameter is set this way, or is not set at all"
         return self.time_of_day() == "AnyTimeOfDay" if self.time_of_day() is not None else True
+
+    def RfiNight(self):
+        "Is this session constrained to only be scheduled during non-working hours?"
+        return self.get_time_of_day() == "RfiNight"
+
+    def PtcsNight(self):
+        "Is this session constrained to only be scheduled during PTCS's definition of night?"
+        return self.get_time_of_day() == "PtcsNight"
 
     def get_time_of_day(self):
         """
