@@ -92,6 +92,7 @@ class TestUpdateEphemeris(NellTestCase):
             if value[1] not in types:
                 types.append(value[1])
 
-        self.assertEquals(len(types), 2)
+        self.assertEquals(len(types), 3)
         self.assertTrue("Comets" in types)
         self.assertTrue("Asteroids" in types)
+        self.assertTrue("Unusual" in types)

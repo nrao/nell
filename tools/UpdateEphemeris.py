@@ -64,9 +64,12 @@ class UpdateEphemeris():
         self.resources = [("Comets"
                          , self.baseUrl + "Comets/Soft03Cmt.txt"
                          , self.parseCometLine)
-                        , ("Asteroids"
+                         , ("Asteroids"
                          , self.baseUrl + "Bright/2011/Soft03Bright.txt"
                          , self.parseAsteroidLine)
+                         , ("Unusual"
+                         , self.baseUrl + "Unusual/Soft03Unusual.txt"
+                         , self.parseCometLine)
                          ]
 
         self.specialObjs = {}
