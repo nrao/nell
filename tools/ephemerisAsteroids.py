@@ -21,7 +21,8 @@
 #       Green Bank, WV 24944-0002 USA
 
 # This dictionary was parsed from the contents of this website:
-# http://www.cfa.harvard.edu/iau/Ephemerides/Bright/2010/Soft03Bright.txt
+# old: http://www.cfa.harvard.edu/iau/Ephemerides/Bright/2010/Soft03Bright.txt
+# new: http://www.minorplanetcenter.net/iau/Ephemerides/Bright/2011/Soft03Bright.txt
 # it can be used with pyephem to create objects which can give the
 # position of these objects for any date 
 # For specific use with UpdateEphemeris
