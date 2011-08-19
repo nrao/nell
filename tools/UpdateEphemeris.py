@@ -112,7 +112,8 @@ class UpdateEphemeris():
         self.updateResources()
         self.add("Updated Ephemeris resources\n")
 
-        tgs = Target.objects.filter(system__name = "Ephemeris")
+        tgsAll = Target.objects.filter(system__name = "Ephemeris")
+        tgs = [tg for tg in tgsAll if not tg.session.status.complete]
 
         self.add("Attempting to update %d targets.\n" % len(tgs))
 
