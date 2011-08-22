@@ -23,7 +23,8 @@
 from datetime   import datetime
 from django.db.models                   import Q
 
-from nell.utilities.database.external  import UserInfo, NRAOBosDB
+from nell.utilities.database.external  import UserInfo
+from nell.utilities.database.external.BOSMirrorDB  import BOSMirrorDB
 from scheduler.models       import *
 from scheduler.httpadapters import *
 
@@ -109,7 +110,9 @@ def getReservationsFromBOS(start, end):
     Make sure this creates the same output as getReservationsFromDB.
     """
 
-    res = NRAOBosDB().reservationsRange(start, end)
+    startDt = datetime.strptime(start, "%m/%d/%Y")
+    endDt   = datetime.strptime(end, "%m/%d/%Y")
+    res = BOSMirrorDB().reservationsRange(startDt, endDt)
     reservations = []
     for r in res:
        # BOS is still using the wrong ID - we need 'global id'
