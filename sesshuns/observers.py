@@ -622,7 +622,6 @@ def events(request, *args, **kws):
                }
             jsonobjlist.append(js)
             id = id + 1
-            print s, e, user
 
     # Scheduled telescope periods
     for p in project.getPeriods():
