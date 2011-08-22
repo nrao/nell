@@ -25,6 +25,7 @@ from django.test.client        import Client
 from django.conf               import settings
 from django.contrib.auth       import models as m
 from datetime                  import datetime, timedelta, date
+import time
 
 from test_utils                import BenchTestCase, timeIt
 from scheduler.models          import *
@@ -382,4 +383,65 @@ class TestObservers(TestObserversBase):
         pauls = User.objects.filter(last_name = "Marganian")
         self.assertEqual(0, len(pauls))
 
+    def test_event(self):
+
+        start = datetime(2011, 8, 1)
+        end   = datetime(2011, 9, 1)
+
+        # what a pain in the ass: need to convert times to floats
+        fmt = "%Y-%m-%d %H-%M-%S"
+        startStr = start.strftime(fmt)
+        endStr = end.strftime(fmt)
+        data = { 'start' : time.mktime(time.strptime(startStr, fmt))
+               , 'end'   : time.mktime(time.strptime(endStr,   fmt))
+               }
+        response = self.get('/project/%s/events' % self.p.pcode, data)
+        self.failUnlessEqual(response.status_code, 200)
+        exp = [{"className": "semester", "start": "2012-02-01T00:00:00", "id": 1, "title": "Start of 12A"}
+             , {"className": "semester", "start": "2012-08-01T00:00:00", "id": 2, "title": "Start of 12B"}]
+        result = eval(response.content)
+        self.assertEquals(result, exp)     
+
+        # now add a user w/ reservations and blackouts
+        # (oops, it only grabs UPCOMING reservations, so we
+        # can't test the reservations!!!)
+        dana = User(first_name = "Dana"
+                          , last_name = "Balser"
+                          , pst_id = 18
+                          , role = Role.objects.all()[0]
+                           )
+        dana.save()
+        i =  Investigator(project = self.p
+                        , user    = dana 
+                         )
+        i.save()
+        b = Blackout(user = dana
+                   , start_date = start + timedelta(days = 2)
+                   , end_date   = start + timedelta(days = 7)
+                   , repeat = Repeat.objects.all()[0]
+                    )
+        b.save()            
+        
+        # then a period
+        pa = Period_Accounting(scheduled = 3.0)
+        pa.save()
+        p = Period(session = self.s
+                 , start = start + timedelta(days = 3)
+                 , duration = 3.0
+                 , state = Period_State.get_state('S')
+                 , accounting = pa
+                  )
+        p.save()
+
+        # now see what we get
+        response = self.get('/project/%s/events' % self.p.pcode, data)
+        self.failUnlessEqual(response.status_code, 200)
+        exp = [{"className": "blackout", "start": "2011-08-03T00:00:00+00:00", "end": "2011-08-08T00:00:00+00:00", "id": 1, "title": "Dana Balser: blackout"}
+             , {"start": "2011-08-04T00:00:00+00:00", "end": "2011-08-04T03:00:00", "id": 2, "title": "Observing Low Frequency With No RFI"}
+             , {"className": "semester", "start": "2012-02-01T00:00:00", "id": 3, "title": "Start of 12A"}
+             , {"className": "semester", "start": "2012-08-01T00:00:00", "id": 4, "title": "Start of 12B"}
+             ]
+
+        result = eval(response.content)
+        self.assertEquals(result, exp)
 
