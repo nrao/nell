@@ -38,7 +38,6 @@ def get_results_dict(request):
     units     = {}
     units['sigma']       = 'mJy' if ivalues.get('units', {}).get('value') == 'flux' else 'mK'
     units['t_tot_units'] = 's' if ':' not in explicit.get('t_tot', {}).get('value', '') else 'HH:MM:SS.S'
-    print ivalues
     return {'e'         : explicit
           , 'leftovers' : leftovers
           , 'input'     : input
