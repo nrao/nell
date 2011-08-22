@@ -68,6 +68,15 @@ class TestPSTMirrorDB(NellTestCase):
         id = db.getIdFromUserAuthenticationId(userAuthId)
         self.assertEquals(globalId, id)
 
+    def test_getUserAuthenticationIdFromId(self):
+
+        db = PSTMirrorDB()
+        globalId = 821
+        userAuthId = 823
+        username = 'pmargani'
+        id = db.getUserAuthenticationIdFromId(globalId)
+        self.assertEquals(userAuthId, id)
+
     def test_getBadProfile(self):
         "Make sure we can handle bogus info."
 
