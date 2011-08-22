@@ -25,7 +25,6 @@ import settings
 setup_environ(settings)
 
 from datetime           import datetime, timedelta
-from nell.utilities.database.external     import NRAOBosDB
 from scheduler.models    import *
 
 class ReservationsUtility(object):
@@ -39,19 +38,11 @@ class ReservationsUtility(object):
     reservation info.
     """
 
-    def __init__(self):
-
-        self.bos = NRAOBosDB()
-
     def updateReservations(self):
         "Main functionality of class - retrieve them, store them."
 
         # grab the latest res info
-        try:
-            currentRes = self.getReservationsFromBOS()
-        except:
-            print "exception in retrieving reservations from BOS"
-            return
+        currentRes = self.getReservationsFromBOS()
 
         # if that worked, clean up the current reservations:
         staleRes = Reservation.objects.all()
@@ -70,31 +61,20 @@ class ReservationsUtility(object):
                 new.save()
 
     def getReservationsFromBOS(self):
-        "Use the query service to get all reservations for DSS users."
+        "Use the BOS mirror to get all reservations for DSS users."
 
         res = []
-        # Note: there may be better query services to use,
-        # but this is the only one that's been tested enough
-        # If this starts taking to long we can move to more 
-        # efficient queries.
         users = User.objects.all()
         for user in users:
             try:
-                username = user.username()
+                print user, user.pst_id
+                rs = user.getReservations()
             except:
-                print "Error retrieving username."
-                username = None
-            print user, username
-            if username is not None:
-                try:
-                    rs = self.bos.getReservationsByUsername(username
-                                                          , use_cache = False)
-                except:
-                    print "Error retrieving reservations for: ", user, username
-                    rs = []
-                if len(rs) != 0:
-                    print "!!!!!!!!!!!!!!", rs
-                    res.append((user, rs))
+                print "Error retrieving reservations for: ", user
+                rs = []
+            if len(rs) != 0:
+                print "!!!!!!!!!!!!!!", rs
+                res.append((user, rs))
         print res            
         return res            
 

@@ -44,7 +44,7 @@ class ElectiveHttpAdapter (object):
               # Note: these aren't being currently used by a client
               # but taking them out doesn't speed up current clients
               , "session"        : SessionHttpAdapter(self.elective.session).jsondict()
-              , "periods"        : [PeriodHttpAdapter(p).jsondict('UTC', 0.0) for p in self.elective.periods.all()]
+              , "periods"        : [PeriodHttpAdapter(p).jsondict('UTC') for p in self.elective.periods.all()]
               }
         return js    
 

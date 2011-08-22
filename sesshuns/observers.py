@@ -32,7 +32,6 @@ from models                         import *
 from sets                           import Set
 from nell.tools                     import IcalMap
 from nell.utilities.TimeAgent       import EST, UTC, adjustDateTimeTz
-from nell.utilities.database.external import NRAOBosDB
 from reversion                      import revision
 from utilities                      import *
 from forms                          import BlackoutForm, PreferencesForm
@@ -149,8 +148,7 @@ def profile(request, *args, **kws):
     requestor.checkAuthUser()
     user = User.objects.get(id = args[0]) if args else requestor
     static_info  = user.getStaticContactInfo()
-    username = static_info['username']
-    reservations = NRAOBosDB().getReservationsByUsername(username)
+    reservations = user.getReservations() 
 
     try:
         tz = requestor.preference.timeZone
@@ -220,7 +218,11 @@ def project(request, *args, **kws):
     investigators = project.investigator_set.order_by('priority').all()
     obsBlackouts      = [adjustBlackoutTZ(tz, b) for i in investigators for b in i.projectBlackouts()]
     reqFriendBlackouts = [adjustBlackoutTZ(tz, b) for f in project.friend_set.all() for b in f.projectBlackouts() if f.required ]
-    obsBlackouts.extend(reqFriendBlackouts)
+
+    # prevent duplicates when adding required friend's blackouts:
+    for ob in reqFriendBlackouts:
+        if ob not in obsBlackouts:
+            obsBlackouts.append(ob)
 
     # and the project blackouts?
     projBlackouts     = [adjustBlackoutTZ(tz, b) for b in project.blackout_set.all() if b.isActive()]
@@ -258,7 +260,7 @@ def project(request, *args, **kws):
                                      , 'time_billed' : p.accounting.time_billed()} \
                                     for p in e.periodsOrderByDate()]
                         } for e in project.getActiveElectives()] 
-    res = NRAOBosDB().reservations(project)                   
+    res = project.getUpcomingReservations() 
     return render_to_response(
         "sesshuns/project.html"
       , {'p'           : project
@@ -610,8 +612,16 @@ def events(request, *args, **kws):
         id = id + 1
 
     # Investigator reservations
-    reservations, id = NRAOBosDB().eventjson(project, id)
-    jsonobjlist.extend(reservations)
+    for user, reservations in project.getUpcomingReservations().items(): 
+        for s, e in reservations:
+            js = { "id" : id
+               , "title" : "%s in Green Bank." % user.name()
+               , "start" : s.isoformat()
+               , "end"   : e.isoformat()
+               , "className": 'reservation'
+               }
+            jsonobjlist.append(js)
+            id = id + 1
 
     # Scheduled telescope periods
     for p in project.getPeriods():

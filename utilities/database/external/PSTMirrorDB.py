@@ -100,6 +100,19 @@ class PSTMirrorDB(PSTInterface):
         rows = self.cursor.fetchall()
         return int(rows[0][0])
 
+    def getUserAuthenticationIdFromId(self, id):
+        "inverse of getIdFromUserAuthenticationId"
+
+        q = """
+        SELECT ua.userAuthentication_id
+        FROM person as p, userAuthentication as ua
+        WHERE p.personAuthentication_id = ua.userAuthentication_id
+        AND p.person_id = %d
+        """ % id
+        self.cursor.execute(q)
+        rows = self.cursor.fetchall()
+        return int(rows[0][0])
+
     def getProfileByID(self, user, use_cache = True):
         try:
             # Note: our pst_id is their person PK.
