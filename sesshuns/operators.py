@@ -109,13 +109,7 @@ def gbt_schedule(request, *args, **kws):
     requestor = get_requestor(request)
     supervisor_mode = True if (requestor in get_rescal_supervisors()) else False
 
-    # Ensure only operators or admins trigger costly MOC calculations
-    if requestor.isOperator() or requestor.isAdmin():
-        get_moc = True
-    else:
-        get_moc = False
-
-    schedule = get_gbt_schedule_events(start, end, timezone, get_moc)
+    schedule = get_gbt_schedule_events(start, end, timezone)
 
     try:
         tzutc = Schedule_Notification.objects.latest('date').date.replace(tzinfo=UTC)
@@ -145,13 +139,20 @@ def rcvr_schedule(request, *args, **kwds):
     """
     receivers = [r for r in Receiver.objects.exclude(deleted = True) if r.abbreviation != 'NS']
     schedule  = {}
-    for day, rcvrs in Receiver_Schedule.extract_schedule(datetime.utcnow(), 180).items():
+    rxSchedule = Receiver_Schedule.extract_schedule(datetime.utcnow(), 180)
+    for day, rcvrs in rxSchedule.items():
         schedule[day] = [r in rcvrs for r in receivers]
+    for day, ups, downs in Receiver_Schedule.diff_schedule(rxSchedule):
+        schedule[day] = (schedule[day]
+                       , ', '.join([up.abbreviation for up in ups])
+                       , ', '.join([down.abbreviation for down in downs])
+                         )
 
+    schedule = sorted([(k, v[0], v[1], v[2]) for k, v in schedule.items()])
     return render_to_response(
                'sesshuns/receivers.html'
              , {'receivers': receivers
-              , 'schedule' : sorted(schedule.items())})
+              , 'schedule' : schedule})
 
 @login_required
 def summary(request, *args, **kws):
@@ -204,7 +205,7 @@ def summary(request, *args, **kws):
 
     # Handle either schedule or project summaries.
     if summary == "schedule":
-        schedule = get_gbt_schedule_events(start, end, "ET", False, True)
+        schedule = get_gbt_schedule_events(start, end, "ET", True)
         url      = 'sesshuns/schedule_summary.html'
         projects = []
         receivers = {}

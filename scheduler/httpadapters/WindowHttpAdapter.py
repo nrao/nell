@@ -53,7 +53,7 @@ class WindowHttpAdapter (object):
               , "complete"       : self.window.complete
               , "contigious"     : self.window.isContigious()
               , "num_periods"    : self.window.periods.count()
-              , "periods"        : [PeriodHttpAdapter(p).jsondict('UTC', 0.0) for p in self.window.periods.all()]
+              , "periods"        : [PeriodHttpAdapter(p).jsondict('UTC') for p in self.window.periods.all()]
               , "ranges"         : [WindowRangeHttpAdapter(wr).jsondict() for wr in self.window.ranges()]
               , "errors"         : self.window.errors()
               }

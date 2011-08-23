@@ -172,7 +172,7 @@ def project_search(value):
 # datetime for that day, and a list of that day's events.
 ######################################################################
 
-def get_gbt_schedule_events(start, end, timezone, get_moc = False,
+def get_gbt_schedule_events(start, end, timezone,
                             ignore_non_maint_period_maint_events = False):
     """
     Generate a list of schedule events.  The list returned consists of
@@ -183,12 +183,6 @@ def get_gbt_schedule_events(start, end, timezone, get_moc = False,
     calendar = []
     one_day = timedelta(days = 1)
     utc_start  = TimeAgent.est2utc(start) if timezone == 'ET' else start
-    # find ids of all periods that failed the MOC criteria
-    # in the scheduling range
-    if get_moc:
-        moc_failures = Period.moc_failures(utc_start - one_day, days + 1)
-    else:
-        moc_failures = []
     old_monday = None
 
     for i in range(0, days):
@@ -224,7 +218,7 @@ def get_gbt_schedule_events(start, end, timezone, get_moc = False,
                 ev = CalEventPeriod(p
                                   , p.start < utc_today
                                   , p.end() > utc_tomorrow
-                                  , p.id not in moc_failures
+                                  , p.moc 
                                   , timezone)
                 daily_events.append(ev)
 

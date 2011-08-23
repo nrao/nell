@@ -37,7 +37,7 @@ from sesshuns.utilities                 import get_requestor
 from nell.utilities.notifiers           import SchedulingNotifier, Notifier, Email as EmailMessage
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException, JSONExceptionInfo
 from reversion                          import revision
-from settings                           import PROXY_PORT, DATABASES, DEBUG
+from settings                           import DATABASES, DEBUG
 
 import simplejson as json
 import twitter

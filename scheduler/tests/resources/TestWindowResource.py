@@ -46,7 +46,7 @@ class TestWindowResource(BenchTestCase):
                                    )
         self.default_period.save()                           
         p_adapter = PeriodHttpAdapter(self.default_period)
-        pjson = p_adapter.jsondict('UTC', 1.1)
+        pjson = p_adapter.jsondict('UTC')
         self.fdata = {"session":  self.sesshun.id
                     #, "start":    "2010-01-01"
                     #, "duration": 7
