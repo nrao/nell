@@ -26,3 +26,4 @@ from VersionDiff          import VersionDiff
 from TimeAccounting       import TimeAccounting
 from IcalAntioch          import IcalAntioch
 from hs_profile           import hs_profile
+from getConfigValue       import getConfigValue
