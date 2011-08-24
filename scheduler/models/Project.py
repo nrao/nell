@@ -163,6 +163,19 @@ class Project(models.Model):
         "What periods are associated with this project in the future?"
         return [p for p in self.getPeriods() if p.start > dt] 
 
+    def getUpcomingReservations(self):
+        """
+        Constructs a dictionary mapping the project's users to lists of
+        reservations, where a reservation is a binary tuple of datetimes
+        representing the check-in and check-out dates.
+        """
+        retval = dict()
+        for i in self.investigator_set.all():
+            u = i.user
+            rs = u.getReservations()
+            if rs:
+                retval[u] = rs
+        return retval
 
     def getActiveElectives(self, dt = datetime.now()):
         """

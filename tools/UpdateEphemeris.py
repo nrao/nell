@@ -28,8 +28,7 @@ setup_environ(settings)
 from datetime   import datetime
 
 from scheduler.models import *
-from ephemerisComets import ephemerisComets
-from ephemerisAsteroids import ephemerisAsteroids
+import urllib
 
 # this module rocks!
 import ephem
@@ -40,6 +39,9 @@ class UpdateEphemeris():
     """
     This class is responsible for finding all sessions that have moving sources
     and updating thier ra & dec, where possible, and reporting on results.
+    It's two basic tools it uses are:
+       * ephem library
+       * website containing ephemeris info
     """
 
     def __init__(self, filename = None):
@@ -57,9 +59,20 @@ class UpdateEphemeris():
         now = datetime.utcnow()
         self.nowStr = now.strftime("%Y/%m/%d")
 
-        # make sure we get all the comet info we may need
-        self.comets = ephemerisComets
-        self.asteroids = ephemerisAsteroids
+        # resources for finding targets that aren't in ephem
+        self.baseUrl = "http://www.minorplanetcenter.net/iau/Ephemerides/"
+        self.resources = [("Comets"
+                         , self.baseUrl + "Comets/Soft03Cmt.txt"
+                         , self.parseCometLine)
+                         , ("Asteroids"
+                         , self.baseUrl + "Bright/2011/Soft03Bright.txt"
+                         , self.parseAsteroidLine)
+                         , ("Unusual"
+                         , self.baseUrl + "Unusual/Soft03Unusual.txt"
+                         , self.parseCometLine)
+                         ]
+
+        self.specialObjs = {}
 
     def add(self, lines):
         "For use with printing reports"
@@ -98,8 +111,12 @@ class UpdateEphemeris():
 
         self.add("Updating Ephemeris for %s (UTC)\n" % datetime.utcnow())
 
+        # update resources
+        self.updateResources()
+        self.add("Updated Ephemeris resources\n")
 
-        tgs = Target.objects.filter(system__name = "Ephemeris")
+        tgsAll = Target.objects.filter(system__name = "Ephemeris")
+        tgs = [tg for tg in tgsAll if not tg.session.status.complete]
 
         self.add("Attempting to update %d targets.\n" % len(tgs))
 
@@ -107,6 +124,58 @@ class UpdateEphemeris():
             self.updateTarget(tg)
 
         self.report()    
+
+    def parseCometLine(self, line):
+        "Custom function for parsing a line in the ephemeris file."
+        if line[0] == "#":
+            return (None, None)
+        parts = line.split(",")
+        name = parts[0]
+        return (name, line)
+
+    def parseAsteroidLine(self, line):
+        "Custom function for parsing a line in the ephemeris file."
+        # skip the comments
+        if line[0] == "#":
+            return (None, None)
+        # skip the number line
+        l2 = " ".join(line.split(" ")[1:])
+        # get the name
+        parts = l2.split(",")
+        name = parts[0]
+        return (name, l2)
+
+    def updateResources(self):
+        "Grabs text from websites and converts them to useful lookups"
+        for name, url, parseFnc in self.resources:
+            self.updateResource(name, url, parseFnc)
+
+    def updateResource(self, name, url, parseFnc):
+        lines = self.retrieveResource(name, url)
+        self.parseResourceLines(name, lines, parseFnc)
+
+    def retrieveResource(self, name, url):
+        "Download the resource available at given url, and return the contents."
+
+        # clean up txt file?
+        filename =  name + ".txt"
+        urllib.urlretrieve(url, filename = filename)
+        f = open(filename, 'r')
+        lines = f.readlines()
+        f.close()
+
+        return lines
+
+    def parseResourceLines(self, name, lines, parseFnc):
+        """
+        Interpret the website info into the ephemeris we will use.
+        Given every lines of the resource, parse these lines using
+        the given function, and update the specialObjs dictionary.
+        """
+        for l in lines:
+            dataName, data = parseFnc(l)
+            if dataName is not None and data is not None:
+                self.specialObjs[dataName] = (data, name)
 
     def updateTarget(self, target):
         "Set this target's ra & dec to today's appropriate value"
@@ -140,10 +209,8 @@ class UpdateEphemeris():
         # Either the source name is one of the supplied major/minor planets and 
         # satellites, or it is one in a number of different 
         # lists, such comets & asteroids ('special')
-        if target.source in self.comets.keys():
-            obj = self.getEphemSpecialObj(target, self.comets)
-        elif target.source in self.asteroids.keys():
-            obj = self.getEphemSpecialObj(target, self.asteroids)
+        if target.source in self.specialObjs.keys():
+            obj = self.getEphemSpecialObj(target, self.specialObjs)
         else:
             obj = self.getEphemPlanetObj(target)
         return obj    
@@ -152,7 +219,7 @@ class UpdateEphemeris():
         "Uses the given dict of ephemeris to calculate ra & dec"
 
         try:
-            line = objects[target.source]
+            line, type = objects[target.source]
             comet = ephem.readdb(line)
             return comet
         except:

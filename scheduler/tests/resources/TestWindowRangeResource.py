@@ -46,7 +46,7 @@ class TestWindowRangeResource(BenchTestCase):
                                    )
         self.default_period.save()                           
         p_adapter = PeriodHttpAdapter(self.default_period)
-        pjson = p_adapter.jsondict('UTC', 1.1)
+        pjson = p_adapter.jsondict('UTC')
         fdata = {"session":  self.sesshun.id
                , "num_periods": 0
                 }

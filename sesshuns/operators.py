@@ -109,13 +109,7 @@ def gbt_schedule(request, *args, **kws):
     requestor = get_requestor(request)
     supervisor_mode = True if (requestor in get_rescal_supervisors()) else False
 
-    # Ensure only operators or admins trigger costly MOC calculations
-    if requestor.isOperator() or requestor.isAdmin():
-        get_moc = True
-    else:
-        get_moc = False
-
-    schedule = get_gbt_schedule_events(start, end, timezone, get_moc)
+    schedule = get_gbt_schedule_events(start, end, timezone)
 
     try:
         tzutc = Schedule_Notification.objects.latest('date').date.replace(tzinfo=UTC)
@@ -204,7 +198,7 @@ def summary(request, *args, **kws):
 
     # Handle either schedule or project summaries.
     if summary == "schedule":
-        schedule = get_gbt_schedule_events(start, end, "ET", False, True)
+        schedule = get_gbt_schedule_events(start, end, "ET", True)
         url      = 'sesshuns/schedule_summary.html'
         projects = []
         receivers = {}
