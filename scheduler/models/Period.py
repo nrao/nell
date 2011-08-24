@@ -47,7 +47,7 @@ class Period(models.Model):
     score      = models.FloatField(null = True, editable=False, blank = True)
     forecast   = models.DateTimeField(null = True, editable=False, blank = True)
     backup     = models.BooleanField()
-    moc        = models.BooleanField(default = True)
+    moc        = models.NullBooleanField(default = True)
     moc_ack    = models.BooleanField(default = False)
     receivers  = models.ManyToManyField(Receiver, through = "Period_Receiver")
     window     = models.ForeignKey("Window", blank=True, null=True, related_name = "periods")
