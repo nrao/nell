@@ -311,7 +311,7 @@ def setupWindows(f):
                                    )
         self.period.save()    
 
-        pjson = PeriodHttpAdapter(self.default_period).jsondict('UTC', 1.1)
+        pjson = PeriodHttpAdapter(self.default_period).jsondict('UTC')
         self.fdata = {"session":  1
                     #, "start":    "2009-06-01"
                     #, "duration": 7

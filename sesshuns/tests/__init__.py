@@ -20,7 +20,9 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from nell_utilities           import *
+from nell_utilities               import *
+from TestAstridDB                 import TestAstridDB
+from TestBOSMirrorDB              import TestBOSMirrorDB
 from TestDBReporter               import TestDBReporter
 from TestDSSPrime2DSS             import TestDSSPrime2DSS
 from TestElecAlertNotifier        import TestElecAlertNotifier

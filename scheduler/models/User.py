@@ -27,7 +27,8 @@ from django.db                 import models
 from sets                      import Set
 
 from Role              import Role
-from nell.utilities.database.external    import NRAOBosDB, UserInfo
+from nell.utilities.database.external    import  UserInfo
+from nell.utilities.database.external.BOSMirrorDB    import BOSMirrorDB 
 
 class User(models.Model):
     original_id = models.IntegerField(null = True, blank = True)
@@ -108,11 +109,6 @@ class User(models.Model):
         isStaff(self): Checks to see if 'Staff' is in the user's
         roles.
         """
-        # if self.auth_user:
-        #     return self.auth_user.is_staff
-        # else:
-        #     return False
-
         return self.hasRole("Staff")
     
     def checkAuthUser(self):
@@ -136,10 +132,14 @@ class User(models.Model):
         return UserInfo().getProfileByID(self, use_cache)
 
     def getReservations(self, use_cache = True):
-        try:
-            return NRAOBosDB().getReservationsByUsername(self.username(), use_cache)
-        except:
+        """
+        Use the PST to get the one of the User's types of IDs.  Then
+        use that ID to get the reservations from the BOS.
+        """
+        if self.pst_id is None:
             return []
+        bosId = UserInfo().getUserAuthenticationIdFromId(self.pst_id)
+        return BOSMirrorDB().getReservationsByUserAuthId(bosId)
 
     def getPeriods(self):
         retval = []
@@ -254,4 +254,3 @@ class User(models.Model):
             r = Role.objects.get(role = role)
             role = r
         return role
-

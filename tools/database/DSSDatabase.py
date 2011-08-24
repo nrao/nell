@@ -24,6 +24,7 @@ from datetime                     import date, datetime, timedelta
 from tools.database.DSSPrime2DSS  import DSSPrime2DSS
 from tools.database.Schedtime2DSS import Schedtime2DSS
 from tools.database.UserNames     import UserNames
+from utilities.database.external.AstridDB     import AstridDB
 from scheduler.models             import *
 
 import sys
@@ -40,13 +41,19 @@ class DSSDatabase(object):
     rcvr schedules), this class should be extended.
     """
 
-    def __init__(self, database = "dss_prime", interactive = False):
+    def __init__(self, database = "dss_prime"
+                     , interactive = False
+                     , test = False ):
 
         self.interactive = interactive
 
         # responsible for data transfers
         self.dss_prime = DSSPrime2DSS(database = database)
         self.schedtime = Schedtime2DSS(database = database)
+
+        # be careful w/ the turtle DB
+        dbname = "turtle" if not test else "turtle_sim"
+        self.astridDB = AstridDB(dbname = dbname, test = test)
 
     def create(self, semester):
         "Method for creating a new DSS database "
@@ -57,7 +64,9 @@ class DSSDatabase(object):
         # to keep this step manual.
         # Transfer the semester dependent stuff - schedtime table!
         self.schedtime.transfer_fixed_periods(semester)
-
+        
+        # we no longer create new DSS DB's really, except for testing
+        # so won't bother w/ astrid codes here.
 
     def append(self, semester):
         "Method for appending new semester data to existing DSS database"
@@ -66,6 +75,10 @@ class DSSDatabase(object):
         print "Transferring fixed periods for semester %s..." % (semester)
         self.schedtime.transfer_fixed_periods(semester)
         self.schedtime.print_report(semester)
+        
+        # transfer project codes to astrid
+        pcodes = [p.pcode for p in self.dss_prime.new_projects]
+        self.astridDB.addProjects(pcodes)
 
     def assign_periods_to_windows(self):
         # This function is currently not being called.  It looks like it
