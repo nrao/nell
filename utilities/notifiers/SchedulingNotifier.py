@@ -107,11 +107,12 @@ class SchedulingNotifier(Notifier):
         # observingPeriods, etc.
         self.changedPeriods = []
         for p in futurePeriods:
-            diffs = self.periodChanges.getChangesForNotification(p)
-            if len(diffs) > 0:
-                self.changes[p] = diffs
-                self.changedPeriods.append(p)
-
+            # who cares when Maintenance changes?
+            if not p.session.isMaintenance() and not p.session.isShutdown(): 
+                diffs = self.periodChanges.getChangesForNotification(p)
+                if len(diffs) > 0:
+                    self.changes[p] = diffs
+                    self.changedPeriods.append(p)
         # deleted periods must also be tracked separately, because those
         # observers will get an email with a different subject
         self.deletedPeriods = sorted([p for p in periods if p.isDeleted() and \
