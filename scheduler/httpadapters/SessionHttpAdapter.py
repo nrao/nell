@@ -148,6 +148,8 @@ class SessionHttpAdapter (object):
         self.update_xi_obs_param(fdata, self.sesshun.get_min_eff_tsys_factor())
         self.update_el_limit_obs_param(fdata
                                      , self.sesshun.get_elevation_limit())
+        self.update_solar_avoid_obs_param(fdata
+                                     , self.sesshun.get_solar_avoidance())
         self.update_source_size_obs_param(fdata
                                      , self.sesshun.get_source_size())
         # here if the param is not being used, we don't want the default
@@ -269,6 +271,25 @@ class SessionHttpAdapter (object):
         parameter = Parameter.objects.filter(name="El Limit")[0]
         self.update_parameter(old_value, new_value, parameter)
 
+    def update_solar_avoid_obs_param(self, fdata, old_value):
+        """
+        For taking a json dict and converting its given
+        solar avoid float field into a 'Solar Avoid' float 
+        observing parameter.
+        """
+        new_value = self.get_field(fdata, "solar_avoid", None, float)
+        if new_value is not None: # make sure it's in a legal range
+            try:
+                fv = float(new_value)
+                if fv < 0.0 or fv > 360.0:  # should this be 90?
+                    return # value out of range
+                new_value = TimeAgent.deg2rad(new_value) # DB in radians
+            except:
+                return # nonsense value
+
+        parameter = Parameter.objects.filter(name="Solar Avoid")[0]
+        self.update_parameter(old_value, new_value, parameter)
+
     def update_bool_obs_param(self, fdata, json_name, name, old_value):
         """
         Generic method for taking a json dict and converting its given
@@ -357,6 +378,9 @@ class SessionHttpAdapter (object):
 
     def jsondict(self):
         irradiance = self.sesshun.irradiance()
+        solarAvoid = self.sesshun.get_solar_avoidance()
+        solarAvoid = None if solarAvoid is None else TimeAgent.rad2deg(solarAvoid) # DB in radians
+
         d = {"id"         : self.sesshun.id
            , "pcode"      : self.sesshun.project.pcode
            , "handle"     : self.sesshun.toHandle()
@@ -388,6 +412,7 @@ class SessionHttpAdapter (object):
            , "project_complete" : "Yes" if self.sesshun.project.complete else "No"
            , "xi_factor"  : self.sesshun.get_min_eff_tsys_factor() or 1.0
            , "el_limit"   : self.sesshun.get_elevation_limit() or None # None is default 
+           , "solar_avoid": solarAvoid 
            , "trk_err_threshold"   : self.sesshun.get_tracking_error_threshold()
            , "src_size"   : self.sesshun.get_source_size()
            , "keyhole"    : self.sesshun.keyhole()

@@ -104,6 +104,9 @@
               {% if s.irradiance %}
               <span title="Applies the irradiance threshold to this session.">Irradiance Threshold: </span>{{s.irradiance}}<br/>
               {% endif %}
+              {% if s.get_solar_avoidance %}
+              <span title="Observations do not approach within this angular distance of the Sun (degrees).">Solar Avoidance: </span>{{s.solar_avoidance_degrees}}<br/>
+              {% endif %}
               </td>
             </tr>
               

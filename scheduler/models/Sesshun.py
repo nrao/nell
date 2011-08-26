@@ -299,6 +299,21 @@ class Sesshun(models.Model):
         """
         return self.has_float_obs_param("El Limit")
 
+    def get_solar_avoidance(self):
+        """
+        Returns factor if has 'Solar Avoid' observing parameter,
+        else None
+        """
+        return self.has_float_obs_param("Solar Avoid")
+
+    def solar_avoidance_degrees(self):
+        """
+        Returns 0.0 if there is no solar avoidance, otherwise returns
+        this obs param in degrees.
+        """
+        sa = self.get_solar_avoidance()
+        return 0.0 if sa is None else TimeAgent.rad2deg(sa)
+
     def irradiance(self):
         """
         Returns factor if has 'Irradiance Threshold' observing 
