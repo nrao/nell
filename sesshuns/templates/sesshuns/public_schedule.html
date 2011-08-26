@@ -56,7 +56,7 @@
           <a href="/projects/ical" title="This link provides access to DSS events in the 'iCalendar' format.  To use this feature, right-click the 'ICAL' icon and select 'Copy Link Location'.  Then paste the link into your favorite iCalendar application.">
             <img src="/static/images/ical.gif" style="border: 0;" />
           </a>
-          <a href="/schedule/" title="This link provides access to the full GBT schedule (requires logon).">GBT Schedule</a>
+          <a href="/schedule/" class="top_menu" title="This link provides access to the full GBT schedule (requires login).">GBT Schedule</a>
           {% endif %}
         </td>
         <td style="text-align: right;">
@@ -70,11 +70,11 @@
               <img src="/static/images/chat_offline.gif" style="border: 0;" />
             </a>
           </span>
-          <a href="mailto:helpdesk-dss@gb.nrao.edu" class="top_menu" title="Click here to offer suggestions or report bugs">Helpdesk</a> |
+          <a href="https://help.nrao.edu" class="top_menu" title="Click here to log into NRAO Support Center to offer suggestions or report bugs">Support Center</a> |
           {% if not requestor.isOperator %}
             <a href="/profile" class="top_menu" title="Click here to return to your home profile page">My Home</a> |
           {% else %}
-            <a href="/schedule/" title="Return to the schedule page">GBT Schedule</a> |
+            <a href="/schedule/" class="top_menu" title="Return to the schedule page">GBT Schedule</a> |
           {% endif %}
           <a href="/static/html/main.html" class="top_menu" title="GBT Dynamic Scheduling System documentation">Docs</a> |
           <a href="/accounts/logout/" class="top_menu" title="Click here to safely leave the current DSS login session">Logout</a>
@@ -101,7 +101,7 @@
               <img src="/static/images/chat_offline.gif" style="border: 0;" />
             </a>
           </span>
-          <a href="mailto:helpdesk-dss@gb.nrao.edu" class="top_menu" title="Click here to offer suggestions or report bugs">Helpdesk</a> |
+          <a href="https://help.nrao.edu" class="top_menu" title="Click here to log into NRAO Support Center to offer suggestions or report bugs">Support Center</a> |
           <a href="/static/html/main.html" class="top_menu" title="GBT Dynamic Scheduling System documentation">Docs</a> |
           <a href="/profile" class="top_menu" title="Click here login to the DSS">DSS Login</a>
         </td>

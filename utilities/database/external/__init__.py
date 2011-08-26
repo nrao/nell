@@ -20,6 +20,7 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
+from AstridDB             import AstridDB
 from NRAOBosDB            import NRAOBosDB
 from BOSMirrorDB          import BOSMirrorDB
 from PSTMirrorDB          import PSTMirrorDB
