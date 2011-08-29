@@ -547,9 +547,10 @@ def GenerateReport():
     values = [s.name for s in sessions if not s.project]
     print_values(outfile, values)
 
-    outfile.write("\n\nOpen sessions with alloted time < min duration:")
+    outfile.write("\n\nOpen sessions (not completed) with alloted time < min duration:")
     values = [s.name for s in sessions \
               if s.session_type.type == "open" and \
+                 not s.status.complete and \
                  s.allotment.total_time < s.min_duration]
     print_values(outfile, values)
 
@@ -564,6 +565,12 @@ def GenerateReport():
     values = [s.name for s in sessions \
               if s.session_type.type == "open" and \
                  s.min_duration > s.max_duration]
+    print_values(outfile, values)
+
+    outfile.write("\n\nSessions with min duration too small:")
+    ss1 = [s for s in sessions if s.min_duration <= 0.25]
+    ss = sorted(ss1, lambda x, y: cmp(x.min_duration, y.min_duration))
+    values = ["%s, %f" % (s.name, s.min_duration) for s in ss]
     print_values(outfile, values)
 
     outfile.write("\n\nSessions with negative observed time:")
