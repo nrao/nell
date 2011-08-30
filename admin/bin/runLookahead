@@ -1,6 +1,6 @@
 #!/bin/bash
 
-LOOKAHEADDIR=
+LOOKAHEADDIR=/home/dss/lookahead
 
 die () {
     echo >&2 "$@"
@@ -8,7 +8,17 @@ die () {
     exit 1
 }
 
-
+initCode()
+{
+    echo "Updating Nell code tree."
+    cd $LOOKAHEADDIR/nell
+    git pull origin master
+    echo "Updating Antioch code tree."
+    cd $LOOKAHEADDIR/antioch
+    git pull origin master
+    echo "Building lookahead executable."
+    make lookahead
+}
 
 initDB ()
 {
@@ -75,6 +85,7 @@ echo "                                  - S. L. Clemens"
 echo ""
 echo "Actual results may vary."
 echo ""
+initCode
 initDB
 runReports $1 "initialLookaheadSchedule" 
 prepDB $1
