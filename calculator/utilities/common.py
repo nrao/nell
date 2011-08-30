@@ -122,7 +122,7 @@ def getMessages(request):
         messages.append({'type' : 'Error', 'msg' : 'Source Declination is below -46, the lower limit for the GBT.'})
     rx        = ivalues.get('receiver', {}).get('value')
     topo_freq = results.get('topocentric_freq', {}).get('value', 0)
-    if rx is not None and rx != '' and topo_freq != '':
+    if rx is not None and rx != '' and rx != 'NA' and topo_freq != '':
         _, v = rx.split('(')
         rx_low, rx_hi = map(float, v.replace(" GHz)", '').split(' - ') )
         rx_low, rx_hi = float(rx_low), float(rx_hi)
