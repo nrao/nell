@@ -67,6 +67,39 @@ class TestSessionAlerts(TestSessionAlertBase):
         alerts = sa.findDisabledSessionAlerts(now = w.default_period.start + timedelta(days = 10))
         self.assertEqual(len(alerts), 0)
 
+    def testFindUnauthorizedWindowedSessionAlerts(self):
+        self.makeWindowedSession(start_date = date(2009, 4, 5)
+                               , duration   = 7
+                                )
+
+        sa = SessionInActiveAlerts()
+        w  = Window.objects.all()[0]
+        w.session.status.authorized = False
+        w.session.status.save()
+
+        # Find alerts 20 days before window
+        alerts = sa.findUnauthorizedSessionAlerts(now = w.start_datetime() - timedelta(days = 20))
+        self.assertEqual(len(alerts), 0)
+
+        # Find alerts 10 days before window
+        alerts = sa.findUnauthorizedSessionAlerts(now = w.start_datetime() - timedelta(days = 10))
+        self.assertEqual(len(alerts), 1)
+        self.assertEqual(alerts[0].id, 1)
+
+        # Find alerts at the start of the window
+        alerts = sa.findUnauthorizedSessionAlerts(now = w.start_datetime())
+        self.assertEqual(len(alerts), 1)
+        self.assertEqual(alerts[0].id, 1)
+
+        # Find alerts at the default period
+        alerts = sa.findUnauthorizedSessionAlerts(now = w.default_period.start)
+        self.assertEqual(len(alerts), 1)
+        self.assertEqual(alerts[0].id, 1)
+
+        # Find alerts after the default period, should be zero
+        alerts = sa.findUnauthorizedSessionAlerts(now = w.default_period.start + timedelta(days = 10))
+        self.assertEqual(len(alerts), 0)
+
     def testFindDisabledWindowedSessionAlertsCritical(self):
         """
             Critical being within 4 days of the window.
