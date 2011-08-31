@@ -22,7 +22,8 @@
 
 from calculator.models import FrequencyResolution, WeatherValues, TSky
 
-import math, slalib
+import math
+from pyslalib import slalib
 
 freqRes = {800  : 8192
          , 200  : 32768
