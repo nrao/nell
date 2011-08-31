@@ -27,7 +27,7 @@ setup_environ(settings)
 from scheduler.models         import Window, Elective, Period
 from utilities.notifiers.SessionAlertNotifier import *
 
-class SessionAlerts(object):
+class SessionInActiveAlerts(object):
 
     """
     This class is responsible for finding issues with constrained
