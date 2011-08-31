@@ -20,6 +20,7 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
+from BlackoutAlerts         import BlackoutAlerts
 from ElectiveAlerts         import ElectiveAlerts
 from FixedAlerts            import FixedAlerts
 from SessionInActiveAlerts  import SessionInActiveAlerts
