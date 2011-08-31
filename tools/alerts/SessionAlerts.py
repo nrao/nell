@@ -29,8 +29,17 @@ from utilities.notifiers.SessionAlertNotifier import *
 
 class SessionAlerts(object):
 
+    """
+    This class is responsible for finding issues with constrained
+    sessions (of type Fixed, Elective or Windowed) due to their
+    being inactive (unenabled, or unauthorized), and one of their
+    opportunities to observe is in the near future.
+    """
+
     def __init__(self, quiet = True, filename = None, stageBoundary = 15):
 
+        # the nature of the alerts change as the event gets closer,
+        # and that change's boundary is set here.
         self.stageBoundary = stageBoundary
         self.now = datetime.utcnow()
         
@@ -40,6 +49,15 @@ class SessionAlerts(object):
         self.reportLines = []
        
     def findDisabledSessionAlerts(self, now = None):
+        """
+        For each constrained type (Fixed, Elective, Windowed)
+        of disabled session, returns the compromised
+        objects, if any.
+        For example, if a session is disabled, but an incomplete
+        window is coming up soon enough, this window object
+        will be added to the list of alerts.
+        """
+
         now   = now if now is not None else datetime.utcnow()
         today = datetime(now.year, now.month, now.day)
 
@@ -47,16 +65,19 @@ class SessionAlerts(object):
             daysTillStart   = abs((w.start_datetime() - today).days)
             return (daysTillStart <= self.stageBoundary and now < w.default_period.start) \
                    or (now >= w.start_datetime() and now <= w.default_period.start)
-
+        # what windows risk not getting completed?
         retval  = [w for w in Window.objects.filter(complete = False
                                                   , session__status__enabled = False)
                      if withinWindowBoundary(w)]
 
         def withinElectiveBoundary(e):
             start, end    = e.periodDateRange()
+            if start is None or end is None:
+                return False
+
             daysTillStart = abs((start - today).days)
             return (daysTillStart <= self.stageBoundary and now <= end)
-
+        # what electives risk not getting completed?
         retval.extend([e for e in Elective.objects.filter(complete = False
                                                         , session__status__enabled = False)
                          if withinElectiveBoundary(e)])
@@ -66,6 +87,8 @@ class SessionAlerts(object):
             daysTillStart = abs((start - today).days)
             return daysTillStart <= self.stageBoundary and now <= start
 
+        # what fixed periods risk getting scheduled, even though
+        # their session is disabled?
         retval.extend([p for p in Period.objects.filter(session__session_type__type = 'fixed'
                                                       , state__name = 'Pending'
                                                       , session__status__enabled = False)
@@ -74,6 +97,12 @@ class SessionAlerts(object):
         return retval
 
     def findUnauthorizedSessionAlerts(self, now = None):
+        """
+        Is it me, or is this the same exact thing as
+        findDisabledSessionAlerts, but instead of checking
+        session__status__enabled, we're checking session__status__authorized?
+        """
+    
         now   = now if now is not None else datetime.utcnow()
         today = datetime(now.year, now.month, now.day)
 
