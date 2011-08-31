@@ -21,6 +21,7 @@
 #       Green Bank, WV 24944-0002 USA
 
 from calculator.utilities.Result import Result
+from calculator.utilities.functions import dec2Els
 from django.test import TestCase
 import unittest
 
@@ -78,6 +79,7 @@ class TestResultCalculations(unittest.TestCase):
     def test_confusion_limit(self):
         self.results.set('backend', 'GBT Spectrometer')
         self.results.set('declination', 38.43)
+        self.results.set('min_elevation', 5)
         self.results.set('source_diameter_slider', 2)
         self.results.set('units', 'flux')
         value, _, _, _, _ = self.results.get('confusion_limit')
@@ -94,6 +96,7 @@ class TestResultCalculations(unittest.TestCase):
     def test_airmass(self):
         def getResults(dec):
             self.results.set('declination', dec)
+            self.results.set('min_elevation', dec2Els(dec)[0])
             min_el   = float(self.results.get('min_elevation')[0])
             max_el   = float(self.results.get('max_elevation')[0])
             air_mass = float(self.results.get('air_mass')[0])
@@ -132,6 +135,7 @@ class TestResultCalculations(unittest.TestCase):
     def test_est0(self):
         self.results.set('backend', 'GBT Spectrometer')
         self.results.set('declination', 38.43)
+        self.results.set('min_elevation', 5)
         value = self.results.get('est0')[0]
         self.assertTrue(value is not None)
 
@@ -141,6 +145,7 @@ class TestResultCalculations(unittest.TestCase):
     def test_attenuation(self):
         self.results.set('backend', 'GBT Spectrometer')
         self.results.set('declination', 38.43)
+        self.results.set('min_elevation', 5)
         value = self.results.get('attenuation')[0]
         self.assertTrue(value is not None)
 
@@ -150,6 +155,7 @@ class TestResultCalculations(unittest.TestCase):
     def test_estTS(self):
         self.results.set('backend', 'GBT Spectrometer')
         self.results.set('declination', 38.43)
+        self.results.set('min_elevation', 5)
         self.results.set('right_ascension', 0.0)
         self.results.set('galactic', 'no_correction')
         self.results.set('estimated_continuum', 3)
@@ -162,6 +168,7 @@ class TestResultCalculations(unittest.TestCase):
     def test_t_sys(self):
         self.results.set('backend', 'GBT Spectrometer')
         self.results.set('declination', 38.43)
+        self.results.set('min_elevation', 5)
         self.results.set('right_ascension', 0.0)
         self.results.set('galactic', 'no_correction')
         self.results.set('estimated_continuum', 3)
