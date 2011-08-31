@@ -35,7 +35,7 @@ from scheduler.httpadapters    import SessionHttpAdapter
 from tools.database.UserInfoTools import UserInfoTools
 from utilities                 import TimeAccounting
 from utilities                 import AnalogSet
-from tools.alerts              import SessionAlerts
+from tools.alerts              import SessionInActiveAlerts
 
 def get_sessions(typ,sessions):
     return [s for s in sessions if s.session_type.type == typ]
@@ -624,7 +624,7 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nUpcoming Windowed, Elective, and Fixed Sessions that are not enabled:")
-    sa = SessionAlerts()
+    sa = SessionInActiveAlerts()
     print_values(outfile
                , ["%s session %s which runs %s" % (u.session.session_type.type
                                                  , u.session.id
@@ -633,7 +633,7 @@ def GenerateReport():
                    )
 
     outfile.write("\n\nUpcoming Windowed, Elective, and Fixed Sessions that are not authorized:")
-    sa = SessionAlerts()
+    sa = SessionInActiveAlerts()
     print_values(outfile
                , ["%s session %s which runs %s" % (u.session.session_type.type
                                                  , u.session.id

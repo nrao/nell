@@ -23,7 +23,7 @@
 from datetime    import date, datetime, timedelta
 
 from test_utils.NellTestCase import NellTestCase
-from tools.alerts import SessionAlerts
+from tools.alerts import SessionInActiveAlerts
 from scheduler.models         import *
 from scheduler.httpadapters   import *
 from scheduler.tests.utils                   import create_sesshun
@@ -39,7 +39,7 @@ class TestSessionAlerts(TestSessionAlertBase):
                                , duration   = 7
                                 )
 
-        sa = SessionAlerts()
+        sa = SessionInActiveAlerts()
         w  = Window.objects.all()[0]
         w.session.status.enabled = False
         w.session.status.save()
@@ -75,7 +75,7 @@ class TestSessionAlerts(TestSessionAlertBase):
                                , duration   = 7
                                 )
 
-        sa = SessionAlerts()
+        sa = SessionInActiveAlerts()
         sa.stageBoundary = 4
         w  = Window.objects.all()[0]
         w.session.status.enabled = False
@@ -107,7 +107,7 @@ class TestSessionAlerts(TestSessionAlertBase):
     def testFindDisabledElectiveSessionAlerts(self):
         self.makeElectiveSession() 
 
-        sa = SessionAlerts()
+        sa = SessionInActiveAlerts()
         e  = Elective.objects.all()[0]
         e.session.status.enabled = False
         e.session.status.save()
@@ -142,7 +142,7 @@ class TestSessionAlerts(TestSessionAlertBase):
         """
         self.makeElectiveSession() 
 
-        sa = SessionAlerts()
+        sa = SessionInActiveAlerts()
         sa.stageBoundary = 4
         e  = Elective.objects.all()[0]
         e.session.status.enabled = False
@@ -175,7 +175,7 @@ class TestSessionAlerts(TestSessionAlertBase):
     def testFindDisabledFixedSessionAlerts(self):
         self.makeFixedSession() 
 
-        sa = SessionAlerts()
+        sa = SessionInActiveAlerts()
         p  = Period.objects.filter(session__session_type__type = 'fixed')[0]
         p.session.status.enabled = False
         p.session.status.save()
@@ -202,7 +202,7 @@ class TestSessionAlerts(TestSessionAlertBase):
     def testFindDisabledFixedSessionAlertsCritical(self):
         self.makeFixedSession() 
 
-        sa = SessionAlerts()
+        sa = SessionInActiveAlerts()
         sa.stageBoundary = 4
         p  = Period.objects.filter(session__session_type__type = 'fixed')[0]
         p.session.status.enabled = False
@@ -230,7 +230,7 @@ class TestSessionAlerts(TestSessionAlertBase):
     def xtestRaiseAlerts(self):
         self.makeFixedSession() 
 
-        sa = SessionAlerts(stageBoundary = 4)
+        sa = SessionInActiveAlerts(stageBoundary = 4)
         p  = Period.objects.filter(session__session_type__type = 'fixed')[0]
         p.session.status.enabled = False
         p.session.status.save()
