@@ -147,9 +147,11 @@ class Period(models.Model):
            (len(schedule.values()) == 1 and schedule.values()[0] == []):
             return False # no schedule, no required rcvrs!
 
-        receivers = Set()
-        map(lambda x: receivers.add(x), schedule.values()[0])
-        map(lambda x: receivers.add(x), schedule.values()[1])
+        receivers = Set(schedule.values()[0])
+
+        # There might not be a second day...
+        if len(schedule.values()) == 2:
+            map(lambda x: receivers.add(x), schedule.values()[1])
 
         if not any([all([Set(g.receivers.all()).intersection(receivers) \
                         for g in rcvr_set]) for rcvr_set in required]):
