@@ -133,17 +133,26 @@ class Period(models.Model):
         if all([len(set) == 0 for set in required]):
             return False # No receivers, problem!
 
-        schedule = Receiver_Schedule.extract_schedule(self.start, 0)
+        # NOTE: get schedule for two days, to catch receivers going
+        # up/down on the day of interest.  There is no way to know for
+        # sure via the database the exact time that a receiver went up
+        # or down.  Instead the break-point is assumed to be 1600
+        # hours UT on any given day (it's in the database, but that is
+        # how Receiver_Schedule.extract_schedule() operates).  So if
+        # the receiver changes at some other hour this function could
+        # return an erroneous value unless it considers the union of
+        # the receivers up before and after 1600 hours.
+        schedule = Receiver_Schedule.extract_schedule(self.start, 1)
         if schedule == {} or \
            (len(schedule.values()) == 1 and schedule.values()[0] == []):
             return False # no schedule, no required rcvrs!
 
-        # should return a single date w/ rcvr list
-        dt, receivers = schedule.items()[0]
+        receivers = Set()
+        map(lambda x: receivers.add(x), schedule.values()[0])
+        map(lambda x: receivers.add(x), schedule.values()[1])
 
-        receivers = Set(receivers)
         if not any([all([Set(g.receivers.all()).intersection(receivers) \
-                        for g in set]) for set in required]):
+                        for g in rcvr_set]) for rcvr_set in required]):
             return False # Receiver isn't up
         else:
             return True # Receiver is up
