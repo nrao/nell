@@ -29,7 +29,6 @@ from django.http                    import HttpResponse, HttpResponseRedirect, H
 from django.shortcuts               import render_to_response, get_object_or_404
 from scheduler.utilities            import get_rev_comment
 from models                         import *
-from sets                           import Set
 from nell.tools                     import IcalMap
 from nell.utilities.TimeAgent       import EST, UTC, adjustDateTimeTz
 from reversion                      import revision
@@ -592,7 +591,7 @@ def events(request, *args, **kws):
     jsonobjlist = []
 
     # Project blackout events
-    blackouts = Set([b for b in project.blackout_set.all()])
+    blackouts = set([b for b in project.blackout_set.all()])
     for b in blackouts:
         jsonobjlist.extend(b.eventjson(start, end, id, tz))
         id = id + 1
@@ -606,7 +605,7 @@ def events(request, *args, **kws):
     frdBlackouts = [b for f in project.friend_set.all() \
                       for b in f.user.blackout_set.all() if f.required]
     invBlackouts.extend(frdBlackouts)
-    blackouts = Set(invBlackouts)
+    blackouts = set(invBlackouts)
     for b in blackouts:
         jsonobjlist.extend(b.eventjson(start, end, id, tz))
         id = id + 1
@@ -654,7 +653,7 @@ def dates_not_schedulable(request, *args, **kws):
     project   = Project.objects.get(pcode = pcode)
     period    = (end - start).days
 
-    dates = Set([])
+    dates = set([])
     if not project.has_schedulable_sessions():
         dates = dates.union([start + timedelta(days = i) for i in range(period)])
     else:
