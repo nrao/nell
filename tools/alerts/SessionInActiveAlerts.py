@@ -24,8 +24,9 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from scheduler.models         import Window, Elective, Period
+from scheduler.models                         import Window, Elective, Period
 from utilities.notifiers.SessionAlertNotifier import *
+from django.db.models                         import Q
 
 class SessionInActiveAlerts(object):
 
@@ -33,7 +34,8 @@ class SessionInActiveAlerts(object):
     This class is responsible for finding issues with constrained
     sessions (of type Fixed, Elective or Windowed) due to their
     being inactive (unenabled, or unauthorized), and one of their
-    opportunities to observe is in the near future.
+    opportunities to observe is in the near future.  It also sends
+    emails about these issues to both staff and observers.
     """
 
     def __init__(self, quiet = True, filename = None, stageBoundary = 15):
@@ -49,9 +51,19 @@ class SessionInActiveAlerts(object):
         self.reportLines = []
        
     def findDisabledSessionAlerts(self, now = None):
+        "Who is unenabled but might be scheduled soon?"
+        q = Q(session__status__enabled = False) 
+        return self.findInActiveSessionAlerts(q, now)
+
+    def findUnauthorizedSessionAlerts(self, now = None):
+        "Who is unauthorized but might be scheduled soon?"
+        q = Q(session__status__authorized = False) 
+        return self.findInActiveSessionAlerts(q, now)
+
+    def findInActiveSessionAlerts(self, condition, now = None):
         """
         For each constrained type (Fixed, Elective, Windowed)
-        of disabled session, returns the compromised
+        of an inactive session, returns the compromised
         objects, if any.
         For example, if a session is disabled, but an incomplete
         window is coming up soon enough, this window object
@@ -66,8 +78,8 @@ class SessionInActiveAlerts(object):
             return (daysTillStart <= self.stageBoundary and now < w.default_period.start) \
                    or (now >= w.start_datetime() and now <= w.default_period.start)
         # what windows risk not getting completed?
-        retval  = [w for w in Window.objects.filter(complete = False
-                                                  , session__status__enabled = False)
+        retval  = [w for w in Window.objects.filter(condition
+                                                  , complete = False) 
                      if withinWindowBoundary(w)]
 
         def withinElectiveBoundary(e):
@@ -78,8 +90,8 @@ class SessionInActiveAlerts(object):
             daysTillStart = abs((start - today).days)
             return (daysTillStart <= self.stageBoundary and now <= end)
         # what electives risk not getting completed?
-        retval.extend([e for e in Elective.objects.filter(complete = False
-                                                        , session__status__enabled = False)
+        retval.extend([e for e in Elective.objects.filter(condition
+                                                        , complete = False)
                          if withinElectiveBoundary(e)])
 
         def withinFixedBoundary(p):
@@ -89,49 +101,9 @@ class SessionInActiveAlerts(object):
 
         # what fixed periods risk getting scheduled, even though
         # their session is disabled?
-        retval.extend([p for p in Period.objects.filter(session__session_type__type = 'fixed'
-                                                      , state__name = 'Pending'
-                                                      , session__status__enabled = False)
-                         if withinFixedBoundary(p)])
-
-        return retval
-
-    def findUnauthorizedSessionAlerts(self, now = None):
-        """
-        Is it me, or is this the same exact thing as
-        findDisabledSessionAlerts, but instead of checking
-        session__status__enabled, we're checking session__status__authorized?
-        """
-    
-        now   = now if now is not None else datetime.utcnow()
-        today = datetime(now.year, now.month, now.day)
-
-        def withinWindowBoundary(w):
-            daysTillStart   = abs((w.start_datetime() - today).days)
-            return (daysTillStart <= self.stageBoundary and now < w.default_period.start) \
-                   or (now >= w.start_datetime() and now <= w.default_period.start)
-
-        retval  = [w for w in Window.objects.filter(complete = False
-                                                  , session__status__authorized = False)
-                     if withinWindowBoundary(w)]
-
-        def withinElectiveBoundary(e):
-            start, end    = e.periodDateRange()
-            daysTillStart = abs((start - today).days)
-            return (daysTillStart <= self.stageBoundary and now <= end)
-
-        retval.extend([e for e in Elective.objects.filter(complete = False
-                                                        , session__status__authorized = False)
-                         if withinElectiveBoundary(e)])
-
-        def withinFixedBoundary(p):
-            start = p.start
-            daysTillStart = abs((start - today).days)
-            return daysTillStart <= self.stageBoundary and now <= start
-
-        retval.extend([p for p in Period.objects.filter(session__session_type__type = 'fixed'
-                                                      , state__name = 'Pending'
-                                                      , session__status__authorized = False)
+        retval.extend([p for p in Period.objects.filter(condition
+                                                      , session__session_type__type = 'fixed'
+                                                      , state__name = 'Pending')
                          if withinFixedBoundary(p)])
 
         return retval
@@ -154,54 +126,50 @@ class SessionInActiveAlerts(object):
             f.close()
 
     def raiseAlertsDSSTeam(self, now = None, test = False):
+        """
+        Looks for problems with both unauthorized and unenabled
+        Sessions and informs the DSS Team.
+        """
+
+        # lower the boundary so that we get notified at the last minute
         self.stageBoundary = 4
-        for unknown in self.findDisabledSessionAlerts(now):
-            
-            # report this
-            self.add("Alert for %s session # %d\n" % (unknown.session.session_type.type
-                                                    , unknown.session.id))
-            
-            sa = SessionAlertNotifier(unknown = unknown
-                                    , test = test
-                                    , flag = "enabled"
-                                     )
-            
-            # for now, *really* play it safe
-            if not test:
-                if sa.email is not None:
-                    self.add("Notifying DSS Team about disabled %s session # %d: %s\n" % \
-                         (unknown.session.session_type.type
-                        , unknown.session.id
-                        , sa.email.GetRecipientString()))
-                #print sa.email.GetText()
-                sa.notify()
-        self.write()
-        for unknown in self.findUnauthorizedSessionAlerts(now):
-            
-            # report this
-            self.add("Alert for %s session # %d\n" % (unknown.session.session_type.type
-                                                    , unknown.session.id))
-            
-            sa = SessionAlertNotifier(unknown = unknown
-                                    , test = test
-                                    , flag = "authorized"
-                                     )
-            
-            # for now, *really* play it safe
-            if not test:
-                if sa.email is not None:
-                    self.add("Notifying DSS Team about unauthorized %s session # %d: %s\n" % \
-                         (unknown.session.session_type.type
-                        , unknown.session.id
-                        , sa.email.GetRecipientString()))
-                #print sa.email.GetText()
-                sa.notify()
-        self.write()
+
+        self.raiseDisabledAlerts(now = now, test = test, type = "dss_team")
+        self.raiseUnauthorizedAlerts()
+
+        # restore the old boundary
         self.stageBoundary = 15
 
-    def raiseAlerts(self, now = None, test = False):
+        self.write()
+ 
+    def raiseAlerts(self, now = None, test = False, type = "observers"):
+        "maintain the old interface"
+        self.raiseDisabledAlerts(now = now, test = test, type = type)
+        self.write()
 
-        for unknown in self.findDisabledSessionAlerts(now):
+    def raiseUnauthorizedAlerts(self, now = None, test = False):
+        "The DSS teams gets warnings about unauthorized sessions"
+
+        self.raiseSessionAlerts(now = now
+                           , test = test
+                           , flag = "authorized"
+                           , type = "dss_team"
+                           , fnc = self.findUnauthorizedSessionAlerts
+                             )
+                    
+    def raiseDisabledAlerts(self, now = None, test = False, type = type):
+        "The observers gets warnings about disabled sessions"
+
+        self.raiseSessionAlerts(now = now
+                           , test = test
+                           , flag = "enabled"
+                           , type = type
+                           , fnc = self.findDisabledSessionAlerts
+                             )
+                             
+    def raiseSessionAlerts(self, now = None, test = False, flag = None, type = None, fnc = None):
+
+        for unknown in fnc(now): 
             
             # report this
             self.add("Alert for %s session # %d\n" % (unknown.session.session_type.type
@@ -209,21 +177,23 @@ class SessionInActiveAlerts(object):
             
             sa = SessionAlertNotifier(unknown = unknown
                                     , test = test
-                                    , type = "observers"
-                                    , flag = "enabled"
+                                    , type = type
+                                    , flag = flag
                                      )
             
             # for now, *really* play it safe
             if not test:
                 if sa.email is not None:
-                    self.add("Notifying observers about disabled %s session # %d: %s\n" % \
-                         (unknown.session.session_type.type
+                    
+                    self.add("Notifying %s about un%s %s session # %d: %s\n" % \
+                         (type
+                        , flag
+                        , unknown.session.session_type.type
                         , unknown.session.id
                         , sa.email.GetRecipientString()))
                 #print sa.email.GetText()
                 sa.notify()
-        self.write()
-
+        
 if __name__ == "__main__":
     sa = SessionAlerts()
     sa.raiseAlerts()
