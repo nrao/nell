@@ -66,7 +66,12 @@ class SessionAlertEmail(Email):
         self.SetBody("""
 Dear Observers,  
 
-GBT %s session %s which runs %s is not yet enabled to be scheduled.   As a result it is nearly certain that this session will not be observed.  If you do not enable this session, the window *will not be rescheduled*.
+GBT %s session %s which runs %s is not yet enabled to be scheduled.   As a result it is nearly certain that this session will not be observed.  If you do not enable this session, it *will not be rescheduled*.
+
+You will need to log into the DSS at
+http://dss.gb.nrao.edu/
+and check the enable box on the session for your %s project.
+We do not schedule any observations if the session is not enabled.
 
 If you have any questions, please contact the GBT scheduling team (helpdesk-dss@nrao.edu).  
 
@@ -76,6 +81,7 @@ The GBT scheduling team
         """ % (unknown.session.session_type.type
              , unknown.session.name
              , SessionAlertEmail.getRange(unknown)
+             , unknown.session.name
              )
         )
 
