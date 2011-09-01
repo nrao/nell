@@ -25,7 +25,8 @@ import settings
 setup_environ(settings)
 
 from calculator.models import TSky
-import math, slalib
+import math
+from pyslalib import slalib
 
 class TSkyImport(object):
 

@@ -22,7 +22,6 @@
 
 from Notifier import Notifier
 from datetime import datetime, timedelta
-from sets     import Set
 from Email    import Email
 
 from utilities import TimeAgent

@@ -26,7 +26,6 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from sets                      import Set
 from datetime                  import date, datetime, timedelta
 from django.db.models          import Q
 
@@ -75,8 +74,8 @@ def repeatedObservingParameters(sessions):
 
 #def missing_observer_parameter_pairs(sessions):
 #    pairs = [
-#        Set(["LST Exclude Hi", "LST Exclude Low"])
-#      , Set(["LST Include Hi", "LST Include Low"])
+#        set(["LST Exclude Hi", "LST Exclude Low"])
+#      , set(["LST Include Hi", "LST Include Low"])
 #    ]
 #
 #    return [s.name for s in sessions \
@@ -98,7 +97,7 @@ def check_maintenance_and_rcvrs():
         # of these, is any one of them a maintenance?
         if len([p for p in periods if p.session.project.is_maintenance()]) == 0:
             bad.append(dt.date())
-    return sorted(Set(bad))[1:] # Remove start of DSS
+    return sorted(set(bad))[1:] # Remove start of DSS
 
 def print_values(file, values):
     if values == []:
@@ -209,7 +208,7 @@ def get_non_window_periods():
         # don't care about deleted periods
         pds = s.period_set.exclude(state__name = 'Deleted')
         win = s.window_set.all()
-        winp = Set()
+        winp = set()
 
         # Set up the set of periods that belong to a window.  Doesn't
         # matter here if they're deleted or not, since we are checking
@@ -249,7 +248,7 @@ def get_window_out_of_range_lst():
 
 def get_window_within_48():
     w = get_windows()
-    sid = Set()
+    sid = set()
     within48 = []
 
     for i in w:
@@ -698,7 +697,7 @@ def GenerateReport():
     outfile.write("\n\nProjects that contain non-unique session names:")
     names  = [(p.pcode, [s.name for s in p.sesshun_set.all()])
                                     for p in projects]
-    values = [p for p, n in names if len(Set(n)) != len(n)]
+    values = [p for p, n in names if len(set(n)) != len(n)]
     print_values(outfile, values)
 
     outfile.write("\n\nUsers with duplicate accounts by name:")

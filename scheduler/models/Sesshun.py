@@ -22,7 +22,6 @@
 
 from django.db                import models
 from django.db.models         import Q
-from sets                     import Set
 
 from nell.utilities           import TimeAgent, AnalogSet
 from nell.utilities.receiver  import ReceiverCompile
@@ -405,7 +404,7 @@ class Sesshun(models.Model):
         if self.project is None:
             return []
     
-        dts = Set([])
+        dts = set([])
         dts = dts.union(self.get_receiver_blackout_ranges(start, end))
         dts = dts.union(self.project.get_prescheduled_times(start, end))
         if blackouts:

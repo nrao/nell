@@ -21,7 +21,6 @@
 #       Green Bank, WV 24944-0002 USA
 
 from datetime                import datetime, timedelta
-from sets                    import Set
 
 from test_utils              import BenchTestCase, timeIt
 from utilities               import TimeAgent
@@ -288,7 +287,7 @@ class TestSesshun(BenchTestCase):
         exp = [(datetime(2009, 4, 1), datetime(2009, 4, 11))
              , (datetime(2009, 5, 1), end)
               ]
-        expected = Set(exp)
+        expected = set(exp)
         self.assertEquals(exp, blackouts)
 
         # Now add a project w/ prescheduled times.
