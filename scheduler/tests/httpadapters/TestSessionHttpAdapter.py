@@ -33,7 +33,7 @@ class TestSessionHttpAdapter(NellTestCase):
         self.adapter = SessionHttpAdapter(self.s)
         self.exp = {'req_max': 6.0
              , 'grade': 4.0
-             , 'nighttime': False
+             , 'time_of_day': "AnyTimeOfDay"
              , 'transit': False
              , 'sem_time': 0.0
              , 'lst_in': ''
