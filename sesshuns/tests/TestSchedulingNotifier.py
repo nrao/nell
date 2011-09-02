@@ -293,6 +293,9 @@ Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | Nubbles   |           | three"""
         s.session_type = Session_Type.objects.get(type = "elective")
         s.save()
 
+        e = Elective(session = s, complete = False)
+        e.save()
+
         pa = Period_Accounting(scheduled = 0)
         pa.save()
         p = Period(session = s
@@ -300,6 +303,7 @@ Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | Nubbles   |           | three"""
                  , duration = 1 
                  , state = Period_State.get_state("D")
                  , accounting = pa
+                 , elective = e
                   )
         p.save()
 
@@ -351,3 +355,20 @@ Jan 01 03:00 | Jan 01 08:00 | 09:19 |  4.00 | Nubbles   |           | three"""
         # so no recipients
         email = self.sn.email_templates.getObject("changed")
         self.assertEquals([], email.recipients)
+
+        # okay, now complete this elective, and make sure it
+        # doesn't cause a notification
+        e.complete = True
+        e.save()
+
+        self.sn.setPeriods(self.ps, self.ps)
+
+        self.assertEquals([], self.sn.deletedPeriods)
+        self.assertEquals([], self.sn.deletedElectivePeriods)
+
+        email = self.sn.email_templates.getObject("staff")
+        exp = ["gbtops@gb.nrao.edu"
+             , "gbtinfo@gb.nrao.edu"
+             , "gbtime@gb.nrao.edu"]
+        self.assertEquals(exp, email.recipients)
+
