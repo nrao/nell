@@ -107,6 +107,12 @@
               {% if s.irradiance %}
               <span title="Applies the irradiance threshold to this session (W/m^2).">Irradiance Threshold: </span>{{s.irradiance}}<br/>
               {% endif %}
+              {% if s.get_lst_exclusion_string %}
+              <span title="This session is excluded from observing in this LST range (Hours).">LST Exclusion: </span>{{s.get_lst_exclusion_string}}<br/>
+              {% endif %}
+              {% if s.get_lst_inclusion_string %}
+              <span title="This session can only observe in this LST range (Hours).">LST Inclusion: </span>{{s.get_lst_inclusion_string}}<br/>
+              {% endif %}              
               </td>
             </tr>
               

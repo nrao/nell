@@ -221,6 +221,16 @@ class Sesshun(models.Model):
         return ', '.join(
           ["%.2f-%.2f" % (low, hi) for low, hi in self.get_lst_parameters()[lst_type]])
 
+    def get_lst_exclusion_string(self):
+        "Returns string representation, or None if not set."
+        lst = self.get_lst_string('LST Exclude')
+        return lst if lst is not None else None
+
+    def get_lst_inclusion_string(self):
+        "Returns string representation, or None if not set."
+        lst = self.get_lst_string('LST Include')
+        return lst if lst is not None else None
+
     def getTarget(self):
         try:
             return self.target
