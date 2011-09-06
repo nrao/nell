@@ -23,7 +23,7 @@
 from datetime    import date, datetime, timedelta
 
 from test_utils.NellTestCase import NellTestCase
-from tools.alerts import SessionAlerts
+from tools.alerts import SessionInActiveAlerts
 from scheduler.models         import *
 from scheduler.httpadapters   import *
 from scheduler.tests.utils                   import create_sesshun
@@ -39,7 +39,7 @@ class TestSessionAlerts(TestSessionAlertBase):
                                , duration   = 7
                                 )
 
-        sa = SessionAlerts()
+        sa = SessionInActiveAlerts()
         w  = Window.objects.all()[0]
         w.session.status.enabled = False
         w.session.status.save()
@@ -67,6 +67,39 @@ class TestSessionAlerts(TestSessionAlertBase):
         alerts = sa.findDisabledSessionAlerts(now = w.default_period.start + timedelta(days = 10))
         self.assertEqual(len(alerts), 0)
 
+    def testFindUnauthorizedWindowedSessionAlerts(self):
+        self.makeWindowedSession(start_date = date(2009, 4, 5)
+                               , duration   = 7
+                                )
+
+        sa = SessionInActiveAlerts()
+        w  = Window.objects.all()[0]
+        w.session.status.authorized = False
+        w.session.status.save()
+
+        # Find alerts 20 days before window
+        alerts = sa.findUnauthorizedSessionAlerts(now = w.start_datetime() - timedelta(days = 20))
+        self.assertEqual(len(alerts), 0)
+
+        # Find alerts 10 days before window
+        alerts = sa.findUnauthorizedSessionAlerts(now = w.start_datetime() - timedelta(days = 10))
+        self.assertEqual(len(alerts), 1)
+        self.assertEqual(alerts[0].id, 1)
+
+        # Find alerts at the start of the window
+        alerts = sa.findUnauthorizedSessionAlerts(now = w.start_datetime())
+        self.assertEqual(len(alerts), 1)
+        self.assertEqual(alerts[0].id, 1)
+
+        # Find alerts at the default period
+        alerts = sa.findUnauthorizedSessionAlerts(now = w.default_period.start)
+        self.assertEqual(len(alerts), 1)
+        self.assertEqual(alerts[0].id, 1)
+
+        # Find alerts after the default period, should be zero
+        alerts = sa.findUnauthorizedSessionAlerts(now = w.default_period.start + timedelta(days = 10))
+        self.assertEqual(len(alerts), 0)
+
     def testFindDisabledWindowedSessionAlertsCritical(self):
         """
             Critical being within 4 days of the window.
@@ -75,7 +108,7 @@ class TestSessionAlerts(TestSessionAlertBase):
                                , duration   = 7
                                 )
 
-        sa = SessionAlerts()
+        sa = SessionInActiveAlerts()
         sa.stageBoundary = 4
         w  = Window.objects.all()[0]
         w.session.status.enabled = False
@@ -107,7 +140,7 @@ class TestSessionAlerts(TestSessionAlertBase):
     def testFindDisabledElectiveSessionAlerts(self):
         self.makeElectiveSession() 
 
-        sa = SessionAlerts()
+        sa = SessionInActiveAlerts()
         e  = Elective.objects.all()[0]
         e.session.status.enabled = False
         e.session.status.save()
@@ -142,7 +175,7 @@ class TestSessionAlerts(TestSessionAlertBase):
         """
         self.makeElectiveSession() 
 
-        sa = SessionAlerts()
+        sa = SessionInActiveAlerts()
         sa.stageBoundary = 4
         e  = Elective.objects.all()[0]
         e.session.status.enabled = False
@@ -175,7 +208,7 @@ class TestSessionAlerts(TestSessionAlertBase):
     def testFindDisabledFixedSessionAlerts(self):
         self.makeFixedSession() 
 
-        sa = SessionAlerts()
+        sa = SessionInActiveAlerts()
         p  = Period.objects.filter(session__session_type__type = 'fixed')[0]
         p.session.status.enabled = False
         p.session.status.save()
@@ -202,7 +235,7 @@ class TestSessionAlerts(TestSessionAlertBase):
     def testFindDisabledFixedSessionAlertsCritical(self):
         self.makeFixedSession() 
 
-        sa = SessionAlerts()
+        sa = SessionInActiveAlerts()
         sa.stageBoundary = 4
         p  = Period.objects.filter(session__session_type__type = 'fixed')[0]
         p.session.status.enabled = False
@@ -230,7 +263,7 @@ class TestSessionAlerts(TestSessionAlertBase):
     def xtestRaiseAlerts(self):
         self.makeFixedSession() 
 
-        sa = SessionAlerts(stageBoundary = 4)
+        sa = SessionInActiveAlerts(stageBoundary = 4)
         p  = Period.objects.filter(session__session_type__type = 'fixed')[0]
         p.session.status.enabled = False
         p.session.status.save()

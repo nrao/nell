@@ -1,0 +1,98 @@
+#!/bin/bash
+
+LOOKAHEADDIR=/home/dss/lookahead
+
+die () {
+    echo >&2 "$@"
+    echo "Usage: runLookahead [# of days]"
+    exit 1
+}
+
+initCode()
+{
+    echo "Updating Nell code tree."
+    cd $LOOKAHEADDIR/nell
+    git pull origin master
+    echo "Updating Antioch code tree."
+    cd $LOOKAHEADDIR/antioch
+    git pull origin master
+    echo "Building lookahead executable."
+    make lookahead
+}
+
+initDB ()
+{
+    echo "Initializing database dss_lookahead for lookahead simulations."
+    cd $LOOKAHEADDIR/nell
+    dropdb -U dss dss_lookahead
+    pg_dump -U dss dss > dss_lookahead.sql
+    createdb -U dss dss_lookahead
+    psql dss_lookahead dss -f dss_lookahead.sql > /dev/null
+    rm dss_lookahead.sql
+    echo "Database dss_lookahead initialization complete."
+}
+
+prepDB ()
+{
+    echo "Preparing database."
+    cd $LOOKAHEADDIR/nell
+    python tools/database/ResolveOverlaps.py
+    echo "Publishing periods."
+    python tools/database/PeriodPublisher.py $1
+    echo "Database preparation complete."
+}
+
+runSim ()
+{
+    echo "Running simulations."
+    echo "This could take a minute.  Go get some coffee ..."
+    cd $LOOKAHEADDIR/antioch
+    TODAYS_DATE=$(date +%Y-%m-%d)
+    lookahead -o=simulations -d=$1 -b=$TODAYS_DATE -n=lookahead > lookaheadSim.txt
+    echo "Done running lookahead simulations."  
+    echo "   See details in antioch/lookaheadSim.txt"
+}
+
+cleanUp ()
+{
+    echo "Cleaning up database."
+}
+
+runReports ()
+{
+    echo "Running reports."
+    echo "    days: $1"
+    echo "    saving reports with filenames starting with: $2"
+    cd $LOOKAHEADDIR/nell
+    python tools/reports/runLookaheadReports.py $1 $2 > $2.txt
+    echo "reports written to: "
+    echo "    $2.ics"
+    echo "    $2.txt"
+
+}
+
+[ "$#" -eq 1 ] || die "1 argument required, $# provided"
+echo $1 | grep -E -q '^[0-9]+$' || die "Numeric argument required, $1 provided"
+
+echo ""
+echo "Running lookahead simulations, starting today, for $1 days."
+echo ""
+echo "    Going to the fortune teller's was just as good as going to the "
+echo "    opera, and the cost scarcely a trifle more - ergo, I will disguise "
+echo "    myself and go again, one of these days, when other amusements fail."
+echo ""
+echo "                                  - S. L. Clemens"
+echo ""
+echo "Actual results may vary."
+echo ""
+initCode
+initDB
+runReports $1 "initialLookaheadSchedule" 
+prepDB $1
+runReports $1 "preparedLookaheadSchedule"
+runSim $1
+#cleanUp
+runReports $1 "finalLookaheadSchedule"
+echo "Lookahead Simulations Complete.  Go read the reports: "
+echo "    [inital/prepared/final]LookaheadSchedule.[ics/txt]"
+

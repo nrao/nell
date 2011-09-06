@@ -29,7 +29,6 @@ from nell.utilities   import TimeAccounting
 from scheduler.models import *
 from utilities        import TimeAgent
 from utilities        import AnalogSet
-from sets             import Set
 
 import calendar
 
@@ -114,11 +113,11 @@ class WeeklyReport:
 
         # just those scheduled periods in the current week
         self.observed_periods = \
-            sorted(Set([p for p in self.periods \
+            sorted(set([p for p in self.periods \
                           if AnalogSet.overlaps((p.start, p.end()), (self.start, self.end))]))
         # just those scheduled periods in the upcoming week                  
         self.upcoming_periods = \
-            sorted(Set([p for p in self.periods \
+            sorted(set([p for p in self.periods \
                           if AnalogSet.overlaps((p.start, p.end())
                                     , (self.next_start, self.next_end))]))
 
@@ -155,7 +154,7 @@ class WeeklyReport:
                        
         self.backlog_hours["total_time"] = sum([self.ta.getTimeLeft(p) for p in self.backlog])
         self.backlog_hours["years"] = {}
-        for y in sorted(list(Set([s.start().year for s in self.previousSemesters]))):
+        for y in sorted(list(set([s.start().year for s in self.previousSemesters]))):
             projs = [p for p in self.backlog if p.semester.start().year == y]
             self.backlog_hours["years"]["%d" % y] = (sum([self.ta.getTimeLeft(p) for p in projs]), len(projs))
         self.backlog_hours["monitoring"] = sum([self.ta.getTimeLeft(p) for p in self.backlog \
@@ -198,10 +197,10 @@ class WeeklyReport:
     
         self.outfile.write("Observations for proposals\n")
         self.print_values(self.outfile
-                   , Set([p.session.project.pcode for p in self.observed_periods]))
+                   , set([p.session.project.pcode for p in self.observed_periods]))
     
         self.outfile.write("\nCompleted proposals\n")
-        self.print_values(self.outfile, Set([p.session.project.pcode \
+        self.print_values(self.outfile, set([p.session.project.pcode \
                                    for p in self.observed_periods \
                                    if p.session.project.complete]))
     
@@ -221,9 +220,9 @@ class WeeklyReport:
                  , p.session.project.name
                  , p.__str__())
                   for p in self.upcoming_periods]
-        self.print_values(self.outfile, Set(values))
+        self.print_values(self.outfile, set(values))
     
-        projects = Set([p.session.project for p in self.upcoming_periods])
+        projects = set([p.session.project for p in self.upcoming_periods])
         self.outfile.write("\nContact Information for pre-scheduled projects for %s - %s\n" % (self.next_start.strftime("%m/%d/%Y"), self.next_end.strftime("%m/%d/%Y")))
         self.outfile.write("==========================================================================\n")
         self.outfile.write("\tProject     PI                 Bands Email [NRAO contact]\n")
@@ -236,7 +235,7 @@ class WeeklyReport:
                      , ";".join([f.user.name() for f in p.friend_set.all()])
                      )
                   for p in projects]
-        self.print_values(self.outfile, Set(values))
+        self.print_values(self.outfile, set(values))
     
 
     

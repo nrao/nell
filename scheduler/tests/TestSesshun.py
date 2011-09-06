@@ -21,7 +21,6 @@
 #       Green Bank, WV 24944-0002 USA
 
 from datetime                import datetime, timedelta
-from sets                    import Set
 
 from test_utils              import BenchTestCase, timeIt
 from utilities               import TimeAgent
@@ -135,7 +134,7 @@ class TestSesshun(BenchTestCase):
         ldata["total_time"] = "99"
         ldata["enabled"] = "true"
         ldata["transit"] = "true"
-        ldata["nighttime"] = "false"
+        ldata["time_of_day"] = "RfiNight"
         ldata["lst_ex"] = "2.00-4.00"
         ldata["receiver"] = "(K & (X | (L | C)))"
         ldata["xi_factor"] = 1.76
@@ -149,7 +148,7 @@ class TestSesshun(BenchTestCase):
         self.assertEqual(s.target.source, ldata["source"])
         self.assertEqual(s.status.enabled, ldata["enabled"] == "true")
         self.assertEqual(s.transit(), ldata["transit"] == "true")
-        self.assertEqual(s.nighttime(), None)
+        self.assertEqual(s.time_of_day(), ldata["time_of_day"])
         self.assertEqual(s.get_lst_string('LST Exclude'), ldata["lst_ex"])
         self.assertEqual(s.get_min_eff_tsys_factor(), ldata["xi_factor"])
         self.assertEqual(s.get_elevation_limit(),fdata["el_limit"])
@@ -288,7 +287,7 @@ class TestSesshun(BenchTestCase):
         exp = [(datetime(2009, 4, 1), datetime(2009, 4, 11))
              , (datetime(2009, 5, 1), end)
               ]
-        expected = Set(exp)
+        expected = set(exp)
         self.assertEquals(exp, blackouts)
 
         # Now add a project w/ prescheduled times.

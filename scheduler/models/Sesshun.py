@@ -22,7 +22,6 @@
 
 from django.db                import models
 from django.db.models         import Q
-from sets                     import Set
 
 from nell.utilities           import TimeAgent, AnalogSet
 from nell.utilities.receiver  import ReceiverCompile
@@ -222,6 +221,16 @@ class Sesshun(models.Model):
         return ', '.join(
           ["%.2f-%.2f" % (low, hi) for low, hi in self.get_lst_parameters()[lst_type]])
 
+    def get_lst_exclusion_string(self):
+        "Returns string representation, or None if not set."
+        lst = self.get_lst_string('LST Exclude')
+        return lst if lst is not None else None
+
+    def get_lst_inclusion_string(self):
+        "Returns string representation, or None if not set."
+        lst = self.get_lst_string('LST Include')
+        return lst if lst is not None else None
+
     def getTarget(self):
         try:
             return self.target
@@ -320,12 +329,31 @@ class Sesshun(models.Model):
         """
         return self.has_bool_obs_param("Keyhole")
 
-    def nighttime(self):
+    def any_time_of_day(self):
+        "Ture if this parameter is set this way, or is not set at all"
+        return self.time_of_day() == "AnyTimeOfDay" if self.time_of_day() is not None else True
+
+    def RfiNight(self):
+        "Is this session constrained to only be scheduled during non-working hours?"
+        return self.get_time_of_day() == "RfiNight"
+
+    def PtcsNight(self):
+        "Is this session constrained to only be scheduled during PTCS's definition of night?"
+        return self.get_time_of_day() == "PtcsNight"
+
+    def get_time_of_day(self):
         """
-        Returns True or False if has 'Night-time Flag' observing parameter,
-        else None if not.
+        If we assume any time of day if this parameter isn't set,
+        what time of day can the session observe?
         """
-        return self.has_bool_obs_param("Night-time Flag")
+        return self.time_of_day() if self.time_of_day() is not None else "AnyTimeOfDay"
+
+    def time_of_day(self):
+        """
+        Returns the value of the Time Of Day observing parameter,
+        if it's set (a string), or None if it's not.
+        """
+        return self.has_string_obs_param("Time Of Day")
 
     def good_atmospheric_stability(self):
         """
@@ -351,6 +379,14 @@ class Sesshun(models.Model):
             return True
         else:
             return False
+
+    def has_string_obs_param(self, name):
+        try:
+            tp = Parameter.objects.filter(name=name)[0]
+            top = self.observing_parameter_set.filter(parameter=tp)
+            return top[0].string_value
+        except IndexError:
+            return None
 
     def has_bool_obs_param(self, name):
         tp = Parameter.objects.filter(name=name)[0]
@@ -405,7 +441,7 @@ class Sesshun(models.Model):
         if self.project is None:
             return []
     
-        dts = Set([])
+        dts = set([])
         dts = dts.union(self.get_receiver_blackout_ranges(start, end))
         dts = dts.union(self.project.get_prescheduled_times(start, end))
         if blackouts:

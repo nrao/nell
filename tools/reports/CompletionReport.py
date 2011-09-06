@@ -26,7 +26,6 @@ setup_environ(settings)
 
 from scheduler.models              import *
 from utilities.TimeAccounting    import TimeAccounting
-from sets                         import Set
 from datetime                     import *
 from sesshuns.utilities           import target_hv
 import sys

@@ -29,7 +29,6 @@ from scheduler.models                   import *
 from models                             import *
 from nell.utilities.TimeAgent           import EST, UTC
 from observers                          import project_search
-from sets                               import Set
 from utilities                          import get_requestor, acknowledge_moc
 from utilities                          import get_rescal_supervisors, get_gbt_schedule_events
 from utilities                          import TimeAgent
@@ -139,13 +138,20 @@ def rcvr_schedule(request, *args, **kwds):
     """
     receivers = [r for r in Receiver.objects.exclude(deleted = True) if r.abbreviation != 'NS']
     schedule  = {}
-    for day, rcvrs in Receiver_Schedule.extract_schedule(datetime.utcnow(), 180).items():
+    rxSchedule = Receiver_Schedule.extract_schedule(datetime.utcnow(), 180)
+    for day, rcvrs in rxSchedule.items():
         schedule[day] = [r in rcvrs for r in receivers]
+    for day, ups, downs in Receiver_Schedule.diff_schedule(rxSchedule):
+        schedule[day] = (schedule[day]
+                       , ', '.join([up.abbreviation for up in ups])
+                       , ', '.join([down.abbreviation for down in downs])
+                         )
 
+    schedule = sorted([(k, v[0], v[1], v[2]) for k, v in schedule.items()])
     return render_to_response(
                'sesshuns/receivers.html'
              , {'receivers': receivers
-              , 'schedule' : sorted(schedule.items())})
+              , 'schedule' : schedule})
 
 @login_required
 def summary(request, *args, **kws):
@@ -207,7 +213,7 @@ def summary(request, *args, **kws):
         summary  = {}
     else:
         url      = 'sesshuns/project_summary.html'
-        projects = list(Set([p.session.project for p in periods]))
+        projects = list(set([p.session.project for p in periods]))
         projects.sort(lambda x, y: cmp(x.pcode, y.pcode))
 
         receivers = {}
@@ -246,8 +252,8 @@ def summary(request, *args, **kws):
                url
              , {'calendar' : schedule
               , 'projects' : [(p
-                             , sorted(list(Set(receivers[p.pcode])))
-                             , sorted(list(Set(days[p.pcode]))
+                             , sorted(list(set(receivers[p.pcode])))
+                             , sorted(list(set(days[p.pcode]))
                                     , lambda x, y: cmp(int(x), int(y)))
                              , hours[p.pcode]) for p in projects]
               , 'start'    : start

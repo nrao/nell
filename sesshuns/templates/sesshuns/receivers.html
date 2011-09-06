@@ -7,7 +7,7 @@
   <style type="text/css">
     .header {background-color:#c3d9ff}
     .available {background-color:#999999}
-    .grid {border-style:solid;border-width:thin;}
+    .grid {border-style:solid;border-width:thin;white-space:nowrap}
   </style>
 <!--  
   <link type="text/css" href="http://jqueryui.com/latest/themes/base/ui.all.css" rel="stylesheet" /> >
@@ -26,16 +26,21 @@
 <table class="grid">
   <tr class="header">
   <th class="grid" title="Each date represents a receiver change. For days not listed, find nearest previous date and check the cell shading.">Receiver Changes</th>
+  <th class="grid" >Up</th>
+  <th class="grid" >Down</th>
   {% for r in receivers %}
     <th class="grid" title="{{r.freq_low}} GHz - {{r.freq_hi}} GHz">{{r.abbreviation}}</th>
   {% endfor %}
   </tr>
-  {% for d, available in schedule %}
+  {% for d, available, ups, downs in schedule %}
   <tr>
     <td class="grid">{{d|date:'Y-m-d'}}</td>
+    <td class="grid">{{ups}}</td>
+    <td class="grid">{{downs}}</td>
+    </td>
     {% for a in available %}
       {% if a %}
-        <td class="available grid">X</td>
+        <td class="available grid">UP</td>
       {% else %}
         <td class="grid"></td>
       {% endif %}

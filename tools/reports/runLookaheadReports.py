@@ -20,10 +20,25 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from AnalogSet            import *
-from Borg                 import Borg
-from VersionDiff          import VersionDiff
-from TimeAccounting       import TimeAccounting
-from IcalAntioch          import IcalAntioch
-from hs_profile           import hs_profile
-from getConfigValue       import getConfigValue
+from django.core.management import setup_environ
+import settings
+setup_environ(settings)
+
+from tools.reports.CompletionReport import GenerateReport
+from tools.IcalMap import IcalMap
+from datetime import datetime, timedelta
+import sys
+
+if __name__=='__main__':
+    
+    days = int(sys.argv[1])
+    name = sys.argv[2]
+
+    start = datetime.now()
+    end   = start + timedelta(days = days)
+
+    # right now, this output is not being captured
+    GenerateReport(end)
+    ic = IcalMap()
+    ic.writeSchedule(name + ".ics")
+
