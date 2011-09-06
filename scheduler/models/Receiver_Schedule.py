@@ -21,7 +21,6 @@
 #       Green Bank, WV 24944-0002 USA
 
 from django.db  import models
-from sets       import Set
 from datetime   import datetime, timedelta
 
 from Receiver import Receiver
@@ -271,9 +270,9 @@ class Receiver_Schedule(models.Model):
         # Go through the schedule and determine blackout ranges.
         ranges = []
         for date, receivers in sorted(schedule.items()):
-            receivers = Set(receivers)
-            if not any(all(Set(g.receivers.all()).intersection(receivers) \
-                        for g in set) for set in required):
+            receivers = set(receivers)
+            if not any(all(set(g.receivers.all()).intersection(receivers) \
+                        for g in rx_set) for rx_set in required):
                 # No session has receivers available. Begin drought.
                 if not ranges or ranges[-1][1] is not None:
                     ranges.append((date, None))

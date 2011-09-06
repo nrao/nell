@@ -22,7 +22,6 @@
 
 from django.db              import models
 from django.core.exceptions import ObjectDoesNotExist
-from sets                   import Set
 from datetime               import datetime, timedelta
 
 from utilities.TimeAgent  import adjustDateTimeTz
@@ -130,7 +129,7 @@ class Period(models.Model):
         # E.g. for one session:
         #     [[a, b, c], [x, y, z]] = (a OR b OR c) AND (x OR y OR z)
         required = [self.session.receiver_group_set.all()]
-        if all([len(set) == 0 for set in required]):
+        if all([len(rx_set) == 0 for rx_set in required]):
             return False # No receivers, problem!
 
         # NOTE: get schedule for two days, to catch receivers going
@@ -147,14 +146,14 @@ class Period(models.Model):
            (len(schedule.values()) == 1 and schedule.values()[0] == []):
             return False # no schedule, no required rcvrs!
 
-        receivers = Set(schedule.values()[0])
+        receivers = set(schedule.values()[0])
 
         # There might not be a second day...
         if len(schedule.values()) == 2:
             map(lambda x: receivers.add(x), schedule.values()[1])
 
-        if not any([all([Set(g.receivers.all()).intersection(receivers) \
-                        for g in rcvr_set]) for rcvr_set in required]):
+        if not any([all([set(g.receivers.all()).intersection(receivers) \
+                        for g in rx_set]) for rx_set in required]):
             return False # Receiver isn't up
         else:
             return True # Receiver is up

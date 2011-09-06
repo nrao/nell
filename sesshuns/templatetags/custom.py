@@ -27,7 +27,6 @@ from django.utils.safestring import SafeUnicode
 from sesshuns                import models
 from sesshuns.utilities      import *
 from datetime                import datetime, timedelta
-from sets                    import Set
 from nell.utilities          import TimeAccounting
 from nell.utilities          import TimeAgent
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException
@@ -165,9 +164,9 @@ def get_receiver_change(schedule, day):
     date     = [d for d in schedule.keys() if d.date() == day.date()][0]
     prevdate = [d for d in sorted(schedule.keys()) if d < date][-1]
     added    = [r.abbreviation
-                for r in (Set(schedule[date]) - Set(schedule[prevdate]))]
+                for r in (set(schedule[date]) - set(schedule[prevdate]))]
     removed  = [r.abbreviation
-                for r in (Set(schedule[prevdate]) - Set(schedule[date]))]
+                for r in (set(schedule[prevdate]) - set(schedule[date]))]
 
     string  = "Add: " + ", ".join(added) + " " if added else ""
     string += ", " if string else ""

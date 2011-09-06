@@ -364,7 +364,17 @@ class DSSPrime2DSS(object):
         #      o[5] = parameters.name
 
         for o in self.cursor.fetchall():
-            p  = Parameter.objects.get(name = o[5])
+            # we have started to diverge from Carl's original set of
+            # observing parameters, to our new DSS ones.
+            param_name = o[5]
+            if param_name == "Night-time Flag":
+                # this has been replaced w/ "Time of Day"
+                p = Parameter.objects.get(name = "Time Of Day")
+                # Time Of Day is now an enumeration, of which, Carl's
+                # 'Night-time Flag' maps to the RfiNight choice.
+                o = ("RfiNight", None, None, None, None, 'Time Of Day')
+            else:    
+                p  = Parameter.objects.get(name = param_name)
             if p.name == 'Instruments' and o[0] == "None":
                 #print "Not passing over Observing Parameter = Instruments(None)"
                 pass

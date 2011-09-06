@@ -28,7 +28,6 @@
 ######################################################################
 
 from datetime                import datetime, timedelta
-from sets                    import Set
 from nell.utilities.notifiers  import Notifier, Email as EmailMessage
 from nell.utilities          import TimeAgent
 
