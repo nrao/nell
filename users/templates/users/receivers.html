@@ -1,0 +1,52 @@
+{% extends "users/simple.html" %}
+{% load custom %}
+{% block title %}Receiver Schedule{% endblock %}
+{% block scripts %}
+  <link type="text/css" href="/static/css/lib/themes/base/ui.all.css" rel="stylesheet" />
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"></script>
+  <style type="text/css">
+    .header {background-color:#c3d9ff}
+    .available {background-color:#999999}
+    .grid {border-style:solid;border-width:thin;white-space:nowrap}
+  </style>
+<!--  
+  <link type="text/css" href="http://jqueryui.com/latest/themes/base/ui.all.css" rel="stylesheet" /> >
+  <script type="text/javascript" src="http://jqueryui.com/latest/jquery-1.3.2.js"></script>
+  <script type="text/javascript" src="http://jqueryui.com/latest/ui/ui.core.js"></script>
+  <script type="text/javascript" src="http://jqueryui.com/latest/ui/ui.datepicker.js"></script>
+-->  
+{% endblock %}
+
+{% block content %}
+<center>
+<h1>Receiver Schedule</h1>
+<em>** Cells shaded in <span class="available">gray</span> and containing 'X' indicate receiver installed on GBT **</em>
+</center>
+
+<table class="grid">
+  <tr class="header">
+  <th class="grid" title="Each date represents a receiver change. For days not listed, find nearest previous date and check the cell shading.">Receiver Changes</th>
+  <th class="grid" >Up</th>
+  <th class="grid" >Down</th>
+  {% for r in receivers %}
+    <th class="grid" title="{{r.freq_low}} GHz - {{r.freq_hi}} GHz">{{r.abbreviation}}</th>
+  {% endfor %}
+  </tr>
+  {% for d, available, ups, downs in schedule %}
+  <tr>
+    <td class="grid">{{d|date:'Y-m-d'}}</td>
+    <td class="grid">{{ups}}</td>
+    <td class="grid">{{downs}}</td>
+    </td>
+    {% for a in available %}
+      {% if a %}
+        <td class="available grid">UP</td>
+      {% else %}
+        <td class="grid"></td>
+      {% endif %}
+    {% endfor %}
+  </tr>
+  {% endfor %}
+</table>
+
+{% endblock %}

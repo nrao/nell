@@ -22,7 +22,7 @@
 
 from django.test.client  import Client
 
-from sesshuns.models         import *
+from users.models         import *
 from scheduler.models        import *
 from test_utils              import timeIt
 from PeriodsTestCase         import PeriodsTestCase

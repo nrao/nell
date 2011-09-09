@@ -1,0 +1,349 @@
+{% extends "users/base.html" %}
+
+  {% block title %}GBT Resource Calendar - Event Details{% endblock %}
+
+  {% block scripts %}
+    <link href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+    <script type="text/javascript">
+
+    $(document).ready(function()
+    {
+        var action_url;
+        var $dialog = $('<div></div>')
+            .html('Apply changes to:<ul><li>the Current event<li>this and all Future events after this one<li>All pending events?</ul>')
+            .dialog({modal     : true,
+                     resizable : false,
+                     autoOpen  : false,
+                     title     : 'Modify Repeating Event',
+                     buttons   : {"Current": function()
+                                    {
+                                      $(this).dialog('close');
+                                      window.location.href = action_url;
+                                    },
+                                  "Future": function()
+                                    {
+                                      $(this).dialog('close');
+                                      window.location.href = action_url + 'Future';
+                                    },
+                                  "All": function()
+                                    {
+                                      $(this).dialog('close');
+                                      window.location.href = action_url + 'All';
+                                    },
+                                  "Cancel": function()
+                                    {
+                                      $(this).dialog("close");
+                                    }
+                                  }
+        });
+
+        $('#pickdate').datepicker({
+            dateFormat: 'yy-mm-dd',
+            beforeShowDay: checkAvailability,
+            numberOfMonths: 3,
+	    showButtonPanel: true
+            });
+
+        var $maintenanceDates = {{ copymove_dates|safe }};
+        var $maintenanceGroups = {{ copymove_groups|safe }};
+
+	function checkAvailability(mydate){
+	var $return=false;
+	var $returnclass ="unavailable";
+	$checkdate = $.datepicker.formatDate('yy-mm-dd', mydate);
+	for(var i = 0; i < $maintenanceDates.length; i++)
+	    {
+	       if($maintenanceDates[i] == $checkdate)
+	        {
+		$return = true;
+		$returnclass= "available";
+		}
+	    }
+	return [$return,$returnclass];
+	}
+
+	function getCopyMoveDate() {
+	    date = $('#pickdate').val()
+            return date;
+        }
+
+	function getRank(date) {
+	    ranks = $maintenanceGroups[date];
+
+	    if (ranks.length > 1)
+	    {
+	        var rank = prompt(
+	           "There is more than one maintenance period on this date.  Enter "
+	           + ranks, ranks[0]);
+	    }
+	    else
+	    {
+	        rank = ranks[0]
+	    }
+
+	    return rank;
+        }
+
+        $('#modify').click(function()
+        {
+            action_url = $('form#editActivity')[0].action + '?' + 'ActionEvent=' + 'Modify';
+            $dialog.dialog('open');
+            // prevent the default action, e.g., following a link
+            return false;
+        });
+
+        $('#delete').click(function()
+        {
+            action_url = $('form#editActivity')[0].action + '?' + 'ActionEvent=' + 'Delete';
+             $dialog.dialog('open');
+            // prevent the default action, e.g., following a link
+            return false;
+        });
+
+        $('#move').click(function()
+	{
+	    date = getCopyMoveDate();
+
+	    if (date == '' || date == null)
+	    {
+		return false;
+	    }
+
+            rank = getRank(date);
+
+	    if (rank != null)
+	    {
+                action_url = $('form#editActivity')[0].action + '?' + 'ActionEvent='
+		               + 'Move' + '&' + 'Destination=' + date + '&' + 'Rank=' + rank;
+	        window.location.href = action_url;
+	    }
+	
+	    return false;
+	});
+
+        $('#copy').click(function()
+	{
+	    date = getCopyMoveDate();
+
+	    if (date == '' || date == null)
+	    {
+		return false;
+	    }
+
+            rank = getRank(date);
+
+	    if (rank != null)
+	    {
+                action_url = $('form#editActivity')[0].action + '?' + 'ActionEvent='
+		               + 'Copy' + '&' + 'Destination=' + date + '&' + 'Rank=' + rank;
+	        window.location.href = action_url;
+	    }
+	
+	    return false;
+	});
+    });
+    </script>
+
+  <style type="text/css">
+
+    label {font-weight:normal;}
+
+    table.maintenance
+    {
+    border-collapse:collapse;
+    border: 1px solid black;
+    }
+
+    .table_header
+    {
+        text-align:center;
+        font-family: Helvetica, Arial, sans-serif;
+        font-size: 14px;
+        background-color: #003366;
+        color: #FFFFFF;
+        font-weight: bold;
+    }
+
+    .table_captions
+    {
+    text-align:right;
+    border: 1px solid black;
+    font-size: 12px;
+    font-weight: normal;
+    font-family: Helvetica, Arial, sans-serif;
+    background-color: #DEB887;
+    color: #000000;
+    }
+
+    .table_fields
+    {
+    border: 1px solid black;
+    font-size: 12px;
+    font-weight: normal;
+    font-family: Helvetica,
+    Arial, sans-serif;
+    background-color: #FEFAD8;
+    color: #000000;
+    }
+
+    .table_buttons
+    {
+    text-align:center;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 12px;
+    font-weight: normal;
+    }
+
+  </style>
+
+  {% endblock %}
+
+  {% load custom %}
+
+  {% block content %}
+
+    <BR><table class="maintenance" width="95%">
+      <tr><td class="table_header" align="center" width="95%" colspan="2">
+          Event details [{{ activity_id }}]
+        </td>
+      </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Subject</B></td>
+        <td width="80%" class="table_fields" align="left" valign="top">
+          {{ subject }}
+        </td>
+      </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Date</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ date }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Time</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            From {{ time }} to {{ end_time }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Approved</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ approval }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Location</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ location }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Responsible</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ responsible }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Telescope</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ telescope }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Software</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ software }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Receivers</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ receivers }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Receiver Changes</B></td>
+        <td width="80%" class="table_fields" align="left" valign="top">
+            {% for i in receiver_swap %}
+            <b>Down: </b>{{i.down_receiver.full_description}};  <b>Up:</b>{{i.up_receiver.full_description}}
+            {% endfor %}
+        </td>
+      </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Backends</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ backends }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Other resources</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ other_resources }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Description</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ description }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Last Modified</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ last_modified }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"><B>Created</B></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ created }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"<b>group id</b></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ maintenance_group }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"<b>Recurrent</b></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ repeat_activity }}
+          </td>
+        </tr>
+
+      {% if repeat_activity %}
+      <tr><td width="15%" class="table_captions" align="right" valign="top"<b>Recurrency interval</b></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ repeat_interval }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"<b>Recurrency end</b></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ repeat_end }}
+          </td>
+        </tr>
+      <tr><td width="15%" class="table_captions" align="right" valign="top"<b>Template activity</b></td>
+          <td width="80%" class="table_fields" align="left" valign="top">
+            {{ repeat_template }}
+          </td>
+        </tr>
+      {% endif %}
+
+    </table>
+
+    <table WIDTH="95%">
+      <TR><td class="table_buttons" width="100%"><hr>
+          <form id="editActivity" name="editActivity" action="/resourcecal_edit_activity/{{activity_id}}/" method="get">
+          {% if supervisor_mode %}
+          <input name="ActionEvent" type="submit" class="stdfont" value="Approve">
+          {% endif %}
+
+          {% if repeat_activity %}
+          <button type="button" id="modify">Modify...</button>
+          <button type="button" id="delete">Delete...</button>
+          {% else %}
+          <input name="ActionEvent" type="submit" class="stdfont" value="Modify">
+          <input name="ActionEvent" type="submit" class="stdfont" value="Delete">
+          {% endif %}
+          </form>
+        </TD>
+      </TR>
+
+      <tr><td class="table_buttons" width="100%"><hr>
+	  <button type="button" id="move">Move</button>
+          <button type="button" id="copy">Copy</button>
+
+	  <label for="pickdate">&nbsp;&nbsp;<strong>Destination date:</strong></label>
+	  <input type="text" name="destination" id="pickdate" title="Click for calendar of available destination dates" value="{{start|date:'m/d/Y'}}"/>
+      <tr><td class="table_buttons" width="100%"><hr>
+        <INPUT NAME="back" TYPE="button" CLASS="stdfont" ONCLICK="javascript:history.go(-1)" VALUE="Back">
+        </td>
+      </tr>
+
+  {% endblock %}

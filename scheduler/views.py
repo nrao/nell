@@ -33,7 +33,7 @@ from utilities                          import *
 from scheduler.models                   import User as NellUser
 from nell.tools                         import IcalMap
 from nell.utilities                     import TimeAccounting, TimeAgent
-from sesshuns.utilities                 import get_requestor
+from users.utilities                 import get_requestor
 from nell.utilities.notifiers           import SchedulingNotifier, Notifier, Email as EmailMessage
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException, JSONExceptionInfo
 from reversion                          import revision

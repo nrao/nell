@@ -1,0 +1,137 @@
+{% extends "users/base.html" %}
+{% load custom %}
+{% block title %}GBT Project Summary for {{month}} {{year}}{% endblock %}
+{% block scripts %}
+  <link type="text/css" href="/static/css/lib/themes/base/ui.all.css" rel="stylesheet" />
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    $("#id_start").datepicker();
+  });
+  </script>
+  <style type="text/css">
+    .day_header {background-color:#c3d9ff}
+    .project_type {width:1%; text-align:center}
+    .type_test {background-color:#87CEFA} 
+    .type_astronomy {background-color:#EEEEEE}
+    .type_maintenance {background-color:#98FB98}
+  </style>
+{% endblock %}
+{% block content %}
+  <center>
+  <p>
+  <form action="/schedule/summary" method="POST">
+    <label for="id_month">Month:</label>
+    <select name="month" id="id_month">
+      {% for m in months %}
+        {% if m %}
+          {% ifequal m month %}
+            <option selected="selected">{{m}}</option>
+          {% else %}
+            <option>{{m}}</option>
+          {% endifequal %}
+        {% endif %}
+      {% endfor %}
+    </select>
+    &nbsp; 
+    <label for="id_year">Year:</label>
+    <select name="year" id="year">
+      {% for y in years %}
+        {% ifequal y year %}
+          <option selected="selected">{{y}}</option>
+        {% else %}
+          <option>{{y}}</option>
+        {% endifequal %}
+      {% endfor %}
+    </select>
+    &nbsp; 
+    <label for="id_summary">Project:</label>
+    {% if project %}
+      <input type="text" name="project" value={{project}} />
+    {% else %}
+      <input type="text" name="project" />
+    {% endif %}
+    &nbsp; 
+    <label for="id_summary">Summary:</label>
+    <select name="summary" id="summary">
+      {% ifequal summary "schedule" %}
+        <option selected="selected">schedule</option>
+      {% else %}
+        <option>schedule</option>
+      {% endifequal %}
+      {% ifequal summary "project" %}
+        <option selected="selected">project</option>
+      {% else %}
+        <option>project</option>
+      {% endifequal %}
+    </select>
+    &nbsp; 
+    <input type="submit" value="View"/>
+  </form>
+  </p>
+
+  <hr />
+
+  <h1 class="loud">
+    <center>GBT Project Summary for {{month}} {{year}}</center>
+  </h1>
+
+  <table>
+  <tr class="day_header"> 
+    <th> Project </th>
+    <th> Receivers </th>
+    <th> Days </th>
+    <th> Hours </th>
+  </tr>
+  {% for project, receivers, days, hours in projects %}
+  <tr>
+    <td>{{project.pcode}}</td>
+    <td>{{receivers|format_list}}</td>
+    <td>{{days|format_list}}</td>
+    <td>{{hours}}</td>
+  </tr>
+  {% endfor %}
+  <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td><strong>Total Hours:</strong></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  {% for type, hours in summary %}
+  <tr>
+    <td><strong>{{type}}</strong></td>
+    <td>{{hours}}</td>
+    <td></td>
+    <td></td>
+  </tr>
+  {% endfor %}
+  </table>
+  {% if project %}
+  <table>
+  <tr class="day_header"> 
+    <th> Date </th>
+    <th> Start (ET) </th>
+    <th> Len (hrs) </th>
+    <th> Receivers </th>
+  </tr>
+  {% for dt, len, rcvrs in psummary %}
+  <tr>
+    <td>{{ dt|date:"d M Y D" }}</td>
+    <td>{{ dt|date:"H:i" }}</td>
+    <td>{{ len }}</td>
+    <td>{{ rcvrs }}</td>
+  </tr>
+  {% endfor %}
+  </table>
+  {% endif %}
+  </center>
+
+</body>  
+
+{% endblock %}

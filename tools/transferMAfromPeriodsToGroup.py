@@ -26,7 +26,7 @@
 #
 ######################################################################
 
-from sesshuns.models import Maintenance_Activity, Maintenance_Activity_Group
+from users.models import Maintenance_Activity, Maintenance_Activity_Group
 from scheduler.models import Period
 from datetime import datetime, timedelta
 from nell.utilities import TimeAgent
