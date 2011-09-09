@@ -80,6 +80,9 @@ def receivers_schedule(request, *args, **kws):
                        session__observing_type__type = "maintenance"
                      , start__gte = startdate).order_by("start")]
 
+    # which receivers are temporarily unavailable?
+    unavailable = [r.jsondict() for r in Receiver.objects.filter(available = False).order_by("freq_low")]
+
     # clients want to also know all the latest rcvrs
     rcvrs       = [r.jsondict() for r in Receiver.objects.all().order_by("freq_low") \
                        if r.abbreviation != "NS"]
@@ -87,8 +90,33 @@ def receivers_schedule(request, *args, **kws):
             json.dumps({"schedule" :   jsonschd
                       , "diff":        jsondiff
                       , "maintenance": maintenance
+                      , "unavailable": unavailable
                       , "receivers" :  rcvrs})
           , mimetype = "text/plain")
+
+@revision.create_on_success
+@catch_json_parse_errors
+def rcvr_available_toggle(request, *args, **kws):
+    "Toggles the state of the given receiver's availability."
+
+    try:
+        rcvr = Receiver.get_rcvr(request.POST.get("rcvr", None))    
+    except:    
+        error = "Invalid Input."
+        msg   = "Invalid input: %s" % request.POST.get("rcvr", None)
+        return HttpResponse(json.dumps({'error': error, 'message': msg})
+                           , mimetype = "text/plain")
+
+    # here comes the giant hit to the database; ready?
+    rcvr.available = not rcvr.available
+    rcvr.save()
+    # how was that?
+
+    revision.comment = get_rev_comment(request, None, "rcvr_available_toggle")
+
+    return HttpResponse(json.dumps({'success':'ok'})
+                      , mimetype = "text/plain")
+
 
 @revision.create_on_success
 @catch_json_parse_errors
