@@ -269,9 +269,18 @@ class Period(models.Model):
         """
         self.score = -1.0
         self.forecast = None
-        if self.in_moc_range():
+        if self.in_moc_range() and self.uses_moc():
             self.moc = None
 
+    def uses_moc(self):
+        """
+        Not all periods use their MOC - for instance, the MOC is never 
+        calculated Fixed periods.  We must use the same criteria here as
+        what is being used in Antioch.
+        """
+        return (self.session.isOpen() or self.session.isWindowed()) \
+            and self.isScheduled()
+        
     def in_moc_range(self):
         """
         A period should get it's MOC evaluated only when it's 
