@@ -524,6 +524,14 @@ class DSSPrime2DSS(object):
                     )
         p.save()
 
+        # Get project's disposition
+        query = "SELECT disposition from dispositions where pcode = '%s'" % p.pcode
+        self.cursor.execute(query)
+        dis = self.cursor.fetchone()
+        if dis is not None:
+            p.disposition = dis[0]
+            p.save()
+
         # then the related objects:
         # friends: friend_id from DSS' projects table
         f_id = row[3]
