@@ -36,7 +36,6 @@ class User(models.Model):
     first_name  = models.CharField(max_length = 32)
     last_name   = models.CharField(max_length = 150)
     contact_instructions = models.TextField(null = True, blank = True)
-#    role                 = models.ForeignKey(Role)
     roles = models.ManyToManyField(Role, null = True)
     auth_user            = models.ForeignKey(AuthUser, null = True)
 
@@ -66,7 +65,9 @@ class User(models.Model):
         than a string or Role is passed in.
         """
         role = self._get_role(role)
-        self.roles.add(role)
+
+        if not self.hasRole(role):
+            self.roles.add(role)
 
     def removeRole(self, role):
         """
@@ -78,7 +79,9 @@ class User(models.Model):
         in.
         """
         role = self._get_role(role)
-        self.roles.remove(role)
+
+        if self.hasRole(role):
+            self.roles.remove(role)
 
     def hasRole(self, role):
         """

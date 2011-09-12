@@ -1,5 +1,5 @@
 # Copyright (C) 2011 Associated Universities, Inc. Washington DC, USA.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
@@ -9,11 +9,11 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-# 
+#
 # Correspondence concerning GBT software should be addressed as follows:
 #       GBT Operations
 #       National Radio Astronomy Observatory
@@ -33,7 +33,7 @@ class UserHttpAdapter(object):
 
     def init_from_post(self, fdata):
         self.update_from_post(fdata)
-        
+
     def update_from_post(self, fdata):
         self.user.original_id = int(float(fdata.get('original_id', 0)))
         pst_id_str            = fdata.get('pst_id', None)
@@ -43,9 +43,27 @@ class UserHttpAdapter(object):
         self.user.first_name  = fdata.get('first_name', "")
         self.user.last_name   = fdata.get('last_name', "")
         self.user.contact_instructions   = fdata.get('contact_instructions', "")
-        role                  = Role.objects.get(role = fdata.get('role', 'Observer'))
-        self.user.role        = role
-        self.user.save()
+
+        # Roles.  These should be updated individually *without* first
+        # clearing out all the user's roles (using
+        # user.roles.clear()), as the scheduler UI may not be handling
+        # all possible roles and clearing them would delete roles not
+        # handled by the UI.
+        def update_role(user, fdata, role_key, role_name):
+            try:
+                if fdata.get(role_key, '') == 'true':
+                    user.addRole(role_name)
+                else:
+                    user.removeRole(role_name)
+            except:
+                # printException(formatExceptionInfo())
+                pass
+
+        update_role(self.user, fdata, 'admin', 'Administrator')
+        update_role(self.user, fdata, 'observer', 'Observer')
+        update_role(self.user, fdata, 'operator', 'Operator')
+        update_role(self.user, fdata, 'friend', 'Friend')
+        update_role(self.user, fdata, 'staff', 'Staff')
 
         if self.user.auth_user is None:
             try:
@@ -68,10 +86,6 @@ class UserHttpAdapter(object):
                 pass
                 #printException(formatExceptionInfo())
 
-        staff = fdata.get('staff')
-        self.user.auth_user.is_staff = staff.lower() == 'true' if staff is not None else False
-        self.user.auth_user.save()
-
     def jsondict(self):
         projects = ','.join([i.project.pcode for i in self.user.investigator_set.all()])
         return {'id'                   : self.user.id
@@ -82,8 +96,11 @@ class UserHttpAdapter(object):
               , 'first_name'           : self.user.first_name
               , 'last_name'            : self.user.last_name
               , 'contact_instructions' : self.user.contact_instructions
-              , 'roles'                : [r.role for r in self.user.roles.all()]
-              , 'staff'                : self.user.isStaff()
+              , 'admin'                : self.user.hasRole("Administrator")
+              , 'observer'             : self.user.hasRole("Observer")
+              , 'operator'             : self.user.hasRole("Operator")
+              , 'friend'               : self.user.hasRole("Friend")
+              , 'staff'                : self.user.hasRole("Staff")
               , 'projects'             : projects
                 }
 
