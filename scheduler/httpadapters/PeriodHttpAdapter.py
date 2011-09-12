@@ -157,7 +157,8 @@ class PeriodHttpAdapter (object):
         # how to initialize scheduled time? when they get published!
         # so, only create an accounting object if it needs it.
         if self.period.accounting is None:
-            pa = Period_Accounting(scheduled = 0.0)
+            schd = self.period.duration if self.period.isScheduled() else 0.0 
+            pa = Period_Accounting(scheduled = schd)
             pa.save()
             self.period.accounting = pa
 

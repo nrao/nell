@@ -32,7 +32,6 @@ from Notifier      import Notifier
 from Email         import Email
 from tools.alerts.PeriodChanges import PeriodChanges
 from datetime      import datetime, timedelta
-from sets          import Set
 
 from utilities import TimeAgent
 
@@ -107,18 +106,23 @@ class SchedulingNotifier(Notifier):
         # observingPeriods, etc.
         self.changedPeriods = []
         for p in futurePeriods:
-            diffs = self.periodChanges.getChangesForNotification(p)
-            if len(diffs) > 0:
-                self.changes[p] = diffs
-                self.changedPeriods.append(p)
-
+            # who cares when Maintenance changes?
+            if not p.session.isMaintenance() and not p.session.isShutdown(): 
+                diffs = self.periodChanges.getChangesForNotification(p)
+                if len(diffs) > 0:
+                    self.changes[p] = diffs
+                    self.changedPeriods.append(p)
         # deleted periods must also be tracked separately, because those
         # observers will get an email with a different subject
         self.deletedPeriods = sorted([p for p in periods if p.isDeleted() and \
                                                    (not p.session.isWindowed() and not p.session.isElective())])
 
         # deleted electives get special consideration
-        self.deletedElectivePeriods = sorted([p for p in periods if p.isDeleted() and p.session.isElective()])
+        self.deletedElectivePeriods = sorted([p for p in periods if self.electivePeriodToNotify(p)])  
+
+    def electivePeriodToNotify(self, p):
+        return p.isDeleted() and p.session.isElective() \
+            and p.elective is not None and not p.elective.complete
 
     def notify(self):
         "send out all the different emails"

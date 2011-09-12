@@ -29,7 +29,6 @@ from scheduler.models                   import *
 from models                             import *
 from nell.utilities.TimeAgent           import EST, UTC
 from observers                          import project_search
-from sets                               import Set
 from utilities                          import get_requestor, acknowledge_moc
 from utilities                          import get_rescal_supervisors, get_gbt_schedule_events
 from utilities                          import TimeAgent
@@ -214,7 +213,7 @@ def summary(request, *args, **kws):
         summary  = {}
     else:
         url      = 'sesshuns/project_summary.html'
-        projects = list(Set([p.session.project for p in periods]))
+        projects = list(set([p.session.project for p in periods]))
         projects.sort(lambda x, y: cmp(x.pcode, y.pcode))
 
         receivers = {}
@@ -253,8 +252,8 @@ def summary(request, *args, **kws):
                url
              , {'calendar' : schedule
               , 'projects' : [(p
-                             , sorted(list(Set(receivers[p.pcode])))
-                             , sorted(list(Set(days[p.pcode]))
+                             , sorted(list(set(receivers[p.pcode])))
+                             , sorted(list(set(days[p.pcode]))
                                     , lambda x, y: cmp(int(x), int(y)))
                              , hours[p.pcode]) for p in projects]
               , 'start'    : start

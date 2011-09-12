@@ -76,11 +76,14 @@
               {% if s.transit %}
               <span title="Session RA must pass through transit">Transit</span><br/>
               {% endif %}
-              {% if s.nighttime %}
-              <span title="Require night-time observing for RFI avoidance.">RFI/Night</span><br/>
+              {% if s.RfiNight %}
+              <span title="Require night-time observing for RFI avoidance.">RFI-Night</span><br/>
+              {% endif %}
+              {% if s.PtcsNight %}
+              <span title="Require observing during PTCS definition of night.">PTCS-Night</span><br/>
               {% endif %}
               {% if s.get_min_eff_tsys_factor %}
-              <span title="Scaling factor applied to min effective Tsys to enable observations in degraded atmospheric conditions.">Xi: </span>
+              <span title="Scaling factor (unit-less) applied to min effective Tsys to enable observations in degraded atmospheric conditions.">Xi: </span>
                   {{s.get_min_eff_tsys_factor}}<br/>
               {% endif %}
               {% if s.get_elevation_limit %}
@@ -88,7 +91,7 @@
                   {{s.get_elevation_limit}}<br/>
               {% endif %}
               {% if s.get_tracking_error_threshold_param %}
-              <span title="Tracking Error Threshold">Tracking Error Threshold</span>
+              <span title="Tracking Error Threshold is the largest acceptable tracking error in units of the beam size (unit-less)">Tracking Error Threshold</span>
                   {{s.get_tracking_error_threshold}}<br/>
               {% endif %}
               {% if s.get_source_size %}
@@ -102,8 +105,14 @@
                 <span title="Applies the keyhole limit to this session.">Apply Keyhole Limit</span><br/>
               {% endif %}
               {% if s.irradiance %}
-              <span title="Applies the irradiance threshold to this session.">Irradiance Threshold: </span>{{s.irradiance}}<br/>
+              <span title="Applies the irradiance threshold to this session (W/m^2).">Irradiance Threshold: </span>{{s.irradiance}}<br/>
               {% endif %}
+              {% if s.get_lst_exclusion_string %}
+              <span title="This session is excluded from observing in this LST range (Hours).">LST Exclusion: </span>{{s.get_lst_exclusion_string}}<br/>
+              {% endif %}
+              {% if s.get_lst_inclusion_string %}
+              <span title="This session can only observe in this LST range (Hours).">LST Inclusion: </span>{{s.get_lst_inclusion_string}}<br/>
+              {% endif %}              
               </td>
             </tr>
               

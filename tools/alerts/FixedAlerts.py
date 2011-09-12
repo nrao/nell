@@ -30,100 +30,36 @@ from datetime import datetime
 
 from scheduler.models         import Sesshun, Session_Type
 from utilities.notifiers.FixedAlertNotifier       import FixedAlertNotifier
+from BlackoutAlerts import BlackoutAlerts
 
-class FixedAlerts():
+class FixedAlerts(BlackoutAlerts):
 
     """
     This class is responsible for both finding issues with fixed periods and
-    constraints (enable flag, blackouts, etc.), and sending notifications
+    constraints (blackouts), and sending notifications
     concerning these issues.
     """
    
     def __init__(self, quiet = True, filename = None):
-
-        # two stages for alerts; how many days before start of elective 
-        # to go from stage I to stage II?
-        self.stageBoundary = 15
- 
-        self.now = datetime.utcnow()
-        
-        # for reporting results
-        self.quiet = quiet
-        self.filename = filename if filename is not None else "FixedAlerts.txt"
-        self.reportLines = []
+        BlackoutAlerts.__init__(self
+                              , quiet = quiet
+                              , filename = filename
+                              , type = "Fixed")
         self.lostPeriodCount = 0
-       
-
-    def add(self, lines):
-        "For use with printing reports"
-        if not self.quiet:
-            print lines
-        self.reportLines += lines
-
-    def write(self):        
-        "For use with printing reports"
-        # write it out
-        if self.filename is not None:
-            f = open(self.filename, 'w')
-            f.writelines(self.reportLines)
-            f.close()
-
-    def getBlackedOutFixedPeriods(self, now, sessions = []):
-        """
-        Returns the stats on future fixed sessions. For use in
-        determining if alerts are raised.  Returns a list of
-        offending blacked-out periods, i.e.,
-        [(session, [blacked out period])]
-        where the list of periods are sorted by start times.
-        """
-        if len(sessions) == 0:
-            fixed = Session_Type.objects.filter(type = 'fixed')
-            sessions = Sesshun.objects.filter(session_type = fixed)
-        self.add("Retrieving periods for %d Fixed Sessions\n" % len(sessions))    
-        injured = []
-        for s in sessions:
-            self.add("Periods for (%d) %s\n" % (s.id, s.__str__()))
-            periods = s.getBlackedOutSchedulablePeriods(now)
-            cnt = len(periods)
-            self.add("%d schedulable blacked-out periods\n" % cnt)
-            self.lostPeriodCount += cnt
-            if periods:
-                injured.append((s, periods))
-                self.add("Blacked-out periods for (%d) %s\n" % (s.id, s.__str__()))
-                pstr = '; '.join(str(p) for p in periods)
-                for p in periods:
-                    self.add("%s" % pstr)
-                self.add("\n")
-        return injured    
+    
+    def getBlackedOutFixedPeriods(self, now = None, sessions = []):
+        return self.getBlackedOutPeriods(now = now, objs = sessions)
 
     def findBlackoutAlerts(self, stage = 1, now = None, sessions = []):
-        """
-        Finds problems with fixed sessions, and returns the proper
-        response.
-        Stage is determined by the earliest offending period.
-        Emails will be sent to observers once per week (Monday morning)
-        until 15 days before the period start date. (Stage I)
-        Emails will be sent daily to all project investigators =< 15 
-        days before the period end date. (Stage II)
-        """
 
-        # Just two stages (see comment above)
-        assert stage in (1, 2)
-
-        def withinBoundary(st, stage, now):
-            now   = now if now is not None else datetime.utcnow()
-            today = datetime(now.year, now.month, now.day)
-
-            daysTillStart = (st - today).days
-            if stage == 1:
-                return daysTillStart > self.stageBoundary
-            else:
-                return daysTillStart <= self.stageBoundary
-
-        return [(s, ps, stage)
-                for s, ps in self.getBlackedOutFixedPeriods(now, sessions)
-                    if withinBoundary(ps[0].start, stage, now)]
-
+        if len(sessions) == 0:
+            fixed = Session_Type.objects.filter(type = 'fixed')
+            sessions = Sesshun.objects.filter(session_type = fixed)        
+        return BlackoutAlerts.findBlackoutAlerts(self
+                                        , stage = stage
+                                        , now = now
+                                        , objs = sessions
+                                          )
     def raiseAlerts(self
                   , stage = 1
                   , now = None

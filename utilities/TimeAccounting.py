@@ -217,6 +217,7 @@ class TimeAccounting:
         dct = dict(pcode        = proj.pcode
                  , notes        = notes if notes is not None else ""
                  , times        = self.getProjectTimes(proj) 
+                 , remaining    = self.getTimeRemaining(proj)
                  , sessions     = []
                  )
         for field in self.fields:
@@ -228,6 +229,7 @@ class TimeAccounting:
             sdct = dict(name       = s.name
                       , grade      = s.allotment.grade
                       , total_time = s.allotment.total_time
+                      , remaining   = self.getTimeRemaining(s)
                       , notes      = notes if notes is not None else ""
                       , periods    = []
                       )

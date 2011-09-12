@@ -24,7 +24,6 @@ from datetime                  import datetime
 from django.contrib.auth.models import User as AuthUser
 from django.core.cache         import cache
 from django.db                 import models
-from sets                      import Set
 
 from Role              import Role
 from nell.utilities.database.external    import  UserInfo
@@ -145,7 +144,7 @@ class User(models.Model):
         retval = []
         for i in self.investigator_set.all():
             retval.extend(i.project.getPeriods())
-        return sorted(list(Set(retval)))
+        return sorted(list(set(retval)))
 
     def getPeriodsByProject(self):
         """
@@ -182,7 +181,7 @@ class User(models.Model):
     def getFriendLastNames(self):
         "Returns a list of all the friends' names that are assisting this user."
         projects = [i.project for i in self.investigator_set.all()]
-        return list(Set([f.user.last_name for p in projects
+        return list(set([f.user.last_name for p in projects
                                     for f in p.friend_set.all()]))
 
     def getProjects(self):

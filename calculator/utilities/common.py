@@ -36,7 +36,10 @@ def get_results_dict(request):
     # Also make a dict of the inputs for desiding on how to display stuff.
     ivalues   = dict([splitKey(i) for i in input])
     units     = {}
-    units['sigma']       = 'mJy' if ivalues.get('units', {}).get('value') == 'flux' else 'mK'
+    sensitivity_units        = ivalues.get('units', {}).get('value')
+    if sensitivity_units is not None:
+        units['sigma']           = 'mJy' if sensitivity_units == 'flux' else 'mK'
+        explicit['confusion_limit']['units']= "%s (%s)" % ('S' if sensitivity_units == 'flux' else sensitivity_units.title(), units['sigma'])
     units['t_tot_units'] = 's' if ':' not in explicit.get('t_tot', {}).get('value', '') else 'HH:MM:SS.S'
     return {'e'         : explicit
           , 'leftovers' : leftovers
@@ -119,7 +122,7 @@ def getMessages(request):
         messages.append({'type' : 'Error', 'msg' : 'Source Declination is below -46, the lower limit for the GBT.'})
     rx        = ivalues.get('receiver', {}).get('value')
     topo_freq = results.get('topocentric_freq', {}).get('value', 0)
-    if rx is not None and rx != '' and topo_freq != '':
+    if rx is not None and rx != '' and rx != 'NA' and topo_freq != '':
         _, v = rx.split('(')
         rx_low, rx_hi = map(float, v.replace(" GHz)", '').split(' - ') )
         rx_low, rx_hi = float(rx_low), float(rx_hi)

@@ -29,41 +29,22 @@ from datetime import datetime
 
 from scheduler.models            import *
 from utilities.notifiers.WinAlertNotifier import WinAlertNotifier
+from BlackoutAlerts import BlackoutAlerts
 
-class WindowAlerts():
+class WindowAlerts(BlackoutAlerts):
 
     """
     This class is responsible for both finding issues with windows and
-    constraints (enable flag, blackouts, etc.), and sending notifications
+    constraints (blackouts), and sending notifications
     concerning these issues.
     """
-   
+
     def __init__(self, quiet = True, filename = None):
-
-        # two stages for alerts; how many days before start of window 
-        # to go from stage I to stage II?
-        self.stageBoundary = 15
- 
-        # for reporting results
-        self.quiet = quiet
-        self.filename = filename if filename is not None else "WinAlerts.txt"
-        self.reportLines = []
+        BlackoutAlerts.__init__(self
+                              , quiet = quiet
+                              , filename = filename
+                              , type = "Windowed")
         self.lostWindowTime = 0
-       
-
-    def add(self, lines):
-        "For use with printing reports"
-        if not self.quiet:
-            print lines
-        self.reportLines += lines
-
-    def write(self):        
-        "For use with printing reports"
-        # write it out
-        if self.filename is not None:
-            f = open(self.filename, 'w')
-            f.writelines(self.reportLines)
-            f.close()
 
     def getWindowTimes(self, now, wins = []):
         """

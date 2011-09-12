@@ -126,6 +126,10 @@ class TestDSSPrime2DSS(NellTestCase):
         users = User.objects.all()
         self.assertEquals(287, len(users))
 
+        # check that the observing params are transferred correctly
+        requireLowRfi = [s for s in Sesshun.objects.all() if s.RfiNight()]
+        self.assertEquals(54, len(requireLowRfi))
+
     def test_transfer_only_new_1(self):
 
         self.assert_DB_empty()

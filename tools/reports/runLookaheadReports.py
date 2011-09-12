@@ -24,23 +24,21 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from calculator.models import TSky
-import math
-from pyslalib import slalib
+from tools.reports.CompletionReport import GenerateReport
+from tools.IcalMap import IcalMap
+from datetime import datetime, timedelta
+import sys
 
-class TSkyImport(object):
+if __name__=='__main__':
+    
+    days = int(sys.argv[1])
+    name = sys.argv[2]
 
-    def __init__(self, filename):
-        f    = open(filename)
-        flat = "". join([l.replace('\n', '') for l in f.readlines()])
-        data = map(float, [flat[i:i + 5].strip() for i in range(0, len(flat), 5)])
-        step = 180
-        self.tsky = [data[i:i + step] for i in range(0, len(data), step)]
-        f.close()
-        for i, row in enumerate(self.tsky):
-            for j, t in enumerate(row):
-                tsky = TSky(theta = i, phi = j, tsky = t)
-                tsky.save()
+    start = datetime.now()
+    end   = start + timedelta(days = days)
 
-if __name__ == "__main__":
-    tsky = TSkyImport('calculator/data/tsky.dat')
+    # right now, this output is not being captured
+    GenerateReport(end)
+    ic = IcalMap()
+    ic.writeSchedule(name + ".ics")
+
