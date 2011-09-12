@@ -34,6 +34,29 @@ import calendar
 
 class WeeklyReport:
 
+    def __init__(self, start):
+
+        self.start      = start
+        self.outfile    = open("./DssWeeklyReport.txt", 'w')
+        self.end        = start + timedelta(days = 7)
+        self.next_start = self.end + timedelta(days = 1)
+        self.next_end   = self.end + timedelta(days = 7)
+
+        # all scheduled or completed periods
+        self.periods    = [p for p in Period.objects.all() if p.state.abbreviation in ("S", "C")]
+
+        self.ta         = TimeAccounting()
+
+        # project lists
+        self.backlog = []
+        self.discharge = []
+
+        # quantities to calculate
+        self.lost_hours = {}
+        self.scheduled_hours ={}
+        self.backlog_hours = {}
+        self.discharge_hours = {}
+
     def print_values(self, file, values):
         if values == []:
             file.write("\tNone\n")
@@ -79,24 +102,6 @@ class WeeklyReport:
         return (past, present)                  
 
 
-    def __init__(self, start):
-
-        self.start      = start
-        self.outfile    = open("./DssWeeklyReport.txt", 'w')
-        self.end        = start + timedelta(days = 7)
-        self.next_start = self.end + timedelta(days = 1)
-        self.next_end   = self.end + timedelta(days = 7)
-
-        # all scheduled or completed periods
-        self.periods    = [p for p in Period.objects.all() if p.state.abbreviation in ("S", "C")]
-
-        self.ta         = TimeAccounting()
-
-        # quantities to calculate
-        self.lost_hours = {}
-        self.scheduled_hours ={}
-        self.backlog_hours = {}
-        self.discharge_hours = {}
 
     def report(self):
         "Calculate all time accounting needed, then print it to report file."
@@ -109,6 +114,8 @@ class WeeklyReport:
 
         self.currentSemester   = Semester.getCurrentSemester(self.start)
         self.previousSemesters = Semester.getPreviousSemesters(self.start)
+        # TBF: watch for bug!
+        self.previousSemesters = [s for s in self.previousSemesters if s != self.currentSemester]
         self.futureSemesters   = Semester.getFutureSemesters(self.start)
 
         # just those scheduled periods in the current week
@@ -146,7 +153,10 @@ class WeeklyReport:
         self.scheduled_hours["test_comm"] = self.get_obs_time_tuple('p.session.project.pcode[0] == "T"')
         self.scheduled_hours["shutdown"] = self.get_obs_time_tuple('p.session.project.pcode == "Shutdown"')
 
-        # how do the incomplete projects breakdown?
+        # The distinction between 'backlog' and 'discharge' is that
+        # 'backlog' is from only previous semesters, while discharge
+        # inclues *all* semesters.
+        # But they both only care about incomplete Astronomy projects
         self.backlog    = [p for p in Project.objects.all() \
             if p.semester in self.previousSemesters \
             and not p.complete \
@@ -164,15 +174,20 @@ class WeeklyReport:
                            if any([s.observing_type.type == "vlbi" \
                                    for s in p.sesshun_set.all()])])                           
 
-        total_time = sum([self.ta.getTimeLeft(p) for p in Project.objects.all()])
-        monitoring = sum([self.ta.getTimeLeft(p) for p in self.backlog \
+        self.discharge    = [p for p in Project.objects.all() \
+            if not p.complete \
+            and p.get_category() == "Astronomy"] 
+          
+
+        total_time = sum([self.ta.getTimeLeft(p) for p in self.discharge]) 
+        monitoring = sum([self.ta.getTimeLeft(p) for p in self.discharge \
                            if any([s.session_type.type == "windowed" \
                                    for s in p.sesshun_set.all()]) and \
                               self.ta.getProjectTotalTime(p) <= 200.])
-        vlbi       = sum([self.ta.getTimeLeft(p) for p in self.backlog \
+        vlbi       = sum([self.ta.getTimeLeft(p) for p in self.discharge \
                            if any([s.observing_type.type == "vlbi" \
                                    for s in p.sesshun_set.all()])])
-        large      = sum([self.ta.getTimeLeft(p) for p in self.backlog \
+        large      = sum([self.ta.getTimeLeft(p) for p in self.discharge \
                           if self.ta.getProjectTotalTime(p) > 200.])
         self.discharge_hours['total_time'] = total_time                  
         self.discharge_hours['monitoring'] = monitoring                  
@@ -266,7 +281,7 @@ class WeeklyReport:
         self.outfile.write("\t[")
         years = sorted(self.backlog_hours["years"].keys())
         self.outfile.write(", ".join(["%s: %.1f (%d)" % \
-            (y, self.backlog_hours["years"][y][0], self.backlog_hours["years"][y][1]) for y in years]))
+            (y, self.backlog_hours["years"][y][0], self.backlog_hours["years"][y][1]) for y in years if self.backlog_hours["years"][y][1] != 0.0]))
 
 
         self.outfile.write("]\n")
