@@ -321,7 +321,8 @@ class TestReports(NellTestCase):
                            , '2004': (0, 0)
                            , '2005': (0, 0)
                            , '2008': (0, 0)
-                           , '2009': ((93.5-dur), 1)}
+                           , '2009': ((93.5-dur), 1)
+                           }
                   }
         self.assertEquals(backlog, wr.backlog_hours)
         for key in wr.lost_hours.keys(): 
@@ -331,11 +332,17 @@ class TestReports(NellTestCase):
         wr = WeeklyReport(datetime(2010, 2, 1))
         wr.report()
         scheduled_hours['astronomy'] = ((8.0+12.0), 0)
-        backlog['years']['2010'] = (0,0)
         self.assertEquals(scheduled_hours, wr.scheduled_hours)
         self.assertEquals(backlog, wr.backlog_hours)
         for key in wr.lost_hours.keys(): 
             self.assertEquals(wr.lost_hours[key], 0.0)
+
+        # move up to July, and we'll start reporting 2010 from
+        # previous semesters
+        wr = WeeklyReport(datetime(2010, 7, 1))
+        wr.report()
+        backlog['years']['2010'] = (0,0)
+        self.assertEquals(backlog, wr.backlog_hours)
 
     def test_startEndReport(self):
         # make it quiet

@@ -169,6 +169,8 @@ class TestPeriod(BenchTestCase):
         self.assertEquals(True,  self.p2.is_windowed())
         self.assertEquals(self.w,     self.p2.window)
         self.assertEquals(False, self.p2.is_windowed_default())
+        self.assertEquals(False, self.p.uses_moc())
+        self.assertEquals(False, self.p2.uses_moc())
 
         # now publish!
         # this should move p2 to scheduled, and p to deleted (default)
@@ -183,6 +185,8 @@ class TestPeriod(BenchTestCase):
         self.assertEquals(0.0, w.timeRemaining())
         self.assertEquals(True, w.complete)
         self.assertEquals([self.scheduled, self.deleted], w.periodStates())
+        self.assertEquals(False, p.uses_moc())
+        self.assertEquals(True, p2.uses_moc())
 
         # cleanup
         p2.delete()
