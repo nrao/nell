@@ -57,6 +57,12 @@ class Project(models.Model):
     def __str__(self):
         return self.pcode
 
+    def delete(self, force = False):
+        if len(self.sesshun_set.all()) == 0 or force:
+            super(Project, self).delete()
+        else:
+            raise Exception("Cannot delete projects with sessions.")
+
     def is_science(self):
         return self.project_type.type == "science"
 
