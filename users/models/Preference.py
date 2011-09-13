@@ -20,30 +20,17 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from django.db  import models
+from django.db         import models
+from scheduler.models  import User, TimeZone
 
-class Allotment(models.Model):
-    psc_time          = models.FloatField(help_text = "Hours")
-    total_time        = models.FloatField(help_text = "Hours")
-    max_semester_time = models.FloatField(help_text = "Hours")
-    grade             = models.FloatField(help_text = "0.0 - 4.0")
+class Preference(models.Model):
 
-    # Note: What is this?
-    base_url = "/sesshuns/allotment/"
+    user     = models.OneToOneField(User)
+    timeZone = models.CharField(max_length = 256)
 
-    def __unicode__(self):
-        return "(%d) Total: %5.2f, Grade: %5.2f, PSC: %5.2f, Max: %5.2f" % \
-                                       (self.id
-                                      , float(self.total_time)
-                                      , float(self.grade)
-                                      , float(self.psc_time)
-                                      , float(self.max_semester_time)) 
-
-    # Note: What is this?
-    def get_absolute_url(self):
-        return "/sesshuns/allotment/%i/" % self.id
+    def __str__(self):
+        return "%s (%s)" % (self.user.last_name, self.timeZone)
 
     class Meta:
-        db_table  = "allotment"
-        app_label = "scheduler"
-        
+        db_table  = "preferences"
+        app_label = "users"

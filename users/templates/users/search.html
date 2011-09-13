@@ -1,0 +1,40 @@
+{% extends "users/base.html" %}
+{% load custom %}
+{% block title %}Search Results {% endblock %}
+{% block content %}
+{% if ps %}
+<h3 class="loud">Projects</h3>
+<table>
+  <tr>
+    <th>Project ID</th>
+    <th>Title</th>
+  </tr>
+  {% for p in ps %}
+  <tr>
+    <td>
+      <a href="/project/{{p.pcode}}">{{p.pcode}}</a>
+    </td>
+    <td>
+      {{p.name}}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% if us %}
+<h3 class="loud">Observers</h3>
+<ul>
+  {% for u in us %}
+  <li>
+    <a href="/profile/{{u.id}}">{{u|display_name}}</a>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if not ps and not us %}
+<h3 class="loud">No results found</h3>
+{% endif %}
+
+{% endblock %}

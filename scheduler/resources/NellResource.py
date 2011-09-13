@@ -25,7 +25,7 @@ from django.http              import HttpResponse, HttpResponseRedirect
 from django.shortcuts         import get_object_or_404
 
 from utilities.FormatExceptionInfo import formatExceptionInfo
-from sesshuns.utilities            import get_requestor
+from users.utilities            import get_requestor
 
 import simplejson as json
 import reversion

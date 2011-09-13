@@ -1,0 +1,10 @@
+{% extends "users/base.html" %}
+{% block title %}Dynamic Contact{% endblock %}
+{% block content %}
+<form action="/profile/{{u.id}}/dynamic_contact" method="POST">
+  <textarea name="contact_instructions">{{u.contact_instructions}}</textarea>
+  <br/>
+  <input type="submit" name="button" value="Save"/>&nbsp;&nbsp;
+  <input type="submit" value="Cancel" onclick="window.location.href = '/profile/{{u.id}}'; return false"/>
+</form>
+{% endblock %}
