@@ -64,9 +64,7 @@ class TestElectiveAlerts(NellTestCase):
         self.project_adapter.update_from_post(pdata)
 
         # Create the first user (on project) 
-        self.user1 = User(sanctioned = True
-                        , role = Role.objects.get(role = "Observer")
-                     )
+        self.user1 = User(sanctioned = True)
         self.user1.save()
 
         self.investigator1 =  Investigator(project  = self.project
@@ -75,9 +73,7 @@ class TestElectiveAlerts(NellTestCase):
         self.investigator1.save()
          
         # Create the second user (on project)
-        self.user2 = User(sanctioned = True
-                        , role = Role.objects.get(role = "Observer")
-                     )
+        self.user2 = User(sanctioned = True)
         self.user2.save()
 
         self.investigator2 =  Investigator(project  = self.project

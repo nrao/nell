@@ -53,19 +53,21 @@ class TestObserversBase(BenchTestCase):
         self.u = User(first_name = "dss" #"Test"
                     , last_name  = "account" #"User"
                     , pst_id     = 3251
-                    , role       = Role.objects.all()[0]
                     #, username   = self.auth_user.username
                       )
         self.u.save()
+        self.u.addRole("Administrator")
+        self.u.addRole("Staff")
         self.client.login(username = "dss", password = "asdf5!")
 
         # create a user to act as friend
         self.uFriend = User(first_name = "Best"
                           , last_name = "Friend"
                           , pst_id = None
-                          , role = Role.objects.all()[0]
                            )
         self.uFriend.save()
+        self.uFriend.addRole("Staff")
+        self.uFriend.addRole("Friend")
 
         # create a project
         self.p = Project()

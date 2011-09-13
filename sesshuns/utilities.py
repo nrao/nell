@@ -71,8 +71,7 @@ def create_user(username):
                                                    , use_cache = False)
     user = User(pst_id     = info['person_id']
               , first_name = info['first_name']
-              , last_name  = info['last_name']
-              , role       = Role.objects.get(role = "Observer"))
+              , last_name  = info['last_name'])
     user.save()
 
     p = Preference(user = user, timeZone = "UTC")

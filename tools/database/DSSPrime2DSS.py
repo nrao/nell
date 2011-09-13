@@ -685,7 +685,6 @@ class DSSPrime2DSS(object):
                , sanctioned  = False
                , first_name  = firstName #row[1]
                , last_name   = lastName #row[2]
-               , role        = Role.objects.get(role = "Observer")
                  )
         u.save()
 
