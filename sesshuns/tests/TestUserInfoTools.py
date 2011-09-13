@@ -31,14 +31,12 @@ class TestUserInfoTools(NellTestCase):
         pst_id = 823
         drJekyl = User(last_name = "Jekyl"
                     , first_name = "Dr."
-                    , role = Role.objects.all()[0]
                     , pst_id = pst_id
                      )
         drJekyl.save()
 
         mrJive = User(last_name = "Jive"
                     , first_name = "Mr."
-                    , role = Role.objects.all()[0]
                     , pst_id = pst_id
                      )
         mrJive.save()
@@ -61,7 +59,6 @@ class TestUserInfoTools(NellTestCase):
         # exists in the PST
         hacker = User(last_name = "Marganian"
                     , first_name = "Paul"
-                    , role = Role.objects.all()[0]
                      )
         hacker.save()
  
@@ -88,13 +85,11 @@ class TestUserInfoTools(NellTestCase):
         hacker = User(last_name = "Marganian"
                     , first_name = "Paul"
                     , pst_id = 821
-                    , role = Role.objects.all()[0]
                      )
         hacker.save()
         # and setup someone who does not exist
         professional_software_engineer = User(last_name = "Hocus"
                                             , first_name = "Pocus"
-                                            , role = Role.objects.all()[0]
                                              )
         professional_software_engineer.save()                                             
         
@@ -124,13 +119,11 @@ class TestUserInfoTools(NellTestCase):
         hacker = User(last_name = "Marganian"
                     , first_name = "Paul"
                     #, pst_id = 821
-                    , role = Role.objects.all()[0]
                      )
         hacker.save()
         # and setup someone who does not exist
         professional_software_engineer = User(last_name = "Hocus"
                                             , first_name = "Pocus"
-                                            , role = Role.objects.all()[0]
                                              )
         professional_software_engineer.save()                                             
         

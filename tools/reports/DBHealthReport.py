@@ -378,6 +378,50 @@ def electives_no_periods():
     es = Elective.objects.all()
     return [e for e in es if len(e.periods.all()) == 0]
     
+def report_overlaps(periods, now = None):
+    """
+    We don't want to report on *any* overlaps in the schedule.  Apply
+    some pretty complex rules to keep this more meaningful.
+    """
+    if now is None:
+        now = datetime.utcnow()
+    values  = []
+    overlap = []
+    not_deleted_periods = [p for p in periods if p.state.abbreviation != "D"]
+    for p1 in not_deleted_periods:
+        start1, end1 = p1.start, p1.end()
+        for p2 in not_deleted_periods:
+            start2, end2 = p2.start, p2.end()
+            if p1 != p2 and p1 not in overlap and p2 not in overlap:
+                # what kind of overlap?
+                type = ""
+                if AnalogSet.overlaps((start1, end1), (start2, end2)):
+                    # in the past?
+                    if p1.start < now or p2.start < now:
+                        type = "Overlap in past"
+                    # any scheduled?    
+                    if p1.isScheduled() or p2.isScheduled():
+                        type = "Overlap with scheduled period"
+                    # if it's not one of the above types, see if a 3rd period
+                    # is involved:
+                    if type == "":
+                        # check just the nearest neighbors
+                        oneWeekBefore = p1.start - timedelta(days = 7)
+                        oneWeekAfter  = p1.start + timedelta(days = 7)
+                        neighbors = Period.objects.exclude(state__abbreviation = "D").filter(start__gt = oneWeekBefore
+                                       , start__lt = oneWeekAfter)
+                        for p3 in neighbors:
+                            if p1 != p3 and p2 != p3 and p3 not in overlap:
+                                start3, end3 = p3.start, p3.end()
+                                if AnalogSet.overlaps((start1, end1), (start3, end3)) \
+                                  or AnalogSet.overlaps((start2, end2), (start3, end3)):
+                                    type = "Overlap of 3 periods"  
+                    if type != "": 
+                        values.append("%s: %s and %s" % (type, str(p1), str(p2)))
+                        overlap.extend([p1, p2])
+    return values
+
+
 ######################################################################
 # Writes out the Windows reports
 ######################################################################
@@ -750,18 +794,9 @@ def GenerateReport():
         
 
     outfile.write("\n\nOverlapping periods:")
-    values  = []
-    overlap = []
-    not_deleted_periods = [p for p in periods if p.state.abbreviation != "D"]
-    for p1 in not_deleted_periods:
-        start1, end1 = p1.start, p1.end()
-        for p2 in not_deleted_periods:
-            start2, end2 = p2.start, p2.end()
-            if p1 != p2 and p1 not in overlap and p2 not in overlap:
-                if AnalogSet.overlaps((start1, end1), (start2, end2)):
-                    values.append("%s and %s" % (str(p1), str(p2)))
-                    overlap.extend([p1, p2])
+    values = report_overlaps(periods, now = now)
     print_values(outfile, values)
+
 
     outfile.write("\n\nGaps in historical schedule:")
     ps = Period.objects.filter(start__lt = now)\

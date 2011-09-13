@@ -189,7 +189,6 @@ class TestDSSPrime2DSS(NellTestCase):
                 , last_name  = 'Marganian'
                 , original_id = 123
                 , pst_id      = 821
-                , role        = Role.objects.get(role = "Observer")
                   )
         me.save()
 

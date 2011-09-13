@@ -45,7 +45,9 @@ class TestUser(NellTestCase):
         obsRole = Role.objects.get(role = "Observer")
 
         # Create Investigator1 and his 3 blackouts.
-        self.user1 = User(sanctioned = True, role = obsRole)
+        self.user1 = User(sanctioned = True,
+                          #role = obsRole
+                          )
         self.user1.save()
 
         self.investigator1 =  Investigator(project  = self.project
@@ -53,7 +55,9 @@ class TestUser(NellTestCase):
                                          , observer = True)
         self.investigator1.save()
 
-        self.user2 = User(sanctioned = True, role = obsRole)
+        self.user2 = User(sanctioned = True,
+                          #role = obsRole
+                          )
         self.user2.save()
 
         self.investigator2 =  Investigator(project  = self.project
@@ -83,7 +87,7 @@ class TestUser(NellTestCase):
 
         # add the project friend
         self.user3 = User(sanctioned = True
-                        , role = obsRole
+#                        , role = obsRole
                         , first_name = "Best"
                         , last_name = "Friend"
                          )
@@ -92,7 +96,9 @@ class TestUser(NellTestCase):
         friend.save()
 
         # add an unrelated user
-        self.user4 = User(sanctioned = True, role = obsRole)
+        self.user4 = User(sanctioned = True,
+                          # role = obsRole
+                          )
         self.user4.save()
 
     def tearDown(self):

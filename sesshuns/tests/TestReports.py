@@ -30,6 +30,7 @@ import sys
 from tools.reports.CompletionReport  import GenerateReport as completionReport
 from tools.reports.BlackoutReport  import GenerateBlackoutReport
 from tools.reports.DBHealthReport  import GenerateReport as dbHealth
+from tools.reports.DBHealthReport  import report_overlaps
 #from tools.reports.NFSReport  import GenerateReport as nsfReport
 from tools.reports.ProjectReport  import GenerateProjectReport
 from tools.reports.ProjTimeAcctReport  import GenerateProjectTimeAccountingReport
@@ -321,7 +322,8 @@ class TestReports(NellTestCase):
                            , '2004': (0, 0)
                            , '2005': (0, 0)
                            , '2008': (0, 0)
-                           , '2009': ((93.5-dur), 1)}
+                           , '2009': ((93.5-dur), 1)
+                           }
                   }
         self.assertEquals(backlog, wr.backlog_hours)
         for key in wr.lost_hours.keys(): 
@@ -331,11 +333,17 @@ class TestReports(NellTestCase):
         wr = WeeklyReport(datetime(2010, 2, 1))
         wr.report()
         scheduled_hours['astronomy'] = ((8.0+12.0), 0)
-        backlog['years']['2010'] = (0,0)
         self.assertEquals(scheduled_hours, wr.scheduled_hours)
         self.assertEquals(backlog, wr.backlog_hours)
         for key in wr.lost_hours.keys(): 
             self.assertEquals(wr.lost_hours[key], 0.0)
+
+        # move up to July, and we'll start reporting 2010 from
+        # previous semesters
+        wr = WeeklyReport(datetime(2010, 7, 1))
+        wr.report()
+        backlog['years']['2010'] = (0,0)
+        self.assertEquals(backlog, wr.backlog_hours)
 
     def test_startEndReport(self):
         # make it quiet
@@ -366,8 +374,71 @@ class TestReports(NellTestCase):
 
     def test_dbHealthReport(self):
 
+        # test generating the entire report
         db = dbHealth()
+
+        # test just the overlaps method
+        # first there should be no overlap
+        ps = Period.objects.all().order_by("start")
+        overlaps = report_overlaps(ps)
+        self.assertEquals([], overlaps)
  
+        # make sure these periods are in the future
+        now = ps[0].start - timedelta(days = 7)
+
+        # no, make two overlapping pending periods, this 
+        # should not get reported
+        p0, p1 = ps[0:2]
+        pending = Period_State.get_state('P')
+        p0.state = pending
+        p0.duration = p0.duration + 0.25 # 15 minute overlap
+        p0.save()
+        p1.state = pending
+        p1.save()
+        # there should be no overlap
+        ps = Period.objects.all().order_by("start")
+        overlaps = report_overlaps(ps, now = now)
+        self.assertEquals([], overlaps)
+
+        # now move one of them back to scheduled, and watch it
+        # raise an alarm
+        scheduled = Period_State.get_state('S')
+        p0.state = scheduled
+        p0.save()
+        ps = Period.objects.all().order_by("start")
+        overlaps = report_overlaps(ps, now = now)
+        self.assertEquals(1, len(overlaps))
+        self.assertTrue("Overlap with scheduled period" in overlaps[0])
+
+        # move it back to pending, no alarm
+        p0.state = pending
+        p0.save()
+        ps = Period.objects.all().order_by("start")
+        overlaps = report_overlaps(ps, now = now)
+        self.assertEquals([], overlaps)
+
+        # now raise the the alarm by making this in the past
+        now2 = ps[0].start + timedelta(days = 7)
+        overlaps = report_overlaps(ps, now = now2)
+        self.assertEquals(1, len(overlaps))
+        self.assertTrue("Overlap in past" in overlaps[0])
+
+        # move it back to the future, no alarm
+        ps = Period.objects.all().order_by("start")
+        overlaps = report_overlaps(ps, now = now)
+        self.assertEquals([], overlaps)
+ 
+        # make the overlap involve 3 periods, to raise an alarm
+        p1.state = pending
+        p1.save()
+        p3 = ps[2]
+        p3.start = p1.start
+        p3.state = pending
+        p3.save()
+        overlaps = report_overlaps(ps, now = now)
+        self.assertEquals(1, len(overlaps))
+        self.assertTrue("Overlap of 3 periods" in overlaps[0])
+
     def test_projectReport(self):
 
         pr = GenerateProjectReport()

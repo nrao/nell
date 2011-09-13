@@ -71,8 +71,7 @@ def create_user(username):
                                                    , use_cache = False)
     user = User(pst_id     = info['person_id']
               , first_name = info['first_name']
-              , last_name  = info['last_name']
-              , role       = Role.objects.get(role = "Observer"))
+              , last_name  = info['last_name'])
     user.save()
 
     p = Preference(user = user, timeZone = "UTC")
@@ -313,15 +312,13 @@ def _get_incidental_events(today, timezone):
     return []
 
 def get_rescal_supervisors():
-    # TBF: when roles done, will get these by visiting the roles.
-    s = []
+    """
+    Returns a list of users authorized to manage the resource calendar.
+    """
+    s = list(User.objects.filter(roles__role = "Telescope Supervisor"))
 
-    # don't spam supervisors from test setups
+    # don't spam real supervisors from test setups.
     if settings.DEBUG == True:
-        s += User.objects.filter(auth_user__username = 'rcreager')
-    else:
-        s += User.objects.filter(auth_user__username = 'rcreager')
-        s += User.objects.filter(auth_user__username = 'banderso')
-        s += User.objects.filter(auth_user__username = 'mchestnu')
+        s = [u for u in s if u.auth_user.username == "rcreager"]
 
     return s

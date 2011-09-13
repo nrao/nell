@@ -33,11 +33,10 @@ class TestUtilities(BenchTestCase):
         "Creates investigators, and returns expected emails."
 
         emails = []
-        obs = Role.objects.get(role = "Observer")
+
         for fn, ln, pi, pc, ob, id in invs:
             u = User(first_name = fn
                    , last_name  = ln
-                   , role = obs
                    , pst_id = id # give them sombody's email
                     )
             u.save()
@@ -99,8 +98,7 @@ class TestUtilities(BenchTestCase):
         self.assertEqual([], fs)
 
         # now make some friends
-        obs = Role.objects.get(role = "Observer")
-        u = User(pst_id = 554, role = obs)
+        u = User(pst_id = 554)
         u.save()
         f = Friend(user = u, project = proj)
         f.save()

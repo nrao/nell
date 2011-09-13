@@ -150,10 +150,8 @@ class TestViews(BenchTestCase):
         # create a user
         # Brian Cherinka (pst_id 800) has a reservation in Oct.
         # let's get that reservation, but make it point to this user.
-        roles = Role.objects.all()
         u = User(first_name = "delete"
                , last_name = "me"
-               , role = roles[0]
                # BOS gives id of 802 -> global id of 800
                , pst_id = 800
                  )
@@ -188,10 +186,8 @@ class TestViews(BenchTestCase):
     def test_reservations_from_db(self):
 
         # create a user
-        roles = Role.objects.all()
         u = User(first_name = "delete"
                , last_name = "me"
-               , role = roles[0]
                  )
         u.save()
 

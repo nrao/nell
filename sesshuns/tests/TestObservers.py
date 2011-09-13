@@ -408,7 +408,6 @@ class TestObservers(TestObserversBase):
         dana = User(first_name = "Dana"
                           , last_name = "Balser"
                           , pst_id = 18
-                          , role = Role.objects.all()[0]
                            )
         dana.save()
         i =  Investigator(project = self.p

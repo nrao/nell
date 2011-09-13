@@ -71,10 +71,9 @@ class TestWindowAlerts(NellTestCase):
         self.project_adapter.update_from_post(pdata)
 
         # Create the first user (on project) 
-        self.user1 = User(sanctioned = True
-                        , role = Role.objects.get(role = "Observer")
-                     )
+        self.user1 = User(sanctioned = True)
         self.user1.save()
+        self.user1.addRole("Observer")
 
         self.investigator1 =  Investigator(project  = self.project
                                          , user     = self.user1
@@ -82,10 +81,9 @@ class TestWindowAlerts(NellTestCase):
         self.investigator1.save()
          
         # Create the second user (on project)
-        self.user2 = User(sanctioned = True
-                        , role = Role.objects.get(role = "Observer")
-                     )
+        self.user2 = User(sanctioned = True)
         self.user2.save()
+        self.user2.addRole("Observer")
 
         self.investigator2 =  Investigator(project  = self.project
                                          , user     = self.user2

@@ -36,7 +36,7 @@ class User(models.Model):
     first_name  = models.CharField(max_length = 32)
     last_name   = models.CharField(max_length = 150)
     contact_instructions = models.TextField(null = True, blank = True)
-    role                 = models.ForeignKey(Role)
+    roles = models.ManyToManyField(Role, null = True)
     auth_user            = models.ForeignKey(AuthUser, null = True)
 
     class Meta:
@@ -56,18 +56,63 @@ class User(models.Model):
         "This is no longer stored in the DB, but is pulled"
         return UserInfo().getUsername(self.pst_id)
 
+    def addRole(self, role):
+        """
+        addRole(self, role): Add a role to the user.  'role' can be a
+        Role object, or its name (i.e. "Observer").  If 'role' is none
+        of these, an exception will be thrown: 'DoesNotExist' if the
+        name is not that of a role, or 'TypeError' if something other
+        than a string or Role is passed in.
+        """
+        role = self._get_role(role)
+
+        if not self.hasRole(role):
+            self.roles.add(role)
+
+    def removeRole(self, role):
+        """
+        removeRole(self, role): Removes a role from the user. 'role'
+        may be a Role object, or its name (i.e. "Administrator").  If
+        'role' is none of these, an exception will be thrown:
+        'DoesNotExist' if the name is not that of a role, or
+        'TypeError' if something other than a string or Role is passed
+        in.
+        """
+        role = self._get_role(role)
+
+        if self.hasRole(role):
+            self.roles.remove(role)
+
+    def hasRole(self, role):
+        """
+        hasRole(self, role): Checks to see if 'role' (which may be a
+        string or a Role object) is in the collection of this user's
+        roles.
+        """
+        r = self._get_role(role)
+        return r in self.roles.all()
+
     def isAdmin(self):
-        return self.role.role == "Administrator"
+        """
+        isAdmin(self): Checks to see if the 'Administrator' role is in
+        this user's collection of roles.  Returns true if it is.
+        """
+        return self.hasRole("Administrator")
 
     def isOperator(self):
-        return self.role.role == "Operator"
+        """
+        isOperator(self): Checks to see if the 'Operator' role is in
+        this user's collection of roles.  Returns true if it is.
+        """
+        return self.hasRole("Operator")
 
     def isStaff(self):
-        if self.auth_user:
-            return self.auth_user.is_staff
-        else:
-            return False
-
+        """
+        isStaff(self): Checks to see if 'Staff' is in the user's
+        roles.
+        """
+        return self.hasRole("Staff")
+    
     def checkAuthUser(self):
         if self.auth_user_id is None:
             from django.contrib.auth.models import User as AuthUser
@@ -164,9 +209,17 @@ class User(models.Model):
         "Is this user an investigator on the given project?"
         return pcode in [i.project.pcode for i in self.investigator_set.all()]
 
-    def isFriend(self, pcode):
-        "Is this user a friend for the given project?"
-        return pcode in [f.project.pcode for f in self.friend_set.all()]
+    def isFriend(self, pcode = None):
+        """
+        If 'pcode' is not given, check to see if this user is
+        qualified as a friend.  If 'pcode' is given, checks to see if
+        the user is a friend for the given project.
+        """
+
+        if pcode:
+            return pcode in [f.project.pcode for f in self.friend_set.all()]
+        else:
+            return self.hasRole("Friend")
 
     def canViewProject(self, pcode):
         "A user can view project info if he's an inv, friend, admin, or op."
@@ -192,3 +245,14 @@ class User(models.Model):
         return any([not i.project.complete \
             for i in self.investigator_set.all()])
 
+    def _get_role(self, role):
+        """
+        _get_role(self, role): returns a Role object corresponding to
+        'role'.  If 'role' is a string a db lookup is attempted on it,
+        and if successful a Role object is returned, otherwise the
+        original 'role' is assumed to be a 'Role' and is returned
+        """
+        if type(role).__name__ == 'str':
+            r = Role.objects.get(role = role)
+            role = r
+        return role

@@ -153,10 +153,9 @@ class TestSchedulingNotifier(PeriodsTestCase):
         # assign some observers to the periods
         u = User(last_name = "Nubbles"
                , first_name = "Dr."
-               , role = Role.objects.get(role = "Observer")
                , pst_id = 821 # give it Marganian's contact info
                 )
-        u.save()        
+        u.save()
 
         for p in self.ps:
             inv = Investigator(user = u
