@@ -201,9 +201,12 @@ class Sesshun(models.Model):
                (not self.status.complete) and \
                (not self.project.complete)
 
-    def delete(self):
-        self.allotment.delete()
-        super(Sesshun, self).delete()
+    def delete(self, force = True):
+        if len(self.period_set.all()) == 0 or force:
+            self.allotment.delete()
+            super(Sesshun, self).delete()
+        else:
+            raise Exception("Cannot delete sessions with periods.")
 
     def get_lst_parameters(self):
         params = {'LST Exclude' : [], 'LST Include' : []}

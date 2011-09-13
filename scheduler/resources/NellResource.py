@@ -94,8 +94,10 @@ class NellResource(Resource):
         id = int(args[0])
         o  = self.dbobject.objects.get(id = id)
         revision.comment = self.get_rev_comment(request, o, "delete")
-        o.delete()
-        
-
-        return HttpResponse(json.dumps({"success": "ok"}))
+        try:
+            o.delete()
+        except:
+            return HttpResponse(json.dumps({"error": "You cannot delete this object since it has children that would be orphened. :("}))
+        else:
+            return HttpResponse(json.dumps({"success": "ok"}))
 

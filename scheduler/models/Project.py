@@ -47,6 +47,7 @@ class Project(models.Model):
     accounting_notes = models.TextField(null = True, blank = True)
     notes            = models.TextField(null = True, blank = True)
     schedulers_notes = models.TextField(null = True, blank = True)
+    disposition      = models.CharField(max_length = 4000, null = True)
 
     base_url = "/sesshuns/project/"
 
@@ -55,6 +56,12 @@ class Project(models.Model):
 
     def __str__(self):
         return self.pcode
+
+    def delete(self, force = False):
+        if len(self.sesshun_set.all()) == 0 or force:
+            super(Project, self).delete()
+        else:
+            raise Exception("Cannot delete projects with sessions.")
 
     def is_science(self):
         return self.project_type.type == "science"

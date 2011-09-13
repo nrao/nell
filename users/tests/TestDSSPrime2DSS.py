@@ -130,6 +130,10 @@ class TestDSSPrime2DSS(NellTestCase):
         requireLowRfi = [s for s in Sesshun.objects.all() if s.RfiNight()]
         self.assertEquals(54, len(requireLowRfi))
 
+        # check that BB240's disposition got transferred correctly
+        p = Project.objects.get(pcode = 'BB240')
+        self.assertEquals('This is our favorite project.  It is number 1!', p.disposition)
+
     def test_transfer_only_new_1(self):
 
         self.assert_DB_empty()

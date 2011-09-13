@@ -495,8 +495,8 @@ class TestProject(BenchTestCase):
 
         # Clean up
         otherperiod.delete()
-        othersesshun.delete()
-        otherproject.delete()
+        othersesshun.delete(force = True)
+        otherproject.delete(force = True)
 
     def test_get_prescheduled_days(self):
         start = datetime(2009, 6, 1)
@@ -568,8 +568,8 @@ class TestProject(BenchTestCase):
         # Clean up
         anotherperiod.delete()
         otherperiod.delete()
-        othersesshun.delete()
-        otherproject.delete()
+        othersesshun.delete(force = True)
+        otherproject.delete(force = True)
 
     @timeIt
     def test_get_active_windows(self):

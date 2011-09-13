@@ -21,6 +21,12 @@ CREATE TABLE `friends` (
     `co_i` bool NOT NULL
 )
 ;
+CREATE TABLE `dispositions` (
+    `id` integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    `pcode` varchar(32) NOT NULL,
+    `disposition` varchar(4000) NOT NULL
+)
+;
 CREATE TABLE `semesters` (
     `id` integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
     `semester` varchar(64) NOT NULL
