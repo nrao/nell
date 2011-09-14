@@ -278,8 +278,11 @@ class Period(models.Model):
         calculated Fixed periods.  We must use the same criteria here as
         what is being used in Antioch.
         """
-        return (self.session.isOpen() or self.session.isWindowed()) \
-            and self.isScheduled()
+        if self.session is None or self.state is None:
+            return False
+        else:    
+            return (self.session.isOpen() or self.session.isWindowed()) \
+                and self.isScheduled()
         
     def in_moc_range(self):
         """
