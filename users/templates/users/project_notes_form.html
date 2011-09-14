@@ -1,0 +1,11 @@
+{% extends "users/base.html" %}
+{% block title %}Project Notes{% endblock %}
+{% block content %}
+<form action="/project/{{p.pcode}}/notes" method="POST">
+  <h1>Notes for {{p.pcode}}</h1>
+  <textarea name="notes">{{p.notes}}</textarea>
+  <br/>
+  <input type="submit" name="button" value="Save"/>&nbsp;&nbsp;
+  <input type="submit" value="Cancel" onclick="window.location.href = '/project/{{p.pcode}}'; return false"/>
+</form>
+{% endblock %}

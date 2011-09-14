@@ -46,7 +46,6 @@ class TestProject(BenchTestCase):
 
         # Create the first user (on project) 
         self.user1 = User(sanctioned = True
-                        , role = Role.objects.get(role = "Observer")
                      )
         self.user1.save()
 
@@ -57,7 +56,6 @@ class TestProject(BenchTestCase):
          
         # Create the second user (on project)
         self.user2 = User(sanctioned = True
-                        , role = Role.objects.get(role = "Observer")
                      )
         self.user2.save()
 
@@ -68,7 +66,6 @@ class TestProject(BenchTestCase):
 
         # Create the third unsanctioned user (on project)
         self.user3 = User(sanctioned = False
-                        , role = Role.objects.get(role = "Observer")
                      )
         self.user3.save()
 
@@ -498,8 +495,8 @@ class TestProject(BenchTestCase):
 
         # Clean up
         otherperiod.delete()
-        othersesshun.delete()
-        otherproject.delete()
+        othersesshun.delete(force = True)
+        otherproject.delete(force = True)
 
     def test_get_prescheduled_days(self):
         start = datetime(2009, 6, 1)
@@ -571,8 +568,8 @@ class TestProject(BenchTestCase):
         # Clean up
         anotherperiod.delete()
         otherperiod.delete()
-        othersesshun.delete()
-        otherproject.delete()
+        othersesshun.delete(force = True)
+        otherproject.delete(force = True)
 
     @timeIt
     def test_get_active_windows(self):

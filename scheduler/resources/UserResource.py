@@ -20,12 +20,12 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from django.db.models         import Q
-from django.http              import HttpResponse, HttpResponseRedirect
-from django_restapi.resource  import Resource
-from scheduler.models       import User
-from scheduler.httpadapters import UserHttpAdapter
-from NellResource import NellResource
+from django.db.models        import Q
+from django.http             import HttpResponse, HttpResponseRedirect
+from django_restapi.resource import Resource
+from scheduler.models        import User
+from scheduler.httpadapters  import UserHttpAdapter
+from NellResource            import NellResource
 
 import simplejson as json
 

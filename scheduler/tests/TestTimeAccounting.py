@@ -32,6 +32,7 @@ class TestTimeAccounting(NellTestCase):
     def setUp(self):
         super(TestTimeAccounting, self).setUp()
 
+        # this project has no allotments!
         self.project = Project.objects.order_by('pcode').all()[0]
 
         # setup some periods
@@ -44,6 +45,7 @@ class TestTimeAccounting(NellTestCase):
         self.ps = []
         state = Period_State.objects.get(abbreviation = 'P')
         for start, dur, name in times:
+            # each session has grade 4, time = 3 
             s = create_sesshun()
             s.name = name
             s.save()
@@ -148,6 +150,31 @@ class TestTimeAccounting(NellTestCase):
         dct = self.ta.jsondict(self.project)
         self.assertEqual(3, len(dct['sessions']))
         self.assertEqual(1, len(dct['sessions'][0]['periods']))
+        self.assertEqual(-12., dct['remaining'])
+        self.assertEqual(0, len(dct['times']))
+        # construct a new dict to test against
+        sess = {}
+        for sdct in dct['sessions']:
+            sess[sdct['name']] = {'remaining' : sdct['remaining']
+                                , 'grade' : sdct['grade']
+                                , 'total_time' : sdct['total_time']
+                                #, 'periods' : sdct['periods']
+                                }
+        exp = {'one' : {'grade' : 4.0
+                      , 'total_time' : 3.0
+                      , 'remaining' : -2.0 # 3 - 5 
+                        }
+             , 'two' : {'grade' : 4.0
+                      , 'total_time' : 3.0
+                      , 'remaining' : 0.0 # 3 - 3
+                       }
+             , 'three':{'grade' : 4.0
+                     , 'total_time' : 3.0
+                     , 'remaining' : -1.0 # 3 - 4
+                       }
+              }
+        for key, values in sess.items():
+            self.assertEqual(exp[key], values)
 
         # test identity
         self.ta.update_from_post(self.project, dct)

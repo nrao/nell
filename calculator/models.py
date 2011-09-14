@@ -22,7 +22,7 @@
 
 from django.db import models
 
-from sesshuns  import models as smodels
+from users     import models as smodels
 from scheduler import models as sched_models
 
 class Calc_Backend(models.Model):

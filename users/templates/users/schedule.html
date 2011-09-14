@@ -1,0 +1,382 @@
+{% extends "users/base_wide.html" %}
+
+{% load custom %}
+
+{% block title %}GBT Schedule{% endblock %}
+{% block scripts %}
+  <link type="text/css" href="/static/css/lib/themes/base/ui.all.css" rel="stylesheet" />
+  <style type="text/css" media="print">
+    body {line-height:1.5;font-family:"Helvetica Neue", Arial, Helvetica, sans-serif;color:#000;background:none;font-size:7pt;}
+  </style>
+  <style type="text/css">
+    .top_menu {font-size:120%}
+    .day_header {background-color:#c3d9ff}
+    .project_type {width:1%; text-align:center}
+    .type_test {background-color:#87CEFA}
+    .type_astronomy {background-color:#EEEEEE}
+    .type_commissioning {background-color:#F0E68C}
+    .type_calibration {background-color:#FF9933}
+    .type_maintenance {background-color:#98FB98}
+    .type_shutdown {background-color:#508416}
+    .type_concurrent_activity {background-color:#FF99FF}
+    .moc_failure {background-color:#FF0000}
+    .info{
+        position:relative; /*this is the key*/
+        z-index:24; background-color:#fff;
+        color:#000;
+        text-decoration:none}
+    .info:hover{z-index:25; background-color:#ffffe0}
+    .info span{display: none}
+    .info:hover span{ /*the span will display just on :hover state*/
+        display:block;
+        position:absolute;
+        top:2em; left:2em; width:70em;
+        border:1px solid #000000;
+        background-color:#ffffe0; color:#000;
+        text-align: left}
+  </style>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"></script>
+<!--
+  <link type="text/css" href="http://jqueryui.com/latest/themes/base/ui.all.css" rel="stylesheet" /> >
+  <script type="text/javascript" src="http://jqueryui.com/latest/jquery-1.3.2.js"></script>
+  <script type="text/javascript" src="http://jqueryui.com/latest/ui/ui.core.js"></script>
+  <script type="text/javascript" src="http://jqueryui.com/latest/ui/ui.datepicker.js"></script>
+-->
+  <script type="text/javascript">
+  $(document).ready(function(){
+    $("#id_start").datepicker();
+    $("#id_end").datepicker();
+    $("#id_until").datepicker();
+    setTimeout('document.getCalendar.submit()', 1000*60*5);
+  });
+  </script>
+{% endblock %}
+{% block metatags %}
+{% endblock %}
+{% block content %}
+  <center>
+  <h1 class="loud">GBT Schedule
+  <a href="http://dss.gb.nrao.edu/projects/ical/GBTschedule.ics" title="This link provides access to DSS events in the 'iCalendar' format.  To use this feature, right-click the 'ICAL' icon and select 'Copy Link Location'.  Then paste the link into your favorite iCalendar application.">
+    <img src="/static/images/ical.gif" style="border: 0;" />
+  </a>
+  </h1>
+  <p>{{pubdate|date:"l F d, Y  f A T"}}<p>
+  <form name="getCalendar" action="/schedule/" method="POST">
+  <p>
+    <label for="id_start">Start:</label>
+    <input type="text" name="start" id="id_start" title="Click once for calendar, click twice for previous entries" value="{{start|date:'m/d/Y'}}"/>
+    <label for="id_days">Days:</label>
+    <select name="days" id="id_days">
+      {% for d in day_list %}
+        {% ifequal d days %}
+          <option selected="selected">{{d}}</option>
+        {% else %}
+          <option>{{d}}</option>
+        {% endifequal %}
+      {% endfor %}
+    </select> &nbsp;
+    <input type="submit" value="View Schedule"/>
+  </p>
+  </form>
+  <strong>
+  Support Links:
+  <a href="http://safe.nrao.edu/wiki/bin/view/GB/Observing/GbtFriends{{'%Y%m'|get_date}}" target="On-Duty_Support_Scientist" onClick="window.open('http://safe.nrao.edu/wiki/bin/view/GB/Observing/GbtFriends{{'%Y%m'|get_date}}', 'On-Duty_Support_Scientist');return true;">
+    On-Duty Support Scientist
+  </a>
+  |
+  <a href="https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar" target="Support_Staff_Absences_&_Contact_Info" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar', 'Support_Staff_Absences_&_Contact_Info');return true;">
+    Support Staff Absences & Contact Info
+  </a>
+  <br \>
+  Report Links:
+  <a href='/schedule/summary'>Schedule & Project Summaries</a>
+  |
+  <a href='http://www.gb.nrao.edu/php/shp/index.php'>Historical Schedules</a>
+  |
+  <a href='/investigators/qualified'>Remote Observers</a>
+  <br/>
+  Helpful Links:
+  {% if supervisor_mode %}
+  <a href="../../rescal_admin/" target="_blank">Admin</a>
+  {% endif %}
+  <a href="https://safe.nrao.edu/wiki/bin/view/GB/Software/DSSResourceCalendar" target="_blank">Resource Calendar Help
+  </a>
+  |
+  <a href="https://staff.nrao.edu/wiki/bin/view/GB/BackupProjects" target="Backup_Projects" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/BackupProjects', 'Backup_Projects');return true;">
+    Backup Projects
+  </a>
+  |
+  <a href="/receivers" target="Receiver_Schedule" onClick="window.open('/receivers', 'Receiver_Schedule');return true;">Receiver Schedule</a>
+  |
+  <a href="http://www.gb.nrao.edu/~rmaddale/Weather/DSSOverview.html" target="High_Frequency_Forecasts" onClick="window.open('http://www.gb.nrao.edu/~rmaddale/Weather/', 'High_Frequency_Forecasts');return true;">
+    High Frequency Forecasts
+  </a>
+  |
+  <a href="https://bos.nrao.edu/resReports/roomChart?Start+Date={{calendar|get_cal_start|date:'m/d/Y'}}&End+Date={{calendar|get_cal_end|date:'m/d/Y'}}&Site=1" target="Room_Reservations" onClick="window.open('https://bos.nrao.edu/resReports/roomChart?Start+Date={{calendar|get_cal_start|date:'m/d/Y'}}&End+Date={{calendar|get_cal_end|date:'m/d/Y'}}&Site=1', 'Room_Reservations');return true;">
+    Room Reservations
+  <br \>
+  Ground Weather Forecasts (
+  <a href="http://www.gb.nrao.edu/~rmaddale/WeatherNAM/ground.html" target="Ground_Weather_Forecasts_(3.5_day)" onClick="window.open('http://www.gb.nrao.edu/~rmaddale/WeatherNAM/ground.html', 'Ground_Weather_Forecasts_(3.5_day)');return true;">
+    3.5 day</a>
+  ) (
+  <a href="http://www.gb.nrao.edu/~rmaddale/WeatherGFS3/ground.html" target="Ground_Weather_Forecasts_(7.5_day)" onClick="window.open('http://www.gb.nrao.edu/~rmaddale/WeatherGFS3/ground.html', 'Ground_Weather_Forecasts_(7.5_day)');return true;">
+    7.5 day</a>
+  )
+  </a>
+  </strong>
+  <br />
+  <strong>
+  <em>
+  (All times in ET.  UTC = ET + {{today|get_utc_offset}} hours)
+  </em>
+  </strong>
+  </center>
+
+  {# The Calendar Table #}
+  <table>
+
+    {#################################################################}
+    {# Loop through for each day in the calendar.                    #}
+    {#################################################################}
+
+    {% for day, events in calendar %}
+
+    <tr class="day_header">
+      <th title="Start and End times for the start day (ET). '+' indicates that the period continues on in an undisplayed date."><a href="/resourcecal_add_activity/{{day|date:"Y/m/d"}}/">{{day|date:"D Y-m-d"}}</a></th>
+      <th title="Project Type: 'A' : Astronomy, 'C' : Commissioning, 'D' : Shutdown, 'I' : Incidental activity, 'K' : Calibration, 'M' : Maintenance, 'T' : Test">Type</th>
+      <th>Project ID</th>
+      <th>Project Title</th>
+      <th>PI</th>
+      <th title="Ordered list of observers to contact for this project">Observers</th>
+      <th>Friend</th>
+      <th title="Receivers (Names and frequency ranges in GHz) = (RRI) Rcvr_RRI:  0.10 -  1.60, (342) Rcvr_342:  0.29 -  0.40, (450) Rcvr_450:  0.39 -  0.52, (600) Rcvr_600:  0.51 -  0.69, (800) Rcvr_800:  0.68 -  0.92, (1070) Rcvr_1070:  0.91 -  1.23, (L) Rcvr1_2:  1.15 -  1.73, (S) Rcvr2_3:  1.73 -  2.60, (C) Rcvr4_6:  3.95 -  6.10, (X) Rcvr8_10:  8.00 - 10.00, (Hol) Holography: 11.70 - 12.20, (Ku) Rcvr12_18: 12.00 - 15.40, (KFPA) RcvrArray18_26: 17.00 - 27.50, (K) Rcvr18_26: 18.00 - 26.50, (Ka) Rcvr26_40: 26.00 - 39.50, (Q) Rcvr40_52: 38.20 - 49.80, (MBA) Rcvr_PAR: 80.00 - 100.00">Rcvrs</th>
+    </tr>
+
+    {####################################################}
+    {# this for-block loops for each period in the day. #}
+    {####################################################}
+
+    {% for event in events %}
+
+      {# Notify operator of minimum observing condition (MOC) failure #}
+      {% if requestor.isOperator and event.moc_reschedule %}
+        <script type="text/javascript">
+          window.open("/period/{{event.contained.id}}/moc_reschedule", "MOC Failure", "width=1000,height=300");
+        </script>
+      {% endif %}
+
+      {###############################################################}
+      {# Notify operator of MOC degradation #}
+      {% if requestor.isOperator and event.moc_degraded %}
+        <script type="text/javascript">
+          window.open("/period/{{event.contained.id}}/moc_degraded", "MOC Degraded", "width=1000,height=300");
+        </script>
+      {% endif %}
+
+      {###############################################################}
+      {# New table row for the period #}
+      <tr class="{{event.moc_met|moc_class}}">
+
+      {###############################################################}
+      {# The Date/Time column #}
+      {# start/end cutoff indicates that the period's start/end occurs before/after day. #}
+      {% if event.cutoff %}
+        {% if event.start_cutoff %}
+          <td>+{{event.start|date:"H:i"}} - {{event.end|date:"H:i"}}</td>
+        {% else %}
+          <td>{{event.start|date:"H:i"}} - {{event.end|date:"H:i"}}+</td>
+        {% endif %}
+      {% else %}
+          <td>{{event.start|date:"H:i"}} - {{event.end|date:"H:i"}}</td>
+      {% endif %}
+
+      {################################################################}
+      {# The 'Type' column                                            #}
+      {# Looking at the period type to set the data row class.        #}
+      {# This is what sets the 'Type' background color in the display #}
+      {# Only one of the following 'if' statements will evaluate true #}
+
+      {% if event.project_type == "A" %}
+          <td class="project_type type_astronomy">{{event.project_type}}</td>
+      {% endif %}
+
+      {% if event.project_type == "D" %}
+          <td class="project_type type_shutdown" >{{event.project_type}}</td>
+      {% endif %}
+
+      {% if event.project_type == "M" and not event.pcode == "Shutdown" %}
+          <td class="project_type type_maintenance" >{{event.project_type}}</td>
+      {% endif %}
+
+      {% if event.project_type == "K" %} {# calibration #}
+          <td class="project_type type_calibration" >{{event.project_type}}</td>
+      {% endif %}
+
+      {% if event.project_type == "C" %}
+          <td class="project_type type_commissioning" >{{event.project_type}}</td>
+      {% endif %}
+
+      {% if event.project_type == "T" %}
+          <td class="project_type type_test" >{{event.project_type}}</td>
+      {% endif %}
+
+      {% if event.project_type == "I" %}
+          <td class="project_type type_concurrent_activity" >{{event.project_type}}</td>
+      {% endif %}
+
+
+      {################################################################}
+      {# The 'project ID' column.                                     #}
+      <td>
+      {% if not event.moc_met and not event.moc_ack %} {# blink if MOC event not acknowledged. #}
+        <blink>
+      {% endif %}
+
+        <a href="/project/{{event.pcode}}">{{event.pcode}}</a>
+        {% if event.project_notes %} {# append the '(N)' link for project notes. #}
+          <a href="" class="info">(N)<span><p>Project Notes:</p>{{event.project_notes|escape|linebreaks}}</span></a>
+        {% endif %}
+
+      {% if not event.moc_met and not event.moc_ack %}
+        </blink>
+      {% endif %}
+
+      </td>
+
+      {################################################################}
+      {# data for 'Project Title' column                              #}
+      {% if event.project_type == "A" %}
+        <td>
+          {# output the project title as an anchor link to the proposal's page on the rescal #}
+          <a href="#" onClick="window.open('http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{event.pcode}}', 'Proposal Cover Page', 'width=1000, height=700, scrollbars=yes');return true;">{{event.project_title}}</a>
+
+          {% if not event.moc_met and event.moc_ack %}
+            <img src="/static/images/checked.png" />
+          {% endif %}
+
+          {% if event.has_lost_time %}
+            <br/>
+            (Lost Time: {{event.get_lost_time}})
+          {% endif %}
+        </td>
+      {% endif %}
+      {% if event.project_type == "M" or event.project_type == "D" %} {# Maintenance #}
+	<td>
+	  {# Maintenance periods will provide a period id.  Non-standard          #}
+	  {# maintenance events will not provide a period id, and thus no anchor. #}
+	  {% if event.period_id != 0 %}
+	    <a href="/resourcecal_add_activity/{{event.contained_id}}/">{{event.project_title}}</a>
+	    {# adds a little message about scheduled receiver change: 'Add: <rx>, Remove: <rx> #}
+	    {{rschedule|get_receiver_change:day}}
+	  {% else %}
+	    <strong>{{event.project_title}}</strong>
+	  {% endif %}
+	</td>
+      {% endif %}
+      {% if event.project_type != "A" and event.project_type != "M" %} {# non-science and non-maintenance #}
+	<td>
+	  {{event.project_title}}
+	  {% if not event.moc_met and event.moc_ack %}
+	    <img src="/static/images/checked.png" />
+	  {% endif %}
+	  {% if event.has_lost_time %}
+	    <br/>
+	    (Lost Time: {{event.get_lost_time}})
+	  {% endif %}
+	</td>
+      {% endif %}
+
+      {################################################################}
+      {# 'PI' (principal investigator) column.                        #}
+      <td>
+        <a href="/profile/{{event.principal_investigator.id}}">
+          {{event.principal_investigator.last_name|pretty_none}}
+        </a>
+      </td>
+
+      {################################################################}
+      {# data for 'Observers' column.  May be more than one observer. #}
+      <td>
+        {% for o in event.sanctioned_observers %}
+          <span title="Phones: {{o.user.getStaticContactInfo.phones|format_list}}, Dynamic: {{o.user.contact_instructions}}, Click on this link to view reservations in the observer's profile.">
+            {{forloop.counter}}) <a href="/profile/{{o.user.id}}">{{o.user.last_name|pretty_none}}</a>
+          </span>
+        {% endfor %}
+      </td>
+
+      {################################################################}
+      {# data for 'Friend' column.                                    #}
+      <td>
+	{% for f in event.friends %}
+	  {% if forloop.counter > 1 %}
+	  ,
+	  {% endif %}
+          <a href="#" onClick="window.open('https://staff.nrao.edu/wiki/bin/view/GB/AbsencesCalendar', 'Support Staff Absences & Contact Info', 'width=1000, height=700, scrollbars=yes');return true;">
+          {{f.user.last_name}}
+        </a>
+	{% endfor %}
+      </td>
+
+      {################################################################}
+      {# data for 'Rcvrs' column.                                     #}
+      <td>
+        {# If the period is a science period, gets the period's receiver list   #}
+        {# and outputs them.  If it is a maintenance day, looks at the receiver #}
+        {# schedule and outputs all the receiver for that day.                  #}
+        {% if event.project_type == "M" %}
+          {{rschedule|get_receivers:day}}
+        {% else %}
+          {{event.receiver_list}}
+        {% endif %}
+      </td>
+    </tr>       {# end of one table row #}
+
+    {#####################################################################}
+    {# Now output all the maintenance activities in their own table.     #}
+    {# These will be grouped under a maintenance period if there is one, #}
+    {# or listed on thier own otherwise.                                 #}
+    {#####################################################################}
+
+    {% if event.mas %}
+    <tr>
+    <td></td>
+    <td></td>
+    <td colspan=7>
+      <table border=1 frame=void rules=all cellpadding=3>
+
+      {% if event.project_type == "M" or event.project_type == "D" %}
+          <tr class="project_type type_maintenance" align=left>
+      {% else %}
+          <tr class="project_type type_concurrent_activity" align=left>
+      {% endif %}
+	  <th>Time</th>
+	  <th>Activity</th>
+	</tr>
+	  {% for ma in event.mas %}
+	    {% if ma.approved %}
+	      <tr>
+	      <td>{{ma.time_range}}</td>
+	      <td><a href="/resourcecal_display_activity/{{ma.id}}/">{{ma|flag_rc_conflicts:event.mas}}</a>
+		  &nbsp;&nbsp;<a href="" class="info">Notes<span>
+		  <p>Description:</p>{{ma.description|escape|linebreaks}}</span></a>
+	      </tr>
+	    {% else %}
+	      <tr>
+	      <td><i>{{ma.time_range}}</i></td>
+	      <td><a href="/resourcecal_display_activity/{{ma.id}}/"><i>{{ ma|flag_rc_conflicts:event.mas }}</i></a>
+		  &nbsp;&nbsp;<a href="" class="info"><i>Notes</i><span>
+		  <p>Description:</p>{{ma.description|escape|linebreaks}}</span></a>
+	      </tr>
+	    {% endif %}  {# approved #}
+	  {% endfor %} {# each maintenance activity #}
+      </table>
+    </td>
+    </tr>
+    {% endif %}  {# if event.mas #}
+    {% endfor %} {# for event in events; for each period in the day #}
+    {% endfor %} {# for each day #}
+  </table>
+</body>
+
+
+{% endblock %}

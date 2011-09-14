@@ -1,0 +1,222 @@
+{% extends "users/base.html" %}
+{% load custom %}
+{% block title %}Profile - {{u|display_name}} {% endblock %}
+{% block content %}
+      <div id="header" class="span-24 last">
+        <h1>{{u|display_name}}
+          <a href="http://dss.gb.nrao.edu/investigator/{{u.id}}/ical/GBTSchedule.ics" title="This link provides access to all of your observation and reservation events across all of your projects in the 'iCalendar' format.  To use this feature, right-click the 'ICAL' icon and select 'Copy Link Location'.  Then paste the link into your favorite iCalendar application.">
+            <img src="/static/images/ical.gif" style="border: 0;" />
+          </a>
+        </h1>
+      </div>
+      <div id="subheader" class="span-24 last">
+        <!-- Add affiliation here. -->
+      </div>
+      <hr />
+      <div class="span-17 colborder" id="content">
+        <h3 class="loud">Active Projects</h3>
+        <div>
+          <table>
+            <tr>
+              <th>Project ID</th>
+              <th>Title</th>
+            </tr>
+              {% for p in u|get_incomplete_projects %}
+                <tr class="{% cycle 'odd' 'even' %}">
+                  <td><a href="/project/{{p.pcode}}">{{p.pcode}}</a></td>
+                  <td>{{p.name}}</td>
+                </tr>
+              {% endfor %}
+          </table>
+
+          {% if u.friend_set.all %}
+            <h3 class="loud">Assigned as Friend</h3>
+              <table>
+                <tr>
+                  <th>Project ID</th>
+                  <th title="You must be available to observe this Project">Required</th>
+                  <th>Title</th>
+                </tr>
+                  {% for f in u|get_incomplete_friends %}
+                    <tr class="{% cycle 'odd' 'even' %}">
+                      <td><a href="/project/{{f.project.pcode}}">{{f.project.pcode}}</a></td>
+                      <td>{% if f.required %}Yes{% endif %}</td>
+                      <td>{{f.project.name}}</td>
+                    </tr>
+                  {% endfor %}
+              </table>
+          {% endif %}
+          <hr />
+        </div>
+
+        <div class="span-8 colborder">  
+          <h3 class="loud">Dynamic Contact Information</h3>
+          <p>{{u.contact_instructions|escape|linebreaks}}</p>
+          {% if authorized or requestor.isAdmin %}
+          <a href="/profile/{{u.id}}/dynamic_contact">edit</a>
+          {% endif %}
+        </div>  
+        <div class="span-8 last">  
+          <h3 class="loud">Static Contact Information</h3>  
+          <em>To update, edit your profile at <a href="https://my.nrao.edu">my.nrao.edu</a> <!--then click <a href="/investigator/{{u.id}}/clear_cache">refresh</a>-->. </em>
+          <table>
+            <tr>
+              <th>Email(s)</th>
+            </tr>
+              {% for e in emails %}
+                <tr>
+                  <td>{{e}}</td>
+                </tr>
+              {% endfor %}
+          </table>
+          <table>
+            <tr>
+              <th>Phone(s)</th>
+            </tr>
+              {% for p in phones %}
+                <tr>
+                  <td>{{p}}</td>
+                </tr>
+              {% endfor %}
+          </table>
+          <table>
+            <tr>
+              <th>Postal Address(es)</th>
+            </tr>
+              {% for pt in postals %}
+                <tr>
+                  <td>{{pt}}</td>
+                </tr>
+              {% endfor %}
+          </table>
+          <table>
+            <tr>
+              <th>Affiliation(s)</th>
+            </tr>
+              {% for a in affiliations %}
+                <tr>
+                  <td>{{a}}</td>
+                </tr>
+              {% endfor %}
+          </table>
+
+        </div>
+        <hr />
+        <div>
+          <h3 class="loud">Blackout Dates ({{tz}})</h3>
+          <table>
+            <tr>
+              <th>Begin</th>
+              <th>End</th>
+              <th>Repeat</th>
+              <th>Until</th>
+              <th>Description</th>
+            </tr>
+            {% for b in blackouts %}
+            <tr>
+              <td>{{b.start_date|date:'j M Y H:i'}}</td>
+              <td>{{b.end_date|date:'j M Y H:i'}}</td>
+              <td>{{b.repeat.repeat}}</td>
+              {% if b.until %}
+              <td>{{b.until|date:'j M Y H:i'}}</td>
+              {% else %}
+              <td>{{b.until|pretty_none}}</td>
+              {% endif %}
+              <td>{{b.description}}</td>
+            {% if authorized or requestor.isAdmin %}
+              <td>
+                <a href="/profile/{{u.id}}/blackout/{{b.id}}/">edit</a> |
+                <a href="/profile/{{u.id}}/blackout/{{b.id}}/?_method=DELETE">delete</a>
+              </td>
+            {% endif %}
+            </tr>
+            {% endfor %}
+          </table>
+          {% if authorized or requestor.isAdmin %}
+          <a href="/profile/{{u.id}}/blackout/">add</a>
+          {% endif %}
+          <br/>
+          <br/>
+          <br/>
+        </div>
+        <h3 class="loud">Completed Projects</h3>
+        <div>
+          <table>
+            <tr>
+              <th>Project ID</th>
+              <th>Title</th>
+            </tr>
+              {% for p in u|get_complete_projects %}
+                <tr class="{% cycle 'odd' 'even' %}">
+                  <td><a href="/project/{{p.pcode}}">{{p.pcode}}</a></td>
+                  <td>{{p.name}}</td>
+                </tr>
+              {% endfor %}
+          </table>
+
+          {% if u.friend_set.all %}
+            <h3 class="loud">Historically Assigned as Friend</h3>
+              <table>
+                <tr>
+                  <th>Project ID</th>
+                  <th title="You must be available to observe this Project">Required</th>
+                  <th>Title</th>
+                </tr>
+                  {% for f in u|get_complete_friends %}
+                    <tr class="{% cycle 'odd' 'even' %}">
+                      <td><a href="/project/{{f.project.pcode}}">{{f.project.pcode}}</a></td>
+                      <td>{% if f.required %}Yes{% endif %}</td>
+                      <td>{{f.project.name}}</td>
+                    </tr>
+                  {% endfor %}
+              </table>
+          {% endif %}
+          <hr />
+        </div>
+      </div>
+      <div class="span-6 last" id="sidebar">
+        <div id="periods">
+          <h3 class="caps">Upcoming Observations
+          </h3>
+          <div class="box">
+            <ul>
+            {% for proj, pds in upcomingPeriods %}
+              {% if pds %}
+              <li title="{{proj.pcode}}">{{proj.pcode}}</li>
+                <ul>
+                  {% for pd in pds %}
+                    <li title="{{pd.session.name}}: {{pd.start|date:'Y-m-d H:i'}} {{tz}} for {{pd.duration|hrs2sex}} hrs">
+                    {{pd.session.name}}: {{pd.start|date:"D, M d H:i"}} {{tz}} for {{pd.duration|hrs2sex}} hrs
+                    </li>
+                  {% endfor %}
+                </ul>
+              </li>
+              {% endif %}
+            {% endfor %}
+            </ul>
+          </div>
+        </div>
+        <div id="reservation">
+          <h3 class="caps">Upcoming Reservations</h3>
+          <a href="/investigator/{{u.id}}/clear_cache">Refresh</a>
+          <div class="box">
+          <table>
+            <tr>
+              <th>check-in</th>
+              <th>check-out</th>
+            </tr>
+              {% for r in reservations %}
+                <tr>
+                  <td title="{{r.0|date:'m/d/Y'}}">
+                    {{ r.0|date:"D, M d" }}
+                  </td>
+                  <td title="{{r.1|date:'m/d/Y'}}">
+                    {{ r.1|date:"D, M d" }}
+                  </td>
+                </tr>
+              {% endfor %}
+          </table>
+          </div>
+        </div>
+      </div>
+{% endblock %}

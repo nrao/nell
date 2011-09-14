@@ -29,10 +29,9 @@ setup_environ(settings)
 from datetime                  import *
 from nell.utilities.TimeAccounting import TimeAccounting
 from scheduler.models           import *
-from sets                      import Set
 
 def get_type(project):
-    return Set([s.session_type.type for s in project.sesshun_set.all()])
+    return set([s.session_type.type for s in project.sesshun_set.all()])
 
 def get_sessions(project, typ, enabled = None, complete = False):
     if enabled is not None:
@@ -67,7 +66,7 @@ def get_rcvrs(project, typ):
       , "KFPA": "P"
     }
 
-    grps = list(Set([", ".join([rcvr_dict[r.abbreviation] \
+    grps = list(set([", ".join([rcvr_dict[r.abbreviation] \
                                 for rg in s.receiver_group_set.all()
                                 for r in rg.receivers.all()])
                      for s in get_sessions(project, typ)]))

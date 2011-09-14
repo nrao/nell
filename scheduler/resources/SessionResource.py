@@ -30,6 +30,7 @@ from scheduler.utilities    import jsonMap
 from scheduler.httpadapters import SessionHttpAdapter
 
 import simplejson as json
+from reversion import revision
 
 class SessionResource(NellResource):
     def __init__(self, *args, **kws):
@@ -118,4 +119,3 @@ class SessionResource(NellResource):
             s_id  = args[0]
             s     = get_object_or_404(Sesshun, pk = s_id)
             return HttpResponse(json.dumps(dict(session = SessionHttpAdapter(s).jsondict())))
-

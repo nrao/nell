@@ -34,7 +34,6 @@ class TestBlackout(NellTestCase):
         # create some user blackouts
         self.u = User(first_name = "Test"
                     , last_name  = "User"
-                    , role       = Role.objects.all()[0]
                       )
         self.u.save()
 

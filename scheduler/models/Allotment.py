@@ -28,6 +28,7 @@ class Allotment(models.Model):
     max_semester_time = models.FloatField(help_text = "Hours")
     grade             = models.FloatField(help_text = "0.0 - 4.0")
 
+    # Note: What is this?
     base_url = "/sesshuns/allotment/"
 
     def __unicode__(self):
@@ -38,6 +39,7 @@ class Allotment(models.Model):
                                       , float(self.psc_time)
                                       , float(self.max_semester_time)) 
 
+    # Note: What is this?
     def get_absolute_url(self):
         return "/sesshuns/allotment/%i/" % self.id
 

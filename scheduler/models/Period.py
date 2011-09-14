@@ -22,7 +22,6 @@
 
 from django.db              import models
 from django.core.exceptions import ObjectDoesNotExist
-from sets                   import Set
 from datetime               import datetime, timedelta
 
 from utilities.TimeAgent  import adjustDateTimeTz
@@ -130,20 +129,31 @@ class Period(models.Model):
         # E.g. for one session:
         #     [[a, b, c], [x, y, z]] = (a OR b OR c) AND (x OR y OR z)
         required = [self.session.receiver_group_set.all()]
-        if all([len(set) == 0 for set in required]):
+        if all([len(rx_set) == 0 for rx_set in required]):
             return False # No receivers, problem!
 
-        schedule = Receiver_Schedule.extract_schedule(self.start, 0)
+        # NOTE: get schedule for two days, to catch receivers going
+        # up/down on the day of interest.  There is no way to know for
+        # sure via the database the exact time that a receiver went up
+        # or down.  Instead the break-point is assumed to be 1600
+        # hours UT on any given day (it's in the database, but that is
+        # how Receiver_Schedule.extract_schedule() operates).  So if
+        # the receiver changes at some other hour this function could
+        # return an erroneous value unless it considers the union of
+        # the receivers up before and after 1600 hours.
+        schedule = Receiver_Schedule.extract_schedule(self.start, 1)
         if schedule == {} or \
            (len(schedule.values()) == 1 and schedule.values()[0] == []):
             return False # no schedule, no required rcvrs!
 
-        # should return a single date w/ rcvr list
-        dt, receivers = schedule.items()[0]
+        receivers = set(schedule.values()[0])
 
-        receivers = Set(receivers)
-        if not any([all([Set(g.receivers.all()).intersection(receivers) \
-                        for g in set]) for set in required]):
+        # There might not be a second day...
+        if len(schedule.values()) == 2:
+            map(lambda x: receivers.add(x), schedule.values()[1])
+
+        if not any([all([set(g.receivers.all()).intersection(receivers) \
+                        for g in rx_set]) for rx_set in required]):
             return False # Receiver isn't up
         else:
             return True # Receiver is up
@@ -259,9 +269,21 @@ class Period(models.Model):
         """
         self.score = -1.0
         self.forecast = None
-        if self.in_moc_range():
+        if self.in_moc_range() and self.uses_moc():
             self.moc = None
 
+    def uses_moc(self):
+        """
+        Not all periods use their MOC - for instance, the MOC is never 
+        calculated Fixed periods.  We must use the same criteria here as
+        what is being used in Antioch.
+        """
+        if self.session is None or self.state is None:
+            return False
+        else:    
+            return (self.session.isOpen() or self.session.isWindowed()) \
+                and self.isScheduled()
+        
     def in_moc_range(self):
         """
         A period should get it's MOC evaluated only when it's 

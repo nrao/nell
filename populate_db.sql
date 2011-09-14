@@ -22,6 +22,9 @@ INSERT INTO allotment VALUES (DEFAULT, 100.5, 100.5, 100.5, 4.0);
 INSERT INTO roles VALUES (DEFAULT, 'Administrator');
 INSERT INTO roles VALUES (DEFAULT, 'Observer');
 INSERT INTO roles VALUES (DEFAULT, 'Operator');
+INSERT INTO roles VALUES (DEFAULT, 'Staff');
+INSERT INTO roles VALUES (DEFAULT, 'Friend');
+INSERT INTO roles VALUES (DEFAULT, 'Telescope Supervisor');
 
 INSERT INTO repeats VALUES (DEFAULT, 'Once');
 INSERT INTO repeats VALUES (DEFAULT, 'Weekly');
@@ -79,7 +82,7 @@ INSERT INTO semesters VALUES (DEFAULT, '12B');
 INSERT INTO project_types VALUES (DEFAULT, 'science');
 INSERT INTO project_types VALUES (DEFAULT, 'non-science');
 
-INSERT INTO projects VALUES (DEFAULT, 1, 1, 'GBT09A-001', '', false, false, false, NULL, NULL);
+INSERT INTO projects VALUES (DEFAULT, 1, 1, 'GBT09A-001', '', false, false, false, NULL, NULL, NULL);
 
 INSERT INTO session_types VALUES (DEFAULT, 'open');
 INSERT INTO session_types VALUES (DEFAULT, 'fixed');
@@ -143,7 +146,6 @@ INSERT INTO parameters VALUES (DEFAULT, 'LST Include Hi', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'LST Exclude Low', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'LST Exclude Hi', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'UTC Flag', 'boolean');
-INSERT INTO parameters VALUES (DEFAULT, 'Night-time Flag', 'boolean');
 INSERT INTO parameters VALUES (DEFAULT, 'Obs Eff Limit', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Atmos St Limit', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Tr Err Limit', 'float');
@@ -153,7 +155,7 @@ INSERT INTO parameters VALUES (DEFAULT, 'ZA Limit', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Solar Avoid', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Precip', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Wind', 'float');
-INSERT INTO parameters VALUES (DEFAULT, 'Time Day', 'datetime');
+INSERT INTO parameters VALUES (DEFAULT, 'Time Of Day', 'string');
 INSERT INTO parameters VALUES (DEFAULT, 'Transit', 'boolean');
 INSERT INTO parameters VALUES (DEFAULT, 'Transit Before', 'float');
 INSERT INTO parameters VALUES (DEFAULT, 'Transit After', 'float');

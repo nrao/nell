@@ -2,10 +2,10 @@ from django.conf.urls.defaults     import *
 from django.conf                   import settings
 from scheduler.views               import *
 from calculator.views              import load_calc_ui
-from sesshuns.observers            import *
-from sesshuns.operators            import *
-from sesshuns.resource_cal         import *
-from sesshuns.admin                import rescal_admin
+from users.observers            import *
+from users.operators            import *
+from users.resource_cal         import *
+from users.admin                import rescal_admin
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin

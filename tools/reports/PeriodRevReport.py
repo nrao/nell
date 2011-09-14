@@ -28,6 +28,7 @@ setup_environ(settings)
 from scheduler.models import *
 from reversion.models import Version
 from RevisionReport import RevisionReport
+from datetime       import datetime
 
 class PeriodRevReport(RevisionReport):
     def __init__(self, filename = None):

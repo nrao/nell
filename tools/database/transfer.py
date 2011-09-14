@@ -28,7 +28,6 @@ setup_environ(settings)
 from datetime                  import *
 from nell.utilities.TimeAccounting import TimeAccounting
 from scheduler.models           import *
-from sets                      import Set
 
 import sys
 

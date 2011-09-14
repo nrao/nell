@@ -26,7 +26,6 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from sets                      import Set
 from datetime                  import date, datetime, timedelta
 from django.db.models          import Q
 
@@ -35,7 +34,7 @@ from scheduler.httpadapters    import SessionHttpAdapter
 from tools.database.UserInfoTools import UserInfoTools
 from utilities                 import TimeAccounting
 from utilities                 import AnalogSet
-from tools.alerts              import SessionAlerts
+from tools.alerts              import SessionInActiveAlerts
 
 def get_sessions(typ,sessions):
     return [s for s in sessions if s.session_type.type == typ]
@@ -75,8 +74,8 @@ def repeatedObservingParameters(sessions):
 
 #def missing_observer_parameter_pairs(sessions):
 #    pairs = [
-#        Set(["LST Exclude Hi", "LST Exclude Low"])
-#      , Set(["LST Include Hi", "LST Include Low"])
+#        set(["LST Exclude Hi", "LST Exclude Low"])
+#      , set(["LST Include Hi", "LST Include Low"])
 #    ]
 #
 #    return [s.name for s in sessions \
@@ -98,7 +97,7 @@ def check_maintenance_and_rcvrs():
         # of these, is any one of them a maintenance?
         if len([p for p in periods if p.session.project.is_maintenance()]) == 0:
             bad.append(dt.date())
-    return sorted(Set(bad))[1:] # Remove start of DSS
+    return sorted(set(bad))[1:] # Remove start of DSS
 
 def print_values(file, values):
     if values == []:
@@ -209,7 +208,7 @@ def get_non_window_periods():
         # don't care about deleted periods
         pds = s.period_set.exclude(state__name = 'Deleted')
         win = s.window_set.all()
-        winp = Set()
+        winp = set()
 
         # Set up the set of periods that belong to a window.  Doesn't
         # matter here if they're deleted or not, since we are checking
@@ -249,7 +248,7 @@ def get_window_out_of_range_lst():
 
 def get_window_within_48():
     w = get_windows()
-    sid = Set()
+    sid = set()
     within48 = []
 
     for i in w:
@@ -379,6 +378,50 @@ def electives_no_periods():
     es = Elective.objects.all()
     return [e for e in es if len(e.periods.all()) == 0]
     
+def report_overlaps(periods, now = None):
+    """
+    We don't want to report on *any* overlaps in the schedule.  Apply
+    some pretty complex rules to keep this more meaningful.
+    """
+    if now is None:
+        now = datetime.utcnow()
+    values  = []
+    overlap = []
+    not_deleted_periods = [p for p in periods if p.state.abbreviation != "D"]
+    for p1 in not_deleted_periods:
+        start1, end1 = p1.start, p1.end()
+        for p2 in not_deleted_periods:
+            start2, end2 = p2.start, p2.end()
+            if p1 != p2 and p1 not in overlap and p2 not in overlap:
+                # what kind of overlap?
+                type = ""
+                if AnalogSet.overlaps((start1, end1), (start2, end2)):
+                    # in the past?
+                    if p1.start < now or p2.start < now:
+                        type = "Overlap in past"
+                    # any scheduled?    
+                    if p1.isScheduled() or p2.isScheduled():
+                        type = "Overlap with scheduled period"
+                    # if it's not one of the above types, see if a 3rd period
+                    # is involved:
+                    if type == "":
+                        # check just the nearest neighbors
+                        oneWeekBefore = p1.start - timedelta(days = 7)
+                        oneWeekAfter  = p1.start + timedelta(days = 7)
+                        neighbors = Period.objects.exclude(state__abbreviation = "D").filter(start__gt = oneWeekBefore
+                                       , start__lt = oneWeekAfter)
+                        for p3 in neighbors:
+                            if p1 != p3 and p2 != p3 and p3 not in overlap:
+                                start3, end3 = p3.start, p3.end()
+                                if AnalogSet.overlaps((start1, end1), (start3, end3)) \
+                                  or AnalogSet.overlaps((start2, end2), (start3, end3)):
+                                    type = "Overlap of 3 periods"  
+                    if type != "": 
+                        values.append("%s: %s and %s" % (type, str(p1), str(p2)))
+                        overlap.extend([p1, p2])
+    return values
+
+
 ######################################################################
 # Writes out the Windows reports
 ######################################################################
@@ -547,9 +590,10 @@ def GenerateReport():
     values = [s.name for s in sessions if not s.project]
     print_values(outfile, values)
 
-    outfile.write("\n\nOpen sessions with alloted time < min duration:")
+    outfile.write("\n\nOpen sessions (not completed) with alloted time < min duration:")
     values = [s.name for s in sessions \
               if s.session_type.type == "open" and \
+                 not s.status.complete and \
                  s.allotment.total_time < s.min_duration]
     print_values(outfile, values)
 
@@ -564,6 +608,12 @@ def GenerateReport():
     values = [s.name for s in sessions \
               if s.session_type.type == "open" and \
                  s.min_duration > s.max_duration]
+    print_values(outfile, values)
+
+    outfile.write("\n\nSessions with min duration too small:")
+    ss1 = [s for s in sessions if s.min_duration <= 0.25]
+    ss = sorted(ss1, lambda x, y: cmp(x.min_duration, y.min_duration))
+    values = ["%s, %f" % (s.name, s.min_duration) for s in ss]
     print_values(outfile, values)
 
     outfile.write("\n\nSessions with negative observed time:")
@@ -617,7 +667,7 @@ def GenerateReport():
     print_values(outfile, values)
 
     outfile.write("\n\nUpcoming Windowed, Elective, and Fixed Sessions that are not enabled:")
-    sa = SessionAlerts()
+    sa = SessionInActiveAlerts()
     print_values(outfile
                , ["%s session %s which runs %s" % (u.session.session_type.type
                                                  , u.session.id
@@ -626,7 +676,7 @@ def GenerateReport():
                    )
 
     outfile.write("\n\nUpcoming Windowed, Elective, and Fixed Sessions that are not authorized:")
-    sa = SessionAlerts()
+    sa = SessionInActiveAlerts()
     print_values(outfile
                , ["%s session %s which runs %s" % (u.session.session_type.type
                                                  , u.session.id
@@ -691,7 +741,7 @@ def GenerateReport():
     outfile.write("\n\nProjects that contain non-unique session names:")
     names  = [(p.pcode, [s.name for s in p.sesshun_set.all()])
                                     for p in projects]
-    values = [p for p, n in names if len(Set(n)) != len(n)]
+    values = [p for p, n in names if len(set(n)) != len(n)]
     print_values(outfile, values)
 
     outfile.write("\n\nUsers with duplicate accounts by name:")
@@ -744,18 +794,9 @@ def GenerateReport():
         
 
     outfile.write("\n\nOverlapping periods:")
-    values  = []
-    overlap = []
-    not_deleted_periods = [p for p in periods if p.state.abbreviation != "D"]
-    for p1 in not_deleted_periods:
-        start1, end1 = p1.start, p1.end()
-        for p2 in not_deleted_periods:
-            start2, end2 = p2.start, p2.end()
-            if p1 != p2 and p1 not in overlap and p2 not in overlap:
-                if AnalogSet.overlaps((start1, end1), (start2, end2)):
-                    values.append("%s and %s" % (str(p1), str(p2)))
-                    overlap.extend([p1, p2])
+    values = report_overlaps(periods, now = now)
     print_values(outfile, values)
+
 
     outfile.write("\n\nGaps in historical schedule:")
     ps = Period.objects.filter(start__lt = now)\
