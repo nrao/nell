@@ -46,7 +46,6 @@ urlpatterns = patterns(''
    , url(r'^period/([^/]+)/moc_reschedule$', moc_reschedule)
    , url(r'^period/([^/]+)/moc_degraded$', moc_degraded)
    , url(r'^window/([^/]+)/assign_period/(\d+)$', window_assign_period)
-   , url(r'^investigator/([^/]+)/clear_cache$',         clear_user_cache)
    , url(r'^investigator/([^/]+)/ical$',                observer_ical)
    , url(r'^investigator/([^/]+)/ical/[A-za-z.]*$',     observer_ical)
    , url(r'^investigators/qualified$', remotely_qualified)

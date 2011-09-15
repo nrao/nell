@@ -43,8 +43,6 @@ class NellTestCase(unittest.TestCase):
                         , dbname = dbname)
 
     def setUp(self):
-        if hasattr(settings, "CACHE_BACKEND"):
-            settings.CACHE_BACKEND = "dummy:///" # disable caching for testing
         c = self.connect()
 
         sql = open("populate_db.sql").read()
