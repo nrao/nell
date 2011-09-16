@@ -4,6 +4,7 @@
 *.prof
 *.swp
 *.log
+\#*\#
 
 settings.py
 urls.py
@@ -21,3 +22,24 @@ GBT09A-001TimeAccounting.txt
 WindowsReport.txt
 test_completionReport.txt
 test_projTimeAcctReport.txt
+
+Asteroids.txt
+AstridDBReport.txt
+Comets.txt
+DBReporter.txt
+TestUserInfoTools.txt
+Unusual.txt
+create.sql
+docs/database-new-rcal.vsd
+docs/database.vsd.bkup
+docs/~$$database-new-rcal.~vsd
+dss_backup.sql
+new_scheduler.sql
+old_roles.txt
+old_scheduler.sql
+sesshuns/observers.py.back
+tbfs-done.txt
+tbfs.txt
+test.py
+tools/csv_to_roles.py
+tools/roles_to_csv.py

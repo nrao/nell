@@ -7,24 +7,39 @@ CREATE TABLE `authors` (
     `peoplekey` varchar(150) NOT NULL,
     `email` varchar(150) NOT NULL,
     `pi` bool NOT NULL,
-    `co_i` bool NOT NULL
+    `co_i` bool NOT NULL,
+    `pst_id` integer NOT NULL
 )
 ;
 ALTER TABLE `authors` ADD CONSTRAINT project_id FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`);
-CREATE TABLE `friends` (
-    `id` integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
-    `first` varchar(32) NOT NULL,
-    `last` varchar(150) NOT NULL,
-    `peoplekey` varchar(150) NOT NULL,
-    `email` varchar(150) NOT NULL,
-    `pi` bool NOT NULL,
-    `co_i` bool NOT NULL
-)
-;
+
+CREATE TABLE IF NOT EXISTS `friends` (
+  `id` integer  NOT NULL auto_increment PRIMARY KEY,
+  `first` varchar(32) NOT NULL,
+  `last` varchar(150) NOT NULL,
+  `peoplekey` varchar(150) NOT NULL,
+  `email` varchar(150) NOT NULL,
+  `pi` tinyint(1) NOT NULL,
+  `co_i` tinyint(1) NOT NULL,
+  `pst_id` integer NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS `blackouts` (
+  `id` integer NOT NULL auto_increment PRIMARY KEY,
+  `start_time` datetime NOT NULL,
+  `end_time` datetime NOT NULL,
+  `description` varchar(512) NOT NULL,
+  `author_id` integer NOT NULL,
+  `people_key` integer NOT NULL,
+  `pcodes` varchar(250) NOT NULL
+);
+
 CREATE TABLE `dispositions` (
     `id` integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
     `pcode` varchar(32) NOT NULL,
-    `disposition` varchar(4000) NOT NULL
+    `disposition` varchar(4000) NOT NULL,
+    `abstract` varchar(1000) NOT NULL,
+    `backends` varchar(20) NOT NULL
 )
 ;
 CREATE TABLE `semesters` (
@@ -42,8 +57,7 @@ CREATE TABLE `allotment` (
     `psc_time` varchar(12) NOT NULL,
     `total_time` varchar(12) NOT NULL,
     `max_semester_time` varchar(12) NOT NULL,
-    `grade` varchar(12) NOT NULL,
-    `ignore_grade` bool NOT NULL
+    `grade` varchar(12) NOT NULL
 )
 ;
 CREATE TABLE `projects` (
