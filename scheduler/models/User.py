@@ -22,7 +22,6 @@
 
 from datetime                  import datetime
 from django.contrib.auth.models import User as AuthUser
-from django.core.cache         import cache
 from django.db                 import models
 
 from Role              import Role
@@ -130,10 +129,10 @@ class User(models.Model):
         """
         return self.getStaticContactInfo()['emails']
 
-    def getStaticContactInfo(self, use_cache = True):
-        return UserInfo().getProfileByID(self, use_cache)
+    def getStaticContactInfo(self): 
+        return UserInfo().getProfileByID(self) 
 
-    def getReservations(self, use_cache = True):
+    def getReservations(self): 
         """
         Use the PST to get the one of the User's types of IDs.  Then
         use that ID to get the reservations from the BOS.
@@ -237,9 +236,6 @@ class User(models.Model):
         shared_projects = [p for p in upcodes if self.isFriend(p) \
                                               or self.isInvestigator(p)]
         return shared_projects != [] or self.isAdmin() or self.isOperator()
-    def clearCachedInfo(self):
-        cache.delete(self.username())
-        cache.delete(str(self.pst_id)) # Keys are strings only.
 
     def hasIncompleteProject(self):
         return any([not i.project.complete \

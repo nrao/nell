@@ -110,6 +110,9 @@
               {% if s.get_lst_exclusion_string %}
               <span title="This session is excluded from observing in this LST range (Hours).">LST Exclusion: </span>{{s.get_lst_exclusion_string}}<br/>
               {% endif %}
+              {% if s.get_solar_avoidance %}
+              <span title="Observations do not approach within this angular distance of the Sun (degrees).">Solar Avoidance: </span>{{s.solar_avoidance_degrees}}<br/>
+              {% endif %}
               {% if s.get_lst_inclusion_string %}
               <span title="This session can only observe in this LST range (Hours).">LST Inclusion: </span>{{s.get_lst_inclusion_string}}<br/>
               {% endif %}              
