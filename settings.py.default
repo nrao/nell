@@ -64,8 +64,7 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        #'ENGINE': 'django.db.backends.postgresql_psycopg2', # Deployment
+        'ENGINE': 'django.db.backends.postgresql_psycopg2', # Deployment & development
         'NAME': 'dss',                   # Or path to database file if using sqlite3.  #MODIFY#
         'USER': 'dss',                   # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
@@ -177,11 +176,3 @@ INSTALLED_APPS = (
     'nell.calculator',
     'reversion'
 )
-
-# this is needed for making direct calls to the Antioch server via the
-# nginx proxy.  Use your port and host specified in
-# /home/dss/conundrum/conf/nginx.conf.  Note that 'ANTIOCH_HOST is not
-# really the Antioch host, but the nginx host.
-
-#PROXY_PORT = 8001       #MODIFY#
-#ANTIOCH_HOST =  "http://trent.gb.nrao.edu"    #MODIFY#
