@@ -35,11 +35,11 @@ STATIC_DOC_ROOT   = NELL_ROOT + '/users/static'
 DOC_ROOT          = NELL_ROOT + '/docs/www'
 MEDIA             = '/home/dss.gb.nrao.edu/active/python/lib/python2.5/site-packages/django/contrib/admin/media' 
 SC_EQUATION_DEFS  = NELL_ROOT + '/calculator/data/equations.cfg'
+SETTINGS_CONF     = '/home/dss/release/conf/settings.cfg'
+config = ConfigParser.RawConfigParser()
+config.read(SETTINGS_CONF)
 
 # Twitter Stuff
-TWITTER_CONF = '/home/dss/release/conf/twitter.cfg'
-config = ConfigParser.RawConfigParser()
-config.read(TWITTER_CONF)
 TWITTER = {'consumer_key'        : config.get('keys', 'consumer_key')
          , 'consumer_secret'     : config.get('keys', 'consumer_secret')
          , 'access_token_key'    : config.get('keys', 'access_token_key')
@@ -62,27 +62,21 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+DB_USER_KEY = 'dev_user' # def_user or prod_user
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2', # Deployment & development
-        'NAME': 'dss',                   # Or path to database file if using sqlite3.  #MODIFY#
-        'USER': 'dss',                   # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
-        'HOST': 'trent',                 # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '5432',                  # Set to empty string for default. Not used with sqlite3.
+        'ENGINE'   : 'django.db.backends.postgresql_psycopg2', 
+        'NAME'     : 'dss',     # Or path to database file if using sqlite3.  #MODIFY#
+        'USER'     : config.get('database', DB_USER_KEY),
+        'PASSWORD' : config.get('database', DB_USER_KEY + '_password'),
+        'HOST'     : 'trent',   # Set to empty string for localhost. Not used with sqlite3.
+        'PORT'     : '5432',    # Set to empty string for default. Not used with sqlite3.
     }
 }
 
 BENCHMARK_DB_NAME = None      # Set to 'benchmark' for nightly unit tests
                               # or a personal database for your own tests
                               # or leave as None to not save benchmarks
-
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake'
-    }
-}
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

@@ -35,6 +35,17 @@ class TestTerm(unittest.TestCase):
         self.assertTrue('stuff' in term.__str__())
         self.assertEquals((3, None, '', 'stuff', None), term.get())
 
+    def testIsJustValue(self):
+        
+        self.assertEquals("", self.term.isJustValue())
+
+        self.term.equation = "23.4"
+        self.assertEquals(True, self.term.isJustValue())
+
+        eq = "23.4 + x"
+        self.term = Term('test', equation = eq, units = 'ohms')
+        self.assertEquals(False, self.term.isJustValue())
+
     def testAddObserver(self):
         self.assertEquals([], self.term.observers)
         self.term.addObserver('1')

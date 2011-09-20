@@ -110,6 +110,9 @@
               {% if s.get_lst_exclusion_string %}
               <span title="This session is excluded from observing in this LST range (Hours).">LST Exclusion: </span>{{s.get_lst_exclusion_string}}<br/>
               {% endif %}
+              {% if s.get_solar_avoidance %}
+              <span title="Observations do not approach within this angular distance of the Sun (degrees).">Solar Avoidance: </span>{{s.solar_avoidance_degrees}}<br/>
+              {% endif %}
               {% if s.get_lst_inclusion_string %}
               <span title="This session can only observe in this LST range (Hours).">LST Inclusion: </span>{{s.get_lst_inclusion_string}}<br/>
               {% endif %}              
@@ -407,6 +410,14 @@
         <h3 class="grey_highlight loud">Project Notes (<a href="/project/{{p.pcode}}/notes">edit</a>)</h3>
           <p>
           {{p.notes|pretty_none|escape|linebreaks}}
+          </p>
+        <h3 class="grey_highlight loud">Project Abstract </h3>
+          <p>
+          {{p.abstract|pretty_none|escape|linebreaks}}
+          </p>
+        <h3 class="grey_highlight loud">Project Disposition </h3>
+          <p>
+          {{p.disposition|pretty_none|escape|linebreaks}}
           </p>
         {% if requestor.isAdmin %}
         <h3 class="grey_highlight loud">Scheduler's Notes (<a href="/project/{{p.pcode}}/schedulers_notes">edit</a>)</h3>

@@ -113,7 +113,7 @@ class PSTMirrorDB(PSTInterface):
         rows = self.cursor.fetchall()
         return int(rows[0][0])
 
-    def getProfileByID(self, user, use_cache = True):
+    def getProfileByID(self, user): 
         try:
             # Note: our pst_id is their person PK.
             return self.getStaticContactInfoByID(user.pst_id)
@@ -132,11 +132,11 @@ class PSTMirrorDB(PSTInterface):
                       , personAuth_id= 'Not Available'
                       )
 
-    def getStaticContactInfoByUserName(self, username, use_cache = True):
+    def getStaticContactInfoByUserName(self, username): 
         id = self.getIdFromUsername(username)
         return self.getStaticContactInfoByID(id)
 
-    def getStaticContactInfoByID(self, person_id, use_cache = True):
+    def getStaticContactInfoByID(self, person_id): 
         """
         This returns the same output as the method of the same name in 
         PSTQueryService.

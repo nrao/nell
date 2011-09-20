@@ -20,19 +20,27 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-class Document(object):
+from django.db import models
 
-    """
-    Parent class for all classes which wish to implement the 
-    Observer Pattern.
-    """
+from Sesshun  import Sesshun
+from users.models import Backend
 
-    def __init__(self):
-        self.observers = []
+class Backend_Group(models.Model):
+    session        = models.ForeignKey(Sesshun)
+    backends       = models.ManyToManyField(
+                                  Backend
+                                , db_table = "backend_groups_backends")
 
-    def notify(self, keyword, value):
-        for o in self.observers:
-            o.onNotify(keyword, value)
+    class Meta:
+        db_table  = "backend_groups"
+        app_label = "scheduler"
 
-    def addObserver(self, observer):
-        self.observers.append(observer)
+    def __unicode__(self):
+        return "Backend Group for Sess: (%s): %s" % \
+               (self.session.id,
+                " ".join([b.abbreviation for b in self.backends.all()]))
+
+    def __str__(self):
+        return "(%s)" % \
+               " OR ".join([b.abbreviation for b in self.backends.all()])
+

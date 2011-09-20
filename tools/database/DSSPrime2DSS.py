@@ -23,8 +23,19 @@
 from datetime                          import datetime, timedelta
 from DBReporter                        import DBReporter
 from nell.scheduler.models             import *
+from nell.users.models             import Backend
 import math
 import MySQLdb as m
+
+def safeUnicode(string):
+    try:
+        uni = unicode(string)
+    except UnicodeDecodeError:
+        if len(string) == 1:
+            uni = ''
+        else:
+            uni = ''.join([safeUnicode(s) for s in string])
+    return uni
 
 class DSSPrime2DSS(object):
     """
@@ -348,6 +359,8 @@ class DSSPrime2DSS(object):
                 rg.receivers.add(rcvr)
             rg.save()
 
+        self.add_backends(s)
+
         # now get the observing parameters
         query = """SELECT op.string_value, op.integer_value, op.float_value,
                           op.boolean_value, op.datetime_value, parameters.name
@@ -394,6 +407,19 @@ class DSSPrime2DSS(object):
         self.create_windows(s, s_id_prime)
 
         self.new_sessions.append(s)
+
+    def add_backends(self, s):
+        # now get the backends
+        bg = Backend_Group(session = s)
+        bg.save()
+        query = "SELECT backends from dispositions where pcode = '%s'" % s.project.pcode
+        self.cursor.execute(query)
+        result = self.cursor.fetchone()
+        if result is not None:
+            for b in result[0]:
+                backend = Backend.objects.filter(rc_code = b)[0]
+                bg.backends.add(backend)
+            bg.save()
 
     def normalize_investigators(self):
         for p in Project.objects.all():
@@ -524,13 +550,7 @@ class DSSPrime2DSS(object):
                     )
         p.save()
 
-        # Get project's disposition
-        query = "SELECT disposition from dispositions where pcode = '%s'" % p.pcode
-        self.cursor.execute(query)
-        dis = self.cursor.fetchone()
-        if dis is not None:
-            p.disposition = dis[0]
-            p.save()
+        self.add_disposition(p)
 
         # then the related objects:
         # friends: friend_id from DSS' projects table
@@ -557,6 +577,17 @@ class DSSPrime2DSS(object):
         rows = self.cursor.fetchall()
         for row in rows:
             self.add_project_allotment(p, row)
+
+    def add_disposition(self, p):
+        # Get project's disposition
+        query = "SELECT disposition, abstract from dispositions where pcode = '%s'" % p.pcode
+        self.cursor.execute(query)
+        dis = self.cursor.fetchone()
+
+        if dis is not None:
+            p.disposition = safeUnicode(dis[0])
+            p.abstract    = safeUnicode(dis[1])
+            p.save()
 
     def add_project_allotment(self, project, row):
         """

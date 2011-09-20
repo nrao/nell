@@ -32,7 +32,6 @@ from TestFixedAlertNotifier       import TestFixedAlertNotifier
 from TestIcalAntioch              import TestIcalAntioch
 from TestMaintenanceActivity      import TestMaintenanceActivity
 from TestMaintenanceActivityGroup import TestMaintenanceActivityGroup
-from TestNRAOBosDB                import TestNRAOBosDB
 from TestObservers                import TestObservers
 from TestObserversBase            import TestObserversBase
 from TestOperators                import TestOperators

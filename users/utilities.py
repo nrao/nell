@@ -67,8 +67,7 @@ def create_user(username):
     If the DSS doesn't know about the user, but the User Portal does,
     then add them to our database so they can at least see their profile.
     """
-    info = UserInfo().getStaticContactInfoByUserName(username
-                                                   , use_cache = False)
+    info = UserInfo().getStaticContactInfoByUserName(username)
     user = User(pst_id     = info['person_id']
               , first_name = info['first_name']
               , last_name  = info['last_name'])
