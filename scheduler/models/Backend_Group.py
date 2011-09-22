@@ -23,7 +23,7 @@
 from django.db import models
 
 from Sesshun  import Sesshun
-from users.models import Backend
+from Backend import Backend
 
 class Backend_Group(models.Model):
     session        = models.ForeignKey(Sesshun)
