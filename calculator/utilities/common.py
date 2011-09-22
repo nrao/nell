@@ -20,8 +20,10 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from django.db.models import Q
+from django.db.models         import Q
 from calculator.models        import *
+from functions                import isNotVisible
+from utilities.TimeAgent      import *
 
 # View utility functions go here.
 
@@ -172,13 +174,23 @@ def getMessages(request):
 
     # All right, slog through each problem child, and check on them
 
+    # source not visible?
+    # TBF: import this
+    GBT_LAT = 38 + 26 / 60.
+    min_elevation =  ivalues.get("min_elevation", {}).get("value", 1)
+    dec = ivalues.get("declination", {}).get("value", 0)
+    if dec != '' and min_elevation != '' and \
+        isNotVisible(float(dec), float(min_elevation)):
+        messages.append({'type' : 'Error'
+                       , 'msg'  : 'Source will never be visible.'
+                        })
+
     # source diameter
     diameter = results.get("source_diameter", {}).get("value", 1)
     if diameter != '' and float(diameter) > 0:
         messages.append({'type' : 'Warning', 'msg' : 'Since source is extended, the calculated results are approximations.'})
 
     # declination too low?   
-    dec = ivalues.get("declination", {}).get("value", 0)
     if dec != '' and float(dec) < -46:
         messages.append({'type' : 'Error', 'msg' : 'Source Declination is below -46, the lower limit for the GBT.'})
 
