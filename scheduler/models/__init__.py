@@ -21,6 +21,7 @@
 #       Green Bank, WV 24944-0002 USA
 
 from Allotment                       import Allotment
+from Backend                         import Backend
 from Backend_Group                   import Backend_Group
 from Blackout                        import Blackout
 from Column                          import Column

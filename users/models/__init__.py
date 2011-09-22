@@ -20,7 +20,6 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from Backend                         import Backend
 from Preference                      import Preference
 from Maintenance_Activity            import Maintenance_Activity
 from Maintenance_Activity_Group      import Maintenance_Activity_Group

@@ -26,7 +26,7 @@ from users     import models as smodels
 from scheduler import models as sched_models
 
 class Calc_Backend(models.Model):
-    dss_backend = models.ForeignKey(smodels.Backend, null = True)
+    dss_backend = models.ForeignKey(sched_models.Backend, null = True)
     name        = models.CharField(max_length=200)
 
     def __unicode__(self):

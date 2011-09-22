@@ -45,4 +45,4 @@ class Backend(models.Model):
 
     class Meta:
         db_table  = "backends"
-        app_label = "users"
+        app_label = "scheduler"

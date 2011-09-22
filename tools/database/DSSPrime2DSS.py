@@ -23,7 +23,6 @@
 from datetime                          import datetime, timedelta
 from DBReporter                        import DBReporter
 from nell.scheduler.models             import *
-from nell.users.models             import Backend
 import math
 import MySQLdb as m
 
