@@ -34,14 +34,28 @@ import sys
 
 class Result(Thread):
 
+    """
+    This class is responsible for loading the equation definitions
+    from a configuration file, and evaluating those equations
+    using collections of Term objects, all thread safe.
+    """
+
     @staticmethod
     def getEquations(section):
+        """
+        Loads the equation configuration file, and returns the 
+        equation information as a list of tuples, where each tuple
+        carries information such as the euqation's units, it's label, etc
+        """
+       
+        # parse the file
         config = ConfigParser.RawConfigParser()
         config.read(settings.SC_EQUATION_DEFS)
 
         if section is None:
             section = 'equations'
 
+        # create a map of term to term attributes
         equations = {}
         for term, equation in config.items(section):
             equations[term] = [equation, None, None, None]
@@ -59,6 +73,7 @@ class Result(Thread):
                 digits, order = map(lambda s: s.strip(), display.split(','))
                 equations[term][3] = digits, int(order)
 
+        # convert our map into a list of tuples
         return [(t, e, u, l, d) for t, (e, u, l, d) in equations.items()]
 
     def __init__(self, section):
@@ -68,9 +83,12 @@ class Result(Thread):
         self.queue = Queue()
         self.loop = True
 
+        # for every term listed in the config file, create a Term obj.
         self.terms = {}
         for t, equation, units, label, display in Result.getEquations(section):
             self.terms[t] = Term(t, None, equation, units, label, display)
+            # this class will have it's onNotify method called when
+            # a term calls it's notify method.
             self.terms[t].addObserver(self)
 
         self.start() # Start queue thread
@@ -85,6 +103,11 @@ class Result(Thread):
         self.loop = False
 
     def get(self, key = None):
+        """
+        Once the queue is empty, returns the named term's value, or
+        all term values, if no specific term is named.
+        """
+
         while True:
             self.queue.join()
             self.lock.acquire()
@@ -108,6 +131,11 @@ class Result(Thread):
                 self.lock.release()
 
     def set(self, key, value):
+        """
+        Sets the value of the term specified by the given key,
+        and then evaluates all terms that are dependent on this key.
+        """
+
         self.lock.acquire()
         try:
             if self.terms.has_key(key):

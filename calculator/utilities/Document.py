@@ -21,6 +21,12 @@
 #       Green Bank, WV 24944-0002 USA
 
 class Document(object):
+
+    """
+    Parent class for all classes which wish to implement the 
+    Observer Pattern.
+    """
+
     def __init__(self):
         self.observers = []
 
