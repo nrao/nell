@@ -26,6 +26,72 @@ from calculator.utilities.functions import *
 
 class TestFunctions(TestCase):
 
+    def test_getTimeVisible(self):
+
+        # Check against Ron's results for this min. elevation
+        minEl = 10.0
+        decs1 = range(-90, -41)
+        for d in decs1:
+            self.assertEqual(0.0, getTimeVisible(d, minEl))
+
+        decs2 = range(-41, -37)
+        exp1 = [1.3883594994
+              , 2.29455878167
+              , 2.92003968103
+              ,3.42296389013
+               ]
+        for d, exp in zip(decs2, exp1):
+            self.assertAlmostEqual(exp, getTimeVisible(d, minEl), 3)        
+        decs3 = range(58, 62)
+        exp1 = [19.7846602664
+              , 20.3872020526
+              , 21.1471354295
+              , 22.2649133951
+               ]
+        for d, exp in zip(decs3, exp1):
+            self.assertAlmostEqual(exp, getTimeVisible(d, minEl), 3)        
+        decs4 = range(62, 90)
+        for d in decs4:
+            self.assertEqual(24.0, getTimeVisible(d, minEl))
+
+        # and for this min. elevation
+        minEl = 45.0
+        decs1 = range(-90, -6)
+        for d in decs1:
+            self.assertEqual(0.0, getTimeVisible(d, minEl))
+
+        decs2 = range(-6, 2)
+        exp1 = [
+             1.02209227744
+          ,  1.69242662209
+          ,  2.15760990169
+          ,  2.53345067507
+          ,  2.85557861975
+          ,  3.14067869313
+          ,  3.39818344892
+          ,  3.63405281888      
+               ]
+
+        for d, exp in zip(decs2, exp1):
+            self.assertAlmostEqual(exp, getTimeVisible(d, minEl), 3)        
+        decs3 = range(80, 84)
+        exp1 = [ 
+             6.09735485686
+          ,  5.4019871385
+          ,  4.38386884241
+          ,  2.56344352291
+               ]
+        for d, exp in zip(decs3, exp1):
+            self.assertAlmostEqual(exp, getTimeVisible(d, minEl), 2)        
+        decs4 = range(84, 90)
+        for d in decs4:
+            self.assertEqual(0.0, getTimeVisible(d, minEl))
+
+        #for dec in range(-90, 90):
+        #    t = getTimeVisible(dec, 10.0)
+            #print dec, t
+
+        
     def test_sourceSizeCorrection(self):
         correction = sourceSizeCorrection(6, 8)
         self.assertAlmostEqual(correction, 0.828, 3)
