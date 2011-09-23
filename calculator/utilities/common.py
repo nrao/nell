@@ -175,14 +175,12 @@ def getMessages(request):
     # All right, slog through each problem child, and check on them
 
     # source not visible?
-    # TBF: import this
-    GBT_LAT = 38 + 26 / 60.
     min_elevation =  ivalues.get("min_elevation", {}).get("value", 1)
     dec = ivalues.get("declination", {}).get("value", 0)
     if dec != '' and min_elevation != '' and \
         isNotVisible(float(dec), float(min_elevation)):
         messages.append({'type' : 'Error'
-                       , 'msg'  : 'Source will never be visible.'
+                       , 'msg'  : 'Source will never rise above min elevation.'
                         })
 
     # source diameter
