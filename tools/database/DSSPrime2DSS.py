@@ -376,17 +376,8 @@ class DSSPrime2DSS(object):
         #      o[5] = parameters.name
 
         for o in self.cursor.fetchall():
-            # we have started to diverge from Carl's original set of
-            # observing parameters, to our new DSS ones.
             param_name = o[5]
-            if param_name == "Night-time Flag":
-                # this has been replaced w/ "Time of Day"
-                p = Parameter.objects.get(name = "Time Of Day")
-                # Time Of Day is now an enumeration, of which, Carl's
-                # 'Night-time Flag' maps to the RfiNight choice.
-                o = ("RfiNight", None, None, None, None, 'Time Of Day')
-            else:    
-                p  = Parameter.objects.get(name = param_name)
+            p  = Parameter.objects.get(name = param_name)
             if p.name == 'Instruments' and o[0] == "None":
                 #print "Not passing over Observing Parameter = Instruments(None)"
                 pass
@@ -536,16 +527,16 @@ class DSSPrime2DSS(object):
         """
 
         # first the project
-        semester = Semester.objects.get(semester = row[12])
-        ptype    = Project_Type.objects.get(type = row[14])
+        semester = Semester.objects.get(semester = row[11])
+        ptype    = Project_Type.objects.get(type = row[13])
         p = Project(semester     = semester
                   , project_type = ptype
                   , pcode        = row[4]
                   , name         = self.filter_bad_char(row[5])
                   , thesis       = row[6] == 1
                   , complete     = row[7] == 1
-                  , start_date   = row[9]
-                  , end_date     = row[10]
+                  , start_date   = row[8]
+                  , end_date     = row[9]
                     )
         p.save()
 
