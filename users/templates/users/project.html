@@ -411,6 +411,12 @@
           <p>
           {{p.notes|pretty_none|escape|linebreaks}}
           </p>
+        {% if requestor.isAdmin %}
+        <h3 class="grey_highlight loud">Scheduler's Notes (<a href="/project/{{p.pcode}}/schedulers_notes">edit</a>)</h3>
+          <p>
+          {{p.schedulers_notes|pretty_none|escape|linebreaks}}
+          </p>
+        {% endif %}
         <h3 class="grey_highlight loud">Project Abstract </h3>
           <p>
           {{p.abstract|pretty_none|escape|linebreaks}}
@@ -419,12 +425,6 @@
           <p>
           {{p.disposition|pretty_none|escape|linebreaks}}
           </p>
-        {% if requestor.isAdmin %}
-        <h3 class="grey_highlight loud">Scheduler's Notes (<a href="/project/{{p.pcode}}/schedulers_notes">edit</a>)</h3>
-          <p>
-          {{p.schedulers_notes|pretty_none|escape|linebreaks}}
-          </p>
-        {% endif %}
       </div>
       <div class="span-4 last" id="sidebar">
         <div id="observer_info">
