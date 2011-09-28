@@ -216,14 +216,14 @@ def get_options(request, *args, **kws):
     mode = request.GET.get("mode", None)
     if mode == "project_codes":
         semesters   = request.GET.get("semesters")
-        enabled     = request.GET.get("enabled")
         notcomplete = request.GET.get("notcomplete")
-        if semesters is not None and enabled is not None and notcomplete is not None:
-            notcomplete = notcomplete == 'true'
-            semesters   = semesters.replace('[', '').replace(']', '').split(', ') 
+        if semesters is not None and notcomplete is not None:
+            notcompleteFlt = notcomplete == 'Not Complete'
+            semesters      = semesters.replace('[', '').replace(']', '').split(', ') 
             filter   = " | " .join(["Q(semester__semester = '%s')" % s for s in semesters])
             projects = Project.objects.filter(eval(filter))
-            projects = projects.filter(complete = not notcomplete).order_by('pcode')
+            if notcomplete != 'All':
+                projects = projects.filter(complete = not notcompleteFlt).order_by('pcode')
         else:
             projects = Project.objects.order_by('pcode')
         return HttpResponse(
@@ -253,12 +253,16 @@ def get_options(request, *args, **kws):
         enabled     = request.GET.get("enabled")
         notcomplete = request.GET.get("notcomplete")
         if semesters is not None and enabled is not None and notcomplete is not None:
-            notcomplete = notcomplete == 'true'
-            enabled     = enabled == 'true'
+            notcompleteFlt = notcomplete == 'Not Complete'
+            enabledFlt  = enabled == 'Enabled'
             semesters   = semesters.replace('[', '').replace(']', '').split(', ') 
             filter      = " | " .join(["Q(project__semester__semester = '%s')" % s for s in semesters])
             ss = Sesshun.objects.filter(eval(filter))
-            ss = ss.filter(status__complete = not notcomplete).filter(status__enabled = enabled).order_by('name')
+            if notcomplete != 'All':
+                ss = ss.filter(status__complete = not notcompleteFlt)
+            if enabled != 'All':
+                ss = ss.filter(status__enabled = enabledFlt)
+            ss = ss.order_by('name')
         else:
             ss = Sesshun.objects.all().order_by('name')
 

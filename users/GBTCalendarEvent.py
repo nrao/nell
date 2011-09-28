@@ -443,7 +443,7 @@ class CalEventFloatingMaintenance(CalEvent):
         dt = datetime(w.year, w.month, w.day, 8)
 
         if self.TZ != 'ET':
-            dt = TimeAgent.etc2utc(dt)
+            dt = TimeAgent.est2utc(dt)
 
         return dt
 

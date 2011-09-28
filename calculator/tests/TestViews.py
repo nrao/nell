@@ -189,7 +189,7 @@ class TestViews(TestViewsBase):
               , 'right_ascension': [u'']
               , 'rest_freq': [u'1440.0']
               , 'source_velocity': [u'0']
-              , 'declination': [u'38:26']
+              , 'declination': [u'38']
               , 'estimated_continuum': [u'0']
               , 'topocentric_freq': [u'1440.0']
               , 'doppler-hidden': [u'Optical']

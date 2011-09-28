@@ -321,7 +321,7 @@ def getMinIntegrationTime(request):
 def validate(key, value):
     if value is None or value == '':
         return value
-    if key in ('declination', 'right_ascension'):
+    if key in ('right_ascension'):
         values = value.split(":")
         hour   = values[0]
         if len(values) == 3:
