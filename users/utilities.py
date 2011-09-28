@@ -216,7 +216,7 @@ def get_gbt_schedule_events(start, end, timezone,
                 ev = CalEventPeriod(p
                                   , p.start < utc_today
                                   , p.end() > utc_tomorrow
-                                  , p.moc 
+                                  , True if not (p.moc is False) else False
                                   , timezone)
                 daily_events.append(ev)
 
