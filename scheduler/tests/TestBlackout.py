@@ -38,18 +38,26 @@ class TestBlackout(NellTestCase):
         self.u.save()
 
         once = Repeat.objects.get(repeat = 'Once')
-        self.blackout1 = Blackout(user       = self.u
-                            , repeat     = once
-                            , start_date = datetime(2009, 1, 1, 11)
-                            , end_date   = datetime(2009, 1, 3, 11))
+
+        try:
+            tz = self.u.preference.timeZone
+        except:
+            tz = 'UTC'
+
+        self.blackout1 = Blackout(user = self.u)
+        self.blackout1.initialize(tz     = tz,
+                                  repeat = once,
+                                  start  = datetime(2009, 1, 1, 11),
+                                  end    = datetime(2009, 1, 3, 11))
         self.blackout1.save()
 
         weekly = Repeat.objects.get(repeat = 'Weekly')
-        self.blackout2 = Blackout(user       = self.u
-                            , repeat     = weekly
-                            , start_date = datetime(2009, 1, 4, 11)
-                            , end_date   = datetime(2009, 1, 4, 13)
-                            , until      = datetime(2009, 5, 4, 11))
+        self.blackout2 = Blackout(user = self.u)
+        self.blackout2.initialize(tz     = tz,
+                                  repeat = weekly,
+                                  start  = datetime(2009, 1, 4, 11),
+                                  end    = datetime(2009, 1, 4, 13),
+                                  until  = datetime(2009, 5, 4, 11))
         self.blackout2.save()
 
         # create some project blackouts
@@ -63,14 +71,14 @@ class TestBlackout(NellTestCase):
                                )
         self.project.save()
 
-        self.blackout3 = Blackout(project    = self.project
-                                , repeat     = once
-                                , start_date = datetime(2008, 10, 1, 11)
-                                , end_date   = datetime(2008, 10, 3, 11))
+        self.blackout3 = Blackout(project    = self.project)
+        self.blackout3.initialize(tz     = 'UTC',
+                                  repeat = once,
+                                  start  = datetime(2008, 10, 1, 11),
+                                  end    = datetime(2008, 10, 3, 11))
         self.blackout3.save()
 
     def test_eventjson(self):
-
         # user blackout
         calstart = datetime(2009, 1, 1)
         calend   = datetime(2009, 1, 30)
@@ -98,7 +106,7 @@ class TestBlackout(NellTestCase):
         self.assertEqual(event, json[0])
 
     def test_isActive(self):
-        results = [(b.isActive(b.start_date + timedelta(hours = 2))
+        results = [(b.isActive(b.getStartDate() + timedelta(hours = 2))
                   , b.isActive(b.end_date + timedelta(hours = 2)))
                    for b in Blackout.objects.all()]
         self.assertEqual(results, [(True, False), (True, True), (True, False)])
@@ -106,7 +114,7 @@ class TestBlackout(NellTestCase):
     def test_generateDates(self):
 
         # no repeats are easy ...
-        dts = [(self.blackout1.start_date, self.blackout1.end_date)]
+        dts = [(self.blackout1.getStartDate(), self.blackout1.getEndDate())]
         calstart = datetime(2009, 1, 1)
         calend   = datetime(2009, 1, 30)
         gdts = self.blackout1.generateDates(calstart, calend)
@@ -122,8 +130,8 @@ class TestBlackout(NellTestCase):
         # how does January look?
         calstart = datetime(2009, 1, 1)
         calend   = datetime(2009, 1, 30)
-        start = self.blackout2.start_date
-        end = self.blackout2.end_date
+        start = self.blackout2.getStartDate()
+        end = self.blackout2.getEndDate()
         dts = [(start, end)]
         for i in [1,2,3]:
             dts.append((start + timedelta(days = 7 * i)
@@ -150,7 +158,7 @@ class TestBlackout(NellTestCase):
         self.assertEquals(0, len(gdts))
 
         # no repeats are easy ... even for project blackouts
-        dts = [(self.blackout3.start_date, self.blackout3.end_date)]
+        dts = [(self.blackout3.getStartDate(), self.blackout3.getEndDate())]
         calstart = datetime(2008, 10, 1)
         calend   = datetime(2008, 10, 30)
         gdts = self.blackout3.generateDates(calstart, calend)

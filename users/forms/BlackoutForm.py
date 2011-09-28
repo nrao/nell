@@ -63,6 +63,7 @@ class BlackoutForm(forms.Form):
 
         # Now see if the data to be saved is valid    
         # watch for malformed dates
+        # NOTE: parse_datetime takes 'tz' and returns UT!!!
         self.cleaned_start, stError = parse_datetime(data, 'start', 'start_time', tz)
         self.cleaned_end,   edError = parse_datetime(data,   'end',   'end_time', tz)
         self.cleaned_until, utError = parse_datetime(data, 'until', 'until_time', tz)

@@ -29,15 +29,14 @@ from nell.utilities.database.external    import  UserInfo
 from nell.utilities.database.external.BOSMirrorDB    import BOSMirrorDB 
 
 class User(models.Model):
-    original_id = models.IntegerField(null = True, blank = True)
-    pst_id      = models.IntegerField(null = True, blank = True)
-    sanctioned  = models.BooleanField(default = False)
-    first_name  = models.CharField(max_length = 32)
-    last_name   = models.CharField(max_length = 150)
+    original_id          = models.IntegerField(null = True, blank = True)
+    pst_id               = models.IntegerField(null = True, blank = True)
+    sanctioned           = models.BooleanField(default = False)
+    first_name           = models.CharField(max_length = 32)
+    last_name            = models.CharField(max_length = 150)
     contact_instructions = models.TextField(null = True, blank = True)
-    roles = models.ManyToManyField(Role, null = True)
+    roles                = models.ManyToManyField(Role, null = True)
     auth_user            = models.ForeignKey(AuthUser, null = True)
-
     class Meta:
         db_table  = "users"
         app_label = "scheduler"

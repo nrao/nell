@@ -127,6 +127,11 @@ def preferences(request, *args, **kws):
                             })
 
 def adjustBlackoutTZ(tz, blackout):
+    """
+    Takes a Blackout object and converts the datetimes from UTC to
+    'tz'.
+    """
+    # TBF: Blackout's internal data is accessed directly and this breaks with DST fixes.
     return {'user'        : blackout.user # None for project blackouts
           , 'id'          : blackout.id
           , 'start_date'  : adjustDateTimeTz(tz, blackout.start_date)
@@ -522,11 +527,13 @@ def blackout_worker(request, type, forObj, b_id, requestor, urlRedirect):
                 else:
                     b = Blackout(user = forObj)
 
-            b.start_date  = f.cleaned_start
-            b.end_date    = f.cleaned_end
-            b.until       = f.cleaned_until
-            b.repeat      = f.cleaned_data['repeat']
-            b.description = f.cleaned_data['description']
+            b.initialize(tzp, f.cleaned_start, f.cleaned_end, f.cleaned_until,
+                         f.cleaned_data['repeat'], f.cleaned_data['description'])
+            # b.start_date  = f.cleaned_start
+            # b.end_date    = f.cleaned_end
+            # b.until       = f.cleaned_until
+            # b.repeat      = f.cleaned_data['repeat']
+            # b.description = f.cleaned_data['description']
             b.save()
         
             revision.comment = get_rev_comment(request, b, "blackout")

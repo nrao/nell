@@ -22,6 +22,7 @@
 
 from Allotment                       import Allotment
 from Blackout                        import Blackout
+from Blackout_Sequence               import Blackout_Sequence
 from Column                          import Column
 from Elective                        import Elective
 from EmailTemplate                   import EmailTemplate

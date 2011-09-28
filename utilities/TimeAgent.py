@@ -286,3 +286,17 @@ def range_to_days(ranges):
                 end   = end + datetime.timedelta(days = 1)
     return dates
 
+######################################################################
+# Given a timezone and two UTC times denoting a time range, returns a
+# list of UTC datetimes where DST transitions occur for that timezone
+# in that time range.  If no transition occurs, returns an empty list.
+######################################################################
+
+def dst_boundaries(tz, tbstart, tbend):
+    # NOTE: this may be implementation dependent!
+    tzone = pytz.timezone(tz)
+
+    if tzone.zone == 'UTC':
+        return []  # UTC has no _utc_transition_times, naturally.
+    else:
+        return  [t for t in tzone._utc_transition_times if t > tbstart and t < tbend]
