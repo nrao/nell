@@ -12,10 +12,10 @@ initCode()
 {
     echo "Updating Nell code tree."
     cd $LOOKAHEADDIR/nell
-    git pull origin master
+    git pull origin release --tags
     echo "Updating Antioch code tree."
     cd $LOOKAHEADDIR/antioch
-    git pull origin master
+    git pull origin release --tags
     echo "Building lookahead executable."
     make lookahead
 }
