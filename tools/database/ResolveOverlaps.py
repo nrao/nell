@@ -63,7 +63,7 @@ class ResolveOverlaps:
         # But make sure you choose periods that actually exist
         p1choosen, p2choosen = (0, 1) if p2total > 1 else (1, 0)
         ep1 = p1.elective.periods.all().order_by('start')[p1choosen]
-        ep2 = p1.elective.periods.all().order_by('start')[p2choosen]
+        ep2 = p2.elective.periods.all().order_by('start')[p2choosen]
     
         # if these don't overlap, we're good
         return AnalogSet.overlaps((ep1.start, ep1.end())
