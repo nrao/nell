@@ -45,7 +45,7 @@ prepDB ()
 runSim ()
 {
     echo "Running simulations."
-    echo "This could take a minute.  Go get some coffee ..."
+    echo "This could take a minute.  Go get some coffee (or hot chocolate) ..."
     cd $LOOKAHEADDIR/antioch
     TODAYS_DATE=$(date +%Y-%m-%d)
     lookahead -o=simulations -d=$1 -b=$TODAYS_DATE -n=lookahead > lookaheadSim.txt
