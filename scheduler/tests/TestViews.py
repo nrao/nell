@@ -95,10 +95,23 @@ class TestViews(BenchTestCase):
         # since the 'create_maintenance_period' utility converts from
         # ET to UTC and this test would fail depending on whether
         # we're in dailight or standard time.
-        expected = '{"diff": [{"down": [], "up": ["RRI", "342", "450"], "day": "04/06/2009"}, {"down": ["RRI"], "up": ["600"], "day": "04/11/2009"}], "receivers": ["Z", "RRI", "342", "450", "600", "800", "1070", "L", "S", "C", "X", "Hol", "Ku", "KFPA", "K", "Ka", "Q", "W", "MBA"], "maintenance": ["%s"], "schedule": {"04/11/2009": ["342", "450", "600"], "04/06/2009": ["RRI", "342", "450"]}}' % (p.start)
+        expected = '{"diff": [{"down": [], "up": ["RRI", "342", "450"], "day": "04/06/2009"}, {"down": ["RRI"], "up": ["600"], "day": "04/11/2009"}], "receivers": ["Z", "RRI", "342", "450", "600", "800", "1070", "L", "S", "C", "X", "Hol", "Ku", "KFPA", "K", "Ka", "Q", "W", "MBA"], "unavailable": [], "maintenance": ["%s"], "schedule": {"04/11/2009": ["342", "450", "600"], "04/06/2009": ["RRI", "342", "450"]}}' % (p.start)
         self.assertEqual(expected, response.content)
 
         self.failUnlessEqual(response.status_code, 200)
+
+        # now change some availability
+        X = Receiver.get_rcvr("X")
+        X.available = False
+        X.save()
+
+        response = client.get('/scheduler/receivers/schedule',
+                                   {"startdate" : startdate,
+                                    "duration" : 7})
+        self.failUnlessEqual(response.status_code, 200)
+
+        rsDict = eval(response.content)
+        self.assertEquals(['X'], rsDict['unavailable'])
 
     def test_get_options(self):
         create_sesshun()

@@ -27,6 +27,7 @@ class Receiver(models.Model):
     abbreviation = models.CharField(max_length = 32)
     freq_low     = models.FloatField(help_text = "GHz")
     freq_hi      = models.FloatField(help_text = "GHz")
+    available    = models.BooleanField(default = True)
     deleted      = models.BooleanField(default = False)
 
     class Meta:
