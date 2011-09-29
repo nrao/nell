@@ -42,6 +42,7 @@ urlpatterns = patterns(''
    , url(r'^receivers/shift_date$',                        rcvr_schedule_shift_date)
    , url(r'^receivers/add_date$',                          rcvr_schedule_add_date)
    , url(r'^receivers/toggle_rcvr$',                       rcvr_schedule_toggle_rcvr)
+   , url(r'^receivers/toggle_available$',                  rcvr_available_toggle)
    , url(r'^receivers/delete_date$',                       rcvr_schedule_delete_date)
    , url(r'^reservations$',                                reservations)
    , url(r'^period/([^/]+)/time_accounting$',              period_time_accounting)
