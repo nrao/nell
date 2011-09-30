@@ -1,5 +1,5 @@
 # Copyright (C) 2011 Associated Universities, Inc. Washington DC, USA.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
@@ -9,31 +9,31 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-# 
+#
 # Correspondence concerning GBT software should be addressed as follows:
 #       GBT Operations
 #       National Radio Astronomy Observatory
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from datetime                import datetime, timedelta
+from datetime               import datetime, timedelta
 
-from test_utils              import BenchTestCase, timeIt
-from utilities               import TimeAgent
-from scheduler.models         import *
-from scheduler.httpadapters   import *
-from utils                   import create_sesshun, fdata
+from test_utils             import BenchTestCase, timeIt
+from utilities              import TimeAgent
+from scheduler.models       import *
+from scheduler.httpadapters import *
+from utils                  import create_sesshun, fdata, create_blackout
 
 class TestSesshun(BenchTestCase):
 
     def setUp(self):
         super(TestSesshun, self).setUp()
         self.sesshun = create_sesshun()
-        
+
     def test_usesDeletedReceiver(self):
 
         # setup
@@ -92,7 +92,7 @@ class TestSesshun(BenchTestCase):
         obs.save()
         th = self.sesshun.get_tracking_error_threshold()
         self.assertEquals(0.5, th)
-        
+
 
     @timeIt
     def test_init_from_post(self):
@@ -216,7 +216,7 @@ class TestSesshun(BenchTestCase):
         blackouts = self.sesshun.get_receiver_blackout_ranges(start, end)
         self.assertEquals([], blackouts)
 
-        # Now add some receivers to this session          
+        # Now add some receivers to this session
         SessionHttpAdapter(self.sesshun).save_receivers('L | (X & S)')
         blackouts = self.sesshun.get_receiver_blackout_ranges(start, end)
         # No available receivers at these times:
@@ -279,7 +279,7 @@ class TestSesshun(BenchTestCase):
                 rs.save()
             rcvr_id = rcvr_id - 2
 
-        # Now add some receivers to this session          
+        # Now add some receivers to this session
         SessionHttpAdapter(self.sesshun).save_receivers('L | (X & S)')
         blackouts = self.sesshun.get_time_not_schedulable(start, end)
 
@@ -339,12 +339,10 @@ class TestSesshun(BenchTestCase):
         self.assertEquals([(start, newEnd)], blackouts)
 
         # extend this with a Project Blackout
-        blackout = Blackout(project    = self.sesshun.project
-                          , start_date = datetime(2009, 4, 18, 12)
-                          , end_date   = datetime(2009, 4, 23, 12)
-                          , repeat     = Repeat.objects.all()[0]
-                            )
-        blackout.save()
+        blackout = create_blackout(project = self.sesshun.project,
+                                   start   = datetime(2009, 4, 18, 12),
+                                   end     = datetime(2009, 4, 23, 12),
+                                   repeat  = 'Once')
 
         exp = [(datetime(2009, 4, 1), datetime(2009, 4, 11))
              , (datetime(2009, 4, 18, 12), datetime(2009, 4, 23, 12))
@@ -356,15 +354,16 @@ class TestSesshun(BenchTestCase):
 
         # test the time available blacked out calculations
         # Calculate the expected result:
-        # it turns out that the project blackout overlaps with all 
+        # it turns out that the project blackout overlaps with all
         # schedulable time, except for one hour on 4/20
-        hrsBlackedOut = (TimeAgent.timedelta2minutes(blackout.end_date - blackout.start_date)/60.0) - 1.0
+        hrsBlackedOut = (TimeAgent.timedelta2minutes(blackout.getEndDate()
+                                                     - blackout.getStartDate()) / 60.0) - 1.0
         totalTime = TimeAgent.timedelta2minutes(end - start) / 60.0
         hrsSchedulable = totalTime - hrsNotSchedulable
 
         s, b, ss, bb = self.sesshun.getBlackedOutSchedulableTime(start, end)
-        self.assertEquals(hrsSchedulable, s) 
-        self.assertEquals(hrsBlackedOut, b) 
+        self.assertEquals(hrsSchedulable, s)
+        self.assertEquals(hrsBlackedOut, b)
 
         # test it some more, but in different ranges
         start = datetime(2009, 5, 1)
@@ -379,7 +378,7 @@ class TestSesshun(BenchTestCase):
         self.assertEquals(36.0, b)
 
         # cleanup
-        self.sesshun.receiver_group_set.all().delete()    
+        self.sesshun.receiver_group_set.all().delete()
 
     # This test commented out simply because it takes soo long to create
     # and delete a sufficient number of sesshuns to see a timing difference

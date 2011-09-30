@@ -1,5 +1,5 @@
 # Copyright (C) 2011 Associated Universities, Inc. Washington DC, USA.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
@@ -9,24 +9,24 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-# 
+#
 # Correspondence concerning GBT software should be addressed as follows:
 #       GBT Operations
 #       National Radio Astronomy Observatory
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from datetime                import datetime, timedelta
+from datetime               import datetime, timedelta
 
-from test_utils              import NellTestCase
-from tools.alerts import FixedAlerts
-from scheduler.models         import *
-from scheduler.httpadapters   import *
-from scheduler.tests.utils                   import create_sesshun
+from test_utils             import NellTestCase
+from tools.alerts           import FixedAlerts
+from scheduler.models       import *
+from scheduler.httpadapters import *
+from scheduler.tests.utils  import create_sesshun, create_blackout
 
 class TestFixedAlerts(NellTestCase):
 
@@ -63,7 +63,7 @@ class TestFixedAlerts(NellTestCase):
         }
         self.project_adapter.update_from_post(pdata)
 
-        # Create the first user (on project) 
+        # Create the first user (on project)
         self.user1 = User(sanctioned = True)
         self.user1.save()
 
@@ -71,7 +71,7 @@ class TestFixedAlerts(NellTestCase):
                                          , user     = self.user1
                                          , observer = True)
         self.investigator1.save()
-         
+
         # Create the second user (on project)
         self.user2 = User(sanctioned = True)
         self.user2.save()
@@ -82,42 +82,36 @@ class TestFixedAlerts(NellTestCase):
         self.investigator2.save()
 
         # Create Investigator1's blackouts.
-        blackout11 = Blackout(user       = self.user1
-                            , repeat     = Repeat.objects.all()[0]
-                            , start_date = datetime(2009, 4, 1, 11)
-                            , end_date   = datetime(2009, 4, 4, 20))
-        blackout11.save()
+        blackout11 = create_blackout(user   = self.user1,
+                                     repeat = 'Once',
+                                     start  = datetime(2009, 4, 1, 11),
+                                     end    = datetime(2009, 4, 4, 20))
 
-        blackout12 = Blackout(user       = self.user1
-                            , repeat     = Repeat.objects.all()[0]
-                            , start_date = datetime(2009, 4, 5, 18)
-                            , end_date   = datetime(2009, 4, 8,  9))
-        blackout12.save()
+        blackout12 = create_blackout(user   = self.user1,
+                                     repeat = 'Once',
+                                     start  = datetime(2009, 4, 5, 18),
+                                     end    = datetime(2009, 4, 8,  9))
 
-        blackout13 = Blackout(user       = self.user1
-                            , repeat     = Repeat.objects.all()[0]
-                            , start_date = datetime(2009, 4,  9,  2)
-                            , end_date   = datetime(2009, 4, 17,  9))
-        blackout13.save()
+        blackout13 = create_blackout(user   = self.user1,
+                                     repeat = 'Once',
+                                     start  = datetime(2009, 4,  9,  2),
+                                     end    = datetime(2009, 4, 17,  9))
 
         # Create Investigator2's blackouts.
-        blackout21 = Blackout(user       = self.user2
-                            , repeat     = Repeat.objects.all()[0]
-                            , start_date = datetime(2009, 4, 1, 11)
-                            , end_date   = datetime(2009, 4, 5, 11))
-        blackout21.save()
+        blackout21 = create_blackout(user   = self.user2,
+                                     repeat = 'Once',
+                                     start  = datetime(2009, 4, 1, 11),
+                                     end    = datetime(2009, 4, 5, 11))
 
-        blackout22 = Blackout(user       = self.user2
-                            , repeat     = Repeat.objects.all()[0]
-                            , start_date = datetime(2009, 4, 6, 18)
-                            , end_date   = datetime(2009, 4, 8, 10))
-        blackout22.save()
+        blackout22 = create_blackout(user   = self.user2,
+                                     repeat = 'Once',
+                                     start  = datetime(2009, 4, 6, 18),
+                                     end    = datetime(2009, 4, 8, 10))
 
-        blackout23 = Blackout(user       = self.user2
-                            , repeat     = Repeat.objects.all()[0]
-                            , start_date = datetime(2009, 4, 13, 18)
-                            , end_date   = datetime(2009, 4, 25, 13))
-        blackout23.save()
+        blackout23 = create_blackout(user   = self.user2,
+                                     repeat = 'Once',
+                                     start  = datetime(2009, 4, 13, 18),
+                                     end    = datetime(2009, 4, 25, 13))
 
         # make a session
         self.sesshun1 = create_sesshun()
@@ -125,7 +119,7 @@ class TestFixedAlerts(NellTestCase):
             Session_Type.objects.get(type = "fixed")
         self.sesshun1.project = self.project
         # '1070' available 4/6 - 4/16
-        SessionHttpAdapter(self.sesshun1).save_receivers('1070')        
+        SessionHttpAdapter(self.sesshun1).save_receivers('1070')
         self.sesshun1.save()
 
         # make periods for it (10:15-14:15)
@@ -148,7 +142,7 @@ class TestFixedAlerts(NellTestCase):
             Session_Type.objects.get(type = "fixed")
         self.sesshun2.project = self.project
         # '1070' available 4/6 - 4/16
-        SessionHttpAdapter(self.sesshun2).save_receivers('1070')        
+        SessionHttpAdapter(self.sesshun2).save_receivers('1070')
         self.sesshun2.save()
 
         # make periods for it (09:30-13:30)

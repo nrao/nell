@@ -22,7 +22,7 @@
 
 from datetime                   import datetime, timedelta
 from test_utils              import NellTestCase
-from utils                   import create_sesshun, setupElectives
+from utils                   import create_sesshun, setupElectives, create_blackout
 from scheduler.models         import *
 from scheduler.httpadapters   import *
 
@@ -140,13 +140,10 @@ class TestElective(NellTestCase):
                , sanctioned = True
                       )
         u.save()
-
-        once = Repeat.objects.get(repeat = 'Once')
-        blackout = Blackout(user       = u
-                          , repeat     = once
-                          , start_date = datetime(2009, 6,  8, 11)
-                          , end_date   = datetime(2009, 6, 10, 8))
-        blackout.save()
+        blackout = create_blackout(user   = u,
+                                   repeat = 'Once',
+                                   start  = datetime(2009, 6,  8, 11),
+                                   end    = datetime(2009, 6, 10, 8))
          
         project = self.elec.session.project
         investigator = Investigator(project = project
@@ -157,12 +154,11 @@ class TestElective(NellTestCase):
         # test observer black out
         self.assertEqual([self.period2]
                        , self.elec.getBlackedOutSchedulablePeriods(now))
-        blackout = Blackout(project    = project
-                          , start_date = datetime(2009, 6, 14) 
-                          , end_date   = datetime(2009, 6, 16)
-                          , repeat     = once
-                           )
-        blackout.save()                           
+        blackout = create_blackout(project  = project,
+                                   timezone = 'UTC',
+                                   start    = datetime(2009, 6, 14),
+                                   end      = datetime(2009, 6, 16),
+                                   repeat   = 'Once')
 
         # test project black out
         self.assertEqual([self.period2, self.period3]

@@ -23,8 +23,9 @@
 from datetime import datetime, timedelta
 from time     import mktime
 
-from test_utils              import NellTestCase
+from test_utils               import NellTestCase
 from scheduler.models         import *
+from utils                    import create_blackout
 
 class TestBlackout(NellTestCase):
 
@@ -37,28 +38,16 @@ class TestBlackout(NellTestCase):
                       )
         self.u.save()
 
-        once = Repeat.objects.get(repeat = 'Once')
+        self.blackout1 = create_blackout(user = self.u,
+                                         repeat = "Once",
+                                         start = datetime(2009, 1, 1, 11),
+                                         end = datetime(2009, 1, 3, 11))
 
-        try:
-            tz = self.u.preference.timeZone
-        except:
-            tz = 'UTC'
-
-        self.blackout1 = Blackout(user = self.u)
-        self.blackout1.initialize(tz     = tz,
-                                  repeat = once,
-                                  start  = datetime(2009, 1, 1, 11),
-                                  end    = datetime(2009, 1, 3, 11))
-        self.blackout1.save()
-
-        weekly = Repeat.objects.get(repeat = 'Weekly')
-        self.blackout2 = Blackout(user = self.u)
-        self.blackout2.initialize(tz     = tz,
-                                  repeat = weekly,
-                                  start  = datetime(2009, 1, 4, 11),
-                                  end    = datetime(2009, 1, 4, 13),
-                                  until  = datetime(2009, 5, 4, 11))
-        self.blackout2.save()
+        self.blackout2 = create_blackout(user = self.u,
+                                         repeat = 'Weekly',
+                                         start  = datetime(2009, 1, 4, 11),
+                                         end    = datetime(2009, 1, 4, 13),
+                                         until  = datetime(2009, 5, 4, 11))
 
         # create some project blackouts
         semester = Semester.objects.get(semester = "08C")
@@ -71,12 +60,11 @@ class TestBlackout(NellTestCase):
                                )
         self.project.save()
 
-        self.blackout3 = Blackout(project    = self.project)
-        self.blackout3.initialize(tz     = 'UTC',
-                                  repeat = once,
-                                  start  = datetime(2008, 10, 1, 11),
-                                  end    = datetime(2008, 10, 3, 11))
-        self.blackout3.save()
+        self.blackout3 = create_blackout(project  = self.project,
+                                         timezone = 'UTC',
+                                         repeat   = 'Once',
+                                         start    = datetime(2008, 10, 1, 11),
+                                         end      = datetime(2008, 10, 3, 11))
 
     def test_eventjson(self):
         # user blackout
@@ -107,7 +95,7 @@ class TestBlackout(NellTestCase):
 
     def test_isActive(self):
         results = [(b.isActive(b.getStartDate() + timedelta(hours = 2))
-                  , b.isActive(b.end_date + timedelta(hours = 2)))
+                  , b.isActive(b.getEndDate() + timedelta(hours = 2)))
                    for b in Blackout.objects.all()]
         self.assertEqual(results, [(True, False), (True, True), (True, False)])
 

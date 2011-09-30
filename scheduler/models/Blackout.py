@@ -40,6 +40,27 @@ class Blackout(models.Model):
         return "%s Blackout for %s: %s - %s" % \
                (self.getRepeat(), self.forName(), self.getStartDate(), self.getEndDate())
 
+    def _tz_to_tz(self, dt, tz_from, tz_to, naive = False):
+
+        if tz_from == tz_to:
+            return dt
+
+        tzf = timezone(tz_from)
+        tzt = timezone(tz_to)
+        if not dt.tzinfo:
+            dt = tzf.normalize(tzf.localize(dt))
+        if naive:
+            return dt.astimezone(tzt).replace(tzinfo = None)
+        else:
+            return dt.astimezone(tzt)
+
+    def clear_sequences(self):
+        seq = [s for s in self.blackout_sequence_set.all()]
+        self.blackout_sequence_set.clear()
+
+        for s in seq:
+            s.delete()
+
     def initialize(self, tz, start, end, repeat = None, until = None, description = None):
         """
         Initializes a new or current blackout object to the given values.
@@ -60,19 +81,12 @@ class Blackout(models.Model):
         # as it crosses over DST boundaries, according to the local
         # timezone.
 
-        def tz_to_tz(dt, tz_from, tz_to, naive = False):
-            tzf = timezone(tz_from)
-            tzt = timezone(tz_to)
-            if not dt.tzinfo:
-                dt = tzf.normalize(tzf.localize(dt))
-            if naive:
-                return dt.astimezone(tzt).replace(tzinfo = None)
-            else:
-                return dt.astimezone(tzt)
-
-        self.blackout_sequence_set.clear()
+        if description:
+            self.description = description
+            
+        self.clear_sequences()
         self.timeZone = tz
-        localstart = tz_to_tz(start, 'UTC', tz)
+        localstart = self._tz_to_tz(start, 'UTC', tz)
         duration = end - start
 
         if repeat and until:
@@ -81,20 +95,28 @@ class Blackout(models.Model):
             dates = [start, until]
 
         # now we go from start to first dst bound, first dst to second
-        # dst bound, second dst to 'until', etc.  For this we keep the
-        # local start time, changing the dates as needed, then
-        # converting the resulting datetimes back to UTC.
+        # dst bound, second dst to 'until', etc., creating as many
+        # blackout sequences as necessary.  For this we keep the local
+        # start time--which is the user intent--changing the dates as
+        # needed for each sequence, then converting the resulting
+        # datetimes back to UTC.  When combining the new sequence
+        # dates with the local start time we must ensure we use the
+        # *local* representation of the date, not UTC date. This
+        # should keep any ambiguities from arising if the local time
+        # is such that the UTC date is the next day.  But we keep the
+        # local *time* as specified by the user for all sequences!  If
+        # we don't do this the UT time will not vary, the local time
+        # will.
 
         for i in range(0, len(dates) - 1):
             bs = Blackout_Sequence()
-            i_start_date = datetime(dates[i].year, dates[i].month, dates[i].day,
+            loc_date = self._tz_to_tz(dates[i], 'UTC', tz)
+            i_start_date = datetime(loc_date.year, loc_date.month, loc_date.day,
                                     localstart.hour, localstart.minute)
             i_end_date = i_start_date + duration
-            # The following conversions will carry us from the local
-            # time to proper UT, and save them in the sequence as a
-            # naive datetime.
-            bs.start_date = tz_to_tz(i_start_date, tz, 'UTC', naive = True)
-            bs.end_date = tz_to_tz(i_end_date, tz, 'UTC', naive = True)
+             # Now go back to UTC to save the sequences in the database:
+            bs.start_date = self._tz_to_tz(i_start_date, tz, 'UTC', naive = True)
+            bs.end_date = self._tz_to_tz(i_end_date, tz, 'UTC', naive = True)
             bs.repeat = repeat
             bs.until = dates[i + 1]
             self.blackout_sequence_set.add(bs)
@@ -131,7 +153,7 @@ class Blackout(models.Model):
         if self.getStartDate() is None:
             return False # Never started, not active
 
-        if self.getRepeat() == "Once" and self.getEndDate() and self.getEndDate <= date:
+        if self.getRepeat() == "Once" and self.getEndDate() and self.getEndDate() <= date:
             return False # Done
 
         if self.getStartDate() >= date:
@@ -140,14 +162,14 @@ class Blackout(models.Model):
         if not self.getEndDate() and self.getStartDate() <= date:
             return True # Started on/before date, never ends
 
-        if self.getStartDate() <= date and self.end_date >= date:
+        if self.getStartDate() <= date and self.getEndDate() >= date:
             return True # Starts on/before date, ends on/after date
 
-        if self.repeat.repeat != "Once":
-            if not self.until and self.getStartDate() <= date:
+        if self.getRepeat() != "Once":
+            if not self.getUntil() and self.getStartDate() <= date:
                 return True # Started on/before date, repeats forever
 
-            if self.until and self.until >= date and self.getStartDate() <= date:
+            if self.getUntil() and self.getUntil() >= date and self.getStartDate() <= date:
                 return True # Started on/before date, repeats on/after date
 
         return False
@@ -155,15 +177,33 @@ class Blackout(models.Model):
     def getStartDate(self):
         return self.blackout_sequence_set.all()[0].start_date
 
+    def getStartDateTZ(self, tz = None):
+        if not tz:
+            tz = self.timeZone
+        return self._tz_to_tz(self.getStartDate(), 'UTC', tz)
+
     def getEndDate(self):
         return self.blackout_sequence_set.all()[0].end_date
+
+    def getEndDateTZ(self, tz = None):
+        if not tz:
+            tz = self.timeZone
+        return self._tz_to_tz(self.getEndDate(), 'UTC', tz)
 
     def getUntil(self):
         c = self.blackout_sequence_set.count()
         return self.blackout_sequence_set.all()[c - 1].until
 
+    def getUntilTZ(self, tz = None):
+        if not tz:
+            tz = self.timeZone
+        return self._tz_to_tz(self.getUntil(), 'UTC', tz)
+
     def getRepeat(self):
         return self.blackout_sequence_set.all()[0].repeat.repeat
+
+    def getDescription(self):
+        return self.description
 
     def generateDates(self, calstart, calend):
         """
@@ -234,7 +274,7 @@ class Blackout(models.Model):
         if tz is not None:
             dates = [(adjustDateTimeTz(tz, s), adjustDateTimeTz(tz, e)) for s, e in dates]
         title    = "%s: %s" % (self.forName() #self.user.name()
-                             , self.description or "blackout")
+                             , self.getDescription() or "blackout")
         return [{
             "id"   :      self.id
           , "title":      title

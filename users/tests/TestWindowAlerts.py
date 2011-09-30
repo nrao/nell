@@ -20,14 +20,14 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from datetime import datetime, date, timedelta
+from datetime               import datetime, date, timedelta
 
-from test_utils              import NellTestCase
-from tools.alerts import WindowAlerts
-from utilities               import TimeAgent
-from scheduler.models         import *
-from scheduler.httpadapters   import *
-from scheduler.tests.utils                   import create_sesshun
+from test_utils             import NellTestCase
+from tools.alerts           import WindowAlerts
+from utilities              import TimeAgent
+from scheduler.models       import *
+from scheduler.httpadapters import *
+from scheduler.tests.utils  import create_sesshun, create_blackout
 
 class TestWindowAlerts(NellTestCase):
 
@@ -91,36 +91,31 @@ class TestWindowAlerts(NellTestCase):
         self.investigator2.save()
 
         # Create Investigator1's 3 blackouts.
-        blackout11 = Blackout(user       = self.user1
-                            , repeat     = Repeat.objects.all()[0]
-                            , start_date = datetime(2009, 4, 1, 11)
-                            , end_date   = datetime(2009, 4, 3, 11))
-        blackout11.save()
+        blackout11 = create_blackout(user   = self.user1,
+                                     repeat = 'Once',
+                                     start  = datetime(2009, 4, 1, 11),
+                                     end    = datetime(2009, 4, 3, 11))
 
-        blackout12 = Blackout(user       = self.user1
-                            , repeat     = Repeat.objects.all()[0]
-                            , start_date = datetime(2009, 4, 1, 18)
-                            , end_date   = datetime(2009, 4, 7, 18))
-        blackout12.save()
+        blackout12 = create_blackout(user   = self.user1,
+                                     repeat = 'Once',
+                                     start  = datetime(2009, 4, 1, 18),
+                                     end    = datetime(2009, 4, 7, 18))
 
-        blackout13 = Blackout(user       = self.user1
-                            , repeat     = Repeat.objects.all()[0]
-                            , start_date = datetime(2009, 4, 2, 12)
-                            , end_date   = datetime(2009, 4, 7, 20))
-        blackout13.save()
+        blackout13 = create_blackout(user   = self.user1,
+                                     repeat = 'Once',
+                                     start  = datetime(2009, 4, 2, 12),
+                                     end    = datetime(2009, 4, 7, 20))
 
         # Create Investigator2's 2 blackouts.
-        blackout21 = Blackout(user       = self.user2
-                            , repeat     = Repeat.objects.all()[0]
-                            , start_date = datetime(2009, 4, 1, 11)
-                            , end_date   = datetime(2009, 4, 3, 11))
-        blackout21.save()
+        blackout21 = create_blackout(user   = self.user2,
+                                     repeat = 'Once',
+                                     start  = datetime(2009, 4, 1, 11),
+                                     end    = datetime(2009, 4, 3, 11))
 
-        blackout22 = Blackout(user       = self.user2
-                            , repeat     = Repeat.objects.all()[0]
-                            , start_date = datetime(2009, 4, 1, 18)
-                            , end_date   = datetime(2009, 4, 7, 13))
-        blackout22.save()
+        blackout22 = create_blackout(user   = self.user2,
+                                     repeat = 'Once',
+                                     start  = datetime(2009, 4, 1, 18),
+                                     end    = datetime(2009, 4, 7, 13))
 
         # make a session
         self.sesshun = create_sesshun()
@@ -214,12 +209,10 @@ class TestWindowAlerts(NellTestCase):
         # add some blacked out time - 3 days
         bsStart = datetime(2009, 4, 8)
         bsEnd   = datetime(2009, 4, 11)
-        blackout = Blackout(project    = self.project
-                          , start_date = bsStart
-                          , end_date   = bsEnd
-                          , repeat     = Repeat.objects.all()[0]
-                           )
-        blackout.save()
+        blackout = create_blackout(project = self.project,
+                                   start   = bsStart,
+                                   end     = bsEnd,
+                                   repeat  = 'Once')
         bss.insert(0, (bsStart, bsEnd))
         bssHrs += 3*24
 
@@ -336,12 +329,10 @@ class TestWindowAlerts(NellTestCase):
 
         # if we introduce more blacked out time, we should
         # see this elevate to a level 2 alert
-        blackout = Blackout(project    = self.project
-                          , start_date = datetime(2009, 4, 8)
-                          , end_date   = datetime(2009, 4, 11)
-                          , repeat     = Repeat.objects.all()[0]
-                          )
-        blackout.save()
+        blackout = create_blackout(project = self.project,
+                                   start   = datetime(2009, 4, 8),
+                                   end     = datetime(2009, 4, 11),
+                                   repeat  = 'Once')
 
         ns = wa.findAlertLevels(now)
 

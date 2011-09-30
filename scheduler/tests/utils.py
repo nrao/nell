@@ -325,3 +325,39 @@ def setupWindows(f):
             f(self, *args)
     return setup
 
+######################################################################
+# Create a blackout
+######################################################################
+
+def create_blackout(start, end, repeat = None, until = None, description = None,
+                    user = None, project = None, timezone = None):
+    """
+    Utility to create a blackout for user or project.
+    start       : datetime with the start of the blackout
+    end         : datetime with the end of the blackout
+    repeat      : string, "Once", "Weekly", "Monthly"
+    until       : datetime denotes date where repeating ends
+    description : string
+    user        : User model object
+    project     : Project model object
+    timezone    : pytz timezone string; 'UTC', 'US/Eastern', etc.
+                  If set, overrides user preference.
+    """
+
+    try:
+        if timezone:
+            tz = timezone
+        else:
+            tz = user.preference.timeZone
+    except:
+        tz = 'UTC'
+
+    rpt = Repeat.objects.get(repeat = repeat)
+    blackout = Blackout(user = user if user else None, project = project if project else None)
+    blackout.initialize(tz     = tz,
+                        repeat = rpt,
+                        start  = start,
+                        end    = end,
+                        until  = until,
+                        description = description)
+    return blackout

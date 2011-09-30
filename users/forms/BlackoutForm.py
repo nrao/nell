@@ -40,9 +40,9 @@ class BlackoutForm(forms.Form):
     @staticmethod
     def initialize(b, tz):
 
-        start_date = adjustDate(tz, b.start_date)
-        end_date   = adjustDate(tz, b.end_date)
-        until      = adjustDate(tz, b.until)
+        start_date = adjustDate(tz, b.getStartDate())
+        end_date   = adjustDate(tz, b.getEndDate())
+        until      = adjustDate(tz, b.getUntil())
         return BlackoutForm({'start'      : start_date.strftime("%m/%d/%Y %H:%M").split(' ')[0] \
                                           if start_date is not None else ''
                        , 'start_time' : start_date.strftime("%m/%d/%Y %H:%M").split(' ')[1] \
@@ -51,12 +51,12 @@ class BlackoutForm(forms.Form):
                                           if end_date is not None else ''
                        , 'end_time'   : end_date.strftime("%m/%d/%Y %H:%M").split(' ')[1] \
                                           if end_date is not None else ''
-                       , 'repeats'    : b.repeat.repeat
+                       , 'repeats'    : b.getRepeat()
                        , 'until'      : until.strftime("%m/%d/%Y %H:%M").split(' ')[0] \
                                           if until is not None else ''
                        , 'until_time' : until.strftime("%m/%d/%Y %H:%M").split(' ')[1] \
                                           if until is not None else ''
-                       , 'description' : b.description
+                       , 'description' : b.getDescription()
                         })
 
     def format_dates(self, tz, data):

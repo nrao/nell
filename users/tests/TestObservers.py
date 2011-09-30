@@ -20,20 +20,20 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from copy                      import copy
-from django.test.client        import Client
-from django.conf               import settings
-from django.contrib.auth       import models as m
-from datetime                  import datetime, timedelta, date
+from copy                   import copy
+from django.test.client     import Client
+from django.conf            import settings
+from django.contrib.auth    import models as m
+from datetime               import datetime, timedelta, date
 import time
 
-from test_utils                import BenchTestCase, timeIt
-from scheduler.models          import *
-from scheduler.httpadapters    import *
-from scheduler.tests.utils     import create_sesshun, fdata
+from test_utils             import BenchTestCase, timeIt
+from scheduler.models       import *
+from scheduler.httpadapters import *
+from scheduler.tests.utils  import create_sesshun, fdata, create_blackout
 from users.utilities        import create_user
 from users.GBTCalendarEvent import CalEventPeriod
-from TestObserversBase         import TestObserversBase
+from TestObserversBase      import TestObserversBase
 
 class TestObservers(TestObserversBase):
 
@@ -98,21 +98,19 @@ class TestObservers(TestObserversBase):
         self.assertEqual(u.contact_instructions, data.get('contact_instructions'))
 
     def create_blackout(self):
-        b             = Blackout(user = self.u)
-        b.start       = datetime(2009, 1, 1)
-        b.end         = datetime(2009, 12, 31)
-        b.repeat      = Repeat.objects.all()[0]
-        b.description = "This is a test blackout."
-        b.save()
+        b = create_blackout(user = self.u,
+                            start = datetime(2009, 1, 1),
+                            end = datetime(2009, 12, 31),
+                            repeat = 'Once',
+                            description = "This is a test blackout.")
         return b
 
     def create_blackout_for_project(self):
-        b             = Blackout(project = self.p)
-        b.start       = datetime(2009, 1, 1)
-        b.end         = datetime(2009, 12, 31)
-        b.repeat      = Repeat.objects.all()[0]
-        b.description = "This is a test blackout for a project."
-        b.save()
+        b = create_blackout(project = self.p,
+                            start = datetime(2009, 1, 1),
+                            end = datetime(2009, 12, 31),
+                            repeat = 'Once',
+                            description = "This is a test blackout for a project.")
         return b
 
     def test_blackout_form(self):
@@ -125,7 +123,7 @@ class TestObservers(TestObserversBase):
         b = self.create_blackout()
         response = self.get('/profile/%s/blackout/%s/' % (self.u.id, b.id))
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue(b.description in response.content)
+        self.assertTrue(b.getDescription() in response.content)
 
         # project blackout
         response = self.get('/project/%s/blackout/' % self.p.pcode)
@@ -159,8 +157,8 @@ class TestObservers(TestObserversBase):
         response = self.post(
             '/profile/%s/blackout/%s/' % (self.u.id, b.id), data)
         b = Blackout.objects.get(id = b.id)
-        self.assertEqual(b.end_date.date().strftime("%m/%d/%Y") , data.get('end'))
-        self.assertEqual(b.until.date().strftime("%m/%d/%Y") , data.get('until'))
+        self.assertEqual(b.getEndDate().date().strftime("%m/%d/%Y") , data.get('end'))
+        self.assertEqual(b.getUntil().date().strftime("%m/%d/%Y") , data.get('until'))
         self.failUnlessEqual(response.status_code, 302)
 
         # delete it
@@ -182,7 +180,7 @@ class TestObservers(TestObserversBase):
             '/profile/%s/blackout/' % self.u.id, data)
         self.failUnlessEqual(response.status_code, 302)
         b = self.u.blackout_set.all()[0]
-        self.assertEqual(b.end_date.date().strftime("%m/%d/%Y"), data.get('end'))
+        self.assertEqual(b.getEndDate().date().strftime("%m/%d/%Y"), data.get('end'))
         b.delete()
 
         # create another new one?
@@ -197,6 +195,11 @@ class TestObservers(TestObserversBase):
         start = datetime(2009, 1, 1)
         end   = datetime(2009, 1, 31)
         until = datetime(2010, 1, 31)
+        b.initialize(tz     = 'UTC',
+                     start  = start,
+                     end    = end,
+                     repeat = Repeat.objects.get(repeat = 'Once'),
+                     until  = until)
         data = {'start'       : start.date().strftime("%m/%d/%Y")
               , 'start_time'   : start.time().strftime("%H:%M")
               , 'end'         : end.date().strftime("%m/%d/%Y")
@@ -229,6 +232,11 @@ class TestObservers(TestObserversBase):
         start = datetime(2009, 1, 1)
         end   = datetime(2009, 1, 31)
         until = datetime(2010, 1, 31)
+        b.initialize(tz     = 'UTC',
+                     start  = start,
+                     end    = end,
+                     repeat = Repeat.objects.get(repeat = 'Once'),
+                     until  = until)
         data = {'start'       : start.date().strftime("%m/%d/%Y")
               , 'start_time'   : start.time().strftime("%H:%M")
               , 'end'         : end.date().strftime("%m/%d/%Y")
@@ -244,8 +252,8 @@ class TestObservers(TestObserversBase):
         response = self.post(
             '/project/%s/blackout/%s/' % (self.p.pcode, b.id), data)
         b = Blackout.objects.get(id = b.id)
-        self.assertEqual(b.end_date.date().strftime("%m/%d/%Y") , data.get('end'))
-        self.assertEqual(b.until.date().strftime("%m/%d/%Y") , data.get('until'))
+        self.assertEqual(b.getEndDate().date().strftime("%m/%d/%Y") , data.get('end'))
+        self.assertEqual(b.getUntil().date().strftime("%m/%d/%Y") , data.get('until'))
         self.failUnlessEqual(response.status_code, 302)
 
         # now delete it
@@ -267,7 +275,7 @@ class TestObservers(TestObserversBase):
             '/project/%s/blackout/' % self.p.pcode, data)
         self.failUnlessEqual(response.status_code, 302)
         b = self.p.blackout_set.all()[0]
-        self.assertEqual(b.end_date.date().strftime("%m/%d/%Y"), data.get('end'))
+        self.assertEqual(b.getEndDate().date().strftime("%m/%d/%Y"), data.get('end'))
         b.delete()
 
     @timeIt
@@ -414,13 +422,10 @@ class TestObservers(TestObserversBase):
                         , user    = dana 
                          )
         i.save()
-        b = Blackout(user = dana
-                   , start_date = start + timedelta(days = 2)
-                   , end_date   = start + timedelta(days = 7)
-                   , repeat = Repeat.objects.all()[0]
-                    )
-        b.save()            
-        
+        b = create_blackout(user   = dana,
+                            start  = start + timedelta(days = 2),
+                            end    = start + timedelta(days = 7),
+                            repeat = 'Once')
         # then a period
         pa = Period_Accounting(scheduled = 3.0)
         pa.save()

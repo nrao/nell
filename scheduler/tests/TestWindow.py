@@ -20,12 +20,12 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from datetime                import datetime, timedelta, date
-from utilities               import TimeAgent
-from test_utils              import NellTestCase
-from utils                   import create_sesshun, setupWindows
-from scheduler.models         import *
-from scheduler.httpadapters   import *
+from datetime               import datetime, timedelta, date
+from utilities              import TimeAgent
+from test_utils             import NellTestCase
+from utils                  import create_sesshun, setupWindows, create_blackout
+from scheduler.models       import *
+from scheduler.httpadapters import *
 
 class TestWindow(NellTestCase):
 
@@ -306,20 +306,16 @@ class TestWindow(NellTestCase):
         # make blackout that overlaps this window
         # start = datetime(2009, 6, 1)
         # dur   = 7 # days
-        blackout = Blackout(project    = self.w.session.project
-                          , start_date = datetime(2009, 6, 3) 
-                          , end_date   = datetime(2009, 6, 4)
-                          , repeat     = Repeat.objects.all()[0]
-                           )
-        blackout.save()                           
-        
+        blackout = create_blackout(project = self.w.session.project,
+                                   start   = datetime(2009, 6, 3),
+                                   end     = datetime(2009, 6, 4),
+                                   repeat  = 'Once')
+
         # and another that doesn't
-        blackout = Blackout(project    = self.w.session.project
-                          , start_date = datetime(2009, 6, 8, 12) 
-                          , end_date   = datetime(2009, 6, 9, 12)
-                          , repeat     = Repeat.objects.all()[0]
-                           )
-        blackout.save()           
+        blackout = create_blackout(project = self.w.session.project,
+                                   start   = datetime(2009, 6, 8, 12),
+                                   end     = datetime(2009, 6, 9, 12),
+                                   repeat  = 'Once')
 
         bHrs = self.w.getWindowTimeBlackedOut()
         self.assertEquals(24.0, bHrs)

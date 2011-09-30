@@ -134,11 +134,11 @@ def adjustBlackoutTZ(tz, blackout):
     # TBF: Blackout's internal data is accessed directly and this breaks with DST fixes.
     return {'user'        : blackout.user # None for project blackouts
           , 'id'          : blackout.id
-          , 'start_date'  : adjustDateTimeTz(tz, blackout.start_date)
-          , 'end_date'    : adjustDateTimeTz(tz, blackout.end_date)
-          , 'repeat'      : blackout.repeat
-          , 'until'       : adjustDateTimeTz(tz, blackout.until)
-          , 'description' : blackout.description
+          , 'start_date'  : blackout.getStartDateTZ(tz)
+          , 'end_date'    : blackout.getEndDateTZ(tz)
+          , 'repeat'      : blackout.getRepeat()
+          , 'until'       : blackout.getUntilTZ(tz))
+          , 'description' : blackout.getDescription()
            }
 
 @revision.create_on_success
@@ -159,15 +159,18 @@ def profile(request, *args, **kws):
     except ObjectDoesNotExist:
         tz = "UTC"
 
-    blackouts    = [{'user'        : user
-                   , 'id'          : b.id
-                   , 'start_date'  : adjustDateTimeTz(tz, b.start_date)
-                   , 'end_date'    : adjustDateTimeTz(tz, b.end_date)
-                   , 'repeat'      : b.repeat
-                   , 'until'       : adjustDateTimeTz(tz, b.until)
-                   , 'description' : b.description
-                    } for b in user.blackout_set.order_by("start_date") \
-                      if b.isActive()]
+    blackouts = \
+        sorted([{'user'        : user
+                 , 'id'          : b.id
+                 , 'start_date'  : adjustDateTimeTz(tz, b.getStartDate())
+                 , 'end_date'    : adjustDateTimeTz(tz, b.getEndDate())
+                 , 'repeat'      : b.getRepeat()
+                 , 'until'       : adjustDateTimeTz(tz, b.getUntil())
+                 , 'description' : b.getDescription()
+                 } for b in user.blackout_set.all() if b.isActive()],
+               key = lambda  bl: bl['start_date'])
+
+    
 
     upcomingPeriods = [(proj
                        , [{'session'  : pd.session
@@ -267,21 +270,21 @@ def project(request, *args, **kws):
     res = project.getUpcomingReservations() 
     return render_to_response(
         "users/project.html"
-      , {'p'           : project
-       , 'sess'        : sess
-       , 'u'           : requestor
-       , 'requestor'   : requestor
-       , 'v'           : investigators
-       , 'r'           : res 
-       , 'rcvr_blkouts': rcvr_blkouts
-       , 'tz'          : tz
-       , 'observerBlackouts': obsBlackouts
-       , 'projectBlackouts' : projBlackouts
-       , 'periods'          : periods
-       , 'windows'          : windows
-       , 'upcomingPeriods'  : upcomingPeriods
-       , 'electivePeriods'  : electivePeriods
-       , 'tzs'              : pytz.common_timezones
+      , {'p'                 : project
+       , 'sess'              : sess
+       , 'u'                 : requestor
+       , 'requestor'         : requestor
+       , 'v'                 : investigators
+       , 'r'                 : res 
+       , 'rcvr_blkouts'      : rcvr_blkouts
+       , 'tz'                : tz
+       , 'observerBlackouts' : obsBlackouts
+       , 'projectBlackouts'  : projBlackouts
+       , 'periods'           : periods
+       , 'windows'           : windows
+       , 'upcomingPeriods'   : upcomingPeriods
+       , 'electivePeriods'   : electivePeriods
+       , 'tzs'               : pytz.common_timezones
        }
     )
 
@@ -497,7 +500,7 @@ def user_blackout(request, *args, **kws):
                          , requestor
                          , "/profile/%s" % u_id) # urlRedirect
 
-def blackout_worker(request, type, forObj, b_id, requestor, urlRedirect):
+def blackout_worker(request, kind, forObj, b_id, requestor, urlRedirect):
     "Does most of the work for processing blackout forms"
 
     try:
@@ -522,19 +525,13 @@ def blackout_worker(request, type, forObj, b_id, requestor, urlRedirect):
             if request.POST.get('_method', '') == 'PUT':
                 b = Blackout.objects.get(id = b_id)
             else:
-                if type == "project_blackout":
+                if kind == "project_blackout":
                     b = Blackout(project = forObj)
                 else:
                     b = Blackout(user = forObj)
 
-            b.initialize(tzp, f.cleaned_start, f.cleaned_end, f.cleaned_until,
-                         f.cleaned_data['repeat'], f.cleaned_data['description'])
-            # b.start_date  = f.cleaned_start
-            # b.end_date    = f.cleaned_end
-            # b.until       = f.cleaned_until
-            # b.repeat      = f.cleaned_data['repeat']
-            # b.description = f.cleaned_data['description']
-            b.save()
+            b.initialize(tzp, f.cleaned_start, f.cleaned_end, f.cleaned_data['repeat'],
+                         f.cleaned_until, f.cleaned_data['description'])
         
             revision.comment = get_rev_comment(request, b, "blackout")
             return HttpResponseRedirect(urlRedirect)
@@ -549,7 +546,7 @@ def blackout_worker(request, type, forObj, b_id, requestor, urlRedirect):
     blackoutUrl = "%d/" % int(b_id) if b_id is not None else ""
     # the forms we render have different actions according to whether
     # these blackouts are for users or projects
-    if type == "project_blackout":
+    if kind == "project_blackout":
         for_name = forObj.pcode
         form_action = "/project/%s/blackout/%s" % (forObj.pcode, blackoutUrl)
         cancel_action =  "/project/%s" % forObj.pcode
