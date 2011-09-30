@@ -28,6 +28,24 @@ from functions            import *
 from utilities.TimeAgent  import *
 
 class Term(Document):
+
+    """
+    This class embodies an equation and all it's attributes, as you 
+    might find in the equations.cfg file.  For example, the term
+    'max_elevation' has the following entries in this file:
+        keyword : max_elevation 
+        equation : getMaxElevation(declination)
+        units : d # degrees
+        labels : "Maximum Elevation"
+        display : .1f, 50 # floating point, ?
+    In addition, the dependencies listed in it's equation are kept
+    track of, and other terms can be evaluated based off these
+    dependencies.
+    Terms are dependent on other Terms and will only be evaluated when 
+    all their dependencies are met.
+    """    
+        
+
     def __init__(
         self, keyword, value = None, equation = '', units = None, label = None, display = None):
         Document.__init__(self)
@@ -56,6 +74,10 @@ class Term(Document):
         return self.keyword
 
     def renderDisplay(self):
+        """
+        Uses the display and units attribute to return formatted 
+        representation of the term's value.
+        """
         if self.display is not None and self.display != '':
             return self.display.replace('[value]', str(self.value)).replace('[units]', str(self.units))
         else:
@@ -68,6 +90,7 @@ class Term(Document):
         return self.value, self.units, self.equation, self.renderLabel(), self.display
 
     def set(self, value):
+        "Sets the value of our Term"
         if value is None and self.isJustValue():
             self.set(eval(self.equation))
         elif value is None and not self.isJustValue():
@@ -76,19 +99,31 @@ class Term(Document):
             self.value = value
 
     def evaluate(self, term):
+        """
+        Part of the steps needed to find the final value for this
+        term's equation; the given term should be a dependent of
+        this term.
+        """
+        # is the given term one of our dependencies?
         if term.keyword in self.variables.keys():
             if term.value is None or self.variables[term.keyword] != term.value:
                 self.value = None # need to recalculate
+            # set this term's internal value    
             self.variables[term.keyword] = term.value
         else:
-            return
+            return # if not, nothing to do
 
+        # if we now have values for *all* our dependencies, and this
+        # term doesn't have a value, then calculate our value
         if self.value is None and self.variables and \
            None not in self.variables.values():
+            # calculate our value
             self.set(eval(self.equation, globals(), self.variables))
+            # broadcast what we did
             self.notify(self.keyword, self.value)
 
     def isJustValue(self):
+        "Is the equation just a constant, like 3.14?"
         return self.equation and not self.hasDependencies()
 
     def hasDependencies(self):

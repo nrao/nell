@@ -17,13 +17,9 @@ CONUNDRUMENV=/home/dss/conundrum/conundrum.bash
 # INTEGRATIONHOME is the location of the DSS integration directory
 
 RESTARTSERVERS=0
-#RELEASEHOME=/home/dss/release
-#WEBHOME=/home/dss.gb.nrao.edu/active/python/
-#INTEGRATIONHOME=/home/dss/integration
-
-RELEASEHOME=/home/sandboxes/rcreager/temp/release
-WEBHOME=/home/sandboxes/rcreager/temp/release
-INTEGRATIONHOME=/home/sandboxes/rcreager/temp/integration
+RELEASEHOME=/home/dss/release
+WEBHOME=/home/dss2.gb.nrao.edu/active/
+INTEGRATIONHOME=/home/dss/integration
 
 ######################################################################
 
@@ -344,8 +340,7 @@ update_release_directory()
         # fetch and merge is the same as pull.  Using fetch/merge
         # allows the intermediate step of listing the changes that
         # have been fetched.
-	git fetch origin release && git log ..origin/release
-	git merge origin/release
+	git pull origin release
     fi
 }
 
@@ -386,7 +381,7 @@ check_nell_urls()
 
 get_nell_server_pid()
 {
-    NELLSERVER=`ssh dss@$DSSHOST "ps x | grep 9005 | grep /home/dss/robin/bin/python | grep -v \"grep /home/dss/robin/bin/python\"" 2> /dev/null`
+    NELLSERVER=`ssh dss@$DSSHOST "ps x | grep 9005 | grep /home/dss2.gb.nrao.edu/active/python/bin/python | grep -v \"grep /home/dss2.gb.nrao.edu/active/python/bin/python\"" 2> /dev/null`
     NELLSERVERPID=`echo $NELLSERVER | head -c 5`
 
     if test -z "$NELLSERVERPID"
@@ -448,12 +443,11 @@ restart_nell()
 
     if test "$?" == "0"
     then
-        stop_nell
         printf "Restarting nell server on %s\n" "$DSSHOST"
 
         if test "$RESTARTSERVERS" == "1"
         then
-            ssh dss@$DSSHOST "source $CONUNDRUMENV; cd $RELEASEHOME/nell; python manage.py runserver 0.0.0.0:9005 </dev/null >~/nell.out 2>&1 &" 2> /dev/null
+            ssh dss@$DSSHOST "source $CONUNDRUMENV; cd $RELEASEHOME/nell; runfcgi restart 9005" 2> /dev/null
         fi
     else
         printf "Nell server on %s not restarted.\n" $DSSHOST
@@ -462,42 +456,6 @@ restart_nell()
 
     sleep 2
     get_nell_server_pid
-}
-
-######################################################################
-# stop_nell
-#
-# Interactively stops the nell server on $DSSHOST.
-#
-######################################################################
-
-stop_nell()
-{
-    get_nell_server_pid
-
-    if test "$1" == "msg"
-    then
-        get_response "Do you wish to stop the server? y/n [y]" "y" "n"
-    fi
-
-    if test "$?" == "0"
-    then
-        if test ! -z "$NELLSERVERPID"
-        then
-            printf "Killing current nell server on %s, PID %i\n" "$DSSHOST" $NELLSERVERPID
-
-            if test "$RESTARTSERVERS" == "1"
-            then
-                ssh dss@$DSSHOST "kill $NELLSERVERPID" 2> /dev/null
-            fi
-        fi
-    fi
-
-    if test "$1" == "msg"
-    then
-        sleep 2
-        get_nell_server_pid
-    fi
 }
 
 ######################################################################

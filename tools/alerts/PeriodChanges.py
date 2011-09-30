@@ -49,6 +49,7 @@ class PeriodChanges:
                            , 'window'
                            , 'elective'
                            , 'description'
+                           , 'moc'
                            , 'last_notification'] 
 
     def getStates(self, periodVersions):

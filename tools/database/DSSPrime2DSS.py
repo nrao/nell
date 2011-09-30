@@ -26,6 +26,16 @@ from nell.scheduler.models             import *
 import math
 import MySQLdb as m
 
+def safeUnicode(string):
+    try:
+        uni = unicode(string)
+    except UnicodeDecodeError:
+        if len(string) == 1:
+            uni = ''
+        else:
+            uni = ''.join([safeUnicode(s) for s in string])
+    return uni
+
 class DSSPrime2DSS(object):
     """
     This class is reponsible for fetching data from the 'stepping stone'
@@ -348,6 +358,8 @@ class DSSPrime2DSS(object):
                 rg.receivers.add(rcvr)
             rg.save()
 
+        self.add_backends(s)
+
         # now get the observing parameters
         query = """SELECT op.string_value, op.integer_value, op.float_value,
                           op.boolean_value, op.datetime_value, parameters.name
@@ -364,17 +376,8 @@ class DSSPrime2DSS(object):
         #      o[5] = parameters.name
 
         for o in self.cursor.fetchall():
-            # we have started to diverge from Carl's original set of
-            # observing parameters, to our new DSS ones.
             param_name = o[5]
-            if param_name == "Night-time Flag":
-                # this has been replaced w/ "Time of Day"
-                p = Parameter.objects.get(name = "Time Of Day")
-                # Time Of Day is now an enumeration, of which, Carl's
-                # 'Night-time Flag' maps to the RfiNight choice.
-                o = ("RfiNight", None, None, None, None, 'Time Of Day')
-            else:    
-                p  = Parameter.objects.get(name = param_name)
+            p  = Parameter.objects.get(name = param_name)
             if p.name == 'Instruments' and o[0] == "None":
                 #print "Not passing over Observing Parameter = Instruments(None)"
                 pass
@@ -394,6 +397,19 @@ class DSSPrime2DSS(object):
         self.create_windows(s, s_id_prime)
 
         self.new_sessions.append(s)
+
+    def add_backends(self, s):
+        # now get the backends
+        bg = Backend_Group(session = s)
+        bg.save()
+        query = "SELECT backends from dispositions where pcode = '%s'" % s.project.pcode
+        self.cursor.execute(query)
+        result = self.cursor.fetchone()
+        if result is not None:
+            for b in result[0]:
+                backend = Backend.objects.filter(rc_code = b)[0]
+                bg.backends.add(backend)
+            bg.save()
 
     def normalize_investigators(self):
         for p in Project.objects.all():
@@ -511,26 +527,20 @@ class DSSPrime2DSS(object):
         """
 
         # first the project
-        semester = Semester.objects.get(semester = row[12])
-        ptype    = Project_Type.objects.get(type = row[14])
+        semester = Semester.objects.get(semester = row[11])
+        ptype    = Project_Type.objects.get(type = row[13])
         p = Project(semester     = semester
                   , project_type = ptype
                   , pcode        = row[4]
                   , name         = self.filter_bad_char(row[5])
                   , thesis       = row[6] == 1
                   , complete     = row[7] == 1
-                  , start_date   = row[9]
-                  , end_date     = row[10]
+                  , start_date   = row[8]
+                  , end_date     = row[9]
                     )
         p.save()
 
-        # Get project's disposition
-        query = "SELECT disposition from dispositions where pcode = '%s'" % p.pcode
-        self.cursor.execute(query)
-        dis = self.cursor.fetchone()
-        if dis is not None:
-            p.disposition = dis[0]
-            p.save()
+        self.add_disposition(p)
 
         # then the related objects:
         # friends: friend_id from DSS' projects table
@@ -557,6 +567,17 @@ class DSSPrime2DSS(object):
         rows = self.cursor.fetchall()
         for row in rows:
             self.add_project_allotment(p, row)
+
+    def add_disposition(self, p):
+        # Get project's disposition
+        query = "SELECT disposition, abstract from dispositions where pcode = '%s'" % p.pcode
+        self.cursor.execute(query)
+        dis = self.cursor.fetchone()
+
+        if dis is not None:
+            p.disposition = safeUnicode(dis[0])
+            p.abstract    = safeUnicode(dis[1])
+            p.save()
 
     def add_project_allotment(self, project, row):
         """

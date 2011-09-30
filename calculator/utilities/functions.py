@@ -25,6 +25,8 @@ from calculator.models import FrequencyResolution, WeatherValues, TSky
 import math
 from pyslalib import slalib
 
+from utilities.TimeAgent import *
+
 freqRes = {800  : 8192
          , 200  : 32768
          , 50   : 131072
@@ -62,6 +64,7 @@ def getMinTopoFreq(backend, bandwidth, windows, receiver, beams):
         return (bandwidth / float(channels)) * windows  * beams * 1000 if channels is not None else 0.0
 
 def dec2Els(dec):
+    "Returns the (min, max) elevation for the given declination (degrees)"
     if dec <= GBT_LAT:
         return 5, 90 - GBT_LAT + dec
     elif dec < 90 - GBT_LAT:
@@ -200,3 +203,43 @@ def calcTsky(r, d, freq, gal):
     i, j = raDec2thetaPhi(r, d)
     tsky = TSky.objects.get(theta = i - 1, phi = j - 1)
     return tsky.tsky * math.pow(freq / 408., -2.6) if tsky is not None else 0
+
+def isNotVisible(declination, min_elevation):
+    return min_elevation == 90.0 \
+        or declination <= GBT_LAT - 90.0 + min_elevation \
+        or declination >= GBT_LAT + 90. - min_elevation
+
+def getTimeVisible(declination, min_elevation):
+    """
+    Returns number of hrs a source at a specified Declination is 
+    visible above a specified elevation.  From Meeus, equation 12.6
+    Code was copied from Ron's Tcl script.
+    Inputs in degrees.
+    """
+
+    if isNotVisible(declination, min_elevation):
+        # Never visible since no sky left to rise above; Or, never
+        # visible since declination will never rise above min_el
+        return 0.0
+    
+    # convert all to radians
+    rEl = deg2rad(min_elevation)
+    rDec = deg2rad(declination)
+    rLAT = deg2rad(GBT_LAT)
+
+    # denominator
+    if GBT_LAT == 90. or declination == 90. :
+        d = 0.0
+    else: 
+        d = math.cos(rLAT)*math.cos(rDec)
+
+    # numerator
+    n = math.sin(rEl) - math.sin(rLAT)*math.sin(rDec)
+
+    if abs(n) >= d:
+        # Circumpolar!  Always up!
+        return 24.0
+    else:
+        return 2.0 * rad2hr(math.acos(n/d))
+
+

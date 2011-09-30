@@ -87,7 +87,7 @@ class ScheduleTools(object):
             print "changeSchedule: "
             print start, duration, sesshun
 
-        # tag the descriptoin
+        # tag the description
         nowStr = datetime.now().strftime("%Y-%m-%d %H:%M")    
         descHead = " [Insert Period (%s) " % nowStr 
         # dictionary of who gave and who got, where:
@@ -197,12 +197,12 @@ class ScheduleTools(object):
             pa.save()   
             scheduled = Period_State.objects.get(abbreviation = 'S')
             p = Period.create(session    = sesshun
-                     , start      = start
-                     , duration   = duration
-                     , score      = 0.0
-                     , state      = scheduled
-                     , forecast   = start
-                     , accounting = pa)
+                            , start      = start
+                            , duration   = duration
+                            , score      = 0.0
+                            , state      = scheduled
+                            , forecast   = start
+                            , accounting = pa)
             init_rcvrs_from_session(p.session, p)
             self.reinitScore(p)
             p.save()    
@@ -260,7 +260,7 @@ class ScheduleTools(object):
         After periods are adjusted, time accounting is adjusted appropriately
         """
        
-        # if there isn't a neibhbor, then this change should be done by hand
+        # if there isn't a neighbor, then this change should be done by hand
         if neighbor is None:
             return (False, "Cannot shift period boundary if there is a neighboring gap in the schedule.")
 

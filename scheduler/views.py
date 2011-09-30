@@ -25,6 +25,7 @@ from decorators                         import catch_json_parse_errors
 from django.http                        import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.models         import User as AuthUser
 from django.contrib.auth.decorators     import login_required
+from django.db.models                   import Q
 from django.shortcuts               import render_to_response
 from scheduler.httpadapters             import PeriodHttpAdapter
 from scheduler.utilities                import ScheduleTools
@@ -80,6 +81,9 @@ def receivers_schedule(request, *args, **kws):
                        session__observing_type__type = "maintenance"
                      , start__gte = startdate).order_by("start")]
 
+    # which receivers are temporarily unavailable?
+    unavailable = [r.jsondict() for r in Receiver.objects.filter(available = False).order_by("freq_low")]
+
     # clients want to also know all the latest rcvrs
     rcvrs       = [r.jsondict() for r in Receiver.objects.all().order_by("freq_low") \
                        if r.abbreviation != "NS"]
@@ -87,8 +91,33 @@ def receivers_schedule(request, *args, **kws):
             json.dumps({"schedule" :   jsonschd
                       , "diff":        jsondiff
                       , "maintenance": maintenance
+                      , "unavailable": unavailable
                       , "receivers" :  rcvrs})
           , mimetype = "text/plain")
+
+@revision.create_on_success
+@catch_json_parse_errors
+def rcvr_available_toggle(request, *args, **kws):
+    "Toggles the state of the given receiver's availability."
+
+    try:
+        rcvr = Receiver.get_rcvr(request.POST.get("rcvr", None))    
+    except:    
+        error = "Invalid Input."
+        msg   = "Invalid input: %s" % request.POST.get("rcvr", None)
+        return HttpResponse(json.dumps({'error': error, 'message': msg})
+                           , mimetype = "text/plain")
+
+    # here comes the giant hit to the database; ready?
+    rcvr.available = not rcvr.available
+    rcvr.save()
+    # how was that?
+
+    revision.comment = get_rev_comment(request, None, "rcvr_available_toggle")
+
+    return HttpResponse(json.dumps({'success':'ok'})
+                      , mimetype = "text/plain")
+
 
 @revision.create_on_success
 @catch_json_parse_errors
@@ -214,7 +243,17 @@ def isFriend(user):
 def get_options(request, *args, **kws):
     mode = request.GET.get("mode", None)
     if mode == "project_codes":
-        projects = Project.objects.order_by('pcode')
+        semesters   = request.GET.get("semesters")
+        notcomplete = request.GET.get("notcomplete")
+        if semesters is not None and notcomplete is not None:
+            notcompleteFlt = notcomplete == 'Not Complete'
+            semesters      = semesters.replace('[', '').replace(']', '').split(', ') 
+            filter   = " | " .join(["Q(semester__semester = '%s')" % s for s in semesters])
+            projects = Project.objects.filter(eval(filter))
+            if notcomplete != 'All':
+                projects = projects.filter(complete = not notcompleteFlt).order_by('pcode')
+        else:
+            projects = Project.objects.order_by('pcode')
         return HttpResponse(
             json.dumps({'project codes': [p.pcode for p in projects]
                       , 'project ids':   [p.id for p in projects]})
@@ -238,12 +277,20 @@ def get_options(request, *args, **kws):
           , mimetype = "text/plain")
 
     elif mode == "session_handles":
-        incomplete = request.GET.get('notcomplete', None)
-        enabled    = request.GET.get('enabled')
-        if incomplete is not None and enabled is not None:
-            complete = not (incomplete.lower() == 'true', None)
-            enabled  = enabled.lower() == 'true'
-            ss = Sesshun.objects.filter(status__complete = complete).filter(status__enabled = enabled).order_by('name')
+        semesters   = request.GET.get("semesters")
+        enabled     = request.GET.get("enabled")
+        notcomplete = request.GET.get("notcomplete")
+        if semesters is not None and enabled is not None and notcomplete is not None:
+            notcompleteFlt = notcomplete == 'Not Complete'
+            enabledFlt  = enabled == 'Enabled'
+            semesters   = semesters.replace('[', '').replace(']', '').split(', ') 
+            filter      = " | " .join(["Q(project__semester__semester = '%s')" % s for s in semesters])
+            ss = Sesshun.objects.filter(eval(filter))
+            if notcomplete != 'All':
+                ss = ss.filter(status__complete = not notcompleteFlt)
+            if enabled != 'All':
+                ss = ss.filter(status__enabled = enabledFlt)
+            ss = ss.order_by('name')
         else:
             ss = Sesshun.objects.all().order_by('name')
 
