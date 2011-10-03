@@ -329,6 +329,13 @@ def get_options(request, *args, **kws):
             json.dumps({'periods': ["%s" % p.__str__() for p in periods]
                       , 'period ids': ["%s" % p.id for p in periods]})
           , mimetype = "text/plain")
+    elif mode == "semesters":
+        # return all the semester names
+        semesters = Semester.objects.all().order_by("semester")
+        return HttpResponse(
+            json.dumps({'semesters': ["%s" % s.semester for s in semesters]}) 
+          , mimetype = "text/plain")
+
     else:
         return HttpResponse("")
 
