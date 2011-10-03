@@ -25,7 +25,7 @@ from django.db   import models
 from datetime    import datetime, timedelta
 from pytz        import timezone
 
-from utilities.TimeAgent import adjustDateTimeTz, dst_boundaries
+from utilities.TimeAgent import adjustDateTimeTz, dst_boundaries, truncateDt
 from User        import User
 from Project     import Project
 from Blackout_Sequence import Blackout_Sequence
@@ -86,9 +86,17 @@ class Blackout(models.Model):
             
         self.clear_sequences()
         self.timeZone = tz
+        # cant' really do a timedelta (localend - localstart) to
+        # determine end of repeated blackouts, as any one of these may
+        # straddle a DST transition and the end would be an hour off.
+        # Instead, capture the intent of the user: 'end is that day at
+        # 20:00'; 'end is 2 weeks from now at 8:00", etc. and recreate
+        # those on the repeats.  Keep the timedelta idea at the day
+        # granularity; keep the actual local time.
         localstart = self._tz_to_tz(start, 'UTC', tz)
-        duration = end - start
-
+        localend = self._tz_to_tz(end, 'UTC', tz)
+        days = truncateDt(localend) - truncateDt(localstart)
+        
         if repeat and until:
             dates = [start] + dst_boundaries(tz, start, until) + [until]
         else:
@@ -100,8 +108,8 @@ class Blackout(models.Model):
         # start time--which is the user intent--changing the dates as
         # needed for each sequence, then converting the resulting
         # datetimes back to UTC.  When combining the new sequence
-        # dates with the local start time we must ensure we use the
-        # *local* representation of the date, not UTC date. This
+        # dates with the local start & end time we must ensure we use
+        # the *local* representation of the date, not UTC date. This
         # should keep any ambiguities from arising if the local time
         # is such that the UTC date is the next day.  But we keep the
         # local *time* as specified by the user for all sequences!  If
@@ -113,7 +121,8 @@ class Blackout(models.Model):
             loc_date = self._tz_to_tz(dates[i], 'UTC', tz)
             i_start_date = datetime(loc_date.year, loc_date.month, loc_date.day,
                                     localstart.hour, localstart.minute)
-            i_end_date = i_start_date + duration
+            i_end_date = (truncateDt(i_start_date) + days)\
+                .replace(hour = localend.hour, minute = localend.minute)
              # Now go back to UTC to save the sequences in the database:
             bs.start_date = self._tz_to_tz(i_start_date, tz, 'UTC', naive = True)
             bs.end_date = self._tz_to_tz(i_end_date, tz, 'UTC', naive = True)
