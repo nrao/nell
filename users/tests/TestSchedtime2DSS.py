@@ -202,11 +202,13 @@ class TestSchedtime2DSS(NellTestCase):
         self.assert_DB_empty()
 
         # setup a user
+        role = Role.objects.all()[0]
         u = User(last_name = "White"
                , first_name = "Steve"
-               , role = Role.objects.all()[0]
                 )
         u.save()        
+        u.roles.add(role)
+        u.save()
 
         sd = Schedtime2DSS.Schedtime2DSS(database = 'dss_prime_unit_tests_schedtime')
 

@@ -23,8 +23,7 @@
 from datetime                          import datetime, timedelta
 from nell.utilities                    import TimeAgent
 from scheduler.models                  import *
-from tools.database.UserNames import UserNames
-from tools.reports.Report     import Report, Line
+from tools.reports.Report              import Report, Line
 import math
 import MySQLdb as m
 import sys
