@@ -31,6 +31,19 @@ class Semester(models.Model):
         return self.semester
 
     def start(self):
+        """
+        # start and end dates for semesters follow a simple pattern:
+        # before 11A:
+        # yyA : (yy,  2, 1) to (yy,   5, 31) # 4 months 
+        # yyB : (yy,  6, 1) to (yy,   9, 30) # 4 months
+        # yyC : (yy, 10, 1) to (yy+1, 1, 31) # 4 months
+        # 11A and 11B are fucked up:
+        # 11A : (2011, 2, 1) to (2011, 6, 30) # 5 months 
+        # 11B : (2011, 7, 1) to (2012, 1, 31) # 7 months
+        # after 11B:
+        # yyA : (yy,  2, 1) to (yy,   7, 31) # 6 months
+        # yyB : (yy,  8, 1) to (yy+1, 1, 31) # 6 months
+        """
         # special transition cases from trimesters (prior to '11) to
         # semesters (during '11):
 
@@ -62,16 +75,21 @@ class Semester(models.Model):
         if self.semester == "11B":
             return datetime(2012,1,31)
 
+        # ex: 09A -> 2009
         year = 2000 + int(self.semester[:2])
 
+        # how to compute the month and year from the semester letter?
         if year <= 2010: # old trimesters; some db objects will have these
             end_months = {"A": 5, "B": 9, "C": 1}
+            years = {"A": year, "B": year, "C": year+1}
         else:          # new semesters
             end_months = {"A": 7, "B": 1}
+            years = {"A": year, "B": year+1}
         
-        if self.semester[-1] == "B":
-            year += 1
-        month  = end_months[self.semester[-1]]
+        # now actually compute the date
+        letter = self.semester[-1]
+        year = years[letter]
+        month  = end_months[letter]
         _, day = calendar.monthrange(year, month)
 
         return datetime(year, month, day)
