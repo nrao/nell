@@ -143,12 +143,12 @@ class TestObservers(TestObserversBase):
         end   = datetime(2009, 1, 31)
         until = datetime(2010, 1, 31)
         data = {'start'       : start.date().strftime("%m/%d/%Y")
-              , 'start_time'   : start.time().strftime("%H:%M")
+              , 'start_time'  : start.time().strftime("%H:%M")
               , 'end'         : end.date().strftime("%m/%d/%Y")
-              , 'end_time'     : end.time().strftime("%H:%M")
-              , 'repeats'      : 'Once'
+              , 'end_time'    : end.time().strftime("%H:%M")
+              , 'repeats'     : 'Once'
               , 'until'       : until.strftime("%m/%d/%Y")
-              , 'until_time'   : until.strftime("%H:%M")
+              , 'until_time'  : until.strftime("%H:%M")
               , 'description' : "This is a test blackout."
               , '_method'     : "PUT"
                 }

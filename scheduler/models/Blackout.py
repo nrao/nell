@@ -23,9 +23,8 @@
 from django.core.exceptions   import ObjectDoesNotExist
 from django.db   import models
 from datetime    import datetime, timedelta
-from pytz        import timezone
 
-from utilities.TimeAgent import adjustDateTimeTz, dst_boundaries, truncateDt
+from utilities.TimeAgent import adjustDateTimeTz, dst_boundaries, truncateDt, tz_to_tz
 from User        import User
 from Project     import Project
 from Blackout_Sequence import Blackout_Sequence
@@ -37,23 +36,43 @@ class Blackout(models.Model):
     timeZone    = models.CharField(null = True, max_length = 256, blank = True)
 
     def __unicode__(self):
-        return "%s Blackout for %s: %s - %s" % \
-               (self.getRepeat(), self.forName(), self.getStartDate(), self.getEndDate())
+        return "%i: %s Blackout for %s: %s - %s" % \
+               (self.id, self.getRepeat(), self.forName(), self.getStartDate(), self.getEndDate())
 
-    def _tz_to_tz(self, dt, tz_from, tz_to, naive = False):
+    def get_next_period(self, start, end, periodicity):
+        """
+        given 'start', 'end', 'periodicity' returns the next 'start'
+        and 'end' according to the periodicity.
+        """
+        
+        def dealWithYearlyWrapAround(dt):
+            if dt.month == 12: # Yearly wrap around
+                month = 1; year = dt.year + 1
+            else:
+                month = dt.month + 1
+                year  = dt.year
+                return month, year
 
-        if tz_from == tz_to:
-            return dt
+        if periodicity == "Weekly":
+            start = start + timedelta(days = 7)
+            end   = end   + timedelta(days = 7)
+            return (start, end)
+        elif periodicity == "Monthly":
+            month, year = dealWithYearlyWrapAround(start)
+            start = datetime(year   = year
+                             , month  = month
+                             , day    = start.day
+                             , hour   = start.hour
+                             , minute = start.minute)
+            month, year = dealWithYearlyWrapAround(end)
+            end   = datetime(year   = year
+                             , month  = month
+                             , day    = end.day
+                             , hour   = end.hour
+                             , minute = end.minute)
+            return (start, end)
 
-        tzf = timezone(tz_from)
-        tzt = timezone(tz_to)
-        if not dt.tzinfo:
-            dt = tzf.normalize(tzf.localize(dt))
-        if naive:
-            return dt.astimezone(tzt).replace(tzinfo = None)
-        else:
-            return dt.astimezone(tzt)
-
+    
     def clear_sequences(self):
         seq = [s for s in self.blackout_sequence_set.all()]
         self.blackout_sequence_set.clear()
@@ -74,7 +93,7 @@ class Blackout(models.Model):
 
         self.save() # the Blackout entry in the database needs an ID
                     # so that blackout sequences can be added.
-        
+
         # This is where the magic happens.  The date/time sequence is
         # given in UTC, but we have a local timezone.  We will use
         # this to split (if necessary) this sequence into two or more
@@ -83,20 +102,21 @@ class Blackout(models.Model):
 
         if description:
             self.description = description
-            
+
         self.clear_sequences()
         self.timeZone = tz
+
         # cant' really do a timedelta (localend - localstart) to
         # determine end of repeated blackouts, as any one of these may
         # straddle a DST transition and the end would be an hour off.
         # Instead, capture the intent of the user: 'end is that day at
         # 20:00'; 'end is 2 weeks from now at 8:00", etc. and recreate
         # those on the repeats.  Keep the timedelta idea at the day
-        # granularity; keep the actual local time.
-        localstart = self._tz_to_tz(start, 'UTC', tz)
-        localend = self._tz_to_tz(end, 'UTC', tz)
+        # granularity; preserve the actual local end time.
+        localstart = tz_to_tz(start, 'UTC', tz)
+        localend = tz_to_tz(end, 'UTC', tz)
         days = truncateDt(localend) - truncateDt(localstart)
-        
+
         if repeat and until:
             dates = [start] + dst_boundaries(tz, start, until) + [until]
         else:
@@ -118,14 +138,14 @@ class Blackout(models.Model):
 
         for i in range(0, len(dates) - 1):
             bs = Blackout_Sequence()
-            loc_date = self._tz_to_tz(dates[i], 'UTC', tz)
+            loc_date = tz_to_tz(dates[i], 'UTC', tz)
             i_start_date = datetime(loc_date.year, loc_date.month, loc_date.day,
                                     localstart.hour, localstart.minute)
             i_end_date = (truncateDt(i_start_date) + days)\
                 .replace(hour = localend.hour, minute = localend.minute)
              # Now go back to UTC to save the sequences in the database:
-            bs.start_date = self._tz_to_tz(i_start_date, tz, 'UTC', naive = True)
-            bs.end_date = self._tz_to_tz(i_end_date, tz, 'UTC', naive = True)
+            bs.start_date = tz_to_tz(i_start_date, tz, 'UTC', naive = True)
+            bs.end_date = tz_to_tz(i_end_date, tz, 'UTC', naive = True)
             bs.repeat = repeat
             bs.until = dates[i + 1]
             self.blackout_sequence_set.add(bs)
@@ -184,45 +204,50 @@ class Blackout(models.Model):
         return False
 
     def getStartDate(self):
-        return self.blackout_sequence_set.all()[0].start_date
+        return self.blackout_sequence_set.order_by("start_date")[0].start_date
 
     def getStartDateTZ(self, tz = None):
         if not tz:
             tz = self.timeZone
-        return self._tz_to_tz(self.getStartDate(), 'UTC', tz)
+        return tz_to_tz(self.getStartDate(), 'UTC', tz)
 
     def getEndDate(self):
-        return self.blackout_sequence_set.all()[0].end_date
+        return self.blackout_sequence_set.order_by("start_date")[0].end_date
 
     def getEndDateTZ(self, tz = None):
         if not tz:
             tz = self.timeZone
-        return self._tz_to_tz(self.getEndDate(), 'UTC', tz)
+        return tz_to_tz(self.getEndDate(), 'UTC', tz)
 
     def getUntil(self):
         c = self.blackout_sequence_set.count()
-        return self.blackout_sequence_set.all()[c - 1].until
+        return self.blackout_sequence_set.order_by("start_date")[c - 1].until
 
     def getUntilTZ(self, tz = None):
         if not tz:
             tz = self.timeZone
-        return self._tz_to_tz(self.getUntil(), 'UTC', tz)
+        return tz_to_tz(self.getUntil(), 'UTC', tz)
 
     def getRepeat(self):
-        return self.blackout_sequence_set.all()[0].repeat.repeat
+        return self.blackout_sequence_set.order_by("start_date")[0].repeat.repeat
 
     def getDescription(self):
         return self.description
 
-    def generateDates(self, calstart, calend):
+    def generateDates(self, calstart, calend, local_timezone = False):
         """
         Takes two UTC datetimes representing a period of time on the calendar.
         Returns a list of (datetime, datetime) tuples representing all the
         events generated by this blackout in that period.
+        calstart       : the start datetime
+        calend         : the end datetime
+        local_timezone : boolean, if True results are in the local timezone;
+                         if False, in UTC.
         """
+
         dates = []
 
-        for seq in self.blackout_sequence_set.all():
+        for seq in self.blackout_sequence_set.order_by("start_date"):
             start       = seq.start_date
             end         = seq.end_date
             until       = min(seq.until, calend) if seq.until else calend
@@ -240,41 +265,52 @@ class Blackout(models.Model):
                 if (start > calend or end < calstart) and until < calstart:
                     return [] # Outside time period - hasn't started or already done
 
-            def dealWithYearlyWrapAround(dt):
-                if dt.month == 12: # Yearly wrap around
-                    month = 1; year = dt.year + 1
-                else:
-                    month = dt.month + 1
-                    year  = dt.year
-                return month, year
+            # def dealWithYearlyWrapAround(dt):
+            #     if dt.month == 12: # Yearly wrap around
+            #         month = 1; year = dt.year + 1
+            #     else:
+            #         month = dt.month + 1
+            #         year  = dt.year
+            #     return month, year
 
             if periodicity == "Once":
                 dates.append((start, end))
-            elif periodicity == "Weekly":
-                while start <= until:
-                    if start >= calstart:
-                        dates.append((start, end))
 
-                    start = start + timedelta(days = 7)
-                    end   = end   + timedelta(days = 7)
-            elif periodicity == "Monthly":
-                while start <= until:
-                    if start >= calstart:
-                        dates.append((start, end))
+            while start <= until:
+                if start >= calstart:
+                    dates.append((start, end))
 
-                    month, year = dealWithYearlyWrapAround(start)
-                    start = datetime(year   = year
-                                   , month  = month
-                                   , day    = start.day
-                                   , hour   = start.hour
-                                   , minute = start.minute)
-                    month, year = dealWithYearlyWrapAround(end)
-                    end   = datetime(year   = year
-                                   , month  = month
-                                   , day    = end.day
-                                   , hour   = end.hour
-                                   , minute = end.minute)
-        return dates
+                    start, end = self.get_next_period(start, end, periodicity)
+            # elif periodicity == "Weekly":
+            #     while start <= until:
+            #         if start >= calstart:
+            #             dates.append((start, end))
+
+            #         start = start + timedelta(days = 7)
+            #         end   = end   + timedelta(days = 7)
+            # elif periodicity == "Monthly":
+            #     while start <= until:
+            #         if start >= calstart:
+            #             dates.append((start, end))
+
+            #         month, year = dealWithYearlyWrapAround(start)
+            #         start = datetime(year   = year
+            #                        , month  = month
+            #                        , day    = start.day
+            #                        , hour   = start.hour
+            #                        , minute = start.minute)
+            #         month, year = dealWithYearlyWrapAround(end)
+            #         end   = datetime(year   = year
+            #                        , month  = month
+            #                        , day    = end.day
+            #                        , hour   = end.hour
+            #                        , minute = end.minute)
+
+        if local_timezone:
+            return map(lambda x: (tz_to_tz(x[0], 'UTC', self.timeZone, True),\
+                                      tz_to_tz(x[1], 'UTC', self.timeZone, True)), dates)
+        else:
+            return dates
 
     def eventjson(self, calstart, calend, id = None, tz = None):
         calstart = datetime.fromtimestamp(float(calstart))

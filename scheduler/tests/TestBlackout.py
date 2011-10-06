@@ -20,12 +20,13 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from datetime import datetime, timedelta
-from time     import mktime
+from datetime            import datetime, timedelta
+from time                import mktime
 
-from test_utils               import NellTestCase
-from scheduler.models         import *
-from utils                    import create_blackout
+from test_utils          import NellTestCase
+from scheduler.models    import *
+from utils               import create_blackout
+from utilities.TimeAgent import dst_boundaries, tz_to_tz
 
 class TestBlackout(NellTestCase):
 
@@ -168,3 +169,97 @@ class TestBlackout(NellTestCase):
         self.assertEquals(self.blackout3.forName(), self.project.pcode)
         self.assertEquals(self.blackout3.forUrlId(), self.project.pcode)
 
+    def test_ut_dst(self):
+        blackout = create_blackout(user     = self.u,
+                                   repeat   = 'Weekly',
+                                   start    = datetime(2011, 1, 1, 11),
+                                   end      = datetime(2011, 1, 4, 13),
+                                   until    = datetime(2011, 12, 4, 11),
+                                   timezone = 'UTC')
+
+        # This is a UTC blackout.  Every start time and end time
+        # generated should equal the start and end times above, 11:00
+        # and 13:00.
+
+        dates = blackout.generateDates(blackout.getStartDate(), blackout.getUntil())
+        start_time = blackout.getStartDate().time()
+        end_time = blackout.getEndDate().time()
+
+        for i in dates:
+            self.assertEquals(i[0].time(), start_time)
+            self.assertEquals(i[1].time(), end_time)
+
+    def test_pt_dst(self):
+        # dates are given as UTC dates even though the timezone is
+        # given as a local timezone.  This is the way the blackout
+        # view works. :/
+
+        localstart = datetime(2011, 1, 1, 11)
+        localend = datetime(2011, 1, 4, 13)
+        localuntil = datetime(2011, 12, 4, 11)
+        utcstart = tz_to_tz(localstart, 'US/Pacific', 'UTC', naive = True)
+        utcend = tz_to_tz(localend, 'US/Pacific', 'UTC', True)
+        utcuntil = tz_to_tz(localuntil, 'US/Pacific', 'UTC', True)
+        spring, fall = dst_boundaries('US/Pacific', utcstart, utcuntil)
+        print
+        print "utcstart: %s\tlocalstart: %s" % (utcstart, localstart)
+        print "utcend  : %s\tlocalend  : %s" % (utcend, localend)
+        
+        my_bo = create_blackout(user     = self.u,
+                                repeat   = 'Weekly',
+                                start    = utcstart,
+                                end      = utcend,
+                                until    = utcuntil,
+                                timezone = 'US/Pacific')
+
+        # generate 'UTC' sequence of blackout dates for standard time
+        # until spring transition.
+        print
+        print my_bo
+        dates = my_bo.generateDates(utcstart,
+                                    spring,
+                                    local_timezone = False)
+        self.assertNotEquals(len(dates), 0)
+
+        for i in dates:
+            self.assertEquals(i[0].time(), utcstart.time())
+            self.assertEquals(i[1].time(), utcend.time())
+
+        # generate 'UTC' sequence of blackout dates for spring DST
+        # transition until fall transition.
+        one_hour = timedelta(hours = 1)
+        print my_bo
+        dates = my_bo.generateDates(spring,
+                                    fall,
+                                    local_timezone = False)
+        self.assertNotEquals(len(dates), 0)
+        
+        for i in dates:
+            self.assertEquals((i[0] + one_hour).time(), utcstart.time())
+            self.assertEquals((i[1] + one_hour).time(), utcend.time())
+
+        
+        # generate 'UTC' sequence of blackout dates from fall
+        # transition until the 'until' time.  Back to standard time.
+        print my_bo
+        dates = my_bo.generateDates(fall,
+                                    utcuntil,
+                                    local_timezone = False)
+        print dates
+        self.assertNotEquals(len(dates), 0)
+        
+        for i in dates:
+            self.assertEquals(i[0].time(), utcstart.time())
+            self.assertEquals(i[1].time(), utcend.time())
+            
+        # generate local timezone sequence of blackout dates for the
+        # entire range.
+        dates = my_bo.generateDates(utcstart,
+                                    utcuntil,
+                                    local_timezone = True)
+        self.assertNotEquals(len(dates), 0)
+        
+        for i in dates:
+            print i[0].time(), "\t", i[1].time()
+            self.assertEquals(i[0].time(), localstart.time())
+            self.assertEquals(i[1].time(), localend.time())

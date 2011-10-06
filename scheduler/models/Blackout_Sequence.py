@@ -38,6 +38,11 @@ class Blackout_Sequence(models.Model):
     repeat     = models.ForeignKey(Repeat)
     until      = models.DateTimeField(null = True, blank = True)
 
+    def __unicode__(self):
+        return "%i: Blackout_Sequence: %s - %s, %s, until %s" % \
+               (self.id, self.start_date, self.end_date, self.repeat, self.until)
+
+    
     class Meta:
         db_table  = "blackout_sequence"
         app_label = "scheduler"

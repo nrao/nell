@@ -21,6 +21,8 @@
 #       Green Bank, WV 24944-0002 USA
 
 from mx       import DateTime
+from pytz     import timezone
+
 import math
 import datetime
 import pytz
@@ -286,13 +288,14 @@ def range_to_days(ranges):
                 end   = end + datetime.timedelta(days = 1)
     return dates
 
-######################################################################
-# Given a timezone and two UTC times denoting a time range, returns a
-# list of UTC datetimes where DST transitions occur for that timezone
-# in that time range.  If no transition occurs, returns an empty list.
-######################################################################
 
 def dst_boundaries(tz, tbstart, tbend):
+    """
+    Given a timezone and two UTC times denoting a time range, returns
+    a list of UTC datetimes where DST transitions occur for that
+    timezone in that time range.  If no transition occurs, returns an
+    empty list.
+    """    
     # NOTE: this may be implementation dependent!
     tzone = pytz.timezone(tz)
 
@@ -300,3 +303,24 @@ def dst_boundaries(tz, tbstart, tbend):
         return []  # UTC has no _utc_transition_times, naturally.
     else:
         return  [t for t in tzone._utc_transition_times if t > tbstart and t < tbend]
+
+def tz_to_tz(dt, tz_from, tz_to, naive = False):
+    """
+    Converts a datetime from any timezone to any other.
+    dt      : The datetime
+    tz_from : the timezone to convert from; string, i.e. 'US/Pacific'
+    tz_to   : the timezone to convert to; string
+    naive   : boolean, if true strips the time zone info from returned datetime.
+    """
+
+    if tz_from == tz_to:
+        return dt
+
+    tzf = timezone(tz_from)
+    tzt = timezone(tz_to)
+    if not dt.tzinfo:
+        dt = tzf.normalize(tzf.localize(dt))
+    if naive:
+        return dt.astimezone(tzt).replace(tzinfo = None)
+    else:
+        return dt.astimezone(tzt)

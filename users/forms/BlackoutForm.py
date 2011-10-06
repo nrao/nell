@@ -60,10 +60,11 @@ class BlackoutForm(forms.Form):
                         })
 
     def format_dates(self, tz, data):
-
-        # Now see if the data to be saved is valid    
+        # Now see if the data to be saved is valid
         # watch for malformed dates
-        # NOTE: parse_datetime takes 'tz' and returns UT!!!
+        # NOTE: parse_datetime takes 'tz' and returns UT!!! This
+        # is notable because it influences the functioning of
+        # Blackout.initialize(), which expects this. (RC)
         self.cleaned_start, stError = parse_datetime(data, 'start', 'start_time', tz)
         self.cleaned_end,   edError = parse_datetime(data,   'end',   'end_time', tz)
         self.cleaned_until, utError = parse_datetime(data, 'until', 'until_time', tz)

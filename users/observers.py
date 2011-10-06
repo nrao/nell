@@ -131,13 +131,12 @@ def adjustBlackoutTZ(tz, blackout):
     Takes a Blackout object and converts the datetimes from UTC to
     'tz'.
     """
-    # TBF: Blackout's internal data is accessed directly and this breaks with DST fixes.
     return {'user'        : blackout.user # None for project blackouts
           , 'id'          : blackout.id
           , 'start_date'  : blackout.getStartDateTZ(tz)
           , 'end_date'    : blackout.getEndDateTZ(tz)
           , 'repeat'      : blackout.getRepeat()
-          , 'until'       : blackout.getUntilTZ(tz))
+          , 'until'       : blackout.getUntilTZ(tz)
           , 'description' : blackout.getDescription()
            }
 
