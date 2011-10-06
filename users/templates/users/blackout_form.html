@@ -5,11 +5,29 @@
   <link type="text/css" href="/static/css/lib/themes/base/ui.all.css" rel="stylesheet" />
   <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"></script>
   <script type="text/javascript">
+    <!-- Make sure that id_start and id_end datepickers enforce a valid date range -->
+	$(function() {
+		var dates = $( "#id_start, #id_end" ).datepicker({
+			defaultDate: "+1w",
+			changeMonth: true,
+			numberOfMonths: 1,
+			onSelect: function( selectedDate ) {
+				var option = this.id == "id_start" ? "minDate" : "maxDate",
+					instance = $( this ).data( "datepicker" ),
+					date = $.datepicker.parseDate(
+						instance.settings.dateFormat ||
+						$.datepicker._defaults.dateFormat,
+						selectedDate, instance.settings );
+				dates.not( this ).datepicker( "option", option, date );
+			}
+		});
+	});
+
   $(document).ready(function(){
-    $("#id_start").datepicker();
-    $("#id_end").datepicker();
     $("#id_until").datepicker();
   });
+
+
   </script>
 
 {% endblock %}
