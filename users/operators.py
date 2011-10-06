@@ -82,23 +82,28 @@ def gbt_schedule(request, *args, **kws):
 
     Note: This view is in either ET or UTC, database is in UTC.
     """
+    def cleanSD(startDate):
+        try:
+            return datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now() 
+        except: # Bad input?
+            return datetime.now()
+
     timezones = ['ET', 'UTC']
 
     # Note: we probably should have better error handling here,
     # but since the forms are Date Pickers and drop downs, it seems
     # difficult for the user to send us malformed params.
+
+    # Default date, days, and timezone.  Loaded from the values
+    # saved below, or from defaults if no values were saved.
     if request.method == 'POST':
-        timezone  = request.POST.get('tz', 'ET')
-        days      = int(request.POST.get('days', 5))
-        startDate = request.POST.get('start', None)
-        try:
-            startDate = datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now()
-        except: # Bad input?    
-            startDate = datetime.now()
-    else: # request.method == 'GET'
-        # Default date, days, and timezone.  Loaded from the values
-        # saved below, or from defaults if no values were saved.
-        startDate, days, timezone, timestamp = _get_calendar_defaults(request)
+        startDate, days, timezone = (None, 5, 'ET')
+    else:
+        startDate, days, timezone, _ = _get_calendar_defaults(request)
+    data      = request.POST if request.method == 'POST' else request.GET
+    timezone  = data.get('tz', timezone)
+    days      = int(data.get('days', days))
+    startDate = cleanSD(data.get('start', startDate))
 
     start   = TimeAgent.truncateDt(startDate)
     end     = start + timedelta(days = days)
@@ -116,14 +121,18 @@ def gbt_schedule(request, *args, **kws):
     except:
         pubdate = None
 
+    printerFriendly = data.get('printerFriendly', None)
+    template = 'users/schedules/schedule_friendly.html' if printerFriendly == '1' \
+                   else 'users/schedule.html'
     return render_to_response(
-        'users/schedule.html',
+        template,
         {'calendar'        : schedule,
          'day_list'        : range(1, 32),
          'tz_list'         : timezones,
          'timezone'        : timezone,
          'today'           : datetime.now(EST),
          'start'           : start,
+         'startFmt'        : start.strftime('%m/%d/%Y'), 
          'days'            : days,
          'rschedule'       : Receiver_Schedule.extract_schedule(start, days),
          'requestor'       : requestor,

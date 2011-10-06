@@ -31,6 +31,8 @@
       .type_test {background-color:#87CEFA}
       .type_astronomy {background-color:#EEEEEE}
       .type_maintenance {background-color:#98FB98}
+      td {white-space: nowrap}
+      th {white-space: nowrap}
     </style>
 </head>
 {% load custom %}
@@ -143,7 +145,8 @@
   </p>
   </form>
   <strong>
-  <a href='http://www.gb.nrao.edu/php/shp/index.php'>Historical Schedules</a>
+  <a href='http://www.gb.nrao.edu/php/shp/index.php'>Historical Schedules</a> |
+  <a href="/schedule/public/printerFriendly?tz={{timezone}}&start={{startFmt}}&days={{days}}">Printer Friendly Schedule</a>
   </strong>
   </center>
   <hr />
