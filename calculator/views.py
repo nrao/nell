@@ -134,7 +134,7 @@ def initiateHardware(request):
     backends = getOptions({},'backend')
     selected = {'backend' : backends[0] if len(backends) > 0 else None}
     request.session['SC_backend'] = selected['backend']
-    result = setHardwareConfig(request, selected, 'backend')
+    result = setHardwareConfig(request, selected)
     result.update(backend = backends, success = 'ok')
     return HttpResponse(json.dumps(result), mimetype = "text/plain")
 
@@ -148,13 +148,14 @@ def setHardware(request):
             v = None
             if request.POST.has_key(k) and request.session.has_key("SC_" + k):
                 v = request.POST[k]
-                selected[k] = getValue(k, v) if k == 'receiver' or k == 'backend' else v
+                if v != 'NOTHING':
+                    selected[k] = getValue(k, v) if k == 'receiver' or k == 'backend' else v
             #new change,  stop add this to the filter then stop
             if not newPick and v != request.session.get("SC_" + k):
                 newPick = k
                 request.session["SC_" + k] = v
                 break
-    result = setHardwareConfig(request, selected, newPick)
+    result = setHardwareConfig(request, selected)
     result.update(success = 'ok')
     return HttpResponse(json.dumps(result), mimetype = "text/plain")
 
