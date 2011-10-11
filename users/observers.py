@@ -190,6 +190,19 @@ def profile(request, *args, **kws):
                              , 'tzs'             : pytz.common_timezones
                              , 'isOps'           : requestor.isOperator()})
 
+def project_public(request, *args, **kws):
+    project       = get_object_or_404(Project, pcode = args[0])
+    investigators = project.investigator_set.order_by('priority').all()
+    for i in investigators:
+        i.user.loadStaticContactInfo()
+
+    return render_to_response(
+        "users/project_public.html"
+      , {'project'       : project
+       , 'abstract'      : None if project.abstract == '' else project.abstract
+       , 'investigators' : investigators
+         })
+
 @revision.create_on_success
 @login_required
 @has_project_access

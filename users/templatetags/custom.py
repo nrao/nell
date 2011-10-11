@@ -116,6 +116,11 @@ def display_name(user):
     return "%s %s" % (user.first_name, user.last_name)
 
 @register.filter
+def display_affiliations(affiliations):
+    affiliations = [a for a in affiliations if a != 'Please contact me to add my Institution']
+    return "; ".join(affiliations)
+
+@register.filter
 def display_friend_name(friend):
     required = "(Required)" if friend.required else ""
     return "%s %s %s" % (friend.user.first_name

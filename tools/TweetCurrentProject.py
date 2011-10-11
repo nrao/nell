@@ -41,8 +41,8 @@ def TweetCurrentProject():
         return
 
     title = ps[0].session.project.name[:100]
-    pcode = ps[0].session.project.pcode
-    update = 'Next observation: %s %s' % (pcode, title)
+    url = tinyurl.create_one('https://dss.gb.nrao.edu/project/%s/public' % ps[0].session.project.pcode)
+    update = 'Next observation: %s %s' % (title, url)
     twitter.Api(
         consumer_key        = settings.TWITTER['consumer_key']
       , consumer_secret     = settings.TWITTER['consumer_secret']
