@@ -104,9 +104,12 @@ class Blackout(models.Model):
         self.timeZone = tz
 
         # Simple case: 'Once'
-        if not repeat or repeat == 'Once':
+        if not repeat or repeat.repeat == 'Once':
+            if repeat == None:
+                repeat = Repeat.objects.get(repeat = 'Once')
+                
             bs = Blackout_Sequence(start_date = start, end_date = end,
-                                   repeat = Repeat.objects.get(repeat = 'Once'))
+                                   repeat = repeat, until = until)
             self.blackout_sequence_set.add(bs)
         else:
             # We're looking at a series of blackouts that may continue
@@ -169,7 +172,7 @@ class Blackout(models.Model):
             localend = tz_to_tz(end, 'UTC', tz, naive = True)
             localuntil = tz_to_tz(until, 'UTC', tz, naive = True)
             days = truncateDt(localend) - truncateDt(localstart)
-            periodicity = repeat
+            periodicity = repeat.repeat
             bls = []
 
             while localstart <= localuntil:
@@ -295,7 +298,18 @@ class Blackout(models.Model):
         return tz_to_tz(self.getUntil(), 'UTC', tz)
 
     def getRepeat(self):
-        return self.blackout_sequence_set.order_by("start_date")[0].repeat.repeat
+        repeat = self.blackout_sequence_set.order_by("start_date")[0].repeat.repeat
+
+        # 'repeat' should now have the proper repeat.  However, if
+        # this is a non-'Once' repeating sequence, and there are more
+        # than one sequence, it is possible that the first one is a
+        # 'Once' sequence if the initial blackout straddles the DST
+        # boundary.  In this case, use the next sequence to get the
+        # repeat information.
+        if repeat == 'Once' and self.blackout_sequence_set.count() > 1:
+            repeat = self.blackout_sequence_set.order_by("start_date")[1].repeat.repeat
+
+        return repeat
 
     def getDescription(self):
         return self.description
