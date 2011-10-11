@@ -248,6 +248,7 @@ def getOptions(filter, result):
                 column = 'name'
                 value  = v
                 config = config.filter(eval("Q(%s__%s__contains='%s')" % (k, column, value)))
+                #print "Q(%s__%s__contains='%s')" % (k, column, value)
     config  = config.values(result).distinct()
     if result == 'receiver':
         answers = [getName(result, c[result]) for c in config.order_by('receiver__band_low')]
@@ -262,12 +263,10 @@ def getOptions(filter, result):
         answers.reverse()
     return answers
 
-def setHardwareConfig(request, selected, newPick=None):
+def setHardwareConfig(request, selected):
     #returns dictionary of option lists for all hardware 
     config = {}
     filterDict = {}
-    if not newPick: #hardware hasn't changed dont return anything
-        return config
     selected_keys = selected.keys()
     hardwareList  = [h for h in getHWList() if h not in selected_keys]
     for i in hardwareList:
@@ -281,9 +280,10 @@ def setHardwareConfig(request, selected, newPick=None):
             if request.session.has_key('SC_' + i) and \
                request.session['SC_' + i] in config[i]:
                 #if user already has valid choice keep it
-                selected[i] = request.session['SC_' + i]
+                selected[i] = getRxValue(request.session['SC_' + i]) if i == 'receiver' \
+                      else request.session['SC_' + i]
             else:
-                selected[i] = config[i][0]
+                selected[i] = getRxValue(config[i][0]) if i == 'receiver' else config[i][0]
                 request.session['SC_' + i] = config[i][0]
     return config
 
