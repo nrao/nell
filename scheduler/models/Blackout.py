@@ -20,14 +20,15 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from django.core.exceptions   import ObjectDoesNotExist
-from django.db   import models
-from datetime    import datetime, timedelta
+from django.core.exceptions import ObjectDoesNotExist
+from django.db              import models
+from datetime               import datetime, timedelta
 
-from utilities.TimeAgent import adjustDateTimeTz, dst_boundaries, truncateDt, tz_to_tz
-from User        import User
-from Project     import Project
-from Blackout_Sequence import Blackout_Sequence
+from utilities.TimeAgent    import adjustDateTimeTz, dst_boundaries, truncateDt, tz_to_tz
+from User                   import User
+from Project                import Project
+from Blackout_Sequence      import Blackout_Sequence
+from Repeat                 import Repeat
 
 class Blackout(models.Model):
     user        = models.ForeignKey(User, null = True)
@@ -47,11 +48,13 @@ class Blackout(models.Model):
 
         def dealWithYearlyWrapAround(dt):
             if dt.month == 12: # Yearly wrap around
-                month = 1; year = dt.year + 1
+                month = 1;
+                year = dt.year + 1
             else:
                 month = dt.month + 1
                 year  = dt.year
-                return month, year
+
+            return month, year
 
         if periodicity == "Weekly":
             start = start + timedelta(days = 7)
@@ -101,93 +104,119 @@ class Blackout(models.Model):
         self.timeZone = tz
 
         # Simple case: 'Once'
-        if repeat = None or repeat = 'Once':
+        if not repeat or repeat == 'Once':
             bs = Blackout_Sequence(start_date = start, end_date = end,
                                    repeat = Repeat.objects.get(repeat = 'Once'))
             self.blackout_sequence_set.add(bs)
         else:
-        
-
-        # if repeat and until:
-        #     dates = [start] + dst_boundaries(tz, start, until) + [until]
-        # else:
-        #     dates = [start, until]
-
-        # for i in range(0, len(dates) - 1):
-        #     bs = Blackout_Sequence()
-        #     loc_date = tz_to_tz(dates[i], 'UTC', tz)
-        #     i_start_date = datetime(loc_date.year, loc_date.month, loc_date.day,
-        #                             localstart.hour, localstart.minute)
-        #     i_end_date = (truncateDt(i_start_date) + days)\
-        #         .replace(hour = localend.hour, minute = localend.minute)
-        #      # Now go back to UTC to save the sequences in the database:
-        #     bs.start_date = tz_to_tz(i_start_date, tz, 'UTC', naive = True)
-        #     bs.end_date = tz_to_tz(i_end_date, tz, 'UTC', naive = True)
-        #     bs.repeat = repeat
-        #     bs.until = dates[i + 1]
-        #     self.blackout_sequence_set.add(bs)
-
-        # This is what we're looking at: A series of blackouts that
-        # may continue past a DST boundary.  In addition, one of the
-        # blackouts may itself straddle the DST bound.  The blackout
-        # sequences must be represented in the DB as UTC values, since
-        # Antioch doesn't have the timezone libraries Python has.  But
-        # since blackouts are a user concept, they must be continuous
-        # in the local time zone (i.e. 8:00 AM local time, before or
-        # after DST starts).  Thus the UTC values will change as the
-        # series crosses DST bounds.  In addition we are looking at
-        # the possibility that one of the blackout instances itself
-        # will cross the DST bound. Through all this we wish to
-        # maintain the proper phase and spacing of the repeating
-        # blackouts. This diagram represents this idea:
-        #
-        #                    DST                             DST
-        # |---|---------------|-|=|=======================|===|=|----------------------------|
-        # S   E    ...        S   E      ...              S   E         ...                  U
-        #
-        #     Sequence 1
-        # |---|---------------|
-        # S   E               U
-        #                     Seq 2
-        #                     |---|
-        #                     S   E
-        #                        Rep.
-        #                     |-------|    Sequence 3
-        #                             |---|-------------------|
-        #                             S   E   ...             U
-        #                                                    Rep.
-        #                                                 |-------|      Sequence 4
-        #                                                         |---|----------------------|
-        #                                                         S   E   ...                U
-        #
-        # Naive algorithm:
-        #
-        # 1) Get DST bounds
-        # 2) Map blackout instances SE over entire range
-        # 3) Iterate over SEs and check:
-        #    a) Has S crossed over a DST?
-        #       i) If so, previous E becomes U of last sequence; save sequence, start another.
-        #       ii) Has E crossed over a DST?
-        #          iii) If so, previous E can become U of last sequence, as above, but:
-        #               Create and save a 'Once' sequence with current S and E
-        #    b) Next S becomes S of new sequence, next E its E, Repeat = Rep, no U yet.
+            # We're looking at a series of blackouts that may continue
+            # past a DST boundary.  In addition, one of the blackouts
+            # may itself straddle the DST bound.  The blackout
+            # sequences must be represented in the DB as UTC values,
+            # since Antioch doesn't have the timezone libraries Python
+            # has.  But since blackouts are a user concept, they must
+            # be continuous in the local time zone (i.e. 8:00 AM local
+            # time, before or after DST starts).  Thus the UTC values
+            # will change as the series crosses DST bounds.  In
+            # addition we are looking at the possibility that one of
+            # the blackout instances itself will cross the DST
+            # bound. Through all this we wish to maintain the proper
+            # phase and spacing of the repeating blackouts. This
+            # diagram represents this idea:
+            #
+            #                    DST                             DST
+            # |---|---------------|-|=|=======================|===|=|----------------------------|
+            # S   E    ...        S   E      ...              S   E         ...                  U
+            #
+            #     Sequence 1
+            # |---|---------------|
+            # S   E               U
+            #                     Seq 2
+            #                     |---|
+            #                     S   E
+            #                        Rep.
+            #                     |-------|    Sequence 3
+            #                             |---|-------------------|
+            #                             S   E   ...             U
+            #                                                    Rep.
+            #                                                 |-------|      Sequence 4
+            #                                                         |---|----------------------|
+            #                                                         S   E   ...                U
+            #
+            # Naive algorithm:
+            #
+            # 1) Get DST bounds over desired time range
+            # 2) Map blackout instances (SE) over entire range
+            # 3) Iterate over SEs and check:
+            #    a) Has S crossed over a DST?
+            #       i) If so, previous E becomes U of last sequence; save sequence,
+            #          start another working sequence, and go to next iteration.
+            #    b) Has E crossed over a DST?
+            #       i) If so, previous E can become U of last sequence, as above, but:
+            #          Create and save a 'Once' sequence with current S and E; next SE
+            #          becomes working sequence, and go to next iteration
+            #    c) if we got this far, until of current SE becomes until of working
+            #       sequence
 
             dstb =  dst_boundaries(tz, start, until)
-            localstart = tz_to_tz(start, 'UTC', tz)
-            localend = tz_to_tz(end, 'UTC', tz)
-            localuntil = tz_to_tz(until, 'UTC', tz)
+            dst_date = None
+
+            if len(dstb):
+                dstb.reverse()
+                dst_date = tz_to_tz(dstb.pop(), 'UTC', tz, naive = True)
+
+            localstart = tz_to_tz(start, 'UTC', tz, naive = True)
+            localend = tz_to_tz(end, 'UTC', tz, naive = True)
+            localuntil = tz_to_tz(until, 'UTC', tz, naive = True)
             days = truncateDt(localend) - truncateDt(localstart)
-            periodicity = repeat.repeat
+            periodicity = repeat
+            bls = []
 
             while localstart <= localuntil:
-                bls.append((localstart, localend, periodicity, localuntil))
+                bls.append([localstart, localend, periodicity, localuntil])
                 localstart, localend = self.get_next_period(localstart, localend, periodicity)
 
-            for i in bls:
+            seq = bls[0]
+            seqs = []
 
+            for i in range(0, len(bls)):
+                if dst_date:  # if we are contending with a DST boundary...
+                    # keep DST boundary date current
+                    if seq[0] > dst_date:
+                        if len(dstb):
+                            dst_date = tz_to_tz(dstb.pop(), 'UTC', tz, naive = True)
+                        else:
+                            dst_date = None
+                            continue
 
+                    if bls[i][0] > dst_date:      # start crosses dst_date
+                        seq[3] = bls[i - 1][1]    # set until to previous instance's end
+                        seqs.append(seq)          # save
+                        seq = bls[i]
+                        continue
+                    if bls[i][1] > dst_date:      # start hasn't, but end has crossed
+                        seq[3] = bls[i - 1][1]    # dst_date; set until to previous end
+                        seqs.append(seq)
+                        seq = bls[i]
+                        seq[2] = 'Once'
+                        seqs.append(seq)
 
-        self.save()
+                        if i < len(bls):
+                            seq = bls[i + 1]
+                        continue
+
+                seq[3] = bls[i][3]
+
+            seqs.append(seq) # get the last sequence
+
+            for i in seqs:
+                bs = Blackout_Sequence(start_date = tz_to_tz(i[0], tz, 'UTC', True),
+                                       end_date = tz_to_tz(i[1], tz, 'UTC', True),
+                                       repeat = Repeat.objects.get(repeat = i[2]),
+                                       until = tz_to_tz(i[3], tz, 'UTC', True))
+                self.blackout_sequence_set.add(bs)
+
+            self.save()
 
     def checkValidUser(self):
         assert ((self.project is not None) or (self.user is not None))
@@ -292,56 +321,19 @@ class Blackout(models.Model):
 
             # take care of simple scenarios first
             if start is None or end is None:
-                return [] # What does it mean to have None in start or end?
+                continue  # ignore this sequence
 
-            # see what other conditions we can reject
             if periodicity == "Once":
-                if (start > calend or end < calstart):
-                    return [] # Outside time period - hasn't started or already done
+                if (start >= calstart and end <= calend):
+                    dates.append((start, end))                    
+                continue 
             else:
-                if (start > calend or end < calstart) and until < calstart:
-                    return [] # Outside time period - hasn't started or already done
+                if (start >= calstart and end <= calend) and until > calstart:
+                    while start <= until:
+                        if start >= calstart:
+                            dates.append((start, end))
 
-            # def dealWithYearlyWrapAround(dt):
-            #     if dt.month == 12: # Yearly wrap around
-            #         month = 1; year = dt.year + 1
-            #     else:
-            #         month = dt.month + 1
-            #         year  = dt.year
-            #     return month, year
-
-            if periodicity == "Once":
-                dates.append((start, end))
-
-            while start <= until:
-                if start >= calstart:
-                    dates.append((start, end))
-
-                    start, end = self.get_next_period(start, end, periodicity)
-            # elif periodicity == "Weekly":
-            #     while start <= until:
-            #         if start >= calstart:
-            #             dates.append((start, end))
-
-            #         start = start + timedelta(days = 7)
-            #         end   = end   + timedelta(days = 7)
-            # elif periodicity == "Monthly":
-            #     while start <= until:
-            #         if start >= calstart:
-            #             dates.append((start, end))
-
-            #         month, year = dealWithYearlyWrapAround(start)
-            #         start = datetime(year   = year
-            #                        , month  = month
-            #                        , day    = start.day
-            #                        , hour   = start.hour
-            #                        , minute = start.minute)
-            #         month, year = dealWithYearlyWrapAround(end)
-            #         end   = datetime(year   = year
-            #                        , month  = month
-            #                        , day    = end.day
-            #                        , hour   = end.hour
-            #                        , minute = end.minute)
+                        start, end = self.get_next_period(start, end, periodicity)
 
         if local_timezone:
             return map(lambda x: (tz_to_tz(x[0], 'UTC', self.timeZone, True),\
