@@ -659,3 +659,18 @@ def dates_not_schedulable(request, *args, **kws):
         dates = dates.union(project.get_prescheduled_days(start, end))
 
     return HttpResponse(json.dumps([{"start": d.isoformat()} for d in dates]))
+
+@login_required
+def not_schedulable_details(request, *args, **kws):
+    """
+    Used by monthly project calendar JavaScript to figure out why a
+    project cannot observe on a particular date.
+    """
+    # TBF
+    #print " not_schedulable_details: ", request.GET
+    pcode     = args[0]
+    date     = datetime.fromtimestamp(float(request.GET.get('date', '')))
+    project   = Project.objects.get(pcode = pcode)
+    #print pcode, date
+    return HttpResponse(json.dumps({"pcode": pcode, "date": date.strftime("%Y-%m-%d")}))
+    
