@@ -381,6 +381,21 @@ class TestSesshun(BenchTestCase):
         # cleanup
         self.sesshun.receiver_group_set.all().delete()    
 
+    def test_delete(self):
+        s = create_sesshun()
+        period = Period(session = s
+                      , duration = 180
+                      , start    = datetime(2011, 10, 12, 12, 0, 0)
+                      , state    = Period_State.get_state('S')
+                      )
+        period.save()
+        # Make sure we can not delete a session with children 
+        self.assertRaises(Exception, s.delete)
+
+        # Force the deletion of the session.
+        s.delete(force = True)
+        self.assertRaises(Sesshun.DoesNotExist, Sesshun.objects.get, id = s.id)
+
     # This test commented out simply because it takes soo long to create
     # and delete a sufficient number of sesshuns to see a timing difference
     # in first()
