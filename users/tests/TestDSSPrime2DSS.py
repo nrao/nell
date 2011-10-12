@@ -71,7 +71,7 @@ class TestDSSPrime2DSS(NellTestCase):
 
         return (old_users, new_users)
 
-    def x_test_transfer(self):
+    def test_transfer(self):
 
         self.assert_DB_empty()
 
@@ -134,7 +134,7 @@ class TestDSSPrime2DSS(NellTestCase):
         p = Project.objects.get(pcode = 'BB240')
         self.assertEquals('This is our favorite project.  It is number 1!', p.disposition)
 
-    def x_test_transfer_only_new_1(self):
+    def test_transfer_only_new_1(self):
 
         self.assert_DB_empty()
 
@@ -150,7 +150,7 @@ class TestDSSPrime2DSS(NellTestCase):
         self.assertEquals(199, len(t.new_users))
         self.assertEquals(  0, len(t.old_users))
 
-    def x_test_transfer_only_new_2(self):
+    def test_transfer_only_new_2(self):
 
         self.assert_DB_empty()
 

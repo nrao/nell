@@ -352,7 +352,6 @@ def create_blackout(start, end, repeat = None, until = None, description = None,
     except:
         tz = 'UTC'
 
-    print "in create blackout: %s, %s, %s" % (start, end, until)
     rpt = Repeat.objects.get(repeat = repeat)
     blackout = Blackout(user = user if user else None, project = project if project else None)
     blackout.initialize(tz     = tz,
@@ -361,6 +360,4 @@ def create_blackout(start, end, repeat = None, until = None, description = None,
                         end    = end,
                         until  = until,
                         description = description)
-    print "blackout = ", blackout
-    print "blackout.blackout_sequence_set.all() = ", blackout.blackout_sequence_set.all()
     return blackout

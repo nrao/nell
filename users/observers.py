@@ -1,5 +1,5 @@
 # Copyright (C) 2011 Associated Universities, Inc. Washington DC, USA.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
@@ -9,11 +9,11 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-# 
+#
 # Correspondence concerning GBT software should be addressed as follows:
 #       GBT Operations
 #       National Radio Astronomy Observatory
@@ -50,12 +50,12 @@ def public_schedule(request, *args, **kws):
     # Note: we probably should have better error handling here,
     # but since the forms are Date Pickers and drop downs, it seems
     # impossible for the user to send us malformed params.
-    if request.method == 'POST': 
+    if request.method == 'POST':
         timezone  = request.POST.get('tz', 'ET')
-        days      = int(request.POST.get('days', 5))    
-        startDate = request.POST.get('start', None) 
+        days      = int(request.POST.get('days', 5))
+        startDate = request.POST.get('start', None)
         try:
-            startDate = datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now() 
+            startDate = datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now()
         except: # Bad input?
             startDate = datetime.now()
     else:
@@ -151,7 +151,7 @@ def profile(request, *args, **kws):
     requestor.checkAuthUser()
     user = User.objects.get(id = args[0]) if args else requestor
     static_info  = user.getStaticContactInfo()
-    reservations = user.getReservations() 
+    reservations = user.getReservations()
 
     try:
         tz = requestor.preference.timeZone
@@ -169,7 +169,7 @@ def profile(request, *args, **kws):
                  } for b in user.blackout_set.all() if b.isActive()],
                key = lambda  bl: bl['start_date'])
 
-    
+
 
     upcomingPeriods = [(proj
                        , [{'session'  : pd.session
@@ -265,8 +265,8 @@ def project(request, *args, **kws):
                                      , 'scheduled' : "Yes" if p.isScheduled() else ""
                                      , 'time_billed' : p.accounting.time_billed()} \
                                     for p in e.periodsOrderByDate()]
-                        } for e in project.getActiveElectives()] 
-    res = project.getUpcomingReservations() 
+                        } for e in project.getActiveElectives()]
+    res = project.getUpcomingReservations()
     return render_to_response(
         "users/project.html"
       , {'p'                 : project
@@ -274,7 +274,7 @@ def project(request, *args, **kws):
        , 'u'                 : requestor
        , 'requestor'         : requestor
        , 'v'                 : investigators
-       , 'r'                 : res 
+       , 'r'                 : res
        , 'rcvr_blkouts'      : rcvr_blkouts
        , 'tz'                : tz
        , 'observerBlackouts' : obsBlackouts
@@ -381,7 +381,7 @@ def modify_priority(request, *args, **kws):
                 break
             if i == I:
                 t = i
-    
+
     revision.comment = get_rev_comment(request, project, "modify_priority")
 
     return HttpResponseRedirect("/project/%s" % pcode)
@@ -488,6 +488,7 @@ def user_blackout(request, *args, **kws):
         b_id  = None
     else:
         u_id, b_id, = args
+        blackout = Blackout.objects.get(id = b_id)
 
     user      = User.objects.get(id = u_id)
     requestor = get_requestor(request)
@@ -531,11 +532,11 @@ def blackout_worker(request, kind, forObj, b_id, requestor, urlRedirect):
 
             b.initialize(tzp, f.cleaned_start, f.cleaned_end, f.cleaned_data['repeat'],
                          f.cleaned_until, f.cleaned_data['description'])
-        
             revision.comment = get_rev_comment(request, b, "blackout")
             return HttpResponseRedirect(urlRedirect)
     else:
         b = Blackout.objects.get(id = b_id) if b_id is not None else None
+
         if request.GET.get('_method', '') == "DELETE" and b is not None:
             b.delete()
             return HttpResponseRedirect(urlRedirect)
@@ -549,7 +550,7 @@ def blackout_worker(request, kind, forObj, b_id, requestor, urlRedirect):
         for_name = forObj.pcode
         form_action = "/project/%s/blackout/%s" % (forObj.pcode, blackoutUrl)
         cancel_action =  "/project/%s" % forObj.pcode
-    else:    
+    else:
         for_name = forObj.display_name()
         form_action = "/profile/%d/blackout/%s" % (forObj.id, blackoutUrl)
         cancel_action =  "/profile/%d" % forObj.id
@@ -594,7 +595,7 @@ def events(request, *args, **kws):
 
     # NOTE: here we display ALL investigator blackouts, but
     # in the Observer Blackout section, we are only displaying blackouts
-    # of observers.  
+    # of observers.
     # Investigator blackout & Required Friend events
     invBlackouts = [b for i in project.investigator_set.all() \
                       for b in i.user.blackout_set.all()]
@@ -607,7 +608,7 @@ def events(request, *args, **kws):
         id = id + 1
 
     # Investigator reservations
-    for user, reservations in project.getUpcomingReservations().items(): 
+    for user, reservations in project.getUpcomingReservations().items():
         for s, e in reservations:
             js = { "id" : id
                , "title" : "%s in Green Bank." % user.name()

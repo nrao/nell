@@ -97,8 +97,7 @@ class Blackout(models.Model):
         self.save() # the Blackout entry in the database needs an ID
                     # so that blackout sequences can be added.
 
-        if description:
-            self.description = description
+        self.description = description
 
         self.clear_sequences()
         self.timeZone = tz
@@ -219,7 +218,7 @@ class Blackout(models.Model):
                                        until = tz_to_tz(i[3], tz, 'UTC', True))
                 self.blackout_sequence_set.add(bs)
 
-            self.save()
+        self.save()
 
     def checkValidUser(self):
         assert ((self.project is not None) or (self.user is not None))
@@ -325,6 +324,13 @@ class Blackout(models.Model):
                          if False, in UTC.
         """
 
+        # short-circuit if calstart-calend outside of range
+        start = self.getStartDate()
+        end = self.getEndDate() if self.getRepeat() == 'Once' else self.getUntil()
+
+        if end < calstart or start > calend:
+            return []
+
         dates = []
 
         for seq in self.blackout_sequence_set.order_by("start_date"):
@@ -338,16 +344,24 @@ class Blackout(models.Model):
                 continue  # ignore this sequence
 
             if periodicity == "Once":
-                if (start >= calstart and end <= calend):
+                # A 'Once' sequence may belong to a 'Once' blackout,
+                # or may be a DST transition sequence in a repeat
+                # blackout.  The date test is for the latter, but will
+                # work in either case.
+                if not (end < calstart or start > calend):
                     dates.append((start, end))                    
-                continue 
             else:
-                if (start >= calstart and end <= calend) and until > calstart:
-                    while start <= until:
-                        if start >= calstart:
-                            dates.append((start, end))
+                # Check to see if this *sequence* (not the entire
+                # blackout) is outside the calstart-calend range.  If
+                # so, skip to next sequence.
+                if until < calstart or start > calend:
+                    continue
+                # Otherwise, get the dates that are within the range.
+                while start <= until:
+                    if start >= calstart:
+                        dates.append((start, end))
 
-                        start, end = self.get_next_period(start, end, periodicity)
+                    start, end = self.get_next_period(start, end, periodicity)
 
         if local_timezone:
             return map(lambda x: (tz_to_tz(x[0], 'UTC', self.timeZone, True),\

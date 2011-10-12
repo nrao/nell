@@ -1,5 +1,5 @@
 # Copyright (C) 2011 Associated Universities, Inc. Washington DC, USA.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
@@ -9,11 +9,11 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-# 
+#
 # Correspondence concerning GBT software should be addressed as follows:
 #       GBT Operations
 #       National Radio Astronomy Observatory
@@ -201,10 +201,7 @@ class TestBlackout(NellTestCase):
         utcend = tz_to_tz(localend, 'US/Pacific', 'UTC', True)
         utcuntil = tz_to_tz(localuntil, 'US/Pacific', 'UTC', True)
         spring, fall = dst_boundaries('US/Pacific', utcstart, utcuntil)
-        print
-        print "utcstart: %s\tlocalstart: %s" % (utcstart, localstart)
-        print "utcend  : %s\tlocalend  : %s" % (utcend, localend)
-        
+
         my_bo = create_blackout(user     = self.u,
                                 repeat   = 'Weekly',
                                 start    = utcstart,
@@ -214,52 +211,62 @@ class TestBlackout(NellTestCase):
 
         # generate 'UTC' sequence of blackout dates for standard time
         # until spring transition.
-        print
-        print my_bo
         dates = my_bo.generateDates(utcstart,
                                     spring,
                                     local_timezone = False)
         self.assertNotEquals(len(dates), 0)
 
-        for i in dates:
-            self.assertEquals(i[0].time(), utcstart.time())
-            self.assertEquals(i[1].time(), utcend.time())
+        # All the dates except the last one are in standard time.
+        for i in range(0, len(dates) - 1):
+            self.assertEquals(dates[i][0].time(), utcstart.time())
+            self.assertEquals(dates[i][1].time(), utcend.time())
+        # the last one straddles DST, so end should be an hour earlier in UTC.
+        self.assertEquals(dates[-1][0].time(), utcstart.time())
+        self.assertEquals(dates[-1][1].time(), (utcend - timedelta(hours = 1)).time())
 
         # generate 'UTC' sequence of blackout dates for spring DST
-        # transition until fall transition.
+        # transition until fall transition.  This sequence will
+        # include 2 transition blackouts over both DST transitions:
         one_hour = timedelta(hours = 1)
-        print my_bo
         dates = my_bo.generateDates(spring,
                                     fall,
                                     local_timezone = False)
         self.assertNotEquals(len(dates), 0)
-        
-        for i in dates:
-            self.assertEquals((i[0] + one_hour).time(), utcstart.time())
-            self.assertEquals((i[1] + one_hour).time(), utcend.time())
 
-        
+        self.assertEquals(dates[0][0].time(), utcstart.time())
+        self.assertEquals(dates[0][1].time(), (utcend - one_hour).time())
+
+        for i in range(1, len(dates) - 1):
+            self.assertEquals(dates[i][0].time(), (utcstart - one_hour).time())
+            self.assertEquals(dates[i][1].time(), (utcend - one_hour).time())
+
+        self.assertEquals(dates[-1][0].time(), (utcstart - one_hour).time())
+        self.assertEquals(dates[-1][1].time(), utcend.time())
+
         # generate 'UTC' sequence of blackout dates from fall
         # transition until the 'until' time.  Back to standard time.
-        print my_bo
+        # The first blackout in the range will be a transition
+        # blackout.
         dates = my_bo.generateDates(fall,
                                     utcuntil,
                                     local_timezone = False)
-        print dates
         self.assertNotEquals(len(dates), 0)
-        
-        for i in dates:
-            self.assertEquals(i[0].time(), utcstart.time())
-            self.assertEquals(i[1].time(), utcend.time())
-            
+
+        self.assertEquals(dates[0][0].time(), (utcstart - one_hour).time())
+        self.assertEquals(dates[0][1].time(), utcend.time())
+
+        for i in range(1, len(dates)):
+            self.assertEquals(dates[i][0].time(), utcstart.time())
+            self.assertEquals(dates[i][1].time(), utcend.time())
+
         # generate local timezone sequence of blackout dates for the
-        # entire range.
+        # entire range.  Despite the complexity of the underlying UTC
+        # representation, the local times should all be the same.
         dates = my_bo.generateDates(utcstart,
                                     utcuntil,
                                     local_timezone = True)
         self.assertNotEquals(len(dates), 0)
-        
+
         for i in dates:
-            print i[0].time(), "\t", i[1].time()
             self.assertEquals(i[0].time(), localstart.time())
             self.assertEquals(i[1].time(), localend.time())
