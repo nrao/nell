@@ -17,18 +17,27 @@ $(document).ready(function() {
                     var msg = "";
                     var pcode = data["pcode"];
                     var dt = data["date"];
-                    msg = "Reasons that project " + pcode + " cannot observe on " + dt + ".\n";
-                    if (!data["has_schedulable_sessions"]) {
-                        msg += "Does not have any schedulable sessions.\n"
+                    msg = "Reasons that project " + pcode + " cannot observe on " + dt + ":\n";
+                    if (data["project_complete"]) {
+                        msg += " * Project complete.\n"
+                    }
+                    if (data["no_enabled_sessions"]) {
+                       msg += " * No enabled sessions.\n"
+                    }
+                    if (data["no_authorized_sessions"]) {
+                       msg += " * No authorized sessions.\n"
+                    }
+                    if (data["no_incomplete_sessions"]) {
+                        msg += " * All sessions complete.\n"
                     }
                     if (data["no_receivers"]) {
-                        msg += "Does not have any receivers available.\n" 
+                        msg += " * Receiver(s) not available.\n"
                     }
                     if (data["blackedout"]) {
-                        msg += "Has no available observers or is covered by Project Blackout.\n"
+                        msg += " * No observer available.\n"
                     }
                     if (data["prescheduled"]) {
-                        msg += "The selected date is completely pre-scheduled with other projects.\n"
+                        msg += " * LST range not available.\n"
                     }
                     alert(msg);
                 });

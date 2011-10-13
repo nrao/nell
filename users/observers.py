@@ -672,7 +672,10 @@ def not_schedulable_details(request, *args, **kws):
     # construct dict of reasons why it's unavailable
     dct = {"pcode": pcode
          , "date": date.strftime("%Y-%m-%d")
-         , "has_schedulable_sessions" : project.has_schedulable_sessions()
+         , "no_enabled_sessions" : not project.has_enabled_sessions()
+         , "no_authorized_sessions" : not project.has_authorized_sessions()
+         , "no_incomplete_sessions" : not project.has_incomplete_sessions()
+         , "project_complete" : project.complete
          , "no_receivers" : project.day_has_rcvrs_unavailable(date) 
          , "blackedout" : project.day_is_blackedout(date) 
          , "prescheduled" : project.day_is_prescheduled(date) 

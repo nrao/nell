@@ -167,7 +167,6 @@ class Project(models.Model):
                                    
                                              .exclude(state__abbreviation='D')])
 
-
     def getUpcomingPeriods(self, dt = datetime.now()):
         "What periods are associated with this project in the future?"
         return [p for p in self.getPeriods() if p.start > dt] 
@@ -209,6 +208,18 @@ class Project(models.Model):
 
     def has_schedulable_sessions(self):
         sessions = [s for s in self.sesshun_set.all() if s.schedulable()]
+        return True if sessions != [] else False
+
+    def has_enabled_sessions(self):
+        sessions = [s for s in self.sesshun_set.all() if s.status.enabled]
+        return True if sessions != [] else False
+
+    def has_authorized_sessions(self):
+        sessions = [s for s in self.sesshun_set.all() if s.status.authorized]
+        return True if sessions != [] else False
+
+    def has_incomplete_sessions(self):
+        sessions = [s for s in self.sesshun_set.all() if not s.status.complete]
         return True if sessions != [] else False
 
     def isInvestigator(self, user):

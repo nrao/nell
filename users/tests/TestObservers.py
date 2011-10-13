@@ -446,6 +446,15 @@ class TestObservers(TestObserversBase):
 
     def test_dates_not_schedulable(self):
 
+        def getUnavilDct(bs = 'false'
+                       , no_enabled = 'false'
+                       , no_authorized = 'false'
+                       , prescheduled = 'false'
+                       , date = '2011-08-01'):
+            "help function producing expected results."               
+            exp = '{"prescheduled": %s, "blackedout": %s, "pcode": "mike", "no_incomplete_sessions": false, "project_complete": false, "date": "%s", "no_receivers": false, "no_enabled_sessions": %s, "no_authorized_sessions": %s}' % (prescheduled, bs, date, no_enabled, no_authorized)
+            return exp
+
         start = datetime(2011, 8, 1)
         dayTwo = start + timedelta(days = 1)
         end   = datetime(2011, 8, 4)
@@ -473,7 +482,7 @@ class TestObservers(TestObserversBase):
         response = self.get('/project/%s/unavailable/details' % self.p.pcode, {'date' : startTime})
 
         self.failUnlessEqual(response.status_code, 200)
-        exp = '{"no_receivers": false, "prescheduled": false, "blackedout": false, "pcode": "mike", "has_schedulable_sessions": false, "date": "2011-08-01"}' 
+        exp = getUnavilDct(no_enabled = "true", no_authorized = "true")
         self.assertEquals(exp, response.content)     
 
         # now make the session enabled, and see how things change 
@@ -489,7 +498,7 @@ class TestObservers(TestObserversBase):
 
         response = self.get('/project/%s/unavailable/details' % self.p.pcode, {'date' : startTime})
 
-        exp = '{"no_receivers": false, "prescheduled": false, "blackedout": false, "pcode": "mike", "has_schedulable_sessions": true, "date": "2011-08-01"}' 
+        exp = getUnavilDct()
         self.assertEqual(exp, response.content)
 
         # now modify the observer and give them blackouts so that 
@@ -514,12 +523,12 @@ class TestObservers(TestObserversBase):
 
         # details on first available day
         response = self.get('/project/%s/unavailable/details' % self.p.pcode, {'date' : startTime})
-        exp = '{"no_receivers": false, "prescheduled": false, "blackedout": false, "pcode": "mike", "has_schedulable_sessions": true, "date": "2011-08-01"}' 
+        exp = getUnavilDct()
         self.assertEqual(exp, response.content)
 
         # details on first UNavailable day
         response = self.get('/project/%s/unavailable/details' % self.p.pcode, {'date' : dayTwoTime})
-        exp = '{"no_receivers": false, "prescheduled": false, "blackedout": true, "pcode": "mike", "has_schedulable_sessions": true, "date": "2011-08-02"}' 
+        exp = getUnavilDct(bs = 'true', date = "2011-08-02")
         self.assertEqual(exp, response.content)
 
         # Now, mess up the first day with a period from a different project
@@ -546,11 +555,11 @@ class TestObservers(TestObserversBase):
 
         # details on first day
         response = self.get('/project/%s/unavailable/details' % self.p.pcode, {'date' : startTime})
-        exp = '{"no_receivers": false, "prescheduled": true, "blackedout": false, "pcode": "mike", "has_schedulable_sessions": true, "date": "2011-08-01"}' 
+        exp = getUnavilDct(prescheduled = 'true')
         self.assertEqual(exp, response.content)
 
         # details on second day
         response = self.get('/project/%s/unavailable/details' % self.p.pcode, {'date' : dayTwoTime})
-        exp = '{"no_receivers": false, "prescheduled": false, "blackedout": true, "pcode": "mike", "has_schedulable_sessions": true, "date": "2011-08-02"}' 
+        exp = getUnavilDct(bs = 'true', date = "2011-08-02")
         self.assertEqual(exp, response.content)
 
