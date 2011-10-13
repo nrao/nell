@@ -23,7 +23,9 @@
 from django.db              import models
 from django.core.exceptions import ObjectDoesNotExist
 from datetime               import datetime, timedelta
-
+from utilities            import AnalogSet
+from utilities.TimeAgent  import range_to_days
+from utilities.TimeAgent  import timedelta2minutes
 from utilities.TimeAgent  import adjustDateTimeTz
 from utilities.AnalogSet  import overlaps
 from Observing_Type       import Observing_Type
@@ -275,6 +277,7 @@ class Period(models.Model):
     def get_periods(start, duration, ignore_deleted = True):
         "Returns all periods that overlap given time interval (start, minutes)"
         end = start + timedelta(minutes = duration)
+
         # there is no Period.end in the database, so, first cast a wide net.
         # we can do this because periods won't last more then 16 hours ...
         beforeStart = start - timedelta(days = 1)
@@ -289,6 +292,53 @@ class Period(models.Model):
             ps = [p for p in ps if p.state.abbreviation != 'D']
         return ps
 
+    @staticmethod
+    def get_prescheduled_times(start, end, project = None):
+        """
+        Returns a list of binary tuples of the form (start, end) that
+        describe when this project cannot observe because other 
+        projects already have scheduled telescope periods during
+        the time range specified by the start and end arguments.
+        NOTE: this is functionally identical to 
+        Project.get_prescheduled_times, but uses a DB query to
+        improve performance; Project cannot do this becuase the query
+        causes circular references.
+        """
+
+        def truncatePeriodRange(p, start, end):
+            "we don't care about periods outside of range"
+            s = max(p.start, start)
+            e = min(p.end(), end)
+            return (s, e) 
+
+        # first query DB simply by the time range
+        minutes = timedelta2minutes(end - start)
+        ps1 = Period.get_periods(start, minutes)
+
+        # now filter out other stuff
+        pId = None
+        if project is not None:
+            pId = project.id
+        scheduled = Period_State.get_state('S')
+        times = [truncatePeriodRange(p, start, end) for p in ps1 \
+            if p.session.project.id != pId \
+            and p.state == scheduled \
+            and AnalogSet.overlaps((p.start, p.end()), (start, end))]
+        return sorted(AnalogSet.unions(times))
+
+    @staticmethod
+    def get_prescheduled_days(start, end, project = None):
+        return range_to_days(Period.get_prescheduled_times(start
+                                                         , end
+                                                         , project = project))
+
+    @staticmethod
+    def day_is_prescheduled(day, project = None):
+        nextDay = day + timedelta(days = 1)
+        return len(Period.get_prescheduled_days(day
+                                              , nextDay
+                                              , project = project)) > 0
+    
     @staticmethod
     def create(*args, **kws):
         """

@@ -667,9 +667,10 @@ def dates_not_schedulable(request, *args, **kws):
             e = end
         dates = dates.union(project.get_blackout_dates(s, e))
         dates = dates.union(project.get_receiver_blackout_dates(s, e))
-        dates = dates.union(project.get_prescheduled_days(s, e))
-        #dates = dates.union(Period.get_prescheduled_days(s, e
-        #     , project = project))
+        # NOTE: use static method optimization
+        #dates = dates.union(project.get_prescheduled_days(s, e))
+        dates = dates.union(Period.get_prescheduled_days(s, e
+             , project = project))
 
 
     return HttpResponse(json.dumps([{"start": d.isoformat()} for d in dates]))
@@ -692,9 +693,10 @@ def not_schedulable_details(request, *args, **kws):
          , "project_complete" : project.complete
          , "no_receivers" : project.day_has_rcvrs_unavailable(date) 
          , "blackedout" : project.day_is_blackedout(date) 
-         , "prescheduled" : project.day_is_prescheduled(date) 
-         #, "prescheduled" : Period.day_is_prescheduled(date
-         #                                            , project = project) 
+         # NOTE: use static method optimization
+         #, "prescheduled" : project.day_is_prescheduled(date) 
+         , "prescheduled" : Period.day_is_prescheduled(date
+                                                     , project = project) 
           }
     return HttpResponse(json.dumps(dct))
     
