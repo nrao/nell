@@ -106,7 +106,18 @@ class Blackout(models.Model):
         if not repeat or repeat.repeat == 'Once':
             if repeat == None:
                 repeat = Repeat.objects.get(repeat = 'Once')
-                
+
+            # NOTE: Strip out TZ info, just in case the database has
+            # not been altered to use timestamp without time zone.
+            # The tzinfo is UTC, as these times are provided as UTC
+            # representations of the user's desired local time, and
+            # that is what we want.  However, if the tzinfo is not set
+            # to None and the database has not been altered then these
+            # get set to the local time by the time it is saved to a
+            # sequence
+            start = start.replace(tzinfo = None)
+            end = end.replace(tzinfo = None)
+            
             bs = Blackout_Sequence(start_date = start, end_date = end,
                                    repeat = repeat, until = until)
             self.blackout_sequence_set.add(bs)
@@ -127,8 +138,8 @@ class Blackout(models.Model):
             # diagram represents this idea:
             #
             #                    DST                             DST
-            # |---|---------------|-|=|=======================|===|=|----------------------------|
-            # S   E    ...        S   E      ...              S   E         ...                  U
+            # |---|---------------|-|=|=======================|===|=|----------------|
+            # S   E    ...        S   E      ...              S   E         ...      U
             #
             #     Sequence 1
             # |---|---------------|
@@ -141,9 +152,9 @@ class Blackout(models.Model):
             #                             |---|-------------------|
             #                             S   E   ...             U
             #                                                    Rep.
-            #                                                 |-------|      Sequence 4
-            #                                                         |---|----------------------|
-            #                                                         S   E   ...                U
+            #                                                 |-------|   Sequence 4
+            #                                                         |---|----------|
+            #                                                         S   E   ...    U
             #
             # Naive algorithm:
             #

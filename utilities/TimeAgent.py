@@ -1,5 +1,5 @@
 # Copyright (C) 2006 Associated Universities, Inc. Washington DC, USA.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
@@ -9,11 +9,11 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-# 
+#
 # Correspondence concerning GBT software should be addressed as follows:
 #       GBT Operations
 #       National Radio Astronomy Observatory
@@ -41,7 +41,7 @@ dates and times passed to and from use the built-in module datetime.
 These functions are built around mx.DateTime with a little help
 from slalib for LST stuff.  The core time frame is UTC which can
 be represented by either DateTime (absolute or date + time) or
-DateTimeDelta (relative or dateless).  LST is always taken to be 
+DateTimeDelta (relative or dateless).  LST is always taken to be
 relative, i.e., represented by a DateTimeDelta object.  Relative
 times are translated into an absolute time for "today." Translations
 to and from TimeStamp (MJD and seconds since midnight as the Ygor
@@ -211,11 +211,11 @@ def dtDiffHrs(time1, time2):
     "Gives absolute difference between two times in hours."
     if time1 > time2:
         diffDays = (time1 - time2).days
-        diffSecs = (time1 - time2).seconds 
-    else:    
+        diffSecs = (time1 - time2).seconds
+    else:
         diffDays = (time2 - time1).days
-        diffSecs = (time2 - time1).seconds 
-    return (diffDays * 24.0) + (diffSecs / (60.0 * 60.0))    
+        diffSecs = (time2 - time1).seconds
+    return (diffDays * 24.0) + (diffSecs / (60.0 * 60.0))
 
 def dtDiffMins(time1, time2):
     "Gives absolute difference between two times in integral minutes."
@@ -223,7 +223,7 @@ def dtDiffMins(time1, time2):
 
 def date2datetime(date_obj):
     "Converts Date object to a Datetime object"
-    return datetime.datetime(date_obj.year, date_obj.month, date_obj.day)    
+    return datetime.datetime(date_obj.year, date_obj.month, date_obj.day)
 
 def adjustDateTimeTz(tz_pref, dt, to_utc = False):
     if dt is None:
@@ -253,26 +253,26 @@ def str2dt(str):
 
 def strStr2dt(dstr, tstr):
     return str2dt(dstr + ' ' + tstr) if tstr else str2dt(dstr)
-        
+
 def dt2str(dt):
     "datetime object to YYYY-MM-DD hh:mm:ss string"
     if dt is None:
         return None
-    else:    
+    else:
         return dt.strftime("%Y-%m-%d %H:%M:%S")
 
 def d2str(dt):
     "datetime object to YYYY-MM-DD string"
     if dt is None:
         return None
-    else:    
+    else:
         return dt.strftime("%Y-%m-%d")
 
 def t2str(dt):
     "datetime object to hh:mm string"
     if dt is None:
         return None
-    else:    
+    else:
         return dt.strftime("%H:%M")
 
 def range_to_days(ranges):
@@ -295,14 +295,18 @@ def dst_boundaries(tz, tbstart, tbend):
     a list of UTC datetimes where DST transitions occur for that
     timezone in that time range.  If no transition occurs, returns an
     empty list.
-    """    
+    """
+
+    # Got to have non-naive datetimes for the comparisons below
+    start = tbstart.replace(tzinfo = None)
+    end = tbend.replace(tzinfo = None)
     # NOTE: this may be implementation dependent!
     tzone = pytz.timezone(tz)
 
     if tzone.zone == 'UTC':
         return []  # UTC has no _utc_transition_times, naturally.
     else:
-        return  [t for t in tzone._utc_transition_times if t > tbstart and t < tbend]
+        return  [t for t in tzone._utc_transition_times if t > start and t < end]
 
 def tz_to_tz(dt, tz_from, tz_to, naive = False):
     """

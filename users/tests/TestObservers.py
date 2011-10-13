@@ -124,6 +124,7 @@ class TestObservers(TestObserversBase):
         response = self.get('/profile/%s/blackout/%s/' % (self.u.id, b.id))
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue(b.getDescription() in response.content)
+        self.assertTrue(b.getRepeat() in response.content)
 
         # project blackout
         response = self.get('/project/%s/blackout/' % self.p.pcode)
@@ -133,7 +134,8 @@ class TestObservers(TestObserversBase):
         b = self.create_blackout_for_project()
         response = self.get('/project/%s/blackout/%s/' % (self.p.pcode, b.id))
         self.failUnlessEqual(response.status_code, 200)
-        self.assertTrue(b.description in response.content)
+        self.assertTrue(b.getDescription() in response.content)
+        self.assertTrue(b.getRepeat() in response.content)
 
     @timeIt
     def test_blackout(self):
