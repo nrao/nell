@@ -666,11 +666,16 @@ def not_schedulable_details(request, *args, **kws):
     Used by monthly project calendar JavaScript to figure out why a
     project cannot observe on a particular date.
     """
-    # TBF
-    #print " not_schedulable_details: ", request.GET
     pcode     = args[0]
     date     = datetime.fromtimestamp(float(request.GET.get('date', '')))
     project   = Project.objects.get(pcode = pcode)
-    #print pcode, date
-    return HttpResponse(json.dumps({"pcode": pcode, "date": date.strftime("%Y-%m-%d")}))
+    # construct dict of reasons why it's unavailable
+    dct = {"pcode": pcode
+         , "date": date.strftime("%Y-%m-%d")
+         , "has_schedulable_sessions" : project.has_schedulable_sessions()
+         , "no_receivers" : project.day_has_rcvrs_unavailable(date) 
+         , "blackedout" : project.day_is_blackedout(date) 
+         , "prescheduled" : project.day_is_prescheduled(date) 
+          }
+    return HttpResponse(json.dumps(dct))
     

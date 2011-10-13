@@ -444,3 +444,113 @@ class TestObservers(TestObserversBase):
         result = eval(response.content)
         self.assertEquals(result, exp)
 
+    def test_dates_not_schedulable(self):
+
+        start = datetime(2011, 8, 1)
+        dayTwo = start + timedelta(days = 1)
+        end   = datetime(2011, 8, 4)
+        allDates = [{'start' : '2011-08-0%dT00:00:00' % i} for i in range(1,4)]
+
+        # what a pain in the ass: need to convert times to floats
+        fmt = "%Y-%m-%d %H-%M-%S"
+        startStr  = start.strftime(fmt)
+        dayTwoStr = dayTwo.strftime(fmt)
+        endStr    = end.strftime(fmt)
+        startTime  = time.mktime(time.strptime(startStr, fmt))
+        dayTwoTime = time.mktime(time.strptime(dayTwoStr, fmt))
+        endTime    = time.mktime(time.strptime(endStr,   fmt))
+        data = { 'start' : startTime
+               , 'end'   : endTime
+               }
+        response = self.get('/project/%s/unavailable' % self.p.pcode, data)
+        self.failUnlessEqual(response.status_code, 200)
+
+        # none of the dates will be available
+        result = eval(response.content)
+        self.assertEquals(result, allDates)     
+
+        # because the one session is not schedulable
+        response = self.get('/project/%s/unavailable/details' % self.p.pcode, {'date' : startTime})
+
+        self.failUnlessEqual(response.status_code, 200)
+        exp = '{"no_receivers": false, "prescheduled": false, "blackedout": false, "pcode": "mike", "has_schedulable_sessions": false, "date": "2011-08-01"}' 
+        self.assertEquals(exp, response.content)     
+
+        # now make the session enabled, and see how things change 
+        self.s.status.enabled = self.s.status.authorized = True
+        self.s.status.save()
+
+        response = self.get('/project/%s/unavailable' % self.p.pcode, data)
+        self.failUnlessEqual(response.status_code, 200)
+
+        # none of the dates will be UNavailable
+        result = eval(response.content)
+        self.assertEquals([], result) 
+
+        response = self.get('/project/%s/unavailable/details' % self.p.pcode, {'date' : startTime})
+
+        exp = '{"no_receivers": false, "prescheduled": false, "blackedout": false, "pcode": "mike", "has_schedulable_sessions": true, "date": "2011-08-01"}' 
+        self.assertEqual(exp, response.content)
+
+        # now modify the observer and give them blackouts so that 
+        # the project can't be observed
+        self.i.observer = True
+        self.i.save()
+        self.u.sanctioned = True
+        self.u.save()
+        b = Blackout(user = self.u
+                   , start_date = start + timedelta(days = 1)
+                   , end_date   = start + timedelta(days = 7)
+                   , repeat = Repeat.objects.all()[0]
+                    )
+        b.save()            
+       
+        # see how this messes things up
+        response = self.get('/project/%s/unavailable' % self.p.pcode, data)
+        self.failUnlessEqual(response.status_code, 200)
+        # the last two dates are blacked out 
+        result = eval(response.content)
+        self.assertEquals(allDates[1:], result) 
+
+        # details on first available day
+        response = self.get('/project/%s/unavailable/details' % self.p.pcode, {'date' : startTime})
+        exp = '{"no_receivers": false, "prescheduled": false, "blackedout": false, "pcode": "mike", "has_schedulable_sessions": true, "date": "2011-08-01"}' 
+        self.assertEqual(exp, response.content)
+
+        # details on first UNavailable day
+        response = self.get('/project/%s/unavailable/details' % self.p.pcode, {'date' : dayTwoTime})
+        exp = '{"no_receivers": false, "prescheduled": false, "blackedout": true, "pcode": "mike", "has_schedulable_sessions": true, "date": "2011-08-02"}' 
+        self.assertEqual(exp, response.content)
+
+        # Now, mess up the first day with a period from a different project
+        p2 = self.create_project('mark')
+        p2.save()
+        s2 = self.create_session()
+        s2.project = p2
+        s2.save()
+        pa = Period_Accounting(scheduled = 3.0)
+        pa.save()
+        p = Period(session = s2
+                 , start = start 
+                 , duration = 25.0 # should block out 1st day, but not 2cd
+                 , state = Period_State.get_state('S')
+                 , accounting = pa
+                  )
+        p.save()
+
+        response = self.get('/project/%s/unavailable' % self.p.pcode, data)
+        self.failUnlessEqual(response.status_code, 200)
+        # all dates are unavailable again 
+        result = eval(response.content)
+        self.assertEquals(allDates, result) 
+
+        # details on first day
+        response = self.get('/project/%s/unavailable/details' % self.p.pcode, {'date' : startTime})
+        exp = '{"no_receivers": false, "prescheduled": true, "blackedout": false, "pcode": "mike", "has_schedulable_sessions": true, "date": "2011-08-01"}' 
+        self.assertEqual(exp, response.content)
+
+        # details on second day
+        response = self.get('/project/%s/unavailable/details' % self.p.pcode, {'date' : dayTwoTime})
+        exp = '{"no_receivers": false, "prescheduled": false, "blackedout": true, "pcode": "mike", "has_schedulable_sessions": true, "date": "2011-08-02"}' 
+        self.assertEqual(exp, response.content)
+

@@ -167,6 +167,7 @@ class Project(models.Model):
                                    
                                              .exclude(state__abbreviation='D')])
 
+
     def getUpcomingPeriods(self, dt = datetime.now()):
         "What periods are associated with this project in the future?"
         return [p for p in self.getPeriods() if p.start > dt] 
@@ -263,6 +264,10 @@ class Project(models.Model):
         sessions = [s for s in self.sesshun_set.all() if s.status.complete]
         return True if sessions != [] else False
 
+    def day_is_prescheduled(self, day):
+        nextDay = day + timedelta(days = 1)
+        return len(self.get_prescheduled_days(day, nextDay)) > 0
+
     def get_prescheduled_days(self, start, end):
         """
         Returns a list of binary tuples of the form (start, end) that
@@ -279,13 +284,25 @@ class Project(models.Model):
         projects already have scheduled telescope periods during
         the time range specified by the start and end arguments.
         """
-        times = [(d.start, d.start + timedelta(hours = d.duration)) \
+
+        def truncatePeriodRange(p, start, end):
+            s = max(p.start, start)
+            e = min(p.end(), end)
+            return (s, e)
+
+        times = [truncatePeriodRange(d, start, end) \
                  for p in Project.objects.all() \
+                 # TBF: that's why this takes so long!  limit the
+                 # periods by the time range a little!!!!
                  for d in p.getPeriods() \
                  if p != self and \
                     d.state.abbreviation == 'S' and \
                     AnalogSet.overlaps((d.start, d.end()), (start, end))]
-        return AnalogSet.unions(times)
+        return sorted(AnalogSet.unions(times))
+
+    def day_is_blackedout(self, day):
+        nextDay = day  + timedelta(days = 1)
+        return len(self.get_blackout_dates(day, nextDay)) > 0
 
     def get_blackout_dates(self, start, end):
         """
@@ -405,6 +422,10 @@ class Project(models.Model):
         if required == []:
             return [] # No sessions, no problem
         return Receiver_Schedule.get_receiver_blackout_ranges(required, start, end)
+
+    def day_has_rcvrs_unavailable(self, day):
+        nextDay = day  + timedelta(days = 1)
+        return len(self.get_receiver_blackout_dates(day, nextDay)) > 0
 
     def get_receiver_blackout_dates(self, start, end):
         # Change date ranges into individual days.
