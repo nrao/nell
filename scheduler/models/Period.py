@@ -269,43 +269,7 @@ class Period(models.Model):
         """
         self.score = -1.0
         self.forecast = None
-        if self.in_moc_range() and self.uses_moc():
-            self.moc = None
-
-    def uses_moc(self):
-        """
-        Not all periods use their MOC - for instance, the MOC is never 
-        calculated Fixed periods.  We must use the same criteria here as
-        what is being used in Antioch.
-        """
-        if self.session is None or self.state is None:
-            return False
-        else:    
-            return (self.session.isOpen() or self.session.isWindowed()) \
-                and self.isScheduled()
-        
-    def in_moc_range(self):
-        """
-        A period should get it's MOC evaluated only when it's 
-        in the near future or at the start of it's observations.
-        """
-        start, end = Period.get_moc_time_range()
-        if self.start and self.duration:
-            return overlaps((start, end), (self.start, self.end())) 
-        else:
-            False
-        
-    @staticmethod
-    def get_moc_time_range():
-        """
-        When should a period get it's MOC evaluated?
-        Within the first 30 minutes of it's observations, and up to
-        2 days in the future.
-        """    
-        now = datetime.utcnow()
-        start = now - timedelta(minutes = 30)
-        end = now + timedelta(days = 2)    
-        return (start, end)        
+        self.moc = None
 
     @staticmethod
     def get_periods(start, duration, ignore_deleted = True):

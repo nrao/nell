@@ -28,8 +28,7 @@
 ######################################################################
 
 from django.db                       import models
-from Backend                         import Backend
-from scheduler.models                import Period, Receiver, User
+from scheduler.models                import Period, Receiver, User, Backend
 from Maintenance_Telescope_Resources import Maintenance_Telescope_Resources
 from Maintenance_Software_Resources  import Maintenance_Software_Resources
 from Maintenance_Other_Resources     import Maintenance_Other_Resources

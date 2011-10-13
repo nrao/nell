@@ -105,6 +105,16 @@ def create_users():
                  ))
     return users
 
+def create_maintenance_project():
+    s = Semester.objects.get(semester = "11B")
+    pt = Project_Type.objects.all()[0]
+    proj = Project(semester = s
+                 , project_type = pt)
+    proj.pcode = "Maintenance"
+    proj.name = "Maintenance"
+    proj.save()
+    return proj
+
 def create_maintenance_sesshun():
     # Test field data
     fdata = {"req_max": "6"

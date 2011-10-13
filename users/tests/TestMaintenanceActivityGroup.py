@@ -27,10 +27,12 @@
 ######################################################################
 
 from test_utils            import NellTestCase
-from users.models       import *
+from users.models          import *
 from scheduler.models      import *
-from scheduler.tests.utils import create_maintenance_period, create_maintenance_elective
-from datetime              import datetime
+from scheduler.tests.utils import create_maintenance_period
+from scheduler.tests.utils import create_maintenance_elective
+from users.tests.utils     import create_maintenance_activity
+from datetime              import datetime, timedelta
 
 class TestMaintenanceActivityGroup(NellTestCase):
     def setUp(self):
@@ -212,3 +214,27 @@ class TestMaintenanceActivityGroup(NellTestCase):
         self.assertEqual('C', mags[2].rank)
         self.assertEqual(mags[2].deleted, False)
         self.assertEqual(mags[2].period.id, p1.id)
+
+
+    def test_get_maintenance_activity_set(self):
+
+        
+        # get the maintenance groups for the week of April 11, 2011
+        mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
+        # there should be 3 maintenance groups: 2 electives, one pending period
+        self.assertEqual(len(mags), 3)
+
+        # there should be no activiites
+        for mag in mags:
+            self.assertEqual([], mag.get_maintenance_activity_set())
+
+        # now there should be one each
+        for i in range(3):
+            ma = create_maintenance_activity()
+            ma.set_description(str(i))
+            ma.group = mags[i]
+            ma.save()
+        mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
+        for i, mag in enumerate(mags):
+            self.assertEqual(str(i), mag.get_maintenance_activity_set()[0].description)
+

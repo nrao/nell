@@ -45,24 +45,22 @@ def public_schedule(request, *args, **kws):
 
     Note: This view is in either ET or UTC, database is in UTC.
     """
+    def cleanSD(startDate):
+        try:
+            return datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now() 
+        except: # Bad input?
+            return datetime.now()
+
     timezones = ['ET', 'UTC']
 
     # Note: we probably should have better error handling here,
     # but since the forms are Date Pickers and drop downs, it seems
     # impossible for the user to send us malformed params.
-    if request.method == 'POST':
-        timezone  = request.POST.get('tz', 'ET')
-        days      = int(request.POST.get('days', 5))
-        startDate = request.POST.get('start', None)
-        try:
-            startDate = datetime.strptime(startDate, '%m/%d/%Y') if startDate else datetime.now()
-        except: # Bad input?
-            startDate = datetime.now()
-    else:
-        # default time range
-        timezone  = 'ET'
-        days      = 5
-        startDate = datetime.now()
+
+    data      = request.POST if request.method == 'POST' else request.GET
+    timezone  = data.get('tz', 'ET')
+    days      = int(data.get('days', 5))    
+    startDate = cleanSD(data.get('start', None) )
 
     start    = TimeAgent.truncateDt(startDate)
     end      = start + timedelta(days = days)
@@ -79,13 +77,20 @@ def public_schedule(request, *args, **kws):
     except:
         pubdate = None
 
+    if len(args) == 1:
+        printerFriendly, = args
+    else:
+        printerFriendly = None
+    template = 'users/schedules/public_schedule_friendly.html' if printerFriendly == 'printerFriendly' \
+                   else 'users/public_schedule.html'
     return render_to_response(
-               'users/public_schedule.html'
-             , {'calendar'     :    schedule
+                template
+              , {'calendar'     :    schedule
               , 'day_list'     :    range(1, 15)
               , 'tz_list'      :    timezones
               , 'timezone'     :    timezone
               , 'start'        :    start
+              , 'startFmt'     :    start.strftime('%m/%d/%Y')
               , 'days'         :    days
               , 'rschedule'    :    Receiver_Schedule.extract_schedule(start, days)
               , 'timezone'     :    timezone
@@ -192,6 +197,19 @@ def profile(request, *args, **kws):
                              , 'upcomingPeriods' : upcomingPeriods
                              , 'tzs'             : pytz.common_timezones
                              , 'isOps'           : requestor.isOperator()})
+
+def project_public(request, *args, **kws):
+    project       = get_object_or_404(Project, pcode = args[0])
+    investigators = project.investigator_set.order_by('priority').all()
+    for i in investigators:
+        i.user.loadStaticContactInfo()
+
+    return render_to_response(
+        "users/project_public.html"
+      , {'project'       : project
+       , 'abstract'      : None if project.abstract == '' else project.abstract
+       , 'investigators' : investigators
+         })
 
 @revision.create_on_success
 @login_required

@@ -297,7 +297,7 @@ def dst_boundaries(tz, tbstart, tbend):
     empty list.
     """
 
-    # Got to have non-naive datetimes for the comparisons below
+    # Got to have naive datetimes for the comparisons below
     start = tbstart.replace(tzinfo = None)
     end = tbend.replace(tzinfo = None)
     # NOTE: this may be implementation dependent!

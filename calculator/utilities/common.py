@@ -20,39 +20,73 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from django.db.models import Q
+from django.db.models         import Q
 from calculator.models        import *
+from functions                import isNotVisible
+from utilities.TimeAgent      import *
 
 # View utility functions go here.
 
 def get_results_dict(request):
+    """
+    Takes the results that are squirrled away in the cookie, and formats
+    it properly for use in the HTML to be rendered.
+    """
+
     explicit, leftovers, input = splitResults(request)
+
+    # filter out leftovers that don't have a display
     leftovers = [r for r in leftovers if r['display'] is not None]
+    # so that you can then sort the leftovers by the second half of
+    # their display, and convert the values to strings
     leftovers = [sanitize(r) for r in sorted(leftovers, key = lambda r: r['display'][1]) 
                       if r['value'] is not None]
+    # convert everything else to strings too
     input     = map(sanitize, input)
     explicit  = map(sanitize, explicit)
+
+    # The next two dicts are created for easy display in the rendered HTML
+    # Take the list of dictionaries, and make a new one, keyed off of term
     explicit  = dict([splitKey(e) for e in explicit])
     # Also make a dict of the inputs for desiding on how to display stuff.
     ivalues   = dict([splitKey(i) for i in input])
+
+    # create a small custom dictionary to handle a few units issues
     units     = {}
     sensitivity_units        = ivalues.get('units', {}).get('value')
     if sensitivity_units is not None:
         units['sigma']           = 'mJy' if sensitivity_units == 'flux' else 'mK'
         explicit['confusion_limit']['units']= "%s (%s)" % ('S' if sensitivity_units == 'flux' else sensitivity_units.title(), units['sigma'])
     units['t_tot_units'] = 's' if ':' not in explicit.get('t_tot', {}).get('value', '') else 'HH:MM:SS.S'
+
+    # error checking and such
+    msgs = getMessages(request)
+
     return {'e'         : explicit
           , 'leftovers' : leftovers
           , 'input'     : input
           , 'ivalues'   : ivalues
           , 'units'     : units
-          , 'messages'  : getMessages(request)
+          , 'messages'  : msgs
           }
 
 def splitResults(request, debug = False):
+    """
+    Takes the current SC_result found in the cookie (request.session)
+    and splits thme into different lists, all of which are lists
+    of a dictionary encapsulating a Term object.
+    The different lists include those things that were originally just
+    user input, and then different types of derived results: explict
+    and leftovers.  Explicits are the main things that we worry about
+    in this calculatory, and have dedicated displays.  Leftovers is 
+    all the other stuff, which get displayed in a more generic manner.
+    """
+
     exceptions = ('topocentric_freq', 'smoothing_resolution')
 
     explicit, leftovers, input, debug_results = [], [], [], []
+    # split up the calculator results into differet lists of dictionary
+    # representations of a Term object
     for k, (v, u, e, l, d) in request.session.get('SC_result', {}).items(): 
         data = {'term' : k
               , 'value' : v
@@ -61,10 +95,14 @@ def splitResults(request, debug = False):
               , 'label'    : l
               , 'display'  : d
                 }
+        # The second part of the display decides what type of result it is
+        # A priority of 1 makes it EXPLICIT
         if (e != '' or k in exceptions) and d is not None and d[1] == 1:
             explicit.append(data)
+        # everything else is a leftover, to be treated accordingly    
         elif (e != '' or k in exceptions) and d is not None and d[1] > 1:
             leftovers.append(data)
+        # if the original equation was blank, it must be user input    
         elif e == '' and k not in exceptions:
             input.append(data)
         else:
@@ -72,14 +110,22 @@ def splitResults(request, debug = False):
 
     if debug:
         leftovers += debug_results
+
     return explicit, leftovers, input
 
 def sanitize(result):
+    """
+    Attempts to convert the value of the given result from it's current
+    form (most likely a float), into a string representation, using the
+    first part of the display of the given result.
+    """
     v = result.get('value')
     u = result.get('units')
     d = result.get('display')
     t = result.get('term')
     result['units'] = '' if u is None else u
+    # try and convert the float value to a string rep. using
+    # the first part of the display from equations.cfg
     if v is not None and v != '' and d is not None and d[0] != '':
         try:
             result['value'] = ("%" + d[0]) % float(v)
@@ -87,6 +133,7 @@ def sanitize(result):
             pass
     if v is None:
         result['value'] = ''
+    # special handling of time formatting    
     if v is not None and (t == 'time' or t == 't_tot'):
         time = float(v)
         if time > 3600:
@@ -106,20 +153,46 @@ def sanitize(result):
 
 def splitKey(e):
     k = e.pop('term')
+    # TBF: doesn't the sanitize function use the term we just POPed?
     return k, sanitize(e)
 
 def getMessages(request):
+    """
+    Examines the current results, looks for possible problems,
+    and returns snotty messages for each problem found.
+    Each message also includes a type (ie, Error, Warning)
+    """
+
+    # TBF: isn't this redundant? why not pass these in?
     explicit, leftovers, input = splitResults(request)
+
+    # Convert the list of dictionaries, to a dictionary keyed by term
     results = dict([splitKey(r) for r in explicit + leftovers])
     ivalues = dict([splitKey(i) for i in input])
 
     messages = []
+
+    # All right, slog through each problem child, and check on them
+
+    # source not visible?
+    min_elevation =  ivalues.get("min_elevation", {}).get("value", 1)
+    dec = ivalues.get("declination", {}).get("value", 0)
+    if dec != '' and min_elevation != '' and \
+        isNotVisible(float(dec), float(min_elevation)):
+        messages.append({'type' : 'Error'
+                       , 'msg'  : 'Source will never rise above min elevation.'
+                        })
+
+    # source diameter
     diameter = results.get("source_diameter", {}).get("value", 1)
     if diameter != '' and float(diameter) > 0:
         messages.append({'type' : 'Warning', 'msg' : 'Since source is extended, the calculated results are approximations.'})
-    dec = ivalues.get("declination", {}).get("value", 0)
+
+    # declination too low?   
     if dec != '' and float(dec) < -46:
         messages.append({'type' : 'Error', 'msg' : 'Source Declination is below -46, the lower limit for the GBT.'})
+
+    # frequency out of bound?    
     rx        = ivalues.get('receiver', {}).get('value')
     topo_freq = results.get('topocentric_freq', {}).get('value', 0)
     if rx is not None and rx != '' and rx != 'NA' and topo_freq != '':
@@ -130,10 +203,13 @@ def getMessages(request):
         if not (topo_freq >= rx_low and topo_freq <= rx_hi):
             messages.append({'type' : 'Warning', 'msg' : 'Topocentric frequnecy is beyond the nominal range for the selected receiver.'})
 
+    # sensitivity vs. confusion limit?
     sensitivity = results.get("sigma", {}).get("value")
     confusion_limit = results.get("confusion_limit", {}).get("value")
     if sensitivity != '' and confusion_limit != '' and sensitivity < confusion_limit:
         messages.append({'type' : 'Warning', 'msg' : 'Sensitivity is less than the confusion limit.'})
+
+    # 1/F gain variations?
     backend    = ivalues.get('backend', {}).get('value')
     bandwidth  = ivalues.get('bandwidth', {}).get('value')
     time       = ivalues.get('time', {}).get('value')
@@ -172,6 +248,7 @@ def getOptions(filter, result):
                 column = 'name'
                 value  = v
                 config = config.filter(eval("Q(%s__%s__contains='%s')" % (k, column, value)))
+                #print "Q(%s__%s__contains='%s')" % (k, column, value)
     config  = config.values(result).distinct()
     if result == 'receiver':
         answers = [getName(result, c[result]) for c in config.order_by('receiver__band_low')]
@@ -186,12 +263,10 @@ def getOptions(filter, result):
         answers.reverse()
     return answers
 
-def setHardwareConfig(request, selected, newPick=None):
+def setHardwareConfig(request, selected):
     #returns dictionary of option lists for all hardware 
     config = {}
     filterDict = {}
-    if not newPick: #hardware hasn't changed dont return anything
-        return config
     selected_keys = selected.keys()
     hardwareList  = [h for h in getHWList() if h not in selected_keys]
     for i in hardwareList:
@@ -205,9 +280,10 @@ def setHardwareConfig(request, selected, newPick=None):
             if request.session.has_key('SC_' + i) and \
                request.session['SC_' + i] in config[i]:
                 #if user already has valid choice keep it
-                selected[i] = request.session['SC_' + i]
+                selected[i] = getRxValue(request.session['SC_' + i]) if i == 'receiver' \
+                      else request.session['SC_' + i]
             else:
-                selected[i] = config[i][0]
+                selected[i] = getRxValue(config[i][0]) if i == 'receiver' else config[i][0]
                 request.session['SC_' + i] = config[i][0]
     return config
 
@@ -245,7 +321,7 @@ def getMinIntegrationTime(request):
 def validate(key, value):
     if value is None or value == '':
         return value
-    if key in ('declination', 'right_ascension'):
+    if key in ('right_ascension'):
         values = value.split(":")
         hour   = values[0]
         if len(values) == 3:

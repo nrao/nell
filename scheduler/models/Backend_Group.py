@@ -20,11 +20,27 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from Preference                      import Preference
-from Maintenance_Activity            import Maintenance_Activity
-from Maintenance_Activity_Group      import Maintenance_Activity_Group
-from Maintenance_Telescope_Resources import Maintenance_Telescope_Resources
-from Maintenance_Software_Resources  import Maintenance_Software_Resources
-from Maintenance_Other_Resources     import Maintenance_Other_Resources
-from Maintenance_Activity_Change     import Maintenance_Activity_Change
-from Maintenance_Receivers_Swap      import Maintenance_Receivers_Swap
+from django.db import models
+
+from Sesshun  import Sesshun
+from Backend import Backend
+
+class Backend_Group(models.Model):
+    session        = models.ForeignKey(Sesshun)
+    backends       = models.ManyToManyField(
+                                  Backend
+                                , db_table = "backend_groups_backends")
+
+    class Meta:
+        db_table  = "backend_groups"
+        app_label = "scheduler"
+
+    def __unicode__(self):
+        return "Backend Group for Sess: (%s): %s" % \
+               (self.session.id,
+                " ".join([b.abbreviation for b in self.backends.all()]))
+
+    def __str__(self):
+        return "(%s)" % \
+               " OR ".join([b.abbreviation for b in self.backends.all()])
+

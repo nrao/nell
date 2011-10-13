@@ -32,6 +32,11 @@ import simplejson as json
 import time
 
 def text_results(request):
+    """
+    Instead of producing a viewable HTML file, this takes the same
+    results and presents them in a simple text file format that
+    is downloaded from the client browser.
+    """
     response = render(request
                     , "results.txt"
                     , get_results_dict(request)
@@ -45,10 +50,19 @@ def load_calc_ui(request):
 
 #@login_required
 def display_results(request):
+    """
+    Produces stand-alone HTML page viewable from the browser that
+    uses the same HTML template as what is used to produce the 
+    HTML in the calculator's results tab.
+    """
     return render_to_response("results.html", get_results_dict(request))
 
 #@login_required
 def get_results(request, *args, **kwds):
+    """
+    Produces the same results that the other *_results methods do, 
+    except here we just return the raw JSON.
+    """
     explicit, leftovers, input = splitResults(request, debug = True)
     results = explicit + leftovers
     retval = {'success'       : 'ok'
@@ -120,7 +134,7 @@ def initiateHardware(request):
     backends = getOptions({},'backend')
     selected = {'backend' : backends[0] if len(backends) > 0 else None}
     request.session['SC_backend'] = selected['backend']
-    result = setHardwareConfig(request, selected, 'backend')
+    result = setHardwareConfig(request, selected)
     result.update(backend = backends, success = 'ok')
     return HttpResponse(json.dumps(result), mimetype = "text/plain")
 
@@ -134,13 +148,14 @@ def setHardware(request):
             v = None
             if request.POST.has_key(k) and request.session.has_key("SC_" + k):
                 v = request.POST[k]
-                selected[k] = getValue(k, v) if k == 'receiver' or k == 'backend' else v
+                if v != 'NOTHING':
+                    selected[k] = getValue(k, v) if k == 'receiver' or k == 'backend' else v
             #new change,  stop add this to the filter then stop
             if not newPick and v != request.session.get("SC_" + k):
                 newPick = k
                 request.session["SC_" + k] = v
                 break
-    result = setHardwareConfig(request, selected, newPick)
+    result = setHardwareConfig(request, selected)
     result.update(success = 'ok')
     return HttpResponse(json.dumps(result), mimetype = "text/plain")
 
