@@ -470,6 +470,7 @@ class TestObservers(TestObserversBase):
         endTime    = time.mktime(time.strptime(endStr,   fmt))
         data = { 'start' : startTime
                , 'end'   : endTime
+               , 'past'  : True
                }
         response = self.get('/project/%s/unavailable' % self.p.pcode, data)
         self.failUnlessEqual(response.status_code, 200)
