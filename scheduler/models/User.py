@@ -38,6 +38,8 @@ class User(models.Model):
     roles = models.ManyToManyField(Role, null = True)
     auth_user            = models.ForeignKey(AuthUser, null = True)
 
+    staticContactInfo = None
+
     class Meta:
         db_table  = "users"
         app_label = "scheduler"
@@ -131,6 +133,9 @@ class User(models.Model):
 
     def getStaticContactInfo(self): 
         return UserInfo().getProfileByID(self) 
+
+    def loadStaticContactInfo(self):
+        self.staticContactInfo = UserInfo().getProfileByID(self)
 
     def getReservations(self): 
         """

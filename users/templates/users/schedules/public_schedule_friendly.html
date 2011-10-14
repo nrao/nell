@@ -99,7 +99,7 @@
     {# data for 'Project Title' column                              #}
 
       {% if event.project_type == "A" %}
-        <td><a href="http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{event.pcode}}">{{event.project_title}}</a></td>
+        <td><a href="/project/{{event.pcode}}/public">{{event.project_title}}</a></td>
       {% else %}
         {% if event.project_type == "M" %}
           <td>{{event.project_title}}{{rschedule|get_receiver_change:day}}</td>

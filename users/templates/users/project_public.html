@@ -1,0 +1,37 @@
+{% extends "users/base.html" %}
+{% load custom %}
+{% block title %} {{project.pcode}} {% endblock %}
+{% block scripts %}
+    <style type="text/css">
+      .grey_highlight {background-color:#EEEEEE; width:100%}
+      .checkable {cursor:pointer}
+      td {white-space:nowrap; vertical-align: text-top}
+      th {white-space:nowrap}
+    </style>
+{% endblock %}
+{% block content %}
+        <h1>{{project.pcode}}</h1>
+        <h3 class="alt">{{project.name}}</h3>
+        <h3 class="grey_highlight loud">Abstract </h3>
+        {% if abstract %}
+        <p>
+          {{abstract|pretty_none|escape|linebreaks}}
+        </p>
+        {% else %}
+        <p>Abstract not on file.</p>
+        {% endif %}
+        <h3 class="grey_highlight loud">Investigators </h3>
+        <table>
+          <tr>
+            <th>Name</th>
+            <th>Institution</th>
+          </tr>
+          {% for i in investigators %}
+          <tr>
+            <td>{{i.user|display_name}} {% if i.principal_investigator %} * {% endif %}</td>
+            <td>{{i.user.staticContactInfo.affiliations|display_affiliations}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+        <p>* indicates the PI</p>
+{% endblock %}

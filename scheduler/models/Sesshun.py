@@ -201,7 +201,7 @@ class Sesshun(models.Model):
                (not self.status.complete) and \
                (not self.project.complete)
 
-    def delete(self, force = True):
+    def delete(self, force = False):
         if len(self.period_set.all()) == 0 or force:
             self.allotment.delete()
             super(Sesshun, self).delete()
