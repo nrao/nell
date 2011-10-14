@@ -27,6 +27,7 @@ urlpatterns = patterns(''
    , url(r'^$',                                            home)
    , url(r'^project/([^/]+)/events$',                      events)
    , url(r'^project/([^/]+)/unavailable$',                 dates_not_schedulable)
+   , url(r'^project/([^/]+)/unavailable/details$',         not_schedulable_details)
    , url(r'^project/([^/]+)/public$',                      project_public)
    , url(r'^project/([^/]+)$',                             project)
    , url(r'^project/([^/]+)/notes$',                       project_notes)
