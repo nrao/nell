@@ -276,12 +276,22 @@ def t2str(dt):
         return dt.strftime("%H:%M")
 
 def range_to_days(ranges):
+    """
+    Converts a list of datetime range tuples (start, end) into a list of
+    days completely covered by these dates.
+    Assumes that the datetime ranges have been combined so that there
+    are no overlaps.
+    """
     dates = []
     for rstart, rend in ranges:
-        if rend - rstart > datetime.timedelta(days = 1):
+        # since there are no overlaps between ranges, if this range
+        # doesn't cover a whole day, then no days will be affected
+        if rend - rstart >= datetime.timedelta(days = 1):
+            # okay, how many days will be affected?
             start = rstart
             end   = rstart.replace(hour = 0, minute = 0, second = 0) + datetime.timedelta(days = 1)
-            while start < rend and end < rend:
+            # go through each day to check
+            while start < rend and end <= rend:
                 if end - start >= datetime.timedelta(days = 1):
                     dates.append(start)
                 start = end

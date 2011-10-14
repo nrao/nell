@@ -23,7 +23,7 @@
 from datetime               import datetime
 from nell.utilities         import TimeAgent
 from scheduler.models        import Period, Period_Accounting, Period_Receiver, \
-                                   Period_State, Project, Receiver, Sesshun
+                                   Period_State, Project, Receiver, Sesshun, Window
 from utilities.TimeAgent import d2str, dt2str, strStr2dt, t2str
 from SessionHttpAdapter     import SessionHttpAdapter
 
@@ -81,7 +81,6 @@ class PeriodHttpAdapter (object):
             self.period.accounting.update_from_post(fdata)
 
     def from_post(self, fdata, tz):
-
         # only update the score if something in the period has changed
         update_score = False
         if not update_score:
@@ -135,6 +134,16 @@ class PeriodHttpAdapter (object):
         wId = fdata.get("window_id", None)
         if wId is not None:
             self.period.window_id = wId
+            try:
+                win = Window.objects.get(id = wId)
+            except Window.DoesNotExist:
+                pass
+            else:
+                end = win.last_date()
+                if end and date is None:
+                    self.period.start = datetime(end.year, end.month, end.day)
+                    self.period.duration = 1
+                    
         elif self.period.session.isWindowed() and self.period.window_id is None:
             # just because the window id wasn't specified doesn't mean
             # we don't want to assign this a window:

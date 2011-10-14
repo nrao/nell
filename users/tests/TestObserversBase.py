@@ -70,22 +70,14 @@ class TestObserversBase(BenchTestCase):
         self.uFriend.addRole("Friend")
 
         # create a project
-        self.p = Project()
-        adapter = ProjectHttpAdapter(self.p)
-        adapter.init_from_post({'semester'   : '09C'
-                             , 'type'       : 'science'
-                             , 'pcode'      : 'mike'
-                             , 'name'       : 'mikes awesome project!'
-                             , 'PSC_time'   : '100.0'
-                             , 'total_time' : '100.0'
-                             , 'sem_time'   : '50.0'
-                               })
+        self.p = self.create_project("mike")
 
         # make the first user an investigator on this project
         i =  Investigator(project = self.p
                         , user    = self.u
                          )
         i.save()
+        self.i = i
 
         # assign the friend user to theis project
         self.friend = Friend(project = self.p
@@ -93,18 +85,36 @@ class TestObserversBase(BenchTestCase):
         self.friend.save()
 
         # create a session for the project
-        fdata2 = copy(fdata)
-        fdata2.update({'source_v' : 1.0
-                     , 'source_h' : 1.0
-                     , 'source'   : 'testing'
-                       })
-        self.s = Sesshun()
-        SessionHttpAdapter(self.s).init_from_post(fdata2)
+        self.s = self.create_session()
         self.s.project = self.p
         self.s.save()
 
     def tearDown(self):
         super(TestObserversBase, self).tearDown()
+
+    def create_project(self, pcode):
+        # create a project
+        p = Project()
+        adapter = ProjectHttpAdapter(p)
+        adapter.init_from_post({'semester'   : '09C'
+                             , 'type'       : 'science'
+                             , 'pcode'      : pcode 
+                             , 'name'       : 'mikes awesome project!'
+                             , 'PSC_time'   : '100.0'
+                             , 'total_time' : '100.0'
+                             , 'sem_time'   : '50.0'
+                               })
+        return p
+
+    def create_session(self):
+        fdata2 = copy(fdata)
+        fdata2.update({'source_v' : 1.0
+                     , 'source_h' : 1.0
+                     , 'source'   : 'testing'
+                       })
+        s = Sesshun()
+        SessionHttpAdapter(s).init_from_post(fdata2)
+        return s
 
     def get(self, url, data = {}):
         """

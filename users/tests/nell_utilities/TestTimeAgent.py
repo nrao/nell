@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
 from utilities.SLATimeAgent   import *
 from utilities.TimeAgent      import *
-from datetime       import datetime, time
+from datetime       import datetime, time, timedelta
 import os
 import unittest
 
@@ -91,6 +91,47 @@ class TestTimeAgent(unittest.TestCase):
         self.assertEqual('12B', dt2semester(dt12b2))
         self.assertEqual('12B', dt2semester(dt12b3))
         self.assertEqual('13A', dt2semester(dt13a1))
+
+    def test_range_to_days(self):
+
+        firstDay = datetime(2011, 8, 1)
+        start = datetime(2011, 8, 1, 12) 
+        end   = datetime(2011, 8, 5, 6)
+        r = [(start, end)]
+        days = range_to_days(r)
+        # 8/1 and 8/5 are NOT completely covered by these datetimes,
+        # so they AREN'T in the list
+        exp = [firstDay + timedelta(days = i) for i in range(1,4)]
+        self.assertEquals(exp, days)
+
+        start = datetime(2011, 8, 1) 
+        end   = datetime(2011, 8, 2)
+        r = [(start, end)]
+        days = range_to_days(r)
+        exp = [firstDay]
+        self.assertEquals(exp, days)
+
+        start = datetime(2011, 8, 1) 
+        end   = datetime(2011, 8, 5)
+        r = [(start, end)]
+        days = range_to_days(r)
+        exp = [firstDay + timedelta(days = i) for i in range(0,4)]
+        self.assertEquals(exp, days)
+
+        start = datetime(2011, 8, 1, 6) 
+        end   = datetime(2011, 8, 5)
+        r = [(start, end)]
+        days = range_to_days(r)
+        exp = [firstDay + timedelta(days = i) for i in range(1,4)]
+        self.assertEquals(exp, days)
+
+        start = datetime(2011, 8, 1) 
+        end   = datetime(2011, 8, 5, 6)
+        r = [(start, end)]
+        days = range_to_days(r)
+        exp = [firstDay + timedelta(days = i) for i in range(0,4)]
+        self.assertEquals(exp, days)
+
 
 if __name__ == "__main__":
     unittest.main()
