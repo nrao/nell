@@ -21,3 +21,4 @@
 #       Green Bank, WV 24944-0002 USA
 
 from TestSessionHttpAdapter import TestSessionHttpAdapter
+from TestPeriodHttpAdapter  import TestPeriodHttpAdapter
