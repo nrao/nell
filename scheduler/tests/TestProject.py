@@ -539,6 +539,8 @@ class TestProject(BenchTestCase):
         # Test again
         days = self.project.get_prescheduled_days(start, end)
         self.assertEquals(0, len(days))
+        days = self.project.get_prescheduled_days(start, start + timedelta(days = 1))
+        self.assertEquals(0, len(days))
 
         # Now add a period w/ prescheduled times for whole day.
         fdata = {'session'  : othersesshun.id
@@ -556,6 +558,12 @@ class TestProject(BenchTestCase):
         days = self.project.get_prescheduled_days(start, end)
         self.assertEquals(1, len(days))
         self.assertEquals(days[0], datetime(2009, 6, 1))
+        days = self.project.get_prescheduled_days(start, start + timedelta(days = 1))
+        self.assertEquals(1, len(days))
+        self.assertEquals(days[0], datetime(2009, 6, 1))
+        days = self.project.get_prescheduled_days(start + timedelta(days=1)
+                                                , start + timedelta(days=2))
+        self.assertEquals(0, len(days))
 
         # Now make that whole day prescheduled period part of the project.
         anotherperiod.session = self.sesshun
@@ -563,6 +571,8 @@ class TestProject(BenchTestCase):
 
         # Test again
         days = self.project.get_prescheduled_days(start, end)
+        self.assertEquals(0, len(days))
+        days = self.project.get_prescheduled_days(start, start + timedelta(days = 1))
         self.assertEquals(0, len(days))
 
         # Clean up

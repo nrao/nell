@@ -660,15 +660,56 @@ def dates_not_schedulable(request, *args, **kws):
     pcode     = args[0]
     start     = datetime.fromtimestamp(float(request.GET.get('start', '')))
     end       = datetime.fromtimestamp(float(request.GET.get('end', '')))
+    past      = 'True' == request.GET.get('past', 'False')
     project   = Project.objects.get(pcode = pcode)
     period    = (end - start).days
 
     dates = set([])
     if not project.has_schedulable_sessions():
+        # it doesn't matter, all dates are all unavailable
         dates = dates.union([start + timedelta(days = i) for i in range(period)])
     else:
-        dates = dates.union(project.get_blackout_dates(start, end))
-        dates = dates.union(project.get_receiver_blackout_dates(start, end))
-        dates = dates.union(project.get_prescheduled_days(start, end))
+        # it does depend on the time.  Do we need to bother with the past?
+        if not past:
+            now = datetime.today()
+            today = datetime(now.year, now.month, now.day)
+            s = max(start, today)
+            e = max(end,   today)
+        else:
+            s = start
+            e = end
+        dates = dates.union(project.get_blackout_dates(s, e))
+        dates = dates.union(project.get_receiver_blackout_dates(s, e))
+        # NOTE: use static method optimization
+        #dates = dates.union(project.get_prescheduled_days(s, e))
+        dates = dates.union(Period.get_prescheduled_days(s, e
+             , project = project))
+
 
     return HttpResponse(json.dumps([{"start": d.isoformat()} for d in dates]))
+
+@login_required
+def not_schedulable_details(request, *args, **kws):
+    """
+    Used by monthly project calendar JavaScript to figure out why a
+    project cannot observe on a particular date.
+    """
+    pcode     = args[0]
+    date     = datetime.fromtimestamp(float(request.GET.get('date', '')))
+    project   = Project.objects.get(pcode = pcode)
+    # construct dict of reasons why it's unavailable
+    dct = {"pcode": pcode
+         , "date": date.strftime("%Y-%m-%d")
+         , "no_enabled_sessions" : not project.has_enabled_sessions()
+         , "no_authorized_sessions" : not project.has_authorized_sessions()
+         , "no_incomplete_sessions" : not project.has_incomplete_sessions()
+         , "project_complete" : project.complete
+         , "no_receivers" : project.day_has_rcvrs_unavailable(date) 
+         , "blackedout" : project.day_is_blackedout(date) 
+         # NOTE: use static method optimization
+         #, "prescheduled" : project.day_is_prescheduled(date) 
+         , "prescheduled" : Period.day_is_prescheduled(date
+                                                     , project = project) 
+          }
+    return HttpResponse(json.dumps(dct))
+    

@@ -685,6 +685,117 @@ class TestUtilities(BenchTestCase):
         #self.assertEqual(1, len(mas))
         #self.assertEqual("Repeat Daily 1", mas[0].subject)
 
+    def test_get_gbt_schedule_events_elective_2(self):
+
+        # first, make sure an empty schedule looks empty
+        start = datetime(2011, 9, 25)
+        end   = datetime(2011, 10, 1)
+        timezone = 'UTC'
+        exp = self.assert_empty_schedule(start, end)
+
+        # create the Maintenance Project
+        proj = create_maintenance_project()
+
+        #week = datetime(2011, 04, 11)
+        per_data = ((datetime(2011, 9, 27, 8), 8),
+                    (datetime(2011, 9, 28, 8), 8),
+                    (datetime(2011, 9, 29, 8), 8),
+                    (datetime(2011, 9, 30, 8), 8))
+        me = create_maintenance_elective(per_data)    
+
+        # need to call this to create the first maint. group
+        sch = get_gbt_schedule_events(start, end, timezone)
+        mag = Maintenance_Activity_Group.objects.all()[0]
+
+        # now create simple events
+        ma1 = create_maintenance_activity()
+        ma1.set_start(datetime(2011, 9, 26, 10), 'UTC')
+        ma1.group = mag
+        ma1.save()
+        ma2 = create_maintenance_activity()
+        ma2.set_start(datetime(2011, 9, 26, 11), 'UTC')
+        ma2.subject = "ma2"
+        ma2.group = mag
+        ma2.save()
+    
+        # now publish the period on Wed (9/28)!
+        p = me.periods.all().order_by("start")[1]
+        p.publish()
+        p.save()
+
+        # see what it looks like
+        sch = get_gbt_schedule_events(start, end, timezone)
+        # now there's nothing on monday, but there is on Wed. 
+        blankDays = [0,1,2,4,5]
+        for i in blankDays: 
+            self.assertEqual(exp[i], sch[i])
+        # check out Wed.    
+        calEvents = sch[3][1]
+        self.assertEqual(1,len(calEvents))
+        self.assertEqual('CalEventFixedMaintenance', calEvents[0].__class__.__name__)
+        mag = calEvents[0].contained
+        self.assertEqual("1 -- 2011-09-26; (2011-09-28); A; active; ma2, Test Maintenance Activity", mag.__unicode__())
+        mas = mag.get_maintenance_activity_set()
+        self.assertEqual(2, len(mas))
+        ma = mas[0]
+        self.assertEqual("Test Maintenance Activity", ma.subject)
+        self.assertEqual(False, ma.is_repeat_activity())
+        self.assertEqual(False, ma.is_repeat_template())
+        ma = mas[1]
+        self.assertEqual("ma2", ma.subject)
+        self.assertEqual(False, ma.is_repeat_activity())
+        self.assertEqual(False, ma.is_repeat_template())
+
+        # now, schedule an emergency maint. activity for Tuesday.
+        ms = create_maintenance_sesshun()
+        ms.name = "Emergency Maintenance"
+        ms.session_type = Session_Type.objects.get(type = "fixed")
+        ms.save()
+   
+        pa = Period_Accounting(scheduled = 1.0)
+        pa.save()
+        scheduled = Period_State.get_state("S")
+        p = Period(session = ms
+                 , start = datetime(2011, 9, 27, 10)
+                 , duration = 1.0
+                 , state = scheduled
+                 , accounting = pa
+                  )
+        p.save()
+
+        # see what it looks like
+        sch = get_gbt_schedule_events(start, end, timezone)
+        # now there's nothing on monday, but there is on Wed. 
+        blankDays = [0,1,4,5]
+        for i in blankDays: 
+            self.assertEqual(exp[i], sch[i])
+        # TBF: now check out this Feature!  The activites have 
+        # moved from Wed. to Tuesday.
+        # check out Tues.    
+        calEvents = sch[2][1]
+        self.assertEqual(1,len(calEvents))
+        self.assertEqual('CalEventFixedMaintenance', calEvents[0].__class__.__name__)
+        mag = calEvents[0].contained
+        self.assertEqual("1 -- 2011-09-26; (2011-09-27); A; active; ma2, Test Maintenance Activity", mag.__unicode__())
+        mas = mag.get_maintenance_activity_set()
+        self.assertEqual(2, len(mas))
+        ma = mas[0]
+        self.assertEqual("Test Maintenance Activity", ma.subject)
+        self.assertEqual(False, ma.is_repeat_activity())
+        self.assertEqual(False, ma.is_repeat_template())
+        ma = mas[1]
+        self.assertEqual("ma2", ma.subject)
+        self.assertEqual(False, ma.is_repeat_activity())
+        self.assertEqual(False, ma.is_repeat_template())
+        # check out Wed.
+        calEvents = sch[3][1]
+        self.assertEqual(1,len(calEvents))
+        self.assertEqual('CalEventFixedMaintenance', calEvents[0].__class__.__name__)
+        mag = calEvents[0].contained
+        self.assertEqual("2 -- 2011-09-26; (2011-09-28); B; active; Empty", mag.__unicode__())
+        mas = mag.get_maintenance_activity_set()
+        self.assertEqual(0, len(mas))
+
 
     def assert_empty_schedule(self, start, end):
         timezone = 'UTC'
