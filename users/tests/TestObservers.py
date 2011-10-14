@@ -515,12 +515,11 @@ class TestObservers(TestObserversBase):
         self.i.save()
         self.u.sanctioned = True
         self.u.save()
-        b = Blackout(user = self.u
-                   , start_date = start + timedelta(days = 1)
-                   , end_date   = start + timedelta(days = 7)
-                   , repeat = Repeat.objects.all()[0]
+        b = Blackout(user = self.u)
+        b.initialize(tz = 'UTC',
+                     start = start + timedelta(days = 1),
+                     end   = start + timedelta(days = 7)
                     )
-        b.save()            
        
         # see how this messes things up
         response = self.get('/project/%s/unavailable' % self.p.pcode, data)
