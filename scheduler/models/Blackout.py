@@ -305,7 +305,8 @@ class Blackout(models.Model):
     def getUntilTZ(self, tz = None):
         if not tz:
             tz = self.timeZone
-        return tz_to_tz(self.getUntil(), 'UTC', tz)
+        until = self.getUntil()
+        return tz_to_tz(until, 'UTC', tz) if until is not None else until
 
     def getRepeat(self):
         repeat = self.blackout_sequence_set.order_by("start_date")[0].repeat.repeat
