@@ -81,7 +81,8 @@ class IcalMap:
         self.cal.add('calscale', 'GREGORIAN')
 
         # this calendar only displays Scheduled periods
-        periods = [p for p in Period.objects.all() if p.isScheduled()]
+        periods = [p for p in Period.objects.all().order_by("start") \
+            if p.isScheduled()]
 
         if user: # Personalize this calendar for somebody!
             periods = [p for p in periods \
