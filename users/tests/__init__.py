@@ -30,6 +30,7 @@ from TestElectiveAlerts           import TestElectiveAlerts
 from TestFixedAlerts              import TestFixedAlerts
 from TestFixedAlertNotifier       import TestFixedAlertNotifier
 from TestIcalAntioch              import TestIcalAntioch
+from TestIcalMap                  import TestIcalMap
 from TestMaintenanceActivity      import TestMaintenanceActivity
 from TestMaintenanceActivityGroup import TestMaintenanceActivityGroup
 from TestObservers                import TestObservers
