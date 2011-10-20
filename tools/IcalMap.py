@@ -81,14 +81,13 @@ class IcalMap:
         self.cal.add('calscale', 'GREGORIAN')
 
         # this calendar only displays Scheduled periods
-        periods = [p for p in Period.objects.all().order_by("start") \
-            if p.isScheduled()]
-
         if user: # Personalize this calendar for somebody!
-            periods = [p for p in periods \
-                       if p.session.project.isInvestigator(user)]
+            periods = sorted([p for p in user.getPeriods() \
+                if p.isScheduled()])
             reservations = user.getReservations()
         else:
+            periods = [p for p in Period.objects.all().order_by("start") \
+                if p.isScheduled()]
             reservations = []
 
         for p in periods:
