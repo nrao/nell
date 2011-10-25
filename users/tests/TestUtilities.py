@@ -498,7 +498,7 @@ class TestUtilities(BenchTestCase):
         # with regular maint. on thursday, unscheduled on wed.
         ps = []
         # twice a week for three weeks
-        dates = [(9, 28, mu), (9, 29, ms)] #, (10, 5), (10, 6), (10, 12), (10, 13)]
+        dates = [(9, 26, ms), (9, 28, mu), (9, 29, ms)]
         for month, day, sess in dates:
             pa = Period_Accounting(scheduled = 0.0)
             pa.save()
@@ -514,7 +514,7 @@ class TestUtilities(BenchTestCase):
 
         # check out the schedule
         sch = get_gbt_schedule_events(start, end, timezone)
-        nonBlankDays = [3,4] 
+        nonBlankDays = [1,3,4] 
         blankDays = [i for i in range(0,7) if i not in nonBlankDays]
         for i in blankDays:
             self.assertEqual(exp[i], sch[i])
@@ -535,7 +535,7 @@ class TestUtilities(BenchTestCase):
         ma = create_maintenance_activity()
         ma.subject = "Repeat Daily 1"
         ma.group = mags[0] # the first one from the list above
-        ma.set_start(datetime(2011, 9, 27, 10), 'UTC')
+        ma.set_start(datetime(2011, 9, 26, 10), 'UTC')
         ma.repeat_interval = 1
         ma.repeat_end = datetime(2011, 10, 15, 10)
         ma.save()
@@ -543,8 +543,6 @@ class TestUtilities(BenchTestCase):
         # it should only show up on the regular maint. day
         # check out the schedule
         sch = get_gbt_schedule_events(start, end, timezone)
-        nonBlankDays = [3,4] 
-        blankDays = [i for i in range(0,7) if i not in nonBlankDays]
         for i in blankDays:
             self.assertEqual(exp[i], sch[i])
 
@@ -557,7 +555,7 @@ class TestUtilities(BenchTestCase):
             mag = calEvents[0].contained
             mas = mag.get_maintenance_activity_set()
             if day == 3:
-                # unscheduled day
+                # unscheduled day!
                 self.assertEqual(0, len(mas))
             else:
                 self.assertEquals(1, len(mas))   
