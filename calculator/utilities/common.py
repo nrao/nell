@@ -134,7 +134,7 @@ def sanitize(result):
     if v is None:
         result['value'] = ''
     # special handling of time formatting    
-    if v is not None and (t == 'time' or t == 't_tot'):
+    if v is not None and (t == 'time' or t == 't_tot' or u == 's'):
         time = float(v)
         if time > 3600:
             hr = time / 3600.
@@ -148,6 +148,10 @@ def sanitize(result):
             sec = (mi - int(mi)) * 60
             mi  = int(mi)
             result['value'] = "00:%02d:%04.1f" % (mi, sec)
+        elif time >= 1:
+            result['value'] = "%.1f" % time
+        elif time <= 0.01:
+            result['value'] = "%4.3g" % time
 
     return result
 
