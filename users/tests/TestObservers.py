@@ -442,14 +442,21 @@ class TestObservers(TestObserversBase):
         # now see what we get
         response = self.get('/project/%s/events' % self.p.pcode, data)
         self.failUnlessEqual(response.status_code, 200)
-        exp = [{"className": "blackout", "start": "2011-08-03T00:00:00+00:00", "end": "2011-08-08T00:00:00+00:00", "id": 1, "title": "Dana Balser: blackout"}
-             , {"start": "2011-08-04T00:00:00+00:00", "end": "2011-08-04T03:00:00", "id": 2, "title": "Observing Low Frequency With No RFI"}
-             , {"className": "semester", "start": "2012-02-01T00:00:00", "id": 3, "title": "Start of 12A"}
-             , {"className": "semester", "start": "2012-08-01T00:00:00", "id": 4, "title": "Start of 12B"}
+        exp = [{"className": "blackout", "start": "2011-08-03T00:00:00+00:00", "end": "2011-08-08T00:00:00+00:00", "title": "Dana Balser: blackout"}
+             , {"start": "2011-08-04T00:00:00+00:00", "end": "2011-08-04T03:00:00", "title": "Observing Low Frequency With No RFI"}
+             , {"className": "semester", "start": "2012-02-01T00:00:00", "title": "Start of 12A"}
+             , {"className": "semester", "start": "2012-08-01T00:00:00", "title": "Start of 12B"}
              ]
 
         result = eval(response.content)
-        self.assertEquals(result, exp)
+        # now, since we don't have control of reservations, if there is a reservation, remove it
+        filteredResult = [r for r in result if not r.has_key('className') or r['className'] != 'reservation']
+        # we have to remove the id as well, since there's no guarantee what this will be
+        for r in filteredResult:
+            r.pop('id')
+        self.assertEquals(len(filteredResult), len(exp))
+        for r in filteredResult:
+            self.assertTrue(r in exp)
 
     def test_dates_not_schedulable(self):
 
