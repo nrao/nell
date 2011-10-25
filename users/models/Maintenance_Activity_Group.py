@@ -149,14 +149,109 @@ class Maintenance_Activity_Group(models.Model):
     ######################################################################
     # The model already has a 'maintenance_activity_set' attribute
     # wich can be used to access the Maintenance_Activity objects
-    # associated with this group.  However, when a group is assigned
-    # to a scheduled period--i.e. goes from 'floating' to 'fixed',
-    # with a firm date and time--is is then possible to go through the
-    # repeat templates to see if any should be instantiated for the
-    # date of the scheduled period.  If so this function does this and
-    # folds them into the existing maintenance activity set and
-    # returns it.
-    ######################################################################
+    # associated with this group.  This code adds instances of repeat
+    # activities to this set based on any repeat templates that are
+    # currently active.  Repeats are added to both published and
+    # unpublished maintenance activity groups.  The following lays out
+    # the heuristics.
+    #
+    # We start out with an example of what we want, based on the following week:
+    #
+    #                    Week
+    #   Monday    Tuedsay    Wednestay  Thurdsay   Friday     Saturday   Sunday
+    # |----------|----------|----------|----------|----------|----------|----------|
+    #     'B'                 'x'                   'Ap'
+    #     'C'
+    #
+    # 'B', 'C': floating unpublished
+    # 'x'     : fixed published
+    # 'Ap'    : floating published
+    #
+    # Note: when 'add'ing below the assumption is that it first checks
+    # to ensure this hasn't already been done.
+    #
+    # Assigning repeats.  Here is what we want to do:
+    #
+    #    - Daily:   * add one to all '*p', and to 'x' if not 'Unscheduled Maintenance'.
+    #                 Ensure only one per day.
+    #               * add one each to 'A' and 'B'.
+    #               * done.
+    #
+    #    - Weekly:  * See if any 'x' or '*p' fits the bill.
+    #                 - Yes:  done.
+    #                 - No: continue.
+    #               * affix to 'A'
+    #               * done.
+    #
+    #    - Monthly: * See if this week is due.
+    #                 - Yes: Do as weekly.
+    #                 - No: done.
+    #
+    # From the above it can be seen that we don't really deal in
+    # periods here, only in maintenance activity groups.  There are 5
+    # kinds of maintenance activity groups:
+    #
+    #    * floating unpublished
+    #    * fixed unpublished
+    #    * floating published
+    #    * fixed published
+    #    * fixed published that are emergency.
+    #
+    # Of those we are only interested in three:
+    #
+    #    * floating unpublished
+    #    * fixed published, except emergency
+    #    * floating published
+    #
+    # These can be reduced to two groups of mags by query:
+    #
+    #    * Ux: maintenance activity groups that have no period (remaining floating)
+    #    * P:  maintenance activity groups with periods that don't belong
+    #          to session "Uncheduled Maintenance".
+    #
+    # This reduces all the above to:
+    #
+    #         Week
+    #   Monday    Tuedsay    Wednestay  Thurdsay   Friday     Saturday   Sunday
+    # |----------|----------|----------|----------|----------|----------|----------|
+    #     'U1'                 'P'                   'P'
+    #     'U2'
+    #
+    # This function is done from the perspective of the MAG.
+    # Instantiating a template is therefore is like claiming it.  But
+    # before claiming it we check to make sure no other MAG has a
+    # better claim.. From the perspective of the MAG, assigning
+    # repeats becomes:
+    #
+    #    - Daily:   * Is self a P?
+    #                   - Yes: Is there another P today?
+    #                            - Yes: Is other P more suitable?
+    #                                     -Yes: continue;
+    #                            - No: add one to self
+    #                   - No: Is self a 'U'?
+    #                           - Yes: add one to self
+    #               * done.
+    #
+    #    - Weekly:  * See if any other 'P' fits the bill.
+    #                 - Yes: done.
+    #               * If self a 'P', is self suitable?
+    #                 - Yes: add, and done.
+    #                 - No: continue
+    #               * If self a 'U', see if highest ranking 'U'
+    #                 - Yes : add the repeat activity.
+    #               * done.
+    #
+    #    - Monthly: * See if this week is due.
+    #                 - Yes: Do as weekly.
+    #                 - No: done.
+    #
+    # There is one final step, which is to clean up after the 'U*'
+    # become published, in case two or more are published to the same
+    # day as each other or another maintenance activity group which
+    # has already received a repeat.  Look for MAGs on the same day.
+    # If found, ensure that a particular repeat activity only shows up
+    # on the appropriate MAG.
+    ######################################################################    
 
     def get_maintenance_activity_set(self):
         """
@@ -164,11 +259,54 @@ class Maintenance_Activity_Group(models.Model):
         group's duration, in time order.
         """
 
-        if not self.period or self.period.session.name == "Unscheduled Maintenance":
+        unscheduled_maintenance = "Unscheduled Maintenance"
+
+        def get_templates(end):
+            repeatQ = models.Q(deleted = False) \
+                & (models.Q(repeat_interval = 1) \
+                       | models.Q(repeat_interval = 7) \
+                       | models.Q(repeat_interval = 30)) \
+                       & (models.Q(_start__lte = end) \
+                              & models.Q(repeat_end__gte = end))
+            dbrmas = Maintenance_Activity.objects.filter(repeatQ)
+            return [p for p in dbrmas]
+
+        def is_P(mag):
+            return True if mag.period and \
+                mag.period.session.name != unscheduled_maintenance
+
+        def is_U(mag):
+            return True if not mag.period
+
+        def is_highest_U(mag):
+            if not is_U(mag):
+                return False
+            
+            week = mag.week
+            mags = Maintenance_Activity_Group.objects.filter(week = week)\
+                .filter(period = None).order_by("rank")
+            return mag == mags[0]
+            
+
+
+        Us = None
+        Ps = None
+        
+    def get_maintenance_activity_set2(self):
+        """
+        Returns a set of maintenance activities occuring during this
+        group's duration, in time order.
+        """
+
+        unscheduled_maintenance = "Unscheduled Maintenance"
+        
+        if not self.period or self.period.session.name == unscheduled_maintenance:
             mas = self.maintenance_activity_set.all()
         else:
-            period = self.period
             # To handle repeat maintenance activity objects:
+            period = self.period
+
+            # Get the templates:
             repeatQ = models.Q(deleted = False) \
                 & (models.Q(repeat_interval = 1) \
                        | models.Q(repeat_interval = 7) \
@@ -176,13 +314,18 @@ class Maintenance_Activity_Group(models.Model):
                        & (models.Q(_start__lte = period.end()) \
                               & models.Q(repeat_end__gte = period.end()))
 
+            # Get the time period
             start_endQ = models.Q(start__gte = period.start) \
                 & models.Q(start__lte = period.end())
             today = TimeAgent.truncateDt(period.start)
+            # Get other groups today.  They will be used below to see
+            # if any of them is a better fit.  We must exclude any
+            # possible emergency maintenance periods:
             other_groups_today = Maintenance_Activity_Group.objects\
                 .filter(period__start__gte = today)\
                 .filter(period__start__lt = today + timedelta(1))\
-                .exclude(id = self.id)
+                .exclude(id = self.id) \
+                .exclude(period__session__name = unscheduled_maintenance)
 
             groupQ  = models.Q(group = self)
             dbmas   = Maintenance_Activity.objects.filter(groupQ)
