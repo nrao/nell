@@ -36,7 +36,7 @@ class Project(models.Model):
     semester         = models.ForeignKey(Semester)
     project_type     = models.ForeignKey(Project_Type)
     allotments       = models.ManyToManyField(Allotment, through = "Project_Allotment")
-    pcode            = models.CharField(max_length = 32)
+    pcode            = models.CharField(max_length = 32, unique = True)
     name             = models.CharField(max_length = 150)
     thesis           = models.BooleanField()
     complete         = models.BooleanField()
