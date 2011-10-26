@@ -455,6 +455,11 @@ table.fc-border-separate {
 	padding: 2px 2px 1px; /* distance between events and day edges */
 	}
 	
+.fc-grid .fc-unavailable {
+    /* background-color : #0F0; */
+    background : #999999;
+    }
+
 /* event styles */
 	
 .fc-grid .fc-event-time {

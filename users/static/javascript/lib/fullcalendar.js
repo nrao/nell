@@ -148,7 +148,15 @@ $.fn.fullCalendar = function(options) {
 		eventSources.push(options.events);
 		delete options.events;
 	}
-	
+
+    // in practice there will just be one source for the unavailable
+    // dates - the nell server.  But we want this to behave like events.
+	var unavailableSources = options.unavailableSources || [];
+	delete options.unavailableSources;
+	if (options.unavailable) {
+		unavailableSources.push(options.unavailable);
+		delete options.unavailable;
+	}
 
 	options = $.extend(true, {},
 		defaults,
@@ -159,7 +167,7 @@ $.fn.fullCalendar = function(options) {
 	
 	this.each(function(i, _element) {
 		var element = $(_element);
-		var calendar = new Calendar(element, options, eventSources);
+		var calendar = new Calendar(element, options, eventSources, unavailableSources);
 		element.data('fullCalendar', calendar); // TODO: look into memory leak implications
 		calendar.render();
 	});
@@ -178,7 +186,7 @@ function setDefaults(d) {
 
 
  
-function Calendar(element, options, eventSources) {
+function Calendar(element, options, eventSources, unavailableSources) {
 	var t = this;
 	
 	
@@ -206,9 +214,11 @@ function Calendar(element, options, eventSources) {
 	t.getView = getView;
 	t.option = option;
 	t.trigger = trigger;
-	
+	t.unavailableDates = unavailableDates;
 	
 	// imports
+	UnavailableManager.call(t, options, unavailableSources);
+    var fetchUnavailable = t.fetchUnavailable;
 	EventManager.call(t, options, eventSources);
 	var isFetchNeeded = t.isFetchNeeded;
 	var fetchEvents = t.fetchEvents;
@@ -230,7 +240,7 @@ function Calendar(element, options, eventSources) {
 	var date = new Date();
 	var events = [];
 	var _dragElement;
-	
+    var unavailableDates = [];	
 	
 	
 	/* Main Rendering
@@ -502,6 +512,7 @@ function Calendar(element, options, eventSources) {
 	
 	function refetchEvents() {
 		fetchEvents(currentView.visStart, currentView.visEnd); // will call reportEvents
+        fetchUnavailable(currentView.visStart, currentView.visEnd);
 	}
 	
 	
@@ -849,6 +860,156 @@ var ajaxDefaults = {
 
 var eventGUID = 1;
 
+// A collection of functions for getting the unavailable dates
+// from the server.
+function UnavailableManager(options, _sources) {
+	var t = this;
+	
+	// exports
+	t.addUnavailableSource = addUnavailableSource;
+	t.fetchUnavailable = fetchUnavailable;
+    /*
+	t.isFetchNeeded = isFetchNeeded;
+	t.removeEventSource = removeEventSource;
+	t.updateEvent = updateEvent;
+	t.renderEvent = renderEvent;
+	t.removeEvents = removeEvents;
+	t.clientEvents = clientEvents;
+	t.normalizeEvent = normalizeEvent;
+	*/
+	
+	// imports
+	var trigger = t.trigger;
+	var getView = t.getView;
+	//var reportEvents = t.reportEvents;
+    var unavailableDates = t.unavailableDates
+	
+	
+	// locals
+	var stickySource = { events: [] };
+	var sources = [ stickySource ];
+	var rangeStart, rangeEnd;
+	//var currentFetchID = 0;
+	//var pendingSourceCnt = 0;
+	var loadingLevel = 0;
+	//var cache = [];
+	
+	
+	for (var i=0; i<_sources.length; i++) {
+		_addUnavailableSource(_sources[i]);
+	}
+
+	function fetchUnavailable(start, end) {
+		rangeStart = start;
+		rangeEnd = end;
+		//cache = [];
+        unavailableDates  = [];
+		var len = sources.length;
+		for (var i=0; i<len; i++) {
+			fetchUnavailableSource(sources[i]);
+		}
+	}
+
+	function fetchUnavailableSource(source) {
+		_fetchUnavailableSource(source, function(dates) {
+                // here we define our callback.
+				if (dates) {
+                    // parse the results into our list of date strings
+					for (var i=0; i<dates.length; i++) {
+						dates[i].source = source;
+                        unavailableDates[i] = dates[i].start;
+					}
+				}
+                // now that we've got dates, update the calendar UI
+                var v = t.getView()
+                v.markUnavailableDays(unavailableDates);
+		});
+	}
+	
+    // here we make the actual JSON request for the unavailable dates
+    function _fetchUnavailableSource(source, callback) {
+
+			var url = source.url;
+			if (url) {
+				var success = source.success;
+				var error = source.error;
+				var complete = source.complete;
+				var data = $.extend({}, source.data || {});
+				var startParam = firstDefined(source.startParam, options.startParam);
+				var endParam = firstDefined(source.endParam, options.endParam);
+				if (startParam) {
+					data[startParam] = Math.round(+rangeStart / 1000);
+				}
+				if (endParam) {
+					data[endParam] = Math.round(+rangeEnd / 1000);
+				}
+                // we're loading!
+				pushLoading();
+                // here we actually make the JSON request to get the
+                // unavailable dates
+				$.ajax($.extend({}, ajaxDefaults, source, {
+					data: data,
+					success: function(events) {
+						events = events || [];
+						var res = applyAll(success, this, arguments);
+						if ($.isArray(res)) {
+							events = res;
+						}
+						callback(events);  // got the dates, now what?
+					},
+					error: function() {
+						applyAll(error, this, arguments);
+						callback();
+					},
+					complete: function() {
+						applyAll(complete, this, arguments);
+                        // done loading!
+						popLoading();
+					}
+				}));    
+        }
+    }
+
+    // takes the source (ex: a url which will give us our unavailable
+    // dates) and then uses that to actually get the dates.
+	function addUnavailableSource(source) {
+		source = _addUnavailableSource(source);
+		if (source) {
+			fetchUnavailableSource(source); 
+		}
+	}
+	
+	function _addUnavailableSource(source) {
+		if ($.isFunction(source) || $.isArray(source)) {
+			source = { events: source };
+		}
+		else if (typeof source == 'string') {
+			source = { url: source };
+		}
+		if (typeof source == 'object') {
+			//normalizeSource(source);
+			sources.push(source);
+			return source;
+		}
+	}
+
+	/* Loading State
+	-----------------------------------------------------------------------------*/
+	
+	
+	function pushLoading() {
+		if (!loadingLevel++) {
+			trigger('loading', null, true);
+		}
+	}
+	
+	
+	function popLoading() {
+		if (!--loadingLevel) {
+			trigger('loading', null, false);
+		}
+	}
+}
 
 function EventManager(options, _sources) {
 	var t = this;
@@ -928,7 +1089,7 @@ function EventManager(options, _sources) {
 		});
 	}
 	
-	
+
 	function _fetchEventSource(source, callback) {
 		var i;
 		var fetchers = fc.sourceFetchers;
@@ -1006,7 +1167,6 @@ function EventManager(options, _sources) {
 	/* Sources
 	-----------------------------------------------------------------------------*/
 	
-
 	function addEventSource(source) {
 		source = _addEventSource(source);
 		if (source) {
@@ -2126,6 +2286,8 @@ function BasicView(element, calendar, viewName) {
 	t.getColCnt = function() { return colCnt };
 	t.getColWidth = function() { return colWidth };
 	t.getDaySegmentContainer = function() { return daySegmentContainer };
+    t.markUnavailableDays = markUnavailableDays;
+
 	
 	
 	// imports
@@ -2140,6 +2302,7 @@ function BasicView(element, calendar, viewName) {
 	var clearOverlays = t.clearOverlays;
 	var daySelectionMousedown = t.daySelectionMousedown;
 	var formatDate = calendar.formatDate;
+    var unavailableDates = t.unavailableDates;
 	
 	
 	// locals
@@ -2272,8 +2435,43 @@ function BasicView(element, calendar, viewName) {
 				.appendTo(element);
 	}
 	
-	
-	
+
+    // Given a list of date strings, see if any of the days currently
+    // in the calendar match one of these, and if so mark the day
+    // accordingly.
+    function markUnavailableDays(days) {
+        var cell;
+        var date;
+        var dates = []
+        if (days) {
+            // convert list of strings to list of dates
+            for (var i=0; i<days.length; i++) {
+                dates[i] = parseDate(days[i]);
+            }
+            // for each day in calendar, see if we need to gray it out
+		    bodyCells.each(function(i, _cell) {
+			    cell = $(_cell);
+			    date = indexDate(i);                
+                if (hasDate(date, dates)) {
+                    cell.addClass('fc-unavailable');
+                } else {
+                    cell.removeClass('fc-unavailable');
+                }
+            });    
+        }
+    }
+    
+    // why won't $.inArray work?
+    function hasDate(date, dates) {
+        for (var i=0; i<dates.length; i++) {
+            var thisDate = dates[i];
+            if (+date == +thisDate) {
+                return 1; // found it!
+            }
+        }
+        return 0; // couldn't find it!
+    }
+
 	function updateCells(firstTime) {
 		var dowDirty = firstTime || rowCnt == 1; // could the cells' day-of-weeks need updating?
 		var month = t.start.getMonth();
@@ -2291,6 +2489,7 @@ function BasicView(element, calendar, viewName) {
 			});
 		}
 		
+        var l = bodyCells.length;
 		bodyCells.each(function(i, _cell) {
 			cell = $(_cell);
 			date = indexDate(i);
@@ -2308,6 +2507,16 @@ function BasicView(element, calendar, viewName) {
 			if (dowDirty) {
 				setDayID(cell, date);
 			}
+            /*
+            // I thought this would be the place to do this,
+            // but unavailableDates is always undefined.
+            if (unavailableDates) {
+                var gray = $.inArray(date.getDate(), unavailableDates);
+                if (gray) {
+                    cell.addClass('fc-unavailable');
+                }
+            }
+            */
 		});
 		
 		bodyRows.each(function(i, _row) {
