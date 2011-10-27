@@ -1,7 +1,7 @@
 $(document).ready(function() {
 	$('#calendar').fullCalendar({
         draggable: false,
-        timeFormat: 'H:i',
+        timeFormat: 'H:mm',
         events: event_url,
         unavailable: unavailable_url,
         // Clicking on a day provides feedback as to why that day
