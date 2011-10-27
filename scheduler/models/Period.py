@@ -112,6 +112,7 @@ class Period(models.Model):
               , "title": "".join(["Observing ", self.session.name])
               , "start": adjustDateTimeTz(tz, self.start).isoformat() if tz is not None else self.start.isoformat()
               , "end"  : end.isoformat()
+              , "className" : "period"
         }
 
     def get_rcvr_ranges(self):
