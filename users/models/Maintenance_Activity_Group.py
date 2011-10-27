@@ -105,7 +105,8 @@ class Maintenance_Activity_Group(models.Model):
         app_label = "users"
 
     def __unicode__(self):
-        sr = "%i -- %s; (%s); %s; %s; " % (self.id, self.week.date(), self.get_start().date(),
+        sr = "%i -- %s; (%s); %s; %s; " % (self.id, self.week.date() if self.week else '',
+                                           self.get_start().date(),
                                            self.rank, "deleted" if self.deleted else "active")
 
         if self.maintenance_activity_set.count():
@@ -119,7 +120,7 @@ class Maintenance_Activity_Group(models.Model):
         Returns the start-of-week date of the week this activity will
         take place in.
         """
-        return TimeAgent.truncateDt(self.week)
+        return TimeAgent.truncateDt(self.week) if self.week else None
 
     def get_start(self, tzname = None):
         """
@@ -163,7 +164,7 @@ class Maintenance_Activity_Group(models.Model):
         group's duration, in time order.
         """
 
-        if not self.period:
+        if not self.period or self.period.session.name == "Unscheduled Maintenance":
             mas = self.maintenance_activity_set.all()
         else:
             period = self.period
@@ -280,9 +281,25 @@ class Maintenance_Activity_Group(models.Model):
         Returns a list of maintenance activity groups for the week
         starting on 'utc_day'.  This list will be sorted by rank, and
         each group will have been assigned to the correct maintenance
-        period, should any of those be scheduled.
+        period, should any of those be scheduled.  Those groups with
+        rank 'x' are fixed, already have periods, and do not get
+        sorted by rank.
         """
-        utc_day = TimeAgent.truncateDt(utc_day)
+
+        mags = []
+
+        pmags = Maintenance_Activity_Group._get_fixed_mags(utc_day)
+        emags = Maintenance_Activity_Group._get_elective_mags(utc_day)
+
+        mags = emags + pmags # electives first, then fixed.
+
+        if not include_deleted:
+            mags = [m for m in mags if not m.deleted]
+
+        return mags
+
+    @staticmethod
+    def _get_fixed_mags(utc_day):
         mags = []
 
         try:
@@ -292,9 +309,43 @@ class Maintenance_Activity_Group(models.Model):
                 .filter(session__observing_type__type = "maintenance")\
                 .filter(start__gte = utc_day)\
                 .filter(start__lt = utc_day + delta)\
-                .filter(elective = None)\
-                .exclude(state__abbreviation = 'D')
+                .filter(session__session_type__type = 'fixed')\
+                .filter(state__name = "Scheduled")
+            
+            for i in mp:
+                if i.maintenance_activity_group_set.count() == 0:
+                    mag = Maintenance_Activity_Group()
+                    mag.deleted = False
+                    mag.rank = 'x'
+                    mag.week = utc_day
+                    i.maintenance_activity_group_set.add(mag)
+                else:
+                    mag = i.maintenance_activity_group_set.all()[0]
+                    # for backwards compatibility, mark groups
+                    # belonging to fixed periods with rank 'x' so that
+                    # they are not picked up by _get_elective_mags().
+                    if mag.rank != 'x':
+                        mag.rank = 'x'
+                        mag.save()
 
+                    if not mag.week:
+                        mag.week = utc_day
+                        mag.save()
+
+                mags.append(mag)
+                mags.sort(key = lambda x: x.get_start())
+        except:
+            if settings.DEBUG == True:
+                printException(formatExceptionInfo())
+
+        return mags
+
+    @staticmethod
+    def _get_elective_mags(utc_day):
+        mags = []
+
+        try:
+            delta = timedelta(days = 7)
             # get maintenance electives for the date span
             me = Elective.objects\
                 .filter(session__observing_type__type = 'maintenance')\
@@ -305,19 +356,30 @@ class Maintenance_Activity_Group(models.Model):
             # don't care about elective with all deleted periods.
             me = [e for e in me if e.periods.count() > e.deletedPeriods().count()]
 
-            # need as many groups as there are maintenance days
-            # (floating or fixed).  First, count up the maintenance
-            # days, then the groups.  If not equal, we must either
-            # truncate the groups or add to them.  Finally any groups
-            # within the tally must be marked not deleted (in case
-            # they were deleted earlier), and any outside the tally
-            # must be marked deleted.
-            maintenance_periods = mp.count() + len(me)
+            # need as many floating groups as there are elective
+            # maintenance days.  First, count up the maintenance days,
+            # then the groups.  If not equal, we must either truncate
+            # the groups or add to them.  Finally any groups within
+            # the tally must be marked not deleted (in case they were
+            # deleted earlier), and any outside the tally must be
+            # marked deleted.
+            maintenance_periods = len(me)
             dbmags = Maintenance_Activity_Group.objects\
                 .filter(week__gte = utc_day)\
                 .filter(week__lt = utc_day + delta)\
+                .exclude(rank = 'x') \
                 .order_by("rank")
             mags = [mag for mag in dbmags]
+
+            # these are all ordered by rank now, relabel rank in case
+            # it doesn't start with 'A' ('B', 'C', etc.), or there is
+            # a gap ('A', 'B', 'D', etc.) (would occur if manually
+            # deleted from database, etc., and leaving old rank might
+            # confuse users.)
+            for i in range(0, len(mags)):
+                if mags[i].rank != chr(65 + i):
+                    mags[i].rank = chr(65 + i)
+                    mags[i].save()
 
             if maintenance_periods != len(mags):
                 if len(mags) > maintenance_periods:
@@ -341,16 +403,10 @@ class Maintenance_Activity_Group(models.Model):
                     mag.deleted = False
                     mag.save()
 
-            # now make sure scheduled periods/electives get assigned
-            # the correct group.
+            # now make sure scheduled electives get assigned the
+            # correct group.
             sched_periods = []
 
-            # start with non-elective periods
-            for i in mp:
-                if i.isScheduled():
-                    sched_periods.append(i)
-
-            # add any elective's scheduled periods
             for i in me:
                 sched_periods += i.periodsByState('S')
 
@@ -376,8 +432,4 @@ class Maintenance_Activity_Group(models.Model):
             if settings.DEBUG == True:
                 printException(formatExceptionInfo())
 
-        if not include_deleted:
-            mags = [m for m in mags if not m.deleted]
-
         return mags
-

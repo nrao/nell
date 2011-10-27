@@ -101,21 +101,21 @@ class TestUtilities(BenchTestCase):
                  , accounting = pa
                   )
         p.save()
-    
-        # now see what the calendar brings up - the pending period on 9/29
-        # is actually diplayed as a 'floating maintenance day' on the 
-        # monday of the week (9/26)
+
+        # the schedule should remain empty: fixed period not yet published.
+        exp = self.assert_empty_schedule(start, end)
+
+        # now publish the period!
+        p.publish()
+        p.save()
+
+        # now get the schedule
         sch = get_gbt_schedule_events(start, end, timezone)
-        # all other days are still blank
-        blankDays = [0,2,3,4,5]
-        for i in blankDays: 
-            self.assertEqual(exp[i], sch[i])
-       
-        # what's on the monday?
-        calEvents = sch[1][1]
+        # Should now appear on Thursday
+        calEvents = sch[4][1]
         self.assertEqual(1,len(calEvents))
         mag = calEvents[0].contained
-        self.assertEqual("1 -- 2011-09-26; (2011-09-26); A; active; Empty", mag.__unicode__())
+        self.assertEqual('1 -- ; (2011-09-29); x; active; Empty', mag.__unicode__())
         self.assertEqual([], mag.get_maintenance_activity_set())
 
         # now create a simple event
@@ -124,17 +124,12 @@ class TestUtilities(BenchTestCase):
         ma.group = mag
         ma.save()
 
-        # make sure it shows up in the floating maint. day
-        sch = get_gbt_schedule_events(start, end, timezone)
-        # all other days are still blank
-        for i in blankDays: 
-            self.assertEqual(exp[i], sch[i])
-       
-        # what's on the monday?  Should show our new activity too!
-        calEvents = sch[1][1]
+        # Get the maintenance on Thurdsay again, check to see if our activity is there
+        calEvents = sch[4][1]
         self.assertEqual(1,len(calEvents))
         mag = calEvents[0].contained
-        self.assertEqual("1 -- 2011-09-26; (2011-09-26); A; active; Test Maintenance Activity", mag.__unicode__())
+        self.assertEqual('1 -- ; (2011-09-29); x; active; Test Maintenance Activity',
+                         mag.__unicode__())
         mas = mag.get_maintenance_activity_set()
         self.assertEqual(1, len(mas))
         ma = mas[0]
@@ -150,74 +145,23 @@ class TestUtilities(BenchTestCase):
         ma.repeat_end = datetime(2011, 9, 30, 10)
         ma.save()
 
-        # where does it show up?  It should only appear once on the
-        # floating day:
+        # where does it show up?  It should only appear once on Thursday
         sch = get_gbt_schedule_events(start, end, timezone)
-        # all other days are still blank
-        for i in blankDays: 
-            self.assertEqual(exp[i], sch[i])
-
-        # Monday?    
-        calEvents = sch[1][1]
-        self.assertEqual(1,len(calEvents))
-        self.assertEqual('CalEventFloatingMaintenance', calEvents[0].__class__.__name__)
-        mag = calEvents[0].contained
-        self.assertEqual("1 -- 2011-09-26; (2011-09-26); A; active; Repeat Daily 1, Test Maintenance Activity", mag.__unicode__())
-        mas = mag.get_maintenance_activity_set()
-        self.assertEqual(2, len(mas))
-        ma = mas[0]
-        self.assertEqual("Repeat Daily 1", ma.subject)
-        self.assertEqual(False, ma.is_repeat_activity())
-        self.assertEqual(True, ma.is_repeat_template())
-        ma = mas[1]
-        self.assertEqual("Test Maintenance Activity", ma.subject)
-        self.assertEqual(False, ma.is_repeat_activity())
-        self.assertEqual(False, ma.is_repeat_template())
-
-        # make sure the DB makes sense
-        all = Maintenance_Activity.objects.all()
-        self.assertEqual(2, len(Maintenance_Activity.objects.all()))
-        self.assertEqual(1, len(Maintenance_Activity_Group.objects.all()))
-
-        # now publish the period!
-        p.publish()
-        p.save()
-
-        # make sure the DB makes sense
-        self.assertEqual(2, len(Maintenance_Activity.objects.all()))
-        self.assertEqual(1, len(Maintenance_Activity_Group.objects.all()))
-
-        # that really changes things!
-        sch = get_gbt_schedule_events(start, end, timezone)
-        # now there's nothing on monday, but there is on thursday 
-        blankDays = [0,1,2,3,5]
-        for i in blankDays: 
-            self.assertEqual(exp[i], sch[i])
-        # check out Thursday    
         calEvents = sch[4][1]
         self.assertEqual(1,len(calEvents))
-        # see how the class has changed!
-        self.assertEqual('CalEventFixedMaintenance', calEvents[0].__class__.__name__)
         mag = calEvents[0].contained
-        # note how the .week is the same, but .date() has changed
-        self.assertEqual("1 -- 2011-09-26; (2011-09-29); A; active; Repeat Daily 1, Test Maintenance Activity", mag.__unicode__())
+        self.assertEqual('1 -- ; (2011-09-29); x; active; Repeat Daily 1, Test Maintenance Activity',
+                         mag.__unicode__())
         mas = mag.get_maintenance_activity_set()
         self.assertEqual(2, len(mas))
-        ma = mas[0]
-        self.assertEqual("Test Maintenance Activity", ma.subject)
-        self.assertEqual(False, ma.is_repeat_activity())
-        self.assertEqual(False, ma.is_repeat_template())
-        ma = mas[1]
-        self.assertEqual("Repeat Daily 1", ma.subject)
-        self.assertEqual(True, ma.is_repeat_activity())
-        self.assertEqual(False, ma.is_repeat_template())
-        self.assertEqual(2, ma.repeat_template_id)
-        
+       
         # make sure the DB makes sense
+        all_ma = Maintenance_Activity.objects.all()
+        # There should be 3 maintenance activities: the one added
+        # above, the template for 'Repeat Daily 1', and an instance of
+        # 'Repeat Daily 1'.
+        self.assertEqual(3, len(all_ma))
         self.assertEqual(1, len(Maintenance_Activity_Group.objects.all()))
-        # Woah!  check it out: 2 -> 3 because the original repeat stays
-        # as is, but there's a new one for display on Thursday
-        self.assertEqual(3, len(Maintenance_Activity.objects.all()))
 
 
     def test_get_gbt_schedule_events_elective(self):
@@ -261,7 +205,6 @@ class TestUtilities(BenchTestCase):
 
         # now create a simple event
         ma = create_maintenance_activity()
-        # TBF: how are these set via the forms?
         ma.set_start(datetime(2011, 9, 26, 10), 'UTC')
         ma.group = mag
         ma.save()
@@ -286,7 +229,6 @@ class TestUtilities(BenchTestCase):
         # now create a daily repeat!
         ma = create_maintenance_activity()
         ma.subject = "Repeat Daily 1"
-        # TBF: how are these set via the forms?
         ma.set_start(datetime(2011, 9, 26, 9), 'UTC')
         ma.group = mag
         ma.repeat_interval = 1
@@ -379,7 +321,6 @@ class TestUtilities(BenchTestCase):
         self.assertEqual(0, len(Maintenance_Activity_Group.objects.all()))        
         # now create a simple event for Tuesday
         ma = create_maintenance_activity()
-        # TBF: how are these set via the forms?
         ma.set_start(datetime(2011, 9, 27, 10), 'UTC')
         ma.save()
 
@@ -399,7 +340,6 @@ class TestUtilities(BenchTestCase):
         # let's see what repeats do: make one starting on Wed. 
         ma = create_maintenance_activity()
         ma.subject = "Repeat Daily 1"
-        # TBF: how are these set via the forms?
         ma.set_start(datetime(2011, 9, 28, 9), 'UTC')
         ma.repeat_interval = 1
         ma.repeat_end = datetime(2011, 9, 30, 10)
@@ -427,85 +367,8 @@ class TestUtilities(BenchTestCase):
         self.assertEqual(1, len(mas))
         self.assertEqual("Repeat Daily 1", mas[0].subject)
 
-    def test_get_gbt_schedule_events_repeats_fixed(self):
-        "Focus on the behavoir of repeats with fixed maintenance"
-
-        # first, make sure an empty schedule looks empty
-        start = datetime(2011, 9, 25)
-        end   = datetime(2011, 10, 1)
-        timezone = 'UTC'
-        exp = self.assert_empty_schedule(start, end)
-
-        # create the fixed maintenance session
-        proj = create_maintenance_project()
-        ms = create_maintenance_sesshun()
-    
-        # create a pending periods for the wed (9/28) and thursday (9/29)
-        # of the work week starting monday (9/26)
-        ps = []
-        for day in [28, 29]:
-            pa = Period_Accounting(scheduled = 0.0)
-            pa.save()
-            pending = Period_State.get_state("P")
-            p = Period(session = ms
-                 , start = datetime(2011, 9, day, 10)
-                 , duration = 1.0
-                 , state = pending
-                 , accounting = pa
-                  )
-            p.save()
-            ps.append(p)
-    
-        sch = get_gbt_schedule_events(start, end, timezone)
-        blankDays = [0,2,3,4,5] 
-        for i in blankDays:
-            self.assertEqual(exp[i], sch[i])
-
-        # check out Monday    
-        calEvents = sch[1][1]
-        self.assertEqual(2,len(calEvents))
-        mags = []
-        for i in [0,1]:
-            self.assertEqual('CalEventFloatingMaintenance'
-                           , calEvents[i].__class__.__name__)
-            mag = calEvents[i].contained
-            self.assertEqual([], mag.get_maintenance_activity_set())
-            mags.append(mag) # for use below
-
-        # now create a daily repeating activity    
-        ma = create_maintenance_activity()
-        ma.subject = "Repeat Daily 1"
-        ma.group = mags[0] # the first one from the list above
-        ma.set_start(datetime(2011, 9, 27, 9), 'UTC')
-        ma.repeat_interval = 1
-        ma.repeat_end = datetime(2011, 9, 30, 10)
-        ma.save()
-
-        sch = get_gbt_schedule_events(start, end, timezone)
-        blankDays = [0,2,3,4,5] 
-        for i in blankDays:
-            self.assertEqual(exp[i], sch[i])
-
-        # check out Monday    
-        calEvents = sch[1][1]
-        self.assertEqual(2,len(calEvents))
-        for i in [0,1]:
-            self.assertEqual('CalEventFloatingMaintenance'
-                           , calEvents[i].__class__.__name__)
-        # TBF: the activity shows up in ONE of the floating ones
-        # instead of both
-        mag = calEvents[0].contained
-        mas = mag.get_maintenance_activity_set()
-        self.assertEqual(1, len(mas))
-        self.assertEqual("Repeat Daily 1", mas[0].subject)
-        mag = calEvents[1].contained
-        mas = mag.get_maintenance_activity_set()
-        self.assertEqual(0, len(mas))
-        #self.assertEqual(1, len(mas))
-        #self.assertEqual("Repeat Daily 1", mas[0].subject)
-
     def test_get_gbt_schedule_events_repeats_fixed_weekly(self):
-        "Focus on the behavoir of repeats with fixed maintenance"
+        "Focus on the behavior of repeats with fixed maintenance"
 
         # first, make sure an empty schedule looks empty
         start = datetime(2011, 9, 25)
@@ -525,11 +388,11 @@ class TestUtilities(BenchTestCase):
         for month, day in dates:
             pa = Period_Accounting(scheduled = 0.0)
             pa.save()
-            pending = Period_State.get_state("P")
+            scheduled = Period_State.get_state("S")
             p = Period(session = ms
                  , start = datetime(2011, month, day, 10)
                  , duration = 1.0
-                 , state = pending
+                 , state = scheduled
                  , accounting = pa
                   )
             p.save()
@@ -537,80 +400,165 @@ class TestUtilities(BenchTestCase):
 
         # check out the schedule
         sch = get_gbt_schedule_events(start, end, timezone)
-        nonBlankDays = [1,8,15] 
+        nonBlankDays = [3,4,10,11,17,18] #[1,8,15] 
         blankDays = [i for i in range(0,20) if i not in nonBlankDays]
         for i in blankDays:
             self.assertEqual(exp[i], sch[i])
 
-        # check out Mondays   
+        # check out the days the periods are scheduled for   
+        mags = []
         for day in nonBlankDays:
             calEvents = sch[day][1]
-            self.assertEqual(2,len(calEvents))
-            mags = []
-            for i in [0,1]:
-                self.assertEqual('CalEventFloatingMaintenance'
-                               , calEvents[i].__class__.__name__)
-                mag = calEvents[i].contained
-                self.assertEqual([], mag.get_maintenance_activity_set())
-                mags.append(mag) # for use below
+            self.assertEqual(1,len(calEvents))
+            self.assertEqual('CalEventFixedMaintenance'
+                           , calEvents[0].__class__.__name__)
+            mag = calEvents[0].contained
+            self.assertEqual([], mag.get_maintenance_activity_set())
+            mags.append(mag) # for use below
+        
 
         # now create a daily repeating activity for the whole time range   
         ma = create_maintenance_activity()
         ma.subject = "Repeat Daily 1"
         ma.group = mags[0] # the first one from the list above
-        ma.set_start(datetime(2011, 9, 27, 9), 'UTC')
+        ma.set_start(datetime(2011, 9, 27, 10), 'UTC')
         ma.repeat_interval = 1
         ma.repeat_end = datetime(2011, 10, 15, 10)
         ma.save()
 
         # check out the schedule
         sch = get_gbt_schedule_events(start, end, timezone)
-        nonBlankDays = [1,8,15] 
         blankDays = [i for i in range(0,20) if i not in nonBlankDays]
         for i in blankDays:
             self.assertEqual(exp[i], sch[i])
 
-        # check out Mondays   
+        # check out the periods' days 
         for day in nonBlankDays:
             calEvents = sch[day][1]
-            self.assertEqual(2,len(calEvents))
-            for i in [0,1]:
-                self.assertEqual('CalEventFloatingMaintenance'
-                               , calEvents[i].__class__.__name__)
-                mag = calEvents[i].contained
-                mas = mag.get_maintenance_activity_set()
-                # TBF: users want this on EVERY one
-                #self.assertEqual(0, len(mas))
+            self.assertEqual(1,len(calEvents))
+            self.assertEqual('CalEventFixedMaintenance'
+                           , calEvents[0].__class__.__name__)
+            mag = calEvents[0].contained
+            mas = mag.get_maintenance_activity_set()
+            self.assertEqual(1, len(mas))
+            self.assertEqual("Repeat Daily 1", mas[0].subject)
 
 
-        # now create a weekly repeating activity for the whole time range
+        # Now create a weekly repeating activity for two weeks 
         ma = create_maintenance_activity()
         ma.subject = "Repeat Weekly 1"
         ma.group = mags[0] # the first one from the list above
-        ma.set_start(datetime(2011, 9, 27, 9), 'UTC')
+        ma.set_start(datetime(2011, 9, 28, 10), 'UTC')
         ma.repeat_interval = 7 # weekly
-        ma.repeat_end = datetime(2011, 10, 15, 10)
+        ma.repeat_end = datetime(2011, 10, 10, 10)
         ma.save()
+        
 
         # check out the schedule
         sch = get_gbt_schedule_events(start, end, timezone)
-        nonBlankDays = [1,8,15] 
         blankDays = [i for i in range(0,20) if i not in nonBlankDays]
         for i in blankDays:
             self.assertEqual(exp[i], sch[i])
 
-        # check out Mondays   
-        for day in nonBlankDays[0:1]:
+        for day in nonBlankDays: 
             calEvents = sch[day][1]
-            self.assertEqual(2,len(calEvents))
-            for i in [0,1]:
-                self.assertEqual('CalEventFloatingMaintenance'
-                               , calEvents[i].__class__.__name__)
-                mag = calEvents[i].contained
-                mas = mag.get_maintenance_activity_set()
-                # TBF: what *is* supposed to happen here?
-                #self.assertEqual(2, len(mas))
-                #self.assertEqual("Repeat Daily 1", mas[0].subject)
+            self.assertEqual(1,len(calEvents))
+            self.assertEqual('CalEventFixedMaintenance'
+                           , calEvents[0].__class__.__name__)
+            mag = calEvents[0].contained
+            mas = mag.get_maintenance_activity_set()
+            # the weekly only shows up twice
+            if day in [3,10]:
+                self.assertEqual(2, len(mas))
+                self.assertEqual("Repeat Daily 1", mas[0].subject)
+                self.assertEqual("Repeat Weekly 1", mas[1].subject)
+            else:    
+                self.assertEqual(1, len(mas))
+                self.assertEqual("Repeat Daily 1", mas[0].subject)
+
+    def test_get_gbt_schedule_events_repeats_unscheduled(self):
+        "Focus on the behavior of repeats with fixed maintenance"
+
+        # first, make sure an empty schedule looks empty
+        start = datetime(2011, 9, 25)
+        end   = datetime(2011, 10,15)
+        timezone = 'UTC'
+        exp = self.assert_empty_schedule(start, end)
+
+        # create the fixed maintenance sessions
+        proj = create_maintenance_project()
+        ms = create_maintenance_sesshun()
+        # here's our special 'unscheduled' session!
+        mu = create_maintenance_sesshun()
+        mu.name = "Unscheduled Maintenance"
+        mu.save()
+
+        # create a pending periods for the wed (9/28) and thursday (9/29)
+        # of the work week starting monday (9/26)
+        # with regular maint. on thursday, unscheduled on wed.
+        ps = []
+        # twice a week for three weeks
+        dates = [(9, 26, ms), (9, 28, mu), (9, 29, ms)]
+        for month, day, sess in dates:
+            pa = Period_Accounting(scheduled = 0.0)
+            pa.save()
+            scheduled = Period_State.get_state("S")
+            p = Period(session = sess
+                 , start = datetime(2011, month, day, 10)
+                 , duration = 1.0
+                 , state = scheduled
+                 , accounting = pa
+                  )
+            p.save()
+            ps.append(p)
+
+        # check out the schedule
+        sch = get_gbt_schedule_events(start, end, timezone)
+        nonBlankDays = [1,3,4] 
+        blankDays = [i for i in range(0,7) if i not in nonBlankDays]
+        for i in blankDays:
+            self.assertEqual(exp[i], sch[i])
+
+        # check out the days the periods are scheduled for   
+        mags = []
+        for day in nonBlankDays:
+            calEvents = sch[day][1]
+            self.assertEqual(1,len(calEvents))
+            self.assertEqual('CalEventFixedMaintenance'
+                           , calEvents[0].__class__.__name__)
+            mag = calEvents[0].contained
+            self.assertEqual([], mag.get_maintenance_activity_set())
+            mags.append(mag) # for use below
+        
+
+        # now create a daily repeating activity for the whole time range
+        ma = create_maintenance_activity()
+        ma.subject = "Repeat Daily 1"
+        ma.group = mags[0] # the first one from the list above
+        ma.set_start(datetime(2011, 9, 26, 10), 'UTC')
+        ma.repeat_interval = 1
+        ma.repeat_end = datetime(2011, 10, 15, 10)
+        ma.save()
+
+        # it should only show up on the regular maint. day
+        # check out the schedule
+        sch = get_gbt_schedule_events(start, end, timezone)
+        for i in blankDays:
+            self.assertEqual(exp[i], sch[i])
+
+        # check out the days the periods are scheduled for   
+        for day in nonBlankDays:
+            calEvents = sch[day][1]
+            self.assertEqual(1,len(calEvents))
+            self.assertEqual('CalEventFixedMaintenance'
+                           , calEvents[0].__class__.__name__)
+            mag = calEvents[0].contained
+            mas = mag.get_maintenance_activity_set()
+            if day == 3:
+                # unscheduled day!
+                self.assertEqual(0, len(mas))
+            else:
+                self.assertEquals(1, len(mas))   
 
     def test_get_gbt_schedule_events_repeats_electives(self):
         "Focus on the behavoir of repeats with elective maintenance"
@@ -635,13 +583,14 @@ class TestUtilities(BenchTestCase):
     
         # now check out the schedule
         sch = get_gbt_schedule_events(start, end, timezone)
-        blankDays = [0,2,3,4,5,6,7,9,10,11,12] # TBF - shorten! 
+        nonBlankDays = [1,8]
+        blankDays = [i for i in range(0,13) if i not in nonBlankDays] 
         for i in blankDays:
             self.assertEqual(exp[i], sch[i])
 
         # check out Mondays    
         mags = []
-        for day in [1,8]:
+        for day in nonBlankDays:
             calEvents = sch[day][1]
             self.assertEqual(1,len(calEvents))
             self.assertEqual('CalEventFloatingMaintenance'
@@ -717,7 +666,7 @@ class TestUtilities(BenchTestCase):
         ma2.subject = "ma2"
         ma2.group = mag
         ma2.save()
-    
+
         # now publish the period on Wed (9/28)!
         p = me.periods.all().order_by("start")[1]
         p.publish()
@@ -767,34 +716,28 @@ class TestUtilities(BenchTestCase):
         sch = get_gbt_schedule_events(start, end, timezone)
         # now there's nothing on monday, but there is on Wed. 
         blankDays = [0,1,4,5]
+
         for i in blankDays: 
             self.assertEqual(exp[i], sch[i])
-        # TBF: now check out this Feature!  The activites have 
-        # moved from Wed. to Tuesday.
-        # check out Tues.    
+
         calEvents = sch[2][1]
         self.assertEqual(1,len(calEvents))
         self.assertEqual('CalEventFixedMaintenance', calEvents[0].__class__.__name__)
         mag = calEvents[0].contained
-        self.assertEqual("1 -- 2011-09-26; (2011-09-27); A; active; ma2, Test Maintenance Activity", mag.__unicode__())
+        # make sure it is the 'emergency' mag, not the one that belongs on Wed.
+        self.assertEqual("2 -- ; (2011-09-27); x; active; Empty", mag.__unicode__())
+        # And it's empty; we didn't add anything above.
         mas = mag.get_maintenance_activity_set()
-        self.assertEqual(2, len(mas))
-        ma = mas[0]
-        self.assertEqual("Test Maintenance Activity", ma.subject)
-        self.assertEqual(False, ma.is_repeat_activity())
-        self.assertEqual(False, ma.is_repeat_template())
-        ma = mas[1]
-        self.assertEqual("ma2", ma.subject)
-        self.assertEqual(False, ma.is_repeat_activity())
-        self.assertEqual(False, ma.is_repeat_template())
+        self.assertEqual(0, len(mas))
         # check out Wed.
         calEvents = sch[3][1]
         self.assertEqual(1,len(calEvents))
         self.assertEqual('CalEventFixedMaintenance', calEvents[0].__class__.__name__)
         mag = calEvents[0].contained
-        self.assertEqual("2 -- 2011-09-26; (2011-09-28); B; active; Empty", mag.__unicode__())
+        self.assertEqual('1 -- 2011-09-26; (2011-09-28); A; active; ma2, Test Maintenance Activity',
+                         mag.__unicode__())
         mas = mag.get_maintenance_activity_set()
-        self.assertEqual(0, len(mas))
+        self.assertEqual(2, len(mas))
 
 
     def assert_empty_schedule(self, start, end):

@@ -58,10 +58,15 @@ class TestMaintenanceActivityGroup(NellTestCase):
     def test_maintenance_groups(self):
         # get the maintenance groups for the week of April 11, 2011
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
-        # there should be 3 maintenance groups: 2 electives, one pending period
-        self.assertEqual(len(mags), 3)
-        # mag should have period set to None.  Elective not scheduled yet.
-        for i in range(0, len(mags)):
+        # there should be 2 maintenance groups: 2 electives
+        # we don't pick up the pending period from the fixed session
+
+        self.assertEqual(len(mags), 2)
+
+        # mag should have period set to None if elective.  Elective
+        # not scheduled yet.  Pending period should be set and is the
+        # last one in the list.
+        for i in range(0, len(mags) - 1):
             mag = mags[i]
             self.assertEqual(mag.period, None)
             self.assertEqual(mag.rank, chr(65 + i))
@@ -74,40 +79,61 @@ class TestMaintenanceActivityGroup(NellTestCase):
         self.mp1.save()
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week,
                                                                           include_deleted = True)
-        # there should still be 3 maintenance groups, but the last one
-        # should be marked deleted because of the deleted period.
-        self.assertEqual(len(mags), 3)
-        self.assertEqual(mags[2].deleted, True)
+        # there should still be 2 maintenance groups, the two electives.
+        self.assertEqual(len(mags), 2)
+
+        # delete one of the electives.
+        self.me1.setComplete(True)
+        mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week,
+                                                                          include_deleted = True)
+        # there should be 2 maintenance groups, but one deleted.
+        self.assertEqual(len(mags), 2)
+        self.assertEqual(mags[1].deleted, True)
 
         # now only return non-deleted ones.
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
-        self.assertEqual(len(mags), 2)
+        self.assertEqual(len(mags), 1)
         
         # restore the period.
         self.mp1.state = self.pending
         self.mp1.save()
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
+        self.assertEqual(len(mags), 1)
+
+        # restore the elective.
+        self.me1.setComplete(False)
+        mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
+        self.assertEqual(len(mags), 2)
+        
+        # now publish the fixed session's period
+        self.mp1.state = self.scheduled
+        self.mp1.save()
+        mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
         self.assertEqual(len(mags), 3)
-        self.assertEqual(mags[2].deleted, False)
 
     ######################################################################
     # This tests the assignemnt of groups to scheduled periods.  The
     # results should be:
     #
-    # 1st scheduled period, no matter when, should get 'A'
+    # 1st scheduled elective, no matter when, should get 'A'
     #
-    # 2nd scheduled should get 'B' if later than 'A', but 'A' if
-    # earlier and other period should then get 'B'
+    # 2nd scheduled elective should get 'B' if later than 'A', but 'A'
+    # if earlier and other period should then get 'B'
     #
-    # 3d scheduled period should get 'C' if it comes after the first
-    # two; otherwise should get the appropriate group in accordance
-    # with its scheduled date.
+    # 3d scheduled period should get 'x' to denote a fixed maintenance
+    # period.  It should be independend of the other two, regardless
+    # of scheduled date.
     #
     # Subsequent changes to the scheduled periods (new dates,
     # deletions, etc.) should continue to be accounted for.
     ######################################################################
         
     def test_maintenance_assignment(self):
+
+        # publish the fixed session's period
+        self.mp1.state = self.scheduled
+        self.mp1.save()
+
         # publish the first elective, publishing its Friday period.
         pds = self.me1.periods.all().order_by('start')
         p1 = pds[pds.count() - 1] # get last one, Friday.
@@ -117,14 +143,16 @@ class TestMaintenanceActivityGroup(NellTestCase):
         self.assertEqual(len(mags), 3)
         
         # 0 is 'A', and period should be the recently scheduled
-        # period.  'B' and 'C' should be uunassigned.
+        # period.  'B'should be unassigned.  'x' should remain
+        # unaffected.
         
         self.assertEqual('A', mags[0].rank)
         self.assertEqual(mags[0].period.id, p1.id)
         self.assertEqual('B', mags[1].rank)
         self.assertEqual(mags[1].period, None)
-        self.assertEqual('C', mags[2].rank)
-        self.assertEqual(mags[2].period, None)
+        # this is considered a fixed maintenance activity; should have a period.
+        self.assertEqual('x', mags[2].rank)
+        self.assertEqual(mags[2].period, self.mp1)
        
         # publish the second elective, for Tuesday
         
@@ -144,26 +172,27 @@ class TestMaintenanceActivityGroup(NellTestCase):
         self.assertEqual(mags[0].period.id, p2.id)
         self.assertEqual('B', mags[1].rank)
         self.assertEqual(mags[1].period.id, p1.id)
-        self.assertEqual('C', mags[2].rank)
-        self.assertEqual(mags[2].period, None)
+        self.assertEqual('x', mags[2].rank)
+        self.assertEqual(mags[2].period, self.mp1)
 
         # now schedule the pending non-elective period Monday.  This
-        # period will now have 'A', p2 will have 'B', and p1 will have
-        # 'C'
+        # period will still have 'x'; A will still be p2, and B will
+        # still be p1.  (mags come back sorted by rank, with
+        # non-elective ('x') last, sorted by start date.)
         
         self.mp1.publish()
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
         self.assertEqual(len(mags), 3)
         self.assertEqual('A', mags[0].rank)
-        self.assertEqual(mags[0].period.id, self.mp1.id)
+        self.assertEqual(mags[0].period.id, p2.id)
         self.assertEqual('B', mags[1].rank)
-        self.assertEqual(mags[1].period.id, p2.id)
-        self.assertEqual('C', mags[2].rank)
-        self.assertEqual(mags[2].period.id, p1.id)
+        self.assertEqual(mags[1].period.id, p1.id)
+        self.assertEqual('x', mags[2].rank)
+        self.assertEqual(mags[2].period.id, self.mp1.id)
 
-        # Now move the already scheduled self.mp1 to Wednesday.  It
-        # should now get 'B', and the previous 'B' holder should get
-        # 'A'.  'C' should remain the same.
+        # Now move the already scheduled non-elective self.mp1 to
+        # Wednesday. Nothing should change!  A will still be p2, and B
+        # will still be p1.
         
         self.mp1.start = datetime(2011, 04, 13, 8)
         self.mp1.save()
@@ -171,54 +200,57 @@ class TestMaintenanceActivityGroup(NellTestCase):
         self.assertEqual('A', mags[0].rank)
         self.assertEqual(mags[0].period.id, p2.id)
         self.assertEqual('B', mags[1].rank)
-        self.assertEqual(mags[1].period.id, self.mp1.id)
-        self.assertEqual('C', mags[2].rank)
-        self.assertEqual(mags[2].period.id, p1.id)
+        self.assertEqual(mags[1].period.id, p1.id)
+        self.assertEqual('x', mags[2].rank)
+        self.assertEqual(mags[2].period.id, self.mp1.id)
 
-        # Now delete the middle period 'self.mp1'.  'A' should remain
-        # with 'p2', 'B' should now go to 'p1', and 'C' should be
-        # marked deleted.
+        # Now delete the middle period 'self.mp1'.  'A' and 'B' should
+        # remain the same.
 
         self.mp1.state = self.deleted
         self.mp1.save()
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week,
                                                                           include_deleted = True)
+        self.assertEqual(2, len(mags)) # only the two electives.
         self.assertEqual('A', mags[0].rank)
         self.assertEqual(mags[0].period.id, p2.id)
         self.assertEqual('B', mags[1].rank)
         self.assertEqual(mags[1].period.id, p1.id)
-        self.assertEqual('C', mags[2].rank)
-        self.assertEqual(mags[2].deleted, True)
         
         # now revive 'self.mp1'.  C should reappear.
-        self.mp1.state = self.pending
+        self.mp1.state = self.scheduled 
         self.mp1.save()
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
+        self.assertEqual(3, len(mags)) # 'x' should reappear
         self.assertEqual('A', mags[0].rank)
         self.assertEqual(mags[0].period.id, p2.id)
         self.assertEqual('B', mags[1].rank)
         self.assertEqual(mags[1].period.id, p1.id)
-        self.assertEqual('C', mags[2].rank)
+        self.assertEqual('x', mags[2].rank)
         self.assertEqual(mags[2].deleted, False)
-        self.assertEqual(mags[2].period, None)
+        self.assertEqual(mags[2].period.id, self.mp1.id)
 
-        # and finally re-schedule 'self.mp1'.  'B' should be assigned to
-        # it, since it is still Wednesday.
+        # and finally re-schedule 'self.mp1'. The two elective
+        # activities should yet again remain unchanged.
         self.mp1.state = self.scheduled
         self.mp1.save()
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
+        self.assertEqual(3, len(mags))
         self.assertEqual('A', mags[0].rank)
         self.assertEqual(mags[0].period.id, p2.id)
         self.assertEqual('B', mags[1].rank)
-        self.assertEqual(mags[1].period.id, self.mp1.id)
-        self.assertEqual('C', mags[2].rank)
+        self.assertEqual(mags[1].period.id, p1.id)
+        self.assertEqual('x', mags[2].rank)
         self.assertEqual(mags[2].deleted, False)
-        self.assertEqual(mags[2].period.id, p1.id)
+        self.assertEqual(mags[2].period.id, self.mp1.id)
 
 
     def test_get_maintenance_activity_set(self):
 
-        
+        # publish the fixed sessions period
+        self.mp1.state = self.scheduled
+        self.mp1.save()
+
         # get the maintenance groups for the week of April 11, 2011
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
         # there should be 3 maintenance groups: 2 electives, one pending period
