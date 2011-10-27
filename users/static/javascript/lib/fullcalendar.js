@@ -4864,7 +4864,10 @@ function DayEventRenderer() {
 				" class='fc-event-inner fc-event-skin'" +
 				(skinCss ? " style='" + skinCss + "'" : '') +
 				">";
-			if (!event.allDay && seg.isStart) {
+            // TBF: It seems as if event.allDay always keeps the time from
+            // being displayed (BUG!).
+			//if (!event.allDay && seg.isStart) {
+			if (seg.isStart) {
 				html +=
 					"<span class='fc-event-time'>" +
 					htmlEscape(formatDates(event.start, event.end, opt('timeFormat'))) +
