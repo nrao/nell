@@ -278,10 +278,42 @@ a.fc-event {
 	text-align: right;
 	}
 	
+/*
+  Here we add the classnames for those events the Nell server
+  provides so that each type of event can have it's own color.
+*/
+
+.period {
+    background-color:  #C1D9EC;
+    background: #C1D9EC;
+    }
+
+.blackout {
+	background-color: #99CCBB !important; 
+    background:  #99CCBB; 
+	}
+    
+.reservation {
+	background-color: #EEAABB !important;
+    background:  #EEAABB;     
+}
+
+.window {
+	background-color: #CCBBDD !important;
+    background:  #CCBBDD;     
+}
+
+.semester {
+	background-color: #FF6666 !important;
+    background:  #FF6666;     
+}
+
 .fc-event-skin {
-	border-color: #36c;     /* default BORDER color */
-	background-color: #36c; /* default BACKGROUND color */
-	color: #fff;            /* default TEXT color */
+	border-color: #999;     /* default BORDER color */
+    /* NOTE: we are removing the background-color so that adding the
+       classnames above to the parent div can override this color */
+	/* background-color: #fff; /* default BACKGROUND color */
+	color: #000;            /* default TEXT color */
 	}
 	
 .fc-event-inner {
