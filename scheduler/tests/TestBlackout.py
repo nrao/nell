@@ -67,33 +67,6 @@ class TestBlackout(NellTestCase):
                                          start    = datetime(2008, 10, 1, 11),
                                          end      = datetime(2008, 10, 3, 11))
 
-    def test_eventjson(self):
-        # user blackout
-        calstart = datetime(2009, 1, 1)
-        calend   = datetime(2009, 1, 30)
-        json = self.blackout1.eventjson(mktime(calstart.timetuple())
-                                      , mktime(calend.timetuple()))
-        event = {'className': 'blackout'
-               , 'start': '2009-01-01T11:00:00'
-               , 'end': '2009-01-03T11:00:00'
-               , 'id': 1L
-               , 'title': 'Test User: blackout'
-               }
-        self.assertEqual(event, json[0])
-
-        # project blackout
-        calstart = datetime(2008, 10, 1)
-        calend   = datetime(2008, 10, 30)
-        json = self.blackout3.eventjson(mktime(calstart.timetuple())
-                                      , mktime(calend.timetuple()))
-        event = {'className': 'blackout'
-               , 'start': '2008-10-01T11:00:00'
-               , 'end': '2008-10-03T11:00:00'
-               , 'id': 3L
-               , 'title': '%s: blackout' % self.pcode
-               }
-        self.assertEqual(event, json[0])
-
     def test_isActive(self):
         results = [(b.isActive(b.getStartDate() + timedelta(hours = 2))
                   , b.isActive(b.getEndDate() + timedelta(hours = 2)))

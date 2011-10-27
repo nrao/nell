@@ -66,21 +66,6 @@ class WindowRange(models.Model):
 
         return False
 
-    def eventjson(self, id):
-        """
-        This representation of the window range is meant specifically
-        for the Monthly Project Calendar: that is, we use
-        end_datetime here in order to get the correct number of 
-        days displayed on the calendar.
-        """
-        return {
-                "id"   :     id
-              , "title":     "".join(["Window ", self.window.session.name])
-              , "start":     self.start_datetime().isoformat()
-              , "end"  :     self.end_datetime().isoformat()
-              , "className": 'window'
-        }
-
     def lstInRange(self, lst, buffer = 0):
         "Does a given LST fit in this range?"
 

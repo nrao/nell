@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
 from utilities.SLATimeAgent   import *
 from utilities.TimeAgent      import *
-from datetime       import datetime, time, timedelta
+from datetime                 import datetime, time, timedelta, date
 import os
 import unittest
 
@@ -131,6 +131,19 @@ class TestTimeAgent(unittest.TestCase):
         days = range_to_days(r)
         exp = [firstDay + timedelta(days = i) for i in range(0,4)]
         self.assertEquals(exp, days)
+
+    def test_backoffFromMidnight(self):
+
+        dt  = datetime(2011, 1, 1, 0, 0, 0)
+        exp = datetime(2010, 12, 31, 23, 45, 0)
+        self.assertEquals(exp, backoffFromMidnight(dt))
+
+        dt  = date(2011, 1, 1)
+        exp = datetime(2010, 12, 31, 23, 45, 0)
+        self.assertEquals(exp, backoffFromMidnight(dt))
+
+        dt = datetime(2011, 1, 1, 0, 1, 0)
+        self.assertEquals(dt, backoffFromMidnight(dt))
 
 
 if __name__ == "__main__":

@@ -1,70 +1,112 @@
-/*!
- * FullCalendar v1.2.1 Google Calendar Extension
+/*
+ * FullCalendar v1.5.2 Google Calendar Plugin
  *
- * Visit http://arshaw.com/fullcalendar/docs/#google-calendar
- * for docs and examples.
+ * Copyright (c) 2011 Adam Shaw
+ * Dual licensed under the MIT and GPL licenses, located in
+ * MIT-LICENSE.txt and GPL-LICENSE.txt respectively.
  *
- * Copyright (c) 2009 Adam Shaw
- * Dual licensed under the MIT and GPL licenses:
- *   http://www.opensource.org/licenses/mit-license.php
- *   http://www.gnu.org/licenses/gpl.html
+ * Date: Sun Aug 21 22:06:09 2011 -0700
  *
- * Date: 2009-05-31 13:56:02 -0700 (Sun, 31 May 2009)
- * Revision: 23
  */
  
 (function($) {
 
-	$.fullCalendar.gcalFeed = function(feedUrl, options) {
-		
-		feedUrl = feedUrl.replace(/\/basic$/, '/full');
-		options = options || {};
-		var draggable = options.draggable || false;
-		
-		return function(start, end, callback) {
-			$.getJSON(feedUrl + "?alt=json-in-script&callback=?",
-				{
-					'start-min': $.fullCalendar.formatDate(start, 'c'),
-					'start-max': $.fullCalendar.formatDate(end, 'c'),
-					'singleevents': true
-				},
-				function(data) {
-					var events = [];
-					if (data.feed.entry)
-						$.each(data.feed.entry, function(i, entry) {
-							var url;
-							$.each(entry['link'], function(j, link) {
-								if (link.type == 'text/html') url = link.href;
-							});
-							var showTime = entry['gd$when'][0]['startTime'].indexOf('T') != -1;
-							var classNames = [];
-							if (showTime) {
-								classNames.push('nobg');
-							}
-							if (options.className) {
-								if (typeof options.className == 'string') {
-									classNames.push(options.className);
-								}else{
-									classNames = classNames.concat(options.className);
-								}
-							}
-							events.push({
-								id: entry['gCal$uid']['value'],
-								url: url,
-								title: entry['title']['$t'],
-								start: $.fullCalendar.parseDate(entry['gd$when'][0]['startTime']),
-								end: $.fullCalendar.parseDate(entry['gd$when'][0]['endTime']),
-								location: entry['gd$where'][0]['valueString'],
-								description: entry['content']['$t'],
-								showTime: showTime,
-								className: classNames,
-								draggable: draggable
-							});
-						});
-					callback(events);
-				});
+
+var fc = $.fullCalendar;
+var formatDate = fc.formatDate;
+var parseISO8601 = fc.parseISO8601;
+var addDays = fc.addDays;
+var applyAll = fc.applyAll;
+
+
+fc.sourceNormalizers.push(function(sourceOptions) {
+	if (sourceOptions.dataType == 'gcal' ||
+		sourceOptions.dataType === undefined &&
+		(sourceOptions.url || '').match(/^(http|https):\/\/www.google.com\/calendar\/feeds\//)) {
+			sourceOptions.dataType = 'gcal';
+			if (sourceOptions.editable === undefined) {
+				sourceOptions.editable = false;
+			}
 		}
-			
+});
+
+
+fc.sourceFetchers.push(function(sourceOptions, start, end) {
+	if (sourceOptions.dataType == 'gcal') {
+		return transformOptions(sourceOptions, start, end);
 	}
+});
+
+
+function transformOptions(sourceOptions, start, end) {
+
+	var success = sourceOptions.success;
+	var data = $.extend({}, sourceOptions.data || {}, {
+		'start-min': formatDate(start, 'u'),
+		'start-max': formatDate(end, 'u'),
+		'singleevents': true,
+		'max-results': 9999
+	});
+	
+	var ctz = sourceOptions.currentTimezone;
+	if (ctz) {
+		data.ctz = ctz = ctz.replace(' ', '_');
+	}
+
+	return $.extend({}, sourceOptions, {
+		url: sourceOptions.url.replace(/\/basic$/, '/full') + '?alt=json-in-script&callback=?',
+		dataType: 'jsonp',
+		data: data,
+		startParam: false,
+		endParam: false,
+		success: function(data) {
+			var events = [];
+			if (data.feed.entry) {
+				$.each(data.feed.entry, function(i, entry) {
+					var startStr = entry['gd$when'][0]['startTime'];
+					var start = parseISO8601(startStr, true);
+					var end = parseISO8601(entry['gd$when'][0]['endTime'], true);
+					var allDay = startStr.indexOf('T') == -1;
+					var url;
+					$.each(entry.link, function(i, link) {
+						if (link.type == 'text/html') {
+							url = link.href;
+							if (ctz) {
+								url += (url.indexOf('?') == -1 ? '?' : '&') + 'ctz=' + ctz;
+							}
+						}
+					});
+					if (allDay) {
+						addDays(end, -1); // make inclusive
+					}
+					events.push({
+						id: entry['gCal$uid']['value'],
+						title: entry['title']['$t'],
+						url: url,
+						start: start,
+						end: end,
+						allDay: allDay,
+						location: entry['gd$where'][0]['valueString'],
+						description: entry['content']['$t']
+					});
+				});
+			}
+			var args = [events].concat(Array.prototype.slice.call(arguments, 1));
+			var res = applyAll(success, this, args);
+			if ($.isArray(res)) {
+				return res;
+			}
+			return events;
+		}
+	});
+	
+}
+
+
+// legacy
+fc.gcalFeed = function(url, sourceOptions) {
+	return $.extend({}, sourceOptions, { url: url, dataType: 'gcal' });
+};
+
 
 })(jQuery);
