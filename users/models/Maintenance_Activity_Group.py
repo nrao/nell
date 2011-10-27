@@ -285,7 +285,7 @@ class Maintenance_Activity_Group(models.Model):
         rank 'x' are fixed, already have periods, and do not get
         sorted by rank.
         """
-        utc_day = TimeAgent.truncateDt(utc_day)
+
         mags = []
 
         pmags = Maintenance_Activity_Group._get_fixed_mags(utc_day)
@@ -317,6 +317,7 @@ class Maintenance_Activity_Group(models.Model):
                     mag = Maintenance_Activity_Group()
                     mag.deleted = False
                     mag.rank = 'x'
+                    mag.week = utc_day
                     i.maintenance_activity_group_set.add(mag)
                 else:
                     mag = i.maintenance_activity_group_set.all()[0]
@@ -325,6 +326,10 @@ class Maintenance_Activity_Group(models.Model):
                     # they are not picked up by _get_elective_mags().
                     if mag.rank != 'x':
                         mag.rank = 'x'
+                        mag.save()
+
+                    if not mag.week:
+                        mag.week = utc_day
                         mag.save()
 
                 mags.append(mag)
@@ -365,6 +370,16 @@ class Maintenance_Activity_Group(models.Model):
                 .exclude(rank = 'x') \
                 .order_by("rank")
             mags = [mag for mag in dbmags]
+
+            # these are all ordered by rank now, relabel rank in case
+            # it doesn't start with 'A' ('B', 'C', etc.), or there is
+            # a gap ('A', 'B', 'D', etc.) (would occur if manually
+            # deleted from database, etc., and leaving old rank might
+            # confuse users.)
+            for i in range(0, len(mags)):
+                if mags[i].rank != chr(65 + i):
+                    mags[i].rank = chr(65 + i)
+                    mags[i].save()
 
             if maintenance_periods != len(mags):
                 if len(mags) > maintenance_periods:
