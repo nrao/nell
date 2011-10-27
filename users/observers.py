@@ -602,53 +602,9 @@ def events(request, *args, **kws):
     except ObjectDoesNotExist:
         tz = "UTC"
 
-    # Each event needs a unique id.  Let's start with 1.
-    id          = 1
-    jsonobjlist = []
     ej = EventJson()
 
-    # Project blackout events
-    blackouts = set([b for b in project.blackout_set.all()])
-    for b in blackouts:
-        jsonobjlist.extend(ej.blackoutJson(b, start, end, id, tz))
-        id = id + 1
-
-    # NOTE: here we display ALL investigator blackouts, but
-    # in the Observer Blackout section, we are only displaying blackouts
-    # of observers.
-    # Investigator blackout & Required Friend events
-    invBlackouts = [b for i in project.investigator_set.all() \
-                      for b in i.user.blackout_set.all()]
-    frdBlackouts = [b for f in project.friend_set.all() \
-                      for b in f.user.blackout_set.all() if f.required]
-    invBlackouts.extend(frdBlackouts)
-    blackouts = set(invBlackouts)
-    for b in blackouts:
-        jsonobjlist.extend(ej.blackoutJson(b, start, end, id, tz))
-        id = id + 1
-
-    # Investigator reservations
-    for user, reservations in project.getUpcomingReservations().items():
-        for s, e in reservations:
-            jsonobjlist.append(ej.reservationJson(user, s, e, id))
-            id = id + 1
-
-    # Scheduled telescope periods
-    for p in project.getPeriods():
-        jsonobjlist.append(ej.periodJson(p, id, tz))
-        id = id + 1
-
-    # Semester start dates
-    date = datetime.fromtimestamp(float(start))
-    for s in Semester.getFutureSemesters(date):
-        jsonobjlist.append(EventJson().semesterJson(s, id))
-        id = id + 1
-
-    # Scheduled telescope windows
-    for w in project.get_windows():
-        for wr in w.windowrange_set.all():
-            jsonobjlist.append(ej.windowRangeJson(wr, id))
-            id = id + 1
+    jsonobjlist = ej.getEvents(project, start, end, tz)
 
     return HttpResponse(json.dumps(jsonobjlist))
 
