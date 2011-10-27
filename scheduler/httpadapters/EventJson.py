@@ -36,14 +36,20 @@ class EventJson:
     even return a list of dicts instead of a single one.
     """
 
+    def mkJson(self, id, title, start, end = None, className = None):
+        "Utitlity for creating json dict.  Takes datetimes."
+        js = dict( id = id
+                   , title = title
+                   , start = start.isoformat()
+                   , className = className
+                   )
+        if end is not None:
+            js.update(dict(end = end.isoformat()))
+        return js    
+
     def reservationJson(self, user, start, end, id):
-        js = { "id" : id
-           , "title" : "%s in Green Bank." % user.name()
-           , "start" : start.isoformat()
-           , "end"   : end.isoformat()
-           , "className": 'reservation'
-           }
-        return js   
+        title = "%s in Green Bank." % user.name()
+        return self.mkJson(id, title, start, end, 'reservation') 
 
     
     def blackoutJson(self, blackout, calstart, calend, id = None, tz = None):
@@ -55,35 +61,30 @@ class EventJson:
             dates = [(adjustDateTimeTz(tz, s), adjustDateTimeTz(tz, e)) for s, e in dates]
         title    = "%s: %s" % (blackout.forName() 
                              , blackout.getDescription() or "blackout")
-        return [{
-            "id"   :      blackout.id
-          , "title":      title
-          , "start":      d[0].isoformat() if d[0] else None
-          , "end"  :      d[1].isoformat() if d[1] else None
-          , "className": 'blackout'
-        } for d in dates]
-    
+
+        return [self.mkJson(blackout.id
+                          , title
+                          , d[0] if d[0] else None                     
+                          , d[1] if d[1] else None                     
+                          , 'blackout'
+                           ) for d in dates]
 
     def periodJson(self, period, id, tz = None):
         end = period.start + timedelta(hours = period.duration)
-        # TBF: use:
+        # TBF: use period.end(), and how come we ignore tz?
         #end = period.end()
-
-        return {
-                "id"   : id
-              , "title": "".join(["Observing ", period.session.name])
-              , "start": adjustDateTimeTz(tz, period.start).isoformat() if tz is not None else period.start.isoformat()
-              , "end"  : end.isoformat()
-              , "className" : "period"
-        }    
+        title = "".join(["Observing ", period.session.name])
+        start = adjustDateTimeTz(tz, period.start) if tz is not None \
+            else period.start
+        return self.mkJson(id, title, start, end, 'period')
 
     def semesterJson(self, semester, id):
-        return {
-            "id"   :     id
-          , "title":     "".join(["Start of ", semester.semester])
-          , "start":     semester.start().isoformat()
-          , "className": 'semester'
-        }
+        title = "".join(["Start of ", semester.semester])
+        return self.mkJson(id
+                         , title
+                         , semester.start()
+                         , None
+                         , 'semester')
 
     def windowRangeJson(self, wr, id):
         """
@@ -92,11 +93,12 @@ class EventJson:
         end_datetime here in order to get the correct number of 
         days displayed on the calendar.
         """
-        return {
-                "id"   :     id
-              , "title":     "".join(["Window ", wr.window.session.name])
-              , "start":     wr.start_datetime().isoformat()
-              , "end"  :     wr.end_datetime().isoformat()
-              , "className": 'window'
-        }
+        title = "".join(["Window ", wr.window.session.name])
+        js = self.mkJson(id
+                       , title
+                       , wr.start_datetime()
+                       , wr.end_datetime()
+                       , 'window')
+        return js
+
 
