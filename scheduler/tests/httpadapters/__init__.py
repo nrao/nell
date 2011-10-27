@@ -20,5 +20,6 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
+from TestEventJson          import TestEventJson
 from TestSessionHttpAdapter import TestSessionHttpAdapter
 from TestPeriodHttpAdapter  import TestPeriodHttpAdapter

@@ -29,6 +29,7 @@ from django.http                    import HttpResponse, HttpResponseRedirect, H
 from django.shortcuts               import render_to_response, get_object_or_404
 from scheduler.utilities            import get_rev_comment
 from models                         import *
+from scheduler.httpadapters         import EventJson
 from nell.tools                     import IcalMap
 from nell.utilities.TimeAgent       import EST, UTC, adjustDateTimeTz
 from reversion                      import revision
@@ -604,11 +605,12 @@ def events(request, *args, **kws):
     # Each event needs a unique id.  Let's start with 1.
     id          = 1
     jsonobjlist = []
+    ej = EventJson()
 
     # Project blackout events
     blackouts = set([b for b in project.blackout_set.all()])
     for b in blackouts:
-        jsonobjlist.extend(b.eventjson(start, end, id, tz))
+        jsonobjlist.extend(ej.blackoutJson(b, start, end, id, tz))
         id = id + 1
 
     # NOTE: here we display ALL investigator blackouts, but
@@ -622,36 +624,30 @@ def events(request, *args, **kws):
     invBlackouts.extend(frdBlackouts)
     blackouts = set(invBlackouts)
     for b in blackouts:
-        jsonobjlist.extend(b.eventjson(start, end, id, tz))
+        jsonobjlist.extend(ej.blackoutJson(b, start, end, id, tz))
         id = id + 1
 
     # Investigator reservations
     for user, reservations in project.getUpcomingReservations().items():
         for s, e in reservations:
-            js = { "id" : id
-               , "title" : "%s in Green Bank." % user.name()
-               , "start" : s.isoformat()
-               , "end"   : e.isoformat()
-               , "className": 'reservation'
-               }
-            jsonobjlist.append(js)
+            jsonobjlist.append(ej.reservationJson(user, s, e, id))
             id = id + 1
 
     # Scheduled telescope periods
     for p in project.getPeriods():
-        jsonobjlist.append(p.eventjson(id, tz))
+        jsonobjlist.append(ej.periodJson(p, id, tz))
         id = id + 1
 
     # Semester start dates
     date = datetime.fromtimestamp(float(start))
     for s in Semester.getFutureSemesters(date):
-        jsonobjlist.append(s.eventjson(id))
+        jsonobjlist.append(EventJson().semesterJson(s, id))
         id = id + 1
 
     # Scheduled telescope windows
     for w in project.get_windows():
         for wr in w.windowrange_set.all():
-            jsonobjlist.append(wr.eventjson(id))
+            jsonobjlist.append(ej.windowRangeJson(wr, id))
             id = id + 1
 
     return HttpResponse(json.dumps(jsonobjlist))

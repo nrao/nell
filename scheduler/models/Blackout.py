@@ -381,22 +381,6 @@ class Blackout(models.Model):
         else:
             return dates
 
-    def eventjson(self, calstart, calend, id = None, tz = None):
-        calstart = datetime.fromtimestamp(float(calstart))
-        calend   = datetime.fromtimestamp(float(calend))
-        dates    = self.generateDates(calstart, calend)
-        if tz is not None:
-            dates = [(adjustDateTimeTz(tz, s), adjustDateTimeTz(tz, e)) for s, e in dates]
-        title    = "%s: %s" % (self.forName() #self.user.name()
-                             , self.getDescription() or "blackout")
-        return [{
-            "id"   :      self.id
-          , "title":      title
-          , "start":      d[0].isoformat() if d[0] else None
-          , "end"  :      d[1].isoformat() if d[1] else None
-          , "className": 'blackout'
-        } for d in dates]
-
     class Meta:
         db_table  = "blackouts"
         app_label = "scheduler"

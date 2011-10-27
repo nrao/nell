@@ -21,6 +21,7 @@
 #       Green Bank, WV 24944-0002 USA
 
 from ElectiveHttpAdapter     import ElectiveHttpAdapter
+from EventJson               import EventJson
 from FriendHttpAdapter       import FriendHttpAdapter
 from InvestigatorHttpAdapter import InvestigatorHttpAdapter
 from PeriodHttpAdapter       import PeriodHttpAdapter
