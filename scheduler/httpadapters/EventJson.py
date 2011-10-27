@@ -21,7 +21,7 @@
 #       Green Bank, WV 24944-0002 USA
 
 from datetime            import datetime, timedelta
-from utilities.TimeAgent import adjustDateTimeTz
+from utilities.TimeAgent import adjustDateTimeTz, backoffFromMidnight
 
 class EventJson:
 
@@ -43,8 +43,13 @@ class EventJson:
                    , start = start.isoformat()
                    , className = className
                    )
+        # If an end datetime is specified, watch for a bug (or feature?)
+        # in fullcalendar 1.5, wherein something ending at midnight
+        # (ex: 2006-2-4 00:00) is displayed on that day.  The affect of 
+        # this is that reservations and windows (that are just dates)
+        # are being displayed for one day too many.
         if end is not None:
-            js.update(dict(end = end.isoformat()))
+            js.update(dict(end = backoffFromMidnight(end).isoformat()))
         return js    
 
     def reservationJson(self, user, start, end, id):

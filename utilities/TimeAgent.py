@@ -338,3 +338,26 @@ def tz_to_tz(dt, tz_from, tz_to, naive = False):
         return dt.astimezone(tzt).replace(tzinfo = None)
     else:
         return dt.astimezone(tzt)
+
+def backoffFromMidnight(dt):
+    """
+    Some things don't deal well with boundaries between days.
+    For example, fullcalendar will interpret the end of an 
+    event landing at midnight as that event being on the
+    following day.  
+    Use this function to adjust such datetimes back by a step
+    to avoid such bugs.
+    Warning: date objects will get returned as datetimes.
+    """
+
+    step = 15 # minutes
+
+    # At midnight? By definition a date object will be
+    if dt.__class__.__name__ == 'date':
+        return date2datetime(dt) - datetime.timedelta(minutes = step)
+    elif (dt.hour == 0) and (dt.minute == 0) \
+        and (dt.second == 0) and (dt.microsecond == 0):
+        return dt - datetime.timedelta(minutes = step)
+    else:
+        return dt
+
