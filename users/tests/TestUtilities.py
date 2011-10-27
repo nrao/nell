@@ -115,7 +115,7 @@ class TestUtilities(BenchTestCase):
         calEvents = sch[4][1]
         self.assertEqual(1,len(calEvents))
         mag = calEvents[0].contained
-        self.assertEqual('1 -- ; (2011-09-29); x; active; Empty', mag.__unicode__())
+        self.assertEqual('1 -- 2011-09-26; (2011-09-29); x; active; Empty', mag.__unicode__())
         self.assertEqual([], mag.get_maintenance_activity_set())
 
         # now create a simple event
@@ -128,7 +128,7 @@ class TestUtilities(BenchTestCase):
         calEvents = sch[4][1]
         self.assertEqual(1,len(calEvents))
         mag = calEvents[0].contained
-        self.assertEqual('1 -- ; (2011-09-29); x; active; Test Maintenance Activity',
+        self.assertEqual('1 -- 2011-09-26; (2011-09-29); x; active; Test Maintenance Activity',
                          mag.__unicode__())
         mas = mag.get_maintenance_activity_set()
         self.assertEqual(1, len(mas))
@@ -150,7 +150,7 @@ class TestUtilities(BenchTestCase):
         calEvents = sch[4][1]
         self.assertEqual(1,len(calEvents))
         mag = calEvents[0].contained
-        self.assertEqual('1 -- ; (2011-09-29); x; active; Repeat Daily 1, Test Maintenance Activity',
+        self.assertEqual('1 -- 2011-09-26; (2011-09-29); x; active; Repeat Daily 1, Test Maintenance Activity',
                          mag.__unicode__())
         mas = mag.get_maintenance_activity_set()
         self.assertEqual(2, len(mas))
@@ -725,7 +725,7 @@ class TestUtilities(BenchTestCase):
         self.assertEqual('CalEventFixedMaintenance', calEvents[0].__class__.__name__)
         mag = calEvents[0].contained
         # make sure it is the 'emergency' mag, not the one that belongs on Wed.
-        self.assertEqual("2 -- ; (2011-09-27); x; active; Empty", mag.__unicode__())
+        self.assertEqual("2 -- 2011-09-26; (2011-09-27); x; active; Empty", mag.__unicode__())
         # And it's empty; we didn't add anything above.
         mas = mag.get_maintenance_activity_set()
         self.assertEqual(0, len(mas))
