@@ -443,7 +443,7 @@ class TestObservers(TestObserversBase):
         response = self.get('/project/%s/events' % self.p.pcode, data)
         self.failUnlessEqual(response.status_code, 200)
         exp = [{"className": "blackout", "start": "2011-08-03T00:00:00+00:00", "end": "2011-08-08T00:00:00+00:00", "title": "Dana Balser: blackout"}
-             , {"start": "2011-08-04T00:00:00+00:00", "end": "2011-08-04T03:00:00", "title": "Observing Low Frequency With No RFI"}
+             , {"className": "period", "start": "2011-08-04T00:00:00+00:00", "end": "2011-08-04T03:00:00", "title": "Observing Low Frequency With No RFI"}
              , {"className": "semester", "start": "2012-02-01T00:00:00", "title": "Start of 12A"}
              , {"className": "semester", "start": "2012-08-01T00:00:00", "title": "Start of 12B"}
              ]
