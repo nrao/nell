@@ -222,12 +222,10 @@ def getMessages(request):
     time       = ivalues.get('time', {}).get('value')
     conversion = ivalues.get('conversion', {}).get('value')
     t_tot      = results.get('t_tot', {}).get('value')
-    if t_tot != '' and t_tot is not None:
-        t_tot      = sex2float(t_tot) if ':' in t_tot else float(t_tot)
     msg = {'type' : 'Warning', 'msg' : 'Time*Bandwidth exceeds the suggested limit from 1/F gain variations of . Please justify how you plan on observing beyond that limit.'}
     if rx != '' and bandwidth != '' and time != '' and t_tot != '' and conversion != '' and None not in (rx, bandwidth, time, t_tot, conversion):
-        limit = float(time) * float(bandwidth) if conversion == 'Time to Sensitivity' else \
-                t_tot * float(bandwidth)
+        limit = sex2float(time) * float(bandwidth) if conversion == 'Time to Sensitivity' else \
+                sex2float(t_tot) * float(bandwidth)
         if backend == 'Mustang' and limit >= 1e5:
             messages.append(msg)
         elif backend == 'Caltech Continuum Backend' and 'Ka' in rx and limit >= 1e5:
@@ -328,6 +326,10 @@ def getMinIntegrationTime(request):
     request.session['SC_result']['min_integration'] = (min_int, None, '', '', None)
 
 def sex2float(value):
+    if value == '' or value is None:
+        return value
+    elif ':' not in value:
+        return float(value)
     values = value.split(":")
     hour   = values[0]
     if len(values) == 3:
