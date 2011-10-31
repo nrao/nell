@@ -365,8 +365,8 @@ class Maintenance_Activity_Group(models.Model):
             # marked deleted.
             maintenance_periods = len(me)
             dbmags = Maintenance_Activity_Group.objects\
-                .filter(week__gte = utc_day)\
-                .filter(week__lt = utc_day + delta)\
+                .filter(week__gte = TimeAgent.truncateDt(utc_day))\
+                .filter(week__lt = TimeAgent.truncateDt(utc_day) + delta)\
                 .exclude(rank = 'x') \
                 .order_by("rank")
             mags = [mag for mag in dbmags]
@@ -415,15 +415,21 @@ class Maintenance_Activity_Group(models.Model):
             sched_periods.sort(key = lambda x: x.start)
             mags.sort(key = lambda x: x.rank)
 
+            def in_query_set(item, qset):
+                for i in qset:
+                    if item == i:
+                        return True
+                    return False
+
             for i in range(0, len(mags)):
                 mag = mags[i]
 
                 if i < len(sched_periods):
                     p = sched_periods[i]
-
-                    if mag.period != p:
-                        mag.period = p
-                        mag.save()
+                    
+                    if not in_query_set(mag, p.maintenance_activity_group_set.all()):
+                        p.maintenance_activity_group_set.clear()
+                        p.maintenance_activity_group_set.add(mag)
                 else:
                     if mag.period:
                         mag.period = None
