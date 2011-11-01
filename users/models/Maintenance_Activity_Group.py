@@ -251,26 +251,14 @@ class Maintenance_Activity_Group(models.Model):
     # has already received a repeat.  Look for MAGs on the same day.
     # If found, ensure that a particular repeat activity only shows up
     # on the appropriate MAG.
-    ######################################################################    
+    ######################################################################
 
     def get_maintenance_activity_set(self):
         """
         Returns a set of maintenance activities occuring during this
         group's duration, in time order.
         """
-
-        unscheduled_maintenance = "Unscheduled Maintenance"
-
-        def get_templates(end):
-            repeatQ = models.Q(deleted = False) \
-                & (models.Q(repeat_interval = 1) \
-                       | models.Q(repeat_interval = 7) \
-                       | models.Q(repeat_interval = 30)) \
-                       & (models.Q(_start__lte = end) \
-                              & models.Q(repeat_end__gte = end))
-            dbrmas = Maintenance_Activity.objects.filter(repeatQ)
-            return [p for p in dbrmas]
-
+        # We need some functions...
         def is_P(mag):
             return True if mag.period and \
                 mag.period.session.name != unscheduled_maintenance
@@ -281,17 +269,99 @@ class Maintenance_Activity_Group(models.Model):
         def is_highest_U(mag):
             if not is_U(mag):
                 return False
-            
+
             week = mag.week
             mags = Maintenance_Activity_Group.objects.filter(week = week)\
                 .filter(period = None).order_by("rank")
             return mag == mags[0]
-            
+
+        def already_instantiated(template, mag):
+            for j in mag.maintenance_activity_set.all():
+                if j.repeat_template == template:
+                    return True
+           return False
 
 
-        Us = None
-        Ps = None
-        
+        def good_fit(template, mag):
+            pass
+
+        def better_fit(template, other_mags):
+            for g in other_mags:
+                if template.get_start().time() >= g.get_start().time() \
+                        and template.get_start().time() < g.get_end().time():
+                    return True
+            return False
+
+        def instantiate(template, mag):
+            ma = template.clone(mag)
+
+        def remove(template, mag):
+            for i in mag.maintenance_activity_set.all():
+                if i.repeat_template == template:
+                    i.delete()
+
+        if is_P(self) and is_U(self):
+
+            # set up all the data we need:
+
+            unscheduled_maintenance = "Unscheduled Maintenance"
+            # Get repeat templates
+            repeatQ = models.Q(deleted = False) \
+                & (models.Q(repeat_interval = 1) \
+                       | models.Q(repeat_interval = 7) \
+                       | models.Q(repeat_interval = 30)) \
+                       & (models.Q(_start__lte = end) \
+                              & models.Q(repeat_end__gte = end))
+            dbrmas = Maintenance_Activity.objects.filter(repeatQ)
+            templates = [p for p in dbrmas]
+
+            if is_P(self):
+                today = TimeAgent.truncateDt(self.period.start)
+                # Get other groups today.  They will be used below to see
+                # if any of them is a better fit.  We must exclude any
+                # possible emergency maintenance periods:
+                other_groups_today = Maintenance_Activity_Group.objects\
+                    .exclude(period = None)\
+                    .filter(period__start__gte = today)\
+                    .filter(period__start__lt = today + timedelta(1))\
+                    .exclude(id = self.id) \
+                    .exclude(period__session__name = unscheduled_maintenance)
+            else:
+                other_groups_today = []
+
+            this_week = self.get_week()
+            other_groups_this_week =  Maintenance_Activity_Group.objects\
+                .exclude(period = None)\
+                .filter(period__start__gte = this_week)\
+                .filter(period__start__lt = today + timedelta(7))\
+                .exclude(id = self.id) \
+                .exclude(period__session__name = unscheduled_maintenance)
+
+            # Meat and potatoes: For each template, see if we must instantiate it:
+
+            for t in templates:
+                if t.repeat_interval = 1:
+                    if altready_instantiated(t, self):
+                        if better_fit(t, other_groups_today):
+                            remove(t, self)
+                    else:
+                        if not better_fit(t, other_groups_today):
+                            instantiate(t, self)
+
+                if t.repeat_interval = 7 or t.repeat_interval = 30:
+                    if already_instantiated(t, self):
+                        if better_fit(t, other_groups_this_week):
+                            remove(t, self)
+                    else:
+                        if good_fit(t, self):
+                            if is_P(self) or is_highest_U(self):
+                                instantiate(t, self)
+
+        groupQ  = models.Q(group = self)
+        dbmas   = Maintenance_Activity.objects.filter(groupQ)
+        mas = [i for i in dbmas if not i.is_repeat_template()]
+        return mas
+
     def get_maintenance_activity_set2(self):
         """
         Returns a set of maintenance activities occuring during this
@@ -299,7 +369,7 @@ class Maintenance_Activity_Group(models.Model):
         """
 
         unscheduled_maintenance = "Unscheduled Maintenance"
-        
+
         if not self.period or self.period.session.name == unscheduled_maintenance:
             mas = self.maintenance_activity_set.all()
         else:
@@ -454,7 +524,7 @@ class Maintenance_Activity_Group(models.Model):
                 .filter(start__lt = utc_day + delta)\
                 .filter(session__session_type__type = 'fixed')\
                 .filter(state__name = "Scheduled")
-            
+
             for i in mp:
                 if i.maintenance_activity_group_set.count() == 0:
                     mag = Maintenance_Activity_Group()
