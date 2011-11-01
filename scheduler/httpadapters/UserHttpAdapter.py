@@ -43,6 +43,7 @@ class UserHttpAdapter(object):
         self.user.first_name  = fdata.get('first_name', "")
         self.user.last_name   = fdata.get('last_name', "")
         self.user.contact_instructions   = fdata.get('contact_instructions', "")
+        self.user.save()
 
         # Roles.  These should be updated individually *without* first
         # clearing out all the user's roles (using
