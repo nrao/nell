@@ -94,14 +94,6 @@ class Semester(models.Model):
 
         return datetime(year, month, day)
 
-    def eventjson(self, id):
-        return {
-            "id"   :     id
-          , "title":     "".join(["Start of ", self.semester])
-          , "start":     self.start().isoformat()
-          , "className": 'semester'
-        }
-
     @staticmethod
     def getFutureSemesters(today = datetime.today()):
         "Returns a list of Semesters that start on or after the given date."

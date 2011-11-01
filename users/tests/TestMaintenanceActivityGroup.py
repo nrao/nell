@@ -58,8 +58,11 @@ class TestMaintenanceActivityGroup(NellTestCase):
     def test_maintenance_groups(self):
         # get the maintenance groups for the week of April 11, 2011
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
-        # there should be 3 maintenance groups: 2 electives, one pending period
-        self.assertEqual(len(mags), 3)
+        # there should be 2 maintenance groups: 2 electives
+        # we don't pick up the pending period from the fixed session
+
+        self.assertEqual(len(mags), 2)
+
         # mag should have period set to None if elective.  Elective
         # not scheduled yet.  Pending period should be set and is the
         # last one in the list.
@@ -71,10 +74,6 @@ class TestMaintenanceActivityGroup(NellTestCase):
             # not scheduled electives, so mag get_start() should be
             # the same as mag.get_week()
             self.assertEqual(mag.get_start(), mag.get_week())
-
-        # test the last one, with the pending period:
-        self.assertEqual(mags[2].period.id, self.mp1.id)
-        self.assertEqual(mags[2].rank, 'x')
 
         self.mp1.state = self.deleted
         self.mp1.save()
@@ -99,13 +98,19 @@ class TestMaintenanceActivityGroup(NellTestCase):
         self.mp1.state = self.pending
         self.mp1.save()
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
-        self.assertEqual(len(mags), 2)
+        self.assertEqual(len(mags), 1)
 
         # restore the elective.
         self.me1.setComplete(False)
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
-        self.assertEqual(len(mags), 3)
+        self.assertEqual(len(mags), 2)
         
+        # now publish the fixed session's period
+        self.mp1.state = self.scheduled
+        self.mp1.save()
+        mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
+        self.assertEqual(len(mags), 3)
+
     ######################################################################
     # This tests the assignemnt of groups to scheduled periods.  The
     # results should be:
@@ -124,6 +129,11 @@ class TestMaintenanceActivityGroup(NellTestCase):
     ######################################################################
         
     def test_maintenance_assignment(self):
+
+        # publish the fixed session's period
+        self.mp1.state = self.scheduled
+        self.mp1.save()
+
         # publish the first elective, publishing its Friday period.
         pds = self.me1.periods.all().order_by('start')
         p1 = pds[pds.count() - 1] # get last one, Friday.
@@ -208,7 +218,7 @@ class TestMaintenanceActivityGroup(NellTestCase):
         self.assertEqual(mags[1].period.id, p1.id)
         
         # now revive 'self.mp1'.  C should reappear.
-        self.mp1.state = self.pending
+        self.mp1.state = self.scheduled 
         self.mp1.save()
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
         self.assertEqual(3, len(mags)) # 'x' should reappear
@@ -237,7 +247,10 @@ class TestMaintenanceActivityGroup(NellTestCase):
 
     def test_get_maintenance_activity_set(self):
 
-        
+        # publish the fixed sessions period
+        self.mp1.state = self.scheduled
+        self.mp1.save()
+
         # get the maintenance groups for the week of April 11, 2011
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
         # there should be 3 maintenance groups: 2 electives, one pending period

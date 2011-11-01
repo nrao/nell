@@ -104,16 +104,6 @@ class Period(models.Model):
                              , self.session.project.pcode
                              , original_id)
 
-    def eventjson(self, id, tz = None):
-        end = self.start + timedelta(hours = self.duration)
-
-        return {
-                "id"   : id
-              , "title": "".join(["Observing ", self.session.name])
-              , "start": adjustDateTimeTz(tz, self.start).isoformat() if tz is not None else self.start.isoformat()
-              , "end"  : end.isoformat()
-        }
-
     def get_rcvr_ranges(self):
         ranges = ["%5.2f - %5.2f".strip() % (r.freq_low, r.freq_hi) for r in self.receivers.all()]
         return ", ".join(ranges)

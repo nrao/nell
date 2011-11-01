@@ -498,7 +498,7 @@ class Maintenance_Activity_Group(models.Model):
         rank 'x' are fixed, already have periods, and do not get
         sorted by rank.
         """
-        utc_day = TimeAgent.truncateDt(utc_day)
+
         mags = []
 
         pmags = Maintenance_Activity_Group._get_fixed_mags(utc_day)
@@ -530,6 +530,7 @@ class Maintenance_Activity_Group(models.Model):
                     mag = Maintenance_Activity_Group()
                     mag.deleted = False
                     mag.rank = 'x'
+                    mag.week = utc_day
                     i.maintenance_activity_group_set.add(mag)
                 else:
                     mag = i.maintenance_activity_group_set.all()[0]
@@ -538,6 +539,10 @@ class Maintenance_Activity_Group(models.Model):
                     # they are not picked up by _get_elective_mags().
                     if mag.rank != 'x':
                         mag.rank = 'x'
+                        mag.save()
+
+                    if not mag.week:
+                        mag.week = utc_day
                         mag.save()
 
                 mags.append(mag)
@@ -571,30 +576,53 @@ class Maintenance_Activity_Group(models.Model):
             # the tally must be marked not deleted (in case they were
             # deleted earlier), and any outside the tally must be
             # marked deleted.
+
             maintenance_periods = len(me)
+            # When obtaining the maintenance activity groups for this
+            # week, ensure that the query will match the mag's 'week'
+            # field by stripping off the time of 'utc_day'.  Otherwise
+            # it may not pick it up.  Also we include a generous time
+            # range for 'week' just to make sure time issues don't
+            # crop in and exclude any group.
             dbmags = Maintenance_Activity_Group.objects\
-                .filter(week__gte = utc_day)\
-                .filter(week__lt = utc_day + delta)\
+                .filter(week__gte = TimeAgent.truncateDt(utc_day))\
+                .filter(week__lt = TimeAgent.truncateDt(utc_day) + delta)\
                 .exclude(rank = 'x') \
                 .order_by("rank")
             mags = [mag for mag in dbmags]
 
+            # these are all ordered by rank now, relabel rank in case
+            # it doesn't start with 'A' ('B', 'C', etc.), or there is
+            # a gap ('A', 'B', 'D', etc.) (would occur if manually
+            # deleted from database, etc., and leaving old rank might
+            # confuse users.)
+            for i in range(0, len(mags)):
+                if mags[i].rank != chr(65 + i):
+                    mags[i].rank = chr(65 + i)
+                    mags[i].save()
+
+            # either too many or not enough mags.  Deal with it
+            # accordingly...
             if maintenance_periods != len(mags):
+                # too many; mark the excess as deleted.
                 if len(mags) > maintenance_periods:
                     for i in range(maintenance_periods, len(mags)):
                         mag = mags[i]
                         mag.deleted = True
                         mag.period = None
                         mag.save()
+                # too few; create more to make up the numbers.
                 if len(mags) < maintenance_periods:
                     for i in range(len(mags), maintenance_periods):
                         mag = Maintenance_Activity_Group()
-                        mag.week = utc_day
+                        mag.week = TimeAgent.truncateDt(utc_day)
                         mag.deleted = False
                         mag.rank = chr(65 + i)
                         mag.save()
                         mags.append(mag)
 
+            # Mark all mags from 0 to number of maintenance periods as
+            # undeleted.  This reuses any previously deleted mags.
             for i in range(0, maintenance_periods):
                 mag = mags[i]
                 if mag.deleted:
@@ -613,15 +641,25 @@ class Maintenance_Activity_Group(models.Model):
             sched_periods.sort(key = lambda x: x.start)
             mags.sort(key = lambda x: x.rank)
 
+            def in_query_set(item, qset):
+                for i in qset:
+                    if item == i:
+                        return True
+                    return False
+
             for i in range(0, len(mags)):
                 mag = mags[i]
 
                 if i < len(sched_periods):
                     p = sched_periods[i]
-
-                    if mag.period != p:
-                        mag.period = p
-                        mag.save()
+                    
+                    # update the period if the mag is not the right
+                    # one, or if it has more than one mag, to ensure
+                    # just one per period.
+                    if not in_query_set(mag, p.maintenance_activity_group_set.all()) \
+                            or p.maintenance_activity_group_set.count() > 1:
+                        p.maintenance_activity_group_set.clear()
+                        p.maintenance_activity_group_set.add(mag)
                 else:
                     if mag.period:
                         mag.period = None

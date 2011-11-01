@@ -196,10 +196,15 @@ def get_gbt_schedule_events(start, end, timezone,
         # get the Monday for the week.  The maintenance activity
         # groups are retrieved for the entire week, so we do this only
         # once per week.
-        monday = utc_today - timedelta(utc_today.weekday())
+        monday = today - timedelta(today.weekday())
+        # if we go from Monday to Monday in ETC then we must convert
+        # to the equivalent of Monday 00:00 ET into UTC to get the right
+        # time range.  If already in UT, then it will stay whatever
+        # 'monday' is set to.
+        monday_in_utc = TimeAgent.est2utc(monday) if timezone == 'ET' else monday
 
         if monday != old_monday:
-            mags = Maintenance_Activity_Group.get_maintenance_activity_groups(monday)
+            mags = Maintenance_Activity_Group.get_maintenance_activity_groups(monday_in_utc)
             old_monday = monday
 
         # Include previous day's periods because last one may end

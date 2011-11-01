@@ -45,7 +45,10 @@ class TestProjectResource(BenchTestCase):
 
     @timeIt
     def test_create(self):
-        response = self.client.post('/scheduler/projects', self.fdata)
+        # pcodes must be unique
+        fdata = self.fdata.copy()
+        fdata.update({'pcode' : 'WTF'})
+        response = self.client.post('/scheduler/projects', fdata)
         self.failUnlessEqual(response.status_code, 200)
 
     @timeIt
@@ -62,6 +65,7 @@ class TestProjectResource(BenchTestCase):
                     , 'PSC_time'   : ''
                     , 'sem_time'   : ''
                     , 'grade'      : ''
+                    , 'pcode'      : 'WTF' # must be unique
                       })
 
         response = self.client.post('/scheduler/projects', fdata)

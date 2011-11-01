@@ -438,6 +438,7 @@ class TestProject(BenchTestCase):
         # Now add a project w/ prescheduled times.
         otherproject = Project()
         pdata = {"semester"   : "09A"
+               , "pcode"      : "otherProject"
                , "type"       : "science"
                , "total_time" : "10.0"
                , "PSC_time"   : "10.0"
@@ -486,6 +487,7 @@ class TestProject(BenchTestCase):
         # Now add a project w/ prescheduled times but not for whole day.
         otherproject = Project()
         pdata = {"semester"   : "09A"
+               , "pcode"      : "otherProject"
                , "type"       : "science"
                , "total_time" : "10.0"
                , "PSC_time"   : "10.0"
@@ -598,10 +600,6 @@ class TestProject(BenchTestCase):
         self.gitrdone(p1, ProjectHttpAdapter(p1).init_from_post
                     , p2, ProjectHttpAdapter(p2).init_from_post)
 
-        p3 = Project()
-        adapter = ProjectHttpAdapter(p3)
-        adapter.init_from_post({})
-
     def test_update_from_post(self):
         p1 = Project()
         p2 = Project()
@@ -611,6 +609,7 @@ class TestProject(BenchTestCase):
         "Mike was here."
 
         p_fdata = {"semester" : "09A"
+                 , "pcode"    : "p1"
                  , "type"     : "science"
                  , "total_time" : "10.0"
                  , "PSC_time"   : "10.0"
@@ -621,6 +620,7 @@ class TestProject(BenchTestCase):
         self.defaultAssertion(p_fdata, p1)
 
         p_fdata1 = {"semester" : "09A"
+                 , "pcode"    : "p2"
                  , "type"     : "science"
                  , "total_time" : "10.0, 5.0"
                  , "PSC_time"   : "10.0, 5.0"
@@ -631,6 +631,7 @@ class TestProject(BenchTestCase):
         self.defaultAssertion(p_fdata1, p2)
 
         p_fdata = {"semester" : "09A"
+                 , "pcode"    : "p3"
                  , "type"     : "science"
                  , "total_time" : "10.0, 5.0, 1.0"
                  , "PSC_time"   : "10.0, 5.0, 1.0"

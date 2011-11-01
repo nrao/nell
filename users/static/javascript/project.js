@@ -1,13 +1,13 @@
 $(document).ready(function() {
 	$('#calendar').fullCalendar({
         draggable: false,
-        timeFormat: 'H:i',
+        timeFormat: 'H:mm',
         events: event_url,
         unavailable: unavailable_url,
         // Clicking on a day provides feedback as to why that day
         // may not be available for observing.
         dayClick: function(td) {
-            if ($(this).is('.unavailable')) {
+            if ($(this).hasClass('fc-unavailable')) { 
                 // This day is unavailable, so make a JSON request to 
                 // find out why.
                 var data = {};
