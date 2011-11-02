@@ -253,18 +253,20 @@ class Maintenance_Activity_Group(models.Model):
     # on the appropriate MAG.
     ######################################################################
 
-    def get_maintenance_activity_set(self):
+    def get_maintenance_activity_set2(self):
         """
         Returns a set of maintenance activities occuring during this
         group's duration, in time order.
         """
+
         # We need some functions...
         def is_P(mag):
             return True if mag.period and \
-                mag.period.session.name != unscheduled_maintenance
+                mag.period.session.name != unscheduled_maintenance \
+                else False
 
         def is_U(mag):
-            return True if not mag.period
+            return True if not mag.period else False
 
         def is_highest_U(mag):
             if not is_U(mag):
@@ -279,11 +281,82 @@ class Maintenance_Activity_Group(models.Model):
             for j in mag.maintenance_activity_set.all():
                 if j.repeat_template == template:
                     return True
-           return False
+            return False
 
+        def get_monthly_due_dates(template):
+            date = template._start
+            end = datetime(template.repeat_end.year,
+                           template.repeat_end.month,
+                           template.repeat_end.day)
+            dates = []
+
+            while date < end:
+                dates.append(date)
+
+                if date.month == 12:
+                    date = date.replace(month = 1)
+                    date = date.replace(year = date.year + 1)
+                else:
+                    date = date.replace(month = date.month + 1)
+            return dates
+
+        def template_due(template):
+            # daily and weekly will always be due this week.
+            if template.repeat_interval == 1 or template.repeat_interval == 7:
+                return True
+
+            due_dates = get_monthly_due_dates(template)
+
+            for i in range(0, 7):
+                if self.week + timedelta(days = i) in due_dates:
+                    return True
+
+            return False
+            
 
         def good_fit(template, mag):
-            pass
+
+            # take care of simple case: no published mags this week,
+            # the template is due, and this is the highest U:
+            if len(published_groups_this_week) == 0 \
+                    and template_due(template) \
+                    and is_highest_U(mag):
+                return True
+
+            # dm = {4: 30, 5: 20, 6: 10, 0: 0, 1: 15, 2: 25, 3: 35}
+            # delta = timedelta(days = 3)
+            # today = TimeAgent.truncateDt(period.start)
+            # p = Period.get_periods_by_observing_type(today - delta,
+            #                                          today + delta,
+            #                                          "maintenance")
+
+            # for i in rmas:
+            #     if i.repeat_interval > 1:
+            #         start_date = TimeAgent.truncateDt(i.get_start())
+            #         diff = (today - start_date).days % i.repeat_interval
+
+            #         if diff:
+            #             # doesn't fall on this date.  Is this the closest
+            #             # period though?
+
+            #             if diff > 6:     # monthly not due
+            #                 x.append(i)
+            #             else:            # weekly or monthly that is due this week
+            #                 for j in p:
+            #                     if j != period:  # check only other periods
+            #                         mod = (j.start.date() \
+            #                                    - start_date.date()).days \
+            #                                    % i.repeat_interval
+
+            #                         # Test to see if it's a better fit in
+            #                         # another period.  and if so, don't
+            #                         # use here.
+            #                         if mod < 7 and dm[mod] < dm[diff]:
+            #                             x.append(i)
+            #                             break
+
+            return False
+
 
         def better_fit(template, other_mags):
             for g in other_mags:
@@ -300,11 +373,17 @@ class Maintenance_Activity_Group(models.Model):
                 if i.repeat_template == template:
                     i.delete()
 
-        if is_P(self) and is_U(self):
-
+        if is_P(self) or is_U(self):
             # set up all the data we need:
+            if is_P(self):
+                today = TimeAgent.truncateDt(self.period.start)
+                end = self.period.end()
+            else:
+                today = self.week
+                end = self.week + timedelta(days = 7)
 
-            unscheduled_maintenance = "Unscheduled Maintenance"
+            unscheduled_maintenance = u"Unscheduled Maintenance"
+
             # Get repeat templates
             repeatQ = models.Q(deleted = False) \
                 & (models.Q(repeat_interval = 1) \
@@ -330,39 +409,39 @@ class Maintenance_Activity_Group(models.Model):
                 other_groups_today = []
 
             this_week = self.get_week()
-            other_groups_this_week =  Maintenance_Activity_Group.objects\
+            published_groups_this_week =  Maintenance_Activity_Group.objects\
                 .exclude(period = None)\
                 .filter(period__start__gte = this_week)\
                 .filter(period__start__lt = today + timedelta(7))\
                 .exclude(id = self.id) \
+                .exclude(period = None) \
                 .exclude(period__session__name = unscheduled_maintenance)
 
             # Meat and potatoes: For each template, see if we must instantiate it:
 
             for t in templates:
-                if t.repeat_interval = 1:
-                    if altready_instantiated(t, self):
+                if t.repeat_interval == 1:
+                    if already_instantiated(t, self):
                         if better_fit(t, other_groups_today):
                             remove(t, self)
                     else:
                         if not better_fit(t, other_groups_today):
                             instantiate(t, self)
 
-                if t.repeat_interval = 7 or t.repeat_interval = 30:
+                if t.repeat_interval == 7 or t.repeat_interval == 30:
                     if already_instantiated(t, self):
-                        if better_fit(t, other_groups_this_week):
+                        if not good_fit(t, self):
                             remove(t, self)
                     else:
                         if good_fit(t, self):
-                            if is_P(self) or is_highest_U(self):
-                                instantiate(t, self)
+                            instantiate(t, self)
 
         groupQ  = models.Q(group = self)
         dbmas   = Maintenance_Activity.objects.filter(groupQ)
         mas = [i for i in dbmas if not i.is_repeat_template()]
         return mas
 
-    def get_maintenance_activity_set2(self):
+    def get_maintenance_activity_set(self):
         """
         Returns a set of maintenance activities occuring during this
         group's duration, in time order.
@@ -652,7 +731,7 @@ class Maintenance_Activity_Group(models.Model):
 
                 if i < len(sched_periods):
                     p = sched_periods[i]
-                    
+
                     # update the period if the mag is not the right
                     # one, or if it has more than one mag, to ensure
                     # just one per period.

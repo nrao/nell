@@ -270,3 +270,101 @@ class TestMaintenanceActivityGroup(NellTestCase):
         for i, mag in enumerate(mags):
             self.assertEqual(str(i), mag.get_maintenance_activity_set()[0].description)
 
+    def test_get_maintenance_activity_set_2(self):
+
+        # returns true if a maintenance activity group contains an
+        # instance derived from template 'templ'.
+        def has_template_instance(templ, mas):
+            for i in mas:
+                if i.is_repeat_activity():
+                    if i.repeat_template == templ:
+                        return True
+            return False
+
+        def add_template(start, interval, end):
+            t = create_maintenance_activity()
+            t.repeat_interval = interval
+            t._start = start
+            t.repeat_end = end
+            t.save()
+            return t
+
+        # simple case: a repeating activity, no published periods.
+        # Daily activity should wind up on both 'A' and 'B', and
+        # weekly/monthly only on 'A'.
+
+        week = datetime(2011, 04, 11)
+        t_daily = add_template(datetime(2011, 04, 01),
+                               1,
+                               datetime(2011, 04, 22))
+
+        # get the maintenance activity groups.  Should be 2, one for
+        # me1, one for me2.
+
+        mags = Maintenance_Activity_Group\
+            .get_maintenance_activity_groups(week)
+        self.assertEqual(2, len(mags))
+        mags.sort(key = lambda x: x.rank)
+        masA = mags[0].get_maintenance_activity_set2()
+        masB = mags[1].get_maintenance_activity_set2()
+
+        # each of 'masA' and 'masB' should have an instance of
+        # template 'ma':
+        self.assertTrue(has_template_instance(t_daily, masA))
+        self.assertTrue(has_template_instance(t_daily, masB))
+
+        # Now create a weekly template:
+        t_weekly = add_template(datetime(2011, 4, 6),
+                                7,
+                                datetime(2011, 4, 22))
+
+        masA = mags[0].get_maintenance_activity_set2()
+        masB = mags[1].get_maintenance_activity_set2()
+
+        # 'A' should have a daily and a weekly, 'B' only the daily.
+        self.assertTrue(has_template_instance(t_daily, masA))
+        self.assertTrue(has_template_instance(t_daily, masB))
+        self.assertTrue(has_template_instance(t_weekly, masA))
+        self.assertFalse(has_template_instance(t_weekly, masB))
+
+        self.assertEqual(len(masA), 2)
+        self.assertEqual(len(masB), 1)
+
+        # Now add a monthly but not due.  Should not show up.
+        t_monthly_not_due = add_template(datetime(2011, 4, 6),
+                                         30,
+                                         datetime(2011, 7, 1))
+
+        masA = mags[0].get_maintenance_activity_set2()
+        masB = mags[1].get_maintenance_activity_set2()
+
+        # Nothing should change.
+        self.assertTrue(has_template_instance(t_daily, masA))
+        self.assertTrue(has_template_instance(t_weekly, masA))
+        self.assertFalse(has_template_instance(t_monthly_not_due, masA))
+        self.assertTrue(has_template_instance(t_daily, masB))
+        self.assertFalse(has_template_instance(t_weekly, masB))
+        self.assertFalse(has_template_instance(t_monthly_not_due, masB))
+
+        self.assertEqual(len(masA), 2)
+        self.assertEqual(len(masB), 1)
+
+        # Add a monthly, due the 14th, this week.
+        t_monthly = add_template(datetime(2011, 3, 14),
+                                 30,
+                                 datetime(2011, 7, 1))
+
+        masA = mags[0].get_maintenance_activity_set2()
+        masB = mags[1].get_maintenance_activity_set2()
+
+        # 'A' should carry 1 daily, 1 weekly and 1 monthly
+        # 'B' should carry only 1 daily
+        self.assertTrue(has_template_instance(t_daily, masA))
+        self.assertTrue(has_template_instance(t_weekly, masA))
+        self.assertTrue(has_template_instance(t_monthly, masA))
+        self.assertTrue(has_template_instance(t_daily, masB))
+        self.assertFalse(has_template_instance(t_weekly, masB))
+        self.assertFalse(has_template_instance(t_monthly, masB))
+
+        self.assertEqual(len(masA), 3)
+        self.assertEqual(len(masB), 1)
