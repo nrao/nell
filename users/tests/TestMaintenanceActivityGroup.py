@@ -46,6 +46,8 @@ class TestMaintenanceActivityGroup(NellTestCase):
         self.me2 = create_maintenance_elective(per_data)
         self.mp1 = create_maintenance_period(datetime(2011, 04, 11, 8), 8,
                                              'Pending')
+        self.mp2 = create_maintenance_period(datetime(2011, 04, 14, 8), 8,
+                                             'Pending')
         self.deleted = Period_State.objects.get(name = 'Deleted')
         self.pending = Period_State.objects.get(name = 'Pending')
         self.scheduled = Period_State.objects.get(name = 'Scheduled')
@@ -368,3 +370,34 @@ class TestMaintenanceActivityGroup(NellTestCase):
 
         self.assertEqual(len(masA), 3)
         self.assertEqual(len(masB), 1)
+
+        # now publish the fixed session's period
+        self.mp1.state = self.scheduled
+        self.mp1.save()
+
+        # new weekly template, due Tuesday.
+        t_weekly_2 = add_template(datetime(2011, 3, 5),
+                                  7,
+                                  datetime(2011, 7, 1))
+        # Should be 3 mags now.
+        mags = Maintenance_Activity_Group\
+            .get_maintenance_activity_groups(week)
+        self.assertEqual(3, len(mags))
+        
+        masA = mags[0].get_maintenance_activity_set2()
+        masB = mags[1].get_maintenance_activity_set2()
+        masF1 = mags[2].get_maintenance_activity_set2()
+        # 'A' and 'B' should not have changed.
+        self.assertTrue(has_template_instance(t_daily, masA))
+        self.assertTrue(has_template_instance(t_weekly, masA))
+        self.assertTrue(has_template_instance(t_monthly, masA))
+        self.assertTrue(has_template_instance(t_daily, masB))
+        self.assertFalse(has_template_instance(t_weekly, masB))
+        self.assertFalse(has_template_instance(t_monthly, masB))
+
+        self.assertEqual(len(masA), 3)
+        self.assertEqual(len(masB), 1)
+
+        self.assertTrue(has_template_instance(t_daily, masF1))
+        self.assertTrue(has_template_instance(t_weekly_2, masF1))
+        self.assertEqual(len(masF1), 2)
