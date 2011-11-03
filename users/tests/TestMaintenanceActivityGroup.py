@@ -401,3 +401,53 @@ class TestMaintenanceActivityGroup(NellTestCase):
         self.assertTrue(has_template_instance(t_daily, masF1))
         self.assertTrue(has_template_instance(t_weekly_2, masF1))
         self.assertEqual(len(masF1), 2)
+
+        # now publish one of the floating periods.  Nothing should change.
+
+        ps = self.me1.periodsByState("P").order_by("start")
+        ps[0].publish()
+        mags = Maintenance_Activity_Group\
+            .get_maintenance_activity_groups(week)
+        self.assertEqual(3, len(mags))
+        
+        masA = mags[0].get_maintenance_activity_set2()
+        masB = mags[1].get_maintenance_activity_set2()
+        masF1 = mags[2].get_maintenance_activity_set2()
+        self.assertTrue(has_template_instance(t_daily, masA))
+        self.assertTrue(has_template_instance(t_weekly, masA))
+        self.assertTrue(has_template_instance(t_monthly, masA))
+        self.assertTrue(has_template_instance(t_daily, masB))
+        self.assertFalse(has_template_instance(t_weekly, masB))
+        self.assertFalse(has_template_instance(t_monthly, masB))
+
+        self.assertEqual(len(masA), 3)
+        self.assertEqual(len(masB), 1)
+
+        self.assertTrue(has_template_instance(t_daily, masF1))
+        self.assertTrue(has_template_instance(t_weekly_2, masF1))
+        self.assertEqual(len(masF1), 2)
+
+        # now publish the other floating period.  Nothing should change.
+
+        ps = self.me2.periodsByState("P").order_by("start")
+        ps[3].publish()
+        mags = Maintenance_Activity_Group\
+            .get_maintenance_activity_groups(week)
+        self.assertEqual(3, len(mags))
+        
+        masA = mags[0].get_maintenance_activity_set2()
+        masB = mags[1].get_maintenance_activity_set2()
+        masF1 = mags[2].get_maintenance_activity_set2()
+        self.assertTrue(has_template_instance(t_daily, masA))
+        self.assertTrue(has_template_instance(t_weekly, masA))
+        self.assertTrue(has_template_instance(t_monthly, masA))
+        self.assertTrue(has_template_instance(t_daily, masB))
+        self.assertFalse(has_template_instance(t_weekly, masB))
+        self.assertFalse(has_template_instance(t_monthly, masB))
+
+        self.assertEqual(len(masA), 3)
+        self.assertEqual(len(masB), 1)
+
+        self.assertTrue(has_template_instance(t_daily, masF1))
+        self.assertTrue(has_template_instance(t_weekly_2, masF1))
+        self.assertEqual(len(masF1), 2)
