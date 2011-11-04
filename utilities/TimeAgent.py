@@ -26,6 +26,7 @@ from pytz     import timezone
 import math
 import datetime
 import pytz
+import calendar
 
 UTC = pytz.timezone('UTC')
 EST = pytz.timezone('US/Eastern')
@@ -360,4 +361,23 @@ def backoffFromMidnight(dt):
         return dt - datetime.timedelta(minutes = step)
     else:
         return dt
+
+# Thanks StackOverflow!
+# http://stackoverflow.com/questions/4130922/how-to-increment-datetime-month-in-python
+def add_months(date, months):
+    """
+    Takes a datetime.date() and adds an arbitrary number of months to
+    that date.  Fixes up the date so that no date is illegal
+    (i.e. add_months(datetime.date(2011, 1, 31), 1) would not return
+    datetime.date(2011, 2, 31); instead it would return
+    datetime.date(2011, 2, 28).
+    
+    Usage: add_months(date, months)
+    where date is a datetime.date() and months is an integer.
+    """
+    month = date.month - 1 + months
+    year = date.year + month / 12
+    month = month % 12 + 1
+    day = min(date.day, calendar.monthrange(year, month)[1])
+    return datetime.date(year, month, day)
 

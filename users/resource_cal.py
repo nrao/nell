@@ -500,7 +500,7 @@ def edit_activity(request, activity_id = None):
 
         elif request.GET['ActionEvent'] == 'DeleteAll':
             ma = Maintenance_Activity.objects.filter(id = activity_id)[0]
-            ma.repeat_template.delete = True
+            ma.repeat_template.deleted = True
             ma.repeat_template.save()
             mas = Maintenance_Activity.objects \
                 .filter(repeat_template = ma.repeat_template)

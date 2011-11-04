@@ -34,6 +34,28 @@ from scheduler.tests.utils import create_maintenance_elective
 from users.tests.utils     import create_maintenance_activity
 from datetime              import datetime, timedelta
 
+# returns true if a maintenance activity group contains an
+# instance derived from template 'templ'.
+def has_template_instance(templ, mas):
+    for i in mas:
+        if i.is_repeat_activity():
+            if i.repeat_template == templ:
+                return True
+    return False
+
+# adds a new template to the database.
+def add_template(start, interval = 0, end = None):
+    t = create_maintenance_activity()
+    t.repeat_interval = interval
+    t._start = start
+
+    if end:
+        t.repeat_end = end
+
+    t.save()
+    return t
+
+
 class TestMaintenanceActivityGroup(NellTestCase):
     def setUp(self):
         super(TestMaintenanceActivityGroup, self).setUp()
@@ -95,7 +117,7 @@ class TestMaintenanceActivityGroup(NellTestCase):
         # now only return non-deleted ones.
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
         self.assertEqual(len(mags), 1)
-        
+
         # restore the period.
         self.mp1.state = self.pending
         self.mp1.save()
@@ -106,7 +128,7 @@ class TestMaintenanceActivityGroup(NellTestCase):
         self.me1.setComplete(False)
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
         self.assertEqual(len(mags), 2)
-        
+
         # now publish the fixed session's period
         self.mp1.state = self.scheduled
         self.mp1.save()
@@ -129,7 +151,7 @@ class TestMaintenanceActivityGroup(NellTestCase):
     # Subsequent changes to the scheduled periods (new dates,
     # deletions, etc.) should continue to be accounted for.
     ######################################################################
-        
+
     def test_maintenance_assignment(self):
 
         # publish the fixed session's period
@@ -143,11 +165,11 @@ class TestMaintenanceActivityGroup(NellTestCase):
         self.me1.setComplete(True)
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
         self.assertEqual(len(mags), 3)
-        
+
         # 0 is 'A', and period should be the recently scheduled
         # period.  'B'should be unassigned.  'x' should remain
         # unaffected.
-        
+
         self.assertEqual('A', mags[0].rank)
         self.assertEqual(mags[0].period.id, p1.id)
         self.assertEqual('B', mags[1].rank)
@@ -155,9 +177,9 @@ class TestMaintenanceActivityGroup(NellTestCase):
         # this is considered a fixed maintenance activity; should have a period.
         self.assertEqual('x', mags[2].rank)
         self.assertEqual(mags[2].period, self.mp1)
-       
+
         # publish the second elective, for Tuesday
-        
+
         pds = self.me2.periods.all().order_by('start')
         p2 = pds[0]
         p2.publish()
@@ -181,7 +203,7 @@ class TestMaintenanceActivityGroup(NellTestCase):
         # period will still have 'x'; A will still be p2, and B will
         # still be p1.  (mags come back sorted by rank, with
         # non-elective ('x') last, sorted by start date.)
-        
+
         self.mp1.publish()
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
         self.assertEqual(len(mags), 3)
@@ -195,7 +217,7 @@ class TestMaintenanceActivityGroup(NellTestCase):
         # Now move the already scheduled non-elective self.mp1 to
         # Wednesday. Nothing should change!  A will still be p2, and B
         # will still be p1.
-        
+
         self.mp1.start = datetime(2011, 04, 13, 8)
         self.mp1.save()
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
@@ -218,9 +240,9 @@ class TestMaintenanceActivityGroup(NellTestCase):
         self.assertEqual(mags[0].period.id, p2.id)
         self.assertEqual('B', mags[1].rank)
         self.assertEqual(mags[1].period.id, p1.id)
-        
+
         # now revive 'self.mp1'.  C should reappear.
-        self.mp1.state = self.scheduled 
+        self.mp1.state = self.scheduled
         self.mp1.save()
         mags = Maintenance_Activity_Group.get_maintenance_activity_groups(self.week)
         self.assertEqual(3, len(mags)) # 'x' should reappear
@@ -274,23 +296,6 @@ class TestMaintenanceActivityGroup(NellTestCase):
 
     def test_get_maintenance_activity_set_2(self):
 
-        # returns true if a maintenance activity group contains an
-        # instance derived from template 'templ'.
-        def has_template_instance(templ, mas):
-            for i in mas:
-                if i.is_repeat_activity():
-                    if i.repeat_template == templ:
-                        return True
-            return False
-
-        def add_template(start, interval, end):
-            t = create_maintenance_activity()
-            t.repeat_interval = interval
-            t._start = start
-            t.repeat_end = end
-            t.save()
-            return t
-
         # simple case: a repeating activity, no published periods.
         # Daily activity should wind up on both 'A' and 'B', and
         # weekly/monthly only on 'A'.
@@ -307,8 +312,8 @@ class TestMaintenanceActivityGroup(NellTestCase):
             .get_maintenance_activity_groups(week)
         self.assertEqual(2, len(mags))
         mags.sort(key = lambda x: x.rank)
-        masA = mags[0].get_maintenance_activity_set2()
-        masB = mags[1].get_maintenance_activity_set2()
+        masA = mags[0].get_maintenance_activity_set()
+        masB = mags[1].get_maintenance_activity_set()
 
         # each of 'masA' and 'masB' should have an instance of
         # template 'ma':
@@ -320,8 +325,8 @@ class TestMaintenanceActivityGroup(NellTestCase):
                                 7,
                                 datetime(2011, 4, 22))
 
-        masA = mags[0].get_maintenance_activity_set2()
-        masB = mags[1].get_maintenance_activity_set2()
+        masA = mags[0].get_maintenance_activity_set()
+        masB = mags[1].get_maintenance_activity_set()
 
         # 'A' should have a daily and a weekly, 'B' only the daily.
         self.assertTrue(has_template_instance(t_daily, masA))
@@ -337,8 +342,8 @@ class TestMaintenanceActivityGroup(NellTestCase):
                                          30,
                                          datetime(2011, 7, 1))
 
-        masA = mags[0].get_maintenance_activity_set2()
-        masB = mags[1].get_maintenance_activity_set2()
+        masA = mags[0].get_maintenance_activity_set()
+        masB = mags[1].get_maintenance_activity_set()
 
         # Nothing should change.
         self.assertTrue(has_template_instance(t_daily, masA))
@@ -356,8 +361,8 @@ class TestMaintenanceActivityGroup(NellTestCase):
                                  30,
                                  datetime(2011, 7, 1))
 
-        masA = mags[0].get_maintenance_activity_set2()
-        masB = mags[1].get_maintenance_activity_set2()
+        masA = mags[0].get_maintenance_activity_set()
+        masB = mags[1].get_maintenance_activity_set()
 
         # 'A' should carry 1 daily, 1 weekly and 1 monthly
         # 'B' should carry only 1 daily
@@ -383,10 +388,10 @@ class TestMaintenanceActivityGroup(NellTestCase):
         mags = Maintenance_Activity_Group\
             .get_maintenance_activity_groups(week)
         self.assertEqual(3, len(mags))
-        
-        masA = mags[0].get_maintenance_activity_set2()
-        masB = mags[1].get_maintenance_activity_set2()
-        masF1 = mags[2].get_maintenance_activity_set2()
+
+        masA = mags[0].get_maintenance_activity_set()
+        masB = mags[1].get_maintenance_activity_set()
+        masF1 = mags[2].get_maintenance_activity_set()
         # 'A' and 'B' should not have changed.
         self.assertTrue(has_template_instance(t_daily, masA))
         self.assertTrue(has_template_instance(t_weekly, masA))
@@ -409,10 +414,10 @@ class TestMaintenanceActivityGroup(NellTestCase):
         mags = Maintenance_Activity_Group\
             .get_maintenance_activity_groups(week)
         self.assertEqual(3, len(mags))
-        
-        masA = mags[0].get_maintenance_activity_set2()
-        masB = mags[1].get_maintenance_activity_set2()
-        masF1 = mags[2].get_maintenance_activity_set2()
+
+        masA = mags[0].get_maintenance_activity_set()
+        masB = mags[1].get_maintenance_activity_set()
+        masF1 = mags[2].get_maintenance_activity_set()
         self.assertTrue(has_template_instance(t_daily, masA))
         self.assertTrue(has_template_instance(t_weekly, masA))
         self.assertTrue(has_template_instance(t_monthly, masA))
@@ -434,10 +439,10 @@ class TestMaintenanceActivityGroup(NellTestCase):
         mags = Maintenance_Activity_Group\
             .get_maintenance_activity_groups(week)
         self.assertEqual(3, len(mags))
-        
-        masA = mags[0].get_maintenance_activity_set2()
-        masB = mags[1].get_maintenance_activity_set2()
-        masF1 = mags[2].get_maintenance_activity_set2()
+
+        masA = mags[0].get_maintenance_activity_set()
+        masB = mags[1].get_maintenance_activity_set()
+        masF1 = mags[2].get_maintenance_activity_set()
         self.assertTrue(has_template_instance(t_daily, masA))
         self.assertTrue(has_template_instance(t_weekly, masA))
         self.assertTrue(has_template_instance(t_monthly, masA))
@@ -451,3 +456,120 @@ class TestMaintenanceActivityGroup(NellTestCase):
         self.assertTrue(has_template_instance(t_daily, masF1))
         self.assertTrue(has_template_instance(t_weekly_2, masF1))
         self.assertEqual(len(masF1), 2)
+
+    def test_weekly_and_monthly_repeat_placement(self):
+        week = datetime(2011, 04, 11)
+
+        # publish all three of our maintenance activities (deleting
+        # the fourth):
+        # | Monday | Tuesday | Wednesday | Thursday | Friday |
+        #              me1                   mp2       me2
+
+        self.mp1.state = self.deleted
+        self.mp1.save()
+        pA = self.me1.periodsByState("P").order_by("start")[0]
+        pA.publish()
+        self.mp2.publish()
+        pB = self.me2.periodsByState("P").order_by("start")[3]
+        pB.publish()
+
+        # Gather the MAGS.  There should be 3 and each should be
+        # empty and each should have the correct period.
+
+        mags = Maintenance_Activity_Group\
+            .get_maintenance_activity_groups(week)
+        masA = mags[0].get_maintenance_activity_set()
+        masB = mags[1].get_maintenance_activity_set()
+        masF = mags[2].get_maintenance_activity_set()
+        self.assertEqual(3, len(mags))
+        self.assertEqual(0, len(masA))
+        self.assertEqual(0, len(masB))
+        self.assertEqual(0, len(masF))
+        self.assertEqual(mags[0].period.id, pA.id)
+        self.assertEqual(mags[1].period.id, pB.id)
+        self.assertEqual(mags[2].period.id, self.mp2.id)
+
+        # Create a weekly activity whose due date falls on Wednesdays.
+        t_weekly = add_template(datetime(2011, 4, 6),
+                                7,
+                                datetime(2011, 4, 22))
+        # there is no Wednesday maintenance.  There is a Tuesday and a
+        # Thursday period.  It should fall on Tuesday, as in case of
+        # tie the earlier date is preferred.
+        masA = mags[0].get_maintenance_activity_set()
+        masB = mags[1].get_maintenance_activity_set()
+        masF = mags[2].get_maintenance_activity_set()
+        self.assertEqual(1, len(masA))
+        self.assertEqual(0, len(masB))
+        self.assertEqual(0, len(masF))
+        # Create a monthly activity whose due date falls on
+        # Monday. Again, it should go to Tuesday.
+        t_monthly = add_template(datetime(2011, 3, 11),
+                                30,
+                                datetime(2011, 4, 22))
+        masA = mags[0].get_maintenance_activity_set()
+        masB = mags[1].get_maintenance_activity_set()
+        masF = mags[2].get_maintenance_activity_set()
+        self.assertEqual(2, len(masA))
+        self.assertEqual(0, len(masB))
+        self.assertEqual(0, len(masF))
+
+        # Create a weekly activity for Thursday
+        t_weekly_thurs = add_template(datetime(2011, 4, 7),
+                                      7,
+                                      datetime(2011, 4, 22))
+        masA = mags[0].get_maintenance_activity_set()
+        masB = mags[1].get_maintenance_activity_set()
+        masF = mags[2].get_maintenance_activity_set()
+        self.assertEqual(2, len(masA))
+        self.assertEqual(0, len(masB))
+        self.assertEqual(1, len(masF))
+
+        # Delete the Tuesday period. We're left with the Thursday and
+        # Friday periods.
+        mags[0].period.state = self.deleted
+        mags[0].period.save()
+        # That means only two active maintenance activity groups:
+        mags = Maintenance_Activity_Group\
+            .get_maintenance_activity_groups(week)
+        self.assertEqual(2, len(mags))
+        self.assertEqual(mags[0].period.id, pB.id)
+        self.assertEqual(mags[1].period.id, self.mp2.id)
+
+
+        # Repopulate the maintenance activity sets.  Because the
+        # Tuesday period disappeared, magA gets reassigned to the sole
+        # remaining floating period, on Friday.  Because we've already
+        # instantiated 2 templates on magA, those go to Friday with
+        # it.
+        masF = mags[1].get_maintenance_activity_set()
+        masA = mags[0].get_maintenance_activity_set()
+
+        self.assertEqual(2, len(masA))
+        self.assertEqual(1, len(masF))
+
+        # Now "soft" delete those that are on Friday.  They should NOT
+        # be reinstantiated.  This simulates the supervisor or a user
+        # deleting these; wouldn't want them to pop back up again!
+
+        for i in masA:
+            i.deleted = True
+            i.save()
+
+        masF = mags[1].get_maintenance_activity_set()
+        masA = mags[0].get_maintenance_activity_set()
+
+        self.assertEqual(0, len(masA))
+        self.assertEqual(1, len(masF))
+
+        # "Hard" delete those on Friday.  Now they SHOULD be
+        # reinstantiated, on Thursday's period, the closest period to
+        # their due date:
+
+        mags[0].maintenance_activity_set.clear()
+        masF = mags[1].get_maintenance_activity_set()
+        masA = mags[0].get_maintenance_activity_set()
+
+        self.assertEqual(0, len(masA))
+        self.assertEqual(3, len(masF))
+       
