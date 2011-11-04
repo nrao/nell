@@ -244,9 +244,9 @@ class WeeklyReport:
         self.outfile.write("\t----------- ------------------ ----- --------------------\n")
         values = ["%s %s %s %s [%s]" % \
                       (p.pcode.ljust(11)
-                     , str(p.principal_investigator())[:17].ljust(18)
+                     , self.projPIname(p) 
                      , ",".join(p.rcvrs_specified())[:4].center(5)
-                     , p.principal_investigator().getEmails()[0]
+                     , self.projPIemail(p) 
                      , ";".join([f.user.name() for f in p.friend_set.all()])
                      )
                   for p in projects]
@@ -309,6 +309,21 @@ class WeeklyReport:
     
         self.outfile.write("\nVisitors coming for %s - %s:\n" % (self.next_start.strftime("%m/%d/%Y"), self.next_end.strftime("%m/%d/%Y")))
         self.print_values(self.outfile, visitors)
+
+    def projPIname(self, proj):
+        if proj.principal_investigator() is not None:
+            name = str(proj.principal_investigator())[:17].ljust(18)
+        else:
+            name = "None"
+        return name    
+    
+    def projPIemail(self, proj):        
+        if proj.principal_investigator() is not None:
+            emails = proj.principal_investigator().getEmails()
+            email = emails[0] if len(emails) > 0 else "None"
+        else:
+            email = "None"
+        return email
 
 def show_help(program):
     print "\nThe arguments to", program, "are:"
