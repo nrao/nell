@@ -43,6 +43,7 @@ class UserHttpAdapter(object):
         self.user.first_name  = fdata.get('first_name', "")
         self.user.last_name   = fdata.get('last_name', "")
         self.user.contact_instructions   = fdata.get('contact_instructions', "")
+        self.user.save()
 
         # Roles.  These should be updated individually *without* first
         # clearing out all the user's roles (using
@@ -72,10 +73,11 @@ class UserHttpAdapter(object):
                 username = fdata.get('username', '')
                 if username == '' and self.user.pst_id is not None:
                     username = self.user.username()
-                self.user.auth_user = \
-                    AuthUser(username = username
-                           , password = "!"
-                            )
+                auth_user, created = \
+                    AuthUser.objects.get_or_create(username = username
+                        , defaults = {'username' : username
+                                    , 'password' : "!"})
+                self.user.auth_user = auth_user
                 self.user.auth_user.save()
                 self.user.save()
                 #  Note:  Why is this necessary?  Should be able to
