@@ -30,6 +30,7 @@ from scheduler.tests.utils import create_maintenance_sesshun
 from scheduler.tests.utils import create_maintenance_project
 from scheduler.tests.utils import create_maintenance_elective
 from users.tests.utils     import create_maintenance_activity
+from users.tests.utils     import has_template_instance
 
 class TestUtilities(BenchTestCase):
 
@@ -150,7 +151,7 @@ class TestUtilities(BenchTestCase):
         calEvents = sch[4][1]
         self.assertEqual(1,len(calEvents))
         mag = calEvents[0].contained
-        self.assertEqual('1 -- 2011-09-26; (2011-09-29); x; active; Repeat Daily 1, Test Maintenance Activity',
+        self.assertEqual('1 -- 2011-09-26; (2011-09-29); x; active; Test Maintenance Activity',
                          mag.__unicode__())
         mas = mag.get_maintenance_activity_set()
         self.assertEqual(2, len(mas))
@@ -234,7 +235,6 @@ class TestUtilities(BenchTestCase):
         ma.repeat_interval = 1
         ma.repeat_end = datetime(2011, 9, 30, 10)
         ma.save()
-
         # where does it show up?  It should only appear once on the
         # floating day:
         sch = get_gbt_schedule_events(start, end, timezone)
@@ -247,20 +247,22 @@ class TestUtilities(BenchTestCase):
         self.assertEqual(1,len(calEvents))
         self.assertEqual('CalEventFloatingMaintenance', calEvents[0].__class__.__name__)
         mag = calEvents[0].contained
-        self.assertEqual("1 -- 2011-09-26; (2011-09-26); A; active; Repeat Daily 1, Test Maintenance Activity", mag.__unicode__())
+        self.assertEqual("1 -- 2011-09-26; (2011-09-26); A; active; Test Maintenance Activity", mag.__unicode__())
         mas = mag.get_maintenance_activity_set()
         self.assertEqual(2, len(mas))
         ma = mas[0]
         self.assertEqual("Repeat Daily 1", ma.subject)
-        self.assertEqual(False, ma.is_repeat_activity())
-        self.assertEqual(True, ma.is_repeat_template())
+        self.assertEqual(True, ma.is_repeat_activity())
+        self.assertEqual(False, ma.is_repeat_template())
         ma = mas[1]
         self.assertEqual("Test Maintenance Activity", ma.subject)
         self.assertEqual(False, ma.is_repeat_activity())
         self.assertEqual(False, ma.is_repeat_template())
 
-        # make sure the DB makes sense
-        self.assertEqual(2, len(Maintenance_Activity.objects.all()))
+        # make sure the DB makes sense.  One maintenance activity
+        # group, 3 maintenance activities: one non-repeat, one repeat
+        # template, one instantiated from the template.
+        self.assertEqual(3, len(Maintenance_Activity.objects.all()))
         self.assertEqual(1, len(Maintenance_Activity_Group.objects.all()))
 
         # now publish the period on Wed (9/28)!
@@ -268,8 +270,8 @@ class TestUtilities(BenchTestCase):
         p.publish()
         p.save()
 
-        # make sure the DB makes sense
-        self.assertEqual(2, len(Maintenance_Activity.objects.all()))
+        # make sure the DB makes sense.  Nothing should have changed.
+        self.assertEqual(3, len(Maintenance_Activity.objects.all()))
         self.assertEqual(1, len(Maintenance_Activity_Group.objects.all()))
 
         # that really changes things!
@@ -418,13 +420,13 @@ class TestUtilities(BenchTestCase):
         
 
         # now create a daily repeating activity for the whole time range   
-        ma = create_maintenance_activity()
-        ma.subject = "Repeat Daily 1"
-        ma.group = mags[0] # the first one from the list above
-        ma.set_start(datetime(2011, 9, 27, 10), 'UTC')
-        ma.repeat_interval = 1
-        ma.repeat_end = datetime(2011, 10, 15, 10)
-        ma.save()
+        ma_daily = create_maintenance_activity()
+        ma_daily.subject = "Repeat Daily 1"
+        ma_daily.group = mags[0] # the first one from the list above
+        ma_daily.set_start(datetime(2011, 9, 27, 10), 'UTC')
+        ma_daily.repeat_interval = 1
+        ma_daily.repeat_end = datetime(2011, 10, 15, 10)
+        ma_daily.save()
 
         # check out the schedule
         sch = get_gbt_schedule_events(start, end, timezone)
@@ -445,13 +447,13 @@ class TestUtilities(BenchTestCase):
 
 
         # Now create a weekly repeating activity for two weeks 
-        ma = create_maintenance_activity()
-        ma.subject = "Repeat Weekly 1"
-        ma.group = mags[0] # the first one from the list above
-        ma.set_start(datetime(2011, 9, 28, 10), 'UTC')
-        ma.repeat_interval = 7 # weekly
-        ma.repeat_end = datetime(2011, 10, 10, 10)
-        ma.save()
+        ma_weekly = create_maintenance_activity()
+        ma_weekly.subject = "Repeat Weekly 1"
+        ma_weekly.group = mags[0] # the first one from the list above
+        ma_weekly.set_start(datetime(2011, 9, 28, 10), 'UTC')
+        ma_weekly.repeat_interval = 7 # weekly
+        ma_weekly.repeat_end = datetime(2011, 10, 10, 10)
+        ma_weekly.save()
         
 
         # check out the schedule
@@ -467,11 +469,12 @@ class TestUtilities(BenchTestCase):
                            , calEvents[0].__class__.__name__)
             mag = calEvents[0].contained
             mas = mag.get_maintenance_activity_set()
+
             # the weekly only shows up twice
             if day in [3,10]:
                 self.assertEqual(2, len(mas))
-                self.assertEqual("Repeat Daily 1", mas[0].subject)
-                self.assertEqual("Repeat Weekly 1", mas[1].subject)
+                self.assertTrue(has_template_instance(ma_daily, mas)) 
+                self.assertTrue(has_template_instance(ma_weekly, mas))
             else:    
                 self.assertEqual(1, len(mas))
                 self.assertEqual("Repeat Daily 1", mas[0].subject)
@@ -629,8 +632,7 @@ class TestUtilities(BenchTestCase):
                        , calEvents[0].__class__.__name__)
         mag = calEvents[0].contained
         mas = mag.get_maintenance_activity_set()
-        # TBF: the repeat should show up here!
-        self.assertEqual(0, len(mas))
+        self.assertEqual(1, len(mas))
         #self.assertEqual(1, len(mas))
         #self.assertEqual("Repeat Daily 1", mas[0].subject)
 

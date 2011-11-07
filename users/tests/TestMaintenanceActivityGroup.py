@@ -31,30 +31,8 @@ from users.models          import *
 from scheduler.models      import *
 from scheduler.tests.utils import create_maintenance_period
 from scheduler.tests.utils import create_maintenance_elective
-from users.tests.utils     import create_maintenance_activity
+from users.tests.utils     import create_maintenance_activity, has_template_instance, add_template
 from datetime              import datetime, timedelta
-
-# returns true if a maintenance activity group contains an
-# instance derived from template 'templ'.
-def has_template_instance(templ, mas):
-    for i in mas:
-        if i.is_repeat_activity():
-            if i.repeat_template == templ:
-                return True
-    return False
-
-# adds a new template to the database.
-def add_template(start, interval = 0, end = None):
-    t = create_maintenance_activity()
-    t.repeat_interval = interval
-    t._start = start
-
-    if end:
-        t.repeat_end = end
-
-    t.save()
-    return t
-
 
 class TestMaintenanceActivityGroup(NellTestCase):
     def setUp(self):

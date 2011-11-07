@@ -110,7 +110,8 @@ class Maintenance_Activity_Group(models.Model):
                                            self.rank, "deleted" if self.deleted else "active")
 
         if self.maintenance_activity_set.count():
-            sr += ", ".join([e.get_subject() for e in self.maintenance_activity_set.all()])
+            sr += ", ".join([e.get_subject() for e in self.maintenance_activity_set.all() \
+                                 if not e.is_repeat_template()])
         else:
             sr += "Empty"
         return sr
@@ -361,12 +362,8 @@ class Maintenance_Activity_Group(models.Model):
             if is_P(self):
                 dm = {-4: 40, -3: 30, -2: 20, -1: 10, 0: 0, 1: 15, 2: 25, 3: 35, 4: 45}
                 today = TimeAgent.truncateDt(self.period.start)
-                print
-                print "template id =", template.id
-                print "today =", today
                 p = [mag.period for mag in published_groups_this_week]
                 due_date = get_due_date(template)
-                print "due_date =", due_date
                 diff = (today - due_date).days
 
                 if diff:
@@ -380,9 +377,7 @@ class Maintenance_Activity_Group(models.Model):
                             # another period.  and if so, don't
                             # use here.
                             if dm[mod] < dm[diff]:
-                                print "False"
                                 return False
-                print "True"
                 return True
             return False
 
@@ -412,7 +407,7 @@ class Maintenance_Activity_Group(models.Model):
                        | models.Q(repeat_interval = 7) \
                        | models.Q(repeat_interval = 30)) \
                        & (models.Q(_start__lte = end) \
-                              & models.Q(repeat_end__gte = end))
+                              & models.Q(repeat_end__gte = today))
             dbrmas = Maintenance_Activity.objects.filter(repeatQ)
             templates = [p for p in dbrmas]
 
