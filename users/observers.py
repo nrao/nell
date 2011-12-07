@@ -84,10 +84,13 @@ def public_schedule(request, *args, **kws):
         printerFriendly = None
     template = 'users/schedules/public_schedule_friendly.html' if printerFriendly == 'printerFriendly' \
                    else 'users/public_schedule.html'
+    # day range of the public schedule               
+    day_list = range(1,15)
+    day_list.append(30)
     return render_to_response(
                 template
               , {'calendar'     :    schedule
-              , 'day_list'     :    range(1, 15)
+              , 'day_list'     :    day_list
               , 'tz_list'      :    timezones
               , 'timezone'     :    timezone
               , 'start'        :    start
