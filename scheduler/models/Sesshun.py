@@ -35,6 +35,7 @@ from Period_State      import Period_State
 from Session_Type      import Session_Type
 from Status            import Status
 from System            import System
+from Target            import Target
 
 class Sesshun(models.Model):
     

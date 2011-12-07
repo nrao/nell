@@ -23,11 +23,10 @@
 from django.db      import models
 from math           import modf
 from nell.utilities import TimeAgent
-from Sesshun        import Sesshun
 from System         import System
 
 class Target(models.Model):
-    session    = models.OneToOneField(Sesshun, null = True, related_name = "target")
+    session    = models.OneToOneField("Sesshun", null = True, related_name = "target")
     system     = models.ForeignKey(System)
     source     = models.CharField(null = True, max_length = 256, blank = True)
     vertical   = models.FloatField(null = True, blank = True)
