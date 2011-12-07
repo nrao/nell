@@ -378,6 +378,14 @@ def electives_no_periods():
     es = Elective.objects.all()
     return [e for e in es if len(e.periods.all()) == 0]
     
+def periods_no_elective():
+    "A period from an Elective Session should belong to an Elective."
+    es = Sesshun.objects.filter(session_type__type = "elective")
+    no_electives = []
+    for s in es:
+        no_electives.extend([p for p in s.period_set.all() if p.elective is None])
+    return no_electives
+
 def report_overlaps(periods, now = None):
     """
     We don't want to report on *any* overlaps in the schedule.  Apply
@@ -867,6 +875,10 @@ def GenerateReport():
     outfile.write("\n\nElectives with no Opportunities (Periods):")
     values = electives_no_periods()
     print_values(outfile, values)
+
+    outfile.write("\n\nPeriods from Elective Session not in an Elective:")
+    ps = periods_no_elective()
+    print_values(outfile, [str(p) for p in ps])
 
     output_windows_report(outfile)
 
