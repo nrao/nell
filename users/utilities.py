@@ -40,8 +40,11 @@ import settings
 
 def target_hv(value):
     t = value.getTarget()
-    tag = "*" if t.isEphemeris() else ""
-    return t.get_horizontal() + tag, t.get_vertical() + tag
+    if t is not None:
+        tag = "*" if t.isEphemeris() else ""
+        return t.get_horizontal() + tag, t.get_vertical() + tag
+    else:
+        return "", ""
 
 def getReceivers(names):
     rcvrs = []

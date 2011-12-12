@@ -26,6 +26,7 @@ from django                  import template
 from django.utils.safestring import SafeUnicode
 from users                import models
 from users.utilities      import *
+from scheduler.models     import Target
 from datetime                import datetime, timedelta
 from nell.utilities          import TimeAccounting
 from nell.utilities          import TimeAgent
@@ -55,7 +56,7 @@ def target_system(session):
     try:
         ts = session.target
         return ts.system.name
-    except models.Target.DoesNotExist:
+    except Target.DoesNotExist:
         return ""
 
 @register.filter
