@@ -167,7 +167,7 @@ class Project(models.Model):
                                    
                                              .exclude(state__abbreviation='D')])
 
-    def getUpcomingPeriods(self, dt = datetime.now()):
+    def getUpcomingPeriods(self, dt = datetime.utcnow()):
         "What periods are associated with this project in the future?"
         return [p for p in self.getPeriods() if p.start > dt] 
 
