@@ -86,6 +86,10 @@ class SessionHttpAdapter (object):
         proposition = fdata.get("receiver")
         self.save_receivers(proposition)
         
+        self.create_target(fdata)
+        self.sesshun.save()
+
+    def create_target(self, fdata):
         systemName = fdata.get("coord_mode", "J2000")
         system = System.objects.get(name = systemName)
 
@@ -99,7 +103,6 @@ class SessionHttpAdapter (object):
                       , horizontal = h_axis
                         )
         target.save()
-        self.sesshun.save()
 
     def save_receivers(self, proposition):
         abbreviations = [r.abbreviation for r in Receiver.objects.all()]
@@ -167,15 +170,18 @@ class SessionHttpAdapter (object):
         h_axis = fdata.get("source_h", None)
         v_axis = fdata.get("source_v", None)
 
-        t            = self.sesshun.target
-        t.system     = system
-        t.source     = fdata.get("source", None)
-        if h_axis is not None:
-            t.horizontal  = TimeAgent.deg2rad(float(h_axis)) \
-                            if systemName == 'Galactic' \
-                            else TimeAgent.hr2rad(float(h_axis))
-        t.vertical = TimeAgent.deg2rad(float(v_axis)) if v_axis is not None else t.vertical
-        t.save()
+        try:
+            t            = self.sesshun.target
+            t.system     = system
+            t.source     = fdata.get("source", None)
+            if h_axis is not None:
+                t.horizontal  = TimeAgent.deg2rad(float(h_axis)) \
+                                if systemName == 'Galactic' \
+                                else TimeAgent.hr2rad(float(h_axis))
+            t.vertical = TimeAgent.deg2rad(float(v_axis)) if v_axis is not None else t.vertical
+            t.save()
+        except Target.DoesNotExist:
+            self.create_target(fdata)
 
         self.sesshun.save()
 
