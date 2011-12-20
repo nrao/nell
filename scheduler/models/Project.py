@@ -111,6 +111,9 @@ class Project(models.Model):
 
         return category
 
+    def get_category_code(self):
+        return self.get_category()[0]
+
     def get_allotments_display(self):
         return self.allotments.all()
 
