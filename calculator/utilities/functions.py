@@ -41,14 +41,14 @@ spectrometerK1K2  = {800  : (1.235, 1.21)
 
 GBT_LAT = 38 + 26 / 60.
 LAT     = 51.57
-backendsWithKnownRes = ('Spectral Processor', 'GBT Spectrometer', 'FPGA Spectrometer')
+backendsWithKnownRes = ('Spectral Processor', 'GBT Spectrometer', 'VErsitile GB Astronomical Spectrometer')
 
 def getMinTopoFreq(backend, bandwidth, windows, receiver, beams):
     if backend in backendsWithKnownRes:
         qBandwidth = None if backend == 'Spectral Processor' else bandwidth
         fr         = FrequencyResolution.objects.filter(backend__dss_backend__name = backend
                                                       , bandwidth = qBandwidth)
-        if backend == 'FPGA Spectrometer' and windows in (8, 16):
+        if backend == 'VErsitile GB Astronomical Spectrometer' and windows in (8, 16):
             fr = fr.filter(windows__name = int(windows))
         if len(fr) == 0:
             return 1
@@ -56,7 +56,7 @@ def getMinTopoFreq(backend, bandwidth, windows, receiver, beams):
     else:
         return 1
 
-    if backend == 'FPGA Spectrometer':
+    if backend == 'VErsitile GB Astronomical Spectrometer':
         return bandwidth * 1e3 / float(channels) # kHz
     else:
         # Note: KFPA is a 7 beam rx, but we want to use 8 beams for calculations.
