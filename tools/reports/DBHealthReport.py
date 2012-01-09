@@ -713,6 +713,16 @@ def GenerateReport():
                          not all([s.isScience() for s in p.sesshun_set.all()])]
     print_values(outfile, values)
 
+    outfile.write("\n\nProjects whose category is inconsistent with its sessions' categories:")
+    badCats = []
+    for p in projects:
+        cats = list(set([s.getCategory() for s in p.sesshun_set.all()]))
+        if len(cats) > 1:
+            badCats.append(p.pcode)
+        elif len(cats) == 1 and cats[0] != p.get_category():
+            badCats.append(p.pcode)
+    print_values(outfile, badCats)
+    
     outfile.write("\n\nReceiver changes happening on days other than maintenance days:")
     values = [str(s) for s in check_maintenance_and_rcvrs()]
     print_values(outfile, values)

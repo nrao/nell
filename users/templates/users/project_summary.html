@@ -79,6 +79,7 @@
   <table>
   <tr class="day_header"> 
     <th> Project </th>
+    <th> Type </th>
     <th> Receivers </th>
     <th> Days </th>
     <th> Hours </th>
@@ -86,6 +87,7 @@
   {% for project, receivers, days, hours in projects %}
   <tr>
     <td>{{project.pcode}}</td>
+    <td>{{project.get_category_code}}</td>
     <td>{{receivers|format_list}}</td>
     <td>{{days|format_list}}</td>
     <td>{{hours}}</td>
