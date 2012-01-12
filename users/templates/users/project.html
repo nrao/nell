@@ -105,7 +105,7 @@
               {% if s.keyhole %}
                 <span title="Applies the keyhole limit to this session.">Apply Keyhole Limit</span><br/>
               {% endif %}
-              {% if s.irradiance %}
+              {% if s.irradiance and not s.usesMustang %}
               <span title="Applies the irradiance threshold to this session (W/m^2).">Irradiance Threshold: </span>{{s.irradiance}}<br/>
               {% endif %}
               {% if s.get_lst_exclusion_string %}

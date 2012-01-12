@@ -111,6 +111,9 @@ class Project(models.Model):
 
         return category
 
+    def get_category_code(self):
+        return self.get_category()[0]
+
     def get_allotments_display(self):
         return self.allotments.all()
 
@@ -167,7 +170,7 @@ class Project(models.Model):
                                    
                                              .exclude(state__abbreviation='D')])
 
-    def getUpcomingPeriods(self, dt = datetime.now()):
+    def getUpcomingPeriods(self, dt = datetime.utcnow()):
         "What periods are associated with this project in the future?"
         return [p for p in self.getPeriods() if p.start > dt] 
 

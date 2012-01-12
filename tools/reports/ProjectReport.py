@@ -64,6 +64,7 @@ def get_rcvrs(project, typ):
       , "Z"   : "Z"
       , "Hol" : "H"
       , "KFPA": "P"
+      , "W"   : "W"
     }
 
     grps = list(set([", ".join([rcvr_dict[r.abbreviation] \

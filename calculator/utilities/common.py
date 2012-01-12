@@ -134,7 +134,7 @@ def sanitize(result):
     if v is None:
         result['value'] = ''
     # special handling of time formatting    
-    if v is not None and v != '' and (t == 'time' or t == 't_tot' or u == 's'):
+    if v is not None and v != '' and t is not None and (t == 'time' or t == 't_tot' or u == 's'):
         try:
             time = float(v)
         except ValueError:

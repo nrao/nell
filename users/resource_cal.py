@@ -579,23 +579,39 @@ def edit_activity(request, activity_id = None):
 # def _get_maintenance_activity_group_by_date(date, rank)
 #
 # This function takes a date and rank and returns a
-# Maintenance_Activity_Group based on that date and rank.  For
-# example, if there are 3 floating maintenance days, their dates will
-# all be on the Monday of the week, but the rank ('A', 'B', 'C') would
-# differentiate them.
+# Maintenance_Activity_Group based on that date or rank.  Floating
+# maintenance activity groups are selected by rank, non-floating by
+# date.  For example, if there are 3 floating maintenance days, their
+# dates will all be on the Monday of the week, but the rank ('A', 'B',
+# 'C') would differentiate them.  However if the desired destination
+# is *not* a floating maintenance day (i.e. the rank will be 'x', not
+# 'A', 'B', etc.), then the actual date is used to pin down the
+# desired maintenance activity group.
+#
+# The first maintenance activity group that meets the criterion is the
+# one returned.  What this means is if there are two non-floating
+# maintenance periods on a given day, the maintenance activity group
+# returned by this function will be the one that shows up first in the
+# list returned by
+# Maintenance_Activity_Group.get_maintenance_activity_groups(week).
 #
 ######################################################################
 
 def _get_maintenance_activity_group_by_date(date, rank):
     week = date - timedelta(date.weekday())
     groups = Maintenance_Activity_Group.get_maintenance_activity_groups(week)
-    group = None
 
-    if len(groups):
-        for i in groups:
-            if i.rank == rank.upper():
-                group = i
-    return group
+    if len(groups) == 0:
+        return None
+
+    if rank.upper() == 'X':
+        def comp_mag(mag):
+            return TimeAgent.truncateDt(mag.get_start()) == date
+    else:
+        def comp_mag(mag):
+            return mag.rank == rank.upper()
+
+    return filter(comp_mag, groups)[0]
 
 ######################################################################
 # def _process_activity(request, ma, form)
