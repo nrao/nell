@@ -326,10 +326,13 @@ def getMinIntegrationTime(request):
     request.session['SC_result']['min_integration'] = (min_int, None, '', '', None)
 
 def sex2float(value):
-    if value == '' or value is None:
+    try:
+        if value == '' or value is None:
+            return value
+        elif ':' not in value:
+            return float(value)
+    except TypeError:
         return value
-    elif ':' not in value:
-        return float(value)
     values = value.split(":")
     hour   = values[0]
     if len(values) == 3:
