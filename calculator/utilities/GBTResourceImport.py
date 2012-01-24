@@ -81,30 +81,38 @@ class GBTResourceImport(object):
             configurations.
         """
         self.configs = \
-           [dict([(k, [self.getResource(k, v)] if type(v) != list else [self.getResource(k, i)
-                   for i in v]) for k, v in d.iteritems()]) for d in self.data]
+           [dict([(k, [self.getResource(k, v)] if type(v) != list 
+                                               else [self.getResource(k, i) for i in v]) 
+                   for k, v in d.iteritems()]) for d in self.data]
 
         if not self.silent:
             print len(Configuration.objects.all()), "hardware configurations initially."
         for c in self.configs:
-            for r in c['Receiver']:
-                for pol in c['Polarization']:
-                    for bandwidth in c['Bandwidth (MHz)']:
-                        for win in c['Number spectral windows']:
-                            for switching in c['Switching mode']:
-                                conf = Configuration(backend      = c['Backend'][0]
-                                                   , mode         = c['Mode'][0]
-                                                   , receiver     = r
-                                                   , beams        = c['# beams'][0]
-                                                   , polarization = pol
-                                                   , bandwidth    = bandwidth
-                                                   , windows      = win
-                                                   , integration  = c['Min integ time'][0]
-                                                   , switching    = switching
-                                                   )
-                                conf.save()
+            try:
+                self.makeConfiguration(c)
+            except KeyError:
+                pass
+
         if not self.silent:
             print len(Configuration.objects.all()), "hardware configurations created."
+    
+    def makeConfiguration(self, c):
+        for r in c['Receiver']:
+            for pol in c['Polarization']:
+                for bandwidth in c['Bandwidth (MHz)']:
+                    for win in c['Number spectral windows']:
+                        for switching in c['Switching mode']:
+                            conf = Configuration(backend      = c['Backend'][0]
+                                               , mode         = c['Mode'][0]
+                                               , receiver     = r
+                                               , beams        = c['# beams'][0]
+                                               , polarization = pol
+                                               , bandwidth    = bandwidth
+                                               , windows      = win
+                                               , integration  = c['Min integ time'][0]
+                                               , switching    = switching
+                                               )
+                            conf.save()
 
 if __name__ == "__main__":
     resources = GBTResourceImport("calculator/data/gbt_resources_table.txt")

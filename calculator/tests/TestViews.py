@@ -78,7 +78,7 @@ class TestViews(TestViewsBase):
               , 'mode': [u'Spectral Line']
               , 'receiver': [u'L']
               , 'mode-hidden': [u'Spectral Line']
-              , 'backend': [u'FPGA Spectrometer']
+              , 'backend': [u'VErsitile GB Astronomical Spectrometer']
               }
         response = self.client.post('/calculator/set_terms/', data)
         response = self.client.get('/calculator/get_results')
@@ -103,7 +103,7 @@ class TestViews(TestViewsBase):
               , 'mode': [u'Spectral Line']
               , 'receiver': [u'L']
               , 'mode-hidden': [u'Spectral Line']
-              , 'backend': [u'FPGA Spectrometer']
+              , 'backend': [u'VErsitile GB Astronomical Spectrometer']
               }
         response = self.client.post('/calculator/set_terms/', data)
         response = self.client.get('/calculator/get_results')
