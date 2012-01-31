@@ -160,7 +160,6 @@ def sanitize(result):
 
 def splitKey(e):
     k = e.pop('term')
-    # TBF: doesn't the sanitize function use the term we just POPed?
     return k, sanitize(e)
 
 def getMessages(request):
@@ -218,11 +217,11 @@ def getMessages(request):
 
     # 1/F gain variations?
     backend    = ivalues.get('backend', {}).get('value')
-    bandwidth  = ivalues.get('bandwidth', {}).get('value')
+    bandwidth  = ivalues.get('bw', {}).get('value')
     time       = ivalues.get('time', {}).get('value')
     conversion = ivalues.get('conversion', {}).get('value')
     t_tot      = results.get('t_tot', {}).get('value')
-    msg = {'type' : 'Warning', 'msg' : 'Time*Bandwidth exceeds the suggested limit from 1/F gain variations of . Please justify how you plan on observing beyond that limit.'}
+    msg = {'type' : 'Warning', 'msg' : 'Time*(Bandwidth resolution) exceeds the suggested limit for 1/F gain variations.  Advanced observing techniques may be required to reach your scientific goals.  Please address this issue in your technical justification.'}
     if rx != '' and bandwidth != '' and time != '' and t_tot != '' and conversion != '' and None not in (rx, bandwidth, time, t_tot, conversion):
         limit = sex2float(time) * float(bandwidth) if conversion == 'Time to Sensitivity' else \
                 sex2float(t_tot) * float(bandwidth)
