@@ -162,9 +162,14 @@ Ext.define('PHT.view.session.Form', {
                     columnwidth:0.333,
                     border: false,
                     items: [{ 
-                        xtype: 'textfield',
+                        xtype: 'combo',
+                        name: 'separation',
                         fieldLabel: 'Separation',
-                        name: 'separation'
+                        store: 'SessionSeparations', // MVC baby!
+                        queryMode: 'local',
+                        displayField: 'separation',
+                        valueField: 'separation',
+                        forceSelection: true,
                     },{
                         xtype: 'numberfield',
                         fieldLabel: 'Low Freq (Hrs)',

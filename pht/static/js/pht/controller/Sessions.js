@@ -4,6 +4,7 @@ Ext.define('PHT.controller.Sessions', {
     models: [
         'Session',
         'SessionType',
+        'SessionSeparation',
         'Semester',
         'WeatherType',
     ],
@@ -11,6 +12,7 @@ Ext.define('PHT.controller.Sessions', {
     stores: [
         'Sessions',
         'SessionTypes',
+        'SessionSeparations',
         'Semesters',
         'WeatherTypes',
     ],

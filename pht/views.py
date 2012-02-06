@@ -153,6 +153,9 @@ def pis(request):
 def proposal_types(request):
     return simpleGetAllResponse('proposal types', ProposalType.jsonDictOptions())
 
+def session_separations(request):
+    return simpleGetAllResponse('session separations', SessionSeparation.jsonDictOptions())
+
 def session_types(request):
     return simpleGetAllResponse('session types', SessionType.jsonDictOptions())
 

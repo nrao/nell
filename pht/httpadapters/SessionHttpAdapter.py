@@ -33,6 +33,7 @@ class SessionHttpAdapter(object):
         sessType = self.session.session_type.type if self.session.session_type is not None else None
         wthrType = self.session.weather_type.type if self.session.weather_type is not None else None
         semester = self.session.semester.semester if self.session.semester is not None else None
+        separation = self.session.separation.separation if self.session.separation is not None else None
         include, exclude = self.session.get_lst_string()
         
         data = {'id'                      : self.session.id
@@ -42,7 +43,7 @@ class SessionHttpAdapter(object):
               , 'semester'                : semester 
               , 'session_type'            : sessType
               , 'weather_type'            : wthrType
-              , 'separation'              : self.session.separation
+              , 'separation'              : separation
               , 'interval_time'           : self.session.interval_time
               , 'constraint_field'        : self.session.constraint_field
               , 'comments'                : self.session.comments
@@ -145,6 +146,8 @@ class SessionHttpAdapter(object):
         proposal = Proposal.objects.get(pcode = pcode)
         self.session.proposal = proposal
 
+        sep = SessionSeparation.objects.get(separation = data.get('separation'))
+        self.session.separation = sep
         sessionType = SessionType.objects.get(type = data.get('session_type'))
         self.session.session_type = sessionType
         weatherType = WeatherType.objects.get(type = data.get('weather_type'))
@@ -154,7 +157,6 @@ class SessionHttpAdapter(object):
         
         self.session.pst_session_id = self.getInt(data, 'pst_session_id', default = 0) 
         self.session.name = data.get('name')
-        self.session.separation = data.get('separation')
         self.session.interval_time = self.getFloat(data,'interval_time')
         self.session.constraint_field = data.get('constraint_field')
         self.session.comments = data.get('comments')

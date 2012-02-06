@@ -10,9 +10,9 @@ from ResourceGroup            import ResourceGroup
 from Resource                 import Resource
 from ScientificCategory       import ScientificCategory
 from Session                  import Session
-#from Session_Receiver_Granted import Session_Receiver_Granted
 from SessionFlags             import SessionFlags
 from SessionParameter         import SessionParameter
+from SessionSeparation        import SessionSeparation
 from SessionType              import SessionType
 from SourceGroup              import SourceGroup
 from Source                   import Source

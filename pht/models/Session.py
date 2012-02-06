@@ -20,18 +20,19 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from django.db                 import models
+from django.db         import models
 
-from Allotment    import Allotment
-from Backend      import Backend
-from Proposal     import Proposal
-from Receiver     import Receiver
-from SessionType  import SessionType
-from Semester     import Semester
-from SessionFlags import SessionFlags
-from Source       import Source
-from Target       import Target
-from WeatherType  import WeatherType
+from Allotment         import Allotment
+from Backend           import Backend
+from Proposal          import Proposal
+from Receiver          import Receiver
+from SessionSeparation import SessionSeparation
+from SessionType       import SessionType
+from Semester          import Semester
+from SessionFlags      import SessionFlags
+from Source            import Source
+from Target            import Target
+from WeatherType       import WeatherType
 
 from pht.utilities import *
 
@@ -52,7 +53,7 @@ class Session(models.Model):
     pst_session_id          = models.IntegerField()
     name                    = models.CharField(max_length = 2000)
     
-    separation              = models.CharField(null = True, max_length = 255) # day or week
+    separation              = models.ForeignKey(SessionSeparation, null = True)
     interval_time           = models.IntegerField(null = True, ) # TBF: units?
     constraint_field        = models.CharField(null = True, max_length = 2000)
     comments                = models.CharField(null = True, max_length = 2000)
@@ -120,12 +121,13 @@ class Session(models.Model):
         an SQL query.
         """
 
+        separation = SessionSeparation.objects.get(separation = result['SEPARATION'].strip())
         session = Session(pst_session_id = result['session_id']
                           # Don't use result's because that's for the
                           # PST, not our GB PHT DB!
                         , proposal_id = proposal_id #result['PROPOSAL_ID']
                         , name = result['SESSION_NAME']
-                        , separation = result['SEPARATION']
+                        , separation = separation 
                         , interval_time = result['INTERVAL_TIME']
                         , constraint_field = result['CONSTRAINT_FIELD']
                         , comments = result['COMMENTS']
