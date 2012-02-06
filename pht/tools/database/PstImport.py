@@ -283,6 +283,8 @@ class PstImport(PstInterface):
             if rcvr is not None and rcvr != 'None':
                 rcvr = Receiver.get_rcvr(rcvr)
                 session.receivers.add(rcvr)
+                # default this receiver as granted
+                session.receivers_granted.add(rcvr)
             # associate the front end w/ this session
             backend = self.backendMap.get(r[1], None)
             if backend is not None and backend != 'None':

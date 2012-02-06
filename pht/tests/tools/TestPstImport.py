@@ -42,6 +42,9 @@ class TestPstImport(unittest.TestCase):
         self.assertAlmostEquals(4.79908, src.ra, 2)
         self.assertTrue(len(s.sources.all()) == 0)
         self.assertTrue(len(s.receivers.all()) > 0)
+        self.assertTrue(len(s.receivers_granted.all()) > 0)
+        self.assertEquals(s.receivers.all()[0].name
+                        , s.receivers_granted.all()[0].name)
         self.assertTrue(len(s.backends.all()) > 0)
         self.assertTrue(s.allotment is not None)
         self.assertTrue(s.target is not None)
