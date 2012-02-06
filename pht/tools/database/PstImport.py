@@ -139,7 +139,8 @@ class PstImport(PstInterface):
               join author as a on p.principal_investigator_id = a.author_id)
               join userAuthentication as ua on ua.userAuthentication_id = a.user_id)
               join person on person.personAuthentication_id = ua.userAuthentication_id
-            where PROP_ID like '%%%s%%' and (p.TELESCOPE = 'GBT' or p.TELESCOPE = 'VLBA')
+            where PROP_ID like '%%%s%%' and (p.TELESCOPE = 'GBT' or p.TELESCOPE = 'VLBA' or p.TELESCOPE = 'VLBI')
+            order by PROP_ID
             """ % semester
         self.cursor.execute(q)
         keys = self.getKeys()
@@ -169,7 +170,8 @@ class PstImport(PstInterface):
                 AND p.proposal_id = %d;
         """ % proposal_id
         self.cursor.execute(q)
-        for row in self.cursor.fetchall():
+        rows = self.cursor.fetchall()
+        for row in rows:
             if row[0].strip() == 'GBT':
                 # all we need is one resource to be the GBT!
                 return True
