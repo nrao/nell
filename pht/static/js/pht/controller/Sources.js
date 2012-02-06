@@ -132,7 +132,6 @@ Ext.define('PHT.controller.Sources', {
             return;
         }
 
-        console.log(f.isValid());
         source.set(values);
         // Is this a new source?
         // NOTE: using model.ProposalSource since we are only updating from Prop. Src. grid

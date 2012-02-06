@@ -5,17 +5,12 @@ Ext.define('PHT.view.source.ProposalList' ,{
 
     multiSelect: true,
     viewConfig: {
+        copy: true,
         plugins: {
             ptype: 'gridviewdragdrop',
             dragGroup: 'proposalSourceGridDDGroup',
             dropGroup: 'sessionSourceGridDDGroup',
         },
-        listeners: {
-            drop: function(node, data, dropRec, dropPosition) {
-                var dropOn = dropRec ? ' ' + dropPosition + ' ' + dropRec.get('name') : ' on empty view';
-                console.log("Drag from session sources to proposal sources", 'Dropped on ' + dropOn);
-            },
-        }
     },
 
     initComponent: function() {

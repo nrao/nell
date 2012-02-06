@@ -83,8 +83,6 @@ Ext.application({
         var sessionSources = Ext.create('PHT.view.source.SessionListWindow', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
-        sessionSources.down('sessionsourcelist').setProposalSourceList(
-          proposalSources.down('proposalsourcelist'));
 
         // setup menus
         var toolsMenu = Ext.create('Ext.menu.Menu', {

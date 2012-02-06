@@ -74,7 +74,7 @@ Ext.define('PHT.view.source.SessionList' ,{
                            url: url,
                            method: 'POST',
                         });
-                        grid.proposalSourceList.getStore("ProposalSources").load();
+
                         grid.getSelectionModel().deselectAll();
                     }
                 }
@@ -108,10 +108,6 @@ Ext.define('PHT.view.source.SessionList' ,{
         */
 
         this.callParent(arguments);
-    },
-
-    setProposalSourceList: function(proposalSourceList) {
-        this.proposalSourceList = proposalSourceList;
     },
 
     setProposal: function(pcode) {
