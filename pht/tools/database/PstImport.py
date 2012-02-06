@@ -63,6 +63,7 @@ class PstImport(PstInterface):
           , 'K-Band Upper (22.0-26.5 GHz)' : 'K'
           , 'Ka-Band MM-F3 (36.0-40.0 GHz)' : 'Ka'
           , 'Ka-band - Zpectrometer' : 'Ka'
+          , 'Ka-Band - Zpectrometer' : 'Ka'
           , 'Ka-Band - CCB' : 'Ka'
           , 'Mustang' : 'MBA'
           , 'KFPA' : 'KFPA' 
@@ -130,7 +131,7 @@ class PstImport(PstInterface):
 
     def importProposals(self, semester):
         """
-        Imports all the proposals in a given semester.
+        Imports all the GBT-related proposals in a given semester.
         """
         q = """
             select p.*,  a.*, person.person_id
@@ -143,16 +144,38 @@ class PstImport(PstInterface):
         self.cursor.execute(q)
         keys = self.getKeys()
         for row in self.cursor.fetchall():
-            proposal = Proposal.createFromSqlResult(dict(zip(keys, map(self.safeUnicode, row))))
-            proposal.setSemester(semester)
-            self.fetchScientificCategories(proposal)
-            self.fetchObservingTypes(proposal)
-            self.fetchSessions(proposal)
-            self.fetchSources(proposal)
-            self.fetchAuthors(proposal)
-            self.proposals.append(proposal)
+            results = dict(zip(keys, map(self.safeUnicode, row)))
+            pid = int(results['proposal_id'])
+            if self.proposalUsesGBT(pid):
+                proposal = Proposal.createFromSqlResult(results)
+                proposal.setSemester(semester)
+                self.fetchScientificCategories(proposal)
+                self.fetchObservingTypes(proposal)
+                self.fetchSessions(proposal)
+                self.fetchSources(proposal)
+                self.fetchAuthors(proposal)
+                self.proposals.append(proposal)
 
         self.report()
+
+    def proposalUsesGBT(self, proposal_id):
+        "Does at least one of the proposal's resources include the GBT?"
+        q = """
+            select r.TELESCOPE 
+            from proposal as p, RESOURCES as r, sessionPair as sp, session as s 
+            where sp.RESOURCE_GROUP = r.resource_group 
+                AND s.session_id = sp.session_id 
+                AND s.proposal_id = p.proposal_id 
+                AND p.proposal_id = %d;
+        """ % proposal_id
+        self.cursor.execute(q)
+        for row in self.cursor.fetchall():
+            if row[0].strip() == 'GBT':
+                # all we need is one resource to be the GBT!
+                return True
+        # if we got here, no GBT resource!
+        return False
+
 
     def fetchAuthors(self, proposal):
         q = """

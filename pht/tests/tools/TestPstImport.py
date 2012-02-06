@@ -50,6 +50,15 @@ class TestPstImport(unittest.TestCase):
         self.assertTrue(s.target is not None)
         proposal.delete()
 
+    def test_proposalUsesGBT(self):
+
+        # GBT/12A-002
+        pId = 5813
+        self.assertEquals(True, self.pst.proposalUsesGBT(pId))
+        # VLBA only
+        pId = 5821
+        self.assertEquals(False, self.pst.proposalUsesGBT(pId))
+
     def test_importProposals(self):
         self.pst.importProposals('12A')
         self.assertTrue(len(Proposal.objects.all()) > 0)
