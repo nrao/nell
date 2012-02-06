@@ -41,6 +41,7 @@ urlpatterns = patterns(''
    , url(r'^sessions$',                  sessionResource.requestHandler)
    , url(r'^options$',                   get_options)
    , url(r'^session/types',              session_types)
+   , url(r'^session/separations',        session_separations)
    , url(r'^weather/types',              weather_types)
    , url(r'^semesters',                  semesters)
 )
