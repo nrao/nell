@@ -138,7 +138,7 @@ Ext.define('PHT.view.session.Form', {
             xtype: 'tabpanel',
             title: 'Session Details',
             collapsible: true,
-            collapsed: true,
+            collapsed: false,
             items: [{
                 // Allotment Tab
                 title: 'Allotment',
@@ -260,7 +260,7 @@ Ext.define('PHT.view.session.Form', {
                     items: [{
                         xtype: 'checkboxfield',
                         name: 'transit_flat',
-                        fieldLabel: 'Transit Flat',
+                        fieldLabel: 'Transit',
                         uncheckedValue: 'false',
                         inputValue: 'true',
                         labelAlign: 'left',
