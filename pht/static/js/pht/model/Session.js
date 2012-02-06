@@ -50,7 +50,7 @@ Ext.define('PHT.model.Session', {
            ], 
     proxy: {
         type: 'rest',
-        url: 'sessions',
+        url: '/pht/sessions',
         reader: {
             type: 'json',
             root: 'sessions',

@@ -5,7 +5,7 @@ Ext.define('PHT.model.Semester', {
              ],
     proxy: {
         type: 'ajax',
-        url: 'semesters',
+        url: '/pht/semesters',
         reader: {
             type: 'json',
             root: 'semesters',

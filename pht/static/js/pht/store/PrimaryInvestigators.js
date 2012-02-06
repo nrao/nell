@@ -4,7 +4,7 @@ Ext.define('PHT.store.PrimaryInvestigators', {
     autoLoad: true,
     proxy: {
         type: 'ajax',
-        url: 'proposal/pis',
+        url: '/pht/proposal/pis',
         reader: {
             type: 'json',
             root: 'pis',

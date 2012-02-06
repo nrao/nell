@@ -18,7 +18,7 @@ Ext.define('PHT.store.ProposalTree', {
     */
     proxy: {
         type : 'ajax',
-        url : 'tree',
+        url : '/pht/tree',
         reader: {
             type: 'json',
             root: 'proposals',

@@ -67,7 +67,7 @@ Ext.define('PHT.view.author.List' ,{
         store.setProxy(
         {
             type: 'rest',
-            url: 'proposals/' + pcode + '/authors',
+            url: '/pht/proposals/' + pcode + '/authors',
             reader: {
                 type : 'json',
                 root: 'authors',

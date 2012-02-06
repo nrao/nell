@@ -22,7 +22,7 @@ Ext.define('PHT.model.ProposalSource', {
            ], 
     proxy: {
         type: 'rest',
-        url: 'sources',
+        url: '/pht/sources',
         reader: {
             type: 'json',
             root: 'sources',

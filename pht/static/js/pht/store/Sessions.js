@@ -4,7 +4,7 @@ Ext.define('PHT.store.Sessions', {
     autoLoad: true,
     proxy: {
         type: 'rest',
-        url: 'sessions',
+        url: '/pht/sessions',
         reader: {
             type: 'json',
             root: 'sessions',

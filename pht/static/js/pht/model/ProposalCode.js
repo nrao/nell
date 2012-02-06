@@ -5,7 +5,7 @@ Ext.define('PHT.model.ProposalCode', {
              ],
     proxy: {
         type: 'ajax',
-        url: 'options?mode=proposal_codes',
+        url: '/pht/options?mode=proposal_codes',
         reader: {
             type: 'json',
             root: 'proposal codes',

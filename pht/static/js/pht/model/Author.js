@@ -26,7 +26,7 @@ Ext.define('PHT.model.Author', {
            ],
     proxy: {
         type: 'rest',
-        url: 'authors',
+        url: '/pht/authors',
         reader: {
             type: 'json',
             root: 'authors',

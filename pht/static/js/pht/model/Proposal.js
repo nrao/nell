@@ -21,7 +21,7 @@ Ext.define('PHT.model.Proposal', {
            ], 
     proxy: {
         type: 'rest',
-        url: 'proposals',
+        url: '/pht/proposals',
         reader: {
             type: 'json',
             root: 'proposals',

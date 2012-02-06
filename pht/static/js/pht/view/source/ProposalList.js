@@ -72,7 +72,7 @@ Ext.define('PHT.view.source.ProposalList' ,{
         store.setProxy(
         {
             type: 'rest',
-            url: 'proposals/' + pcode + '/sources',
+            url: '/pht/proposals/' + pcode + '/sources',
             reader: {
                 type : 'json',
                 root: 'sources',

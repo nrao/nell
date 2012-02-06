@@ -69,7 +69,7 @@ Ext.define('PHT.view.source.SessionList' ,{
                     var session = grid.sessionCombo.getValue();
                     for (i = 0; i < data.records.length; i++) {
                         record = data.records[i];
-                        url = '/sessions/' + session + '/sources/' + record.get('id');
+                        url = '/pht/sessions/' + session + '/sources/' + record.get('id');
                         Ext.Ajax.request({
                            url: url,
                            method: 'POST',
@@ -130,7 +130,7 @@ Ext.define('PHT.view.source.SessionList' ,{
         store.setProxy(
         {
             type: 'rest',
-            url: 'sessions/' + session_id + '/sources',
+            url: '/pht/sessions/' + session_id + '/sources',
             reader: {
                 type : 'json',
                 root: 'sources',

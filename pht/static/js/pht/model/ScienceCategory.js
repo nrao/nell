@@ -5,7 +5,7 @@ Ext.define('PHT.model.ScienceCategory', {
              ],
     proxy: {
         type: 'ajax',
-        url: 'proposal/science/categories',
+        url: '/pht/proposal/science/categories',
         reader: {
             type: 'json',
             root: 'science categories',

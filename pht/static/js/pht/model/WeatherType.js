@@ -5,7 +5,7 @@ Ext.define('PHT.model.WeatherType', {
              ],
     proxy: {
         type: 'ajax',
-        url: 'weather/types',
+        url: '/pht/weather/types',
         reader: {
             type: 'json',
             root: 'weather types',

@@ -92,6 +92,7 @@ def meanAngle(thetas):
     if len(thetas) == 1:
         return thetas[0]
 
+    thetas.sort()
     avg_theta = thetas[0]
     for theta in thetas[1:]:
         # Find the difference between the angles

@@ -4,7 +4,7 @@ Ext.define('PHT.store.PstUsers', {
     autoLoad: true,
     proxy: {
         type: 'ajax',
-        url: 'pst/users',
+        url: '/pht/pst/users',
         reader: {
             type: 'json',
             root: 'users',

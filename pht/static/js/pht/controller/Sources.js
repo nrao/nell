@@ -157,7 +157,7 @@ Ext.define('PHT.controller.Sources', {
         var session = grid.sessionCombo.getValue();
         for (i = 0; i < sources.length; i++) {
             source =  sources[i].get('id');
-            url = '/sessions/' + session + '/sources/' + source;
+            url = '/pht/sessions/' + session + '/sources/' + source;
             Ext.Ajax.request({
                url: url,
                method: 'DELETE',
@@ -175,7 +175,7 @@ Ext.define('PHT.controller.Sources', {
         }
         var store   = this.getSessionsStore();
         var session = store.getById(grid.sessionCombo.getValue());
-        var url     = '/sessions/' + session.get('id') + '/averageradec';
+        var url     = '/pht/sessions/' + session.get('id') + '/averageradec';
         var source_ids = new Array();
         for (i = 0; i < sources.length; i++) {
             source_ids.push(sources[i].get('id'));

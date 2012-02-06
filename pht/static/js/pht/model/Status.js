@@ -5,7 +5,7 @@ Ext.define('PHT.model.Status', {
              ],
     proxy: {
         type: 'ajax',
-        url: 'proposal/statuses',
+        url: '/pht/proposal/statuses',
         reader: {
             type: 'json',
             root: 'statuses',

@@ -427,7 +427,7 @@ class TestViews(TestCase):
         results  = self.eval_response(response.content)
         self.failUnlessEqual(response.status_code, 200)
 
-        self.assertAlmostEqual(results['data']['ra'], 4.7902, 4)
+        self.assertAlmostEqual(results['data']['ra'], 4.7932, 4)
         self.assertAlmostEqual(results['data']['dec'], -0.2146, 4)
 
         positions = [(0.2, 3), (0.1, 3), (2 * math.pi - .2, 3)]
