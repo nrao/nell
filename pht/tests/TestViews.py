@@ -87,7 +87,7 @@ class TestViews(TestCase):
     # Proposal CRUD
     def test_proposals(self):
         self.client   = Client()
-        response = self.client.get("/proposals")
+        response = self.client.get("/pht/proposals")
         results = self.eval_response(response.content)
 
         self.failUnlessEqual(response.status_code, 200)
@@ -97,7 +97,7 @@ class TestViews(TestCase):
 
     def test_proposal_get(self):
         self.client   = Client()
-        response = self.client.get("/proposals/%s" % self.proposal.pcode)
+        response = self.client.get("/pht/proposals/%s" % self.proposal.pcode)
         results = self.eval_response(response.content)
 
         self.failUnlessEqual(response.status_code, 200)
@@ -120,7 +120,7 @@ class TestViews(TestCase):
                   , 'observing_types' : [o.type for o in self.proposal.observing_types.all()]
                   , 'joint_proposal'  : str(not self.proposal.joint_proposal)
                    }
-        response = self.client.post("/proposals", json.dumps(data)
+        response = self.client.post("/pht/proposals", json.dumps(data)
                                   , content_type='application/json')
         results = self.eval_response(response.content)
 
@@ -143,7 +143,7 @@ class TestViews(TestCase):
                   , 'abstract'        : self.proposal.abstract
                   , 'joint_proposal'  : str(not self.proposal.joint_proposal)
                    }
-        response = self.client.post("/proposals", json.dumps(data)
+        response = self.client.post("/pht/proposals", json.dumps(data)
                                   , content_type='application/json')
         results = self.eval_response(response.content)
 
@@ -166,7 +166,7 @@ class TestViews(TestCase):
                    }
 
         before   = len(Proposal.objects.all())
-        response = self.client.put("/proposals/%s" % self.proposal.pcode, json.dumps(data)
+        response = self.client.put("/pht/proposals/%s" % self.proposal.pcode, json.dumps(data)
                                  , content_type='application/json')
         after    = len(Proposal.objects.all())
         results = self.eval_response(response.content)
@@ -178,7 +178,7 @@ class TestViews(TestCase):
 
     def test_proposal_delete(self):
         before   = len(Proposal.objects.all())
-        response = self.client.delete("/proposals/%s" % self.proposal.pcode)
+        response = self.client.delete("/pht/proposals/%s" % self.proposal.pcode)
         after    = len(Proposal.objects.all())
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(before - after, 1)
@@ -187,7 +187,7 @@ class TestViews(TestCase):
     def test_sessions(self):
         sess = self.proposal.session_set.all()[0]
         self.client   = Client()
-        response = self.client.get("/sessions")
+        response = self.client.get("/pht/sessions")
         results = self.eval_response(response.content)
 
         self.failUnlessEqual(response.status_code, 200)
@@ -197,7 +197,7 @@ class TestViews(TestCase):
     def test_session_get(self):
         self.client   = Client()
         sess = self.proposal.session_set.all()[0]
-        response = self.client.get("/sessions/%s" % sess.id)
+        response = self.client.get("/pht/sessions/%s" % sess.id)
         results = self.eval_response(response.content)
 
         self.failUnlessEqual(response.status_code, 200)
@@ -208,7 +208,7 @@ class TestViews(TestCase):
     def test_session_delete(self):
         before   = len(Session.objects.all())
         sess = self.proposal.session_set.all()[0]
-        response = self.client.delete("/sessions/%s" % sess.id)
+        response = self.client.delete("/pht/sessions/%s" % sess.id)
         after    = len(Session.objects.all())
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(before - after, 1)
@@ -216,7 +216,7 @@ class TestViews(TestCase):
     def test_session_post(self):
                    
         before   = len(Session.objects.all())
-        response = self.client.post("/sessions/%s" % self.session.id
+        response = self.client.post("/pht/sessions/%s" % self.session.id
                                   , json.dumps(self.s_data)
                                   , content_type='application/json')
         after    = len(Session.objects.all().order_by('id'))
@@ -231,7 +231,7 @@ class TestViews(TestCase):
 
     def test_session_put(self):
         before   = len(Session.objects.all())
-        response = self.client.put("/sessions/%s" % self.session.id
+        response = self.client.put("/pht/sessions/%s" % self.session.id
                                  , json.dumps(self.s_data)
                                  , content_type='application/json')
         after    = len(Session.objects.all())
@@ -252,7 +252,7 @@ class TestViews(TestCase):
         self.s_data['lst_ex'] = lst_ex 
         self.s_data['lst_in'] = lst_in 
 
-        response = self.client.put("/sessions/%s" % self.session.id
+        response = self.client.put("/pht/sessions/%s" % self.session.id
                                  , json.dumps(self.s_data)
                                  , content_type='application/json')
         after    = len(Session.objects.all())
@@ -274,7 +274,7 @@ class TestViews(TestCase):
         self.s_data['backends'] = 'gbtSpec,gbtSpecP'
         self.s_data['receivers'] = 'L,S,X'
         self.s_data['receivers_granted'] = 'L,X'
-        response = self.client.put("/sessions/%s" % self.session.id
+        response = self.client.put("/pht/sessions/%s" % self.session.id
                                  , json.dumps(self.s_data)
                                  , content_type='application/json')
         after    = len(Session.objects.all())
@@ -294,7 +294,7 @@ class TestViews(TestCase):
     # Session CRUD
     def test_proposal_sources(self):
         self.client   = Client()
-        url = "/proposals/%s/sources" % self.proposal.pcode
+        url = "/pht/proposals/%s/sources" % self.proposal.pcode
         response = self.client.get(url)
         results = self.eval_response(response.content)
 
@@ -305,7 +305,7 @@ class TestViews(TestCase):
     def test_source_get(self):
         self.client   = Client()
         src = self.proposal.source_set.all()[0]
-        response = self.client.get("/sources/%s" % src.id)
+        response = self.client.get("/pht/sources/%s" % src.id)
         results = self.eval_response(response.content)
 
         self.failUnlessEqual(response.status_code, 200)
@@ -315,7 +315,7 @@ class TestViews(TestCase):
     def test_source_delete(self):
         src = self.proposal.source_set.all()[0]
         before   = len(Source.objects.all())
-        response = self.client.delete("/sources/%s" % src.id)
+        response = self.client.delete("/pht/sources/%s" % src.id)
         after    = len(Source.objects.all())
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(before - after, 1)
@@ -323,7 +323,7 @@ class TestViews(TestCase):
     def test_source_post(self):
                    
         src = self.proposal.source_set.all()[0]
-        response = self.client.post("/sources/%s" % src.id
+        response = self.client.post("/pht/sources/%s" % src.id
                                   , json.dumps(self.src_data)
                                   , content_type='application/json')
         results = self.eval_response(response.content)
@@ -334,7 +334,7 @@ class TestViews(TestCase):
     def test_source_put(self):
         before   = len(Source.objects.all())
         src = self.proposal.source_set.all()[0]
-        response = self.client.put("/sources/%s" % src.id
+        response = self.client.put("/pht/sources/%s" % src.id
                                  , json.dumps(self.src_data)
                                  , content_type='application/json')
         after    = len(Source.objects.all())
@@ -349,7 +349,7 @@ class TestViews(TestCase):
         session  = Session.objects.all()[0] # get a session
 
         # Get me all the sources on this session
-        response = self.client.get('/sessions/%s/sources' % session.id)
+        response = self.client.get('/pht/sessions/%s/sources' % session.id)
         results  = self.eval_response(response.content)
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(len(results['sources']), 0)
@@ -360,7 +360,7 @@ class TestViews(TestCase):
 
         # Get me all the sources on this session again.  New ones
         # should be there.
-        response = self.client.get('/sessions/%s/sources' % session.id)
+        response = self.client.get('/pht/sessions/%s/sources' % session.id)
         results  = self.eval_response(response.content)
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(len(results['sources']), 3)
@@ -374,7 +374,7 @@ class TestViews(TestCase):
         source_id = session.proposal.source_set.all()[0].id
 
         # Add a source to this session
-        response = self.client.post('/sessions/%s/sources/%s' % (session.id, source_id))
+        response = self.client.post('/pht/sessions/%s/sources/%s' % (session.id, source_id))
         results  = self.eval_response(response.content)
         self.failUnlessEqual(response.status_code, 200)
 
@@ -401,7 +401,7 @@ class TestViews(TestCase):
             session.sources.add(source)
 
         # Remove a source from this session
-        response = self.client.delete('/sessions/%s/sources/%s' % (session.id, source_id))
+        response = self.client.delete('/pht/sessions/%s/sources/%s' % (session.id, source_id))
 
         # Has the source been removed?
         session = Session.objects.get(id = session.id)
@@ -412,7 +412,7 @@ class TestViews(TestCase):
         session   = Session.objects.all()[0] # get as session
 
         # Get request should return a 404
-        response = self.client.get('/sessions/%s/averageradec' % session.id)
+        response = self.client.get('/pht/sessions/%s/averageradec' % session.id)
         self.failUnlessEqual(response.status_code, 404)
 
 
@@ -423,7 +423,7 @@ class TestViews(TestCase):
             sources.append(source.id)
 
         data     = {'sources': sources}
-        response = self.client.post('/sessions/%s/averageradec' % session.id, data)
+        response = self.client.post('/pht/sessions/%s/averageradec' % session.id, data)
         results  = self.eval_response(response.content)
         self.failUnlessEqual(response.status_code, 200)
 
@@ -435,7 +435,7 @@ class TestViews(TestCase):
         sources   = [self.addSource(session, ra, dec).id for ra, dec in positions]
 
         data     = {'sources': sources}
-        response = self.client.post('/sessions/%s/averageradec' % session.id, data)
+        response = self.client.post('/pht/sessions/%s/averageradec' % session.id, data)
         results  = self.eval_response(response.content)
         self.failUnlessEqual(response.status_code, 200)
 

@@ -32,7 +32,7 @@ class TestAuthorResource(TestCase):
 
     def test_read(self):
         proposal = Proposal.objects.all()[0]
-        response = self.client.get('/proposals/%s/authors' % proposal.pcode)
+        response = self.client.get('/pht/proposals/%s/authors' % proposal.pcode)
         self.failUnlessEqual(response.status_code, 200)
 
     def test_create(self):
@@ -53,7 +53,7 @@ class TestAuthorResource(TestCase):
                   , 'supported'         : 'false'
                   , 'budget'            : 2.5
                   }
-        response = self.client.post('/authors', json.dumps(data)
+        response = self.client.post('/pht/authors', json.dumps(data)
                                   , content_type='application/json')
         self.failUnlessEqual(response.status_code, 200)
         results = eval(response.content.replace('false', 'False').replace('null', 'None'))
@@ -77,7 +77,7 @@ class TestAuthorResource(TestCase):
                   , 'supported'         : proposal.pi.supported
                   , 'budget'            : proposal.pi.budget
                   }
-        response = self.client.put('/proposals/%s/authors/%s' % (proposal.pcode, proposal.pi.id)
+        response = self.client.put('/pht/proposals/%s/authors/%s' % (proposal.pcode, proposal.pi.id)
                                  , json.dumps(data)
                                  , content_type='application/json')
         self.failUnlessEqual(response.status_code, 200)
@@ -86,6 +86,6 @@ class TestAuthorResource(TestCase):
 
     def test_delete(self):
         proposal = Proposal.objects.all()[0]
-        response = self.client.delete('/authors/%s' % proposal.pi.id)
+        response = self.client.delete('/pht/authors/%s' % proposal.pi.id)
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue(len(Author.objects.filter(id = proposal.pi.id)) == 0)
