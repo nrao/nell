@@ -54,8 +54,8 @@ class Target(models.Model):
 
         target = Target(min_lst = c.sexHrs2rad(result['MINIMUM_LST'])
                       , max_lst = c.sexHrs2rad(result['MAXIMUM_LST'])
-                      # TBF: why bother converting?  It is soooo FUBAR!
-                      , elevation_min = result['ELEVATION_MINIMUM']      
+                      # TBF: why bother importing?  It is soooo FUBAR!
+                      #, elevation_min = result['ELEVATION_MINIMUM']      
                       , pst_max_lst = result['MAXIMUM_LST']
                       , pst_min_lst = result['MINIMUM_LST']
                       , pst_elevation_min = result['ELEVATION_MINIMUM']
