@@ -32,6 +32,7 @@ NELL_ROOT         = '{path to your nell sandbox}' #MODIFY#
 CALCULATOR_UI_DIR = '/home/dss.gb.nrao.edu/active/calculator-ui'
 NUBBLES_DIR       = '/home/dss/release/nubbles'
 STATIC_DOC_ROOT   = NELL_ROOT + '/users/static'
+STATIC_PHT        = NELL_ROOT + '/pht/static'
 DOC_ROOT          = NELL_ROOT + '/docs/www'
 MEDIA             = '/home/dss.gb.nrao.edu/active/python/lib/python2.5/site-packages/django/contrib/admin/media' 
 SC_EQUATION_DEFS  = NELL_ROOT + '/calculator/data/equations.cfg'
@@ -168,5 +169,6 @@ INSTALLED_APPS = (
     'nell.users',
     'nell.users.templatetags',
     'nell.calculator',
+    'nell.pht',
     'reversion'
 )

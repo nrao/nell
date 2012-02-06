@@ -16,6 +16,7 @@ admin.autodiscover()
 urlpatterns = patterns(''
    , (r'^calculator/', include('nell.calculator.urls')) #
    , (r'^scheduler/',  include('nell.scheduler.urls'))  #
+   , (r'^pht/',        include('nell.pht.urls'))  #
    , (r'^admin/',      include(admin.site.urls))        #
    , (r'^rescal_admin/', include(rescal_admin.urls))
    , url(r'^profile/(\d+)/blackout/(\d+)/$',               user_blackout)
