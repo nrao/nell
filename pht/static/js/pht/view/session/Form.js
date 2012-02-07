@@ -81,9 +81,15 @@ Ext.define('PHT.view.session.Form', {
             border: false,
             layout: 'anchor',
             items: [{
-                xtype: 'textfield',
+                xtype: 'combo',
                 name: 'grade',
                 fieldLabel: 'Grade',
+                store: 'SessionGrades', // MVC baby!
+                queryMode: 'local',
+                displayField: 'grade',
+                valueField: 'grade',
+                forceSelection: true,
+                allowBlank: false,
             },{
                 xtype: 'numberfield',
                 fieldLabel: 'Requested Time (Hrs)',
