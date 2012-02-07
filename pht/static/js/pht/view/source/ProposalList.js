@@ -50,6 +50,7 @@ Ext.define('PHT.view.source.ProposalList' ,{
         this.columns = [
             {header: 'Proposal', dataIndex: 'pcode', width: 100},
             {header: 'Target Name', dataIndex: 'target_name', width: 100},
+            {header: 'Coord. Epoch', dataIndex: 'coordinate_epoch', flex: 1},
             {header: 'Coord. Sys.', dataIndex: 'coordinate_system', flex: 1},
             {header: 'RA', dataIndex: 'ra',  flex: 1},
             {header: 'Dec', dataIndex: 'dec',  flex: 1},

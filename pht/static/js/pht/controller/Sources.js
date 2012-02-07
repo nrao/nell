@@ -4,12 +4,22 @@ Ext.define('PHT.controller.Sources', {
     models: [
         'ProposalSource',
         'SessionSource',
+        'SourceCoordinateEpoch',
+        'SourceCoordinateSystem',
+        'SourceVelocityType',
+        'SourceConvention',
+        'SourceReferenceFrame',
     ],
 
     stores: [
         'ProposalSources',
         'SessionSources',
         'Sessions',
+        'SourceCoordinateEpochs',
+        'SourceCoordinateSystems',
+        'SourceVelocityTypes',
+        'SourceConventions',
+        'SourceReferenceFrames',
     ],
 
     views: [

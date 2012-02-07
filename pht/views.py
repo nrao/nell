@@ -177,6 +177,22 @@ def science_categories(request):
 def statuses(request):
     return simpleGetAllResponse('statuses', Status.jsonDictOptions())
 
+def source_epochs(request):
+    return simpleGetAllResponse('source epochs', SourceCoordinateEpoch.jsonDictOptions())
+
+def source_systems(request):
+    return simpleGetAllResponse('source systems', SourceCoordinateSystem.jsonDictOptions())
+
+def source_velocity_types(request):
+    return simpleGetAllResponse('source velocity types', SourceVelocityType.jsonDictOptions())
+
+def source_conventions(request):
+    return simpleGetAllResponse('source conventions', SourceConvention.jsonDictOptions())
+
+def source_reference_frames(request):
+    return simpleGetAllResponse('source reference frames', SourceReferenceFrame.jsonDictOptions())
+
+
 def simpleGetAllResponse(key, data):
     return HttpResponse(json.dumps({"success" : "ok" , key : data })
                       , content_type = 'application/json')

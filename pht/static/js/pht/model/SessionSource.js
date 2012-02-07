@@ -5,6 +5,7 @@ Ext.define('PHT.model.SessionSource', {
            , 'name'
            , 'target_name'
            , 'coordinate_system'
+           , 'coordinate_epoch'
            , 'ra'
            , 'dec'
            , 'ra_range'

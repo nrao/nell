@@ -138,7 +138,7 @@ class SourceHttpAdapter(object):
                                                 , SourceVelocityType
                                                 , 'type')
         self.source.convention = self.getEnum(data
-                                            , 'conventions'
+                                            , 'convention'
                                             , SourceConvention
                                             , 'convention')
         self.source.reference_frame = self.getEnum(data
