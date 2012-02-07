@@ -29,6 +29,8 @@ from Semester           import Semester
 from Status             import Status
 from ProposalType       import ProposalType
 
+from datetime           import datetime
+
 class Proposal(models.Model):
 
     pst_proposal_id = models.IntegerField(null = True)
@@ -72,13 +74,18 @@ class Proposal(models.Model):
 
         proposalType  = ProposalType.objects.get(type = result['PROPOSAL_TYPE'])
         status        = Status.objects.get(name = result['STATUS'].title())
+        submit_date  = result['SUBMITTED_DATE'] \
+            if result['SUBMITTED_DATE'] != 'None' \
+            else datetime.now().strftime("%Y-%M-%d %H:%m:%S")
+
+
         proposal = Proposal(pst_proposal_id = result['proposal_id']
                           , proposal_type   = proposalType
                           , status          = status
                           , pcode           = result['PROP_ID'].replace('/', '')
                           , create_date     = result['CREATED_DATE']
                           , modify_date     = result['MODIFIED_DATE']
-                          , submit_date     = result['SUBMITTED_DATE']
+                          , submit_date     = submit_date 
                           , total_time      = 0.0 #result['total_time']
                           , title           = result['TITLE']
                           , abstract        = result['ABSTRACT']
