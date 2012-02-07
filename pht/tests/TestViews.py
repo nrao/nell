@@ -62,15 +62,16 @@ class TestViews(TestCase):
         self.src_data = {
                 'pcode'                   : src.proposal.pcode
               , 'target_name'             : src.target_name
-              , 'coordinate_system'       : src.coordinate_system
               , 'ra'                      : rad2sexHrs(src.ra)
               , 'dec'                     : rad2sexDeg(src.dec)
               , 'ra_range'                : rad2sexHrs(src.ra_range)
               , 'dec_range'               : rad2sexDeg(src.dec_range)
-              , 'velocity_units'          : src.velocity_units
+              , 'coordinate_system'       : src.coordinate_system.system
+              , 'coordinate_epoch'        : src.coordinate_epoch.epoch
+              , 'velocity_units'          : src.velocity_units.type
               , 'velocity_redshift'       : src.velocity_redshift
-              , 'convention'              : src.convention
-              , 'reference_frame'         : src.reference_frame
+              , 'convention'              : src.convention.convention
+              , 'reference_frame'         : src.reference_frame.frame
               , 'observed'                : src.observed
               , 'allowed'                 : src.allowed
                }
@@ -300,7 +301,7 @@ class TestViews(TestCase):
 
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(self.proposal.pcode, results['sources'][0]['pcode'])
-        self.assertEqual('J2000', results['sources'][0]['coordinate_system'])
+        self.assertEqual('J2000', results['sources'][0]['coordinate_epoch'])
 
     def test_source_get(self):
         self.client   = Client()
@@ -443,18 +444,24 @@ class TestViews(TestCase):
         self.assertAlmostEqual(results['data']['dec'], 3.0, 4)
 
     def addSource(self, session, ra, dec):
+        j2000 = SourceCoordinateEpoch.objects.get(epoch = 'J2000')
+        gal = SourceCoordinateSystem.objects.get(system = 'Galactic')
+        velocity = SourceVelocityType.objects.get(type = 'Velocity')
+        con = SourceConvention.objects.get(convention = 'Radio')
+        frame = SourceReferenceFrame.objects.get(frame = 'LSRK')
         source = Source(pst_source_id = 0
                       , proposal_id = session.proposal_id
                       , target_name = 'test target'
-                      , coordinate_system = 'J2000'
                       , ra = ra
                       , ra_range = ra
                       , dec = dec
                       , dec_range = dec
-                      , velocity_units = 'km/s'
-                      , velocity_redshift = '1'
-                      , convention = 'star trek'
-                      , reference_frame = 'rest'
+                      , coordinate_epoch = j2000 
+                      , coordinate_system = gal 
+                      , velocity_units = velocity 
+                      , velocity_redshift = 1.0
+                      , convention = con
+                      , reference_frame = frame 
                       )
 
         source.save()

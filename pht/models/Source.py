@@ -22,8 +22,13 @@
 
 from django.db                 import models
 
-from Proposal      import Proposal
-from pht.utilities import *
+from Proposal                  import Proposal
+from SourceConvention          import SourceConvention
+from SourceCoordinateEpoch     import SourceCoordinateEpoch
+from SourceCoordinateSystem    import SourceCoordinateSystem
+from SourceReferenceFrame      import SourceReferenceFrame
+from SourceVelocityType        import SourceVelocityType
+from pht.utilities             import *
 from pht.utilities.Conversions import Conversions
 
 class Source(models.Model):
@@ -31,15 +36,16 @@ class Source(models.Model):
     proposal          = models.ForeignKey(Proposal)
     pst_source_id     = models.IntegerField(null = True)
     target_name       = models.CharField(null = True, max_length = 2000)
-    coordinate_system = models.CharField(null = True, max_length = 64)
     ra                = models.FloatField(null = True)
     dec               = models.FloatField(null = True)
     ra_range          = models.FloatField(null = True)
     dec_range         = models.FloatField(null = True)
-    velocity_units    = models.CharField(null = True, max_length = 64)
-    velocity_redshift = models.CharField(null = True, max_length = 64) # Why is this CharField?
-    convention        = models.CharField(null = True, max_length = 255)
-    reference_frame   = models.CharField(null = True, max_length = 255)
+    coordinate_epoch  = models.ForeignKey(SourceCoordinateEpoch, null = True)
+    coordinate_system = models.ForeignKey(SourceCoordinateSystem, null = True)
+    velocity_units    = models.ForeignKey(SourceVelocityType, null = True)
+    velocity_redshift = models.FloatField(null = True)
+    convention        = models.ForeignKey(SourceConvention, null = True)
+    reference_frame   = models.ForeignKey(SourceReferenceFrame, null = True, max_length = 255)
     observed          = models.BooleanField(default = False)
     allowed           = models.NullBooleanField(null = True)
     # for storing raw string imported from PST
@@ -84,20 +90,33 @@ class Source(models.Model):
 
         c = Conversions()
 
+        epoch = SourceCoordinateEpoch.objects.get(epoch = result['coordinate'])
+        sys = SourceCoordinateSystem.objects.get(system = result['coordinate_system'])
+        vType = SourceVelocityType.objects.get(type = result['velocity_type'])
+        ref = SourceReferenceFrame.objects.get(frame = result['referenceFrame'])
+        con = SourceConvention.objects.get(convention = result['convention'])
+        
+        # Occasionally this string can be something dumb like '?'
+        try:
+            vRedshift = float(result['velocity_redshift'])
+        except:
+            vRedshift = None
+
         source = Source(pst_source_id = result['source_id']
                           # Don't use result's because that's for the
                           # PST, not our GB PHT DB!
-                        , proposal_id = proposal_id #result['PROPOSAL_ID']
+                        , proposal_id = proposal_id 
                         , target_name = result['target_name']
-                        , coordinate_system = result['coordinate']
                         , ra = c.sexHrs2rad(result['right_ascension'])
                         , ra_range = c.sexHrs2rad(result['right_ascension_range'])
                         , dec = c.sexDeg2rad(result['declination'])
                         , dec_range = c.sexDeg2rad(result['declination_range'])
-                        , velocity_units = result['velocity_type']
-                        , velocity_redshift = result['velocity_redshift']
-                        , convention = result['convention']
-                        , reference_frame = result['referenceFrame']
+                        , coordinate_epoch = epoch 
+                        , coordinate_system = sys 
+                        , velocity_units = vType 
+                        , velocity_redshift = vRedshift 
+                        , convention = con 
+                        , reference_frame = ref 
                         , pst_ra = result['right_ascension']
                         , pst_ra_range = result['right_ascension_range']
                         , pst_dec = result['declination']

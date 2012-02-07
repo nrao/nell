@@ -17,6 +17,11 @@ from SessionSeparation        import SessionSeparation
 from SessionType              import SessionType
 from SourceGroup              import SourceGroup
 from Source                   import Source
+from SourceConvention         import SourceConvention
+from SourceCoordinateEpoch    import SourceCoordinateEpoch
+from SourceCoordinateSystem   import SourceCoordinateSystem
+from SourceReferenceFrame     import SourceReferenceFrame
+from SourceVelocityType       import SourceVelocityType
 from Semester                 import Semester
 from Status                   import Status
 from Target                   import Target

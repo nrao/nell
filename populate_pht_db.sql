@@ -128,3 +128,25 @@ INSERT INTO pht_session_grades VALUES (DEFAULT, 'B');
 INSERT INTO pht_session_grades VALUES (DEFAULT, 'C');
 INSERT INTO pht_session_grades VALUES (DEFAULT, 'D');
 INSERT INTO pht_session_grades VALUES (DEFAULT, 'H');
+
+INSERT INTO pht_coordinate_epochs VALUES (DEFAULT, 'J2000');
+INSERT INTO pht_coordinate_epochs VALUES (DEFAULT, 'B1950');
+
+INSERT INTO pht_coordinate_systems VALUES (DEFAULT, 'Equatorial');
+INSERT INTO pht_coordinate_systems VALUES (DEFAULT, 'Galactic');
+
+INSERT INTO pht_velocity_types VALUES (DEFAULT, 'Velocity');
+INSERT INTO pht_velocity_types VALUES (DEFAULT, 'Redshift');
+
+INSERT INTO pht_conventions VALUES (DEFAULT, 'Radio');
+INSERT INTO pht_conventions VALUES (DEFAULT, 'Optical');
+INSERT INTO pht_conventions VALUES (DEFAULT, 'Redshift');
+
+INSERT INTO pht_reference_frames VALUES (DEFAULT, 'LSRK');
+INSERT INTO pht_reference_frames VALUES (DEFAULT, 'Barycentric');
+INSERT INTO pht_reference_frames VALUES (DEFAULT, 'Topocentric');
+INSERT INTO pht_reference_frames VALUES (DEFAULT, 'LSRD');
+INSERT INTO pht_reference_frames VALUES (DEFAULT, 'Heliocentric');
+INSERT INTO pht_reference_frames VALUES (DEFAULT, 'Galactic');
+INSERT INTO pht_reference_frames VALUES (DEFAULT, 'CMB');
+
