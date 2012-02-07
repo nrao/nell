@@ -30,6 +30,7 @@ from SessionSeparation import SessionSeparation
 from SessionType       import SessionType
 from Semester          import Semester
 from SessionFlags      import SessionFlags
+from SessionGrade      import SessionGrade
 from Source            import Source
 from Target            import Target
 from WeatherType       import WeatherType
@@ -47,7 +48,7 @@ class Session(models.Model):
     session_type            = models.ForeignKey(SessionType, null = True)
     weather_type            = models.ForeignKey(WeatherType, null = True)
     semester                = models.ForeignKey(Semester, null = True)
-    grade                   = models.CharField(max_length = 20, null = True)
+    grade                   = models.ForeignKey(SessionGrade, null = True)
     flags                   = models.ForeignKey(SessionFlags, null = True)
     receivers_granted       = models.ManyToManyField(Receiver) 
     pst_session_id          = models.IntegerField()

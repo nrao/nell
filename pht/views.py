@@ -156,6 +156,9 @@ def proposal_types(request):
 def session_separations(request):
     return simpleGetAllResponse('session separations', SessionSeparation.jsonDictOptions())
 
+def session_grades(request):
+    return simpleGetAllResponse('session grades', SessionGrade.jsonDictOptions())
+
 def session_types(request):
     return simpleGetAllResponse('session types', SessionType.jsonDictOptions())
 

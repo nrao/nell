@@ -34,6 +34,7 @@ class SessionHttpAdapter(object):
         wthrType = self.session.weather_type.type if self.session.weather_type is not None else None
         semester = self.session.semester.semester if self.session.semester is not None else None
         separation = self.session.separation.separation if self.session.separation is not None else None
+        grade = self.session.grade.grade if self.session.grade is not None else None
         include, exclude = self.session.get_lst_string()
         
         data = {'id'                      : self.session.id
@@ -44,6 +45,7 @@ class SessionHttpAdapter(object):
               , 'session_type'            : sessType
               , 'weather_type'            : wthrType
               , 'separation'              : separation
+              , 'grade'                   : grade
               , 'interval_time'           : self.session.interval_time
               , 'constraint_field'        : self.session.constraint_field
               , 'comments'                : self.session.comments
@@ -146,6 +148,9 @@ class SessionHttpAdapter(object):
         proposal = Proposal.objects.get(pcode = pcode)
         self.session.proposal = proposal
 
+        grade = data.get('grade', '')
+        grade = SessionGrade.objects.get(grade = grade) if grade != '' else None
+        self.session.grade = grade
         sep = SessionSeparation.objects.get(separation = data.get('separation'))
         self.session.separation = sep
         sessionType = SessionType.objects.get(type = data.get('session_type'))

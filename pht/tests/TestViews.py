@@ -270,7 +270,7 @@ class TestViews(TestCase):
 
         self.assertEqual('gbtSpec', self.session.get_backends())
         self.assertEqual('C', self.session.get_receivers())
-        self.assertEqual('', self.session.get_receivers_granted())
+        self.assertEqual('C', self.session.get_receivers_granted())
         self.s_data['backends'] = 'gbtSpec,gbtSpecP'
         self.s_data['receivers'] = 'L,S,X'
         self.s_data['receivers_granted'] = 'L,X'

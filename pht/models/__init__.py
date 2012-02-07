@@ -11,6 +11,7 @@ from Resource                 import Resource
 from ScientificCategory       import ScientificCategory
 from Session                  import Session
 from SessionFlags             import SessionFlags
+from SessionGrade             import SessionGrade
 from SessionParameter         import SessionParameter
 from SessionSeparation        import SessionSeparation
 from SessionType              import SessionType

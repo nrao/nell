@@ -122,3 +122,9 @@ INSERT INTO pht_backends VALUES (DEFAULT, 'User supplied or new backend ', 'Othe
 
 INSERT INTO pht_session_separations VALUES (DEFAULT, 'day');
 INSERT INTO pht_session_separations VALUES (DEFAULT, 'week');
+
+INSERT INTO pht_session_grades VALUES (DEFAULT, 'A');
+INSERT INTO pht_session_grades VALUES (DEFAULT, 'B');
+INSERT INTO pht_session_grades VALUES (DEFAULT, 'C');
+INSERT INTO pht_session_grades VALUES (DEFAULT, 'D');
+INSERT INTO pht_session_grades VALUES (DEFAULT, 'H');
