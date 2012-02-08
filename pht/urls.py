@@ -45,6 +45,7 @@ urlpatterns = patterns(''
    , url(r'^session/separations',        session_separations)
    , url(r'^weather/types',              weather_types)
    , url(r'^semesters',                  semesters)
+   , url(r'^receivers',                  receivers)
    , url(r'^source/epochs',              source_epochs)
    , url(r'^source/systems',             source_systems)
    , url(r'^source/velocity_types',      source_velocity_types)

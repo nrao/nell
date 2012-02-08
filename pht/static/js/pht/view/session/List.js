@@ -21,11 +21,27 @@ Ext.define('PHT.view.session.List' ,{
                 }
             },
         });
+        this.rcvrCombo = Ext.create('Ext.form.field.ComboBox', {
+            name: 'rcvr',
+            store: 'Receivers',
+            queryMode: 'local',
+            displayField: 'abbreviation',
+            valueField: 'abbreviation',
+            hideLabel: true,
+            emptyText: 'Select a receiver...',
+            listeners: {
+                select: function(combo, record, index) {
+                    var rcvr = record[0].get('abbreviation');
+                    grid.setReceiver(rcvr);
+                }
+            },
+        });
     
         this.dockedItems = [{
             xtype: 'toolbar',
             items: [
                 this.proposalCombo,
+                this.rcvrCombo,
                 Ext.create('Ext.button.Button', {
                     text: 'Clear Filters',
                     action: 'clear',
@@ -67,6 +83,16 @@ Ext.define('PHT.view.session.List' ,{
         }
         store.filter("pcode", pcode);
         this.proposalCombo.setValue(pcode);
+        store.sync();
+    },
+
+    setReceiver: function(rcvr) {
+        var store = this.getStore('Receivers');
+        if (store.isFiltered()){
+            store.clearFilter();
+        }
+        store.filter("rcvr", rcvr);
+        this.rcvrCombo.setValue(rcvr);
         store.sync();
     },
 });

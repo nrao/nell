@@ -2,6 +2,7 @@ Ext.define('PHT.controller.Sessions', {
     extend: 'PHT.controller.PhtController',
    
     models: [
+        'Receiver',
         'Session',
         'SessionGrade',
         'SessionType',
@@ -11,6 +12,7 @@ Ext.define('PHT.controller.Sessions', {
     ],
 
     stores: [
+        'Receivers',
         'Sessions',
         'SessionGrades',
         'SessionTypes',
