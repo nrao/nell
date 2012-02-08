@@ -54,10 +54,10 @@ class TestPstImport(unittest.TestCase):
 
         # GBT/12A-002
         pId = 5813
-        self.assertEquals(True, self.pst.proposalUsesGBT(pId))
+        self.assertEquals(True, self.pst.proposalUsesGBT(pId, "GBT"))
         # VLBA only
         pId = 5821
-        self.assertEquals(False, self.pst.proposalUsesGBT(pId))
+        self.assertEquals(False, self.pst.proposalUsesGBT(pId, "VLBA"))
 
     def test_importProposals(self):
         self.pst.importProposals('12A')
