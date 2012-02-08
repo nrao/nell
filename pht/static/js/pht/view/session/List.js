@@ -96,14 +96,14 @@ Ext.define('PHT.view.session.List' ,{
         if (store.isFiltered()){
             store.clearFilter();
         }
-        this.filterFor('pcode', pcode);
-        this.filterFor('receivers', rcvr);
+        this.filterFor(store, 'pcode', pcode);
+        this.filterFor(store, 'receivers', rcvr);
         store.sync();
-    }
+    },
 
     // Need this rather then just store.filter because we want 
     // success if our value is *anywhere* found in field.
-    filterFor: function(field, value) {
+    filterFor: function(store, field, value) {
         if (value != null & value != '') {
             store.filter([{
                 filterFn: function(item) {
