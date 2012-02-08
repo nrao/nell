@@ -2,6 +2,7 @@ Ext.define('PHT.view.proposal.List' ,{
     extend: 'Ext.grid.Panel',
     alias : 'widget.proposallist',
     store : 'Proposals', 
+    multiSelect: true,
 
     initComponent: function() {
         this.authorsFilterText = Ext.create('Ext.form.field.Text', {
@@ -52,6 +53,10 @@ Ext.define('PHT.view.proposal.List' ,{
                 Ext.create('Ext.button.Button', {
                     text: 'Create Proposal',
                     action: 'create',
+                }),
+                Ext.create('Ext.button.Button', {
+                    text: 'Edit Proposal(s)',
+                    action: 'edit',
                 }),
                 Ext.create('Ext.button.Button', {
                     text: 'Delete Proposal',
