@@ -78,22 +78,30 @@ Ext.define('PHT.view.session.List' ,{
     },
 
     setProposal: function(pcode) {
+        var rcvr = this.rcvrCombo.getValue();
+        this.resetFilter(pcode, rcvr);
+        this.proposalCombo.setValue(pcode);
+    },
+
+    setReceiver: function(rcvr) {
+        var pcode = this.proposalCombo.getValue();
+        this.resetFilter(pcode, rcvr);
+        this.rcvrCombo.setValue(rcvr);
+    },
+
+    // When ever a new filter parameter is applied, we need to
+    // clear the filter, but then *reapply* any other appropriate filters
+    resetFilter: function(pcode, rcvr) {
         var store = this.getStore('Sessions');
         if (store.isFiltered()){
             store.clearFilter();
         }
-        store.filter("pcode", pcode);
-        this.proposalCombo.setValue(pcode);
+        if (pcode != null & pcode != '') {
+            store.filter("pcode", pcode);
+        }    
+        if (rcvr != null & rcvr != '') {
+            store.filter("receivers", rcvr);
+        }    
         store.sync();
-    },
-
-    setReceiver: function(rcvr) {
-        var store = this.getStore('Receivers');
-        if (store.isFiltered()){
-            store.clearFilter();
-        }
-        store.filter("receivers", rcvr);
-        this.rcvrCombo.setValue(rcvr);
-        store.sync();
-    },
+    }
 });
