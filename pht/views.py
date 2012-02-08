@@ -168,6 +168,9 @@ def weather_types(request):
 def semesters(request):
     return simpleGetAllResponse('semesters', Semester.jsonDictOptions())
 
+def receivers(request):
+    return simpleGetAllResponse('receivers', Receiver.jsonDictOptions())
+
 def observing_types(request):
     return simpleGetAllResponse('observing types', ObservingType.jsonDictOptions())
 

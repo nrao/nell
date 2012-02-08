@@ -21,11 +21,27 @@ Ext.define('PHT.view.session.List' ,{
                 }
             },
         });
+        this.rcvrCombo = Ext.create('Ext.form.field.ComboBox', {
+            name: 'rcvr',
+            store: 'Receivers',
+            queryMode: 'local',
+            displayField: 'abbreviation',
+            valueField: 'abbreviation',
+            hideLabel: true,
+            emptyText: 'Select a receiver...',
+            listeners: {
+                select: function(combo, record, index) {
+                    var rcvr = record[0].get('abbreviation');
+                    grid.setReceiver(rcvr);
+                }
+            },
+        });
     
         this.dockedItems = [{
             xtype: 'toolbar',
             items: [
                 this.proposalCombo,
+                this.rcvrCombo,
                 Ext.create('Ext.button.Button', {
                     text: 'Clear Filters',
                     action: 'clear',
@@ -48,6 +64,7 @@ Ext.define('PHT.view.session.List' ,{
             {header: 'Requested', dataIndex: 'requested_time', flex: 1},
             {header: 'Repeats', dataIndex: 'repeats', flex: 1},
             {header: 'Separation', dataIndex: 'separation', flex: 1},
+            {header: 'Rcvrs', dataIndex: 'receivers', flex: 1},
             {header: 'Interval', dataIndex: 'interval_time', flex: 1},
             {header: 'Constraint', dataIndex: 'constraint_field', flex: 1},
             {header: 'Comments', dataIndex: 'comments', flex: 1},
@@ -61,12 +78,39 @@ Ext.define('PHT.view.session.List' ,{
     },
 
     setProposal: function(pcode) {
+        var rcvr = this.rcvrCombo.getValue();
+        this.resetFilter(pcode, rcvr);
+        this.proposalCombo.setValue(pcode);
+    },
+
+    setReceiver: function(rcvr) {
+        var pcode = this.proposalCombo.getValue();
+        this.resetFilter(pcode, rcvr);
+        this.rcvrCombo.setValue(rcvr);
+    },
+
+    // When ever a new filter parameter is applied, we need to
+    // clear the filter, but then *reapply* any other appropriate filters
+    resetFilter: function(pcode, rcvr) {
         var store = this.getStore('Sessions');
         if (store.isFiltered()){
             store.clearFilter();
         }
-        store.filter("pcode", pcode);
-        this.proposalCombo.setValue(pcode);
+        this.filterFor(store, 'pcode', pcode);
+        this.filterFor(store, 'receivers', rcvr);
         store.sync();
     },
+
+    // Need this rather then just store.filter because we want 
+    // success if our value is *anywhere* found in field.
+    filterFor: function(store, field, value) {
+        if (value != null & value != '') {
+            store.filter([{
+                filterFn: function(item) {
+                    return item.get(field).search(value) > -1;
+                }
+            }]);    
+            
+        }    
+    }
 });

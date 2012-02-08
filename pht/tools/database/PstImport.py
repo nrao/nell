@@ -139,7 +139,7 @@ class PstImport(PstInterface):
               join author as a on p.principal_investigator_id = a.author_id)
               join userAuthentication as ua on ua.userAuthentication_id = a.user_id)
               join person on person.personAuthentication_id = ua.userAuthentication_id
-            where PROP_ID like '%%%s%%' and (p.TELESCOPE = 'GBT' or p.TELESCOPE = 'VLBA' or p.TELESCOPE = 'VLBI')
+            where PROP_ID like '%%%s%%' and (p.TELESCOPE = 'GBT' or p.TELESCOPE = 'VLBA')
             order by PROP_ID
             """ % semester
         self.cursor.execute(q)
@@ -147,7 +147,8 @@ class PstImport(PstInterface):
         for row in self.cursor.fetchall():
             results = dict(zip(keys, map(self.safeUnicode, row)))
             pid = int(results['proposal_id'])
-            if self.proposalUsesGBT(pid):
+            telescope = results['TELESCOPE']
+            if self.proposalUsesGBT(pid, telescope):            
                 proposal = Proposal.createFromSqlResult(results)
                 proposal.setSemester(semester)
                 self.fetchScientificCategories(proposal)
@@ -159,8 +160,12 @@ class PstImport(PstInterface):
 
         self.report()
 
-    def proposalUsesGBT(self, proposal_id):
+    def proposalUsesGBT(self, proposal_id, telescope):
         "Does at least one of the proposal's resources include the GBT?"
+        # VLBA is a special case
+        if telescope == "VLBA":
+            return self.vlbaProposalUsesGBT(proposal_id)
+        # This should work for GBT, VLA proposals (TBF: VLBI???)        
         q = """
             select r.TELESCOPE 
             from proposal as p, RESOURCES as r, sessionPair as sp, session as s 
@@ -178,6 +183,30 @@ class PstImport(PstInterface):
         # if we got here, no GBT resource!
         return False
 
+    def getProposalId(self, pcode):
+        "I need this all the time."
+        q = "select proposal_id from proposal where PROP_ID = '%s'" % pcode
+        self.cursor.execute(q)
+        return self.cursor.fetchone()[0]
+
+    def vlbaProposalUsesGBT(self, proposal_id):
+
+        # VLBA doesn't use resource groups.  We can deal straight with 
+        # the proposal
+        q = """
+        select v.GBT
+        from (proposal as p join RESOURCES as r on r.PROPOSAL_ID = p.proposal_id) 
+            join VLBA_RESOURCE as v on v.id = r.resource_id 
+        where p.proposal_id = %d
+        """ % proposal_id
+        self.cursor.execute(q)
+        rows = self.cursor.fetchall()
+        for row in rows:
+            if row[0] == '\x01':
+                # all we need is one to be the GBT!
+                return True
+        # if we got here, no GBT!
+        return False
 
     def fetchAuthors(self, proposal):
         q = """

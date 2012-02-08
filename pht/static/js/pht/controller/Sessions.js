@@ -2,6 +2,7 @@ Ext.define('PHT.controller.Sessions', {
     extend: 'PHT.controller.PhtController',
    
     models: [
+        'Receiver',
         'Session',
         'SessionGrade',
         'SessionType',
@@ -11,6 +12,7 @@ Ext.define('PHT.controller.Sessions', {
     ],
 
     stores: [
+        'Receivers',
         'Sessions',
         'SessionGrades',
         'SessionTypes',
@@ -72,6 +74,7 @@ Ext.define('PHT.controller.Sessions', {
         }
         var grid = button.up('sessionlist');
         grid.proposalCombo.reset();
+        grid.rcvrCombo.reset();
     },
 
     createSession: function(button) {
