@@ -111,30 +111,21 @@ Ext.define('PHT.controller.Proposals', {
         var grid = button.up('grid');
         this.selectedProposals = grid.getSelectionModel().getSelection();
 
-        var template = Ext.create('PHT.model.Proposal');
-        var view = Ext.widget('proposaledit');
-        var fields = view.down('form').getForm().getFields();
-        fields.each(function(item, index, length) {
-            var disabledItems = ['pcode', 'pi_id'];
-            if (disabledItems.indexOf(item.getName()) > -1) {
-                item.disable();
-            }
-            item.allowBlank = true;
-            if (item.getName() == 'joint_proposal') {
-                var joint_proposal = false;
-                for (i = 0; i < this.selectedProposals.length; i++) {
-                    value = this.selectedProposals[i].get('joint_proposal');
-                    console.log(value);
-                    if (!value) {
-                        break;
-                    } else {
-                        joint_proposal = true;
-                    }
+        if (this.selectedProposals.length <= 1) {
+            this.editProposal(grid, this.selectedProposals[0]);
+        } else {
+            var template = Ext.create('PHT.model.Proposal');
+            var view = Ext.widget('proposaledit');
+            var fields = view.down('form').getForm().getFields();
+            fields.each(function(item, index, length) {
+                var disabledItems = ['pcode', 'pi_id', 'joint_proposal'];
+                if (disabledItems.indexOf(item.getName()) > -1) {
+                    item.disable();
                 }
-                template.set('joint_proposal', joint_proposal);
-            }
-        }, this);
-        view.down('form').loadRecord(template);
+                item.allowBlank = true;
+            }, this);
+            view.down('form').loadRecord(template);
+        }
     },
 
     updateProposal: function(button) {
@@ -143,7 +134,7 @@ Ext.define('PHT.controller.Proposals', {
             proposal = form.getRecord(),
             values   = form.getValues();
 
-        if (this.selectedProposals.length == 0) {
+        if (this.selectedProposals.length <= 1) {
             // don't do anything if this form is actually invalid
             var f = form.getForm();
             if (!(f.isValid())) {
@@ -166,21 +157,12 @@ Ext.define('PHT.controller.Proposals', {
             }
         } else {
             var dirty_items = form.getForm().getFieldValues(true);
-            var items       = form.getForm().getFieldValues();
-            console.log(items);
             real_items = {}
             for (var i in dirty_items) {
                 if (values[i] != '') {
                     real_items[i] = values[i];
                 }
             }
-            for (var i in items) {
-                //if (typeof values[i] == 'boolean') {
-                if (i == 'joint_proposal') {
-                    real_items[i] = values[i];
-                }
-            }
-            console.log(real_items);
             for (i=0; i < this.selectedProposals.length; i++) {
                 this.selectedProposals[i].set(real_items);
             }
