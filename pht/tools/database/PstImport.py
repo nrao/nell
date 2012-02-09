@@ -282,14 +282,16 @@ class PstImport(PstInterface):
         # other defaults
         session.semester     = proposal.semester
         session.weather_type = WeatherType.objects.get(type = 'Poor')
-        session.session_type = SessionType.objects.get(type = 'Open')
         flags = SessionFlags()
         flags.save()
         session.flags = flags
         
         # other stuff
         self.importResources(session)
+        session.save()
 
+        # now we can determine it's type
+        session.session_type = session.determineSessionType()
         session.save()
 
         return session

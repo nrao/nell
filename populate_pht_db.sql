@@ -48,10 +48,12 @@ INSERT INTO pht_weather_types VALUES (DEFAULT, 'Fair');
 INSERT INTO pht_weather_types VALUES (DEFAULT, 'Good');
 INSERT INTO pht_weather_types VALUES (DEFAULT, 'Excellent');
 
-INSERT INTO pht_session_types VALUES (DEFAULT, 'Open');
-INSERT INTO pht_session_types VALUES (DEFAULT, 'Fixed');
-INSERT INTO pht_session_types VALUES (DEFAULT, 'Windowed');
-INSERT INTO pht_session_types VALUES (DEFAULT, 'Elective');
+INSERT INTO pht_session_types VALUES (DEFAULT, 'Open - Low Freq', 'LF');
+INSERT INTO pht_session_types VALUES (DEFAULT, 'Open - High Freq 1', 'HF1');
+INSERT INTO pht_session_types VALUES (DEFAULT, 'Open - High Freq 2', 'HF2');
+INSERT INTO pht_session_types VALUES (DEFAULT, 'Fixed', 'F');
+INSERT INTO pht_session_types VALUES (DEFAULT, 'Windowed', 'W');
+INSERT INTO pht_session_types VALUES (DEFAULT, 'Elective', 'E');
 
 INSERT INTO pht_parameters VALUES (DEFAULT, 'LST Include Low', 'float');
 INSERT INTO pht_parameters VALUES (DEFAULT, 'LST Include Hi', 'float');

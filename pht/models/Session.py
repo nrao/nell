@@ -110,11 +110,40 @@ class Session(models.Model):
         return ','.join([r.abbreviation \
             for r in self.receivers.all().order_by('freq_low')])
 
+    def get_highest_receiver(self):
+        rcvrs = list(self.receivers.all().order_by('freq_low'))
+        return rcvrs[-1] if len(rcvrs) > 0 else None
+
     def get_backends(self):
         "Returns comma-separated string of backends."
         return ','.join([r.abbreviation \
             for r in self.backends.all().order_by('name')])
 
+    def determineSessionType(self):
+        """
+        What might you think this session's type should be 
+        according to how it is currently setup?
+        """
+
+        # TBF: i'm sure this algo needs refining.
+        # TBF: First, is this some kind of monitoring? look
+        # at repeats, and what else?
+
+        # if it's some time of open, use the highest receiver
+        # to determin it's category
+        highFreq2 = ['MBA', 'W', 'KFPA']
+        highFreq1 = ['X', 'Ku', 'Ka', 'Q']
+        r = self.get_highest_receiver()
+        if r.abbreviation in highFreq2:
+            type = SessionType.get_type('HF2')
+        elif r.abbreviation in highFreq1:    
+            type = SessionType.get_type('HF1')
+        else:
+            type = SessionType.get_type('LF')
+
+        return type    
+
+        
     @staticmethod
     def createFromSqlResult(proposal_id, result):
         """
