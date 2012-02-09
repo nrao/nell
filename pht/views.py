@@ -171,6 +171,9 @@ def semesters(request):
 def receivers(request):
     return simpleGetAllResponse('receivers', Receiver.jsonDictOptions())
 
+def backends(request):
+    return simpleGetAllResponse('backends', Backend.jsonDictOptions())
+
 def observing_types(request):
     return simpleGetAllResponse('observing types', ObservingType.jsonDictOptions())
 

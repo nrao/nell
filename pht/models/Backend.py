@@ -40,3 +40,14 @@ class Backend(models.Model):
     class Meta:
         db_table  = "pht_backends"
         app_label = "pht"
+
+    def jsonDict(self):
+        return {'id'           : self.id
+              , 'abbreviation' : self.abbreviation
+              , 'name'         : self.name
+               }
+
+    @staticmethod
+    def jsonDictOptions():
+        return [s.jsonDict() for s in Backend.objects.all().order_by('abbreviation')]
+        
