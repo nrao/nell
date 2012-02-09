@@ -24,6 +24,7 @@ from django.db         import models
 
 from Allotment         import Allotment
 from Backend           import Backend
+from ObservingType     import ObservingType
 from Proposal          import Proposal
 from Receiver          import Receiver
 from SessionSeparation import SessionSeparation
@@ -125,22 +126,31 @@ class Session(models.Model):
         according to how it is currently setup?
         """
 
-        # TBF: i'm sure this algo needs refining.
-        # TBF: First, is this some kind of monitoring? look
-        # at repeats, and what else?
+        type = None
 
-        # if it's some time of open, use the highest receiver
-        # to determin it's category
+        # TBF: i'm sure this algo needs refining.
+        # Use the proposal's observing types to determine
+        # if this might be Windowed or Fixed.
+        radar = ObservingType.objects.get(type = "Radar")
+        monitoring = ObservingType.objects.get(type = "Monitoring")
+        if radar in self.proposal.observing_types.all():
+            return SessionType.get_type('F') # Fixed
+        if monitoring in self.proposal.observing_types.all():
+            return SessionType.get_type('W') # Windowed
+
+        # It must be some kind of of Open, so use the highest receiver
+        # to determin it's category.
         highFreq2 = ['MBA', 'W', 'KFPA']
         highFreq1 = ['X', 'Ku', 'Ka', 'Q']
         r = self.get_highest_receiver()
-        if r.abbreviation in highFreq2:
-            type = SessionType.get_type('HF2')
-        elif r.abbreviation in highFreq1:    
-            type = SessionType.get_type('HF1')
-        else:
-            type = SessionType.get_type('LF')
-
+        if r is not None:
+            if r.abbreviation in highFreq2:
+                type = SessionType.get_type('HF2')
+            elif r.abbreviation in highFreq1:    
+                type = SessionType.get_type('HF1')
+            else:
+                type = SessionType.get_type('LF')
+    
         return type    
 
         

@@ -31,6 +31,7 @@ class SessionHttpAdapter(object):
 
     def jsonDict(self, detailed = False):
         sessType = self.session.session_type.type if self.session.session_type is not None else None
+        sessTypeCode = self.session.session_type.abbreviation if self.session.session_type is not None else None
         wthrType = self.session.weather_type.type if self.session.weather_type is not None else None
         semester = self.session.semester.semester if self.session.semester is not None else None
         separation = self.session.separation.separation if self.session.separation is not None else None
@@ -43,6 +44,7 @@ class SessionHttpAdapter(object):
               , 'pst_session_id'          : self.session.pst_session_id
               , 'semester'                : semester 
               , 'session_type'            : sessType
+              , 'session_type_code'       : sessTypeCode
               , 'weather_type'            : wthrType
               , 'separation'              : separation
               , 'grade'                   : grade
