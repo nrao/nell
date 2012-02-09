@@ -260,11 +260,17 @@ class SessionHttpAdapter(object):
         resources = data.get(key, None)
         if resources is None:
             return (False, [])
+        # we can get a string or a list.
+        if resources.__class__.__name__ == 'list':
+            rscString = ','.join(resources)
+        else:
+            rscString = resources
+            resources = resources.split(',')
         # if the string sent is identical to what we have, don't do anything
-        if resources == currentResource:
+        if rscString == currentResource:
             return (False, [])
         # we'll have to update, so get the new resources
-        rs = [klass.objects.get(abbreviation = r) for r in resources.split(',') if r != '']
+        rs = [klass.objects.get(abbreviation = r.strip()) for r in resources if r != '']
         return (True, rs)
 
     def update_lst_parameters(self, param, ranges):
