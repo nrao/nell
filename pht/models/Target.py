@@ -40,7 +40,7 @@ class Target(models.Model):
     pst_elevation_min = models.CharField(null = True, max_length = 255)
 
     class Meta:
-        db_table  = "pht_allotments"
+        db_table  = "pht_targets"
         app_label = "pht"
 
     @staticmethod

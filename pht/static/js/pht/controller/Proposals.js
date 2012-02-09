@@ -44,6 +44,9 @@ Ext.define('PHT.controller.Proposals', {
             'proposallist toolbar button[action=create]': {
                 click: this.createProposal
             },
+            'proposallist toolbar button[action=edit]': {
+                click: this.editSelectedProposals
+            },
             'proposallist toolbar button[action=delete]': {
                 click: this.deleteProposal
             },
@@ -59,6 +62,7 @@ Ext.define('PHT.controller.Proposals', {
             
         });        
 
+        this.selectedProposals = [];
         this.callParent(arguments);
     },
 
@@ -103,32 +107,68 @@ Ext.define('PHT.controller.Proposals', {
         view.down('form').loadRecord(record);        
     },   
 
+    editSelectedProposals: function(button) {
+        var grid = button.up('grid');
+        this.selectedProposals = grid.getSelectionModel().getSelection();
+
+        if (this.selectedProposals.length <= 1) {
+            this.editProposal(grid, this.selectedProposals[0]);
+        } else {
+            var template = Ext.create('PHT.model.Proposal');
+            var view = Ext.widget('proposaledit');
+            var fields = view.down('form').getForm().getFields();
+            fields.each(function(item, index, length) {
+                var disabledItems = ['pcode', 'pi_id', 'joint_proposal'];
+                if (disabledItems.indexOf(item.getName()) > -1) {
+                    item.disable();
+                }
+                item.allowBlank = true;
+            }, this);
+            view.down('form').loadRecord(template);
+        }
+    },
+
     updateProposal: function(button) {
         var win      = button.up('window'),
             form     = win.down('form'),
             proposal = form.getRecord(),
             values   = form.getValues();
 
-        // don't do anything if this form is actually invalid
-        var f = form.getForm();
-        if (!(f.isValid())) {
-            return;
-        }
-
-        proposal.set(values);
-        // Is this a new proposal?
-        if (proposal.get('id') == '') {
-            proposal.save();
-            var store = this.getProposalsStore();
-            store.load({
-                scope   : this,
-                callback: function(records, operation, success) {
-                    var last = store.getById(store.max('id'));
-                    form.loadRecord(last);
-                }
-            });    
+        if (this.selectedProposals.length <= 1) {
+            // don't do anything if this form is actually invalid
+            var f = form.getForm();
+            if (!(f.isValid())) {
+                return;
+            }
+            proposal.set(values);
+            // Is this a new proposal?
+            if (proposal.get('id') == '') {
+                proposal.save();
+                var store = this.getProposalsStore();
+                store.load({
+                    scope   : this,
+                    callback: function(records, operation, success) {
+                        var last = store.getById(store.max('id'));
+                        form.loadRecord(last);
+                    }
+                });    
+            } else {
+                this.getProposalsStore().sync();
+            }
         } else {
+            var dirty_items = form.getForm().getFieldValues(true);
+            real_items = {}
+            for (var i in dirty_items) {
+                if (values[i] != '') {
+                    real_items[i] = values[i];
+                }
+            }
+            for (i=0; i < this.selectedProposals.length; i++) {
+                this.selectedProposals[i].set(real_items);
+            }
             this.getProposalsStore().sync();
+            this.selectedProposals = [];
+            win.close();
         }
     },
 });
