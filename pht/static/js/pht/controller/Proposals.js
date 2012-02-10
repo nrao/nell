@@ -32,6 +32,7 @@ Ext.define('PHT.controller.Proposals', {
         'proposal.List',
         'proposal.ListWindow',
         'proposal.Edit',
+        'proposal.Form',
         'proposal.Navigate',
     ],
 

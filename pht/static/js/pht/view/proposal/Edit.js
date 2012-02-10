@@ -6,8 +6,16 @@ Ext.define('PHT.view.proposal.Edit', {
     layout: 'fit',
     autoShow: true,
     plain: true,
-    //constrain: true,
-
+    listeners: {
+        // enable the save button when a change is made
+        dirtychange: function(form, dirty) {
+            if (dirty) {
+                this.saveBtn.enable(true);
+            } else {
+                this.saveBtn.disable(true);
+            }
+        }
+    },
     initComponent: function() {
         this.piCombo = Ext.create('Ext.form.field.ComboBox', {
                             name: 'pi_id',
@@ -20,8 +28,9 @@ Ext.define('PHT.view.proposal.Edit', {
                         });
         this.items = [
             {
-                xtype: 'form',
+                xtype: 'proposalform',
                 border: false,
+                trackResetOnLoad: true,
                 fieldDefaults: {
                     labelStyle: 'font-weight:bold',
                 },
@@ -139,12 +148,15 @@ Ext.define('PHT.view.proposal.Edit', {
                 }],
             },
         ];
+        
+        this.saveBtn = Ext.create('Ext.Button', {
+            text: 'Save',
+            action: 'save',
+            disabled: true,
+        });
 
         this.buttons = [
-            {
-                text: 'Save',
-                action: 'save'
-            },
+            this.saveBtn,
             {
                 text: 'Close',
                 scope: this,
