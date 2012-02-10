@@ -1,21 +1,8 @@
 Ext.define('PHT.view.proposal.Edit', {
-    extend: 'Ext.window.Window',
+    extend: 'PHT.view.Edit',
     alias : 'widget.proposaledit',
-
     title : 'Edit Proposal',
-    layout: 'fit',
-    autoShow: true,
-    plain: true,
-    listeners: {
-        // enable the save button when a change is made
-        dirtychange: function(form, dirty) {
-            if (dirty) {
-                this.saveBtn.enable(true);
-            } else {
-                this.saveBtn.disable(true);
-            }
-        }
-    },
+
     initComponent: function() {
         this.piCombo = Ext.create('Ext.form.field.ComboBox', {
                             name: 'pi_id',
@@ -28,7 +15,7 @@ Ext.define('PHT.view.proposal.Edit', {
                         });
         this.items = [
             {
-                xtype: 'proposalform',
+                xtype: 'phtform',
                 border: false,
                 trackResetOnLoad: true,
                 fieldDefaults: {
@@ -148,20 +135,9 @@ Ext.define('PHT.view.proposal.Edit', {
                 }],
             },
         ];
-        
-        this.saveBtn = Ext.create('Ext.Button', {
-            text: 'Save',
-            action: 'save',
-            disabled: true,
-        });
 
+        // the Save & Close buttons are prepended later by the parent
         this.buttons = [
-            this.saveBtn,
-            {
-                text: 'Close',
-                scope: this,
-                handler: this.close,
-            },
             {
                 text: 'Sessions',
                 action: 'sessions'

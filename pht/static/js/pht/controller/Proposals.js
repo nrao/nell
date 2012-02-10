@@ -29,10 +29,11 @@ Ext.define('PHT.controller.Proposals', {
     ],
 
     views: [
+        'Edit',
+        'Form',
         'proposal.List',
         'proposal.ListWindow',
         'proposal.Edit',
-        'proposal.Form',
         'proposal.Navigate',
     ],
 

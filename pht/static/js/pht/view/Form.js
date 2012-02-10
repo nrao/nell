@@ -1,6 +1,6 @@
-Ext.define('PHT.view.proposal.Form', {
+Ext.define('PHT.view.Form', {
     extend: 'Ext.form.Panel',
-    alias: 'widget.proposalform',
+    alias: 'widget.phtform',
     trackResetOnLoad: true,
     initComponent: function() {
         // we want this event to bubble up to parents
