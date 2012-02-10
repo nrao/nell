@@ -1,10 +1,8 @@
-// TBFs: units, formats, validations
-
-
 Ext.define('PHT.view.session.Form', {
-    extend: 'Ext.form.Panel',
+    extend: 'PHT.view.Form',
     alias:  'widget.sessionform',
     bodyStyle:'padding:5px',
+    trackResetOnLoad: true,
     width: 600,
     fieldDefaults: {
         labelAlign: 'top',

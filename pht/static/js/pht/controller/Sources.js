@@ -23,6 +23,8 @@ Ext.define('PHT.controller.Sources', {
     ],
 
     views: [
+        'Edit',
+        'Form',
         'proposal.Edit',
         'session.Edit',
         'source.ProposalList',

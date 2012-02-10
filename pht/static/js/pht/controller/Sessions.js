@@ -24,6 +24,8 @@ Ext.define('PHT.controller.Sessions', {
     ],
 
     views: [
+        'Edit',
+        'Form',
         'proposal.Edit',
         'session.List',
         'session.Edit',

@@ -1,26 +1,19 @@
 Ext.define('PHT.view.session.Edit', {
-    extend: 'Ext.window.Window',
+    extend: 'PHT.view.Edit',
     alias : 'widget.sessionedit',
-
     title : 'Edit Session',
-    layout: 'fit',
-    autoShow: true,
-    constrain: true,
 
     initComponent: function() {
 
-        this.items = [{xtype: 'sessionform'}];
+        this.items = [
+            {
+                xtype: 'sessionform',
+                trackResetOnLoad: true,
+            }
+        ];
 
+        // Add these to the Save & Close buttons
         this.buttons = [
-            {
-                text: 'Save',
-                action: 'save'
-            },
-            {
-                text: 'Close',
-                scope: this,
-                handler: this.close
-            },
             {
                 text: 'Sources',
                 action: 'sources'
@@ -28,7 +21,6 @@ Ext.define('PHT.view.session.Edit', {
         ];
 
         this.callParent(arguments);
-
         
     },
 });    

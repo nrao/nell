@@ -18,8 +18,6 @@ Ext.define('PHT.view.Edit', {
    // assume this get's called AFTER the child's
    initComponent: function() {
    
-        console.log('in Edit.js');
-        console.log(this.buttons);
         this.saveBtn = Ext.create('Ext.Button', {
             text: 'Save',
             action: 'save',
@@ -35,9 +33,9 @@ Ext.define('PHT.view.Edit', {
             },
         ];
 
+        // stick these buttons in front of whatever buttons
+        // the child may have added
         this.buttons = buttons.concat(this.buttons);
-        console.log('done in Edit.js');
-        console.log(this.buttons);
 
         this.callParent(arguments);
    },
