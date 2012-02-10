@@ -344,6 +344,46 @@ Ext.define('PHT.view.session.Form', {
                     width: 500,
                 }]
             },{
+                title: 'Monitoring',
+                items: [{
+                    xtype: 'datefield',
+                    name: 'start_date',
+                    fieldLabel: 'Start Date',
+                },{
+                    xtype: 'textfield',
+                    name: 'start_time',
+                    fieldLabel: 'Start Time',
+                },{
+                    xtype: 'numberfield',
+                    name: 'window_size',
+                    fieldLabel: 'Window Size',
+                },{    
+                    xtype: 'numberfield',
+                    name: 'outer_window_size',
+                    fieldLabel: 'Outer Window Size',
+                },{    
+                    xtype: 'numberfield',
+                    name: 'outer_repeats',
+                    fieldLabel: 'Outer Repeats',
+                },{    
+                    xtype: 'combo',
+                    name: 'outer_separation',
+                    fieldLabel: 'Outer Separation',
+                    //vtype: 'receiverList',
+                    store: 'SessionSeparations',
+                    queryMode: 'local',
+                    valueField: 'separation',
+                    displayField: 'separation',
+                },{    
+                    xtype: 'numberfield',
+                    name: 'outer_interval',
+                    fieldLabel: 'Outer Repeats',
+                },{    
+                    xtype: 'textfield',
+                    name: 'custom_sequence',
+                    fieldLabel: 'Custom Sequence',
+                }]    
+            },{
                 title: 'Misc',
                 items: [{
                     xtype: 'checkboxfield',

@@ -21,6 +21,7 @@
 #       Green Bank, WV 24944-0002 USA
 
 import math
+from datetime import datetime
 
 # TBF: use decoraters to gaurd for None?
 
@@ -133,4 +134,12 @@ def sexDeg2rad(value):
 
 def rad2sexDeg(value):
     return float2sexigesimel(rad2deg(value))
+
+def formatExtDate(dt):
+    return str(datetime.strftime(dt, "%m/%d/%Y")) if dt is not None else None
+
+def extDatetime2Datetime(date, time):
+    dt = "%s %s:00" % (date, time)
+    dtfrmt = "%m/%d/%Y %H:%M:%S"
+    return datetime.strptime(dt, dtfrmt)
 

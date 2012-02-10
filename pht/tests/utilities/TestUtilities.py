@@ -26,6 +26,20 @@ from pht.utilities import *
 
 class TestUtilities(unittest.TestCase):
 
+    def test_extDatetime2Datetime(self):
+
+        dt = "01/01/2011"
+        time = "00:00"
+        exp = datetime(2011, 1, 1)
+        r = extDatetime2Datetime(dt, time)
+        self.assertEqual(exp, r)
+
+        dt = "12/24/2011"
+        time = "01:15"
+        exp = datetime(2011, 12, 24, 1, 15)
+        r = extDatetime2Datetime(dt, time)
+        self.assertEqual(exp, r)
+
     def test_sex2flt_identity(self):
 
         # the functions sexigesimel2float and float2sexigesimel

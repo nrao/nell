@@ -18,8 +18,12 @@
 
 from datetime import datetime
 
-from pht.models    import *
-from pht.utilities import *
+from pht.models          import *
+from pht.utilities       import *
+from utilities.TimeAgent import *
+
+def formatDate(dt):
+    return str(dt.strftime('%m/%d/%Y'))
 
 class SessionHttpAdapter(object):
 
@@ -37,6 +41,7 @@ class SessionHttpAdapter(object):
         separation = self.session.separation.separation if self.session.separation is not None else None
         grade = self.session.grade.grade if self.session.grade is not None else None
         include, exclude = self.session.get_lst_string()
+        monitoringStart = self.session.monitoring.start_time
         
         data = {'id'                      : self.session.id
               , 'name'                    : self.session.name
@@ -80,6 +85,15 @@ class SessionHttpAdapter(object):
               , 'backends'                : self.session.get_backends()
               , 'receivers'               : self.session.get_receivers()
               , 'receivers_granted'       : self.session.get_receivers_granted()
+              # monitoring
+              , 'start_date'              : formatExtDate(monitoringStart)
+              , 'start_time'              : t2str(monitoringStart)
+              , 'window_size'             : self.session.monitoring.window_size
+              , 'outer_window_size'       : self.session.monitoring.outer_window_size
+              , 'outer_repeats'           : self.session.monitoring.outer_repeats
+              , 'outer_separation'        : self.session.monitoring.outer_separation
+              , 'outer_interval'          : self.session.monitoring.outer_interval
+              , 'custom_sequence'         : self.session.monitoring.custom_sequence
               # session params
               , "lst_ex"                  : exclude or ""
               , "lst_in"                  : include or ""
@@ -104,6 +118,9 @@ class SessionHttpAdapter(object):
         flags = SessionFlags()
         flags.save()
         self.session.flags = flags
+        m = Monitoring()
+        m.save()
+        self.session.monitoring = m
 
         # now fill in their fields
         self.updateFromPost(data)
@@ -200,6 +217,24 @@ class SessionHttpAdapter(object):
         self.session.flags.guaranteed =  self.getBool(data, 'guaranteed')
         self.session.flags.save()
 
+        # monitoring
+        self.session.monitoring.window_size = self.getInt(data, 'window_size')
+        self.session.monitoring.outer_window_size = self.getInt(data, 'outer_window_size')
+        self.session.monitoring.outer_repeats = self.getInt(data, 'outer_repeats')
+        self.session.monitoring.outer_separation = self.getInt(data, 'outer_separation')
+        self.session.monitoring.outer_interval = self.getInt(data, 'outer_interval')
+        # the start datetime comes in two pieces
+        date = data.get("start_date", "")
+        time = data.get("start_time", "")
+        date = date if date != "" else None
+        time = time if time != "" else None
+        print date, time
+        if date is not None and time is not None:
+            start = extDatetime2Datetime(date, time)
+            print start
+            self.session.monitoring.start_time = start
+        self.session.monitoring.save()
+        
         # more complex stuff:
         # like LST ranges
         self.update_lst_parameters('lst_ex', data.get('lst_ex'))
