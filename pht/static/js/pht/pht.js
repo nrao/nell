@@ -85,6 +85,18 @@ Ext.application({
         });
 
         // setup menus
+        var importMenu = Ext.create('Ext.menu.Menu', {
+            id : 'importMenu',
+            items : [{
+                text: 'Import Proposal(s)',
+                handler: this.importProposals
+                },
+                {
+                text: "Import Semester's Proposals",
+                handler: this.importSemesterProposals
+                }
+            ]
+        });
         var toolsMenu = Ext.create('Ext.menu.Menu', {
             id : 'toolsMenu',
             items : [{
@@ -141,6 +153,12 @@ Ext.application({
             text: 'Tools',
             menu: toolsMenu
         });
+        /*
+        tb.add({
+            text: 'Import',
+            menu: importMenu
+        });
+        */
         viewport.layout.regions.center.add(propListWin);
         viewport.layout.regions.center.add(sessListWin);
         viewport.layout.regions.center.add(proposalAuthors);

@@ -18,6 +18,8 @@ urlpatterns = patterns(''
     , {'document_root': settings.STATIC_PHT})
    , url(r'^$',                                  root)
    , url(r'^tree$',                              tree)
+   , url(r'^import$',                            import_proposals)
+   , url(r'^import/semester$',                   import_semester)
    , url(r'^proposals/([^/]+)/authors$',         authorResource.requestHandler)
    , url(r'^proposals/([^/]+)/authors/([^/]+)$', authorResource.requestHandler)
    , url(r'^proposals/([^/]+)/sources$',         proposal_sources)

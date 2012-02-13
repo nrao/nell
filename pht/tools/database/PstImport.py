@@ -114,18 +114,28 @@ class PstImport(PstInterface):
             """ % pcode
         self.cursor.execute(q)
         row      = map(self.safeUnicode, self.cursor.fetchone())
-        proposal = Proposal.createFromSqlResult(dict(zip(self.getKeys(), row)))
-        proposal.setSemester(semester)
-        proposal.save()
-        self.fetchAuthors(proposal)
-        self.fetchScientificCategories(proposal)
-        self.fetchObservingTypes(proposal)
-        self.fetchSessions(proposal)
-        self.fetchSources(proposal)
+        result   = dict(zip(self.getKeys(), row))
+        pcode    = result['PROP_ID'].replace('/', '')
+
+        try:
+            proposal = Proposal.objects.get(pcode = pcode)
+            proposal.delete()
+        except Proposal.DoesNotExist:
+            pass
+        finally:
+            proposal = Proposal.createFromSqlResult(result)
+            if semester is not None:
+                proposal.setSemester(semester)
+            proposal.save()
+            self.fetchAuthors(proposal)
+            self.fetchScientificCategories(proposal)
+            self.fetchObservingTypes(proposal)
+            self.fetchSessions(proposal)
+            self.fetchSources(proposal)
         
-        self.proposals.append(proposal)
+            self.proposals.append(proposal)
  
-        self.report()
+            self.report()
 
         return proposal
 
@@ -145,18 +155,22 @@ class PstImport(PstInterface):
         self.cursor.execute(q)
         keys = self.getKeys()
         for row in self.cursor.fetchall():
-            results = dict(zip(keys, map(self.safeUnicode, row)))
-            pid = int(results['proposal_id'])
-            telescope = results['TELESCOPE']
-            if self.proposalUsesGBT(pid, telescope):            
-                proposal = Proposal.createFromSqlResult(results)
-                proposal.setSemester(semester)
-                self.fetchScientificCategories(proposal)
-                self.fetchObservingTypes(proposal)
-                self.fetchSessions(proposal)
-                self.fetchSources(proposal)
-                self.fetchAuthors(proposal)
-                self.proposals.append(proposal)
+            results   = dict(zip(keys, map(self.safeUnicode, row)))
+            pcode     = results['PROP_ID'].replace('/', '')
+            try:
+                prop = Proposal.objects.get(pcode = pcode)
+            except Proposal.DoesNotExist:
+                pid       = int(results['proposal_id'])
+                telescope = results['TELESCOPE']
+                if self.proposalUsesGBT(pid, telescope):            
+                    proposal = Proposal.createFromSqlResult(results)
+                    proposal.setSemester(semester)
+                    self.fetchScientificCategories(proposal)
+                    self.fetchObservingTypes(proposal)
+                    self.fetchSessions(proposal)
+                    self.fetchSources(proposal)
+                    self.fetchAuthors(proposal)
+                    self.proposals.append(proposal)
 
         self.report()
 

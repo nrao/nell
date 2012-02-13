@@ -72,17 +72,17 @@ class Proposal(models.Model):
         an SQL query.
         """
 
+        pcode         = result['PROP_ID'].replace('/', '')
         proposalType  = ProposalType.objects.get(type = result['PROPOSAL_TYPE'])
         status        = Status.objects.get(name = result['STATUS'].title())
         submit_date  = result['SUBMITTED_DATE'] \
             if result['SUBMITTED_DATE'] != 'None' \
             else datetime.now().strftime("%Y-%M-%d %H:%m:%S")
 
-
         proposal = Proposal(pst_proposal_id = result['proposal_id']
                           , proposal_type   = proposalType
                           , status          = status
-                          , pcode           = result['PROP_ID'].replace('/', '')
+                          , pcode           = pcode
                           , create_date     = result['CREATED_DATE']
                           , modify_date     = result['MODIFIED_DATE']
                           , submit_date     = submit_date 

@@ -61,7 +61,12 @@ Ext.define('PHT.view.proposal.List' ,{
                 Ext.create('Ext.button.Button', {
                     text: 'Delete Proposal',
                     action: 'delete',
-                })
+                }),
+                { xtype: 'tbseparator' },
+                Ext.create('Ext.button.Button', {
+                    text: 'Import Proposal',
+                    action: 'import',
+                }),
             ]
         }];
 
