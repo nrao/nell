@@ -169,6 +169,22 @@ Ext.application({
             backendListText: bckListText,
         });
 
+        // Validate comma separated list of numbers
+        Ext.apply(Ext.form.field.VTypes, {
+            numberList:  function(v) {
+                var nums = v.split(",");
+                for (var i=0; i<nums.length; i++) {
+                    if (isNaN(parseInt(nums[i]))) {
+                        return false;
+                    }
+                }
+                // a list of numbers!
+                return true;
+            },
+            numberListText: 'Must be a comma separated list of numbers',
+            numberListMask: /[\d\,]/i,
+        });
+         
         // Validate Time in HH:MM format
         var hoursMinutesTest = /^(([2][0-3])|([0-1][0-9]))(:)([0-5][0-9])$/i;
         Ext.apply(Ext.form.field.VTypes, {
