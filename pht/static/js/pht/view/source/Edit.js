@@ -10,19 +10,15 @@ var allowedStates = Ext.create('Ext.data.Store', {
 
 
 Ext.define('PHT.view.source.Edit', {
-    extend: 'Ext.window.Window',
+    extend: 'PHT.view.Edit',
     alias : 'widget.sourceedit',
-
     title : 'Edit Source',
-    layout: 'fit',
-    autoShow: true,
-    plain: true,
-    //constrain: true,
 
     initComponent: function() {
         this.items = [
             {
-                xtype: 'form',
+                xtype: 'phtform',
+                trackResetOnLoad: true,
                 items: [
                     {
                         xtype: 'textfield',
@@ -153,19 +149,8 @@ Ext.define('PHT.view.source.Edit', {
 
         ];
 
-        this.buttons = [
-            {
-                text: 'Save',
-                action: 'save',
-                // does this not work because we aren't 'inside' the form?
-                formBind: true,
-            },
-            {
-                text: 'Close',
-                scope: this,
-                handler: this.hide,
-            },
-        ];
+        // TBF: this child needs to initialize for the parent
+        this.buttons = []
 
         this.callParent(arguments);
     },

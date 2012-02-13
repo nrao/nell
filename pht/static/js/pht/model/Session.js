@@ -5,6 +5,7 @@ Ext.define('PHT.model.Session', {
            , 'pcode'
            , 'name'
            , 'session_type'
+           , 'session_type_code'
            , 'weather_type'
            , 'semester'
            , 'grade'

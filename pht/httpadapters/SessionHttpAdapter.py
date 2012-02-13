@@ -31,6 +31,7 @@ class SessionHttpAdapter(object):
 
     def jsonDict(self, detailed = False):
         sessType = self.session.session_type.type if self.session.session_type is not None else None
+        sessTypeCode = self.session.session_type.abbreviation if self.session.session_type is not None else None
         wthrType = self.session.weather_type.type if self.session.weather_type is not None else None
         semester = self.session.semester.semester if self.session.semester is not None else None
         separation = self.session.separation.separation if self.session.separation is not None else None
@@ -43,6 +44,7 @@ class SessionHttpAdapter(object):
               , 'pst_session_id'          : self.session.pst_session_id
               , 'semester'                : semester 
               , 'session_type'            : sessType
+              , 'session_type_code'       : sessTypeCode
               , 'weather_type'            : wthrType
               , 'separation'              : separation
               , 'grade'                   : grade
@@ -260,11 +262,17 @@ class SessionHttpAdapter(object):
         resources = data.get(key, None)
         if resources is None:
             return (False, [])
+        # we can get a string or a list.
+        if resources.__class__.__name__ == 'list':
+            rscString = ','.join(resources)
+        else:
+            rscString = resources
+            resources = resources.split(',')
         # if the string sent is identical to what we have, don't do anything
-        if resources == currentResource:
+        if rscString == currentResource:
             return (False, [])
         # we'll have to update, so get the new resources
-        rs = [klass.objects.get(abbreviation = r) for r in resources.split(',') if r != '']
+        rs = [klass.objects.get(abbreviation = r.strip()) for r in resources if r != '']
         return (True, rs)
 
     def update_lst_parameters(self, param, ranges):

@@ -74,7 +74,7 @@ Ext.define('PHT.view.proposal.List' ,{
             {header: 'PCODE', dataIndex: 'pcode', flex: 1},
             {header: 'Title', dataIndex: 'title', width: 200},
             {header: 'Proposal Type', dataIndex: 'proposal_type', flex: 1},
-            {header: 'Observing Type', dataIndex: 'observing_type', flex: 1},
+            {header: 'Observing Types', dataIndex: 'observing_types', flex: 1},
             {header: 'Status', dataIndex: 'status', flex: 1},
             {header: 'PI', dataIndex: 'pi_name', flex: 1},
             {header: 'Authors', dataIndex: 'authors', width: 200},

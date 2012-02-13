@@ -1,12 +1,7 @@
 Ext.define('PHT.view.proposal.Edit', {
-    extend: 'Ext.window.Window',
+    extend: 'PHT.view.Edit',
     alias : 'widget.proposaledit',
-
     title : 'Edit Proposal',
-    layout: 'fit',
-    autoShow: true,
-    plain: true,
-    //constrain: true,
 
     initComponent: function() {
         this.piCombo = Ext.create('Ext.form.field.ComboBox', {
@@ -20,8 +15,9 @@ Ext.define('PHT.view.proposal.Edit', {
                         });
         this.items = [
             {
-                xtype: 'form',
+                xtype: 'phtform',
                 border: false,
+                trackResetOnLoad: true,
                 fieldDefaults: {
                     labelStyle: 'font-weight:bold',
                 },
@@ -140,16 +136,8 @@ Ext.define('PHT.view.proposal.Edit', {
             },
         ];
 
+        // the Save & Close buttons are prepended later by the parent
         this.buttons = [
-            {
-                text: 'Save',
-                action: 'save'
-            },
-            {
-                text: 'Close',
-                scope: this,
-                handler: this.close,
-            },
             {
                 text: 'Sessions',
                 action: 'sessions'

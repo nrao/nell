@@ -1,10 +1,8 @@
-// TBFs: units, formats, validations
-
-
 Ext.define('PHT.view.session.Form', {
-    extend: 'Ext.form.Panel',
+    extend: 'PHT.view.Form',
     alias:  'widget.sessionform',
     bodyStyle:'padding:5px',
+    trackResetOnLoad: true,
     width: 600,
     fieldDefaults: {
         labelAlign: 'top',
@@ -306,26 +304,41 @@ Ext.define('PHT.view.session.Form', {
             },{
                 title: 'Resources',
                 items: [{
-                    xtype: 'textfield',
+                    xtype: 'combo',
+                    multiSelect: true,
                     name: 'backends',
                     fieldLabel: 'Backends Requested',
+                    store: 'Backends',
+                    queryMode: 'local',
+                    displayField: 'abbreviation',
+                    valueField: 'abbreviation',
                     vtype: 'backendList',
                     labelAlign: 'left',
                     labelWidth: 150,
                     width: 500,
                 },{    
-                    xtype: 'textfield',
+                    xtype: 'combo',
+                    multiSelect: true,
                     name: 'receivers',
                     fieldLabel: 'Receivers Requested',
                     vtype: 'receiverList',
+                    store: 'Receivers',
+                    queryMode: 'local',
+                    displayField: 'abbreviation',
+                    valueField: 'abbreviation',
                     labelAlign: 'left',
                     labelWidth: 150,
                     width: 500,
                 },{    
-                    xtype: 'textfield',
+                    xtype: 'combo',
+                    multiSelect: true,
                     name: 'receivers_granted',
                     fieldLabel: 'Receivers Granted',
                     vtype: 'receiverList',
+                    store: 'Receivers',
+                    queryMode: 'local',
+                    displayField: 'abbreviation',
+                    valueField: 'abbreviation',
                     labelAlign: 'left',
                     labelWidth: 150,
                     width: 500,

@@ -1,15 +1,15 @@
-Ext.define('PHT.model.SessionType', {
+Ext.define('PHT.model.Backend', {
     extend: 'Ext.data.Model',
     fields: ['id',
-             'type',
+             'name',
              'abbreviation',
              ],
     proxy: {
         type: 'ajax',
-        url: '/pht/session/types',
+        url: '/pht/backends',
         reader: {
             type: 'json',
-            root: 'session types',
+            root: 'backends',
             successProperty: 'success'
         }
     }

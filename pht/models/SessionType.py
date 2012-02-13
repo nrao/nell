@@ -23,6 +23,7 @@ from django.db                 import models
 class SessionType(models.Model):
 
     type = models.CharField(max_length = 32)
+    abbreviation = models.CharField(max_length = 32)
 
     class Meta:
         db_table  = "pht_session_types"
@@ -34,9 +35,14 @@ class SessionType(models.Model):
     def jsonDict(self):
         return {'id'   : self.id
               , 'type' : self.type
+              , 'abbreviation' : self.abbreviation
                }
 
     @staticmethod
     def jsonDictOptions():
         return [ot.jsonDict() for ot in SessionType.objects.all()]
+
+    @staticmethod
+    def get_type(abbreviation):
+        return SessionType.objects.get(abbreviation = abbreviation)
 

@@ -243,7 +243,7 @@ function makeObjFromList(list) {
 function hasAllValues(values, validValues) {
     for (i=0; i<values.length; i++) {
         // is this one in our valid list?
-        var value = values[i];
+        var value = values[i].trim();
         if (!(value in validValues)) {
             return false;
         }
