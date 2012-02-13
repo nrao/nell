@@ -76,6 +76,7 @@ class TestViews(TestCase):
                   , 'weather_type' : sess.weather_type.type
                   , 'repeats' : sess.allotment.repeats
                   , 'separation' : sess.separation.separation
+                  , 'outer_separation' : sess.separation.separation
                   , 'interval_time' : sess.interval_time
                   , 'constraint_field' : sess.constraint_field
                   , 'comments' : sess.comments

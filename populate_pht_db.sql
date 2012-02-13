@@ -122,6 +122,7 @@ INSERT INTO pht_backends VALUES (DEFAULT, 'VLBA recorder and DAR ', 'gbtVLBA');
 INSERT INTO pht_backends VALUES (DEFAULT, 'Zpectrometer ', 'Zpect');
 INSERT INTO pht_backends VALUES (DEFAULT, 'User supplied or new backend ', 'Other');
 
+INSERT INTO pht_session_separations VALUES (DEFAULT, 'hour');
 INSERT INTO pht_session_separations VALUES (DEFAULT, 'day');
 INSERT INTO pht_session_separations VALUES (DEFAULT, 'week');
 

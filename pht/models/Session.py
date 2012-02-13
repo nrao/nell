@@ -24,6 +24,7 @@ from django.db         import models
 
 from Allotment         import Allotment
 from Backend           import Backend
+from Monitoring        import Monitoring
 from ObservingType     import ObservingType
 from Proposal          import Proposal
 from Receiver          import Receiver
@@ -51,12 +52,14 @@ class Session(models.Model):
     semester                = models.ForeignKey(Semester, null = True)
     grade                   = models.ForeignKey(SessionGrade, null = True)
     flags                   = models.ForeignKey(SessionFlags, null = True)
+    monitoring              = models.ForeignKey(Monitoring, null = True)
     receivers_granted       = models.ManyToManyField(Receiver) 
     pst_session_id          = models.IntegerField()
     name                    = models.CharField(max_length = 2000)
     
+    # TBF: should separation and interval_time be in allotment?
     separation              = models.ForeignKey(SessionSeparation, null = True)
-    interval_time           = models.IntegerField(null = True, ) # TBF: units?
+    interval_time           = models.IntegerField(null = True, ) # TBF: units of separation?
     constraint_field        = models.CharField(null = True, max_length = 2000)
     comments                = models.CharField(null = True, max_length = 2000)
     scheduler_notes         = models.TextField(null = True, blank = True)

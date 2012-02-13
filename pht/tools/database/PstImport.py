@@ -299,6 +299,9 @@ class PstImport(PstInterface):
         flags = SessionFlags()
         flags.save()
         session.flags = flags
+        m = Monitoring()
+        m.save()
+        session.monitoring = m
         
         # other stuff
         self.importResources(session)

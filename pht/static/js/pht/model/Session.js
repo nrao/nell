@@ -41,6 +41,18 @@ Ext.define('PHT.model.Session', {
            , 'optical_night'
            , 'transit_flat'
            , 'guaranteed'
+           // monitoring
+           , 'inner_repeats'
+           , 'inner_separation'
+           , 'inner_interval'
+           , 'start_date'
+           , 'start_time'
+           , 'window_size'
+           , 'outer_window_size'
+           , 'outer_repeats'
+           , 'outer_separation'
+           , 'outer_interval'
+           , 'custom_sequence'
            // session params
            , 'lst_ex'
            , 'lst_in'
