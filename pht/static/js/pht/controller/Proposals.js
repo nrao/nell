@@ -25,6 +25,7 @@ Ext.define('PHT.controller.Proposals', {
         'ScienceCategories',
         'Statuses',
         'Semesters',
+        'Sessions',
         'ProposalTree',
     ],
 
@@ -34,6 +35,7 @@ Ext.define('PHT.controller.Proposals', {
         'proposal.List',
         'proposal.ListWindow',
         'proposal.Edit',
+        'proposal.Import',
         'proposal.Navigate',
     ],
 
@@ -55,8 +57,14 @@ Ext.define('PHT.controller.Proposals', {
             'proposallist toolbar button[action=clear]': {
                 click: this.clearFilter
             },
+            'proposallist toolbar button[action=import]': {
+                click: this.importProposalForm
+            },
             'proposaledit button[action=save]': {
                 click: this.updateProposal
+            },            
+            'proposalimport button[action=import]': {
+                click: this.importProposal
             },            
             'proposalnavigate': {
                 itemclick: this.editTreeNode
@@ -88,7 +96,65 @@ Ext.define('PHT.controller.Proposals', {
         }
     },
 
-    // Proposals:
+    importProposalForm: function(button) {
+        var view      = Ext.widget('proposalimport');
+        var grid      = button.up('grid');
+        var proposals = grid.getSelectionModel().getSelection();
+        var fields    = view.down('form').getForm().getFields();
+        var pcodeCB   = fields.filter('name', 'pcode').last();
+        var selected  = [];
+        console.log(pcodeCB);
+        for (i=0; i < proposals.length; i++) {
+            selected.push([proposals[i].get('pcode')]);
+        }
+        console.log(selected);
+        pcodeCB.setValue(selected);
+    },
+
+    importProposal: function(button) {
+        var me     = this;
+        var win    = button.up('window');
+            form   = win.down('form');
+            values = form.getValues();
+
+        win.setLoading(true);
+        if (values.proposalsCheckbox == 'on'){
+            Ext.Ajax.request({
+                url: '/pht/import',
+                params: {
+                    proposals: values.pcode
+                },
+                method: 'POST',
+                timeout: 300000,
+                success: function(response) {
+                    win.close();
+                    me.getProposalsStore().load();
+                    me.getProposalTreeStore().load();
+                    me.getProposalCodesStore().load();
+                    me.getSessionsStore().load();
+                },
+             });
+        } else if (values.semesterCheckbox == 'on') {
+            Ext.Ajax.request({
+                url: '/pht/import/semester',
+                params: {
+                    semester: values.semester
+                },
+                method: 'POST',
+                timeout: 300000,
+                success: function(response) {
+                    win.close();
+                    me.getProposalsStore().load();
+                    me.getProposalTreeStore().load();
+                    me.getProposalCodesStore().load();
+                    me.getSessionsStore().load();
+                },
+             });
+        } else {
+            win.close();
+        }
+    },
+
     createProposal: function(button) {
         var proposal = Ext.create('PHT.model.Proposal');
         var view = Ext.widget('proposaledit');
@@ -97,10 +163,23 @@ Ext.define('PHT.controller.Proposals', {
 
     deleteProposal: function(button) {
         var grid = button.up('grid');
-        var proposal = grid.getSelectionModel().getLastSelected();
-        this.confirmDelete(this.getProposalsStore(),
-                           proposal,
-                           'Deleting Proposal ' + proposal.get('pcode'));
+        var proposals = grid.getSelectionModel().getSelection();
+        var store  = this.getProposalsStore();
+        Ext.Msg.show({
+             title: 'Deleting Selected Proposals',
+             msg: 'Are you sure?',
+             buttons: Ext.Msg.YESNO,
+             icon: Ext.Msg.QUESTION,
+             scope: this,
+             fn: function(id) {
+                 if (id == 'yes') {
+                     for (i = 0; i < proposals.length; i++) {
+                         proposals[i].destroy();
+                     }
+                     store.remove(proposals);
+                 }
+             }
+        });
     },
     
     editProposal: function(grid, record) {

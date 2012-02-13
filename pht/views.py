@@ -5,6 +5,7 @@ import simplejson as json
 
 from utilities import *
 from models import *
+from pht.tools.database import PstImport
 from httpadapters import *
 from tools.database import PstInterface
 import math
@@ -44,6 +45,23 @@ def tree(request, *args, **kws):
     return HttpResponse(json.dumps({"success" : "ok"
                                   , "proposals" : js
                                    })
+                      , content_type = 'application/json')
+
+def import_proposals(request, *args, **kws):
+    if request.method == 'POST':
+        pst = PstImport()
+        for pcode in request.POST.getlist('proposals'):
+            pst.importProposal(pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/'))
+    return HttpResponse(json.dumps({"success" : "ok"})
+                      , content_type = 'application/json')
+
+def import_semester(request, *args, **kws):
+    if request.method == 'POST':
+        pst      = PstImport()
+        semester = request.POST.get('semester')
+        if semester is not None:
+            pst.importProposals(semester)
+    return HttpResponse(json.dumps({"success" : "ok"})
                       , content_type = 'application/json')
 
 def get_options(request, *args, **kws):
