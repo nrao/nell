@@ -169,6 +169,17 @@ Ext.application({
             backendListText: bckListText,
         });
 
+        // Validate Time in HH:MM format
+        var hoursMinutesTest = /^(([2][0-3])|([0-1][0-9]))(:)([0-5][0-9])$/i;
+        Ext.apply(Ext.form.field.VTypes, {
+            hoursMinutes:  function(v) {
+
+                return hoursMinutesTest.test(v);
+            },
+            hoursMinutesText: 'Must be a value in Hours, between 0 and 24, in format (HH:MM)',
+            hoursMinutesMask: /[\d\:]/i,
+        });
+
         // Validates Hour strings in sexigesimal format
         var hourFieldTest = /^(([0]?[0-9]|1[0-9]|2[0-3])(:)([0-5][0-9])(:)([0-5][0-9])(.)([0-9]))$/i;
         Ext.apply(Ext.form.field.VTypes, {
