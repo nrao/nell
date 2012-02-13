@@ -20,26 +20,15 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-import simplejson as json
-from django.http import HttpResponse
-from users.decorators import admin_only
+from django.core.management import setup_environ
+import settings
+setup_environ(settings)
 
-class Resource(object):
+from scheduler.models import User
 
-    def requestHandler(self, request, *args, **kws):
-        if request.method == 'GET':
-            return self.read(request, *args, **kws)
-        elif request.method == 'POST':
-            return self.create(request, *args, **kws)
-        elif request.method == "PUT":
-            return self.update(request, *args, **kws)
-        elif request.method == "DELETE":
-            return self.delete(request, *args, **kws)
-        else:
-            return self.read(request, *args, **kws)
-
-    def create(self, request, *args, **kws):
-        self.adapter.initFromPost(json.loads(request.raw_post_data))
-        return HttpResponse(json.dumps(self.adapter.jsonDict())
-                          , content_type = 'application/json')
+admins = ['mmccarty', 'pmargani', 'mwhitehe', 'tminter', 'koneil']
+for a in admins:
+    u = User.objects.get(auth_user__username = a)
+    u.addRole("Administrator")
+    print u.roles.all()
 

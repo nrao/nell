@@ -1,5 +1,6 @@
 from django.conf.urls.defaults import patterns, include, url
 from django.conf               import settings
+from django.contrib.auth.decorators import login_required
 
 from pht.views  import *
 from pht.resources import *
@@ -20,16 +21,16 @@ urlpatterns = patterns(''
    , url(r'^tree$',                              tree)
    , url(r'^import$',                            import_proposals)
    , url(r'^import/semester$',                   import_semester)
-   , url(r'^proposals/([^/]+)/authors$',         authorResource.requestHandler)
-   , url(r'^proposals/([^/]+)/authors/([^/]+)$', authorResource.requestHandler)
+   , url(r'^proposals/([^/]+)/authors$',         login_required(authorResource.requestHandler))
+   , url(r'^proposals/([^/]+)/authors/([^/]+)$', login_required(authorResource.requestHandler))
    , url(r'^proposals/([^/]+)/sources$',         proposal_sources)
-   , url(r'^proposals/([^/]+)/sources/([^/]+)$', sourceResource.requestHandler)
-   , url(r'^authors/([^/]+)$',                   authorResource.requestHandler)
-   , url(r'^authors$',                           authorResource.requestHandler)
-   , url(r'^sources/([^/]+)$',                   sourceResource.requestHandler)
-   , url(r'^sources$',                           sourceResource.requestHandler)
-   , url(r'^proposals/([^/]+)$',                 proposalResource.requestHandler)
-   , url(r'^proposals$',                         proposalResource.requestHandler)
+   , url(r'^proposals/([^/]+)/sources/([^/]+)$', login_required(sourceResource.requestHandler))
+   , url(r'^authors/([^/]+)$',                   login_required(authorResource.requestHandler))
+   , url(r'^authors$',                           login_required(authorResource.requestHandler))
+   , url(r'^sources/([^/]+)$',                   login_required(sourceResource.requestHandler))
+   , url(r'^sources$',                           login_required(sourceResource.requestHandler))
+   , url(r'^proposals/([^/]+)$',                 login_required(proposalResource.requestHandler))
+   , url(r'^proposals$',                         login_required(proposalResource.requestHandler))
    , url(r'^proposal/pis',                       pis)
    , url(r'^proposal/types',                     proposal_types)
    , url(r'^proposal/observing/types',           observing_types)
@@ -39,8 +40,8 @@ urlpatterns = patterns(''
    , url(r'^sessions/([^/]+)/sources/([^/]+)$',  session_sources)
    , url(r'^sessions/([^/]+)/sources$',          session_sources)
    , url(r'^sessions/([^/]+)/averageradec$',     session_average_ra_dec)
-   , url(r'^sessions/([^/]+)$',          sessionResource.requestHandler)
-   , url(r'^sessions$',                  sessionResource.requestHandler)
+   , url(r'^sessions/([^/]+)$',          login_required(sessionResource.requestHandler))
+   , url(r'^sessions$',                  login_required(sessionResource.requestHandler))
    , url(r'^options$',                   get_options)
    , url(r'^session/grades',             session_grades)
    , url(r'^session/types',              session_types)

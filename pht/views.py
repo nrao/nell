@@ -1,18 +1,24 @@
 from django.shortcuts               import render_to_response
 from django.http  import HttpResponse, HttpResponseNotFound
+from django.contrib.auth.decorators import login_required
 
 import simplejson as json
 
 from utilities import *
+from users.decorators import admin_only
 from models import *
 from pht.tools.database import PstImport
 from httpadapters import *
 from tools.database import PstInterface
 import math
 
+@login_required
+@admin_only
 def root(request):
     return render_to_response("pht/root.html", {})
 
+@login_required
+@admin_only
 def tree(request, *args, **kws):
     "Service tailor made for populating an Ext JS 4 Tree Panel"
 
@@ -47,6 +53,8 @@ def tree(request, *args, **kws):
                                    })
                       , content_type = 'application/json')
 
+@login_required
+@admin_only
 def import_proposals(request, *args, **kws):
     if request.method == 'POST':
         pst = PstImport()
@@ -55,6 +63,8 @@ def import_proposals(request, *args, **kws):
     return HttpResponse(json.dumps({"success" : "ok"})
                       , content_type = 'application/json')
 
+@login_required
+@admin_only
 def import_semester(request, *args, **kws):
     if request.method == 'POST':
         pst      = PstImport()
@@ -64,32 +74,41 @@ def import_semester(request, *args, **kws):
     return HttpResponse(json.dumps({"success" : "ok"})
                       , content_type = 'application/json')
 
+@login_required
+@admin_only
 def get_options(request, *args, **kws):
     "Depending on mode, returns various options"
     mode = request.GET.get("mode", None)
     if mode == "proposal_codes":
         ps = Proposal.objects.all().order_by('pcode')
-        return simpleGetAllResponse('proposal codes'
-                                   , [{'id' : p.id
-                                     , 'pcode' : p.pcode} for p in ps])
+        pcodes = [{'id' : p.id, 'pcode' : p.pcode} for p in ps]
+        return HttpResponse(json.dumps({"success" : "ok" , 'proposal codes' : pcodes })
+                          , content_type = 'application/json')
     else:
         return HttpResponse("")
 
 # Sources - just like Sessions & Proposals, but with additional methods to support
 # the Proposal Sources & Session Sources grids.
 
+@login_required
+@admin_only
 def proposal_sources(request, *args):
     pcode,   = args
     proposal = Proposal.objects.get(pcode = pcode)
-    return simpleGetAllResponse('sources', [SourceHttpAdapter(ps).jsonDict()
-                                            for ps in proposal.source_set.all()])
+    sources  = [SourceHttpAdapter(ps).jsonDict()
+                  for ps in proposal.source_set.all()]
+    return HttpResponse(json.dumps({"success" : "ok" , 'sources' : sources })
+                      , content_type = 'application/json')
 
+@login_required
+@admin_only
 def session_sources(request, *args):
     if len(args) == 1:
         session_id, = args
         session     = Session.objects.get(id = session_id)
-        return simpleGetAllResponse('sources', [SourceHttpAdapter(s).jsonDict()
-                                                for s in session.sources.all()])
+        sources     = [SourceHttpAdapter(s).jsonDict() for s in session.sources.all()]
+        return HttpResponse(json.dumps({"success" : "ok" , 'sources' : sources })
+                          , content_type = 'application/json')
     elif len(args) == 2:
         if request.method == 'POST':
             session_id, source_id, = args
@@ -128,6 +147,8 @@ def meanAngle(thetas):
             avg_theta = (avg_theta + theta) / 2.
     return avg_theta 
 
+@login_required
+@admin_only
 def session_average_ra_dec(request, *args):
     if request.method == 'POST':
         # who's getting modified?
@@ -154,28 +175,46 @@ def session_average_ra_dec(request, *args):
         return HttpResponseNotFound('<h1>Page not found</h1>')
 
 
+@login_required
+@admin_only
 def users(request):
     pst   = PstInterface()
     users = [{'id' : r['person_id']
             , 'person_id' : r['person_id']
             , 'name' : '%s, %s' % (r['lastName'], r['firstName'])}
              for r in pst.getUsers()]
-    return simpleGetAllResponse('users', users)
+    return HttpResponse(json.dumps({"success" : "ok" , 'users' : users })
+                      , content_type = 'application/json')
 
+@login_required
+@admin_only
 def pis(request):
     authors = [{'id': a.id, 'name': a.getLastFirstName(), 'pcode': a.proposal.pcode}
                for a in Author.objects.all()]
 
-    return simpleGetAllResponse('pis', authors)
+    return HttpResponse(json.dumps({"success" : "ok" , 'pis' : authors })
+                      , content_type = 'application/json')
 
+@login_required
+@admin_only
 def proposal_types(request):
-    return simpleGetAllResponse('proposal types', ProposalType.jsonDictOptions())
+    return HttpResponse(json.dumps({"success" : "ok"
+                                  , 'proposal types' : ProposalType.jsonDictOptions()})
+                      , content_type = 'application/json')
 
+@login_required
+@admin_only
 def session_separations(request):
-    return simpleGetAllResponse('session separations', SessionSeparation.jsonDictOptions())
+    return HttpResponse(json.dumps({"success" : "ok" 
+                                  , 'session separations' : SessionSeparation.jsonDictOptions()})
+                      , content_type = 'application/json')
 
+@login_required
+@admin_only
 def session_grades(request):
-    return simpleGetAllResponse('session grades', SessionGrade.jsonDictOptions())
+    return HttpResponse(json.dumps({"success" : "ok"
+                                  , 'session grades' : SessionGrade.jsonDictOptions()})
+                      , content_type = 'application/json')
 
 def session_types(request):
     return simpleGetAllResponse('session types', SessionType.jsonDictOptions())
@@ -215,7 +254,6 @@ def source_conventions(request):
 
 def source_reference_frames(request):
     return simpleGetAllResponse('source reference frames', SourceReferenceFrame.jsonDictOptions())
-
 
 def simpleGetAllResponse(key, data):
     return HttpResponse(json.dumps({"success" : "ok" , key : data })

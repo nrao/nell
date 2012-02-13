@@ -21,20 +21,47 @@
 #       Green Bank, WV 24944-0002 USA
 
 import simplejson as json
-from django.test.client import Client
-from django.test        import TestCase
-from pht.models         import *
-from pht.utilities      import *
+from django.test.client  import Client
+from django.test         import TestCase
+from django.conf         import settings
+from django.contrib.auth import models as m
 import math
+
+from scheduler.models    import User
+from pht.models          import *
+from pht.utilities       import *
 
 class TestViews(TestCase):
     # must use django.test.TestCase if we want fixtures
-    fixtures = ['proposal_GBT12A-002.json']
+    fixtures = ['proposal_GBT12A-002.json', 'scheduler.json']
 
     def setUp(self):
+        # Don't use CAS for authentication during unit tests
+        if 'django_cas.backends.CASBackend' in settings.AUTHENTICATION_BACKENDS:
+            settings.AUTHENTICATION_BACKENDS = settings.AUTHENTICATION_BACKENDS[:-1]
+        if 'django_cas.middleware.CASMiddleware' in settings.MIDDLEWARE_CLASSES:
+            settings.MIDDLEWARE_CLASSES      = settings.MIDDLEWARE_CLASSES[:-1]
+
+        self.client = Client()
+
+        self.auth_user = m.User.objects.create_user('dss', 'dss@nrao.edu', 'asdf5!')
+        self.auth_user.is_staff = True
+        self.auth_user.save()
+
+        # create the user
+        self.u = User(first_name = "dss" #"Test"
+                    , last_name  = "account" #"User"
+                    , pst_id     = 3251
+                    #, username   = self.auth_user.username
+                      )
+        self.u.save()
+        self.u.addRole("Administrator")
+        self.u.addRole("Staff")
+
+        self.client.login(username = "dss", password = "asdf5!")
+
         # load the single proposal from the fixture
         self.proposal = Proposal.objects.get(pcode = "GBT12A-002")
-        self.client   = Client()
         self.dtfmt    = "%m/%d/%Y"
 
         sess = self.proposal.session_set.all()[0]
@@ -88,7 +115,6 @@ class TestViews(TestCase):
 
     # Proposal CRUD
     def test_proposals(self):
-        self.client   = Client()
         response = self.client.get("/pht/proposals")
         results = self.eval_response(response.content)
 
@@ -98,7 +124,6 @@ class TestViews(TestCase):
         self.assertEqual(self.proposal.proposal_type.type, results['proposals'][0]['proposal_type'])
 
     def test_proposal_get(self):
-        self.client   = Client()
         response = self.client.get("/pht/proposals/%s" % self.proposal.pcode)
         results = self.eval_response(response.content)
 
@@ -108,7 +133,6 @@ class TestViews(TestCase):
         self.assertEqual(self.proposal.proposal_type.type, results['proposal_type'])
 
     def test_proposal_post(self):
-        self.client   = Client()
         data     = {'pi_id'           : self.proposal.pi.id
                   , 'proposal_type'   : self.proposal.proposal_type.type
                   , 'status'          : self.proposal.status.name
@@ -132,7 +156,6 @@ class TestViews(TestCase):
                        , data.get('observing_types'))
 
     def test_proposal_post_empty(self):
-        self.client   = Client()
         data     = {'pi_id'           : self.proposal.pi.id
                   , 'proposal_type'   : self.proposal.proposal_type.type
                   , 'status'          : self.proposal.status.name
@@ -153,7 +176,6 @@ class TestViews(TestCase):
         self.assertEqual(results.get('pcode'), data.get('pcode'))
 
     def test_proposal_put(self):
-        self.client   = Client()
         data     = {'pi_id'           : self.proposal.pi.id
                   , 'proposal_type'   : self.proposal.proposal_type.type
                   , 'status'          : self.proposal.status.name
@@ -188,7 +210,6 @@ class TestViews(TestCase):
     # Session CRUD
     def test_sessions(self):
         sess = self.proposal.session_set.all()[0]
-        self.client   = Client()
         response = self.client.get("/pht/sessions")
         results = self.eval_response(response.content)
 
@@ -197,7 +218,6 @@ class TestViews(TestCase):
         self.assertEqual(sess.name, results['sessions'][0]['name'])
 
     def test_session_get(self):
-        self.client   = Client()
         sess = self.proposal.session_set.all()[0]
         response = self.client.get("/pht/sessions/%s" % sess.id)
         results = self.eval_response(response.content)
@@ -295,17 +315,15 @@ class TestViews(TestCase):
         
     # Session CRUD
     def test_proposal_sources(self):
-        self.client   = Client()
         url = "/pht/proposals/%s/sources" % self.proposal.pcode
         response = self.client.get(url)
+        self.failUnlessEqual(response.status_code, 200)
         results = self.eval_response(response.content)
 
-        self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(self.proposal.pcode, results['sources'][0]['pcode'])
         self.assertEqual('J2000', results['sources'][0]['coordinate_epoch'])
 
     def test_source_get(self):
-        self.client   = Client()
         src = self.proposal.source_set.all()[0]
         response = self.client.get("/pht/sources/%s" % src.id)
         results = self.eval_response(response.content)
