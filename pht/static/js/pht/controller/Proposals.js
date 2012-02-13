@@ -25,6 +25,7 @@ Ext.define('PHT.controller.Proposals', {
         'ScienceCategories',
         'Statuses',
         'Semesters',
+        'Sessions',
         'ProposalTree',
     ],
 
@@ -96,7 +97,18 @@ Ext.define('PHT.controller.Proposals', {
     },
 
     importProposalForm: function(button) {
-        var view = Ext.widget('proposalimport');
+        var view      = Ext.widget('proposalimport');
+        var grid      = button.up('grid');
+        var proposals = grid.getSelectionModel().getSelection();
+        var fields    = view.down('form').getForm().getFields();
+        var pcodeCB   = fields.filter('name', 'pcode').last();
+        var selected  = [];
+        console.log(pcodeCB);
+        for (i=0; i < proposals.length; i++) {
+            selected.push([proposals[i].get('pcode')]);
+        }
+        console.log(selected);
+        pcodeCB.setValue(selected);
     },
 
     importProposal: function(button) {
@@ -118,6 +130,8 @@ Ext.define('PHT.controller.Proposals', {
                     win.close();
                     me.getProposalsStore().load();
                     me.getProposalTreeStore().load();
+                    me.getProposalCodesStore().load();
+                    me.getSessionsStore().load();
                 },
              });
         } else if (values.semesterCheckbox == 'on') {
@@ -132,6 +146,8 @@ Ext.define('PHT.controller.Proposals', {
                     win.close();
                     me.getProposalsStore().load();
                     me.getProposalTreeStore().load();
+                    me.getProposalCodesStore().load();
+                    me.getSessionsStore().load();
                 },
              });
         } else {
