@@ -87,6 +87,11 @@ class SessionHttpAdapter(object):
               , 'receivers'               : self.session.get_receivers()
               , 'receivers_granted'       : self.session.get_receivers_granted()
               # monitoring
+              # first some duplicates (readonly):
+              , 'inner_repeats'           : self.session.allotment.repeats
+              , 'inner_separation'        : separation
+              , 'inner_interval'          : self.session.interval_time
+              # now stuff that is unique
               , 'start_date'              : formatExtDate(monitoringStart)
               , 'start_time'              : t2str(monitoringStart)
               , 'window_size'             : self.session.monitoring.window_size
@@ -232,10 +237,8 @@ class SessionHttpAdapter(object):
         time = data.get("start_time", "")
         date = date if date != "" else None
         time = time if time != "" else None
-        print date, time
         if date is not None and time is not None:
             start = extDatetime2Datetime(date, time)
-            print start
             self.session.monitoring.start_time = start
         self.session.monitoring.save()
         

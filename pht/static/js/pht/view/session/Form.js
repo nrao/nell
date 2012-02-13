@@ -360,12 +360,12 @@ Ext.define('PHT.view.session.Form', {
                             title: 'Inner Loop',
                             items: [{
                                 xtype: 'numberfield',
-                                name: 'repeats',
+                                name: 'inner_repeats',
                                 fieldLabel: 'Repeats',
                                 readOnly: true,
                             },{    
                                 xtype: 'combo',
-                                name: 'separation',
+                                name: 'inner_separation',
                                 fieldLabel: 'Separation',
                                 store: 'SessionSeparations',
                                 queryMode: 'local',
@@ -374,7 +374,7 @@ Ext.define('PHT.view.session.Form', {
                                 readOnly: true,
                             },{    
                                 xtype: 'numberfield',
-                                name: 'interval',
+                                name: 'inner_interval',
                                 fieldLabel: 'Repeats',
                                 readOnly: true,
                             },{    
