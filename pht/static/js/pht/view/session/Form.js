@@ -365,11 +365,14 @@ Ext.define('PHT.view.session.Form', {
                             xtype: 'fieldset',
                             title: 'Inner Loop',
                             defaults: {minValue: 0},
+                            // first three items are identical to 
+                            // seperation, repeats, interval
                             items: [{
                                 xtype: 'numberfield',
                                 name: 'inner_repeats',
                                 fieldLabel: 'Repeats',
                                 readOnly: true,
+                                fieldCls: "x-pht-formfield-readonly",
                             },{    
                                 xtype: 'combo',
                                 name: 'inner_separation',
@@ -379,11 +382,13 @@ Ext.define('PHT.view.session.Form', {
                                 valueField: 'separation',
                                 displayField: 'separation',
                                 readOnly: true,
+                                fieldCls: "x-pht-formfield-readonly",
                             },{    
                                 xtype: 'numberfield',
                                 name: 'inner_interval',
                                 fieldLabel: 'Repeats',
                                 readOnly: true,
+                                fieldCls: "x-pht-formfield-readonly",
                             },{    
                                 xtype: 'numberfield',
                                 xtype: 'numberfield',
@@ -452,6 +457,9 @@ Ext.define('PHT.view.session.Form', {
                 }]    
             },{
                 title: 'Original PST Values',
+                defaults: {
+                    fieldCls: "x-pht-formfield-readonly",
+                },    
                 items: [{
                     xtype: 'textfield',
                     fieldLabel: 'PST Min LST',

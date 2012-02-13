@@ -122,6 +122,9 @@ Ext.define('PHT.view.source.Edit', {
                         title: 'Original PST Values',
                         collapsible: true,
                         collapsed: true,
+                        defaults: {
+                            fieldCls: "x-pht-formfield-readonly",
+                        },    
                         items: [{
                             xtype: 'textfield',
                             name : 'pst_ra',
