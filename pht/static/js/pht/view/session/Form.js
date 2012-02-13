@@ -345,44 +345,92 @@ Ext.define('PHT.view.session.Form', {
                 }]
             },{
                 title: 'Monitoring',
+                border: false,
+                defaults:{bodyStyle:'padding:10px'},
                 items: [{
-                    xtype: 'datefield',
-                    name: 'start_date',
-                    fieldLabel: 'Start Date',
-                },{
-                    xtype: 'textfield',
-                    name: 'start_time',
-                    fieldLabel: 'Start Time',
-                },{
-                    xtype: 'numberfield',
-                    name: 'window_size',
-                    fieldLabel: 'Window Size',
+                    // Upper half has two columns
+                    layout: 'column',
+                    border: false,
+                    items:[{
+                        // first column
+                        columnWidth: 0.5,
+                        border: false,
+                        items: [{
+                            xtype: 'fieldset',
+                            title: 'Inner Loop',
+                            items: [{
+                                xtype: 'numberfield',
+                                name: 'repeats',
+                                fieldLabel: 'Repeats',
+                                readOnly: true,
+                            },{    
+                                xtype: 'combo',
+                                name: 'separation',
+                                fieldLabel: 'Separation',
+                                store: 'SessionSeparations',
+                                queryMode: 'local',
+                                valueField: 'separation',
+                                displayField: 'separation',
+                                readOnly: true,
+                            },{    
+                                xtype: 'numberfield',
+                                name: 'interval',
+                                fieldLabel: 'Repeats',
+                                readOnly: true,
+                            },{    
+                                xtype: 'numberfield',
+                                xtype: 'numberfield',
+                                name: 'window_size',
+                                fieldLabel: 'Window Size',
+                            },{
+                                xtype: 'datefield',
+                                name: 'start_date',
+                               fieldLabel: 'Start Date',
+                            },{
+                                xtype: 'textfield',
+                                name: 'start_time',
+                                fieldLabel: 'Start Time',
+                                vtype: 'hoursMinutes',
+                            }],
+                        }],
+                    },{
+                        // second column
+                        columnWidth: 0.5,
+                        border: false,
+                        items: [{
+                            xtype: 'fieldset',
+                            title: 'Outer Loop',
+                            items: [{
+                                xtype: 'numberfield',
+                                name: 'outer_repeats',
+                                fieldLabel: 'Outer Repeats',
+                            },{    
+                                xtype: 'combo',
+                                name: 'outer_separation',
+                                fieldLabel: 'Outer Separation',
+                                store: 'SessionSeparations',
+                                queryMode: 'local',
+                                valueField: 'separation',
+                                displayField: 'separation',
+                            },{    
+                                xtype: 'numberfield',
+                                name: 'outer_interval',
+                                fieldLabel: 'Outer Interval',
+                            },{    
+                                xtype: 'numberfield',
+                                name: 'outer_window_size',
+                                fieldLabel: 'Outer Window Size',
+                            }],
+                        }],
+                    }],
+                // remaining items    
                 },{    
-                    xtype: 'numberfield',
-                    name: 'outer_window_size',
-                    fieldLabel: 'Outer Window Size',
-                },{    
-                    xtype: 'numberfield',
-                    name: 'outer_repeats',
-                    fieldLabel: 'Outer Repeats',
-                },{    
-                    xtype: 'combo',
-                    name: 'outer_separation',
-                    fieldLabel: 'Outer Separation',
-                    //vtype: 'receiverList',
-                    store: 'SessionSeparations',
-                    queryMode: 'local',
-                    valueField: 'separation',
-                    displayField: 'separation',
-                },{    
-                    xtype: 'numberfield',
-                    name: 'outer_interval',
-                    fieldLabel: 'Outer Repeats',
-                },{    
+                    
                     xtype: 'textfield',
                     name: 'custom_sequence',
                     fieldLabel: 'Custom Sequence',
-                }]    
+                    width: 500,
+                }],    
             },{
                 title: 'Misc',
                 items: [{
