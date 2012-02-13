@@ -39,6 +39,7 @@ class SessionHttpAdapter(object):
         wthrType = self.session.weather_type.type if self.session.weather_type is not None else None
         semester = self.session.semester.semester if self.session.semester is not None else None
         separation = self.session.separation.separation if self.session.separation is not None else None
+        outerSep = self.session.monitoring.outer_separation.separation if self.session.monitoring.outer_separation is not None else None
         grade = self.session.grade.grade if self.session.grade is not None else None
         include, exclude = self.session.get_lst_string()
         monitoringStart = self.session.monitoring.start_time
@@ -91,7 +92,7 @@ class SessionHttpAdapter(object):
               , 'window_size'             : self.session.monitoring.window_size
               , 'outer_window_size'       : self.session.monitoring.outer_window_size
               , 'outer_repeats'           : self.session.monitoring.outer_repeats
-              , 'outer_separation'        : self.session.monitoring.outer_separation
+              , 'outer_separation'        : outerSep
               , 'outer_interval'          : self.session.monitoring.outer_interval
               , 'custom_sequence'         : self.session.monitoring.custom_sequence
               # session params
@@ -218,11 +219,14 @@ class SessionHttpAdapter(object):
         self.session.flags.save()
 
         # monitoring
+        sep = SessionSeparation.objects.get(separation = data.get('outer_separation'))
+        self.session.monitoring.outer_separation = sep
+
         self.session.monitoring.window_size = self.getInt(data, 'window_size')
         self.session.monitoring.outer_window_size = self.getInt(data, 'outer_window_size')
         self.session.monitoring.outer_repeats = self.getInt(data, 'outer_repeats')
-        self.session.monitoring.outer_separation = self.getInt(data, 'outer_separation')
         self.session.monitoring.outer_interval = self.getInt(data, 'outer_interval')
+        self.session.monitoring.custom_sequence = data.get('custom_sequence', None)
         # the start datetime comes in two pieces
         date = data.get("start_date", "")
         time = data.get("start_time", "")
