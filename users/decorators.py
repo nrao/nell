@@ -29,8 +29,8 @@ def admin_only(view_func):
     If the logged in user isn't an administrator, redirect elsewhere.
     Otherwise, proceed as planned.
     """
-    redirect_url = '/profile'
     def decorate(request, *args, **kwds):
+        redirect_url = '/profile'
         if not get_requestor(request).isAdmin():
             if len(args) != 0:
                 redirect_url = redirect_url % args

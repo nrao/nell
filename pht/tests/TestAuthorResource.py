@@ -21,14 +21,42 @@
 #       Green Bank, WV 24944-0002 USA
 
 import simplejson as json
-from django.test.client import Client
-from django.test        import TestCase
+from django.test.client  import Client
+from django.test         import TestCase
+from django.conf         import settings
+from django.contrib.auth import models as m
 
+from scheduler.models    import User
 from pht.models import Author, Proposal
 
 class TestAuthorResource(TestCase):
     # must use django.test.TestCase if we want fixtures
-    fixtures = ['proposal_GBT12A-002.json']
+    fixtures = ['proposal_GBT12A-002.json', 'scheduler.json']
+
+    def setUp(self):
+        # Don't use CAS for authentication during unit tests
+        if 'django_cas.backends.CASBackend' in settings.AUTHENTICATION_BACKENDS:
+            settings.AUTHENTICATION_BACKENDS = settings.AUTHENTICATION_BACKENDS[:-1]
+        if 'django_cas.middleware.CASMiddleware' in settings.MIDDLEWARE_CLASSES:
+            settings.MIDDLEWARE_CLASSES      = settings.MIDDLEWARE_CLASSES[:-1]
+
+        self.client = Client()
+
+        self.auth_user = m.User.objects.create_user('dss', 'dss@nrao.edu', 'asdf5!')
+        self.auth_user.is_staff = True
+        self.auth_user.save()
+
+        # create the user
+        self.u = User(first_name = "dss" #"Test"
+                    , last_name  = "account" #"User"
+                    , pst_id     = 3251
+                    #, username   = self.auth_user.username
+                      )
+        self.u.save()
+        self.u.addRole("Administrator")
+        self.u.addRole("Staff")
+
+        self.client.login(username = "dss", password = "asdf5!")
 
     def test_read(self):
         proposal = Proposal.objects.all()[0]

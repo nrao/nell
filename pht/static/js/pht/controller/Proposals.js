@@ -103,11 +103,9 @@ Ext.define('PHT.controller.Proposals', {
         var fields    = view.down('form').getForm().getFields();
         var pcodeCB   = fields.filter('name', 'pcode').last();
         var selected  = [];
-        console.log(pcodeCB);
         for (i=0; i < proposals.length; i++) {
             selected.push([proposals[i].get('pcode')]);
         }
-        console.log(selected);
         pcodeCB.setValue(selected);
     },
 
