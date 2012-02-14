@@ -37,6 +37,7 @@ urlpatterns = patterns(''
    , url(r'^proposal/science/categories',        science_categories)
    , url(r'^proposal/statuses',                  statuses)
    , url(r'^pst/users',                          users)
+   , url(r'^pst/user/info$',                     user_info)
    , url(r'^sessions/([^/]+)/sources/([^/]+)$',  session_sources)
    , url(r'^sessions/([^/]+)/sources$',          session_sources)
    , url(r'^sessions/([^/]+)/averageradec$',     session_average_ra_dec)

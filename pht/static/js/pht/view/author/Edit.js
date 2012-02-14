@@ -9,6 +9,19 @@ Ext.define('PHT.view.author.Edit', {
     //constrain: true,
 
     initComponent: function() {
+        var me = this;
+        this.pcodeCB = Ext.create('Ext.form.field.ComboBox',
+            {
+                name: 'pcode',
+                fieldLabel: 'PCODE',
+                store: 'ProposalCodes',
+                queryMode: 'local',
+                displayField: 'pcode',
+                valueField: 'pcode',
+                forceSelection: true,
+                allowBlank: false,
+                labelStyle: 'font-weight:bold',
+            });
         this.items = [
             {
                 xtype: 'form',
@@ -16,29 +29,44 @@ Ext.define('PHT.view.author.Edit', {
                     labelStyle: 'font-weight:bold',
                 },
                 items: [
-                    {
-                        xtype: 'combo',
-                        name: 'pcode',
-                        fieldLabel: 'PCODE',
-                        store: 'ProposalCodes', // MVC baby!
-                        queryMode: 'local',
-                        displayField: 'pcode',
-                        valueField: 'pcode',
-                        forceSelection: true,
-                        allowBlank: false,
-                        labelStyle: 'font-weight:bold',
-                    },
+                    this.pcodeCB,
                     {
                         xtype: 'combo',
                         name: 'pst_person_id',
                         fieldLabel: 'PST User',
-                        store: 'PstUsers', // MVC baby!
+                        store: 'PstUsers',
                         queryMode: 'local',
                         displayField: 'name',
                         valueField: 'person_id',
                         forceSelection: true,
                         allowBlank: false,
                         labelStyle: 'font-weight:bold',
+                        listeners: {
+                            select: function(combo, record, index) {
+                                Ext.Ajax.request({
+                                    url: '/pht/pst/user/info',
+                                    params: {
+                                        person_id: combo.getValue()
+                                    },
+                                    method: 'GET',
+                                    success: function(response) {
+                                        var json = eval('(' + response.responseText + ')');
+                                        var author = Ext.create('PHT.model.Author', 
+                                            {pcode : me.pcodeCB.getValue()
+                                           , pst_person_id : combo.getValue()
+                                           , last_name : json.info.lastName
+                                           , first_name : json.info.firstName
+                                           , affiliation : json.info.affiliation
+                                           , email : json.info.email
+                                           , telephone : json.info.phone
+                                           , address : json.info.address
+                                           , professional_status : json.info.personType
+                                        });
+                                        me.down('form').loadRecord(author);
+                                    },
+                                });
+                            }
+                        }
                     },
                     {
                         xtype: 'textfield',
@@ -76,8 +104,8 @@ Ext.define('PHT.view.author.Edit', {
                     },
                     {
                         xtype: 'textfield',
-                        name : 'telesphone',
-                        fieldLabel: 'Telesphone',
+                        name : 'telephone',
+                        fieldLabel: 'Telephone',
                         width: 300,
                     },
                     {
