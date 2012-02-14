@@ -67,7 +67,23 @@ Ext.define('PHT.controller.Sessions', {
         var session = form.getRecord();
         var url = '/pht/sessions/' + session.get('id') + '/calculateLSTs';
 
-        // error check
+        // error check: make them save changes first
+        var f = form.getForm()
+        if (f.isDirty()) {
+            Ext.Msg.alert('Warning', "Save changes before calculating LST's");    
+            return
+        }
+        // need valid Ra / Dec
+        var raField = f.findField('ra');
+        var decField = f.findField('dec');
+        if (!raField.isValid() | !decField.isValid()) {
+            Ext.Msg.alert('Warning', "Cannot calculate LSTs with invalid Ra & Dec values.");
+            return
+        }
+        if (session.get('ra') == "" | session.get('dec') == "") {
+            Ext.Msg.alert('Warning', "Ra and Dec values necessary to calculate LSTs.");
+            return
+        }
 
         Ext.Ajax.request({
            url: url,
@@ -149,6 +165,8 @@ Ext.define('PHT.controller.Sessions', {
                 }
             });
         } else {
+            // set's the form to not dirty again.
+            form.loadRecord(session);
             this.getSessionsStore().sync();
         }
     },
