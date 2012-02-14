@@ -146,3 +146,11 @@ class Horizon:
     def degrees2Radians(self, degrees):
         "Utility function for trignometric function arguments."
         return degrees*math.pi/180.0
+
+    def normalizeHours(self, dtDelta):
+        """
+        This module often returns DateTimeDeltas that may have
+        hours values > 24.
+        """
+
+        return dtDelta.hours if dtDelta.hours < 24.0 else dtDelta.hours - 24.0

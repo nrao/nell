@@ -48,7 +48,7 @@ class Target(models.Model):
     def calcLSTrange(self):
         """
         Returns the minimum and maximum LST from the position
-        and the minimum elevation.
+        and the minimum elevation (in radians).
         """
 
         if self.ra is None or self.dec is None:
@@ -64,7 +64,18 @@ class Target(models.Model):
         rise, set = h.riseSetLSTs(rad2deg(self.ra)
                                 , rad2deg(self.dec))
 
-        return (hr2rad(rise.hours), hr2rad(set.hours))
+        # unless this is a special case!
+        if set is None:
+            # our source never sets - it's always up!
+            return (0.0, hr2rad(24.0))
+        if rise is None:
+            # our source never rises 
+            return (0.0, 0.0)
+
+        minLst = hr2rad(h.normalizeHours(rise))
+        maxLst = hr2rad(h.normalizeHours(set))
+
+        return (minLst, maxLst)
 
     def calcCenterWidthLST(self, minLst = None, maxLst = None):
         """

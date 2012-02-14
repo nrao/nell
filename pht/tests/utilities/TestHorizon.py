@@ -22,6 +22,7 @@
 import unittest
 import math
 from mx                    import DateTime
+from pht.utilities         import * 
 from pht.utilities.Horizon import Horizon 
 
 class TestHorizon(unittest.TestCase):
@@ -92,3 +93,31 @@ class TestHorizon(unittest.TestCase):
         rise, set = h.riseSetLSTs(20.0, 0.0, now)
         self.assertEqual('21:03:18.21', str(rise))
         self.assertEqual('05:36:41.79', str(set))
+
+        # demonstrates that we need to normalize results
+        h = Horizon()
+        ra = rad2deg(hr2rad(22.0))
+        rise, set = h.riseSetLSTs(ra, 10.0, now)
+        self.assertEqual('15:54:14.83', str(rise))
+        # watch for > 24 hours
+        self.assertEqual('1:04:05:45.17', str(set))
+        self.assertAlmostEqual(28.0958, set.hours, 2)
+
+        self.assertAlmostEquals(4.09588185187, h.normalizeHours(set), 3)
+
+        # source that is always up
+        rise, set = h.riseSetLSTs(ra, 80.0, now)
+        self.assertTrue(set is None) 
+
+        # source that is never up
+        rise, set = h.riseSetLSTs(ra, -80.0, now)
+        self.assertTrue(rise is None) 
+
+        # but a source that is always up may not survive the el limit 
+        h = Horizon(30)
+        elLimHr = rad2hr(deg2rad(30))
+        rise, set = h.riseSetLSTs(ra, 80.0, now)
+        self.assertTrue(set is not None) 
+
+
+

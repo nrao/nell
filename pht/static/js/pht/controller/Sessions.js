@@ -89,7 +89,6 @@ Ext.define('PHT.controller.Sessions', {
            url: url,
            method: 'POST',
            success: function(response) {
-               console.log('calculated LSTs!');
                var json = eval('(' + response.responseText + ')');
 
                // update our session and form with this result
