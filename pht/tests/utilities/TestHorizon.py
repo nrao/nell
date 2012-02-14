@@ -62,6 +62,14 @@ class TestHorizon(unittest.TestCase):
         self.assertEqual(18.0, width.hours)
         self.assertEqual(3.0, center.hours)
 
+        # 0 - 24 is a popular range
+        rise = DateTime.DateTimeDelta(0, 0, 0, 0)
+        set  = DateTime.DateTimeDelta(0, 24, 0, 0)
+
+        center, width = h.riseSet2centerWidth(rise, set)
+        self.assertEqual(24.0, width.hours)
+        self.assertEqual(12.0, center.hours)
+
     def test_getRiseSet(self):
 
         now = DateTime.DateTime(2006, 5, 31, 18, 6, 4)

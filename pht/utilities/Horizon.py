@@ -41,9 +41,11 @@ class Horizon:
                "Horizon's physical elevation must be less than 90 degrees."
         self.horizon = physical_horizon
 
-
     def riseSet2centerWidth(self, rise, set):
-        "Convert endpoints to a center point and width."
+        """
+        Convert endpoints to a center point and width.
+        All in DateTimeDelta's.
+        """
 
         # inputs are DateTimeDelta's
         # assuming hours are 0 - 24.

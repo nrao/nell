@@ -22,8 +22,10 @@
 
 from django.db                 import models
 
-from pht.utilities import *
+from mx                        import DateTime
+from pht.utilities             import *
 from pht.utilities.Conversions import Conversions
+from pht.utilities.Horizon     import Horizon
 
 class Target(models.Model):
 
@@ -43,6 +45,57 @@ class Target(models.Model):
         db_table  = "pht_targets"
         app_label = "pht"
 
+    def calcLSTrange(self):
+        """
+        Returns the minimum and maximum LST from the position
+        and the minimum elevation.
+        """
+
+        if self.ra is None or self.dec is None:
+            return (None, None)
+
+        # our utility tool - it takes everything in degrees
+        if self.elevation_min is not None:
+            h = Horizon(rad2deg(self.elevation_min))
+        else:
+            h = Horizon()
+
+        # and the tool returns DateTimeDelta's
+        rise, set = h.riseSetLSTs(rad2deg(self.ra)
+                                , rad2deg(self.dec))
+
+        return (hr2rad(rise.hours), hr2rad(set.hours))
+
+    def calcCenterWidthLST(self, minLst = None, maxLst = None):
+        """
+        Returns the center LST and LST width based off the min &
+        max LST's (all in radians).
+        """
+
+        if minLst is None:
+            minLst = self.min_lst
+        if maxLst is None:
+            maxLst = self.max_lst
+        if minLst is None or maxLst is None:    
+            return (None, None)
+
+        # our utility tool - it takes everything in degrees
+        if self.elevation_min is not None:
+            h = Horizon(rad2deg(self.elevation_min))
+        else:
+            h = Horizon()
+
+        
+        # and the tool returns DateTimeDelta's
+        minLst = DateTime.DateTimeDelta(0, rad2hr(minLst), 0, 0)
+        maxLst = DateTime.DateTimeDelta(0, rad2hr(maxLst), 0, 0)
+        center, width = h.riseSet2centerWidth(minLst, maxLst)
+
+        return (hr2rad(center.hours), hr2rad(width.hours))
+                                            
+            
+                           
+        
     @staticmethod
     def createFromSqlResult(result):
         """

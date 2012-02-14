@@ -5,3 +5,4 @@ from TestProposalType       import TestProposalType
 from TestScientificCategory import TestScientificCategory
 from TestSession            import TestSession
 from TestStatus             import TestStatus
+from TestTarget             import TestTarget
