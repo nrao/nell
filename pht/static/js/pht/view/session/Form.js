@@ -6,11 +6,11 @@ Ext.define('PHT.view.session.Form', {
     width: 600,
     fieldDefaults: {
         labelAlign: 'top',
-        msgTarget: 'side'
+        msgTarget: 'side',
     },
     defaults: {
         anchor: '90%',
-        border: false
+        border: false,
     },
     items: [{
         // First, all basic parameters, in two columns
@@ -78,6 +78,9 @@ Ext.define('PHT.view.session.Form', {
             columnWidth: 0.333,
             border: false,
             layout: 'anchor',
+            defaults: {
+                minValue: 0,
+            },    
             items: [{
                 xtype: 'combo',
                 name: 'grade',
@@ -91,7 +94,7 @@ Ext.define('PHT.view.session.Form', {
             },{
                 xtype: 'numberfield',
                 fieldLabel: 'Requested Time (Hrs)',
-                        name: 'requested_time',
+                name: 'requested_time',
             },{
                 xtype: 'numberfield',
                 fieldLabel: 'Allocated (Hrs)',
@@ -152,6 +155,7 @@ Ext.define('PHT.view.session.Form', {
                     // First Column
                     columnwidth: 0.333,
                     border: false,
+                    defaults: {minValue: 0},
                     items: [{ 
                         xtype: 'numberfield',
                         fieldLabel: 'Semester (Hrs)',
@@ -165,6 +169,7 @@ Ext.define('PHT.view.session.Form', {
                     // Second Column
                     columnwidth:0.333,
                     border: false,
+                    defaults: {minValue: 0},
                     items: [{ 
                         xtype: 'combo',
                         name: 'separation',
@@ -183,6 +188,7 @@ Ext.define('PHT.view.session.Form', {
                     // Third Column
                     columnwidth:0.333,
                     border: false,
+                    defaults: {minValue: 0},
                     items: [{ 
                         xtype: 'numberfield',
                         fieldLabel: 'High Freq 1 (Hrs)',
@@ -358,11 +364,15 @@ Ext.define('PHT.view.session.Form', {
                         items: [{
                             xtype: 'fieldset',
                             title: 'Inner Loop',
+                            defaults: {minValue: 0},
+                            // first three items are identical to 
+                            // seperation, repeats, interval
                             items: [{
                                 xtype: 'numberfield',
                                 name: 'inner_repeats',
                                 fieldLabel: 'Repeats',
                                 readOnly: true,
+                                fieldCls: "x-pht-formfield-readonly",
                             },{    
                                 xtype: 'combo',
                                 name: 'inner_separation',
@@ -372,11 +382,13 @@ Ext.define('PHT.view.session.Form', {
                                 valueField: 'separation',
                                 displayField: 'separation',
                                 readOnly: true,
+                                fieldCls: "x-pht-formfield-readonly",
                             },{    
                                 xtype: 'numberfield',
                                 name: 'inner_interval',
                                 fieldLabel: 'Repeats',
                                 readOnly: true,
+                                fieldCls: "x-pht-formfield-readonly",
                             },{    
                                 xtype: 'numberfield',
                                 xtype: 'numberfield',
@@ -400,6 +412,7 @@ Ext.define('PHT.view.session.Form', {
                         items: [{
                             xtype: 'fieldset',
                             title: 'Outer Loop',
+                            defaults: {minValue: 0},
                             items: [{
                                 xtype: 'numberfield',
                                 name: 'outer_repeats',
@@ -444,6 +457,9 @@ Ext.define('PHT.view.session.Form', {
                 }]    
             },{
                 title: 'Original PST Values',
+                defaults: {
+                    fieldCls: "x-pht-formfield-readonly",
+                },    
                 items: [{
                     xtype: 'textfield',
                     fieldLabel: 'PST Min LST',
