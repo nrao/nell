@@ -192,7 +192,15 @@ def user_info(request):
     pst   = PstInterface()
     person_id = int(request.POST.get('person_id') if request.method == 'POST' \
                 else request.GET.get('person_id'))
-    return HttpResponse(json.dumps({"success" : "ok", "info" : pst.getUserInfo(person_id)})
+    info = pst.getUserInfo(person_id)
+    info['address'] = "%s %s %s, %s %s %s" % (info.get('street1')
+                                            , info.get('street2')
+                                            , info.get('city')
+                                            , info.get('state')
+                                            , info.get('postalCode')
+                                            , info.get('addressCountry')
+                                             )
+    return HttpResponse(json.dumps({"success" : "ok", "info" : info})
                       , content_type = 'application/json')
 
 @login_required
