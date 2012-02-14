@@ -159,6 +159,10 @@ def Absolute2RelativeLST(absolute):
         gbls = 24 + gbls
     return gbls
 
+def Degrees2RelativeTime(degrees):
+    "Return the DateTimeDelta corresponding to the given angle in degrees."
+    return DateTime.TimeDelta(degrees/(360.0/24))
+
 def mjd2gmst(mjd):
     """
     Greenwich Mean Sidereal Time
