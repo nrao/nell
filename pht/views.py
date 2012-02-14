@@ -174,6 +174,47 @@ def session_average_ra_dec(request, *args):
     else:
         return HttpResponseNotFound('<h1>Page not found</h1>')
 
+@login_required
+@admin_only
+def session_calculate_LSTs(request, *args):
+    if request.method == 'POST':
+        # who's getting modified?
+        session_id, = args
+        session     = Session.objects.get(id = session_id)
+ 
+        minLst, maxLst = session.target.calcLSTrange()
+        if minLst is None or maxLst is None:
+            return HttpResponse(json.dumps({"failure" : "failure"})
+                              , content_type = 'application/json')
+        
+        # save calcs to the DB
+        session.target.min_lst = minLst
+        session.target.max_lst = maxLst
+        session.target.save()
+
+        # now use this LST range for the center & width
+        center, width = session.target.calcCenterWidthLST()
+        session.target.center_lst = center
+        session.target.lst_width   = width
+        session.target.save()
+
+        # send back to the serve the result in both float
+        # and string formats
+        data = dict(minLst = minLst
+                  , maxLst = maxLst
+                  , centerLst = center
+                  , lstWidth  = width
+                  , minLstSexagesimel = rad2sexHrs(minLst)
+                  , maxLstSexagesimel = rad2sexHrs(maxLst)
+                  , centerLstSexagesimel = rad2sexHrs(center)
+                  , lstWidthSexagesimel = rad2sexHrs(width)
+                   )
+        return HttpResponse(json.dumps({"success" : "ok"
+                                      , "data" : data})
+                          , content_type = 'application/json')
+    else:
+        return HttpResponseNotFound('<h1>Page not found</h1>')
+
 
 @login_required
 @admin_only

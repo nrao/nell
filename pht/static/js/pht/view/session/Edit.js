@@ -20,6 +20,16 @@ Ext.define('PHT.view.session.Edit', {
             },
         ];
 
+        this.dockedItems = [{
+            xtype: 'toolbar',
+            items: [
+                Ext.create('Ext.button.Button', {
+                    text: 'Calculate LSTs',
+                    action: 'calculateLSTs',
+                }),
+            ]
+        }];
+
         this.callParent(arguments);
         
     },

@@ -215,7 +215,7 @@ Ext.define('PHT.view.session.Form', {
                         xtype: 'textfield',
                     },{
                         fieldLabel: 'LST Width (Hrs)',
-                        name: 'LST Width',
+                        name: 'lst_width',
                         vtype: 'hourField',
                         xtype: 'textfield',
                     }],    

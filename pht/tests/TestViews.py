@@ -428,6 +428,31 @@ class TestViews(TestCase):
         sources = [s.id for s in session.sources.all()]
         self.assertTrue(source_id not in sources)
 
+    def test_session_calculate_LSTs(self):
+
+        session   = Session.objects.all()[0] # get as session
+
+        # setup the ra & dec just like in TestHorizon
+        session.target.elevation_min = None
+        session.target.ra  = deg2rad(20.0)
+        session.target.dec = deg2rad(20.0)
+        session.target.save()
+
+        response = self.client.post('/pht/sessions/%s/calculateLSTs' % session.id)
+        results  = self.eval_response(response.content)
+        self.failUnlessEqual(response.status_code, 200)
+
+        data = {'centerLstSexagesimel': '01:20:00.0'
+              , 'minLstSexagesimel': '18:41:12.0'
+              , 'maxLstSexagesimel': '07:58:48.0'
+              , 'centerLst': 0.34906585039886556
+              , 'minLst': 4.8921598395631136
+              , 'lstWidthSexagesimel': '13:17:35.9'
+              , 'maxLst': 2.0891571684142036
+              , 'lstWidth': 3.4801826360306758}
+              
+        self.assertEqual(data, results['data'])
+
     def test_session_average_ra_dec(self):
         session   = Session.objects.all()[0] # get as session
 

@@ -53,9 +53,37 @@ Ext.define('PHT.controller.Sessions', {
             'proposaledit button[action=sessions]': {
                 click: this.proposalSessions
             },             
+            'sessionedit button[action=calculateLSTs]': {
+                click: this.calculateLSTs
+            },             
         });
 
         this.callParent(arguments);
+    },
+
+    calculateLSTs: function(button) {
+        var win = button.up('window');
+        var form = win.down('form');
+        var session = form.getRecord();
+        var url = '/pht/sessions/' + session.get('id') + '/calculateLSTs';
+
+        // error check
+
+        Ext.Ajax.request({
+           url: url,
+           method: 'POST',
+           success: function(response) {
+               console.log('calculated LSTs!');
+               var json = eval('(' + response.responseText + ')');
+
+               // update our session and form with this result
+               session.set('min_lst', json.data.minLstSexagesimel);
+               session.set('max_lst', json.data.maxLstSexagesimel);
+               session.set('center_lst', json.data.centerLstSexagesimel);
+               session.set('lst_width', json.data.lstWidthSexagesimel);
+               form.loadRecord(session)
+           },
+       });    
     },
 
     setSessionListWindow: function(sessionListWindow) {
