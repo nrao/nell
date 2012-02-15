@@ -215,7 +215,7 @@ Ext.application({
         });
 
         // Validates Hour strings in sexigesimal format
-        var hourFieldTest = /^(([0]?[0-9]|1[0-9]|2[0-3])(:)([0-5][0-9])(:)([0-5][0-9])(.)([0-9]))$/i;
+        var hourFieldTest = /^(24:00:00.0|(([0]?[0-9]|1[0-9]|2[0-3])(:)([0-5][0-9])(:)([0-5][0-9])(.)([0-9])))$/i;
         Ext.apply(Ext.form.field.VTypes, {
             hourField:  function(v) {
 
