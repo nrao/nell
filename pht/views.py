@@ -229,6 +229,23 @@ def users(request):
 
 @login_required
 @admin_only
+def user_info(request):
+    pst   = PstInterface()
+    person_id = int(request.POST.get('person_id') if request.method == 'POST' \
+                else request.GET.get('person_id'))
+    info = pst.getUserInfo(person_id)
+    info['address'] = "%s %s %s, %s %s %s" % (info.get('street1')
+                                            , info.get('street2')
+                                            , info.get('city')
+                                            , info.get('state')
+                                            , info.get('postalCode')
+                                            , info.get('addressCountry')
+                                             )
+    return HttpResponse(json.dumps({"success" : "ok", "info" : info})
+                      , content_type = 'application/json')
+
+@login_required
+@admin_only
 def pis(request):
     authors = [{'id': a.id, 'name': a.getLastFirstName(), 'pcode': a.proposal.pcode}
                for a in Author.objects.all()]

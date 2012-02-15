@@ -65,14 +65,35 @@ class PstInterface(object):
         keys = self.getKeys()
         return [dict(zip(keys, map(self.safeUnicode, row))) for row in self.cursor.fetchall()]
 
+    def fetchoneDict(self):
+        keys = self.getKeys()
+        row  = self.cursor.fetchone()
+        return dict(zip(keys, map(self.safeUnicode, row)))
+
     def getAuthor(self, author_id):
         q = """
             select * from author where author_id = %s
             """ % author_id
         self.cursor.execute(q)
-        keys = self.getKeys()
-        row  = self.cursor.fetchone()
-        return dict(zip(keys, map(self.safeUnicode, row)))
+        return self.fetchoneDict()
+
+    def getUserInfo(self, person_id):
+        q = """
+        select p.lastName, p.firstName, o.formalName as affiliation, pt.personType, e.email, 
+          ph.phone, a.street1, a.street2, a.city, s.state, a.postalCode, c.addressCountry
+        from (((((((person as p 
+          left outer join organization as o on o.organization_id = p.defaultOrganization_id)
+          left outer join email as e on e.person_id = p.person_id and e.defaultEmail = true)
+          left outer join phone as ph on ph.person_id = p.person_id and ph.defaultPhone = true)
+          left outer join address as a on a.person_id = p.person_id and a.defaultAddress = true)
+          left outer join addressState as s on s.addressState_id = a.addressState_id)
+          left outer join addressCountry as c on c.addressCountry_id = a.addressCountry_id)
+          left outer join person_personType as ppt on ppt.person_id = p.person_id)
+          left outer join personType as pt on pt.personType_id = ppt.personType_id
+        where p.person_id = %s limit 1
+            """ % person_id
+        self.cursor.execute(q)
+        return dict([(k, v if v is not None and v != 'None' else '') for k, v in self.fetchoneDict().iteritems()])
 
     def getSrcField(self, field, table):
         q = "select DISTINCT %s from %s order by %s" % (field, table, field)
