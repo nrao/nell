@@ -32,6 +32,7 @@ Ext.define('PHT.controller.Sources', {
         'source.SessionList',
         'source.SessionListWindow',
         'source.Edit',
+        'source.Import',
     ],
 
     init: function() {
@@ -64,6 +65,12 @@ Ext.define('PHT.controller.Sources', {
             'sourceedit button[action=save]': {
                 click: this.updateSource
             },             
+            'proposalsourcelist toolbar button[action=import]': {
+                click: this.importSources
+            },
+            'sourceimport button[action=import]': {
+                click: this.uploadFile
+            },             
         });
 
         this.sessionForms = {};
@@ -73,6 +80,31 @@ Ext.define('PHT.controller.Sources', {
 
     notify: function(data) {
         this.sessionForms[data.session.id] = data;
+    },
+
+    uploadFile: function(button) {
+        console.log('uploadFile'); 
+        //var view = Ext.widget('sourceimport');
+        console.log(button);
+        var win = button.up('window');
+        var form = win.down('form');
+        var f = form.getForm()
+        if(f.isValid()){
+            console.log('submitting');
+            f.submit({
+                url: 'sources/import',
+                waitMsg: 'Uploading your sources man...',
+                success: function(fp, o) {
+                    console.log('success');
+                    msg('Success', 'Processed file "' + o.result.file + '" on the server');
+                }
+            });
+        }   
+    },
+
+    importSources: function(button) {
+        console.log('importSources'); 
+        var view = Ext.widget('sourceimport');
     },
 
     setProposalSourcesWindow: function(proposalSourcesWindow) {

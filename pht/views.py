@@ -244,6 +244,13 @@ def user_info(request):
     return HttpResponse(json.dumps({"success" : "ok", "info" : info})
                       , content_type = 'application/json')
 
+def sources_import(request):
+
+    print "sources_import"
+    print request
+    return HttpResponse(json.dumps({"success" : "ok", "file" : "theFile"})
+                      , content_type = 'application/json')
+
 @login_required
 @admin_only
 def pis(request):

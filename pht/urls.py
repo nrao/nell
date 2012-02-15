@@ -57,4 +57,5 @@ urlpatterns = patterns(''
    , url(r'^source/velocity_types',      source_velocity_types)
    , url(r'^source/conventions',         source_conventions)
    , url(r'^source/reference_frames',    source_reference_frames)
+   , url(r'^sources/import$',            sources_import)
 )

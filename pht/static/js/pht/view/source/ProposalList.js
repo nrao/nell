@@ -44,6 +44,10 @@ Ext.define('PHT.view.source.ProposalList' ,{
                     text: 'Delete Sources',
                     action: 'delete',
                 }),
+                Ext.create('Ext.button.Button', {
+                    text: 'Bulk Import',
+                    action: 'import',
+                }),
             ]
         }];
 
