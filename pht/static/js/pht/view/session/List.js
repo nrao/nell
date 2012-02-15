@@ -36,12 +36,28 @@ Ext.define('PHT.view.session.List' ,{
                 }
             },
         });
+        this.sciCatCombo = Ext.create('Ext.form.field.ComboBox', {
+            name: 'category',
+            store: 'ScienceCategories',
+            queryMode: 'local',
+            displayField: 'category',
+            valueField: 'id',
+            hideLabel: true,
+            emptyText: 'Select a category...',
+            listeners: {
+                select: function(combo, record, index) {
+                    var cat = record[0].get('category');
+                    grid.setScienceCategory(cat);
+                }
+            },
+        });
     
         this.dockedItems = [{
             xtype: 'toolbar',
             items: [
                 this.proposalCombo,
                 this.rcvrCombo,
+                this.sciCatCombo,
                 Ext.create('Ext.button.Button', {
                     text: 'Clear Filters',
                     action: 'clear',
@@ -65,6 +81,7 @@ Ext.define('PHT.view.session.List' ,{
             {header: 'Requested', dataIndex: 'requested_time', flex: 1},
             {header: 'Repeats', dataIndex: 'repeats', flex: 1},
             {header: 'Separation', dataIndex: 'separation', flex: 1},
+            {header: 'Sci. Cat.', dataIndex: 'sci_categories', flex: 1},
             {header: 'Rcvrs', dataIndex: 'receivers', flex: 1},
             {header: 'Interval', dataIndex: 'interval_time', flex: 1},
             {header: 'Constraint', dataIndex: 'constraint_field', flex: 1},
@@ -80,25 +97,35 @@ Ext.define('PHT.view.session.List' ,{
 
     setProposal: function(pcode) {
         var rcvr = this.rcvrCombo.getValue();
-        this.resetFilter(pcode, rcvr);
+        var cat  = this.sciCatCombo.getValue();
+        this.resetFilter(pcode, rcvr, cat);
         this.proposalCombo.setValue(pcode);
     },
 
     setReceiver: function(rcvr) {
         var pcode = this.proposalCombo.getValue();
-        this.resetFilter(pcode, rcvr);
+        var cat   = this.sciCatCombo.getValue();
+        this.resetFilter(pcode, rcvr, cat);
         this.rcvrCombo.setValue(rcvr);
+    },
+
+    setScienceCategory: function(cat) {
+        var pcode = this.proposalCombo.getValue();
+        var rcvr  = this.rcvrCombo.getValue();
+        this.resetFilter(pcode, rcvr, cat);
+        this.sciCatCombo.setValue(cat);
     },
 
     // When ever a new filter parameter is applied, we need to
     // clear the filter, but then *reapply* any other appropriate filters
-    resetFilter: function(pcode, rcvr) {
+    resetFilter: function(pcode, rcvr, cat) {
         var store = this.getStore('Sessions');
         if (store.isFiltered()){
             store.clearFilter();
         }
         this.filterFor(store, 'pcode', pcode);
         this.filterFor(store, 'receivers', rcvr);
+        this.filterFor(store, 'sci_categories', cat);
         store.sync();
     },
 

@@ -4,6 +4,7 @@ Ext.define('PHT.model.Session', {
            , 'pst_session_id'
            , 'pcode'
            , 'name'
+           , 'sci_categories'
            , 'session_type'
            , 'session_type_code'
            , 'weather_type'

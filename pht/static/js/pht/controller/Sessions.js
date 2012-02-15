@@ -122,6 +122,7 @@ Ext.define('PHT.controller.Sessions', {
         var grid = button.up('sessionlist');
         grid.proposalCombo.reset();
         grid.rcvrCombo.reset();
+        grid.sciCatCombo.reset();
     },
 
     createSession: function(button) {

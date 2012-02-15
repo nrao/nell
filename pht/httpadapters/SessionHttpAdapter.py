@@ -43,11 +43,13 @@ class SessionHttpAdapter(object):
         grade = self.session.grade.grade if self.session.grade is not None else None
         include, exclude = self.session.get_lst_string()
         monitoringStart = self.session.monitoring.start_time
+        sci_categories = [sc.category for sc in self.session.proposal.sci_categories.all()]
         
         data = {'id'                      : self.session.id
               , 'name'                    : self.session.name
               , 'pcode'                   : self.session.proposal.pcode
               , 'pst_session_id'          : self.session.pst_session_id
+              , 'sci_categories'          : ', '.join(sci_categories)
               , 'semester'                : semester 
               , 'session_type'            : sessType
               , 'session_type_code'       : sessTypeCode
