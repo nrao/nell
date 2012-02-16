@@ -13,7 +13,7 @@ from tools.database import PstInterface
 import math
 
 
-def handle_uploaded_sources(f):
+def handle_uploaded_sources(f, sessionId):
 
     try:
         # TBF: where to really put the file?
@@ -32,14 +32,17 @@ def sources_import(request):
     "Handles upload of a file containing sources"
     # TBF: not sure that these HttpResponses are correct thing to return
     if request.method == 'POST':
-        if handle_uploaded_sources(request.FILES['photo-path']):
+        sessId = int(request.POST.get('session_id'))
+        if handle_uploaded_sources(request.FILES['file'], sessId):
             return HttpResponse(json.dumps({"success" : "ok"})
                               , content_type = 'application/json')
         else:
+        # error
             return HttpResponse(json.dumps({"success" : False})
                               , content_type = 'application/json')
             
     else:
+        # error
         return HttpResponse(json.dumps({"success" : False})
                           , content_type = 'application/json')
 

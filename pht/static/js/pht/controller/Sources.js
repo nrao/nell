@@ -89,6 +89,9 @@ Ext.define('PHT.controller.Sources', {
         if(f.isValid()){
             f.submit({
                 url: 'sources/import',
+                params: {
+                    session_id: 3,
+                },    
                 waitMsg: 'Uploading your sources man...',
                 success: function(fp, o) {
                     // Major TBF: we don't seem to be returning the right
@@ -102,6 +105,8 @@ Ext.define('PHT.controller.Sources', {
                         Ext.Msg.alert('Failure', 'There was an error uploading the file.');
                     } else {
                         Ext.Msg.alert('Info', 'Your sources have been uploaded.');
+                        win.close()
+                        // TBF: update the proposal source grid 
                     }
                 },
             });
