@@ -83,27 +83,32 @@ Ext.define('PHT.controller.Sources', {
     },
 
     uploadFile: function(button) {
-        console.log('uploadFile'); 
-        //var view = Ext.widget('sourceimport');
-        console.log(button);
         var win = button.up('window');
         var form = win.down('form');
         var f = form.getForm()
         if(f.isValid()){
-            console.log('submitting');
             f.submit({
                 url: 'sources/import',
                 waitMsg: 'Uploading your sources man...',
                 success: function(fp, o) {
-                    console.log('success');
-                    msg('Success', 'Processed file "' + o.result.file + '" on the server');
-                }
+                    // Major TBF: we don't seem to be returning the right
+                    // thing from the server: we ALWAYS get our success
+                    // callback, and when we do, we can't use o.result,
+                    // which *should* be the decoded JSON response.
+                    // So, instead, we have to parse the raw response.
+                    var failureStr = '</span>success<span class="q">"</span></span>: <span class="bool">false</span>'
+                    var response = o.response.responseText
+                    if (response.search(failureStr) != -1) {
+                        Ext.Msg.alert('Failure', 'There was an error uploading the file.');
+                    } else {
+                        Ext.Msg.alert('Info', 'Your sources have been uploaded.');
+                    }
+                },
             });
         }   
     },
 
     importSources: function(button) {
-        console.log('importSources'); 
         var view = Ext.widget('sourceimport');
     },
 
@@ -231,7 +236,11 @@ Ext.define('PHT.controller.Sources', {
            },
            method: 'POST',
            success: function(response) {
+               console.log('average response: ');
+               console.log(response);
                var json = eval('(' + response.responseText + ')');
+               console.log(json);
+
 
                // update our session record with this result
                session.set('ra', json.data.ra_sexagesimel);

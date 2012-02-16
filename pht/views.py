@@ -12,6 +12,37 @@ from httpadapters import *
 from tools.database import PstInterface
 import math
 
+
+def handle_uploaded_sources(f):
+
+    try:
+        # TBF: where to really put the file?
+        destination = open('myname.txt', 'wb+')
+        for chunk in f.chunks():
+            destination.write(chunk)
+        destination.close()
+    except:
+        return False
+    # TBF: validate file
+    # TBF: create sources if file is valid 
+    return True
+
+
+def sources_import(request):
+    "Handles upload of a file containing sources"
+    # TBF: not sure that these HttpResponses are correct thing to return
+    if request.method == 'POST':
+        if handle_uploaded_sources(request.FILES['photo-path']):
+            return HttpResponse(json.dumps({"success" : "ok"})
+                              , content_type = 'application/json')
+        else:
+            return HttpResponse(json.dumps({"success" : False})
+                              , content_type = 'application/json')
+            
+    else:
+        return HttpResponse(json.dumps({"success" : False})
+                          , content_type = 'application/json')
+
 @login_required
 @admin_only
 def root(request):
@@ -216,6 +247,7 @@ def session_calculate_LSTs(request, *args):
         return HttpResponseNotFound('<h1>Page not found</h1>')
 
 
+
 @login_required
 @admin_only
 def users(request):
@@ -244,13 +276,6 @@ def user_info(request):
     return HttpResponse(json.dumps({"success" : "ok", "info" : info})
                       , content_type = 'application/json')
 
-def sources_import(request):
-
-    print "sources_import"
-    print request
-    return HttpResponse(json.dumps({"success" : "ok", "file" : "theFile"})
-                      , content_type = 'application/json')
-
 @login_required
 @admin_only
 def pis(request):
@@ -263,6 +288,8 @@ def pis(request):
 @login_required
 @admin_only
 def proposal_types(request):
+    print "proposal_types: "
+    print request
     return HttpResponse(json.dumps({"success" : "ok"
                                   , 'proposal types' : ProposalType.jsonDictOptions()})
                       , content_type = 'application/json')
