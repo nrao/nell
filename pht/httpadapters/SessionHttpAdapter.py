@@ -18,6 +18,7 @@
 
 from datetime import datetime
 
+from scheduler.models    import Observing_Type
 from pht.models          import *
 from pht.utilities       import *
 from utilities.TimeAgent import *
@@ -36,6 +37,7 @@ class SessionHttpAdapter(object):
     def jsonDict(self, detailed = False):
         sessType = self.session.session_type.type if self.session.session_type is not None else None
         sessTypeCode = self.session.session_type.abbreviation if self.session.session_type is not None else None
+        observingType = self.session.observing_type.type if self.session.observing_type is not None else None
         wthrType = self.session.weather_type.type if self.session.weather_type is not None else None
         semester = self.session.semester.semester if self.session.semester is not None else None
         separation = self.session.separation.separation if self.session.separation is not None else None
@@ -53,6 +55,7 @@ class SessionHttpAdapter(object):
               , 'semester'                : semester 
               , 'session_type'            : sessType
               , 'session_type_code'       : sessTypeCode
+              , 'observing_type'          : observingType
               , 'weather_type'            : wthrType
               , 'separation'              : separation
               , 'grade'                   : grade
@@ -182,6 +185,8 @@ class SessionHttpAdapter(object):
         self.session.separation = sep
         sessionType = SessionType.objects.get(type = data.get('session_type'))
         self.session.session_type = sessionType
+        observingType = Observing_Type.objects.get(type = data.get('observing_type'))
+        self.session.observing_type = observingType
         weatherType = WeatherType.objects.get(type = data.get('weather_type'))
         self.session.weather_type = weatherType
         semester = Semester.objects.get(semester = data.get('semester'))

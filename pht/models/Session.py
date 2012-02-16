@@ -22,6 +22,7 @@
 
 from django.db         import models
 
+from scheduler.models  import Observing_Type
 from Allotment         import Allotment
 from Backend           import Backend
 from Monitoring        import Monitoring
@@ -48,6 +49,7 @@ class Session(models.Model):
     allotment               = models.ForeignKey(Allotment, null = True)
     target                  = models.ForeignKey(Target, null = True)
     session_type            = models.ForeignKey(SessionType, null = True)
+    observing_type          = models.ForeignKey(Observing_Type, null = True)
     weather_type            = models.ForeignKey(WeatherType, null = True)
     semester                = models.ForeignKey(Semester, null = True)
     grade                   = models.ForeignKey(SessionGrade, null = True)

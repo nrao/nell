@@ -20,12 +20,14 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-import unittest
+from django.test         import TestCase
 
 from pht.tools.database import PstImport
 from pht.models         import Proposal
 
-class TestPstImport(unittest.TestCase):
+class TestPstImport(TestCase):
+
+    fixtures = ['scheduler.json']
 
     def setUp(self):
         self.pst = PstImport()

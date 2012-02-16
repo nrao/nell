@@ -7,6 +7,7 @@ Ext.define('PHT.model.Session', {
            , 'sci_categories'
            , 'session_type'
            , 'session_type_code'
+           , 'observing_type'
            , 'weather_type'
            , 'semester'
            , 'grade'

@@ -32,3 +32,11 @@ class Observing_Type(models.Model):
         db_table  = "observing_types"
         app_label = "scheduler"
 
+    def jsonDict(self):
+        return {'id'   : self.id
+              , 'type' : self.type
+               }
+
+    @staticmethod
+    def jsonDictOptions():
+        return [ot.jsonDict() for ot in Observing_Type.objects.all()]

@@ -73,6 +73,7 @@ class TestViews(TestCase):
                   , 'semester' : sess.semester.semester
                   , 'requested_time' : sess.allotment.requested_time
                   , 'session_type' : sess.session_type.type
+                  , 'observing_type' : sess.observing_type.type
                   , 'weather_type' : sess.weather_type.type
                   , 'repeats' : sess.allotment.repeats
                   , 'separation' : sess.separation.separation

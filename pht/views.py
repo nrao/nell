@@ -6,6 +6,7 @@ import simplejson as json
 
 from utilities import *
 from users.decorators import admin_only
+from scheduler.models import *
 from models import *
 from pht.tools.database import PstImport
 from httpadapters import *
@@ -273,6 +274,9 @@ def session_grades(request):
     return HttpResponse(json.dumps({"success" : "ok"
                                   , 'session grades' : SessionGrade.jsonDictOptions()})
                       , content_type = 'application/json')
+
+def session_observing_types(request):
+    return simpleGetAllResponse('observing types', Observing_Type.jsonDictOptions())
 
 def session_types(request):
     return simpleGetAllResponse('session types', SessionType.jsonDictOptions())

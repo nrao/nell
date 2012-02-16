@@ -78,6 +78,7 @@ Ext.define('PHT.view.session.List' ,{
             {header: 'PCODE', dataIndex: 'pcode', width: 100},
             {header: 'Name', dataIndex: 'name', width: 100},
             {header: 'Type', dataIndex: 'session_type_code', flex: 1},
+            {header: 'Obs. Type', dataIndex: 'observing_type', flex: 1},
             {header: 'Requested', dataIndex: 'requested_time', flex: 1},
             {header: 'Repeats', dataIndex: 'repeats', flex: 1},
             {header: 'Separation', dataIndex: 'separation', flex: 1},

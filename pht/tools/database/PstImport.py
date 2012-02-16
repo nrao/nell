@@ -24,8 +24,9 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from PstInterface import PstInterface
-from pht.models   import *
+from PstInterface     import PstInterface
+from pht.models       import *
+from scheduler.models import Observing_Type
 
 class PstImport(PstInterface):
 
@@ -311,8 +312,25 @@ class PstImport(PstInterface):
         session.session_type = session.determineSessionType()
         session.save()
 
+        # Infer the session's observing type
+        self.inferSessionObservingType(session)
+
         return session
     
+    def inferSessionObservingType(self, session):
+        pcode = session.proposal.pcode.lower()
+        if 'vlba' in pcode or 'vlbi' in pcode:
+            session.observing_type = Observing_Type.objects.get(type = 'vlbi')
+        elif len(session.proposal.observing_types.filter(type = 'Pulsar')) > 0:
+            session.observing_type = Observing_Type.objects.get(type = 'pulsar')
+        elif len(session.proposal.observing_types.filter(type = 'Continnum')) > 0:
+            session.observing_type = Observing_Type.objects.get(type = 'continuum')
+        elif len(session.proposal.observing_types.filter(type__icontains = 'radar')) > 0:
+            session.observing_type = Observing_Type.objects.get(type = 'radar')
+        elif len(session.proposal.observing_types.filter(type = 'Spectroscopy')) > 0:
+            session.observing_type = Observing_Type.objects.get(type = 'spectral line')
+        session.save()
+
     def importResources(self, session):
         "Get the front & back ends associated with this session."
 

@@ -62,6 +62,17 @@ Ext.define('PHT.view.session.Form', {
                 labelStyle: 'font-weight:bold',
             },{    
                 xtype: 'combo',
+                name: 'observing_type',
+                fieldLabel: 'Observing Type',
+                store: 'SessionObservingTypes', 
+                queryMode: 'local',
+                displayField: 'type',
+                valueField: 'type',
+                forceSelection: true,
+                allowBlank: false,
+                labelStyle: 'font-weight:bold',
+            },{    
+                xtype: 'combo',
                 name: 'weather_type',
                 fieldLabel: 'Weather Type',
                 store: 'WeatherTypes', // MVC baby!
