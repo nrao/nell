@@ -27,3 +27,4 @@ from Semester                 import Semester
 from Status                   import Status
 from Target                   import Target
 from WeatherType              import WeatherType
+from revision_register        import *
