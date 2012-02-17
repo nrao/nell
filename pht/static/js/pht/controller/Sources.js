@@ -82,36 +82,27 @@ Ext.define('PHT.controller.Sources', {
         this.sessionForms[data.session.id] = data;
     },
 
+
     uploadFile: function(button) {
         var win = button.up('window');
         var form = win.down('form');
         var f = form.getForm()
         if(f.isValid()){
             f.submit({
+                scope: this,
                 url: 'sources/import',
                 params: {
-                    session_id: 3,
+                    session_id: 3, // TBF
                 },    
-                waitMsg: 'Uploading your sources man...',
-                success: function(fp, o) {
-                    // Major TBF: we don't seem to be returning the right
-                    // thing from the server: we ALWAYS get our success
-                    // callback, and when we do, we can't use o.result,
-                    // which *should* be the decoded JSON response.
-                    // So, instead, we have to parse the raw response.
-                    var failureStr = '</span>success<span class="q">"</span></span>: <span class="bool">false</span>'
-                    var response = o.response.responseText
-                    if (response.search(failureStr) != -1) {
-                        Ext.Msg.alert('Failure', 'There was an error uploading the file.');
-                    } else {
-                        Ext.Msg.alert('Info', 'Your sources have been uploaded.');
-                        win.close()
-                        // TBF: update the proposal source grid 
-                    }
+                waitMsg: 'Uploading your sources ...',
+                success: function(fp, action) {
+                    handleSourceUploadResult(action, win);
+                    this.getProposalSourcesStore().load();
                 },
             });
         }   
     },
+
 
     importSources: function(button) {
         var view = Ext.widget('sourceimport');
@@ -263,3 +254,32 @@ Ext.define('PHT.controller.Sources', {
 
 
 });
+
+// Utilities
+
+// Major TBF: we don't seem to be returning the right
+// thing from the server: we ALWAYS get our success
+// callback, and when we do, we can't use o.result,
+// which *should* be the decoded JSON response.
+// So, instead, we have to parse the raw response.
+function handleSourceUploadResult(action, win) {
+    var failureStr = '</span>success<span class="q">"</span></span>: <span class="bool">false</span>';
+    var response = action.response.responseText;
+    var startFailureStr = response.search(failureStr);
+    if (startFailureStr != -1) {
+        var startErrMsg = response.search("errorMsg");
+        var msg = "There was an error uploading your sources (none have been saved)";
+        if (startErrMsg < startFailureStr) {
+            var len = startFailureStr - startErrMsg;
+            var msgDetails = response.substr(startErrMsg, len);
+             msg += ': \n' + msgDetails;
+        } else {
+            msg += '.';
+        }                
+        Ext.Msg.alert('Failure', msg);
+    } else {
+        Ext.Msg.alert('Info', 'Your sources have been uploaded.');
+        win.close()
+    }
+}
+
