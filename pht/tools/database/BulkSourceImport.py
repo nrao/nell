@@ -61,7 +61,7 @@ class BulkSourceImport:
         lines = f.readlines()
         f.close()
         
-        self.importSourcesFromLines(line)
+        return self.importSourcesFromLines(lines)
             
     def importSourcesFromLines(self, lines):
         "Each of the given lines could be imported as a new source."

@@ -10,6 +10,7 @@ from models import *
 from pht.tools.database import PstImport
 from httpadapters import *
 from tools.database import PstInterface
+from tools.database import BulkSourceImport
 import math
 
 
@@ -17,28 +18,35 @@ def handle_uploaded_sources(f, sessionId):
 
     try:
         # TBF: where to really put the file?
-        destination = open('myname.txt', 'wb+')
+        filename = 'myname.txt'
+        destination = open(filename, 'wb+')
         for chunk in f.chunks():
             destination.write(chunk)
         destination.close()
-    except:
-        return False
-    # TBF: validate file
-    # TBF: create sources if file is valid 
-    return True
+    except Exception, e:
+        return (False, str(e))
+    s = Session.objects.get(id = sessionId)
+    # create sources if file is valid 
+    i = BulkSourceImport(filename = filename
+                       , pcode = s.proposal.pcode)
+    return i.importSources()                                    
 
-
+# TBF: login
 def sources_import(request):
     "Handles upload of a file containing sources"
     # TBF: not sure that these HttpResponses are correct thing to return
     if request.method == 'POST':
         sessId = int(request.POST.get('session_id'))
-        if handle_uploaded_sources(request.FILES['file'], sessId):
+        result, err = handle_uploaded_sources(request.FILES['file']
+                                            , sessId)
+        if result:                                    
             return HttpResponse(json.dumps({"success" : "ok"})
                               , content_type = 'application/json')
         else:
-        # error
-            return HttpResponse(json.dumps({"success" : False})
+            print err
+            # error
+            return HttpResponse(json.dumps({"success" : False
+                                          , "errorMsg" : err})
                               , content_type = 'application/json')
             
     else:
