@@ -32,6 +32,7 @@ Ext.define('PHT.controller.Sources', {
         'source.SessionList',
         'source.SessionListWindow',
         'source.Edit',
+        'source.Import',
     ],
 
     init: function() {
@@ -64,6 +65,12 @@ Ext.define('PHT.controller.Sources', {
             'sourceedit button[action=save]': {
                 click: this.updateSource
             },             
+            'proposalsourcelist toolbar button[action=import]': {
+                click: this.importSources
+            },
+            'sourceimport button[action=import]': {
+                click: this.uploadFile
+            },             
         });
 
         this.sessionForms = {};
@@ -73,6 +80,39 @@ Ext.define('PHT.controller.Sources', {
 
     notify: function(data) {
         this.sessionForms[data.session.id] = data;
+    },
+
+
+    uploadFile: function(button) {
+        var win = button.up('window');
+        var form = win.down('form');
+        var f = form.getForm()
+        if(f.isValid()){
+            console.log(f.getValues());
+            f.submit({
+                scope: this,
+                url: 'sources/import',
+                params: {
+                    pcode: win.pcode, 
+                },    
+                waitMsg: 'Uploading your sources ...',
+                success: function(fp, action) {
+                    handleSourceUploadResult(action, win);
+                    this.getProposalSourcesStore().load();
+                },
+            });
+        }   
+    },
+
+
+    importSources: function(button) {
+        var view = Ext.widget('sourceimport');
+        // make sure this window knows who it is importing for
+        var propSrcList = button.up('panel')
+        console.log(propSrcList);
+        var pcode = propSrcList.proposalCombo.getValue();
+        console.log(pcode);
+        view.setProposalCode(pcode);
     },
 
     setProposalSourcesWindow: function(proposalSourcesWindow) {
@@ -199,7 +239,11 @@ Ext.define('PHT.controller.Sources', {
            },
            method: 'POST',
            success: function(response) {
+               console.log('average response: ');
+               console.log(response);
                var json = eval('(' + response.responseText + ')');
+               console.log(json);
+
 
                // update our session record with this result
                session.set('ra', json.data.ra_sexagesimel);
@@ -217,3 +261,32 @@ Ext.define('PHT.controller.Sources', {
 
 
 });
+
+// Utilities
+
+// Major TBF: we don't seem to be returning the right
+// thing from the server: we ALWAYS get our success
+// callback, and when we do, we can't use o.result,
+// which *should* be the decoded JSON response.
+// So, instead, we have to parse the raw response.
+function handleSourceUploadResult(action, win) {
+    var failureStr = '</span>success<span class="q">"</span></span>: <span class="bool">false</span>';
+    var response = action.response.responseText;
+    var startFailureStr = response.search(failureStr);
+    if (startFailureStr != -1) {
+        var startErrMsg = response.search("errorMsg");
+        var msg = "There was an error uploading your sources (none have been saved)";
+        if (startErrMsg < startFailureStr) {
+            var len = startFailureStr - startErrMsg;
+            var msgDetails = response.substr(startErrMsg, len);
+             msg += ': \n' + msgDetails;
+        } else {
+            msg += '.';
+        }                
+        Ext.Msg.alert('Failure', msg);
+    } else {
+        Ext.Msg.alert('Info', 'Your sources have been uploaded.');
+        win.close()
+    }
+}
+

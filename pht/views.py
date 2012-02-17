@@ -11,7 +11,10 @@ from models import *
 from pht.tools.database import PstImport
 from httpadapters import *
 from tools.database import PstInterface
+from tools.database import BulkSourceImport
 import math
+
+
 
 @login_required
 @admin_only
@@ -54,6 +57,7 @@ def tree(request, *args, **kws):
                                    })
                       , content_type = 'application/json')
 
+
 @login_required
 @admin_only
 def import_proposals(request, *args, **kws):
@@ -74,6 +78,47 @@ def import_semester(request, *args, **kws):
             pst.importProposals(semester)
     return HttpResponse(json.dumps({"success" : "ok"})
                       , content_type = 'application/json')
+                                  
+
+@login_required
+@admin_only
+def sources_import(request):
+    "Handles upload of a file containing sources"
+    # TBF: not sure that these HttpResponses are correct thing to return
+    if request.method == 'POST':
+        pcode = request.POST.get('pcode')
+        result, err = handle_uploaded_sources(request.FILES['file']
+                                            , pcode)
+        if result:                                    
+            return HttpResponse(json.dumps({"success" : "ok"})
+                              , content_type = 'application/json')
+        else:
+            #print err
+            # error
+            return HttpResponse(json.dumps({"success" : False
+                                          , "errorMsg" : err})
+                              , content_type = 'application/json')
+            
+    else:
+        # error
+        return HttpResponse(json.dumps({"success" : False})
+                          , content_type = 'application/json')
+
+def handle_uploaded_sources(f, pcode):
+
+    try:
+        # TBF: where to really put the file?
+        filename = 'sourceImport.txt'
+        destination = open(filename, 'wb+')
+        for chunk in f.chunks():
+            destination.write(chunk)
+        destination.close()
+    except Exception, e:
+        return (False, str(e))
+    # create sources if file is valid 
+    i = BulkSourceImport(filename = filename
+                       , pcode = pcode)
+    return i.importSources()  
 
 @login_required
 @admin_only
@@ -217,6 +262,7 @@ def session_calculate_LSTs(request, *args):
         return HttpResponseNotFound('<h1>Page not found</h1>')
 
 
+
 @login_required
 @admin_only
 def users(request):
@@ -257,6 +303,8 @@ def pis(request):
 @login_required
 @admin_only
 def proposal_types(request):
+    print "proposal_types: "
+    print request
     return HttpResponse(json.dumps({"success" : "ok"
                                   , 'proposal types' : ProposalType.jsonDictOptions()})
                       , content_type = 'application/json')
