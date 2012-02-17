@@ -18,6 +18,7 @@ urlpatterns = patterns(''
    , (r'^static/(?P<path>.*)$', 'django.views.static.serve'
     , {'document_root': settings.STATIC_PHT})
    , url(r'^$',                                  root)
+   , url(r'^sources/import$',                    sources_import)
    , url(r'^tree$',                              tree)
    , url(r'^import$',                            import_proposals)
    , url(r'^import/semester$',                   import_semester)
