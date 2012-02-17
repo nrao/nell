@@ -14,45 +14,6 @@ from tools.database import BulkSourceImport
 import math
 
 
-def handle_uploaded_sources(f, sessionId):
-
-    try:
-        # TBF: where to really put the file?
-        filename = 'myname.txt'
-        destination = open(filename, 'wb+')
-        for chunk in f.chunks():
-            destination.write(chunk)
-        destination.close()
-    except Exception, e:
-        return (False, str(e))
-    s = Session.objects.get(id = sessionId)
-    # create sources if file is valid 
-    i = BulkSourceImport(filename = filename
-                       , pcode = s.proposal.pcode)
-    return i.importSources()                                    
-
-# TBF: login
-def sources_import(request):
-    "Handles upload of a file containing sources"
-    # TBF: not sure that these HttpResponses are correct thing to return
-    if request.method == 'POST':
-        sessId = int(request.POST.get('session_id'))
-        result, err = handle_uploaded_sources(request.FILES['file']
-                                            , sessId)
-        if result:                                    
-            return HttpResponse(json.dumps({"success" : "ok"})
-                              , content_type = 'application/json')
-        else:
-            print err
-            # error
-            return HttpResponse(json.dumps({"success" : False
-                                          , "errorMsg" : err})
-                              , content_type = 'application/json')
-            
-    else:
-        # error
-        return HttpResponse(json.dumps({"success" : False})
-                          , content_type = 'application/json')
 
 @login_required
 @admin_only
@@ -95,6 +56,7 @@ def tree(request, *args, **kws):
                                    })
                       , content_type = 'application/json')
 
+
 @login_required
 @admin_only
 def import_proposals(request, *args, **kws):
@@ -115,6 +77,48 @@ def import_semester(request, *args, **kws):
             pst.importProposals(semester)
     return HttpResponse(json.dumps({"success" : "ok"})
                       , content_type = 'application/json')
+                                  
+
+@login_required
+@admin_only
+def sources_import(request):
+    "Handles upload of a file containing sources"
+    # TBF: not sure that these HttpResponses are correct thing to return
+    if request.method == 'POST':
+        sessId = int(request.POST.get('session_id'))
+        result, err = handle_uploaded_sources(request.FILES['file']
+                                            , sessId)
+        if result:                                    
+            return HttpResponse(json.dumps({"success" : "ok"})
+                              , content_type = 'application/json')
+        else:
+            #print err
+            # error
+            return HttpResponse(json.dumps({"success" : False
+                                          , "errorMsg" : err})
+                              , content_type = 'application/json')
+            
+    else:
+        # error
+        return HttpResponse(json.dumps({"success" : False})
+                          , content_type = 'application/json')
+
+def handle_uploaded_sources(f, sessionId):
+
+    try:
+        # TBF: where to really put the file?
+        filename = 'myname.txt'
+        destination = open(filename, 'wb+')
+        for chunk in f.chunks():
+            destination.write(chunk)
+        destination.close()
+    except Exception, e:
+        return (False, str(e))
+    s = Session.objects.get(id = sessionId)
+    # create sources if file is valid 
+    i = BulkSourceImport(filename = filename
+                       , pcode = s.proposal.pcode)
+    return i.importSources()  
 
 @login_required
 @admin_only
