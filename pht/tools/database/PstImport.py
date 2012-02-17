@@ -300,7 +300,8 @@ class PstImport(PstInterface):
         flags = SessionFlags()
         flags.save()
         session.flags = flags
-        m = Monitoring()
+        day = SessionSeparation.objects.get(separation = 'day')
+        m = Monitoring(outer_separation = day)
         m.save()
         session.monitoring = m
         
