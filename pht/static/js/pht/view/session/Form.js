@@ -101,7 +101,7 @@ Ext.define('PHT.view.session.Form', {
                 displayField: 'grade',
                 valueField: 'grade',
                 forceSelection: true,
-                allowBlank: false,
+                allowBlank: true,
             },{
                 xtype: 'numberfield',
                 fieldLabel: 'Requested Time (Hrs)',

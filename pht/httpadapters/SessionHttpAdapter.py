@@ -178,8 +178,10 @@ class SessionHttpAdapter(object):
         proposal = Proposal.objects.get(pcode = pcode)
         self.session.proposal = proposal
 
+
         grade = data.get('grade', '')
-        grade = SessionGrade.objects.get(grade = grade) if grade != '' else None
+        grade = SessionGrade.objects.get(grade = grade) \
+            if grade != '' and grade is not None else None
         self.session.grade = grade
         sep = SessionSeparation.objects.get(separation = data.get('separation'))
         self.session.separation = sep
