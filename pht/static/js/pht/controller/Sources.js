@@ -88,11 +88,12 @@ Ext.define('PHT.controller.Sources', {
         var form = win.down('form');
         var f = form.getForm()
         if(f.isValid()){
+            console.log(f.getValues());
             f.submit({
                 scope: this,
                 url: 'sources/import',
                 params: {
-                    session_id: 3, // TBF
+                    pcode: win.pcode, 
                 },    
                 waitMsg: 'Uploading your sources ...',
                 success: function(fp, action) {
@@ -106,6 +107,12 @@ Ext.define('PHT.controller.Sources', {
 
     importSources: function(button) {
         var view = Ext.widget('sourceimport');
+        // make sure this window knows who it is importing for
+        var propSrcList = button.up('panel')
+        console.log(propSrcList);
+        var pcode = propSrcList.proposalCombo.getValue();
+        console.log(pcode);
+        view.setProposalCode(pcode);
     },
 
     setProposalSourcesWindow: function(proposalSourcesWindow) {

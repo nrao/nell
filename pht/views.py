@@ -85,9 +85,9 @@ def sources_import(request):
     "Handles upload of a file containing sources"
     # TBF: not sure that these HttpResponses are correct thing to return
     if request.method == 'POST':
-        sessId = int(request.POST.get('session_id'))
+        pcode = request.POST.get('pcode')
         result, err = handle_uploaded_sources(request.FILES['file']
-                                            , sessId)
+                                            , pcode)
         if result:                                    
             return HttpResponse(json.dumps({"success" : "ok"})
                               , content_type = 'application/json')
@@ -103,21 +103,20 @@ def sources_import(request):
         return HttpResponse(json.dumps({"success" : False})
                           , content_type = 'application/json')
 
-def handle_uploaded_sources(f, sessionId):
+def handle_uploaded_sources(f, pcode):
 
     try:
         # TBF: where to really put the file?
-        filename = 'myname.txt'
+        filename = 'sourceImport.txt'
         destination = open(filename, 'wb+')
         for chunk in f.chunks():
             destination.write(chunk)
         destination.close()
     except Exception, e:
         return (False, str(e))
-    s = Session.objects.get(id = sessionId)
     # create sources if file is valid 
     i = BulkSourceImport(filename = filename
-                       , pcode = s.proposal.pcode)
+                       , pcode = pcode)
     return i.importSources()  
 
 @login_required
