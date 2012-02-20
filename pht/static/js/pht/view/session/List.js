@@ -2,7 +2,7 @@ Ext.define('PHT.view.session.List' ,{
     extend: 'Ext.grid.Panel',
     alias : 'widget.sessionlist',
     store : 'Sessions', 
-
+    multiSelect: true,
 
     initComponent: function() {
         var grid = this;

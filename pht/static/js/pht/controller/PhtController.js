@@ -5,6 +5,8 @@ Ext.define('PHT.controller.PhtController', {
         this.observers = [];
     },
 
+
+
     editSession: function(grid, record) {
         var view = Ext.widget('sessionedit');
         view.down('form').loadRecord(record);        
@@ -70,4 +72,59 @@ Ext.define('PHT.controller.PhtController', {
         });
     },
 
+    updateRecord: function(button, selectedRecords, store) {
+        var win      = button.up('window'),
+            form     = win.down('form'),
+            record = form.getRecord(),
+            values   = form.getValues();
+
+        // editing one, or multiple records?
+        if (selectedRecords.length <= 1) {
+
+            // don't do anything if this form is actually invalid
+            var f = form.getForm();
+            if (!(f.isValid())) {
+                return;
+            }
+    
+            record.set(values);
+            // Is this a new session?
+            if (record.get('id') == '') {
+                record.save();
+                //var store = this.getSessionsStore();
+                 store.load({
+                    scope   : this,
+                    callback: function(records, operation, success) {
+                        last = store.getById(store.max('id'));
+                        form.loadRecord(last);
+                    }
+                });
+            } else {
+                // set's the form to not dirty again.
+                form.loadRecord(record);
+                //this.getSessionsStore().sync();
+                store.sync();
+            }    
+        } else {
+          
+            // multiple records
+            var dirty_items = form.getForm().getFieldValues(true);
+            // set only those non-blank values that have changed
+            real_items = {}
+            for (var i in dirty_items) {
+                if (values[i] != '') {
+                    real_items[i] = values[i];
+                }
+            }
+            // set these values for each selected record
+            for (i=0; i < selectedRecords.length; i++) {
+                selectedRecords[i].set(real_items);
+            }
+            store.sync();
+            // clean up
+            selectedRecords = [];
+            win.close();
+        }
+    },    
+    
 });
