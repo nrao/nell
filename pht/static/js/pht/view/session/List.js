@@ -68,6 +68,10 @@ Ext.define('PHT.view.session.List' ,{
                     action: 'create',
                 }),
                 Ext.create('Ext.button.Button', {
+                    text: 'Edit Session(s)',
+                    action: 'edit',
+                }),
+                Ext.create('Ext.button.Button', {
                     text: 'Delete Session',
                     action: 'delete',
                 }),

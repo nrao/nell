@@ -38,10 +38,13 @@ Ext.define('PHT.controller.Sessions', {
 
         this.control({
             'sessionlist' : {
-                itemdblclick: this.editSelectedSessions
+                itemdblclick: this.editSession
             },
             'sessionlist toolbar button[action=create]': {
                 click: this.createSession
+            },
+            'sessionlist toolbar button[action=edit]': {
+                click: this.editSelectedSessions
             },
             'sessionlist toolbar button[action=delete]': {
                 click: this.deleteSession
@@ -63,6 +66,7 @@ Ext.define('PHT.controller.Sessions', {
             },             
         });
 
+        this.selectedSessions = [];
         this.callParent(arguments);
     },
 

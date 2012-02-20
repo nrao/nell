@@ -46,10 +46,13 @@ Ext.define('PHT.controller.Sources', {
             },
             // proposal source grid:
             'proposalsourcelist' : {
-                itemdblclick: this.editSelectedSources
+                itemdblclick: this.editSource
             },
             'proposalsourcelist toolbar button[action=create]': {
                 click: this.createSource
+            },
+            'proposalsourcelist toolbar button[action=edit]': {
+                click: this.editSelectedSources
             },
             'proposalsourcelist toolbar button[action=delete]': {
                 click: this.deleteSource
@@ -74,7 +77,7 @@ Ext.define('PHT.controller.Sources', {
         });
 
         this.sessionForms = {};
-
+        this.selectedSources = [];
         this.callParent(arguments);
     },
 
