@@ -452,8 +452,8 @@ Ext.define('PHT.view.session.Form', {
                     
                     xtype: 'textfield',
                     name: 'custom_sequence',
-                    fieldLabel: 'Custom Sequence',
-                    vtype: 'numberList',
+                    fieldLabel: 'Custom Sequence (always start with 1)',
+                    vtype: 'sessMonitoringCustomSeq',
                     width: 500,
                 }],    
             },{
