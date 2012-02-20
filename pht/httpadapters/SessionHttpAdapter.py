@@ -170,6 +170,21 @@ class SessionHttpAdapter(object):
         v = data.get(key, '')
         return sexDeg2rad(v) if v != '' else None
 
+    def getEnum(self, data, dataField, klass, field):
+        """
+        Common code used for grabbing a value from the response,
+        getting the proper enumerated object from the DB (or None)
+        and returning it.
+        """
+        v = data.get(dataField, '')
+        if v is not None and v != '':
+            # would do an objects.get if we could
+            v = klass.objects.extra(where=["%s = '%s'" % (field, v)])
+            assert len(v) == 1 
+            v = v[0]    
+        else:
+            v = None
+        return v
 
     def updateFromPost(self, data):
 
@@ -178,13 +193,15 @@ class SessionHttpAdapter(object):
         proposal = Proposal.objects.get(pcode = pcode)
         self.session.proposal = proposal
 
+        self.session.grade = self.getEnum(data
+                                        , 'grade'
+                                        , SessionGrade
+                                        , 'grade')
+        self.session.separation = self.getEnum(data
+                                            , 'separation'
+                                            , SessionSeparation
+                                            , 'separation')
 
-        grade = data.get('grade', '')
-        grade = SessionGrade.objects.get(grade = grade) \
-            if grade != '' and grade is not None else None
-        self.session.grade = grade
-        sep = SessionSeparation.objects.get(separation = data.get('separation'))
-        self.session.separation = sep
         sessionType = SessionType.objects.get(type = data.get('session_type'))
         self.session.session_type = sessionType
         observingType = Observing_Type.objects.get(type = data.get('observing_type'))
@@ -233,8 +250,11 @@ class SessionHttpAdapter(object):
         self.session.flags.save()
 
         # monitoring
-        sep = SessionSeparation.objects.get(separation = data.get('outer_separation'))
-        self.session.monitoring.outer_separation = sep
+        self.session.monitoring.outer_separation = \
+            self.getEnum(data
+                       , 'outer_separation'
+                       , SessionSeparation
+                       , 'separation')
 
         self.session.monitoring.window_size = self.getInt(data, 'window_size')
         self.session.monitoring.outer_window_size = self.getInt(data, 'outer_window_size')
