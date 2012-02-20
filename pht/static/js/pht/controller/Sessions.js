@@ -46,6 +46,9 @@ Ext.define('PHT.controller.Sessions', {
             'sessionlist toolbar button[action=delete]': {
                 click: this.deleteSession
             },
+            'sessionlist toolbar button[action=duplicate]': {
+                click: this.duplicateSession
+            },
             'sessionlist toolbar button[action=clear]': {
                 click: this.clearFilter
             },
@@ -139,6 +142,15 @@ Ext.define('PHT.controller.Sessions', {
         this.confirmDelete(this.getSessionsStore(),
                       session,
                       'Deleting Session ' + session.get('name')
+        );              
+    },
+
+    duplicateSession: function(button) {
+        var grid = button.up('grid');
+        var session = grid.getSelectionModel().getLastSelected();
+        this.confirmDuplicate(this.getSessionsStore(),
+                      session,
+                      'Duplicating Session ' + session.get('name')
         );              
     },
 

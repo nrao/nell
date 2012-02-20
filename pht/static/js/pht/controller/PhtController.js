@@ -41,4 +41,33 @@ Ext.define('PHT.controller.PhtController', {
             }
         });
     },
+
+    // utilitiy for making sure users are sure they want to reproduce
+    confirmDuplicate: function(store, record, title) {
+       Ext.Msg.show({
+            title: title,
+            msg: 'Are you sure?',
+            buttons: Ext.Msg.YESNO,
+            icon: Ext.Msg.QUESTION,
+            scope: this,
+            fn: function(id) {
+                if (id == 'yes') {
+                    // don't use model.copy because that will cause
+                    // a PUT, instead of a POST. Instead we create a new
+                    // one, then, gasp, copy fields one by one.
+                    // TBF: put this in a copyRecord utility function?
+                    var newRecord = Ext.create(store.model, {});
+                    for (var i=0; i<record.fields.keys.length; i++) {
+                        var field = record.fields.keys[i];
+                        newRecord.set(field, record.get(field));
+                    }
+                    // make sure server gives a new one of these
+                    newRecord.set('id', '');
+                    newRecord.save();
+                    store.load();
+                }
+            }
+        });
+    },
+
 });
