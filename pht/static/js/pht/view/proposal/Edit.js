@@ -129,10 +129,10 @@ Ext.define('PHT.view.proposal.Edit', {
                         name : 'spectral_line',
                         fieldLabel: 'Spectral Line Info',
                         width: 600,
-                        height: 100,
+                        height: 50,
                         allowBlank: true,
-                    {
                     },    
+                    {
                         xtype: 'textarea',
                         name : 'abstract',
                         fieldLabel: 'Abstract',
