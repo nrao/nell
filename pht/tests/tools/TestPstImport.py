@@ -64,8 +64,13 @@ class TestPstImport(TestCase):
     def test_importProposals(self):
         self.pst.importProposals('12A')
         self.assertTrue(len(Proposal.objects.all()) > 0)
-        for p in Proposal.objects.all():
+        ps = Proposal.objects.all()
+        for p in ps: 
             self.assertTrue(len(p.session_set.all()) > 0)
+            # make sure all vlbi/a sessions are fixed
+            if 'vlbi' in p.pcode.lower() or 'vlba' in p.pcode.lower():
+                for s in p.session_set.all():
+                    self.assertEqual('Fixed', s.session_type.type)
             p.delete()
 
     def test_importProposals_12B(self):
