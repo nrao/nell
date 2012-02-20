@@ -131,6 +131,7 @@ Ext.define('PHT.view.proposal.Edit', {
                         width: 600,
                         height: 50,
                         allowBlank: true,
+                        labelStyle: '',
                     },    
                     {
                         xtype: 'textarea',

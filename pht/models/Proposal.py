@@ -48,7 +48,7 @@ class Proposal(models.Model):
     total_time      = models.FloatField()  # Minutes
     title           = models.CharField(max_length = 512)
     abstract        = models.CharField(max_length = 2000)
-    spectral_line   = models.CharField(max_length = 2000)
+    spectral_line   = models.CharField(max_length = 2000, null = True)
     joint_proposal  = models.BooleanField()
 
     class Meta:
