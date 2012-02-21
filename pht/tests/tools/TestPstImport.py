@@ -37,7 +37,7 @@ class TestPstImport(TestCase):
         self.assertTrue(proposal is not None)
         self.assertTrue(len(proposal.sci_categories.all()) > 0)
         self.assertTrue(len(proposal.session_set.all()) > 0)
-        s = proposal.session_set.all()[0]
+        s = proposal.session_set.all().order_by('name')[0]
         self.assertEquals("He_ELD_5G", s.name)
         self.assertTrue(len(proposal.source_set.all()) > 0)
         src = proposal.source_set.all()[0]

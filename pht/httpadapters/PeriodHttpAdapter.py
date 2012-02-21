@@ -62,7 +62,6 @@ class PeriodHttpAdapter(object):
         self.period.save()
 
     def updateFromPost(self, data):
-        print data
 
         # we can change who this period belongs to: sessions
         # are uniquely identified by their 'name (project)' handle
