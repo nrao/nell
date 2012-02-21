@@ -106,6 +106,22 @@ class TestViews(TestCase):
                }
         
                
+        # create a period for this session
+        start = datetime(2011, 1, 1, 12)
+        dur = 2.5
+        self.period = Period(session = sess
+                           , start = start
+                           , duration = dur
+                            )
+        self.period.save()
+        self.period_data = {
+            'session'    : sess.name
+          , 'session_id' : sess.id
+          , 'start_date' : '01/01/2011'
+          , 'start_time' : '12:00'
+          , 'duration'   : dur
+        }
+
     def tearDown(self):
         for p in Proposal.objects.all():
             p.delete()
@@ -359,7 +375,7 @@ class TestViews(TestCase):
         print Source.objects.all()
     """
         
-    # Session CRUD
+    # Source CRUD
     def test_proposal_sources(self):
         url = "/pht/proposals/%s/sources" % self.proposal.pcode
         response = self.client.get(url)
@@ -556,3 +572,66 @@ class TestViews(TestCase):
 
         source.save()
         return source
+
+    # Period CRUD
+    def test_period_get(self):
+
+        response = self.client.get("/pht/periods/%d" % self.period.id)
+        results = self.eval_response(response.content)
+
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertEqual(self.period.session.name, results['session'])
+        self.assertEqual(self.period.session.id, results['session_id'])
+        self.assertEqual(self.period.duration, results['duration'])
+        self.assertEqual('01/01/2011', results['start_date'])
+        self.assertEqual('12:00', results['start_time'])
+
+    def test_period_delete(self):
+        before   = len(Period.objects.all())
+        response = self.client.delete("/pht/periods/%d" % self.period.id)
+        after    = len(Period.objects.all())
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertEqual(before - after, 1)
+
+    def test_period_post(self):
+                   
+        before   = len(Period.objects.all())
+        response = self.client.post("/pht/periods/whatever" 
+                                  , json.dumps(self.period_data)
+                                  , content_type='application/json')
+        results = self.eval_response(response.content)
+
+        self.failUnlessEqual(response.status_code, 200)
+
+        after   = len(Period.objects.all())
+        self.assertEqual(1, after - before)
+
+        fields = ['session', 'session_id', 'duration', 'start_date', 'start_time']
+        for field in fields:
+            self.assertEqual(results.get(field)
+                           , self.period_data.get(field))
+
+    def test_period_put(self):
+
+        # change the current period
+        data = self.period_data.copy()
+        sessId = 1 if data['session_id'] == 2 else 2
+        data['session_id'] = sessId
+        data['duration'] = 3.0
+        data['start_date'] = '01/13/2011'
+        data['start_time'] = '14:15'
+
+        before   = len(Period.objects.all())
+        response = self.client.put("/pht/periods/%s" % self.period.id
+                                 , json.dumps(data)
+                                 , content_type='application/json')
+        after    = len(Period.objects.all())
+        results = self.eval_response(response.content)
+
+        self.failUnlessEqual(response.status_code, 200)
+        pAgain = Period.objects.get(id = self.period.id) # Get fresh instance from db
+        self.assertEqual(pAgain.session.id, sessId)
+        self.assertEqual(pAgain.duration, 3.0)
+        self.assertEqual(pAgain.start, datetime(2011, 1, 13, 14, 15))
+        self.assertEqual(before - after, 0)
+        
