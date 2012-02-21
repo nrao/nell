@@ -4,6 +4,7 @@ from Backend                  import Backend
 from Monitoring               import Monitoring
 from ObservingType            import ObservingType
 from Parameter                import Parameter
+from Period                   import Period
 from Proposal                 import Proposal
 from ProposalType             import ProposalType
 from Receiver                 import Receiver
