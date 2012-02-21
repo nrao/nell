@@ -3,10 +3,12 @@ Ext.define('PHT.controller.Periods', {
    
     models: [
         'Period',
+        'SessionName',
     ],
 
     stores: [
         'Periods',
+        'SessionNames',
     ],
 
     views: [

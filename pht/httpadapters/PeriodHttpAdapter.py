@@ -61,8 +61,10 @@ class PeriodHttpAdapter(object):
     def updateFromPost(self, data):
 
         # we can change who this period belongs to
-        sId = data.get('session_id')
-        session = Session.objects.get(id = sId)
+        name = data.get('session')
+        # TBF: until we enforce session name uniqueness, we can't do this
+        #session = Session.objects.get(name = name)
+        session = Session.objects.filter(name = name).order_by('id')[0]
         self.period.session = session
         
         # the start datetime comes in two pieces

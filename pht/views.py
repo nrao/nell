@@ -153,6 +153,11 @@ def get_options(request, *args, **kws):
         pcodes = [{'id' : p.id, 'pcode' : p.pcode} for p in ps]
         return HttpResponse(json.dumps({"success" : "ok" , 'proposal codes' : pcodes })
                           , content_type = 'application/json')
+    elif mode == "session_names":                      
+        ss = Session.objects.all().order_by('name')
+        sess = [{'id' : s.id, 'session' : s.name} for s in ss]
+        return HttpResponse(json.dumps({"success" : "ok" , 'session names' : sess })
+                          , content_type = 'application/json')
     else:
         return HttpResponse("")
 

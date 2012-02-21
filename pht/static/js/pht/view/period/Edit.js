@@ -14,12 +14,15 @@ Ext.define('PHT.view.period.Edit', {
                 },
                 items: [
                     {
-                        xtype: 'textfield',
+                        xtype: 'combo',
                         name : 'session',
                         fieldLabel: 'Session',
+                        store: 'SessionNames',
                         allowBlank: false,
                         labelStyle: 'font-weight:bold',
-                        readOnly: true,
+                        displayField: 'session',
+                        valueField: 'session',
+                        queryMode: 'local',
                     },{
                         xtype: 'datefield',
                         name: 'start_date',
@@ -37,18 +40,6 @@ Ext.define('PHT.view.period.Edit', {
                         allowBlank: false,
                         labelStyle: 'font-weight:bold',
                     }
-                    /*
-                    },{
-                        xtype: 'combo',
-                        name: 'pcode',
-                        fieldLabel: 'PCODE',
-                        store : 'ProposalCodes',
-                        queryMode: 'local',
-                        displayField: 'pcode',
-                        valueField: 'pcode',
-                        allowBlank: false,
-                        labelStyle: 'font-weight:bold',
-                    */    
                 ]
             },
 
