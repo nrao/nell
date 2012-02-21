@@ -134,7 +134,13 @@ class Session(models.Model):
         type = None
 
         # TBF: i'm sure this algo needs refining.
-        # Use the proposal's observing types to determine
+
+        # First, all vlba or vlbi should be typed Fixed.
+        pcode = self.proposal.pcode.lower()
+        if 'vlba' in pcode or 'vlbi' in pcode:
+            return SessionType.get_type('F')
+
+        # Otherwise, use the proposal's observing types to determine
         # if this might be Windowed or Fixed.
         radar = ObservingType.objects.get(type = "Radar")
         monitoring = ObservingType.objects.get(type = "Monitoring")
@@ -143,7 +149,7 @@ class Session(models.Model):
         if monitoring in self.proposal.observing_types.all():
             return SessionType.get_type('W') # Windowed
 
-        # It must be some kind of of Open, so use the highest receiver
+        # Well, it must b some kind of of Open, so use the highest receiver
         # to determin it's category.
         highFreq2 = ['MBA', 'W', 'KFPA']
         highFreq1 = ['X', 'Ku', 'Ka', 'Q']

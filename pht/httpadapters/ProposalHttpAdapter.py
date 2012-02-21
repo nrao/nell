@@ -66,6 +66,7 @@ class ProposalHttpAdapter(object):
               , 'total_time'       : self.proposal.total_time
               , 'title'            : self.proposal.title
               , 'abstract'         : self.proposal.abstract
+              , 'spectral_line'    : self.proposal.spectral_line
               , 'joint_proposal'   : self.proposal.joint_proposal
                }
 
@@ -98,6 +99,7 @@ class ProposalHttpAdapter(object):
         self.proposal.total_time      = data.get('total_time', 0.0)
         self.proposal.title           = data.get('title')
         self.proposal.abstract        = data.get('abstract')
+        self.proposal.spectral_line   = data.get('spectral_line')
         self.proposal.joint_proposal  = data.get('joint_proposal') == 'true'
 
         self.proposal.save()

@@ -270,9 +270,20 @@ class PstImport(PstInterface):
                from session
                where proposal_id = %s""" % proposal.pst_proposal_id
         self.cursor.execute(q)
+        # make sure session names are unique within the proposal
+        names = {}
         for r in self.cursor.fetchall():
             sid = int(r[0])
             sess = self.importSession(proposal, sid)
+            if sess.name in names.keys():
+                current = names[sess.name]
+                next = current + 1
+                names[sess.name] = next  
+                sess.name = "%s - %d" % (sess.name, next)
+                sess.save()
+            else:
+                names[sess.name] = 1
+
     
     def importSession(self, proposal, sessId):
         """
@@ -300,7 +311,8 @@ class PstImport(PstInterface):
         flags = SessionFlags()
         flags.save()
         session.flags = flags
-        m = Monitoring()
+        day = SessionSeparation.objects.get(separation = 'day')
+        m = Monitoring(outer_separation = day)
         m.save()
         session.monitoring = m
         

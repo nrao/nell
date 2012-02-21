@@ -10,6 +10,7 @@ from pht.resources import *
 # admin.autodiscover()
 
 authorResource   = AuthorResource()
+periodResource   = PeriodResource()
 proposalResource = ProposalResource()
 sessionResource  = SessionResource()
 sourceResource   = SourceResource()
@@ -50,6 +51,8 @@ urlpatterns = patterns(''
    , url(r'^session/observing/types',    session_observing_types)
    , url(r'^session/types',              session_types)
    , url(r'^session/separations',        session_separations)
+   , url(r'^periods/([^/]+)$',                 login_required(periodResource.requestHandler))
+   , url(r'^periods$',                         login_required(periodResource.requestHandler))
    , url(r'^weather/types',              weather_types)
    , url(r'^semesters',                  semesters)
    , url(r'^receivers',                  receivers)

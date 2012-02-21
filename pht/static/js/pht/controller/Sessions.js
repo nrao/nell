@@ -43,8 +43,14 @@ Ext.define('PHT.controller.Sessions', {
             'sessionlist toolbar button[action=create]': {
                 click: this.createSession
             },
+            'sessionlist toolbar button[action=edit]': {
+                click: this.editSelectedSessions
+            },
             'sessionlist toolbar button[action=delete]': {
                 click: this.deleteSession
+            },
+            'sessionlist toolbar button[action=duplicate]': {
+                click: this.duplicateSession
             },
             'sessionlist toolbar button[action=clear]': {
                 click: this.clearFilter
@@ -60,6 +66,7 @@ Ext.define('PHT.controller.Sessions', {
             },             
         });
 
+        this.selectedSessions = [];
         this.callParent(arguments);
     },
 
@@ -142,34 +149,49 @@ Ext.define('PHT.controller.Sessions', {
         );              
     },
 
+    duplicateSession: function(button) {
+        var grid = button.up('grid');
+        var session = grid.getSelectionModel().getLastSelected();
+        this.confirmDuplicate(this.getSessionsStore(),
+                      session,
+                      'Duplicating Session ' + session.get('name')
+        );              
+    },
+
     updateSession: function(button) {
-        var win      = button.up('window'),
-            form     = win.down('form'),
-            session = form.getRecord(),
-            values   = form.getValues();
+        this.updateRecord(button
+                        , this.selectedSessions
+                        , this.getSessionsStore()
+                         );
+        this.selectedSessions = [];                 
+    },
 
-        // don't do anything if this form is actually invalid
-        var f = form.getForm();
-        if (!(f.isValid())) {
-            return;
-        }
+    editSelectedSessions: function(button) {
+        var grid = button.up('grid');
+        this.selectedSessions = grid.getSelectionModel().getSelection();
 
-        session.set(values);
-        // Is this a new session?
-        if (session.get('id') == '') {
-            session.save();
-            var store = this.getSessionsStore();
-             store.load({
-                scope   : this,
-                callback: function(records, operation, success) {
-                    last = store.getById(store.max('id'));
-                    form.loadRecord(last);
-                }
-            });
+        if (this.selectedSessions.length <= 1) {
+            this.editSession(grid, this.selectedSessions[0]);
         } else {
-            // set's the form to not dirty again.
-            form.loadRecord(session);
-            this.getSessionsStore().sync();
+            var template = Ext.create('PHT.model.Session');
+            var view = Ext.widget('sessionedit');
+            var fields = view.down('form').getForm().getFields();
+            fields.each(function(item, index, length) {
+                var disabledItems = ['pcode',
+                             'thermal_night',
+                                 'rfi_night',
+                             'optical_night',
+                              'transit_flat',
+                                'guaranteed',
+                   'session_teim_calculated',
+                                    ];
+                if (disabledItems.indexOf(item.getName()) > -1) {
+                    item.disable();
+                }
+                item.allowBlank = true;
+            }, this);
+            view.down('form').loadRecord(template);
         }
+    
     },
 });

@@ -51,6 +51,9 @@ Ext.define('PHT.controller.Sources', {
             'proposalsourcelist toolbar button[action=create]': {
                 click: this.createSource
             },
+            'proposalsourcelist toolbar button[action=edit]': {
+                click: this.editSelectedSources
+            },
             'proposalsourcelist toolbar button[action=delete]': {
                 click: this.deleteSource
             },
@@ -74,7 +77,7 @@ Ext.define('PHT.controller.Sources', {
         });
 
         this.sessionForms = {};
-
+        this.selectedSources = [];
         this.callParent(arguments);
     },
 
@@ -172,35 +175,34 @@ Ext.define('PHT.controller.Sources', {
         view.down('form').loadRecord(record);        
     },
 
-    updateSource: function(button) {
-        var win      = button.up('window'),
-            form     = win.down('form'),
-            source = form.getRecord(),
-            values   = form.getValues();
+    editSelectedSources: function(button) {
+        var grid = button.up('grid');
+        this.selectedSources = grid.getSelectionModel().getSelection();
 
-        // don't do anything if this form is actually invalid
-        var f = form.getForm();
-        if (!(f.isValid())) {
-            return;
-        }
-
-        source.set(values);
-        // Is this a new source?
-        // NOTE: using model.ProposalSource since we are only updating from Prop. Src. grid
-        if (source.get('id') == '') {
-            source.save();
-            var store = this.getProposalSourcesStore();
-            store.load({
-                scope   : this,
-                callback: function(records, operation, success) {
-                    var last = store.getById(store.max('id'));
-                    form.loadRecord(last);
-                }
-            });
-            //this.getProposalSourcesStore().insert(0, [source]);
+        if (this.selectedSources.length <= 1) {
+            this.editSource(grid, this.selectedSources[0]);
         } else {
-            this.getProposalSourcesStore().sync();
-        }    
+            var template = Ext.create('PHT.model.ProposalSource');
+            var view = Ext.widget('sourceedit');
+            var fields = view.down('form').getForm().getFields();
+            // what fields don't work with multi edit?
+            fields.each(function(item, index, length) {
+                var disabledItems = ['pcode', 'observed'];
+                if (disabledItems.indexOf(item.getName()) > -1) {
+                    item.disable();
+                }
+                item.allowBlank = true;
+            }, this);
+            view.down('form').loadRecord(template);
+        }
+    },
+
+    updateSource: function(button) {
+        this.updateRecord(button
+                        , this.selectedSources
+                        , this.getProposalSourcesStore()
+                         );
+        this.selectedSources = []      
     },
 
     removeSourceFromSession: function(button) {

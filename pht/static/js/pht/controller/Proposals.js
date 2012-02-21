@@ -87,12 +87,23 @@ Ext.define('PHT.controller.Proposals', {
         grid.titleFilterText.reset();
     },
 
+    // How to respond to click's on the navigation tree?
     editTreeNode: function(view, record, item, index, event) {
-        var item = this.getStore(record.raw.store).getById(record.internalId);
-        if (record.raw.store == 'Proposals') {
-            this.editProposal(view, item);
-        } else if (record.raw.store == 'Sessions') {
-            this.editSession(view, item);
+        // The id is of form type=value, but we could also use
+        // record.raw.store and record.raw.semester/pcode/sessionId
+        // to figure this all out.
+        var parts = record.internalId.split('=');
+        var type = parts[0];
+        var value = parts[1];
+        if (type != 'semester') {
+            if (record.raw.store == 'Proposals') {
+                var item = this.getStore(record.raw.store).getById(value);
+                this.editProposal(view, item);
+            } else if (record.raw.store == 'Sessions') {
+                var id = parseInt(value);
+                var item = this.getStore(record.raw.store).getById(id);
+                this.editSession(view, item);
+            }
         }
     },
 
@@ -208,46 +219,10 @@ Ext.define('PHT.controller.Proposals', {
     },
 
     updateProposal: function(button) {
-        var win      = button.up('window'),
-            form     = win.down('form'),
-            proposal = form.getRecord(),
-            values   = form.getValues();
-
-        if (this.selectedProposals.length <= 1) {
-            // don't do anything if this form is actually invalid
-            var f = form.getForm();
-            if (!(f.isValid())) {
-                return;
-            }
-            proposal.set(values);
-            // Is this a new proposal?
-            if (proposal.get('id') == '') {
-                proposal.save();
-                var store = this.getProposalsStore();
-                store.load({
-                    scope   : this,
-                    callback: function(records, operation, success) {
-                        var last = store.getById(store.max('id'));
-                        form.loadRecord(last);
-                    }
-                });    
-            } else {
-                this.getProposalsStore().sync();
-            }
-        } else {
-            var dirty_items = form.getForm().getFieldValues(true);
-            real_items = {}
-            for (var i in dirty_items) {
-                if (values[i] != '') {
-                    real_items[i] = values[i];
-                }
-            }
-            for (i=0; i < this.selectedProposals.length; i++) {
-                this.selectedProposals[i].set(real_items);
-            }
-            this.getProposalsStore().sync();
-            this.selectedProposals = [];
-            win.close();
-        }
+        this.updateRecord(button
+                        , this.selectedProposals
+                        , this.getProposalsStore()
+                         );
+        this.selectedProposals = [];                  
     },
 });

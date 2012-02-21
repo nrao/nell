@@ -5,6 +5,8 @@ Ext.define('PHT.controller.PhtController', {
         this.observers = [];
     },
 
+
+
     editSession: function(grid, record) {
         var view = Ext.widget('sessionedit');
         view.down('form').loadRecord(record);        
@@ -41,4 +43,88 @@ Ext.define('PHT.controller.PhtController', {
             }
         });
     },
+
+    // utilitiy for making sure users are sure they want to reproduce
+    confirmDuplicate: function(store, record, title) {
+       Ext.Msg.show({
+            title: title,
+            msg: 'Are you sure?',
+            buttons: Ext.Msg.YESNO,
+            icon: Ext.Msg.QUESTION,
+            scope: this,
+            fn: function(id) {
+                if (id == 'yes') {
+                    // don't use model.copy because that will cause
+                    // a PUT, instead of a POST. Instead we create a new
+                    // one, then, gasp, copy fields one by one.
+                    // TBF: put this in a copyRecord utility function?
+                    var newRecord = Ext.create(store.model, {});
+                    for (var i=0; i<record.fields.keys.length; i++) {
+                        var field = record.fields.keys[i];
+                        newRecord.set(field, record.get(field));
+                    }
+                    // make sure server gives a new one of these
+                    newRecord.set('id', '');
+                    newRecord.save();
+                    store.load();
+                }
+            }
+        });
+    },
+
+    updateRecord: function(button, selectedRecords, store) {
+        var win      = button.up('window'),
+            form     = win.down('form'),
+            record = form.getRecord(),
+            values   = form.getValues();
+
+        // editing one, or multiple records?
+        if (selectedRecords.length <= 1) {
+
+            // don't do anything if this form is actually invalid
+            var f = form.getForm();
+            if (!(f.isValid())) {
+                return;
+            }
+    
+            record.set(values);
+            // Is this a new session?
+            if (record.get('id') == '') {
+                record.save();
+                //var store = this.getSessionsStore();
+                 store.load({
+                    scope   : this,
+                    callback: function(records, operation, success) {
+                        last = store.getById(store.max('id'));
+                        form.loadRecord(last);
+                    }
+                });
+            } else {
+                // set's the form to not dirty again.
+                form.loadRecord(record);
+                //this.getSessionsStore().sync();
+                store.sync();
+            }    
+        } else {
+          
+            // multiple records
+            var dirty_items = form.getForm().getFieldValues(true);
+            // set only those non-blank values that have changed
+            real_items = {}
+            for (var i in dirty_items) {
+                if (values[i] != '') {
+                    real_items[i] = values[i];
+                }
+            }
+            // set these values for each selected record
+            for (i=0; i < selectedRecords.length; i++) {
+                selectedRecords[i].set(real_items);
+            }
+            store.sync();
+            // clean up
+            selectedRecords = [];
+            win.close();
+        }
+    },    
+    
 });

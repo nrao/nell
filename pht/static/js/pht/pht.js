@@ -10,6 +10,7 @@ Ext.application({
 
     controllers: ['Proposals'
                 , 'Authors'
+                , 'Periods'
                 , 'Sources'
                 , 'Sessions'
                 ],
@@ -86,6 +87,9 @@ Ext.application({
         var overviewCalendar = Ext.create('PHT.view.overview.Calendar', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
+        var periodListWin = Ext.create('PHT.view.period.ListWindow', {
+            renderTo: viewport.layout.regions.center.getEl(),
+        });
 
         // setup menus
         var importMenu = Ext.create('Ext.menu.Menu', {
@@ -132,6 +136,11 @@ Ext.application({
                 handler: function() {
                     overviewCalendar.show();
                 }},
+                {
+                text: 'Period Explorer',
+                handler: function() {
+                    periodListWin.show();
+                }},
             ]
         });
         var editMenu = Ext.create('Ext.menu.Menu', {
@@ -173,6 +182,7 @@ Ext.application({
         viewport.layout.regions.center.add(proposalSources);
         viewport.layout.regions.center.add(sessionSources);
         viewport.layout.regions.center.add(overviewCalendar);
+        viewport.layout.regions.center.add(periodListWin);
         propListWin.maximize();
         overviewCalendar.maximize();
         overviewCalendar.show();
@@ -198,20 +208,30 @@ Ext.application({
             backendListText: bckListText,
         });
 
-        // Validate comma separated list of numbers
+        // Validate Session's monitoring custome sequence:
+        // comma separated list of numbers > zero, starting with one
         Ext.apply(Ext.form.field.VTypes, {
-            numberList:  function(v) {
+            sessMonitoringCustomSeq:  function(v) {
                 var nums = v.split(",");
                 for (var i=0; i<nums.length; i++) {
-                    if (isNaN(parseInt(nums[i]))) {
+                    var num = parseInt(nums[i]);
+                    // don't allow NaNs or zeros
+                    if (isNaN(num)) {
                         return false;
                     }
+                    if (num == 0) {
+                        return false
+                    }
+                    // make sure first one is one
+                    if (i == 0 & num != 1)  {
+                        return false 
+                    }
                 }
-                // a list of numbers!
+                // a list of numbers > 0!
                 return true;
             },
-            numberListText: 'Must be a comma separated list of numbers',
-            numberListMask: /[\d\,]/i,
+            sessMonitoringCustomSeqText: 'Must be a comma separated list of numbers, starting with 1, and never containing zero.',
+            sessMonitoringCustomSeqMask: /[\d\,]/i,
         });
          
         // Validate Time in HH:MM format

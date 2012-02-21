@@ -101,7 +101,7 @@ Ext.define('PHT.view.session.Form', {
                 displayField: 'grade',
                 valueField: 'grade',
                 forceSelection: true,
-                allowBlank: false,
+                allowBlank: true,
             },{
                 xtype: 'numberfield',
                 fieldLabel: 'Requested Time (Hrs)',
@@ -452,8 +452,8 @@ Ext.define('PHT.view.session.Form', {
                     
                     xtype: 'textfield',
                     name: 'custom_sequence',
-                    fieldLabel: 'Custom Sequence',
-                    vtype: 'numberList',
+                    fieldLabel: 'Custom Sequence (always start with 1)',
+                    vtype: 'sessMonitoringCustomSeq',
                     width: 500,
                 }],    
             },{

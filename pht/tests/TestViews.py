@@ -106,6 +106,23 @@ class TestViews(TestCase):
                }
         
                
+        # create a period for this session
+        start = datetime(2011, 1, 1, 12)
+        dur = 2.5
+        self.period = Period(session = sess
+                           , start = start
+                           , duration = dur
+                            )
+        self.period.save()
+        self.period_data = {
+            'session'    : sess.name
+          , 'handle'     : "%s (%s)" % (sess.name, sess.proposal.pcode)
+          , 'session_id' : sess.id
+          , 'start_date' : '01/01/2011'
+          , 'start_time' : '12:00'
+          , 'duration'   : dur
+        }
+
     def tearDown(self):
         for p in Proposal.objects.all():
             p.delete()
@@ -113,6 +130,51 @@ class TestViews(TestCase):
     def eval_response(self, response_content):
         "Makes sure we can turn the json string returned into a python dict"
         return eval(response_content.replace('false', 'False').replace('true', 'True').replace('null', 'None'))
+
+    def test_tree(self):
+
+        # test top level
+        response = self.client.get("/pht/tree")
+        results = self.eval_response(response.content)
+        self.failUnlessEqual(response.status_code, 200)
+        tree = {"proposals": [{"text": "12A"
+                             , "leaf": False
+                             , "semester" : "12A"
+                             , "id": "semester=12A"
+                             , "store": None}]
+              , "success": "ok"   }
+        self.assertEqual(tree, results)
+
+        # semester level
+        params = {'node' : 'semester=12A'}
+        response = self.client.get("/pht/tree", params)
+        results = self.eval_response(response.content)
+        self.failUnlessEqual(response.status_code, 200)
+        tree = {"proposals": [{"text": "GBT12A-002"
+                             , "pcode": "GBT12A-002"
+                             , "leaf": False
+                             , "id": "pcode=GBT12A-002"
+                             , "store": "Proposals"}]
+              , "success": "ok"   }
+        self.assertEqual(tree, results)
+
+        # proposal level
+        params = {'node' : 'pcode=GBT12A-002'}
+        response = self.client.get("/pht/tree", params)
+        results = self.eval_response(response.content)
+        self.failUnlessEqual(response.status_code, 200)
+        tree = {'proposals': [{'text': 'He_ELD_5G (1)'
+                             , 'leaf': True
+                             , 'sessionId': 1
+                             , 'id': 'sessionId=1'
+                             , 'store': 'Sessions'}
+                           , {'text': 'He_ELD_5G (2)'
+                            , 'leaf': True
+                            , 'sessionId': 2
+                             , 'id': 'sessionId=2'
+                            , 'store': 'Sessions'}]
+              , 'success': 'ok'}
+        self.assertEqual(tree, results)
 
     # Proposal CRUD
     def test_proposals(self):
@@ -314,7 +376,7 @@ class TestViews(TestCase):
         print Source.objects.all()
     """
         
-    # Session CRUD
+    # Source CRUD
     def test_proposal_sources(self):
         url = "/pht/proposals/%s/sources" % self.proposal.pcode
         response = self.client.get(url)
@@ -511,3 +573,72 @@ class TestViews(TestCase):
 
         source.save()
         return source
+
+    # Period CRUD
+    def test_period_get(self):
+
+        response = self.client.get("/pht/periods/%d" % self.period.id)
+        results = self.eval_response(response.content)
+
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertEqual(self.period.session.name, results['session'])
+        self.assertEqual(self.period.session.id, results['session_id'])
+        self.assertEqual(self.period.duration, results['duration'])
+        self.assertEqual('01/01/2011', results['start_date'])
+        self.assertEqual('12:00', results['start_time'])
+
+    def test_period_delete(self):
+        before   = len(Period.objects.all())
+        response = self.client.delete("/pht/periods/%d" % self.period.id)
+        after    = len(Period.objects.all())
+        self.failUnlessEqual(response.status_code, 200)
+        self.assertEqual(before - after, 1)
+
+    def test_period_post(self):
+                   
+        before   = len(Period.objects.all())
+        response = self.client.post("/pht/periods/whatever" 
+                                  , json.dumps(self.period_data)
+                                  , content_type='application/json')
+        results = self.eval_response(response.content)
+
+        self.failUnlessEqual(response.status_code, 200)
+
+        after   = len(Period.objects.all())
+        self.assertEqual(1, after - before)
+
+        # TBF: need to solve session name uniqueness issue
+        #fields = ['session', 'session_id', 'duration', 'start_date', 'start_time']
+        fields = ['session', 'duration', 'start_date', 'start_time']
+        for field in fields:
+            self.assertEqual(results.get(field)
+                           , self.period_data.get(field))
+
+    def test_period_put(self):
+
+        # change the current period
+        data = self.period_data.copy()
+        # TBF: can't do this till we fix the fixture that has the non-unique sess names
+        # change the period's session's handle to the other one
+        #handles = ["%s (%s)" % (s.name, s.proposal.pcode) \
+        #    for s in Session.objects.all().order_by('id')]
+        #handle = handles[0] if handles[0] != self.period_data['handle'] else handles[1]    
+        #data['handle'] = handle
+        data['duration'] = 3.0
+        data['start_date'] = '01/13/2011'
+        data['start_time'] = '14:15'
+
+        before   = len(Period.objects.all())
+        response = self.client.put("/pht/periods/%s" % self.period.id
+                                 , json.dumps(data)
+                                 , content_type='application/json')
+        after    = len(Period.objects.all())
+        results = self.eval_response(response.content)
+
+        self.failUnlessEqual(response.status_code, 200)
+        pAgain = Period.objects.get(id = self.period.id) # Get fresh instance from db
+        #self.assertNotEqual(pAgain.session.id, self.period_data['session_id'])
+        self.assertEqual(pAgain.duration, 3.0)
+        self.assertEqual(pAgain.start, datetime(2011, 1, 13, 14, 15))
+        self.assertEqual(before - after, 0)
+        

@@ -2,7 +2,7 @@ Ext.define('PHT.view.session.List' ,{
     extend: 'Ext.grid.Panel',
     alias : 'widget.sessionlist',
     store : 'Sessions', 
-
+    multiSelect: true,
 
     initComponent: function() {
         var grid = this;
@@ -68,13 +68,22 @@ Ext.define('PHT.view.session.List' ,{
                     action: 'create',
                 }),
                 Ext.create('Ext.button.Button', {
+                    text: 'Edit Session(s)',
+                    action: 'edit',
+                }),
+                Ext.create('Ext.button.Button', {
                     text: 'Delete Session',
                     action: 'delete',
+                }),
+                Ext.create('Ext.button.Button', {
+                    text: 'Duplicate Session',
+                    action: 'duplicate',
                 }),
             ]},
         ];
 
         this.columns = [
+            {header: 'ID', dataIndex: 'id', flex: 1},
             {header: 'PCODE', dataIndex: 'pcode', width: 100},
             {header: 'Name', dataIndex: 'name', width: 100},
             {header: 'Type', dataIndex: 'session_type_code', flex: 1},

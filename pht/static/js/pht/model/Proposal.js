@@ -17,6 +17,7 @@ Ext.define('PHT.model.Proposal', {
            , 'total_time'
            , 'title'
            , 'abstract'
+           , 'spectral_line'
            , 'joint_proposal'
            ], 
     proxy: {

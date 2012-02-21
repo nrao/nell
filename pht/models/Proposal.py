@@ -48,6 +48,7 @@ class Proposal(models.Model):
     total_time      = models.FloatField()  # Minutes
     title           = models.CharField(max_length = 512)
     abstract        = models.CharField(max_length = 2000)
+    spectral_line   = models.CharField(max_length = 2000, null = True)
     joint_proposal  = models.BooleanField()
 
     class Meta:
@@ -64,6 +65,15 @@ class Proposal(models.Model):
             self.save()
         except:
             pass
+
+    @staticmethod
+    def semestersUsed():
+        "Returns only the distinct semesters used by all Proposals"
+        sems = []
+        for p in Proposal.objects.all().order_by('pcode'):
+            if p.semester.semester not in sems:
+                sems.append(p.semester)
+        return sems
 
     @staticmethod
     def createFromSqlResult(result):

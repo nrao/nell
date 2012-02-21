@@ -4,6 +4,7 @@ from Backend                  import Backend
 from Monitoring               import Monitoring
 from ObservingType            import ObservingType
 from Parameter                import Parameter
+from Period                   import Period
 from Proposal                 import Proposal
 from ProposalType             import ProposalType
 from Receiver                 import Receiver
@@ -27,3 +28,4 @@ from Semester                 import Semester
 from Status                   import Status
 from Target                   import Target
 from WeatherType              import WeatherType
+from revision_register        import *
