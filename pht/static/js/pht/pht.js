@@ -83,6 +83,9 @@ Ext.application({
         var sessionSources = Ext.create('PHT.view.source.SessionListWindow', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
+        var overviewCalendar = Ext.create('PHT.view.overview.Calendar', {
+            renderTo: viewport.layout.regions.center.getEl(),
+        });
 
         // setup menus
         var importMenu = Ext.create('Ext.menu.Menu', {
@@ -124,6 +127,11 @@ Ext.application({
                 handler: function() {
                     proposalAuthors.show();
                 }},
+                {
+                text: 'Overview Calendar',
+                handler: function() {
+                    overviewCalendar.show();
+                }},
             ]
         });
         var editMenu = Ext.create('Ext.menu.Menu', {
@@ -164,7 +172,10 @@ Ext.application({
         viewport.layout.regions.center.add(proposalAuthors);
         viewport.layout.regions.center.add(proposalSources);
         viewport.layout.regions.center.add(sessionSources);
+        viewport.layout.regions.center.add(overviewCalendar);
         propListWin.maximize();
+        overviewCalendar.maximize();
+        overviewCalendar.show();
         this.getController('Sources').setProposalSourcesWindow(proposalSources);
         this.getController('Sources').setSessionSourcesWindow(sessionSources);
         this.getController('Authors').setProposalAuthorsWindow(proposalAuthors);
