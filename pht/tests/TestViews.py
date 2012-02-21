@@ -114,6 +114,35 @@ class TestViews(TestCase):
         "Makes sure we can turn the json string returned into a python dict"
         return eval(response_content.replace('false', 'False').replace('true', 'True').replace('null', 'None'))
 
+    def test_tree(self):
+
+
+        response = self.client.get("/pht/tree")
+        results = self.eval_response(response.content)
+        self.failUnlessEqual(response.status_code, 200)
+        tree = {"proposals": [{"text": "GBT12A-002"
+                             , "pcode": "GBT12A-002"
+                             , "leaf": False
+                             , "id": "GBT12A-002"
+                             , "store": "Proposals"}]
+              , "success": "ok"   }
+              
+        self.assertEqual(tree, results)
+
+        response = self.client.get("/pht/tree", {'node' : 'GBT12A-002'})
+        results = self.eval_response(response.content)
+        self.failUnlessEqual(response.status_code, 200)
+        tree = {'proposals': [{'text': 'He_ELD_5G (2)'
+                             , 'leaf': True
+                             , 'id': 2
+                             , 'store': 'Sessions'}
+                           , {'text': 'He_ELD_5G (1)'
+                            , 'leaf': True
+                            , 'id': 1
+                            , 'store': 'Sessions'}]
+              , 'success': 'ok'}
+        self.assertEqual(tree, results)
+
     # Proposal CRUD
     def test_proposals(self):
         response = self.client.get("/pht/proposals")
