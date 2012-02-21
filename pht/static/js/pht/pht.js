@@ -10,6 +10,7 @@ Ext.application({
 
     controllers: ['Proposals'
                 , 'Authors'
+                , 'Periods'
                 , 'Sources'
                 , 'Sessions'
                 ],
@@ -83,6 +84,9 @@ Ext.application({
         var sessionSources = Ext.create('PHT.view.source.SessionListWindow', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
+        var periodListWin = Ext.create('PHT.view.period.ListWindow', {
+            renderTo: viewport.layout.regions.center.getEl(),
+        });
 
         // setup menus
         var importMenu = Ext.create('Ext.menu.Menu', {
@@ -124,6 +128,11 @@ Ext.application({
                 handler: function() {
                     proposalAuthors.show();
                 }},
+                {
+                text: 'Period Explorer',
+                handler: function() {
+                    periodListWin.show();
+                }},
             ]
         });
         var editMenu = Ext.create('Ext.menu.Menu', {
@@ -164,6 +173,7 @@ Ext.application({
         viewport.layout.regions.center.add(proposalAuthors);
         viewport.layout.regions.center.add(proposalSources);
         viewport.layout.regions.center.add(sessionSources);
+        viewport.layout.regions.center.add(periodListWin);
         propListWin.maximize();
         this.getController('Sources').setProposalSourcesWindow(proposalSources);
         this.getController('Sources').setSessionSourcesWindow(sessionSources);
