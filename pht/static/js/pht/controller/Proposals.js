@@ -87,12 +87,23 @@ Ext.define('PHT.controller.Proposals', {
         grid.titleFilterText.reset();
     },
 
+    // How to respond to click's on the navigation tree?
     editTreeNode: function(view, record, item, index, event) {
-        var item = this.getStore(record.raw.store).getById(record.internalId);
-        if (record.raw.store == 'Proposals') {
-            this.editProposal(view, item);
-        } else if (record.raw.store == 'Sessions') {
-            this.editSession(view, item);
+        // The id is of form type=value, but we could also use
+        // record.raw.store and record.raw.semester/pcode/sessionId
+        // to figure this all out.
+        var parts = record.internalId.split('=');
+        var type = parts[0];
+        var value = parts[1];
+        if (type != 'semester') {
+            if (record.raw.store == 'Proposals') {
+                var item = this.getStore(record.raw.store).getById(value);
+                this.editProposal(view, item);
+            } else if (record.raw.store == 'Sessions') {
+                var id = parseInt(value);
+                var item = this.getStore(record.raw.store).getById(id);
+                this.editSession(view, item);
+            }
         }
     },
 

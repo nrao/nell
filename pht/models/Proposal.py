@@ -67,6 +67,15 @@ class Proposal(models.Model):
             pass
 
     @staticmethod
+    def semestersUsed():
+        "Returns only the distinct semesters used by all Proposals"
+        sems = []
+        for p in Proposal.objects.all().order_by('pcode'):
+            if p.semester.semester not in sems:
+                sems.append(p.semester)
+        return sems
+
+    @staticmethod
     def createFromSqlResult(result):
         """
         Creates a new Proposal instance initialized using the result from

@@ -26,29 +26,52 @@ def root(request):
 def tree(request, *args, **kws):
     "Service tailor made for populating an Ext JS 4 Tree Panel"
 
-    # do we want all proposals, or just the sessions for a given proposal?
+    # Where in the tree is this request from? 
     node = request.GET.get('node', None)
     
-    # each node in the tree needs:
+    # Each node in the tree needs:
     # text : what's displayed
     # leaf : whether it's the end of a branch (leaf) or not 
     # id : unique id for the node - when a proposal gets clicked on in the
-    # tree, this is what the value of the node above will be
+    # tree, this is what the value of the node above will be.  Here we've 
+    # designed this id to be of form type=value, where type tells you what
+    # level of the tree you are at.
+    # store : this is used by the client to know where to retrieve
+    # a requested object from.
+    # XXX : we can also stick in whatever extra info we want in there.
+
     js = []
     if node == 'root' or node is None:
+        # We're at the very top of our tree.
+        # Get the Semesters used by proposals in this DB
         ps = Proposal.objects.all().order_by('pcode')
+        sems = [s.semester for s in Proposal.semestersUsed()]
+        js = [{'text' : semester
+             , 'id'   : 'semester=%s' % semester
+             , 'store': None 
+             , 'semester' : semester
+             , 'leaf' : False} for semester in sems]
+    elif 'semester' in node:  
+        # A semester node has been clicked on: 
+        # send back the projects for this semester.
+        sem =  node.split('=')[1] 
+        ps = Proposal.objects.filter(semester__semester = sem).order_by('pcode')
         js = [{'pcode' : p.pcode
-             , 'id'    : p.pcode
+             , 'id'    : "pcode=%s" % p.pcode
              , 'text'  : p.pcode
              , 'leaf'  : False
              , 'store' : 'Proposals'
               } for p in ps]
-    else:
-        pcode = node
+    #else:
+    elif 'pcode' in node:
+        # A project node has been clicked on: 
+        # send back the sessions for this project.
+        pcode = node.split('=')[1] 
         p = Proposal.objects.get(pcode = pcode)
         js = [{ 'text' : "%s (%d)" % (s.name, s.id)
-              , 'id'   : s.id
+              , 'id'   : "sessionId=%d" % s.id
               , 'leaf' : True 
+              , 'sessionId' : s.id
               , 'store' : 'Sessions'
               } for s in p.session_set.all()]
 

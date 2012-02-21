@@ -116,29 +116,45 @@ class TestViews(TestCase):
 
     def test_tree(self):
 
-
+        # test top level
         response = self.client.get("/pht/tree")
+        results = self.eval_response(response.content)
+        self.failUnlessEqual(response.status_code, 200)
+        tree = {"proposals": [{"text": "12A"
+                             , "leaf": False
+                             , "semester" : "12A"
+                             , "id": "semester=12A"
+                             , "store": None}]
+              , "success": "ok"   }
+        self.assertEqual(tree, results)
+
+        # semester level
+        params = {'node' : 'semester=12A'}
+        response = self.client.get("/pht/tree", params)
         results = self.eval_response(response.content)
         self.failUnlessEqual(response.status_code, 200)
         tree = {"proposals": [{"text": "GBT12A-002"
                              , "pcode": "GBT12A-002"
                              , "leaf": False
-                             , "id": "GBT12A-002"
+                             , "id": "pcode=GBT12A-002"
                              , "store": "Proposals"}]
               , "success": "ok"   }
-              
         self.assertEqual(tree, results)
 
-        response = self.client.get("/pht/tree", {'node' : 'GBT12A-002'})
+        # proposal level
+        params = {'node' : 'pcode=GBT12A-002'}
+        response = self.client.get("/pht/tree", params)
         results = self.eval_response(response.content)
         self.failUnlessEqual(response.status_code, 200)
         tree = {'proposals': [{'text': 'He_ELD_5G (2)'
                              , 'leaf': True
-                             , 'id': 2
+                             , 'sessionId': 2
+                             , 'id': 'sessionId=2'
                              , 'store': 'Sessions'}
                            , {'text': 'He_ELD_5G (1)'
                             , 'leaf': True
-                            , 'id': 1
+                            , 'sessionId': 1
+                             , 'id': 'sessionId=1'
                             , 'store': 'Sessions'}]
               , 'success': 'ok'}
         self.assertEqual(tree, results)
