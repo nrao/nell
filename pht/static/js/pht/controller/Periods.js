@@ -64,7 +64,6 @@ Ext.define('PHT.controller.Periods', {
 
 
     createPeriod: function(button) {
-        console.log('create period');
         var period = Ext.create('PHT.model.Period');
         var view = Ext.widget('periodedit');
         view.down('form').loadRecord(period);
@@ -94,6 +93,7 @@ Ext.define('PHT.controller.Periods', {
     
     editPeriod: function(grid, record) {
         var view   = Ext.widget('periodedit');
+        //TBF
         //view.filterPis(record.get('pcode'));
         view.down('form').loadRecord(record);        
     },   
@@ -107,14 +107,7 @@ Ext.define('PHT.controller.Periods', {
         } else {
             var template = Ext.create('PHT.model.Period');
             var view = Ext.widget('periodedit');
-            var fields = view.down('form').getForm().getFields();
-            fields.each(function(item, index, length) {
-                var disabledItems = []; //['pcode', 'pi_id', 'joint_proposal'];
-                if (disabledItems.indexOf(item.getName()) > -1) {
-                    item.disable();
-                }
-                item.allowBlank = true;
-            }, this);
+            // no field need to be disabled
             view.down('form').loadRecord(template);
         }
     },

@@ -6,44 +6,11 @@ Ext.define('PHT.view.period.List' ,{
 
     initComponent: function() {
 
-        /*
-        this.authorsFilterText = Ext.create('Ext.form.field.Text', {
-            name: 'authors',
-            enableKeyEvents: true,
-            emptyText: 'Select Authors...',
-            listeners: {
-                specialkey: function(textField, e, eOpts) {
-                    if (e.getKey() == e.ENTER) {
-                        var values = textField.getValue().toLowerCase().split(';');
-                        var store  = textField.up('proposallist').getStore('Proposals');
-                        for (i=0; i < values.length; i++) {
-                            author = values[i].toLowerCase();
-                            store.filter([{
-                                filterFn: function(item) {
-                                    return item.get('authors').toLowerCase().search(author) > -1;
-                                }
-                            }]);
-                        }
-                    }
-                }
-            },
-        });
-
-        */
-
         this.sessionFilterText = Ext.create('PHT.view.period.FilterText', {
             name: 'sessionFilter',
             emptyText: 'Enter Session (PCODE)...',
             filterField: 'handle',
         });
-
-        /*
-        this.titleFilterText = Ext.create('PHT.view.proposal.FilterText', {
-            name : 'titleFilter',
-            emptyText: 'Enter Title...',
-            filterField: 'title',
-        });
-        */
 
         this.dockedItems = [{
             xtype: 'toolbar',
