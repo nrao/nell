@@ -29,50 +29,46 @@ Ext.define('PHT.view.period.List' ,{
             },
         });
 
-        this.pcodeFilterText = Ext.create('PHT.view.proposal.FilterText', {
-            name: 'pcodeFilter',
-            emptyText: 'Enter PCode...',
-            filterField: 'pcode',
+        */
+
+        this.sessionFilterText = Ext.create('PHT.view.period.FilterText', {
+            name: 'sessionFilter',
+            emptyText: 'Enter Session...',
+            filterField: 'session',
         });
 
+        /*
         this.titleFilterText = Ext.create('PHT.view.proposal.FilterText', {
             name : 'titleFilter',
             emptyText: 'Enter Title...',
             filterField: 'title',
         });
+        */
 
         this.dockedItems = [{
             xtype: 'toolbar',
             items: [
-                this.pcodeFilterText,
-                this.titleFilterText,
-                this.authorsFilterText,
+                this.sessionFilterText,
                 Ext.create('Ext.button.Button', {
                         text: 'Clear Filters',
                         action: 'clear',
                 }),
                 { xtype: 'tbseparator' },
                 Ext.create('Ext.button.Button', {
-                    text: 'Create Proposal',
+                    text: 'Create Period',
                     action: 'create',
                 }),
                 Ext.create('Ext.button.Button', {
-                    text: 'Edit Proposal(s)',
+                    text: 'Edit Period(s)',
                     action: 'edit',
                 }),
                 Ext.create('Ext.button.Button', {
-                    text: 'Delete Proposal',
+                    text: 'Delete Period',
                     action: 'delete',
-                }),
-                { xtype: 'tbseparator' },
-                Ext.create('Ext.button.Button', {
-                    text: 'Import Proposal',
-                    action: 'import',
                 }),
             ]
         }];
         
-        */
 
         this.columns = [
             {header: 'ID', dataIndex: 'id', flex: 1},
