@@ -146,15 +146,15 @@ class TestViews(TestCase):
         response = self.client.get("/pht/tree", params)
         results = self.eval_response(response.content)
         self.failUnlessEqual(response.status_code, 200)
-        tree = {'proposals': [{'text': 'He_ELD_5G (2)'
+        tree = {'proposals': [{'text': 'He_ELD_5G (1)'
                              , 'leaf': True
-                             , 'sessionId': 2
-                             , 'id': 'sessionId=2'
-                             , 'store': 'Sessions'}
-                           , {'text': 'He_ELD_5G (1)'
-                            , 'leaf': True
-                            , 'sessionId': 1
+                             , 'sessionId': 1
                              , 'id': 'sessionId=1'
+                             , 'store': 'Sessions'}
+                           , {'text': 'He_ELD_5G (2)'
+                            , 'leaf': True
+                            , 'sessionId': 2
+                             , 'id': 'sessionId=2'
                             , 'store': 'Sessions'}]
               , 'success': 'ok'}
         self.assertEqual(tree, results)

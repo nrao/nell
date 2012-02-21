@@ -73,7 +73,7 @@ def tree(request, *args, **kws):
               , 'leaf' : True 
               , 'sessionId' : s.id
               , 'store' : 'Sessions'
-              } for s in p.session_set.all()]
+              } for s in p.session_set.all().order_by('id')]
 
     return HttpResponse(json.dumps({"success" : "ok"
                                   , "proposals" : js
