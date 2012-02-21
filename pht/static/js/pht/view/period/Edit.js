@@ -15,13 +15,13 @@ Ext.define('PHT.view.period.Edit', {
                 items: [
                     {
                         xtype: 'combo',
-                        name : 'session',
+                        name : 'handle',
                         fieldLabel: 'Session',
                         store: 'SessionNames',
                         allowBlank: false,
                         labelStyle: 'font-weight:bold',
-                        displayField: 'session',
-                        valueField: 'session',
+                        displayField: 'handle',
+                        valueField: 'handle',
                         queryMode: 'local',
                     },{
                         xtype: 'datefield',

@@ -3,6 +3,8 @@ Ext.define('PHT.model.Period', {
     fields: ['id'
            , 'session'
            , 'session_id'
+           , 'pcode'
+           , 'handle'
            , 'start_date'
            , 'start_time'
            , 'duration'

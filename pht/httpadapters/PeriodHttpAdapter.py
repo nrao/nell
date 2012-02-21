@@ -44,10 +44,13 @@ class PeriodHttpAdapter(object):
         self.period = period
 
     def jsonDict(self):
-
+        handle = "%s (%s)" % (self.period.session.name
+                            , self.period.session.proposal.pcode)
         return {'id'         : self.period.id
               , 'session'    : self.period.session.name
               , 'session_id' : self.period.session.id
+              , 'pcode'      : self.period.session.proposal.pcode
+              , 'handle'     : handle
               , 'start_date' : formatExtDate(self.period.start)
               , 'start_time' : t2str(self.period.start)
               , 'duration'   : self.period.duration
@@ -59,12 +62,15 @@ class PeriodHttpAdapter(object):
         self.period.save()
 
     def updateFromPost(self, data):
+        print data
 
-        # we can change who this period belongs to
-        name = data.get('session')
-        # TBF: until we enforce session name uniqueness, we can't do this
-        #session = Session.objects.get(name = name)
-        session = Session.objects.filter(name = name).order_by('id')[0]
+        # we can change who this period belongs to: sessions
+        # are uniquely identified by their 'name (project)' handle
+        handle = data.get('handle')
+        demarker = handle.rfind('(')
+        name = handle[0:(demarker-1)]
+        pcode = handle[(demarker+1):-1]
+        session = Session.objects.filter(name = name, proposal__pcode = pcode)[0]
         self.period.session = session
         
         # the start datetime comes in two pieces

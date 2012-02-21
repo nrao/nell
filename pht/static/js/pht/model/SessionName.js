@@ -2,6 +2,7 @@ Ext.define('PHT.model.SessionName', {
     extend: 'Ext.data.Model',
     fields: [ 'id',
               'session',
+              'handle',
              ],
     proxy: {
         type: 'ajax',
