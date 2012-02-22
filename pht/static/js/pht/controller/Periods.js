@@ -38,15 +38,6 @@ Ext.define('PHT.controller.Periods', {
             'periodedit button[action=save]': {
                 click: this.updatePeriod
             },            
-            /*
-            'proposalimport button[action=import]': {
-                click: this.importProposal
-            },            
-            'proposalnavigate': {
-                itemclick: this.editTreeNode
-            },
-            */
-            
         });        
 
         this.selectedPeriods = [];
@@ -93,8 +84,6 @@ Ext.define('PHT.controller.Periods', {
     
     editPeriod: function(grid, record) {
         var view   = Ext.widget('periodedit');
-        //TBF
-        //view.filterPis(record.get('pcode'));
         view.down('form').loadRecord(record);        
     },   
 

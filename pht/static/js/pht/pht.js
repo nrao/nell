@@ -234,15 +234,25 @@ Ext.application({
             sessMonitoringCustomSeqMask: /[\d\,]/i,
         });
          
-        // Validate Time in HH:MM format
-        var hoursMinutesTest = /^(([2][0-3])|([0-1][0-9]))(:)([0-5][0-9])$/i;
+        // Validate Time in HH:MM format, on quarter boundaries
+        var hoursMinutesQtrTest = /^(([2][0-3])|([0-1][0-9]))(:)(00|15|30|45)$/i;
         Ext.apply(Ext.form.field.VTypes, {
-            hoursMinutes:  function(v) {
+            hoursMinutesQtr:  function(v) {
 
-                return hoursMinutesTest.test(v);
+                return hoursMinutesQtrTest.test(v);
             },
-            hoursMinutesText: 'Must be a value in Hours, between 0 and 24, in format (HH:MM)',
-            hoursMinutesMask: /[\d\:]/i,
+            hoursMinutesQtrText: 'Must be a value in Hours, between 0 and 24, in format (HH:MM), on quarter boundaries (00,15,30,45)',
+            hoursMinutesQtrMask: /[\d\:]/i,
+        });
+
+        // Validate a time duration in hours (on qrt boundaries)
+        Ext.apply(Ext.form.field.VTypes, {
+            hoursDecimalQtr: function(v) {
+                remainder = v % 0.25
+                epsilon = 1e-5;
+                return (remainder < epsilon);
+            },
+            hoursDecimalQtrText: 'Must be a value in decimal Hours, on quarter boundaries (.0, .25, .5, .75)',
         });
 
         // Validates Hour strings in sexigesimal format

@@ -413,7 +413,7 @@ Ext.define('PHT.view.session.Form', {
                                 xtype: 'textfield',
                                 name: 'start_time',
                                 fieldLabel: 'Start Time',
-                                vtype: 'hoursMinutes',
+                                vtype: 'hoursMinutesQtr',
                             }],
                         }],
                     },{

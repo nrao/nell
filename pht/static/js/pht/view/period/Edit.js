@@ -18,11 +18,10 @@ Ext.define('PHT.view.period.Edit', {
                         name : 'handle',
                         fieldLabel: 'Session',
                         store: 'SessionNames',
-                        allowBlank: false,
-                        labelStyle: 'font-weight:bold',
                         displayField: 'handle',
                         valueField: 'handle',
                         queryMode: 'local',
+                        width: 400,
                     },{
                         xtype: 'datefield',
                         name: 'start_date',
@@ -31,14 +30,14 @@ Ext.define('PHT.view.period.Edit', {
                         xtype: 'textfield',
                         name: 'start_time',
                         fieldLabel: 'Start Time',
-                        vtype: 'hoursMinutes',
+                        vtype: 'hoursMinutesQtr',
                     },{
                         xtype: 'numberfield',
                         name: 'duration',
                         fieldLabel: 'Duration (Hrs)',
-                        min: 0,
-                        allowBlank: false,
-                        labelStyle: 'font-weight:bold',
+                        minValue: 0,
+                        step: 0.25,
+                        vtype: 'hoursDecimalQtr',
                     }
                 ]
             },
