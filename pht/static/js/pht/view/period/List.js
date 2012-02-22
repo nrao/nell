@@ -6,6 +6,9 @@ Ext.define('PHT.view.period.List' ,{
 
     initComponent: function() {
         var grid = this;
+
+        this.util = Ext.create('PHT.view.Util');
+
         this.sessionFilterText = Ext.create('Ext.form.field.Text', {
             name: 'sessionFilter',
             emptyText: 'Enter Session (PCODE)...',
@@ -138,7 +141,7 @@ Ext.define('PHT.view.period.List' ,{
     // success if our value is *anywhere* found in field.
     filterFor: function(store, field, value) {
         if (value != null & value != '') {
-            value = this.escapeRegEx(value);
+            value = this.util.escapeRegEx(value);
             store.filter([{
                 filterFn: function(item) {
                     return item.get(field).search(value) > -1;
@@ -147,17 +150,5 @@ Ext.define('PHT.view.period.List' ,{
             
         }    
     },
-
-    // TBF: we need a utility area to put this stuff in 
-    escapeRegEx: function(str) {
-        // http://kevin.vanzonneveld.net
-        // *     example 1: preg_quote("$40");
-        // *     returns 1: '\$40'
-        // *     example 2: preg_quote("*RRRING* Hello?");
-        // *     returns 2: '\*RRRING\* Hello\?'
-        // *     example 3: preg_quote("\\.+*?[^]$(){}=!<>|:");
-        // *     returns 3: '\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:'
-        return (str+'').replace(/([\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:])/g, "\\$1");
-    },    
 
 });
