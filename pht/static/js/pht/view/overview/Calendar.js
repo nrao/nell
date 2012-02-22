@@ -1,5 +1,6 @@
 Ext.define('PHT.view.overview.Calendar', {
     extend: 'Ext.window.Window',
+    autoScroll: true,
     width: '90%',
     height: '90%',
     layout: 'fit',
@@ -12,7 +13,55 @@ Ext.define('PHT.view.overview.Calendar', {
 
     initComponent: function() {
         var me      = this;
-        var numDays = 45;
+        this.startDateMenu = Ext.create('Ext.menu.DatePicker', { });
+        this.items  = [this.genDrawComponent(45)];
+        var days = Ext.create('Ext.data.Store', {
+            fields: ['day'],
+            data:[
+                {'day' : 7},
+                {'day' : 14},
+                {'day' : 30},
+                {'day' : 45},
+                {'day' : 60},
+                {'day' : 90},
+                ]
+        });
+        this.numDaysCombo  = Ext.create('Ext.form.field.ComboBox', {
+                    fieldLabel: 'Days',
+                    store: days,
+                    queryMode: 'local',
+                    displayField: 'day',
+                    valueField: 'day',
+                    value: '45',
+                    labelAlign: 'right',
+                    labelWidth: 30,
+        });
+        this.dockedItems = [{
+            xtype: 'toolbar',
+            items: [
+                {
+                    text: 'Start Date',
+                    menu: this.startDateMenu 
+                },
+                this.numDaysCombo,
+                {
+                    text: 'Update',
+                    action: 'update',
+                    listeners: {
+                        click: function(button){
+                            me.removeAll(true);
+                            me.add(me.genDrawComponent(me.numDaysCombo.getValue()));
+                            me.doLayout();
+                        }
+                    },
+                },
+            ]
+        }];
+        this.callParent(arguments);
+    },
+
+    genDrawComponent: function(numDays){
+        var me      = this;
         this.px2time = Ext.create('PHT.view.overview.PixelsToTime');
         this.hourPx = this.px2time.hourPx; // # of pixels for an hour
         this.dayPx  = this.px2time.dayPx; // # of pixels for a day
@@ -20,8 +69,7 @@ Ext.define('PHT.view.overview.Calendar', {
         this.height = (numDays + 1) * this.dayPx - this.dayPx;
 
         var drawComponent = Ext.create('Ext.draw.Component', {
-            height: 400,
-            width: 600,
+            autoScroll: true,
             items: [
                 {
                     type: 'path',
@@ -52,25 +100,7 @@ Ext.define('PHT.view.overview.Calendar', {
         this.labelHours(drawComponent);
         this.labelDays(drawComponent, numDays);
         this.insertPeriods(drawComponent);
-        this.items  = [drawComponent];
-        var days = Ext.create('Ext.data.Store', {
-            fields: ['day'],
-            data:
-                {'day' : 1},
-        });
-        this.dockedItems = [{
-            xtype: 'toolbar',
-            items: [
-                Ext.create('Ext.form.field.ComboBox', {
-                    fieldLabel: 'Days',
-                    store: days,
-                    queryMode: 'local',
-                    displayField: 'day',
-                    valueField: 'day'
-                }),
-            ]
-        }];
-        this.callParent(arguments);
+        return drawComponent;
     },
 
     insertPeriods: function(drawComponent) {
@@ -105,15 +135,33 @@ Ext.define('PHT.view.overview.Calendar', {
     },
 
     labelDays: function(drawComponent, numDays) {
-        var start = 20;
-        for (i = 1; i < numDays + 1; i++){
-            drawComponent.items.push({
+        var calDate = new Date(this.startDateMenu.picker.getValue().toUTCString());
+        var start   = 20;
+        var text    = '';
+        var day     = 0;
+        var rowLabel;
+        var month = new Array( "Jan", "Feb", "Mar", "Apr", "May",
+            "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec");
+
+        for (i = 0; i < numDays; i++){
+            day = calDate.getUTCDate();
+            if (day == 1 | i == 0) {
+                text = month[calDate.getUTCMonth()] + " " + day;
+
+            } else {
+                text = day;
+            }
+
+            rowLabel = Ext.create('Ext.draw.Sprite', {
                 type: 'text',
-                text: i,
-                x: 75,
+                'text-anchor': 'end',
+                text: text,
+                x: 90,
                 y: start
             });
+            drawComponent.items.push(rowLabel);
             start += this.dayPx;
+            calDate.setDate(day + 1);
         }
     },
 
@@ -150,6 +198,7 @@ Ext.define('PHT.view.overview.Calendar', {
         }
         return path;
     },
+
     generateQuarterLines: function(numDays) {
         var numCols = 24;
         var start   = 100;
@@ -168,4 +217,8 @@ Ext.define('PHT.view.overview.Calendar', {
         }
         return path;
     },
+
+    close: function() {
+        this.hide();
+    }
 });
