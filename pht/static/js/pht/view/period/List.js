@@ -8,6 +8,7 @@ Ext.define('PHT.view.period.List' ,{
         var grid = this;
 
         this.util = Ext.create('PHT.view.Util');
+        this.timeUtil = Ext.create('PHT.view.TimeUtil');
 
         this.sessionFilterText = Ext.create('Ext.form.field.Text', {
             name: 'sessionFilter',
@@ -111,25 +112,22 @@ Ext.define('PHT.view.period.List' ,{
         if ((startDate != null) & (days != null)) {
             // convert the startDate, days to a time range: need an end date
             var endDate = new Date(startDate);
-            endDate.setDate(endDate.getDate()+days);
+            endDate = this.timeUtil.addDays(days, endDate);
             store.filter([{
-                filterFn: function(item) {
-                     // convert our item's string start and duration to
-                     // a range of date objects
-                     // TBF: start_time!!!
-                     var itemStart = new Date(item.get('start_date'));
-                     // convert fractional hours to int hours & minutes
-                     var hoursFrac = parseFloat(item.get('duration'));
-                     var hours = Math.floor((hoursFrac*60)/60);
-                     if (hours > 0) {
-                         var minutes = (hoursFrac % hours) * 60;
-                     } else {
-                         var minutes = hoursFrac * 60;
-                     }
-                     var itemEnd = new Date(itemStart);
-                     itemEnd.setHours(itemEnd.getHours() + hours);
-                     itemEnd.setMinutes(itemEnd.getMinutes() + minutes);
-                     return (startDate <= itemEnd) & (itemStart <= endDate)
+                filterFn: function(period) {
+                     // TBF: how to avoid creating this every time?
+                     timeUtil = Ext.create('PHT.view.TimeUtil');
+                     // does our time range cover this period's? 
+                     var periodStartStr = period.get('start_date') + ' ' + period.get('start_time');
+                     var periodStart = new Date(periodStartStr); 
+                     var periodEnd = new Date(periodStart);
+                     var hours = parseFloat(period.get('duration'));
+                     var hm = timeUtil.fractionalHours2HrsMinutes(hours);
+                     periodEnd = timeUtil.addHoursMinutes(hm[0], hm[1], periodEnd);
+                     return timeUtil.overlap(periodStart,
+                                                  periodEnd,
+                                                  startDate,
+                                                  endDate)
     
                 }
             }]);        
