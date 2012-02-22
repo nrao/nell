@@ -18,8 +18,6 @@ Ext.define('PHT.view.period.Edit', {
                         name : 'handle',
                         fieldLabel: 'Session',
                         store: 'SessionNames',
-                        //allowBlank: false,
-                        //labelStyle: 'font-weight:bold',
                         displayField: 'handle',
                         valueField: 'handle',
                         queryMode: 'local',
@@ -40,8 +38,6 @@ Ext.define('PHT.view.period.Edit', {
                         minValue: 0,
                         step: 0.25,
                         vtype: 'hoursDecimalQtr',
-                        //allowBlank: false,
-                        //labelStyle: 'font-weight:bold',
                     }
                 ]
             },
