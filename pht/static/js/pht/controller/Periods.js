@@ -13,6 +13,7 @@ Ext.define('PHT.controller.Periods', {
 
     views: [
         'period.Edit',
+        'session.Edit',
         'period.List',
         'period.ListWindow',
     ],
@@ -38,10 +39,30 @@ Ext.define('PHT.controller.Periods', {
             'periodedit button[action=save]': {
                 click: this.updatePeriod
             },            
+            'sessionedit button[action=periods]': {
+                click: this.sessionPeriods
+            },            
         });        
 
         this.selectedPeriods = [];
         this.callParent(arguments);
+    },
+
+    setPeriodsWindow: function(periodsWindow) {
+        this.periodsWindow = periodsWindow;
+    },
+
+    sessionPeriods: function(button) {
+        var win     = button.up('window');
+            form    = win.down('form');
+            session = form.getRecord();
+        var pcode      = session.get('pcode');
+            session_name = session.get('name');
+        var handle = session_name + " (" + pcode + ")";    
+
+        this.periodsWindow.down('periodlist').setHandle(handle);
+        this.periodsWindow.show();
+    
     },
 
     clearFilter: function(button) {

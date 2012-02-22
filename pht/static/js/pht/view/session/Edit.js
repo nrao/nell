@@ -18,6 +18,10 @@ Ext.define('PHT.view.session.Edit', {
                 text: 'Sources',
                 action: 'sources'
             },
+            {
+                text: 'Periods',
+                action: 'periods'
+            },
         ];
 
         this.dockedItems = [{

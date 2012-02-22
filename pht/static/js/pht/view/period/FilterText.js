@@ -8,9 +8,6 @@ Ext.define('PHT.view.period.FilterText', {
                 var store = textField.up('periodlist').getStore('Periods');
                 store.filter([{
                     filterFn: function(item) {
-                        console.log(value); 
-                        console.log(item.get(textField.filterField).toLowerCase());
-                        console.log(item.get(textField.filterField).toLowerCase().search(value));
                         return item.get(textField.filterField).toLowerCase().search(value) > -1;
                     }
                 }]);
