@@ -66,12 +66,8 @@ Ext.define('PHT.controller.Periods', {
     },
 
     clearFilter: function(button) {
-        var store = this.getStore('Periods');
-        if (store.isFiltered()){
-            store.clearFilter()
-        }
         var grid = button.up('periodlist');
-        grid.sessionFilterText.reset();
+        grid.clearFilters();
     },
 
 

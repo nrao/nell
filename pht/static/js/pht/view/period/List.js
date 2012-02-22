@@ -101,6 +101,16 @@ Ext.define('PHT.view.period.List' ,{
         this.resetFilter(handle, startDate, days);
     },
 
+    clearFilters: function() {
+        var store = this.getStore('Periods');
+        if (store.isFiltered()){
+            store.clearFilter()
+        }
+        this.sessionFilterText.reset();
+        this.startDateFilter.reset();
+        this.daysFilter.reset();
+    },
+
     // When ever a new filter parameter is applied, we need to
     // clear the filter, but then *reapply* any other appropriate filters
     resetFilter: function(handle, startDate, days) {
