@@ -6,10 +6,17 @@ Ext.define('PHT.view.period.List' ,{
 
     initComponent: function() {
         var grid = this;
-        this.sessionFilterText = Ext.create('PHT.view.period.FilterText', {
+        this.sessionFilterText = Ext.create('Ext.form.field.Text', {
             name: 'sessionFilter',
             emptyText: 'Enter Session (PCODE)...',
-            filterField: 'handle',
+            enableKeyEvents: true,
+            listeners: {
+                specialkey: function(textField, e, eOpts) {
+                    if (e.getKey() == e.ENTER) {
+                        grid.setHandle(textField.getValue());
+                    }    
+                }        
+            },
         });
 
         this.startDateFilter = Ext.create('Ext.form.field.Date', {
@@ -93,39 +100,37 @@ Ext.define('PHT.view.period.List' ,{
     // When ever a new filter parameter is applied, we need to
     // clear the filter, but then *reapply* any other appropriate filters
     resetFilter: function(handle, startDate, days) {
-        // convert the startDate, days to a time range: need an end date
-        var endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate()+days);
         var store = this.getStore('Periods');
         if (store.isFiltered()){
             store.clearFilter();
         }
-        //this.filterFor(store, 'handle', handle);
-        store.filter('handle', handle);
-        store.filter([{
-            filterFn: function(item) {
-                 console.log(item.get('start_date'));
-                 // convert our item's string start and duration to
-                 // a range of date objects
-                 // TBF: start_time!!!
-                 var itemStart = new Date(item.get('start_date'));
-                 // convert fractional hours to int hours & minutes
-                 var hoursFrac = parseFloat(item.get('duration'));
-                 var hours = Math.floor((hoursFrac*60)/60);
-                 if (hours > 0) {
-                     var minutes = (hoursFrac % hours) * 60;
-                 } else {
-                     var minutes = hoursFrac * 60;
-                 }
-                 var itemEnd = new Date(itemStart);
-                 itemEnd.setHours(itemEnd.getHours() + hours);
-                 itemEnd.setMinutes(itemEnd.getMinutes() + minutes);
-                 //return this.overlap(startDate, endDate, itemStart, itemEnd)
-                 return (startDate <= itemEnd) & (itemStart <= endDate)
-
-            }
-        }]);        
-        //store.filter('start_date', dle);
+        this.filterFor(store, 'handle', handle);
+        if ((startDate != null) & (days != null)) {
+            // convert the startDate, days to a time range: need an end date
+            var endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate()+days);
+            store.filter([{
+                filterFn: function(item) {
+                     // convert our item's string start and duration to
+                     // a range of date objects
+                     // TBF: start_time!!!
+                     var itemStart = new Date(item.get('start_date'));
+                     // convert fractional hours to int hours & minutes
+                     var hoursFrac = parseFloat(item.get('duration'));
+                     var hours = Math.floor((hoursFrac*60)/60);
+                     if (hours > 0) {
+                         var minutes = (hoursFrac % hours) * 60;
+                     } else {
+                         var minutes = hoursFrac * 60;
+                     }
+                     var itemEnd = new Date(itemStart);
+                     itemEnd.setHours(itemEnd.getHours() + hours);
+                     itemEnd.setMinutes(itemEnd.getMinutes() + minutes);
+                     return (startDate <= itemEnd) & (itemStart <= endDate)
+    
+                }
+            }]);        
+        }
         store.sync();
     },
 
@@ -133,7 +138,7 @@ Ext.define('PHT.view.period.List' ,{
     // success if our value is *anywhere* found in field.
     filterFor: function(store, field, value) {
         if (value != null & value != '') {
-            value = escapeRegEx(value);
+            value = this.escapeRegEx(value);
             store.filter([{
                 filterFn: function(item) {
                     return item.get(field).search(value) > -1;
@@ -152,7 +157,6 @@ Ext.define('PHT.view.period.List' ,{
         // *     returns 2: '\*RRRING\* Hello\?'
         // *     example 3: preg_quote("\\.+*?[^]$(){}=!<>|:");
         // *     returns 3: '\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:'
-    
         return (str+'').replace(/([\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:])/g, "\\$1");
     },    
 
