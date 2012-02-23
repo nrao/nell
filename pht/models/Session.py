@@ -42,6 +42,8 @@ from Target            import Target
 from WeatherType       import WeatherType
 
 from pht.utilities import *
+from utilities     import SLATimeAgent as sla
+from utilities     import TimeAgent
 
 class Session(models.Model):
 
@@ -253,6 +255,7 @@ class Session(models.Model):
         # but the subsequent one's aren't separations, but days.
         # so, NOT x days after the last one, but day x.
         dts = genDateTimesFromDays(self.monitoring.start_time, days)
+        dts = self.adjustForLstDrift(dts)
         ps = self.genPeriodsFromDates(dts, self.allotment.period_time)
         return len(ps)    
 
@@ -260,15 +263,46 @@ class Session(models.Model):
         for p in self.period_set.all():
             p.delete()
 
+    def genPeriodsFromDays(self, start, days):
+        "With a start time and a cadence list, we can generate periods."
+        dts = genDateTimesFromDaySeparations(self.monitoring.start_time
+                                           , days)
+        dts = self.adjustForLstDrift(dts)
+        return self.genPeriodsFromDates(dts, self.allotment.period_time)
+
     def genPeriodsFromInnerLoop(self):
         "Uses session montitoring params to generate list of periods"
         days = self.genDaysFromInnerLoop()
         if len(days) > 0:
-            dts = genDateTimesFromDaySeparations(self.monitoring.start_time, days)
-            ps = self.genPeriodsFromDates(dts, self.allotment.period_time)
+            ps = self.genPeriodsFromDays(self.monitoring.start_time, days)
             return len(ps)
         else:
             return 0
+
+    def adjustForLstDrift(self, dts):
+        """
+        Assuming the first datetime is the target LST, adjust all 
+        datetimes to be on the same LST (when they are on different dates.
+        Finally, make sure adjusted dates fall on quarter boundaries.
+        """
+
+        if len(dts) == 0:
+            return []
+
+        # what's the target LST?
+        start = dts[0]
+        lst = sla.Absolute2RelativeLST(start)
+
+        # make sure each datetime stays on this lst
+        adjusted = [start]
+        for dt in dts[1:]:
+            newDt = sla.RelativeLST2AbsoluteTime(lst, dt)
+            if newDt > dt:
+                dt2 = dt - timedelta(days = 1)
+                newDt = sla.RelativeLST2AbsoluteTime(lst, dt2)
+            adjusted.append(TimeAgent.quarter(newDt))
+            
+        return adjusted 
 
     def genDaysFromInnerLoop(self):
         "Uses session montitoring params to generate list of days"
@@ -291,9 +325,7 @@ class Session(models.Model):
         "Uses session montitoring params to generate list of periods"
         days = self.genDaysFromOuterLoop()
         if len(days) > 0:
-            dts = genDateTimesFromDaySeparations(self.monitoring.start_time
-                                               , days)
-            ps = self.genPeriodsFromDates(dts, self.allotment.period_time)
+            ps = self.genPeriodsFromDays(self.monitoring.start_time, days)
             return len(ps)
         else:
             return 0

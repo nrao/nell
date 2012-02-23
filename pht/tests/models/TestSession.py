@@ -22,7 +22,7 @@
 
 import simplejson as json
 from django.test        import TestCase
-from datetime           import datetime
+from datetime           import datetime, timedelta
 from pht.models         import *
 
 class TestSession(TestCase):
@@ -58,8 +58,8 @@ class TestSession(TestCase):
         # test
         self.assertEqual(3, numPs)
         exp = [datetime(2011, 1, 1)
-             , datetime(2011, 1, 4)
-             , datetime(2011, 1, 9)
+             , datetime(2011, 1, 2, 23, 45) # 1/3
+             , datetime(2011, 1, 4, 23, 45) # 1/5
               ]
         for i in range(len(ps)):
             self.assertEqual(exp[i], ps[i].start)
@@ -75,7 +75,7 @@ class TestSession(TestCase):
         # test
         self.assertEqual(2, numPs)
         exp = [datetime(2011, 1, 1)
-             , datetime(2011, 1, 3)
+             , datetime(2011, 1, 2)
               ]
         for i in range(len(ps)):
             self.assertEqual(exp[i], ps[i].start)
@@ -117,9 +117,10 @@ class TestSession(TestCase):
 
         # test
         self.assertEqual(9, r)
+        # watch out for lst drift!
         self.assertEqual(datetime(2011, 1, 1), ps[0].start) 
-        self.assertEqual(datetime(2011, 1, 4), ps[1].start) 
-        self.assertEqual(datetime(2011, 3, 2), ps[len(ps)-1].start) 
+        self.assertEqual(datetime(2011, 1, 3, 23, 45), ps[1].start) #1/4
+        self.assertEqual(datetime(2011, 3, 1, 20), ps[len(ps)-1].start) #3/2
 
     def test_genPeriodsFromInnerLoop(self):
 
@@ -151,13 +152,13 @@ class TestSession(TestCase):
         r = self.session.genPeriodsFromInnerLoop()
         ps = self.session.period_set.all().order_by('start')
 
-        # test
+        # test - check out the LST drift!
         self.assertEqual(5, r)
         exp = [datetime(2011, 1, 1)
-             , datetime(2011, 1, 5)
-             , datetime(2011, 1, 9)
-             , datetime(2011, 1, 13)
-             , datetime(2011, 1, 17)
+             , datetime(2011, 1, 4,  23, 45) # 1/5
+             , datetime(2011, 1, 8,  23, 30) # 1/9
+             , datetime(2011, 1, 12, 23, 15) # 1/13
+             , datetime(2011, 1, 16, 23, 0)  # 1/17
               ]
         for i in range(len(ps)):
             self.assertEqual(exp[i], ps[i].start)
@@ -179,13 +180,13 @@ class TestSession(TestCase):
         r = self.session.genPeriodsFromInnerLoop()
         ps = self.session.period_set.all().order_by('start')
 
-        # test
+        # test - check out the big LST drift!
         self.assertEqual(5, r)
         exp = [datetime(2011, 1, 1)
-             , datetime(2011, 1, 29)
-             , datetime(2011, 2, 26)
-             , datetime(2011, 3, 26)
-             , datetime(2011, 4, 23)
+             , datetime(2011, 1, 28, 22, 15) # 1/29
+             , datetime(2011, 2, 25, 20, 15) # 2/26
+             , datetime(2011, 3, 25, 18, 30) # 3/26
+             , datetime(2011, 4, 22,16, 45) # 4/23
               ]
         for i in range(len(ps)):
             self.assertEqual(exp[i], ps[i].start)
@@ -218,15 +219,51 @@ class TestSession(TestCase):
         # test
         self.assertEqual(3, r)
         exp = [datetime(2011, 1, 1)
-             , datetime(2011, 1, 3)
-             , datetime(2011, 1, 5)
+             , datetime(2011, 1, 2, 23, 45) # 1/3
+             , datetime(2011, 1, 4, 23, 45) # 1/5
               ]
+              
         for i in range(len(ps)):
             self.assertEqual(exp[i], ps[i].start)
             self.assertEqual(dur, ps[i].duration)
         
         # cleanup
         self.session.deletePeriods()
+
+    def test_adjustForLstDrift(self):
+
+        dts = [datetime(2011, 1, 1)
+             , datetime(2011, 1, 3)
+             , datetime(2011, 1, 5)
+              ]
+        newDts = self.session.adjustForLstDrift(dts)
+        self.assertEqual(datetime(2011, 1, 1), newDts[0])
+        self.assertEqual(datetime(2011, 1, 2, 23, 45), newDts[1])
+        self.assertEqual(datetime(2011, 1, 4, 23, 45), newDts[2])
+
+        dt = datetime(2011, 1, 1)
+        dts = [dt + timedelta(days = i) for i in range(60)]
+        newDts = self.session.adjustForLstDrift(dts)
+        # every four days we drift by another 15 minutes
+        self.assertEqual(dts[0], newDts[0])
+        qtr = timedelta(minutes = 15)
+        self.assertEqual(dts[2], newDts[2] + qtr)
+        qtr5 = timedelta(minutes = 15*5)
+        self.assertEqual(dts[20], newDts[20] + qtr5)
+        qtr15 = timedelta(minutes = 15*15)
+        self.assertEqual(dts[57], newDts[57] + qtr15)
+
+        dt = datetime(2011, 1, 16)
+        dts = [dt + timedelta(days = i) for i in range(60)]
+        newDts = self.session.adjustForLstDrift(dts)
+        # every four days we drift by another 15 minutes
+        self.assertEqual(dts[0], newDts[0])
+        qtr = timedelta(minutes = 15)
+        self.assertEqual(dts[2], newDts[2] + qtr)
+        qtr5 = timedelta(minutes = 15*5)
+        self.assertEqual(dts[20], newDts[20] + qtr5)
+        qtr15 = timedelta(minutes = 15*15)
+        self.assertEqual(dts[57], newDts[57] + qtr15)
 
     def test_lsts(self):
         
