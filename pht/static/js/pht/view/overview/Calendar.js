@@ -1,5 +1,6 @@
 Ext.define('PHT.view.overview.Calendar', {
     extend: 'Ext.window.Window',
+    alias: 'widget.overviewcalendar',
     autoScroll: true,
     width: '90%',
     height: '90%',
@@ -14,7 +15,6 @@ Ext.define('PHT.view.overview.Calendar', {
     initComponent: function() {
         var me      = this;
         this.startDateMenu = Ext.create('Ext.menu.DatePicker', { });
-        this.items  = [this.genDrawComponent(45)];
         var days = Ext.create('Ext.data.Store', {
             fields: ['day'],
             data:[
@@ -47,13 +47,6 @@ Ext.define('PHT.view.overview.Calendar', {
                 {
                     text: 'Update',
                     action: 'update',
-                    listeners: {
-                        click: function(button){
-                            me.removeAll(true);
-                            me.add(me.genDrawComponent(me.numDaysCombo.getValue()));
-                            me.doLayout();
-                        }
-                    },
                 },
             ]
         }];
@@ -99,42 +92,12 @@ Ext.define('PHT.view.overview.Calendar', {
         });
         this.labelHours(drawComponent);
         this.labelDays(drawComponent, numDays);
-        this.insertPeriods(drawComponent);
         return drawComponent;
     },
 
-    insertPeriods: function(drawComponent) {
-        // Some test periods for now.
-        var period  = Ext.create('PHT.view.overview.Period');
-        period.setDrawComponent(drawComponent);
-        period.setColor('blue');
-        period.setDay(4);
-        period.setTime(1.75, 4.5);
-        drawComponent.items.push(period);
-
-        period  = Ext.create('PHT.view.overview.Period');
-        period.setDrawComponent(drawComponent);
-        period.setColor('red');
-        period.setDay(8);
-        period.setTime(10.5, 8.5);
-        drawComponent.items.push(period);
-
-        period  = Ext.create('PHT.view.overview.Period');
-        period.setDrawComponent(drawComponent);
-        period.setColor('purple');
-        period.setDay(8);
-        period.setTime(5.0, 6);
-        drawComponent.items.push(period);
-
-        period  = Ext.create('PHT.view.overview.Period');
-        period.setDrawComponent(drawComponent);
-        period.setColor('green');
-        period.setDay(5);
-        period.setTime(20.0, 8.0);
-        drawComponent.items.push(period);
-    },
-
     labelDays: function(drawComponent, numDays) {
+        //  Need to copy the date object from the picker 
+        //  because we'll modify it below.
         var calDate = new Date(this.startDateMenu.picker.getValue().toUTCString());
         var start   = 20;
         var text    = '';

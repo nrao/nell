@@ -8,6 +8,7 @@ Ext.define('PHT.view.overview.Period', {
         var parentConfig = {
             type: 'rect',
             fill: 'red',
+            stroke: 2,
             width: 45,
             height: this.px2time.dayPx,
             opacity: .6,

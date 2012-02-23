@@ -13,6 +13,7 @@ Ext.application({
                 , 'Periods'
                 , 'Sources'
                 , 'Sessions'
+                , 'OverviewCalendar'
                 ],
 
     
@@ -186,6 +187,7 @@ Ext.application({
         propListWin.maximize();
         overviewCalendar.maximize();
         overviewCalendar.show();
+        this.getController('OverviewCalendar').setOverviewCalendar(overviewCalendar);
         this.getController('Sources').setProposalSourcesWindow(proposalSources);
         this.getController('Sources').setSessionSourcesWindow(sessionSources);
         this.getController('Authors').setProposalAuthorsWindow(proposalAuthors);
