@@ -21,7 +21,7 @@
 #       Green Bank, WV 24944-0002 USA
 
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # TBF: use decoraters to gaurd for None?
 
@@ -143,3 +143,12 @@ def extDatetime2Datetime(date, time):
     dtfrmt = "%m/%d/%Y %H:%M:%S"
     return datetime.strptime(dt, dtfrmt)
 
+def genDateTimes(start, days):
+    "Generate a list of DTs from a start and list of days"
+    dts = [start]
+    for i in range(1, len(days)):
+        dt = dts[-1] + timedelta(days = days[i])
+        dts.append(dt)
+    return dts    
+
+    

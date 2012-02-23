@@ -22,11 +22,14 @@
 
 from django.db         import models
 
+from datetime          import datetime, timedelta
+
 from scheduler.models  import Observing_Type
 from Allotment         import Allotment
 from Backend           import Backend
 from Monitoring        import Monitoring
 from ObservingType     import ObservingType
+from Period            import Period
 from Proposal          import Proposal
 from Receiver          import Receiver
 from SessionSeparation import SessionSeparation
@@ -164,7 +167,172 @@ class Session(models.Model):
     
         return type    
 
+    def periodGenerationFrom(self):
+        """
+        Examines the monitor related parameters, and determines
+        if and what kind of periods can be generated.
+        """
+
+        if self.canUseCustomSequence():
+            return "custom_sequence"
+
+        if self.canUseInnerLoop():
+            if self.canUseOuterLoop():
+                return "outer_loop"
+            else:
+                return "inner_loop"
+        else:
+            return None
+
+    def canUseCustomSequence(self):
+        "Does the session have sufficient info for this?"
+        if (self.monitoring is not None) and (self.allotment.period_time is not None):
+            seq = self.monitoring.custom_sequence
+            return (seq is not None) and (seq != '') \
+                and self.allotment.period_time is not None \
+                and self.monitoring.start_time is not None
+        else:
+            return False
+
+    def canUseInnerLoop(self):
+        "Does the session have sufficient info for this?"
+        return self.monitoring is not None \
+            and self.allotment is not None \
+            and self.monitoring.start_time is not None \
+            and self.allotment.repeats is not None \
+            and self.allotment.period_time is not None \
+            and self.separation is not None \
+            and self.interval_time is not None
+    
+    def canUseOuterLoop(self):
+        "Does the session have sufficient info for this?"
+        return self.monitoring is not None \
+            and self.allotment is not None \
+            and self.monitoring.outer_repeats is not None \
+            and self.monitoring.outer_separation is not None \
+            and self.monitoring.outer_interval is not None \
+            and self.allotment.period_time is not None
+
+    def genPeriods(self):
+        "Generate periods, if possible, from monitoring params."
+
+        oldPeriods = self.period_set.all()
+
+        source = self.periodGenerationFrom()
+        if source == "custom_sequence":
+            r = self.genPeriodsFromCustomSequence()
+        elif source == "inner_loop":
+            r = self.genPeriodsFromInnerLoop()
+        elif source == "outer_loop":
+            r = self.genPeriodsFromOuterLoop()
+        else:
+            r = 0
+
+        # if we created any, delete the old ones
+        if r > 0:
+            for p in oldPeriods:
+                p.delete()
+
+        return r    
+
+    def genPeriodsFromCustomSequence(self):
+        """
+        Generate periods from the start time, period length, 
+        and comma separated list of separations (1,30,60).
+        """
+
+        if not self.canUseCustomSequence():
+            return 0 
+
+        days = [int(d.strip()) \
+            for d in self.monitoring.custom_sequence.split(',')]
+
+        # first day must always be 1, and next ones build off subsequents
+        assert days[0] == 1
+        dts = genDateTimes(self.monitoring.start_time, days)
+        ps = self.genPeriodsFromDates(dts, self.allotment.period_time)
+        return len(ps)    
+
+    def deletePeriods(self):
+        for p in self.period_set.all():
+            p.delete()
+
+    def genPeriodsFromInnerLoop(self):
+        "Uses session montitoring params to generate list of periods"
+        days = self.genDaysFromInnerLoop()
+        if len(days) > 0:
+            dts = genDateTimes(self.monitoring.start_time, days)
+            ps = self.genPeriodsFromDates(dts, self.allotment.period_time)
+            return len(ps)
+        else:
+            return 0
+
+    def genDaysFromInnerLoop(self):
+        "Uses session montitoring params to generate list of days"
+        if not self.canUseInnerLoop():
+            return [] 
+
+        # gather what we need
+        start = self.monitoring.start_time 
+        repeats = self.allotment.repeats 
+        duration = self.allotment.period_time 
+        interval = self.interval_time
+        sep = 1 if self.separation.separation == 'day' else 7
+            
+        # make it look like a custom sequence
+        days = [1]
+        for i in range(repeats - 1):
+            days.append(interval*sep)
+        return days
+
+    def genPeriodsFromOuterLoop(self):
+        "Uses session montitoring params to generate list of periods"
+        days = self.genDaysFromOuterLoop()
+        if len(days) > 0:
+            dts = genDateTimes(self.monitoring.start_time, days)
+            ps = self.genPeriodsFromDates(dts, self.allotment.period_time)
+            return len(ps)
+        else:
+            return 0
+
+    def genDaysFromOuterLoop(self):
+        "Uses session montitoring params to generate list of days"
+        if not self.canUseInnerLoop() or not self.canUseOuterLoop():
+            return [] 
+
+        # gather what we need - inner
+        start = self.monitoring.start_time 
+        repeats = self.allotment.repeats 
+        duration = self.allotment.period_time 
+        interval = self.interval_time
+        sep = 1 if self.separation.separation == 'day' else 7
+            
+        # gather what we need - outer
+        outerRepeats = self.monitoring.outer_repeats
+        outerInterval = self.monitoring.outer_interval
+        outerSep = 1 if self.monitoring.outer_separation.separation == 'day' else 7
         
+        # make it look like a custom sequence - list of days:
+        days = [1]
+        for i in range(outerRepeats):
+            for j in range(repeats - 1):
+                days.append(interval*sep)
+            if i < outerRepeats - 1:    
+                days.append(outerInterval*outerSep)    
+        return days        
+
+    def genPeriodsFromDates(self, dts, duration):
+        "Generates list of periods based of given start times and duration."
+        ps = []
+        for dt in dts:
+            p = Period(session = self
+                     , start = dt
+                     , duration = duration 
+                      )
+            p.save()
+            ps.append(p)
+        return ps    
+
     @staticmethod
     def createFromSqlResult(proposal_id, result):
         """
