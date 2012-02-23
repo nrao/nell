@@ -44,6 +44,7 @@ urlpatterns = patterns(''
    , url(r'^sessions/([^/]+)/sources$',          session_sources)
    , url(r'^sessions/([^/]+)/averageradec$',     session_average_ra_dec)
    , url(r'^sessions/([^/]+)/calculateLSTs$',    session_calculate_LSTs)
+   , url(r'^sessions/([^/]+)/generatePeriods$',  session_generate_periods)
    , url(r'^sessions/([^/]+)$',          login_required(sessionResource.requestHandler))
    , url(r'^sessions$',                  login_required(sessionResource.requestHandler))
    , url(r'^options$',                   get_options)

@@ -216,7 +216,7 @@ class Session(models.Model):
     def genPeriods(self):
         "Generate periods, if possible, from monitoring params."
 
-        oldPeriods = self.period_set.all()
+        oldPeriods = [p.id for p in self.period_set.all()]
 
         source = self.periodGenerationFrom()
         if source == "custom_sequence":
@@ -230,7 +230,8 @@ class Session(models.Model):
 
         # if we created any, delete the old ones
         if r > 0:
-            for p in oldPeriods:
+            for pid in oldPeriods:
+                p = Period.objects.get(id = pid)
                 p.delete()
 
         return r    

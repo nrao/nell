@@ -252,6 +252,39 @@ def session_average_ra_dec(request, *args):
 
 @login_required
 @admin_only
+def session_generate_periods(request, *args):
+    if request.method == 'POST':
+        # who's getting modified?
+        session_id, = args
+        session     = Session.objects.get(id = session_id)
+        
+        periodSource = session.periodGenerationFrom()
+        if periodSource is None:
+            msg = """
+            You have not specified enough information
+            in this session to generate Periods.
+            """
+            return HttpResponse(json.dumps({"success" : False 
+                                          , "message" : msg})
+                              , content_type = 'application/json')
+        
+        # looks like we can safely proceed 
+        numPs = session.genPeriods()
+        msg = """
+        Pre-existing periods have been removed, 
+        and %d new Periods were generated using type: %s
+        """ % (numPs, periodSource)
+        session     = Session.objects.get(id = session_id)
+
+        return HttpResponse(json.dumps({"success" : "ok"
+                                      , "message" : msg})
+                          , content_type = 'application/json')
+    else:
+        return HttpResponseNotFound('<h1>Page not found</h1>')
+        
+
+@login_required
+@admin_only
 def session_calculate_LSTs(request, *args):
     if request.method == 'POST':
         # who's getting modified?
