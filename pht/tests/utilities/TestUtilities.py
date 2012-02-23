@@ -26,7 +26,19 @@ from pht.utilities import *
 
 class TestUtilities(unittest.TestCase):
 
-    def test_genDateTimes(self):
+    def test_genDateTimesFromDays(self):
+
+        days = [1,3,5]
+        exp = [datetime(2011, 1, 1)
+             , datetime(2011, 1, 3)
+             , datetime(2011, 1, 5)
+              ]
+        start = exp[0]      
+        dts = genDateTimesFromDays(start, days)
+
+        self.assertEqual(exp, dts)
+
+    def test_genDateTimesFromDaySeparations(self):
 
         days = [1,3,5]
         exp = [datetime(2011, 1, 1)
@@ -34,7 +46,7 @@ class TestUtilities(unittest.TestCase):
              , datetime(2011, 1, 9)
               ]
         start = exp[0]      
-        dts = genDateTimes(start, days)
+        dts = genDateTimesFromDaySeparations(start, days)
 
         self.assertEqual(exp, dts)
 

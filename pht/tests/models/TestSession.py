@@ -218,8 +218,8 @@ class TestSession(TestCase):
         # test
         self.assertEqual(3, r)
         exp = [datetime(2011, 1, 1)
-             , datetime(2011, 1, 4)
-             , datetime(2011, 1, 9)
+             , datetime(2011, 1, 3)
+             , datetime(2011, 1, 5)
               ]
         for i in range(len(ps)):
             self.assertEqual(exp[i], ps[i].start)

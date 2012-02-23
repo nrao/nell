@@ -247,9 +247,11 @@ class Session(models.Model):
         days = [int(d.strip()) \
             for d in self.monitoring.custom_sequence.split(',')]
 
-        # first day must always be 1, and next ones build off subsequents
+        # first day must always be 1
         assert days[0] == 1
-        dts = genDateTimes(self.monitoring.start_time, days)
+        # but the subsequent one's aren't separations, but days.
+        # so, NOT x days after the last one, but day x.
+        dts = genDateTimesFromDays(self.monitoring.start_time, days)
         ps = self.genPeriodsFromDates(dts, self.allotment.period_time)
         return len(ps)    
 
@@ -261,7 +263,7 @@ class Session(models.Model):
         "Uses session montitoring params to generate list of periods"
         days = self.genDaysFromInnerLoop()
         if len(days) > 0:
-            dts = genDateTimes(self.monitoring.start_time, days)
+            dts = genDateTimesFromDaySeparations(self.monitoring.start_time, days)
             ps = self.genPeriodsFromDates(dts, self.allotment.period_time)
             return len(ps)
         else:
@@ -279,7 +281,6 @@ class Session(models.Model):
         interval = self.interval_time
         sep = 1 if self.separation.separation == 'day' else 7
             
-        # make it look like a custom sequence
         days = [1]
         for i in range(repeats - 1):
             days.append(interval*sep)
@@ -289,7 +290,8 @@ class Session(models.Model):
         "Uses session montitoring params to generate list of periods"
         days = self.genDaysFromOuterLoop()
         if len(days) > 0:
-            dts = genDateTimes(self.monitoring.start_time, days)
+            dts = genDateTimesFromDaySeparations(self.monitoring.start_time
+                                               , days)
             ps = self.genPeriodsFromDates(dts, self.allotment.period_time)
             return len(ps)
         else:
@@ -312,7 +314,6 @@ class Session(models.Model):
         outerInterval = self.monitoring.outer_interval
         outerSep = 1 if self.monitoring.outer_separation.separation == 'day' else 7
         
-        # make it look like a custom sequence - list of days:
         days = [1]
         for i in range(outerRepeats):
             for j in range(repeats - 1):
