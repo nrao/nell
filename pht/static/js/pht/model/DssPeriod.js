@@ -12,6 +12,7 @@ Ext.define('PHT.model.DssPeriod', {
     proxy: {
         type: 'ajax',
         url: '/scheduler/periods/UTC',
+        timeout: 300000,
         reader: {
             type: 'json',
             root: 'periods',

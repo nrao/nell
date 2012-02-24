@@ -41,7 +41,7 @@ Ext.define('PHT.controller.OverviewCalendar', {
 
     insertPeriods: function(drawComponent, numDays) {
         var dssStore   = this.getStore('DssPeriods');
-        var start      = this.oc.startDateMenu.picker.getValue();
+        var start      = this.oc.startDateField.getValue();
         var startDate  = new Date();
         startDate.setUTCFullYear(start.getUTCFullYear());
         startDate.setUTCMonth(start.getUTCMonth());
@@ -57,7 +57,6 @@ Ext.define('PHT.controller.OverviewCalendar', {
         dssStore.load({
             scope: this,
             callback: function(records, operation, success) {
-                console.log(dssStore.getCount());
                 this.oc.removeAll(true);
                 var drawComponent = this.oc.genDrawComponent(numDays);
                 var period;
@@ -65,12 +64,16 @@ Ext.define('PHT.controller.OverviewCalendar', {
                 var dayIndex;
                 var timeStr;
                 var time;
+                var rxes;
+                var rcvrDays = {};
+                for (i=0; i <= numDays; i++){
+                    rcvrDays[i] = {};
+                }
 
                 for (r in records) {
                     dateStr = records[r].get('date').split('-');
                     timeStr = records[r].get('time').split(':');
                     time    = parseFloat(timeStr[0]) + (parseFloat(timeStr[1]) / 60);
-                    console.log(timeStr);
                     periodDate = new Date();
                     periodDate.setUTCFullYear(dateStr[0]);
                     periodDate.setUTCMonth(dateStr[1] - 1);
@@ -80,12 +83,6 @@ Ext.define('PHT.controller.OverviewCalendar', {
                     periodDate.setUTCSeconds(0);
                     periodDate.setUTCMilliseconds(0);
                     dayIndex = 1 + (periodDate - startDate) / 86400000;
-                    /*
-                    console.log(dayIndex);
-                    console.log(records[r].get('date') + " : " + records[r].get('time') + ' - ' + records[r].get('duration'));
-                    console.log(periodDate.getUTCFullYear() + "-" + (periodDate.getUTCMonth()+1) + "-" + periodDate.getUTCDate() + " : " + time + ' - ' + parseFloat(records[r].get('duration')));
-                    console.log(periodDate.toUTCString());
-                    */
 
                     period  = Ext.create('PHT.view.overview.Period');
                     period.setDrawComponent(drawComponent);
@@ -93,7 +90,30 @@ Ext.define('PHT.controller.OverviewCalendar', {
                       return i>5 ? null : a[Math.floor(Math.random()*16)] }).join(''));
                     period.setDay(dayIndex);
                     period.setTime(time, parseFloat(records[r].get('duration')));
-                    drawComponent.items.push(period);
+                    period.setData(records[r]);
+
+                    rxes = records[r].get('session').receiver;
+                    while(rxes.match('\\)') != null | rxes.match('\\(') != null | rxes.match(' ') != null) {
+                        rxes =rxes.replace(')', '');
+                        rxes =rxes.replace('(', '');
+                        rxes =rxes.replace(' ', '');
+                    } 
+                    rxes_ors = rxes.split('|');
+                    for (i in rxes_ors) {
+                        rxes_ands = rxes_ors[i].split('&');
+                        for (j in rxes_ands){
+                            rcvrDays[dayIndex][rxes_ands[j]] = 1;
+                        }
+                    }
+                }
+                for (dayI in rcvrDays){
+                    rcvrStr = "";
+                    if (dayI > 0 ) {
+                        for (rx in rcvrDays[dayI]){
+                            rcvrStr = rcvrStr + " " + rx;
+                        }
+                        this.oc.addRcvrList(drawComponent, dayI, rcvrStr);
+                    }
                 }
 
                 this.oc.add(drawComponent);

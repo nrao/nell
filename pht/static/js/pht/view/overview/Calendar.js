@@ -14,7 +14,6 @@ Ext.define('PHT.view.overview.Calendar', {
 
     initComponent: function() {
         var me      = this;
-        this.startDateMenu = Ext.create('Ext.menu.DatePicker', { });
         var days = Ext.create('Ext.data.Store', {
             fields: ['day'],
             data:[
@@ -32,17 +31,21 @@ Ext.define('PHT.view.overview.Calendar', {
                     queryMode: 'local',
                     displayField: 'day',
                     valueField: 'day',
-                    value: '45',
+                    value: '30',
                     labelAlign: 'right',
                     labelWidth: 30,
+        });
+        this.startDateField = Ext.create('Ext.form.field.Date', {
+            name: 'startDate',
+            value: new Date(),
+            fieldLabel: 'Start Date',
+            labelAlign: 'right',
+            labelWidth: 60,
         });
         this.dockedItems = [{
             xtype: 'toolbar',
             items: [
-                {
-                    text: 'Start Date',
-                    menu: this.startDateMenu 
-                },
+                this.startDateField,
                 this.numDaysCombo,
                 {
                     text: 'Update',
@@ -75,14 +78,6 @@ Ext.define('PHT.view.overview.Calendar', {
                     path: me.generateGridPath(numDays),
                 },
                 {
-                    type: 'rect',
-                    stroke: '#000',
-                    height: this.height,
-                    width: 60,
-                    x: this.width + 10,
-                    y: 10
-                },
-                {
                     type: 'text',
                     text: 'Rcvrs',
                     x: this.width + 15,
@@ -95,10 +90,19 @@ Ext.define('PHT.view.overview.Calendar', {
         return drawComponent;
     },
 
+    addRcvrList: function(drawComponent, day, rcvrStr) {
+        drawComponent.items.push({
+            type: 'text',
+            text: rcvrStr,
+            x: this.width + 15,
+            y: this.px2time.day2px(parseInt(day)) + 10
+        });
+    },
+
     labelDays: function(drawComponent, numDays) {
         //  Need to copy the date object from the picker 
         //  because we'll modify it below.
-        var calDate = new Date(this.startDateMenu.picker.getValue().toUTCString());
+        var calDate = new Date(this.startDateField.getValue().toUTCString());
         var start   = 20;
         var text    = '';
         var day     = 0;

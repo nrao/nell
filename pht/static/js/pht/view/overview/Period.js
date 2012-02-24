@@ -35,6 +35,11 @@ Ext.define('PHT.view.overview.Period', {
 
     setDrawComponent: function(drawComponent){
         this.drawComponent = drawComponent;
+        this.drawComponent.items.push(this);
+    },
+
+    setData: function(record){
+        this.record = record;
     },
 
     setColor: function(color) {
@@ -67,7 +72,6 @@ Ext.define('PHT.view.overview.Period', {
         this.sibling.setColor(this.color);
         this.sibling.setDay(day);
         this.sibling.setTime(start, duration);
-        this.drawComponent.items.push(this.sibling);
     }
 
 });
