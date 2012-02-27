@@ -133,7 +133,7 @@ Ext.define('PHT.view.overview.Calendar', {
     },
 
     labelHours: function(drawComponent) {
-        var start = 125;
+        var start = 100;
         for (i = 0; i < 24; i++){
             drawComponent.items.push({
                 type: 'text',
@@ -141,6 +141,9 @@ Ext.define('PHT.view.overview.Calendar', {
                 x: start,
                 y: 0
             });
+            if (i == 9) {
+                start -= 5;
+            }
             start += this.hourPx;
         }
     },

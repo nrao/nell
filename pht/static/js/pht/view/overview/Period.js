@@ -22,11 +22,15 @@ Ext.define('PHT.view.overview.Period', {
             click: function() {
                 console.log('click');
             },
-            mouseover: function() {
-                console.log('mouseover');
+            mouseover: function(e, t) {
+                //console.log('mouseover');
+                console.log(e);
+                console.log(t);
+                me.tooltip.showAt([me.x, me.y]);
             },
             mouseout: function() {
-                console.log('mouseout');
+                //console.log('mouseout');
+                me.tooltip.hide();
             },
         };
 
@@ -40,6 +44,34 @@ Ext.define('PHT.view.overview.Period', {
 
     setData: function(record){
         this.record = record;
+        if (this.sibling) {
+            this.sibling.setData(record);
+        }
+
+        if (this.record.get('session').type == 'elective'){
+            this.setColor('purple');
+        } else if (this.record.get('session').type == 'fixed'){
+            this.setColor('red');
+        } else if (this.record.get('session').type == 'windowed'){
+            if (this.record.get('session').guaranteed) {
+                this.setColor('green');
+            } else {
+                this.setColor('yellow');
+            }
+        } else if (this.record.get('session').type == 'open'){
+            this.setColor('blue');
+        }
+        if (this.record.get('session').science == 'maintenance'){
+            this.setColor('orange');
+        }
+
+        var id = 'dss_' + record.get('id');
+        this.setAttributes({id : id })
+        this.tooltip = Ext.create('Ext.tip.ToolTip', {
+            target: id,
+            html: record.get('handle'),
+        });
+
     },
 
     setColor: function(color) {
@@ -49,7 +81,8 @@ Ext.define('PHT.view.overview.Period', {
 
     setDay: function(day) {
         this.day = day;
-        this.setAttributes({y: this.px2time.day2px(day)});
+        this.y   = this.px2time.day2px(day);
+        this.setAttributes({y: this.y});
     },
 
     setTime: function(start, duration) {
@@ -60,16 +93,15 @@ Ext.define('PHT.view.overview.Period', {
             this.createSibling(this.day + 1, 0, duration_prime);
         }
 
-        var x     = this.px2time.time2px(start),
-            width = this.px2time.duration2px(duration);
+        this.x     = this.px2time.time2px(start),
+        this.width = this.px2time.duration2px(duration);
         
-        this.setAttributes({x : x, width : width});
+        this.setAttributes({x : this.x, width : this.width});
     },
 
     createSibling: function(day, start, duration){
         this.sibling = Ext.create('PHT.view.overview.Period');
         this.sibling.setDrawComponent(this.drawComponent);
-        this.sibling.setColor(this.color);
         this.sibling.setDay(day);
         this.sibling.setTime(start, duration);
     }
