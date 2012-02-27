@@ -64,10 +64,70 @@ Ext.define('PHT.controller.Sessions', {
             'sessionedit button[action=calculateLSTs]': {
                 click: this.calculateLSTs
             },             
+            'sessionedit button[action=generatePeriods]': {
+                click: this.generatePeriods
+            },             
         });
 
         this.selectedSessions = [];
         this.callParent(arguments);
+    },
+
+    setPeriodsWindow: function(periodsWindow) {
+        this.periodsWindow = periodsWindow;
+    },
+
+    generatePeriods: function(button) {
+        var win = button.up('window');
+        var form = win.down('form');
+        var session = form.getRecord();
+        this.session = session
+        var url = '/pht/sessions/' + session.get('id') + '/generatePeriods';
+
+        // error check: make them save changes first
+        var f = form.getForm()
+        if (f.isDirty()) {
+            Ext.Msg.alert('Warning', "Save changes before generating periods");    
+            return
+        }
+
+        // the rest of the error checking is done server side
+        Ext.Ajax.request({
+           url: url,
+           method: 'POST',
+           scope: this,
+           success: function(response) {
+               var json = eval('(' + response.responseText + ')');
+               var msg = json.message;
+               // TBF: why can we only generate the success callback?
+               if (json.success) {
+                   // let them know how it went, then show new periods
+                   Ext.Msg.show({
+                        title: 'Info',
+                        msg: msg,
+                        buttons: Ext.Msg.OK,
+                        icon: Ext.Msg.INFO,
+                        scope: this,
+                        fn: function(id) {
+                           // why can't I reused these variables from
+                           // above?  why do I have only 'button'?
+                           var win = button.up('window');
+                           var form = win.down('form');
+                           var session = form.getRecord();
+                           var pcode      = session.get('pcode');
+                               session_name = session.get('name');
+                           var handle = session_name + " (" + pcode + ")";   
+                           this.periodsWindow.down('periodlist').setHandle(handle);
+                           this.periodsWindow.down('periodlist').getStore('Periods').load();
+                           this.periodsWindow.show();                   
+                        }
+                    });
+               } else {
+                   // let them know what the problem was
+                   Ext.Msg.alert('Warning', msg);
+               }
+           },
+       });    
     },
 
     calculateLSTs: function(button) {

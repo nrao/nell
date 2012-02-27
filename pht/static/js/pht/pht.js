@@ -192,6 +192,8 @@ Ext.application({
         this.getController('Sources').setSessionSourcesWindow(sessionSources);
         this.getController('Authors').setProposalAuthorsWindow(proposalAuthors);
         this.getController('Sessions').setSessionListWindow(sessListWin);
+        this.getController('Sessions').setPeriodsWindow(periodListWin);
+        this.getController('Periods').setPeriodsWindow(periodListWin);
         this.getController('Sessions').addObserver(this.getController('Sources'));
         this.getController('Proposals').addObserver(this.getController('Sources'));
         

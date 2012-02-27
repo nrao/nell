@@ -30,10 +30,10 @@ from utilities.TimeAgent  import timedelta2minutes
 from utilities.TimeAgent  import adjustDateTimeTz
 from utilities.AnalogSet  import overlaps
 
-from Session              import Session
+#from Session              import Session
 
 class Period(models.Model):
-    session    = models.ForeignKey(Session)
+    session    = models.ForeignKey("Session")
     start      = models.DateTimeField(help_text = "yyyy-mm-dd hh:mm")
     duration   = models.FloatField(help_text = "Hours")
     #window     = models.ForeignKey("Window", blank=True, null=True, related_name = "per
