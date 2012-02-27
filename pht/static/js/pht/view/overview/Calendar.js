@@ -1,5 +1,6 @@
 Ext.define('PHT.view.overview.Calendar', {
     extend: 'Ext.window.Window',
+    alias: 'widget.overviewcalendar',
     autoScroll: true,
     width: '90%',
     height: '90%',
@@ -13,8 +14,6 @@ Ext.define('PHT.view.overview.Calendar', {
 
     initComponent: function() {
         var me      = this;
-        this.startDateMenu = Ext.create('Ext.menu.DatePicker', { });
-        this.items  = [this.genDrawComponent(45)];
         var days = Ext.create('Ext.data.Store', {
             fields: ['day'],
             data:[
@@ -32,28 +31,25 @@ Ext.define('PHT.view.overview.Calendar', {
                     queryMode: 'local',
                     displayField: 'day',
                     valueField: 'day',
-                    value: '45',
+                    value: '30',
                     labelAlign: 'right',
                     labelWidth: 30,
+        });
+        this.startDateField = Ext.create('Ext.form.field.Date', {
+            name: 'startDate',
+            value: new Date(),
+            fieldLabel: 'Start Date',
+            labelAlign: 'right',
+            labelWidth: 60,
         });
         this.dockedItems = [{
             xtype: 'toolbar',
             items: [
-                {
-                    text: 'Start Date',
-                    menu: this.startDateMenu 
-                },
+                this.startDateField,
                 this.numDaysCombo,
                 {
                     text: 'Update',
                     action: 'update',
-                    listeners: {
-                        click: function(button){
-                            me.removeAll(true);
-                            me.add(me.genDrawComponent(me.numDaysCombo.getValue()));
-                            me.doLayout();
-                        }
-                    },
                 },
             ]
         }];
@@ -82,14 +78,6 @@ Ext.define('PHT.view.overview.Calendar', {
                     path: me.generateGridPath(numDays),
                 },
                 {
-                    type: 'rect',
-                    stroke: '#000',
-                    height: this.height,
-                    width: 60,
-                    x: this.width + 10,
-                    y: 10
-                },
-                {
                     type: 'text',
                     text: 'Rcvrs',
                     x: this.width + 15,
@@ -99,43 +87,22 @@ Ext.define('PHT.view.overview.Calendar', {
         });
         this.labelHours(drawComponent);
         this.labelDays(drawComponent, numDays);
-        this.insertPeriods(drawComponent);
         return drawComponent;
     },
 
-    insertPeriods: function(drawComponent) {
-        // Some test periods for now.
-        var period  = Ext.create('PHT.view.overview.Period');
-        period.setDrawComponent(drawComponent);
-        period.setColor('blue');
-        period.setDay(4);
-        period.setTime(1.75, 4.5);
-        drawComponent.items.push(period);
-
-        period  = Ext.create('PHT.view.overview.Period');
-        period.setDrawComponent(drawComponent);
-        period.setColor('red');
-        period.setDay(8);
-        period.setTime(10.5, 8.5);
-        drawComponent.items.push(period);
-
-        period  = Ext.create('PHT.view.overview.Period');
-        period.setDrawComponent(drawComponent);
-        period.setColor('purple');
-        period.setDay(8);
-        period.setTime(5.0, 6);
-        drawComponent.items.push(period);
-
-        period  = Ext.create('PHT.view.overview.Period');
-        period.setDrawComponent(drawComponent);
-        period.setColor('green');
-        period.setDay(5);
-        period.setTime(20.0, 8.0);
-        drawComponent.items.push(period);
+    addRcvrList: function(drawComponent, day, rcvrStr) {
+        drawComponent.items.push({
+            type: 'text',
+            text: rcvrStr,
+            x: this.width + 15,
+            y: this.px2time.day2px(parseInt(day)) + 10
+        });
     },
 
     labelDays: function(drawComponent, numDays) {
-        var calDate = new Date(this.startDateMenu.picker.getValue().toUTCString());
+        //  Need to copy the date object from the picker 
+        //  because we'll modify it below.
+        var calDate = new Date(this.startDateField.getValue().toUTCString());
         var start   = 20;
         var text    = '';
         var day     = 0;
@@ -166,7 +133,7 @@ Ext.define('PHT.view.overview.Calendar', {
     },
 
     labelHours: function(drawComponent) {
-        var start = 125;
+        var start = 100;
         for (i = 0; i < 24; i++){
             drawComponent.items.push({
                 type: 'text',
@@ -174,6 +141,9 @@ Ext.define('PHT.view.overview.Calendar', {
                 x: start,
                 y: 0
             });
+            if (i == 9) {
+                start -= 5;
+            }
             start += this.hourPx;
         }
     },
