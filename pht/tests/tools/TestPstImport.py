@@ -52,6 +52,13 @@ class TestPstImport(TestCase):
         self.assertTrue(s.target is not None)
         proposal.delete()
 
+    def test_semesterFromPcode(self):
+
+        self.assertEquals("12A", self.pst.semesterFromPcode("GBT/12A-002"))
+        self.assertEquals("12B", self.pst.semesterFromPcode("GBT/12B-012"))
+        self.assertEquals("12B", self.pst.semesterFromPcode("VLBA/12B-012"))
+        self.assertEquals(None, self.pst.semesterFromPcode("Chewbacca"))
+
     def test_proposalUsesGBT(self):
 
         # GBT/12A-002
