@@ -22,11 +22,12 @@ from scheduler.models    import Observing_Type
 from pht.models          import *
 from pht.utilities       import *
 from utilities.TimeAgent import *
+from PhtHttpAdapter      import PhtHttpAdapter
 
 def formatDate(dt):
     return str(dt.strftime('%m/%d/%Y'))
 
-class SessionHttpAdapter(object):
+class SessionHttpAdapter(PhtHttpAdapter):
 
     def __init__(self, session = None):
         self.setSession(session)
@@ -135,56 +136,6 @@ class SessionHttpAdapter(object):
 
         # now fill in their fields
         self.updateFromPost(data)
-
-    def getType(self, data, key, fnc, default):
-        "Entries for floats & ints can often be blank strings"
-        value = None
-        value = data.get(key, None)
-        if value is None or value == '':
-            return default
-        else:
-            try:
-                value = fnc(value)
-            except:
-                value = default
-            finally:
-                return value
-
-    def getInt(self, data, key, default = None):
-        "Entries for integers can often be blank strings"
-        return self.getType(data, key, int, default )
-
-    def getFloat(self, data, key, default = None):
-        "Entries for floats can often be blank strings"
-        return self.getType(data, key, float, default )
-
-    def getBool(self, data, key):
-        "Booleans come in as strings"
-        return data.get(key) == 'true'
-
-    def getSexHrs2rad(self, data, key):
-        v = data.get(key, '')
-        return sexHrs2rad(v) if v != '' else None
-
-    def getSexDeg2rad(self, data, key):
-        v = data.get(key, '')
-        return sexDeg2rad(v) if v != '' else None
-
-    def getEnum(self, data, dataField, klass, field):
-        """
-        Common code used for grabbing a value from the response,
-        getting the proper enumerated object from the DB (or None)
-        and returning it.
-        """
-        v = data.get(dataField, '')
-        if v is not None and v != '':
-            # would do an objects.get if we could
-            v = klass.objects.extra(where=["%s = '%s'" % (field, v)])
-            assert len(v) == 1 
-            v = v[0]    
-        else:
-            v = None
-        return v
 
     def updateFromPost(self, data):
 
