@@ -55,7 +55,6 @@ Ext.define('PHT.view.overview.Period', {
         } else if (this.record.get('session').type == 'fixed'){
             this.setColor('red');
         } else if (this.record.get('session').type == 'windowed'){
-            console.log(record);
             if (this.record.get('session').guaranteed) {
                 this.setColor('green');
             } else {
@@ -68,31 +67,15 @@ Ext.define('PHT.view.overview.Period', {
             this.setColor('orange');
         }
 
-        /*
-        var id;
-        var receivers;
-        console.log("setData, periodType: ");
-        console.log(this.periodType);
-        if (this.periodType == 'dss') {
-            id = 'dss_' + record.get('id');
-            receivers = record.get('session').receiver
-        } else {
-            id = 'pht_' + record.get('id');
-            receivers = record.get('session_json').receivers
-        }
-        */
         var id = type + '_' + record.get('id');
 
-        console.log("results: ");
-        console.log(id);
-        console.log(receivers);
         this.setAttributes({id : id })
         this.tooltip = Ext.create('Ext.tip.ToolTip', {
             target: id,
             title: record.get('handle'),
             html: 'Start Date: ' + record.get('date') + ' at ' + record.get('time') + '<br/>' +
                   'Duration: ' + record.get('duration') + '<br/>' +
-                  'Receiver(s): ' + receivers, //record.get('session').receiver,
+                  'Receiver(s): ' + receivers, 
             width: 250,
             dismissDelay: 0,
         });

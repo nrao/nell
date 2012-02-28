@@ -67,13 +67,15 @@ Ext.define('PHT.controller.OverviewCalendar', {
                 var startFmted = startDate.getUTCFullYear() + '-' + (startDate.getUTCMonth()+1) + '-' + startDate.getUTCDate();
                 var url = '/scheduler/periods/UTC?startPeriods=' + startFmted+ '&daysPeriods=' + numDays;
                 dssStore.getProxy().url = url;
+
                 dssStore.load({
                     scope: this,
                     callback: function(records, operation, success) {
-
-
                         var dayIndex;
                         var rxes;
+                        var rcvrs;
+
+                        // initialize the receivers needed by day
                         var rcvrDays = {};
                         for (i=0; i <= numDays; i++){
                             rcvrDays[i] = {};
@@ -82,63 +84,25 @@ Ext.define('PHT.controller.OverviewCalendar', {
                         this.oc.removeAll(true);
                         var drawComponent = this.oc.genDrawComponent(numDays);
 
+                        // draw the pht periods and parse rcvr info
                         for (p in phtPeriods) {
                             dayIndex = this.insertPeriod(phtPeriods[p], startDate, numDays, drawComponent, 'pht');
-                            console.log(phtPeriods[p]);
-                            rxes = phtPeriods[p].get('session_json').receivers;
-                            console.log(rxes);
-                            rxes_ands = rxes.split(',');
-                            for (j in rxes_ands){
-                                rcvrDays[dayIndex][rxes_ands[j]] = 1;
+                            rcvrs = this.getPhtPeriodReceivers(phtPeriods[p]);
+                            for (j in rcvrs){
+                                rcvrDays[dayIndex][rcvrs[j]] = 1;
                             }
-                            console.log(rcvrDays);
-                            /*
-                            for (dayI in rcvrDays){
-                                rcvrStr = "";
-                                if (dayI > 0 ) {
-                                    for (rx in rcvrDays[dayI]){
-                                        rcvrStr = rcvrStr + " " + rx;
-                                    }
-                                    this.oc.addRcvrList(drawComponent, dayI, rcvrStr);
-                                }
-                            }
-                            */
                         }
+
+                        // draw the dss periods and parse rcvr info
                         for (r in records) {
-                            console.log("inserting this period next: ");
-                            console.log(r);
-                            console.log(records[r]);
-
                             dayIndex = this.insertPeriod(records[r], startDate, numDays, drawComponent, 'dss');
-
-                            rxes = records[r].get('session').receiver;
-                            console.log(rxes)
-                            while(rxes.match('\\)') != null | rxes.match('\\(') != null | rxes.match(' ') != null) {
-                                rxes =rxes.replace(')', '');
-                                rxes =rxes.replace('(', '');
-                                rxes =rxes.replace(' ', '');
-                            } 
-                            rxes_ors = rxes.split('|');
-                            for (i in rxes_ors) {
-                                rxes_ands = rxes_ors[i].split('&');
-                                for (j in rxes_ands){
-                                    rcvrDays[dayIndex][rxes_ands[j]] = 1;
-                                }
+                            rcvrs = this.getDssPeriodReceivers(records[r]);
+                            for (j in rcvrs){
+                                rcvrDays[dayIndex][rcvrs[j]] = 1;
                             }
-                            console.log(rcvrDays);
-                            /*
-                            for (dayI in rcvrDays){
-                                rcvrStr = "";
-                                if (dayI > 0 ) {
-                                    for (rx in rcvrDays[dayI]){
-                                        rcvrStr = rcvrStr + " " + rx;
-                                    }
-                                    this.oc.addRcvrList(drawComponent, dayI, rcvrStr);
-                                }
-                            }
-                            */
                         }
 
+                        // draw the receivers column
                         for (dayI in rcvrDays){
                             rcvrStr = "";
                             if (dayI > 0 ) {
@@ -149,7 +113,6 @@ Ext.define('PHT.controller.OverviewCalendar', {
                             }
                         }
 
-                        console.log("DONE!");
                         this.oc.add(drawComponent);
                         this.oc.doLayout();
                     }
@@ -157,6 +120,29 @@ Ext.define('PHT.controller.OverviewCalendar', {
             }
         });
 
+    },
+
+    // PHT periods simply have a comma separated list of receivers
+    getPhtPeriodReceivers: function(period) {
+        rxes = period.get('session_json').receivers;
+        return rxes.split(',');
+    },    
+    
+    // DSS periods use a logical expression for the receivers
+    getDssPeriodReceivers: function(period) {
+        var rcvrs = [];
+        rxes = period.get('session').receiver;
+        while(rxes.match('\\)') != null | rxes.match('\\(') != null | rxes.match(' ') != null) {
+            rxes =rxes.replace(')', '');
+            rxes =rxes.replace('(', '');
+            rxes =rxes.replace(' ', '');
+        } 
+        rxes_ors = rxes.split('|');
+        for (i in rxes_ors) {
+            rxes_ands = rxes_ors[i].split('&');
+            rcvrs = rcvrs.concat(rxes_ands);
+        }
+        return rcvrs;                        
     },
 
     getDssPeriodDate: function(dateStr) {
@@ -186,8 +172,6 @@ Ext.define('PHT.controller.OverviewCalendar', {
     },
 
     insertPeriod: function(record, startDate, numDays, drawComponent, type) {
-        console.log('insertPeriod: ' + type);
-        console.log(record);
         var period;
         var periodDate;
         var dayIndex;
@@ -196,10 +180,8 @@ Ext.define('PHT.controller.OverviewCalendar', {
         var rxes;
         var receivers;
         period  = Ext.create('PHT.view.overview.Period');
-        //period.setPeriodType(type)
         var dateStr = record.get('date')
-        // deal with the two different date formats
-        //if (dateStr.search('-') != -1) {
+        // DSS and PHT periods are ALMOST identical
         if (type == 'dss') {
             periodDate = this.getDssPeriodDate(dateStr);
             receivers = record.get('session').receiver
@@ -211,8 +193,6 @@ Ext.define('PHT.controller.OverviewCalendar', {
         time    = parseFloat(timeStr[0]) + (parseFloat(timeStr[1]) / 60);
         dayIndex = 1 + (periodDate - startDate) / 86400000;
         period.setDrawComponent(drawComponent);
-        //period.setColor('#'+'0123456789abcdef'.split('').map(function(v,i,a){
-        //  return i>5 ? null : a[Math.floor(Math.random()*16)] }).join(''));
         period.setDay(dayIndex);
         period.setTime(time, parseFloat(record.get('duration')));
         period.setData(record, type, receivers);
