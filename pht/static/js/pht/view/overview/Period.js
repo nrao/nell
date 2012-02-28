@@ -67,6 +67,11 @@ Ext.define('PHT.view.overview.Period', {
             this.setColor('orange');
         }
 
+        if (type == 'pht') {
+            console.log("pht period!");
+            this.setAttributes({opacity : 0.4});
+        }
+
         var id = type + '_' + record.get('id');
 
         this.setAttributes({id : id })
