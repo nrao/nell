@@ -5,8 +5,8 @@ Ext.define('PHT.model.Period', {
            , 'session_id'
            , 'pcode'
            , 'handle'
-           , 'start_date'
-           , 'start_time'
+           , 'date'
+           , 'time'
            , 'duration'
            ], 
     proxy: {
