@@ -5,6 +5,7 @@ Ext.define('PHT.view.overview.Period', {
         this.px2time = Ext.create('PHT.view.overview.PixelsToTime');
         this.day     = 0;
         this.color   = 'red';
+        this.periodType = '';
         var parentConfig = {
             type: 'rect',
             fill: 'red',
@@ -39,7 +40,11 @@ Ext.define('PHT.view.overview.Period', {
         this.drawComponent.items.push(this);
     },
 
-    setData: function(record){
+    setPeriodType: function(type) {
+        this.periodType = type;
+    },
+
+    setData: function(record, type, receivers){
         this.record = record;
         if (this.sibling) {
             this.sibling.setData(record);
@@ -63,14 +68,31 @@ Ext.define('PHT.view.overview.Period', {
             this.setColor('orange');
         }
 
-        var id = 'dss_' + record.get('id');
+        /*
+        var id;
+        var receivers;
+        console.log("setData, periodType: ");
+        console.log(this.periodType);
+        if (this.periodType == 'dss') {
+            id = 'dss_' + record.get('id');
+            receivers = record.get('session').receiver
+        } else {
+            id = 'pht_' + record.get('id');
+            receivers = record.get('session_json').receivers
+        }
+        */
+        var id = type + '_' + record.get('id');
+
+        console.log("results: ");
+        console.log(id);
+        console.log(receivers);
         this.setAttributes({id : id })
         this.tooltip = Ext.create('Ext.tip.ToolTip', {
             target: id,
             title: record.get('handle'),
             html: 'Start Date: ' + record.get('date') + ' at ' + record.get('time') + '<br/>' +
                   'Duration: ' + record.get('duration') + '<br/>' +
-                  'Receiver(s): ' + record.get('session').receiver,
+                  'Receiver(s): ' + receivers, //record.get('session').receiver,
             width: 250,
             dismissDelay: 0,
         });

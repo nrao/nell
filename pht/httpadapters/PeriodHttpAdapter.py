@@ -27,6 +27,10 @@ from pht.utilities       import *
 from pht.models          import *
 from PhtHttpAdapter      import PhtHttpAdapter
 
+
+#from pht.httpadapters import SessionHttpAdapter
+from SessionHttpAdapter import SessionHttpAdapter
+
 class PeriodHttpAdapter(PhtHttpAdapter):
 
     def __init__(self, period = None):
@@ -36,10 +40,14 @@ class PeriodHttpAdapter(PhtHttpAdapter):
         self.period = period
 
     def jsonDict(self):
+
+        adapter  = SessionHttpAdapter(self.period.session)
+        sessionJson = adapter.jsonDict()
         handle = "%s (%s)" % (self.period.session.name
                             , self.period.session.proposal.pcode)
         return {'id'         : self.period.id
               , 'session'    : self.period.session.name
+              , 'session_json' : sessionJson # TBF: align this with DSS Periods
               , 'session_id' : self.period.session.id
               , 'pcode'      : self.period.session.proposal.pcode
               , 'handle'     : handle
