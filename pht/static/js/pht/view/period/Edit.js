@@ -24,11 +24,11 @@ Ext.define('PHT.view.period.Edit', {
                         width: 400,
                     },{
                         xtype: 'datefield',
-                        name: 'start_date',
+                        name: 'date',
                         fieldLabel: 'Start Date',
                     },{
                         xtype: 'textfield',
-                        name: 'start_time',
+                        name: 'time',
                         fieldLabel: 'Start Time',
                         vtype: 'hoursMinutesQtr',
                     },{

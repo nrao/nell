@@ -51,8 +51,8 @@ class PeriodHttpAdapter(object):
               , 'session_id' : self.period.session.id
               , 'pcode'      : self.period.session.proposal.pcode
               , 'handle'     : handle
-              , 'start_date' : formatExtDate(self.period.start)
-              , 'start_time' : t2str(self.period.start)
+              , 'date' : formatExtDate(self.period.start)
+              , 'time' : t2str(self.period.start)
               , 'duration'   : self.period.duration
                 }
 
@@ -73,8 +73,8 @@ class PeriodHttpAdapter(object):
         self.period.session = session
         
         # the start datetime comes in two pieces
-        date = data.get("start_date", "")
-        time = data.get("start_time", "")
+        date = data.get("date", "")
+        time = data.get("time", "")
         date = date if date != "" else None
         time = time if time != "" else None
         if date is not None and time is not None:

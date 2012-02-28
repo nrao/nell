@@ -74,8 +74,8 @@ Ext.define('PHT.view.period.List' ,{
         this.columns = [
             {header: 'ID', dataIndex: 'id', flex: 1},
             {header: 'Session (PCODE)', dataIndex: 'handle', width: 300},
-            {header: 'Start Date', dataIndex: 'start_date', flex: 1},
-            {header: 'Start Time (UTC)', dataIndex: 'start_time', flex: 1},
+            {header: 'Start Date', dataIndex: 'date', flex: 1},
+            {header: 'Start Time (UTC)', dataIndex: 'time', flex: 1},
             {header: 'Duration (Hrs)', dataIndex: 'duration', flex: 1},
         ];
 

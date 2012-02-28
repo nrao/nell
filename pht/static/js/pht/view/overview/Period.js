@@ -20,16 +20,13 @@ Ext.define('PHT.view.overview.Period', {
         var me = this;
         this.listeners = {
             click: function() {
-                console.log('click');
+                var view   = Ext.widget('periodedit');
+                view.down('form').loadRecord(this.record);        
             },
-            mouseover: function(e, t) {
-                //console.log('mouseover');
-                console.log(e);
-                console.log(t);
-                me.tooltip.showAt([me.x, me.y]);
+            mouseover: function(me, e) {
+                me.tooltip.showAt(e.getXY());
             },
             mouseout: function() {
-                //console.log('mouseout');
                 me.tooltip.hide();
             },
         };
@@ -53,6 +50,7 @@ Ext.define('PHT.view.overview.Period', {
         } else if (this.record.get('session').type == 'fixed'){
             this.setColor('red');
         } else if (this.record.get('session').type == 'windowed'){
+            console.log(record);
             if (this.record.get('session').guaranteed) {
                 this.setColor('green');
             } else {
@@ -69,7 +67,12 @@ Ext.define('PHT.view.overview.Period', {
         this.setAttributes({id : id })
         this.tooltip = Ext.create('Ext.tip.ToolTip', {
             target: id,
-            html: record.get('handle'),
+            title: record.get('handle'),
+            html: 'Start Date: ' + record.get('date') + ' at ' + record.get('time') + '<br/>' +
+                  'Duration: ' + record.get('duration') + '<br/>' +
+                  'Receiver(s): ' + record.get('session').receiver,
+            width: 250,
+            dismissDelay: 0,
         });
 
     },
