@@ -87,9 +87,13 @@ Ext.define('PHT.controller.OverviewCalendar', {
                         // draw the pht periods and parse rcvr info
                         for (p in phtPeriods) {
                             dayIndex = this.insertPeriod(phtPeriods[p], startDate, numDays, drawComponent, 'pht');
-                            rcvrs = this.getPhtPeriodReceivers(phtPeriods[p]);
-                            for (j in rcvrs){
-                                rcvrDays[dayIndex][rcvrs[j]] = 1;
+                            // TBF: we need to filter these periods by date,
+                            // instead of getting them ALL and checking this.
+                            if (dayIndex != -1) {
+                                rcvrs = this.getPhtPeriodReceivers(phtPeriods[p]);
+                                for (j in rcvrs){
+                                    rcvrDays[dayIndex][rcvrs[j]] = 1;
+                                }
                             }
                         }
 
@@ -192,11 +196,16 @@ Ext.define('PHT.controller.OverviewCalendar', {
         timeStr = record.get('time').split(':');
         time    = parseFloat(timeStr[0]) + (parseFloat(timeStr[1]) / 60);
         dayIndex = 1 + (periodDate - startDate) / 86400000;
-        period.setDrawComponent(drawComponent);
-        period.setDay(dayIndex);
-        period.setTime(time, parseFloat(record.get('duration')));
-        period.setData(record, type, receivers);
-        return dayIndex
+        // safegaurd that this period lands on our calendar
+        if (dayIndex > numDays) {
+            return -1;
+        } else {    
+            period.setDrawComponent(drawComponent);
+            period.setDay(dayIndex);
+            period.setTime(time, parseFloat(record.get('duration')));
+            period.setData(record, type, receivers);
+            return dayIndex
+        }    
     },    
 
 });

@@ -67,8 +67,8 @@ Ext.define('PHT.view.overview.Period', {
             this.setColor('orange');
         }
 
+        // make the pht periods distinguishable from the dss ones
         if (type == 'pht') {
-            console.log("pht period!");
             this.setAttributes({opacity : 0.4});
         }
 
