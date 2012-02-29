@@ -120,6 +120,20 @@ Ext.define('PHT.controller.Proposals', {
         pcodeCB.setValue(selected);
     },
 
+    importProposalFormByProposal: function() {
+        var view = Ext.widget('proposalimport');
+        var form = view.down('form');
+        var f = form.getForm()
+        f.setValues({proposalsCheckbox : 'on'});
+    },
+
+    importProposalFormBySemester: function() {
+        var view = Ext.widget('proposalimport');
+        var form = view.down('form');
+        var f = form.getForm()
+        f.setValues({semesterCheckbox : 'on'});
+    },    
+
     importProposal: function(button) {
         var me     = this;
         var win    = button.up('window');
