@@ -125,8 +125,10 @@ class PstImport(PstInterface):
             pass
         finally:
             proposal = Proposal.createFromSqlResult(result)
-            if semester is not None:
-                proposal.setSemester(semester)
+            if semester is None:
+                # try to figure out what the semester is
+                semester = self.semesterFromPcode(pcode)
+            proposal.setSemester(semester)
             proposal.save()
             self.fetchAuthors(proposal)
             self.fetchScientificCategories(proposal)
@@ -139,6 +141,18 @@ class PstImport(PstInterface):
             self.report()
 
         return proposal
+
+    def semesterFromPcode(self, pcode):
+        """
+        If the proposal code takes a form like GBT/12A-001, we should
+        be able to figure out what the semester is.
+        """
+        try:
+            semester = pcode.split("-")[0][-3:]
+            assert semester[-1] in ['A','B','C']
+        except:
+            semester = None
+        return semester    
 
     def importProposals(self, semester):
         """

@@ -23,17 +23,9 @@
 from datetime import datetime
 
 from pht.models import *
+from PhtHttpAdapter      import PhtHttpAdapter
 
-def formatDate(dt):
-    return str(dt.strftime('%m/%d/%Y'))
-
-def cleanPostData(data):
-    bad_keys = [k for k, v in data.iteritems() if v == '']
-    for bk in bad_keys:
-        data.pop(bk)
-    return data
-
-class ProposalHttpAdapter(object):
+class ProposalHttpAdapter(PhtHttpAdapter):
 
     def __init__(self, proposal = None):
         self.setProposal(proposal)
@@ -60,9 +52,9 @@ class ProposalHttpAdapter(object):
               , 'authors'          : authors
               , 'sci_categories'   : sci_categories
               , 'pcode'            : self.proposal.pcode
-              , 'create_date'      : formatDate(self.proposal.create_date)
-              , 'modify_date'      : formatDate(self.proposal.modify_date)
-              , 'submit_date'      : formatDate(self.proposal.submit_date)
+              , 'create_date'      : self.formatDate(self.proposal.create_date)
+              , 'modify_date'      : self.formatDate(self.proposal.modify_date)
+              , 'submit_date'      : self.formatDate(self.proposal.submit_date)
               , 'total_time'       : self.proposal.total_time
               , 'title'            : self.proposal.title
               , 'abstract'         : self.proposal.abstract
@@ -73,7 +65,7 @@ class ProposalHttpAdapter(object):
     def initFromPost(self, data):
         self.proposal = Proposal()
         self.proposal.create_date = datetime.now()
-        self.updateFromPost(cleanPostData(data))
+        self.updateFromPost(self.cleanPostData(data))
         self.proposal.save()
 
     def updateFromPost(self, data):

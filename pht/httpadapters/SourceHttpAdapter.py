@@ -18,20 +18,17 @@
 
 from datetime import datetime
 
-from pht.models import *
-from pht.utilities import *
+from pht.models     import *
+from pht.utilities  import *
+from PhtHttpAdapter import PhtHttpAdapter
 
-class SourceHttpAdapter(object):
+class SourceHttpAdapter(PhtHttpAdapter):
 
     def __init__(self, source = None):
         self.setSource(source)
 
     def setSource(self, source):
         self.source = source
-
-    def get(self, obj, attr):
-        "Can't get something from nothing.  Really."
-        return obj.__getattribute__(attr) if obj is not None else None
 
     def jsonDict(self):
 
@@ -64,27 +61,6 @@ class SourceHttpAdapter(object):
               , 'pst_dec_range'               : self.source.pst_dec_range
                }
 
-    def getFloat(self, data, key):
-        "Entries for floats can often be blank strings"
-        value = None
-        value = data.get(key, None)
-        if value is None or value == '':
-            return None
-        else:
-            try:
-                value = float(value)
-            except:
-                value = None
-            finally:
-                return value
-
-    def getSexHrs2rad(self, data, key):
-        v = data.get(key, '')
-        return sexHrs2rad(v) if v != '' else None
-
-    def getSexDeg2rad(self, data, key):
-        v = data.get(key, '')
-        return sexDeg2rad(v) if v != '' else None
 
     def initFromPost(self, data):
 
@@ -93,22 +69,6 @@ class SourceHttpAdapter(object):
 
         # now fill in their fields
         self.updateFromPost(data)
-
-    def getEnum(self, data, dataField, klass, field):
-        """
-        Common code used for grabbing a value from the response,
-        getting the proper enumerated object from the DB (or None)
-        and returning it.
-        """
-        v = data.get(dataField, '')
-        if v is not None and v != '':
-            # would do an objects.get if we could
-            v = klass.objects.extra(where=["%s = '%s'" % (field, v)])
-            assert len(v) == 1 
-            v = v[0]    
-        else:
-            v = None
-        return v
 
     def updateFromPost(self, data):
 

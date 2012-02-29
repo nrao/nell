@@ -128,7 +128,7 @@ Ext.define('PHT.view.period.List' ,{
                      // TBF: how to avoid creating this every time?
                      timeUtil = Ext.create('PHT.view.TimeUtil');
                      // does our time range cover this period's? 
-                     var periodStartStr = period.get('start_date') + ' ' + period.get('start_time');
+                     var periodStartStr = period.get('date') + ' ' + period.get('time');
                      var periodStart = new Date(periodStartStr); 
                      var periodEnd = new Date(periodStart);
                      var hours = parseFloat(period.get('duration'));

@@ -23,8 +23,9 @@
 from datetime import datetime
 
 from pht.models import *
+from PhtHttpAdapter      import PhtHttpAdapter
 
-class AuthorHttpAdapter(object):
+class AuthorHttpAdapter(PhtHttpAdapter):
 
     def __init__(self, author = None):
         self.setAuthor(author)
