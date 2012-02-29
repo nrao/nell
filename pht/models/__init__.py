@@ -1,6 +1,7 @@
 from Allotment                import Allotment
 from Author                   import Author
 from Backend                  import Backend
+from ImportReport             import ImportReport
 from Monitoring               import Monitoring
 from ObservingType            import ObservingType
 from Parameter                import Parameter
