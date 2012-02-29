@@ -50,7 +50,7 @@ Ext.define('PHT.view.overview.Period', {
         } else if (this.record.get('session').type == 'fixed'){
             this.setColor('red');
         } else if (this.record.get('session').type == 'windowed'){
-            console.log(record);
+            //console.log(record);
             if (this.record.get('session').guaranteed) {
                 this.setColor('green');
             } else {

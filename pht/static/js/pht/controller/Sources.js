@@ -203,6 +203,7 @@ Ext.define('PHT.controller.Sources', {
                         , this.getProposalSourcesStore()
                          );
         this.selectedSources = []      
+        this.getSessionSourcesStore().sync();
     },
 
     removeSourceFromSession: function(button) {
