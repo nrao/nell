@@ -13,6 +13,7 @@ Ext.define('PHT.controller.OverviewCalendar', {
 
     views: [
         'overview.Calendar',
+        'period.Edit',
     ],
 
     init: function() {
@@ -21,6 +22,9 @@ Ext.define('PHT.controller.OverviewCalendar', {
             'overviewcalendar toolbar button[action=update]': {
                 click: this.drawCalendar
             },
+            'periodedit button[action=save]': {
+                click: this.updatePeriod
+            },            
             
         });        
 
@@ -65,9 +69,8 @@ Ext.define('PHT.controller.OverviewCalendar', {
 
                 // now get the dss periods
                 var startFmted = startDate.getUTCFullYear() + '-' + (startDate.getUTCMonth()+1) + '-' + startDate.getUTCDate();
-                var url = '/scheduler/periods/UTC?startPeriods=' + startFmted+ '&daysPeriods=' + numDays;
-                dssStore.getProxy().url = url;
-
+                dssStore.getProxy().extraParams = {startPeriods : startFmted,
+                                                   daysPeriods  : numDays};
                 dssStore.load({
                     scope: this,
                     callback: function(records, operation, success) {
@@ -124,6 +127,14 @@ Ext.define('PHT.controller.OverviewCalendar', {
             }
         });
 
+    },
+
+    updatePeriod: function(button) {
+        this.selectedPeriods = [];                  
+        this.updateRecord(button
+                        , this.selectedPeriods
+                        , this.getDssPeriodsStore()
+                         );
     },
 
     // PHT periods simply have a comma separated list of receivers
@@ -207,5 +218,4 @@ Ext.define('PHT.controller.OverviewCalendar', {
             return dayIndex
         }    
     },    
-
 });

@@ -641,4 +641,3 @@ class TestViews(TestCase):
         self.assertEqual(pAgain.duration, 3.0)
         self.assertEqual(pAgain.start, datetime(2011, 1, 13, 14, 15))
         self.assertEqual(before - after, 0)
-        

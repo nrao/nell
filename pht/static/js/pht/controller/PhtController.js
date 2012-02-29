@@ -105,7 +105,6 @@ Ext.define('PHT.controller.PhtController', {
             } else {
                 // set's the form to not dirty again.
                 form.loadRecord(record);
-                //this.getSessionsStore().sync();
                 store.sync();
             }    
         } else {

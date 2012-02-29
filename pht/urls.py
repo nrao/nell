@@ -9,11 +9,12 @@ from pht.resources import *
 # from django.contrib import admin
 # admin.autodiscover()
 
-authorResource   = AuthorResource()
-periodResource   = PeriodResource()
-proposalResource = ProposalResource()
-sessionResource  = SessionResource()
-sourceResource   = SourceResource()
+authorResource    = AuthorResource()
+periodResource    = PeriodResource()
+dssPeriodResource = DssPeriodResource()
+proposalResource  = ProposalResource()
+sessionResource   = SessionResource()
+sourceResource    = SourceResource()
 
 urlpatterns = patterns(''
    , (r'^static/(?P<path>.*)$', 'django.views.static.serve'
@@ -54,6 +55,8 @@ urlpatterns = patterns(''
    , url(r'^session/separations',        session_separations)
    , url(r'^periods/([^/]+)$',                 login_required(periodResource.requestHandler))
    , url(r'^periods$',                         login_required(periodResource.requestHandler))
+   , url(r'^dss/periods/([^/]+)/([^/]+)$',     login_required(dssPeriodResource.requestHandler))
+   , url(r'^dss/periods/([^/]+)$',             login_required(dssPeriodResource.requestHandler))
    , url(r'^weather/types',              weather_types)
    , url(r'^semesters',                  semesters)
    , url(r'^receivers',                  receivers)
