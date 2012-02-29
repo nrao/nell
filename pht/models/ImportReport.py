@@ -22,6 +22,8 @@
 
 from django.db                 import models
 
+from pht.utilities import *
+
 class ImportReport(models.Model):
 
     create_date = models.DateTimeField(null = True)
@@ -33,4 +35,14 @@ class ImportReport(models.Model):
 
     def __str__(self):
         return "Report from %s" % self.create_date
-    
+
+    def jsonDict(self):
+        return {'id'          : self.id
+              , 'create_date' : datetime2ExtDatetime(self.create_date)
+              , 'report'      : self.report
+               }
+
+    @staticmethod
+    def jsonDictOptions():
+        return [s.jsonDict() for s in ImportReport.objects.all().order_by('-create_date')]
+            

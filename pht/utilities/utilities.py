@@ -143,6 +143,11 @@ def extDatetime2Datetime(date, time):
     dtfrmt = "%m/%d/%Y %H:%M:%S"
     return datetime.strptime(dt, dtfrmt)
 
+def datetime2ExtDatetime(dt):
+    dtfrmt = "%m/%d/%Y %H:%M:%S"
+    return dt.strftime(dtfrmt)
+
+
 def genDateTimesFromDaySeparations(start, days):
     "Generate a list of DTs from a start and list of day separations"
     dts = [start]

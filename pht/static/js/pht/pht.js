@@ -10,6 +10,7 @@ Ext.application({
 
     controllers: ['Proposals'
                 , 'Authors'
+                , 'Dashboard'
                 , 'Periods'
                 , 'Sources'
                 , 'Sessions'
@@ -45,6 +46,7 @@ Ext.application({
                 {
                     title: 'Dash Board (Analysis)',
                     region: 'south',
+                    xtype: 'dashboard',
                     height: 250,
                     minSize: 75,
                     maxSize: 250,
@@ -183,8 +185,8 @@ Ext.application({
         viewport.layout.regions.center.add(overviewCalendar);
         viewport.layout.regions.center.add(periodListWin);
         propListWin.maximize();
-        overviewCalendar.maximize();
-        overviewCalendar.show();
+        //overviewCalendar.maximize();
+        //overviewCalendar.show();
         this.getController('OverviewCalendar').setOverviewCalendar(overviewCalendar);
         this.getController('Sources').setProposalSourcesWindow(proposalSources);
         this.getController('Sources').setSessionSourcesWindow(sessionSources);
