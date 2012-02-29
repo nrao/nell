@@ -155,6 +155,7 @@ Ext.define('PHT.controller.Proposals', {
                     me.getProposalTreeStore().load();
                     me.getProposalCodesStore().load();
                     me.getSessionsStore().load();
+                    me.notifyObservers({notification: 'newImport'});
                 },
              });
         } else if (values.semesterCheckbox == 'on') {
@@ -171,6 +172,7 @@ Ext.define('PHT.controller.Proposals', {
                     me.getProposalTreeStore().load();
                     me.getProposalCodesStore().load();
                     me.getSessionsStore().load();
+                    me.notifyObservers({notification: 'newImport'});
                 },
              });
         } else {
