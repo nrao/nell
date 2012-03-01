@@ -24,6 +24,7 @@ from django.test         import TestCase
 
 from pht.tools.database import PstImport
 from pht.models         import Proposal
+from pht.models         import ImportReport
 
 class TestPstImport(TestCase):
 
@@ -50,6 +51,9 @@ class TestPstImport(TestCase):
         self.assertTrue(len(s.backends.all()) > 0)
         self.assertTrue(s.allotment is not None)
         self.assertTrue(s.target is not None)
+        reports = ImportReport.objects.all()
+        self.assertEqual(1, len(reports))
+        self.assertTrue(0 < len(reports[0].report))
         proposal.delete()
 
     def test_semesterFromPcode(self):

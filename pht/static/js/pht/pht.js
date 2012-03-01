@@ -10,6 +10,7 @@ Ext.application({
 
     controllers: ['Proposals'
                 , 'Authors'
+                , 'Dashboard'
                 , 'Periods'
                 , 'Sources'
                 , 'Sessions'
@@ -45,6 +46,8 @@ Ext.application({
                 {
                     title: 'Dash Board (Analysis)',
                     region: 'south',
+                    xtype: 'dashboard',
+                    id: 'south-region',
                     height: 250,
                     minSize: 75,
                     maxSize: 250,
@@ -183,8 +186,8 @@ Ext.application({
         viewport.layout.regions.center.add(overviewCalendar);
         viewport.layout.regions.center.add(periodListWin);
         propListWin.maximize();
-        overviewCalendar.maximize();
-        overviewCalendar.show();
+        //overviewCalendar.maximize();
+        //overviewCalendar.show();
         this.getController('OverviewCalendar').setOverviewCalendar(overviewCalendar);
         this.getController('Sources').setProposalSourcesWindow(proposalSources);
         this.getController('Sources').setSessionSourcesWindow(sessionSources);
@@ -194,6 +197,7 @@ Ext.application({
         this.getController('Periods').setPeriodsWindow(periodListWin);
         this.getController('Sessions').addObserver(this.getController('Sources'));
         this.getController('Proposals').addObserver(this.getController('Sources'));
+        this.getController('Proposals').addObserver(this.getController('Dashboard'));
         
         // TBF: better place for VTypes?
         // See: http://www.sencha.com/forum/archive/index.php/t-140812.html?s=01edc6b9436d419b2dae5754d39d9e04

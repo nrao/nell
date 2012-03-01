@@ -81,7 +81,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'lst_width'               : rad2sexHrs(self.session.target.lst_width)
               , 'min_lst'                 : rad2sexHrs(self.session.target.min_lst)
               , 'max_lst'                 : rad2sexHrs(self.session.target.max_lst)
-              , 'elevation_min'           : rad2sexHrs(self.session.target.elevation_min)
+              , 'elevation_min'           : rad2sexDeg(self.session.target.elevation_min)
               # session flags
               , 'thermal_night'           : self.session.flags.thermal_night
               , 'rfi_night'               : self.session.flags.rfi_night
@@ -189,7 +189,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
         self.session.target.lst_width = self.getSexHrs2rad(data, 'lst_width')
         self.session.target.min_lst = self.getSexHrs2rad(data, 'min_lst')
         self.session.target.max_lst = self.getSexHrs2rad(data, 'max_lst')
-        self.session.target.elevation_min = self.getSexHrs2rad(data, 'elevation_min')
+        self.session.target.elevation_min = self.getSexDeg2rad(data, 'elevation_min')
         self.session.target.save()
 
         # flags

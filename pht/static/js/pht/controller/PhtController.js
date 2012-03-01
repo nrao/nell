@@ -10,7 +10,10 @@ Ext.define('PHT.controller.PhtController', {
     editSession: function(grid, record) {
         var view = Ext.widget('sessionedit');
         view.down('form').loadRecord(record);        
-        this.notifyObservers({session: record, form: view.down('form')});
+        this.notifyObservers({notification: 'editSession',
+                              session: record,
+                              form: view.down('form')
+        });
     },
 
     addObserver: function(controller) {
@@ -18,7 +21,7 @@ Ext.define('PHT.controller.PhtController', {
     },
 
     notifyObservers: function(data) {
-        for (i = 0; i < this.observers.length; i++){
+        for (var i = 0; i < this.observers.length; i++){
             this.observers[i].notify(data);
         }
     },

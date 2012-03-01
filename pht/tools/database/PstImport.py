@@ -24,21 +24,23 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
+from datetime         import datetime
+
 from PstInterface     import PstInterface
 from pht.models       import *
 from scheduler.models import Observing_Type
 
 class PstImport(PstInterface):
 
-    def __init__(self, filename = "PstImport.txt", quiet = True):
+    def __init__(self, filename = "PstImport.txt", quiet = True, save = True):
         PstInterface.__init__(self)
 
         self.proposals = []
 
         # for reporting
         self.lines = []
-        self.filename = filename
         self.quiet = quiet
+        self.save = save
 
     def initMap(self):
         
@@ -453,8 +455,21 @@ class PstImport(PstInterface):
     def report(self):
         "Write to a file, and/or stdout how the import went."
 
+        now = datetime.utcnow()
+
         self.reportLine("*** PST IMPORT REPORT ***\n")
+        self.reportLine("*** Summary ***\n")
+        self.reportLine("Imported on %s\n" % now)
         self.reportLine("Imported %d Proposals\n" % len(self.proposals))
+        numSessions = sum([len(p.session_set.all()) for p in self.proposals])
+        self.reportLine("Imported %d Sessions\n" % numSessions)
+        self.reportLine("\n");
+
+        self.reportLine("*** Details ***\n")
+        self.reportLine("Proposals Imported: \n")
+        for p in self.proposals:
+            self.reportLine("    %s\n" % p.pcode)
+        self.reportLine("\n");
 
         # any problems converting?
         max_lst = [s.target.max_lst for p in self.proposals for s in p.session_set.all()]
@@ -470,10 +485,12 @@ class PstImport(PstInterface):
         self.reportConversionStat('source.declination', dec)
         self.reportConversionStat('source.declination_range', dec_range)
 
-        # write it out to file
-        f = open(self.filename, 'w')
-        f.writelines(self.lines)
-        f.close()
+        # write it to the DB 
+        if self.save:
+            ir = ImportReport(create_date = now
+                            , report = "".join(self.lines)
+                             )
+            ir.save()
 
     def reportConversionStat(self, field, values):    
         "How did converting a particular field go?"

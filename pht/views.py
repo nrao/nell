@@ -422,6 +422,9 @@ def receivers(request):
 def backends(request):
     return simpleGetAllResponse('backends', Backend.jsonDictOptions())
 
+def import_reports(request):
+    return simpleGetAllResponse('import_reports', ImportReport.jsonDictOptions())
+
 def observing_types(request):
     return simpleGetAllResponse('observing types', ObservingType.jsonDictOptions())
 
