@@ -1,10 +1,12 @@
 from django.shortcuts               import render_to_response
 from django.http  import HttpResponse, HttpResponseNotFound
 from django.contrib.auth.decorators import login_required
+from datetime   import datetime, timedelta
 
 import simplejson as json
 
 from utilities import *
+from nell.utilities import SLATimeAgent
 from users.decorators import admin_only
 from scheduler.models import *
 from models import *
@@ -353,6 +355,22 @@ def user_info(request):
                                              )
     return HttpResponse(json.dumps({"success" : "ok", "info" : info})
                       , content_type = 'application/json')
+
+@login_required
+@admin_only
+def lst_range(request):
+    startDateStr = request.GET.get('start')
+    numDays      = request.GET.get('numDays')
+    startDate    = datetime.strptime(startDateStr, '%Y-%m-%d')
+    endDate      = startDate + timedelta(days = int(numDays))
+    start        = SLATimeAgent.RelativeLST2AbsoluteTime(0, startDate)
+    end          = SLATimeAgent.RelativeLST2AbsoluteTime(0, endDate)
+    return HttpResponse(json.dumps({"success" : "ok" 
+                                  , 'lines' : [{'start' : str(start)
+                                              , 'end' : str(end) }]
+                                   })
+                      , content_type = 'application/json')
+
 
 @login_required
 @admin_only

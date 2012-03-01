@@ -131,6 +131,11 @@ class TestViews(TestCase):
         "Makes sure we can turn the json string returned into a python dict"
         return eval(response_content.replace('false', 'False').replace('true', 'True').replace('null', 'None'))
 
+    def test_lst_range(self):
+        response = self.client.get("/pht/calendar/lstrange"
+                                 , {'start' : '2012-2-28', 'numDays' : '14'})
+        self.failUnlessEqual(response.status_code, 200)
+
     def test_tree(self):
 
         # test top level

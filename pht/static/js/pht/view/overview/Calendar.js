@@ -82,7 +82,7 @@ Ext.define('PHT.view.overview.Calendar', {
                     text: 'Rcvrs',
                     x: this.width + 15,
                     y: 0
-                }
+                },
             ]
         });
         this.labelHours(drawComponent);

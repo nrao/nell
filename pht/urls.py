@@ -23,6 +23,7 @@ urlpatterns = patterns(''
    , url(r'^sources/import$',                    sources_import)
    , url(r'^tree$',                              tree)
    , url(r'^import$',                            import_proposals)
+   , url(r'^calendar/lstrange$',                 lst_range)
    , url(r'^import/semester$',                   import_semester)
    , url(r'^proposals/([^/]+)/authors$',         login_required(authorResource.requestHandler))
    , url(r'^proposals/([^/]+)/authors/([^/]+)$', login_required(authorResource.requestHandler))

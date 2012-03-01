@@ -48,6 +48,7 @@ Ext.define('PHT.controller.OverviewCalendar', {
     insertPeriods: function(drawComponent, numDays) {
         var dssStore   = this.getStore('DssPeriods');
         var phtStore   = this.getStore('Periods');
+        var me = this;
 
         // What's the start date (at midnight) of our calendar?
         var start      = this.oc.startDateField.getValue();
@@ -120,8 +121,40 @@ Ext.define('PHT.controller.OverviewCalendar', {
                             }
                         }
 
-                        this.oc.add(drawComponent);
-                        this.oc.doLayout();
+                        Ext.Ajax.request({
+                            url: '/pht/calendar/lstrange',
+                            params: {
+                                start:   startFmted,
+                                numDays: numDays,
+                            },
+                            method: 'GET',
+                            success: function(response) {
+                                console.log(response);
+                                var endY     = 10 + numDays * me.oc.dayPx;
+                                var json     = eval('(' + response.responseText + ')');
+                                for(i in json.lines) {
+                                    var startStr = json.lines[i].start.split(' ')[1].split(':');
+                                    var endStr   = json.lines[i].end.split(' ')[1].split(':');
+                                    var lstHrBegin = 
+                                        parseFloat(startStr[0]) + (parseFloat(startStr[1]) / 60);
+                                    var beginPx  = me.oc.px2time.time2px(lstHrBegin);
+                                    var lstHrEnd = parseFloat(endStr[0]) + (parseFloat(endStr[1]) / 60);
+                                    console.log(lstHrBegin);
+                                    console.log(lstHrEnd);
+                                    var endPx    = me.oc.px2time.time2px(lstHrEnd);
+                                    var path     = ['M' + beginPx + ' 10'
+                                                  , 'L' + endPx + ' ' + endY];
+                                    drawComponent.items.push({
+                                        type: 'path',
+                                        stroke: 'red',
+                                        path: path,
+                                    });
+                                }
+                                me.oc.add(drawComponent);
+                                me.oc.doLayout();
+                            },
+                        });
+
                     }
                 });    
             }
