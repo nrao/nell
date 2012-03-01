@@ -79,7 +79,7 @@ Ext.define('PHT.view.overview.Period', {
             target: id,
             title: record.get('handle'),
             html: 'Start Date: ' + record.get('date') + ' at ' + record.get('time') + '<br/>' +
-                  'Duration: ' + record.get('duration') + '<br/>' +
+                  'Duration: ' + record.get('duration') + 'hrs<br/>' +
                   'Receiver(s): ' + receivers, 
             width: 250,
             dismissDelay: 0,
