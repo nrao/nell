@@ -220,9 +220,9 @@ Ext.define('PHT.view.session.Form', {
                     columnwidth: 0.5,
                     border: false,
                     items: [{
-                        fieldLabel: 'Horizon Limit',
+                        fieldLabel: 'Horizon Limit (Deg)',
                         name: 'elevation_min',
-                        vtype: 'degreeField',
+                        vtype: 'elevationField',
                         xtype: 'textfield',
                     },{
                         fieldLabel: 'LST Width (Hrs)',

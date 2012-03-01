@@ -286,6 +286,15 @@ Ext.application({
             degreeFieldMask: /[\d\.\:\+\-]/i,
         });
 
+        var elevationFieldTest = /^(90:00:00.0|(([0-8][0-9])(:)([0-5][0-9])(:)([0-5][0-9])(.)([0-9])))$/i;
+        Ext.apply(Ext.form.field.VTypes, {
+            elevationField:  function(v) {
+                // TBF: also check valid range
+                return elevationFieldTest.test(v);
+            },
+            elevationFieldText: 'Must be a value in Degrees, in sexigesimel format (+/- DDD:MM:SS.S), between 0 and 90.',
+            elevationFieldMask: /[\d\.\:\+\-]/i,
+        });
     },
 
     // TBF: should this be in the controller?
