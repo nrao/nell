@@ -120,6 +120,20 @@ Ext.define('PHT.controller.Proposals', {
         pcodeCB.setValue(selected);
     },
 
+    importProposalFormByProposal: function() {
+        var view = Ext.widget('proposalimport');
+        var form = view.down('form');
+        var f = form.getForm()
+        f.setValues({proposalsCheckbox : 'on'});
+    },
+
+    importProposalFormBySemester: function() {
+        var view = Ext.widget('proposalimport');
+        var form = view.down('form');
+        var f = form.getForm()
+        f.setValues({semesterCheckbox : 'on'});
+    },    
+
     importProposal: function(button) {
         var me     = this;
         var win    = button.up('window');
@@ -141,6 +155,7 @@ Ext.define('PHT.controller.Proposals', {
                     me.getProposalTreeStore().load();
                     me.getProposalCodesStore().load();
                     me.getSessionsStore().load();
+                    me.notifyObservers({notification: 'newImport'});
                 },
              });
         } else if (values.semesterCheckbox == 'on') {
@@ -157,6 +172,7 @@ Ext.define('PHT.controller.Proposals', {
                     me.getProposalTreeStore().load();
                     me.getProposalCodesStore().load();
                     me.getSessionsStore().load();
+                    me.notifyObservers({notification: 'newImport'});
                 },
              });
         } else {

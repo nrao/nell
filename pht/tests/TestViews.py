@@ -118,8 +118,8 @@ class TestViews(TestCase):
             'session'    : sess.name
           , 'handle'     : "%s (%s)" % (sess.name, sess.proposal.pcode)
           , 'session_id' : sess.id
-          , 'start_date' : '01/01/2011'
-          , 'start_time' : '12:00'
+          , 'date' : '01/01/2011'
+          , 'time' : '12:00'
           , 'duration'   : dur
         }
 
@@ -130,6 +130,11 @@ class TestViews(TestCase):
     def eval_response(self, response_content):
         "Makes sure we can turn the json string returned into a python dict"
         return eval(response_content.replace('false', 'False').replace('true', 'True').replace('null', 'None'))
+
+    def test_lst_range(self):
+        response = self.client.get("/pht/calendar/lstrange"
+                                 , {'start' : '2012-2-28', 'numDays' : '14'})
+        self.failUnlessEqual(response.status_code, 200)
 
     def test_tree(self):
 
@@ -584,8 +589,8 @@ class TestViews(TestCase):
         self.assertEqual(self.period.session.name, results['session'])
         self.assertEqual(self.period.session.id, results['session_id'])
         self.assertEqual(self.period.duration, results['duration'])
-        self.assertEqual('01/01/2011', results['start_date'])
-        self.assertEqual('12:00', results['start_time'])
+        self.assertEqual('01/01/2011', results['date'])
+        self.assertEqual('12:00', results['time'])
 
     def test_period_delete(self):
         before   = len(Period.objects.all())
@@ -608,8 +613,8 @@ class TestViews(TestCase):
         self.assertEqual(1, after - before)
 
         # TBF: need to solve session name uniqueness issue
-        #fields = ['session', 'session_id', 'duration', 'start_date', 'start_time']
-        fields = ['session', 'duration', 'start_date', 'start_time']
+        #fields = ['session', 'session_id', 'duration', 'date', 'time']
+        fields = ['session', 'duration', 'date', 'time']
         for field in fields:
             self.assertEqual(results.get(field)
                            , self.period_data.get(field))
@@ -625,8 +630,8 @@ class TestViews(TestCase):
         #handle = handles[0] if handles[0] != self.period_data['handle'] else handles[1]    
         #data['handle'] = handle
         data['duration'] = 3.0
-        data['start_date'] = '01/13/2011'
-        data['start_time'] = '14:15'
+        data['date'] = '01/13/2011'
+        data['time'] = '14:15'
 
         before   = len(Period.objects.all())
         response = self.client.put("/pht/periods/%s" % self.period.id
@@ -641,4 +646,3 @@ class TestViews(TestCase):
         self.assertEqual(pAgain.duration, 3.0)
         self.assertEqual(pAgain.start, datetime(2011, 1, 13, 14, 15))
         self.assertEqual(before - after, 0)
-        

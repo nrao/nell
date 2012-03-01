@@ -18,7 +18,16 @@ Ext.define('PHT.view.session.Edit', {
                 text: 'Sources',
                 action: 'sources'
             },
+            {
+                text: 'Periods',
+                action: 'periods'
+            },
         ];
+
+        this.genPeriodsBtn = Ext.create('Ext.button.Button', {
+           text: 'Gen. Periods',
+           action: 'generatePeriods',
+        }),
 
         this.dockedItems = [{
             xtype: 'toolbar',
@@ -27,6 +36,7 @@ Ext.define('PHT.view.session.Edit', {
                     text: 'Calculate LSTs',
                     action: 'calculateLSTs',
                 }),
+                this.genPeriodsBtn,
             ]
         }];
 

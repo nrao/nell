@@ -25,17 +25,13 @@ from datetime import datetime
 from utilities.TimeAgent import *
 from pht.utilities       import *
 from pht.models          import *
+from PhtHttpAdapter      import PhtHttpAdapter
 
-def formatDate(dt):
-    return str(dt.strftime('%m/%d/%Y'))
 
-def cleanPostData(data):
-    bad_keys = [k for k, v in data.iteritems() if v == '']
-    for bk in bad_keys:
-        data.pop(bk)
-    return data
+#from pht.httpadapters import SessionHttpAdapter
+from SessionHttpAdapter import SessionHttpAdapter
 
-class PeriodHttpAdapter(object):
+class PeriodHttpAdapter(PhtHttpAdapter):
 
     def __init__(self, period = None):
         self.setPeriod(period)
@@ -44,21 +40,25 @@ class PeriodHttpAdapter(object):
         self.period = period
 
     def jsonDict(self):
+
+        adapter  = SessionHttpAdapter(self.period.session)
+        sessionJson = adapter.jsonDict()
         handle = "%s (%s)" % (self.period.session.name
                             , self.period.session.proposal.pcode)
         return {'id'         : self.period.id
               , 'session'    : self.period.session.name
+              , 'session_json' : sessionJson # TBF: align this with DSS Periods
               , 'session_id' : self.period.session.id
               , 'pcode'      : self.period.session.proposal.pcode
               , 'handle'     : handle
-              , 'start_date' : formatExtDate(self.period.start)
-              , 'start_time' : t2str(self.period.start)
+              , 'date' : formatExtDate(self.period.start)
+              , 'time' : t2str(self.period.start)
               , 'duration'   : self.period.duration
                 }
 
     def initFromPost(self, data):
         self.period = Period()
-        self.updateFromPost(cleanPostData(data))
+        self.updateFromPost(self.cleanPostData(data))
         self.period.save()
 
     def updateFromPost(self, data):
@@ -73,8 +73,8 @@ class PeriodHttpAdapter(object):
         self.period.session = session
         
         # the start datetime comes in two pieces
-        date = data.get("start_date", "")
-        time = data.get("start_time", "")
+        date = data.get("date", "")
+        time = data.get("time", "")
         date = date if date != "" else None
         time = time if time != "" else None
         if date is not None and time is not None:
@@ -84,31 +84,5 @@ class PeriodHttpAdapter(object):
         self.period.duration = self.getFloat(data, 'duration')
 
         self.period.save()
-
-
-
-    # TBF: refactor this to a base class or utility
-    def getType(self, data, key, fnc, default):
-        "Entries for floats & ints can often be blank strings"
-        value = None
-        value = data.get(key, None)
-        if value is None or value == '':
-            return default
-        else:
-            try:
-                value = fnc(value)
-            except:
-                value = default
-            finally:
-                return value
-
-    def getInt(self, data, key, default = None):
-        "Entries for integers can often be blank strings"
-        return self.getType(data, key, int, default )
-
-    def getFloat(self, data, key, default = None):
-        "Entries for floats can often be blank strings"
-        return self.getType(data, key, float, default )
-
 
 

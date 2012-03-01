@@ -13,6 +13,7 @@ Ext.define('PHT.controller.Periods', {
 
     views: [
         'period.Edit',
+        'session.Edit',
         'period.List',
         'period.ListWindow',
     ],
@@ -38,28 +39,35 @@ Ext.define('PHT.controller.Periods', {
             'periodedit button[action=save]': {
                 click: this.updatePeriod
             },            
-            /*
-            'proposalimport button[action=import]': {
-                click: this.importProposal
+            'sessionedit button[action=periods]': {
+                click: this.sessionPeriods
             },            
-            'proposalnavigate': {
-                itemclick: this.editTreeNode
-            },
-            */
-            
         });        
 
         this.selectedPeriods = [];
         this.callParent(arguments);
     },
 
+    setPeriodsWindow: function(periodsWindow) {
+        this.periodsWindow = periodsWindow;
+    },
+
+    sessionPeriods: function(button) {
+        var win     = button.up('window');
+            form    = win.down('form');
+            session = form.getRecord();
+        var pcode      = session.get('pcode');
+            session_name = session.get('name');
+        var handle = session_name + " (" + pcode + ")";    
+
+        this.periodsWindow.down('periodlist').setHandle(handle);
+        this.periodsWindow.show();
+    
+    },
+
     clearFilter: function(button) {
-        var store = this.getStore('Periods');
-        if (store.isFiltered()){
-            store.clearFilter()
-        }
         var grid = button.up('periodlist');
-        grid.sessionFilterText.reset();
+        grid.clearFilters();
     },
 
 
@@ -93,8 +101,6 @@ Ext.define('PHT.controller.Periods', {
     
     editPeriod: function(grid, record) {
         var view   = Ext.widget('periodedit');
-        //TBF
-        //view.filterPis(record.get('pcode'));
         view.down('form').loadRecord(record);        
     },   
 

@@ -9,11 +9,12 @@ from pht.resources import *
 # from django.contrib import admin
 # admin.autodiscover()
 
-authorResource   = AuthorResource()
-periodResource   = PeriodResource()
-proposalResource = ProposalResource()
-sessionResource  = SessionResource()
-sourceResource   = SourceResource()
+authorResource    = AuthorResource()
+periodResource    = PeriodResource()
+dssPeriodResource = DssPeriodResource()
+proposalResource  = ProposalResource()
+sessionResource   = SessionResource()
+sourceResource    = SourceResource()
 
 urlpatterns = patterns(''
    , (r'^static/(?P<path>.*)$', 'django.views.static.serve'
@@ -22,6 +23,7 @@ urlpatterns = patterns(''
    , url(r'^sources/import$',                    sources_import)
    , url(r'^tree$',                              tree)
    , url(r'^import$',                            import_proposals)
+   , url(r'^calendar/lstrange$',                 lst_range)
    , url(r'^import/semester$',                   import_semester)
    , url(r'^proposals/([^/]+)/authors$',         login_required(authorResource.requestHandler))
    , url(r'^proposals/([^/]+)/authors/([^/]+)$', login_required(authorResource.requestHandler))
@@ -44,6 +46,7 @@ urlpatterns = patterns(''
    , url(r'^sessions/([^/]+)/sources$',          session_sources)
    , url(r'^sessions/([^/]+)/averageradec$',     session_average_ra_dec)
    , url(r'^sessions/([^/]+)/calculateLSTs$',    session_calculate_LSTs)
+   , url(r'^sessions/([^/]+)/generatePeriods$',  session_generate_periods)
    , url(r'^sessions/([^/]+)$',          login_required(sessionResource.requestHandler))
    , url(r'^sessions$',                  login_required(sessionResource.requestHandler))
    , url(r'^options$',                   get_options)
@@ -53,10 +56,13 @@ urlpatterns = patterns(''
    , url(r'^session/separations',        session_separations)
    , url(r'^periods/([^/]+)$',                 login_required(periodResource.requestHandler))
    , url(r'^periods$',                         login_required(periodResource.requestHandler))
+   , url(r'^dss/periods/([^/]+)/([^/]+)$',     login_required(dssPeriodResource.requestHandler))
+   , url(r'^dss/periods/([^/]+)$',             login_required(dssPeriodResource.requestHandler))
    , url(r'^weather/types',              weather_types)
    , url(r'^semesters',                  semesters)
    , url(r'^receivers',                  receivers)
    , url(r'^backends',                   backends)
+   , url(r'^import_reports',             import_reports)
    , url(r'^source/epochs',              source_epochs)
    , url(r'^source/systems',             source_systems)
    , url(r'^source/velocity_types',      source_velocity_types)

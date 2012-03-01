@@ -10,9 +10,11 @@ Ext.application({
 
     controllers: ['Proposals'
                 , 'Authors'
+                , 'Dashboard'
                 , 'Periods'
                 , 'Sources'
                 , 'Sessions'
+                , 'OverviewCalendar'
                 ],
 
     
@@ -44,6 +46,8 @@ Ext.application({
                 {
                     title: 'Dash Board (Analysis)',
                     region: 'south',
+                    xtype: 'dashboard',
+                    id: 'south-region',
                     height: 250,
                     minSize: 75,
                     maxSize: 250,
@@ -96,11 +100,11 @@ Ext.application({
             id : 'importMenu',
             items : [{
                 text: 'Import Proposal(s)',
-                handler: this.importProposals
+                handler: this.getController('Proposals').importProposalFormByProposal
                 },
                 {
                 text: "Import Semester's Proposals",
-                handler: this.importSemesterProposals
+                handler: this.getController('Proposals').importProposalFormBySemester
                 }
             ]
         });
@@ -170,12 +174,10 @@ Ext.application({
             text: 'Tools',
             menu: toolsMenu
         });
-        /*
         tb.add({
             text: 'Import',
             menu: importMenu
         });
-        */
         viewport.layout.regions.center.add(propListWin);
         viewport.layout.regions.center.add(sessListWin);
         viewport.layout.regions.center.add(proposalAuthors);
@@ -184,14 +186,18 @@ Ext.application({
         viewport.layout.regions.center.add(overviewCalendar);
         viewport.layout.regions.center.add(periodListWin);
         propListWin.maximize();
-        overviewCalendar.maximize();
-        overviewCalendar.show();
+        //overviewCalendar.maximize();
+        //overviewCalendar.show();
+        this.getController('OverviewCalendar').setOverviewCalendar(overviewCalendar);
         this.getController('Sources').setProposalSourcesWindow(proposalSources);
         this.getController('Sources').setSessionSourcesWindow(sessionSources);
         this.getController('Authors').setProposalAuthorsWindow(proposalAuthors);
         this.getController('Sessions').setSessionListWindow(sessListWin);
+        this.getController('Sessions').setPeriodsWindow(periodListWin);
+        this.getController('Periods').setPeriodsWindow(periodListWin);
         this.getController('Sessions').addObserver(this.getController('Sources'));
         this.getController('Proposals').addObserver(this.getController('Sources'));
+        this.getController('Proposals').addObserver(this.getController('Dashboard'));
         
         // TBF: better place for VTypes?
         // See: http://www.sencha.com/forum/archive/index.php/t-140812.html?s=01edc6b9436d419b2dae5754d39d9e04
@@ -234,15 +240,25 @@ Ext.application({
             sessMonitoringCustomSeqMask: /[\d\,]/i,
         });
          
-        // Validate Time in HH:MM format
-        var hoursMinutesTest = /^(([2][0-3])|([0-1][0-9]))(:)([0-5][0-9])$/i;
+        // Validate Time in HH:MM format, on quarter boundaries
+        var hoursMinutesQtrTest = /^(([2][0-3])|([0-1][0-9]))(:)(00|15|30|45)$/i;
         Ext.apply(Ext.form.field.VTypes, {
-            hoursMinutes:  function(v) {
+            hoursMinutesQtr:  function(v) {
 
-                return hoursMinutesTest.test(v);
+                return hoursMinutesQtrTest.test(v);
             },
-            hoursMinutesText: 'Must be a value in Hours, between 0 and 24, in format (HH:MM)',
-            hoursMinutesMask: /[\d\:]/i,
+            hoursMinutesQtrText: 'Must be a value in Hours, between 0 and 24, in format (HH:MM), on quarter boundaries (00,15,30,45)',
+            hoursMinutesQtrMask: /[\d\:]/i,
+        });
+
+        // Validate a time duration in hours (on qrt boundaries)
+        Ext.apply(Ext.form.field.VTypes, {
+            hoursDecimalQtr: function(v) {
+                remainder = v % 0.25
+                epsilon = 1e-5;
+                return (remainder < epsilon);
+            },
+            hoursDecimalQtrText: 'Must be a value in decimal Hours, on quarter boundaries (.0, .25, .5, .75)',
         });
 
         // Validates Hour strings in sexigesimal format
@@ -270,6 +286,15 @@ Ext.application({
             degreeFieldMask: /[\d\.\:\+\-]/i,
         });
 
+        var elevationFieldTest = /^(90:00:00.0|(([0-8][0-9])(:)([0-5][0-9])(:)([0-5][0-9])(.)([0-9])))$/i;
+        Ext.apply(Ext.form.field.VTypes, {
+            elevationField:  function(v) {
+                // TBF: also check valid range
+                return elevationFieldTest.test(v);
+            },
+            elevationFieldText: 'Must be a value in Degrees, in sexigesimel format (+/- DDD:MM:SS.S), between 0 and 90.',
+            elevationFieldMask: /[\d\.\:\+\-]/i,
+        });
     },
 
     // TBF: should this be in the controller?

@@ -82,7 +82,9 @@ Ext.define('PHT.controller.Sources', {
     },
 
     notify: function(data) {
-        this.sessionForms[data.session.id] = data;
+        if (data['notification'] == 'editSession') {
+            this.sessionForms[data.session.id] = data;
+        }
     },
 
 
@@ -203,6 +205,7 @@ Ext.define('PHT.controller.Sources', {
                         , this.getProposalSourcesStore()
                          );
         this.selectedSources = []      
+        this.getSessionSourcesStore().sync();
     },
 
     removeSourceFromSession: function(button) {
