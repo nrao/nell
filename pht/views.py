@@ -359,16 +359,41 @@ def user_info(request):
 @login_required
 @admin_only
 def lst_range(request):
+    def lstDt2lstHr(dt):
+        time = dt.time()
+        return time.hour + time.minute / 60. + (time.second + time.microsecond / 10e6) / 3600
+
+    def check_lst_range(lst, startDate, endDate):
+        slst  = lstDt2lstHr(startDate)
+        elst  = lstDt2lstHr(endDate)
+        if (elst > slst):
+            i = 0
+            newElst = slst
+            while newElst < 3:
+                i += 1
+                newEndDate = startDate + timedelta(days = i)
+                newEndDate = SLATimeAgent.RelativeLST2AbsoluteTime(lst, newEndDate)
+                newElst    = lstDt2lstHr(newEndDate)
+            newEndDate = startDate + timedelta(days = i - 1)
+            newEndDate = SLATimeAgent.RelativeLST2AbsoluteTime(lst, newEndDate)
+            newElst    = lstDt2lstHr(newEndDate)
+            sndsd = newEndDate + timedelta(days = 1)
+            sndsd = datetime(sndsd.year, sndsd.month, sndsd.day, 23, 59, 59)
+            return [(startDate, newEndDate), (sndsd, endDate)]
+        else:
+            return [(startDate, endDate)]
+
     startDateStr = request.GET.get('start')
     numDays      = request.GET.get('numDays')
     startDate    = datetime.strptime(startDateStr, '%Y-%m-%d')
     endDate      = startDate + timedelta(days = int(numDays))
-    start        = SLATimeAgent.RelativeLST2AbsoluteTime(0, startDate)
-    end          = SLATimeAgent.RelativeLST2AbsoluteTime(0, endDate)
-    return HttpResponse(json.dumps({"success" : "ok" 
-                                  , 'lines' : [{'start' : str(start)
-                                              , 'end' : str(end) }]
-                                   })
+    lines = []
+    for lst in [0, 6, 12, 18]:
+        lines.extend([{'start': str(s), 'end' : str(e)} 
+            for s, e in check_lst_range(lst
+                                      , SLATimeAgent.RelativeLST2AbsoluteTime(lst, startDate)
+                                      , SLATimeAgent.RelativeLST2AbsoluteTime(lst, endDate))])
+    return HttpResponse(json.dumps({"success" : "ok", 'lines' : lines})
                       , content_type = 'application/json')
 
 
@@ -384,8 +409,6 @@ def pis(request):
 @login_required
 @admin_only
 def proposal_types(request):
-    print "proposal_types: "
-    print request
     return HttpResponse(json.dumps({"success" : "ok"
                                   , 'proposal types' : ProposalType.jsonDictOptions()})
                       , content_type = 'application/json')

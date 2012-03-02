@@ -12,7 +12,7 @@ Ext.define('PHT.view.overview.Period', {
             stroke: 2,
             width: 45,
             height: this.px2time.dayPx,
-            opacity: .6,
+            opacity: .4,
             x: 100,
             y: this.vertOffset,
             floating: true,

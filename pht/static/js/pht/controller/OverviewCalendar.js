@@ -129,24 +129,32 @@ Ext.define('PHT.controller.OverviewCalendar', {
                             },
                             method: 'GET',
                             success: function(response) {
-                                console.log(response);
                                 var endY     = 10 + numDays * me.oc.dayPx;
                                 var json     = eval('(' + response.responseText + ')');
                                 for(i in json.lines) {
+                                    var pStartDate = me.getDssPeriodDate(json.lines[i].start.split(' ')[0]);
+                                    var pEndDate   = me.getDssPeriodDate(json.lines[i].end.split(' ')[0]);
+                                    var startIndex = 1 + (pStartDate - startDate) / 86400000;
+                                    var endIndex   = 1 + (pEndDate - startDate) / 86400000;
                                     var startStr = json.lines[i].start.split(' ')[1].split(':');
                                     var endStr   = json.lines[i].end.split(' ')[1].split(':');
                                     var lstHrBegin = 
                                         parseFloat(startStr[0]) + (parseFloat(startStr[1]) / 60);
                                     var beginPx  = me.oc.px2time.time2px(lstHrBegin);
                                     var lstHrEnd = parseFloat(endStr[0]) + (parseFloat(endStr[1]) / 60);
-                                    console.log(lstHrBegin);
-                                    console.log(lstHrEnd);
                                     var endPx    = me.oc.px2time.time2px(lstHrEnd);
-                                    var path     = ['M' + beginPx + ' 10'
-                                                  , 'L' + endPx + ' ' + endY];
+                                    var sDayPx   = me.oc.px2time.day2px(startIndex);
+                                    var eDayPx   = me.oc.px2time.day2px(endIndex);
+                                    var path     = ['M' + beginPx + ' ' + sDayPx
+                                                  , 'L' + endPx + ' ' + eDayPx];
+                                    if (i == 0 | (startIndex != 1 & i == 1)) {
+                                        var color = 'red';
+                                    } else {
+                                        var color = 'gray';
+                                    }
                                     drawComponent.items.push({
                                         type: 'path',
-                                        stroke: 'red',
+                                        stroke: color,
                                         path: path,
                                     });
                                 }
@@ -241,7 +249,7 @@ Ext.define('PHT.controller.OverviewCalendar', {
         time    = parseFloat(timeStr[0]) + (parseFloat(timeStr[1]) / 60);
         dayIndex = 1 + (periodDate - startDate) / 86400000;
         // safegaurd that this period lands on our calendar
-        if (dayIndex > numDays) {
+        if (dayIndex > numDays | dayIndex < 0) {
             return -1;
         } else {    
             period.setDrawComponent(drawComponent);
