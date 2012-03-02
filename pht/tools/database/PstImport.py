@@ -284,7 +284,8 @@ class PstImport(PstInterface):
 
         q = """select session_id 
                from session
-               where proposal_id = %s""" % proposal.pst_proposal_id
+               where MODIFIED_SESSION = false
+               and proposal_id = %s""" % proposal.pst_proposal_id
         self.cursor.execute(q)
         # make sure session names are unique within the proposal
         names = {}
