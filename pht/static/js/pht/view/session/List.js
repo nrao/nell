@@ -93,6 +93,7 @@ Ext.define('PHT.view.session.List' ,{
             {header: 'Separation', dataIndex: 'separation', flex: 1},
             {header: 'Sci. Cat.', dataIndex: 'sci_categories', flex: 1},
             {header: 'Rcvrs', dataIndex: 'receivers', flex: 1},
+            {header: 'Backends', dataIndex: 'backends', flex: 1},
             {header: 'Interval', dataIndex: 'interval_time', flex: 1},
             {header: 'Constraint', dataIndex: 'constraint_field', flex: 1},
             {header: 'Comments', dataIndex: 'comments', flex: 1},
