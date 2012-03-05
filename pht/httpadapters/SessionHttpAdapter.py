@@ -62,7 +62,9 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'grade'                   : grade
               , 'interval_time'           : self.session.interval_time
               , 'constraint_field'        : self.session.constraint_field
+              , 'has_constraint_field'    : self.hasText(self.session.constraint_field)
               , 'comments'                : self.session.comments
+              , 'has_comments'            : self.hasText(self.session.comments)
               , 'scheduler_notes'         : self.session.scheduler_notes
               , 'session_time_calculated' : self.session.session_time_calculated
               # allotment
@@ -115,6 +117,9 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'pst_elevation_min'       : self.session.target.pst_elevation_min
                }
         return data
+
+    def hasText(self, text):
+        return text is not None and text != ""
 
     def initFromPost(self, data):
 

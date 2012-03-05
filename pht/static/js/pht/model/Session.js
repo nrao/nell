@@ -15,7 +15,9 @@ Ext.define('PHT.model.Session', {
            , 'receivers'
            , 'receivers_granted'
            , 'constraint_field'
+           , 'has_constraint_field'
            , 'comments'
+           , 'has_comments'
            , 'scheduler_notes'
            , 'session_time_calculated'
            // allotment
