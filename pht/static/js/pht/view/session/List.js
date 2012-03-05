@@ -91,7 +91,6 @@ Ext.define('PHT.view.session.List' ,{
             {header: 'Requested', dataIndex: 'requested_time', flex: 1},
             {header: 'Repeats', dataIndex: 'repeats', flex: 1},
             {header: 'Separation', dataIndex: 'separation', flex: 1},
-            {header: 'Sci. Cat.', dataIndex: 'sci_categories', flex: 1},
             {header: 'Rcvrs', dataIndex: 'receivers', flex: 1},
             {header: 'Backends', dataIndex: 'backends', flex: 1},
             {header: 'Interval', dataIndex: 'interval_time', flex: 1},
@@ -100,7 +99,6 @@ Ext.define('PHT.view.session.List' ,{
             {header: 'Min LST', dataIndex: 'min_lst', flex: 1},
             {header: 'Max LST', dataIndex: 'max_lst', flex: 1},
             {header: 'El Min', dataIndex: 'elevation_min', flex: 1},
-            {header: 'Sess Time Calc', dataIndex: 'session_time_calculated', flex: 1},
         ];
 
         this.callParent(arguments);
