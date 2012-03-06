@@ -88,8 +88,20 @@ def tree(request, *args, **kws):
 def import_proposals(request, *args, **kws):
     if request.method == 'POST':
         pst = PstImport()
+        # pcode is in PHT format - need to convert
         for pcode in request.POST.getlist('proposals'):
             pst.importProposal(pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/'))
+    return HttpResponse(json.dumps({"success" : "ok"})
+                      , content_type = 'application/json')
+
+@login_required
+@admin_only
+def import_pst_proposals(request, *args, **kws):
+    if request.method == 'POST':
+        pst = PstImport()
+        # pcode is in PST format
+        for pcode in request.POST.getlist('proposals'):
+            pst.importProposal(pcode)
     return HttpResponse(json.dumps({"success" : "ok"})
                       , content_type = 'application/json')
 
@@ -104,7 +116,6 @@ def import_semester(request, *args, **kws):
     return HttpResponse(json.dumps({"success" : "ok"})
                       , content_type = 'application/json')
                                   
-
 @login_required
 @admin_only
 def sources_import(request):
@@ -427,6 +438,12 @@ def session_grades(request):
                                   , 'session grades' : SessionGrade.jsonDictOptions()})
                       , content_type = 'application/json')
 
+def pst_proposal_codes(request):
+    pst = PstInterface()
+    return HttpResponse(json.dumps({"success" : "ok"
+                                  , 'pst pcodes' : pst.getProposalCodes()})
+                      , content_type = 'application/json')
+    
 def session_observing_types(request):
     return simpleGetAllResponse('observing types', Observing_Type.jsonDictOptions())
 
