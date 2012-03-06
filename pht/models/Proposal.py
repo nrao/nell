@@ -42,8 +42,6 @@ class Proposal(models.Model):
     investigators   = models.ManyToManyField('Author', related_name = 'investigator_on')
     sci_categories  = models.ManyToManyField(ScientificCategory)
     pcode           = models.CharField(max_length = 32, unique = True)
-    # TBF: remove this field
-    total_time      = models.FloatField()
     create_date     = models.DateTimeField()
     modify_date     = models.DateTimeField()
     submit_date     = models.DateTimeField()
@@ -108,7 +106,6 @@ class Proposal(models.Model):
                           , proposal_type   = proposalType
                           , status          = status
                           , pcode           = pcode
-                          , total_time      = 0.0 # TBF: remove
                           , create_date     = result['CREATED_DATE']
                           , modify_date     = result['MODIFIED_DATE']
                           , submit_date     = submit_date 

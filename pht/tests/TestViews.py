@@ -173,11 +173,13 @@ class TestViews(TestCase):
                              , 'sessionId': 1
                              , 'id': 'sessionId=1'
                              , 'store': 'Sessions'}
-                           , {'text': 'He_ELD_5G (2)'
-                            , 'leaf': True
-                            , 'sessionId': 2
-                             , 'id': 'sessionId=2'
-                            , 'store': 'Sessions'}]
+                              ]
+
+                          # , {'text': 'He_ELD_5G (2)'
+                          #  , 'leaf': True
+                          #  , 'sessionId': 2
+                          #   , 'id': 'sessionId=2'
+                          #  , 'store': 'Sessions'}]
               , 'success': 'ok'}
         self.assertEqual(tree, results)
 
@@ -208,7 +210,6 @@ class TestViews(TestCase):
                   , 'pst_proposal_id' : self.proposal.pst_proposal_id
                   , 'pcode'           : self.proposal.pcode.replace('-002', '-003')
                   , 'submit_date'     : self.proposal.submit_date.strftime(self.dtfmt)
-                  , 'total_time'      : self.proposal.total_time
                   , 'title'           : self.proposal.title
                   , 'abstract'        : self.proposal.abstract
                   , 'observing_types' : [o.type for o in self.proposal.observing_types.all()]
@@ -231,7 +232,6 @@ class TestViews(TestCase):
                   , 'pst_proposal_id' : ''
                   , 'pcode'           : self.proposal.pcode.replace('-002', '-003')
                   , 'submit_date'     : self.proposal.submit_date.strftime(self.dtfmt)
-                  , 'total_time'      : ''
                   , 'title'           : self.proposal.title
                   , 'abstract'        : self.proposal.abstract
                   , 'joint_proposal'  : str(not self.proposal.joint_proposal)
@@ -251,7 +251,6 @@ class TestViews(TestCase):
                   , 'pst_proposal_id' : self.proposal.pst_proposal_id
                   , 'pcode'           : self.proposal.pcode.replace('-002', '-001')
                   , 'submit_date'     : self.proposal.submit_date.strftime(self.dtfmt)
-                  , 'total_time'      : self.proposal.total_time
                   , 'title'           : self.proposal.title
                   , 'abstract'        : self.proposal.abstract
                   , 'joint_proposal'  : str(not self.proposal.joint_proposal)
