@@ -77,7 +77,8 @@ Ext.define('PHT.view.proposal.List' ,{
             {header: 'Observing Types', dataIndex: 'observing_types', width: 200},
             {header: 'PI', dataIndex: 'pi_name', flex: 1},
             {header: 'Sci. Categories', dataIndex: 'sci_categories', flex: 1},
-            {header: 'Total Time', dataIndex: 'total_time', flex: 1},
+            {header: 'Requested Hrs', dataIndex: 'requested_time', flex: 1},
+            {header: 'Allocated Hrs', dataIndex: 'allocated_time', flex: 1},
             {header: 'Joint Proposal', dataIndex: 'joint_proposal', flex: 1}
         ];
 

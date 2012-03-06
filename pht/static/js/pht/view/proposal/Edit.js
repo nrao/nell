@@ -45,6 +45,20 @@ Ext.define('PHT.view.proposal.Edit', {
                             valueField: 'semester',
                             forceSelection: true,
                             allowBlank: false,
+                        },
+                        {
+                            xtype: 'numberfield',
+                            name: 'requested_time',
+                            fieldLabel: 'Requested (Hrs)',
+                            readOnly: true,
+                            fieldCls: "x-pht-formfield-readonly",
+                        },
+                        {
+                            xtype: 'numberfield',
+                            name: 'allocated_time',
+                            fieldLabel: 'Allocated (Hrs)',
+                            readOnly: true,
+                            fieldCls: "x-pht-formfield-readonly",
                         }],
                     },
                     {

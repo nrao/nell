@@ -42,10 +42,11 @@ class Proposal(models.Model):
     investigators   = models.ManyToManyField('Author', related_name = 'investigator_on')
     sci_categories  = models.ManyToManyField(ScientificCategory)
     pcode           = models.CharField(max_length = 32, unique = True)
+    # TBF: remove this field
+    total_time      = models.FloatField()
     create_date     = models.DateTimeField()
     modify_date     = models.DateTimeField()
     submit_date     = models.DateTimeField()
-    total_time      = models.FloatField()  # Minutes
     title           = models.CharField(max_length = 512)
     abstract        = models.CharField(max_length = 2000)
     spectral_line   = models.CharField(max_length = 2000, null = True)
@@ -57,6 +58,20 @@ class Proposal(models.Model):
 
     def __str__(self):
         return self.pcode
+
+    def requestedTime(self):
+        "Simply the sum of the sessions' time"
+        return sum([s.allotment.requested_time \
+            for s in self.session_set.all() \
+                if s.allotment is not None \
+                and s.allotment.requested_time is not None])
+
+    def allocatedTime(self):
+        "Simply the sum of the sessions' time"
+        return sum([s.allotment.allocated_time \
+            for s in self.session_set.all() \
+                if s.allotment is not None \
+                and s.allotment.allocated_time is not None])
 
     def setSemester(self, semester):
         "Uses semester name to set the correct object."
@@ -93,10 +108,10 @@ class Proposal(models.Model):
                           , proposal_type   = proposalType
                           , status          = status
                           , pcode           = pcode
+                          , total_time      = 0.0 # TBF: remove
                           , create_date     = result['CREATED_DATE']
                           , modify_date     = result['MODIFIED_DATE']
                           , submit_date     = submit_date 
-                          , total_time      = 0.0 #result['total_time']
                           , title           = result['TITLE']
                           , abstract        = result['ABSTRACT']
                           , joint_proposal  = False #result['joint_proposal']
