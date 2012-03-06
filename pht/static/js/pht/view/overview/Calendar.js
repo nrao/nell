@@ -1,13 +1,6 @@
 Ext.define('PHT.view.overview.Calendar', {
-    extend: 'Ext.window.Window',
+    extend: 'Ext.panel.Panel',
     alias: 'widget.overviewcalendar',
-    autoScroll: true,
-    width: '90%',
-    height: '90%',
-    layout: 'fit',
-    constrainHeader: true,
-    title: 'Overview Calendar',
-    maximizable: true,
     bodyStyle: {
         background: '#fff',
     }, 
@@ -58,6 +51,7 @@ Ext.define('PHT.view.overview.Calendar', {
 
     genDrawComponent: function(numDays){
         var me      = this;
+        this.periods = [];
         this.px2time = Ext.create('PHT.view.overview.PixelsToTime');
         this.hourPx = this.px2time.hourPx; // # of pixels for an hour
         this.dayPx  = this.px2time.dayPx; // # of pixels for a day
@@ -65,6 +59,8 @@ Ext.define('PHT.view.overview.Calendar', {
         this.height = (numDays + 1) * this.dayPx - this.dayPx;
 
         var drawComponent = Ext.create('Ext.draw.Component', {
+            height: '100%',
+            width: '100%',
             autoScroll: true,
             items: [
                 {
@@ -186,6 +182,20 @@ Ext.define('PHT.view.overview.Calendar', {
             start += this.hourPx;
         }
         return path;
+    },
+
+    highlight: function(periods){
+        for (i in this.periods){
+            if(this.periods[i].record.get('id') == periods[0].get('id')){
+                this.periods[i].selected();
+            } else {
+                this.periods[i].unselected();
+            }
+        }
+    },
+
+    addPeriod: function(period){
+        this.periods.push(period);
     },
 
     close: function() {

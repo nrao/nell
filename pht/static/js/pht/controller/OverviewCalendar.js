@@ -14,6 +14,7 @@ Ext.define('PHT.controller.OverviewCalendar', {
     views: [
         'overview.Calendar',
         'period.Edit',
+        'period.List',
     ],
 
     init: function() {
@@ -25,15 +26,23 @@ Ext.define('PHT.controller.OverviewCalendar', {
             'periodedit button[action=save]': {
                 click: this.updatePeriod
             },            
+            'periodlist' : {
+                itemclick: this.highlightPeriod
+            },
             
         });        
 
         this.callParent(arguments);
     },
 
-    setOverviewCalendar: function(oc) {
-        this.oc = oc;
+    setOverviewCalendarWindow: function(ocWin) {
+        this.oc = ocWin.getCalendar();
+        this.pe = ocWin.getPeriodExplorer();
         this.drawCalendar();
+    },
+
+    highlightPeriod: function() {
+        this.oc.highlight(this.pe.getSelectionModel().getSelection());
     },
 
     drawCalendar: function(){
@@ -256,6 +265,7 @@ Ext.define('PHT.controller.OverviewCalendar', {
             period.setDay(dayIndex);
             period.setTime(time, parseFloat(record.get('duration')));
             period.setData(record, type, receivers);
+            this.oc.addPeriod(period);
             return dayIndex
         }    
     },    

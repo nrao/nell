@@ -88,10 +88,7 @@ Ext.application({
         var sessionSources = Ext.create('PHT.view.source.SessionListWindow', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
-        var overviewCalendar = Ext.create('PHT.view.overview.Calendar', {
-            renderTo: viewport.layout.regions.center.getEl(),
-        });
-        var periodListWin = Ext.create('PHT.view.period.ListWindow', {
+        var overviewCalendarWin = Ext.create('PHT.view.overview.Window', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
 
@@ -138,12 +135,7 @@ Ext.application({
                 {
                 text: 'Overview Calendar',
                 handler: function() {
-                    overviewCalendar.show();
-                }},
-                {
-                text: 'Period Explorer',
-                handler: function() {
-                    periodListWin.show();
+                    overviewCalendarWin.show();
                 }},
             ]
         });
@@ -183,18 +175,15 @@ Ext.application({
         viewport.layout.regions.center.add(proposalAuthors);
         viewport.layout.regions.center.add(proposalSources);
         viewport.layout.regions.center.add(sessionSources);
-        viewport.layout.regions.center.add(overviewCalendar);
-        viewport.layout.regions.center.add(periodListWin);
+        viewport.layout.regions.center.add(overviewCalendarWin);
         propListWin.maximize();
-        //overviewCalendar.maximize();
-        //overviewCalendar.show();
-        this.getController('OverviewCalendar').setOverviewCalendar(overviewCalendar);
+        this.getController('OverviewCalendar').setOverviewCalendarWindow(overviewCalendarWin);
         this.getController('Sources').setProposalSourcesWindow(proposalSources);
         this.getController('Sources').setSessionSourcesWindow(sessionSources);
         this.getController('Authors').setProposalAuthorsWindow(proposalAuthors);
         this.getController('Sessions').setSessionListWindow(sessListWin);
-        this.getController('Sessions').setPeriodsWindow(periodListWin);
-        this.getController('Periods').setPeriodsWindow(periodListWin);
+        this.getController('Sessions').setPeriodsWindow(overviewCalendarWin);
+        this.getController('Periods').setPeriodsWindow(overviewCalendarWin);
         this.getController('Sessions').addObserver(this.getController('Sources'));
         this.getController('Proposals').addObserver(this.getController('Sources'));
         this.getController('Proposals').addObserver(this.getController('Dashboard'));

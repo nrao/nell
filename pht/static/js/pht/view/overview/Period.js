@@ -95,6 +95,14 @@ Ext.define('PHT.view.overview.Period', {
         this.setAttributes({fill: color});
     },
 
+    selected: function() {
+        this.setAttributes({opacity: 1}, true);
+    },
+
+    unselected: function() {
+        this.setAttributes({opacity: .4}, true);
+    },
+
     setDay: function(day) {
         this.day = day;
         this.y   = this.px2time.day2px(day);
