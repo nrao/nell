@@ -55,7 +55,8 @@ class ProposalHttpAdapter(PhtHttpAdapter):
               , 'create_date'      : self.formatDate(self.proposal.create_date)
               , 'modify_date'      : self.formatDate(self.proposal.modify_date)
               , 'submit_date'      : self.formatDate(self.proposal.submit_date)
-              , 'total_time'       : self.proposal.total_time
+              , 'requested_time'   : self.proposal.requestedTime()
+              , 'allocated_time'   : self.proposal.allocatedTime()
               , 'title'            : self.proposal.title
               , 'abstract'         : self.proposal.abstract
               , 'spectral_line'    : self.proposal.spectral_line

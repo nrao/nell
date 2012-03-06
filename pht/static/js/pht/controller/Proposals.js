@@ -11,6 +11,7 @@ Ext.define('PHT.controller.Proposals', {
         'Proposal',
         'ProposalType',
         'ProposalCode',
+        'PstProposalCode',
         'Status',
         'ScienceCategory',
         'Semester',
@@ -22,6 +23,7 @@ Ext.define('PHT.controller.Proposals', {
         'Proposals',
         'ProposalCodes',
         'ProposalTypes',
+        'PstProposalCodes',
         'ScienceCategories',
         'Statuses',
         'Semesters',
@@ -112,7 +114,7 @@ Ext.define('PHT.controller.Proposals', {
         var grid      = button.up('grid');
         var proposals = grid.getSelectionModel().getSelection();
         var fields    = view.down('form').getForm().getFields();
-        var pcodeCB   = fields.filter('name', 'pcode').last();
+        var pcodeCB   = fields.filter('name', 'pcode').first();
         var selected  = [];
         for (i=0; i < proposals.length; i++) {
             selected.push([proposals[i].get('pcode')]);
@@ -134,6 +136,24 @@ Ext.define('PHT.controller.Proposals', {
         f.setValues({semesterCheckbox : 'on'});
     },    
 
+    importProposalFormByPstProposal: function() {
+        var view = Ext.widget('proposalimport');
+        var form = view.down('form');
+        var f = form.getForm()
+        f.setValues({pstProposalsCheckbox : 'on'});
+    },
+
+    refresh: function() {
+        console.log('refreshing');
+        this.getProposalsStore().load();
+        // TBF, BUG: this causes the tree to hang
+        //this.getProposalTreeStore().load();
+        this.getProposalCodesStore().load();
+        this.getSessionsStore().load();
+        this.notifyObservers({notification: 'newImport'});
+        console.log('done');
+    },
+
     importProposal: function(button) {
         var me     = this;
         var win    = button.up('window');
@@ -151,11 +171,7 @@ Ext.define('PHT.controller.Proposals', {
                 timeout: 300000,
                 success: function(response) {
                     win.close();
-                    me.getProposalsStore().load();
-                    me.getProposalTreeStore().load();
-                    me.getProposalCodesStore().load();
-                    me.getSessionsStore().load();
-                    me.notifyObservers({notification: 'newImport'});
+                    me.refresh();
                 },
              });
         } else if (values.semesterCheckbox == 'on') {
@@ -168,13 +184,23 @@ Ext.define('PHT.controller.Proposals', {
                 timeout: 300000,
                 success: function(response) {
                     win.close();
-                    me.getProposalsStore().load();
-                    me.getProposalTreeStore().load();
-                    me.getProposalCodesStore().load();
-                    me.getSessionsStore().load();
-                    me.notifyObservers({notification: 'newImport'});
+                    me.refresh();
                 },
+                
              });
+        } else if (values.pstProposalsCheckbox == 'on') {
+            Ext.Ajax.request({
+                url: '/pht/import/pst',
+                params: {
+                    proposals: values.pcode
+                },
+                method: 'POST',
+                timeout: 300000,
+                success: function(response) {
+                    win.close();
+                    me.refresh();
+                },
+            });     
         } else {
             win.close();
         }

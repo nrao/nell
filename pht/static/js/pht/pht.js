@@ -96,13 +96,17 @@ Ext.application({
         var importMenu = Ext.create('Ext.menu.Menu', {
             id : 'importMenu',
             items : [{
-                text: 'Import Proposal(s)',
+                text: 'Reimport Proposal(s)',
                 handler: this.getController('Proposals').importProposalFormByProposal
                 },
                 {
                 text: "Import Semester's Proposals",
                 handler: this.getController('Proposals').importProposalFormBySemester
-                }
+                },
+                {
+                text: "Import PST Proposal(s)",
+                handler: this.getController('Proposals').importProposalFormByPstProposal
+                },
             ]
         });
         var toolsMenu = Ext.create('Ext.menu.Menu', {
