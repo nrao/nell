@@ -34,7 +34,6 @@ class TestTarget(TestCase):
 
         self.targets = Target.objects.all().order_by('id')
         self.t1 = self.targets[0]
-        self.t2 = self.targets[1]
 
     def test_calcLSTrange(self):
         self.assertEqual((None, None), self.t1.calcLSTrange())
