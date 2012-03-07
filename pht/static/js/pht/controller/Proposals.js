@@ -45,7 +45,8 @@ Ext.define('PHT.controller.Proposals', {
 
         this.control({
             'proposallist' : {
-                itemdblclick: this.editProposal
+                itemdblclick: this.editProposal,
+                itemclick: this.filterSessionExplorer,
             },
             'proposallist toolbar button[action=create]': {
                 click: this.createProposal
@@ -87,6 +88,11 @@ Ext.define('PHT.controller.Proposals', {
         grid.authorsFilterText.reset();
         grid.pcodeFilterText.reset();
         grid.titleFilterText.reset();
+    },
+
+    filterSessionExplorer: function(grid, record) {
+        this.notifyObservers({notification: 'filterSessionExplorer'
+                            , pcode : record.get('pcode')});
     },
 
     // How to respond to click's on the navigation tree?

@@ -130,6 +130,12 @@ Ext.define('PHT.controller.Sessions', {
        });    
     },
 
+    notify: function(data) {
+        if (data['notification'] == 'filterSessionExplorer') {
+            this.sessionListWindow.down('sessionlist').setProposal(data.pcode);
+        }
+    },
+
     calculateLSTs: function(button) {
         var win = button.up('window');
         var form = win.down('form');
