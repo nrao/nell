@@ -190,6 +190,7 @@ Ext.application({
         this.getController('Periods').setPeriodsWindow(overviewCalendarWin);
         this.getController('Sessions').addObserver(this.getController('Sources'));
         this.getController('Proposals').addObserver(this.getController('Sources'));
+        this.getController('Proposals').addObserver(this.getController('Sessions'));
         this.getController('Proposals').addObserver(this.getController('Dashboard'));
         
         // TBF: better place for VTypes?
