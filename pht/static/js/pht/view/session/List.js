@@ -83,21 +83,20 @@ Ext.define('PHT.view.session.List' ,{
         ];
 
         this.columns = [
-            {header: 'ID', dataIndex: 'id', flex: 1},
             {header: 'PCODE', dataIndex: 'pcode', width: 100},
             {header: 'Name', dataIndex: 'name', width: 100},
             {header: 'Type', dataIndex: 'session_type_code', flex: 1},
-            {header: 'Obs. Type', dataIndex: 'observing_type', flex: 1},
+            {header: 'Obs. Type', dataIndex: 'observing_type', width: 80},
             {header: 'Requested', dataIndex: 'requested_time', flex: 1},
             {header: 'Repeats', dataIndex: 'repeats', flex: 1},
             {header: 'Separation', dataIndex: 'separation', flex: 1},
             {header: 'Rcvrs', dataIndex: 'receivers', flex: 1},
-            {header: 'Backends', dataIndex: 'backends', flex: 1},
+            {header: 'Backends', dataIndex: 'backends', width: 100},
             {header: 'Interval', dataIndex: 'interval_time', flex: 1},
             {header: 'Constraint?', dataIndex: 'has_constraint_field', flex: 1},
             {header: 'Comments?', dataIndex: 'has_comments', flex: 1},
-            {header: 'Min LST', dataIndex: 'min_lst', flex: 1},
-            {header: 'Max LST', dataIndex: 'max_lst', flex: 1},
+            {header: 'Min LST', dataIndex: 'min_lst', width: 100},
+            {header: 'Max LST', dataIndex: 'max_lst', width: 100},
             {header: 'El Min', dataIndex: 'elevation_min', flex: 1},
         ];
 
