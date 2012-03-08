@@ -82,6 +82,7 @@ class TestPstImport(TestCase):
         stypes = []
         otypes = []
         wtypes = []
+        noObsType = 0
         for p in ps: 
             self.assertTrue(len(p.session_set.all()) > 0)
             # make sure all vlbi/a sessions are fixed
@@ -99,8 +100,11 @@ class TestPstImport(TestCase):
                 if s.weather_type is not None and \
                     s.weather_type.type not in wtypes:
                     wtypes.append(s.weather_type.type)
+                if s.observing_type is None:
+                    noObsType += 1
             p.delete()
 
+        self.assertEqual(0, noObsType)
         # make sure the types we are setting are reasonable
         expSessTypes = [
               'Fixed'
