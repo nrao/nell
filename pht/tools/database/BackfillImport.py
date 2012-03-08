@@ -46,36 +46,37 @@ class BackfillImport(PstImport):
 
         for project in projects:
             pcode    = project.pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/')
-            proposal = self.importProposal(pcode, semester = project.semester.semester)
-            """
-            for s in proposal.session_set.all():
-                s.delete()
+            if project.semester.semester == '11B':
+                proposal = self.importProposal(pcode, semester = project.semester.semester)
+                self.importDssSessions(project, proposal)
 
-            for s in project.sesshun_set.all():
-                session = Session(proposal = proposal
-                                    , name = s.name
-                                    , scheduler_notes = s.notes
-                                    , comments = s.accounting_notes
-                                    , pst_session_id = 0
-                                    )
-                session.save()
+    def importDssSessions(self, project, proposal):
+        for s in proposal.session_set.all():
+            s.delete()
 
-                # other defaults
-                session.semester     = proposal.semester
-                session.weather_type = WeatherType.objects.get(type = 'Poor')
-                flags = SessionFlags()
-                flags.save()
-                session.flags = flags
-                day = SessionSeparation.objects.get(separation = 'day')
-                m = Monitoring(outer_separation = day)
-                m.save()
-                session.monitoring = m
-                session.save()
+        for s in project.sesshun_set.all():
+            session = Session(proposal = proposal
+                            , name = s.name
+                            , scheduler_notes = s.notes
+                            , comments = s.accounting_notes
+                            , pst_session_id = 0
+                            )
+            session.save()
+
+            # other defaults
+            session.semester     = proposal.semester
+            session.weather_type = WeatherType.objects.get(type = 'Poor')
+            flags = SessionFlags()
+            flags.save()
+            session.flags = flags
+            day = SessionSeparation.objects.get(separation = 'day')
+            m = Monitoring(outer_separation = day)
+            m.save()
+            session.monitoring = m
+            session.save()
          
-                self.setSessionTarget(session, s)
-                self.setSessionAllotment(session, s)
-            """
-
+            self.setSessionTarget(session, s)
+            self.setSessionAllotment(session, s)
 
     def setSessionTarget(self, pht_session, dss_session):
         try:
