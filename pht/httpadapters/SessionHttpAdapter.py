@@ -55,6 +55,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'sci_categories'          : ', '.join(sci_categories)
               , 'semester'                : semester 
               , 'session_type'            : sessType
+              , 'type'                    : sessType # to be like DSS session
               , 'session_type_code'       : sessTypeCode
               , 'observing_type'          : observingType
               , 'weather_type'            : wthrType
