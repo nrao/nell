@@ -79,6 +79,14 @@ class Proposal(models.Model):
         except:
             pass
 
+    def hasObsType(self, obsType, contains = False):
+        "Does this proposal have the given observation type?"
+        if contains:
+            ts = self.observing_types.filter(type__icontains = obsType)
+        else:
+            ts = self.observing_types.filter(type = obsType)
+        return len(ts) > 0
+        
     @staticmethod
     def semestersUsed():
         "Returns only the distinct semesters used by all Proposals"

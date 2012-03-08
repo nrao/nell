@@ -203,8 +203,39 @@ class Session(models.Model):
 
         return type    
         
+    def determineObservingType(self):
+        "Figure out obs type from proposal and backends."
 
-
+        obsType = None
+        if self.proposal is not None:
+            pcode = self.proposal.pcode.lower()
+            if 'vlba' in pcode or 'vlbi' in pcode:
+                obsType = 'vlbi'
+            else:    
+                # okay, how about the proposal's obs types?
+                if self.proposal.hasObsType('Pulsar'):
+                    obsType = 'pulsar'
+                elif self.proposal.hasObsType('Continuum'):
+                    obsType = 'continuum'
+                elif self.proposal.hasObsType('radar', contains = True):
+                    obsType = 'radar'
+                elif self.proposal.hasObsType('Spectroscopy'):
+                    obsType = 'spectral line'
+        if obsType is None:
+            # Hmm, none of the above tricks worked; use backends!
+            backends = [b.abbreviation for b in self.backends.all()]
+            rcvrs = [r.abbreviation for r in self.receivers.all()]
+            if 'Vegas' in backends or 'gbtSpec' in backends \
+                or 'gbtSpecP' in backends or 'Zpect' in backends:
+                obsType = "spectral line"
+            elif 'MBA' in rcvrs or 'CCB' in backends or 'DCR' in backends:
+                obsType = "continuum"
+            elif 'GUPPY' in backends:
+                obsType = "continuum"
+        if obsType is not None:
+            obsType = Observing_Type.objects.get(type = obsType)
+        return obsType                
+                
     def periodGenerationFrom(self):
         """
         Examines the monitor related parameters, and determines
