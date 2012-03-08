@@ -34,6 +34,17 @@ class TestSession(TestCase):
         self.proposal = Proposal.objects.get(pcode = "GBT12A-002")
         self.session = self.proposal.session_set.all().order_by('id')[0]
 
+    def test_determineFreqCategory(self):
+        self.assertEqual('LF', self.session.determineFreqCategory())
+
+    def test_determineSessionType(self):
+        self.assertEqual('Open - Low Freq'
+                       , self.session.determineSessionType().type)
+
+    def test_determineWeatherType(self):
+        self.assertEqual('Poor'
+                       , self.session.determineWeatherType().type)
+
     def test_genPeriods(self):
 
         # first make sure we don't crash when things

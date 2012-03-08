@@ -337,8 +337,9 @@ class PstImport(PstInterface):
         self.importResources(session)
         session.save()
 
-        # now we can determine it's type
+        # now we can determine it's types
         session.session_type = session.determineSessionType()
+        session.weather_type = session.determineWeatherType()
         session.save()
 
         # Infer the session's observing type
