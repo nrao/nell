@@ -180,7 +180,8 @@ Ext.application({
         viewport.layout.regions.center.add(proposalSources);
         viewport.layout.regions.center.add(sessionSources);
         viewport.layout.regions.center.add(overviewCalendarWin);
-        propListWin.maximize();
+        propListWin.show();
+        sessListWin.show();
         this.getController('OverviewCalendar').setOverviewCalendarWindow(overviewCalendarWin);
         this.getController('Sources').setProposalSourcesWindow(proposalSources);
         this.getController('Sources').setSessionSourcesWindow(sessionSources);

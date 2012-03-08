@@ -5,12 +5,11 @@ Ext.define('PHT.view.session.ListWindow', {
     constrain: true,
     layout: 'fit',
     width: '60%',
-    height: '45%',
-    minWidth: 500,
-    minHeight: 300,
+    height: '70%',
     plain: true,
-    //minimizable: true, //TBF: Doesn't work?!
     maximizable: true,
+    x: 0,
+    y: 300,
     items: {
         border: false
     },
