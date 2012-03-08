@@ -46,6 +46,7 @@ class BackfillImport(PstImport):
 
         for project in projects:
             pcode    = project.pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/')
+            # TBF: kluge to keep data at low volume
             if project.semester.semester == '11B':
                 proposal = self.importProposal(pcode, semester = project.semester.semester)
                 self.importDssSessions(project, proposal)
@@ -60,12 +61,18 @@ class BackfillImport(PstImport):
                             , scheduler_notes = s.notes
                             , comments = s.accounting_notes
                             , pst_session_id = 0
+                            , semester = proposal.semester
+                            , observing_type = s.observing_type
                             )
             session.save()
 
-            # other defaults
-            session.semester     = proposal.semester
-            session.weather_type = WeatherType.objects.get(type = 'Poor')
+            self.setSessionReceivers(session, s)
+            self.setSessionTarget(session, s)
+            self.setSessionAllotment(session, s)
+            session.session_type = session.determineSessionType()
+            session.weather_type = session.determineWeatherType()
+
+            # defaults
             flags = SessionFlags()
             flags.save()
             session.flags = flags
@@ -75,9 +82,18 @@ class BackfillImport(PstImport):
             session.monitoring = m
             session.save()
          
-            self.setSessionTarget(session, s)
-            self.setSessionAllotment(session, s)
 
+    def setSessionReceivers(self, pht_session, dss_session):
+        """
+        Transfers DSS session's receivers to the PHT session.
+        Ignores the DSS logic.
+        """
+
+        for r in dss_session.rcvrs_specified():
+            rcvr = Receiver.get_rcvr(r)
+            pht_session.receivers.add(rcvr)
+        pht_session.save()    
+            
     def setSessionTarget(self, pht_session, dss_session):
         try:
             target = Target(ra = dss_session.target.horizontal
