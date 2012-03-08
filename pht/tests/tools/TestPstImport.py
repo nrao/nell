@@ -53,6 +53,7 @@ class TestPstImport(TestCase):
         self.assertTrue(s.target is not None)
         self.assertEqual('Open - Low Freq', s.session_type.type)
         self.assertEqual('Poor', s.weather_type.type)
+        self.assertEqual('spectral line', s.observing_type.type)
         reports = ImportReport.objects.all()
         self.assertEqual(1, len(reports))
         self.assertTrue(0 < len(reports[0].report))
@@ -108,7 +109,11 @@ class TestPstImport(TestCase):
             , 'Open - Low Freq'
             , 'Windowed'
             ]
-        expObsTypes = ['pulsar', 'radar', 'spectral line', 'vlbi']
+        expObsTypes = [ 'continuum'
+                      , 'pulsar'
+                      , 'radar'
+                      , 'spectral line'
+                      , 'vlbi']
         self.assertEquals(expObsTypes, sorted(otypes))
         self.assertEquals(expSessTypes, sorted(stypes))
         self.assertEquals(['Excellent', 'Good', 'Poor'], sorted(wtypes))
