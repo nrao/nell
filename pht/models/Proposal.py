@@ -31,6 +31,8 @@ from ProposalType       import ProposalType
 
 from scheduler.models   import Project as DSSProject 
 
+from utilities          import TimeAccounting
+
 from datetime           import datetime
 
 class Proposal(models.Model):
@@ -52,6 +54,8 @@ class Proposal(models.Model):
     abstract        = models.CharField(max_length = 2000)
     spectral_line   = models.CharField(max_length = 2000, null = True)
     joint_proposal  = models.BooleanField()
+    next_semester_complete = models.BooleanField(default = True)
+    #next_semester_time     = models.FloatField(null = True)
 
     class Meta:
         db_table  = "pht_proposals"
@@ -73,6 +77,39 @@ class Proposal(models.Model):
             for s in self.session_set.all() \
                 if s.allotment is not None \
                 and s.allotment.allocated_time is not None])
+
+    # *** Section: accessing the corresponding DSS project
+    def timeRemaining(self):
+        "From this proposal's project's time accounting."
+        if self.dss_project is not None:
+            ta = TimeAccounting()
+            return ta.getTimeLeft(self.dss_project)
+        else:
+            return None
+
+    def timeBilled(self):
+        "From this proposal's project's time accounting."
+        return self.getTime('time_billed')
+
+    def timeScheduled(self):
+        "From this proposal's project's time accounting."
+        return self.getTime('scheduled')
+
+    def getTime(self, type):
+        "Leverage time accounting for this proposal's project."
+        if self.dss_project is not None:
+            ta = TimeAccounting()
+            return ta.getTime(type, self.dss_project)
+        else:
+            return None
+
+    def isComplete(self):
+        if self.dss_project is not None:
+            return self.dss_project.complete
+        else:
+            return None
+
+    # *** End Section: accessing the corresponding DSS project
 
     def setSemester(self, semester):
         "Uses semester name to set the correct object."
@@ -126,8 +163,13 @@ class Proposal(models.Model):
                           )
 
         proposal.save()
-        author      = Author.createFromSqlResult(result, proposal)
-        proposal.pi = author
+
+        try:
+            author      = Author.createFromSqlResult(result, proposal)
+            proposal.pi = author
+        except:
+            pass
+
         proposal.save()
         return proposal
 
