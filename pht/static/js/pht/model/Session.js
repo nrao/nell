@@ -82,7 +82,8 @@ Ext.define('PHT.model.Session', {
         reader: {
             type: 'json',
             root: 'sessions',
-            successProperty: 'success'
+            successProperty: 'success',
+            totalProperty: 'total',
         }
     }
 });

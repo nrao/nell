@@ -39,9 +39,16 @@ class ProposalResource(Resource):
             return HttpResponse(json.dumps(adapter.jsonDict())
                               , content_type = 'application/json')
         else:
+            # Keep this here for when we start doing pagenation
+            """
+            start = request.GET.get('start', 0)
+            limit = request.GET.get('limit', 25)
+            end   = int(start) + int(limit)
+            """
             proposals = Proposal.objects.all().order_by('pcode')
             return HttpResponse(json.dumps({"success" : "ok"
                                           , "proposals" : [ProposalHttpAdapter(p).jsonDict() for p in proposals]
+                                          , "total" : len(proposals)
                                            })
                               , content_type = 'application/json')
 

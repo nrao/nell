@@ -35,7 +35,8 @@ Ext.define('PHT.model.Proposal', {
         reader: {
             type: 'json',
             root: 'proposals',
-            successProperty: 'success'
+            successProperty: 'success',
+            totalProperty: 'total',
         }
     }
 });

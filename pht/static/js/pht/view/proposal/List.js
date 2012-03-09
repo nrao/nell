@@ -68,7 +68,17 @@ Ext.define('PHT.view.proposal.List' ,{
                     action: 'import',
                 }),
             ]
-        }];
+        },
+        /*
+        TBF: Hold for paging
+        {
+            xtype: 'pagingtoolbar',
+            store: 'Proposals',
+            dock: 'bottom',
+            displayInfo: true
+        }
+        */
+        ];
 
         this.columns = [
             {header: 'PCODE', dataIndex: 'pcode', flex: 1},
