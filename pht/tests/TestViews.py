@@ -174,12 +174,6 @@ class TestViews(TestCase):
                              , 'id': 'sessionId=1'
                              , 'store': 'Sessions'}
                               ]
-
-                          # , {'text': 'He_ELD_5G (2)'
-                          #  , 'leaf': True
-                          #  , 'sessionId': 2
-                          #   , 'id': 'sessionId=2'
-                          #  , 'store': 'Sessions'}]
               , 'success': 'ok'}
         self.assertEqual(tree, results)
 
@@ -200,7 +194,12 @@ class TestViews(TestCase):
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(self.proposal.pcode, results['pcode'])
         self.assertEqual(self.proposal.title, results['title'])
-        self.assertEqual(self.proposal.proposal_type.type, results['proposal_type'])
+        self.assertEqual(self.proposal.proposal_type.type
+                       , results['proposal_type'])
+        self.assertEqual(self.proposal.scheduledTime()
+                       , results['scheduled_time'])
+        self.assertEqual(self.proposal.next_semester_complete
+                       , results['next_sem_complete'])
 
     def test_proposal_post(self):
         data     = {'pi_id'           : self.proposal.pi.id

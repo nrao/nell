@@ -101,10 +101,10 @@ class TestProposal(TestCase):
     def test_timeAccounting(self):
 
         self.assertEqual(12.0, self.ta.getTime('time_billed', self.project))
-        self.assertEqual(12.0, self.proposal.timeBilled())
+        self.assertEqual(12.0, self.proposal.billedTime())
 
         self.assertEqual(12.0, self.ta.getTime('scheduled', self.project))
-        self.assertEqual(12.0, self.proposal.timeScheduled())
+        self.assertEqual(12.0, self.proposal.scheduledTime())
 
         self.assertEqual(-12.0, self.ta.getTimeRemaining(self.project))
-        self.assertEqual(-12.0, self.proposal.timeRemaining())
+        self.assertEqual(-12.0, self.proposal.remainingTime())

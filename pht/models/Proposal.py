@@ -79,7 +79,15 @@ class Proposal(models.Model):
                 and s.allotment.allocated_time is not None])
 
     # *** Section: accessing the corresponding DSS project
-    def timeRemaining(self):
+    def dssAllocatedTime(self):
+        "How much was the corresponding DSS project allocated?"
+        if self.dss_project is not None:
+            ta = TimeAccounting()
+            return ta.getProjectTotalTime(self.dss_project)
+        else:
+            return None
+
+    def remainingTime(self):
         "From this proposal's project's time accounting."
         if self.dss_project is not None:
             ta = TimeAccounting()
@@ -87,11 +95,11 @@ class Proposal(models.Model):
         else:
             return None
 
-    def timeBilled(self):
+    def billedTime(self):
         "From this proposal's project's time accounting."
         return self.getTime('time_billed')
 
-    def timeScheduled(self):
+    def scheduledTime(self):
         "From this proposal's project's time accounting."
         return self.getTime('scheduled')
 

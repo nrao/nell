@@ -20,6 +20,14 @@ Ext.define('PHT.model.Proposal', {
            , 'abstract'
            , 'spectral_line'
            , 'joint_proposal'
+           , 'next_sem_complete'
+           // from DSS project:
+           , 'dss_pcode'
+           , 'complete'
+           , 'dss_total_time'
+           , 'billed_time'
+           , 'scheduled_time'
+           , 'remaining_time'
            ], 
     proxy: {
         type: 'rest',
