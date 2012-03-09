@@ -123,6 +123,10 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'billed_time'             : self.session.billedTime()
               , 'scheduled_time'          : self.session.scheduledTime()
               , 'remaining_time'          : self.session.remainingTime() 
+              # next semester stuff
+              , 'next_sem_complete'       : self.session.next_semester.complete
+              , 'next_sem_time'           : self.session.next_semester.time
+              , 'next_sem_repeats'        : self.session.next_semester.repeats
                }
         return data
 
@@ -146,6 +150,9 @@ class SessionHttpAdapter(PhtHttpAdapter):
         m = Monitoring()
         m.save()
         self.session.monitoring = m
+        n = SessionNextSemester()
+        n.save()
+        self.session.next_semester = n
 
         # now fill in their fields
         self.updateFromPost(data)
@@ -212,6 +219,12 @@ class SessionHttpAdapter(PhtHttpAdapter):
         self.session.flags.transit_flat =  self.getBool(data, 'transit_flat')
         self.session.flags.guaranteed =  self.getBool(data, 'guaranteed')
         self.session.flags.save()
+
+        # next semester
+        self.session.next_semester.complete = self.getBool(data, 'next_sem_complete')
+        self.session.next_semester.time = self.getFloat(data, 'next_sem_time')
+        self.session.next_semester.repeats = self.getInt(data, 'next_sem_repeats')
+        self.session.next_semester.save()
 
         # monitoring
         self.session.monitoring.outer_separation = \

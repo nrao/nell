@@ -24,23 +24,24 @@ from django.db         import models
 
 from datetime          import datetime, timedelta
 
-from scheduler.models  import Observing_Type
-from Allotment         import Allotment
-from Backend           import Backend
-from Monitoring        import Monitoring
-from ObservingType     import ObservingType
-from Period            import Period
-from Proposal          import Proposal
-from Receiver          import Receiver
-from SessionSeparation import SessionSeparation
-from SessionType       import SessionType
-from Semester          import Semester
-from SessionFlags      import SessionFlags
-from SessionGrade      import SessionGrade
-from Source            import Source
-from Target            import Target
-from WeatherType       import WeatherType
-from scheduler.models  import Sesshun as DSSSession
+from scheduler.models    import Observing_Type
+from Allotment           import Allotment
+from Backend             import Backend
+from Monitoring          import Monitoring
+from ObservingType       import ObservingType
+from Period              import Period
+from Proposal            import Proposal
+from Receiver            import Receiver
+from SessionSeparation   import SessionSeparation
+from SessionType         import SessionType
+from Semester            import Semester
+from SessionFlags        import SessionFlags
+from SessionGrade        import SessionGrade
+from SessionNextSemester import SessionNextSemester
+from Source              import Source
+from Target              import Target
+from WeatherType         import WeatherType
+from scheduler.models    import Sesshun as DSSSession
 
 from utilities     import TimeAccounting
 from pht.utilities import *
@@ -64,8 +65,10 @@ class Session(models.Model):
     flags                   = models.ForeignKey(SessionFlags, null = True)
     monitoring              = models.ForeignKey(Monitoring, null = True)
     receivers_granted       = models.ManyToManyField(Receiver) 
+    next_semester           = models.ForeignKey(SessionNextSemester, null = True)
     pst_session_id          = models.IntegerField()
     name                    = models.CharField(max_length = 2000)
+
     
     # TBF: should separation and interval_time be in allotment?
     separation              = models.ForeignKey(SessionSeparation, null = True)

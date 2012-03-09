@@ -57,6 +57,10 @@ Ext.define('PHT.model.Session', {
            , 'outer_separation'
            , 'outer_interval'
            , 'custom_sequence'
+           // next semester
+           , 'next_sem_complete'
+           , 'next_sem_time'
+           , 'next_sem_repeats'
            // session params
            , 'lst_ex'
            , 'lst_in'

@@ -66,6 +66,11 @@ class TestViews(TestCase):
 
         sess = self.proposal.session_set.all()[0]
         self.session = sess
+        # I'm too lazy to recreate the fixture
+        n = SessionNextSemester()
+        n.save()
+        self.session.next_semester = n
+        self.session.save()
         self.s_data  = {
                     'pst_session_id'   : sess.pst_session_id
                   , 'pcode' : sess.proposal.pcode

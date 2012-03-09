@@ -51,6 +51,7 @@ class TestPstImport(TestCase):
         self.assertTrue(len(s.backends.all()) > 0)
         self.assertTrue(s.allotment is not None)
         self.assertTrue(s.target is not None)
+        self.assertTrue(s.next_semester is not None)
         self.assertEqual('Open - Low Freq', s.session_type.type)
         self.assertEqual('Poor', s.weather_type.type)
         self.assertEqual('spectral line', s.observing_type.type)

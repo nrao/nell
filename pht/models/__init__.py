@@ -15,6 +15,7 @@ from ScientificCategory       import ScientificCategory
 from Session                  import Session
 from SessionFlags             import SessionFlags
 from SessionGrade             import SessionGrade
+from SessionNextSemester      import SessionNextSemester
 from SessionParameter         import SessionParameter
 from SessionSeparation        import SessionSeparation
 from SessionType              import SessionType

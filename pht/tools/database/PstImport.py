@@ -332,6 +332,9 @@ class PstImport(PstInterface):
         m = Monitoring(outer_separation = day)
         m.save()
         session.monitoring = m
+        n = SessionNextSemester()
+        n.save()
+        session.next_semester = n
         
         # other stuff
         self.importResources(session)
