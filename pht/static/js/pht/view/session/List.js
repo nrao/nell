@@ -80,6 +80,15 @@ Ext.define('PHT.view.session.List' ,{
                     action: 'duplicate',
                 }),
             ]},
+        /*
+        TBF: Hold for paging
+        {
+            xtype: 'pagingtoolbar',
+            store: 'Sessions',
+            dock: 'bottom',
+            displayInfo: true
+        }
+        */
         ];
 
         this.columns = [

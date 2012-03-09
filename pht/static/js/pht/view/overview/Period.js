@@ -62,6 +62,7 @@ Ext.define('PHT.view.overview.Period', {
     },
 
     setData: function(record, pType, receivers){
+        this.record = record;
         if (this.sibling) {
             this.sibling.setData(record, pType, receivers);
         }

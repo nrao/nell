@@ -42,9 +42,16 @@ class SessionResource(Resource):
             return HttpResponse(json.dumps(adapter.jsonDict(detailed = True))
                               , content_type = 'application/json')
         else:
+            # Keep this here for when we start doing pagenation
+            """
+            start = request.GET.get('start', 0)
+            limit = request.GET.get('limit', 25)
+            end   = int(start) + int(limit)
+            """
             sessions = Session.objects.all()
             return HttpResponse(json.dumps({"success" : "ok"
                                           , "sessions" : [SessionHttpAdapter(s).jsonDict() for s in sessions]
+                                          , "total" : len(sessions)
                                            })
                               , content_type = 'application/json')
 
