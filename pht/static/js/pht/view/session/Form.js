@@ -491,6 +491,13 @@ Ext.define('PHT.view.session.Form', {
                         uncheckedValue: 'false',
                         inputValue: 'true',
                         labelStyle: '',
+                    },{
+                        xtype: 'datefield',
+                        fieldLabel: 'Last Date Scheduled',
+                        name: 'last_date_scheduled',
+                        readOnly: true,
+                        fieldCls: "x-pht-formfield-readonly",
+                        labelStyle: '',
                     }]
                 },{    
                     // Second Column

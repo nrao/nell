@@ -85,7 +85,7 @@ class Session(models.Model):
     def __str__(self):
         return "%s (%d)" % (self.name, self.id)
 
-    # *** Section: accessing the corresponding DSS project
+    # *** Section: accessing the corresponding DSS session
     def dssAllocatedTime(self):
         "How much was the corresponding DSS Session allocated?"
         if self.dss_session is not None \
@@ -124,6 +124,19 @@ class Session(models.Model):
             return self.dss_session.status.complete
         else:
             return None
+
+    def lastDateScheduled(self):
+        """
+        Returns the end of the last non-deleted period for the 
+        corresponding DSS session.
+        """
+
+        dt = None
+        if self.dss_session is not None:
+            range = self.dss_session.getPeriodRange()
+            if len(range) == 2:
+                dt = range[1] # end of last period
+        return dt
 
     # *** End Section: accessing the corresponding DSS project
 

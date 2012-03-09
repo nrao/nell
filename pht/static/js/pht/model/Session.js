@@ -74,6 +74,7 @@ Ext.define('PHT.model.Session', {
            , 'billed_time'
            , 'scheduled_time'
            , 'remaining_time'
+           , 'last_date_scheduled'
            ], 
     proxy: {
         type: 'rest',

@@ -123,6 +123,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'billed_time'             : self.session.billedTime()
               , 'scheduled_time'          : self.session.scheduledTime()
               , 'remaining_time'          : self.session.remainingTime() 
+              , 'last_date_scheduled'     : formatExtDate(self.session.lastDateScheduled())
               # next semester stuff
               , 'next_sem_complete'       : self.session.next_semester.complete
               , 'next_sem_time'           : self.session.next_semester.time
