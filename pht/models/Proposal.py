@@ -29,11 +29,14 @@ from Semester           import Semester
 from Status             import Status
 from ProposalType       import ProposalType
 
+from scheduler.models   import Project as DSSProject 
+
 from datetime           import datetime
 
 class Proposal(models.Model):
 
     pst_proposal_id = models.IntegerField(null = True)
+    dss_project     = models.ForeignKey(DSSProject, null = True)
     proposal_type   = models.ForeignKey(ProposalType)
     observing_types = models.ManyToManyField(ObservingType)
     status          = models.ForeignKey(Status)

@@ -40,6 +40,7 @@ from SessionGrade      import SessionGrade
 from Source            import Source
 from Target            import Target
 from WeatherType       import WeatherType
+from scheduler.models  import Sesshun as DSSSession
 
 from pht.utilities import *
 from utilities     import SLATimeAgent as sla
@@ -48,6 +49,7 @@ from utilities     import TimeAgent
 class Session(models.Model):
 
     proposal                = models.ForeignKey(Proposal)
+    dss_session             = models.ForeignKey(DSSSession, null = True)
     sources                 = models.ManyToManyField(Source)
     receivers               = models.ManyToManyField(Receiver, related_name = 'sessions')
     backends                = models.ManyToManyField(Backend)

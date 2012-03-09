@@ -47,8 +47,12 @@ class BackfillImport(PstImport):
         for project in projects:
             pcode    = project.pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/')
             # TBF: kluge to keep data at low volume
-            if project.semester.semester == '11B':
+            #if project.semester.semester == '11B':
+            if True:
                 proposal = self.importProposal(pcode, semester = project.semester.semester)
+                # make sure we maintain the PHT/DSS connection
+                proposal.dss_project = project
+                proposal.save()
                 self.importDssSessions(project, proposal)
 
     def importDssSessions(self, project, proposal):
@@ -57,6 +61,7 @@ class BackfillImport(PstImport):
 
         for s in project.sesshun_set.all():
             session = Session(proposal = proposal
+                            , dss_session = s
                             , name = s.name
                             , scheduler_notes = s.notes
                             , comments = s.accounting_notes
