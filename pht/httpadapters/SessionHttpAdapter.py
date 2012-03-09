@@ -47,6 +47,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
         include, exclude = self.session.get_lst_string()
         monitoringStart = self.session.monitoring.start_time
         sci_categories = [sc.category for sc in self.session.proposal.sci_categories.all()]
+        dss_sess_name = self.session.dss_session.name if self.session.dss_session is not None else 'unknown'        
         
         data = {'id'                      : self.session.id
               , 'name'                    : self.session.name
@@ -116,6 +117,12 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'pst_min_lst'             : self.session.target.pst_min_lst
               , 'pst_max_lst'             : self.session.target.pst_max_lst
               , 'pst_elevation_min'       : self.session.target.pst_elevation_min
+              # stuff from the DSS session (readonly)
+              , 'dss_session'             : dss_sess_name
+              , 'dss_total_time'          : self.session.dssAllocatedTime()
+              , 'billed_time'             : self.session.billedTime()
+              , 'scheduled_time'          : self.session.scheduledTime()
+              , 'remaining_time'          : self.session.remainingTime() 
                }
         return data
 

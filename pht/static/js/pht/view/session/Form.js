@@ -457,6 +457,70 @@ Ext.define('PHT.view.session.Form', {
                     width: 500,
                 }],    
             },{
+                title: 'DSS Session',
+                defaults: {
+                    fieldCls: "x-pht-formfield-readonly",
+                },    
+                items: [{
+                    xtype: 'textfield',
+                    fieldLabel: 'DSS Session',
+                    name: 'dss_session',
+                    readOnly: true,
+                    fieldCls: "x-pht-formfield-readonly",
+                    labelStyle: '',
+                },{
+                /*
+                {
+                    xtype: 'checkboxfield',
+                    fieldLabel: 'Next Semester Complete?',
+                    //boxLabel: 'Next Semester Complete?',
+                    name: 'next_sem_complete',
+                    uncheckedValue: 'false',
+                    inputValue: 'true',
+                    labelStyle: '',
+                },
+                {
+                */
+                    xtype: 'checkboxfield',
+                    fieldLabel: 'Currently Complete?',
+                    //boxLabel: 'Currently Complete?',
+                    name: 'complete',
+                    uncheckedValue: 'false',
+                    inputValue: 'true',
+                    readOnly: true,
+                    fieldCls: "x-pht-formfield-readonly",
+                    labelStyle: '',
+                },{
+                    xtype: 'numberfield',
+                    fieldLabel: 'DSS Alloted (Hrs)',
+                    name: 'dss_total_time',
+                    readOnly: true,
+                    fieldCls: "x-pht-formfield-readonly",
+                    labelStyle: '',
+                },{
+                    xtype: 'numberfield',
+                    fieldLabel: 'Scheduled (Hrs)',
+                    name: 'scheduled_time',
+                    readOnly: true,
+                    fieldCls: "x-pht-formfield-readonly",
+                    labelStyle: '',
+                },{
+                    xtype: 'numberfield',
+                    fieldLabel: 'Billed (Hrs)',
+                    name: 'billed_time',
+                    readOnly: true,
+                    fieldCls: "x-pht-formfield-readonly",
+                    labelStyle: '',
+                },{
+                    xtype: 'numberfield',
+                    fieldLabel: 'Remaining (Hrs)',
+                    name: 'remaining_time',
+                    readOnly: true,
+                    fieldCls: "x-pht-formfield-readonly",
+                    labelStyle: '',
+        
+                }],
+            },{
                 title: 'Misc',
                 items: [{
                     xtype: 'checkboxfield',

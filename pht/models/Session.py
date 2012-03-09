@@ -42,6 +42,7 @@ from Target            import Target
 from WeatherType       import WeatherType
 from scheduler.models  import Sesshun as DSSSession
 
+from utilities     import TimeAccounting
 from pht.utilities import *
 from utilities     import SLATimeAgent as sla
 from utilities     import TimeAgent
@@ -80,6 +81,48 @@ class Session(models.Model):
 
     def __str__(self):
         return "%s (%d)" % (self.name, self.id)
+
+    # *** Section: accessing the corresponding DSS project
+    def dssAllocatedTime(self):
+        "How much was the corresponding DSS Session allocated?"
+        if self.dss_session is not None \
+            and self.dss_session.allotment is not None:
+            return self.dss_session.allotment.total_time 
+        else:
+            return None
+
+    def remainingTime(self):
+        "From this session's dss sessions's time accounting."
+        if self.dss_session is not None:
+            ta = TimeAccounting()
+            return ta.getTimeLeft(self.dss_session)
+        else:
+            return None
+
+    def billedTime(self):
+        "From this session's project's time accounting."
+        return self.getTime('time_billed')
+
+    def scheduledTime(self):
+        "From this session's project's time accounting."
+        return self.getTime('scheduled')
+
+    def getTime(self, type):
+        "Leverage time accounting for this proposal's project."
+        if self.dss_session is not None:
+            ta = TimeAccounting()
+            return ta.getTime(type, self.dss_session)
+        else:
+            return None
+
+    def isComplete(self):
+        if self.dss_session is not None \
+            and self.dss_session.status is not None:
+            return self.dss_session.status.complete
+        else:
+            return None
+
+    # *** End Section: accessing the corresponding DSS project
 
     def get_lst_parameters(self):
         """

@@ -64,6 +64,12 @@ Ext.define('PHT.model.Session', {
            , 'pst_min_lst'
            , 'pst_max_lst'
            , 'pst_elevation_min'
+           // dss session (readonly)
+           , 'dss_session'
+           , 'dss_total_time'
+           , 'billed_time'
+           , 'scheduled_time'
+           , 'remaining_time'
            ], 
     proxy: {
         type: 'rest',
