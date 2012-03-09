@@ -33,7 +33,17 @@ class TestBackfillImport(TestCase):
 
     def test_importProposals(self):
         session  = create_sesshun()
-        backfill = BackfillImport()
+
+        # add some rcvrs
+        rg = scheduler.Receiver_Group(session = session)
+        rg.save()
+        r = scheduler.Receiver.get_rcvr('L')
+        rg.receivers.add(r)
+        r = scheduler.Receiver.get_rcvr('X')
+        rg.receivers.add(r)
+        rg.save()
+
+        backfill = BackfillImport(quiet = True)
         backfill.importProjects()
         for p in pht.Proposal.objects.all():
             p.delete()
