@@ -502,12 +502,14 @@ class Session(models.Model):
         an SQL query.
         """
 
+        proposal   = Proposal.objects.get(id = proposal_id)
         separation = SessionSeparation.objects.get(separation = result['SEPARATION'].strip())
         session = Session(pst_session_id = result['session_id']
                           # Don't use result's because that's for the
                           # PST, not our GB PHT DB!
                         , proposal_id = proposal_id #result['PROPOSAL_ID']
-                        , name = result['SESSION_NAME']
+                        #, name = result['SESSION_NAME']
+                        , name = proposal.pcode + ' - ' + str(1 + len(proposal.session_set.all()))
                         , separation = separation 
                         , interval_time = result['INTERVAL_TIME']
                         , constraint_field = result['CONSTRAINT_FIELD']
