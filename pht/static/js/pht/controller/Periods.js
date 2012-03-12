@@ -77,26 +77,13 @@ Ext.define('PHT.controller.Periods', {
         view.down('form').loadRecord(period);
     },
 
-    // TBF: refactor up to super class
     deletePeriod: function(button) {
         var grid = button.up('grid');
         var periods = grid.getSelectionModel().getSelection();
-        var store  = this.getPeriodsStore();
-        Ext.Msg.show({
-             title: 'Deleting Selected Periods',
-             msg: 'Are you sure?',
-             buttons: Ext.Msg.YESNO,
-             icon: Ext.Msg.QUESTION,
-             scope: this,
-             fn: function(id) {
-                 if (id == 'yes') {
-                     for (i = 0; i < periods.length; i++) {
-                         periods[i].destroy();
-                     }
-                     store.remove(periods);
-                 }
-             }
-        });
+        this.confirmDeleteMultiple(this.getPeriodsStore(),
+                                   periods,
+                                   'Deleting Selected Periods'
+        );
     },
     
     editPeriod: function(grid, record) {

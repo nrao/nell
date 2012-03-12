@@ -218,22 +218,10 @@ Ext.define('PHT.controller.Proposals', {
     deleteProposal: function(button) {
         var grid = button.up('grid');
         var proposals = grid.getSelectionModel().getSelection();
-        var store  = this.getProposalsStore();
-        Ext.Msg.show({
-             title: 'Deleting Selected Proposals',
-             msg: 'Are you sure?',
-             buttons: Ext.Msg.YESNO,
-             icon: Ext.Msg.QUESTION,
-             scope: this,
-             fn: function(id) {
-                 if (id == 'yes') {
-                     for (i = 0; i < proposals.length; i++) {
-                         proposals[i].destroy();
-                     }
-                     store.remove(proposals);
-                 }
-             }
-        });
+        this.confirmDeleteMultiple(this.getProposalsStore(),
+                                   proposals,
+                                   'Deleting Selected Proposals'
+        );
     },
     
     editProposal: function(grid, record) {

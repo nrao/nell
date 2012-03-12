@@ -47,6 +47,25 @@ Ext.define('PHT.controller.PhtController', {
         });
     },
 
+    confirmDeleteMultiple: function(store, records, title) {
+       Ext.Msg.show({
+            title: title,
+            msg: 'Are you sure?',
+            buttons: Ext.Msg.YESNO,
+            icon: Ext.Msg.QUESTION,
+            scope: this,
+            fn: function(id) {
+                if (id == 'yes') {
+                    for (i = 0; i < records.length; i++) {
+                        records[i].destroy();
+                    }
+                    store.remove(records);
+                }
+            }
+        });
+    },
+
+
     // utilitiy for making sure users are sure they want to reproduce
     confirmDuplicate: function(store, record, title) {
        Ext.Msg.show({
