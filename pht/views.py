@@ -11,6 +11,7 @@ from users.decorators import admin_only
 from scheduler.models import *
 from models import *
 from pht.tools.database import PstImport
+from pht.tools.LstPressures import LstPressures
 from httpadapters import *
 from tools.database import PstInterface
 from tools.database import BulkSourceImport
@@ -87,38 +88,8 @@ def tree(request, *args, **kws):
 @admin_only
 def lst_pressure(request, *args, **kws):
 
-    # TBF: replace this with a proper tool
-    #ss = Session.objects.all()
-    ss = [s for s in Session.objects.all().order_by('name') if s.dss_session is not None]
-
-    bins = [0.0]*24
-    
-    badRas = []
-    noRas = []
-    
-    for s in ss:
-       #print s
-       hr = rad2hr(s.target.ra)
-       #print hr
-       if hr is not None:
-           bin = int(math.floor(hr))
-           #print "bin: ", bin
-           if bin < 24:
-               if s.dss_session:
-                   bins[bin] += s.remainingTime()
-               else:
-                   bins[bin] += s.allotment.allocated_time
-           else:
-               badRas.append(s)
-       else:
-           noRas.append(s)
-    
-    # transform to what the Ext model expects
-    pressure = []
-    for i, b in enumerate(bins):
-        print b
-        pressure.append({'ra' : i, 'pressure' : b})
-
+    lst = LstPressures()
+    pressure = lst.getPressures()
 
     return HttpResponse(json.dumps({"success" : "ok"
                                   , "lst_pressure" : pressure

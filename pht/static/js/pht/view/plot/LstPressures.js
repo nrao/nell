@@ -8,10 +8,15 @@ Ext.define('PHT.view.plot.LstPressures', {
     width: 400,
     height: 300,
     store: 'LstPressures',
+    animate: true,
+    shadow: true,
+    legend: {
+        position: 'right',
+    },    
     axes: [{
         type: 'Numeric',
         position: 'left',
-        fields: ['pressure'],
+        fields: ['carryover', 'Poor_A', 'Poor_B', 'Poor_C'],
         title: 'Pressure (Hrs)',
         minimum: 0,
         //adjustMinimumByMajorUnit: 0
@@ -28,8 +33,9 @@ Ext.define('PHT.view.plot.LstPressures', {
     }],
     series: [{
         type: 'column',
+        stacked: true,
         xField: 'ra',
-        yField: ['pressure'], 
+        yField: ['carryover', 'Poor_A', 'Poor_B', 'Poor_C' ], 
     }],
 
 });

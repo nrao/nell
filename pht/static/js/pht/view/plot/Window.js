@@ -15,6 +15,19 @@ Ext.define('PHT.view.plot.Window', {
         xtype : 'lstpressureplot'
     }],
 
+
+    initComponent: function() {    
+        this.dockedItems = [{
+            xtype: 'toolbar',
+            items: [
+                {
+                    text: 'Update',
+                    action: 'update',
+                },
+            ]
+        }];
+        this.callParent(arguments);
+    },
 });
 
 

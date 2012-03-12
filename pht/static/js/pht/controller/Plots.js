@@ -15,8 +15,20 @@ Ext.define('PHT.controller.Plots', {
     ],
 
     init: function() {
-        this.callParent(arguments);
+        this.control({
+            'plotwindow toolbar button[action=update]': {
+                click: this.drawPlot
+            },
+            
+        }); 
 
+        this.callParent(arguments);
     },
+
+    drawPlot: function() {
+        var store = this.getStore('LstPressures');
+        store.load();
+    },
+
 });    
 
