@@ -2,6 +2,7 @@
 Ext.Loader.setConfig({enabled:true});
 
 Ext.require(['Ext.form.*']);
+Ext.require(['Ext.chart.*']);
 
 Ext.application({
     name: 'PHT',
@@ -12,6 +13,7 @@ Ext.application({
                 , 'Authors'
                 , 'Dashboard'
                 , 'Periods'
+                , 'Plots'
                 , 'Sources'
                 , 'Sessions'
                 , 'OverviewCalendar'
@@ -89,6 +91,9 @@ Ext.application({
             renderTo: viewport.layout.regions.center.getEl(),
         });
         var overviewCalendarWin = Ext.create('PHT.view.overview.Window', {
+            renderTo: viewport.layout.regions.center.getEl(),
+        });
+        var plot = Ext.create('PHT.view.plot.Window', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
 
@@ -180,8 +185,10 @@ Ext.application({
         viewport.layout.regions.center.add(proposalSources);
         viewport.layout.regions.center.add(sessionSources);
         viewport.layout.regions.center.add(overviewCalendarWin);
-        propListWin.show();
-        sessListWin.show();
+        viewport.layout.regions.center.add(plot);
+        plot.show();
+        //propListWin.show();
+        //sessListWin.show();
         this.getController('OverviewCalendar').setOverviewCalendarWindow(overviewCalendarWin);
         this.getController('Sources').setProposalSourcesWindow(proposalSources);
         this.getController('Sources').setSessionSourcesWindow(sessionSources);
