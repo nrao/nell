@@ -150,14 +150,11 @@ Ext.define('PHT.controller.Proposals', {
     },
 
     refresh: function() {
-        console.log('refreshing');
         this.getProposalsStore().load();
-        // TBF, BUG: this causes the tree to hang
-        //this.getProposalTreeStore().load();
+        this.getProposalTreeStore().load();
         this.getProposalCodesStore().load();
         this.getSessionsStore().load();
         this.notifyObservers({notification: 'newImport'});
-        console.log('done');
     },
 
     importProposal: function(button) {

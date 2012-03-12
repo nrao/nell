@@ -28,6 +28,9 @@ def root(request):
 def tree(request, *args, **kws):
     "Service tailor made for populating an Ext JS 4 Tree Panel"
 
+    if request.method == 'POST':
+        return HttpResponse(json.dumps({"success" : "ok" })
+                          , content_type = 'application/json')
     # Where in the tree is this request from? 
     node = request.GET.get('node', None)
     
@@ -46,7 +49,6 @@ def tree(request, *args, **kws):
     if node == 'root' or node is None:
         # We're at the very top of our tree.
         # Get the Semesters used by proposals in this DB
-        ps = Proposal.objects.all().order_by('pcode')
         sems = [s.semester for s in Proposal.semestersUsed()]
         js = [{'text' : semester
              , 'id'   : 'semester=%s' % semester

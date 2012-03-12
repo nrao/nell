@@ -138,11 +138,11 @@ class Proposal(models.Model):
     @staticmethod
     def semestersUsed():
         "Returns only the distinct semesters used by all Proposals"
-        sems = []
+        sems = {}
         for p in Proposal.objects.all().order_by('pcode'):
             if p.semester.semester not in sems:
-                sems.append(p.semester)
-        return sems
+                sems[p.semester] = True
+        return sems.keys()
 
     @staticmethod
     def createFromSqlResult(result):
