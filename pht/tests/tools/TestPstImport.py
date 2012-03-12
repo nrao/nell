@@ -51,6 +51,9 @@ class TestPstImport(TestCase):
         self.assertTrue(len(s.backends.all()) > 0)
         self.assertTrue(s.allotment is not None)
         self.assertTrue(s.target is not None)
+        self.assertEqual('Open - Low Freq', s.session_type.type)
+        self.assertEqual('Poor', s.weather_type.type)
+        self.assertEqual('spectral line', s.observing_type.type)
         reports = ImportReport.objects.all()
         self.assertEqual(1, len(reports))
         self.assertTrue(0 < len(reports[0].report))
@@ -76,13 +79,48 @@ class TestPstImport(TestCase):
         self.pst.importProposals('12A')
         self.assertTrue(len(Proposal.objects.all()) > 0)
         ps = Proposal.objects.all()
+        stypes = []
+        otypes = []
+        wtypes = []
+        noObsType = 0
         for p in ps: 
             self.assertTrue(len(p.session_set.all()) > 0)
             # make sure all vlbi/a sessions are fixed
             if 'vlbi' in p.pcode.lower() or 'vlba' in p.pcode.lower():
                 for s in p.session_set.all():
                     self.assertEqual('Fixed', s.session_type.type)
+            for s in p.session_set.all():
+                # collect the various types being set
+                if s.session_type is not None and \
+                    s.session_type.type not in stypes:
+                    stypes.append(s.session_type.type)
+                if s.observing_type is not None and \
+                    s.observing_type.type not in otypes:
+                    otypes.append(s.observing_type.type)
+                if s.weather_type is not None and \
+                    s.weather_type.type not in wtypes:
+                    wtypes.append(s.weather_type.type)
+                if s.observing_type is None:
+                    noObsType += 1
             p.delete()
+
+        self.assertEqual(0, noObsType)
+        # make sure the types we are setting are reasonable
+        expSessTypes = [
+              'Fixed'
+            , 'Open - High Freq 1'
+            , 'Open - High Freq 2'
+            , 'Open - Low Freq'
+            , 'Windowed'
+            ]
+        expObsTypes = [ 'continuum'
+                      , 'pulsar'
+                      , 'radar'
+                      , 'spectral line'
+                      , 'vlbi']
+        self.assertEquals(expObsTypes, sorted(otypes))
+        self.assertEquals(expSessTypes, sorted(stypes))
+        self.assertEquals(['Excellent', 'Good', 'Poor'], sorted(wtypes))
 
     def test_importProposals_12B(self):
         self.pst.importProposals('12B')

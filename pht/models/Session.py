@@ -156,19 +156,86 @@ class Session(models.Model):
 
         # Well, it must b some kind of of Open, so use the highest receiver
         # to determin it's category.
+        category = self.determineFreqCategory()
+        type = None
+        if category is not None:
+            type = SessionType.get_type(category)
+
+        return type    
+
+    def determineFreqCategory(self):
+        "From the receivers: High Frequency 1, 2, or Low Frequency?"
+        category = None
         highFreq2 = ['MBA', 'W', 'KFPA']
         highFreq1 = ['X', 'Ku', 'Ka', 'Q']
         r = self.get_highest_receiver()
         if r is not None:
             if r.abbreviation in highFreq2:
-                type = SessionType.get_type('HF2')
+                category = 'HF2'
             elif r.abbreviation in highFreq1:    
-                type = SessionType.get_type('HF1')
+                category = 'HF1'
             else:
-                type = SessionType.get_type('LF')
-    
-        return type    
+                category = 'LF'
+        return category
+        
+        
+    def determineWeatherType(self):
+        """
+        The receiver needing the best weather determines which 
+        category a session goes into.
+ 
+        MCB, W, KFPA  --->  Excellent
+        X, Ku, Ka, Q  --->  Good
+        342, 450, 600,800, 1070, L, S, C ---> Poor
+ 
+        So a session requesting L and X would go into Good since X 
+        needs the better weather conditions.    
+        """
 
+        category = self.determineFreqCategory()
+        type = None
+        if category is not None:
+            cat2weather = {'HF2' : 'Excellent'
+                         , 'HF1' : 'Good'
+                         , 'LF'  : 'Poor'
+                          }
+            type = WeatherType.objects.get(type = cat2weather[category])
+
+        return type    
+        
+    def determineObservingType(self):
+        "Figure out obs type from proposal and backends."
+
+        obsType = None
+        if self.proposal is not None:
+            pcode = self.proposal.pcode.lower()
+            if 'vlba' in pcode or 'vlbi' in pcode:
+                obsType = 'vlbi'
+            else:    
+                # okay, how about the proposal's obs types?
+                if self.proposal.hasObsType('Pulsar'):
+                    obsType = 'pulsar'
+                elif self.proposal.hasObsType('Continuum'):
+                    obsType = 'continuum'
+                elif self.proposal.hasObsType('radar', contains = True):
+                    obsType = 'radar'
+                elif self.proposal.hasObsType('Spectroscopy'):
+                    obsType = 'spectral line'
+        if obsType is None:
+            # Hmm, none of the above tricks worked; use backends!
+            backends = [b.abbreviation for b in self.backends.all()]
+            rcvrs = [r.abbreviation for r in self.receivers.all()]
+            if 'Vegas' in backends or 'gbtSpec' in backends \
+                or 'gbtSpecP' in backends or 'Zpect' in backends:
+                obsType = "spectral line"
+            elif 'MBA' in rcvrs or 'CCB' in backends or 'DCR' in backends:
+                obsType = "continuum"
+            elif 'GUPPY' in backends:
+                obsType = "continuum"
+        if obsType is not None:
+            obsType = Observing_Type.objects.get(type = obsType)
+        return obsType                
+                
     def periodGenerationFrom(self):
         """
         Examines the monitor related parameters, and determines
