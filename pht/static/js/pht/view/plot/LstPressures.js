@@ -24,7 +24,7 @@ var colors = ['orange',
              ];
 
 // map to colors above
-var fields = ['carryover', 
+var fields = ['Carryover', 
               'Poor_A',
               'Poor_B',
               'Poor_C',
@@ -78,7 +78,7 @@ Ext.define('PHT.view.plot.LstPressures', {
         type: 'Category',
         position: 'bottom',
         grid: true,
-        fields: ['ra'],
+        fields: ['LST'],
         title: 'LST',
         label: {
             rotate: {
@@ -89,7 +89,7 @@ Ext.define('PHT.view.plot.LstPressures', {
     series: [{
         type: 'column',
         stacked: true,
-        xField: 'ra',
+        xField: 'LST',
         yField: fields,
         tips: {
           trackMouse: true,
@@ -106,14 +106,14 @@ Ext.define('PHT.view.plot.LstPressures', {
                     values.push(' ' + field + ' = ' + value);
                 }    
             }
-            this.setTitle('LST = ' + storeItem.get('ra') + ': ' + values.join());
+            this.setTitle('LST = ' + storeItem.get('LST') + ': ' + values.join());
           },
         },  
     },{
         type: 'line',
         showMarkers: false,
-        xField: 'ra',
-        yField: 'available',
+        xField: 'LST',
+        yField: 'Available',
     }],
 
 });

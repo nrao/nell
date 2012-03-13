@@ -36,7 +36,7 @@ class LstPressures(object):
 
         self.bins = [0.0]*24
 
-        self.pressures = [{'ra':float(i), 'total':0.0} for i in range(24)]
+        self.pressures = [{'LST':float(i), 'Total':0.0} for i in range(24)]
 
         # for reporting
         self.badRas = []
@@ -49,19 +49,19 @@ class LstPressures(object):
         to the format expected by the web browser client (Ext store).
         For example:
         [
-         {'ra': 0.0, 'total': 2.0, 'A': 1.0, 'B': 1.0},
-         {'ra': 1.0, 'total': 3.0, 'A': 2.0, 'B': 1.0},
+         {'LST': 0.0, 'total': 2.0, 'A': 1.0, 'B': 1.0},
+         {'LST': 1.0, 'total': 3.0, 'A': 2.0, 'B': 1.0},
         ]
         """
 
         # how much time is available in a semester (6 months)?
         for p in self.pressures:
-            p['available'] = (180*24) / 24 
+            p['Available'] = (180*24) / 24 
 
         # carry over
         ss = [s for s in Session.objects.all() \
             if s.dss_session is not None]
-        self.getPressuresByType(ss, "carryover")
+        self.getPressuresByType(ss, "Carryover")
 
         # TBF: maintenance and test time
 
@@ -94,7 +94,7 @@ class LstPressures(object):
                         pressure = s.remainingTime()
                     else:
                         pressure = s.allotment.allocated_time
-                    self.pressures[bin]['total'] += pressure
+                    self.pressures[bin]['Total'] += pressure
                     self.pressures[bin][type] += pressure
                 else:
                     self.badRas.append(s)

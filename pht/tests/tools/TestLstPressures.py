@@ -45,8 +45,8 @@ class TestLstPressures(TestCase):
         lst = LstPressures()
         ps = lst.getPressures()
         for i, p in enumerate(ps):
-            self.assertEqual(float(i), p['ra'])
-            self.assertEqual(0.0, p['total'])
+            self.assertEqual(float(i), p['LST'])
+            self.assertEqual(0.0, p['Total'])
             for t in types:
                 self.assertEqual(0.0, p[t])
 
@@ -69,16 +69,15 @@ class TestLstPressures(TestCase):
         # make sure this shows up as one non-zero entry 
         for i, p in enumerate(ps):
             if i != 12:
-                self.assertEqual(float(i), p['ra'])
-                self.assertEqual(0.0, p['total'])
+                self.assertEqual(float(i), p['LST'])
+                self.assertEqual(0.0, p['Total'])
                 for t in types:
                     self.assertEqual(0.0, p[t])
             else:
-                self.assertEqual(time, p['total'])
+                self.assertEqual(time, p['Total'])
                 for t in types:
                     if t != 'Poor_A':
                         self.assertEqual(0.0, p[t])
                     else:    
-                        print p
                         self.assertEqual(time, p[t])
                 
