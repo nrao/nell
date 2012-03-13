@@ -67,12 +67,14 @@ Ext.define('PHT.view.plot.LstPressures', {
         type: 'Numeric',
         position: 'left',
         fields: fields,
+        grid: true,
         title: 'Pressure (Hrs)',
         minimum: 0,
         //adjustMinimumByMajorUnit: 0
     }, {
         type: 'Numeric',
         position: 'bottom',
+        grid: true,
         fields: ['ra'],
         title: 'LST',
         label: {
@@ -86,6 +88,25 @@ Ext.define('PHT.view.plot.LstPressures', {
         stacked: true,
         xField: 'ra',
         yField: fields,
+        tips: {
+          trackMouse: true,
+          width: 300,
+          height: 80,
+          renderer: function(storeItem, item) {
+            var values = [];
+            for (f in fields) {
+                var field = fields[f];
+                var value = storeItem.get(field);
+                console.log(field);
+                console.log(value);
+                if (value > 0.0) {
+                    values.push(' ' + field + ' = ' + value);
+                }    
+            }
+             
+            this.setTitle('LST = ' + storeItem.get('ra') + ': ' + values.join());
+          },
+        },  
     },{
         type: 'line',
         showMarkers: false,
