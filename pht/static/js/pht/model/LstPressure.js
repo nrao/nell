@@ -1,8 +1,8 @@
 Ext.define('PHT.model.LstPressure', {
     extend: 'Ext.data.Model',
     fields: ['ra',
-             'total',
              'carryover',
+             'total',
              'Poor_A',
              'Poor_B',
              'Poor_C',
