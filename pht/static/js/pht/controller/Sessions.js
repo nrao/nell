@@ -208,10 +208,10 @@ Ext.define('PHT.controller.Sessions', {
 
     deleteSession: function(button) {
         var grid = button.up('grid');
-        var session = grid.getSelectionModel().getLastSelected();
-        this.confirmDelete(this.getSessionsStore(),
-                      session,
-                      'Deleting Session ' + session.get('name')
+        var sessions = grid.getSelectionModel().getSelection();
+        this.confirmDeleteMultiple(this.getSessionsStore(),
+                      sessions,
+                      'Deleting Selected Sessions'
         );              
     },
 

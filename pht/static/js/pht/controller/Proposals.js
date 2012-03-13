@@ -150,14 +150,11 @@ Ext.define('PHT.controller.Proposals', {
     },
 
     refresh: function() {
-        console.log('refreshing');
         this.getProposalsStore().load();
-        // TBF, BUG: this causes the tree to hang
-        //this.getProposalTreeStore().load();
+        this.getProposalTreeStore().load();
         this.getProposalCodesStore().load();
         this.getSessionsStore().load();
         this.notifyObservers({notification: 'newImport'});
-        console.log('done');
     },
 
     importProposal: function(button) {
@@ -221,22 +218,10 @@ Ext.define('PHT.controller.Proposals', {
     deleteProposal: function(button) {
         var grid = button.up('grid');
         var proposals = grid.getSelectionModel().getSelection();
-        var store  = this.getProposalsStore();
-        Ext.Msg.show({
-             title: 'Deleting Selected Proposals',
-             msg: 'Are you sure?',
-             buttons: Ext.Msg.YESNO,
-             icon: Ext.Msg.QUESTION,
-             scope: this,
-             fn: function(id) {
-                 if (id == 'yes') {
-                     for (i = 0; i < proposals.length; i++) {
-                         proposals[i].destroy();
-                     }
-                     store.remove(proposals);
-                 }
-             }
-        });
+        this.confirmDeleteMultiple(this.getProposalsStore(),
+                                   proposals,
+                                   'Deleting Selected Proposals'
+        );
     },
     
     editProposal: function(grid, record) {

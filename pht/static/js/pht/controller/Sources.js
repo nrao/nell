@@ -166,10 +166,11 @@ Ext.define('PHT.controller.Sources', {
 
     deleteSource: function(button) {
         var grid = button.up('grid');
-        var source = grid.getSelectionModel().getLastSelected();
-        this.confirmDelete(this.getProposalSourcesStore(),
-                           source,
-                           'Deleting Source ' + source.get('target_name'));
+        var sources = grid.getSelectionModel().getSelection();
+        this.confirmDeleteMultiple(this.getProposalSourcesStore(),
+                           sources,
+                           'Deleting Selected Sources'
+        );
     },
     
     editSource: function(grid, record) {
