@@ -54,6 +54,10 @@ class LstPressures(object):
         ]
         """
 
+        # how much time is available in a semester (6 months)?
+        for p in self.pressures:
+            p['available'] = (180*24) / 24 
+
         # carry over
         ss = [s for s in Session.objects.all() \
             if s.dss_session is not None]

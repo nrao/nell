@@ -86,6 +86,11 @@ Ext.define('PHT.view.plot.LstPressures', {
         stacked: true,
         xField: 'ra',
         yField: fields,
+    },{
+        type: 'line',
+        showMarkers: false,
+        xField: 'ra',
+        yField: 'available',
     }],
 
 });
