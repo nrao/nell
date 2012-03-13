@@ -72,7 +72,10 @@ Ext.define('PHT.view.plot.LstPressures', {
         minimum: 0,
         //adjustMinimumByMajorUnit: 0
     }, {
-        type: 'Numeric',
+        // Using Numeric has some funny consequences.  Since
+        // we always know the Ra is between 0 and 23, this is a 
+        // sensible axis type to use.
+        type: 'Category',
         position: 'bottom',
         grid: true,
         fields: ['ra'],
@@ -93,17 +96,16 @@ Ext.define('PHT.view.plot.LstPressures', {
           width: 300,
           height: 80,
           renderer: function(storeItem, item) {
+            // display any non zero values in the tooltip
+            // for each column
             var values = [];
             for (f in fields) {
                 var field = fields[f];
                 var value = storeItem.get(field);
-                console.log(field);
-                console.log(value);
                 if (value > 0.0) {
                     values.push(' ' + field + ' = ' + value);
                 }    
             }
-             
             this.setTitle('LST = ' + storeItem.get('ra') + ': ' + values.join());
           },
         },  
