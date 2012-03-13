@@ -324,7 +324,6 @@ class PstImport(PstInterface):
         session.target = Target.createFromSqlResult(rowDct)
         # other defaults
         session.semester     = proposal.semester
-        session.weather_type = WeatherType.objects.get(type = 'Poor')
         flags = SessionFlags()
         flags.save()
         session.flags = flags
