@@ -146,6 +146,11 @@ Ext.application({
                 handler: function() {
                     overviewCalendarWin.show();
                 }},
+                {
+                text: 'Plots',
+                handler: function() {
+                    plot.show();
+                }},
             ]
         });
         var editMenu = Ext.create('Ext.menu.Menu', {
@@ -186,9 +191,8 @@ Ext.application({
         viewport.layout.regions.center.add(sessionSources);
         viewport.layout.regions.center.add(overviewCalendarWin);
         viewport.layout.regions.center.add(plot);
-        plot.show();
-        //propListWin.show();
-        //sessListWin.show();
+        propListWin.show();
+        sessListWin.show();
         this.getController('OverviewCalendar').setOverviewCalendarWindow(overviewCalendarWin);
         this.getController('Sources').setProposalSourcesWindow(proposalSources);
         this.getController('Sources').setSessionSourcesWindow(sessionSources);
