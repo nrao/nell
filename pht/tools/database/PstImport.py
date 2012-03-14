@@ -72,7 +72,7 @@ class PstImport(PstInterface):
           , 'KFPA' : 'KFPA' 
           , 'KFPA (shared risk)' : 'KFPA'
           , 'Mustang (90 GHz)' : 'MBA'
-          , 'KFPA (18-26.5 GHz)' : 'MBA'
+          , 'KFPA (18-26.5 GHz)' : 'KFPA'
           , 'W-band Shared Risk (68-92 GHz)' : 'W' 
           , 'Ka-Band - CCB (26.0-40.0 GHz)': 'Ka'
           , 'W-band MM4 (85-93.3 GHz)' : 'W'
