@@ -375,12 +375,13 @@ class PstImport(PstInterface):
 
         # ignore resource groups, and just get the resources for 
         # this session
-        q = """select gr.FRONT_END, gr.BACK_END 
-        from GBT_RESOURCE as gr, RESOURCES as r, sessionPair as sp, session as s 
-        where sp.RESOURCE_GROUP = r.resource_group 
-            AND r.resource_id = gr.id 
-            AND s.session_id = sp.session_id 
-            AND s.session_id = %d""" % session.pst_session_id
+        q = """
+        select gr.FRONT_END, gr.BACK_END 
+        from GBT_RESOURCE as gr, sessionResource as sr 
+        where gr.Id = sr.resource_id 
+            AND sr.SESSION_ID = %d
+        """ % session.pst_session_id
+
         self.cursor.execute(q)
         rows = self.cursor.fetchall()
         self.initMap()
@@ -433,6 +434,45 @@ class PstImport(PstInterface):
         source.save()
 
         return source
+
+    def reimportAllSessionResources(self, semester):
+        """
+        This is a one-time needed function for fixing the fact that
+        we had a bug in the original import, and now want to just
+        reimport the session's resources.
+        """
+        ss = Session.objects.filter(proposal__semester__semester = semester).order_by('name')
+        changes = {}
+        for s in ss:
+            # what are they now?
+            rcvrs = s.get_receivers()
+            backends = s.get_backends()
+            changes[s.name] = {'old' : (rcvrs, backends)}
+            # good, now get rid of them
+            for r in s.receivers.all():
+                s.receivers.remove(r)
+            for b in s.backends.all():
+                s.backends.remove(b)
+            # now reimport them    
+            self.importResources(s)            
+            # what's it look like now?
+            snew = Session.objects.get(id = s.id)
+            rcvrs = snew.get_receivers()
+            backends = snew.get_backends()
+            changes[s.name]['new'] = (rcvrs, backends)
+
+        # report
+        filename = "reimportResources.txt"
+        f = open(filename, 'w')
+        changed = 0
+        for k, v in changes.items():
+            f.write("%s:\n" % k)
+            if v['old'] != v['new']:
+                changed += 1
+                f.write("    Old: %s, %s\n" % (v['old'][0], v['old'][1]))
+                f.write("    New: %s, %s\n" % (v['new'][0], v['new'][1]))
+        f.write("Changed %d of %d sessions.\n" % (changed, len(ss)))    
+        f.close()    
 
     def reportLine(self, line):
         "Add line to stuff to go into report file, and maybe to stdout too."
