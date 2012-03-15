@@ -39,6 +39,7 @@ Ext.define('PHT.model.Session', {
            , 'min_lst'
            , 'max_lst'
            , 'elevation_min'
+           , 'solar_avoid'
            // flags
            , 'thermal_night'
            , 'rfi_night'
