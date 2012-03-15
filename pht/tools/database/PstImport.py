@@ -435,19 +435,27 @@ class PstImport(PstInterface):
 
         return source
 
-    def reimportAllSessionResources(self, semester):
+    def reimportAllSessionResources(self, semester, sessions = None):
         """
         This is a one-time needed function for fixing the fact that
         we had a bug in the original import, and now want to just
         reimport the session's resources.
         """
-        ss = Session.objects.filter(proposal__semester__semester = semester).order_by('name')
+
+        if sessions is None:
+            ss = Session.objects.filter(proposal__semester__semester = semester).order_by('name')
+        else:
+            ss = sessions
+
+        reimported = []
         changes = {}
         for s in ss:
+            reimported.append(s) 
+            key = "%s (%s)" % (s.name, s.proposal.pcode)
             # what are they now?
             rcvrs = s.get_receivers()
             backends = s.get_backends()
-            changes[s.name] = {'old' : (rcvrs, backends)}
+            changes[key] = {'old' : (rcvrs, backends)}
             # good, now get rid of them
             for r in s.receivers.all():
                 s.receivers.remove(r)
@@ -459,15 +467,19 @@ class PstImport(PstInterface):
             snew = Session.objects.get(id = s.id)
             rcvrs = snew.get_receivers()
             backends = snew.get_backends()
-            changes[s.name]['new'] = (rcvrs, backends)
+            changes[key]['new'] = (rcvrs, backends)
 
         # report
         filename = "reimportResources.txt"
         f = open(filename, 'w')
         changed = 0
+        f.write("Reimported sources for sessions:\n")
+        for s in reimported:
+            f.write(    "%s (%s)\n" % (s.name, s.proposal.pcode))
+        f.write("Actual Changes:\n")
         for k, v in changes.items():
-            f.write("%s:\n" % k)
             if v['old'] != v['new']:
+                f.write("%s:\n" % k)
                 changed += 1
                 f.write("    Old: %s, %s\n" % (v['old'][0], v['old'][1]))
                 f.write("    New: %s, %s\n" % (v['new'][0], v['new'][1]))
