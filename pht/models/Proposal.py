@@ -28,6 +28,7 @@ from ScientificCategory import ScientificCategory
 from Semester           import Semester
 from Status             import Status
 from ProposalType       import ProposalType
+from Receiver           import Receiver
 
 from scheduler.models   import Project as DSSProject 
 
@@ -110,6 +111,20 @@ class Proposal(models.Model):
             return ta.getTime(type, self.dss_project)
         else:
             return None
+
+    def backends(self):
+        return ''
+
+    def bands(self):
+        "What are the bands associated with this proposal?"
+        return ', '.join([r.abbreviation for r in 
+            Receiver.objects.raw(
+                """select distinct r.id, r.abbreviation 
+                   from ((pht_sessions as s 
+                     join pht_proposals as p on p.id = s.proposal_id ) 
+                     join pht_sessions_receivers as sr on s.id = sr.session_id) 
+                     join pht_receivers as r on r.id = sr.receiver_id 
+                   where p.pcode = '%s'""" % self.pcode)])
 
     def isComplete(self):
         if self.dss_project is not None:
