@@ -11,6 +11,7 @@ from users.decorators import admin_only
 from scheduler.models import *
 from models import *
 from pht.tools.database import PstImport
+from pht.tools.LstPressures import LstPressures
 from httpadapters import *
 from tools.database import PstInterface
 from tools.database import BulkSourceImport
@@ -84,6 +85,18 @@ def tree(request, *args, **kws):
                                    })
                       , content_type = 'application/json')
 
+
+@login_required
+@admin_only
+def lst_pressure(request, *args, **kws):
+
+    lst = LstPressures()
+    pressure = lst.getPressures()
+
+    return HttpResponse(json.dumps({"success" : "ok"
+                                  , "lst_pressure" : pressure
+                                   })
+                      , content_type = 'application/json')
 
 @login_required
 @admin_only

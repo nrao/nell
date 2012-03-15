@@ -2,6 +2,7 @@
 Ext.Loader.setConfig({enabled:true});
 
 Ext.require(['Ext.form.*']);
+Ext.require(['Ext.chart.*']);
 
 Ext.application({
     name: 'PHT',
@@ -12,6 +13,7 @@ Ext.application({
                 , 'Authors'
                 , 'Dashboard'
                 , 'Periods'
+                , 'Plots'
                 , 'Sources'
                 , 'Sessions'
                 , 'OverviewCalendar'
@@ -91,6 +93,9 @@ Ext.application({
         var overviewCalendarWin = Ext.create('PHT.view.overview.Window', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
+        var plot = Ext.create('PHT.view.plot.Window', {
+            renderTo: viewport.layout.regions.center.getEl(),
+        });
 
         // setup menus
         var importMenu = Ext.create('Ext.menu.Menu', {
@@ -141,6 +146,11 @@ Ext.application({
                 handler: function() {
                     overviewCalendarWin.show();
                 }},
+                {
+                text: 'Plots',
+                handler: function() {
+                    plot.show();
+                }},
             ]
         });
         var editMenu = Ext.create('Ext.menu.Menu', {
@@ -180,6 +190,7 @@ Ext.application({
         viewport.layout.regions.center.add(proposalSources);
         viewport.layout.regions.center.add(sessionSources);
         viewport.layout.regions.center.add(overviewCalendarWin);
+        viewport.layout.regions.center.add(plot);
         propListWin.show();
         sessListWin.show();
         this.getController('OverviewCalendar').setOverviewCalendarWindow(overviewCalendarWin);
@@ -290,6 +301,7 @@ Ext.application({
             elevationFieldText: 'Must be a value in Degrees, in sexigesimel format (+/- DDD:MM:SS.S), between 0 and 90.',
             elevationFieldMask: /[\d\.\:\+\-]/i,
         });
+
     },
 
     // TBF: should this be in the controller?
