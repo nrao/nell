@@ -2,6 +2,7 @@
 Ext.Loader.setConfig({enabled:true});
 
 Ext.require(['Ext.form.*']);
+Ext.require(['Ext.chart.*']);
 
 Ext.application({
     name: 'PHT',
@@ -12,6 +13,7 @@ Ext.application({
                 , 'Authors'
                 , 'Dashboard'
                 , 'Periods'
+                , 'Plots'
                 , 'Sources'
                 , 'Sessions'
                 , 'OverviewCalendar'
@@ -88,10 +90,10 @@ Ext.application({
         var sessionSources = Ext.create('PHT.view.source.SessionListWindow', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
-        var overviewCalendar = Ext.create('PHT.view.overview.Calendar', {
+        var overviewCalendarWin = Ext.create('PHT.view.overview.Window', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
-        var periodListWin = Ext.create('PHT.view.period.ListWindow', {
+        var plot = Ext.create('PHT.view.plot.Window', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
 
@@ -99,13 +101,17 @@ Ext.application({
         var importMenu = Ext.create('Ext.menu.Menu', {
             id : 'importMenu',
             items : [{
-                text: 'Import Proposal(s)',
+                text: 'Reimport Proposal(s)',
                 handler: this.getController('Proposals').importProposalFormByProposal
                 },
                 {
                 text: "Import Semester's Proposals",
                 handler: this.getController('Proposals').importProposalFormBySemester
-                }
+                },
+                {
+                text: "Import PST Proposal(s)",
+                handler: this.getController('Proposals').importProposalFormByPstProposal
+                },
             ]
         });
         var toolsMenu = Ext.create('Ext.menu.Menu', {
@@ -138,12 +144,12 @@ Ext.application({
                 {
                 text: 'Overview Calendar',
                 handler: function() {
-                    overviewCalendar.show();
+                    overviewCalendarWin.show();
                 }},
                 {
-                text: 'Period Explorer',
+                text: 'Plots',
                 handler: function() {
-                    periodListWin.show();
+                    plot.show();
                 }},
             ]
         });
@@ -183,20 +189,20 @@ Ext.application({
         viewport.layout.regions.center.add(proposalAuthors);
         viewport.layout.regions.center.add(proposalSources);
         viewport.layout.regions.center.add(sessionSources);
-        viewport.layout.regions.center.add(overviewCalendar);
-        viewport.layout.regions.center.add(periodListWin);
-        propListWin.maximize();
-        //overviewCalendar.maximize();
-        //overviewCalendar.show();
-        this.getController('OverviewCalendar').setOverviewCalendar(overviewCalendar);
+        viewport.layout.regions.center.add(overviewCalendarWin);
+        viewport.layout.regions.center.add(plot);
+        propListWin.show();
+        sessListWin.show();
+        this.getController('OverviewCalendar').setOverviewCalendarWindow(overviewCalendarWin);
         this.getController('Sources').setProposalSourcesWindow(proposalSources);
         this.getController('Sources').setSessionSourcesWindow(sessionSources);
         this.getController('Authors').setProposalAuthorsWindow(proposalAuthors);
         this.getController('Sessions').setSessionListWindow(sessListWin);
-        this.getController('Sessions').setPeriodsWindow(periodListWin);
-        this.getController('Periods').setPeriodsWindow(periodListWin);
+        this.getController('Sessions').setPeriodsWindow(overviewCalendarWin);
+        this.getController('Periods').setPeriodsWindow(overviewCalendarWin);
         this.getController('Sessions').addObserver(this.getController('Sources'));
         this.getController('Proposals').addObserver(this.getController('Sources'));
+        this.getController('Proposals').addObserver(this.getController('Sessions'));
         this.getController('Proposals').addObserver(this.getController('Dashboard'));
         
         // TBF: better place for VTypes?
@@ -295,6 +301,7 @@ Ext.application({
             elevationFieldText: 'Must be a value in Degrees, in sexigesimel format (+/- DDD:MM:SS.S), between 0 and 90.',
             elevationFieldMask: /[\d\.\:\+\-]/i,
         });
+
     },
 
     // TBF: should this be in the controller?

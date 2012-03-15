@@ -15,7 +15,9 @@ Ext.define('PHT.model.Session', {
            , 'receivers'
            , 'receivers_granted'
            , 'constraint_field'
+           , 'has_constraint_field'
            , 'comments'
+           , 'has_comments'
            , 'scheduler_notes'
            , 'session_time_calculated'
            // allotment
@@ -55,6 +57,10 @@ Ext.define('PHT.model.Session', {
            , 'outer_separation'
            , 'outer_interval'
            , 'custom_sequence'
+           // next semester
+           , 'next_sem_complete'
+           , 'next_sem_time'
+           , 'next_sem_repeats'
            // session params
            , 'lst_ex'
            , 'lst_in'
@@ -62,6 +68,13 @@ Ext.define('PHT.model.Session', {
            , 'pst_min_lst'
            , 'pst_max_lst'
            , 'pst_elevation_min'
+           // dss session (readonly)
+           , 'dss_session'
+           , 'dss_total_time'
+           , 'billed_time'
+           , 'scheduled_time'
+           , 'remaining_time'
+           , 'last_date_scheduled'
            ], 
     proxy: {
         type: 'rest',
@@ -69,7 +82,8 @@ Ext.define('PHT.model.Session', {
         reader: {
             type: 'json',
             root: 'sessions',
-            successProperty: 'success'
+            successProperty: 'success',
+            totalProperty: 'total',
         }
     }
 });

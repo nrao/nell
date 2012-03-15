@@ -11,6 +11,7 @@ Ext.define('PHT.controller.Proposals', {
         'Proposal',
         'ProposalType',
         'ProposalCode',
+        'PstProposalCode',
         'Status',
         'ScienceCategory',
         'Semester',
@@ -22,6 +23,7 @@ Ext.define('PHT.controller.Proposals', {
         'Proposals',
         'ProposalCodes',
         'ProposalTypes',
+        'PstProposalCodes',
         'ScienceCategories',
         'Statuses',
         'Semesters',
@@ -43,7 +45,8 @@ Ext.define('PHT.controller.Proposals', {
 
         this.control({
             'proposallist' : {
-                itemdblclick: this.editProposal
+                itemdblclick: this.editProposal,
+                itemclick: this.filterSessionExplorer,
             },
             'proposallist toolbar button[action=create]': {
                 click: this.createProposal
@@ -87,6 +90,11 @@ Ext.define('PHT.controller.Proposals', {
         grid.titleFilterText.reset();
     },
 
+    filterSessionExplorer: function(grid, record) {
+        this.notifyObservers({notification: 'filterSessionExplorer'
+                            , pcode : record.get('pcode')});
+    },
+
     // How to respond to click's on the navigation tree?
     editTreeNode: function(view, record, item, index, event) {
         // The id is of form type=value, but we could also use
@@ -112,7 +120,7 @@ Ext.define('PHT.controller.Proposals', {
         var grid      = button.up('grid');
         var proposals = grid.getSelectionModel().getSelection();
         var fields    = view.down('form').getForm().getFields();
-        var pcodeCB   = fields.filter('name', 'pcode').last();
+        var pcodeCB   = fields.filter('name', 'pcode').first();
         var selected  = [];
         for (i=0; i < proposals.length; i++) {
             selected.push([proposals[i].get('pcode')]);
@@ -134,6 +142,21 @@ Ext.define('PHT.controller.Proposals', {
         f.setValues({semesterCheckbox : 'on'});
     },    
 
+    importProposalFormByPstProposal: function() {
+        var view = Ext.widget('proposalimport');
+        var form = view.down('form');
+        var f = form.getForm()
+        f.setValues({pstProposalsCheckbox : 'on'});
+    },
+
+    refresh: function() {
+        this.getProposalsStore().load();
+        this.getProposalTreeStore().load();
+        this.getProposalCodesStore().load();
+        this.getSessionsStore().load();
+        this.notifyObservers({notification: 'newImport'});
+    },
+
     importProposal: function(button) {
         var me     = this;
         var win    = button.up('window');
@@ -151,11 +174,7 @@ Ext.define('PHT.controller.Proposals', {
                 timeout: 300000,
                 success: function(response) {
                     win.close();
-                    me.getProposalsStore().load();
-                    me.getProposalTreeStore().load();
-                    me.getProposalCodesStore().load();
-                    me.getSessionsStore().load();
-                    me.notifyObservers({notification: 'newImport'});
+                    me.refresh();
                 },
              });
         } else if (values.semesterCheckbox == 'on') {
@@ -168,13 +187,23 @@ Ext.define('PHT.controller.Proposals', {
                 timeout: 300000,
                 success: function(response) {
                     win.close();
-                    me.getProposalsStore().load();
-                    me.getProposalTreeStore().load();
-                    me.getProposalCodesStore().load();
-                    me.getSessionsStore().load();
-                    me.notifyObservers({notification: 'newImport'});
+                    me.refresh();
                 },
+                
              });
+        } else if (values.pstProposalsCheckbox == 'on') {
+            Ext.Ajax.request({
+                url: '/pht/import/pst',
+                params: {
+                    proposals: values.pcode
+                },
+                method: 'POST',
+                timeout: 300000,
+                success: function(response) {
+                    win.close();
+                    me.refresh();
+                },
+            });     
         } else {
             win.close();
         }
@@ -189,22 +218,10 @@ Ext.define('PHT.controller.Proposals', {
     deleteProposal: function(button) {
         var grid = button.up('grid');
         var proposals = grid.getSelectionModel().getSelection();
-        var store  = this.getProposalsStore();
-        Ext.Msg.show({
-             title: 'Deleting Selected Proposals',
-             msg: 'Are you sure?',
-             buttons: Ext.Msg.YESNO,
-             icon: Ext.Msg.QUESTION,
-             scope: this,
-             fn: function(id) {
-                 if (id == 'yes') {
-                     for (i = 0; i < proposals.length; i++) {
-                         proposals[i].destroy();
-                     }
-                     store.remove(proposals);
-                 }
-             }
-        });
+        this.confirmDeleteMultiple(this.getProposalsStore(),
+                                   proposals,
+                                   'Deleting Selected Proposals'
+        );
     },
     
     editProposal: function(grid, record) {

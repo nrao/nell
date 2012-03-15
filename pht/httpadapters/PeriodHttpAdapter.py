@@ -45,6 +45,7 @@ class PeriodHttpAdapter(PhtHttpAdapter):
         sessionJson = adapter.jsonDict()
         handle = "%s (%s)" % (self.period.session.name
                             , self.period.session.proposal.pcode)
+        sessTypeCode = self.period.session.session_type.abbreviation if self.period.session.session_type is not None else None
         return {'id'         : self.period.id
               , 'session'    : self.period.session.name
               , 'session_json' : sessionJson # TBF: align this with DSS Periods
@@ -54,6 +55,8 @@ class PeriodHttpAdapter(PhtHttpAdapter):
               , 'date' : formatExtDate(self.period.start)
               , 'time' : t2str(self.period.start)
               , 'duration'   : self.period.duration
+              , 'window_size'             : self.period.session.monitoring.window_size
+              , 'session_type_code'       : sessTypeCode
                 }
 
     def initFromPost(self, data):

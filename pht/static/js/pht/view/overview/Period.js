@@ -6,13 +6,30 @@ Ext.define('PHT.view.overview.Period', {
         this.day     = 0;
         this.color   = 'red';
         this.periodType = '';
+        // map color names to hex values
+        this.colors = { red:  '#FF0000',
+                        green: '#00FF00',
+                        blue: '#0000FF',
+                        purple: '#800080',
+                        yellow: '#FFFF00',
+                        orange: '#FFA500',
+                      };
+        // map a type of box on the calendar to a color           
+        this.session2color = { open: 'blue',
+                             fixed: 'red',
+                             defaultWindowed: 'yellow',
+                             chosenWindowed: 'green',
+                             elective: 'purple',
+                             maintenance: 'orange',
+                             };
+
         var parentConfig = {
             type: 'rect',
             fill: 'red',
             stroke: 2,
             width: 45,
             height: this.px2time.dayPx,
-            opacity: .4,
+            opacity: 0.3,
             x: 100,
             y: this.vertOffset,
             floating: true,
@@ -40,56 +57,87 @@ Ext.define('PHT.view.overview.Period', {
         this.drawComponent.items.push(this);
     },
 
-    setPeriodType: function(type) {
-        this.periodType = type;
+    setPeriodType: function(pType) {
+        this.periodType = pType;
     },
 
-    setData: function(record, type, receivers){
+    setData: function(record, pType, receivers){
         this.record = record;
         if (this.sibling) {
-            this.sibling.setData(record);
+            this.sibling.setData(record, pType, receivers);
         }
 
-        if (this.record.get('session').type == 'elective'){
-            this.setColor('purple');
-        } else if (this.record.get('session').type == 'fixed'){
-            this.setColor('red');
-        } else if (this.record.get('session').type == 'windowed'){
-            if (this.record.get('session').guaranteed) {
-                this.setColor('green');
-            } else {
-                this.setColor('yellow');
+        var description = 'Start Date: ' + record.get('date') + ' at ' + record.get('time') +
+                          '<br/>Duration: ' + record.get('duration') + 'hrs' +
+                          '<br/>Receiver(s): ' + receivers; 
+
+        // figure out how to display these periods - remember 
+        // that DSS and PHT periods are a little different
+        var sessionType;
+        var observingType;
+        var boxType;
+        if (pType == 'dss') {
+            sessionType =  this.record.get('session').type.toLowerCase()
+            observingType = this.record.get('session').science.toLowerCase()
+        } else {
+            sessionType =  this.record.get('session_json').type.toLowerCase()
+            observingType = this.record.get('session_json').observing_type.toLowerCase()
+            // there are 3 different types of PHT open sessions
+            if (sessionType.search("open") != -1) {
+                sessionType = "open";
             }
-        } else if (this.record.get('session').type == 'open'){
-            this.setColor('blue');
         }
-        if (this.record.get('session').science == 'maintenance'){
-            this.setColor('orange');
+        
+        // each 'box' on the calendar is a period, and we are mapping
+        // many different period attributes to one attribute of this
+        // box: the color.
+        if (observingType == 'maintenance') {
+            boxType = 'maintenance'
+        } else if (sessionType == 'windowed') {
+            description += '<br/>Window Start: ' + record.get("wstart") +
+                           '<br/>Window End: ' + record.get("wend");
+            if (this.record.get('wdefault')) {
+                boxType = 'defaultWindowed'
+            } else {
+                boxType = 'chosenWindowed'
+            }
+        } else {
+            boxType = sessionType
         }
 
-        // make the pht periods distinguishable from the dss ones
-        if (type == 'pht') {
-            this.setAttributes({opacity : 0.4});
-        }
+        this.setColor(this.session2color[boxType], pType)
 
-        var id = type + '_' + record.get('id');
+        var id = pType + '_' + record.get('id');
 
         this.setAttributes({id : id })
         this.tooltip = Ext.create('Ext.tip.ToolTip', {
             target: id,
             title: record.get('handle'),
-            html: 'Start Date: ' + record.get('date') + ' at ' + record.get('time') + '<br/>' +
-                  'Duration: ' + record.get('duration') + 'hrs<br/>' +
-                  'Receiver(s): ' + receivers, 
+            html: description,
             width: 250,
             dismissDelay: 0,
         });
 
     },
 
-    setColor: function(color) {
-        this.color = color;
-        this.setAttributes({fill: color});
+    setColor: function(colorName, pType) {
+        var color = this.colors[colorName]
+        var c = new Ext.draw.Color.fromString(color);
+        // distinguish the PHT from DSS periods 
+        if (pType == 'pht') {
+            // factor defaults to .2; .5 makes blue white!
+            c = c.getLighter()
+        }
+        this.color = c.toString(); //color;
+        this.setAttributes({fill: c.toString()}); //color});
+    },
+
+    selected: function() {
+        this.setAttributes({opacity: 1}, true);
+    },
+
+    unselected: function() {
+        this.setAttributes({opacity: .3}, true);
     },
 
     setDay: function(day) {

@@ -457,6 +457,97 @@ Ext.define('PHT.view.session.Form', {
                     width: 500,
                 }],    
             },{
+                title: 'DSS Session',
+                layout: 'column',
+                defaults: {bodyStyle:'padding:10px'},
+                //defaults: {
+                //    fieldCls: "x-pht-formfield-readonly",
+                //},    
+                items: [{
+                    // First Column
+                    columnwidth: 0.333,
+                    border: false,
+                    items: [{
+                        xtype: 'textfield',
+                        fieldLabel: 'DSS Session',
+                        name: 'dss_session',
+                        readOnly: true,
+                        fieldCls: "x-pht-formfield-readonly",
+                        labelStyle: '',
+                    },{
+                        xtype: 'checkboxfield',
+                        fieldLabel: 'Currently Complete?',
+                        //boxLabel: 'Currently Complete?',
+                        name: 'complete',
+                        uncheckedValue: 'false',
+                        inputValue: 'true',
+                        readOnly: true,
+                        fieldCls: "x-pht-formfield-readonly",
+                        labelStyle: '',
+                    },{
+                        xtype: 'checkboxfield',
+                        fieldLabel: 'Next Semester Complete?',
+                        name: 'next_sem_complete',
+                        uncheckedValue: 'false',
+                        inputValue: 'true',
+                        labelStyle: '',
+                    },{
+                        xtype: 'datefield',
+                        fieldLabel: 'Last Date Scheduled',
+                        name: 'last_date_scheduled',
+                        readOnly: true,
+                        fieldCls: "x-pht-formfield-readonly",
+                        labelStyle: '',
+                    }]
+                },{    
+                    // Second Column
+                    columnwidth: 0.333,
+                    border: false,
+                    items: [{
+                        xtype: 'numberfield',
+                        fieldLabel: 'Next Semester Time (Hrs)',
+                        name: 'next_sem_time',
+                    },{
+                        xtype: 'numberfield',
+                        fieldLabel: 'Next Semester Repeats',
+                        name: 'next_sem_repeats',
+                        minValue: 0,
+                    },{
+                        xtype: 'numberfield',
+                        fieldLabel: 'DSS Alloted (Hrs)',
+                        name: 'dss_total_time',
+                        readOnly: true,
+                        fieldCls: "x-pht-formfield-readonly",
+                        labelStyle: '',
+                    }],    
+                },{        
+                    // Third column
+                    columnwidth: 0.333, 
+                    border: false,
+                    items: [{
+                        xtype: 'numberfield',
+                        fieldLabel: 'Scheduled (Hrs)',
+                        name: 'scheduled_time',
+                        readOnly: true,
+                        fieldCls: "x-pht-formfield-readonly",
+                        labelStyle: '',
+                    },{    
+                        xtype: 'numberfield',
+                        fieldLabel: 'Billed (Hrs)',
+                        name: 'billed_time',
+                        readOnly: true,
+                        fieldCls: "x-pht-formfield-readonly",
+                        labelStyle: '',
+                    },{
+                        xtype: 'numberfield',
+                        fieldLabel: 'Remaining (Hrs)',
+                        name: 'remaining_time',
+                        readOnly: true,
+                        fieldCls: "x-pht-formfield-readonly",
+                        labelStyle: '',
+                    }],
+                }],    
+            },{
                 title: 'Misc',
                 items: [{
                     xtype: 'checkboxfield',

@@ -56,6 +56,17 @@ class PstInterface(object):
                 uni = ''.join([self.safeUnicode(s) for s in string])
         return uni
 
+    def getProposalCodes(self):
+        q = """
+            select PROP_ID
+            from proposal
+            order by PROP_ID
+            """
+        self.cursor.execute(q)
+        return [{'pcode' : r[0]} for r in self.cursor.fetchall()]
+        #keys = self.getKeys()
+        #return [dict(zip(keys, map(self.safeUnicode, row))) for row in self.cursor.fetchall()]
+
     def getUsers(self):
         q = """
             select person_id, firstName, lastName

@@ -47,6 +47,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
         include, exclude = self.session.get_lst_string()
         monitoringStart = self.session.monitoring.start_time
         sci_categories = [sc.category for sc in self.session.proposal.sci_categories.all()]
+        dss_sess_name = self.session.dss_session.name if self.session.dss_session is not None else 'unknown'        
         
         data = {'id'                      : self.session.id
               , 'name'                    : self.session.name
@@ -55,6 +56,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'sci_categories'          : ', '.join(sci_categories)
               , 'semester'                : semester 
               , 'session_type'            : sessType
+              , 'type'                    : sessType # to be like DSS session
               , 'session_type_code'       : sessTypeCode
               , 'observing_type'          : observingType
               , 'weather_type'            : wthrType
@@ -62,7 +64,9 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'grade'                   : grade
               , 'interval_time'           : self.session.interval_time
               , 'constraint_field'        : self.session.constraint_field
+              , 'has_constraint_field'    : self.hasText(self.session.constraint_field)
               , 'comments'                : self.session.comments
+              , 'has_comments'            : self.hasText(self.session.comments)
               , 'scheduler_notes'         : self.session.scheduler_notes
               , 'session_time_calculated' : self.session.session_time_calculated
               # allotment
@@ -113,8 +117,22 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'pst_min_lst'             : self.session.target.pst_min_lst
               , 'pst_max_lst'             : self.session.target.pst_max_lst
               , 'pst_elevation_min'       : self.session.target.pst_elevation_min
+              # stuff from the DSS session (readonly)
+              , 'dss_session'             : dss_sess_name
+              , 'dss_total_time'          : self.session.dssAllocatedTime()
+              , 'billed_time'             : self.session.billedTime()
+              , 'scheduled_time'          : self.session.scheduledTime()
+              , 'remaining_time'          : self.session.remainingTime() 
+              , 'last_date_scheduled'     : formatExtDate(self.session.lastDateScheduled())
+              # next semester stuff
+              , 'next_sem_complete'       : self.session.next_semester.complete
+              , 'next_sem_time'           : self.session.next_semester.time
+              , 'next_sem_repeats'        : self.session.next_semester.repeats
                }
         return data
+
+    def hasText(self, text):
+        return text is not None and text != ""
 
     def initFromPost(self, data):
 
@@ -133,6 +151,9 @@ class SessionHttpAdapter(PhtHttpAdapter):
         m = Monitoring()
         m.save()
         self.session.monitoring = m
+        n = SessionNextSemester()
+        n.save()
+        self.session.next_semester = n
 
         # now fill in their fields
         self.updateFromPost(data)
@@ -199,6 +220,12 @@ class SessionHttpAdapter(PhtHttpAdapter):
         self.session.flags.transit_flat =  self.getBool(data, 'transit_flat')
         self.session.flags.guaranteed =  self.getBool(data, 'guaranteed')
         self.session.flags.save()
+
+        # next semester
+        self.session.next_semester.complete = self.getBool(data, 'next_sem_complete')
+        self.session.next_semester.time = self.getFloat(data, 'next_sem_time')
+        self.session.next_semester.repeats = self.getInt(data, 'next_sem_repeats')
+        self.session.next_semester.save()
 
         # monitoring
         self.session.monitoring.outer_separation = \

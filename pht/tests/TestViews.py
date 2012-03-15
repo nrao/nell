@@ -66,6 +66,11 @@ class TestViews(TestCase):
 
         sess = self.proposal.session_set.all()[0]
         self.session = sess
+        # I'm too lazy to recreate the fixture
+        n = SessionNextSemester()
+        n.save()
+        self.session.next_semester = n
+        self.session.save()
         self.s_data  = {
                     'pst_session_id'   : sess.pst_session_id
                   , 'pcode' : sess.proposal.pcode
@@ -173,11 +178,7 @@ class TestViews(TestCase):
                              , 'sessionId': 1
                              , 'id': 'sessionId=1'
                              , 'store': 'Sessions'}
-                           , {'text': 'He_ELD_5G (2)'
-                            , 'leaf': True
-                            , 'sessionId': 2
-                             , 'id': 'sessionId=2'
-                            , 'store': 'Sessions'}]
+                              ]
               , 'success': 'ok'}
         self.assertEqual(tree, results)
 
@@ -198,7 +199,12 @@ class TestViews(TestCase):
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(self.proposal.pcode, results['pcode'])
         self.assertEqual(self.proposal.title, results['title'])
-        self.assertEqual(self.proposal.proposal_type.type, results['proposal_type'])
+        self.assertEqual(self.proposal.proposal_type.type
+                       , results['proposal_type'])
+        self.assertEqual(self.proposal.scheduledTime()
+                       , results['scheduled_time'])
+        self.assertEqual(self.proposal.next_semester_complete
+                       , results['next_sem_complete'])
 
     def test_proposal_post(self):
         data     = {'pi_id'           : self.proposal.pi.id
@@ -208,7 +214,6 @@ class TestViews(TestCase):
                   , 'pst_proposal_id' : self.proposal.pst_proposal_id
                   , 'pcode'           : self.proposal.pcode.replace('-002', '-003')
                   , 'submit_date'     : self.proposal.submit_date.strftime(self.dtfmt)
-                  , 'total_time'      : self.proposal.total_time
                   , 'title'           : self.proposal.title
                   , 'abstract'        : self.proposal.abstract
                   , 'observing_types' : [o.type for o in self.proposal.observing_types.all()]
@@ -231,7 +236,6 @@ class TestViews(TestCase):
                   , 'pst_proposal_id' : ''
                   , 'pcode'           : self.proposal.pcode.replace('-002', '-003')
                   , 'submit_date'     : self.proposal.submit_date.strftime(self.dtfmt)
-                  , 'total_time'      : ''
                   , 'title'           : self.proposal.title
                   , 'abstract'        : self.proposal.abstract
                   , 'joint_proposal'  : str(not self.proposal.joint_proposal)
@@ -251,7 +255,6 @@ class TestViews(TestCase):
                   , 'pst_proposal_id' : self.proposal.pst_proposal_id
                   , 'pcode'           : self.proposal.pcode.replace('-002', '-001')
                   , 'submit_date'     : self.proposal.submit_date.strftime(self.dtfmt)
-                  , 'total_time'      : self.proposal.total_time
                   , 'title'           : self.proposal.title
                   , 'abstract'        : self.proposal.abstract
                   , 'joint_proposal'  : str(not self.proposal.joint_proposal)

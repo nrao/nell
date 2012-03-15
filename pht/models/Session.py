@@ -24,23 +24,26 @@ from django.db         import models
 
 from datetime          import datetime, timedelta
 
-from scheduler.models  import Observing_Type
-from Allotment         import Allotment
-from Backend           import Backend
-from Monitoring        import Monitoring
-from ObservingType     import ObservingType
-from Period            import Period
-from Proposal          import Proposal
-from Receiver          import Receiver
-from SessionSeparation import SessionSeparation
-from SessionType       import SessionType
-from Semester          import Semester
-from SessionFlags      import SessionFlags
-from SessionGrade      import SessionGrade
-from Source            import Source
-from Target            import Target
-from WeatherType       import WeatherType
+from scheduler.models    import Observing_Type
+from Allotment           import Allotment
+from Backend             import Backend
+from Monitoring          import Monitoring
+from ObservingType       import ObservingType
+from Period              import Period
+from Proposal            import Proposal
+from Receiver            import Receiver
+from SessionSeparation   import SessionSeparation
+from SessionType         import SessionType
+from Semester            import Semester
+from SessionFlags        import SessionFlags
+from SessionGrade        import SessionGrade
+from SessionNextSemester import SessionNextSemester
+from Source              import Source
+from Target              import Target
+from WeatherType         import WeatherType
+from scheduler.models    import Sesshun as DSSSession
 
+from utilities     import TimeAccounting
 from pht.utilities import *
 from utilities     import SLATimeAgent as sla
 from utilities     import TimeAgent
@@ -48,6 +51,7 @@ from utilities     import TimeAgent
 class Session(models.Model):
 
     proposal                = models.ForeignKey(Proposal)
+    dss_session             = models.ForeignKey(DSSSession, null = True)
     sources                 = models.ManyToManyField(Source)
     receivers               = models.ManyToManyField(Receiver, related_name = 'sessions')
     backends                = models.ManyToManyField(Backend)
@@ -61,8 +65,10 @@ class Session(models.Model):
     flags                   = models.ForeignKey(SessionFlags, null = True)
     monitoring              = models.ForeignKey(Monitoring, null = True)
     receivers_granted       = models.ManyToManyField(Receiver) 
+    next_semester           = models.ForeignKey(SessionNextSemester, null = True)
     pst_session_id          = models.IntegerField()
     name                    = models.CharField(max_length = 2000)
+
     
     # TBF: should separation and interval_time be in allotment?
     separation              = models.ForeignKey(SessionSeparation, null = True)
@@ -78,6 +84,61 @@ class Session(models.Model):
 
     def __str__(self):
         return "%s (%d)" % (self.name, self.id)
+
+    # *** Section: accessing the corresponding DSS session
+    def dssAllocatedTime(self):
+        "How much was the corresponding DSS Session allocated?"
+        if self.dss_session is not None \
+            and self.dss_session.allotment is not None:
+            return self.dss_session.allotment.total_time 
+        else:
+            return None
+
+    def remainingTime(self):
+        "From this session's dss sessions's time accounting."
+        if self.dss_session is not None:
+            ta = TimeAccounting()
+            return ta.getTimeLeft(self.dss_session)
+        else:
+            return None
+
+    def billedTime(self):
+        "From this session's project's time accounting."
+        return self.getTime('time_billed')
+
+    def scheduledTime(self):
+        "From this session's project's time accounting."
+        return self.getTime('scheduled')
+
+    def getTime(self, type):
+        "Leverage time accounting for this proposal's project."
+        if self.dss_session is not None:
+            ta = TimeAccounting()
+            return ta.getTime(type, self.dss_session)
+        else:
+            return None
+
+    def isComplete(self):
+        if self.dss_session is not None \
+            and self.dss_session.status is not None:
+            return self.dss_session.status.complete
+        else:
+            return None
+
+    def lastDateScheduled(self):
+        """
+        Returns the end of the last non-deleted period for the 
+        corresponding DSS session.
+        """
+
+        dt = None
+        if self.dss_session is not None:
+            range = self.dss_session.getPeriodRange()
+            if len(range) == 2:
+                dt = range[1] # end of last period
+        return dt
+
+    # *** End Section: accessing the corresponding DSS project
 
     def get_lst_parameters(self):
         """
@@ -474,12 +535,14 @@ class Session(models.Model):
         an SQL query.
         """
 
+        proposal   = Proposal.objects.get(id = proposal_id)
         separation = SessionSeparation.objects.get(separation = result['SEPARATION'].strip())
         session = Session(pst_session_id = result['session_id']
                           # Don't use result's because that's for the
                           # PST, not our GB PHT DB!
                         , proposal_id = proposal_id #result['PROPOSAL_ID']
-                        , name = result['SESSION_NAME']
+                        #, name = result['SESSION_NAME']
+                        , name = proposal.pcode + ' - ' + str(1 + len(proposal.session_set.all()))
                         , separation = separation 
                         , interval_time = result['INTERVAL_TIME']
                         , constraint_field = result['CONSTRAINT_FIELD']

@@ -77,6 +77,8 @@ Ext.define('PHT.view.period.List' ,{
             {header: 'Start Date', dataIndex: 'date', flex: 1},
             {header: 'Start Time (UTC)', dataIndex: 'time', flex: 1},
             {header: 'Duration (Hrs)', dataIndex: 'duration', flex: 1},
+            {header: 'Session Type', dataIndex: 'session_type_code', flex: 1},
+            {header: 'Window Size', dataIndex: 'window_size', flex: 1},
         ];
 
         this.callParent(arguments);

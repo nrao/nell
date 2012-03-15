@@ -130,6 +130,12 @@ Ext.define('PHT.controller.Sessions', {
        });    
     },
 
+    notify: function(data) {
+        if (data['notification'] == 'filterSessionExplorer') {
+            this.sessionListWindow.down('sessionlist').setProposal(data.pcode);
+        }
+    },
+
     calculateLSTs: function(button) {
         var win = button.up('window');
         var form = win.down('form');
@@ -202,10 +208,10 @@ Ext.define('PHT.controller.Sessions', {
 
     deleteSession: function(button) {
         var grid = button.up('grid');
-        var session = grid.getSelectionModel().getLastSelected();
-        this.confirmDelete(this.getSessionsStore(),
-                      session,
-                      'Deleting Session ' + session.get('name')
+        var sessions = grid.getSelectionModel().getSelection();
+        this.confirmDeleteMultiple(this.getSessionsStore(),
+                      sessions,
+                      'Deleting Selected Sessions'
         );              
     },
 

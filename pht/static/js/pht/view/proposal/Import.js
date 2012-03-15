@@ -12,7 +12,7 @@ Ext.define('PHT.view.proposal.Import', {
 
     initComponent: function() {
         var proposals = Ext.create('PHT.view.proposal.PhtFieldSet', {
-            title: 'Import Proposal(s)',
+            title: 'Reimport Proposal(s)',
             defaultType: 'textfield',
             collapsible: true,
             checkboxToggle: true,
@@ -21,6 +21,7 @@ Ext.define('PHT.view.proposal.Import', {
             listeners: {
                 expand: function() {
                     semester.collapse();
+                    pstProposals.collapse();
                 }
             },
             items: [
@@ -47,6 +48,7 @@ Ext.define('PHT.view.proposal.Import', {
             listeners: {
                 expand: function() {
                     proposals.collapse();
+                    pstProposals.collapse();
                 }
             },
             items: [
@@ -61,12 +63,42 @@ Ext.define('PHT.view.proposal.Import', {
                 },
             ]
         });
+
+        var pstProposals = Ext.create('PHT.view.proposal.PhtFieldSet', {
+            title: 'Import PST Proposal(s)',
+            defaultType: 'textfield',
+            collapsible: true,
+            checkboxToggle: true,
+            checkboxName: 'pstProposalsCheckbox',
+            layout: 'anchor',
+            collapsed: true,
+            listeners: {
+                expand: function() {
+                    semester.collapse();
+                    proposals.collapse();
+                }
+            },
+            items: [
+                {
+                    xtype: 'combo',
+                    name: 'pcode',
+                    fieldLabel: 'PST PCODE',
+                    store: 'PstProposalCodes', 
+                    queryMode: 'local',
+                    displayField: 'pcode',
+                    valueField: 'pcode',
+                    multiSelect: true,
+                },
+            ]
+        });
+
         this.items = [
             {
                 xtype: 'form',
                 items: [
                     proposals,
-                    semester
+                    semester,
+                    pstProposals,
                 ]
             },
         ];

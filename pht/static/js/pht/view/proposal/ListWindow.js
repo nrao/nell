@@ -4,13 +4,12 @@ Ext.define('PHT.view.proposal.ListWindow', {
     title: 'Proposal Explorer',
     constrain: true,
     layout: 'fit',
-    width: '90%',
-    height: '90%',
-    minWidth: 500,
-    minHeight: 300,
+    width: '100%',
+    height: '30%',
     plain: true,
-    //minimizable: true, //TBF: Doesn't work?!
     maximizable: true,
+    x: 0,
+    y: 0,
     items: {
         border: false
     },

@@ -39,7 +39,7 @@ class TestPstImport(TestCase):
         self.assertTrue(len(proposal.sci_categories.all()) > 0)
         self.assertTrue(len(proposal.session_set.all()) > 0)
         s = proposal.session_set.all().order_by('name')[0]
-        self.assertEquals("He_ELD_5G", s.name)
+        self.assertEquals("GBT12A-002 - 1", s.name)
         self.assertTrue(len(proposal.source_set.all()) > 0)
         src = proposal.source_set.all()[0]
         self.assertAlmostEquals(4.79908, src.ra, 2)
@@ -53,6 +53,7 @@ class TestPstImport(TestCase):
         self.assertTrue(len(s.backends.all()) > 0)
         self.assertTrue(s.allotment is not None)
         self.assertTrue(s.target is not None)
+        self.assertTrue(s.next_semester is not None)
         self.assertEqual('Open - Low Freq', s.session_type.type)
         self.assertEqual('Poor', s.weather_type.type)
         self.assertEqual('spectral line', s.observing_type.type)

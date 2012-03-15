@@ -20,9 +20,91 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-import unittest
+#import unittest
+from django.test import TestCase
 
-class TestProposal(unittest.TestCase):
+from scheduler.models import Project as DSSProject
+from scheduler.models import Period as DSSPeriod
+from scheduler.models import Period_State as DSSPeriod_State
+from scheduler.models import Period_Accounting as DSSPeriod_Accounting
 
-    pass
+from pht.models import Proposal
+from utilities import TimeAccounting
+from scheduler.tests.utils     import create_sesshun
 
+from datetime import datetime, timedelta
+
+class TestProposal(TestCase):
+
+    fixtures = ['scheduler.json']
+
+    def setUp(self):
+        super(TestProposal, self).setUp()
+
+        # this project has no allotments!
+        self.project = DSSProject.objects.order_by('pcode').all()[0]
+
+        # setup some periods
+        self.start = datetime(2000, 1, 1, 0)
+        self.end   = self.start + timedelta(hours = 12)
+        times = [(datetime(2000, 1, 1, 0), 5.0, "one")
+               , (datetime(2000, 1, 1, 5), 3.0, "two")
+               , (datetime(2000, 1, 1, 8), 4.0, "three")
+               ]
+        self.ps = []
+        state = DSSPeriod_State.objects.get(abbreviation = 'P')
+        for start, dur, name in times:
+            # each session has grade 4, time = 3 
+            s = create_sesshun()
+            s.name = name
+            s.save()
+            pa = DSSPeriod_Accounting(scheduled = dur)
+            pa.save()
+            p = DSSPeriod( session    = s
+                      , start      = start
+                      , duration   = dur
+                      , state      = state
+                      , accounting = pa
+                      )
+            p.save()
+            self.ps.append(p)
+
+
+        # Okay, now set up the corresponding proposal
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        sqlResult = { 'PROP_ID' : self.project.pcode
+                    , 'PROPOSAL_TYPE' : 'Regular'
+                    , 'STATUS' : 'Draft'
+                    , 'SUBMITTED_DATE' : now 
+                    , 'CREATED_DATE' : now 
+                    , 'MODIFIED_DATE' : now 
+                    , 'TITLE' : 'Lynrd Sknyrd'
+                    , 'ABSTRACT' : 'What song do you wanna hear?'
+                    , 'proposal_id' : 0
+                    }
+        proposal = Proposal.createFromSqlResult(sqlResult)
+        proposal.dss_project = self.project
+        proposal.setSemester(self.project.semester.semester)
+        proposal.save()
+        self.proposal = proposal
+
+        self.ta = TimeAccounting()
+
+    def tearDown(self):
+        super(TestProposal, self).tearDown()
+
+        for p in self.ps:
+            s = p.session
+            p.delete()
+            s.delete()
+
+    def test_timeAccounting(self):
+
+        self.assertEqual(12.0, self.ta.getTime('time_billed', self.project))
+        self.assertEqual(12.0, self.proposal.billedTime())
+
+        self.assertEqual(12.0, self.ta.getTime('scheduled', self.project))
+        self.assertEqual(12.0, self.proposal.scheduledTime())
+
+        self.assertEqual(-12.0, self.ta.getTimeRemaining(self.project))
+        self.assertEqual(-12.0, self.proposal.remainingTime())

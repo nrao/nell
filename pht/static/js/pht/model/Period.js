@@ -9,6 +9,8 @@ Ext.define('PHT.model.Period', {
            , 'date'
            , 'time'
            , 'duration'
+           , 'window_size'
+           , 'session_type_code'
            ], 
     proxy: {
         type: 'rest',

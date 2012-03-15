@@ -14,6 +14,7 @@ Ext.define('PHT.controller.OverviewCalendar', {
     views: [
         'overview.Calendar',
         'period.Edit',
+        'period.List',
     ],
 
     init: function() {
@@ -25,15 +26,23 @@ Ext.define('PHT.controller.OverviewCalendar', {
             'periodedit button[action=save]': {
                 click: this.updatePeriod
             },            
+            'periodlist' : {
+                itemclick: this.highlightPeriod
+            },
             
         });        
 
         this.callParent(arguments);
     },
 
-    setOverviewCalendar: function(oc) {
-        this.oc = oc;
+    setOverviewCalendarWindow: function(ocWin) {
+        this.oc = ocWin.getCalendar();
+        this.pe = ocWin.getPeriodExplorer();
         this.drawCalendar();
+    },
+
+    highlightPeriod: function() {
+        this.oc.highlight(this.pe.getSelectionModel().getSelection());
     },
 
     drawCalendar: function(){
@@ -227,7 +236,7 @@ Ext.define('PHT.controller.OverviewCalendar', {
         return periodDate
     },
 
-    insertPeriod: function(record, startDate, numDays, drawComponent, type) {
+    insertPeriod: function(record, startDate, numDays, drawComponent, pType) {
         var period;
         var periodDate;
         var dayIndex;
@@ -238,7 +247,7 @@ Ext.define('PHT.controller.OverviewCalendar', {
         period  = Ext.create('PHT.view.overview.Period');
         var dateStr = record.get('date')
         // DSS and PHT periods are ALMOST identical
-        if (type == 'dss') {
+        if (pType == 'dss') {
             periodDate = this.getDssPeriodDate(dateStr);
             receivers = record.get('session').receiver
         } else {
@@ -255,7 +264,8 @@ Ext.define('PHT.controller.OverviewCalendar', {
             period.setDrawComponent(drawComponent);
             period.setDay(dayIndex);
             period.setTime(time, parseFloat(record.get('duration')));
-            period.setData(record, type, receivers);
+            period.setData(record, pType, receivers);
+            this.oc.addPeriod(period);
             return dayIndex
         }    
     },    

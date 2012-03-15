@@ -65,9 +65,11 @@ Ext.define('PHT.controller.Authors', {
 
     deleteAuthor: function(button) {
         var grid = button.up('grid');
-        var author = grid.getSelectionModel().getLastSelected();
-        author.destroy();
-        this.getAuthorsStore().remove([author]);
+        var authors = grid.getSelectionModel().getSelection();
+        this.confirmDeleteMultiple(this.getAuthorsStore(),
+                      authors,
+                      'Deleting Selected Authors'
+        );              
     },
 
     editAuthor: function(grid, record) {

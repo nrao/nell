@@ -68,21 +68,27 @@ Ext.define('PHT.view.proposal.List' ,{
                     action: 'import',
                 }),
             ]
-        }];
+        },
+        /*
+        TBF: Hold for paging
+        {
+            xtype: 'pagingtoolbar',
+            store: 'Proposals',
+            dock: 'bottom',
+            displayInfo: true
+        }
+        */
+        ];
 
         this.columns = [
             {header: 'PCODE', dataIndex: 'pcode', flex: 1},
             {header: 'Title', dataIndex: 'title', width: 200},
             {header: 'Proposal Type', dataIndex: 'proposal_type', flex: 1},
-            {header: 'Observing Types', dataIndex: 'observing_types', flex: 1},
-            {header: 'Status', dataIndex: 'status', flex: 1},
+            {header: 'Observing Types', dataIndex: 'observing_types', width: 200},
             {header: 'PI', dataIndex: 'pi_name', flex: 1},
-            {header: 'Authors', dataIndex: 'authors', width: 200},
             {header: 'Sci. Categories', dataIndex: 'sci_categories', flex: 1},
-            {header: 'Create Date', dataIndex: 'create_date', flex: 1},
-            {header: 'Modify Date', dataIndex: 'modify_date', flex: 1},
-            {header: 'Submit Date', dataIndex: 'submit_date', flex: 1},
-            {header: 'Total Time', dataIndex: 'total_time', flex: 1},
+            {header: 'Requested Hrs', dataIndex: 'requested_time', flex: 1},
+            {header: 'Allocated Hrs', dataIndex: 'allocated_time', flex: 1},
             {header: 'Joint Proposal', dataIndex: 'joint_proposal', flex: 1}
         ];
 

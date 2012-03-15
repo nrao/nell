@@ -8,6 +8,9 @@ Ext.define('PHT.model.DssPeriod', {
            , 'date'
            , 'time'
            , 'duration'
+           , 'wdefault'
+           , 'wstart'
+           , 'wend'
            ], 
     proxy: {
         type: 'rest',

@@ -40,6 +40,7 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         semester = self.proposal.semester.semester if self.proposal.semester is not None else None
         pi_id   = self.proposal.pi.id if self.proposal.pi is not None else None
         pi_name = self.proposal.pi.getLastFirstName() if self.proposal.pi is not None else None
+        dss_pcode = self.proposal.dss_project.pcode if self.proposal.dss_project is not None else 'unknown'
 
         return {'id'               : self.proposal.pcode
               , 'pst_proposal_id'  : self.proposal.pst_proposal_id
@@ -55,11 +56,19 @@ class ProposalHttpAdapter(PhtHttpAdapter):
               , 'create_date'      : self.formatDate(self.proposal.create_date)
               , 'modify_date'      : self.formatDate(self.proposal.modify_date)
               , 'submit_date'      : self.formatDate(self.proposal.submit_date)
-              , 'total_time'       : self.proposal.total_time
+              , 'requested_time'   : self.proposal.requestedTime()
+              , 'allocated_time'   : self.proposal.allocatedTime()
               , 'title'            : self.proposal.title
               , 'abstract'         : self.proposal.abstract
               , 'spectral_line'    : self.proposal.spectral_line
               , 'joint_proposal'   : self.proposal.joint_proposal
+              , 'next_sem_complete': self.proposal.next_semester_complete
+              , 'dss_pcode'        : dss_pcode
+              , 'complete'         : self.proposal.isComplete()
+              , 'dss_total_time'   : self.proposal.dssAllocatedTime()
+              , 'billed_time'      : self.proposal.billedTime()
+              , 'scheduled_time'   : self.proposal.scheduledTime()
+              , 'remaining_time'   : self.proposal.remainingTime()
                }
 
     def initFromPost(self, data):
@@ -92,7 +101,10 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         self.proposal.title           = data.get('title')
         self.proposal.abstract        = data.get('abstract')
         self.proposal.spectral_line   = data.get('spectral_line')
-        self.proposal.joint_proposal  = data.get('joint_proposal') == 'true'
+        self.proposal.joint_proposal  = \
+            data.get('joint_proposal') == 'true'
+        self.proposal.next_semester_complete  = \
+            data.get('next_semester_complete') == 'true'
 
         self.proposal.save()
 

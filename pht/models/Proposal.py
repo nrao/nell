@@ -29,11 +29,16 @@ from Semester           import Semester
 from Status             import Status
 from ProposalType       import ProposalType
 
+from scheduler.models   import Project as DSSProject 
+
+from utilities          import TimeAccounting
+
 from datetime           import datetime
 
 class Proposal(models.Model):
 
     pst_proposal_id = models.IntegerField(null = True)
+    dss_project     = models.ForeignKey(DSSProject, null = True)
     proposal_type   = models.ForeignKey(ProposalType)
     observing_types = models.ManyToManyField(ObservingType)
     status          = models.ForeignKey(Status)
@@ -45,11 +50,12 @@ class Proposal(models.Model):
     create_date     = models.DateTimeField()
     modify_date     = models.DateTimeField()
     submit_date     = models.DateTimeField()
-    total_time      = models.FloatField()  # Minutes
     title           = models.CharField(max_length = 512)
     abstract        = models.CharField(max_length = 2000)
     spectral_line   = models.CharField(max_length = 2000, null = True)
     joint_proposal  = models.BooleanField()
+    next_semester_complete = models.BooleanField(default = True)
+    #next_semester_time     = models.FloatField(null = True)
 
     class Meta:
         db_table  = "pht_proposals"
@@ -57,6 +63,61 @@ class Proposal(models.Model):
 
     def __str__(self):
         return self.pcode
+
+    def requestedTime(self):
+        "Simply the sum of the sessions' time"
+        return sum([s.allotment.requested_time \
+            for s in self.session_set.all() \
+                if s.allotment is not None \
+                and s.allotment.requested_time is not None])
+
+    def allocatedTime(self):
+        "Simply the sum of the sessions' time"
+        return sum([s.allotment.allocated_time \
+            for s in self.session_set.all() \
+                if s.allotment is not None \
+                and s.allotment.allocated_time is not None])
+
+    # *** Section: accessing the corresponding DSS project
+    def dssAllocatedTime(self):
+        "How much was the corresponding DSS project allocated?"
+        if self.dss_project is not None:
+            ta = TimeAccounting()
+            return ta.getProjectTotalTime(self.dss_project)
+        else:
+            return None
+
+    def remainingTime(self):
+        "From this proposal's project's time accounting."
+        if self.dss_project is not None:
+            ta = TimeAccounting()
+            return ta.getTimeLeft(self.dss_project)
+        else:
+            return None
+
+    def billedTime(self):
+        "From this proposal's project's time accounting."
+        return self.getTime('time_billed')
+
+    def scheduledTime(self):
+        "From this proposal's project's time accounting."
+        return self.getTime('scheduled')
+
+    def getTime(self, type):
+        "Leverage time accounting for this proposal's project."
+        if self.dss_project is not None:
+            ta = TimeAccounting()
+            return ta.getTime(type, self.dss_project)
+        else:
+            return None
+
+    def isComplete(self):
+        if self.dss_project is not None:
+            return self.dss_project.complete
+        else:
+            return None
+
+    # *** End Section: accessing the corresponding DSS project
 
     def setSemester(self, semester):
         "Uses semester name to set the correct object."
@@ -77,11 +138,11 @@ class Proposal(models.Model):
     @staticmethod
     def semestersUsed():
         "Returns only the distinct semesters used by all Proposals"
-        sems = []
+        sems = {}
         for p in Proposal.objects.all().order_by('pcode'):
             if p.semester.semester not in sems:
-                sems.append(p.semester)
-        return sems
+                sems[p.semester] = True
+        return sems.keys()
 
     @staticmethod
     def createFromSqlResult(result):
@@ -104,15 +165,19 @@ class Proposal(models.Model):
                           , create_date     = result['CREATED_DATE']
                           , modify_date     = result['MODIFIED_DATE']
                           , submit_date     = submit_date 
-                          , total_time      = 0.0 #result['total_time']
                           , title           = result['TITLE']
                           , abstract        = result['ABSTRACT']
                           , joint_proposal  = False #result['joint_proposal']
                           )
 
         proposal.save()
-        author      = Author.createFromSqlResult(result, proposal)
-        proposal.pi = author
+
+        try:
+            author      = Author.createFromSqlResult(result, proposal)
+            proposal.pi = author
+        except:
+            pass
+
         proposal.save()
         return proposal
 
