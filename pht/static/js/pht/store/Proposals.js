@@ -3,5 +3,5 @@ Ext.define('PHT.store.Proposals', {
     model: 'PHT.model.Proposal',
     //remoteFilter: true,
     //remoteSort: true,
-    autoLoad: true,
+    autoLoad: false,
 });

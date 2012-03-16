@@ -72,7 +72,7 @@ class PstImport(PstInterface):
           , 'KFPA' : 'KFPA' 
           , 'KFPA (shared risk)' : 'KFPA'
           , 'Mustang (90 GHz)' : 'MBA'
-          , 'KFPA (18-26.5 GHz)' : 'MBA'
+          , 'KFPA (18-26.5 GHz)' : 'KFPA'
           , 'W-band Shared Risk (68-92 GHz)' : 'W' 
           , 'Ka-Band - CCB (26.0-40.0 GHz)': 'Ka'
           , 'W-band MM4 (85-93.3 GHz)' : 'W'
@@ -388,12 +388,12 @@ class PstImport(PstInterface):
 
         # ignore resource groups, and just get the resources for 
         # this session
-        q = """select gr.FRONT_END, gr.BACK_END 
-        from GBT_RESOURCE as gr, RESOURCES as r, sessionPair as sp, session as s 
-        where sp.RESOURCE_GROUP = r.resource_group 
-            AND r.resource_id = gr.id 
-            AND s.session_id = sp.session_id 
-            AND s.session_id = %d""" % session.pst_session_id
+        q = """
+        select gr.FRONT_END, gr.BACK_END 
+        from GBT_RESOURCE as gr, sessionResource as sr 
+        where gr.Id = sr.resource_id 
+            AND sr.SESSION_ID = %d
+        """ % session.pst_session_id
         self.cursor.execute(q)
         rows = self.cursor.fetchall()
         self.initMap()
@@ -446,6 +446,57 @@ class PstImport(PstInterface):
         source.save()
 
         return source
+
+    def reimportAllSessionResources(self, semester, sessions = None):
+        """
+        This is a one-time needed function for fixing the fact that
+        we had a bug in the original import, and now want to just
+        reimport the session's resources.
+        """
+
+        if sessions is None:
+            ss = Session.objects.filter(proposal__semester__semester = semester).order_by('name')
+        else:
+            ss = sessions
+
+        reimported = []
+        changes = {}
+        for s in ss:
+            reimported.append(s) 
+            key = "%s (%s)" % (s.name, s.proposal.pcode)
+            # what are they now?
+            rcvrs = s.get_receivers()
+            backends = s.get_backends()
+            changes[key] = {'old' : (rcvrs, backends)}
+            # good, now get rid of them
+            for r in s.receivers.all():
+                s.receivers.remove(r)
+            for b in s.backends.all():
+                s.backends.remove(b)
+            # now reimport them    
+            self.importResources(s)            
+            # what's it look like now?
+            snew = Session.objects.get(id = s.id)
+            rcvrs = snew.get_receivers()
+            backends = snew.get_backends()
+            changes[key]['new'] = (rcvrs, backends)
+
+        # report
+        filename = "reimportResources.txt"
+        f = open(filename, 'w')
+        changed = 0
+        f.write("Reimported sources for sessions:\n")
+        for s in reimported:
+            f.write(    "%s (%s)\n" % (s.name, s.proposal.pcode))
+        f.write("Actual Changes:\n")
+        for k, v in changes.items():
+            if v['old'] != v['new']:
+                f.write("%s:\n" % k)
+                changed += 1
+                f.write("    Old: %s, %s\n" % (v['old'][0], v['old'][1]))
+                f.write("    New: %s, %s\n" % (v['new'][0], v['new'][1]))
+        f.write("Changed %d of %d sessions.\n" % (changed, len(ss)))    
+        f.close()    
 
     def reportLine(self, line):
         "Add line to stuff to go into report file, and maybe to stdout too."

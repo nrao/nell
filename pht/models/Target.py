@@ -36,6 +36,7 @@ class Target(models.Model):
     min_lst           = models.FloatField(null = True) # rads
     max_lst           = models.FloatField(null = True) # rads
     elevation_min     = models.FloatField(null = True) # rads
+    solar_avoid       = models.FloatField(null = True) # rads
     # for storing the raw values from pst
     pst_min_lst       = models.CharField(null = True, max_length = 255)
     pst_max_lst       = models.CharField(null = True, max_length = 255)

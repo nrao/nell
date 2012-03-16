@@ -48,6 +48,9 @@ class SessionHttpAdapter(PhtHttpAdapter):
         monitoringStart = self.session.monitoring.start_time
         sci_categories = [sc.category for sc in self.session.proposal.sci_categories.all()]
         dss_sess_name = self.session.dss_session.name if self.session.dss_session is not None else 'unknown'        
+        solar_avoid = self.session.target.solar_avoid
+        if solar_avoid is not None:
+            solar_avoid = rad2deg(solar_avoid)
         
         data = {'id'                      : self.session.id
               , 'name'                    : self.session.name
@@ -86,6 +89,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'min_lst'                 : rad2sexHrs(self.session.target.min_lst)
               , 'max_lst'                 : rad2sexHrs(self.session.target.max_lst)
               , 'elevation_min'           : rad2sexDeg(self.session.target.elevation_min)
+              , 'solar_avoid'             : solar_avoid
               # session flags
               , 'thermal_night'           : self.session.flags.thermal_night
               , 'rfi_night'               : self.session.flags.rfi_night
@@ -211,6 +215,10 @@ class SessionHttpAdapter(PhtHttpAdapter):
         self.session.target.min_lst = self.getSexHrs2rad(data, 'min_lst')
         self.session.target.max_lst = self.getSexHrs2rad(data, 'max_lst')
         self.session.target.elevation_min = self.getSexDeg2rad(data, 'elevation_min')
+        solar_avoid = self.getFloat(data, 'solar_avoid')
+        if solar_avoid is not None:
+            solar_avoid = deg2rad(solar_avoid)
+        self.session.target.solar_avoid = solar_avoid    
         self.session.target.save()
 
         # flags

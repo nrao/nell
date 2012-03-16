@@ -78,9 +78,15 @@ Ext.application({
         var propListWin = Ext.create('PHT.view.proposal.ListWindow', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
+        // load the store explicitly so loading message appears
+        var propList = propListWin.down('proposallist');
+        propList.store.load(); 
         var sessListWin = Ext.create('PHT.view.session.ListWindow', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
+        // load the store explicitly so loading message appears
+        var sessList = sessListWin.down('sessionlist');
+        sessList.store.load();
         var proposalSources = Ext.create('PHT.view.source.ProposalListWindow', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
@@ -301,7 +307,6 @@ Ext.application({
             elevationFieldText: 'Must be a value in Degrees, in sexigesimel format (+/- DDD:MM:SS.S), between 0 and 90.',
             elevationFieldMask: /[\d\.\:\+\-]/i,
         });
-
     },
 
     // TBF: should this be in the controller?
