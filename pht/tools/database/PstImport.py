@@ -135,8 +135,8 @@ class PstImport(PstInterface):
             self.fetchAuthors(proposal)
             self.fetchScientificCategories(proposal)
             self.fetchObservingTypes(proposal)
-            self.fetchSessions(proposal)
             self.fetchSources(proposal)
+            self.fetchSessions(proposal)
         
             self.proposals.append(proposal)
  
@@ -184,8 +184,8 @@ class PstImport(PstInterface):
                     proposal.setSemester(semester)
                     self.fetchScientificCategories(proposal)
                     self.fetchObservingTypes(proposal)
-                    self.fetchSessions(proposal)
                     self.fetchSources(proposal)
+                    self.fetchSessions(proposal)
                     self.fetchAuthors(proposal)
                     self.proposals.append(proposal)
 
@@ -337,6 +337,7 @@ class PstImport(PstInterface):
         
         # other stuff
         self.importResources(session)
+        self.importSessionSources(session)
         session.save()
 
         # now we can determine it's types
@@ -347,6 +348,18 @@ class PstImport(PstInterface):
 
         return session
     
+
+    def importSessionSources(self, session):
+        "Get the sources associated with this session."
+        q = "select source_id from sessionSource where SESSION_ID = %s" % session.pst_session_id
+        self.cursor.execute(q)
+        rows = self.cursor.fetchall()
+        for source_id, in rows:
+            source = session.proposal.source_set.get(pst_source_id = source_id)
+            session.sources.add(source)
+            session.save()
+        session.averageRaDec(session.sources.all())
+
     def importResources(self, session):
         "Get the front & back ends associated with this session."
 
@@ -381,7 +394,6 @@ class PstImport(PstInterface):
         where gr.Id = sr.resource_id 
             AND sr.SESSION_ID = %d
         """ % session.pst_session_id
-
         self.cursor.execute(q)
         rows = self.cursor.fetchall()
         self.initMap()

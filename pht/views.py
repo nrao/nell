@@ -229,28 +229,6 @@ def session_sources(request, *args):
         return HttpResponse(json.dumps({"success" : "ok"})
                           , content_type = 'application/json')
 
-def meanAngle(thetas):
-    if len(thetas) == 1:
-        return thetas[0]
-
-    thetas.sort()
-    avg_theta = thetas[0]
-    for theta in thetas[1:]:
-        # Find the difference between the angles
-        diff = abs(avg_theta - theta)
-        if diff > math.pi:
-            # Switch to the nearest angle
-            diff_prime = 2 * math.pi - diff
-            # Compute the middle of the angle
-            avg      = diff_prime / 2.
-            # Fold the average into the original angle
-            theta = theta + avg
-            # Account for wrap around and set the new overall average
-            avg_theta = theta - (2 * math.pi) if theta >= 2 * math.pi else theta
-        else:
-            avg_theta = (avg_theta + theta) / 2.
-    return avg_theta 
-
 @login_required
 @admin_only
 def session_average_ra_dec(request, *args):
@@ -259,11 +237,7 @@ def session_average_ra_dec(request, *args):
         session_id, = args
         session     = Session.objects.get(id = session_id)
         sources     = [Source.objects.get(id = id) for id in request.POST.getlist('sources')]
-        average_ra  = meanAngle([s.ra for s in sources]) 
-        average_dec = sum([s.dec for s in sources]) / float(len(sources))
-        session.target.ra  = average_ra
-        session.target.dec = average_dec
-        session.target.save()
+        average_ra, average_dec = session.averageRaDec(sources)
 
         # send back to the serve the result in both float
         # and string formats
