@@ -233,7 +233,7 @@ Ext.define('PHT.view.session.Form', {
                         fieldLabel: 'Solar Avoidance (Deg)',
                         name: 'solar_avoid',
                         //vtype: 'hourField',
-                        xtype: 'numberfiled',
+                        xtype: 'numberfield',
                         minValue: 0.0,
                         maxValue: 360.0
                     }],    
