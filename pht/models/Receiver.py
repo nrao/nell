@@ -27,6 +27,7 @@ from django.db  import models
 class Receiver(models.Model):
     name         = models.CharField(max_length = 32)
     abbreviation = models.CharField(max_length = 32)
+    code         = models.CharField(max_length = 2)
     freq_low     = models.FloatField(help_text = "GHz")
     freq_hi      = models.FloatField(help_text = "GHz")
     #available    = models.BooleanField(default = True)

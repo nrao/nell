@@ -387,12 +387,13 @@ def lst_range(request):
 @login_required
 @admin_only
 def proposal_summary(request):
+    semester = request.GET.get('semester')
     # Create the HttpResponse object with the appropriate PDF headers.
     response = HttpResponse(mimetype='application/pdf')
     response['Content-Disposition'] = 'attachment; filename=proposalSummary.pdf'
 
     ps = ProposalSummary(response)
-    ps.report()
+    ps.report(semester = semester)
 
     return response
 
