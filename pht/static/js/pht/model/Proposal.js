@@ -34,6 +34,7 @@ Ext.define('PHT.model.Proposal', {
         url: '/pht/proposals',
         reader: {
             type: 'json',
+            timeout: 300000,
             root: 'proposals',
             successProperty: 'success',
             totalProperty: 'total',
