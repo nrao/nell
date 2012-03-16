@@ -72,7 +72,7 @@ class PstImport(PstInterface):
           , 'KFPA' : 'KFPA' 
           , 'KFPA (shared risk)' : 'KFPA'
           , 'Mustang (90 GHz)' : 'MBA'
-          , 'KFPA (18-26.5 GHz)' : 'MBA'
+          , 'KFPA (18-26.5 GHz)' : 'KFPA'
           , 'W-band Shared Risk (68-92 GHz)' : 'W' 
           , 'Ka-Band - CCB (26.0-40.0 GHz)': 'Ka'
           , 'W-band MM4 (85-93.3 GHz)' : 'W'
@@ -388,12 +388,12 @@ class PstImport(PstInterface):
 
         # ignore resource groups, and just get the resources for 
         # this session
-        q = """select gr.FRONT_END, gr.BACK_END 
-        from GBT_RESOURCE as gr, RESOURCES as r, sessionPair as sp, session as s 
-        where sp.RESOURCE_GROUP = r.resource_group 
-            AND r.resource_id = gr.id 
-            AND s.session_id = sp.session_id 
-            AND s.session_id = %d""" % session.pst_session_id
+        q = """
+        select gr.FRONT_END, gr.BACK_END 
+        from GBT_RESOURCE as gr, sessionResource as sr 
+        where gr.Id = sr.resource_id 
+            AND sr.SESSION_ID = %d
+        """ % session.pst_session_id
         self.cursor.execute(q)
         rows = self.cursor.fetchall()
         self.initMap()
