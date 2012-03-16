@@ -25,6 +25,7 @@ from django.db                 import models
 class ObservingType(models.Model):
 
     type = models.CharField(max_length = 32)
+    code = models.CharField(max_length = 2)
 
     class Meta:
         db_table  = "pht_observing_types"

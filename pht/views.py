@@ -13,8 +13,8 @@ from models import *
 from pht.tools.database import PstImport
 from pht.tools.LstPressures import LstPressures
 from httpadapters import *
-from tools.database import PstInterface
-from tools.database import BulkSourceImport
+from tools.database import PstInterface, BulkSourceImport
+from tools.reports import *
 import math
 
 
@@ -396,6 +396,19 @@ def lst_range(request):
     return HttpResponse(json.dumps({"success" : "ok", 'lines' : lines})
                       , content_type = 'application/json')
 
+
+@login_required
+@admin_only
+def proposal_summary(request):
+    semester = request.GET.get('semester')
+    # Create the HttpResponse object with the appropriate PDF headers.
+    response = HttpResponse(mimetype='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=proposalSummary.pdf'
+
+    ps = ProposalSummary(response)
+    ps.report(semester = semester)
+
+    return response
 
 @login_required
 @admin_only

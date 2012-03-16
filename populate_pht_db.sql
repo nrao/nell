@@ -84,43 +84,43 @@ INSERT INTO pht_semesters VALUES (DEFAULT, '11B');
 INSERT INTO pht_semesters VALUES (DEFAULT, '12A');
 INSERT INTO pht_semesters VALUES (DEFAULT, '12B');
 
-INSERT INTO pht_receivers VALUES (DEFAULT, 'NoiseSource',   'NS',   0.000,   0.000); -- 
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr_RRI',      'RRI',  0.100,   1.600); -- R
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr_342',      '342',  0.290,   0.395); -- 3
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr_450',      '450',  0.385,   0.520); -- 4
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr_600',      '600',  0.510,   0.690); -- 6
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr_800',      '800',  0.680,   0.920); -- 8
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr_1070',    '1070',  0.910,   1.230); -- A
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr1_2',       'L',    1.150,   1.730); -- L
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr2_3',       'S',    1.730,   2.600); -- S
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr4_6',       'C',    3.950,   6.100); -- C
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr8_10',      'X',    8.000,  10.000); -- X
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr12_18',     'Ku',  12.000,  15.400); -- U
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr18_26',     'K',   18.000,  26.500); -- K
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr26_40',     'Ka',  26.000,  39.500); -- B
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr40_52',     'Q',   38.200,  49.800); -- Q
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr_PAR',      'MBA', 80.000, 100.000); -- M
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Zpectrometer',  'Z',    0.000,   0.000); -- 
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Holography',    'Hol', 11.700,  12.200); -- H
-INSERT INTO pht_receivers VALUES (DEFAULT, 'RcvrArray18_26','KFPA',17.000,  27.500); -- F
-INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr68_92',     'W',   68.000,  92.000); -- W
+INSERT INTO pht_receivers VALUES (DEFAULT, 'NoiseSource',   'NS',   'N', 0.000,   0.000); -- 
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr_RRI',      'RRI',  'R', 0.100,   1.600); -- R
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr_342',      '342',  '3', 0.290,   0.395); -- 3
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr_450',      '450',  '4', 0.385,   0.520); -- 4
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr_600',      '600',  '6', 0.510,   0.690); -- 6
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr_800',      '800',  '8', 0.680,   0.920); -- 8
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr_1070',    '1070',  'A', 0.910,   1.230); -- A
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr1_2',       'L',    'L', 1.150,   1.730); -- L
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr2_3',       'S',    'S', 1.730,   2.600); -- S
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr4_6',       'C',    'C', 3.950,   6.100); -- C
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr8_10',      'X',    'X', 8.000,  10.000); -- X
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr12_18',     'Ku',   'U', 12.000,  15.400); -- U
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr18_26',     'K',    'K', 18.000,  26.500); -- K
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr26_40',     'Ka',   'B', 26.000,  39.500); -- B
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr40_52',     'Q',    'Q', 38.200,  49.800); -- Q
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr_PAR',      'MBA',  'M', 80.000, 100.000); -- M
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Zpectrometer',  'Z',    'Z', 0.000,   0.000); -- 
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Holography',    'Hol',  'H', 11.700,  12.200); -- H
+INSERT INTO pht_receivers VALUES (DEFAULT, 'RcvrArray18_26','KFPA', 'F', 17.000,  27.500); -- F
+INSERT INTO pht_receivers VALUES (DEFAULT, 'Rcvr68_92',     'W',    'W', 68.000,  92.000); -- W
 
-INSERT INTO pht_backends VALUES (DEFAULT, 'Caltech Continuum Backend', 'CCB');
-INSERT INTO pht_backends VALUES (DEFAULT, 'Caltech-Green Bank-Swinbourne Recorder 2', 'CGSR2');
-INSERT INTO pht_backends VALUES (DEFAULT, 'GBT Digital Continuum Receiver', 'DCR');
-INSERT INTO pht_backends VALUES (DEFAULT, 'GBT Spectrometer', 'gbtSpec');
-INSERT INTO pht_backends VALUES (DEFAULT, 'Green Bank Astronomical Signal Processor', 'GASP');
-INSERT INTO pht_backends VALUES (DEFAULT, 'Green bank Ultimate Pulsar Processor', 'GUPPY');
-INSERT INTO pht_backends VALUES (DEFAULT, 'Haystack Mark 4 High bandwidth (> 1Gb/s)', 'HayMark4');
-INSERT INTO pht_backends VALUES (DEFAULT, 'Mark 5 recorder (disks)', 'Mark5');
-INSERT INTO pht_backends VALUES (DEFAULT, 'Mustang', 'Mustang');
-INSERT INTO pht_backends VALUES (DEFAULT, 'Radar backend', 'Radar');
-INSERT INTO pht_backends VALUES (DEFAULT, 'S2 recorder', 'gbtS2');
-INSERT INTO pht_backends VALUES (DEFAULT, 'Spectral Processor', 'gbtSpecP');
-INSERT INTO pht_backends VALUES (DEFAULT, 'VErsitile GB Astronomical Spectrometer ', 'Vegas');
-INSERT INTO pht_backends VALUES (DEFAULT, 'VLBA recorder and DAR ', 'gbtVLBA');
-INSERT INTO pht_backends VALUES (DEFAULT, 'Zpectrometer ', 'Zpect');
-INSERT INTO pht_backends VALUES (DEFAULT, 'User supplied or new backend ', 'Other');
+INSERT INTO pht_backends VALUES (DEFAULT, 'Caltech Continuum Backend', 'CCB', 'C');
+INSERT INTO pht_backends VALUES (DEFAULT, 'Caltech-Green Bank-Swinbourne Recorder 2', 'CGSR2', '2');
+INSERT INTO pht_backends VALUES (DEFAULT, 'GBT Digital Continuum Receiver', 'DCR', 'D');
+INSERT INTO pht_backends VALUES (DEFAULT, 'GBT Spectrometer', 'gbtSpec', 'S');
+INSERT INTO pht_backends VALUES (DEFAULT, 'Green Bank Astronomical Signal Processor', 'GASP', 'G');
+INSERT INTO pht_backends VALUES (DEFAULT, 'Green bank Ultimate Pulsar Processor', 'GUPPY', 'U');
+INSERT INTO pht_backends VALUES (DEFAULT, 'Haystack Mark 4 High bandwidth (> 1Gb/s)', 'HayMark4', 'H');
+INSERT INTO pht_backends VALUES (DEFAULT, 'Mark 5 recorder (disks)', 'Mark5', '5');
+INSERT INTO pht_backends VALUES (DEFAULT, 'Mustang', 'Mustang', 'M');
+INSERT INTO pht_backends VALUES (DEFAULT, 'Radar backend', 'Radar', 'R');
+INSERT INTO pht_backends VALUES (DEFAULT, 'S2 recorder', 'gbtS2', 'E');
+INSERT INTO pht_backends VALUES (DEFAULT, 'Spectral Processor', 'gbtSpecP', 'P');
+INSERT INTO pht_backends VALUES (DEFAULT, 'VErsitile GB Astronomical Spectrometer ', 'Vegas', 'V');
+INSERT INTO pht_backends VALUES (DEFAULT, 'VLBA recorder and DAR ', 'gbtVLBA', 'B');
+INSERT INTO pht_backends VALUES (DEFAULT, 'Zpectrometer ', 'Zpect', 'Z');
+INSERT INTO pht_backends VALUES (DEFAULT, 'User supplied or new backend ', 'Other', 'O');
 
 INSERT INTO pht_session_separations VALUES (DEFAULT, 'hour');
 INSERT INTO pht_session_separations VALUES (DEFAULT, 'day');
