@@ -39,13 +39,13 @@ class TestSemesterTimeAccounting(TestCase):
         # make some maintenance periods
         self.maintProj = create_maintenance_project()
         # daytime period
-        dt1 = datetime(2012, 3, 20, 13)
+        dt1 = datetime(2012, 3, 20, 13) # EST
         mp1 = create_maintenance_period(dt1, 4.0)
         # TBF: bug?
         mp1.session.project = self.maintProj
         mp1.session.save()
         # day & night period
-        dt2 = datetime(2012, 3, 21, 23)
+        dt2 = datetime(2012, 3, 21, 5) # EST
         mp2 = create_maintenance_period(dt2, 8.0)
         # TBF: bug?
         mp2.session.project = self.maintProj
@@ -78,9 +78,24 @@ class TestSemesterTimeAccounting(TestCase):
 
     def test_getPeriodHours(self):
 
+        # day time only period
         mp1 = self.maintPeriods[0]
-
         hrs = self.ta.getPeriodHours(mp1)
+        exp = {'total': 4.0
+             , 'gcHrs': 0
+             , 'lowFreqHrs': 2.0
+             , 'hiFreq1Hrs': 2.0
+             , 'hiFreq2Hrs': 0.0}
+        self.assertEqual(exp, hrs)     
+
+        # a little night AND day period
+        mp2 = self.maintPeriods[1]
+        hrs = self.ta.getPeriodHours(mp2)
+        self.assertEqual(8.0, hrs['total']) 
+        self.assertEqual(4.0, hrs['lowFreqHrs']) 
+        self.assertAlmostEqual(5.3558844564835955, hrs['gcHrs'], 3) 
+        self.assertAlmostEqual(3.4154166, hrs['hiFreq1Hrs'], 3) 
+        self.assertAlmostEqual(0.5845833, hrs['hiFreq2Hrs'], 3) 
 
 
     def test_getHrsInGC(self):
@@ -159,5 +174,32 @@ class TestSemesterTimeAccounting(TestCase):
         self.assertEquals(dur, day + night) 
         self.assertAlmostEquals(41.348888888888887, day, 3)
         self.assertAlmostEquals(17.6511111111, night, 3)
+
+    def test_calculateTimeAccounting(self):
+
+        self.ta.calculateTimeAccounting()
+
+        # check the buckets
+        total, gc = self.ta.totalAvailableHrs
+        self.assertEqual(181*24, total)
+        self.assertEqual((181*24)*(6/24.), gc)
+
+        hrs = self.ta.maintHrs
+        self.assertEqual(12.0, hrs['total'])
+        self.assertEqual(6.0,  hrs['lowFreqHrs'])
+        self.assertAlmostEqual(5.3558844564, hrs['gcHrs'], 3) 
+        self.assertAlmostEqual(5.4154166, hrs['hiFreq1Hrs'], 3) 
+        self.assertAlmostEqual(0.5845833, hrs['hiFreq2Hrs'], 3) 
+
+        hrs = self.ta.shutdownHrs
+        exp = {'total': 0.0
+             , 'gcHrs': 0
+             , 'lowFreqHrs': 0.0
+             , 'hiFreq1Hrs': 0.0
+             , 'hiFreq2Hrs': 0.0}
+        self.assertEqual(exp, hrs)     
+
+
+        # TBF
 
 

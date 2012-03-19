@@ -51,28 +51,37 @@ class SemesterTimeAccounting(object):
         # Galactic Center goes from 15 to 20 hours [,)
         self.gcHrs = (15, 21) 
 
+        # initialize all the buckets we'll be calculating
+        self.totalAvailableHrs = (None, None)
+        self.maintHrs = None
+        self.shutdownHrs = None
+        self.testHrs = None
+
     def calculateTimeAccounting(self):
 
         # how many hours in this semester?
-        days = getSemesterDays(self.semester)
+        days = self.getSemesterDays(self.semester)
         totalHrs = days * 24
         totalGCHrs = self.getGCHrs(totalHrs)
-        self.totalAvailableHrs = (totalHrs, self.getGCHrs(totalHrs))  
+        self.totalAvailableHrs = (totalHrs, totalGCHrs)  
 
         # how much has been pre-assigned for this semester?
         # first, find the periods
         self.maintPeriods = self.getMaintenancePeriods()
         #self.testingPeriods = self.getTestingPeriods()
         self.shutdownPeriods = self.getShutdownPeriods()
-        self.testSessions = self.getTestSesssions()
+        self.testSessions = self.getTestSessions()
 
         # now calculate their hours
         self.maintHrs = self.getHours(self.maintPeriods)
         self.shutdownHrs = self.getHours(self.shutdownPeriods)
-        self.testHrs = self.getSessionHrs(self.testSessions)
+        self.testHrs = self.getSessionHours(self.testSessions)
 
         # so, how much does that leave left for real astronomy?
-        self.astronomyAvailableHrs = None # TBF: add up maintHrs, shutdownHrs, testHrs, total and GC, then subtract those from the totalAvailableHrs
+        self.astronomyAvailableHrs = None
+        # add up maintHrs, shutdownHrs, testHrs, total and GC, 
+        # then subtract those from the totalAvailableHrs
+
 
         # in order to calculate these
         self.lowFreqAvailableHrs = (None, None) # TBF
@@ -97,27 +106,32 @@ class SemesterTimeAccounting(object):
 
     def getMaintenancePeriods(self):
         "What maintenance periods have been scheduled for this semester?"
-        ps = DSSPeriod.objects.filter( \
-            session__project__pcode = 'Maintenance'
-          , start__gt = self.semester.start()
-          , start__lt = self.semester.end()).exclude( \
-              state__name = 'Deleted').order_by('start')
-        return ps
+        return self.getProjectPeriods('Maintenance')
 
-    def getTestSessions():
+    def getTestSessions(self):
         # TBF
         return []
     
-    def getShutdownPeriods():
-        # TBF
-        return []
+    def getShutdownPeriods(self):
+        "What shutdown periods have been scheduled for this semester?"
+        return self.getProjectPeriods('Shutdown')
+
+    def getProjectPeriods(self, pcode):    
+        ps = DSSPeriod.objects.filter( \
+            session__project__pcode = pcode
+          , start__gt = self.semester.start()
+          , start__lt = self.semester.end()).exclude( \
+              state__name = 'Deleted').order_by('start')    
+        return ps 
 
     def getHours(self, periods):
+
+        # TBF: use objects instead of dicts?
         allHrs = dict(total = 0.0
                   , gcHrs = 0.0
                   , lowFreqHrs = 0.0
-                  , hiFreq1hrs = 0.0
-                  , hiFreq2hrs = 0.0
+                  , hiFreq1Hrs = 0.0
+                  , hiFreq2Hrs = 0.0
                   )       
                     
         for p in periods:
@@ -154,7 +168,7 @@ class SemesterTimeAccounting(object):
         # night time periods DO!
         lowFreqHrs += .50 * nightHrs
         hiFreq1Hrs += .25 * nightHrs
-        hiFreq2Hrs += .20 * nightHrs
+        hiFreq2Hrs += .25 * nightHrs
 
         return dict(total = dur
                   , gcHrs = gcHrs
@@ -227,14 +241,14 @@ class SemesterTimeAccounting(object):
     def getSessionHours(self, session):
 
         freq2key = {'LF' : 'lowFreqHrs'
-                  , 'HF1' : 'hiFreq1hrs'
+                  , 'HF1' : 'hiFreq1Hrs'
                   , 'HF2' : 'hiFreq2hrs'
                    }
         allHrs = dict(total = 0.0
                   , gcHrs = 0.0
                   , lowFreqHrs = 0.0
-                  , hiFreq1hrs = 0.0
-                  , hiFreq2hrs = 0.0
+                  , hiFreq1Hrs = 0.0
+                  , hiFreq2Hrs = 0.0
                   )       
         for s in session:
             timeType = freq2key[s.determineFreqCategory()]
