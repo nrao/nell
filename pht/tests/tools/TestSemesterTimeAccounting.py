@@ -124,3 +124,40 @@ class TestSemesterTimeAccounting(TestCase):
         self.assertAlmostEquals(2.48694527307, gc, 3)
         self.assertAlmostEquals(9.51305472693, nonGc, 3)
 
+    def test_getHrsInDayTime(self):
+
+        # all night time
+        dur = 1.0
+        dt1 = datetime(2012, 3, 19, 1)
+        dt2 = dt1 + timedelta(hours = dur)
+        day, night = self.ta.getHrsInDayTime(dt1, dt2)
+        self.assertEquals(day, 0.0)
+        self.assertEquals(night, dur)
+
+        # all day time
+        dur = 1.0
+        dt1 = datetime(2012, 3, 19, 13)
+        dt2 = dt1 + timedelta(hours = dur)
+        day, night = self.ta.getHrsInDayTime(dt1, dt2)
+        self.assertEquals(day, dur)
+        self.assertEquals(night, 0.0)
+
+        # small overlap
+        dur = 6.0
+        dt1 = datetime(2012, 3, 19, 9)
+        dt2 = dt1 + timedelta(hours = dur)
+        day, night = self.ta.getHrsInDayTime(dt1, dt2)
+        self.assertEquals(dur, day + night) 
+        self.assertEquals(day, 3.61)
+        self.assertEquals(night, 2.39)
+
+        # multi-day time range - like a long shutdown
+        dur = (24*2.0) + 11.0
+        dt1 = datetime(2012, 3, 19, 12)
+        dt2 = dt1 + timedelta(hours = dur)
+        day, night = self.ta.getHrsInDayTime(dt1, dt2)
+        self.assertEquals(dur, day + night) 
+        self.assertAlmostEquals(41.348888888888887, day, 3)
+        self.assertAlmostEquals(17.6511111111, night, 3)
+
+

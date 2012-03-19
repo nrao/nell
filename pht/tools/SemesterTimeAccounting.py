@@ -20,6 +20,8 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
+from datetime import datetime, date, timedelta
+
 from scheduler.models import Semester as DSSSemester
 from scheduler.models import Project
 from scheduler.models import Period as DSSPeriod
@@ -27,6 +29,8 @@ from scheduler.models import Period as DSSPeriod
 from utilities import AnalogSet
 from utilities import TimeAgent
 from utilities import SLATimeAgent as sla
+
+from pht.tools.Sun import Sun
 
 class SemesterTimeAccounting(object):
 
@@ -39,6 +43,8 @@ class SemesterTimeAccounting(object):
 
     def __init__(self, semester):
 
+
+        self.sun = Sun()
 
         self.semester = DSSSemester.objects.get(semester = semester)
 
@@ -138,7 +144,7 @@ class SemesterTimeAccounting(object):
         start = period.start
         end = period.end()
 
-        dayHrs, nightHrs = self.getHrsInDaylight(start, end)
+        dayHrs, nightHrs = self.getHrsInDayTime(start, end)
         gcHrs, nonGCHrs  = self.getHrsInGC(start, end)
 
         # day time periods don't bill against high freq 2
@@ -157,10 +163,33 @@ class SemesterTimeAccounting(object):
                   , hiFreq2Hrs = hiFreq2Hrs
                   )       
 
-    def getHrsInDaylight(self, start, end):
-        #TBF
+    def getHrsInDayTime(self, start, end):
+        "Split up given time range by PTCS day and night time hours."
         dur = TimeAgent.dtDiffHrs(start, end)
-        return (dur, 0)
+        startDate = date(start.year, start.month, start.day)
+        #rise, set = self.sun.getRiseSet(date1)
+        # cast a wide net: compute the rise and set times for any days
+        # that might be covered by the given time range
+        days = (end - start).days + 2
+        dayTimes = []
+        for day in range(days):
+            dt = startDate + timedelta(days = day)
+            dayTimes.append(self.sun.getPTCSRiseSet(dt))
+        # where does our given time range intersect with day time?    
+        ints = AnalogSet.intersects([dayTimes, [(start, end)]])
+        if len(ints) > 0:
+            # some day time
+            day = 0.0
+            for intersection in ints:
+                td = intersection[1] - intersection[0]
+                day += TimeAgent.timedelta2frachours(td)
+            # the rest must be night time    
+            night = abs(dur - day) 
+        else:
+            # our range is all night time.
+            day = 0.0
+            night = dur 
+        return (day, night)
 
     def fltEqual(self, flt1, flt2):
         eps = 1e-3
@@ -175,6 +204,7 @@ class SemesterTimeAccounting(object):
         # be simplistic about the overalp
         if lstEnd < lstStart:
             lstEnd += 24.0
+            
         # what's the overlap with the Galactice Center?
         if AnalogSet.overlaps((lstStart, lstEnd), self.gcHrs):
             overlap = AnalogSet.intersect((lstStart, lstEnd), self.gcHrs)
