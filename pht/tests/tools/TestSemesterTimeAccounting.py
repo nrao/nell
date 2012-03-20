@@ -23,6 +23,7 @@
 from django.test         import TestCase
 
 from pht.tools.SemesterTimeAccounting import SemesterTimeAccounting
+from pht.tools.SemesterTimeAccounting import Times
 from scheduler.models import Period as DSSPeriod
 from scheduler.models import Project
 from scheduler.tests.utils import * 
@@ -81,21 +82,20 @@ class TestSemesterTimeAccounting(TestCase):
         # day time only period
         mp1 = self.maintPeriods[0]
         hrs = self.ta.getPeriodHours(mp1)
-        exp = {'total': 4.0
-             , 'gcHrs': 0
-             , 'lowFreqHrs': 2.0
-             , 'hiFreq1Hrs': 2.0
-             , 'hiFreq2Hrs': 0.0}
+        exp = Times(total = 4.0
+             , lowFreq = 2.0
+             , hiFreq1 = 2.0
+             )
         self.assertEqual(exp, hrs)     
 
         # a little night AND day period
         mp2 = self.maintPeriods[1]
         hrs = self.ta.getPeriodHours(mp2)
-        self.assertEqual(8.0, hrs['total']) 
-        self.assertEqual(4.0, hrs['lowFreqHrs']) 
-        self.assertAlmostEqual(5.3558844564835955, hrs['gcHrs'], 3) 
-        self.assertAlmostEqual(3.4154166, hrs['hiFreq1Hrs'], 3) 
-        self.assertAlmostEqual(0.5845833, hrs['hiFreq2Hrs'], 3) 
+        self.assertEqual(8.0, hrs.total) 
+        self.assertEqual(4.0, hrs.lowFreq) 
+        self.assertAlmostEqual(5.3558844564835955, hrs.gc, 3) 
+        self.assertAlmostEqual(3.4154166, hrs.hiFreq1, 3) 
+        self.assertAlmostEqual(0.5845833, hrs.hiFreq2, 3) 
 
 
     def test_getHrsInGC(self):
@@ -185,18 +185,18 @@ class TestSemesterTimeAccounting(TestCase):
         self.assertEqual((181*24)*(6/24.), gc)
 
         hrs = self.ta.maintHrs
-        self.assertEqual(12.0, hrs['total'])
-        self.assertEqual(6.0,  hrs['lowFreqHrs'])
-        self.assertAlmostEqual(5.3558844564, hrs['gcHrs'], 3) 
-        self.assertAlmostEqual(5.4154166, hrs['hiFreq1Hrs'], 3) 
-        self.assertAlmostEqual(0.5845833, hrs['hiFreq2Hrs'], 3) 
+        self.assertEqual(12.0, hrs.total)
+        self.assertEqual(6.0,  hrs.lowFreq)
+        self.assertAlmostEqual(5.3558844564, hrs.gc, 3) 
+        self.assertAlmostEqual(5.4154166, hrs.hiFreq1, 3) 
+        self.assertAlmostEqual(0.5845833, hrs.hiFreq2, 3) 
 
         hrs = self.ta.shutdownHrs
-        exp = {'total': 0.0
-             , 'gcHrs': 0
-             , 'lowFreqHrs': 0.0
-             , 'hiFreq1Hrs': 0.0
-             , 'hiFreq2Hrs': 0.0}
+        exp = Times(total = 0.0
+             , gc = 0
+             , lowFreq = 0.0
+             , hiFreq1 = 0.0
+             , hiFreq2 = 0.0)
         self.assertEqual(exp, hrs)     
 
 

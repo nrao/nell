@@ -32,6 +32,53 @@ from utilities import SLATimeAgent as sla
 
 from pht.tools.Sun import Sun
 
+class Times(object):
+
+    """
+    This class simply makes the management of the different
+    quantities we'll be calculating a lot easier.
+    """
+    
+    def __init__(self
+        , total = 0.0
+        , gc = 0.0
+        , lowFreq = 0.0
+        , hiFreq1 = 0.0
+        , hiFreq2 = 0.0
+        ):
+
+        self.total = total
+        self.gc = gc
+        self.lowFreq = lowFreq 
+        self.hiFreq1 = hiFreq1
+        self.hiFreq2 = hiFreq2
+
+    def __str__(self):
+
+        return "Total: %5.2f, GC: %5.2f, LF: %5.2f, HF1: %5.2f, HF2: %5.2f" % \
+            (self.total, self.gc, self.lowFreq, self.hiFreq1, self.hiFreq2)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __add__(self, other):
+        "Override addition to add all the fields"
+        return Times( \
+            total = self.total + other.total
+          , gc = self.gc + other.gc
+          , lowFreq = self.lowFreq + other.lowFreq
+          , hiFreq1 = self.hiFreq1 + other.hiFreq1
+          , hiFreq2 = self.hiFreq2 + other.hiFreq2
+        )
+
+    def __eq__(self, other):
+        "Override equality to compare all the fields"
+        return self.total == other.total \
+            and self.gc == other.gc \
+            and self.lowFreq == other.lowFreq \
+            and self.hiFreq1 == other.hiFreq1 \
+            and self.hiFreq2 == other.hiFreq2
+
 class SemesterTimeAccounting(object):
 
     """
@@ -126,21 +173,11 @@ class SemesterTimeAccounting(object):
 
     def getHours(self, periods):
 
-        # TBF: use objects instead of dicts?
-        allHrs = dict(total = 0.0
-                  , gcHrs = 0.0
-                  , lowFreqHrs = 0.0
-                  , hiFreq1Hrs = 0.0
-                  , hiFreq2Hrs = 0.0
-                  )       
-                    
+        allHrs = Times()            
         for p in periods:
-            #total += p.duration
-
             hrs = self.getPeriodHours(p)
             # update the totals
-            for k, v in allHrs.items():
-                allHrs[k] += hrs[k]
+            allHrs += hrs
 
         return allHrs        
             
@@ -170,11 +207,11 @@ class SemesterTimeAccounting(object):
         hiFreq1Hrs += .25 * nightHrs
         hiFreq2Hrs += .25 * nightHrs
 
-        return dict(total = dur
-                  , gcHrs = gcHrs
-                  , lowFreqHrs = lowFreqHrs
-                  , hiFreq1Hrs = hiFreq1Hrs
-                  , hiFreq2Hrs = hiFreq2Hrs
+        return Times(total = dur
+                  , gc = gcHrs
+                  , lowFreq= lowFreqHrs
+                  , hiFreq1= hiFreq1Hrs
+                  , hiFreq2= hiFreq2Hrs
                   )       
 
     def getHrsInDayTime(self, start, end):
@@ -240,21 +277,17 @@ class SemesterTimeAccounting(object):
 
     def getSessionHours(self, session):
 
-        freq2key = {'LF' : 'lowFreqHrs'
-                  , 'HF1' : 'hiFreq1Hrs'
-                  , 'HF2' : 'hiFreq2hrs'
+        freq2key = {'LF' : 'lowFreq'
+                  , 'HF1' : 'hiFreq1'
+                  , 'HF2' : 'hiFreq2'
                    }
-        allHrs = dict(total = 0.0
-                  , gcHrs = 0.0
-                  , lowFreqHrs = 0.0
-                  , hiFreq1Hrs = 0.0
-                  , hiFreq2Hrs = 0.0
-                  )       
+        allHrs = Times()          
         for s in session:
             timeType = freq2key[s.determineFreqCategory()]
-            allHrs[timeType] += s.allotment.allocated_time
-            allHrs['total']  += s.allotment.allocated_time
-            allHrs['gcHrs']  += self.getGCHoursFromSession(s)
+            # TBF
+            #allHrs.__settimeType] += s.allotment.allocated_time
+            allHrs.total  += s.allotment.allocated_time
+            allHrs.gc     += self.getGCHoursFromSession(s)
 
         return allHrs    
             
