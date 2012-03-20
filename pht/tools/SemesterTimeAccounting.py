@@ -71,13 +71,28 @@ class Times(object):
           , hiFreq2 = self.hiFreq2 + other.hiFreq2
         )
 
+    def __sub__(self, other):
+        "Override addition to add all the fields"
+        return Times( \
+            total = self.total - other.total
+          , gc = self.gc - other.gc
+          , lowFreq = self.lowFreq - other.lowFreq
+          , hiFreq1 = self.hiFreq1 - other.hiFreq1
+          , hiFreq2 = self.hiFreq2 - other.hiFreq2
+        )
+
     def __eq__(self, other):
         "Override equality to compare all the fields"
-        return self.total == other.total \
-            and self.gc == other.gc \
-            and self.lowFreq == other.lowFreq \
-            and self.hiFreq1 == other.hiFreq1 \
-            and self.hiFreq2 == other.hiFreq2
+        return self.eq(self.total, other.total) \
+            and self.eq(self.gc, other.gc) \
+            and self.eq(self.lowFreq, other.lowFreq) \
+            and self.eq(self.hiFreq1, other.hiFreq1) \
+            and self.eq(self.hiFreq2, other.hiFreq2)
+
+    def eq(self, v1, v2):
+        "Are these floats almost equal?"
+        eps = 1e10-3
+        return abs(v1 - v2) < eps
 
 class SemesterTimeAccounting(object):
 
@@ -104,6 +119,13 @@ class SemesterTimeAccounting(object):
         self.shutdownHrs = None
         self.testHrs = None
 
+    def checkTimes(self):
+
+        preAssigned = self.maintHrs + self.shutdownHrs + self.testHrs
+        avail = preAssigned  + self.astronomyAvailableHrs
+        assert avail.total == self.totalAvailableHrs[0]
+
+        
     def calculateTimeAccounting(self):
 
         # how many hours in this semester?
@@ -128,6 +150,15 @@ class SemesterTimeAccounting(object):
         self.astronomyAvailableHrs = None
         # add up maintHrs, shutdownHrs, testHrs, total and GC, 
         # then subtract those from the totalAvailableHrs
+        preAssigned = self.maintHrs + self.shutdownHrs + self.testHrs
+        total = self.totalAvailableHrs[0]
+        avail = Times(total = total 
+                    , gc = self.totalAvailableHrs[1]
+                    , lowFreq = total * 0.50
+                    , hiFreq1 = total * 0.25
+                    , hiFreq2 = total * 0.25
+                     )
+        self.astronomyAvailableHrs = avail - preAssigned             
 
 
         # in order to calculate these

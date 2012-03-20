@@ -192,13 +192,18 @@ class TestSemesterTimeAccounting(TestCase):
         self.assertAlmostEqual(0.5845833, hrs.hiFreq2, 3) 
 
         hrs = self.ta.shutdownHrs
-        exp = Times(total = 0.0
-             , gc = 0
-             , lowFreq = 0.0
-             , hiFreq1 = 0.0
-             , hiFreq2 = 0.0)
-        self.assertEqual(exp, hrs)     
+        self.assertEqual(Times(), hrs)     
 
+        self.ta.checkTimes()
+
+        print self.ta.astronomyAvailableHrs
+        exp = Times(total = 4332.
+                  , gc = 1080.64
+                  , lowFreq = 2166.0
+                  , hiFreq1 = 1080.58
+                  , hiFreq2 = 1085.42
+                   )
+        self.assertEqual(exp, self.ta.astronomyAvailableHrs)           
 
         # TBF
 
