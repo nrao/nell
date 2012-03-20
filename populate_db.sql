@@ -100,6 +100,7 @@ INSERT INTO observing_types VALUES (DEFAULT, 'spectral line');
 INSERT INTO observing_types VALUES (DEFAULT, 'maintenance');
 INSERT INTO observing_types VALUES (DEFAULT, 'calibration');
 INSERT INTO observing_types VALUES (DEFAULT, 'testing');
+INSERT INTO observing_types VALUES (DEFAULT, 'commissioning');
 
 INSERT INTO period_states VALUES (DEFAULT, 'Pending',   'P');
 INSERT INTO period_states VALUES (DEFAULT, 'Scheduled', 'S');
