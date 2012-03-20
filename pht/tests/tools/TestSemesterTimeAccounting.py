@@ -22,16 +22,17 @@
 
 from django.test         import TestCase
 
+
 from pht.tools.SemesterTimeAccounting import SemesterTimeAccounting
 from pht.tools.SemesterTimeAccounting import Times
 from scheduler.models import Period as DSSPeriod
+from scheduler.models import Semester as DSSSemester
 from scheduler.models import Project
 from scheduler.tests.utils import * 
-#from pht.models         import Proposal
-#from pht.models         import ImportReport
+from pht.models import *
 
 class TestSemesterTimeAccounting(TestCase):
-    fixtures = ['scheduler.json']
+    fixtures = ['proposal_GBT12A-002.json', 'scheduler.json']
 
     def setUp(self):
         self.semester = '12A'
@@ -53,6 +54,10 @@ class TestSemesterTimeAccounting(TestCase):
         mp2.session.save()
         self.maintPeriods = [mp1, mp2]
 
+        # BUG: this observing type missing in scheduler.json fixture
+        o = Observing_Type(type = 'commissioning')
+        o.save()
+
     def tearDown(self):
 
         # clean up
@@ -62,6 +67,20 @@ class TestSemesterTimeAccounting(TestCase):
             s.delete()
 
         self.maintProj.delete()
+
+    def createTestingSessions(self):
+     
+        # I'm lazy; let's just change the session we've already got
+        p = Proposal.objects.all()[0]
+        s = p.session_set.all()[0]
+        s.observing_type = Observing_Type.objects.get(type = 'testing')
+        semester = Semester.objects.get(semester = self.semester)
+        s.semester = semester
+        s.allotment.allocated_time = 2.5
+        s.allotment.save()
+        s.save()
+        return [s]
+
 
     def test_getSemesterDays(self):
         self.assertEqual(181, self.ta.getSemesterDays())
@@ -76,6 +95,23 @@ class TestSemesterTimeAccounting(TestCase):
         self.assertEqual(2, len(ps))
         self.assertEqual(self.maintPeriods[0].start
                        , ps[0].start)
+
+    def test_getTestSessions(self):
+
+        ss = self.ta.getTestSessions()
+        self.assertEqual(0, len(ss))
+        self.createTestingSessions()
+        ss = self.ta.getTestSessions()
+        self.assertEqual(1, len(ss))
+
+    def test_getSessionHours(self):
+
+        
+        s = self.createTestingSessions()[0]
+        ts = self.ta.getSessionHours(s)
+        exp = Times(total = 2.5
+                  , lowFreq = 2.5)
+        self.assertEqual(exp, ts)          
 
     def test_getPeriodHours(self):
 
@@ -177,6 +213,7 @@ class TestSemesterTimeAccounting(TestCase):
 
     def test_calculateTimeAccounting(self):
 
+        # calculate everything
         self.ta.calculateTimeAccounting()
 
         # check the buckets
@@ -185,26 +222,60 @@ class TestSemesterTimeAccounting(TestCase):
         self.assertEqual((181*24)*(6/24.), gc)
 
         hrs = self.ta.maintHrs
-        self.assertEqual(12.0, hrs.total)
-        self.assertEqual(6.0,  hrs.lowFreq)
-        self.assertAlmostEqual(5.3558844564, hrs.gc, 3) 
-        self.assertAlmostEqual(5.4154166, hrs.hiFreq1, 3) 
-        self.assertAlmostEqual(0.5845833, hrs.hiFreq2, 3) 
+        expMnt = Times(total = 12.0
+                  , gc = 5.355884
+                  , lowFreq = 6.0
+                  , hiFreq1 = 5.4154166
+                  , hiFreq2 = 0.5845833
+                    )
+        self.assertEqual(expMnt, hrs)            
+        #self.assertEqual(12.0, hrs.total)
+        #self.assertEqual(6.0,  hrs.lowFreq)
+        #self.assertAlmostEqual(5.3558844564, hrs.gc, 3) 
+        #self.assertAlmostEqual(5.4154166, hrs.hiFreq1, 3) 
+        #self.assertAlmostEqual(0.5845833, hrs.hiFreq2, 3) 
 
+        # no shutdown or testing
         hrs = self.ta.shutdownHrs
+        self.assertEqual(Times(), hrs)     
+        hrs = self.ta.testHrs
         self.assertEqual(Times(), hrs)     
 
         self.ta.checkTimes()
 
-        print self.ta.astronomyAvailableHrs
-        exp = Times(total = 4332.
+        expAv = Times(total = 4332.
                   , gc = 1080.64
                   , lowFreq = 2166.0
                   , hiFreq1 = 1080.58
                   , hiFreq2 = 1085.42
                    )
-        self.assertEqual(exp, self.ta.astronomyAvailableHrs)           
+        self.assertEqual(expAv, self.ta.astronomyAvailableHrs)           
 
-        # TBF
+        # now introduce some 12A testing time 
+        ss = self.createTestingSessions()
+
+        # and recalculate everything
+        self.ta.calculateTimeAccounting()
+
+        # these should not have changed
+        total, gc = self.ta.totalAvailableHrs
+        self.assertEqual(181*24, total)
+        self.assertEqual((181*24)*(6/24.), gc)
+        hrs = self.ta.maintHrs
+        self.assertEqual(expMnt, hrs)            
+        hrs = self.ta.shutdownHrs
+        self.assertEqual(Times(), hrs)     
+
+        # but now we have testing
+        exp = Times(total = 2.5
+                  , lowFreq = 2.5)
+        self.assertEqual(exp, self.ta.testHrs)
+
+        # which lowers our overall available time
+        expAv = expAv - exp
+        self.assertEqual(expAv, self.ta.astronomyAvailableHrs)           
+
+
+
 
 

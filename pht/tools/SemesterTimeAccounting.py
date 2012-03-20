@@ -20,11 +20,16 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
+from django.db.models import Q
+
 from datetime import datetime, date, timedelta
 
-from scheduler.models import Semester as DSSSemester
+from pht.models       import *
+
 from scheduler.models import Project
+from scheduler.models import Observing_Type 
 from scheduler.models import Period as DSSPeriod
+from scheduler.models import Semester as DSSSemester
 
 from utilities import AnalogSet
 from utilities import TimeAgent
@@ -144,7 +149,7 @@ class SemesterTimeAccounting(object):
         # now calculate their hours
         self.maintHrs = self.getHours(self.maintPeriods)
         self.shutdownHrs = self.getHours(self.shutdownPeriods)
-        self.testHrs = self.getSessionHours(self.testSessions)
+        self.testHrs = self.getSessionsHours(self.testSessions)
 
         # so, how much does that leave left for real astronomy?
         self.astronomyAvailableHrs = None
@@ -186,10 +191,6 @@ class SemesterTimeAccounting(object):
         "What maintenance periods have been scheduled for this semester?"
         return self.getProjectPeriods('Maintenance')
 
-    def getTestSessions(self):
-        # TBF
-        return []
-    
     def getShutdownPeriods(self):
         "What shutdown periods have been scheduled for this semester?"
         return self.getProjectPeriods('Shutdown')
@@ -201,6 +202,18 @@ class SemesterTimeAccounting(object):
           , start__lt = self.semester.end()).exclude( \
               state__name = 'Deleted').order_by('start')    
         return ps 
+
+    def getTestSessions(self):
+        "What are the testing sessions for this semester?"
+        sem = self.semester.semester
+        testing = Observing_Type.objects.get(type='testing')
+        commissioning = Observing_Type.objects.get(type='commissioning')
+        calibration = Observing_Type.objects.get(type = 'calibration')
+        return Session.objects.filter(Q(semester__semester = sem) 
+                                    , Q(observing_type = testing) \
+                                    | Q(observing_type = commissioning)\
+                                    | Q(observing_type = calibration))
+
 
     def getHours(self, periods):
 
@@ -306,21 +319,33 @@ class SemesterTimeAccounting(object):
             nonGcHrs = dur
         return (gcHrs, nonGcHrs)
 
-    def getSessionHours(self, session):
+    def getSessionsHours(self, ss):
 
+        all = Times()
+        for s in ss:
+            t = self.getSessionHours(s)
+            all += t
+        return all
+
+    def getSessionHours(self, s):
+        "PHT Sessions simply bill to the freq they are at."
+
+        # how to map from session freq type to time category?
         freq2key = {'LF' : 'lowFreq'
                   , 'HF1' : 'hiFreq1'
                   , 'HF2' : 'hiFreq2'
                    }
-        allHrs = Times()          
-        for s in session:
-            timeType = freq2key[s.determineFreqCategory()]
-            # TBF
-            #allHrs.__settimeType] += s.allotment.allocated_time
-            allHrs.total  += s.allotment.allocated_time
-            allHrs.gc     += self.getGCHoursFromSession(s)
+        t = Times()          
+        timeType = freq2key[s.determineFreqCategory()]
 
-        return allHrs    
+        # add alloted time to this time type 
+        t.__setattr__(timeType, s.allotment.allocated_time)
+
+        # add to other categories
+        t.total  += s.allotment.allocated_time
+        t.gc     += self.getGCHoursFromSession(s)
+
+        return t    
             
     def getGCHoursFromSession(self, session):
         # TBF: use max/min LST as compared to the Galctic Center
