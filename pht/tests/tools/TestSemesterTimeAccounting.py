@@ -24,7 +24,8 @@ from django.test         import TestCase
 
 
 from pht.tools.SemesterTimeAccounting import SemesterTimeAccounting
-from pht.tools.SemesterTimeAccounting import Times
+from pht.tools.SemesterTimeAccounting import SemesterTimes, Times
+
 from scheduler.models import Period as DSSPeriod
 from scheduler.models import Semester as DSSSemester
 from scheduler.models import Project
@@ -111,7 +112,8 @@ class TestSemesterTimeAccounting(TestCase):
         ts = self.ta.getSessionHours(s)
         exp = Times(total = 2.5
                   , lowFreq = 2.5)
-        self.assertEqual(exp, ts)          
+        self.assertEqual(exp, ts.total)          
+        self.assertEqual(Times(), ts.gc)          
 
     def test_getPeriodHours(self):
 
@@ -122,17 +124,17 @@ class TestSemesterTimeAccounting(TestCase):
              , lowFreq = 2.0
              , hiFreq1 = 2.0
              )
-        self.assertEqual(exp, hrs)     
+        self.assertEqual(exp, hrs.total)     
 
         # a little night AND day period
         mp2 = self.maintPeriods[1]
         hrs = self.ta.getPeriodHours(mp2)
-        self.assertEqual(8.0, hrs.total) 
-        self.assertEqual(4.0, hrs.lowFreq) 
-        self.assertAlmostEqual(5.3558844564835955, hrs.gc, 3) 
-        self.assertAlmostEqual(3.4154166, hrs.hiFreq1, 3) 
-        self.assertAlmostEqual(0.5845833, hrs.hiFreq2, 3) 
+        self.assertEqual(8.0, hrs.total.total) 
+        self.assertEqual(4.0, hrs.total.lowFreq) 
+        self.assertAlmostEqual(3.4154166, hrs.total.hiFreq1, 3) 
+        self.assertAlmostEqual(0.5845833, hrs.total.hiFreq2, 3) 
 
+        self.assertAlmostEqual(5.3558844564835955, hrs.gc.total, 3) 
 
     def test_getHrsInGC(self):
 
@@ -217,39 +219,38 @@ class TestSemesterTimeAccounting(TestCase):
         self.ta.calculateTimeAccounting()
 
         # check the buckets
-        total, gc = self.ta.totalAvailableHrs
-        self.assertEqual(181*24, total)
-        self.assertEqual((181*24)*(6/24.), gc)
+        totalAv = self.ta.totalAvailableHrs
+        self.assertEqual(181*24, totalAv.total.total)
+        self.assertEqual((181*24)*(6/24.), totalAv.gc.total)
+        # TBF: other totalAv.total fields?
 
         hrs = self.ta.maintHrs
-        expMnt = Times(total = 12.0
-                  , gc = 5.355884
+        expMntT = Times(total = 12.0
                   , lowFreq = 6.0
                   , hiFreq1 = 5.4154166
                   , hiFreq2 = 0.5845833
                     )
-        self.assertEqual(expMnt, hrs)            
-        #self.assertEqual(12.0, hrs.total)
-        #self.assertEqual(6.0,  hrs.lowFreq)
-        #self.assertAlmostEqual(5.3558844564, hrs.gc, 3) 
-        #self.assertAlmostEqual(5.4154166, hrs.hiFreq1, 3) 
-        #self.assertAlmostEqual(0.5845833, hrs.hiFreq2, 3) 
+        self.assertEqual(expMntT, hrs.total)            
+        expMntGC = Times(total =  5.355884) # TBF other fields?
+        self.assertAlmostEqual(expMntGC.total, hrs.gc.total, 3)
 
         # no shutdown or testing
         hrs = self.ta.shutdownHrs
-        self.assertEqual(Times(), hrs)     
+        self.assertEqual(Times(), hrs.total)     
         hrs = self.ta.testHrs
-        self.assertEqual(Times(), hrs)     
+        self.assertEqual(Times(), hrs.total)     
 
         self.ta.checkTimes()
 
-        expAv = Times(total = 4332.
-                  , gc = 1080.64
+        expAvT = Times(total = 4332.
                   , lowFreq = 2166.0
                   , hiFreq1 = 1080.58
                   , hiFreq2 = 1085.42
                    )
-        self.assertEqual(expAv, self.ta.astronomyAvailableHrs)           
+        self.assertEqual(expAvT, self.ta.astronomyAvailableHrs.total)           
+        expAvGC = Times(total = 1080.6441)
+        self.assertAlmostEqual(expAvGC.total
+                             , self.ta.astronomyAvailableHrs.gc.total, 3)
 
         # now introduce some 12A testing time 
         ss = self.createTestingSessions()
@@ -258,22 +259,19 @@ class TestSemesterTimeAccounting(TestCase):
         self.ta.calculateTimeAccounting()
 
         # these should not have changed
-        total, gc = self.ta.totalAvailableHrs
-        self.assertEqual(181*24, total)
-        self.assertEqual((181*24)*(6/24.), gc)
-        hrs = self.ta.maintHrs
-        self.assertEqual(expMnt, hrs)            
-        hrs = self.ta.shutdownHrs
-        self.assertEqual(Times(), hrs)     
+        totalAv = self.ta.totalAvailableHrs
+        self.assertEqual(181*24, totalAv.total.total)
+        self.assertEqual((181*24)*(6/24.), totalAv.gc.total)
 
         # but now we have testing
         exp = Times(total = 2.5
                   , lowFreq = 2.5)
-        self.assertEqual(exp, self.ta.testHrs)
+        self.assertEqual(exp, self.ta.testHrs.total)
 
         # which lowers our overall available time
-        expAv = expAv - exp
-        self.assertEqual(expAv, self.ta.astronomyAvailableHrs)           
+        expAvT = expAvT - exp
+        self.assertEqual(expAvT
+                       , self.ta.astronomyAvailableHrs.total)           
 
 
 

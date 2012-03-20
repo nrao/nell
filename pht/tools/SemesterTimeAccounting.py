@@ -37,6 +37,52 @@ from utilities import SLATimeAgent as sla
 
 from pht.tools.Sun import Sun
 
+class SemesterTimes(object):
+
+    """
+    This class makes it easier for us to deal with the fact that
+    for every time quantity we want to calculate, we will
+    also want to calculate this quantity for the Galactic Center time.
+    """
+ 
+    def __init__(self, total = None, gc = None):
+
+        total = total if total is not None else  Times(type = 'Total')
+        gc = gc if gc is not None else  Times(type = 'GC')
+
+        self.total = total 
+        # Galactic Center time
+        self.gc = gc
+
+    def __str__(self):
+        return "%s; %s" % (self.total, self.gc)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __add__(self, other):
+        "Override addition to add all the fields"
+        return SemesterTimes( \
+            total = self.total + other.total
+          , gc = self.gc + other.gc
+        )
+
+    def __sub__(self, other):
+        "Override addition to add all the fields"
+        return SemesterTimes( \
+            total = self.total - other.total
+          , gc = self.gc - other.gc
+        )
+
+    def __eq__(self, other):
+        "Override equality to compare all the fields"
+        return self.total == other.total \
+            and self.gc == other.gc
+
+    def check(self):
+        self.total.check()
+        self.gc.check()
+
 class Times(object):
 
     """
@@ -45,23 +91,23 @@ class Times(object):
     """
     
     def __init__(self
+        , type = None
         , total = 0.0
-        , gc = 0.0
         , lowFreq = 0.0
         , hiFreq1 = 0.0
         , hiFreq2 = 0.0
         ):
 
+        self.type = type
         self.total = total
-        self.gc = gc
         self.lowFreq = lowFreq 
         self.hiFreq1 = hiFreq1
         self.hiFreq2 = hiFreq2
 
     def __str__(self):
 
-        return "Total: %5.2f, GC: %5.2f, LF: %5.2f, HF1: %5.2f, HF2: %5.2f" % \
-            (self.total, self.gc, self.lowFreq, self.hiFreq1, self.hiFreq2)
+        return "Type: %s, Total: %5.2f, LF: %5.2f, HF1: %5.2f, HF2: %5.2f" % \
+            (self.type, self.total, self.lowFreq, self.hiFreq1, self.hiFreq2)
 
     def __repr__(self):
         return self.__str__()
@@ -70,17 +116,15 @@ class Times(object):
         "Override addition to add all the fields"
         return Times( \
             total = self.total + other.total
-          , gc = self.gc + other.gc
           , lowFreq = self.lowFreq + other.lowFreq
           , hiFreq1 = self.hiFreq1 + other.hiFreq1
           , hiFreq2 = self.hiFreq2 + other.hiFreq2
         )
 
     def __sub__(self, other):
-        "Override addition to add all the fields"
+        "Override subtraction to subtract all the fields"
         return Times( \
             total = self.total - other.total
-          , gc = self.gc - other.gc
           , lowFreq = self.lowFreq - other.lowFreq
           , hiFreq1 = self.hiFreq1 - other.hiFreq1
           , hiFreq2 = self.hiFreq2 - other.hiFreq2
@@ -89,15 +133,26 @@ class Times(object):
     def __eq__(self, other):
         "Override equality to compare all the fields"
         return self.eq(self.total, other.total) \
-            and self.eq(self.gc, other.gc) \
             and self.eq(self.lowFreq, other.lowFreq) \
             and self.eq(self.hiFreq1, other.hiFreq1) \
             and self.eq(self.hiFreq2, other.hiFreq2)
+
+    def factor(self, f):
+        "Create new object with all fields multiplied by factor."
+        return Times( \
+            total = self.total * f
+          , lowFreq = self.lowFreq * f
+          , hiFreq1 = self.hiFreq1 * f
+          , hiFreq2 = self.hiFreq2 * f
+        )
 
     def eq(self, v1, v2):
         "Are these floats almost equal?"
         eps = 1e10-3
         return abs(v1 - v2) < eps
+
+    def check(self):
+        assert self.total == (self.lowFreq + self.hiFreq1 + self.hiFreq2)
 
 class SemesterTimeAccounting(object):
 
@@ -119,17 +174,28 @@ class SemesterTimeAccounting(object):
         self.gcHrs = (15, 21) 
 
         # initialize all the buckets we'll be calculating
-        self.totalAvailableHrs = (None, None)
-        self.maintHrs = None
-        self.shutdownHrs = None
-        self.testHrs = None
+        self.totalAvailableHrs = SemesterTimes() 
+        self.maintHrs = SemesterTimes()
+        self.shutdownHrs = SemesterTimes()
+        self.testHrs = SemesterTimes()
+        self.astronomyAvailableHrs = SemesterTimes()
+
+        # TBF: how is availability binned?
+        self.lowFreqPercent = 0.50
+        self.hiFreq1Percent = 0.25
+        self.hiFreq2Percent = 0.25
 
     def checkTimes(self):
 
+        self.totalAvailableHrs.check() 
+        self.maintHrs.check() 
+        self.shutdownHrs.check() 
+        self.testHrs.check() 
+        self.astronomyAvailableHrs.check() 
+        
         preAssigned = self.maintHrs + self.shutdownHrs + self.testHrs
         avail = preAssigned  + self.astronomyAvailableHrs
-        assert avail.total == self.totalAvailableHrs[0]
-
+        assert avail.total == self.totalAvailableHrs.total
         
     def calculateTimeAccounting(self):
 
@@ -137,12 +203,23 @@ class SemesterTimeAccounting(object):
         days = self.getSemesterDays(self.semester)
         totalHrs = days * 24
         totalGCHrs = self.getGCHrs(totalHrs)
-        self.totalAvailableHrs = (totalHrs, totalGCHrs)  
+        total = Times(type = 'total'
+                    , total = totalHrs
+                    , lowFreq = totalHrs*self.lowFreqPercent
+                    , hiFreq1 = totalHrs*self.hiFreq1Percent
+                    , hiFreq2 = totalHrs*self.hiFreq2Percent
+                     )
+        gc = Times(type = 'gc'
+                 , total = self.getGCHrs(totalHrs)
+                 , lowFreq = self.getGCHrs(total.lowFreq)
+                 , hiFreq1 = self.getGCHrs(total.hiFreq1)
+                 , hiFreq2 = self.getGCHrs(total.hiFreq2)
+                     )         
+        self.totalAvailableHrs =  SemesterTimes(total = total, gc = gc)  
 
         # how much has been pre-assigned for this semester?
         # first, find the periods
         self.maintPeriods = self.getMaintenancePeriods()
-        #self.testingPeriods = self.getTestingPeriods()
         self.shutdownPeriods = self.getShutdownPeriods()
         self.testSessions = self.getTestSessions()
 
@@ -156,20 +233,17 @@ class SemesterTimeAccounting(object):
         # add up maintHrs, shutdownHrs, testHrs, total and GC, 
         # then subtract those from the totalAvailableHrs
         preAssigned = self.maintHrs + self.shutdownHrs + self.testHrs
-        total = self.totalAvailableHrs[0]
-        avail = Times(total = total 
-                    , gc = self.totalAvailableHrs[1]
-                    , lowFreq = total * 0.50
-                    , hiFreq1 = total * 0.25
-                    , hiFreq2 = total * 0.25
-                     )
-        self.astronomyAvailableHrs = avail - preAssigned             
+        self.astronomyAvailableHrs = self.totalAvailableHrs - preAssigned             
 
 
         # in order to calculate these
         self.lowFreqAvailableHrs = (None, None) # TBF
         self.highFreq1AvailableHrs = (None, None) # TBF
         self.highFreq2AvailableHrs = (None, None) # TBF
+
+    def report(self):
+        "Prints out simple version of the results."
+        pass
 
     def getSemesterDays(self, semester = None):    
         "How many days in the given semester?"
@@ -217,7 +291,7 @@ class SemesterTimeAccounting(object):
 
     def getHours(self, periods):
 
-        allHrs = Times()            
+        allHrs = SemesterTimes()            
         for p in periods:
             hrs = self.getPeriodHours(p)
             # update the totals
@@ -241,6 +315,7 @@ class SemesterTimeAccounting(object):
 
         dayHrs, nightHrs = self.getHrsInDayTime(start, end)
         gcHrs, nonGCHrs  = self.getHrsInGC(start, end)
+        gcFrac = gcHrs / dur
 
         # day time periods don't bill against high freq 2
         lowFreqHrs = .50 * dayHrs
@@ -251,12 +326,17 @@ class SemesterTimeAccounting(object):
         hiFreq1Hrs += .25 * nightHrs
         hiFreq2Hrs += .25 * nightHrs
 
-        return Times(total = dur
-                  , gc = gcHrs
+        total= Times(type = 'total'
+                  , total = dur
                   , lowFreq= lowFreqHrs
                   , hiFreq1= hiFreq1Hrs
                   , hiFreq2= hiFreq2Hrs
                   )       
+
+        gc = total.factor(gcFrac)
+        gc.type = 'gc'
+
+        return SemesterTimes(total = total, gc = gc)
 
     def getHrsInDayTime(self, start, end):
         "Split up given time range by PTCS day and night time hours."
@@ -321,7 +401,7 @@ class SemesterTimeAccounting(object):
 
     def getSessionsHours(self, ss):
 
-        all = Times()
+        all = SemesterTimes()
         for s in ss:
             t = self.getSessionHours(s)
             all += t
@@ -342,10 +422,14 @@ class SemesterTimeAccounting(object):
         t.__setattr__(timeType, s.allotment.allocated_time)
 
         # add to other categories
-        t.total  += s.allotment.allocated_time
-        t.gc     += self.getGCHoursFromSession(s)
+        t.total  = s.allotment.allocated_time
+        gcHrs    = self.getGCHoursFromSession(s)
+        gcFrac   = gcHrs / t.total
+        gc       = t.factor(gcFrac)
 
-        return t    
+        return SemesterTimes(total = t, gc = gc)
+
+            
             
     def getGCHoursFromSession(self, session):
         # TBF: use max/min LST as compared to the Galctic Center
