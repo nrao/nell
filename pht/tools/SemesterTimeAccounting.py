@@ -25,6 +25,7 @@ from django.db.models import Q
 from datetime import datetime, date, timedelta
 
 from pht.models       import *
+from pht.utilities    import *
 
 from scheduler.models import Project
 from scheduler.models import Observing_Type 
@@ -106,7 +107,7 @@ class Times(object):
 
     def __str__(self):
 
-        return "Type: %s, Total: %5.2f, LF: %5.2f, HF1: %5.2f, HF2: %5.2f" % \
+        return "Type: %8s, Total: %8.2f, LF: %8.2f, HF1: %8.2f, HF2: %8.2f" % \
             (self.type, self.total, self.lowFreq, self.hiFreq1, self.hiFreq2)
 
     def __repr__(self):
@@ -115,7 +116,8 @@ class Times(object):
     def __add__(self, other):
         "Override addition to add all the fields"
         return Times( \
-            total = self.total + other.total
+            type = self.type
+          , total = self.total + other.total
           , lowFreq = self.lowFreq + other.lowFreq
           , hiFreq1 = self.hiFreq1 + other.hiFreq1
           , hiFreq2 = self.hiFreq2 + other.hiFreq2
@@ -124,7 +126,8 @@ class Times(object):
     def __sub__(self, other):
         "Override subtraction to subtract all the fields"
         return Times( \
-            total = self.total - other.total
+            type = self.type
+          , total = self.total - other.total
           , lowFreq = self.lowFreq - other.lowFreq
           , hiFreq1 = self.hiFreq1 - other.hiFreq1
           , hiFreq2 = self.hiFreq2 - other.hiFreq2
@@ -148,7 +151,7 @@ class Times(object):
 
     def eq(self, v1, v2):
         "Are these floats almost equal?"
-        eps = 1e10-3
+        eps = 1e-2
         return abs(v1 - v2) < eps
 
     def check(self):
@@ -203,13 +206,13 @@ class SemesterTimeAccounting(object):
         days = self.getSemesterDays(self.semester)
         totalHrs = days * 24
         totalGCHrs = self.getGCHrs(totalHrs)
-        total = Times(type = 'total'
+        total = Times(type = 'Total'
                     , total = totalHrs
                     , lowFreq = totalHrs*self.lowFreqPercent
                     , hiFreq1 = totalHrs*self.hiFreq1Percent
                     , hiFreq2 = totalHrs*self.hiFreq2Percent
                      )
-        gc = Times(type = 'gc'
+        gc = Times(type = 'GC'
                  , total = self.getGCHrs(totalHrs)
                  , lowFreq = self.getGCHrs(total.lowFreq)
                  , hiFreq1 = self.getGCHrs(total.hiFreq1)
@@ -243,7 +246,36 @@ class SemesterTimeAccounting(object):
 
     def report(self):
         "Prints out simple version of the results."
-        pass
+
+        print "Summary of Semester %s" % self.semester.semester
+        print "As of %s" % datetime.now()
+        print ""
+        print "Time Analysis for Semester %s" % self.semester.semester
+        print "%s to %s" % (self.semester.start(), self.semester.end())
+        print ""
+
+        print "Hours available in the Semester: "
+        print "%s" % self.totalAvailableHrs.total
+        print "%s" % self.totalAvailableHrs.gc
+
+        print ""
+        print "Maint: %s" % self.maintHrs.total
+        print "       %s" % self.maintHrs.gc
+        print "Shutd: %s" % self.shutdownHrs.total
+        print "       %s" % self.shutdownHrs.gc
+        print "Tests: %s" % self.testHrs.total
+        print "       %s" % self.testHrs.gc
+        print ""
+
+        print "Available for Astronomy = %5.2f, GC[%5.2f]" % \
+            (self.astronomyAvailableHrs.total.total
+           , self.astronomyAvailableHrs.gc.total)
+
+        print ""
+        print "Available for ALL Astronomy during %s" % \
+            self.semester.semester    
+        print "%s" % self.astronomyAvailableHrs.total
+        print "%s" % self.astronomyAvailableHrs.gc
 
     def getSemesterDays(self, semester = None):    
         "How many days in the given semester?"
@@ -335,7 +367,7 @@ class SemesterTimeAccounting(object):
 
         gc = total.factor(gcFrac)
         gc.type = 'gc'
-
+        
         return SemesterTimes(total = total, gc = gc)
 
     def getHrsInDayTime(self, start, end):
@@ -379,25 +411,35 @@ class SemesterTimeAccounting(object):
         # be simplistic about the overalp
         if lstEnd < lstStart:
             lstEnd += 24.0
-            
-        # what's the overlap with the Galactice Center?
-        if AnalogSet.overlaps((lstStart, lstEnd), self.gcHrs):
-            overlap = AnalogSet.intersect((lstStart, lstEnd), self.gcHrs)
-            # if our range is entirely in GC, avoid calculations
-            if self.fltEqual(overlap[0], lstStart) \
-                and self.fltEqual(overlap[1], lstEnd):
-                gcHrs = dur
-                nonGcHrs = 0
-            else:    
-               # otherwise we need to convert back to hours - 
-               # one way to do this is via fractions
-               frac = (overlap[1] - overlap[0]) / (lstEnd - lstStart)
-               gcHrs = dur * frac
-               nonGcHrs = (1.0 - frac) * dur
-        else:
-            gcHrs = 0
-            nonGcHrs = dur
+        
+        gcHrs, nonGcHrs = self.findOverlap((lstStart, lstEnd), self.gcHrs, dur)
         return (gcHrs, nonGcHrs)
+
+    def findOverlap(self, a, b, dur):
+        """Utility for returning the fraction of given duration that
+        is spent in the overlap of the two given tuples.
+        """
+        a1, a2 = a
+        b1, b2 = b
+        # what's the overlap between them (like the Galactice Center)?
+        if AnalogSet.overlaps(a, b):
+            ints = AnalogSet.intersect(a, b)
+            # if our range is entirely in overlap, avoid calculations
+            if self.fltEqual(ints[0], a1) \
+                and self.fltEqual(ints[1], a2):
+                overlap = dur
+                nonOverlap = 0
+            else:    
+               # otherwise we need to convert back to duration - 
+               # one way to do this is via fractions
+               frac = (ints[1] - ints[0]) / (a2 - a1)
+               overlap = dur * frac
+               nonOverlap = (1.0 - frac) * dur
+        else:
+            overlap = 0
+            nonOverlap = dur
+            
+        return (overlap, nonOverlap)
 
     def getSessionsHours(self, ss):
 
@@ -423,7 +465,7 @@ class SemesterTimeAccounting(object):
 
         # add to other categories
         t.total  = s.allotment.allocated_time
-        gcHrs    = self.getGCHoursFromSession(s)
+        gcHrs, nonGCHrs = self.getGCHoursFromSession(s)
         gcFrac   = gcHrs / t.total
         gc       = t.factor(gcFrac)
 
@@ -432,8 +474,12 @@ class SemesterTimeAccounting(object):
             
             
     def getGCHoursFromSession(self, session):
-        # TBF: use max/min LST as compared to the Galctic Center
-        return 0.0
+        # use max/min LST as compared to the Galctic Center
+        s = (rad2hr(session.target.min_lst)
+           , rad2hr(session.target.max_lst))
+        dur = session.allotment.allocated_time
+        gcHrs, nonGCHrs = self.findOverlap(s, self.gcHrs, dur)
+        return gcHrs, nonGCHrs                                 
 
             
 

@@ -31,17 +31,26 @@ from scheduler.models import Semester as DSSSemester
 from scheduler.models import Project
 from scheduler.tests.utils import * 
 from pht.models import *
+from pht.utilities import *
 
 class TestSemesterTimeAccounting(TestCase):
     fixtures = ['proposal_GBT12A-002.json', 'scheduler.json']
 
     def setUp(self):
+        """
+        Setup periods to look like this:
+
+        UTC:   |12345678901234567890123|12345678901234567890123|
+        GC:    |   <--------->         |  <---------->         |
+        Day:   |          <------------|-->       <------------|
+        Maint: |                xxxx   |        xxxxxxxx       |
+        """
         self.semester = '12A'
         self.ta = SemesterTimeAccounting(self.semester)
 
         # make some maintenance periods
         self.maintProj = create_maintenance_project()
-        # daytime period
+        # daytime period:
         dt1 = datetime(2012, 3, 20, 13) # EST
         mp1 = create_maintenance_period(dt1, 4.0)
         # TBF: bug?
@@ -70,6 +79,11 @@ class TestSemesterTimeAccounting(TestCase):
         self.maintProj.delete()
 
     def createTestingSessions(self):
+        """
+        Create a PHT Session that will be one of the 'testing' 
+        types, for this semester, and that does not overlap
+        with the Galactic Center.
+        """
      
         # I'm lazy; let's just change the session we've already got
         p = Proposal.objects.all()[0]
@@ -77,6 +91,9 @@ class TestSemesterTimeAccounting(TestCase):
         s.observing_type = Observing_Type.objects.get(type = 'testing')
         semester = Semester.objects.get(semester = self.semester)
         s.semester = semester
+        s.target.min_lst = 0.0
+        s.target.max_lst = hr2rad(5.0)
+        s.target.save()
         s.allotment.allocated_time = 2.5
         s.allotment.save()
         s.save()
@@ -114,6 +131,17 @@ class TestSemesterTimeAccounting(TestCase):
                   , lowFreq = 2.5)
         self.assertEqual(exp, ts.total)          
         self.assertEqual(Times(), ts.gc)          
+
+        # now change it's lst range to intersect
+        # with the GC
+        s.target.min_lst = hr2rad(10.0)
+        s.target.max_lst = hr2rad(20.0)
+        s.target.save()
+        ts = self.ta.getSessionHours(s)
+        self.assertEqual(exp, ts.total)          
+        exp = Times(total = 1.25 
+                  , lowFreq = 1.25)
+        self.assertEqual(exp, ts.gc)          
 
     def test_getPeriodHours(self):
 
@@ -214,6 +242,9 @@ class TestSemesterTimeAccounting(TestCase):
         self.assertAlmostEquals(17.6511111111, night, 3)
 
     def test_calculateTimeAccounting(self):
+        """
+        Here's where we tie it all together:
+        """
 
         # calculate everything
         self.ta.calculateTimeAccounting()
@@ -273,6 +304,7 @@ class TestSemesterTimeAccounting(TestCase):
         self.assertEqual(expAvT
                        , self.ta.astronomyAvailableHrs.total)           
 
+        #self.ta.report()
 
 
 
