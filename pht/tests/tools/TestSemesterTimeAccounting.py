@@ -150,7 +150,8 @@ class TestSemesterTimeAccounting(TestCase):
         hrs = self.ta.getPeriodHours(mp1)
         exp = Times(total = 4.0
              , lowFreq = 2.0
-             , hiFreq1 = 2.0
+             , hiFreq1 = 1.0
+             , hiFreq2 = 1.0
              )
         self.assertEqual(exp, hrs.total)     
 
@@ -159,8 +160,8 @@ class TestSemesterTimeAccounting(TestCase):
         hrs = self.ta.getPeriodHours(mp2)
         self.assertEqual(8.0, hrs.total.total) 
         self.assertEqual(4.0, hrs.total.lowFreq) 
-        self.assertAlmostEqual(3.4154166, hrs.total.hiFreq1, 3) 
-        self.assertAlmostEqual(0.5845833, hrs.total.hiFreq2, 3) 
+        self.assertAlmostEqual(2.0, hrs.total.hiFreq1, 3) 
+        self.assertAlmostEqual(2.0, hrs.total.hiFreq2, 3) 
 
         self.assertAlmostEqual(5.3558844564835955, hrs.gc.total, 3) 
 
@@ -258,8 +259,8 @@ class TestSemesterTimeAccounting(TestCase):
         hrs = self.ta.maintHrs
         expMntT = Times(total = 12.0
                   , lowFreq = 6.0
-                  , hiFreq1 = 5.4154166
-                  , hiFreq2 = 0.5845833
+                  , hiFreq1 = 3.0
+                  , hiFreq2 = 3.0
                     )
         self.assertEqual(expMntT, hrs.total)            
         expMntGC = Times(total =  5.355884) # TBF other fields?
@@ -275,8 +276,8 @@ class TestSemesterTimeAccounting(TestCase):
 
         expAvT = Times(total = 4332.
                   , lowFreq = 2166.0
-                  , hiFreq1 = 1080.58
-                  , hiFreq2 = 1085.42
+                  , hiFreq1 = 1083.0
+                  , hiFreq2 = 1083.0
                    )
         self.assertEqual(expAvT, self.ta.astronomyAvailableHrs.total)           
         expAvGC = Times(total = 1080.6441)
@@ -304,7 +305,7 @@ class TestSemesterTimeAccounting(TestCase):
         self.assertEqual(expAvT
                        , self.ta.astronomyAvailableHrs.total)           
 
-        #self.ta.report()
+        self.ta.report()
 
 
 

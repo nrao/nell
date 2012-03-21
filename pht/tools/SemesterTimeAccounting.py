@@ -183,7 +183,6 @@ class SemesterTimeAccounting(object):
         self.testHrs = SemesterTimes()
         self.astronomyAvailableHrs = SemesterTimes()
 
-        # TBF: how is availability binned?
         self.lowFreqPercent = 0.50
         self.hiFreq1Percent = 0.25
         self.hiFreq2Percent = 0.25
@@ -345,18 +344,14 @@ class SemesterTimeAccounting(object):
         start = period.start
         end = period.end()
 
-        dayHrs, nightHrs = self.getHrsInDayTime(start, end)
+        # Turns out that we FOR NOW, we don't care about day/night
+        #dayHrs, nightHrs = self.getHrsInDayTime(start, end)
         gcHrs, nonGCHrs  = self.getHrsInGC(start, end)
         gcFrac = gcHrs / dur
 
-        # day time periods don't bill against high freq 2
-        lowFreqHrs = .50 * dayHrs
-        hiFreq1Hrs = .50 * dayHrs
-        hiFreq2Hrs = 0.0 
-        # night time periods DO!
-        lowFreqHrs += .50 * nightHrs
-        hiFreq1Hrs += .25 * nightHrs
-        hiFreq2Hrs += .25 * nightHrs
+        lowFreqHrs = self.lowFreqPercent * dur
+        hiFreq1Hrs = self.hiFreq1Percent * dur
+        hiFreq2Hrs = self.hiFreq2Percent * dur
 
         total= Times(type = 'total'
                   , total = dur
