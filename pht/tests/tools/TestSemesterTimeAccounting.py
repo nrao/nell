@@ -305,7 +305,7 @@ class TestSemesterTimeAccounting(TestCase):
         self.assertEqual(expAvT
                        , self.ta.astronomyAvailableHrs.total)           
 
-        self.ta.report()
+        #self.ta.report()
 
 
 
