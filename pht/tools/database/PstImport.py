@@ -273,11 +273,29 @@ class PstImport(PstInterface):
               join userAuthentication as ua on ua.userAuthentication_id = a.user_id)
               join person on person.personAuthentication_id = ua.userAuthentication_id
             where proposal_id = %s
-            """ % proposal.pst_proposal_id
+        """ % proposal.pst_proposal_id
         self.cursor.execute(q)
         keys = self.getKeys()
         for row in self.cursor.fetchall():
             author = Author.createFromSqlResult(dict(zip(keys, map(self.safeUnicode, row))), proposal)
+
+    def fixAuthorsBits(self):
+        """
+        The author booleans got messed up when we originally import authors.  
+        This method fixes them.
+        """
+        for a in Author.objects.all():
+            q   = "select * from author where author_id = %s" % a.pst_author_id
+            self.cursor.execute(q)
+            keys = self.getKeys()
+            row = self.cursor.fetchone()
+            result = dict(zip(keys, map(self.safeUnicode, row)))
+            a.domestic = result['DOMESTIC'] == '\x01'
+            a.new_user = result['NEW_USER'] == '\x01'
+            a.thesis_observing = result['THESIS_OBSERVING'] == '\x01'
+            a.support_requester = result['SUPPORT_REQUESTER'] == '\x01'
+            a.supported = result['SUPPORTED'] == '\x01'
+            a.save()
 
     def fetchScientificCategories(self, proposal):
         q = """select scientificCategory 

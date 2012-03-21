@@ -67,21 +67,21 @@ class Author(models.Model):
                                                , pst_author_id       = result['author_id']
                                                , proposal            = proposal
                                                , affiliation         = result['AFFILIATION']
-                                               , domestic            = result['DOMESTIC']
-                                               , new_user            = result['NEW_USER']
+                                               , domestic            = result['DOMESTIC'] == '\x01'
+                                               , new_user            = result['NEW_USER'] == '\x01'
                                                , email               = result['EMAIL']
                                                , address             = result['ADDRESS']
                                                , telephone           = result['TELEPHONE']
                                                , last_name           = result['LAST_NAME']
                                                , first_name          = result['FIRST_NAME']
                                                , professional_status = result['PROFESSIONAL_STATUS']
-                                               , thesis_observing    = result['THESIS_OBSERVING']
+                                               , thesis_observing    = result['THESIS_OBSERVING'] == '\x01'
                                                , graduation_year     = result['GRADUATION_YEAR']
                                                , oldauthor_id        = result['OLDAUTHOR_ID']
                                                , storage_order       = result['STORAGE_ORDER']
                                                , other_awards        = result['OTHER_AWARDS']
-                                               , support_requester   = result['SUPPORT_REQUESTER']
-                                               , supported           = result['SUPPORTED']
+                                               , support_requester   = result['SUPPORT_REQUESTER'] == '\x01'
+                                               , supported           = result['SUPPORTED'] == '\x01'
                                                , budget              = result['BUDGET']
                                                , assignment          = result['ASSIGNMENT']
                                                )

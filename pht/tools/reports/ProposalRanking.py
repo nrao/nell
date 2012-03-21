@@ -71,7 +71,7 @@ class ProposalRanking(Report):
         score      = str(proposal.normalizedSRPScore) \
                        if proposal.normalizedSRPScore is not None else ''
         students  = len(proposal.author_set.filter(thesis_observing = True))
-        thesis    = str(students)
+        thesis    = str(students) if students > 0 else ''
         return [Paragraph(proposal.pcode.split('-')[1], self.styleSheet)
               , ''
               , Paragraph(pi_name, self.styleSheet)
