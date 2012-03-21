@@ -72,9 +72,7 @@ class ProposalSummary(Report):
         return [20, 310, 80, 40, 30, 50, 50, 50, 120]
 
     def genFooter(self, canvas, doc):
-        dt = datetime.now()
-        days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        dateStr = '%s, %s' % (days[dt.weekday()],  dt.strftime('%B %d, %Y'))
+        dateStr = self.getDateStr()
         data = [
           [Paragraph('<b>Bands(GHz):</b>', self.styleSheet)
          , Paragraph(self.genBands(), self.styleSheet)],

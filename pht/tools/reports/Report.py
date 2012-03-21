@@ -41,18 +41,17 @@ class Report(object):
         self.styleSheet = getSampleStyleSheet()['Normal']
         self.styleSheet.fontSize = 7
         self.title = ''
+        self.proposals = []
 
     def report(self, semester = None):
         self.semester = semester
         self.title = self.title if self.semester is None else \
-                     self.title + "for Semester %s" % self.semester
+                     self.title + " for Semester %s" % self.semester
 
         data = [self.genHeader()]
-        if semester is None:
-            proposals = [self.genRow(p) for p in Proposal.objects.all()]
-        else:
-            proposals = [self.genRow(p) for p in Proposal.objects.filter(semester__semester = semester)]
-        data.extend(proposals)
+        self.proposals = self.order(Proposal.objects.all() if semester is None else
+                                    Proposal.objects.filter(semester__semester = semester))
+        data.extend(map(self.genRow, self.proposals))
         t = Table(data, colWidths = self.colWidths())
         self.tableStyle = TableStyle([
             ('TOPPADDING', (0, 0), (-1, -1), 0),
@@ -60,7 +59,7 @@ class Report(object):
             ('LINEABOVE', (0, 1), (-1, 1), 1, colors.black),
             ('BOX', (0, 0), (-1, -1), 1, colors.black),
         ])
-        for i in range(6, len(proposals), 5):
+        for i in range(6, len(self.proposals), 5):
             self.tableStyle.add('LINEABOVE', (0, i),(-1, i), 1, colors.black)
         t.setStyle(self.tableStyle)
 
@@ -75,6 +74,10 @@ class Report(object):
         canvas.drawString(43, w-40, self.title)
         self.genFooter(canvas, doc)
 
+    def order(self, proposals):
+        "Default implementation doesn't sort, override for custom sorting."
+        return proposals
+
     def genBands(self):
         return ', '.join(['%s(%s-%s)' % (r.code, r.freq_low, r.freq_hi)
           for r in Receiver.objects.all()])
@@ -85,3 +88,7 @@ class Report(object):
     def genObsTypes(self):
         return ', '.join(['%s-%s' % (ot.code, ot.type) for ot in ObservingType.objects.all()])
 
+    def getDateStr(self):
+        dt = datetime.now()
+        days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        return '%s, %s' % (days[dt.weekday()],  dt.strftime('%B %d, %Y'))

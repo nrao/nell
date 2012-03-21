@@ -137,6 +137,7 @@ class PstImport(PstInterface):
             self.fetchObservingTypes(proposal)
             self.fetchSources(proposal)
             self.fetchSessions(proposal)
+            self.fetchSRPScore(proposal)
         
             self.proposals.append(proposal)
  
@@ -187,6 +188,7 @@ class PstImport(PstInterface):
                     self.fetchSources(proposal)
                     self.fetchSessions(proposal)
                     self.fetchAuthors(proposal)
+                    self.fetchSRPScore(proposal)
                     self.proposals.append(proposal)
 
         self.report()
@@ -238,6 +240,31 @@ class PstImport(PstInterface):
                 return True
         # if we got here, no GBT!
         return False
+
+    def fetchSRPScore(self, proposal):
+        q = """
+            SELECT
+              tr.normalizedSRPScore as score,
+              pns.srpScores as srpScores
+            FROM (proposal AS p
+            LEFT JOIN proposal_tac_reviews AS tr ON p.proposal_id = tr.proposal_id)
+            LEFT JOIN proposal_normalized_scores AS pns ON p.proposal_id = pns.proposal_id
+            WHERE p.proposal_id = '%s'
+            """ % proposal.pst_proposal_id
+        self.cursor.execute(q)
+        row    = self.cursor.fetchone()
+        rowDct = dict(zip(self.getKeys(), row))
+        proposal.normalizedSRPScore       = rowDct['score']
+        proposal.draft_normalizedSRPScore = rowDct['srpScores']
+
+        q = """
+            select count(*) as numrefs from proposal_reviews where proposal_id = %s
+            """ % proposal.pst_proposal_id
+        self.cursor.execute(q)
+        row    = self.cursor.fetchone()
+        rowDct = dict(zip(self.getKeys(), row))
+        proposal.num_refs = rowDct['numrefs']
+        proposal.save()
 
     def fetchAuthors(self, proposal):
         q = """

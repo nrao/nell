@@ -26,6 +26,8 @@ from pht.tools.reports import ProposalRanking
 
 class TestProposalRanking(TestCase):
 
+    fixtures = ['proposal_GBT12A-002.json']
+
     def test_report(self):
         pr = ProposalRanking('test_proposalRanking.pdf')
         pr.report()

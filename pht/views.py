@@ -412,6 +412,19 @@ def proposal_summary(request):
 
 @login_required
 @admin_only
+def proposal_ranking(request):
+    semester = request.GET.get('semester')
+    # Create the HttpResponse object with the appropriate PDF headers.
+    response = HttpResponse(mimetype='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=proposalRanking.pdf'
+
+    ps = ProposalRanking(response)
+    ps.report(semester = semester)
+
+    return response
+
+@login_required
+@admin_only
 def pis(request):
     authors = [{'id': a.id, 'name': a.getLastFirstName(), 'pcode': a.proposal.pcode}
                for a in Author.objects.all()]

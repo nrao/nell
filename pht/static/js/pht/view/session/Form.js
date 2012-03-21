@@ -404,7 +404,7 @@ Ext.define('PHT.view.session.Form', {
                             },{    
                                 xtype: 'numberfield',
                                 name: 'inner_interval',
-                                fieldLabel: 'Repeats',
+                                fieldLabel: 'Interval',
                                 readOnly: true,
                                 fieldCls: "x-pht-formfield-readonly",
                             },{    

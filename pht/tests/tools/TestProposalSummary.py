@@ -26,6 +26,8 @@ from pht.tools.reports import ProposalSummary
 
 class TestProposalSummary(TestCase):
 
+    fixtures = ['proposal_GBT12A-002.json']
+
     def test_report(self):
         ps = ProposalSummary('test_proposalSummary.pdf')
         ps.report()

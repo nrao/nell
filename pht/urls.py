@@ -21,6 +21,7 @@ urlpatterns = patterns(''
     , {'document_root': settings.STATIC_PHT})
    , url(r'^$',                                  root)
    , url(r'^reports/proposalsummary$',           proposal_summary)
+   , url(r'^reports/proposalranking$',           proposal_ranking)
    , url(r'^sources/import$',                    sources_import)
    , url(r'^tree$',                              tree)
    , url(r'^import$',                            import_proposals)
