@@ -32,9 +32,9 @@ Ext.define('PHT.model.Proposal', {
     proxy: {
         type: 'rest',
         url: '/pht/proposals',
+        timeout: 300000,
         reader: {
             type: 'json',
-            timeout: 300000,
             root: 'proposals',
             successProperty: 'success',
             totalProperty: 'total',
