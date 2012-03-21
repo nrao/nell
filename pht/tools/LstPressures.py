@@ -32,15 +32,156 @@ from scheduler.models import Observing_Type
 
 class LstPressures(object):
 
+    """
+    From Toney Minter:
+
+    Calculating the LST pressure for a session
+------------------------------------------
+
+T_semster is the time in a session that is proposed to be observed in
+the semester in question.  Note that some sessions, such as monitoring
+project sessions, will have their time split between different semesters.
+
+The LST range 0.0-23.99999... will be broken into a number (N) of
+equal length segments.  The ith segment is given by T_i.  This
+represents the total amount of time the session will need in segment i.
+There will also be two weights given by w_i and f_i.
+
+1) Minimum and maximum LST range.  This must take into account minimum 
+elevation and users specified LST restrictions.  (LST exclusion will enter 
+below.)  For a fixed time sessions the UT date and time range will be 
+converted in the minimum LST (start time) and maximum LST (stop time).  
+
+The calculation of the LST range can not be made automatically as 
+observers sometimes list restrictions in the text of the proposal, 
+the sources in the session can be changed (during session editing or as
+a result of TAC decisions) , different observations can require different 
+elevation restrictions, etc.  The minimum and maximum LST range should be 
+obtained from the GB PHT tool.
+
+2) Within minimum and maximum LST set w_i=1.0.  Outside the minimum and
+maximum LST set w_i=0.0.
+
+3) If there is an LST exclusion then set w_i=0.0 if the ith segment
+is in the exclusion.
+
+The LST exclusions are for night time (observing only from sunset to
+sunrise), thermal nighttime (three hours after sunset to sunrise) and
+RFI night time (from 8:00 pm to 8:00 am local time).  The sunrise and
+sunset times for the GBT (location given in the GBT Proposer's Guide)
+must be calculated for each day in the semester when these flags are
+to be used.  The change between EDT/EST will have to be handled correctly
+also.
+
+4) If any flags are set (thermal night, rfi night, daylight night) then
+we must calculate the fraction of time that a given LST segment meets
+those criteria during the semester.  This will give f_i with f_i being
+between 0 and 1.  If there are no flags set then f_i=1.0.
+For example if 65 of 180 days meet the flag conditions for the ith LST
+segment then f_i=65/180=0.3611....
+
+5) Now calculate T_i using
+
+T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
+    """
+        
+
     def __init__(self):
 
-        self.bins = [0.0]*24
+        self.hrs = 24
+        self.bins = [0.0]*self.hrs
 
         self.pressures = [{'LST':float(i), 'Total':0.0} for i in range(24)]
 
         # for reporting
-        self.badRas = []
-        self.noRas = []
+        self.badSess = []
+
+        # TBF: compute these!
+        self.nightFlagPs   = [1.0]*self.hrs
+        self.rfiFlagPs     = [1.0]*self.hrs
+        self.opticalFlagPs = [1.0]*self.hrs
+        self.transitFlagPs = [1.0]*self.hrs
+
+    def getLstWeightsForSession(self, session):
+        "Simple: LST's within min/max are on, rest are off."
+        ws = [0.0] * self.hrs
+        minLst = int(math.floor(rad2hr(session.target.min_lst)))
+        maxLst = int(math.floor(rad2hr(session.target.max_lst)))
+        for b in range(minLst, maxLst):
+            ws[b] = 1.0
+        return ws
+
+    def modifyWeightsForLstExclusion(self, session, ws):
+        "Modify given weights to be zero within the exclusion."
+        lstRanges = session.get_lst_parameters()
+        exclusions = lstRanges['LST Exclude']
+        for lowEx, hiEx in exclusions:
+            lowEx = int(math.floor(rad2hr(lowEx)))
+            hiEx = int(math.floor(rad2hr(hiEx)))
+            for b in range(lowEx, hiEx+1):
+                ws[b] = 0.0
+        return ws
+
+    def getFlagWeightsForSession(self, session):
+        "Different flags affect LST pressure differently."
+
+        fs = [1.0]*self.hrs
+        if session.flags.thermal_night:
+            fs = self.product(fs, self.nightFlagPs)
+        elif session.flags.rfi_night:
+            fs = self.product(fs, self.rfiFlagPs)
+        elif session.flags.optical_night:
+            fs = self.product(fs, self.opticalFlagPs)
+        elif session.flags.transit_flat:
+            fs = self.product(fs, self.transitFlagPs)
+        return fs
+
+    def getPressuresForSession(self, session):
+        """
+        Take into account different attributes of given session
+        to return it's LST Pressure at each LST (0..23)
+        """
+
+        # first, is this session setup so we can do this?
+        if session.target is None or session.allotment is None \
+            or session.allotment.allocated_time is None \
+            or session.target.min_lst is None \
+            or session.target.max_lst is None:
+            return []
+
+        # TBF: is this right?
+        totalTime = session.allotment.allocated_time
+
+        hrs = 24
+        bins = [0.0] * hrs 
+        w = [0.0] * hrs
+        f = [1.0] * hrs
+        
+        ws = self.getLstWeightsForSession(session)
+
+        # now take into account LST exclusion
+        ws = self.modifyWeightsForLstExclusion(session, ws)
+
+        # now look at the flags
+        fs = self.getFlagWeightsForSession(session)
+
+        # put it all togethor to calculate pressures
+        weightSum = sum([(ws[i] * fs[i]) for i in range(self.hrs)])
+        ps = [(totalTime * ws[i] * fs[i]) / weightSum \
+            for i in range(self.hrs)]
+
+        return ps    
+
+    def product(self, xs, ys):
+        "multiply two vectors"
+        # TBF: I know we shouldn't be writing our own one of these ...
+        assert len(xs) == len(ys)
+        zz = []
+        for i in range(len(xs)):
+            zz.append(xs[i] * ys[i])
+        return zz    
+
+
 
     def getPressures(self):
         """
@@ -86,20 +227,15 @@ class LstPressures(object):
                 p[type] = 0.0
 
         for s in sessions:
-            hr = rad2hr(s.target.ra)
-            if hr is not None:
-                bin = int(math.floor(hr))
-                if bin < 24:
-                    if s.dss_session:
-                        pressure = s.remainingTime()
-                    else:
-                        pressure = s.allotment.allocated_time
-                    self.pressures[bin]['Total'] += pressure
-                    self.pressures[bin][type] += pressure
-                else:
-                    self.badRas.append(s)
+            
+            ps = self.getPressuresForSession(s)
+            if len(ps) > 0:
+                for hr in range(self.hrs):
+                    self.pressures[hr]['Total'] += ps[hr]
+                    self.pressures[hr][type] += ps[hr]
             else:
-                self.noRas.append(s)
+                self.badSess.append(s)
+
             
 
 
