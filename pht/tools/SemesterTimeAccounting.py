@@ -182,12 +182,24 @@ class SemesterTimeAccounting(object):
         self.shutdownHrs = SemesterTimes()
         self.testHrs = SemesterTimes()
         self.astronomyAvailableHrs = SemesterTimes()
+        self.carryOver = {}
+        self.newAstronomyGradeAHrs = SemesterTimes()
+        self.newAstronomyAllGradeHrs = SemesterTimes()
 
         self.lowFreqPercent = 0.50
         self.hiFreq1Percent = 0.25
         self.hiFreq2Percent = 0.25
 
+        # how to map from session freq type to time category?
+        self.freq2key = {'LF' : 'lowFreq'
+                       , 'HF1' : 'hiFreq1'
+                       , 'HF2' : 'hiFreq2'
+                        }
+
+        self.grades = ['A', 'B', 'C']                
+
     def checkTimes(self):
+        "Basic check that everything adds up"
 
         self.totalAvailableHrs.check() 
         self.maintHrs.check() 
@@ -198,8 +210,8 @@ class SemesterTimeAccounting(object):
         preAssigned = self.maintHrs + self.shutdownHrs + self.testHrs
         avail = preAssigned  + self.astronomyAvailableHrs
         assert avail.total == self.totalAvailableHrs.total
-        
-    def calculateTimeAccounting(self):
+
+    def calcTotalAvailableHours(self):
 
         # how many hours in this semester?
         days = self.getSemesterDays(self.semester)
@@ -217,7 +229,11 @@ class SemesterTimeAccounting(object):
                  , hiFreq1 = self.getGCHrs(total.hiFreq1)
                  , hiFreq2 = self.getGCHrs(total.hiFreq2)
                      )         
-        self.totalAvailableHrs =  SemesterTimes(total = total, gc = gc)  
+        return  SemesterTimes(total = total, gc = gc)  
+
+    def calculateTimeAccounting(self):
+
+        self.totalAvailableHrs =  self.calcTotalAvailableHours()  
 
         # how much has been pre-assigned for this semester?
         # first, find the periods
@@ -236,12 +252,31 @@ class SemesterTimeAccounting(object):
         # then subtract those from the totalAvailableHrs
         preAssigned = self.maintHrs + self.shutdownHrs + self.testHrs
         self.astronomyAvailableHrs = self.totalAvailableHrs - preAssigned             
+        # now, what's the carry over?
+        self.carryOverSessions = self.getCarryOverSessions()
+        self.carryOver = self.getCarryOver(self.carryOverSessions)
 
+        # and how does THAT affect time available?
+        self.newAstroAvailGradeAHrs = \
+            self.getNewAstroAvailableTime(self.carryOver
+                                         , self.astronomyAvailableHrs
+                                         , ['A']
+                                          )
 
-        # in order to calculate these
-        self.lowFreqAvailableHrs = (None, None) # TBF
-        self.highFreq1AvailableHrs = (None, None) # TBF
-        self.highFreq2AvailableHrs = (None, None) # TBF
+        self.newAstroAvailAllGradeHrs = \
+            self.getNewAstroAvailableTime(self.carryOver
+                                         , self.astronomyAvailableHrs
+                                         , self.grades
+                                          )
+
+    def getNewAstroAvailableTime(self, carryover, available, grades):
+
+        carryOverTotals = SemesterTimes()
+        for g in grades:
+            times = carryover[g]['times']
+            fixed = carryover[g]['fixed']
+            carryOverTotals += times + fixed
+        return available - carryOverTotals
 
     def report(self):
         "Prints out simple version of the results."
@@ -275,6 +310,31 @@ class SemesterTimeAccounting(object):
             self.semester.semester    
         print "%s" % self.astronomyAvailableHrs.total
         print "%s" % self.astronomyAvailableHrs.gc
+
+        print ""
+        print "Backlog committments for %s" % self.semester.semester
+        for g in self.grades:
+            tt = self.carryOver[g]['fixed'].total.total + \
+                 self.carryOver[g]['times'].total.total
+            gt = self.carryOver[g]['fixed'].gc.total + \
+                 self.carryOver[g]['times'].gc.total
+            print "Group %s Time:" % g
+            print "    Fixed: %s" % self.carryOver[g]['fixed'].total
+            print "           %s" % self.carryOver[g]['fixed'].gc
+            print "    Rest:  %s" % self.carryOver[g]['times'].total
+            print "           %s" % self.carryOver[g]['times'].gc
+            print "Group %s total Hours = %5.2f GC[%5.2f]" % (g, tt, gt)
+            print ""
+            
+        print "Available for NEW Astronomy during %s" % self.semester.semester
+        print "Includes only Group A carry over time:"
+        print "    %s" % self.newAstroAvailGradeAHrs.total
+        print "    %s" % self.newAstroAvailGradeAHrs.gc
+        print ""
+        print "Includes Groups A, B and C carry over time:"
+        print "    %s" % self.newAstroAvailAllGradeHrs.total
+        print "    %s" % self.newAstroAvailAllGradeHrs.gc
+        print ""
 
     def getSemesterDays(self, semester = None):    
         "How many days in the given semester?"
@@ -447,13 +507,8 @@ class SemesterTimeAccounting(object):
     def getSessionHours(self, s):
         "PHT Sessions simply bill to the freq they are at."
 
-        # how to map from session freq type to time category?
-        freq2key = {'LF' : 'lowFreq'
-                  , 'HF1' : 'hiFreq1'
-                  , 'HF2' : 'hiFreq2'
-                   }
         t = Times()          
-        timeType = freq2key[s.determineFreqCategory()]
+        timeType = self.freq2key[s.determineFreqCategory()]
 
         # add alloted time to this time type 
         t.__setattr__(timeType, s.allotment.allocated_time)
@@ -461,7 +516,7 @@ class SemesterTimeAccounting(object):
         # add to other categories
         t.total  = s.allotment.allocated_time
         gcHrs, nonGCHrs = self.getGCHoursFromSession(s)
-        gcFrac   = gcHrs / t.total
+        gcFrac   = gcHrs / (gcHrs + nonGCHrs) 
         gc       = t.factor(gcFrac)
 
         return SemesterTimes(total = t, gc = gc)
@@ -476,7 +531,77 @@ class SemesterTimeAccounting(object):
         gcHrs, nonGCHrs = self.findOverlap(s, self.gcHrs, dur)
         return gcHrs, nonGCHrs                                 
 
+    def getCarryOverSessions(self):
+        """
+        Returns any sessions that have a corresponding
+        DSS Session and won't be complete next semester.
+        In other words, they contribute to carry over.
+        """
+
+        # TBF: how to do the not None query?
+        ss = Session.objects.filter(next_semester__complete = False)
+        return [s for s in ss if s.dss_session is not None]
             
+    def getCarryOver(self, sessions):
+        """
+        How much do these sessions contribute to the 
+        carryover, divided by Grade and Frequency,
+        among other things.
+        """
+
+        carryOver = {}
+        for g in ['A', 'B', 'C']:
+            grade = SessionGrade.objects.get(grade = g)
+            ss = [s for s in sessions if s.grade == grade]
+            carryOver[g] = self.getCarryOverForGrade(ss)
+        return carryOver    
+
+    def getCarryOverForGrade(self, sessions):
+
+        # TBF: how much time contributed by fixed?
+        fixed = SemesterTimes()
+
+        # then divide them up by freq.
+        st = self.getCarryOverTimes(sessions)
+
+        return dict(fixed = fixed
+                  , times = st)
+
+    def getCarryOverTimes(self, ss):
+
+       sts = SemesterTimes()
+       for s in ss:
+          st = self.getCarryOverForSession(s)
+          sts += st 
+       return sts    
+
+    def getCarryOverForSession(self, s):
+        """
+        How much will the given session contribute to this
+        semester's carryover?
+        """
+
+        # what freq to bill this against?
+        timeType = self.freq2key[s.determineFreqCategory()]
+
+        # add next semester's time to this time type 
+        t = Times(type = 'Total')          
+        time = s.next_semester.time
+        t.__setattr__(timeType, time)
+        t.total = time
+
+        # how much of this time is Galactic Center time?
+        gcHrs, nonGcHrs = self.getGCHoursFromSession(s)
+        gcFrac = gcHrs / (gcHrs + nonGcHrs)
+        gc = t.factor(gcFrac)
+        gc.type = 'GC'
+
+        return SemesterTimes(total = t, gc = gc) 
+        
+
+       
+       
+
 
     
         

@@ -32,6 +32,7 @@ from scheduler.models import Project
 from scheduler.tests.utils import * 
 from pht.models import *
 from pht.utilities import *
+from pht.httpadapters import SessionHttpAdapter
 
 class TestSemesterTimeAccounting(TestCase):
     fixtures = ['proposal_GBT12A-002.json', 'scheduler.json']
@@ -100,6 +101,44 @@ class TestSemesterTimeAccounting(TestCase):
         return [s]
 
 
+    def createCarryOverSession(self):
+        """
+        Creates a PHT Session that will contribute to the carryover:
+           * intersects with Galactic Center
+           * L band - Low Freq group
+           * Grade A
+           * Next Semester time to complete
+        """
+
+        sem = Semester.objects.get(semester = '12A')
+        p = Proposal.objects.all()[0]
+
+        data  = {
+            'name' : 'nextSemesterSession'
+          , 'pcode' : p.pcode
+          , 'grade' : 'A'  
+          , 'semester' : sem
+          , 'requested_time' : 3.5  
+          , 'allocated_time' : 3.5  
+          , 'session_type' : 'Open - Low Freq'
+          , 'observing_type' : 'continuum' 
+          , 'weather_type' : 'Poor'
+          , 'repeats' : 2 
+          , 'min_lst' : '10:00:00.0' 
+          , 'max_lst' : '20:00:00.0' 
+          , 'elevation_min' : '00:00:00.0' 
+          , 'next_sem_complete' : False
+          , 'next_sem_time' : 1.0
+          , 'receivers' : 'L'
+        }
+
+        adapter = SessionHttpAdapter()
+        adapter.initFromPost(data)
+        # just so that is HAS a DSS session.
+        adapter.session.dss_session = self.maintProj.sesshun_set.all()[0]
+        adapter.session.save()
+        return adapter.session
+        
     def test_getSemesterDays(self):
         self.assertEqual(181, self.ta.getSemesterDays())
         self.assertEqual(183, self.ta.getSemesterDays(semester = '12B'))
@@ -122,9 +161,16 @@ class TestSemesterTimeAccounting(TestCase):
         ss = self.ta.getTestSessions()
         self.assertEqual(1, len(ss))
 
+    def test_getCarryOverSessions(self):
+
+        ss = self.ta.getCarryOverSessions()
+        self.assertEqual(0, len(ss))
+        s = self.createCarryOverSession()
+        ss = self.ta.getCarryOverSessions()
+        self.assertEqual(1, len(ss))
+
     def test_getSessionHours(self):
 
-        
         s = self.createTestingSessions()[0]
         ts = self.ta.getSessionHours(s)
         exp = Times(total = 2.5
@@ -142,6 +188,97 @@ class TestSemesterTimeAccounting(TestCase):
         exp = Times(total = 1.25 
                   , lowFreq = 1.25)
         self.assertEqual(exp, ts.gc)          
+
+    def test_getCarryOver(self):
+
+        # create the input
+        s = self.createCarryOverSession()
+
+        # analyze this input
+        carryOver = self.ta.getCarryOver([s])
+
+        # check result
+        exp = {}
+        grades = ['A', 'B', 'C']
+        for g in grades:
+            exp[g] = {'fixed' : SemesterTimes()
+                    , 'times' : SemesterTimes()}
+        exp['A']['times'].total.total = 1.0 
+        exp['A']['times'].total.lowFreq = 1.0 
+        exp['A']['times'].gc.total = 0.5 
+        exp['A']['times'].gc.lowFreq = 0.5 
+
+        self.assertEqual(exp, carryOver)
+
+    def test_getNewAstroAvailableTime(self):
+
+        # setup up blank inputs
+        grades = ['A', 'B', 'C']
+        c = {}
+        for g in grades:
+            c[g] = {'fixed' : SemesterTimes()
+                  , 'times' : SemesterTimes()}
+        a = SemesterTimes()          
+
+        # blank inputs should produce blank outputs
+        newAv = self.ta.getNewAstroAvailableTime(c, a, ['A'])
+        self.assertEquals(SemesterTimes(), newAv)
+        newAv = self.ta.getNewAstroAvailableTime(c, a, grades)
+        self.assertEquals(SemesterTimes(), newAv)
+
+        # now make it some real numbers to crunch on
+        total = 10.0
+        gc = 5.0
+        totalFixed = 100.0
+        for g in ['A', 'B']:
+            c[g]['times'].total = Times(total = total
+                                      , lowFreq = total)
+            #c[g]['times'].total.total = total 
+            #c[g]['times'].total.lowFreq = total 
+            c[g]['times'].gc = Times(total = gc
+                                   , lowFreq = gc)
+            #c[g]['times'].gc.total = gc 
+            #c[g]['times'].gc.lowFreq = gc 
+            c[g]['fixed'].total.total = totalFixed 
+            c[g]['fixed'].total.lowFreq = .50 * totalFixed 
+            c[g]['fixed'].total.hiFreq1 = .25 * totalFixed 
+            c[g]['fixed'].total.hiFreq2 = .25 * totalFixed 
+
+        a = self.ta.calcTotalAvailableHours()
+
+        # just grade A
+        newAv = self.ta.getNewAstroAvailableTime(c, a, ['A'])
+
+        # total should go down by total + totalFixed.
+        t = Times(total = a.total.total - total - totalFixed
+                , lowFreq = a.total.lowFreq - total - (.5*totalFixed)
+                , hiFreq1 = a.total.hiFreq1 - (.25*totalFixed)
+                , hiFreq2 = a.total.hiFreq2 - (.25*totalFixed)
+                 )
+        self.assertEqual(t, newAv.total)         
+        g = Times(total = a.gc.total - gc
+                , lowFreq = a.gc.lowFreq - gc
+                , hiFreq1 = a.gc.hiFreq1 
+                , hiFreq2 = a.gc.hiFreq2 
+                 )
+        self.assertEqual(g, newAv.gc)         
+
+        # now all grades
+        newAv = self.ta.getNewAstroAvailableTime(c, a, grades)
+
+        # times should got down twice as much
+        t = Times(total = a.total.total - (2 * (total + totalFixed))
+                , lowFreq = a.total.lowFreq - (2 * (total + (.5*totalFixed)))
+                , hiFreq1 = a.total.hiFreq1 - (2.*(.25*totalFixed))
+                , hiFreq2 = a.total.hiFreq2 - (2.*(.25*totalFixed))
+                 )
+        self.assertEqual(t, newAv.total)         
+        g = Times(total = a.gc.total - (2*gc)
+                , lowFreq = a.gc.lowFreq - (2*gc)
+                , hiFreq1 = a.gc.hiFreq1 
+                , hiFreq2 = a.gc.hiFreq2 
+                 )
+        self.assertEqual(g, newAv.gc)         
 
     def test_getPeriodHours(self):
 
@@ -256,6 +393,7 @@ class TestSemesterTimeAccounting(TestCase):
         self.assertEqual((181*24)*(6/24.), totalAv.gc.total)
         # TBF: other totalAv.total fields?
 
+        # there are maint. periods to account for
         hrs = self.ta.maintHrs
         expMntT = Times(total = 12.0
                   , lowFreq = 6.0
@@ -270,22 +408,34 @@ class TestSemesterTimeAccounting(TestCase):
         hrs = self.ta.shutdownHrs
         self.assertEqual(Times(), hrs.total)     
         hrs = self.ta.testHrs
-        self.assertEqual(Times(), hrs.total)     
+        self.assertEqual(Times(), hrs.total)
+        # and no carry over
+        expCO = {}
+        for g in self.ta.grades: 
+            expCO[g] = {'fixed' : SemesterTimes()
+                     , 'times' : SemesterTimes()
+                       }
+        self.assertEqual(expCO, self.ta.carryOver)               
 
+        # do our internal check
         self.ta.checkTimes()
 
+        # check the hours available to astronomy
         expAvT = Times(total = 4332.
                   , lowFreq = 2166.0
                   , hiFreq1 = 1083.0
                   , hiFreq2 = 1083.0
                    )
-        self.assertEqual(expAvT, self.ta.astronomyAvailableHrs.total)           
+        self.assertEqual(expAvT, self.ta.astronomyAvailableHrs.total) 
         expAvGC = Times(total = 1080.6441)
         self.assertAlmostEqual(expAvGC.total
                              , self.ta.astronomyAvailableHrs.gc.total, 3)
 
+        # Testing, part two!
         # now introduce some 12A testing time 
         ss = self.createTestingSessions()
+        # and some carry over
+        s = self.createCarryOverSession()
 
         # and recalculate everything
         self.ta.calculateTimeAccounting()
@@ -305,6 +455,23 @@ class TestSemesterTimeAccounting(TestCase):
         self.assertEqual(expAvT
                        , self.ta.astronomyAvailableHrs.total)           
 
+        # and we've got carry over too!
+        expCO['A']['times'].total = Times(total = 1.0
+                                        , lowFreq = 1.0)
+        expCO['A']['times'].gc = Times(total = 0.5
+                                     , lowFreq = 0.5)
+        self.assertEqual(expCO['B'], self.ta.carryOver['B']) 
+        self.assertEqual(expCO['C'], self.ta.carryOver['C'])  
+
+        # which affects the time we have for NEW astronomy:
+        # no Grade B & C carry over means these should be equal
+        self.assertEqual(self.ta.newAstroAvailGradeAHrs
+                       , self.ta.newAstroAvailAllGradeHrs)
+
+        t = expAvT - Times(total = 1.0, lowFreq = 1.0)
+        newAstro = SemesterTimes(total = t, gc = g)
+        self.assertEqual(t, self.ta.newAstroAvailGradeAHrs.total)
+ 
         #self.ta.report()
 
 
