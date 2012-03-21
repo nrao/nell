@@ -5,3 +5,5 @@ from TestPstImport        import TestPstImport
 from TestPstInterface     import TestPstInterface
 from TestProposalRanking  import TestProposalRanking
 from TestProposalSummary  import TestProposalSummary
+from TestSemesterTimeAccounting import TestSemesterTimeAccounting
+from TestSun                    import TestSun
