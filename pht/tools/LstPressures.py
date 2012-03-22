@@ -27,6 +27,7 @@
 from datetime import date, datetime, timedelta
 from utilities import SLATimeAgent as sla
 from utilities import TimeAgent
+from utilities import TimeAccounting
 
 from pht.utilities    import *
 from pht.models       import *
@@ -250,6 +251,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         ws = [0.0] * self.hrs
         minLst = int(math.floor(rad2hr(session.target.min_lst)))
         maxLst = int(math.floor(rad2hr(session.target.max_lst)))
+        if (0 > minLst or minLst > 24.0) or (0 > maxLst or maxLst > 24.0):
+            print "Illegal LST min/max: ", minLst, maxLst, session
+            return ws
         # wrap around?
         if minLst > maxLst:
             ons = [(0, maxLst), (minLst, self.hrs)]
@@ -283,12 +287,12 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             fs = self.product(fs, self.rfiWeights)
         return fs
 
-    def getPressuresForSession(self, session):
+    def getPressuresForSession(self, session, carryover = False):
         """
         Take into account different attributes of given session
         to return it's LST Pressure at each LST (0..23)
         """
-
+        
         # first, is this session setup so we can do this?
         if session.target is None or session.allotment is None \
             or session.allotment.allocated_time is None \
@@ -297,7 +301,13 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             return []
 
         # TBF: is this right?
-        totalTime = session.allotment.allocated_time
+        # Carryover we get the time differently
+        if carryover:
+            # TBF: Eventually, switch to the next semester fields
+            ta = TimeAccounting()
+            totalTime = ta.getTimeRemaining(session.dss_session)
+        else:    
+            totalTime = session.allotment.allocated_time
 
         hrs = 24
         bins = [0.0] * hrs 
@@ -314,8 +324,11 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         # put it all togethor to calculate pressures
         weightSum = sum([(ws[i] * fs[i]) for i in range(self.hrs)])
-        ps = [(totalTime * ws[i] * fs[i]) / weightSum \
-            for i in range(self.hrs)]
+        if weightSum != 0:
+            ps = [(totalTime * ws[i] * fs[i]) / weightSum \
+                for i in range(self.hrs)]
+        else:
+            ps = [0.0]*self.hrs
 
         return ps    
 
@@ -373,9 +386,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             for p in self.pressures:
                 p[type] = 0.0
 
+        carryover = type == 'Carryover'
         for s in sessions:
-            
-            ps = self.getPressuresForSession(s)
+            ps = self.getPressuresForSession(s, carryover = carryover)
             if len(ps) > 0:
                 for hr in range(self.hrs):
                     self.pressures[hr]['Total'] += ps[hr]
