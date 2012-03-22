@@ -126,8 +126,34 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                           , 0.63835616438356169
                           , 0.62465753424657533
                           ]
+        self.opticalFlagPs = [0.50958904109589043
+                            , 0.51232876712328768
+                            , 0.51232876712328768
+                            , 0.51506849315068493
+                            , 0.51506849315068493
+                            , 0.51780821917808217
+                            , 0.51780821917808217
+                            , 0.51780821917808217
+                            , 0.51506849315068493
+                            , 0.51506849315068493
+                            , 0.51506849315068493
+                            , 0.51232876712328768
+                            , 0.51232876712328768
+                            , 0.50958904109589043
+                            , 0.50684931506849318
+                            , 0.50684931506849318
+                            , 0.50410958904109593
+                            , 0.50136986301369868
+                            , 0.50136986301369868
+                            , 0.50136986301369868
+                            , 0.50136986301369868
+                            , 0.50410958904109593
+                            , 0.50684931506849318
+                            , 0.50958904109589043
+                            ]
         self.rfiFlagPs     = [1.0]*self.hrs
-        self.opticalFlagPs = [1.0]*self.hrs
+        
+        [1.0]*self.hrs
         self.transitFlagPs = [1.0]*self.hrs
 
         # for computing day light hours
@@ -138,14 +164,26 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
     def computeNightFlagPressure(self, numDays = 365, month = 1):
         "Computes the weights for the PTCS night time flag,"
+        return self.computeRiseSetPressure(self.sun.getPTCSRiseSet
+                                         , numDays = numDays
+                                         , month = month)
        
+    def computeOpticalFlagPressure(self, numDays = 365, month = 1):
+        "Computes the weights for the optical flag,"
+        return self.computeRiseSetPressure(self.sun.getRiseSet
+                                         , numDays = numDays
+                                         , month = month)
+   
+    def computeRiseSetPressure(self, riseSetFn, numDays = 365, month = 1):
+        "Computes the weights for a time of day constraint."
         # when is daytime for each day of the year? UTC?
         exCnt = [0]*24
         start = date(self.year, month, 1)
         for days in range(numDays):
             # when is day light for this day, UTC? 
             dt = start + timedelta(days = days)
-            r, s =self.sun.getPTCSRiseSet(dt)
+            # use the given function to compute rise/set for this day
+            r, s =riseSetFn(dt) 
             # LSTs for these UTC datetimes?
             minLst = sla.Absolute2RelativeLST(r) 
             maxLst = sla.Absolute2RelativeLST(s)

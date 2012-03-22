@@ -189,3 +189,17 @@ class TestLstPressures(TestCase):
         self.assertEquals(exp, ex)
         self.assertEqual(ex[0]/365., ws[0])
         self.assertEqual(ex[12]/365., ws[12])
+
+    def test_computeOpticalFlagPressure(self):
+
+        lst = LstPressures()
+
+        # Note that the exclusion zone here is smaller than that 
+        # for PTCS night time
+        ws, ex = lst.computeOpticalFlagPressure(month = 1, numDays = 30)
+        exp = [12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 16, 30, 30, 30, 30, 30, 30, 30, 30, 24]
+        self.assertEqual(exp, ex)
+        ws, ex = lst.computeOpticalFlagPressure()
+        exp = [186, 187, 187, 188, 188, 189, 189, 189, 188, 188, 188, 187, 187, 186, 185, 185, 184, 183, 183, 183, 183, 184, 185, 186]
+        self.assertEqual(exp, ex)
+       
