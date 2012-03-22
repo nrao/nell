@@ -104,9 +104,18 @@ class BackfillImport(PstImport):
             
     def setSessionTarget(self, pht_session, dss_session):
         try:
-            target = Target(ra = dss_session.target.horizontal
-                              , dec = dss_session.target.vertical
-                                )
+            target = Target(ra  = dss_session.target.horizontal
+                          , dec = dss_session.target.vertical
+                            )
+            target.save()
+            # use this ra & dec to calc. the other LST values
+            min_lst, max_lst = target.calcLSTrange()
+            target.min_lst = min_lst
+            target.max_lst = max_lst
+            target.save()
+            center, width = target.calcCenterWidthLST()
+            target.center_lst = center
+            target.lst_width = width
             target.save()
             pht_session.target = target
             pht_session.save()
