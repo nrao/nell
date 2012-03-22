@@ -25,8 +25,9 @@ from django.test         import TestCase
 from pht.utilities import *
 from pht.tools.LstPressures import LstPressures
 from pht.models         import Proposal
+from pht.models         import Session
 from pht.models         import SessionGrade
-#from pht.models         import ImportReport
+from pht.httpadapters   import SessionHttpAdapter
 
 class TestLstPressures(TestCase):
 
@@ -102,11 +103,33 @@ class TestLstPressures(TestCase):
             self.assertAlmostEqual(exp[i], ps[i], 3)
  
     def test_getLstWeightsForSession(self):
+
         lst = LstPressures()
+
+        # this is easy when min = 0, max = 12 LST
         ws = lst.getLstWeightsForSession(self.session)
         exp = [1.0]*12
         off = [0.0]*12
         exp.extend(off)
+        self.assertEqual(exp, ws)
+
+        # change min/max lst and see what happens
+        self.session.target.min_lst = hr2rad(20.0)
+        self.session.target.max_lst = hr2rad(4.0)
+        ws = lst.getLstWeightsForSession(self.session)
+        exp = [1.0]*4
+        off = [0.0]*16
+        exp.extend(off)
+        exp.extend([1.0]*4)
+        self.assertEqual(exp, ws)
+
+        # catch an edge case
+        self.session.target.min_lst = hr2rad(23.5)
+        self.session.target.max_lst = hr2rad(1.2)
+        ws = lst.getLstWeightsForSession(self.session)
+        exp = [1.0]
+        exp.extend([0.0]*22)
+        exp.append(1.0)
         self.assertEqual(exp, ws)
 
     def test_modifyWeightsForLstExclusion(self):
@@ -120,6 +143,13 @@ class TestLstPressures(TestCase):
         # so the weights don't get modified
         self.assertEqual(ws, ws2)
 
+        # now introduce some exclusions
+        adapter = SessionHttpAdapter(self.session)
+        adapter.update_lst_parameters('lst_ex', '4.5-7.2,21.2-23.0')
+        # get the refreshed session
+        s = Session.objects.get(id = self.session.id)
+        ws3 = lst.modifyWeightsForLstExclusion(s, ws)
+        
     def test_getFlagWeightsForSession(self):
 
         lst = LstPressures()

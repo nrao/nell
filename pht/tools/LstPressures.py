@@ -107,8 +107,14 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         ws = [0.0] * self.hrs
         minLst = int(math.floor(rad2hr(session.target.min_lst)))
         maxLst = int(math.floor(rad2hr(session.target.max_lst)))
-        for b in range(minLst, maxLst):
-            ws[b] = 1.0
+        # wrap around?
+        if minLst > maxLst:
+            ons = [(0, maxLst), (minLst, self.hrs)]
+        else:
+            ons = [(minLst, maxLst)]
+        for minLst, maxLst in ons:
+            for b in range(minLst, maxLst):
+                ws[b] = 1.0
         return ws
 
     def modifyWeightsForLstExclusion(self, session, ws):
@@ -116,9 +122,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         lstRanges = session.get_lst_parameters()
         exclusions = lstRanges['LST Exclude']
         for lowEx, hiEx in exclusions:
-            lowEx = int(math.floor(rad2hr(lowEx)))
-            hiEx = int(math.floor(rad2hr(hiEx)))
-            for b in range(lowEx, hiEx+1):
+            lowEx = int(math.floor(lowEx))
+            hiEx = int(math.floor(hiEx))
+            for b in range(lowEx, hiEx):
                 ws[b] = 0.0
         return ws
 
