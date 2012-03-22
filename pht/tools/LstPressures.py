@@ -26,6 +26,7 @@
 
 from datetime import date, datetime, timedelta
 from utilities import SLATimeAgent as sla
+from utilities import TimeAgent
 
 from pht.utilities    import *
 from pht.models       import *
@@ -151,9 +152,32 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                             , 0.50684931506849318
                             , 0.50958904109589043
                             ]
-        self.rfiWeights     = [1.0]*self.hrs
+        self.rfiWeights     = [0.54246575342465753
+                             , 0.54520547945205478
+                             , 0.54520547945205478
+                             , 0.54246575342465753
+                             , 0.54246575342465753
+                             , 0.54246575342465753
+                             , 0.50136986301369868
+                             , 0.50136986301369868
+                             , 0.50136986301369868
+                             , 0.48493150684931507
+                             , 0.46027397260273972
+                             , 0.45753424657534247
+                             , 0.46027397260273972
+                             , 0.46027397260273972
+                             , 0.46027397260273972
+                             , 0.46027397260273972
+                             , 0.45753424657534247
+                             , 0.46301369863013697
+                             , 0.50136986301369868
+                             , 0.50136986301369868
+                             , 0.49863013698630138
+                             , 0.51780821917808217
+                             , 0.54246575342465753
+                             , 0.54246575342465753
+                             ] 
         
-        self.transitFlagPs = [1.0]*self.hrs
 
         # for computing day light hours
         self.sun = Sun()
@@ -202,6 +226,25 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         weights = [e/float(numDays) for e in exCnt]
         return (weights, exCnt)
 
+    def computeRfiWeights(self, numDays = 365, month = 1):
+        return self.computeRiseSetPressure(self.getRfiRiseSet
+                                         , numDays = numDays
+                                         , month = month)
+
+    def getRfiRiseSet(self, date):
+        "Gives the time high RFI start and ends for the given date."
+
+        # DSS definition says this is between 8 AM - 8 PM EST.
+        # Takes into account DST
+        rise = datetime(date.year, date.month, date.day, 8)
+        set  = datetime(date.year, date.month, date.day, 20)
+        rise = TimeAgent.est2utc(rise)
+        set  = TimeAgent.est2utc(set)
+        return (rise, set)
+
+
+        # convert this to UT
+        
     def getLstWeightsForSession(self, session):
         "Simple: LST's within min/max are on, rest are off."
         ws = [0.0] * self.hrs

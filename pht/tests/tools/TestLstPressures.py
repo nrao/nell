@@ -22,6 +22,8 @@
 
 from django.test         import TestCase
 
+from datetime import datetime, date, timedelta
+
 from pht.utilities import *
 from pht.tools.LstPressures import LstPressures
 from pht.models         import Proposal
@@ -203,3 +205,30 @@ class TestLstPressures(TestCase):
         exp = [186, 187, 187, 188, 188, 189, 189, 189, 188, 188, 188, 187, 187, 186, 185, 185, 184, 183, 183, 183, 183, 184, 185, 186]
         self.assertEqual(exp, ex)
        
+    def test_getRfiRiseSet(self):
+
+        lst = LstPressures()
+
+        dt = date(2012, 1, 1)
+        rs = lst.getRfiRiseSet(dt)
+        exp = (datetime(2012, 1, 1, 13), datetime(2012, 1, 2, 1))
+        self.assertEqual(exp, rs)
+
+        # note change in DST
+        dt = date(2012, 6, 1)
+        rs = lst.getRfiRiseSet(dt)
+        exp = (datetime(2012, 6, 1, 12), datetime(2012, 6, 2, 0))
+        self.assertEqual(exp, rs)
+
+    def test_computeRfiWeights(self):
+
+        lst = LstPressures()
+        ws, ex = lst.computeRfiWeights(numDays = 1, month = 1)
+        exp = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        self.assertEqual(exp, ex)
+        ws, ex = lst.computeRfiWeights(numDays = 30, month = 1)
+        exp = [30, 30, 21, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 25, 30, 30, 30, 30, 30, 30, 30, 30] 
+        self.assertEqual(exp, ex)
+        ws, ex = lst.computeRfiWeights()
+        exp =[198, 199, 199, 198, 198, 198, 183, 183, 183, 177, 168, 167, 168, 168, 168, 168, 167, 169, 183, 183, 182, 189, 198, 198]
+        self.assertEqual(exp, ex)
