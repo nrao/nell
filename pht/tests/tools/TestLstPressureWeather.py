@@ -94,3 +94,23 @@ class TestLstPressureWeather(TestCase):
         ps = self.lst.binFixedSession(self.session, self.sessPressure)
         exp = Pressures(excellent = self.sessPressure)
         self.assertEqual(exp, ps)
+
+    def test_binWindowedSession(self):
+
+        self.session.monitoring.window_size = 2
+        ps = self.lst.binWindowedSession(self.session, self.sessPressure)
+        exp = Pressures(poor = self.sessPressure*0.5
+                      , good = self.sessPressure*0.25
+                      , excellent = self.sessPressure*0.25
+                        )
+        self.assertEqual(exp, ps)
+
+        # now change the window size
+        self.session.monitoring.window_size = 20
+        ps = self.lst.binWindowedSession(self.session, self.sessPressure)
+        self.assertEqual(ps.good.tolist(), ps.excellent.tolist())
+        exp = Pressures(poor = self.sessPressure*0.75
+                      , good = self.sessPressure*0.125
+                      , excellent = self.sessPressure*0.125
+                        )
+        self.assertEqual(exp, ps)

@@ -175,6 +175,7 @@ Again, note that this is only for time assigned to Group A.
                , avPoor = 0.50
                , avGood = 0.25
                , avExcellent = 0.25
+               , windowFrac = 0.5
                 ):
 
         self.wPoor = WeatherType.objects.get(type = 'Poor')
@@ -190,7 +191,8 @@ Again, note that this is only for time assigned to Group A.
         self.shares = dict(Poor = avPoor
                          , Good = avGood
                          , Excellent = avExcellent
-                             )
+                          )
+        self.windowFrac = windowFrac                  
 
     def binSessionPressureWeather(self, session, pressures):
 
@@ -202,6 +204,8 @@ Again, note that this is only for time assigned to Group A.
             ps = self.binOpenSession(session, pressure)
         elif type == 'fixed':
             ps = self.binFixedSession(session, pressure)
+        elif type == 'windowed':
+            ps = self.binWindowedSession(session, pressure)
         
         # accumulate the results
         self.pressures += ps
@@ -225,14 +229,30 @@ Again, note that this is only for time assigned to Group A.
                  + self.shares[self.wExcellent.type] 
             # good gets this share     
             f = self.shares[self.wGood.type] / base
-            good = pressure * f
-            ps.setType(self.wGood.type, good)
+            ps.good = pressure * f
             # excellent gets this share
             f = self.shares[self.wExcellent.type] / base
-            ex = pressure * f
-            ps.setType(self.wExcellent.type, ex)
+            ps.excellent = pressure * f
         elif wType == self.wExcellent:
             # excellent gets it all
             ps.setType(self.wExcellent.type, pressure)
         return ps    
             
+    def binWindowedSession(self, session, pressure):
+        # depends on window size (days)
+        wsize = session.monitoring.window_size
+        ps = Pressures()
+        if wsize <= 3: 
+            # get's distributed evenly - just like a fixed in poor wthr.
+            for wt in self.wTypes:
+                ps.setType(wt, pressure*self.shares[wt])
+        else:
+            # take into account the extra chance this window has 
+            # of being scheduled like open
+            wf = 1 - self.windowFrac
+            ps.poor = (pressure*self.windowFrac) + \
+               (pressure * wf * self.shares[self.wPoor.type])
+            ps.good = pressure * wf * self.shares[self.wGood.type]   
+            ps.excellent = pressure * wf * self.shares[self.wExcellent.type]   
+        return ps
+
