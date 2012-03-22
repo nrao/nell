@@ -102,6 +102,15 @@ class TestLstPressures(TestCase):
         for i in range(24):
             self.assertAlmostEqual(exp[i], ps[i], 3)
  
+        # set night time flag
+        self.session.flags.thermal_night = True
+        ps = lst.getPressuresForSession(self.session)
+        # changes non-zero ones by a little bit.
+        exp = [0.54267161410018538, 0.54025974025974011, 0.53784786641929494, 0.54025974025974011, 0.54025974025974011, 0.54267161410018538, 0.54508348794063066, 0.54267161410018538, 0.54267161410018538, 0.54267161410018538, 0.54267161410018538, 0.54025974025974011]
+        exp.extend([0.0]*12)
+        for i in range(len(exp)):
+            self.assertAlmostEqual(exp[i], ps[i], 3)
+
     def test_getLstWeightsForSession(self):
 
         lst = LstPressures()
@@ -161,3 +170,22 @@ class TestLstPressures(TestCase):
         # so the weights are all 1.0 
         self.assertEqual(exp, fs)
 
+        # now set the PTCS night time flag
+        self.session.flags.thermal_night = True
+        fs = lst.getFlagWeightsForSession(self.session)
+        self.assertEqual(lst.nightFlagPs, fs)
+        
+    def test_computeNightFlagPressure(self):
+
+        lst = LstPressures()
+        ws, ex = lst.computeNightFlagPressure(month = 1, numDays = 30)
+        exp = [30, 30, 24, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 16, 30, 30, 30, 30, 30, 30, 30, 30, 30]
+        self.assertEquals(exp, ex)
+        ws, ex = lst.computeNightFlagPressure(month = 6, numDays = 30)
+        exp = [30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 17, 2, 0, 0, 0, 0, 12, 26, 30]
+        self.assertEquals(exp, ex)
+        ws, ex = lst.computeNightFlagPressure()
+        exp = [225, 224, 223, 224, 224, 225, 226, 225, 225, 225, 225, 224, 225, 227, 229, 235, 242, 250, 256, 256, 249, 241, 233, 228]
+        self.assertEquals(exp, ex)
+        self.assertEqual(ex[0]/365., ws[0])
+        self.assertEqual(ex[12]/365., ws[12])

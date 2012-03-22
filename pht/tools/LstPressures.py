@@ -24,11 +24,14 @@
 #import settings
 #setup_environ(settings)
 
-#from datetime         import datetime
+from datetime import date, datetime, timedelta
+from utilities import SLATimeAgent as sla
 
 from pht.utilities    import *
 from pht.models       import *
 from scheduler.models import Observing_Type
+from pht.tools.Sun    import Sun
+
 
 class LstPressures(object):
 
@@ -96,11 +99,71 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # for reporting
         self.badSess = []
 
-        # TBF: compute these!
-        self.nightFlagPs   = [1.0]*self.hrs
+        # TBF: These get computed by methods in this class,
+        # but no need to do it at start up every time.
+        self.nightFlagPs = [0.61643835616438358
+                          , 0.61369863013698633
+                          , 0.61095890410958908
+                          , 0.61369863013698633
+                          , 0.61369863013698633
+                          , 0.61643835616438358
+                          , 0.61917808219178083
+                          , 0.61643835616438358
+                          , 0.61643835616438358
+                          , 0.61643835616438358
+                          , 0.61643835616438358
+                          , 0.61369863013698633
+                          , 0.61643835616438358
+                          , 0.62191780821917808
+                          , 0.62739726027397258
+                          , 0.64383561643835618
+                          , 0.66301369863013704
+                          , 0.68493150684931503
+                          , 0.70136986301369864
+                          , 0.70136986301369864
+                          , 0.68219178082191778
+                          , 0.66027397260273968
+                          , 0.63835616438356169
+                          , 0.62465753424657533
+                          ]
         self.rfiFlagPs     = [1.0]*self.hrs
         self.opticalFlagPs = [1.0]*self.hrs
         self.transitFlagPs = [1.0]*self.hrs
+
+        # for computing day light hours
+        self.sun = Sun()
+        
+        # what example year do we compute flags for?
+        self.year = 2012
+
+    def computeNightFlagPressure(self, numDays = 365, month = 1):
+        "Computes the weights for the PTCS night time flag,"
+       
+        # when is daytime for each day of the year? UTC?
+        exCnt = [0]*24
+        start = date(self.year, month, 1)
+        for days in range(numDays):
+            # when is day light for this day, UTC? 
+            dt = start + timedelta(days = days)
+            r, s =self.sun.getPTCSRiseSet(dt)
+            # LSTs for these UTC datetimes?
+            minLst = sla.Absolute2RelativeLST(r) 
+            maxLst = sla.Absolute2RelativeLST(s)
+            # what bins do those fall into?
+            minHr = int(math.floor(minLst))
+            maxHr = int(math.floor(maxLst))
+            if minHr > maxHr:
+                ex = [(0,maxHr), (minHr, 24)]
+            else:
+                ex = [(minHr, maxHr)]
+                
+            # now tally up the LST bins that get excluded    
+            for s, e in ex:
+                for h in range(s,e):
+                    exCnt[h] += 1
+        # finally convert these counts to weights
+        weights = [e/float(numDays) for e in exCnt]
+        return (weights, exCnt)
 
     def getLstWeightsForSession(self, session):
         "Simple: LST's within min/max are on, rest are off."
