@@ -173,33 +173,33 @@ class TestLstPressures(TestCase):
         # now set the PTCS night time flag
         self.session.flags.thermal_night = True
         fs = lst.getFlagWeightsForSession(self.session)
-        self.assertEqual(lst.nightFlagPs, fs)
+        self.assertEqual(lst.thermalNightWeights, fs)
         
-    def test_computeNightFlagPressure(self):
+    def test_computeThermalNightWeights(self):
 
         lst = LstPressures()
-        ws, ex = lst.computeNightFlagPressure(month = 1, numDays = 30)
+        ws, ex = lst.computeThermalNightWeights(month = 1, numDays = 30)
         exp = [30, 30, 24, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 16, 30, 30, 30, 30, 30, 30, 30, 30, 30]
         self.assertEquals(exp, ex)
-        ws, ex = lst.computeNightFlagPressure(month = 6, numDays = 30)
+        ws, ex = lst.computeThermalNightWeights(month = 6, numDays = 30)
         exp = [30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 17, 2, 0, 0, 0, 0, 12, 26, 30]
         self.assertEquals(exp, ex)
-        ws, ex = lst.computeNightFlagPressure()
+        ws, ex = lst.computeThermalNightWeights()
         exp = [225, 224, 223, 224, 224, 225, 226, 225, 225, 225, 225, 224, 225, 227, 229, 235, 242, 250, 256, 256, 249, 241, 233, 228]
         self.assertEquals(exp, ex)
         self.assertEqual(ex[0]/365., ws[0])
         self.assertEqual(ex[12]/365., ws[12])
 
-    def test_computeOpticalFlagPressure(self):
+    def test_computeOpticalNightWeights(self):
 
         lst = LstPressures()
 
         # Note that the exclusion zone here is smaller than that 
         # for PTCS night time
-        ws, ex = lst.computeOpticalFlagPressure(month = 1, numDays = 30)
+        ws, ex = lst.computeOpticalNightWeights(month = 1, numDays = 30)
         exp = [12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 16, 30, 30, 30, 30, 30, 30, 30, 30, 24]
         self.assertEqual(exp, ex)
-        ws, ex = lst.computeOpticalFlagPressure()
+        ws, ex = lst.computeOpticalNightWeights()
         exp = [186, 187, 187, 188, 188, 189, 189, 189, 188, 188, 188, 187, 187, 186, 185, 185, 184, 183, 183, 183, 183, 184, 185, 186]
         self.assertEqual(exp, ex)
        

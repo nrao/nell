@@ -101,7 +101,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         # TBF: These get computed by methods in this class,
         # but no need to do it at start up every time.
-        self.nightFlagPs = [0.61643835616438358
+        self.thermalNightWeights = [0.61643835616438358
                           , 0.61369863013698633
                           , 0.61095890410958908
                           , 0.61369863013698633
@@ -126,7 +126,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                           , 0.63835616438356169
                           , 0.62465753424657533
                           ]
-        self.opticalFlagPs = [0.50958904109589043
+        self.opticalNightWeights = [0.50958904109589043
                             , 0.51232876712328768
                             , 0.51232876712328768
                             , 0.51506849315068493
@@ -151,9 +151,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                             , 0.50684931506849318
                             , 0.50958904109589043
                             ]
-        self.rfiFlagPs     = [1.0]*self.hrs
+        self.rfiWeights     = [1.0]*self.hrs
         
-        [1.0]*self.hrs
         self.transitFlagPs = [1.0]*self.hrs
 
         # for computing day light hours
@@ -162,13 +161,13 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # what example year do we compute flags for?
         self.year = 2012
 
-    def computeNightFlagPressure(self, numDays = 365, month = 1):
+    def computeThermalNightWeights(self, numDays = 365, month = 1):
         "Computes the weights for the PTCS night time flag,"
         return self.computeRiseSetPressure(self.sun.getPTCSRiseSet
                                          , numDays = numDays
                                          , month = month)
        
-    def computeOpticalFlagPressure(self, numDays = 365, month = 1):
+    def computeOpticalNightWeights(self, numDays = 365, month = 1):
         "Computes the weights for the optical flag,"
         return self.computeRiseSetPressure(self.sun.getRiseSet
                                          , numDays = numDays
@@ -234,13 +233,11 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         fs = [1.0]*self.hrs
         if session.flags.thermal_night:
-            fs = self.product(fs, self.nightFlagPs)
-        elif session.flags.rfi_night:
-            fs = self.product(fs, self.rfiFlagPs)
+            fs = self.product(fs, self.thermalNightWeights)
         elif session.flags.optical_night:
-            fs = self.product(fs, self.opticalFlagPs)
-        elif session.flags.transit_flat:
-            fs = self.product(fs, self.transitFlagPs)
+            fs = self.product(fs, self.opticalNightWeights)
+        elif session.flags.rfi_night:
+            fs = self.product(fs, self.rfiWeights)
         return fs
 
     def getPressuresForSession(self, session):
