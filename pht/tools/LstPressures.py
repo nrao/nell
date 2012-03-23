@@ -33,7 +33,10 @@ from pht.utilities    import *
 from pht.models       import *
 from scheduler.models import Observing_Type
 from pht.tools.Sun    import Sun
+from pht.tools.LstPressureWeather import LstPressureWeather
+from pht.tools.LstPressureWeather import Pressures
 
+import numpy
 
 class LstPressures(object):
 
@@ -97,6 +100,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.bins = [0.0]*self.hrs
 
         self.pressures = [{'LST':float(i), 'Total':0.0} for i in range(24)]
+
+        self.weather = LstPressureWeather()
 
         # for reporting
         self.badSess = []
@@ -298,7 +303,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             or session.allotment.allocated_time is None \
             or session.target.min_lst is None \
             or session.target.max_lst is None:
-            return []
+            return [0.0] * self.hrs
 
         # TBF: is this right?
         # Carryover we get the time differently
@@ -355,46 +360,58 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         ]
         """
 
-        # how much time is available in a semester (6 months)?
-        for p in self.pressures:
-            p['Available'] = (180*24) / 24 
+        # init buckets
+        totalPs     = numpy.array([0.0]*self.hrs)
+        carryoverTotalPs = numpy.array([0.0]*self.hrs)
+        carryoverPs = Pressures() 
+        gradePs = { 'A' : Pressures()
+                 , 'B' : Pressures()
+                 , 'C' : Pressures()
+                 }
 
-        # carry over
-        ss = [s for s in Session.objects.all() \
-            if s.dss_session is not None]
-        self.getPressuresByType(ss, "Carryover")
-
-        # TBF: maintenance and test time
-
-        # new stuff, by all grade and weather type
-        for weather in ['Poor', 'Good', 'Excellent']:
-            for grade in ['A', 'B', 'C']:
-                ss = Session.objects.filter(weather_type__type = weather
-                                          , grade__grade = grade
-                                          , dss_session = None
-                                            )
-                type = "%s_%s" % (weather, grade)
-                self.getPressuresByType(ss, type)
-       
-        return self.pressures
-
-    def getPressuresByType(self, sessions, type):
-        "Get the pressures for the given sessions"
-
-        # initilize this type's dictionary
-        if not self.pressures[0].has_key(type):
-            for p in self.pressures:
-                p[type] = 0.0
-
-        carryover = type == 'Carryover'
-        for s in sessions:
-            ps = self.getPressuresForSession(s, carryover = carryover)
-            if len(ps) > 0:
-                for hr in range(self.hrs):
-                    self.pressures[hr]['Total'] += ps[hr]
-                    self.pressures[hr][type] += ps[hr]
+        # fill the buckets
+        ss = Session.objects.all()
+        for s in ss:
+            carryover = s.dss_session is not None
+            ps = self.getPressuresForSession(s, carryover)
+            ps = numpy.array(ps)
+            # accum pressure in total 
+            totalPs += ps
+            # We really keep carryover separate
+            # Also track carryover by weather type
+            if carryover:
+                carryoverTotalPs += ps
+                carryoverPs += self.weather.binSession(s, ps)
             else:
-                self.badSess.append(s)
+                wps = self.weather.binSession(s, ps)
+                if s.grade is not None:
+                    grade = s.grade.grade
+                    gradePs[grade] += wps
+
+        # now figure out the availability        
+        changes = self.weather.getAvailabilityChanges(gradePs['A'])
+        gradePs['A'] += changes
+
+        # now convert the buckets to expected output
+        output = []
+        for i in range(self.hrs):
+            lstDict = dict(LST = i
+                         , Total = totalPs[i] 
+                         , Available = self.weather.availabilityTotal[i]
+                         , Carryover = carryoverTotalPs[i] 
+                          )
+            for weather in ['Poor', 'Good', 'Excellent']:
+                availType = "Available_%s" % weather
+                lstDict[availType] = self.weather.availability.getType(weather)[i]
+                carryoverType = "Carryover_%s" % weather
+                lstDict[carryoverType] = carryoverPs.getType(weather)[i]
+                for grade in ['A', 'B', 'C']:
+                    type = "%s_%s" % (weather, grade)
+                    lstDict[type] = gradePs[grade].getType(weather)[i]
+            output.append(lstDict)
+            
+        return output        
+
 
             
 
