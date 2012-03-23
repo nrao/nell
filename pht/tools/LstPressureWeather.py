@@ -36,6 +36,7 @@ from pht.utilities    import *
 from pht.models       import *
 from scheduler.models import Observing_Type
 from pht.tools.Sun    import Sun
+from scheduler.models import Semester as DSSSemester
 
 HRS = 24
 
@@ -179,11 +180,15 @@ Again, note that this is only for time assigned to Group A.
     """
 
     def __init__(self
+               , semester = '12A'
                , avPoor = 0.50
                , avGood = 0.25
                , avExcellent = 0.25
                , windowFrac = 0.5
                 ):
+
+        self.semester = DSSSemester.objects.get(semester = semester)
+        self.numDays = (self.semester.end() - self.semester.start()).days
 
         self.wPoor = WeatherType.objects.get(type = 'Poor')
         self.wGood = WeatherType.objects.get(type = 'Good')
@@ -199,18 +204,46 @@ Again, note that this is only for time assigned to Group A.
         self.hrs = 24
 
         self.pressures = Pressures() 
-        self.available = Pressures()
+
 
         self.shares = dict(Poor = avPoor
                          , Good = avGood
                          , Excellent = avExcellent
                           )
         self.windowFrac = windowFrac                  
+        self.initAvailability()
 
-    #def calculatePressures(self, sessions):
-#
-#        for s in sessions:
- #           self.pressures += self.binSession(
+    def initAvailability(self):                          
+        """
+        Initial availability is the number of hours availabe split
+        up by each weather types share
+        """
+        totalAvail = (self.numDays * 24.) / 24. 
+        self.availability = Pressures()
+        for wt in self.wTypes:
+            available = numpy.array([totalAvail*self.shares[wt]]*self.hrs)
+            self.availability.setType(wt, available)
+
+    def getAvailabilityChanges(self, gradeAPressure):
+        "The amount of time for grade A affects availability"
+
+        changes = Pressures()
+        goodShare = self.shares['Good']
+        excellentShare = self.shares['Excellent']
+
+        for i in range(self.hrs):
+            if gradeAPressure.poor[i] > self.availability.poor[i]:
+                # spread out the difference between what's available
+                # for poor and excellent 
+                diff = gradeAPressure.poor[i] - self.availability.poor[i]
+                base = goodShare + excellentShare
+                changes.good[i] = (diff * goodShare) / base 
+                changes.excellent[i] = (diff * excellentShare) / base 
+                # cap the poor time
+                changes.poor[i] = -1.0 * diff
+
+        return changes
+
 
     def binSession(self, session, pressures):
  

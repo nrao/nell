@@ -384,6 +384,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 grade = s.grade.grade
                 gradePs[grade] += wps
 
+        # now figure out the availability        
+        changes = self.weather.getAvailabilityChanges(gradePs['A'])
+        gradePs['A'] += changes
+
         # now convert the buckets to expected output
         output = []
         for i in range(self.hrs):
