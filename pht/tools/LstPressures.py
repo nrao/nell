@@ -362,7 +362,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         # init buckets
         totalPs     = numpy.array([0.0]*self.hrs)
-        carryoverPs = numpy.array([0.0]*self.hrs)
+        carryoverTotalPs = numpy.array([0.0]*self.hrs)
+        carryoverPs = Pressures() 
         gradePs = { 'A' : Pressures()
                  , 'B' : Pressures()
                  , 'C' : Pressures()
@@ -376,13 +377,16 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             ps = numpy.array(ps)
             # accum pressure in total 
             totalPs += ps
-            # TBF: do we really keep carryover separate?
+            # We really keep carryover separate
+            # Also track carryover by weather type
             if carryover:
-                carryoverPs += ps
+                carryoverTotalPs += ps
+                carryoverPs += self.weather.binSession(s, ps)
             else:
                 wps = self.weather.binSession(s, ps)
-                grade = s.grade.grade
-                gradePs[grade] += wps
+                if s.grade is not None:
+                    grade = s.grade.grade
+                    gradePs[grade] += wps
 
         # now figure out the availability        
         changes = self.weather.getAvailabilityChanges(gradePs['A'])
@@ -393,9 +397,14 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         for i in range(self.hrs):
             lstDict = dict(LST = i
                          , Total = totalPs[i] 
-                         , Carryover = carryoverPs[i] 
+                         , Available = self.weather.availabilityTotal[i]
+                         , Carryover = carryoverTotalPs[i] 
                           )
             for weather in ['Poor', 'Good', 'Excellent']:
+                availType = "Available_%s" % weather
+                lstDict[availType] = self.weather.availability.getType(weather)[i]
+                carryoverType = "Carryover_%s" % weather
+                lstDict[carryoverType] = carryoverPs.getType(weather)[i]
                 for grade in ['A', 'B', 'C']:
                     type = "%s_%s" % (weather, grade)
                     lstDict[type] = gradePs[grade].getType(weather)[i]

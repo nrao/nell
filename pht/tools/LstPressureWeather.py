@@ -219,6 +219,7 @@ Again, note that this is only for time assigned to Group A.
         up by each weather types share
         """
         totalAvail = (self.numDays * 24.) / 24. 
+        self.availabilityTotal = numpy.array([totalAvail]*self.hrs)
         self.availability = Pressures()
         for wt in self.wTypes:
             available = numpy.array([totalAvail*self.shares[wt]]*self.hrs)
