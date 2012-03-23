@@ -58,7 +58,38 @@ class TestLstPressureWeather(TestCase):
         self.wPoor = WeatherType.objects.get(type = 'Poor')
         self.wGood = WeatherType.objects.get(type = 'Good')
         self.wExcellent = WeatherType.objects.get(type = 'Excellent')
+   
+    def createSession(self):
+        "Create a new session for the tests"
 
+        p = Proposal.objects.all()[0]
+
+        data  = {
+            'name' : 'nextSemesterSession'
+          , 'pcode' : p.pcode
+          , 'grade' : 'A'  
+          , 'semester' : sem
+          , 'requested_time' : 3.5  
+          , 'allocated_time' : 3.5  
+          , 'session_type' : 'Open - Low Freq'
+          , 'observing_type' : 'continuum' 
+          , 'weather_type' : 'Poor'
+          , 'repeats' : 2 
+          , 'min_lst' : '10:00:00.0' 
+          , 'max_lst' : '20:00:00.0' 
+          , 'elevation_min' : '00:00:00.0' 
+          , 'next_sem_complete' : False
+          , 'next_sem_time' : 1.0
+          , 'receivers' : 'L'
+        }
+
+        adapter = SessionHttpAdapter()
+        adapter.initFromPost(data)
+        # just so that is HAS a DSS session.
+        #adapter.session.dss_session = self.maintProj.sesshun_set.all()[0]
+        adapter.session.save()
+        return adapter.session
+    
     def test_binOpenSession(self):
 
         # make sure it shows up in poor
@@ -113,4 +144,11 @@ class TestLstPressureWeather(TestCase):
                       , good = self.sessPressure*0.125
                       , excellent = self.sessPressure*0.125
                         )
+        self.assertEqual(exp, ps)
+
+    def test_binSession(self):
+
+        # make sure it shows up in poor
+        ps = self.lst.binSession(self.session, self.sessPressure)
+        exp = Pressures(poor = self.sessPressure)
         self.assertEqual(exp, ps)

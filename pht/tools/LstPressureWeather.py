@@ -54,6 +54,10 @@ class Pressures(object):
         return "Poor: %s\nGood: %s\nEx: %s\n" % (self.poor
                                                , self.good
                                                , self.excellent)
+
+    def __repr__(self):
+        return self.__str__()
+
     def __eq__(self, other):
         return (self.poor.tolist() == other.poor.tolist()) \
            and (self.good.tolist() == other.good.tolist()) \
@@ -77,6 +81,9 @@ class Pressures(object):
 
     def setType(self, type, value):
         self.__setattr__(type.lower(), value)
+
+    def getType(self, type):
+        return self.__getattribute__(type.lower())
 
 class LstPressureWeather(object):
 
@@ -182,33 +189,49 @@ Again, note that this is only for time assigned to Group A.
         self.wGood = WeatherType.objects.get(type = 'Good')
         self.wExcellent = WeatherType.objects.get(type = 'Excellent')
 
+        self.sFixed = SessionType.objects.get(type = 'Fixed')
+        self.sWindowed = SessionType.objects.get(type = 'Windowed')
+        self.sElective = SessionType.objects.get(type = 'Elective')
+
         # TBF: get rid of 4th weather type
         self.wTypes = ['Poor', 'Good','Excellent']
         self.grades = ['A', 'B', 'C']
         self.hrs = 24
+
         self.pressures = Pressures() 
-       
+        self.available = Pressures()
+
         self.shares = dict(Poor = avPoor
                          , Good = avGood
                          , Excellent = avExcellent
                           )
         self.windowFrac = windowFrac                  
 
-    def binSessionPressureWeather(self, session, pressures):
+    #def calculatePressures(self, sessions):
+#
+#        for s in sessions:
+ #           self.pressures += self.binSession(
+
+    def binSession(self, session, pressures):
+ 
+        if session.session_type is None:
+            return Pressures() 
 
         # in case pressures is a list
         pressures = numpy.array(pressures)
 
-        type = session.session_type.type
-        if type == 'open':
-            ps = self.binOpenSession(session, pressure)
-        elif type == 'fixed':
-            ps = self.binFixedSession(session, pressure)
-        elif type == 'windowed':
-            ps = self.binWindowedSession(session, pressure)
+        type = session.session_type
+        if type == self.sFixed:
+            ps = self.binFixedSession(session, pressures)
+        elif type == self.sWindowed:
+            ps = self.binWindowedSession(session, pressures)
+        elif type == self.sElective:
+            ps = self.binElectiveSession(session, pressures)
+        else:
+            # must be one of the 3 open types
+            ps = self.binOpenSession(session, pressures)
         
-        # accumulate the results
-        self.pressures += ps
+        return ps
 
     def binOpenSession(self, session, pressure):
         wType = session.weather_type.type
@@ -255,4 +278,8 @@ Again, note that this is only for time assigned to Group A.
             ps.good = pressure * wf * self.shares[self.wGood.type]   
             ps.excellent = pressure * wf * self.shares[self.wExcellent.type]   
         return ps
+
+    def binElectiveSession(self, session, pressure):
+        # TBF: where do we get these from, the periods?
+        return Pressures() 
 

@@ -27,8 +27,10 @@ from datetime import datetime, date, timedelta
 from pht.utilities import *
 from pht.tools.LstPressures import LstPressures
 from pht.models         import Proposal
+from pht.models         import Semester
 from pht.models         import Session
 from pht.models         import SessionGrade
+from pht.models         import SessionType
 from pht.httpadapters   import SessionHttpAdapter
 
 class TestLstPressures(TestCase):
@@ -52,6 +54,37 @@ class TestLstPressures(TestCase):
         s.allotment.save()
         s.save()
         self.session = s
+
+    def createSession(self):
+        "Create a new session for the tests"
+
+        p = Proposal.objects.all()[0]
+        sem = Semester.objects.get(semester = '12A')
+        data  = {
+            'name' : 'nextSemesterSession'
+          , 'pcode' : p.pcode
+          , 'grade' : 'A'  
+          , 'semester' : sem
+          , 'requested_time' : 3.5  
+          , 'allocated_time' : 3.5  
+          , 'session_type' : 'Open - Low Freq'
+          , 'observing_type' : 'continuum' 
+          , 'weather_type' : 'Poor'
+          , 'repeats' : 2 
+          , 'min_lst' : '10:00:00.0' 
+          , 'max_lst' : '20:00:00.0' 
+          , 'elevation_min' : '00:00:00.0' 
+          , 'next_sem_complete' : False
+          , 'next_sem_time' : 1.0
+          , 'receivers' : 'L'
+        }
+
+        adapter = SessionHttpAdapter()
+        adapter.initFromPost(data)
+        # just so that is HAS a DSS session.
+        #adapter.session.dss_session = self.maintProj.sesshun_set.all()[0]
+        adapter.session.save()
+        return adapter.session
 
     def test_getPressures(self):
 
@@ -89,6 +122,72 @@ class TestLstPressures(TestCase):
 
         # make sure it doesn't show up out of it's range
         for hr in range(12, 24):
+            self.assertEqual(float(hr), ps[hr]['LST'])
+            self.assertEqual(0.0, ps[hr]['Total'])
+            for t in types:
+                self.assertEqual(0.0, ps[hr][t])
+
+    def test_getPressures2(self):
+
+        lst = LstPressures()
+
+        wtypes = ['Poor', 'Good', 'Excellent']
+        grades = ['A', 'B', 'C']
+        types = ["%s_%s" % (w, g) for w in wtypes for g in grades]
+
+        # make this session a fixed session, and watch the hours 
+        # get distributed across the weathers
+        self.session.session_type = SessionType.objects.get(type = 'Fixed')
+        self.session.save()
+
+        # calc pressures
+        ps = lst.getPressures()
+
+        # make sure it shows up in it's LST range
+        s1total = 0.5416
+        for hr in range(12):
+            self.assertAlmostEqual(s1total, ps[hr]['Total'], 3)
+            self.assertAlmostEqual(s1total * 0.50, ps[hr]['Poor_A'], 3)
+            self.assertAlmostEqual(s1total * 0.25, ps[hr]['Good_A'], 3)
+            self.assertAlmostEqual(s1total * 0.25, ps[hr]['Excellent_A'], 3)
+
+        # make sure it doesn't show up out of it's range
+        for hr in range(12, 24):
+            self.assertEqual(float(hr), ps[hr]['LST'])
+            self.assertEqual(0.0, ps[hr]['Total'])
+            for t in types:
+                self.assertEqual(0.0, ps[hr][t])
+
+        # add a new session and make sure it shows up
+        s = self.createSession()
+
+        # calc pressures
+        ps = lst.getPressures()
+        s2total = 0.318181818182    
+
+        # the first 10 hours are just the first session
+        for hr in range(9):
+            self.assertAlmostEqual(s1total, ps[hr]['Total'], 3)
+            self.assertAlmostEqual(s1total * 0.50, ps[hr]['Poor_A'], 3)
+            self.assertAlmostEqual(s1total * 0.25, ps[hr]['Good_A'], 3)
+            self.assertAlmostEqual(s1total * 0.25, ps[hr]['Excellent_A'], 3)
+        
+        # the next two are combined 
+        for hr in range(9, 12):
+            self.assertAlmostEqual(s1total + s2total, ps[hr]['Total'], 3)
+            self.assertAlmostEqual((s1total * 0.50) + s2total, ps[hr]['Poor_A'], 3)
+            self.assertAlmostEqual(s1total * 0.25, ps[hr]['Good_A'], 3)
+            self.assertAlmostEqual(s1total * 0.25, ps[hr]['Excellent_A'], 3)
+
+        # up to 20 it's just the second session    
+        for hr in range(12, 20):
+            self.assertAlmostEqual(s2total, ps[hr]['Total'], 3)
+            self.assertAlmostEqual(s2total, ps[hr]['Poor_A'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['Good_A'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['Excellent_A'], 3)
+
+        # make sure there's nothing at the end 
+        for hr in range(21, 24):
             self.assertEqual(float(hr), ps[hr]['LST'])
             self.assertEqual(0.0, ps[hr]['Total'])
             for t in types:
