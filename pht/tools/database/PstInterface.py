@@ -24,18 +24,15 @@ import MySQLdb as m
 from pht.utilities import * 
 from pht.utilities.Conversions import Conversions 
 
+import settings
+
 class PstInterface(object):
 
-    def __init__(self, host = "trent.gb.nrao.edu"
-                     , user = "nrao_200"
-                     , passwd = "wugupHA8"
-                     , database = "nrao_200"
-                     , silent   = True
-                 ):
-        self.db = m.connect(host   = host
-                          , user   = user
-                          , passwd = passwd
-                          , db     = database
+    def __init__(self, silent = True):
+        self.db = m.connect(host   = settings.PST['HOST']
+                          , user   = settings.PST['USER']
+                          , passwd = settings.PST['PASSWORD']
+                          , db     = settings.PST['NAME']
                             )
         self.cursor = self.db.cursor()
         self.silent = silent
