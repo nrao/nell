@@ -171,6 +171,31 @@ class Proposal(models.Model):
         return sems.keys()
 
     @staticmethod
+    def createFromDssProject(project):
+        """
+        Creates a new Proposal instance initialized using a DSS Project.
+        """
+        proposalType  = ProposalType.objects.get(type = "Director's Discretionary Time")
+        status        = Status.objects.get(name = 'Submitted')
+        abstract      = '' if project.abstract is None else project.abstract
+        semester      = Semester.objects.get(semester = project.semester.semester)
+        proposal = Proposal(pst_proposal_id = 0
+                          , proposal_type   = proposalType
+                          , status          = status
+                          , semester        = semester
+                          , pcode           = project.pcode
+                          , create_date     = datetime.now()
+                          , modify_date     = datetime.now()
+                          , submit_date     = datetime.now()
+                          , title           = project.name
+                          , abstract        = abstract
+                          , joint_proposal  = False 
+                          )
+
+        proposal.save()
+        return proposal
+
+    @staticmethod
     def createFromSqlResult(result):
         """
         Creates a new Proposal instance initialized using the result from
