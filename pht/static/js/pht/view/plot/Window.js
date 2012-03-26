@@ -2,12 +2,11 @@ Ext.define('PHT.view.plot.Window', {
     extend: 'Ext.window.Window',
     alias: 'widget.plotwindow',
     autoScroll: true,
-    width: '90%',
-    height: '90%',
+    width: '95%',
+    height: '95%',
     //layout: 'border',
     constrainHeader: true,
     title: 'Plots',
-
     maximizable: true,
     autoshow: true,
     /*
@@ -24,7 +23,7 @@ Ext.define('PHT.view.plot.Window', {
                align: 'stretch',
              },  
     defaults: {
-        style: 'margin: 10px 0 0 10px'
+        style: 'margin: 5px 0 0 5px'
     },
          
     items: [{
@@ -32,28 +31,36 @@ Ext.define('PHT.view.plot.Window', {
                   align: 'stretch',
                 },
         flex: 1,
-        items: [{
-            title: 'Total',
-            xtype : 'lstpressuretotal',
+        defaults: {
+            layout: 'fit',
             flex: 1,
+        },
+        items: [{
+            title: 'Total Pressure',
+            xtype : 'panel',
+            items: [{xtype: 'lstpressuretotal'}],
         },{
             title: 'Poor',
-            xtype : 'lstpressurepoor',
-            flex: 1,
+            xtype : 'panel',
+            items: [{xtype: 'lstpressurepoor'}],
         }],
       },{
         layout: { type: 'hbox',
                   align: 'stretch',
                 },
         flex: 1,
+        defaults: {
+            layout: 'fit',
+            flex: 1,
+        },
         items: [{
             title: 'Good',
-            xtype : 'lstpressuregood',
-            flex: 1,
+            xtype : 'panel',
+            items: [{xtype: 'lstpressuregood'}],
         },{
             title: 'Excellent',
-            xtype : 'lstpressureexcellent',
-            flex: 1,
+            xtype : 'panel',
+            items: [{xtype: 'lstpressureexcellent'}],
         }],
     }],
     /*             

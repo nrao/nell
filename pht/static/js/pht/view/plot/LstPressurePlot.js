@@ -4,8 +4,6 @@ Ext.define('PHT.view.plot.LstPressurePlot', {
     bodyStyle: {
         background: '#fff',
     }, 
-    width: 300,
-    height: 400,
     store: 'LstPressures',
     animate: true,
     shadow: true,
