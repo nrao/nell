@@ -30,6 +30,10 @@ Ext.define('PHT.view.overview.Window', {
 
     getPeriodExplorer: function() {
         return this.down('periodlist');
+    },
+
+    close: function() {
+        this.hide();
     }
 });
 
