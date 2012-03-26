@@ -8,6 +8,17 @@ Ext.define('PHT.view.plot.PlotTheme', {
         return [c, c1, c2];
     } ,
 
+    constructor: function(config) {
+        this.callParent([Ext.apply({
+            axisTitleLeft: {
+              font: 'bold 8px Arial'
+            },            
+            axisTitleBottom: {
+              font: 'bold 8px Arial'
+            },            
+        }, config)]);
+    },
+    
 });
 
 Ext.define('Ext.chart.theme.LstPressureThemeTotal', {
@@ -32,7 +43,7 @@ Ext.define('Ext.chart.theme.LstPressureThemeTotal', {
              ];        
 
         this.callParent([Ext.apply({
-            colors: colors
+            colors: colors,
         }, config)]);
     }
 });
