@@ -11,7 +11,11 @@ Ext.define('PHT.controller.Plots', {
 
     views: [
         'plot.Window',
-        'plot.LstPressures',
+        'plot.LstPressurePlot',
+        'plot.LstPressureTotal',
+        'plot.LstPressurePoor',
+        'plot.LstPressureGood',
+        'plot.LstPressureExcellent',
     ],
 
     init: function() {

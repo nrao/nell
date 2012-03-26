@@ -1,29 +1,4 @@
-// We need a color theme where the weather types are very
-// different, but one can distinguish the different grades
-function getColors(color) {
-    var c = new Ext.draw.Color.fromString(color);
-    var c1 = c.getLighter(0.15);
-    var c2 = c.getLighter(0.30);
-    return [c, c1, c2];
-}
-
-// The below colors should map to the below fields
-var blues = getColors('#0000FF');
-var greens = getColors('#00FF00');
-var reds = getColors('#FF0000');
-var colors = ['orange',
-              reds[0].toString(),
-              reds[1].toString(), 
-              reds[2].toString(), 
-              greens[0].toString(),
-              greens[1].toString(), 
-              greens[2].toString(), 
-              blues[0].toString(),
-              blues[1].toString(), 
-              blues[2].toString(), 
-             ];
-
-// map to colors above
+// map to colors 
 var fields = ['Carryover', 
               'Poor_A',
               'Poor_B',
@@ -36,33 +11,26 @@ var fields = ['Carryover',
               'Excellent_C',
               ];
 
-// We use this theme in our chart 
-Ext.define('Ext.chart.theme.LstPressureTheme', {
-    extend: 'Ext.chart.theme.Base',
- 
-    constructor: function(config) {
-        this.callParent([Ext.apply({
-            colors: colors
-        }, config)]);
-    }
-});
+Ext.require('PHT.view.plot.PlotTheme');
 
-Ext.define('PHT.view.plot.LstPressures', {
-    extend: 'Ext.chart.Chart',
-    theme: 'LstPressureTheme',
-    alias: 'widget.lstpressureplot',
+Ext.define('PHT.view.plot.LstPressureTotal', {
+    extend: 'PHT.view.plot.LstPressurePlot',
+    theme: 'LstPressureThemeTotal',
+    alias: 'widget.lstpressuretotal',
+    /*
     bodyStyle: {
         background: '#fff',
     }, 
     title: 'Lst Pressures',
-    width: 600,
-    height: 500,
+    width: 300,
+    height: 250,
     store: 'LstPressures',
     animate: true,
     shadow: true,
     legend: {
         position: 'right',
-    },    
+    },
+    */
     axes: [{
         type: 'Numeric',
         position: 'left',
