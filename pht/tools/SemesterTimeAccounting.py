@@ -598,7 +598,10 @@ class SemesterTimeAccounting(object):
 
         # how much of this time is Galactic Center time?
         gcHrs, nonGcHrs = self.getGCHoursFromSession(s)
-        gcFrac = gcHrs / (gcHrs + nonGcHrs)
+        if (gcHrs + nonGcHrs) > 0.0:
+            gcFrac = gcHrs / (gcHrs + nonGcHrs)
+        else:
+            gcFrac = 0.0
         gc = t.factor(gcFrac)
         gc.type = 'GC'
 
