@@ -20,6 +20,10 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
+from django.core.management import setup_environ
+import settings
+setup_environ(settings)
+
 from django.db.models import Q
 
 from datetime import datetime, date, timedelta
@@ -557,12 +561,14 @@ class SemesterTimeAccounting(object):
         return carryOver    
 
     def getCarryOverForGrade(self, sessions):
+        "Carry over is divided between fixed and everything else"
 
-        # TBF: how much time contributed by fixed?
-        fixed = SemesterTimes()
+        fixed = SessionType.objects.get(type = 'Fixed')
+        fixedSess = [s for s in sessions if s.session_type == fixed]
+        otherSess = [s for s in sessions if s.session_type != fixed]
 
-        # then divide them up by freq.
-        st = self.getCarryOverTimes(sessions)
+        fixed = self.getCarryOverTimes(fixedSess) 
+        st = self.getCarryOverTimes(otherSess)
 
         return dict(fixed = fixed
                   , times = st)
@@ -598,7 +604,10 @@ class SemesterTimeAccounting(object):
 
         return SemesterTimes(total = t, gc = gc) 
         
-
+if __name__ == '__main__':
+    ta = SemesterTimeAccounting(semester = '12B') 
+    ta.calculateTimeAccounting()
+    ta.report()
        
        
 
