@@ -128,12 +128,24 @@ class BackfillImport(PstImport):
                                  )
         allotment.save()
         pht_session.allotment = allotment
-        gradeMap = {4.0 : 'A', 3.0 : 'B', 2.0: 'C', 1.0: 'D'}
-        grade    = gradeMap.get(dss_session.allotment.grade)
+        grade = self.dssGrade2phtGrade(dss_session.allotment.grade)
         if grade is not None:
             pht_session.grade = SessionGrade.objects.get(grade = grade)
         pht_session.save()
 
+    def dssGrade2phtGrade(self, grade):
+        "Simple mapping"
+        phtGrade = None
+        if grade >= 4:
+            phtGrade = 'A'
+        elif grade >= 3 and grade < 4:    
+            phtGrade = 'B'
+        elif grade >= 2 and grade < 3:    
+            phtGrade = 'C'
+        elif grade < 2:    
+            phtGrade = 'D'
+        return phtGrade    
+        
     def checkPst(self, pcode):
         pcode = pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/')
         q = "select count(*) from proposal where PROP_ID = '%s'" % pcode
