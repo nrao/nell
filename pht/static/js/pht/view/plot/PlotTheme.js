@@ -1,11 +1,20 @@
 Ext.define('PHT.view.plot.PlotTheme', {
     extend: 'Ext.chart.theme.Base',
 
+    // returns color objects for the given color in various shades
     getColors: function(color) {
         var c = new Ext.draw.Color.fromString(color);
-        var c1 = c.getLighter(0.15);
-        var c2 = c.getLighter(0.30);
-        return [c, c1, c2];
+        var f1 = 0.25
+        var f2 = 0.40
+        // TBF: hack - for some reason it takes more to distinguish 
+        // the greens
+        if (color == '#00FF00') {
+            f1 += .05
+            f2 += .05
+        }    
+        var c1 = c.getLighter(f1);
+        var c2 = c.getLighter(f2);
+        return [c, c1, c2]
     } ,
 
     constructor: function(config) {
