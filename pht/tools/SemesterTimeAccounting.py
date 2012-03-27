@@ -340,6 +340,42 @@ class SemesterTimeAccounting(object):
         print "    %s" % self.newAstroAvailAllGradeHrs.gc
         print ""
 
+        #self.debugReport()
+
+    def debugReport(self):
+        "For debugging"
+
+        print "DETAILS: "
+        print "Maint. Periods: "
+        total = 0
+        for p in self.maintPeriods:
+            print p 
+            total += p.duration
+        print "Total maint periods: ", total    
+
+        print "Shutdown Periods: "
+        total = 0
+        for p in self.shutdownPeriods:
+            print p 
+            total += p.duration
+        print "Total shutdown periods: ", total    
+
+        print "Test Sessions: "
+        for s in self.testSessions:
+            print s
+
+        print "Carryover Sessions:"
+        total = 0
+        totals = {'A' : 0.0, 'B' : 0.0, 'C' : 0.0, 'None' : 0.0}
+        for s in self.carryOverSessions:
+            print s, s.session_type, s.grade, s.next_semester.time 
+            if s.grade is not None:
+                totals[s.grade.grade] += s.next_semester.time
+            else:
+                totals['None'] += s.next_semester.time
+            total = s.next_semester.time
+        print "Total Carryover Time: ", total, totals    
+
     def getSemesterDays(self, semester = None):    
         "How many days in the given semester?"
         if semester is None:
@@ -543,7 +579,7 @@ class SemesterTimeAccounting(object):
         """
 
         # TBF: how to do the not None query?
-        ss = Session.objects.filter(next_semester__complete = False)
+        ss = Session.objects.filter(next_semester__complete = False).order_by('name')
         return [s for s in ss if s.dss_session is not None]
             
     def getCarryOver(self, sessions):
