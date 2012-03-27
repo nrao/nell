@@ -4,21 +4,10 @@ Ext.define('PHT.view.plot.Window', {
     autoScroll: true,
     width: '95%',
     height: '95%',
-    //layout: 'border',
     constrainHeader: true,
     title: 'Plots',
     maximizable: true,
     autoshow: true,
-    /*
-    layout : { type: 'hbox'
-             , align: 'stretch'
-             },
-    items: [{
-        xtype : 'lstpressuretotal'
-      },{
-        xtype: 'lstpressurepoor'
-    }],
-    */
     layout : { type: 'vbox',
                align: 'stretch',
              },  
@@ -26,6 +15,49 @@ Ext.define('PHT.view.plot.Window', {
         style: 'margin: 5px 0 0 5px'
     },
          
+    initComponent: function() {
+
+        this.proposalCombo = Ext.create('Ext.form.field.ComboBox', {
+            name: 'pcode',
+            store: 'ProposalCodes',
+            queryMode: 'local',
+            displayField: 'pcode',
+            valueField: 'pcode',
+            hideLabel: true,
+            emptyText: 'Select a proposal...',
+        });
+         this.sessionCombo = Ext.create('Ext.form.field.ComboBox', {
+            name: 'session',
+            store: 'Sessions',
+            queryMode: 'local',
+            lastQuery: '',
+            displayField: 'name',
+            valueField: 'id',
+            hideLabel: true,
+            emptyText: 'Select a session...',
+        });
+
+        this.dockedItems = [{
+            xtype: 'toolbar',
+            items: [
+                {
+                    text: 'Update',
+                    action: 'update',
+                },{
+                    xtype: 'tbseparator'
+                },
+                this.proposalCombo,
+                this.sessionCombo,
+                Ext.create('Ext.button.Button', {
+                        text: 'Clear Filters',
+                        action: 'clear',
+                }),
+            ]
+        }];
+        this.callParent(arguments);
+    },        
+
+    // display the 4 plots in a 2 x 2 table
     items: [{
         layout: { type: 'hbox',
                   align: 'stretch',
@@ -63,36 +95,6 @@ Ext.define('PHT.view.plot.Window', {
             items: [{xtype: 'lstpressureexcellent'}],
         }],
     }],
-    /*             
-    items: [{
-        layout : { type: 'hbox'
-            , align: 'stretch'
-                },
-        items: [{
-            xtype: 'lstpressuretotal',
-        }],
-      },{  
-        layout : { type: 'hbox'
-            , align: 'stretch'
-                },
-        items: [{
-            xtype: 'lstpressurepoor',
-        }],
-    }],
-    */
-
-    initComponent: function() {    
-        this.dockedItems = [{
-            xtype: 'toolbar',
-            items: [
-                {
-                    text: 'Update',
-                    action: 'update',
-                },
-            ]
-        }];
-        this.callParent(arguments);
-    },
 });
 
 
