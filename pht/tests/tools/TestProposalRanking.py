@@ -20,22 +20,14 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from django.db                 import models
+from django.test         import TestCase
 
-class ObservingType(models.Model):
+from pht.tools.reports import ProposalRanking
 
-    type = models.CharField(max_length = 32)
-    code = models.CharField(max_length = 2)
+class TestProposalRanking(TestCase):
 
-    class Meta:
-        db_table  = "pht_observing_types"
-        app_label = "pht"
+    fixtures = ['proposal_GBT12A-002.json']
 
-    def jsonDict(self):
-        return {'id'   : self.id
-              , 'type' : self.type
-               }
-
-    @staticmethod
-    def jsonDictOptions():
-        return [ot.jsonDict() for ot in ObservingType.objects.all()]
+    def test_report(self):
+        pr = ProposalRanking('test_proposalRanking.pdf')
+        pr.report()

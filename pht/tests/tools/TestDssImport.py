@@ -24,10 +24,10 @@ from django.test         import TestCase
 
 from pht       import models as pht
 from scheduler import models as scheduler
-from pht.tools.database import BackfillImport
+from pht.tools.database import DssImport
 from scheduler.tests.utils    import create_sesshun
 
-class TestBackfillImport(TestCase):
+class TestDssImport(TestCase):
 
     fixtures = ['scheduler.json']
 
@@ -43,17 +43,9 @@ class TestBackfillImport(TestCase):
         rg.receivers.add(r)
         rg.save()
 
-        backfill = BackfillImport(quiet = True)
-        backfill.importProjects()
+        dss = DssImport(projects = scheduler.Project.objects.all(), quiet = True)
+        dss.importProjects()
+
         for p in pht.Proposal.objects.all():
             p.delete()
-
-    def test_dssGrade2phtGrade(self):
-
-        grades = [-1.0, 0.25, 1.2, 2.0, 3.3, 4.0, 4.8]
-        exp    = ['D', 'D', 'D', 'C', 'B', 'A', 'A']
-        backfill = BackfillImport(quiet = True)
-        for i in range(len(grades)):
-            g = backfill.dssGrade2phtGrade(grades[i])
-            self.assertEqual(exp[i], g)
 

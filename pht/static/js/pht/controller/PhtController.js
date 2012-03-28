@@ -40,8 +40,8 @@ Ext.define('PHT.controller.PhtController', {
             scope: this,
             fn: function(id) {
                 if (id == 'yes') {
-                    record.destroy();
                     store.remove([record]);
+                    store.sync();
                 }
             }
         });
@@ -56,10 +56,8 @@ Ext.define('PHT.controller.PhtController', {
             scope: this,
             fn: function(id) {
                 if (id == 'yes') {
-                    for (i = 0; i < records.length; i++) {
-                        records[i].destroy();
-                    }
                     store.remove(records);
+                    store.sync();
                 }
             }
         });

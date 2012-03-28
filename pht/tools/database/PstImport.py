@@ -137,6 +137,7 @@ class PstImport(PstInterface):
             self.fetchObservingTypes(proposal)
             self.fetchSources(proposal)
             self.fetchSessions(proposal)
+            self.fetchSRPScore(proposal)
         
             self.proposals.append(proposal)
  
@@ -187,6 +188,7 @@ class PstImport(PstInterface):
                     self.fetchSources(proposal)
                     self.fetchSessions(proposal)
                     self.fetchAuthors(proposal)
+                    self.fetchSRPScore(proposal)
                     self.proposals.append(proposal)
 
         self.report()
@@ -239,6 +241,31 @@ class PstImport(PstInterface):
         # if we got here, no GBT!
         return False
 
+    def fetchSRPScore(self, proposal):
+        q = """
+            SELECT
+              tr.normalizedSRPScore as score,
+              pns.srpScores as srpScores
+            FROM (proposal AS p
+            LEFT JOIN proposal_tac_reviews AS tr ON p.proposal_id = tr.proposal_id)
+            LEFT JOIN proposal_normalized_scores AS pns ON p.proposal_id = pns.proposal_id
+            WHERE p.proposal_id = '%s'
+            """ % proposal.pst_proposal_id
+        self.cursor.execute(q)
+        row    = self.cursor.fetchone()
+        rowDct = dict(zip(self.getKeys(), row))
+        proposal.normalizedSRPScore       = rowDct['score']
+        proposal.draft_normalizedSRPScore = rowDct['srpScores']
+
+        q = """
+            select count(*) as numrefs from proposal_reviews where proposal_id = %s
+            """ % proposal.pst_proposal_id
+        self.cursor.execute(q)
+        row    = self.cursor.fetchone()
+        rowDct = dict(zip(self.getKeys(), row))
+        proposal.num_refs = rowDct['numrefs']
+        proposal.save()
+
     def fetchAuthors(self, proposal):
         q = """
             select person.person_id, a.* 
@@ -246,11 +273,29 @@ class PstImport(PstInterface):
               join userAuthentication as ua on ua.userAuthentication_id = a.user_id)
               join person on person.personAuthentication_id = ua.userAuthentication_id
             where proposal_id = %s
-            """ % proposal.pst_proposal_id
+        """ % proposal.pst_proposal_id
         self.cursor.execute(q)
         keys = self.getKeys()
         for row in self.cursor.fetchall():
             author = Author.createFromSqlResult(dict(zip(keys, map(self.safeUnicode, row))), proposal)
+
+    def fixAuthorsBits(self):
+        """
+        The author booleans got messed up when we originally import authors.  
+        This method fixes them.
+        """
+        for a in Author.objects.all():
+            q   = "select * from author where author_id = %s" % a.pst_author_id
+            self.cursor.execute(q)
+            keys = self.getKeys()
+            row = self.cursor.fetchone()
+            result = dict(zip(keys, map(self.safeUnicode, row)))
+            a.domestic = result['DOMESTIC'] == '\x01'
+            a.new_user = result['NEW_USER'] == '\x01'
+            a.thesis_observing = result['THESIS_OBSERVING'] == '\x01'
+            a.support_requester = result['SUPPORT_REQUESTER'] == '\x01'
+            a.supported = result['SUPPORTED'] == '\x01'
+            a.save()
 
     def fetchScientificCategories(self, proposal):
         q = """select scientificCategory 
@@ -446,6 +491,57 @@ class PstImport(PstInterface):
         source.save()
 
         return source
+
+    def reimportAllSessionResources(self, semester, sessions = None):
+        """
+        This is a one-time needed function for fixing the fact that
+        we had a bug in the original import, and now want to just
+        reimport the session's resources.
+        """
+
+        if sessions is None:
+            ss = Session.objects.filter(proposal__semester__semester = semester).order_by('name')
+        else:
+            ss = sessions
+
+        reimported = []
+        changes = {}
+        for s in ss:
+            reimported.append(s) 
+            key = "%s (%s)" % (s.name, s.proposal.pcode)
+            # what are they now?
+            rcvrs = s.get_receivers()
+            backends = s.get_backends()
+            changes[key] = {'old' : (rcvrs, backends)}
+            # good, now get rid of them
+            for r in s.receivers.all():
+                s.receivers.remove(r)
+            for b in s.backends.all():
+                s.backends.remove(b)
+            # now reimport them    
+            self.importResources(s)            
+            # what's it look like now?
+            snew = Session.objects.get(id = s.id)
+            rcvrs = snew.get_receivers()
+            backends = snew.get_backends()
+            changes[key]['new'] = (rcvrs, backends)
+
+        # report
+        filename = "reimportResources.txt"
+        f = open(filename, 'w')
+        changed = 0
+        f.write("Reimported sources for sessions:\n")
+        for s in reimported:
+            f.write(    "%s (%s)\n" % (s.name, s.proposal.pcode))
+        f.write("Actual Changes:\n")
+        for k, v in changes.items():
+            if v['old'] != v['new']:
+                f.write("%s:\n" % k)
+                changed += 1
+                f.write("    Old: %s, %s\n" % (v['old'][0], v['old'][1]))
+                f.write("    New: %s, %s\n" % (v['new'][0], v['new'][1]))
+        f.write("Changed %d of %d sessions.\n" % (changed, len(ss)))    
+        f.close()    
 
     def reportLine(self, line):
         "Add line to stuff to go into report file, and maybe to stdout too."

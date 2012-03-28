@@ -104,9 +104,18 @@ class BackfillImport(PstImport):
             
     def setSessionTarget(self, pht_session, dss_session):
         try:
-            target = Target(ra = dss_session.target.horizontal
-                              , dec = dss_session.target.vertical
-                                )
+            target = Target(ra  = dss_session.target.horizontal
+                          , dec = dss_session.target.vertical
+                            )
+            target.save()
+            # use this ra & dec to calc. the other LST values
+            min_lst, max_lst = target.calcLSTrange()
+            target.min_lst = min_lst
+            target.max_lst = max_lst
+            target.save()
+            center, width = target.calcCenterWidthLST()
+            target.center_lst = center
+            target.lst_width = width
             target.save()
             pht_session.target = target
             pht_session.save()
@@ -119,12 +128,24 @@ class BackfillImport(PstImport):
                                  )
         allotment.save()
         pht_session.allotment = allotment
-        gradeMap = {4.0 : 'A', 3.0 : 'B', 2.0: 'C', 1.0: 'D'}
-        grade    = gradeMap.get(dss_session.allotment.grade)
+        grade = self.dssGrade2phtGrade(dss_session.allotment.grade)
         if grade is not None:
             pht_session.grade = SessionGrade.objects.get(grade = grade)
         pht_session.save()
 
+    def dssGrade2phtGrade(self, grade):
+        "Simple mapping: round the grade"
+        phtGrade = None
+        grade = round(grade)
+        if grade > 4.0:
+            phtGrade = 'A'
+        elif grade < 1.0:    
+            phtGrade = 'D'
+        else:
+            gradeMap = {4.0 : 'A', 3.0: 'B', 2.0: 'C', 1.0: 'D'}
+            phtGrade = gradeMap.get(grade)
+        return phtGrade    
+        
     def checkPst(self, pcode):
         pcode = pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/')
         q = "select count(*) from proposal where PROP_ID = '%s'" % pcode

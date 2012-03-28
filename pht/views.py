@@ -13,8 +13,8 @@ from models import *
 from pht.tools.database import PstImport
 from pht.tools.LstPressures import LstPressures
 from httpadapters import *
-from tools.database import PstInterface
-from tools.database import BulkSourceImport
+from tools.database import PstInterface, BulkSourceImport
+from tools.reports import *
 import math
 
 
@@ -90,8 +90,27 @@ def tree(request, *args, **kws):
 @admin_only
 def lst_pressure(request, *args, **kws):
 
+    # Are we calculating pressures for all sessions, or just
+    # specific ones?
+    filters = request.GET.get('filter', None)
+
+    # TBF: even though it's possible to have two filters at once
+    # we will just use one of them
+    if filters is not None:
+        filters = eval(filters)
+        for filter in filters:
+            prop = filter.get('property')
+            value = filter.get('value')
+            if prop == 'pcode':
+                ss = Session.objects.filter(proposal__pcode = value)
+            else:
+                ss = Session.objects.filter(id = value)
+    else:
+        ss = None
+        
+    # calcualte the LST pressures    
     lst = LstPressures()
-    pressure = lst.getPressures()
+    pressure = lst.getPressures(sessions = ss)
 
     return HttpResponse(json.dumps({"success" : "ok"
                                   , "lst_pressure" : pressure
@@ -396,6 +415,32 @@ def lst_range(request):
     return HttpResponse(json.dumps({"success" : "ok", 'lines' : lines})
                       , content_type = 'application/json')
 
+
+@login_required
+@admin_only
+def proposal_summary(request):
+    semester = request.GET.get('semester')
+    # Create the HttpResponse object with the appropriate PDF headers.
+    response = HttpResponse(mimetype='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=proposalSummary.pdf'
+
+    ps = ProposalSummary(response)
+    ps.report(semester = semester)
+
+    return response
+
+@login_required
+@admin_only
+def proposal_ranking(request):
+    semester = request.GET.get('semester')
+    # Create the HttpResponse object with the appropriate PDF headers.
+    response = HttpResponse(mimetype='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=proposalRanking.pdf'
+
+    ps = ProposalRanking(response)
+    ps.report(semester = semester)
+
+    return response
 
 @login_required
 @admin_only

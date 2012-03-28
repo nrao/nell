@@ -23,11 +23,13 @@
 from django.db                 import models
 
 from Author             import Author
+from Backend            import Backend
 from ObservingType      import ObservingType
 from ScientificCategory import ScientificCategory
 from Semester           import Semester
 from Status             import Status
 from ProposalType       import ProposalType
+from Receiver           import Receiver
 
 from scheduler.models   import Project as DSSProject 
 
@@ -54,7 +56,10 @@ class Proposal(models.Model):
     abstract        = models.CharField(max_length = 2000)
     spectral_line   = models.CharField(max_length = 2000, null = True)
     joint_proposal  = models.BooleanField()
-    next_semester_complete = models.BooleanField(default = True)
+    normalizedSRPScore       = models.FloatField(null = True)
+    draft_normalizedSRPScore = models.FloatField(null = True)
+    num_refs                 = models.IntegerField(null = True)
+    next_semester_complete   = models.BooleanField(default = True)
     #next_semester_time     = models.FloatField(null = True)
 
     class Meta:
@@ -111,6 +116,27 @@ class Proposal(models.Model):
         else:
             return None
 
+    def backends(self):
+        return ''.join([b.code for b in Backend.objects.raw(
+            """
+            select distinct b.id, b.* 
+            from ((pht_sessions as s 
+              join pht_proposals as p on p.id = s.proposal_id ) 
+              join pht_sessions_backends as sb on s.id = sb.session_id) 
+              join pht_backends as b on b.id = sb.backend_id 
+            where p.pcode = '%s'""" % self.pcode)])
+
+    def bands(self):
+        "What are the bands associated with this proposal?"
+        return ''.join([r.code for r in Receiver.objects.raw(
+            """
+            select distinct r.id, r.abbreviation 
+            from ((pht_sessions as s 
+              join pht_proposals as p on p.id = s.proposal_id ) 
+              join pht_sessions_receivers as sr on s.id = sr.session_id) 
+              join pht_receivers as r on r.id = sr.receiver_id 
+            where p.pcode = '%s'""" % self.pcode)])
+
     def isComplete(self):
         if self.dss_project is not None:
             return self.dss_project.complete
@@ -143,6 +169,31 @@ class Proposal(models.Model):
             if p.semester.semester not in sems:
                 sems[p.semester] = True
         return sems.keys()
+
+    @staticmethod
+    def createFromDssProject(project):
+        """
+        Creates a new Proposal instance initialized using a DSS Project.
+        """
+        proposalType  = ProposalType.objects.get(type = "Director's Discretionary Time")
+        status        = Status.objects.get(name = 'Submitted')
+        abstract      = '' if project.abstract is None else project.abstract
+        semester      = Semester.objects.get(semester = project.semester.semester)
+        proposal = Proposal(pst_proposal_id = 0
+                          , proposal_type   = proposalType
+                          , status          = status
+                          , semester        = semester
+                          , pcode           = project.pcode
+                          , create_date     = datetime.now()
+                          , modify_date     = datetime.now()
+                          , submit_date     = datetime.now()
+                          , title           = project.name
+                          , abstract        = abstract
+                          , joint_proposal  = False 
+                          )
+
+        proposal.save()
+        return proposal
 
     @staticmethod
     def createFromSqlResult(result):

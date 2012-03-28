@@ -1,0 +1,65 @@
+alter table pht_receivers add column code varchar(2);
+
+update pht_receivers set code = 'N' where id = 1;
+update pht_receivers set code = 'R' where id = 2;
+update pht_receivers set code = '3' where id = 3;
+update pht_receivers set code = '4' where id = 4;
+update pht_receivers set code = '6' where id = 5;
+update pht_receivers set code = '8' where id = 6;
+update pht_receivers set code = 'A' where id = 7;
+update pht_receivers set code = 'L' where id = 8;
+update pht_receivers set code = 'S' where id = 9;
+update pht_receivers set code = 'C' where id = 10;
+update pht_receivers set code = 'X' where id = 11;
+update pht_receivers set code = 'U' where id = 12;
+update pht_receivers set code = 'K' where id = 13;
+update pht_receivers set code = 'B' where id = 14;
+update pht_receivers set code = 'Q' where id = 15;
+update pht_receivers set code = 'M' where id = 16;
+update pht_receivers set code = 'Z' where id = 17;
+update pht_receivers set code = 'H' where id = 18;
+update pht_receivers set code = 'F' where id = 19;
+update pht_receivers set code = 'W' where id = 20;
+
+alter table pht_backends add column code varchar(2);
+
+update pht_backends set code = 'C' where id = 1;
+update pht_backends set code = '2' where id = 2;
+update pht_backends set code = 'D' where id = 3;
+update pht_backends set code = 'S' where id = 4;
+update pht_backends set code = 'G' where id = 5;
+update pht_backends set code = 'U' where id = 6;
+update pht_backends set code = 'H' where id = 7;
+update pht_backends set code = '5' where id = 8;
+update pht_backends set code = 'M' where id = 9;
+update pht_backends set code = 'R' where id = 10;
+update pht_backends set code = 'E' where id = 11;
+update pht_backends set code = 'P' where id = 12;
+update pht_backends set code = 'V' where id = 13;
+update pht_backends set code = 'B' where id = 14;
+update pht_backends set code = 'Z' where id = 15;
+update pht_backends set code = 'O' where id = 16;
+
+alter table pht_observing_types add column code varchar(2);
+
+update pht_observing_types set code = 'S' where id = 1;
+update pht_observing_types set code = 'P' where id = 2;
+update pht_observing_types set code = 'C' where id = 3;
+update pht_observing_types set code = 'R' where id = 4;
+update pht_observing_types set code = 'T' where id = 5;
+update pht_observing_types set code = 'L' where id = 6;
+update pht_observing_types set code = 'M' where id = 7;
+update pht_observing_types set code = 'G' where id = 8;
+update pht_observing_types set code = 'U' where id = 9;
+update pht_observing_types set code = 'A' where id = 10;
+update pht_observing_types set code = 'H' where id = 11;
+update pht_observing_types set code = 'F' where id = 12;
+update pht_observing_types set code = 'E' where id = 13;
+update pht_observing_types set code = 'A' where id = 14;
+update pht_observing_types set code = 'Y' where id = 15;
+update pht_observing_types set code = 'D' where id = 16;
+update pht_observing_types set code = 'A' where id = 17;
+update pht_observing_types set code = 'X' where id = 18;
+update pht_observing_types set code = 'N' where id = 19;
+update pht_observing_types set code = 'F' where id = 24;
+update pht_observing_types set code = 'L' where id = 25;
