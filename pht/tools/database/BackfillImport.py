@@ -134,16 +134,16 @@ class BackfillImport(PstImport):
         pht_session.save()
 
     def dssGrade2phtGrade(self, grade):
-        "Simple mapping"
+        "Simple mapping: round the grade"
         phtGrade = None
-        if grade >= 4:
+        grade = round(grade)
+        if grade > 4.0:
             phtGrade = 'A'
-        elif grade >= 3 and grade < 4:    
-            phtGrade = 'B'
-        elif grade >= 2 and grade < 3:    
-            phtGrade = 'C'
-        elif grade < 2:    
+        elif grade < 1.0:    
             phtGrade = 'D'
+        else:
+            gradeMap = {4.0 : 'A', 3.0: 'B', 2.0: 'C', 1.0: 'D'}
+            phtGrade = gradeMap.get(grade)
         return phtGrade    
         
     def checkPst(self, pcode):
