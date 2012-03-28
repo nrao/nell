@@ -79,6 +79,8 @@ class SemesterSummary(object):
         t0 = self.getIntroTable()
         t1 = self.getStartingHoursTable()
         t2 = self.getAvailableAllAstronomyTable()
+        t3 = self.getAvailableNewAstronomyTableGradeA()
+        t4 = self.getAvailableNewAstronomyTable()
 
         b = Paragraph('<br/>', self.styleSheet)
 
@@ -86,6 +88,7 @@ class SemesterSummary(object):
         for g in ['A', 'B', 'C']:
             tables.append(self.getBacklogTableForGrade(g))
             tables.append(b)
+        tables.extend([t3, b, t4, b])    
 
         # write the document to disk (or something)
         self.doc.build(tables
@@ -125,35 +128,13 @@ class SemesterSummary(object):
 
 
         t = Table(data, colWidths = [100, 100, 100])
-
         t.setStyle(self.tableStyle)
-        
         return t
 
     def getAvailableAllAstronomyTable(self):
-        
-        hrsTotal = (self.ta.astronomyAvailableHrs.total.total
-                    , self.ta.astronomyAvailableHrs.gc.total)
-        hrsLowFreq = (self.ta.astronomyAvailableHrs.total.lowFreq
-                    , self.ta.astronomyAvailableHrs.gc.lowFreq)
-        hrsHiFreq1 = (self.ta.astronomyAvailableHrs.total.hiFreq1
-                    , self.ta.astronomyAvailableHrs.gc.hiFreq1)
-        hrsHiFreq2 = (self.ta.astronomyAvailableHrs.total.hiFreq2
-                    , self.ta.astronomyAvailableHrs.gc.hiFreq2)
-
-        data = [[self.pg('Available for ALL Astronomy during %s' % self.semester)
-                ]
-              , self.hrsPg('Hours Total', hrsTotal)  
-              , self.hrsPg('Hours for Low Freq', hrsLowFreq)
-              , self.hrsPg('Hours for Hi Freq 1', hrsHiFreq1)
-              , self.hrsPg('Hours for Hi Freq 2', hrsHiFreq2)
-               ]
-
-        t = Table(data, colWidths = [100, 100, 100])
-
-        t.setStyle(self.tableStyle)
-        
-        return t
+        txt = 'Available for ALL Astronomy during %s' % self.semester
+        return self.getAvailableTable(txt
+                                    , self.ta.astronomyAvailableHrs)
 
     def getBacklogTableForGrade(self, grade):
 
@@ -177,10 +158,50 @@ class SemesterSummary(object):
                ]
 
         t = Table(data, colWidths = [100, 100, 100])
-
         t.setStyle(self.tableStyle)
-        
         return t
+
+    def getAvailableHrs(self, available):
+        "Reorganize our data."
+
+        hrsTotal = (available.total.total
+                    , available.gc.total)
+        hrsLowFreq = (available.total.lowFreq
+                    , available.gc.lowFreq)
+        hrsHiFreq1 = (available.total.hiFreq1
+                    , available.gc.hiFreq1)
+        hrsHiFreq2 = (available.total.hiFreq2
+                    , available.gc.hiFreq2)
+
+        return (hrsTotal, hrsLowFreq, hrsHiFreq1, hrsHiFreq2)            
+        
+    def getAvailableTable(self, text, available):
+        "Worker function for creating a table of available hours."
+        hrsTotal, hrsLowFreq, hrsHiFreq1, hrsHiFreq2 = \
+            self.getAvailableHrs(available)
+
+        data = [[self.pg(text)
+                ]
+              , self.hrsPg('Hours Total', hrsTotal)  
+              , self.hrsPg('Hours for Low Freq', hrsLowFreq)
+              , self.hrsPg('Hours for Hi Freq 1', hrsHiFreq1)
+              , self.hrsPg('Hours for Hi Freq 2', hrsHiFreq2)
+               ]
+
+        t = Table(data, colWidths = [100, 100, 100])
+        t.setStyle(self.tableStyle)
+        return t
+
+    def getAvailableNewAstronomyTableGradeA(self):
+        txt = 'Available for NEW Astronomy during %s (Grade A Carry Over Only)' % self.semester
+        return self.getAvailableTable(txt
+                                    , self.ta.newAstroAvailGradeAHrs)
+
+
+    def getAvailableNewAstronomyTable(self):
+        txt = 'Available for NEW Astronomy during %s (All Grades Carry Over)' % self.semester
+        return self.getAvailableTable(txt
+                                    , self.ta.newAstroAvailAllGradeHrs)
 
     def pg(self, text):
         "Shortcut to Paragraph"
@@ -193,23 +214,9 @@ class SemesterSummary(object):
               , self.pg("GC[%5.2f]" % hrs[1]) # hrs in Gal. Center
                ]
 
-    def colWidths(self):
-        return [100, 20] #, 80, 310, 20, 50, 20, 20, 20, 20, 20, 20, 30, 20, 40]
-
-    def genHeader(self):
-        return [Paragraph('<b>Pro</b>', self.styleSheet)
-              , Paragraph('<b>Ptm/Oh </b>', self.styleSheet)
-               ]
-
-    def genRow(self, proposal):
-        return [Paragraph(proposal.pcode.split('-')[1], self.styleSheet)
-              , '']
     def genFooter(self, canvas, doc):
         pass
 
-    def order(self, proposals):       
-        return proposals
-        
     def makeHeaderFooter(self, canvas, doc):
         canvas.saveState() 
         canvas.setFont('Times-Roman', 20) 
@@ -221,7 +228,7 @@ class SemesterSummary(object):
 if __name__ == '__main__':
 
     f = file('SemesterSummary.pdf', 'w')
-    ss = SemesterSummary(f, semester = '12A')
+    ss = SemesterSummary(f, semester = '12B')
     ss.report()
 
 
