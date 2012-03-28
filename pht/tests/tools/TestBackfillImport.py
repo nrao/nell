@@ -48,3 +48,12 @@ class TestBackfillImport(TestCase):
         for p in pht.Proposal.objects.all():
             p.delete()
 
+    def test_dssGrade2phtGrade(self):
+
+        grades = [-1.0, 0.25, 1.2, 2.0, 3.3, 4.0, 4.8]
+        exp    = ['D', 'D', 'D', 'C', 'B', 'A', 'A']
+        backfill = BackfillImport(quiet = True)
+        for i in range(len(grades)):
+            g = backfill.dssGrade2phtGrade(grades[i])
+            self.assertEqual(exp[i], g)
+

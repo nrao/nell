@@ -348,7 +348,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
 
 
-    def getPressures(self):
+    def getPressures(self, sessions = None):
         """
         Returns a dictionary of pressures by LST for different 
         categories.  This format is specified to easily convert
@@ -360,6 +360,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         ]
         """
 
+        # what sessions are we doing this for?
+        if sessions is None:
+            sessions = Session.objects.all()
+
         # init buckets
         totalPs     = numpy.array([0.0]*self.hrs)
         carryoverTotalPs = numpy.array([0.0]*self.hrs)
@@ -370,8 +374,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                  }
 
         # fill the buckets
-        ss = Session.objects.all()
-        for s in ss:
+        for s in sessions:
             carryover = s.dss_session is not None
             ps = self.getPressuresForSession(s, carryover)
             ps = numpy.array(ps)

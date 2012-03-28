@@ -90,8 +90,27 @@ def tree(request, *args, **kws):
 @admin_only
 def lst_pressure(request, *args, **kws):
 
+    # Are we calculating pressures for all sessions, or just
+    # specific ones?
+    filters = request.GET.get('filter', None)
+
+    # TBF: even though it's possible to have two filters at once
+    # we will just use one of them
+    if filters is not None:
+        filters = eval(filters)
+        for filter in filters:
+            prop = filter.get('property')
+            value = filter.get('value')
+            if prop == 'pcode':
+                ss = Session.objects.filter(proposal__pcode = value)
+            else:
+                ss = Session.objects.filter(id = value)
+    else:
+        ss = None
+        
+    # calcualte the LST pressures    
     lst = LstPressures()
-    pressure = lst.getPressures()
+    pressure = lst.getPressures(sessions = ss)
 
     return HttpResponse(json.dumps({"success" : "ok"
                                   , "lst_pressure" : pressure

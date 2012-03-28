@@ -1,2 +1,3 @@
 from ProposalSummary import ProposalSummary
-from ProposalRanking import ProposalRanking
+from ProposalSummary import ProposalSummary
+from StatusReport    import StatusReport
