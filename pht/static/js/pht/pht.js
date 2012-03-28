@@ -190,6 +190,12 @@ Ext.application({
             autoScroll: true,
             }
         );
+        var semesterSummaryMenu = Ext.create('Ext.menu.Menu', {
+            id: 'semesterSummaryMenu', 
+            items: [],
+            autoScroll: true,
+            }
+        );
         var store = this.getController('Proposals').getSemestersStore();
         store.load({
             scope: this,
@@ -208,6 +214,12 @@ Ext.application({
                             window.open('/pht/reports/proposalranking?semester=' + semester);
                         }
                     });
+                    semesterSummaryMenu.add({
+                        text: semester,
+                        handler: function() {
+                            window.open('/pht/reports/semester_summary?semester=' + semester);
+                        }
+                    });
                 });
             }
         });
@@ -220,6 +232,10 @@ Ext.application({
                 {
                 text: 'Proposal Ranking',
                 menu: proposalRankingMenu
+                },
+                {
+                text: 'Semester Summary',
+                menu: semesterSummaryMenu
                 }
             ]
         });
