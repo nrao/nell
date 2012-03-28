@@ -34,5 +34,5 @@ class TestSemesterSummary(TestCase):
         # I'm too lazy to fix the scheduler.json - missing commissioning
         c = Observing_Type.objects.get_or_create(type = 'commissioning')
 
-        ss = SemesterSummary.SemesterSummary('test_SemesterSummary.pdf'
-                                            , semester = '11A')
+        ss = SemesterSummary('test_SemesterSummary.pdf'
+                           , semester = '11A')
