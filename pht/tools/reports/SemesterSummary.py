@@ -45,14 +45,18 @@ class SemesterSummary(object):
 
     def __init__(self, filename, semester = None):
 
-     
-        #super(SemesterSummary, self).__init__(filename)
-
         self.semester = semester
 
-        self.title = 'Semester Summary'
+        # portrait or landscape?
         w, h      = letter
-        self.doc  = SimpleDocTemplate(filename, pagesize=(h, w))
+        self.orientation = 'portrait'
+        if self.orientation == 'portrait':
+            pagesize = (w, h)
+        else:
+            pagesize = (h, w)
+
+        # set up the page    
+        self.doc  = SimpleDocTemplate(filename, pagesize=pagesize)
         self.styleSheet = getSampleStyleSheet()['Normal']
         self.styleSheet.fontSize = 7
 
@@ -64,6 +68,8 @@ class SemesterSummary(object):
         ])
 
         self.ta = SemesterTimeAccounting(semester = semester)
+
+        self.title = 'Semester Summary'
 
     def report(self, semester = None):
 
@@ -222,7 +228,10 @@ class SemesterSummary(object):
         canvas.setFont('Times-Roman', 20) 
         w, h = letter
 
-        canvas.drawString(43, w-40, self.title)
+        if self.orientation == 'portrait':
+            canvas.drawString(20, h-40, self.title)
+        else:
+            canvas.drawString(w, w-40, self.title)
         self.genFooter(canvas, doc)
 
 if __name__ == '__main__':
