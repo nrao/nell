@@ -40,5 +40,5 @@ class Semester(models.Model):
 
     @staticmethod
     def jsonDictOptions():
-        return [s.jsonDict() for s in Semester.objects.all()]
+        return [s.jsonDict() for s in Semester.objects.all().order_by('-semester')]
 
