@@ -16,6 +16,10 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
+from django.core.management import setup_environ
+import settings
+setup_environ(settings)
+
 from datetime import datetime
 
 from scheduler.models    import Observing_Type
@@ -373,3 +377,5 @@ class SessionHttpAdapter(PhtHttpAdapter):
                                                    , float_value = hi
                                                    )
         
+if __name__ == '__main__':
+    [SessionHttpAdapter(s).jsonDict() for s in Session.objects.all()]
