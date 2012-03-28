@@ -53,7 +53,8 @@ class ProposalSummary(Report):
               ]
 
     def genRow(self, proposal):
-        pi_name   = proposal.pi.getLastFirstName() if proposal.pi is not None else None
+        pi_name   = proposal.pi.getLastFirstName() if proposal.pi is not None else ''
+        email     = proposal.pi.email if proposal.pi is not None else ''
         obs_types = [ot.code for ot in proposal.observing_types.all()]
         students  = len(proposal.author_set.filter(thesis_observing = True))
         thesis    = str(students)
@@ -65,7 +66,7 @@ class ProposalSummary(Report):
               , Paragraph(proposal.bands(), self.styleSheet)
               , Paragraph(proposal.backends(), self.styleSheet)
               , Paragraph(''.join(obs_types), self.styleSheet)
-              , Paragraph(proposal.pi.email, self.styleSheet)
+              , Paragraph(email, self.styleSheet)
               ]
 
     def colWidths(self):
