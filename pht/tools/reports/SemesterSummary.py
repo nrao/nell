@@ -80,10 +80,15 @@ class SemesterSummary(object):
         t1 = self.getStartingHoursTable()
         t2 = self.getAvailableAllAstronomyTable()
 
-        b1 = Paragraph('<br/>', self.styleSheet)
+        b = Paragraph('<br/>', self.styleSheet)
+
+        tables = [t0, b, t1, b, t2, b]
+        for g in ['A', 'B', 'C']:
+            tables.append(self.getBacklogTableForGrade(g))
+            tables.append(b)
 
         # write the document to disk (or something)
-        self.doc.build([t0, b1, t1, b1, t2]
+        self.doc.build(tables
                     , onFirstPage = self.makeHeaderFooter
                     , onLaterPages = self.makeHeaderFooter)
 
@@ -112,22 +117,12 @@ class SemesterSummary(object):
         hrsTests      = (self.ta.testHrs.total.total
                        , self.ta.testHrs.gc.total)  
 
-        data = [[Paragraph('Hours in Semester', self.styleSheet)
-              , Paragraph("%5.2f" % hrsInSemester[0], self.styleSheet)
-              , Paragraph("GC[%5.2f]" % hrsInSemester[1], self.styleSheet)
+        data = [self.hrsPg('Hours in Semester', hrsInSemester)
+              , self.hrsPg('Maintenance Hours', hrsMaint)
+              , self.hrsPg('Test, Comm, Calib Hours', hrsTests)
+              , self.hrsPg('Shutdown Hours', hrsShutdown)
                 ]
-             , [Paragraph('Maintenance Hours', self.styleSheet)
-              , Paragraph("%5.2f" % hrsMaint[0], self.styleSheet)
-              , Paragraph("GC[%5.2f]" % hrsMaint[1], self.styleSheet)
-               ]
-             , [Paragraph('Test, Comm, Calib Hours', self.styleSheet)
-              , Paragraph("%5.2f" % hrsTests[0], self.styleSheet)
-              , Paragraph("GC[%5.2f]" % hrsTests[1], self.styleSheet)
-               ]
-             , [Paragraph('Shutdown Hours', self.styleSheet)
-              , Paragraph("%5.2f" % hrsShutdown[0], self.styleSheet)
-              , Paragraph("GC[%5.2f]" % hrsShutdown[1], self.styleSheet)
-               ]]
+
 
         t = Table(data, colWidths = [100, 100, 100])
 
@@ -137,6 +132,8 @@ class SemesterSummary(object):
 
     def getAvailableAllAstronomyTable(self):
         
+        hrsTotal = (self.ta.astronomyAvailableHrs.total.total
+                    , self.ta.astronomyAvailableHrs.gc.total)
         hrsLowFreq = (self.ta.astronomyAvailableHrs.total.lowFreq
                     , self.ta.astronomyAvailableHrs.gc.lowFreq)
         hrsHiFreq1 = (self.ta.astronomyAvailableHrs.total.hiFreq1
@@ -146,26 +143,38 @@ class SemesterSummary(object):
 
         data = [[self.pg('Available for ALL Astronomy during %s' % self.semester)
                 ]
+              , self.hrsPg('Hours Total', hrsTotal)  
               , self.hrsPg('Hours for Low Freq', hrsLowFreq)
               , self.hrsPg('Hours for Hi Freq 1', hrsHiFreq1)
               , self.hrsPg('Hours for Hi Freq 2', hrsHiFreq2)
                ]
 
-        #data = [[Paragraph('Available for ALL Astronomy during %s' % self.semester, self.styleSheet)
-        #        ]
-        #      , [Paragraph('Hours for Low Freq', self.styleSheet)
-        #        , Paragraph("%5.2f" % hrsLowFreq[0], self.styleSheet)
-        #        , Paragraph("GC[%5.2f]" % hrsLowFreq[1], self.styleSheet)
-        #        ]  
-        #      , [Paragraph('Hours for High Freq 1', self.styleSheet)
-        #        , Paragraph("%5.2f" % hrsHiFreq1[0], self.styleSheet)
-        #        , Paragraph("GC[%5.2f]" % hrsHiFreq1[1], self.styleSheet)
-        #        ]  
-        #      , [Paragraph('Hours for High Freq 2', self.styleSheet)
-        #        , Paragraph("%5.2f" % hrsHiFreq2[0], self.styleSheet)
-        #        , Paragraph("GC[%5.2f]" % hrsHiFreq2[1], self.styleSheet)
-        #        ]  
-        #       ]
+        t = Table(data, colWidths = [100, 100, 100])
+
+        t.setStyle(self.tableStyle)
+        
+        return t
+
+    def getBacklogTableForGrade(self, grade):
+
+        hrsFixed = (self.ta.carryOver[grade]['fixed'].total.total
+                  , self.ta.carryOver[grade]['fixed'].gc.total)
+        hrsTotal = (self.ta.carryOver[grade]['times'].total.total
+                  , self.ta.carryOver[grade]['times'].gc.total)
+        hrsLowFreq = (self.ta.carryOver[grade]['times'].total.lowFreq
+                    , self.ta.carryOver[grade]['times'].gc.lowFreq)
+        hrsHiFreq1 = (self.ta.carryOver[grade]['times'].total.hiFreq1
+                    , self.ta.carryOver[grade]['times'].gc.hiFreq1)
+        hrsHiFreq2 = (self.ta.carryOver[grade]['times'].total.hiFreq2
+                    , self.ta.carryOver[grade]['times'].gc.hiFreq2)
+        
+        data = [[self.pg('Group %s time' % grade)]
+               , self.hrsPg('Hours Total', hrsTotal)  
+               , self.hrsPg('Fixed Hours', hrsFixed)
+               , self.hrsPg('Hours for Low Freq', hrsLowFreq)
+               , self.hrsPg('Hours for Hi Freq 1', hrsHiFreq1)
+               , self.hrsPg('Hours for Hi Freq 2', hrsHiFreq2)               
+               ]
 
         t = Table(data, colWidths = [100, 100, 100])
 
