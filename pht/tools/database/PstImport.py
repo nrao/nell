@@ -418,9 +418,13 @@ class PstImport(PstInterface):
 
         type = self.fetchTypeOfResource(session.pst_session_id)
 
-        # if it ain't GBT, we don't bother
+        # if it ain't GBT or VLBA, we don't bother
         if type is not None and type == 'GBT':
             self.importGBTResource(session)
+        elif type is not None and type == 'VLBA':
+            b = Backend.objects.get(abbreviation = 'gbtVLBA')
+            session.backends.add(b)
+            session.save()
 
     def fetchTypeOfResource(self, pst_sess_id):    
         "We need to know if this is for GBT or VLA, or what."
