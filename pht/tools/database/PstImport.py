@@ -459,7 +459,7 @@ class PstImport(PstInterface):
     
     def checkForNightTimeRx(self, session, rcvr):
         if rcvr.abbreviation == 'W' or rcvr.abbreviation == 'MBA':
-            session.flags.termal_night  = True
+            session.flags.thermal_night = True
             session.flags.rfi_night     = True
             session.flags.optical_night = True
             session.flags.save()
