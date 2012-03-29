@@ -8,4 +8,5 @@ from TestPstInterface     import TestPstInterface
 from TestProposalRanking  import TestProposalRanking
 from TestProposalSummary  import TestProposalSummary
 from TestSemesterTimeAccounting import TestSemesterTimeAccounting
+from TestSemesterSummary import TestSemesterSummary
 from TestSun                    import TestSun

@@ -125,9 +125,15 @@ class TestPstImport(TestCase):
         self.assertEquals(expSessTypes, sorted(stypes))
         self.assertEquals(['Excellent', 'Good', 'Poor'], sorted(wtypes))
 
+        self.assertEqual(0, len(self.pst.badFrontends))
+        self.assertEqual(0, len(self.pst.badBackends))
+
     def test_importProposals_12B(self):
         self.pst.importProposals('12B')
         self.assertTrue(len(Proposal.objects.all()) > 0)
         for p in Proposal.objects.all():
             self.assertTrue(len(p.session_set.all()) > 0)
             p.delete()
+
+        self.assertEqual(0, len(self.pst.badFrontends))
+        self.assertEqual(0, len(self.pst.badBackends))

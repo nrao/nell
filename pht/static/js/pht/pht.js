@@ -178,6 +178,67 @@ Ext.application({
                 }
             ]
         });
+        var proposalSummaryMenu = Ext.create('Ext.menu.Menu', {
+            id: 'proposalSummaryMenu', 
+            items: [],
+            autoScroll: true,
+            }
+        );
+        var proposalRankingMenu = Ext.create('Ext.menu.Menu', {
+            id: 'proposalRankingMenu', 
+            items: [],
+            autoScroll: true,
+            }
+        );
+        var semesterSummaryMenu = Ext.create('Ext.menu.Menu', {
+            id: 'semesterSummaryMenu', 
+            items: [],
+            autoScroll: true,
+            }
+        );
+        var store = this.getController('Proposals').getSemestersStore();
+        store.load({
+            scope: this,
+            callback: function(records, operation, success) {
+                store.each(function(r){
+                    var semester = r.get('semester');
+                    proposalSummaryMenu.add({
+                        text: semester,
+                        handler: function() {
+                            window.open('/pht/reports/proposalsummary?semester=' + semester);
+                        }
+                    });
+                    proposalRankingMenu.add({
+                        text: semester,
+                        handler: function() {
+                            window.open('/pht/reports/proposalranking?semester=' + semester);
+                        }
+                    });
+                    semesterSummaryMenu.add({
+                        text: semester,
+                        handler: function() {
+                            window.open('/pht/reports/semester_summary?semester=' + semester);
+                        }
+                    });
+                });
+            }
+        });
+        var reportsMenu = Ext.create('Ext.menu.Menu', {
+            id : 'reportsMenu',
+            items : [{
+                text: 'Proposal Summary',
+                menu: proposalSummaryMenu
+                },
+                {
+                text: 'Proposal Ranking',
+                menu: proposalRankingMenu
+                },
+                {
+                text: 'Semester Summary',
+                menu: semesterSummaryMenu
+                }
+            ]
+        });
         tb.add({
             text: 'Edit',
             menu: editMenu
@@ -189,6 +250,10 @@ Ext.application({
         tb.add({
             text: 'Import',
             menu: importMenu
+        });
+        tb.add({
+            text: 'Reports',
+            menu: reportsMenu
         });
         viewport.layout.regions.center.add(propListWin);
         viewport.layout.regions.center.add(sessListWin);

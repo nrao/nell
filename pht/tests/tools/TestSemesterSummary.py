@@ -20,25 +20,19 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from django.db  import models
+from django.test         import TestCase
 
-class Semester(models.Model):
+from pht.tools.reports import SemesterSummary
+from scheduler.models  import Observing_Type
 
-    semester = models.CharField(max_length = 64)
+class TestSemesterSummary(TestCase):
 
-    class Meta:
-        db_table  = "pht_semesters"
-        app_label = "pht"
+    fixtures = ['proposal_GBT12A-002.json', 'scheduler.json']
 
-    def __str__(self):
-        return self.semester
+    def test_report(self):
 
-    def jsonDict(self):
-        return {'id'       : self.id
-              , 'semester' : self.semester
-               }
+        # I'm too lazy to fix the scheduler.json - missing commissioning
+        c = Observing_Type.objects.get_or_create(type = 'commissioning')
 
-    @staticmethod
-    def jsonDictOptions():
-        return [s.jsonDict() for s in Semester.objects.all().order_by('-semester')]
-
+        ss = SemesterSummary('test_SemesterSummary.pdf'
+                           , semester = '11A')
