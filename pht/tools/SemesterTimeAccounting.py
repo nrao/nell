@@ -177,6 +177,10 @@ class SemesterTimeAccounting(object):
 
         self.semester = DSSSemester.objects.get(semester = semester)
 
+        self.timeRange = (self.semester.start()
+                        , self.semester.end())
+        self.published = None
+
         # Galactic Center goes from 15 to 20 hours [,)
         self.gcHrs = (15, 21) 
 
@@ -236,6 +240,8 @@ class SemesterTimeAccounting(object):
         return  SemesterTimes(total = total, gc = gc)  
 
     def calculateTimeAccounting(self):
+
+        self.published = datetime.now()
 
         self.totalAvailableHrs =  self.calcTotalAvailableHours()  
 
