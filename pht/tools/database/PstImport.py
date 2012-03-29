@@ -450,12 +450,20 @@ class PstImport(PstInterface):
                 session.receivers.add(rcvr)
                 # default this receiver as granted
                 session.receivers_granted.add(rcvr)
+                self.checkForNightTimeRx(session, rcvr)
             # associate the front end w/ this session
             backend = self.backendMap.get(r[1], None)
             if backend is not None and backend != 'None':
                 backend = Backend.objects.get(abbreviation = backend)
                 session.backends.add(backend)
     
+    def checkForNightTimeRx(self, session, rcvr):
+        if rcvr.abbreviation == 'W' or rcvr.abbreviation == 'MBA':
+            session.flags.termal_night  = True
+            session.flags.rfi_night     = True
+            session.flags.optical_night = True
+            session.flags.save()
+
     def fetchSources(self, proposal):
         "Attach associated sources to this proposal."
 
