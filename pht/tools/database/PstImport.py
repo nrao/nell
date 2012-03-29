@@ -103,6 +103,7 @@ class PstImport(PstInterface):
             'Spectral Processor - pulsar mode': 'gbtSpecP',
             'Spectral Processor - spectral line mode': 'gbtSpecP',
             'VEGAS': 'Vegas',
+            'VEGAS Shared Risk': 'Vegas',
             'Zpectrometer': 'Zpect'}
 
 
