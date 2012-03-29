@@ -36,6 +36,8 @@ class PstImport(PstInterface):
         PstInterface.__init__(self)
 
         self.proposals = []
+        self.badFrontends = []
+        self.badBackends = []
 
         # for reporting
         self.lines = []
@@ -48,37 +50,42 @@ class PstImport(PstInterface):
         # Need to map stuff from PST values to PHT values:
         # First, PST fronteds to PHT rcvr abbreviations
         self.frontendMap = {
-            'L-Band (1.15-1.73 GHz)' : 'L'
-          , 'PF1 340 MHz (0.290-0.395 GHz)' : '342' 
-          , 'Q-Band (38.2-49.8 GHz)' : 'Q'
-          , 'Ku-Band (12.0-15.4 GHz)' : 'Ku'
-          , 'C-Band (3.95-5.85 GHz)' : 'C'
-          , 'K-Band Lower (18.0-22.4 GHz)' : 'K'
-          , 'Ka-Band MM-F1 (26.0-31.0 GHz)' : 'Ka'
-          , 'PF2 (0.910-1.230 GHz)' : '1070'
-          , 'S-Band (1.73-2.60 GHz)' : 'S' 
-          , 'X-Band (8.0-10.0 GHz)' : 'X' 
-          , 'Other' : 'None' 
-          , 'Ka-Band MM-F2 (30.5-37.0 GHz)' : 'Ka' 
-          , 'PF1 800 MHz (0.680-0.920 GHz)' : '800' 
-          , 'PF1 600 MHz (0.510-0.690 GHz)' : '600' 
-          , 'PF1 450 MHz (0.385-0.520 GHz)' : '450' 
-          , 'K-Band Upper (22.0-26.5 GHz)' : 'K'
-          , 'Ka-Band MM-F3 (36.0-40.0 GHz)' : 'Ka'
-          , 'Ka-band - Zpectrometer' : 'Ka'
-          , 'Ka-Band - Zpectrometer' : 'Ka'
-          , 'Ka-Band - CCB' : 'Ka'
-          , 'Mustang' : 'MBA'
-          , 'KFPA' : 'KFPA' 
-          , 'KFPA (shared risk)' : 'KFPA'
-          , 'Mustang (90 GHz)' : 'MBA'
-          , 'KFPA (18-26.5 GHz)' : 'KFPA'
-          , 'W-band Shared Risk (68-92 GHz)' : 'W' 
-          , 'Ka-Band - CCB (26.0-40.0 GHz)': 'Ka'
-          , 'W-band MM4 (85-93.3 GHz)' : 'W'
-          , 'W-band MM1 (67-74 GHz)' : 'W'
-          , 'W-band MM2 (73-80 GHz)' : 'W'
+              'C-Band (3.95-5.85 GHz)'          : 'C'
+            , 'C-band (3.95-5.85 GHz)'          : 'C'
+            , 'C-band Shared Risk (5.85-8 GHz)' : 'C'
+            , 'K-Band Lower (18.0-22.4 GHz)'    : 'K'
+            , 'K-Band Upper (22.0-26.5 GHz)'    : 'K'
+            , 'Ka-Band - CCB'                   : 'Ka'
+            , 'Ka-Band - CCB (26.0-40.0 GHz)'   : 'Ka'
+            , 'Ka-band - Zpectrometer '         : 'Ka'
+            , 'Ka-Band MM-F1 (26.0-31.0 GHz)'   : 'Ka'
+            , 'Ka-Band MM-F2 (30.5-37.0 GHz)'   : 'Ka'
+            , 'Ka-Band MM-F3 (36.0-40.0 GHz)'   : 'Ka'
+            , 'Ka-Band - Zpectrometer'          : 'Ka'
+            , 'KFPA'                            : 'KFPA'
+            , 'KFPA (18-26.5 GHz)'              : 'KFPA'
+            , 'KFPA (shared risk)'              : 'KFPA'
+            , 'Ku-Band (12.0-15.4 GHz)'         : 'Ku'
+            , 'Ku-band Shared Risk (12-18 GHz)' : 'Ku'
+            , 'L-Band (1.15-1.73 GHz)'          : 'L'
+            , 'Mustang'                         : 'MBA'
+            , 'Mustang (90 GHz)'                : 'MBA'
+            , 'Other'                           : 'None'
+            , 'PF1 340 MHz (0.290-0.395 GHz)'   : '342'
+            , 'PF1 450 MHz (0.385-0.520 GHz)'   : '450'
+            , 'PF1 600 MHz (0.510-0.690 GHz)'   : '600'
+            , 'PF1 800 MHz (0.680-0.920 GHz)'   : '800'
+            , 'PF2 (0.910-1.230 GHz)'           : '1070'
+            , 'Q-Band (38.2-49.8 GHz)'          : 'Q'
+            , 'S-Band (1.73-2.60 GHz)'          : 'S'
+            , 'W-band MM1 (67-74 GHz)'          : 'W'
+            , 'W-band MM2 (73-80 GHz)'          : 'W'
+            , 'W-band MM3 (79-86 GHz)'          : 'W'
+            , 'W-band MM4 (85-93.3 GHz)'        : 'W'
+            , 'W-band Shared Risk (68-92 GHz)'  : 'W'
+            , 'X-Band (8.0-10.0 GHz)'           : 'X'
        }
+
 
         # PST backends to PHT backend abbreviations
         self.backendMap = {
@@ -450,11 +457,15 @@ class PstImport(PstInterface):
                 session.receivers.add(rcvr)
                 # default this receiver as granted
                 session.receivers_granted.add(rcvr)
+            elif rcvr is None:
+                self.badFrontends.append((session, r[0]))
             # associate the front end w/ this session
             backend = self.backendMap.get(r[1], None)
             if backend is not None and backend != 'None':
                 backend = Backend.objects.get(abbreviation = backend)
                 session.backends.add(backend)
+            elif backend is None:
+                self.badBackends.append((session, r[1]))
     
     def fetchSources(self, proposal):
         "Attach associated sources to this proposal."
@@ -581,6 +592,13 @@ class PstImport(PstInterface):
         self.reportConversionStat('source.right_ascension_range', ra_range)
         self.reportConversionStat('source.declination', dec)
         self.reportConversionStat('source.declination_range', dec_range)
+
+        self.reportLine("\nNumber of unrecognized frontends: %d\n" % len(self.badFrontends))
+        for s, b in self.badFrontends:
+            self.reportLine("    %s : %s" % (s, b)) 
+        self.reportLine("\nNumber of unrecognized backends: %d\n" % len(self.badBackends))
+        for s, b in self.badBackends:
+            self.reportLine("    %s : %s" % (s, b)) 
 
         # write it to the DB 
         if self.save:
