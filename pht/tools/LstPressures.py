@@ -94,10 +94,14 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
     """
         
 
-    def __init__(self):
+    def __init__(self, carryOverUseNextSemester = True):
 
         self.hrs = 24
         self.bins = [0.0]*self.hrs
+
+        # when calculating carry over, use the next semester field,
+        # OR the current time remaining?
+        self.carryOverUseNextSemester = carryOverUseNextSemester
 
         self.pressures = [{'LST':float(i), 'Total':0.0} for i in range(24)]
 
@@ -308,9 +312,15 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # TBF: is this right?
         # Carryover we get the time differently
         if carryover:
-            # TBF: Eventually, switch to the next semester fields
-            ta = TimeAccounting()
-            totalTime = ta.getTimeRemaining(session.dss_session)
+            # how is carryover to be added to?
+            if self.carryOverUseNextSemester:
+                totalTime = 0.0
+                if session.next_semester is not None \
+                    and session.next_semester.complete == False:
+                    totalTime = session.next_semester.time
+            else:
+                ta = TimeAccounting()
+                totalTime = ta.getTimeRemaining(session.dss_session)
         else:    
             totalTime = session.allotment.allocated_time
 
