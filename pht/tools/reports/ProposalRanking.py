@@ -62,7 +62,7 @@ class ProposalRanking(Report):
               ]
 
     def genRow(self, proposal):
-        pi_name   = proposal.pi.getLastFirstName() if proposal.pi is not None else None
+        pi_name   = proposal.pi.getLastFirstName() if proposal.pi is not None else ''
         obs_types = [ot.code for ot in proposal.observing_types.all()]
         draftRank = str(self.proposalsDraft.index(proposal) + 1)
         rank      = str(self.proposals.index(proposal) + 1)
@@ -72,7 +72,9 @@ class ProposalRanking(Report):
                        if proposal.normalizedSRPScore is not None else ''
         students  = len(proposal.author_set.filter(thesis_observing = True))
         thesis    = str(students) if students > 0 else ''
-        return [Paragraph(proposal.pcode.split('-')[1], self.styleSheet)
+        code    = proposal.pcode.split('-')
+        code    = code[1] if len(code) > 1 else proposal.pcode
+        return [Paragraph(code, self.styleSheet)
               , ''
               , Paragraph(pi_name, self.styleSheet)
               , Paragraph(proposal.title, self.styleSheet)
