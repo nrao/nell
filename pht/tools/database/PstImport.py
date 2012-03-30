@@ -106,6 +106,17 @@ class PstImport(PstInterface):
             'VEGAS Shared Risk': 'Vegas',
             'Zpectrometer': 'Zpect'}
 
+    def importProposalsByPhtPcode(self, pcodes):
+        "Handles differences in PST/PHT pcodes"
+        # add / where needed
+        pcodes = [pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/') for pcode in pcodes]
+        self.importProposalsByPcode(pcodes)
+            
+    def importProposalsByPcode(self, pcodes):
+        "Imports using a list of project codes"
+        for pcode in pcodes:
+            self.importProposal(pcode)
+        self.report()
 
     def importProposal(self, pcode, semester = None):
         """
@@ -114,7 +125,6 @@ class PstImport(PstInterface):
         off to the Proposal model to create a new proposal in the GBPHT
         database initialized with the proposal data from the PST.
         """
-
         q = """
             select p.*, a.*, person.person_id
             from ((proposal as p 
@@ -149,7 +159,8 @@ class PstImport(PstInterface):
         
             self.proposals.append(proposal)
  
-            self.report()
+            # We no longer create a report from this lower-level func.
+            #self.report()
 
         return proposal
 
@@ -169,6 +180,8 @@ class PstImport(PstInterface):
         """
         Imports all the GBT-related proposals in a given semester.
         """
+        # init reporting
+        self.lines = []
         q = """
             select p.*,  a.*, person.person_id
             from ((proposal as p 
@@ -619,6 +632,9 @@ class PstImport(PstInterface):
                             , report = "".join(self.lines)
                              )
             ir.save()
+
+        # clean up
+        self.lines = []
 
     def reportConversionStat(self, field, values):    
         "How did converting a particular field go?"

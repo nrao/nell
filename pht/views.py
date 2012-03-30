@@ -123,8 +123,8 @@ def import_proposals(request, *args, **kws):
     if request.method == 'POST':
         pst = PstImport()
         # pcode is in PHT format - need to convert
-        for pcode in request.POST.getlist('proposals'):
-            pst.importProposal(pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/'))
+        pcodes = request.POST.getlist('proposals')
+        pst.importProposalsByPhtPcode(pcodes)
     return HttpResponse(json.dumps({"success" : "ok"})
                       , content_type = 'application/json')
 
@@ -133,9 +133,9 @@ def import_proposals(request, *args, **kws):
 def import_pst_proposals(request, *args, **kws):
     if request.method == 'POST':
         pst = PstImport()
-        # pcode is in PST format
-        for pcode in request.POST.getlist('proposals'):
-            pst.importProposal(pcode)
+        # pcode is in PST format 
+        pcodes = request.POST.getlist('proposals')
+        pst.importProposalsByPcode(pcodes)
     return HttpResponse(json.dumps({"success" : "ok"})
                       , content_type = 'application/json')
 
