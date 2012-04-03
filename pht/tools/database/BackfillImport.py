@@ -37,23 +37,24 @@ class BackfillImport(PstImport):
 
     def importProjects(self):
         dss_projects = Project.objects.filter(complete = False)
-        projects     = [p for p in dss_projects if self.checkPst(p.pcode)]
+        projects     = [p for p in dss_projects if self.checkPst(p.pcode) and 'GBT' not in p.pcode]
         projects_bad = [p for p in dss_projects if not self.checkPst(p.pcode)]
 
+        print [p.pcode for p in projects]
         if not self.quiet:
             print len(projects), 'projects found in the PST.'
             print len(projects_bad), 'projects not found in the PST.'
 
         for project in projects:
-            pcode    = project.pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/')
-            # TBF: kluge to keep data at low volume
-            #if project.semester.semester == '11B':
-            if True:
-                proposal = self.importProposal(pcode, semester = project.semester.semester)
-                # make sure we maintain the PHT/DSS connection
-                proposal.dss_project = project
-                proposal.save()
-                self.importDssSessions(project, proposal)
+            self.importProject(project)
+
+    def importProject(self, project):
+        pcode    = project.pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/')
+        proposal = self.importProposal(pcode, semester = project.semester.semester)
+        # make sure we maintain the PHT/DSS connection
+        proposal.dss_project = project
+        proposal.save()
+        self.importDssSessions(project, proposal)
 
     def importDssSessions(self, project, proposal):
         for s in proposal.session_set.all():
@@ -148,7 +149,7 @@ class BackfillImport(PstImport):
         
     def checkPst(self, pcode):
         pcode = pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/')
-        q = "select count(*) from proposal where PROP_ID = '%s'" % pcode
+        q = "select count(*) from proposal where PROP_ID = '%s' or LEGACY_ID = '%s'" % (pcode, pcode)
         self.cursor.execute(q)
         result = self.cursor.fetchone()
         return result[0] == 1

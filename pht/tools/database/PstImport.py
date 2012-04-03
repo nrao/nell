@@ -121,12 +121,12 @@ class PstImport(PstInterface):
               join author as a on p.principal_investigator_id = a.author_id)
               join userAuthentication as ua on ua.userAuthentication_id = a.user_id)
               join person on person.personAuthentication_id = ua.userAuthentication_id
-            where PROP_ID = '%s'
-            """ % pcode
+            where PROP_ID = '%s' or LEGACY_ID = '%s'
+            """ % (pcode, pcode)
         self.cursor.execute(q)
         row      = map(self.safeUnicode, self.cursor.fetchone())
         result   = dict(zip(self.getKeys(), row))
-        pcode    = result['PROP_ID'].replace('/', '')
+        result['PROP_ID'] = pcode # Always use the given pcode
 
         try:
             proposal = Proposal.objects.get(pcode = pcode)
