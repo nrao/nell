@@ -56,6 +56,9 @@ class BackfillImport(PstImport):
         proposal.save()
         self.importDssSessions(project, proposal)
 
+        # make a record of what we did.
+        self.report()
+
     def importDssSessions(self, project, proposal):
         for s in proposal.session_set.all():
             s.delete()

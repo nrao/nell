@@ -57,6 +57,9 @@ class TestPstImport(TestCase):
         self.assertEqual('Open - Low Freq', s.session_type.type)
         self.assertEqual('Poor', s.weather_type.type)
         self.assertEqual('spectral line', s.observing_type.type)
+
+        # test the reports
+        self.pst.report()
         reports = ImportReport.objects.all()
         self.assertEqual(1, len(reports))
         self.assertTrue(0 < len(reports[0].report))
