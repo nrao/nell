@@ -102,6 +102,9 @@ Ext.application({
         var plot = Ext.create('PHT.view.plot.Window', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
+        var tac = Ext.create('PHT.view.proposal.TacTool', {
+            renderTo: viewport.layout.regions.center.getEl(),
+        });
 
         // setup menus
         var importMenu = Ext.create('Ext.menu.Menu', {
@@ -156,6 +159,11 @@ Ext.application({
                 text: 'Plots',
                 handler: function() {
                     plot.show();
+                }},
+                {
+                text: 'TAC Tool',
+                handler: function() {
+                    tac.show();
                 }},
             ]
         });
@@ -262,6 +270,7 @@ Ext.application({
         viewport.layout.regions.center.add(sessionSources);
         viewport.layout.regions.center.add(overviewCalendarWin);
         viewport.layout.regions.center.add(plot);
+        viewport.layout.regions.center.add(tac);
         propListWin.show();
         sessListWin.show();
         this.getController('OverviewCalendar').setOverviewCalendarWindow(overviewCalendarWin);
@@ -275,6 +284,7 @@ Ext.application({
         this.getController('Proposals').addObserver(this.getController('Sources'));
         this.getController('Proposals').addObserver(this.getController('Sessions'));
         this.getController('Proposals').addObserver(this.getController('Dashboard'));
+        this.getController('Proposals').setTacToolWindow(tac);
         
         // TBF: better place for VTypes?
         // See: http://www.sencha.com/forum/archive/index.php/t-140812.html?s=01edc6b9436d419b2dae5754d39d9e04

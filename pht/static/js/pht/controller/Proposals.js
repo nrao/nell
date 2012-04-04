@@ -39,6 +39,7 @@ Ext.define('PHT.controller.Proposals', {
         'proposal.Edit',
         'proposal.Import',
         'proposal.Navigate',
+        'proposal.TacTool',
     ],
 
     init: function() {
@@ -46,7 +47,7 @@ Ext.define('PHT.controller.Proposals', {
         this.control({
             'proposallist' : {
                 itemdblclick: this.editProposal,
-                itemclick: this.filterSessionExplorer,
+                itemclick: this.proposalSelected,
             },
             'proposallist toolbar button[action=create]': {
                 click: this.createProposal
@@ -90,9 +91,12 @@ Ext.define('PHT.controller.Proposals', {
         grid.titleFilterText.reset();
     },
 
-    filterSessionExplorer: function(grid, record) {
-        this.notifyObservers({notification: 'filterSessionExplorer'
-                            , pcode : record.get('pcode')});
+    proposalSelected: function(grid, record) {
+        var pcode = record.get('pcode');
+        this.notifyObservers({notification: 'proposalSelected'
+                            , pcode : pcode});
+        // part of this controller, so we don't need notification
+        this.tacToolWindow.setProposal(pcode);
     },
 
     // How to respond to click's on the navigation tree?
@@ -257,5 +261,9 @@ Ext.define('PHT.controller.Proposals', {
                         , this.getProposalsStore()
                          );
         this.selectedProposals = [];                  
+    },
+
+    setTacToolWindow: function(tacToolWindow) {
+        this.tacToolWindow = tacToolWindow;
     },
 });
