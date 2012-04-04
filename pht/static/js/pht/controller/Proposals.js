@@ -67,6 +67,9 @@ Ext.define('PHT.controller.Proposals', {
             'proposaledit button[action=save]': {
                 click: this.updateProposal
             },            
+            'tactool button[action=save]': {
+                click: this.updateProposal
+            },            
             'proposalimport button[action=import]': {
                 click: this.importProposal
             },            

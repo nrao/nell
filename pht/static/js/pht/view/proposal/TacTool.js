@@ -5,8 +5,8 @@ The following should be editable in the GB PHT. TAC comments to PI, NRAO Comment
 */
 
 Ext.define('PHT.view.proposal.TacTool', {
-    extend: 'Ext.window.Window',
-    //extend: 'PHT.view.Edit',
+    //extend: 'Ext.window.Window',
+    extend: 'PHT.view.Edit',
     alias : 'widget.tactool',
     title : 'TAC Tool',
     initComponent: function() {
@@ -56,10 +56,14 @@ Ext.define('PHT.view.proposal.TacTool', {
                 xtype: 'textarea',
                 name : 'srp_to_pi',
                 fieldLabel: 'SRP Comment to PI',
+                readOnly: true,
+                fieldCls: "x-pht-formfield-readonly"
             },{
                 xtype: 'textarea',
                 name : 'srp_to_tac',
                 fieldLabel: 'SRP Comment to TAC',
+                readOnly: true,
+                fieldCls: "x-pht-formfield-readonly"
             },{
                 xtype: 'textarea',
                 name : 'tech_review_to_PI',
@@ -68,9 +72,14 @@ Ext.define('PHT.view.proposal.TacTool', {
                 xtype: 'textarea',
                 name : 'tech_review_to_tac',
                 fieldLabel: 'Tech Review to TAC',
+                readOnly: true,
+                fieldCls: "x-pht-formfield-readonly"
             }],
             
         }];
+
+        // must init for parent class
+        this.buttons = [];
 
         this.callParent(arguments);
     },
