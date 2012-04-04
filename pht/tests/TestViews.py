@@ -29,6 +29,7 @@ import math
 
 from scheduler.models    import User
 from pht.models          import *
+from pht.httpadapters    import *
 from pht.utilities       import *
 
 class TestViews(TestCase):
@@ -140,6 +141,43 @@ class TestViews(TestCase):
         response = self.client.get("/pht/calendar/lstrange"
                                  , {'start' : '2012-2-28', 'numDays' : '14'})
         self.failUnlessEqual(response.status_code, 200)
+
+    def test_sources_transfer(self):
+
+        # assign all sources to the one session
+        p = Proposal.objects.all()[0]
+        for src in p.source_set.all():
+            self.session.sources.add(src)
+            self.session.save()
+
+        self.assertEqual(1, len(Session.objects.all()))
+
+        # copy this session
+        adapter = SessionHttpAdapter(self.session)
+        json = adapter.jsonDict()
+        adapter.initFromPost(json)
+
+        # make sure there are now 2 sessions, but only one has sources
+        self.assertEqual(2, len(Session.objects.all()))
+
+        ss = Session.objects.all().order_by('id')
+
+        self.assertEqual(3, len(ss[0].sources.all()))
+        self.assertEqual(0, len(ss[1].sources.all()))
+
+        ps = Proposal.objects.all()
+        
+        response = self.client.post("/pht/sources/transfer"
+                                 , {'from' : ss[0].id
+                                  , 'to'   : ss[1].id}
+                                   )
+
+        self.failUnlessEqual(response.status_code, 200)
+
+        ss = Session.objects.all().order_by('id')
+
+        self.assertEqual(3, len(ss[0].sources.all()))
+        self.assertEqual(3, len(ss[1].sources.all()))
 
     def test_tree(self):
 

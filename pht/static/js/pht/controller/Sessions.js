@@ -218,10 +218,37 @@ Ext.define('PHT.controller.Sessions', {
     duplicateSession: function(button) {
         var grid = button.up('grid');
         var session = grid.getSelectionModel().getLastSelected();
-        this.confirmDuplicate(this.getSessionsStore(),
-                      session,
-                      'Duplicating Session ' + session.get('name')
-        );              
+        var store = this.getSessionsStore();
+        Ext.Msg.show({
+            title: "Duplicating Session " + session.get('name'),
+            msg: 'Are you sure?',
+            buttons: Ext.Msg.YESNO,
+            icon: Ext.Msg.QUESTION,
+            scope: this,
+            fn: function(id) {
+                if (id == 'yes') {
+                    // copy the session
+                    this.copyRecord(store, session);
+                    store.load({
+                       scope   : this,
+                       callback: function(records, operation, success) {
+                          last = store.getById(store.max('id'));
+                          // now we can use these id's to 
+                          // copy over the session's sources
+                          var url = '/pht/sources/transfer';
+                          Ext.Ajax.request({
+                              url: url,
+                              params : { from : session.get('id'),
+                                         to   : last.get('id')},
+                              method: 'POST',
+                              scope: this,
+                          });    
+                       }
+                    });
+                }
+            }
+        });
+        
     },
 
     updateSession: function(button) {

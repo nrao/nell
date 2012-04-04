@@ -152,6 +152,26 @@ def import_semester(request, *args, **kws):
                                   
 @login_required
 @admin_only
+def sources_transfer(request):
+    "Make sure that one session get's all the sources of another."
+    if request.method == 'POST':
+        fromId = request.POST.get('from')         
+        toId   = request.POST.get('to')
+        if fromId is not None and toId is not None:
+            fromSess = Session.objects.get(id = int(fromId))
+            toSess   = Session.objects.get(id = int(toId))
+            for src in fromSess.sources.all():
+                toSess.sources.add(src)
+                toSess.save()
+        return HttpResponse(json.dumps({"success" : "ok"})
+                          , content_type = 'application/json')
+    else:
+        # error
+        return HttpResponse(json.dumps({"success" : False})
+                          , content_type = 'application/json')
+
+@login_required
+@admin_only
 def sources_import(request):
     "Handles upload of a file containing sources"
     # TBF: not sure that these HttpResponses are correct thing to return

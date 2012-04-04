@@ -74,22 +74,25 @@ Ext.define('PHT.controller.PhtController', {
             scope: this,
             fn: function(id) {
                 if (id == 'yes') {
-                    // don't use model.copy because that will cause
-                    // a PUT, instead of a POST. Instead we create a new
-                    // one, then, gasp, copy fields one by one.
-                    // TBF: put this in a copyRecord utility function?
-                    var newRecord = Ext.create(store.model, {});
-                    for (var i=0; i<record.fields.keys.length; i++) {
-                        var field = record.fields.keys[i];
-                        newRecord.set(field, record.get(field));
-                    }
-                    // make sure server gives a new one of these
-                    newRecord.set('id', '');
-                    newRecord.save();
+                    this.copyRecord(store, record);
                     store.load();
                 }
             }
         });
+    },
+
+    copyRecord: function(store, record) {
+        // don't use model.copy because that will cause
+        // a PUT, instead of a POST. Instead we create a new
+        // one, then, gasp, copy fields one by one.
+        var newRecord = Ext.create(store.model, {});
+        for (var i=0; i<record.fields.keys.length; i++) {
+            var field = record.fields.keys[i];
+            newRecord.set(field, record.get(field));
+        }
+        // make sure server gives a new one of these
+        newRecord.set('id', '');
+        newRecord.save();
     },
 
     updateRecord: function(button, selectedRecords, store) {
