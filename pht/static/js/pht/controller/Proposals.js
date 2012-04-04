@@ -96,7 +96,7 @@ Ext.define('PHT.controller.Proposals', {
         this.notifyObservers({notification: 'proposalSelected'
                             , pcode : pcode});
         // part of this controller, so we don't need notification
-        this.tacToolWindow.setProposal(pcode);
+        this.tacToolWindow.setProposal(pcode, record);
     },
 
     // How to respond to click's on the navigation tree?

@@ -69,10 +69,19 @@ class ProposalHttpAdapter(PhtHttpAdapter):
               , 'billed_time'      : self.proposal.billedTime()
               , 'scheduled_time'   : self.proposal.scheduledTime()
               , 'remaining_time'   : self.proposal.remainingTime()
+              # comments
+              , 'nrao_comment'     : self.proposal.comments.nrao_comment
+              , 'srp_to_pi'        : self.proposal.comments.srp_to_pi
+              , 'srp_to_tac'       : self.proposal.comments.srp_to_tac
+              , 'tech_review_to_pi': self.proposal.comments.tech_review_to_pi
+              , 'tech_review_to_tac': self.proposal.comments.tech_review_to_tac
                }
 
     def initFromPost(self, data):
         self.proposal = Proposal()
+        comments = ProposalComments()
+        comments.save()
+        self.proposal.comments = comments
         self.proposal.create_date = datetime.now()
         self.updateFromPost(self.cleanPostData(data))
         self.proposal.save()
@@ -125,5 +134,13 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         for cat in cats:
             cat = ScientificCategory.objects.get(category = cat)
             self.proposal.sci_categories.add(cat)
+
+        # comments
+        self.proposal.comments.nrao_comment = data.get('nrao_comment')
+        self.proposal.comments.srp_to_pi = data.get('srp_to_pi')
+        self.proposal.comments.srp_to_tac = data.get('srp_to_tac')
+        self.proposal.comments.tech_review_to_pi = data.get('tech_review_to_pi')
+        self.proposal.comments.tech_review_to_tac = data.get('tech_review_to_tac')
+        self.proposal.comments.save()
 
         self.proposal.save()    

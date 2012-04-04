@@ -288,6 +288,7 @@ class PstImport(PstInterface):
             comments.tech_review_to_tac = tech[1]
 
         # save it off
+        comments.save()
         proposal.comments = comments
         proposal.save()
 

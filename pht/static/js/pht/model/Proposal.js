@@ -28,6 +28,12 @@ Ext.define('PHT.model.Proposal', {
            , 'billed_time'
            , 'scheduled_time'
            , 'remaining_time'
+           // comments
+           , 'nrao_comment'
+           , 'srp_to_pi'
+           , 'srp_to_tac'
+           , 'tech_review_to_pi'
+           , 'tech_review_to_tac'
            ], 
     proxy: {
         type: 'rest',

@@ -22,7 +22,7 @@ Ext.define('PHT.view.proposal.TacTool', {
             listeners: {
                 select: function(combo, record, index) {
                     var pcode = record[0].get('pcode');
-                    me.setProposal(pcode);
+                    me.setProposalByPcode(pcode);
                 }
             },
         });
@@ -34,11 +34,57 @@ Ext.define('PHT.view.proposal.TacTool', {
             ]},
         ];
 
+        this.items = [{
+            xtype: 'phtform',
+        
+            border: false,
+            trackResetOnLoad: true,
+            fieldDefaults: {
+               labelStyle: 'font-weight:bold',
+            },
+            defaults: {
+                width: 600,
+                height: 50,
+                allowBlank: true,
+                labelStyle: '',    
+            },
+            items: [{
+                xtype: 'textarea',
+                name : 'nrao_comment',
+                fieldLabel: 'NRAO Comment',
+            },{
+                xtype: 'textarea',
+                name : 'srp_to_pi',
+                fieldLabel: 'SRP Comment to PI',
+            },{
+                xtype: 'textarea',
+                name : 'srp_to_tac',
+                fieldLabel: 'SRP Comment to TAC',
+            },{
+                xtype: 'textarea',
+                name : 'tech_review_to_PI',
+                fieldLabel: 'Tech Review to PI',
+            },{
+                xtype: 'textarea',
+                name : 'tech_review_to_tac',
+                fieldLabel: 'Tech Review to TAC',
+            }],
+            
+        }];
+
         this.callParent(arguments);
     },
 
-    setProposal: function(pcode) {
-        // TBF: load the new proposal
+    setProposalByPcode: function(pcode) {
+
         this.proposalCombo.setValue(pcode);
+        // get the proposals store ...
+    },
+
+    setProposal: function(pcode, proposal) {
+        this.proposalCombo.setValue(pcode);
+        // load the proposal
+        var form = this.down('form');
+        form.loadRecord(proposal);
     },
 });            
