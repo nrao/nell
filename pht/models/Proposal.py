@@ -29,6 +29,7 @@ from ScientificCategory import ScientificCategory
 from Semester           import Semester
 from Status             import Status
 from ProposalType       import ProposalType
+from ProposalComments   import ProposalComments
 from Receiver           import Receiver
 
 from scheduler.models   import Project as DSSProject 
@@ -56,11 +57,11 @@ class Proposal(models.Model):
     abstract        = models.CharField(max_length = 2000)
     spectral_line   = models.CharField(max_length = 2000, null = True)
     joint_proposal  = models.BooleanField()
+    comments        = models.ForeignKey(ProposalComments, null = True)
     normalizedSRPScore       = models.FloatField(null = True)
     draft_normalizedSRPScore = models.FloatField(null = True)
     num_refs                 = models.IntegerField(null = True)
     next_semester_complete   = models.BooleanField(default = True)
-    #next_semester_time     = models.FloatField(null = True)
 
     class Meta:
         db_table  = "pht_proposals"

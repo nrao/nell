@@ -7,6 +7,7 @@ from ObservingType            import ObservingType
 from Parameter                import Parameter
 from Period                   import Period
 from Proposal                 import Proposal
+from ProposalComments         import ProposalComments
 from ProposalType             import ProposalType
 from Receiver                 import Receiver
 from ResourceGroup            import ResourceGroup

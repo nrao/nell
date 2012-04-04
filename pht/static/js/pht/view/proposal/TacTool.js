@@ -1,3 +1,9 @@
+/*
+We need to have the following comments accessible to the client: Technical reviews to TAC, (Same? TAC comments to PI, NRAO comments), SRP Science Review, Technical Review(s), SRP to TAC, TAC comments to NRAO (aka sched note).
+
+The following should be editable in the GB PHT. TAC comments to PI, NRAO Comments, Technical Review(s), and TAC comments to NRAO.
+*/
+
 Ext.define('PHT.view.proposal.TacTool', {
     extend: 'Ext.window.Window',
     //extend: 'PHT.view.Edit',
