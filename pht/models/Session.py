@@ -78,6 +78,7 @@ class Session(models.Model):
     scheduler_notes         = models.TextField(null = True, blank = True)
     session_time_calculated = models.BooleanField(default = False)
 
+
     class Meta:
         db_table  = "pht_sessions"
         app_label = "pht"

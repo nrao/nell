@@ -48,9 +48,11 @@ class SessionResource(Resource):
             limit = request.GET.get('limit', 25)
             end   = int(start) + int(limit)
             """
-            sessions = Session.objects.all()
+            #sessions = Session.objects.all()
+            sessions = SessionHttpAdapter.jsonDictAllHP()
             return HttpResponse(json.dumps({"success" : "ok"
-                                          , "sessions" : [SessionHttpAdapter(s).jsonDict() for s in sessions]
+                                          #, "sessions" : [SessionHttpAdapter(s).jsonDict() for s in sessions]
+                                          , "sessions" : sessions
                                           , "total" : len(sessions)
                                            })
                               , content_type = 'application/json')
