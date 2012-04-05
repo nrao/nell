@@ -95,6 +95,10 @@ Ext.define('PHT.view.plot.Window', {
             items: [{xtype: 'lstpressureexcellent'}],
         }],
     }],
+
+    close: function() {
+        this.hide();
+    }
 });
 
 
