@@ -79,6 +79,10 @@ Ext.define('PHT.view.proposal.TacTool', {
                 fieldLabel: 'Tech Review to TAC',
                 readOnly: true,
                 fieldCls: "x-pht-formfield-readonly"
+            },{
+                xtype: 'textarea',
+                name : 'tac_to_pi',
+                fieldLabel: 'TAC Comments to PI',
             }],
             
         }];

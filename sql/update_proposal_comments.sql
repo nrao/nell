@@ -52,5 +52,5 @@ CREATE INDEX pht_proposals_comments_id ON pht_proposals USING btree (comments_id
 ALTER TABLE ONLY pht_proposals
     ADD CONSTRAINT pht_proposals_comments_id_fkey FOREIGN KEY (comments_id) REFERENCES pht_proposal_comments(id) DEFERRABLE INITIALLY DEFERRED;
 
-
+ALTER TABLE pht_proposal_comments ADD COLUMN tac_to_pi text;
 

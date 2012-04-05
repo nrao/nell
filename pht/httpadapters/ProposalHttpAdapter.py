@@ -79,6 +79,7 @@ class ProposalHttpAdapter(PhtHttpAdapter):
                        , 'srp_to_tac'       : self.proposal.comments.srp_to_tac
                        , 'tech_review_to_pi': self.proposal.comments.tech_review_to_pi
                        , 'tech_review_to_tac': self.proposal.comments.tech_review_to_tac
+                       , 'tac_to_pi'         : self.proposal.comments.tac_to_pi
                         })
         else:
             data.update({'nrao_comment'     : ''
@@ -153,6 +154,7 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         self.proposal.comments.srp_to_tac = data.get('srp_to_tac')
         self.proposal.comments.tech_review_to_pi = data.get('tech_review_to_pi')
         self.proposal.comments.tech_review_to_tac = data.get('tech_review_to_tac')
+        self.proposal.comments.tac_to_pi = data.get('tac_to_pi')
         self.proposal.comments.save()
 
         self.proposal.save()    
