@@ -268,5 +268,6 @@ Ext.define('PHT.controller.Proposals', {
 
     setTacToolWindow: function(tacToolWindow) {
         this.tacToolWindow = tacToolWindow;
+        this.tacToolWindow.setProposalsStore(this.getProposalsStore());
     },
 });

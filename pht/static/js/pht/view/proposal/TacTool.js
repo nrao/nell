@@ -9,6 +9,9 @@ Ext.define('PHT.view.proposal.TacTool', {
     extend: 'PHT.view.Edit',
     alias : 'widget.tactool',
     title : 'TAC Tool',
+    height: '70%',
+    x: 700,
+    y: 225,
     initComponent: function() {
         var me = this;
         this.proposalCombo = Ext.create('Ext.form.field.ComboBox', {
@@ -43,8 +46,8 @@ Ext.define('PHT.view.proposal.TacTool', {
                labelStyle: 'font-weight:bold',
             },
             defaults: {
-                width: 600,
-                height: 50,
+                width: 500,
+                height: 100,
                 allowBlank: true,
                 labelStyle: '',    
             },
@@ -84,10 +87,14 @@ Ext.define('PHT.view.proposal.TacTool', {
         this.callParent(arguments);
     },
 
+    setProposalsStore: function(proposals){
+        this.proposalsStore = proposals;
+    },
+
     setProposalByPcode: function(pcode) {
 
         this.proposalCombo.setValue(pcode);
-        // get the proposals store ...
+        this.setProposal(pcode, this.proposalsStore.findRecord('pcode', pcode));
     },
 
     setProposal: function(pcode, proposal) {

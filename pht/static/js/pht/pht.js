@@ -273,6 +273,7 @@ Ext.application({
         viewport.layout.regions.center.add(tac);
         propListWin.show();
         sessListWin.show();
+        tac.show();
         this.getController('OverviewCalendar').setOverviewCalendarWindow(overviewCalendarWin);
         this.getController('Sources').setProposalSourcesWindow(proposalSources);
         this.getController('Sources').setSessionSourcesWindow(sessionSources);
