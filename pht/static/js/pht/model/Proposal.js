@@ -21,6 +21,7 @@ Ext.define('PHT.model.Proposal', {
            , 'spectral_line'
            , 'joint_proposal'
            , 'next_sem_complete'
+           , 'normalizedSRPScore'
            // from DSS project:
            , 'dss_pcode'
            , 'complete'

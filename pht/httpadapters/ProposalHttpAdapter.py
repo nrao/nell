@@ -42,7 +42,7 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         pi_name = self.proposal.pi.getLastFirstName() if self.proposal.pi is not None else None
         dss_pcode = self.proposal.dss_project.pcode if self.proposal.dss_project is not None else 'unknown'
 
-        return {'id'               : self.proposal.pcode
+        data = {'id'               : self.proposal.pcode
               , 'pst_proposal_id'  : self.proposal.pst_proposal_id
               , 'proposal_type'    : self.proposal.proposal_type.type
               , 'observing_types'  : obs_types
@@ -69,13 +69,25 @@ class ProposalHttpAdapter(PhtHttpAdapter):
               , 'billed_time'      : self.proposal.billedTime()
               , 'scheduled_time'   : self.proposal.scheduledTime()
               , 'remaining_time'   : self.proposal.remainingTime()
-              # comments
-              , 'nrao_comment'     : self.proposal.comments.nrao_comment
-              , 'srp_to_pi'        : self.proposal.comments.srp_to_pi
-              , 'srp_to_tac'       : self.proposal.comments.srp_to_tac
-              , 'tech_review_to_pi': self.proposal.comments.tech_review_to_pi
-              , 'tech_review_to_tac': self.proposal.comments.tech_review_to_tac
-               }
+              , 'normalizedSRPScore' : self.proposal.normalizedSRPScore
+              }
+
+        # comments
+        if self.proposal.comments:
+            data.update({'nrao_comment'     : self.proposal.comments.nrao_comment
+                       , 'srp_to_pi'        : self.proposal.comments.srp_to_pi
+                       , 'srp_to_tac'       : self.proposal.comments.srp_to_tac
+                       , 'tech_review_to_pi': self.proposal.comments.tech_review_to_pi
+                       , 'tech_review_to_tac': self.proposal.comments.tech_review_to_tac
+                        })
+        else:
+            data.update({'nrao_comment'     : ''
+                       , 'srp_to_pi'        : ''
+                       , 'srp_to_tac'       : ''
+                       , 'tech_review_to_pi': ''
+                       , 'tech_review_to_tac': ''
+                        })
+        return data
 
     def initFromPost(self, data):
         self.proposal = Proposal()
