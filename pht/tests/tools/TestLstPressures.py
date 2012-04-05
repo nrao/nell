@@ -32,6 +32,7 @@ from pht.models         import Session
 from pht.models         import SessionGrade
 from pht.models         import SessionType
 from pht.httpadapters   import SessionHttpAdapter
+from scheduler.models   import Period as DSSPeriod
 
 class TestLstPressures(TestCase):
 
@@ -331,3 +332,40 @@ class TestLstPressures(TestCase):
         ws, ex = lst.computeRfiWeights()
         exp =[198, 199, 199, 198, 198, 198, 183, 183, 183, 177, 168, 167, 168, 168, 168, 168, 167, 169, 183, 183, 182, 189, 198, 198]
         self.assertEqual(exp, ex)
+
+    def test_getPressuresFromPeriod(self):
+
+        lst = LstPressures()
+
+        # make period
+        p = DSSPeriod(start = datetime(2012, 4, 5, 12)
+                    , duration = 3.0
+                     )
+        
+        ps = lst.getPressuresFromPeriod(p)
+        exp1 = [0.0] * 19
+        self.assertEqual(exp1, ps[:19])
+        self.assertAlmostEqual(0.37668728573623156, ps[19], 3)
+        self.assertEqual(1.0, ps[20])
+        self.assertEqual(1.0, ps[21])
+        self.assertAlmostEqual(0.63152644233784727, ps[22], 3)
+        self.assertEqual(0.0, ps[23])
+
+
+        # make one that wraps around
+        p2 = DSSPeriod(start = datetime(2012, 4, 5, 12)
+                     , duration = 12.0
+                      )
+        ps2 = lst.getPressuresFromPeriod(p2)
+        self.assertEqual([1.0]*7, ps2[:7])
+        self.assertEqual([0.0]*11, ps2[8:19])
+        self.assertEqual([1.0]*4, ps2[20:])
+        self.assertAlmostEqual(0.65616762656011396,ps2[7],3)
+        self.assertAlmostEqual(0.37668728573623156,ps2[19],3)
+
+        # combine the periods
+        periods = [p, p2]
+        ps3 = lst.getPressuresFromPeriods(periods)
+        exp = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.65616762656011396, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.75337457147246312, 2.0, 2.0, 1.6315264423378473, 1.0]
+        for i in range(len(exp)):
+            self.assertAlmostEqual(exp[i], ps3[i], 3)
