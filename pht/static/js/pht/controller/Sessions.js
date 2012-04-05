@@ -131,7 +131,7 @@ Ext.define('PHT.controller.Sessions', {
     },
 
     notify: function(data) {
-        if (data['notification'] == 'filterSessionExplorer') {
+        if (data['notification'] == 'proposalSelected') {
             this.sessionListWindow.down('sessionlist').setProposal(data.pcode);
         }
     },

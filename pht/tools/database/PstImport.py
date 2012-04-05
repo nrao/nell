@@ -150,6 +150,7 @@ class PstImport(PstInterface):
                 semester = self.semesterFromPcode(pcode)
             proposal.setSemester(semester)
             proposal.save()
+            self.fetchComments(proposal, propQueryResults = result)
             self.fetchAuthors(proposal)
             self.fetchScientificCategories(proposal)
             self.fetchObservingTypes(proposal)
@@ -204,6 +205,7 @@ class PstImport(PstInterface):
                 if self.proposalUsesGBT(pid, telescope):            
                     proposal = Proposal.createFromSqlResult(results)
                     proposal.setSemester(semester)
+                    self.fetchComments(proposal, propQueryResults = results)
                     self.fetchScientificCategories(proposal)
                     self.fetchObservingTypes(proposal)
                     self.fetchSources(proposal)
@@ -261,6 +263,40 @@ class PstImport(PstInterface):
                 return True
         # if we got here, no GBT!
         return False
+
+    def fetchComments(self, proposal, propQueryResults = None):
+
+        pid = int(proposal.pst_proposal_id)
+        
+        if propQueryResults is None:
+            row = self.fetchNRAOComments(proposal)
+            keys = self.getKeys()
+            propQueryResults   = dict(zip(keys, map(self.safeUnicode, row)))
+
+        # initialize the object for all comments
+        comments = ProposalComments.createFromSqlResult(propQueryResults)
+        comments.save()
+
+        # fill it up with the rest of the comments
+        srps = self.fetchSRPComments(pid)
+        if srps is not None:
+            comments.srp_to_pi  = srps[0]
+            comments.srp_to_tac = srps[1]
+        tech = self.fetchTechnicalReviews(pid)
+        if tech is not None:
+            comments.tech_review_to_pi  = tech[0]
+            comments.tech_review_to_tac = tech[1]
+
+        # save it off
+        comments.save()
+        proposal.comments = comments
+        proposal.save()
+
+    def fetchNRAOComments(self, proposal):
+        q = "SELECT comments FROM proposal WHERE proposal_id = %d" \
+            % proposal.pst_proposal_id
+        self.cursor.execute(q)
+        return self.cursor.fetchone()
 
     def fetchSRPScore(self, proposal):
         q = """
@@ -528,6 +564,45 @@ class PstImport(PstInterface):
         source.save()
 
         return source
+
+    def fetchTechnicalReviews(self, proposal_id):
+
+        q = """
+        SELECT tr.commentsForAuthors, tr.commentsForTAC
+        FROM technical_reviews as tr, 
+             proposal_reviews as pr, 
+             proposal as p 
+        WHERE pr.review_id = tr.review_id 
+            AND pr.proposal_id = p.proposal_id 
+            AND p.proposal_id = %d
+        """ % proposal_id
+        self.cursor.execute(q)
+        # collect the possibly mutliple reviews
+        result = None
+        pi = ''
+        tac = ''
+        for row in self.cursor.fetchall():
+            pi  += ' \n' + row[0]
+            tac += ' \n' + row[1]
+        if pi != '' and tac != '':
+            result = (pi, tac)
+        return result    
+
+    def fetchSRPComments(self, proposal_id):
+
+        q = """
+        SELECT sc.commentsForAuthors, sc.commentsForTac
+        FROM srp_comments as sc,
+             proposal as p,
+             proposal_normalized_scores as pns,
+             srp_comments_map as scm 
+         WHERE scm.normalized_scores_id = pns.normalized_scores_id 
+             AND  pns.proposal_id = p.proposal_id 
+             AND sc.srp_comments_id = scm.srp_comments_id 
+             AND p.proposal_id = %d
+        """ % proposal_id
+        self.cursor.execute(q)
+        return self.cursor.fetchone()
 
     def reimportAllSessionResources(self, semester, sessions = None):
         """

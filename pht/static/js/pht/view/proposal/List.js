@@ -2,6 +2,7 @@ Ext.define('PHT.view.proposal.List' ,{
     extend: 'Ext.grid.Panel',
     alias : 'widget.proposallist',
     store : 'Proposals', 
+    autoScroll: true,
     multiSelect: true,
 
     initComponent: function() {
@@ -87,6 +88,7 @@ Ext.define('PHT.view.proposal.List' ,{
             {header: 'Observing Types', dataIndex: 'observing_types', width: 200},
             {header: 'PI', dataIndex: 'pi_name', flex: 1},
             {header: 'Sci. Categories', dataIndex: 'sci_categories', flex: 1},
+            {header: 'SRP Score', dataIndex: 'normalizedSRPScore', flex: 1},
             {header: 'Requested Hrs', dataIndex: 'requested_time', flex: 1},
             {header: 'Allocated Hrs', dataIndex: 'allocated_time', flex: 1},
             {header: 'Joint Proposal', dataIndex: 'joint_proposal', flex: 1}

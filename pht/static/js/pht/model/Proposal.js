@@ -21,6 +21,7 @@ Ext.define('PHT.model.Proposal', {
            , 'spectral_line'
            , 'joint_proposal'
            , 'next_sem_complete'
+           , 'normalizedSRPScore'
            // from DSS project:
            , 'dss_pcode'
            , 'complete'
@@ -28,6 +29,13 @@ Ext.define('PHT.model.Proposal', {
            , 'billed_time'
            , 'scheduled_time'
            , 'remaining_time'
+           // comments
+           , 'nrao_comment'
+           , 'srp_to_pi'
+           , 'srp_to_tac'
+           , 'tech_review_to_pi'
+           , 'tech_review_to_tac'
+           , 'tac_to_pi'
            ], 
     proxy: {
         type: 'rest',

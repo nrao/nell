@@ -63,6 +63,12 @@ class TestViews(TestCase):
 
         # load the single proposal from the fixture
         self.proposal = Proposal.objects.get(pcode = "GBT12A-002")
+        # too lazy to remake the fixture:
+        cmts = ProposalComments()
+        cmts.save()
+        self.proposal.comments = cmts
+        self.proposal.save()
+
         self.dtfmt    = "%m/%d/%Y"
 
         sess = self.proposal.session_set.all()[0]
