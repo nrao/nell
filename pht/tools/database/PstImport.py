@@ -565,17 +565,6 @@ class PstImport(PstInterface):
 
         return source
 
-    def testComments(self):
-
-        ps = Proposal.objects.filter(semester__semester = '12B').exclude(pst_proposal_id = 0).order_by('pcode') 
-        for p in ps[:10]:
-            rows = self.fetchTechnicalReviews(p.pst_proposal_id)
-            print p, p.pst_proposal_id, len(rows)
-            for r in rows:
-                print 'pi', r[0]
-                print 'tac', r[1]
-                print ''
-
     def fetchTechnicalReviews(self, proposal_id):
 
         q = """
@@ -588,7 +577,16 @@ class PstImport(PstInterface):
             AND p.proposal_id = %d
         """ % proposal_id
         self.cursor.execute(q)
-        return self.cursor.fetchone()
+        # collect the possibly mutliple reviews
+        result = None
+        pi = ''
+        tac = ''
+        for row in self.cursor.fetchall():
+            pi  += ' \n' + row[0]
+            tac += ' \n' + row[1]
+        if pi != '' and tac != '':
+            result = (pi, tac)
+        return result    
 
     def fetchSRPComments(self, proposal_id):
 
