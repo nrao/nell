@@ -27,11 +27,14 @@
 from datetime import date, datetime, timedelta
 from utilities import SLATimeAgent as sla
 from utilities import TimeAgent
+from utilities import AnalogSet
 from utilities import TimeAccounting
 
 from pht.utilities    import *
 from pht.models       import *
 from scheduler.models import Observing_Type
+from scheduler.models import Period as DSSPeriod
+from scheduler.models import Semester as DSSSemester
 from pht.tools.Sun    import Sun
 from pht.tools.LstPressureWeather import LstPressureWeather
 from pht.tools.LstPressureWeather import Pressures
@@ -296,6 +299,86 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             fs = self.product(fs, self.rfiWeights)
         return fs
 
+    def useCarryOverPeriods(self, session):
+        """
+        We figure out the carry over for Maintenance
+        and Shutdown sessions from their periods.
+        """
+
+        # TBF: needs improvement
+        pcodes = ['Maintenance', 'Shutdown']
+        return session.proposal.pcode in pcodes
+
+    def getPressuresFromSessionsPeriods(self, session):
+        """
+        We figure out the carry over for Maintenance
+        and Shutdown sessions from their periods.
+        """
+        periods = self.getSessionNextSemesterPeriods(session)
+        return self.getPressuresFromPeriods(periods)
+
+    def getPressuresFromPeriods(self, periods):    
+        total = [0.0]*self.hrs
+        for period in periods:
+            ps = self.getPressuresFromPeriod(period)
+            total = self.add(total, ps)
+        return total
+
+    def getSessionNextSemesterPeriods(self, session, semester = '12B'):
+
+        # TBF: semester of choice is hard coded!!!
+        # TBF: for elective sessions, get one period
+        # per elective group!
+        semester = DSSSemester.objects.get(semester = semester)
+        return DSSPeriod.objects.filter( \
+            session = session.dss_session
+          , start__gt = semester.start()
+          , start__lt = semester.end()).exclude( \
+              state__name = 'Deleted').order_by('start') 
+
+    def getPressuresFromPeriod(self, period):
+        """
+        In a way, a much simpler calculation then
+        figuring out pressure from a session.  Here
+        we know exactly what LST hours are getting
+        blocked.
+        """
+
+        ps = [0.0] * self.hrs
+
+        start = period.start
+        dur   = period.duration
+        end   = period.end()
+        
+        # convert local time range to LST range
+        lstStart = sla.Absolute2RelativeLST(start)
+        lstEnd = sla.Absolute2RelativeLST(end)
+
+        # how does this overlap with 24 hours?
+        if lstStart > lstEnd:
+            ex = [(0,lstEnd), (lstStart, 24)]
+        else:
+            ex = [(lstStart, lstEnd)]
+
+        # convert this to the fraction of each 24 hour
+        # bin covered by the period
+        for hr in range(self.hrs):
+            for s, e in ex:
+                # we add to the pressure only if this
+                # hour is in the periods range
+                if AnalogSet.overlaps((hr, hr+1), (s, e)):
+                    # by how much?
+                    if hr >= s and hr+1 < e:
+                        # the whole thing
+                        ps[hr] = 1.0
+                    elif hr < s and (hr+1) > s:
+                        ps[hr] = (hr+1) - s
+                    else:
+                        ps[hr] = e - hr
+            
+        return ps 
+
+
     def getPressuresForSession(self, session, carryover = False):
         """
         Take into account different attributes of given session
@@ -356,6 +439,15 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             zz.append(xs[i] * ys[i])
         return zz    
 
+    def add(self, xs, ys):
+        "I know, I know, I should just use numpy"
+        assert len(xs) == len(ys)
+        zz = []
+        for i in range(len(xs)):
+            zz.append(xs[i] + ys[i])
+        return zz    
+
+
 
 
     def getPressures(self, sessions = None):
@@ -386,7 +478,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # fill the buckets
         for s in sessions:
             carryover = s.dss_session is not None
-            ps = self.getPressuresForSession(s, carryover)
+            if self.useCarryOverPeriods(s):
+                ps = self.getPressuresFromSessionsPeriods(s)
+            else:
+                ps = self.getPressuresForSession(s, carryover)
             ps = numpy.array(ps)
             # accum pressure in total 
             totalPs += ps
