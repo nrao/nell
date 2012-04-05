@@ -83,10 +83,6 @@ class Session(models.Model):
         db_table  = "pht_sessions"
         app_label = "pht"
 
-    def __init__(self, *args, **kws):
-        self.taTime = None
-        models.Model.__init__(self, *args, **kws)
-
     def __str__(self):
         return "%s (%d)" % (self.name, self.id)
 
@@ -118,10 +114,8 @@ class Session(models.Model):
     def getTime(self, type):
         "Leverage time accounting for this proposal's project."
         if self.dss_session is not None:
-            if self.taTime is None:
-                ta = TimeAccounting()
-                self.taTime = ta.getTime(type, self.dss_session)
-            return self.taTime
+            ta = TimeAccounting()
+            return ta.getTime(type, self.dss_session)
         else:
             return None
 

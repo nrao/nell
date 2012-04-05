@@ -1,3 +1,7 @@
+# Copyright (C) 2011 Associated Universities, Inc. Washington DC, USA.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
@@ -21,6 +25,7 @@ import settings
 setup_environ(settings)
 
 from datetime import datetime
+import settings, pg, psycopg2
 
 from scheduler.models    import Observing_Type
 from pht.models          import *
@@ -38,6 +43,217 @@ class SessionHttpAdapter(PhtHttpAdapter):
 
     def setSession(self, session):
         self.session = session
+
+    @staticmethod
+    def jsonDictHP(curr, keys, values):
+        data = dict(zip(keys, values))
+        query = """
+          select category 
+          from pht_proposals_sci_categories as psc 
+            join pht_scientific_categories as sc on sc.id = psc.scientificcategory_id 
+          where psc.proposal_id = %s
+          """ % data['proposal_id']
+        curr.execute(query)
+        data['sci_categories']       = ', '.join([cat for cat, in curr.fetchall()])
+        data['has_constraint_field'] = SessionHttpAdapter.hasText(data['constraint_field'])
+        data['has_comments']         = SessionHttpAdapter.hasText(data['comments'])
+        data['ra']              = rad2sexHrs(data['ra'])
+        data['dec']             = rad2sexDeg(data['dec'])
+        data['center_lst']      = rad2sexHrs(data['center_lst'])
+        data['lst_width']       = rad2sexHrs(data['lst_width'])
+        data['min_lst']         = rad2sexHrs(data['min_lst'])
+        data['max_lst']         = rad2sexHrs(data['max_lst'])
+        data['elevation_min']   = rad2sexDeg(data['elevation_min'])
+        data['solar_avoid']     = rad2deg(data['solar_avoid']) if data['solar_avoid'] is not None else None
+        data['start_date']      = formatExtDate(data['start_time'])
+        data['start_time']      = t2str(data['start_time'])
+
+        query = """
+          select b.abbreviation 
+          from pht_backends as b 
+            join pht_sessions_backends as sb on sb.backend_id = b.id 
+          where sb.session_id = %s
+        """ % data['id']
+        curr.execute(query)
+        data['backends'] = ','.join([v for v, in curr.fetchall()])
+
+        query = """
+          select r.abbreviation 
+          from pht_receivers as r 
+            join pht_sessions_receivers as sr on sr.receiver_id = r.id 
+          where sr.session_id = %s
+          order by r.freq_low
+        """ % data['id']
+        curr.execute(query)
+        data['receivers'] = ','.join([v for v, in curr.fetchall()])
+
+        query = """
+          select r.abbreviation 
+          from pht_receivers as r 
+            join pht_sessions_receivers_granted as srg on srg.receiver_id = r.id 
+          where srg.session_id = %s
+          order by r.freq_low
+        """ % data['id']
+        curr.execute(query)
+        data['receivers_granted'] = ','.join([v for v, in curr.fetchall()])
+
+        params = {'LST Exclude' : [], 'LST Include' : []}
+        for lst_type in params.keys():
+            query = """
+            select sp.float_value 
+            from pht_session_parameters as sp 
+              join pht_parameters as p on p.id = sp.parameter_id 
+            where session_id = %s and p.name = '%s Low' order by sp.id
+            """ % (data['id'], lst_type)
+            curr.execute(query)
+            lows = [v for v, in curr.fetchall()]
+
+            query = """
+            select sp.float_value 
+            from pht_session_parameters as sp 
+              join pht_parameters as p on p.id = sp.parameter_id 
+            where session_id = %s and p.name = '%s Hi' order by sp.id
+            """ % (data['id'], lst_type)
+            curr.execute(query)
+            highs = [v for v, in curr.fetchall()]
+
+            params[lst_type] = zip(lows, highs)
+
+        data['lst_in'], data['lst_ex'] = [', '.join(
+          ["%.2f-%.2f" % (low, hi) for low, hi in params[t]]) 
+                                       for t in ('LST Include', 'LST Exclude')]
+
+        if data['dss_session_id'] is not None:
+            query = """
+                select sum((pa.scheduled - 
+                  (pa.other_session_weather + pa.other_session_rfi + pa.other_session_other) - 
+                  (pa.lost_time_weather + pa.lost_time_rfi + pa.lost_time_other)) - 
+                  pa.not_billable) as time_billed, 
+                  sum(pa.scheduled) as scheduled_time 
+                from periods as p 
+                  join periods_accounting as pa on pa.id = p.accounting_id 
+                where p.session_id = %s
+            """ % data['dss_session_id']
+            curr.execute(query)
+            tb_keys = [d.name for d in curr.description]
+            tb_data = dict(zip(tb_keys, curr.fetchone()))
+            if tb_data['time_billed'] is not None:
+                tb_data['remaining_time'] = data['dss_total_time'] - tb_data['time_billed']
+            else:
+                tb_data['remaining_time'] = None
+
+            query = """
+                select start, duration 
+                from periods 
+                where session_id = %s and state_id <> 3 
+                order by start desc limit 1
+            """ % (data['dss_session_id'])
+            curr.execute(query)
+            result = curr.fetchone()
+            if result is not None:
+                last_date = result[0] + timedelta(hours = result[1])
+                tb_data['last_date_scheduled'] = formatExtDate(last_date)
+            else:
+                tb_data['last_date_scheduled'] = None
+        else:
+            tb_data = {}
+            tb_data['time_billed']         = None
+            tb_data['scheduled_time']      = None
+            tb_data['remaining_time']      = None
+            tb_data['last_date_scheduled'] = None
+        data.update(tb_data)
+
+        return data
+
+    @staticmethod
+    def jsonDictAllHP():
+        conn = psycopg2.connect(host   = settings.DATABASES['default']['HOST']
+                              , user   = settings.DATABASES['default']['USER']
+                              , password = settings.DATABASES['default']['PASSWORD']
+                              , database = settings.DATABASES['default']['NAME']
+                            )
+        curr = conn.cursor()
+        query = """
+        select 
+          s.id,
+          s.name,
+          p.pcode,
+          p.id as proposal_id,
+          s.pst_session_id,
+          sem.semester,
+          st.type as session_type,
+          st.type,
+          st.abbreviation as session_type_code,
+          ot.type as observing_type,
+          wt.type as weather_type,
+          ss.separation,
+          ss.separation as inner_separation,
+          sg.grade,
+          s.interval_time,
+          s.constraint_field,
+          s.comments,
+          s.scheduler_notes,
+          s.session_time_calculated,
+          a.requested_time,
+          a.repeats,
+          a.allocated_time,
+          a.semester_time,
+          a.period_time,
+          a.low_freq_time,
+          a.hi_freq_1_time,
+          a.hi_freq_2_time,
+          t.ra,
+          t.dec,
+          t.center_lst,
+          t.lst_width,
+          t.min_lst,
+          t.max_lst,
+          t.elevation_min,
+          t.solar_avoid,
+          f.thermal_night,
+          f.rfi_night,
+          f.optical_night,
+          f.transit_flat,
+          f.guaranteed,
+          a.repeats as inner_repeats,
+          s.interval_time as inner_interval,
+          m.start_time,
+          m.window_size,
+          m.outer_window_size,
+          m.outer_repeats,
+          ssm.separation as outer_separation,
+          m.outer_interval,
+          m.custom_sequence,
+          t.pst_min_lst, 
+          t.pst_max_lst,
+          t.pst_elevation_min,
+          ns.complete as next_sem_complete, 
+          ns.time as next_sem_time, 
+          ns.repeats as next_sem_repeats,
+          dss.name as dss_session,
+          dss.id as dss_session_id,
+          dss_a.total_time as dss_total_time
+        from ((((((((((((((
+          pht_sessions as s 
+          left outer join pht_allotements as a on a.id = s.allotment_id) 
+          left outer join pht_session_flags as f on s.flags_id = f.id) 
+          left outer join pht_monitoring as m on m.id = s.monitoring_id) 
+          left outer join pht_targets as t on t.id = s.target_id) 
+          left outer join pht_proposals as p on s.proposal_id = p.id)
+          left outer join pht_session_next_semesters as ns on ns.id = s.next_semester_id)
+          left outer join pht_semesters as sem on sem.id = s.semester_id)
+          left outer join pht_session_types as st on st.id = s.session_type_id)
+          left outer join pht_observing_types as ot on ot.id = s.observing_type_id)
+          left outer join pht_weather_types as wt on wt.id = s.weather_type_id)
+          left outer join pht_session_separations as ss on ss.id = s.separation_id)
+          left outer join pht_session_grades as sg on sg.id = s.grade_id)
+          left outer join pht_session_separations as ssm on ssm.id = m.outer_separation_id)
+          left outer join sessions as dss on dss.id = s.dss_session_id)
+          left outer join allotment as dss_a on dss_a.id = dss.allotment_id
+        """
+        curr.execute(query)
+        keys = [d.name for d in curr.description]
+        return [SessionHttpAdapter.jsonDictHP(curr, keys, values) for values in curr.fetchall()]
 
     def jsonDict(self, detailed = False):
         sessType = self.session.session_type.type if self.session.session_type is not None else None
@@ -71,9 +287,9 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'grade'                   : grade
               , 'interval_time'           : self.session.interval_time
               , 'constraint_field'        : self.session.constraint_field
-              , 'has_constraint_field'    : self.hasText(self.session.constraint_field)
+              , 'has_constraint_field'    : SessionHttpAdapter.hasText(self.session.constraint_field)
               , 'comments'                : self.session.comments
-              , 'has_comments'            : self.hasText(self.session.comments)
+              , 'has_comments'            : SessionHttpAdapter.hasText(self.session.comments)
               , 'scheduler_notes'         : self.session.scheduler_notes
               , 'session_time_calculated' : self.session.session_time_calculated
               # allotment
@@ -139,7 +355,8 @@ class SessionHttpAdapter(PhtHttpAdapter):
                }
         return data
 
-    def hasText(self, text):
+    @staticmethod
+    def hasText(text):
         return text is not None and text != ""
 
     def initFromPost(self, data):
@@ -378,4 +595,13 @@ class SessionHttpAdapter(PhtHttpAdapter):
                                                    )
         
 if __name__ == '__main__':
-    [SessionHttpAdapter(s).jsonDict() for s in Session.objects.all()]
+    #old = [SessionHttpAdapter(s).jsonDict() for s in Session.objects.all()] 
+    #old = [SessionHttpAdapter(Session.objects.get(id = 5836)).jsonDict() ]
+    new = SessionHttpAdapter.jsonDictAllHP()
+    #print old
+    #print "======================================================================="
+    #print new
+    #print len(old), len(new)
+    print len(new)
+    #print len(old)
+    #print old == new
