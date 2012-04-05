@@ -9,6 +9,8 @@ Ext.define('PHT.view.proposal.TacTool', {
     extend: 'PHT.view.Edit',
     alias : 'widget.tactool',
     title : 'TAC Tool',
+    autoscroll: true,
+    layout: 'fit',
     height: '70%',
     x: 700,
     y: 225,
@@ -39,7 +41,7 @@ Ext.define('PHT.view.proposal.TacTool', {
 
         this.items = [{
             xtype: 'phtform',
-        
+            autoScroll: true,
             border: false,
             trackResetOnLoad: true,
             fieldDefaults: {
