@@ -101,27 +101,19 @@ Ext.define('PHT.controller.Proposals', {
         grid.titleFilterText.reset();
     },
 
+    // load the form for allocating grades and time to proposal
     allocateForm: function(button) {
-        console.log('allocateForm');
         var win = button.up('window')
-        console.log(win);
-        console.log(win.proposalCombo);
-        console.log(win.proposalCombo.getValue());
         var allocate = Ext.create('PHT.view.proposal.Allocate');
         allocate.setProposal(win.proposalCombo.getValue());
         allocate.show();
     },
 
+    // assing grades & allocated time to proposal
     allocateProposal: function(button) {
-        console.log('allocateProposal');
         var win = button.up('window')
-
         var form = win.down('form')
-        console.log(win);
-        console.log(form);
-        console.log(win.pcode);
         var pcode = win.pcode;
-        var params = {}
         Ext.Ajax.request({
             url: '/pht/proposals/' + pcode + '/allocate',
             params: form.getValues(),
@@ -129,6 +121,7 @@ Ext.define('PHT.controller.Proposals', {
             timeout: 300000,
             success: function(response) {
                 win.close();
+                // TBF: need to refresh, but how much?
                 //me.refresh();
             },
         });
