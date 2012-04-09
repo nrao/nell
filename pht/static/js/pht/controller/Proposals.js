@@ -40,6 +40,7 @@ Ext.define('PHT.controller.Proposals', {
         'proposal.Import',
         'proposal.Navigate',
         'proposal.TacTool',
+        'proposal.Allocate',
     ],
 
     init: function() {
@@ -70,6 +71,12 @@ Ext.define('PHT.controller.Proposals', {
             'tactool button[action=save]': {
                 click: this.updateProposal
             },            
+            'tactool toolbar button[action=allocate]': {
+                click: this.allocateForm
+            },
+            'proposalallocate button[action=save]': {
+                click: this.allocateProposal
+            },            
             'proposalimport button[action=import]': {
                 click: this.importProposal
             },            
@@ -92,6 +99,40 @@ Ext.define('PHT.controller.Proposals', {
         grid.authorsFilterText.reset();
         grid.pcodeFilterText.reset();
         grid.titleFilterText.reset();
+    },
+
+    allocateForm: function(button) {
+        console.log('allocateForm');
+        var win = button.up('window')
+        console.log(win);
+        console.log(win.proposalCombo);
+        console.log(win.proposalCombo.getValue());
+        var allocate = Ext.create('PHT.view.proposal.Allocate');
+        allocate.setProposal(win.proposalCombo.getValue());
+        allocate.show();
+    },
+
+    allocateProposal: function(button) {
+        console.log('allocateProposal');
+        var win = button.up('window')
+
+        var form = win.down('form')
+        console.log(win);
+        console.log(form);
+        console.log(win.pcode);
+        var pcode = win.pcode;
+        var params = {}
+        Ext.Ajax.request({
+            url: '/pht/proposals/' + pcode + '/allocate',
+            params: form.getValues(),
+            method: 'POST',
+            timeout: 300000,
+            success: function(response) {
+                win.close();
+                //me.refresh();
+            },
+        });
+
     },
 
     proposalSelected: function(grid, record) {

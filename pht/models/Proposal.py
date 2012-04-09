@@ -27,6 +27,7 @@ from Backend            import Backend
 from ObservingType      import ObservingType
 from ScientificCategory import ScientificCategory
 from Semester           import Semester
+from SessionGrade       import SessionGrade
 from Status             import Status
 from ProposalType       import ProposalType
 from ProposalComments   import ProposalComments
@@ -143,6 +144,19 @@ class Proposal(models.Model):
             return self.dss_project.complete
         else:
             return None
+
+    def scaleAllocatedTime(self, scale):
+        "Allocates each of this proposal's sessions by the given scale."
+        for s in self.session_set.all():
+            s.allotment.allocated_time = s.allotment.requested_time * (scale/100.0)
+            s.allotment.save()
+    
+    def setGrades(self, grade):
+        "Sets all sessions to the given grade."
+        g = SessionGrade.objects.get(grade = grade)
+        for s in self.session_set.all():
+            s.grade = g
+            s.save()
 
     # *** End Section: accessing the corresponding DSS project
 

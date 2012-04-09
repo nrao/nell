@@ -34,6 +34,7 @@ urlpatterns = patterns(''
    , url(r'^proposals/([^/]+)/authors/([^/]+)$', login_required(authorResource.requestHandler))
    , url(r'^proposals/([^/]+)/sources$',         proposal_sources)
    , url(r'^proposals/([^/]+)/sources/([^/]+)$', login_required(sourceResource.requestHandler))
+   , url(r'^proposals/([^/]+)/allocate$',        proposal_allocate)
    , url(r'^authors/([^/]+)$',                   login_required(authorResource.requestHandler))
    , url(r'^authors$',                           login_required(authorResource.requestHandler))
    , url(r'^sources/([^/]+)$',                   login_required(sourceResource.requestHandler))

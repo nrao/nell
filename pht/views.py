@@ -119,6 +119,23 @@ def lst_pressure(request, *args, **kws):
 
 @login_required
 @admin_only
+def proposal_allocate(request, *args, **kws):
+
+    if request.method == 'POST':
+        scale = request.POST.get('time_scale')
+        grade = request.POST.get('grade')
+        pcode = args[0]
+        # TBF: raise 404 if pcode not found
+        p = Proposal.objects.get(pcode = pcode)
+        if scale is not None and scale != '':
+            p.scaleAllocatedTime(float(scale))
+        if grade is not None and grade != '':
+            p.setGrades(grade)
+        return HttpResponse(json.dumps({"success" : "ok"})
+                          , content_type = 'application/json')
+
+@login_required
+@admin_only
 def import_proposals(request, *args, **kws):
     if request.method == 'POST':
         pst = PstImport()

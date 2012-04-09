@@ -32,10 +32,17 @@ Ext.define('PHT.view.proposal.TacTool', {
             },
         });
 
+        this.allocateBtn = Ext.create('Ext.button.Button', {
+            text: 'Allocate',
+            action: 'allocate',
+        });
+
         this.dockedItems = [{
             xtype: 'toolbar',
             items: [
                 this.proposalCombo,        
+                { xtype: 'tbseparator'},
+                this.allocateBtn,
             ]},
         ];
 
