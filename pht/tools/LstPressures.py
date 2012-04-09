@@ -112,7 +112,12 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.weather = LstPressureWeather()
 
         # for reporting
-        self.badSess = []
+        self.badSessions = []
+        self.noPeriods = []
+        self.noGrades = []
+        self.carryoverSessions = []
+        self.carryoverSessionPeriods = []
+        self.pressuresBySession = {}
         self.pressures = [] 
 
         # for computing day light hours
@@ -122,6 +127,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.year = 2012
 
         self.nextSemester = DSSSemester.getFutureSemesters()[0]
+        self.nextSemesterStart = self.nextSemester.start()
+        self.nextSemesterEnd   = self.nextSemester.end()
 
         # TBF: get from DB?
         self.grades = ['A', 'B', 'C']
@@ -136,6 +143,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.totalPs  = numpy.array([0.0]*self.hrs)
         self.carryoverTotalPs = numpy.array([0.0]*self.hrs)
         self.carryoverPs = Pressures() 
+        self.newAstronomyTotalPs = numpy.array([0.0]*self.hrs)
         self.gradePs = { 'A' : Pressures()
                  , 'B' : Pressures()
                  , 'C' : Pressures()
@@ -269,13 +277,46 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         return total
 
     def getSessionNextSemesterPeriods(self, session): 
+        """
+        A session that has periods for the next semester should
+        be either fixed, windowed, or elective.  For fixed,
+        all periods count; for windowed, default periods 
+        count, but they should be the only one's setup.
+        Handle electives distinctly.
+        """
+        if session.dss_session.session_type.type == 'elective':
+            periods = self.getElectiveSessionPeriods(session)
+        else:
+            periods = self.getSessionPeriods(session)
+        # for reporting
+        if len(periods) == 0:
+            self.noPeriods.append(session)
+        else:
+            self.carryoverSessionPeriods.append(session)
+        return periods    
 
-        # TBF: for elective sessions, get one period
-        # per elective group!
+    def getElectiveSessionPeriods(self, session):
+        """
+        Only one period per elective will probably get 
+        scheduled, so arbitrarily choose one.
+        """
+        # only look at electives in our time range
+        es = [e for e in session.dss_session.elective_set.all() \
+            if len(e.periods.exclude(state__abbreviation = 'D')) > 0 and \
+            e.getRange()[0] < self.nextSemesterEnd and \
+            e.getRange()[1] > self.nextSemesterStart]
+
+        # just get the first period    
+        ps = [e.periods.exclude(state__abbreviation = 'D')[0] \
+            for e in es]
+        return ps
+
+    def getSessionPeriods(self, session):
+        #assert session.session_type.type != 'Elective'
         return DSSPeriod.objects.filter( \
             session = session.dss_session
-          , start__gt = self.nextSemester.start()
-          , start__lt = self.nextSemester.end()).exclude( \
+          , start__gt = self.nextSemesterStart
+          , start__lt = self.nextSemesterEnd).exclude( \
               state__name = 'Deleted').order_by('start') 
 
     def getPressuresFromPeriod(self, period):
@@ -332,6 +373,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             or session.allotment.allocated_time is None \
             or session.target.min_lst is None \
             or session.target.max_lst is None:
+            self.badSessions.append(session)
             return [0.0] * self.hrs
 
         # TBF: is this right?
@@ -346,6 +388,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             else:
                 ta = TimeAccounting()
                 totalTime = ta.getTimeRemaining(session.dss_session)
+            # reporting
+            self.carryoverSessions.append(session)
         else:    
             totalTime = session.allotment.allocated_time
 
@@ -405,7 +449,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         # what sessions are we doing this for?
         if sessions is None:
-            sessions = Session.objects.all()
+            sessions = Session.objects.all().order_by('name')
 
         # fill the buckets
         for s in sessions:
@@ -414,19 +458,25 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 ps = self.getPressuresFromSessionsPeriods(s)
             else:
                 ps = self.getPressuresForSession(s, carryover)
+            # convert our list to something easier to deal with    
             ps = numpy.array(ps)
             # accum pressure in total 
             self.totalPs += ps
+            # for reporting
+            self.pressuresBySession[s.name] = (carryover, ps, sum(ps))
             # We really keep carryover separate
             # Also track carryover by weather type
             if carryover:
                 self.carryoverTotalPs += ps
                 self.carryoverPs += self.weather.binSession(s, ps)
             else:
+                self.newAstronomyTotalPs += ps
                 wps = self.weather.binSession(s, ps)
                 if s.grade is not None:
                     grade = s.grade.grade
                     self.gradePs[grade] += wps
+                # for reporting    
+                self.noGrades.append(s)    
 
         # now figure out the availability        
         changes = self.weather.getAvailabilityChanges(self.gradePs['A'])
@@ -461,6 +511,35 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.pressures = output   
         return output        
 
+    def almostEqual(self, xs, ys):
+        "Two numpy arrays are almost equal?"
+        eps = 0.001
+        return abs(sum(xs) - sum(ys)) < eps
+
+    def checkPressures(self):
+        "Bookeeping should be self-consistent"
+
+        msgs = []
+        if not self.almostEqual(self.totalPs
+                              , self.carryoverTotalPs + self.newAstronomyTotalPs):
+            msgs.append("Total Pressure ! = Carryover Total + New Astro. Total")  
+
+
+        totalCarryover = numpy.array([0.0]*self.hrs)
+        for w in self.weatherTypes:
+            totalCarryover += self.carryoverPs.getType(w)
+        if not self.almostEqual(totalCarryover, self.carryoverTotalPs):
+            msgs.append("Total Carry Over != All Weather Types")
+        
+        totalNewAstro = numpy.array([0.0]*self.hrs)
+        for g in self.grades:
+            for w in self.weatherTypes:
+                totalNewAstro += self.gradePs[g].getType(w)
+        if not self.almostEqual(totalNewAstro, self.newAstronomyTotalPs):
+            msgs.append("New Astro. Total != All Weather/Grade Types")
+
+        return (len(msgs) == 0, msgs)
+
     def report(self):
         "Report on pressure results - mostly for debugging."
         
@@ -485,13 +564,59 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         
         print ""
         print "Next Semester Astromony: "
+        print self.formatResults("      Total" 
+                               , self.newAstronomyTotalPs)
         for w in self.weatherTypes:
             print "    %s" % w
             for g in self.grades:
                 print self.formatResults("      %s_%s" % (w, g)
                                        , self.gradePs[g].getType(w))
-    def formatResults(self, label, results):
-        label = "%18s" % label
+
+        # warnings
+        valid, msgs = self.checkPressures()
+        if not valid:
+            print ""
+            print "WARNINGS: "
+            for m in msgs:
+                print m 
+
+        # more debugging
+        print ""
+        print "Carry over sessions: %d" % len(self.carryoverSessions)
+        for s in self.carryoverSessions:
+            print "    ", s, s.weather_type
+        print "Carry over sessions w/ periods: %d" % \
+            len(self.carryoverSessionPeriods)
+        for s in self.carryoverSessionPeriods:
+            print "    ", s, s.weather_type
+        print "No Periods for Sessions: %d" % len(self.noPeriods)
+        for s in self.noPeriods:
+            print "    ", s
+        print "Sessions counted towards astronomy w/ out grades: %d" % len(self.noGrades)    
+        for s in self.noGrades:
+            print "    ", s
+        print "Bad Sessions: %d" % len(self.badSessions)
+        for b in self.badSessions:
+            print "    ", b
+
+        # everybodies pressure!
+        print ""
+        print "Pressures by Session: "
+        for k in sorted(self.pressuresBySession.keys()):
+            carryover, ps, total = self.pressuresBySession[k]
+            lbl = "%s (%s, %5.2f)" % (k, carryover, total)
+            print self.formatResults(lbl, ps, lblFrmt = "%35s")
+        print ""
+        print "Non-Zero Pressures by Session: "
+        for k in sorted(self.pressuresBySession.keys()):
+            carryover, ps, total = self.pressuresBySession[k]
+            if sum(ps) > 0.0:
+                lbl = "%s (%s, %5.2f)" % (k, carryover, total)
+                print self.formatResults(lbl, ps, lblFrmt = "%35s")
+
+
+    def formatResults(self, label, results, lblFrmt = "%18s"):
+        label = lblFrmt % label
         rs = ["%7.2f" % results[i] for i in range(len(results))]
         return label + ": " + ' '.join(rs)
             
@@ -583,30 +708,14 @@ if __name__ == '__main__':
     ps = lst.getPressures()
     lst.report()
 
-    exp = [{'Available': 181.0, 'Carryover_Good': 10.408394268910172, 'Carryover': 36.364497468345398, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 0, 'Good_C': 0.0, 'Carryover_Poor': 0.5310742521060543, 'Excellent_A': 0.0, 'Carryover_Excellent': 9.5512514117673142, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 36.963962708987111, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 11.542857142857143, 'Carryover': 35.328571428571436, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 1, 'Good_C': 0.0, 'Carryover_Poor': 1.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 9.7857142857142865, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 35.928036669213149, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 12.037814666064842, 'Carryover': 36.251354091238156, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 2, 'Good_C': 0.0, 'Carryover_Poor': 1.989915046415397, 'Excellent_A': 0.0, 'Carryover_Excellent': 10.280671808921985, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 36.650819331879866, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 14.060054892191472, 'Carryover': 38.542898651699467, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 3, 'Good_C': 0.0, 'Carryover_Poor': 6.0343954986686548, 'Excellent_A': 0.0, 'Carryover_Excellent': 12.302912035048614, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 38.942363892341177, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 15.861502859244046, 'Carryover': 40.245781881855784, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 4, 'Good_C': 0.0, 'Carryover_Poor': 9.6372914327737984, 'Excellent_A': 0.0, 'Carryover_Excellent': 14.104360002101187, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 40.645247122497494, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 16.042857142857144, 'Carryover': 41.100694322570469, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 5, 'Good_C': 0.0, 'Carryover_Poor': 10.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 14.285714285714286, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 41.500159563212179, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 16.042857142857144, 'Carryover': 48.139667475274983, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 6, 'Good_C': 0.0, 'Carryover_Poor': 10.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 14.285714285714286, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 48.539132715916693, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 16.042857142857144, 'Carryover': 56.874582206757943, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 7, 'Good_C': 0.0, 'Carryover_Poor': 10.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 14.285714285714286, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 57.156400388576124, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 16.042857142857144, 'Carryover': 65.609496938155829, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 8, 'Good_C': 0.0, 'Carryover_Poor': 10.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 14.285714285714286, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 65.89131511997401, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 16.042857142857144, 'Carryover': 73.742370627442142, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 9, 'Good_C': 0.0, 'Carryover_Poor': 10.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 14.285714285714286, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 74.024188809260323, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 15.152712290918069, 'Carryover': 74.930509997070018, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 10, 'Good_C': 0.0, 'Carryover_Poor': 9.9339960104075615, 'Excellent_A': 0.0, 'Carryover_Excellent': 14.252712290918067, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 75.2123281788882, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 4.75, 'Carryover': 60.551935262869563, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 11, 'Good_C': 0.0, 'Carryover_Poor': 9.5, 'Excellent_A': 0.0, 'Carryover_Excellent': 4.75, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 61.137649548583852, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 4.7179685338665873, 'Carryover': 67.271845167773591, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 12, 'Good_C': 0.0, 'Carryover_Poor': 9.4359370677331746, 'Excellent_A': 0.0, 'Carryover_Excellent': 4.7179685338665873, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 68.143273739202172, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 3.1294648609924351, 'Carryover': 73.297459341586062, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 13, 'Good_C': 0.0, 'Carryover_Poor': 6.2589297219848703, 'Excellent_A': 0.0, 'Carryover_Excellent': 3.1294648609924351, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 74.168887913014643, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 0.96023589156207612, 'Carryover': 73.40381971703269, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 14, 'Good_C': 0.0, 'Carryover_Poor': 1.9204717831241522, 'Excellent_A': 0.0, 'Carryover_Excellent': 0.96023589156207612, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 74.592895347284809, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 0.0, 'Carryover': 71.478010945211139, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 15, 'Good_C': 0.0, 'Carryover_Poor': 0.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 0.0, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 72.667086575463259, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 0.0, 'Carryover': 69.680423175254418, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 16, 'Good_C': 0.0, 'Carryover_Poor': 0.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 0.0, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 71.069498805506541, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 0.0, 'Carryover': 61.56824350563312, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 17, 'Good_C': 0.0, 'Carryover_Poor': 0.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 0.0, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 62.957319135885228, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 0.0, 'Carryover': 56.011357933675626, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 18, 'Good_C': 0.0, 'Carryover_Poor': 0.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 0.0, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 57.11471927821345, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 0.0, 'Carryover': 53.106970202722692, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 19, 'Good_C': 0.0, 'Carryover_Poor': 0.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 0.0, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 53.924617261546231, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 0.8571428571428571, 'Carryover': 47.338222834044494, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 20, 'Good_C': 0.0, 'Carryover_Poor': 0.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 0.0, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 48.055869892868031, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 10.142857142857144, 'Carryover': 57.991446255859309, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 21, 'Good_C': 0.0, 'Carryover_Poor': 0.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 9.2857142857142865, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 58.509093314682843, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 10.241716044750428, 'Carryover': 48.797937081600416, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 22, 'Good_C': 0.0, 'Carryover_Poor': 0.197717803786567, 'Excellent_A': 0.0, 'Carryover_Excellent': 9.38457318760757, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 49.315584140423951, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
-    , {'Available': 181.0, 'Carryover_Good': 10.392857142857144, 'Carryover': 42.782723697409359, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 23, 'Good_C': 0.0, 'Carryover_Poor': 0.5, 'Excellent_A': 0.0, 'Carryover_Excellent': 9.5357142857142865, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 43.300370756232894, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}]
-
-    assert exp == ps
+    #exp = []
+    #eps = 0.001
+    #for i in range(len(ps)):
+    #    keys = ps[i].keys()
+    #    for k in keys:
+    #        if not (abs(exp[i][k] - ps[i][k]) < eps):
+    #            print "Lst: %f, Key: %s" % (i, k)
+    #            print exp[i][k]
+    #            print ps[i][k]
+    #        assert abs(exp[i][k] - ps[i][k]) < eps
 
