@@ -20,9 +20,9 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-#from django.core.management import setup_environ
-#import settings
-#setup_environ(settings)
+from django.core.management import setup_environ
+import settings
+setup_environ(settings)
 
 from datetime import date, datetime, timedelta
 from utilities import SLATimeAgent as sla
@@ -106,97 +106,41 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # OR the current time remaining?
         self.carryOverUseNextSemester = carryOverUseNextSemester
 
-        self.pressures = [{'LST':float(i), 'Total':0.0} for i in range(24)]
 
+        # for computing pressures based on weather type, on 
+        # holding these results
         self.weather = LstPressureWeather()
 
         # for reporting
         self.badSess = []
-
-        # TBF: These get computed by methods in this class,
-        # but no need to do it at start up every time.
-        self.thermalNightWeights = [0.61643835616438358
-                          , 0.61369863013698633
-                          , 0.61095890410958908
-                          , 0.61369863013698633
-                          , 0.61369863013698633
-                          , 0.61643835616438358
-                          , 0.61917808219178083
-                          , 0.61643835616438358
-                          , 0.61643835616438358
-                          , 0.61643835616438358
-                          , 0.61643835616438358
-                          , 0.61369863013698633
-                          , 0.61643835616438358
-                          , 0.62191780821917808
-                          , 0.62739726027397258
-                          , 0.64383561643835618
-                          , 0.66301369863013704
-                          , 0.68493150684931503
-                          , 0.70136986301369864
-                          , 0.70136986301369864
-                          , 0.68219178082191778
-                          , 0.66027397260273968
-                          , 0.63835616438356169
-                          , 0.62465753424657533
-                          ]
-        self.opticalNightWeights = [0.50958904109589043
-                            , 0.51232876712328768
-                            , 0.51232876712328768
-                            , 0.51506849315068493
-                            , 0.51506849315068493
-                            , 0.51780821917808217
-                            , 0.51780821917808217
-                            , 0.51780821917808217
-                            , 0.51506849315068493
-                            , 0.51506849315068493
-                            , 0.51506849315068493
-                            , 0.51232876712328768
-                            , 0.51232876712328768
-                            , 0.50958904109589043
-                            , 0.50684931506849318
-                            , 0.50684931506849318
-                            , 0.50410958904109593
-                            , 0.50136986301369868
-                            , 0.50136986301369868
-                            , 0.50136986301369868
-                            , 0.50136986301369868
-                            , 0.50410958904109593
-                            , 0.50684931506849318
-                            , 0.50958904109589043
-                            ]
-        self.rfiWeights     = [0.54246575342465753
-                             , 0.54520547945205478
-                             , 0.54520547945205478
-                             , 0.54246575342465753
-                             , 0.54246575342465753
-                             , 0.54246575342465753
-                             , 0.50136986301369868
-                             , 0.50136986301369868
-                             , 0.50136986301369868
-                             , 0.48493150684931507
-                             , 0.46027397260273972
-                             , 0.45753424657534247
-                             , 0.46027397260273972
-                             , 0.46027397260273972
-                             , 0.46027397260273972
-                             , 0.46027397260273972
-                             , 0.45753424657534247
-                             , 0.46301369863013697
-                             , 0.50136986301369868
-                             , 0.50136986301369868
-                             , 0.49863013698630138
-                             , 0.51780821917808217
-                             , 0.54246575342465753
-                             , 0.54246575342465753
-                             ] 
-        
+        self.pressures = [] 
 
         # for computing day light hours
         self.sun = Sun()
         
         # what example year do we compute flags for?
         self.year = 2012
+
+        self.nextSemester = DSSSemester.getFutureSemesters()[0]
+
+        # TBF: get from DB?
+        self.grades = ['A', 'B', 'C']
+        self.weatherTypes = ['Poor', 'Good', 'Excellent']
+
+        self.initPressures()
+        self.initFlagWeights()
+
+
+    def initPressures(self):
+        # init our buckets
+        self.totalPs  = numpy.array([0.0]*self.hrs)
+        self.carryoverTotalPs = numpy.array([0.0]*self.hrs)
+        self.carryoverPs = Pressures() 
+        self.gradePs = { 'A' : Pressures()
+                 , 'B' : Pressures()
+                 , 'C' : Pressures()
+                 }
+
 
     def computeThermalNightWeights(self, numDays = 365, month = 1):
         "Computes the weights for the PTCS night time flag,"
@@ -324,16 +268,14 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             total = self.add(total, ps)
         return total
 
-    def getSessionNextSemesterPeriods(self, session, semester = '12B'):
+    def getSessionNextSemesterPeriods(self, session): 
 
-        # TBF: semester of choice is hard coded!!!
         # TBF: for elective sessions, get one period
         # per elective group!
-        semester = DSSSemester.objects.get(semester = semester)
         return DSSPeriod.objects.filter( \
             session = session.dss_session
-          , start__gt = semester.start()
-          , start__lt = semester.end()).exclude( \
+          , start__gt = self.nextSemester.start()
+          , start__lt = self.nextSemester.end()).exclude( \
               state__name = 'Deleted').order_by('start') 
 
     def getPressuresFromPeriod(self, period):
@@ -447,9 +389,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             zz.append(xs[i] + ys[i])
         return zz    
 
-
-
-
     def getPressures(self, sessions = None):
         """
         Returns a dictionary of pressures by LST for different 
@@ -461,19 +400,12 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
          {'LST': 1.0, 'total': 3.0, 'A': 2.0, 'B': 1.0},
         ]
         """
+        
+        self.initPressures()
 
         # what sessions are we doing this for?
         if sessions is None:
             sessions = Session.objects.all()
-
-        # init buckets
-        totalPs     = numpy.array([0.0]*self.hrs)
-        carryoverTotalPs = numpy.array([0.0]*self.hrs)
-        carryoverPs = Pressures() 
-        gradePs = { 'A' : Pressures()
-                 , 'B' : Pressures()
-                 , 'C' : Pressures()
-                 }
 
         # fill the buckets
         for s in sessions:
@@ -484,45 +416,197 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 ps = self.getPressuresForSession(s, carryover)
             ps = numpy.array(ps)
             # accum pressure in total 
-            totalPs += ps
+            self.totalPs += ps
             # We really keep carryover separate
             # Also track carryover by weather type
             if carryover:
-                carryoverTotalPs += ps
-                carryoverPs += self.weather.binSession(s, ps)
+                self.carryoverTotalPs += ps
+                self.carryoverPs += self.weather.binSession(s, ps)
             else:
                 wps = self.weather.binSession(s, ps)
                 if s.grade is not None:
                     grade = s.grade.grade
-                    gradePs[grade] += wps
+                    self.gradePs[grade] += wps
 
         # now figure out the availability        
-        changes = self.weather.getAvailabilityChanges(gradePs['A'])
-        gradePs['A'] += changes
+        changes = self.weather.getAvailabilityChanges(self.gradePs['A'])
+        self.gradePs['A'] += changes
 
         # now convert the buckets to expected output
+        return self.jsonDict()
+
+    def jsonDict(self):
+        """
+        Convert our numpy arrays to the format expected by the client:
+        A list of dictionaries, where LST is a key.
+        """
+       
         output = []
         for i in range(self.hrs):
             lstDict = dict(LST = i
-                         , Total = totalPs[i] 
+                         , Total = self.totalPs[i] 
                          , Available = self.weather.availabilityTotal[i]
-                         , Carryover = carryoverTotalPs[i] 
+                         , Carryover = self.carryoverTotalPs[i] 
                           )
-            for weather in ['Poor', 'Good', 'Excellent']:
+            for weather in self.weatherTypes: 
                 availType = "Available_%s" % weather
                 lstDict[availType] = self.weather.availability.getType(weather)[i]
                 carryoverType = "Carryover_%s" % weather
-                lstDict[carryoverType] = carryoverPs.getType(weather)[i]
-                for grade in ['A', 'B', 'C']:
+                lstDict[carryoverType] = self.carryoverPs.getType(weather)[i]
+                for grade in self.grades: 
                     type = "%s_%s" % (weather, grade)
-                    lstDict[type] = gradePs[grade].getType(weather)[i]
+                    lstDict[type] = self.gradePs[grade].getType(weather)[i]
             output.append(lstDict)
-            
+           
+        self.pressures = output   
         return output        
 
+    def report(self):
+        "Report on pressure results - mostly for debugging."
+        
+        print self.formatResults('Total', self.totalPs)
 
+        print ""                           
+        print "Availablilty: "
+        print self.formatResults('    Total'
+            , self.weather.availabilityTotal)
+        for w in self.weatherTypes:
+            print self.formatResults('    %s' % w
+                                   , self.weather.availability.getType(w))
+
+        
+        print ""
+        print "Carryover: "
+        print self.formatResults('    Total'
+            , self.carryoverTotalPs)
+        for w in self.weatherTypes:
+            print self.formatResults('    %s' % w
+                                   , self.carryoverPs.getType(w))
+        
+        print ""
+        print "Next Semester Astromony: "
+        for w in self.weatherTypes:
+            print "    %s" % w
+            for g in self.grades:
+                print self.formatResults("      %s_%s" % (w, g)
+                                       , self.gradePs[g].getType(w))
+    def formatResults(self, label, results):
+        label = "%18s" % label
+        rs = ["%7.2f" % results[i] for i in range(len(results))]
+        return label + ": " + ' '.join(rs)
+            
+
+    def initFlagWeights(self):
+
+        # TBF: These get computed by methods in this class,
+        # but no need to do it at start up every time.
+        self.thermalNightWeights = [0.61643835616438358
+                          , 0.61369863013698633
+                          , 0.61095890410958908
+                          , 0.61369863013698633
+                          , 0.61369863013698633
+                          , 0.61643835616438358
+                          , 0.61917808219178083
+                          , 0.61643835616438358
+                          , 0.61643835616438358
+                          , 0.61643835616438358
+                          , 0.61643835616438358
+                          , 0.61369863013698633
+                          , 0.61643835616438358
+                          , 0.62191780821917808
+                          , 0.62739726027397258
+                          , 0.64383561643835618
+                          , 0.66301369863013704
+                          , 0.68493150684931503
+                          , 0.70136986301369864
+                          , 0.70136986301369864
+                          , 0.68219178082191778
+                          , 0.66027397260273968
+                          , 0.63835616438356169
+                          , 0.62465753424657533
+                          ]
+        self.opticalNightWeights = [0.50958904109589043
+                            , 0.51232876712328768
+                            , 0.51232876712328768
+                            , 0.51506849315068493
+                            , 0.51506849315068493
+                            , 0.51780821917808217
+                            , 0.51780821917808217
+                            , 0.51780821917808217
+                            , 0.51506849315068493
+                            , 0.51506849315068493
+                            , 0.51506849315068493
+                            , 0.51232876712328768
+                            , 0.51232876712328768
+                            , 0.50958904109589043
+                            , 0.50684931506849318
+                            , 0.50684931506849318
+                            , 0.50410958904109593
+                            , 0.50136986301369868
+                            , 0.50136986301369868
+                            , 0.50136986301369868
+                            , 0.50136986301369868
+                            , 0.50410958904109593
+                            , 0.50684931506849318
+                            , 0.50958904109589043
+                            ]
+        self.rfiWeights     = [0.54246575342465753
+                             , 0.54520547945205478
+                             , 0.54520547945205478
+                             , 0.54246575342465753
+                             , 0.54246575342465753
+                             , 0.54246575342465753
+                             , 0.50136986301369868
+                             , 0.50136986301369868
+                             , 0.50136986301369868
+                             , 0.48493150684931507
+                             , 0.46027397260273972
+                             , 0.45753424657534247
+                             , 0.46027397260273972
+                             , 0.46027397260273972
+                             , 0.46027397260273972
+                             , 0.46027397260273972
+                             , 0.45753424657534247
+                             , 0.46301369863013697
+                             , 0.50136986301369868
+                             , 0.50136986301369868
+                             , 0.49863013698630138
+                             , 0.51780821917808217
+                             , 0.54246575342465753
+                             , 0.54246575342465753
+                             ] 
             
 
 
+if __name__ == '__main__':
+    lst = LstPressures()
+    ps = lst.getPressures()
+    lst.report()
 
+    exp = [{'Available': 181.0, 'Carryover_Good': 10.408394268910172, 'Carryover': 36.364497468345398, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 0, 'Good_C': 0.0, 'Carryover_Poor': 0.5310742521060543, 'Excellent_A': 0.0, 'Carryover_Excellent': 9.5512514117673142, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 36.963962708987111, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 11.542857142857143, 'Carryover': 35.328571428571436, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 1, 'Good_C': 0.0, 'Carryover_Poor': 1.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 9.7857142857142865, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 35.928036669213149, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 12.037814666064842, 'Carryover': 36.251354091238156, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 2, 'Good_C': 0.0, 'Carryover_Poor': 1.989915046415397, 'Excellent_A': 0.0, 'Carryover_Excellent': 10.280671808921985, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 36.650819331879866, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 14.060054892191472, 'Carryover': 38.542898651699467, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 3, 'Good_C': 0.0, 'Carryover_Poor': 6.0343954986686548, 'Excellent_A': 0.0, 'Carryover_Excellent': 12.302912035048614, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 38.942363892341177, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 15.861502859244046, 'Carryover': 40.245781881855784, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 4, 'Good_C': 0.0, 'Carryover_Poor': 9.6372914327737984, 'Excellent_A': 0.0, 'Carryover_Excellent': 14.104360002101187, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 40.645247122497494, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 16.042857142857144, 'Carryover': 41.100694322570469, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 5, 'Good_C': 0.0, 'Carryover_Poor': 10.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 14.285714285714286, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 41.500159563212179, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 16.042857142857144, 'Carryover': 48.139667475274983, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 6, 'Good_C': 0.0, 'Carryover_Poor': 10.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 14.285714285714286, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 48.539132715916693, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 16.042857142857144, 'Carryover': 56.874582206757943, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 7, 'Good_C': 0.0, 'Carryover_Poor': 10.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 14.285714285714286, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 57.156400388576124, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 16.042857142857144, 'Carryover': 65.609496938155829, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 8, 'Good_C': 0.0, 'Carryover_Poor': 10.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 14.285714285714286, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 65.89131511997401, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 16.042857142857144, 'Carryover': 73.742370627442142, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 9, 'Good_C': 0.0, 'Carryover_Poor': 10.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 14.285714285714286, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 74.024188809260323, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 15.152712290918069, 'Carryover': 74.930509997070018, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 10, 'Good_C': 0.0, 'Carryover_Poor': 9.9339960104075615, 'Excellent_A': 0.0, 'Carryover_Excellent': 14.252712290918067, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 75.2123281788882, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 4.75, 'Carryover': 60.551935262869563, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 11, 'Good_C': 0.0, 'Carryover_Poor': 9.5, 'Excellent_A': 0.0, 'Carryover_Excellent': 4.75, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 61.137649548583852, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 4.7179685338665873, 'Carryover': 67.271845167773591, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 12, 'Good_C': 0.0, 'Carryover_Poor': 9.4359370677331746, 'Excellent_A': 0.0, 'Carryover_Excellent': 4.7179685338665873, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 68.143273739202172, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 3.1294648609924351, 'Carryover': 73.297459341586062, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 13, 'Good_C': 0.0, 'Carryover_Poor': 6.2589297219848703, 'Excellent_A': 0.0, 'Carryover_Excellent': 3.1294648609924351, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 74.168887913014643, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 0.96023589156207612, 'Carryover': 73.40381971703269, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 14, 'Good_C': 0.0, 'Carryover_Poor': 1.9204717831241522, 'Excellent_A': 0.0, 'Carryover_Excellent': 0.96023589156207612, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 74.592895347284809, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 0.0, 'Carryover': 71.478010945211139, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 15, 'Good_C': 0.0, 'Carryover_Poor': 0.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 0.0, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 72.667086575463259, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 0.0, 'Carryover': 69.680423175254418, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 16, 'Good_C': 0.0, 'Carryover_Poor': 0.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 0.0, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 71.069498805506541, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 0.0, 'Carryover': 61.56824350563312, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 17, 'Good_C': 0.0, 'Carryover_Poor': 0.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 0.0, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 62.957319135885228, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 0.0, 'Carryover': 56.011357933675626, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 18, 'Good_C': 0.0, 'Carryover_Poor': 0.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 0.0, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 57.11471927821345, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 0.0, 'Carryover': 53.106970202722692, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 19, 'Good_C': 0.0, 'Carryover_Poor': 0.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 0.0, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 53.924617261546231, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 0.8571428571428571, 'Carryover': 47.338222834044494, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 20, 'Good_C': 0.0, 'Carryover_Poor': 0.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 0.0, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 48.055869892868031, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 10.142857142857144, 'Carryover': 57.991446255859309, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 21, 'Good_C': 0.0, 'Carryover_Poor': 0.0, 'Excellent_A': 0.0, 'Carryover_Excellent': 9.2857142857142865, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 58.509093314682843, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 10.241716044750428, 'Carryover': 48.797937081600416, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 22, 'Good_C': 0.0, 'Carryover_Poor': 0.197717803786567, 'Excellent_A': 0.0, 'Carryover_Excellent': 9.38457318760757, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 49.315584140423951, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}
+    , {'Available': 181.0, 'Carryover_Good': 10.392857142857144, 'Carryover': 42.782723697409359, 'Available_Poor': 90.5, 'Excellent_C': 0.0, 'Excellent_B': 0.0, 'Available_Excellent': 45.25, 'LST': 23, 'Good_C': 0.0, 'Carryover_Poor': 0.5, 'Excellent_A': 0.0, 'Carryover_Excellent': 9.5357142857142865, 'Good_A': 0.0, 'Good_B': 0.0, 'Total': 43.300370756232894, 'Poor_C': 0.0, 'Poor_B': 0.0, 'Poor_A': 0.0, 'Available_Good': 45.25}]
+
+    assert exp == ps
 
