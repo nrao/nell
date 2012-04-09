@@ -260,7 +260,9 @@ Again, note that this is only for time assigned to Group A.
         elif type == self.sWindowed:
             ps = self.binWindowedSession(session, pressures)
         elif type == self.sElective:
-            ps = self.binElectiveSession(session, pressures)
+            #ps = self.binElectiveSession(session, pressures)
+            # TBF: for now, treat Electives like Fixed 
+            ps = self.binFixedSession(session, pressures)
         else:
             # must be one of the 3 open types
             ps = self.binOpenSession(session, pressures)
