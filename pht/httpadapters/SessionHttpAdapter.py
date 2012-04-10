@@ -251,7 +251,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
           left outer join pht_session_next_semesters as ns on ns.id = s.next_semester_id)
           left outer join pht_semesters as sem on sem.id = s.semester_id)
           left outer join pht_session_types as st on st.id = s.session_type_id)
-          left outer join pht_observing_types as ot on ot.id = s.observing_type_id)
+          left outer join observing_types as ot on ot.id = s.observing_type_id)
           left outer join pht_weather_types as wt on wt.id = s.weather_type_id)
           left outer join pht_session_separations as ss on ss.id = s.separation_id)
           left outer join pht_session_grades as sg on sg.id = s.grade_id)
