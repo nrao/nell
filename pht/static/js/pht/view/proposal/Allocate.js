@@ -1,13 +1,8 @@
 Ext.define('PHT.view.proposal.Allocate', {
-    //extend: 'Ext.window.Window',
     extend: 'PHT.view.Edit',
     alias : 'widget.proposalallocate',
     title : 'Allocate for Proposal',
     autoscroll: true,
-    //layout: 'fit',
-    //height: '70%',
-    //x: 700,
-    //y: 225,
     initComponent: function() {
 
         this.items = [{

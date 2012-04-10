@@ -105,7 +105,9 @@ Ext.define('PHT.controller.Proposals', {
     allocateForm: function(button) {
         var win = button.up('window')
         var allocate = Ext.create('PHT.view.proposal.Allocate');
-        allocate.setProposal(win.proposalCombo.getValue());
+        var pcode = win.proposalCombo.getValue();
+        allocate.setProposal(pcode);
+        allocate.setTitle('Allocate for Proposal ' + pcode);
         allocate.show();
     },
 
@@ -113,19 +115,34 @@ Ext.define('PHT.controller.Proposals', {
     allocateProposal: function(button) {
         var win = button.up('window')
         var form = win.down('form')
+        // what was entered in the form?
+        var values = form.getValues();
+        var grade = values['grade']
+        var scale = values['time_scale']
+        // we want only sessions for this proposal
         var pcode = win.pcode;
-        Ext.Ajax.request({
-            url: '/pht/proposals/' + pcode + '/allocate',
-            params: form.getValues(),
-            method: 'POST',
-            timeout: 300000,
-            success: function(response) {
-                win.close();
-                // TBF: need to refresh, but how much?
-                //me.refresh();
-            },
-        });
-
+        var store = this.getStore('Sessions');
+        store.filter('pcode', pcode);
+        // Now set each session's attributes accordingly
+        // We do this on the client side instead of the server side
+        // because it makes refreshing the sessions easier.
+        var cnt = store.getCount();
+        for (i=0; i < cnt; i++) {
+            var session = store.getAt(i);
+            // change session's grade
+            if ((grade != null) && (grade != '')) {
+                session.set('grade', grade);
+            }
+            // change session's allocated time.
+            if ((scale != null) && (scale != '')) {
+                var requested = parseFloat(session.get('requested_time'));
+                var repeats = parseFloat(session.get('repeats'));
+                var allocated = requested * repeats * (parseFloat(scale)/100.0);
+                session.set('allocated_time', allocated);
+            }
+            session.save()
+        }
+        store.sync();
     },
 
     proposalSelected: function(grid, record) {
