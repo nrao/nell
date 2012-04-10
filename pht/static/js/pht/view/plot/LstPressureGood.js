@@ -6,6 +6,7 @@ Ext.define('PHT.view.plot.LstPressureGood', {
     alias: 'widget.lstpressuregood',
     initComponent: function() {
         this.pressureFields = ['Carryover_Good', 
+                      'Requested_Good',
                       'Good_A',
                       'Good_B',
                       'Good_C',

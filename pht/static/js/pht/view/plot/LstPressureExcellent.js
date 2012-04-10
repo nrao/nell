@@ -9,6 +9,7 @@ Ext.define('PHT.view.plot.LstPressureExcellent', {
     initComponent: function() {
         // map to colors 
         this.pressureFields = ['Carryover_Excellent', 
+                      'Requested_Excellent',
                       'Excellent_A',
                       'Excellent_B',
                       'Excellent_C',
