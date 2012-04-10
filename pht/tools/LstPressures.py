@@ -138,11 +138,16 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.initFlagWeights()
 
 
+    def newHrs(self):
+        return numpy.array([0.0]*self.hrs)
+
     def initPressures(self):
         # init our buckets
         self.totalPs  = numpy.array([0.0]*self.hrs)
         self.carryoverTotalPs = numpy.array([0.0]*self.hrs)
         self.carryoverPs = Pressures() 
+        self.requestedTotalPs = numpy.array([0.0]*self.hrs)
+        self.requestedPs = Pressures() 
         self.newAstronomyTotalPs = numpy.array([0.0]*self.hrs)
         self.gradePs = { 'A' : Pressures()
                  , 'B' : Pressures()
@@ -370,7 +375,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         
         # first, is this session setup so we can do this?
         if session.target is None or session.allotment is None \
-            or session.allotment.allocated_time is None \
             or session.target.min_lst is None \
             or session.target.max_lst is None:
             self.badSessions.append(session)
@@ -391,7 +395,11 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             # reporting
             self.carryoverSessions.append(session)
         else:    
-            totalTime = session.allotment.allocated_time
+            # allocated or requested time?
+            if session.allotment.allocated_time is not None:
+                totalTime = session.allotment.allocated_time
+            else:
+                totalTime = session.getTotalRequestedTime()
 
         hrs = 24
         bins = [0.0] * hrs 
@@ -470,13 +478,19 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 self.carryoverTotalPs += ps
                 self.carryoverPs += self.weather.binSession(s, ps)
             else:
-                self.newAstronomyTotalPs += ps
-                wps = self.weather.binSession(s, ps)
-                if s.grade is not None:
-                    grade = s.grade.grade
-                    self.gradePs[grade] += wps
-                # for reporting    
-                self.noGrades.append(s)    
+                if s.allotment.allocated_time is not None: 
+                    self.newAstronomyTotalPs += ps
+                    wps = self.weather.binSession(s, ps)
+                    if s.grade is not None:
+                        grade = s.grade.grade
+                        self.gradePs[grade] += wps
+                    else:    
+                        # for reporting    
+                        self.noGrades.append(s)    
+                else:
+                    # this goes into the requested bucket
+                    self.requestedTotalPs += ps
+                    self.requestedPs += self.weather.binSession(s, ps)
 
         # now figure out the availability        
         changes = self.weather.getAvailabilityChanges(self.gradePs['A'])
@@ -493,16 +507,26 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
        
         output = []
         for i in range(self.hrs):
+            # init the dictionary with the simple stuff, including LST
             lstDict = dict(LST = i
                          , Total = self.totalPs[i] 
                          , Available = self.weather.availabilityTotal[i]
                          , Carryover = self.carryoverTotalPs[i] 
+                         , Requested = self.requestedTotalPs[i] 
                           )
+            # now add in the weather details              
             for weather in self.weatherTypes: 
+                # availability
                 availType = "Available_%s" % weather
                 lstDict[availType] = self.weather.availability.getType(weather)[i]
+                # carry over
                 carryoverType = "Carryover_%s" % weather
                 lstDict[carryoverType] = self.carryoverPs.getType(weather)[i]
+                # requested
+                requestedType = "Requested_%s" % weather
+                lstDict[requestedType] = self.requestedPs.getType(weather)[i]
+
+                # new astronomy is further subdivied by grade
                 for grade in self.grades: 
                     type = "%s_%s" % (weather, grade)
                     lstDict[type] = self.gradePs[grade].getType(weather)[i]
@@ -520,17 +544,28 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         "Bookeeping should be self-consistent"
 
         msgs = []
-        if not self.almostEqual(self.totalPs
-                              , self.carryoverTotalPs + self.newAstronomyTotalPs):
+        # total total
+        total = self.carryoverTotalPs + self.newAstronomyTotalPs + \
+            self.requestedTotalPs
+        if not self.almostEqual(self.totalPs, total):
             msgs.append("Total Pressure ! = Carryover Total + New Astro. Total")  
 
 
+        # carryover
         totalCarryover = numpy.array([0.0]*self.hrs)
         for w in self.weatherTypes:
             totalCarryover += self.carryoverPs.getType(w)
         if not self.almostEqual(totalCarryover, self.carryoverTotalPs):
             msgs.append("Total Carry Over != All Weather Types")
         
+        # new astronomy requested
+        totalRequested = self.newHrs() #numpy.array([0.0]*self.hrs)
+        for w in self.weatherTypes:
+            totalRequested += self.requestedPs.getType(w)
+        if not self.almostEqual(totalRequested, self.requestedTotalPs):
+            msgs.append("Total Requested != All Weather Types")
+
+        # new astronomy allocated
         totalNewAstro = numpy.array([0.0]*self.hrs)
         for g in self.grades:
             for w in self.weatherTypes:
@@ -545,22 +580,17 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         
         print self.formatResults('Total', self.totalPs)
 
-        print ""                           
-        print "Availablilty: "
-        print self.formatResults('    Total'
-            , self.weather.availabilityTotal)
-        for w in self.weatherTypes:
-            print self.formatResults('    %s' % w
-                                   , self.weather.availability.getType(w))
-
+        self.reportPressures("Availability"
+                           , self.weather.availabilityTotal
+                           , self.weather.availability)
         
-        print ""
-        print "Carryover: "
-        print self.formatResults('    Total'
-            , self.carryoverTotalPs)
-        for w in self.weatherTypes:
-            print self.formatResults('    %s' % w
-                                   , self.carryoverPs.getType(w))
+        self.reportPressures("Carryover"
+                           , self.carryoverTotalPs
+                           , self.carryoverPs)
+        
+        self.reportPressures("Requested"
+                           , self.requestedTotalPs
+                           , self.requestedPs)
         
         print ""
         print "Next Semester Astromony: "
@@ -614,6 +644,14 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 lbl = "%s (%s, %5.2f)" % (k, carryover, total)
                 print self.formatResults(lbl, ps, lblFrmt = "%35s")
 
+
+    def reportPressures(self, label, total, wTypes):
+        "Report on pressures and how they break down by weather."
+        print ""
+        print "%s: " % label 
+        print self.formatResults('    Total', total)
+        for w in self.weatherTypes:
+            print self.formatResults('    %s' % w, wTypes.getType(w))
 
     def formatResults(self, label, results, lblFrmt = "%18s"):
         label = lblFrmt % label
@@ -718,4 +756,5 @@ if __name__ == '__main__':
     #            print exp[i][k]
     #            print ps[i][k]
     #        assert abs(exp[i][k] - ps[i][k]) < eps
+
 

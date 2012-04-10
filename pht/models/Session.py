@@ -141,6 +141,15 @@ class Session(models.Model):
 
     # *** End Section: accessing the corresponding DSS project
 
+    def getTotalRequestedTime(self):
+        "Total = requested * repeats"
+        if self.allotment is not None and \
+          self.allotment.requested_time is not None and \
+          self.allotment.repeats is not None:
+            return self.allotment.requested_time * self.allotment.repeats
+        else:
+            return None
+
     def get_lst_parameters(self):
         """
         Returns a dictionary of LST Exclusion and Inclusion

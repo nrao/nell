@@ -95,7 +95,9 @@ class TestLstPressures(TestCase):
 
         # make sure we start off blank, by adjusting the session
         time = self.session.allotment.allocated_time 
+        req  = self.session.allotment.requested_time 
         self.session.allotment.allocated_time = None
+        self.session.allotment.requested_time = 0.0
         self.session.allotment.save()
 
         lst = LstPressures()
@@ -106,8 +108,28 @@ class TestLstPressures(TestCase):
             for t in types:
                 self.assertEqual(0.0, p[t])
 
+        # partially restore this session
+        self.session.allotment.requested_time = req
+        self.session.allotment.save()
+
+        # calc pressures
+        ps = lst.getPressures()
+
+        # make sure it shows up in it's LST range, but as requested
+        for hr in range(12):
+            self.assertAlmostEqual(1.75, ps[hr]['Total'], 3)
+            self.assertAlmostEqual(1.75, ps[hr]['Requested'], 3)
+            self.assertAlmostEqual(1.75, ps[hr]['Requested_Poor'], 3)
+            self.assertAlmostEqual(0.0,  ps[hr]['Requested_Good'], 3)
+
+        # make sure it doesn't show up out of it's range
+        for hr in range(12, 24):
+            self.assertEqual(float(hr), ps[hr]['LST'])
+            self.assertEqual(0.0, ps[hr]['Total'])
+
         # restore this session
         self.session.allotment.allocated_time = time
+        self.session.allotment.requested_time = req
         self.session.allotment.save()
 
         # calc pressures
@@ -117,6 +139,7 @@ class TestLstPressures(TestCase):
         for hr in range(12):
             self.assertAlmostEqual(0.5416666, ps[hr]['Total'], 3)
             self.assertAlmostEqual(0.5416666, ps[hr]['Poor_A'], 3)
+            self.assertAlmostEqual(0.0,       ps[hr]['Requested'], 3)
             for t in types:
                 if t != 'Poor_A':
                     self.assertEqual(0.0, ps[hr][t])
