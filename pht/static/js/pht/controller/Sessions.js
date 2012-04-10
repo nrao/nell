@@ -256,7 +256,41 @@ Ext.define('PHT.controller.Sessions', {
                         , this.selectedSessions
                         , this.getSessionsStore()
                          );
+
+        // We must also reset read-only fields
+        // editing one, or multiple records?
+        if (this.selectedSessions.length <= 1) {
+            var win      = button.up('window'),
+                form     = win.down('form'),
+                record   = form.getRecord(),
+                values   = form.getValues();
+            var f = form.getForm();
+            if (f.isValid()) {
+                this.updateReadOnlyFields(record);
+                form.loadRecord(record);
+            }        
+        } else {
+            for (i=0; i < this.selectedSessions.length; i++) {
+                record = this.selectedSessions[i];
+                this.updateReadOnlyFields(record);
+            }
+        }
+        this.getSessionsStore().sync();
         this.selectedSessions = [];                 
+    },
+
+    // some of the fields shown for the session are read only and
+    // derived from other fields - we need to keep these up to date.
+    updateReadOnlyFields: function(session) {
+        var requested_time = session.get('requested_time');
+        var repeats = session.get('repeats');
+        if ((requested_time != null) && (repeats != null)) {
+            var total = requested_time * repeats;
+            session.set('requested_total', total);
+        }
+        session.set('inner_repeats', session.get('repeats'));
+        session.set('inner_separation', session.get('separation'));
+        session.set('inner_interval', session.get('interval_time'));
     },
 
     editSelectedSessions: function(button) {

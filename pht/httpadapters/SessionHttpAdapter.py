@@ -163,6 +163,14 @@ class SessionHttpAdapter(PhtHttpAdapter):
             tb_data['last_date_scheduled'] = None
         data.update(tb_data)
 
+        # add in the total requested time - simple math
+        requested = data['requested_time']
+        repeats = data['repeats']
+        try:
+            data['requested_total'] = requested * repeats
+        except:    
+            data['requested_total'] = None
+
         return data
 
     @staticmethod
@@ -271,7 +279,12 @@ class SessionHttpAdapter(PhtHttpAdapter):
         solar_avoid = self.session.target.solar_avoid
         if solar_avoid is not None:
             solar_avoid = rad2deg(solar_avoid)
-        
+        requested_total = None
+        if self.session.allotment.requested_time is not None \
+            and self.session.allotment.repeats is not None:
+            requested_total = self.session.allotment.requested_time \
+                * self.session.allotment.repeats
+
         data = {'id'                      : self.session.id
               , 'name'                    : self.session.name
               , 'pcode'                   : self.session.proposal.pcode
@@ -293,6 +306,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'scheduler_notes'         : self.session.scheduler_notes
               , 'session_time_calculated' : self.session.session_time_calculated
               # allotment
+              , 'requested_total'         : requested_total
               , 'requested_time'          : self.session.allotment.requested_time
               , 'repeats'                 : self.session.allotment.repeats
               , 'allocated_time'          : self.session.allotment.allocated_time

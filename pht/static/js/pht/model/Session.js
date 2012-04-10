@@ -25,6 +25,7 @@ Ext.define('PHT.model.Session', {
            , 'separation'
            , 'interval_time'
            , 'requested_time'
+           , 'requested_total'
            , 'allocated_time'
            , 'semester_time'
            , 'period_time'

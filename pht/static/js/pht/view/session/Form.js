@@ -108,16 +108,22 @@ Ext.define('PHT.view.session.Form', {
                 name: 'requested_time',
             },{
                 xtype: 'numberfield',
-                fieldLabel: 'Allocated (Hrs)',
-                name: 'allocated_time',
-            },{
-                xtype: 'numberfield',
                 fieldLabel: 'Repeats',
                 name: 'repeats'
             },{
                 xtype: 'numberfield',
+                fieldLabel: 'Requested Total (Hrs)',
+                name: 'requested_total',
+                readOnly: true,
+                fieldCls: "x-pht-formfield-readonly",
+            },{
+                xtype: 'numberfield',
                 fieldLabel: 'Period (Hrs)',
                 name: 'period_time'
+            },{
+                xtype: 'numberfield',
+                fieldLabel: 'Allocated (Hrs)',
+                name: 'allocated_time',
             }]    
         },{    
             // Thrids Column
