@@ -668,6 +668,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 lbl = "%s (%s, %5.2f)" % (k, carryover, total)
                 print self.formatResults(lbl, ps, lblFrmt = "%35s")
 
+        # for Brian Truitt:
+        print "Remaining Hours by LST (0-23)"
+        for r in self.remainingTotalPs:
+            print "%5.2f" % r
 
     def reportPressures(self, label, total, wTypes):
         "Report on pressures and how they break down by weather."
