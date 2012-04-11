@@ -42,14 +42,12 @@ HRS = 24
 
 class Pressures(object):
 
-    def __init__(self
-        , poor = numpy.array([0.]*HRS)
-        , good = numpy.array([0.]*HRS)
-        , excellent = numpy.array([0.]*HRS)):
-
-        self.poor = poor
-        self.good = good
-        self.excellent = excellent
+    def __init__(self, poor = None, good = None, excellent = None):
+ 
+        # init to hours of zero
+        self.poor = poor if poor is not None else numpy.zeros(HRS)
+        self.good = good if good is not None else numpy.zeros(HRS)
+        self.excellent = excellent if excellent is not None else numpy.zeros(HRS)
 
     def __str__(self):
         return "Poor: %s\nGood: %s\nEx: %s\n" % (self.poor

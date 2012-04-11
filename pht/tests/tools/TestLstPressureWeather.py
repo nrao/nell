@@ -152,3 +152,29 @@ class TestLstPressureWeather(TestCase):
         ps = self.lst.binSession(self.session, self.sessPressure)
         exp = Pressures(poor = self.sessPressure)
         self.assertEqual(exp, ps)
+
+    def test_getAvailabilityChanges(self):
+
+        # no changes necessary
+        gradeAPressure = Pressures()
+        changes = self.lst.getAvailabilityChanges(gradeAPressure)
+        self.assertEqual(Pressures(), changes)
+
+        # now too much poor time mean we need changes
+        tooMuch = [91.5, 91.5]
+        tooMuch.extend([0.0]*22)
+        gradeAPressure = Pressures(poor = numpy.array(tooMuch))
+        changes = self.lst.getAvailabilityChanges(gradeAPressure)
+
+        # check
+        expPoor = [-1., -1.]
+        expPoor.extend([0.0]*22)
+        expGood = [0.5, 0.5]
+        expGood.extend([0.0]*22)
+        exp = Pressures(poor = numpy.array(expPoor)
+                      , good = numpy.array(expGood)
+                      , excellent = numpy.array(expGood)
+                       )
+        self.assertEqual(exp, changes)               
+        
+
