@@ -19,6 +19,10 @@ import math
 
 
 
+def notify(request):
+    return HttpResponse(json.dumps({"success" : "ok" })
+                      , content_type = 'application/json')
+
 @login_required
 @admin_only
 def root(request):
@@ -163,6 +167,7 @@ def sources_transfer(request):
             for src in fromSess.sources.all():
                 toSess.sources.add(src)
                 toSess.save()
+        SessionHttpAdapter(toSess).notify(toSess.proposal)
         return HttpResponse(json.dumps({"success" : "ok"})
                           , content_type = 'application/json')
     else:
@@ -265,6 +270,7 @@ def session_sources(request, *args):
             source  = Source.objects.get(id = source_id)
             session.sources.remove(source)
             session.save()
+        SourceHttpAdapter(source).notify(source.proposal)
         return HttpResponse(json.dumps({"success" : "ok"})
                           , content_type = 'application/json')
 
@@ -285,6 +291,7 @@ def session_average_ra_dec(request, *args):
                   , ra_sexagesimel = rad2sexHrs(average_ra)
                   , dec_sexagesimel= rad2sexDeg(average_dec)
                    )
+        SessionHttpAdapter(session).notify(session.proposal)
         return HttpResponse(json.dumps({"success" : "ok"
                                       , "data" : data})
                           , content_type = 'application/json')
@@ -317,6 +324,7 @@ def session_generate_periods(request, *args):
         """ % (numPs, periodSource)
         session     = Session.objects.get(id = session_id)
 
+        SessionHttpAdapter(session).notify(session.proposal)
         return HttpResponse(json.dumps({"success" : "ok"
                                       , "message" : msg})
                           , content_type = 'application/json')
@@ -359,6 +367,7 @@ def session_calculate_LSTs(request, *args):
                   , centerLstSexagesimel = rad2sexHrs(center)
                   , lstWidthSexagesimel = rad2sexHrs(width)
                    )
+        SessionHttpAdapter(session).notify(session.proposal)
         return HttpResponse(json.dumps({"success" : "ok"
                                       , "data" : data})
                           , content_type = 'application/json')

@@ -62,6 +62,7 @@ class AuthorHttpAdapter(PhtHttpAdapter):
     def initFromPost(self, data):
         self.author = Author()
         self.updateFromPost(data)
+        self.notify(self.author.proposal)
 
     def updateFromPost(self, data):
         proposal  = Proposal.objects.get(pcode = data.get('pcode'))
@@ -90,3 +91,4 @@ class AuthorHttpAdapter(PhtHttpAdapter):
         self.author.assignment           = data.get('assignment')
         self.author.save()
 
+        self.notify(self.author.proposal)

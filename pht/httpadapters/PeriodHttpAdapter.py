@@ -63,6 +63,7 @@ class PeriodHttpAdapter(PhtHttpAdapter):
         self.period = Period()
         self.updateFromPost(self.cleanPostData(data))
         self.period.save()
+        self.notify(self.period.session.proposal)
 
     def updateFromPost(self, data):
 
@@ -88,4 +89,4 @@ class PeriodHttpAdapter(PhtHttpAdapter):
 
         self.period.save()
 
-
+        self.notify(self.period.session.proposal)

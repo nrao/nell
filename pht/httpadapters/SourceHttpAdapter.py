@@ -69,6 +69,7 @@ class SourceHttpAdapter(PhtHttpAdapter):
 
         # now fill in their fields
         self.updateFromPost(data)
+        self.notify(self.source.proposal)
 
     def updateFromPost(self, data):
 
@@ -113,3 +114,4 @@ class SourceHttpAdapter(PhtHttpAdapter):
 
         self.source.save()
 
+        self.notify(self.source.proposal)

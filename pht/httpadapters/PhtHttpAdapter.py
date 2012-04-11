@@ -18,8 +18,16 @@
 
 
 from pht.utilities  import *
+import settings, urllib, urllib2
 
 class PhtHttpAdapter(object):
+
+    def notify(self, proposal):
+        try:
+            fh = urllib2.urlopen(settings.PHT_UPDATES_URL
+                               , data = urllib.urlencode({'proposalIds' : proposal.id}))
+        except urllib2.URLError:
+            pass
 
     def getType(self, data, key, fnc, default):
         "Entries for floats & ints can often be blank strings"

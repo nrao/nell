@@ -98,6 +98,7 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         self.proposal.create_date = datetime.now()
         self.updateFromPost(self.cleanPostData(data))
         self.proposal.save()
+        self.notify(self.proposal)
 
     def updateFromPost(self, data):
 
@@ -158,3 +159,4 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         self.proposal.comments.save()
 
         self.proposal.save()    
+        self.notify(self.proposal)
