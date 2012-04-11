@@ -142,12 +142,26 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         return numpy.array([0.0]*self.hrs)
 
     def initPressures(self):
-        # init our buckets
+        # init our buckets:
+        # This is *everything* 
         self.totalPs  = numpy.array([0.0]*self.hrs)
+
+        # Stuff left over from previous semester's, and the
+        # next semesters committed time to maintenance, testing etc.
         self.carryoverTotalPs = numpy.array([0.0]*self.hrs)
         self.carryoverPs = Pressures() 
+
+        # Available time for the semester - carryover
+        self.remainingTotalPs = self.newHrs()
+        self.remainingPs = Pressures()
+
+        # The new stuff that people have submitted proposals for,
+        # before having been allocated time
         self.requestedTotalPs = numpy.array([0.0]*self.hrs)
         self.requestedPs = Pressures() 
+
+        # The new stuff htat people have submitted proposal for,
+        # AFTER they've been allocated time.
         self.newAstronomyTotalPs = numpy.array([0.0]*self.hrs)
         self.gradePs = { 'A' : Pressures()
                  , 'B' : Pressures()
@@ -496,6 +510,12 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         changes = self.weather.getAvailabilityChanges(self.gradePs['A'])
         self.gradePs['A'] += changes
 
+        # What's *really* available for this semester?
+        self.remainingTotalPs = self.weather.availabilityTotal - \
+            self.carryoverTotalPs
+        self.remainingPs = self.weather.availability - self.carryoverPs
+            
+
         # now convert the buckets to expected output
         return self.jsonDict()
 
@@ -588,6 +608,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                            , self.carryoverTotalPs
                            , self.carryoverPs)
         
+        self.reportPressures("Remaining"
+                           , self.remainingTotalPs
+                           , self.remainingPs)
+
         self.reportPressures("Requested"
                            , self.requestedTotalPs
                            , self.requestedPs)

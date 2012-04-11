@@ -71,7 +71,15 @@ class Pressures(object):
           , good = self.good + other.good
           , excellent = self.excellent + other.excellent
         )
-  
+
+    def __sub__(self, other):
+        "Override subtraction to add all the fields"
+        return Pressures( \
+            poor = self.poor - other.poor
+          , good = self.good - other.good
+          , excellent = self.excellent - other.excellent
+        )  
+
     def __mul__(self, other):
         "Override multiplication to multiply all the fields"
         return Pressures( \
