@@ -19,6 +19,7 @@ sourceResource    = SourceResource()
 urlpatterns = patterns(''
    , (r'^static/(?P<path>.*)$', 'django.views.static.serve'
     , {'document_root': settings.STATIC_PHT})
+   , url(r'^notify$',                            notify)
    , url(r'^$',                                  root)
    , url(r'^reports/proposalsummary$',           proposal_summary)
    , url(r'^reports/proposalranking$',           proposal_ranking)

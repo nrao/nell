@@ -397,6 +397,8 @@ class SessionHttpAdapter(PhtHttpAdapter):
         # now fill in their fields
         self.updateFromPost(data)
 
+        self.notify(self.session.proposal)
+
     def updateFromPost(self, data):
 
         # we can change which proposal this session belongs to
@@ -502,6 +504,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
 
         # done!
         self.session.save()
+        self.notify(self.session.proposal)
 
     def update_rcvrs_granted(self, data):
         "Converts comma-separated string to objects."
