@@ -550,11 +550,18 @@ class SemesterTimeAccounting(object):
             all += t
         return all
 
+    def getTimeType(self, session):
+        "Which of the three types for this session?"
+        # if there is no freq. category, use low freq.
+        freqCat = session.determineFreqCategory()
+        return self.freq2key[freqCat] if freqCat is not None else 'lowFreq'
+
     def getSessionHours(self, s):
         "PHT Sessions simply bill to the freq they are at."
 
         t = Times()          
-        timeType = self.freq2key[s.determineFreqCategory()]
+
+        timeType = self.getTimeType(s)
 
         # add alloted time to this time type 
         t.__setattr__(timeType, s.allotment.allocated_time)
@@ -562,7 +569,10 @@ class SemesterTimeAccounting(object):
         # add to other categories
         t.total  = s.allotment.allocated_time
         gcHrs, nonGCHrs = self.getGCHoursFromSession(s)
-        gcFrac   = gcHrs / (gcHrs + nonGCHrs) 
+        if gcHrs + nonGCHrs != 0.0:
+            gcFrac = gcHrs / (gcHrs + nonGCHrs) 
+        else:
+            gcFrac = 0.0
         gc       = t.factor(gcFrac)
 
         return SemesterTimes(total = t, gc = gc)
@@ -629,8 +639,7 @@ class SemesterTimeAccounting(object):
         semester's carryover?
         """
 
-        # what freq to bill this against?
-        timeType = self.freq2key[s.determineFreqCategory()]
+        timeType = self.getTimeType(s)
 
         # add next semester's time to this time type 
         t = Times(type = 'Total')          
