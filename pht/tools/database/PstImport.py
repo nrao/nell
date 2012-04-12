@@ -604,6 +604,13 @@ class PstImport(PstInterface):
         self.cursor.execute(q)
         return self.cursor.fetchone()
 
+    def checkPst(self, pcode):
+        pcode = pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/')
+        q = "select count(*) from proposal where PROP_ID = '%s' or LEGACY_ID = '%s'" % (pcode, pcode)
+        self.cursor.execute(q)
+        result = self.cursor.fetchone()
+        return result[0] == 1
+
     def reimportAllSessionResources(self, semester, sessions = None):
         """
         This is a one-time needed function for fixing the fact that

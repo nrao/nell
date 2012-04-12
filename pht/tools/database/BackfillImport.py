@@ -150,13 +150,6 @@ class BackfillImport(PstImport):
             phtGrade = gradeMap.get(grade)
         return phtGrade    
         
-    def checkPst(self, pcode):
-        pcode = pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/')
-        q = "select count(*) from proposal where PROP_ID = '%s' or LEGACY_ID = '%s'" % (pcode, pcode)
-        self.cursor.execute(q)
-        result = self.cursor.fetchone()
-        return result[0] == 1
-
 
 if __name__ == '__main__':
     dss = BackfillImport(quiet = False)
