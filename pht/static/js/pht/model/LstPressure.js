@@ -27,6 +27,7 @@ Ext.define('PHT.model.LstPressure', {
     proxy: {
         type: 'ajax',
         url: '/pht/lst_pressure',
+        timeout: 300000,
         reader: {
             type: 'json',
             root: 'lst_pressure',
