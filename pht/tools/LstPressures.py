@@ -249,6 +249,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
     def modifyWeightsForLstExclusion(self, session, ws):
         "Modify given weights to be zero within the exclusion."
+        # save some time if they don't even have this set
+        if not session.has_lst_exclusion():
+            return ws
         lstRanges = session.get_lst_parameters()
         exclusions = lstRanges['LST Exclude']
         for lowEx, hiEx in exclusions:
@@ -480,6 +483,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 ps = self.getPressuresFromSessionsPeriods(s)
             else:
                 ps = self.getPressuresForSession(s, carryover)
+
             # convert our list to something easier to deal with    
             ps = numpy.array(ps)
             # accum pressure in total 
