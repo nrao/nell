@@ -78,7 +78,7 @@ Ext.define('PHT.view.proposal.TacTool', {
                 fieldCls: "x-pht-formfield-readonly"
             },{
                 xtype: 'textarea',
-                name : 'tech_review_to_PI',
+                name : 'tech_review_to_pi',
                 fieldLabel: 'Tech Review to PI',
             },{
                 xtype: 'textarea',
