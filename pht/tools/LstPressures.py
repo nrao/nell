@@ -432,14 +432,14 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         fs = self.getFlagWeightsForSession(session)
 
         # put it all togethor to calculate pressures
-        weightSum = sum([(ws[i] * fs[i]) for i in range(self.hrs)])
+        weightSum = sum(ws * fs)
         if weightSum != 0:
             ps = [(totalTime * ws[i] * fs[i]) / weightSum \
                 for i in range(self.hrs)]
         else:
             ps = [0.0]*self.hrs
 
-        return ps    
+        return numpy.array(ps)    
 
     def getPressures(self, sessions = None):
         """
@@ -467,8 +467,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             else:
                 ps = self.getPressuresForSession(s, carryover)
 
-            # convert our list to something easier to deal with    
-            ps = numpy.array(ps)
             # accum pressure in total 
             self.totalPs += ps
             # for reporting
