@@ -231,7 +231,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         
     def getLstWeightsForSession(self, session):
         "Simple: LST's within min/max are on, rest are off."
-        ws = [0.0] * self.hrs
+        ws = self.newHrs() #[0.0] * self.hrs
         minLst = int(math.floor(rad2hr(session.target.min_lst)))
         maxLst = int(math.floor(rad2hr(session.target.max_lst)))
         if (0 > minLst or minLst > 24.0) or (0 > maxLst or maxLst > 24.0):
@@ -266,11 +266,11 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         fs = [1.0]*self.hrs
         if session.flags.thermal_night:
-            fs = self.product(fs, self.thermalNightWeights)
+            fs = fs * self.thermalNightWeights 
         elif session.flags.optical_night:
-            fs = self.product(fs, self.opticalNightWeights)
+            fs = fs * self.opticalNightWeights  
         elif session.flags.rfi_night:
-            fs = self.product(fs, self.rfiWeights)
+            fs = fs * self.rfiWeights 
         return fs
 
     def useCarryOverPeriods(self, session):
@@ -292,10 +292,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         return self.getPressuresFromPeriods(periods)
 
     def getPressuresFromPeriods(self, periods):    
-        total = [0.0]*self.hrs
+        total = self.newHrs() 
         for period in periods:
             ps = self.getPressuresFromPeriod(period)
-            total = self.add(total, ps)
+            total += ps 
         return total
 
     def getSessionNextSemesterPeriods(self, session): 
@@ -440,23 +440,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             ps = [0.0]*self.hrs
 
         return ps    
-
-    def product(self, xs, ys):
-        "multiply two vectors"
-        # TBF: I know we shouldn't be writing our own one of these ...
-        assert len(xs) == len(ys)
-        zz = []
-        for i in range(len(xs)):
-            zz.append(xs[i] * ys[i])
-        return zz    
-
-    def add(self, xs, ys):
-        "I know, I know, I should just use numpy"
-        assert len(xs) == len(ys)
-        zz = []
-        for i in range(len(xs)):
-            zz.append(xs[i] + ys[i])
-        return zz    
 
     def getPressures(self, sessions = None):
         """
@@ -695,7 +678,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         # TBF: These get computed by methods in this class,
         # but no need to do it at start up every time.
-        self.thermalNightWeights = [0.61643835616438358
+        self.thermalNightWeights = numpy.array([0.61643835616438358
                           , 0.61369863013698633
                           , 0.61095890410958908
                           , 0.61369863013698633
@@ -719,8 +702,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                           , 0.66027397260273968
                           , 0.63835616438356169
                           , 0.62465753424657533
-                          ]
-        self.opticalNightWeights = [0.50958904109589043
+                          ])
+        self.opticalNightWeights = numpy.array([0.50958904109589043
                             , 0.51232876712328768
                             , 0.51232876712328768
                             , 0.51506849315068493
@@ -744,8 +727,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                             , 0.50410958904109593
                             , 0.50684931506849318
                             , 0.50958904109589043
-                            ]
-        self.rfiWeights     = [0.54246575342465753
+                            ])
+        self.rfiWeights     = numpy.array([0.54246575342465753
                              , 0.54520547945205478
                              , 0.54520547945205478
                              , 0.54246575342465753
@@ -769,7 +752,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                              , 0.51780821917808217
                              , 0.54246575342465753
                              , 0.54246575342465753
-                             ] 
+                             ]) 
             
 
 

@@ -245,7 +245,7 @@ class TestLstPressures(TestCase):
         exp = [1.0]*12
         off = [0.0]*12
         exp.extend(off)
-        self.assertEqual(exp, ws)
+        self.assertEqual(exp, ws.tolist())
 
         # change min/max lst and see what happens
         self.session.target.min_lst = hr2rad(20.0)
@@ -255,7 +255,7 @@ class TestLstPressures(TestCase):
         off = [0.0]*16
         exp.extend(off)
         exp.extend([1.0]*4)
-        self.assertEqual(exp, ws)
+        self.assertEqual(exp, ws.tolist())
 
         # catch an edge case
         self.session.target.min_lst = hr2rad(23.5)
@@ -264,7 +264,7 @@ class TestLstPressures(TestCase):
         exp = [1.0]
         exp.extend([0.0]*22)
         exp.append(1.0)
-        self.assertEqual(exp, ws)
+        self.assertEqual(exp, ws.tolist())
 
     def test_modifyWeightsForLstExclusion(self):
 
@@ -298,7 +298,7 @@ class TestLstPressures(TestCase):
         # now set the PTCS night time flag
         self.session.flags.thermal_night = True
         fs = lst.getFlagWeightsForSession(self.session)
-        self.assertEqual(lst.thermalNightWeights, fs)
+        self.assertEqual(lst.thermalNightWeights.tolist(), fs.tolist())
         
     def test_computeThermalNightWeights(self):
 
