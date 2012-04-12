@@ -280,6 +280,8 @@ class TestSession(TestCase):
         
         ex = {'LST Include': [], 'LST Exclude': []}
         self.assertEqual(ex, self.session.get_lst_parameters())
+        self.assertEqual(False, self.session.has_lst_inclusion())
+        self.assertEqual(False, self.session.has_lst_exclusion())
 
         # now create an LST Exclusion range
         pName = "Exclude"
@@ -300,6 +302,8 @@ class TestSession(TestCase):
         # and make sure it shows up correctly
         ex = {'LST Include': [], 'LST Exclude': [(2.0, 4.0)]}
         self.assertEqual(ex, self.session.get_lst_parameters())
+        self.assertEqual(False, self.session.has_lst_inclusion())
+        self.assertEqual(True, self.session.has_lst_exclusion())
 
         include, exclude = self.session.get_lst_string()
         self.assertEqual('', include)

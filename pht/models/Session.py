@@ -150,6 +150,17 @@ class Session(models.Model):
         else:
             return None
 
+    def has_lst_param(self, param):
+        return self.sessionparameter_set.filter(parameter__name = param).count() > 0
+
+    def has_lst_exclusion(self):
+        # just check for the high value
+        return self.has_lst_param('LST Exclude Hi')
+
+    def has_lst_inclusion(self):
+        # just check for the high value
+        return self.has_lst_param('LST Include Hi')
+
     def get_lst_parameters(self):
         """
         Returns a dictionary of LST Exclusion and Inclusion
