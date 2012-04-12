@@ -40,12 +40,29 @@ Ext.define('PHT.view.proposal.List' ,{
             filterField: 'title',
         });
 
+        this.testingFilter = Ext.create('Ext.button.Button', {
+            text: 'Testing',
+            enableToggle: true,
+            pressed: true,
+            toggleHandler: function(button, state) {
+                if (!state) {
+                    var store = button.up('proposallist').getStore('Proposals');
+                    store.filter([{
+                        filterFn: function(item) {
+                            return item.get('pcode').search('TGBT') == -1;
+                        }
+                    }]);
+                }
+            },
+        });
+
         this.dockedItems = [{
             xtype: 'toolbar',
             items: [
                 this.pcodeFilterText,
                 this.titleFilterText,
                 this.authorsFilterText,
+                this.testingFilter,
                 Ext.create('Ext.button.Button', {
                         text: 'Clear Filters',
                         action: 'clear',
