@@ -116,4 +116,8 @@ Ext.define('PHT.view.proposal.TacTool', {
         var form = this.down('form');
         form.loadRecord(proposal);
     },
+
+    close: function() {
+        this.hide();
+    }
 });            
