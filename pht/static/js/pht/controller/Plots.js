@@ -42,6 +42,11 @@ Ext.define('PHT.controller.Plots', {
     updatePlot: function(button) {
         var win = button.up('window')
         var store = this.getStore('LstPressures');
+        // be patient ...
+        var storeMask = new Ext.LoadMask(Ext.getBody()
+            , {msg:"Loading LST Pressures ...",
+               store: store,
+              });
         // which sessions are we calculating pressures for?
         var filters = []
         var pcode = win.proposalCombo.value 
