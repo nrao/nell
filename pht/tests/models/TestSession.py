@@ -34,6 +34,15 @@ class TestSession(TestCase):
         self.proposal = Proposal.objects.get(pcode = "GBT12A-002")
         self.session = self.proposal.session_set.all().order_by('id')[0]
 
+    def test_getTotalRequestedTime(self):
+
+        self.assertEqual(21.0, self.session.getTotalRequestedTime())
+        self.session.allotment.repeats = 2
+        self.session.allotment.save()
+        self.assertEqual(42.0, self.session.getTotalRequestedTime())
+        self.session.allotment.repeats = 1
+        self.session.allotment.save()
+
     def test_determineFreqCategory(self):
         self.assertEqual('LF', self.session.determineFreqCategory())
 
