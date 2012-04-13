@@ -72,10 +72,9 @@ class Proposal(models.Model):
 
     def requestedTime(self):
         "Simply the sum of the sessions' time"
-        return sum([s.allotment.requested_time \
+        return sum([s.getTotalRequestedTime() \
             for s in self.session_set.all() \
-                if s.allotment is not None \
-                and s.allotment.requested_time is not None])
+            if s.getTotalRequestedTime() is not None])
 
     def allocatedTime(self):
         "Simply the sum of the sessions' time"

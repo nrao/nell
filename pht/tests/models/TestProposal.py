@@ -29,6 +29,8 @@ from scheduler.models import Period_State as DSSPeriod_State
 from scheduler.models import Period_Accounting as DSSPeriod_Accounting
 
 from pht.models import Proposal
+from pht.models import Semester
+from pht.httpadapters import SessionHttpAdapter
 from utilities import TimeAccounting
 from scheduler.tests.utils     import create_sesshun
 
@@ -98,6 +100,46 @@ class TestProposal(TestCase):
             p.delete()
             s.delete()
 
+    # TBF: stick this in a utility somewhere        
+    def createSession(self):
+        "Create a new session for the tests"
+
+        p = Proposal.objects.all()[0]
+        sem = Semester.objects.get(semester = '12A')
+        data  = {
+            'name' : 'nextSemesterSession'
+          , 'pcode' : p.pcode
+          , 'grade' : 'A'  
+          , 'semester' : sem
+          , 'requested_time' : 3.5  
+          , 'allocated_time' : 3.5  
+          , 'session_type' : 'Open - Low Freq'
+          , 'observing_type' : 'continuum' 
+          , 'weather_type' : 'Poor'
+          , 'repeats' : 2 
+          , 'min_lst' : '10:00:00.0' 
+          , 'max_lst' : '20:00:00.0' 
+          , 'elevation_min' : '00:00:00.0' 
+          , 'next_sem_complete' : False
+          , 'next_sem_time' : 1.0
+          , 'receivers' : 'L'
+        }
+
+        adapter = SessionHttpAdapter()
+        adapter.initFromPost(data)
+        # just so that is HAS a DSS session.
+        #adapter.session.dss_session = self.maintProj.sesshun_set.all()[0]
+        adapter.session.save()
+        return adapter.session
+
+    def test_requestedTime(self):
+
+        p = Proposal.objects.all()[0]
+        self.assertEqual(0.0, p.requestedTime())
+        # now get some requested time
+        self.createSession()
+        self.assertEqual(7.0, p.requestedTime())
+        
     def test_timeAccounting(self):
 
         self.assertEqual(12.0, self.ta.getTime('time_billed', self.project))
