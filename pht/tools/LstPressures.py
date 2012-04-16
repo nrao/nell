@@ -119,6 +119,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.carryoverSessionPeriods = []
         self.pressuresBySession = {}
         self.futureSessions = []
+        self.semesterSessions = []
         self.pressures = [] 
 
         # for computing day light hours
@@ -414,8 +415,14 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             # reporting
             self.carryoverSessions.append(session)
         else:    
+            # which time attribute of the session to use?
+            if session.allotment.semester_time is not None and \
+                session.allotment.semester_time > 0.0:
+                totalTime = session.allotment.semester_time
+                # reporting
+                self.semesterSessions.append(session)
             # allocated or requested time?
-            if session.allotment.allocated_time is not None:
+            elif session.allotment.allocated_time is not None:
                 totalTime = session.allotment.allocated_time
             else:
                 totalTime = session.getTotalRequestedTime()
@@ -673,6 +680,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             print "    ", b
         print "Future Sessions: %d" % len(self.futureSessions)
         for s in self.futureSessions:
+            print "    ", s
+        print "Sessions using semester time: %d" % len(self.semesterSessions)
+        for s in self.semesterSessions:
             print "    ", s
 
         # everybodies pressure!
