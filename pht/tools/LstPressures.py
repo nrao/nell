@@ -118,6 +118,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.carryoverSessions = []
         self.carryoverSessionPeriods = []
         self.pressuresBySession = {}
+        self.futureSessions = []
+        self.semesterSessions = []
         self.pressures = [] 
 
         # for computing day light hours
@@ -125,10 +127,14 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         
         # what example year do we compute flags for?
         self.year = 2012
-
-        self.nextSemester = DSSSemester.getFutureSemesters()[0]
+        
+        sems = DSSSemester.getFutureSemesters()
+        self.nextSemester = sems[0]
         self.nextSemesterStart = self.nextSemester.start()
         self.nextSemesterEnd   = self.nextSemester.end()
+        # TBF: need future semesters in DSSSemester DB:
+        #self.futureSemesters = [s.semester for s in sems[1:]]
+        self.futureSemesters = ['13A', '13B', '14A', '14B', '15A', '15B']
 
         # TBF: get from DB?
         self.grades = ['A', 'B', 'C']
@@ -412,8 +418,14 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             # reporting
             self.carryoverSessions.append(session)
         else:    
+            # which time attribute of the session to use?
+            if session.allotment.semester_time is not None and \
+                session.allotment.semester_time > 0.0:
+                totalTime = session.allotment.semester_time
+                # reporting
+                self.semesterSessions.append(session)
             # allocated or requested time?
-            if session.allotment.allocated_time is not None:
+            elif session.allotment.allocated_time is not None:
                 totalTime = session.allotment.allocated_time
             else:
                 totalTime = session.getTotalRequestedTime()
@@ -441,6 +453,16 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         return numpy.array(ps)    
 
+    def isSessionForFutureSemester(self, session):
+        """
+        Large projects may have some sessions assigned to future semesters,
+        in which case, we don't want to add them to the pressures.
+        """
+        if session.semester is not None:
+            return session.semester.semester in self.futureSemesters 
+        else:  
+            return False
+
     def getPressures(self, sessions = None):
         """
         Returns a dictionary of pressures by LST for different 
@@ -461,6 +483,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         # fill the buckets
         for s in sessions:
+            # sessions from future semesters we completely ignore
+            if self.isSessionForFutureSemester(s):
+                self.futureSessions.append(s)
+                continue # move on to next session
             carryover = s.dss_session is not None
             if self.useCarryOverPeriods(s):
                 ps = self.getPressuresFromSessionsPeriods(s)
@@ -637,6 +663,12 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         print "Bad Sessions: %d" % len(self.badSessions)
         for b in self.badSessions:
             print "    ", b
+        print "Future Sessions: %d" % len(self.futureSessions)
+        for s in self.futureSessions:
+            print "    ", s
+        print "Sessions using semester time: %d" % len(self.semesterSessions)
+        for s in self.semesterSessions:
+            print "    ", s
 
         # everybodies pressure!
         print ""

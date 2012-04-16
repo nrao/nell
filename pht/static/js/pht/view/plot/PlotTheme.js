@@ -40,16 +40,16 @@ Ext.define('Ext.chart.theme.LstPressureThemeTotal', {
         var reds = this.getColors('#FF0000');
 
         var colors = ['orange',
-              'yellow',
-              reds[0].toString(),
-              reds[1].toString(), 
-              reds[2].toString(), 
-              greens[0].toString(),
-              greens[1].toString(), 
-              greens[2].toString(), 
               blues[0].toString(),
+              greens[0].toString(),
+              reds[0].toString(),
               blues[1].toString(), 
+              greens[1].toString(), 
+              reds[1].toString(), 
               blues[2].toString(), 
+              greens[2].toString(), 
+              reds[2].toString(), 
+              'yellow',
              ];        
 
         this.callParent([Ext.apply({
@@ -67,10 +67,10 @@ Ext.define('Ext.chart.theme.LstPressureThemePoor', {
         var reds = this.getColors('#FF0000');
         
         var colors = ['orange',
-              'yellow',
               reds[0].toString(),
               reds[1].toString(), 
               reds[2].toString(), 
+              'yellow',
         ];
 
         this.callParent([Ext.apply({
@@ -88,10 +88,10 @@ Ext.define('Ext.chart.theme.LstPressureThemeGood', {
         var greens = this.getColors('#00FF00');
         
         var colors = ['orange',
-              'yellow',
               greens[0].toString(),
               greens[1].toString(), 
               greens[2].toString(), 
+              'yellow',
         ];
 
         this.callParent([Ext.apply({
@@ -108,10 +108,10 @@ Ext.define('Ext.chart.theme.LstPressureThemeEx', {
         var blues = this.getColors('#0000FF');
         
         var colors = ['orange',
-              'yellow',
               blues[0].toString(),
               blues[1].toString(), 
               blues[2].toString(), 
+              'yellow',
         ];
 
         this.callParent([Ext.apply({

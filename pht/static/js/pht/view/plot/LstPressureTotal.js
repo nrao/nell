@@ -6,18 +6,34 @@ Ext.define('PHT.view.plot.LstPressureTotal', {
     alias: 'widget.lstpressuretotal',
 
     initComponent: function() {
+
+/*
+        Karen wants the data to appear in the following order, from bottom to top:
+        * carryover
+        * new astronomy:
+          * Grade A:
+            * Excellent
+            * Good
+            * Poor
+          * Grade B:
+            * same weather order
+          * Grade C:
+            * same weather order
+        * requested    
+*/
+
         // map to colors 
         this.pressureFields = ['Carryover', 
-              'Requested',
-              'Poor_A',
-              'Poor_B',
-              'Poor_C',
-              'Good_A',
-              'Good_B',
-              'Good_C',
               'Excellent_A',
+              'Good_A',
+              'Poor_A',
               'Excellent_B',
+              'Good_B',
+              'Poor_B',
               'Excellent_C',
+              'Good_C',
+              'Poor_C',
+              'Requested',
         ];        
         this.availableField = 'Available';
         this.callParent();
