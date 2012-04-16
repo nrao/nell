@@ -12,12 +12,16 @@ from scheduler.models import *
 from models import *
 from pht.tools.database import PstImport
 from pht.tools.LstPressures import LstPressures
+from pht.tools.PlotLstPressures import PlotLstPressures
 from httpadapters import *
 from tools.database import PstInterface, BulkSourceImport
 from tools.reports import *
 import math
 
-
+from matplotlib.backends.backend_agg import FigureCanvasAgg 
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+import numpy
 
 def notify(request):
     return HttpResponse(json.dumps({"success" : "ok" })
@@ -120,6 +124,35 @@ def lst_pressure(request, *args, **kws):
                                   , "lst_pressure" : pressure
                                    })
                       , content_type = 'application/json')
+
+@login_required
+@admin_only
+def print_lst_pressure(request, *args, **kws):
+
+    #lst = LstPressures()
+    #pressure = lst.getPressures()
+
+    #figure = Figure(figsize=(6,6))
+    #ax = figure.add_axes([0.1, 0.1, 0.8, 0.8])
+    #labels = 'Frogs', 'Hogs', 'Dogs', 'Logs'
+    #fracs = [15, 30, 45, 10]
+    #explode=(0, 0.05, 0, 0)
+    #ax.pie(fracs, explode=explode, labels=labels, autopct='%1.1f%%', shadow=True)
+
+    #ind = numpy.arange(lst.hrs)
+    #width = 0.2
+    #data = lst.carryoverTotalPs
+    #print ind
+    #print data
+    #ax.bar(ind, data, width, color='r')
+    #figure.suptitle('Raining Hogs and Dogs', fontsize=14)
+    #canvas = FigureCanvasAgg(figure)
+     # turn the returned canvas into an HTTP response
+    plot = PlotLstPressures()
+    plot.plot('total')
+    response=HttpResponse(content_type='image/png')
+    plot.canvas.print_png(response)
+    return response
 
 @login_required
 @admin_only
