@@ -30,12 +30,25 @@ import numpy
 class PlotLstPressures(object):
 
     def __init__(self):
+
+
+        self.grades = ['A', 'B', 'C']
+
+        # colors for grades A, B, C ...
+        self.reds   = ('#FF0000', '#FF8080', '#FFCCCC')
+        self.blues  = ('#0000FF', '#8080FF', '#CCCCFF')
+        self.greens = ('#00FF00', '#99FF99', '#e5FFe5')
+
+        self.colors = {'excellent' : self.blues
+                     , 'good' : self.greens
+                     , 'poor' : self.reds
+                      }
+
         self.lst = LstPressures()
 
         self.initPlots()
 
     def initPlots(self):
-
 
         self.figure = Figure(figsize=(6,6))
         self.axes = self.figure.add_axes([0.1, 0.1, 0.8, 0.8])
@@ -43,17 +56,21 @@ class PlotLstPressures(object):
 
     def plot(self, type):
 
-        print "getting pressures"
         self.lst.getPressures()
-        print "done w/ pressures"
 
         # what type of plot?
-        # TBF: for now, just do the totals ...
-        #self.plotTotals()
-        self.plotPoor()
+        if type == 'total':
+            self.plotTotals()
+        elif type == 'poor':    
+            self.plotPoor()
+        elif type == 'good':    
+            self.plotGood()
+        elif type == 'excellent':    
+            self.plotExcellent()
+        else:
+            raise "unknown plot type", type
 
     def plotTotals(self):
-
     
         stacks = [
             {'data': self.lst.carryoverTotalPs
@@ -87,6 +104,7 @@ class PlotLstPressures(object):
     
     def plotPoor(self):
 
+        # TBF: There's a patter here we could use to shrink this
         stacks = [
             {'data': self.lst.carryoverPs.poor
            , 'color': 'orange'}
@@ -102,6 +120,40 @@ class PlotLstPressures(object):
        
         self.plotPressureData(stacks, "Poor")
 
+    def plotGood(self):
+
+        stacks = [
+            {'data': self.lst.carryoverPs.good
+           , 'color': 'orange'}
+          , {'data': self.lst.gradePs['A'].good
+           , 'color': self.getColor('A', 'good')}
+          , {'data': self.lst.gradePs['B'].good
+           , 'color': self.getColor('B', 'good')}
+          , {'data': self.lst.gradePs['C'].good
+           , 'color': self.getColor('C', 'good')}
+          , {'data': self.lst.requestedPs.good
+           , 'color': 'yellow'}
+                ]
+       
+        self.plotPressureData(stacks, "Good")
+
+    def plotExcellent(self):
+
+        stacks = [
+            {'data': self.lst.carryoverPs.excellent
+           , 'color': 'orange'}
+          , {'data': self.lst.gradePs['A'].excellent
+           , 'color': self.getColor('A', 'excellent')}
+          , {'data': self.lst.gradePs['B'].excellent
+           , 'color': self.getColor('B', 'excellent')}
+          , {'data': self.lst.gradePs['C'].excellent
+           , 'color': self.getColor('C', 'excellent')}
+          , {'data': self.lst.requestedPs.excellent
+           , 'color': 'yellow'}
+                ]
+       
+        self.plotPressureData(stacks, "Excellent")
+
     def plotPressureData(self, stacks, title):
 
         ind = numpy.arange(self.lst.hrs)
@@ -112,23 +164,13 @@ class PlotLstPressures(object):
             self.axes.bar(ind, data, color=stack['color'], bottom=total)
             total += data
 
+        self.axes.set_xlabel('LST')
+        self.axes.set_ylabel('Pressure (Hrs)')
         self.figure.suptitle(title, fontsize=14)
         self.canvas = FigureCanvasAgg(self.figure)
 
     def getColor(self, grade, weatherType):
-
-        grades = ['A', 'B', 'C']
-
-        reds = ('#FF0000', '#FF8080', '#FFCCCC')
-        blues = ('#0000FF', '#8080FF', '#CCCCFF')
-        greens = ('#00FF00', '#99FF99', '#e5FFe5')
-
-        colors = {'excellent' : blues
-                , 'good' : greens
-                , 'poor' : reds
-                 }
-
-        return colors[weatherType][grades.index(grade)]
+        return self.colors[weatherType][self.grades.index(grade)]
 
     def printPlot(self, filename):
         self.canvas.print_png(filename)

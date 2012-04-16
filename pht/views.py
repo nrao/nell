@@ -128,28 +128,12 @@ def lst_pressure(request, *args, **kws):
 @login_required
 @admin_only
 def print_lst_pressure(request, *args, **kws):
-
-    #lst = LstPressures()
-    #pressure = lst.getPressures()
-
-    #figure = Figure(figsize=(6,6))
-    #ax = figure.add_axes([0.1, 0.1, 0.8, 0.8])
-    #labels = 'Frogs', 'Hogs', 'Dogs', 'Logs'
-    #fracs = [15, 30, 45, 10]
-    #explode=(0, 0.05, 0, 0)
-    #ax.pie(fracs, explode=explode, labels=labels, autopct='%1.1f%%', shadow=True)
-
-    #ind = numpy.arange(lst.hrs)
-    #width = 0.2
-    #data = lst.carryoverTotalPs
-    #print ind
-    #print data
-    #ax.bar(ind, data, width, color='r')
-    #figure.suptitle('Raining Hogs and Dogs', fontsize=14)
-    #canvas = FigureCanvasAgg(figure)
-     # turn the returned canvas into an HTTP response
+ 
+    type = args[0]
+    
     plot = PlotLstPressures()
-    plot.plot('total')
+    plot.plot(type)
+
     response=HttpResponse(content_type='image/png')
     plot.canvas.print_png(response)
     return response
