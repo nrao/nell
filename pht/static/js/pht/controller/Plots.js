@@ -28,6 +28,9 @@ Ext.define('PHT.controller.Plots', {
             'plotwindow toolbar button[action=clear]': {
                 click: this.clearFilterCombos
             },           
+            'plotwindow toolbar button[action=print]': {
+                click: this.printPlot
+            },           
         }); 
 
         this.callParent(arguments);
@@ -37,6 +40,15 @@ Ext.define('PHT.controller.Plots', {
         var win = button.up('window');
         win.proposalCombo.reset()
         win.sessionCombo.reset()
+    },
+
+    printPlot: function(button) {
+        var win = button.up('window');
+        var type = win.plotTypesCombo.value;
+        if ((type != null) && (type != '')) {
+            var url = 'lst_pressure/print/' + type.toLowerCase();
+            window.open(url);
+        }    
     },
 
     updatePlot: function(button) {

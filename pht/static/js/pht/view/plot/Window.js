@@ -36,7 +36,25 @@ Ext.define('PHT.view.plot.Window', {
             hideLabel: true,
             emptyText: 'Select a session...',
         });
-
+        var plotTypes = Ext.create('Ext.data.Store', {
+            fields: ['type'],
+            data:[
+                {'type' : 'Total'},
+                {'type' : 'Poor'},
+                {'type' : 'Good'},
+                {'type' : 'Excellent'},
+                ]
+        });
+         this.plotTypesCombo = Ext.create('Ext.form.field.ComboBox', {
+            name: 'plotType',
+            store: plotTypes,
+            queryMode: 'local',
+            //lastQuery: '',
+            displayField: 'type',
+            valueField: 'type',
+            hideLabel: true,
+            emptyText: 'Select a plot type...',
+        });
         this.dockedItems = [{
             xtype: 'toolbar',
             items: [
@@ -52,6 +70,15 @@ Ext.define('PHT.view.plot.Window', {
                         text: 'Clear Filters',
                         action: 'clear',
                 }),
+                {
+                    xtype: 'tbseparator'
+                },
+                this.plotTypesCombo,
+                {
+                    text: 'Print',
+                    action: 'print',
+                },
+                
             ]
         }];
         this.callParent(arguments);
