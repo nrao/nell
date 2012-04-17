@@ -58,6 +58,7 @@ urlpatterns = patterns(''
    , url(r'^sessions$',                  login_required(sessionResource.requestHandler))
    , url(r'^options$',                   get_options)
    , url(r'^lst_pressure$',              lst_pressure)
+   , url(r'^lst_pressure/print/([^/]+)$', print_lst_pressure)
    , url(r'^session/grades',             session_grades)
    , url(r'^session/observing/types',    session_observing_types)
    , url(r'^session/types',              session_types)
