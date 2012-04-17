@@ -120,6 +120,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.pressuresBySession = {}
         self.futureSessions = []
         self.semesterSessions = []
+        self.failingSessions = []
         self.pressures = [] 
 
         # for computing day light hours
@@ -169,6 +170,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # The new stuff htat people have submitted proposal for,
         # AFTER they've been allocated time.
         self.newAstronomyTotalPs = numpy.array([0.0]*self.hrs)
+        # the sum of grades A, B, C
+        self.newAstronomyGradeTotalPs = numpy.array([0.0]*self.hrs)
         self.gradePs = { 'A' : Pressures()
                  , 'B' : Pressures()
                  , 'C' : Pressures()
@@ -463,6 +466,12 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         else:  
             return False
 
+    def hasFailingGrade(self, session):
+        if session.grade is not None:
+            return session.grade.grade not in self.grades
+        else:
+            return True
+
     def getPressures(self, sessions = None):
         """
         Returns a dictionary of pressures by LST for different 
@@ -483,16 +492,15 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         # fill the buckets
         for s in sessions:
+            carryover = s.dss_session is not None
             # sessions from future semesters we completely ignore
             if self.isSessionForFutureSemester(s):
                 self.futureSessions.append(s)
                 continue # move on to next session
-            carryover = s.dss_session is not None
             if self.useCarryOverPeriods(s):
                 ps = self.getPressuresFromSessionsPeriods(s)
             else:
                 ps = self.getPressuresForSession(s, carryover)
-
             # accum pressure in total 
             self.totalPs += ps
             # for reporting
@@ -505,13 +513,17 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             else:
                 if s.allotment.allocated_time is not None: 
                     self.newAstronomyTotalPs += ps
-                    wps = self.weather.binSession(s, ps)
-                    if s.grade is not None:
+                    if s.grade is not None and not self.hasFailingGrade(s):
+                        self.newAstronomyGradeTotalPs += ps
+                        wps = self.weather.binSession(s, ps)
                         grade = s.grade.grade
                         self.gradePs[grade] += wps
                     else:    
                         # for reporting    
-                        self.noGrades.append(s)    
+                        if s.grade is None:
+                            self.noGrades.append(s)    
+                        else:
+                            self.failingSessions.append(s)
                 else:
                     # this goes into the requested bucket
                     self.requestedTotalPs += ps
@@ -601,7 +613,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         for g in self.grades:
             for w in self.weatherTypes:
                 totalNewAstro += self.gradePs[g].getType(w)
-        if not self.almostEqual(totalNewAstro, self.newAstronomyTotalPs):
+        if not self.almostEqual(totalNewAstro, self.newAstronomyGradeTotalPs):
             msgs.append("New Astro. Total != All Weather/Grade Types")
 
         return (len(msgs) == 0, msgs)
@@ -668,6 +680,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             print "    ", s
         print "Sessions using semester time: %d" % len(self.semesterSessions)
         for s in self.semesterSessions:
+            print "    ", s
+        print "Sessions with failing grade: %d" % len(self.failingSessions)
+        for s in self.failingSessions:
             print "    ", s
 
         # everybodies pressure!

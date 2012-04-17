@@ -43,12 +43,6 @@ Ext.define('PHT.view.plot.LstPressurePlot', {
             }
         }];
         this.series = [{
-            // Availability data
-            type: 'line',
-            showMarkers: false,
-            xField: 'LST',
-            yField: [this.availableField],
-        },{
             // Pressure data
             type: 'column',
             stacked: true,
@@ -72,6 +66,17 @@ Ext.define('PHT.view.plot.LstPressurePlot', {
                 }
                 this.setTitle('LST = ' + storeItem.get('LST') + ': ' + values.join());
               },
+            },
+        },{
+            // Availability data
+            type: 'line',
+            showMarkers: false,
+            xField: 'LST',
+            yField: [this.availableField],
+            style: {
+                fill: '#000000',
+                stroke: '#000000',
+                'stroke-width': 2
             },
         }];
         this.callParent();
