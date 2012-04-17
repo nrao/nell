@@ -35,6 +35,7 @@ class PlotLstPressures(object):
         self.grades = ['A', 'B', 'C']
 
         # colors for grades A, B, C ...
+        # TBF: these should match what the Ext JS 4 client is using
         self.reds   = ('#FF0000', '#FF8080', '#FFCCCC')
         self.blues  = ('#0000FF', '#8080FF', '#CCCCFF')
         self.greens = ('#00FF00', '#99FF99', '#e5FFe5')
@@ -56,6 +57,7 @@ class PlotLstPressures(object):
 
     def plot(self, type):
 
+        # calculate stuff
         self.lst.getPressures()
 
         # what type of plot?
@@ -100,7 +102,7 @@ class PlotLstPressures(object):
            , 'color': 'yellow'}
                 ]
        
-        self.plotPressureData(stacks, "Total Pressure")
+        self.plotPressureData(stacks, "Total", "Total Pressure")
     
     def plotPoor(self):
 
@@ -118,7 +120,7 @@ class PlotLstPressures(object):
            , 'color': 'yellow'}
                 ]
        
-        self.plotPressureData(stacks, "Poor")
+        self.plotPressureData(stacks, "Poor", "Poor")
 
     def plotGood(self):
 
@@ -135,7 +137,7 @@ class PlotLstPressures(object):
            , 'color': 'yellow'}
                 ]
        
-        self.plotPressureData(stacks, "Good")
+        self.plotPressureData(stacks, "Good", "Good")
 
     def plotExcellent(self):
 
@@ -152,17 +154,24 @@ class PlotLstPressures(object):
            , 'color': 'yellow'}
                 ]
        
-        self.plotPressureData(stacks, "Excellent")
+        self.plotPressureData(stacks, 'Excellent', "Excellent")
 
-    def plotPressureData(self, stacks, title):
+    def plotPressureData(self, stacks, availableType, title):
 
+        # stack the pressures one on top of eachother
         ind = numpy.arange(self.lst.hrs)
         total = numpy.zeros(self.lst.hrs)
         for stack in stacks:
             data = stack['data']
-            print data
             self.axes.bar(ind, data, color=stack['color'], bottom=total)
             total += data
+
+        # put the availablitly line across it all
+        if availableType == 'Total':
+            data = self.lst.weather.availabilityTotal
+        else:    
+            data = self.lst.weather.availability.getType(availableType)
+        self.axes.plot(ind, data, color='black')
 
         self.axes.set_xlabel('LST')
         self.axes.set_ylabel('Pressure (Hrs)')
