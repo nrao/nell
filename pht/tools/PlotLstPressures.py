@@ -25,6 +25,7 @@ from pht.tools.LstPressures import LstPressures
 from matplotlib.backends.backend_agg import FigureCanvasAgg 
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
+from pylab import *
 import numpy
 
 class PlotLstPressures(object):
@@ -173,10 +174,27 @@ class PlotLstPressures(object):
             data = self.lst.weather.availability.getType(availableType)
         self.axes.plot(ind, data, color='black')
 
+        # TBF: failed attempt at adding a table of the data
+        #self.axes.add_table(self.createTable(ind, stacks))          
+
         self.axes.set_xlabel('LST')
         self.axes.set_ylabel('Pressure (Hrs)')
         self.figure.suptitle(title, fontsize=14)
         self.canvas = FigureCanvasAgg(self.figure)
+
+    def createTable(self, ind, stacks):
+        "Failed attempt at adding a table of the data"
+        cells = []
+        for stack in stacks:
+            cells.append(["%5.2f" % d for d in stack['data']])
+        colLabels = ["%d" % i for i in ind]
+
+        return table(cellText=cells
+                  , colLabels = colLabels
+                  #, rowLabels=rowLabels
+                  , cellLoc='center'
+                  , loc='lower left')
+            
 
     def getColor(self, grade, weatherType):
         return self.colors[weatherType][self.grades.index(grade)]
