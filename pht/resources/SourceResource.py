@@ -71,5 +71,7 @@ class SourceResource(Resource):
         pcode, id = get_src_args(*args)
         source = Source.objects.get(id = id)
         source.delete()
+        adapter = SourceHttpAdapter(source)
+        adapter.notify(source.proposal)
         return HttpResponse(json.dumps({"success" : "ok"})
                           , content_type = 'application/json')

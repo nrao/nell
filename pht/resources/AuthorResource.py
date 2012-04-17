@@ -56,5 +56,7 @@ class AuthorResource(Resource):
         id,   = args
         author = Author.objects.get(id = id)
         author.delete()
+        adapter = AuthorHttpAdapter(author)
+        adapter.notify(author.proposal)
         return HttpResponse(json.dumps({"success" : "ok"})
                           , content_type = 'application/json')
