@@ -18,6 +18,7 @@ Ext.define('PHT.controller.Plots', {
         'plot.LstPressurePoor',
         'plot.LstPressureGood',
         'plot.LstPressureExcellent',
+        'plot.LstReportWindow',
     ],
 
     init: function() {
@@ -31,6 +32,9 @@ Ext.define('PHT.controller.Plots', {
             'plotwindow toolbar button[action=print]': {
                 click: this.printPlot
             },           
+            'lstreportwindow button[action=ok]': {
+                click: this.lstReport
+            },           
         }); 
 
         this.callParent(arguments);
@@ -40,6 +44,22 @@ Ext.define('PHT.controller.Plots', {
         var win = button.up('window');
         win.proposalCombo.reset()
         win.sessionCombo.reset()
+    },
+
+    lstReport: function(button) {
+        var win = button.up('window');
+        var form = win.down('form');
+        var f = form.getForm();
+        // send report request to server
+        var values = f.getValues();
+        var session = values['session'];
+        var debug = values['debug'];
+        var url = 'reports/lst_pressures?debug=' + debug;
+        if ((session != null) && (session != '')) {
+            url = url + '&session=' + session
+        }
+        window.open(url);
+        win.hide();
     },
 
     printPlot: function(button) {

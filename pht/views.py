@@ -477,6 +477,27 @@ def proposal_summary(request):
 
 @login_required
 @admin_only
+def lst_pressure_report(request, *args, **kws):
+    print "lst: ", request.GET, args, kws
+    debug = request.GET.get('debug', 'false')
+    debug = debug == 'true'
+    sessionId = request.GET.get('session', None)
+    sessions = None
+    if sessionId is not None:
+        s = Session.objects.get(id = int(sessionId))
+        sessions = [s]
+
+    # Create the HttpResponse object with the appropriate PDF headers.
+    response = HttpResponse(mimetype='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=LstPressureReport.pdf'
+
+    lst = LstPressureReport(response)
+    lst.report(sessions = sessions, debug = debug)
+
+    return response
+
+@login_required
+@admin_only
 def proposal_ranking(request):
     semester = request.GET.get('semester')
     # Create the HttpResponse object with the appropriate PDF headers.

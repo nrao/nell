@@ -24,6 +24,7 @@ urlpatterns = patterns(''
    , url(r'^reports/proposalsummary$',           proposal_summary)
    , url(r'^reports/proposalranking$',           proposal_ranking)
    , url(r'^reports/semester_summary$',          semester_summary)
+   , url(r'^reports/lst_pressures$',             lst_pressure_report)
    , url(r'^sources/import$',                    sources_import)
    , url(r'^sources/transfer$',                  sources_transfer)
    , url(r'^tree$',                              tree)
