@@ -144,6 +144,7 @@ Ext.define('PHT.controller.Proposals', {
             session.save()
         }
         store.sync();
+        win.hide()
     },
 
     proposalSelected: function(grid, record) {
