@@ -40,9 +40,7 @@ class LstPressureReport(object):
     representation of what the plots show.
     """
 
-    def __init__(self, filename, semester = None):
-
-        self.semester = semester
+    def __init__(self, filename):
 
         # portrait or landscape?
         w, h      = letter
@@ -56,8 +54,11 @@ class LstPressureReport(object):
         self.doc  = SimpleDocTemplate(filename
                                     , pagesize=pagesize
                                     , topMargin=50)
+
         self.styleSheet = getSampleStyleSheet()['Normal']
         self.styleSheet.fontSize = 6
+
+        # for headers
         self.styleSheet2 = getSampleStyleSheet()['Normal']
         self.styleSheet2.fontSize = 8
 
@@ -115,6 +116,7 @@ class LstPressureReport(object):
                     , onLaterPages = self.makeHeaderFooter)
 
     def createTotalsTable(self):
+        "Simply one header row, and the row of total data"
         rows = [self.createLstRow()
               , self.createRow('Total', self.lst.totalPs, self.fltFrmt)]
         t = Table(rows, colWidths = [30]*self.lst.hrs)
@@ -155,12 +157,13 @@ class LstPressureReport(object):
         return t
 
     def createPressureTable(self, totals, types):
+        "Common pattern: display total, then break it down by weather type."
         rows = [self.createLstRow()]
         dataRows = [self.createRow('Total'
                                  , totals 
                                  , self.fltFrmt)]
         for w in self.lst.weatherTypes:
-            row = self.createRow(w
+            row = self.createRow(self.cropWeatherLabel(w)
                                , types.getType(w) 
                                , self.fltFrmt)
             dataRows.append(row)
@@ -168,70 +171,41 @@ class LstPressureReport(object):
 
         t = Table(rows, colWidths = [30]*self.lst.hrs)
         t.setStyle(self.tableStyle)
-        return 
+        return t 
 
     def createLstRow(self):
+        "Every table begins with the LSTs 0-23"
         return self.createRow('LST', range(self.lst.hrs), '%d')
     
-    def createRow(self, label, data, frmt):
-        rows = [self.pg(label)]
-        dataRows = [self.pg(frmt % d) for d in data]
-        rows.extend(dataRows)
-
     def createAvailableTable(self):
         return self.createPressureTable(self.lst.weather.availabilityTotal
                                       , self.lst.weather.availability)
 
-        rows = [self.createLstRow()]
-        dataRows = [self.createRow('Total'
-                                 , self.lst.weather.availabilityTotal
-                                 , self.fltFrmt)]
-        for w in self.lst.weatherTypes:
-            row = self.createRow(w
-                               , self.lst.weather.availability.getType(w)
-                               , self.fltFrmt)
-            dataRows.append(row)
-        rows.extend(dataRows)
-
-        t = Table(rows, colWidths = [30]*self.lst.hrs)
-        t.setStyle(self.tableStyle)
-        return t
                 
     def createRemainingTable(self):
         return self.createPressureTable(self.lst.remainingTotalPs
                                       , self.lst.remainingPs)
 
-    def createPressureTable(self, totals, types):
-        rows = [self.createLstRow()]
-        dataRows = [self.createRow('Total'
-                                 , totals 
-                                 , self.fltFrmt)]
-        for w in self.lst.weatherTypes:
-            row = self.createRow(w
-                               , types.getType(w) 
-                               , self.fltFrmt)
-            dataRows.append(row)
-        rows.extend(dataRows)
+    def cropWeatherLabel(self, w):
+        if w == 'Excellent':
+            return 'Ex'
+        else:
+            return w
 
-        t = Table(rows, colWidths = [30]*self.lst.hrs)
-        t.setStyle(self.tableStyle)
-        return t
-
-    def createLstRow(self):
-        return self.createRow('LST', range(self.lst.hrs), '%d')
-    
     def createRow(self, label, data, frmt):
-        rows = [self.pg(label)]
+        rows = [self.pg(label, bold = True)]
         dataRows = [self.pg(frmt % d) for d in data]
         rows.extend(dataRows)
         return rows
 
-    def pg(self, text):
+    def pg(self, text, bold = False):
         "Shortcut to Paragraph"
+        if bold:
+            text = "<b>%s</b>" % text
         return Paragraph(text, self.styleSheet)       
 
     def tableHeader(self, text):
-        return Paragraph(text, self.styleSheet2)       
+        return Paragraph("<b>%s</b>" % text, self.styleSheet2)       
 
     def getDataRow(self, title, data):
         row = [self.pg(title)]
