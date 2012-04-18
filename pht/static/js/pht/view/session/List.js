@@ -94,6 +94,7 @@ Ext.define('PHT.view.session.List' ,{
         this.columns = [
             {header: 'PCODE', dataIndex: 'pcode', width: 100},
             {header: 'Name', dataIndex: 'name', width: 100},
+            {header: 'Grade', dataIndex: 'grade', flex: 1},
             {header: 'Type', dataIndex: 'session_type_code', flex: 1},
             {header: 'Obs. Type', dataIndex: 'observing_type', width: 80},
             {header: 'Requested', dataIndex: 'requested_time', flex: 1},
