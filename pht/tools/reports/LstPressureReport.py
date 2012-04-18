@@ -24,6 +24,8 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
+import sys
+
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle
@@ -31,6 +33,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units  import inch
 
 from pht.tools.LstPressures import LstPressures
+from pht.models import *
 
 class LstPressureReport(object):
 
@@ -73,10 +76,15 @@ class LstPressureReport(object):
         self.lst = LstPressures()
 
         self.title = 'LST Pressures'
+        self.titleOffset = 0
 
         self.fltFrmt = "%5.2f"
 
-    def report(self, sessions = None):
+    def report(self, sessions = None, debug = False):
+
+        if sessions is not None:
+            self.title += " for %s" % ",".join([s.name for s in sessions])
+            self.titleOffset = 100 + len(self.title) 
 
         # crunch the numbers
         self.lst.getPressures(sessions) 
@@ -109,6 +117,10 @@ class LstPressureReport(object):
                   , h5, t5 #, b
                   , h6, t6
                    ]
+
+        if debug:
+            debugElements = self.createDebugElements()
+            elements.extend(debugElements)
 
         # write the document to disk (or something)
         self.doc.build(elements
@@ -224,11 +236,28 @@ class LstPressureReport(object):
         if self.orientation == 'portrait':
             canvas.drawString(20, h-40, self.title)
         else:
-            canvas.drawString(w, w-40, self.title)
+            canvas.drawString(w-self.titleOffset, w-40, self.title)
         self.genFooter(canvas, doc)
+
+    def createDebugElements(self):
+
+        el = [self.pg("Debug!")]
+        return el
 
 if __name__ == '__main__':
 
+    sessions = None
+    debug = False
+
+    for arg in sys.argv:
+        key = arg.split('=')[0]
+        if key == '-session':
+            session = arg.split('=')[1]
+            sessions = Session.objects.filter(name = session)
+        elif key == '-debug':
+            debug = True
+
     f = file('LstPressures.pdf', 'w')
     lst = LstPressureReport(f)
-    lst.report()         
+    lst.report(sessions = sessions
+             , debug = debug)         
