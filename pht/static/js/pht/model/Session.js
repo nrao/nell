@@ -4,6 +4,8 @@ Ext.define('PHT.model.Session', {
            , 'pst_session_id'
            , 'pcode'
            , 'name'
+           , 'other_receiver'
+           , 'other_backend'
            , 'sci_categories'
            , 'session_type'
            , 'session_type_code'

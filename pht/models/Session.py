@@ -77,6 +77,8 @@ class Session(models.Model):
     comments                = models.CharField(null = True, max_length = 2000)
     scheduler_notes         = models.TextField(null = True, blank = True)
     session_time_calculated = models.BooleanField(default = False)
+    other_receiver          = models.CharField(max_length = 2000, null = True)
+    other_backend           = models.CharField(max_length = 2000, null = True)
 
 
     class Meta:
