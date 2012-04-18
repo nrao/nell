@@ -108,7 +108,7 @@ class LstPressureReport(object):
         h6 = self.tableHeader('Allocated:')
         t6 = self.createAllocatedTable()
 
-        b = Paragraph('<br/>', self.styleSheet)
+        b = self.getBreak() #Paragraph('<br/>', self.styleSheet)
 
         elements = [h1, t1 
                   , h2, t2 #, b
@@ -225,6 +225,9 @@ class LstPressureReport(object):
         row.extend(rowData)
         return row
 
+    def getBreak(self):
+        return Paragraph('<br/>', self.styleSheet)
+
     def genFooter(self, canvas, doc):
         pass
 
@@ -241,8 +244,62 @@ class LstPressureReport(object):
 
     def createDebugElements(self):
 
-        el = [self.pg("Debug!")]
-        return el
+        els = [self.pg("Debug Info:", bold = True)]
+
+        # warnings ?
+        valid, msgs = self.lst.checkPressures()
+        if not valid:
+            els.append(self.getBreak())
+            els.append(self.pg("Accounting ERRORS:", bold = True))
+            for msg in msgs:
+                els.append(self.pg(msg))
+
+        # non traditional sessions
+        if len(self.lst.badSessions) > 0:
+            ss = self.createSessionElements("Session's without pressures (bad):"
+                                         , self.lst.badSessions)
+            els.extend(ss)
+        if len(self.lst.futureSessions) > 0:
+            ss = self.createSessionElements("Session's for future semesters:"
+                                         , self.lst.futureSessions)
+            els.extend(ss)
+        if len(self.lst.semesterSessions) > 0:
+            ss = self.createSessionElements("Session's using semester time:"
+                                         , self.lst.semesterSessions)
+            els.extend(ss)
+        if len(self.lst.noGrades) > 0:
+            ss = self.createSessionElements("Session's without grades:"
+                                         , self.lst.noGrades)
+            els.extend(ss)
+        if len(self.lst.failingSessions) > 0:
+            ss = self.createSessionElements("Session's with failing grades:"
+                                         , self.lst.failingSessions)
+            els.extend(ss)
+
+        # session details
+        els.append(self.getBreak())
+        els.append(self.pg("Session Details:", bold = True))
+        data = [self.createLstRow()]
+        for name in sorted(self.lst.pressuresBySession.keys()):
+            bucket, ps, total = self.lst.pressuresBySession[name]
+            label = "%s: (%s, %5.2f)" % (name, bucket, total)
+            data.append(self.getDataRow(label, ps))
+        widths = [120]
+        widths.extend([25]*(self.lst.hrs-1))
+        t = Table(data, colWidths = widths)
+        t.setStyle(self.tableStyle)
+        els.append(t)
+
+        return els        
+
+
+    def createSessionElements(self, header, sessions):
+        "Print out a list of sessions"
+        els = [self.getBreak()]
+        els.append(self.pg(header, bold = True))
+        for s in sessions:
+            els.append(self.pg(s.__str__()))
+        return els
 
 if __name__ == '__main__':
 

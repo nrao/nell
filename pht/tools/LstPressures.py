@@ -112,6 +112,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.weather = LstPressureWeather()
 
         # for reporting
+        self.sessions = []
         self.badSessions = []
         self.noPeriods = []
         self.noGrades = []
@@ -298,7 +299,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         and Shutdown sessions from their periods.
         """
         periods = self.getSessionNextSemesterPeriods(session)
-        return self.getPressuresFromPeriods(periods)
+        ps = self.getPressuresFromPeriods(periods)
+        # for reporting
+        self.pressuresBySession[session.__str__()] = ('periods', ps, sum(ps))
+        return ps
 
     def getPressuresFromPeriods(self, periods):    
         total = self.newHrs() 
@@ -404,6 +408,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             or session.target.min_lst is None \
             or session.target.max_lst is None:
             self.badSessions.append(session)
+            # for reporting
+            self.pressuresBySession[session.__str__()] = \
+                ('bad', self.newHrs(), 0.0)
             return [0.0] * self.hrs
 
         # TBF: is this right?
@@ -420,6 +427,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 totalTime = ta.getTimeRemaining(session.dss_session)
             # reporting
             self.carryoverSessions.append(session)
+            bucket = "carryover"
         else:    
             # which time attribute of the session to use?
             if session.allotment.semester_time is not None and \
@@ -427,11 +435,14 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 totalTime = session.allotment.semester_time
                 # reporting
                 self.semesterSessions.append(session)
+                bucket = "semester"
             # allocated or requested time?
             elif session.allotment.allocated_time is not None:
                 totalTime = session.allotment.allocated_time
+                bucket = "allocated"
             else:
                 totalTime = session.getTotalRequestedTime()
+                bucket = "requested"
 
         hrs = 24
         bins = [0.0] * hrs 
@@ -454,7 +465,12 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         else:
             ps = [0.0]*self.hrs
 
-        return numpy.array(ps)    
+        ps = numpy.array(ps)    
+
+        # for reporting
+        self.pressuresBySession[session.__str__()] = (bucket, ps, sum(ps))
+
+        return ps
 
     def isSessionForFutureSemester(self, session):
         """
@@ -489,6 +505,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # what sessions are we doing this for?
         if sessions is None:
             sessions = Session.objects.all().order_by('name')
+        self.sessions = sessions    
 
         # fill the buckets
         for s in sessions:
@@ -496,6 +513,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             # sessions from future semesters we completely ignore
             if self.isSessionForFutureSemester(s):
                 self.futureSessions.append(s)
+                # for reporting
+                self.pressuresBySession[s.__str__()] = \
+                    ('future', self.newHrs(), 0.0)
                 continue # move on to next session
             if self.useCarryOverPeriods(s):
                 ps = self.getPressuresFromSessionsPeriods(s)
@@ -503,8 +523,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 ps = self.getPressuresForSession(s, carryover)
             # accum pressure in total 
             self.totalPs += ps
-            # for reporting
-            self.pressuresBySession[s.name] = (carryover, ps, sum(ps))
             # We really keep carryover separate
             # Also track carryover by weather type
             if carryover:
@@ -528,6 +546,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                     # this goes into the requested bucket
                     self.requestedTotalPs += ps
                     self.requestedPs += self.weather.binSession(s, ps)
+        # for reporting
+        #self.pressuresBySession[s.name] = (carryover, ps, sum(ps))
 
         # now figure out the availability        
         changes = self.weather.getAvailabilityChanges(self.gradePs['A'])
@@ -649,6 +669,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 print self.formatResults("      %s_%s" % (w, g)
                                        , self.gradePs[g].getType(w))
 
+        if len(self.sessions) != len(self.pressuresBySession):
+            print "R U Missing sessions?: ", len(self.sessions), len(self.pressuresBySession)
+
         # warnings
         valid, msgs = self.checkPressures()
         if not valid:
@@ -689,15 +712,15 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         print ""
         print "Pressures by Session: "
         for k in sorted(self.pressuresBySession.keys()):
-            carryover, ps, total = self.pressuresBySession[k]
-            lbl = "%s (%s, %5.2f)" % (k, carryover, total)
+            bucket, ps, total = self.pressuresBySession[k]
+            lbl = "%s (%s, %5.2f)" % (k, bucket, total)
             print self.formatResults(lbl, ps, lblFrmt = "%35s")
         print ""
         print "Non-Zero Pressures by Session: "
         for k in sorted(self.pressuresBySession.keys()):
-            carryover, ps, total = self.pressuresBySession[k]
+            bucket, ps, total = self.pressuresBySession[k]
             if sum(ps) > 0.0:
-                lbl = "%s (%s, %5.2f)" % (k, carryover, total)
+                lbl = "%s (%s, %5.2f)" % (k, bucket, total)
                 print self.formatResults(lbl, ps, lblFrmt = "%35s")
 
         # for Brian Truitt:
