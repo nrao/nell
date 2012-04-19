@@ -18,6 +18,7 @@ Ext.define('PHT.controller.Plots', {
         'plot.LstPressurePoor',
         'plot.LstPressureGood',
         'plot.LstPressureExcellent',
+        'plot.LstReportWindow',
     ],
 
     init: function() {
@@ -27,6 +28,12 @@ Ext.define('PHT.controller.Plots', {
             },
             'plotwindow toolbar button[action=clear]': {
                 click: this.clearFilterCombos
+            },           
+            'plotwindow toolbar button[action=print]': {
+                click: this.printPlot
+            },           
+            'lstreportwindow button[action=ok]': {
+                click: this.lstReport
             },           
         }); 
 
@@ -39,9 +46,39 @@ Ext.define('PHT.controller.Plots', {
         win.sessionCombo.reset()
     },
 
+    lstReport: function(button) {
+        var win = button.up('window');
+        var form = win.down('form');
+        var f = form.getForm();
+        // send report request to server
+        var values = f.getValues();
+        var session = values['session'];
+        var debug = values['debug'];
+        var url = 'reports/lst_pressures?debug=' + debug;
+        if ((session != null) && (session != '')) {
+            url = url + '&session=' + session
+        }
+        window.open(url);
+        win.hide();
+    },
+
+    printPlot: function(button) {
+        var win = button.up('window');
+        var type = win.plotTypesCombo.value;
+        if ((type != null) && (type != '')) {
+            var url = 'lst_pressure/print/' + type.toLowerCase();
+            window.open(url);
+        }    
+    },
+
     updatePlot: function(button) {
         var win = button.up('window')
         var store = this.getStore('LstPressures');
+        // be patient ...
+        var storeMask = new Ext.LoadMask(Ext.getBody()
+            , {msg:"Loading LST Pressures ...",
+               store: store,
+              });
         // which sessions are we calculating pressures for?
         var filters = []
         var pcode = win.proposalCombo.value 

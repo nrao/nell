@@ -12,12 +12,16 @@ from scheduler.models import *
 from models import *
 from pht.tools.database import PstImport
 from pht.tools.LstPressures import LstPressures
+from pht.tools.PlotLstPressures import PlotLstPressures
 from httpadapters import *
 from tools.database import PstInterface, BulkSourceImport
 from tools.reports import *
 import math
 
-
+from matplotlib.backends.backend_agg import FigureCanvasAgg 
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+import numpy
 
 def notify(request):
     return HttpResponse(json.dumps({"success" : "ok" })
@@ -120,6 +124,19 @@ def lst_pressure(request, *args, **kws):
                                   , "lst_pressure" : pressure
                                    })
                       , content_type = 'application/json')
+
+@login_required
+@admin_only
+def print_lst_pressure(request, *args, **kws):
+ 
+    type = args[0]
+    
+    plot = PlotLstPressures()
+    plot.plot(type)
+
+    response=HttpResponse(content_type='image/png')
+    plot.canvas.print_png(response)
+    return response
 
 @login_required
 @admin_only
@@ -455,6 +472,27 @@ def proposal_summary(request):
 
     ps = ProposalSummary(response)
     ps.report(semester = semester)
+
+    return response
+
+@login_required
+@admin_only
+def lst_pressure_report(request, *args, **kws):
+    #print "lst: ", request.GET, args, kws
+    debug = request.GET.get('debug', 'false')
+    debug = debug == 'true'
+    sessionId = request.GET.get('session', None)
+    sessions = None
+    if sessionId is not None:
+        s = Session.objects.get(id = int(sessionId))
+        sessions = [s]
+
+    # Create the HttpResponse object with the appropriate PDF headers.
+    response = HttpResponse(mimetype='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=LstPressureReport.pdf'
+
+    lst = LstPressureReport(response)
+    lst.report(sessions = sessions, debug = debug)
 
     return response
 

@@ -112,6 +112,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.weather = LstPressureWeather()
 
         # for reporting
+        self.sessions = []
         self.badSessions = []
         self.noPeriods = []
         self.noGrades = []
@@ -240,7 +241,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         
     def getLstWeightsForSession(self, session):
         "Simple: LST's within min/max are on, rest are off."
-        ws = [0.0] * self.hrs
+        ws = self.newHrs() #[0.0] * self.hrs
         minLst = int(math.floor(rad2hr(session.target.min_lst)))
         maxLst = int(math.floor(rad2hr(session.target.max_lst)))
         if (0 > minLst or minLst > 24.0) or (0 > maxLst or maxLst > 24.0):
@@ -258,6 +259,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
     def modifyWeightsForLstExclusion(self, session, ws):
         "Modify given weights to be zero within the exclusion."
+        # save some time if they don't even have this set
+        if not session.has_lst_exclusion():
+            return ws
         lstRanges = session.get_lst_parameters()
         exclusions = lstRanges['LST Exclude']
         for lowEx, hiEx in exclusions:
@@ -272,11 +276,11 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         fs = [1.0]*self.hrs
         if session.flags.thermal_night:
-            fs = self.product(fs, self.thermalNightWeights)
+            fs = fs * self.thermalNightWeights 
         elif session.flags.optical_night:
-            fs = self.product(fs, self.opticalNightWeights)
+            fs = fs * self.opticalNightWeights  
         elif session.flags.rfi_night:
-            fs = self.product(fs, self.rfiWeights)
+            fs = fs * self.rfiWeights 
         return fs
 
     def useCarryOverPeriods(self, session):
@@ -295,13 +299,16 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         and Shutdown sessions from their periods.
         """
         periods = self.getSessionNextSemesterPeriods(session)
-        return self.getPressuresFromPeriods(periods)
+        ps = self.getPressuresFromPeriods(periods)
+        # for reporting
+        self.pressuresBySession[session.__str__()] = ('periods', ps, sum(ps))
+        return ps
 
     def getPressuresFromPeriods(self, periods):    
-        total = [0.0]*self.hrs
+        total = self.newHrs() 
         for period in periods:
             ps = self.getPressuresFromPeriod(period)
-            total = self.add(total, ps)
+            total += ps 
         return total
 
     def getSessionNextSemesterPeriods(self, session): 
@@ -401,6 +408,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             or session.target.min_lst is None \
             or session.target.max_lst is None:
             self.badSessions.append(session)
+            # for reporting
+            self.pressuresBySession[session.__str__()] = \
+                ('bad', self.newHrs(), 0.0)
             return [0.0] * self.hrs
 
         # TBF: is this right?
@@ -417,6 +427,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 totalTime = ta.getTimeRemaining(session.dss_session)
             # reporting
             self.carryoverSessions.append(session)
+            bucket = "carryover"
         else:    
             # which time attribute of the session to use?
             if session.allotment.semester_time is not None and \
@@ -424,11 +435,14 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 totalTime = session.allotment.semester_time
                 # reporting
                 self.semesterSessions.append(session)
+                bucket = "semester"
             # allocated or requested time?
             elif session.allotment.allocated_time is not None:
                 totalTime = session.allotment.allocated_time
+                bucket = "allocated"
             else:
                 totalTime = session.getTotalRequestedTime()
+                bucket = "requested"
 
         hrs = 24
         bins = [0.0] * hrs 
@@ -444,31 +458,19 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         fs = self.getFlagWeightsForSession(session)
 
         # put it all togethor to calculate pressures
-        weightSum = sum([(ws[i] * fs[i]) for i in range(self.hrs)])
+        weightSum = sum(ws * fs)
         if weightSum != 0:
             ps = [(totalTime * ws[i] * fs[i]) / weightSum \
                 for i in range(self.hrs)]
         else:
             ps = [0.0]*self.hrs
 
-        return ps    
+        ps = numpy.array(ps)    
 
-    def product(self, xs, ys):
-        "multiply two vectors"
-        # TBF: I know we shouldn't be writing our own one of these ...
-        assert len(xs) == len(ys)
-        zz = []
-        for i in range(len(xs)):
-            zz.append(xs[i] * ys[i])
-        return zz    
+        # for reporting
+        self.pressuresBySession[session.__str__()] = (bucket, ps, sum(ps))
 
-    def add(self, xs, ys):
-        "I know, I know, I should just use numpy"
-        assert len(xs) == len(ys)
-        zz = []
-        for i in range(len(xs)):
-            zz.append(xs[i] + ys[i])
-        return zz    
+        return ps
 
     def isSessionForFutureSemester(self, session):
         """
@@ -503,6 +505,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # what sessions are we doing this for?
         if sessions is None:
             sessions = Session.objects.all().order_by('name')
+        self.sessions = sessions    
 
         # fill the buckets
         for s in sessions:
@@ -510,17 +513,16 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             # sessions from future semesters we completely ignore
             if self.isSessionForFutureSemester(s):
                 self.futureSessions.append(s)
+                # for reporting
+                self.pressuresBySession[s.__str__()] = \
+                    ('future', self.newHrs(), 0.0)
                 continue # move on to next session
             if self.useCarryOverPeriods(s):
                 ps = self.getPressuresFromSessionsPeriods(s)
             else:
                 ps = self.getPressuresForSession(s, carryover)
-            # convert our list to something easier to deal with    
-            ps = numpy.array(ps)
-            # accum pressures in total
+            # accum pressure in total 
             self.totalPs += ps
-            # for reporting
-            self.pressuresBySession[s.name] = (carryover, ps, sum(ps))
             # We really keep carryover separate
             # Also track carryover by weather type
             if carryover:
@@ -544,6 +546,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                     # this goes into the requested bucket
                     self.requestedTotalPs += ps
                     self.requestedPs += self.weather.binSession(s, ps)
+        # for reporting
+        #self.pressuresBySession[s.name] = (carryover, ps, sum(ps))
 
         # now figure out the availability        
         changes = self.weather.getAvailabilityChanges(self.gradePs['A'])
@@ -665,6 +669,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 print self.formatResults("      %s_%s" % (w, g)
                                        , self.gradePs[g].getType(w))
 
+        if len(self.sessions) != len(self.pressuresBySession):
+            print "R U Missing sessions?: ", len(self.sessions), len(self.pressuresBySession)
+
         # warnings
         valid, msgs = self.checkPressures()
         if not valid:
@@ -705,15 +712,15 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         print ""
         print "Pressures by Session: "
         for k in sorted(self.pressuresBySession.keys()):
-            carryover, ps, total = self.pressuresBySession[k]
-            lbl = "%s (%s, %5.2f)" % (k, carryover, total)
+            bucket, ps, total = self.pressuresBySession[k]
+            lbl = "%s (%s, %5.2f)" % (k, bucket, total)
             print self.formatResults(lbl, ps, lblFrmt = "%35s")
         print ""
         print "Non-Zero Pressures by Session: "
         for k in sorted(self.pressuresBySession.keys()):
-            carryover, ps, total = self.pressuresBySession[k]
+            bucket, ps, total = self.pressuresBySession[k]
             if sum(ps) > 0.0:
-                lbl = "%s (%s, %5.2f)" % (k, carryover, total)
+                lbl = "%s (%s, %5.2f)" % (k, bucket, total)
                 print self.formatResults(lbl, ps, lblFrmt = "%35s")
 
         # for Brian Truitt:
@@ -739,7 +746,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         # TBF: These get computed by methods in this class,
         # but no need to do it at start up every time.
-        self.thermalNightWeights = [0.61643835616438358
+        self.thermalNightWeights = numpy.array([0.61643835616438358
                           , 0.61369863013698633
                           , 0.61095890410958908
                           , 0.61369863013698633
@@ -763,8 +770,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                           , 0.66027397260273968
                           , 0.63835616438356169
                           , 0.62465753424657533
-                          ]
-        self.opticalNightWeights = [0.50958904109589043
+                          ])
+        self.opticalNightWeights = numpy.array([0.50958904109589043
                             , 0.51232876712328768
                             , 0.51232876712328768
                             , 0.51506849315068493
@@ -788,8 +795,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                             , 0.50410958904109593
                             , 0.50684931506849318
                             , 0.50958904109589043
-                            ]
-        self.rfiWeights     = [0.54246575342465753
+                            ])
+        self.rfiWeights     = numpy.array([0.54246575342465753
                              , 0.54520547945205478
                              , 0.54520547945205478
                              , 0.54246575342465753
@@ -813,7 +820,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                              , 0.51780821917808217
                              , 0.54246575342465753
                              , 0.54246575342465753
-                             ] 
+                             ]) 
             
 
 

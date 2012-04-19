@@ -105,6 +105,9 @@ Ext.application({
         var tac = Ext.create('PHT.view.proposal.TacTool', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
+        var lstReportWin = Ext.create('PHT.view.plot.LstReportWindow', {
+            renderTo: viewport.layout.regions.center.getEl(),
+        });
 
         // setup menus
         var importMenu = Ext.create('Ext.menu.Menu', {
@@ -244,6 +247,13 @@ Ext.application({
                 {
                 text: 'Semester Summary',
                 menu: semesterSummaryMenu
+                },
+                {
+                text: 'LST Pressures',
+                //menu: semesterSummaryMenu
+                handler: function() {
+                   lstReportWin.show() 
+                  },
                 }
             ]
         });

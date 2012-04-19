@@ -6,6 +6,7 @@ Ext.define('PHT.model.SourceCoordinateSystem', {
     proxy: {
         type: 'ajax',
         url: '/pht/source/systems',
+        timeout: 300000,
         reader: {
             type: 'json',
             root: 'source systems',

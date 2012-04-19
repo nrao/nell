@@ -24,6 +24,7 @@ Ext.define('PHT.model.ProposalSource', {
     proxy: {
         type: 'rest',
         url: '/pht/sources',
+        timeout: 300000,
         reader: {
             type: 'json',
             root: 'sources',

@@ -6,6 +6,7 @@ Ext.define('PHT.model.ScienceCategory', {
     proxy: {
         type: 'ajax',
         url: '/pht/proposal/science/categories',
+        timeout: 300000,
         reader: {
             type: 'json',
             root: 'science categories',

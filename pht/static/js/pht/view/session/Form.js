@@ -372,6 +372,16 @@ Ext.define('PHT.view.session.Form', {
                     labelAlign: 'left',
                     labelWidth: 150,
                     width: 500,
+                },{
+                    xtype: 'textfield',
+                    name: 'other_receiver',
+                    fieldLabel: 'Other Receiver',
+                    labelAlign: 'left'
+                },{
+                    xtype: 'textfield',
+                    name: 'other_backend',
+                    fieldLabel: 'Other Backend',
+                    labelAlign: 'left'
                 }]
             },{
                 title: 'Monitoring',

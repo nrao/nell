@@ -49,8 +49,9 @@ class Report(object):
                      self.title + " for Semester %s" % self.semester
 
         data = [self.genHeader()]
-        self.proposals = self.order(Proposal.objects.all() if semester is None else
-                                    Proposal.objects.filter(semester__semester = semester))
+        self.proposals = self.order(
+         [p for p in Proposal.objects.all() if 'TGBT' not in p.pcode] if semester is None else
+         [p for p in Proposal.objects.filter(semester__semester = semester) if 'TGBT' not in p.pcode])
         data.extend(map(self.genRow, self.proposals))
         t = Table(data, colWidths = self.colWidths())
         self.tableStyle = TableStyle([

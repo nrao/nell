@@ -188,6 +188,8 @@ class SessionHttpAdapter(PhtHttpAdapter):
           p.pcode,
           p.id as proposal_id,
           s.pst_session_id,
+          s.other_receiver,
+          s.other_backend,
           sem.semester,
           st.type as session_type,
           st.type,
@@ -289,6 +291,8 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'name'                    : self.session.name
               , 'pcode'                   : self.session.proposal.pcode
               , 'pst_session_id'          : self.session.pst_session_id
+              , 'other_receiver'          : self.session.other_receiver
+              , 'other_backend'           : self.session.other_backend
               , 'sci_categories'          : ', '.join(sci_categories)
               , 'semester'                : semester 
               , 'session_type'            : sessType
@@ -426,6 +430,8 @@ class SessionHttpAdapter(PhtHttpAdapter):
         
         self.session.pst_session_id = self.getInt(data, 'pst_session_id', default = 0) 
         self.session.name = data.get('name')
+        self.session.other_receiver = data.get('other_receiver')
+        self.session.other_backend = data.get('other_backend')
         self.session.interval_time = self.getFloat(data,'interval_time')
         self.session.constraint_field = data.get('constraint_field')
         self.session.comments = data.get('comments')

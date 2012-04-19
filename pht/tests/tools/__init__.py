@@ -1,6 +1,7 @@
 from TestBackfillImport   import TestBackfillImport
 from TestBulkSourceImport import TestBulkSourceImport
 from TestLstPressures     import TestLstPressures
+from TestLstPressureReport      import TestLstPressureReport
 from TestLstPressureWeather     import TestLstPressureWeather
 from TestDssImport        import TestDssImport
 from TestPstImport        import TestPstImport

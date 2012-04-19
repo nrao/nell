@@ -99,6 +99,7 @@ Ext.define('PHT.controller.Proposals', {
         grid.authorsFilterText.reset();
         grid.pcodeFilterText.reset();
         grid.titleFilterText.reset();
+        grid.testingFilter.toggle(true);
     },
 
     // load the form for allocating grades and time to proposal
@@ -143,6 +144,7 @@ Ext.define('PHT.controller.Proposals', {
             session.save()
         }
         store.sync();
+        win.hide()
     },
 
     proposalSelected: function(grid, record) {

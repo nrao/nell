@@ -5,6 +5,7 @@ Ext.define('PHT.model.PstProposalCode', {
     proxy: {
         type: 'ajax',
         url: '/pht/pst/pcodes',
+        timeout: 300000,
         reader: {
             type: 'json',
             root: 'pst pcodes',

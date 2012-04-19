@@ -6,6 +6,7 @@ Ext.define('PHT.model.ProposalCode', {
     proxy: {
         type: 'ajax',
         url: '/pht/options?mode=proposal_codes',
+        timeout: 300000,
         reader: {
             type: 'json',
             root: 'proposal codes',

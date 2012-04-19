@@ -77,6 +77,8 @@ class Session(models.Model):
     comments                = models.CharField(null = True, max_length = 2000)
     scheduler_notes         = models.TextField(null = True, blank = True)
     session_time_calculated = models.BooleanField(default = False)
+    other_receiver          = models.CharField(max_length = 2000, null = True)
+    other_backend           = models.CharField(max_length = 2000, null = True)
 
 
     class Meta:
@@ -149,6 +151,17 @@ class Session(models.Model):
             return self.allotment.requested_time * self.allotment.repeats
         else:
             return None
+
+    def has_lst_param(self, param):
+        return self.sessionparameter_set.filter(parameter__name = param).count() > 0
+
+    def has_lst_exclusion(self):
+        # just check for the high value
+        return self.has_lst_param('LST Exclude Hi')
+
+    def has_lst_inclusion(self):
+        # just check for the high value
+        return self.has_lst_param('LST Include Hi')
 
     def get_lst_parameters(self):
         """

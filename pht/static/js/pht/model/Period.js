@@ -15,6 +15,7 @@ Ext.define('PHT.model.Period', {
     proxy: {
         type: 'rest',
         url: '/pht/periods',
+        timeout: 300000,
         reader: {
             type: 'json',
             root: 'periods',

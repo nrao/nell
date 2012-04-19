@@ -6,6 +6,7 @@ Ext.define('PHT.model.ObservingType', {
     proxy: {
         type: 'ajax',
         url: '/pht/proposal/observing/types',
+        timeout: 300000,
         reader: {
             type: 'json',
             root: 'observing types',

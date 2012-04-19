@@ -6,6 +6,7 @@ Ext.define('PHT.model.SourceCoordinateEpoch', {
     proxy: {
         type: 'ajax',
         url: '/pht/source/epochs',
+        timeout: 300000,
         reader: {
             type: 'json',
             root: 'source epochs',
