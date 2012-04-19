@@ -478,7 +478,7 @@ def proposal_summary(request):
 @login_required
 @admin_only
 def lst_pressure_report(request, *args, **kws):
-    print "lst: ", request.GET, args, kws
+    #print "lst: ", request.GET, args, kws
     debug = request.GET.get('debug', 'false')
     debug = debug == 'true'
     sessionId = request.GET.get('session', None)
