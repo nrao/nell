@@ -6,6 +6,7 @@ Ext.define('PHT.model.SessionGrade', {
     proxy: {
         type: 'ajax',
         url: '/pht/session/grades',
+        timeout: 300000,
         reader: {
             type: 'json',
             root: 'session grades',

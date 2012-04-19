@@ -83,6 +83,7 @@ Ext.define('PHT.model.Session', {
     proxy: {
         type: 'rest',
         url: '/pht/sessions',
+        timeout: 300000,
         reader: {
             type: 'json',
             root: 'sessions',

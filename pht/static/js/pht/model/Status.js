@@ -6,6 +6,7 @@ Ext.define('PHT.model.Status', {
     proxy: {
         type: 'ajax',
         url: '/pht/proposal/statuses',
+        timeout: 300000,
         reader: {
             type: 'json',
             root: 'statuses',

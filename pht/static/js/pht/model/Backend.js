@@ -7,6 +7,7 @@ Ext.define('PHT.model.Backend', {
     proxy: {
         type: 'ajax',
         url: '/pht/backends',
+        timeout: 300000,
         reader: {
             type: 'json',
             root: 'backends',

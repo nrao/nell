@@ -7,6 +7,7 @@ Ext.define('PHT.model.Receiver', {
     proxy: {
         type: 'ajax',
         url: '/pht/receivers',
+        timeout: 300000,
         reader: {
             type: 'json',
             root: 'receivers',

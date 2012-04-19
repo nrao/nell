@@ -6,6 +6,7 @@ Ext.define('PHT.model.SessionSeparation', {
     proxy: {
         type: 'ajax',
         url: 'session/separations',
+        timeout: 300000,
         reader: {
             type: 'json',
             root: 'session separations',

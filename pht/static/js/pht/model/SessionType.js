@@ -7,6 +7,7 @@ Ext.define('PHT.model.SessionType', {
     proxy: {
         type: 'ajax',
         url: '/pht/session/types',
+        timeout: 300000,
         reader: {
             type: 'json',
             root: 'session types',
