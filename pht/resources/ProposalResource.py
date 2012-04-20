@@ -30,6 +30,7 @@ from pht.models       import Proposal
 class ProposalResource(Resource):
 
     def __init__(self):
+        self.root    = 'proposals'
         self.adapter = ProposalHttpAdapter()
 
     def read(self, request, *args, **kws):

@@ -32,6 +32,7 @@ from nell.utilities         import TimeAgent
 class DssPeriodResource(Resource):
 
     def __init__(self):
+        self.root    = 'periods'
         self.adapter = PeriodHttpAdapter(None)
 
     def create(self, request, *args, **kws):

@@ -74,8 +74,12 @@ Ext.define('PHT.controller.PhtController', {
             scope: this,
             fn: function(id) {
                 if (id == 'yes') {
-                    this.copyRecord(store, record);
-                    store.load();
+                    var newRecord = this.copyRecord(store, record);
+                    newRecord.save({
+                        callback: function(obj) {
+                            store.load();
+                        }    
+                    });
                 }
             }
         });
@@ -92,7 +96,7 @@ Ext.define('PHT.controller.PhtController', {
         }
         // make sure server gives a new one of these
         newRecord.set('id', '');
-        newRecord.save();
+        return newRecord;
     },
 
     updateRecord: function(button, selectedRecords, store) {
@@ -113,14 +117,21 @@ Ext.define('PHT.controller.PhtController', {
             record.set(values);
             // Is this a new session?
             if (record.get('id') == '') {
-                record.save();
-                //var store = this.getSessionsStore();
-                 store.load({
-                    scope   : this,
-                    callback: function(records, operation, success) {
-                        last = store.getById(store.max('id'));
-                        form.loadRecord(last);
-                    }
+                // save on the server side 
+                record.save({
+                    callback: function(obj) {
+                        // TBF: just used this object?
+                        // when the new record is made on the server side,
+                        // retrieve it.
+                        store.load({
+                            scope   : this,
+                            callback: function(records, operation, success) {
+                                // now reload the form
+                                last = store.getById(store.max('id'));
+                                form.loadRecord(last);
+                            }
+                        });
+                    },
                 });
             } else {
                 // set's the form to not dirty again.

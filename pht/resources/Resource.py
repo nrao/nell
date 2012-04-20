@@ -40,6 +40,10 @@ class Resource(object):
 
     def create(self, request, *args, **kws):
         self.adapter.initFromPost(json.loads(request.raw_post_data))
-        return HttpResponse(json.dumps(self.adapter.jsonDict())
+        items = [self.adapter.jsonDict()]
+        return HttpResponse(json.dumps({
+                                'success' : 'ok'
+                              , self.root : items  
+                            })
                           , content_type = 'application/json')
 

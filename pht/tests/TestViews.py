@@ -268,8 +268,9 @@ class TestViews(TestCase):
         results = self.eval_response(response.content)
 
         self.failUnlessEqual(response.status_code, 200)
-        self.assertEqual(results.get('pcode'), data.get('pcode'))
-        self.assertEqual(results.get('observing_types')
+        self.assertEqual(results.get('proposals')[0].get('pcode')
+                       , data.get('pcode'))
+        self.assertEqual(results.get('proposals')[0].get('observing_types')
                        , data.get('observing_types'))
 
     def test_proposal_post_empty(self):
@@ -289,7 +290,8 @@ class TestViews(TestCase):
         results = self.eval_response(response.content)
 
         self.failUnlessEqual(response.status_code, 200)
-        self.assertEqual(results.get('pcode'), data.get('pcode'))
+        self.assertEqual(results.get('proposals')[0].get('pcode')
+                       , data.get('pcode'))
 
     def test_proposal_put(self):
         data     = {'pi_id'           : self.proposal.pi.id
@@ -361,7 +363,8 @@ class TestViews(TestCase):
 
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(after - before, 1)
-        self.assertEqual(results.get('name'), self.s_data.get('name'))
+        self.assertEqual(results.get('sessions')[0].get('name')
+                       , self.s_data.get('name'))
         # look at the new one in the DB
         s = Session.objects.all().order_by('id')[after-1]
         self.assertTrue(s.allotment is not None)
@@ -464,7 +467,8 @@ class TestViews(TestCase):
         results = self.eval_response(response.content)
 
         self.failUnlessEqual(response.status_code, 200)
-        self.assertEqual(results.get('target_name'), self.src_data.get('target_name'))
+        self.assertEqual(results.get('sources')[0].get('target_name')
+                       , self.src_data.get('target_name'))
 
     def test_source_put(self):
         before   = len(Source.objects.all())
@@ -663,7 +667,7 @@ class TestViews(TestCase):
         #fields = ['session', 'session_id', 'duration', 'date', 'time']
         fields = ['session', 'duration', 'date', 'time']
         for field in fields:
-            self.assertEqual(results.get(field)
+            self.assertEqual(results.get('periods')[0].get(field)
                            , self.period_data.get(field))
 
     def test_period_put(self):

@@ -30,6 +30,7 @@ from pht.models       import Period
 class PeriodResource(Resource):
 
     def __init__(self):
+        self.root    = 'periods'
         self.adapter = PeriodHttpAdapter()
 
     def read(self, request, *args, **kws):
