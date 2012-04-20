@@ -84,58 +84,48 @@ Ext.define('PHT.view.plot.Window', {
 
         this.items = [{
             xtype: 'tabpanel',
-            layout: 'fit',
-            height: 800,
+            //layout: 'fit',
             items: [{
               title: 'All',
               bodyPadding: 10,
-              layout: 'fit',
-              autoScroll: true,
+              layout: {type: 'table',
+                       columns: 2,
+                       },
+              defaults: {
+                  bodyStyle: 'padding:20px', 
+              },
               items: [{
-                  layout: { type: 'hbox',
-                            align: 'stretch',
-                          },
+                  title: 'Total Pressure',
+                  xtype : 'panel',
+                  layout: 'fit',
                   flex: 1,
-                  defaults: {
-                      layout: 'fit',
-                      flex: 1,
-                  },
-                  items: [
-                      {
-                          title: 'Total Pressure',
-                          xtype : 'panel',
-                          items: [{xtype: 'lstpressuretotal'}],
-                      },
-                      {
-                          title: 'Poor',
-                          xtype : 'panel',
-                          items: [{xtype: 'lstpressurepoor'}],
-                      }],
-                }
-               ,{
-                  layout: { type: 'hbox',
-                            align: 'stretch',
-                          },
+                  items: [Ext.create('PHT.view.plot.LstPressureTotal', {width: 500, height: 300})]
+              },
+              {
+                  title: 'Poor',
+                  xtype : 'panel',
+                  layout: 'fit',
                   flex: 1,
-                  defaults: {
-                      layout: 'fit',
-                      flex: 1,
-                  },
-                  items: [
-                      {
-                          title: 'Good',
-                          xtype : 'panel',
-                          items: [{xtype: 'lstpressuregood'}],
-                      },{
-                          title: 'Excellent',
-                          xtype : 'panel',
-                          items: [{xtype: 'lstpressureexcellent'}],
-                      }],
-              }]
+                  items: [Ext.create('PHT.view.plot.LstPressurePoor', {width: 500, height: 300})]
+              },
+              {
+                  title: 'Good',
+                  xtype : 'panel',
+                  layout: 'fit',
+                  flex: 1,
+                  items: [Ext.create('PHT.view.plot.LstPressureGood', {width: 500, height: 300})]
+              },{
+                  title: 'Excellent',
+                  xtype : 'panel',
+                  layout: 'fit',
+                  flex: 1,
+                  items: [Ext.create('PHT.view.plot.LstPressureExcellent', {width: 500, height: 300})]
+              }],
                 },
             {
               title: 'Total',
               bodyPadding: 10,
+              height: 800,
               layout: 'fit',
               items: [{
                 layout: 'fit',
@@ -147,6 +137,7 @@ Ext.define('PHT.view.plot.Window', {
             },
             {
               title: 'Poor',
+              height: 800,
               bodyPadding: 10,
               layout: 'fit',
               items: [{
@@ -159,6 +150,7 @@ Ext.define('PHT.view.plot.Window', {
             },
             {
               title: 'Good',
+              height: 800,
               bodyPadding: 10,
               layout: 'fit',
               items: [{
@@ -171,6 +163,7 @@ Ext.define('PHT.view.plot.Window', {
             },
             {
               title: 'Excellent',
+              height: 800,
               bodyPadding: 10,
               layout: 'fit',
               items: [{
