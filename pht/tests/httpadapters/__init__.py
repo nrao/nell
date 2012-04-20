@@ -1,0 +1,1 @@
+from TestProposalHttpAdapter import TestProposalHttpAdapter

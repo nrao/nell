@@ -115,3 +115,10 @@ class SourceHttpAdapter(PhtHttpAdapter):
         self.source.save()
 
         self.notify(self.source.proposal)
+
+    def copy(self, new_pcode):
+        data = self.jsonDict()
+        data['pcode'] = new_pcode
+        adapter = SourceHttpAdapter()
+        adapter.initFromPost(data)
+        return adapter.source

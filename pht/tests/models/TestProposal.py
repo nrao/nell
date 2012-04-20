@@ -38,7 +38,7 @@ from datetime import datetime, timedelta
 
 class TestProposal(TestCase):
 
-    fixtures = ['scheduler.json']
+    fixtures = ['scheduler.json', 'proposal_GBT12A-002']
 
     def setUp(self):
         super(TestProposal, self).setUp()
@@ -101,10 +101,9 @@ class TestProposal(TestCase):
             s.delete()
 
     # TBF: stick this in a utility somewhere        
-    def createSession(self):
+    def createSession(self, p):
         "Create a new session for the tests"
 
-        p = Proposal.objects.all()[0]
         sem = Semester.objects.get(semester = '12A')
         data  = {
             'name' : 'nextSemesterSession'
@@ -134,10 +133,10 @@ class TestProposal(TestCase):
 
     def test_requestedTime(self):
 
-        p = Proposal.objects.all()[0]
+        p = Proposal.objects.get(pcode = 'GBT09A-001')
         self.assertEqual(0.0, p.requestedTime())
         # now get some requested time
-        self.createSession()
+        self.createSession(p)
         self.assertEqual(7.0, p.requestedTime())
         
     def test_timeAccounting(self):

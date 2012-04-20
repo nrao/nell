@@ -92,3 +92,11 @@ class AuthorHttpAdapter(PhtHttpAdapter):
         self.author.save()
 
         self.notify(self.author.proposal)
+
+    def copy(self, new_pcode):
+        data = self.jsonDict()
+        data['pcode'] = new_pcode
+        adapter = AuthorHttpAdapter()
+        adapter.initFromPost(data)
+
+        return adapter.author

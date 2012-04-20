@@ -23,7 +23,10 @@
 from datetime import datetime
 
 from pht.models import *
+from AuthorHttpAdapter   import AuthorHttpAdapter
 from PhtHttpAdapter      import PhtHttpAdapter
+from SessionHttpAdapter  import SessionHttpAdapter
+from SourceHttpAdapter   import SourceHttpAdapter
 
 class ProposalHttpAdapter(PhtHttpAdapter):
 
@@ -114,7 +117,7 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         self.proposal.pst_proposal_id = data.get('pst_proposal_id')
         self.proposal.proposal_type   = proposalType
         # TBF: authors is very complicated, need to fix this
-        #self.proposal.pi              = pi
+        self.proposal.pi              = pi
         self.proposal.status          = status
         self.proposal.semester        = semester
         self.proposal.pcode           = data.get('pcode')
@@ -160,3 +163,32 @@ class ProposalHttpAdapter(PhtHttpAdapter):
 
         self.proposal.save()    
         self.notify(self.proposal)
+
+    def copy(self, new_pcode):
+        data = self.jsonDict()
+        data['pcode'] = new_pcode
+        adapter = ProposalHttpAdapter()
+        adapter.initFromPost(data)
+        
+        # Authors
+        for a in self.proposal.author_set.all():
+            aAdapter = AuthorHttpAdapter(a)
+            aAdapter.copy(new_pcode)
+
+        # Proposal Sources
+        for s in self.proposal.source_set.all():
+            sAdapter = SourceHttpAdapter(s)
+            sAdapter.copy(new_pcode)
+
+        # Sessions
+        for s in self.proposal.session_set.all():
+            sAdapter = SessionHttpAdapter(s)
+            new_s = sAdapter.copy(new_pcode)
+            
+            # Session Sources
+            for source in s.sources.all():
+                new_source = adapter.proposal.source_set.get(pst_source_id = source.pst_source_id)
+                new_s.sources.add(new_source)
+            
+        return adapter.proposal
+        
