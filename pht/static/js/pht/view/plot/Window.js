@@ -61,7 +61,8 @@ Ext.define('PHT.view.plot.Window', {
                 {
                     text: 'Update',
                     action: 'update',
-                },{
+                }
+                ,{
                     xtype: 'tbseparator'
                 },
                 this.proposalCombo,
@@ -78,50 +79,160 @@ Ext.define('PHT.view.plot.Window', {
                     text: 'Print',
                     action: 'print',
                 },
-                
             ]
         }];
+
+        this.items = [{
+            xtype: 'tabpanel',
+            layout: 'fit',
+            height: 800,
+            items: [{
+              title: 'All',
+              bodyPadding: 10,
+              layout: 'fit',
+              autoScroll: true,
+              items: [{
+                  layout: { type: 'hbox',
+                            align: 'stretch',
+                          },
+                  flex: 1,
+                  defaults: {
+                      layout: 'fit',
+                      flex: 1,
+                  },
+                  items: [
+                      {
+                          title: 'Total Pressure',
+                          xtype : 'panel',
+                          items: [{xtype: 'lstpressuretotal'}],
+                      },
+                      {
+                          title: 'Poor',
+                          xtype : 'panel',
+                          items: [{xtype: 'lstpressurepoor'}],
+                      }],
+                }
+               ,{
+                  layout: { type: 'hbox',
+                            align: 'stretch',
+                          },
+                  flex: 1,
+                  defaults: {
+                      layout: 'fit',
+                      flex: 1,
+                  },
+                  items: [
+                      {
+                          title: 'Good',
+                          xtype : 'panel',
+                          items: [{xtype: 'lstpressuregood'}],
+                      },{
+                          title: 'Excellent',
+                          xtype : 'panel',
+                          items: [{xtype: 'lstpressureexcellent'}],
+                      }],
+              }]
+                },
+            {
+              title: 'Total',
+              bodyPadding: 10,
+              layout: 'fit',
+              items: [{
+                layout: 'fit',
+                flex: 1,
+                title: 'Total Pressure',
+                xtype : 'panel',
+                items: [{xtype: 'lstpressuretotal'}],
+                }]
+            },
+            {
+              title: 'Poor',
+              bodyPadding: 10,
+              layout: 'fit',
+              items: [{
+                layout: 'fit',
+                flex: 1,
+                title: 'Poor',
+                xtype : 'panel',
+                items: [{xtype: 'lstpressurepoor'}],
+                }]
+            },
+            {
+              title: 'Good',
+              bodyPadding: 10,
+              layout: 'fit',
+              items: [{
+                layout: 'fit',
+                flex: 1,
+                title: 'Good',
+                xtype : 'panel',
+                items: [{xtype: 'lstpressuregood'}],
+                }]
+            },
+            {
+              title: 'Excellent',
+              bodyPadding: 10,
+              layout: 'fit',
+              items: [{
+                layout: 'fit',
+                flex: 1,
+                title: 'Excellent',
+                xtype : 'panel',
+                items: [{xtype: 'lstpressureexcellent'}],
+                }]
+            },
+            ]
+        }];
+
         this.callParent(arguments);
     },        
 
-    // display the 4 plots in a 2 x 2 table
-    items: [{
-        layout: { type: 'hbox',
-                  align: 'stretch',
-                },
-        flex: 1,
-        defaults: {
-            layout: 'fit',
+    initLayout: function() {
+        // display the 4 plots in a 2 x 2 table
+        return [{
+            layout: { type: 'hbox',
+                      align: 'stretch',
+                    },
             flex: 1,
-        },
-        items: [{
-            title: 'Total Pressure',
-            xtype : 'panel',
-            items: [{xtype: 'lstpressuretotal'}],
-        },{
-            title: 'Poor',
-            xtype : 'panel',
-            items: [{xtype: 'lstpressurepoor'}],
-        }],
-      },{
-        layout: { type: 'hbox',
-                  align: 'stretch',
+            defaults: {
+                layout: 'fit',
+                flex: 1,
+            },
+            items: [
+                {
+                    title: 'Total Pressure',
+                    xtype : 'panel',
+                    items: [{xtype: 'lstpressuretotal'}],
                 },
-        flex: 1,
-        defaults: {
-            layout: 'fit',
+                {
+                    title: 'Poor',
+                    xtype : 'panel',
+                    items: [{xtype: 'lstpressurepoor'}],
+                },
+                ],
+          }
+          ,{
+            layout: { type: 'hbox',
+                      align: 'stretch',
+                    },
             flex: 1,
-        },
-        items: [{
-            title: 'Good',
-            xtype : 'panel',
-            items: [{xtype: 'lstpressuregood'}],
-        },{
-            title: 'Excellent',
-            xtype : 'panel',
-            items: [{xtype: 'lstpressureexcellent'}],
-        }],
-    }],
+            defaults: {
+                layout: 'fit',
+                flex: 1,
+            },
+            items: [
+                {
+                    title: 'Good',
+                    xtype : 'panel',
+                    items: [{xtype: 'lstpressuregood'}],
+                },{
+                    title: 'Excellent',
+                    xtype : 'panel',
+                    items: [{xtype: 'lstpressureexcellent'}],
+                }],
+        }];
+
+    },
 
     close: function() {
         this.hide();
