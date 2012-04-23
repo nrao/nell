@@ -77,6 +77,9 @@ Ext.define('PHT.controller.Proposals', {
             'proposalallocate button[action=save]': {
                 click: this.allocateProposal
             },            
+            'proposalallocate button[action=clear]': {
+                click: this.allocateClearProposal
+            },            
             'proposalimport button[action=import]': {
                 click: this.importProposal
             },            
@@ -119,7 +122,8 @@ Ext.define('PHT.controller.Proposals', {
         // what was entered in the form?
         var values = form.getValues();
         var grade = values['grade']
-        var scale = values['time_scale']
+        var scale = values['scale']
+        var time  = values['time']
         // we want only sessions for this proposal
         var pcode = win.pcode;
         var store = this.getStore('Sessions');
@@ -137,10 +141,17 @@ Ext.define('PHT.controller.Proposals', {
                 session.set('grade', grade);
             }
             // change session's allocated time.
-            if ((scale != null) && (scale != '')) {
-                var requested = parseFloat(session.get('requested_time'));
-                var repeats = parseFloat(session.get('repeats'));
-                var allocated = requested * repeats * (parseFloat(scale)/100.0);
+            if ((time != null) && (time != '')) {
+                if (scale == true) {
+                    var requested = parseFloat(session.get('requested_time'));
+                    var repeats = parseFloat(session.get('repeats'));
+                    var allocated = requested * repeats * (parseFloat(time)/100.0);
+                    console.log('scaling');
+                } else {
+                    var allocated = parseFloat(time);
+                    console.log('absolute');
+                }
+                console.log(allocated);
                 pAllocated += allocated
                 session.set('allocated_time', allocated);
             }
@@ -161,6 +172,17 @@ Ext.define('PHT.controller.Proposals', {
         }
         
         win.hide()
+    },
+
+    allocateClearProposal: function() {
+        var win = button.up('window')
+        var pcode = win.pcode;
+        var store = this.getStore('Sessions');
+        store.filter('pcode', pcode);
+        var cnt = store.getCount();
+        for (i=0; i < cnt; i++) {
+            var session = store.getAt(i);
+            // change session's grade
     },
 
     proposalSelected: function(grid, record) {

@@ -14,10 +14,20 @@ Ext.define('PHT.view.proposal.Allocate', {
                labelStyle: 'font-weight:bold',
             },
             items: [{
-                xtype: 'numberfield',
-                name: 'time_scale',
-                fieldLabel: 'Percentage Time',
-                minValue: 0.0,
+                xtype: 'fieldset',
+                title: 'Scaled or Absolute Time?',
+                items: [{
+                    xtype: 'checkboxfield',
+                    fieldLabel: 'Scale?',
+                    name: 'scale',
+                    uncheckedValue: 'false',
+                    inputValue: 'true',
+                  },{
+                    xtype: 'numberfield',
+                    name: 'time',
+                    fieldLabel: 'Value',
+                    minValue: 0.0,
+                  }]    
             },{
                 xtype: 'combo',
                 name: 'grade',
@@ -31,8 +41,13 @@ Ext.define('PHT.view.proposal.Allocate', {
             }],
         }],    
 
-       // must init for parent class
-        this.buttons = [];
+        // must init for parent class
+        this.clearBtn = Ext.create('Ext.button.Button', {
+            text: 'Clear',
+            action: 'clear',
+        });
+
+        this.buttons = [this.clearBtn];
 
         this.callParent(arguments);
     },
