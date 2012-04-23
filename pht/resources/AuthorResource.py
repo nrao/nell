@@ -30,6 +30,7 @@ from pht.models       import Author, Proposal
 class AuthorResource(Resource):
 
     def __init__(self):
+        self.root = 'authors'
         self.adapter = AuthorHttpAdapter()
 
     def read(self, request, *args, **kws):

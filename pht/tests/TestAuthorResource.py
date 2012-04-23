@@ -85,7 +85,7 @@ class TestAuthorResource(TestCase):
                                   , content_type='application/json')
         self.failUnlessEqual(response.status_code, 200)
         results = eval(response.content.replace('false', 'False').replace('null', 'None'))
-        self.assertEqual(results['email'], data['email'])
+        self.assertEqual(results['authors'][0]['email'], data['email'])
 
     def test_update(self):
         proposal = Proposal.objects.all()[0]

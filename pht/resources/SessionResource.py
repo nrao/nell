@@ -29,11 +29,18 @@ from pht.models       import Session
 
 class SessionResource(Resource):
 
+    def __init__(self):
+        self.root = 'sessions'
+
     def create(self, request, *args, **kws):
         adapter  = SessionHttpAdapter()
         adapter.initFromPost(json.loads(request.raw_post_data))
-        return HttpResponse(json.dumps(adapter.jsonDict())
+        sessions = [adapter.jsonDict(detailed = True)]
+        return HttpResponse(json.dumps({ 'success' : 'ok'
+                                       , self.root : sessions
+                            })
                           , content_type = 'application/json')
+        return response
 
     def read(self, request, *args, **kws):
         if len(args) == 1:

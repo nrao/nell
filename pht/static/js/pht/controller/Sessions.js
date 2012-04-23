@@ -228,30 +228,35 @@ Ext.define('PHT.controller.Sessions', {
             fn: function(id) {
                 if (id == 'yes') {
                     // copy the session
-                    this.copyRecord(store, session);
-                    store.load({
-                       scope   : this,
-                       callback: function(records, operation, success) {
-                          last = store.getById(store.max('id'));
-                          // now we can use these id's to 
-                          // copy over the session's sources
-                          var url = '/pht/sources/transfer';
-                          Ext.Ajax.request({
-                              url: url,
-                              params : { from : session.get('id'),
-                                         to   : last.get('id')},
-                              method: 'POST',
-                              scope: this,
-                              callback: function() {
-                                  store.sync();
-                              },
-                          });    
-                       }
+                    var newSession = this.copyRecord(store, session);
+                    // when the save is successfull on the server side,
+                    // then we can copy over sources
+                    newSession.save({
+                        callback: function(s) {
+                            store.load({
+                               scope   : this,
+                               callback: function(records, operation, success) {
+                                  last = store.getById(store.max('id'));
+                                  // now we can use these id's to 
+                                  // copy over the session's sources
+                                  var url = '/pht/sources/transfer';
+                                  Ext.Ajax.request({
+                                      url: url,
+                                      params : { from : session.get('id'),
+                                                 to   : last.get('id')},
+                                      method: 'POST',
+                                      scope: this,
+                                      callback: function() {
+                                          store.sync();
+                                      },
+                                  });    
+                               }
+                            });
+                        },
                     });
                 }
             }
         });
-        
     },
 
     updateSession: function(button) {
