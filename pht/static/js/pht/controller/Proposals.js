@@ -128,6 +128,8 @@ Ext.define('PHT.controller.Proposals', {
         // We do this on the client side instead of the server side
         // because it makes refreshing the sessions easier.
         var cnt = store.getCount();
+        var pAllocated = 0.0;
+        
         for (i=0; i < cnt; i++) {
             var session = store.getAt(i);
             // change session's grade
@@ -139,11 +141,25 @@ Ext.define('PHT.controller.Proposals', {
                 var requested = parseFloat(session.get('requested_time'));
                 var repeats = parseFloat(session.get('repeats'));
                 var allocated = requested * repeats * (parseFloat(scale)/100.0);
+                pAllocated += allocated
                 session.set('allocated_time', allocated);
             }
             session.save()
         }
         store.sync();
+
+        // if allocated hours changed, update the proposal
+        if ((scale != null) && (scale != '')) {
+            var pStore = this.getStore('Proposals');
+            pStore.filter('pcode', pcode);
+            var cnt = pStore.getCount();
+            for (i=0; i < cnt; i++) {
+                var proposal = pStore.getAt(i);
+                proposal.set('allocated_time', pAllocated);
+            }
+            pStore.sync();
+        }
+        
         win.hide()
     },
 
