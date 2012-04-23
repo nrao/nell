@@ -54,10 +54,14 @@ class AuthorResource(Resource):
                           , content_type = 'application/json')
 
     def delete(self, request, *args, **kws):
-        id,   = args
+        try:
+            id,   = args
+        except ValueError:
+            _, id,   = args
+            
         author = Author.objects.get(id = id)
-        author.delete()
         adapter = AuthorHttpAdapter(author)
         adapter.notify(author.proposal)
+        author.delete()
         return HttpResponse(json.dumps({"success" : "ok"})
                           , content_type = 'application/json')

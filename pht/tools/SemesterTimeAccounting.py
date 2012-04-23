@@ -400,7 +400,21 @@ class SemesterTimeAccounting(object):
 
     def getMaintenancePeriods(self):
         "What maintenance periods have been scheduled for this semester?"
-        return self.getProjectPeriods('Maintenance')
+        allPs = self.getProjectPeriods('Maintenance')
+        # this list of periods includes all periods from elective
+        # sessions; in this case, we only want one period per elective
+        ps = []
+        electives = []
+        for p in allPs:
+            if p.session.session_type.type == 'elective':
+                if p.elective is not None and p.elective not in electives:
+                    # use this period
+                    ps.append(p)
+                    # don't use periods from other electives
+                    electives.append(p.elective)
+            else:
+                ps.append(p)
+        return ps
 
     def getShutdownPeriods(self):
         "What shutdown periods have been scheduled for this semester?"
@@ -546,8 +560,10 @@ class SemesterTimeAccounting(object):
 
         all = SemesterTimes()
         for s in ss:
-            t = self.getSessionHours(s)
-            all += t
+            if s.allotment is not None and \
+              s.allotment.allocated_time is not None:
+                t = self.getSessionHours(s)
+                all += t
         return all
 
     def getTimeType(self, session):
@@ -580,6 +596,12 @@ class SemesterTimeAccounting(object):
             
             
     def getGCHoursFromSession(self, session):
+        if session.allotment is None \
+          or session.allotment.allocated_time is None \
+          or session.target is None \
+          or session.target.min_lst is None \
+          or session.target.max_lst is None:
+            return 0.0, 0.0
         # use max/min LST as compared to the Galctic Center
         s = (rad2hr(session.target.min_lst)
            , rad2hr(session.target.max_lst))

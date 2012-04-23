@@ -114,6 +114,8 @@ class TestAuthorResource(TestCase):
 
     def test_delete(self):
         proposal = Proposal.objects.all()[0]
-        response = self.client.delete('/pht/authors/%s' % proposal.pi.id)
+        #response = self.client.delete('/pht/authors/%s' % proposal.pi.id)
+        # url used by the UI
+        response = self.client.delete('/pht/proposals/%s/authors/%s' % (proposal.pcode, proposal.pi.id))
         self.failUnlessEqual(response.status_code, 200)
         self.assertTrue(len(Author.objects.filter(id = proposal.pi.id)) == 0)
