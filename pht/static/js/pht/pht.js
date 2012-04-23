@@ -438,7 +438,7 @@ function hasAllValues(values, validValues) {
 
 // Receiver Validation
 // TBF: get this from server? or at least put it in a 'data' dir
-var allRcvrs = ['NS','RRI','342','450','600','800','1070','L','S','C','X','Ku','K','Ka','Q','MBA','Z','Hol','KFPA','W']
+var allRcvrs = ['NS','RRI','342','450','600','800','BAO','1070','L','S','C','X','Ku','K','Ka','Q','MBA','Z','Hol','KFPA','W']
 // Convert our list of strings into both a list and a single string 
 var validRcvrs = makeObjFromList(allRcvrs)
 var rcvrsStr = allRcvrs.join(',');

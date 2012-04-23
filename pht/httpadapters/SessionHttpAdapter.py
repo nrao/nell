@@ -617,6 +617,14 @@ class SessionHttpAdapter(PhtHttpAdapter):
                                                    , float_value = hi
                                                    )
         
+    def copy(self, new_pcode):
+        data = self.jsonDict()
+        data['pcode'] = new_pcode
+        data['name']  = self.session.name.replace(self.session.proposal.pcode, new_pcode)
+        adapter = SessionHttpAdapter()
+        adapter.initFromPost(data)
+        return adapter.session
+    
 if __name__ == '__main__':
     #old = [SessionHttpAdapter(s).jsonDict() for s in Session.objects.all()] 
     #old = [SessionHttpAdapter(Session.objects.get(id = 5836)).jsonDict() ]
