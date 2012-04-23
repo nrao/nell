@@ -52,8 +52,8 @@ class PlotLstPressures(object):
 
     def initPlots(self):
 
-        self.figure = Figure(figsize=(6,6))
-        self.axes = self.figure.add_axes([0.1, 0.1, 0.8, 0.8])
+        self.figure = Figure(figsize=(10,6))
+        self.axes = self.figure.add_axes([0.1, 0.1, 0.6, 0.8])
         self.canvas = None
 
     def plot(self, type):
@@ -77,30 +77,41 @@ class PlotLstPressures(object):
     
         stacks = [
             {'data': self.lst.carryoverTotalPs
-           , 'color': 'orange'}
+           , 'color': 'orange'
+           , 'label': 'Carryover'}
            # grade A
           , {'data': self.lst.gradePs['A'].excellent
-           , 'color': self.getColor('A', 'excellent')}
+           , 'color': self.getColor('A', 'excellent')
+           , 'label': 'Excellent A'}
           , {'data': self.lst.gradePs['A'].good
-           , 'color': self.getColor('A', 'good')}
+           , 'color': self.getColor('A', 'good')
+           , 'label': 'Good A'}
           , {'data': self.lst.gradePs['A'].poor
-           , 'color': self.getColor('A', 'poor')}
+           , 'color': self.getColor('A', 'poor')
+           , 'label': 'Poor A'}
            # grade B
           , {'data': self.lst.gradePs['B'].excellent
-           , 'color': self.getColor('B', 'excellent')}
+           , 'color': self.getColor('B', 'excellent')
+           , 'label': 'Excellent B'}
           , {'data': self.lst.gradePs['B'].good
-           , 'color': self.getColor('B', 'good')}
+           , 'color': self.getColor('B', 'good')
+           , 'label': 'Good B'}
           , {'data': self.lst.gradePs['B'].poor
-           , 'color': self.getColor('B', 'poor')}
+           , 'color': self.getColor('B', 'poor')
+           , 'label': 'Poor B'}
            # grade C
           , {'data': self.lst.gradePs['C'].excellent
-           , 'color': self.getColor('C', 'excellent')}
+           , 'color': self.getColor('C', 'excellent')
+           , 'label': 'Excellent C'}
           , {'data': self.lst.gradePs['C'].good
-           , 'color': self.getColor('C', 'good')}
+           , 'color': self.getColor('C', 'good')
+           , 'label': 'Good C'}
           , {'data': self.lst.gradePs['C'].poor
-           , 'color': self.getColor('C', 'poor')}
+           , 'color': self.getColor('C', 'poor')
+           , 'label': 'Poor C'}
           , {'data': self.lst.requestedTotalPs
-           , 'color': 'yellow'}
+           , 'color': 'yellow'
+           , 'label': 'Requested'}
                 ]
        
         self.plotPressureData(stacks, "Total", "Total Pressure")
@@ -110,15 +121,20 @@ class PlotLstPressures(object):
         # TBF: There's a patter here we could use to shrink this
         stacks = [
             {'data': self.lst.carryoverPs.poor
-           , 'color': 'orange'}
+           , 'color': 'orange'
+           , 'label': 'Carryover Poor'}
           , {'data': self.lst.gradePs['A'].poor
-           , 'color': self.getColor('A', 'poor')}
+           , 'color': self.getColor('A', 'poor')
+           , 'label': 'Poor A'}
           , {'data': self.lst.gradePs['B'].poor
-           , 'color': self.getColor('B', 'poor')}
+           , 'color': self.getColor('B', 'poor')
+           , 'label': 'Poor B'}
           , {'data': self.lst.gradePs['C'].poor
-           , 'color': self.getColor('C', 'poor')}
+           , 'color': self.getColor('C', 'poor')
+           , 'label': 'Poor C'}
           , {'data': self.lst.requestedPs.poor
-           , 'color': 'yellow'}
+           , 'color': 'yellow'
+           , 'label': 'Requested Poor'}
                 ]
        
         self.plotPressureData(stacks, "Poor", "Poor")
@@ -127,15 +143,20 @@ class PlotLstPressures(object):
 
         stacks = [
             {'data': self.lst.carryoverPs.good
-           , 'color': 'orange'}
+           , 'color': 'orange'
+           , 'label': 'Carryover Good'}
           , {'data': self.lst.gradePs['A'].good
-           , 'color': self.getColor('A', 'good')}
+           , 'color': self.getColor('A', 'good')
+           , 'label': 'Good A'}
           , {'data': self.lst.gradePs['B'].good
-           , 'color': self.getColor('B', 'good')}
+           , 'color': self.getColor('B', 'good')
+           , 'label': 'Good B'}
           , {'data': self.lst.gradePs['C'].good
-           , 'color': self.getColor('C', 'good')}
+           , 'color': self.getColor('C', 'good')
+           , 'label': 'Good C'}
           , {'data': self.lst.requestedPs.good
-           , 'color': 'yellow'}
+           , 'color': 'yellow'
+           , 'label': 'Requested Good'}
                 ]
        
         self.plotPressureData(stacks, "Good", "Good")
@@ -144,15 +165,20 @@ class PlotLstPressures(object):
 
         stacks = [
             {'data': self.lst.carryoverPs.excellent
-           , 'color': 'orange'}
+           , 'color': 'orange'
+           , 'label': 'Carryover Excellent'}
           , {'data': self.lst.gradePs['A'].excellent
-           , 'color': self.getColor('A', 'excellent')}
+           , 'color': self.getColor('A', 'excellent')
+           , 'label': 'Excellent A'}
           , {'data': self.lst.gradePs['B'].excellent
-           , 'color': self.getColor('B', 'excellent')}
+           , 'color': self.getColor('B', 'excellent')
+           , 'label': 'Excellent B'}
           , {'data': self.lst.gradePs['C'].excellent
-           , 'color': self.getColor('C', 'excellent')}
+           , 'color': self.getColor('C', 'excellent')
+           , 'label': 'Excellent C'}
           , {'data': self.lst.requestedPs.excellent
-           , 'color': 'yellow'}
+           , 'color': 'yellow'
+           , 'label': 'Requested Excellent'}
                 ]
        
         self.plotPressureData(stacks, 'Excellent', "Excellent")
@@ -164,8 +190,10 @@ class PlotLstPressures(object):
         total = numpy.zeros(self.lst.hrs)
         for stack in stacks:
             data = stack['data']
-            self.axes.bar(ind, data, color=stack['color'], bottom=total)
+            self.axes.bar(ind, data, color=stack['color'], label=stack['label'], bottom=total)
             total += data
+
+        lgd = self.axes.legend(loc=(1.05, 0.4))
 
         # put the availablitly line across it all
         if availableType == 'Total':
