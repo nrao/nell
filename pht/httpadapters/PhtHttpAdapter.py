@@ -19,13 +19,18 @@
 
 from pht.utilities  import *
 import settings, urllib, urllib2
+from django.db import transaction
 
 class PhtHttpAdapter(object):
 
+    @transaction.commit_manually
     def notify(self, proposal):
+        transaction.commit()
+
         try:
-            fh = urllib2.urlopen(settings.PHT_UPDATES_URL
-                               , data = urllib.urlencode({'proposalIds' : proposal.id}))
+            fh = urllib2.urlopen(settings.PHT_UPDATES_URL + '?proposalIds=' + str(proposal.id))
+            #fh = urllib2.urlopen(settings.PHT_UPDATES_URL
+            #                   , data = urllib.urlencode({'proposalIds' : proposal.id}))
         except urllib2.URLError:
             pass
 

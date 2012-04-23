@@ -242,6 +242,9 @@ Ext.define('PHT.controller.Sessions', {
                                          to   : last.get('id')},
                               method: 'POST',
                               scope: this,
+                              callback: function() {
+                                  store.sync();
+                              },
                           });    
                        }
                     });

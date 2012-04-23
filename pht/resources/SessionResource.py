@@ -68,5 +68,7 @@ class SessionResource(Resource):
         id,   = args
         session = Session.objects.get(id = id)
         session.delete()
+        adapter = SessionHttpAdapter(session)
+        adapter.notify(session.proposal)
         return HttpResponse(json.dumps({"success" : "ok"})
                           , content_type = 'application/json')
