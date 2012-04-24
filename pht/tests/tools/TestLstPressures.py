@@ -184,20 +184,24 @@ class TestLstPressures(TestCase):
 
         # add a new session and make sure it shows up
         s = self.createSession()
+        # covers this LST range:
+        # [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  1.  1.  1.  1.  1.  1.  1.  1.  1.  1.  0.  0.  0.  0.]
+        # compared to the original:
+        # [ 1.  1.  1.  1.  1.  1.  1.  1.  1.  1.  1.  1.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
 
         # calc pressures
         ps = lst.getPressures()
-        s2total = 0.318181818182    
+        s2total = 0.35 #0.318181818182    
 
         # the first 10 hours are just the first session
-        for hr in range(9):
+        for hr in range(10):
             self.assertAlmostEqual(s1total, ps[hr]['Total'], 3)
             self.assertAlmostEqual(s1total * 0.50, ps[hr]['Poor_A'], 3)
             self.assertAlmostEqual(s1total * 0.25, ps[hr]['Good_A'], 3)
             self.assertAlmostEqual(s1total * 0.25, ps[hr]['Excellent_A'], 3)
         
         # the next two are combined 
-        for hr in range(9, 12):
+        for hr in range(10, 12):
             self.assertAlmostEqual(s1total + s2total, ps[hr]['Total'], 3)
             self.assertAlmostEqual((s1total * 0.50) + s2total, ps[hr]['Poor_A'], 3)
             self.assertAlmostEqual(s1total * 0.25, ps[hr]['Good_A'], 3)
@@ -216,6 +220,86 @@ class TestLstPressures(TestCase):
             self.assertEqual(0.0, ps[hr]['Total'])
             for t in types:
                 self.assertEqual(0.0, ps[hr][t])
+
+    def test_getPressures3(self):
+        """it's a trilogy.
+        Here are the examples I'll be using in my unit tests:
+        # MIN   MAX    BINS
+        
+        1 00:00 01:00  0
+        2 00:00 10:00  0,1,2,3,4,5,6,7,8,9 ([0,9])
+        3 00:30 01:30  0
+        4 10:00 10:59  10
+        5 00:30 10:59  [0-9]
+        6 22:30 08:59  22,23,[0-7]
+        """
+
+        lst = LstPressures()
+
+        # 1
+        self.session.target.min_lst = hr2rad(0.0)
+        self.session.target.max_lst = hr2rad(1.0)
+        self.session.target.save()
+        ps = lst.getPressures()
+        exp = [1.0]
+        off = [0.0]*23
+        exp.extend(off)
+        self.assertEqual(exp, self.nonZeroResults(ps))
+
+        # 2
+        self.session.target.min_lst = hr2rad(0.0)
+        self.session.target.max_lst = hr2rad(10.0)
+        self.session.target.save()
+        ps = lst.getPressures()
+        exp = [1.0]*10
+        off = [0.0]*14
+        exp.extend(off)
+        self.assertEqual(exp, self.nonZeroResults(ps))
+       
+        # 3
+        self.session.target.min_lst = hr2rad(0.5)
+        self.session.target.max_lst = hr2rad(1.5)
+        self.session.target.save()
+        ps = lst.getPressures()
+        exp = [1.0]
+        exp.extend([0.0]*23)
+        self.assertEqual(exp, self.nonZeroResults(ps))
+
+        # 4
+        self.session.target.min_lst = hr2rad(10.0)
+        self.session.target.max_lst = hr2rad(10.9)
+        self.session.target.save()
+        ps = lst.getPressures()
+        exp = [0.0]*10
+        exp.append(1.0)
+        exp.extend([0.0]*13)
+        self.assertEqual(exp, self.nonZeroResults(ps))
+
+        # 5
+        self.session.target.min_lst = hr2rad(0.5)
+        self.session.target.max_lst = hr2rad(10.9)
+        self.session.target.save()
+        ps = lst.getPressures()
+        exp = [1.0]*10
+        exp.extend([0.0]*14)
+        self.assertEqual(exp, self.nonZeroResults(ps))
+
+        # 6
+        self.session.target.min_lst = hr2rad(22.5)
+        self.session.target.max_lst = hr2rad(8.9)
+        self.session.target.save()
+        ps = lst.getPressures()
+        exp = [1.0]*8
+        exp.extend([0.0]*14)
+        exp.extend([1.0]*2)
+        self.assertEqual(exp, self.nonZeroResults(ps))
+            
+    def nonZeroResults(self, pressureDict, key = 'Total'):
+        xs = [0.0]*24
+        for hr in range(24):
+            if pressureDict[hr][key] > 0.0:
+                xs[hr] = 1.0
+        return xs
 
     def test_getPressuresForSession(self):
 
@@ -264,6 +348,73 @@ class TestLstPressures(TestCase):
         exp = [1.0]
         exp.extend([0.0]*22)
         exp.append(1.0)
+        self.assertEqual(exp, ws.tolist())
+
+    def test_getLstWeightsForSession_2(self):
+        """the sequal
+        Here are the examples I'll be using in my unit tests:
+        # MIN   MAX    BINS
+        
+        1 00:00 01:00  0
+        2 00:00 10:00  0,1,2,3,4,5,6,7,8,9 ([0,9])
+        3 00:30 01:30  0
+        4 10:00 10:59  10
+        5 00:30 10:59  [0-9]
+        6 22:30 08:59  22,23,[0-7]
+        """
+
+        lst = LstPressures()
+
+        # 1
+        self.session.target.min_lst = hr2rad(0.0)
+        self.session.target.max_lst = hr2rad(1.0)
+        ws = lst.getLstWeightsForSession(self.session)
+        exp = [1.0]
+        off = [0.0]*23
+        exp.extend(off)
+        self.assertEqual(exp, ws.tolist())
+
+        # 2
+        self.session.target.min_lst = hr2rad(0.0)
+        self.session.target.max_lst = hr2rad(10.0)
+        ws = lst.getLstWeightsForSession(self.session)
+        exp = [1.0]*10
+        off = [0.0]*14
+        exp.extend(off)
+        self.assertEqual(exp, ws.tolist())
+       
+        # 3
+        self.session.target.min_lst = hr2rad(0.5)
+        self.session.target.max_lst = hr2rad(1.5)
+        ws = lst.getLstWeightsForSession(self.session)
+        exp = [1.0]
+        exp.extend([0.0]*23)
+        self.assertEqual(exp, ws.tolist())
+
+        # 4
+        self.session.target.min_lst = hr2rad(10.0)
+        self.session.target.max_lst = hr2rad(10.9)
+        ws = lst.getLstWeightsForSession(self.session)
+        exp = [0.0]*10
+        exp.append(1.0)
+        exp.extend([0.0]*13)
+        self.assertEqual(exp, ws.tolist())
+
+        # 5
+        self.session.target.min_lst = hr2rad(0.5)
+        self.session.target.max_lst = hr2rad(10.9)
+        ws = lst.getLstWeightsForSession(self.session)
+        exp = [1.0]*10
+        exp.extend([0.0]*14)
+        self.assertEqual(exp, ws.tolist())
+
+        # 6
+        self.session.target.min_lst = hr2rad(22.5)
+        self.session.target.max_lst = hr2rad(8.9)
+        ws = lst.getLstWeightsForSession(self.session)
+        exp = [1.0]*8
+        exp.extend([0.0]*14)
+        exp.extend([1.0]*2)
         self.assertEqual(exp, ws.tolist())
 
     def test_modifyWeightsForLstExclusion(self):
