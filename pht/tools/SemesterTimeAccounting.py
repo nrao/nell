@@ -35,6 +35,7 @@ from scheduler.models import Project
 from scheduler.models import Observing_Type 
 from scheduler.models import Period as DSSPeriod
 from scheduler.models import Semester as DSSSemester
+from scheduler.models import Sesshun as DSSSession
 
 from utilities import AnalogSet
 from utilities import TimeAgent
@@ -183,6 +184,9 @@ class SemesterTimeAccounting(object):
 
         # Galactic Center goes from 15 to 20 hours [,)
         self.gcHrs = (15, 21) 
+
+        # for making sure we don't count a given session > once
+        self.preAssignedSessions = []
 
         # initialize all the buckets we'll be calculating
         self.totalAvailableHrs = SemesterTimes() 
@@ -374,7 +378,7 @@ class SemesterTimeAccounting(object):
         total = 0
         totals = {'A' : 0.0, 'B' : 0.0, 'C' : 0.0, 'None' : 0.0}
         for s in self.carryOverSessions:
-            print s, s.session_type, s.grade, s.next_semester.time 
+            print s, s.session_type, s.grade, s.next_semester.time, self.getTimeType(s) 
             if s.grade is not None:
                 totals[s.grade.grade] += s.next_semester.time
             else:
@@ -421,6 +425,9 @@ class SemesterTimeAccounting(object):
         return self.getProjectPeriods('Shutdown')
 
     def getProjectPeriods(self, pcode):    
+        ss = DSSSession.objects.filter(project__pcode = pcode)
+        self.preAssignedSessions.extend(ss)
+        
         ps = DSSPeriod.objects.filter( \
             session__project__pcode = pcode
           , start__gt = self.semester.start()
@@ -434,11 +441,12 @@ class SemesterTimeAccounting(object):
         testing = Observing_Type.objects.get(type='testing')
         commissioning = Observing_Type.objects.get(type='commissioning')
         calibration = Observing_Type.objects.get(type = 'calibration')
-        return Session.objects.filter(Q(semester__semester = sem) 
+        ss = Session.objects.filter(Q(semester__semester = sem) 
                                     , Q(observing_type = testing) \
                                     | Q(observing_type = commissioning)\
                                     | Q(observing_type = calibration))
-
+        self.preAssignedSessions.extend(ss)
+        return ss
 
     def getHours(self, periods):
 
@@ -616,9 +624,12 @@ class SemesterTimeAccounting(object):
         In other words, they contribute to carry over.
         """
 
+        preAssigned = [s.name for s in self.preAssignedSessions]
+
         # TBF: how to do the not None query?
         ss = Session.objects.filter(next_semester__complete = False).order_by('name')
-        return [s for s in ss if s.dss_session is not None]
+        ss2 = [s for s in ss if s.dss_session is not None and s.name not in preAssigned]
+        return ss2
             
     def getCarryOver(self, sessions):
         """
