@@ -39,7 +39,9 @@ class ProposalHttpAdapter(PhtHttpAdapter):
     def jsonDict(self):
         authors        = '; '.join([a.getLastFirstName() for a in self.proposal.author_set.all()])
         sci_categories = [sc.category for sc in self.proposal.sci_categories.all()]
+        sci_cat_codes  = [sc.code for sc in self.proposal.sci_categories.all()]
         obs_types      = [ot.type for ot in self.proposal.observing_types.all()]
+        obs_type_codes = [ot.code for ot in self.proposal.observing_types.all()]
         semester = self.proposal.semester.semester if self.proposal.semester is not None else None
         pi_id   = self.proposal.pi.id if self.proposal.pi is not None else None
         pi_name = self.proposal.pi.getLastFirstName() if self.proposal.pi is not None else None
@@ -49,12 +51,14 @@ class ProposalHttpAdapter(PhtHttpAdapter):
               , 'pst_proposal_id'  : self.proposal.pst_proposal_id
               , 'proposal_type'    : self.proposal.proposal_type.type
               , 'observing_types'  : obs_types
+              , 'obs_type_codes'   : obs_type_codes
               , 'status'           : self.proposal.status.name
               , 'semester'         : semester
               , 'pi_id'            : pi_id 
               , 'pi_name'          : pi_name
               , 'authors'          : authors
               , 'sci_categories'   : sci_categories
+              , 'sci_cat_codes'    : sci_cat_codes
               , 'pcode'            : self.proposal.pcode
               , 'create_date'      : self.formatDate(self.proposal.create_date)
               , 'modify_date'      : self.formatDate(self.proposal.modify_date)

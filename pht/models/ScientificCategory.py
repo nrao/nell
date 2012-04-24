@@ -25,6 +25,7 @@ from django.db                 import models
 class ScientificCategory(models.Model):
 
     category = models.CharField(max_length = 64)
+    code     = models.CharField(max_length = 3)
 
     def __str__(self):
         return self.category
@@ -36,6 +37,7 @@ class ScientificCategory(models.Model):
     def jsonDict(self):
         return {'id'   : self.id
               , 'category' : self.category
+              , 'code'     : self.code
                }
 
     @staticmethod
