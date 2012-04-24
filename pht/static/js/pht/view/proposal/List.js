@@ -108,6 +108,7 @@ Ext.define('PHT.view.proposal.List' ,{
             {header: 'SRP Score', dataIndex: 'normalizedSRPScore', flex: 1},
             {header: 'Requested Hrs', dataIndex: 'requested_time', flex: 1},
             {header: 'Allocated Hrs', dataIndex: 'allocated_time', flex: 1},
+            {header: 'Grades', dataIndex: 'grades', flex: 1},
             {header: 'Joint Proposal', dataIndex: 'joint_proposal', flex: 1}
         ];
 

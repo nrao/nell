@@ -16,6 +16,7 @@ Ext.define('PHT.model.Proposal', {
            , 'submit_date'
            , 'requested_time'
            , 'allocated_time'
+           , 'grades'
            , 'title'
            , 'abstract'
            , 'spectral_line'

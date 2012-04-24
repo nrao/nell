@@ -59,6 +59,13 @@ Ext.define('PHT.view.proposal.Edit', {
                             fieldLabel: 'Allocated (Hrs)',
                             readOnly: true,
                             fieldCls: "x-pht-formfield-readonly",
+                        },
+                        {
+                            xtype: 'textfield',
+                            name: 'grades',
+                            fieldLabel: 'Grades',
+                            readOnly: true,
+                            fieldCls: "x-pht-formfield-readonly",
                         }],
                     },
                     {

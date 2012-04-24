@@ -158,17 +158,20 @@ Ext.define('PHT.controller.Proposals', {
         }
         store.sync();
 
-        // if allocated hours changed, update the proposal
-        if ((time != null) && (time != '')) {
-            var pStore = this.getStore('Proposals');
-            pStore.filter('pcode', pcode);
-            var cnt = pStore.getCount();
-            for (i=0; i < cnt; i++) {
-                var proposal = pStore.getAt(i);
+        // update the proposal
+        var pStore = this.getStore('Proposals');
+        pStore.filter('pcode', pcode);
+        var cnt = pStore.getCount();
+        for (i=0; i < cnt; i++) {
+            var proposal = pStore.getAt(i);
+            if ((time != null) && (time != '')) {
                 proposal.set('allocated_time', pAllocated);
             }
-            pStore.sync();
+            if ((grade != null) && (grade != '')) {
+                proposal.set('grades', grade);
+            }
         }
+        pStore.sync();
         
         win.hide();
     },
@@ -194,6 +197,7 @@ Ext.define('PHT.controller.Proposals', {
         for (i=0; i < cnt; i++) {
             var proposal = pStore.getAt(i);
             proposal.set('allocated_time', 0.0);
+            proposal.set('grades', '');
         }
         pStore.sync();
         win.hide();
