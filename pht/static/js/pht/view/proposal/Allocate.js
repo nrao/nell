@@ -15,10 +15,10 @@ Ext.define('PHT.view.proposal.Allocate', {
             },
             items: [{
                 xtype: 'fieldset',
-                title: 'Scaled or Absolute Time?',
+                title: 'Scaled or Absolute Time',
                 items: [{
                     xtype: 'checkboxfield',
-                    fieldLabel: 'Scale?',
+                    fieldLabel: 'Scaled?',
                     name: 'scale',
                     uncheckedValue: 'false',
                     inputValue: 'true',

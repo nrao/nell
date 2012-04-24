@@ -142,16 +142,15 @@ Ext.define('PHT.controller.Proposals', {
             }
             // change session's allocated time.
             if ((time != null) && (time != '')) {
-                if (scale == true) {
+                // is the time value an absolute value,
+                // or a scaling factor?
+                if (scale == 'true') {
                     var requested = parseFloat(session.get('requested_time'));
                     var repeats = parseFloat(session.get('repeats'));
                     var allocated = requested * repeats * (parseFloat(time)/100.0);
-                    console.log('scaling');
                 } else {
                     var allocated = parseFloat(time);
-                    console.log('absolute');
                 }
-                console.log(allocated);
                 pAllocated += allocated
                 session.set('allocated_time', allocated);
             }
@@ -160,7 +159,7 @@ Ext.define('PHT.controller.Proposals', {
         store.sync();
 
         // if allocated hours changed, update the proposal
-        if ((scale != null) && (scale != '')) {
+        if ((time != null) && (time != '')) {
             var pStore = this.getStore('Proposals');
             pStore.filter('pcode', pcode);
             var cnt = pStore.getCount();
@@ -171,18 +170,33 @@ Ext.define('PHT.controller.Proposals', {
             pStore.sync();
         }
         
-        win.hide()
+        win.hide();
     },
 
-    allocateClearProposal: function() {
+    // clear all sessions' grades to None and times to zero
+    allocateClearProposal: function(button) {
         var win = button.up('window')
         var pcode = win.pcode;
+        // sessions
         var store = this.getStore('Sessions');
         store.filter('pcode', pcode);
         var cnt = store.getCount();
         for (i=0; i < cnt; i++) {
             var session = store.getAt(i);
-            // change session's grade
+            session.set('allocated_time', 0.0);
+            session.set('grade', null);
+        }    
+        store.sync()
+        // now the proposal
+        var pStore = this.getStore('Proposals');
+        pStore.filter('pcode', pcode);
+        var cnt = pStore.getCount();
+        for (i=0; i < cnt; i++) {
+            var proposal = pStore.getAt(i);
+            proposal.set('allocated_time', 0.0);
+        }
+        pStore.sync();
+        win.hide();
     },
 
     proposalSelected: function(grid, record) {
