@@ -1,7 +1,8 @@
 Ext.define('PHT.model.ObservingType', {
     extend: 'Ext.data.Model',
     fields: ['id',
-             'type'
+             'type',
+             'code',
              ],
     proxy: {
         type: 'ajax',

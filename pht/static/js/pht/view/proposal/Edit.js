@@ -189,12 +189,12 @@ Ext.define('PHT.view.proposal.Edit', {
                     {
                         xtype: 'combo',
                         multiSelect: true,
-                        name: 'observing_types',
+                        name: 'obs_type_codes',
                         fieldLabel: 'Observing Types',
                         store: 'ObservingTypes', // MVC baby!
                         queryMode: 'local',
                         displayField: 'type',
-                        valueField: 'type',
+                        valueField: 'code',
                         forceSelection: true,
                         allowBlank: false,
                         width: 600,
@@ -202,12 +202,12 @@ Ext.define('PHT.view.proposal.Edit', {
                     {
                         xtype: 'combo',
                         multiSelect: true,
-                        name: 'sci_categories',
+                        name: 'sci_cat_codes',
                         fieldLabel: 'Science Categories',
                         store: 'ScienceCategories', // MVC baby!
                         queryMode: 'local',
                         displayField: 'category',
-                        valueField: 'category',
+                        valueField: 'code',
                         forceSelection: true,
                         width: 600,
                     },    
@@ -225,7 +225,7 @@ Ext.define('PHT.view.proposal.Edit', {
                         name : 'abstract',
                         fieldLabel: 'Abstract',
                         width: 600,
-                        height: 300,
+                        height: 50,
                         allowBlank: false,
                     }]
                 }],
