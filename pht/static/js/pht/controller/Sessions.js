@@ -260,14 +260,22 @@ Ext.define('PHT.controller.Sessions', {
         });
     },
 
+    getOriginalValues: function(record, originalValues, fields) {
+        for (var i=0; i < fields.length; i++ ) {
+            var fieldName = fields[i];
+            var originalValue = record.get(fieldName);
+            originalValues[fieldName] = originalValue;
+        }
+        return originalValues;    
+
+    },
+
     updateSession: function(button) {
 
         // first, store some of the original values so 
         // we can check for changes later
         var win      = button.up('window'),
-            form     = win.down('form'),
-            session   = form.getRecord(),
-            values   = form.getValues();
+            form     = win.down('form')
         var f = form.getForm();
 
         // here's the fields we care about
@@ -275,14 +283,30 @@ Ext.define('PHT.controller.Sessions', {
                       'repeats',
                       'allocated_time',
                       'grade']
-        fields  = f.getFields();
-        var originalValues = {};
-        for (var i=0; i < sessFields.length; i++ ) {
-            var fieldName = sessFields[i];
-            var fieldOfNames = fields.filter('name', fieldName);
-            var fieldOfName = fieldOfNames.getAt(0);
-            originalValues[fieldName] = fieldOfName.originalValue;
-        }    
+        if (this.selectedSessions.length <= 1) {
+            record   = form.getRecord()
+            //values   = form.getValues();
+            //fields  = f.getFields();
+            var originalValues = {};
+            originalValues = this.getOriginalValues(record, originalValues, sessFields);
+        } else {
+            var originalValues = {};
+            for (i=0; i < this.selectedSessions.length; i++) {
+                record = this.selectedSessions[i];
+                var sId = record.get('id');
+                var values = {}
+                values = this.getOriginalValues(record, values, sessFields);
+                originalValues[sId] = values;
+                /*
+                for (var j=0; j < sessFields.length; j++ ) {
+                    var fieldName = sessFields[j];
+                    var originalValue = record.get(fieldName);
+                    originalValues[sId][fieldName] = originalValue;
+                } 
+                */
+            }
+            console.log(originalValues);
+        }
 
         // here we actually change this session
         this.updateRecord(button
@@ -305,11 +329,36 @@ Ext.define('PHT.controller.Sessions', {
                 record = this.selectedSessions[i];
                 this.updateReadOnlyFields(record);
             }
+            this.updateProposalExplorerMulti(this.selectedSessions, originalValues, sessFields);
         }
         this.getSessionsStore().sync();
         this.selectedSessions = [];                 
     },
 
+    // some of the proposal fields are dependent on their sessions
+    updateProposalExplorerMulti: function(sessions, originalValues, fieldNames) {
+        // first, save some time by looking for if there are any changes
+        var changes = false;
+        for (var i=0; i < fieldNames.length; i++) {
+            var fieldName = fieldNames[i];
+            for (var j=0; j < sessions.length; j++) {
+                var session = sessions[j];
+                var sId = session.get('id');
+                if (originalValues[sId][fieldName] != session.get(fieldName)) {
+                    changes = true;
+                }    
+            }
+        }
+        if (changes == true) {
+            // deal with the changes, one session at a time 
+            for (var j=0; j < sessions.length; j++) {
+                var session = sessions[j];
+                var sId = session.get('id');
+                this.updateProposalExplorer(session, originalValues[sId], fieldNames);
+            }    
+        }    
+    },
+  
     // some of the proposal fields are dependent on their sessions
     updateProposalExplorer: function(session, originalValues, fieldNames) {
         // first, just look if any of the fields we care about have changed
