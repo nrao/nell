@@ -15,6 +15,7 @@ Ext.define('PHT.controller.Sessions', {
 
     stores: [
         'Backends',
+        'Proposals',
         'Receivers',
         'Sessions',
         'SessionGrades',
@@ -260,21 +261,43 @@ Ext.define('PHT.controller.Sessions', {
     },
 
     updateSession: function(button) {
+
+        // first, store some of the original values so 
+        // we can check for changes later
+        var win      = button.up('window'),
+            form     = win.down('form'),
+            session   = form.getRecord(),
+            values   = form.getValues();
+        var f = form.getForm();
+
+        // here's the fields we care about
+        sessFields = ['requested_time',
+                      'repeats',
+                      'allocated_time',
+                      'grade']
+        fields  = f.getFields();
+        var originalValues = {};
+        for (var i=0; i < sessFields.length; i++ ) {
+            var fieldName = sessFields[i];
+            var fieldOfNames = fields.filter('name', fieldName);
+            var fieldOfName = fieldOfNames.getAt(0);
+            originalValues[fieldName] = fieldOfName.originalValue;
+        }    
+
+        // here we actually change this session
         this.updateRecord(button
                         , this.selectedSessions
                         , this.getSessionsStore()
                          );
 
-        // We must also reset read-only fields
-        // editing one, or multiple records?
+        // Now we must reset read-only fields, and update the Prop. Ex.
+        // First, editing one, or multiple records?
         if (this.selectedSessions.length <= 1) {
-            var win      = button.up('window'),
-                form     = win.down('form'),
-                record   = form.getRecord(),
-                values   = form.getValues();
+            var record   = form.getRecord();
             var f = form.getForm();
             if (f.isValid()) {
                 this.updateReadOnlyFields(record);
+                this.updateProposalExplorer(record, originalValues, sessFields);
                 form.loadRecord(record);
             }        
         } else {
@@ -285,6 +308,75 @@ Ext.define('PHT.controller.Sessions', {
         }
         this.getSessionsStore().sync();
         this.selectedSessions = [];                 
+    },
+
+    // some of the proposal fields are dependent on their sessions
+    updateProposalExplorer: function(session, originalValues, fieldNames) {
+        // first, just look if any of the fields we care about have changed
+        var changes = false;
+        for (var i=0; i < fieldNames.length; i++) {
+            var fieldName = fieldNames[i];
+            if (originalValues[fieldName] != session.get(fieldName)) {
+                changes = true;
+            }
+        }
+        if (changes == true) {
+            // deal with the changes - get the session's proposal
+            var pcode = session.get('pcode');
+            var store = this.getProposalsStore();
+            var ind = store.find('pcode', pcode);
+            var proposal = store.getAt(ind);
+            // allocated is the least complicated
+            var alloc = 'allocated_time';
+            sOldAlloc = parseInt(originalValues[alloc]);
+            sNewAlloc = parseInt(session.get(alloc));
+            if (sOldAlloc != sNewAlloc) {
+                var pAll = proposal.get(alloc);
+                var pAllNew = pAll - sOldAlloc + sNewAlloc;
+                proposal.set(alloc, pAllNew);
+            }
+            // requested time is a little more complicated
+            var req = 'requested_time';
+            sOldReq = parseInt(originalValues[req]);
+            sNewReq = parseInt(session.get(req));
+            var rep = 'repeats';
+            sOldRep = parseInt(originalValues[rep]);
+            sNewRep = parseInt(session.get(rep));
+            if ((sOldReq != sNewReq) || (sOldRep != sNewRep)) {
+                var sOldRequest = sOldRep * sOldReq;
+                var sNewRequest = sNewRep * sNewReq;
+                var pRequest = proposal.get('requested_time');
+                pRequest = pRequest - sOldRequest + sNewRequest;
+                proposal.set('requested_time', pRequest);
+            }
+            // grades are also complicated
+            var sOldGrade = originalValues['grade'];
+            var sNewGrade = session.get('grade');
+            if (sOldGrade != sNewGrade) {
+                var gradesStr = proposal.get('grades');
+                var grades = gradesStr.split(',');
+                // what a pain in the ass - 
+                // we need to look at all other sessions to figure
+                // out how to change the proposal's grades
+                sStore = this.getSessionsStore();
+                newGrades = []
+                // find each session w/ for this proposal
+                ind = sStore.find('pcode', pcode);
+                while (ind != -1) {
+                    // get it's grade
+                    var s = sStore.getAt(ind);
+                    var g = s.get('grade');
+                    // and see if we need to add it to the proposal's
+                    if (newGrades.indexOf(g) == -1) {
+                        newGrades.push(g);
+                    }
+                    // is there another one?
+                    ind = sStore.find('pcode', pcode, ind+1);
+                }    
+                proposal.set('grades', newGrades.join(','));
+            }
+            store.sync();
+        }
     },
 
     // some of the fields shown for the session are read only and
