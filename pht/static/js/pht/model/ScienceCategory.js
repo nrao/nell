@@ -1,7 +1,8 @@
 Ext.define('PHT.model.ScienceCategory', {
     extend: 'Ext.data.Model',
     fields: ['id',
-             'category'
+             'category',
+             'code',
              ],
     proxy: {
         type: 'ajax',

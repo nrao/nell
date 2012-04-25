@@ -102,7 +102,7 @@ Ext.define('PHT.view.proposal.List' ,{
             {header: 'PCODE', dataIndex: 'pcode', flex: 1},
             {header: 'Title', dataIndex: 'title', width: 200},
             {header: 'Proposal Type', dataIndex: 'proposal_type', flex: 1},
-            {header: 'Observing Types', dataIndex: 'obs_type_codes', flexh: 1},
+            {header: 'Obs. Types', dataIndex: 'obs_type_codes', flex: 1},
             {header: 'PI', dataIndex: 'pi_name', flex: 1},
             {header: 'Sci. Categories', dataIndex: 'sci_cat_codes', flex: 1},
             {header: 'SRP Score', dataIndex: 'normalizedSRPScore', flex: 1},

@@ -261,6 +261,8 @@ class TestViews(TestCase):
                   , 'title'           : self.proposal.title
                   , 'abstract'        : self.proposal.abstract
                   , 'observing_types' : [o.type for o in self.proposal.observing_types.all()]
+                  # TBF: fixture doesn't have the codes yet
+                  #, 'obs_type_codes'  : [o.code for o in self.proposal.observing_types.all()]
                   , 'joint_proposal'  : str(not self.proposal.joint_proposal)
                    }
         response = self.client.post("/pht/proposals", json.dumps(data)
@@ -270,8 +272,8 @@ class TestViews(TestCase):
         self.failUnlessEqual(response.status_code, 200)
         self.assertEqual(results.get('proposals')[0].get('pcode')
                        , data.get('pcode'))
-        self.assertEqual(results.get('proposals')[0].get('observing_types')
-                       , data.get('observing_types'))
+        self.assertEqual(results.get('proposals')[0].get('title')
+                       , data.get('title'))
 
     def test_proposal_post_empty(self):
         data     = {'pi_id'           : self.proposal.pi.id

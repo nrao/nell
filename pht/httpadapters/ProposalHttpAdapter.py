@@ -144,17 +144,17 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         # multiple observing types possible - returned as an array
         for otype in self.proposal.observing_types.all():
             self.proposal.observing_types.remove(otype)
-        obsTypes = data.get('observing_types', [])    
-        for otName in obsTypes:
-            otype = ObservingType.objects.get(type = otName)
+        obsTypes = data.get('obs_type_codes', [])    
+        for otCode in obsTypes:
+            otype = ObservingType.objects.get(code = otCode)
             self.proposal.observing_types.add(otype)
 
         # same is true for science categories
         for cats in self.proposal.sci_categories.all():
             self.proposal.sci_categories.remove(cats)
-        cats = data.get('sci_categories', [])    
+        cats = data.get('sci_cat_codes', [])    
         for cat in cats:
-            cat = ScientificCategory.objects.get(category = cat)
+            cat = ScientificCategory.objects.get(code = cat)
             self.proposal.sci_categories.add(cat)
 
         # comments
