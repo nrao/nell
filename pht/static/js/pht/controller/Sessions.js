@@ -230,6 +230,8 @@ Ext.define('PHT.controller.Sessions', {
                 if (id == 'yes') {
                     // copy the session
                     var newSession = this.copyRecord(store, session);
+                    // make sure the proposal explorer updates properly
+                    this.duplicateSessionForProposal(session);
                     // when the save is successfull on the server side,
                     // then we can copy over sources
                     newSession.save({
@@ -260,14 +262,45 @@ Ext.define('PHT.controller.Sessions', {
         });
     },
 
-    getOriginalValues: function(record, originalValues, fields) {
+    // make sure the proposal updates correctly when a session is duplicated
+    duplicateSessionForProposal: function(session) {
+        // simple enough - we need to add on these new values
+        var repeats = session.get('repeats');
+        var requested = session.get('requested_time');
+        var allocated = session.get('allocated_time');
+        // get the session's proposal
+        var pcode = session.get('pcode');
+        var store = this.getProposalsStore();
+        var ind = store.find('pcode', pcode);
+        var proposal = store.getAt(ind);
+        // update the proposal where appropriate
+        if ((repeats != null) && (requested != null)) {
+            var pReq = proposal.get('requested_time');
+            if (pReq != null) {
+                proposal.set('requested_time', pReq + (repeats * requested));
+            } else {
+                proposal.set('requested_time', (repeats * requested));
+            }
+        }    
+        if (allocated != null) {
+            var pAlloc = proposal.get('allocated_time');
+            if (pAlloc != null) {
+                proposal.set('allocated_time', pAlloc + allocated);
+            } else {
+                proposal.set('allocated_time', allocated);
+            }
+        }    
+        store.sync()
+    },
+
+    // update the given object with the value for the given fields
+    getValues: function(record, values, fields) {
         for (var i=0; i < fields.length; i++ ) {
             var fieldName = fields[i];
-            var originalValue = record.get(fieldName);
-            originalValues[fieldName] = originalValue;
+            var value = record.get(fieldName);
+            values[fieldName] = value;
         }
-        return originalValues;    
-
+        return values;    
     },
 
     updateSession: function(button) {
@@ -285,25 +318,16 @@ Ext.define('PHT.controller.Sessions', {
                       'grade']
         if (this.selectedSessions.length <= 1) {
             record   = form.getRecord()
-            //values   = form.getValues();
-            //fields  = f.getFields();
             var originalValues = {};
-            originalValues = this.getOriginalValues(record, originalValues, sessFields);
+            originalValues = this.getValues(record, originalValues, sessFields);
         } else {
             var originalValues = {};
             for (i=0; i < this.selectedSessions.length; i++) {
                 record = this.selectedSessions[i];
                 var sId = record.get('id');
                 var values = {}
-                values = this.getOriginalValues(record, values, sessFields);
+                values = this.getValues(record, values, sessFields);
                 originalValues[sId] = values;
-                /*
-                for (var j=0; j < sessFields.length; j++ ) {
-                    var fieldName = sessFields[j];
-                    var originalValue = record.get(fieldName);
-                    originalValues[sId][fieldName] = originalValue;
-                } 
-                */
             }
             console.log(originalValues);
         }
