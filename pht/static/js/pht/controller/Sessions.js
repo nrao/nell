@@ -383,6 +383,28 @@ Ext.define('PHT.controller.Sessions', {
         }    
     },
   
+    // covers things like when a session's allocated or requested time changes
+    // and the proposal needs updating
+    updateProposalTime: function(oldValue, newValue, proposal, fieldName) {
+        // first, if both new & old values are both NaN, no change, and exit
+        if (isNaN(oldValue) && isNaN(newValue)) {
+            return
+        }
+
+        // otherwise, see if there's been a change
+        if (oldValue != newValue) {
+            var pTime = proposal.get(fieldName);
+            // catch NaN's
+            if (!isNaN(oldValue)) {
+                pTime = pTime - oldValue
+            }
+            if (!isNaN(newValue)) {
+                pTime = pTime + newValue
+            }
+            proposal.set(fieldName, pTime);
+        }            
+    },
+
     // some of the proposal fields are dependent on their sessions
     updateProposalExplorer: function(session, originalValues, fieldNames) {
         // first, just look if any of the fields we care about have changed
@@ -403,11 +425,7 @@ Ext.define('PHT.controller.Sessions', {
             var alloc = 'allocated_time';
             sOldAlloc = parseInt(originalValues[alloc]);
             sNewAlloc = parseInt(session.get(alloc));
-            if (sOldAlloc != sNewAlloc) {
-                var pAll = proposal.get(alloc);
-                var pAllNew = pAll - sOldAlloc + sNewAlloc;
-                proposal.set(alloc, pAllNew);
-            }
+            this.updateProposalTime(sOldAlloc, sNewAlloc, proposal, alloc);
             // requested time is a little more complicated
             var req = 'requested_time';
             sOldReq = parseInt(originalValues[req]);
@@ -415,13 +433,8 @@ Ext.define('PHT.controller.Sessions', {
             var rep = 'repeats';
             sOldRep = parseInt(originalValues[rep]);
             sNewRep = parseInt(session.get(rep));
-            if ((sOldReq != sNewReq) || (sOldRep != sNewRep)) {
-                var sOldRequest = sOldRep * sOldReq;
-                var sNewRequest = sNewRep * sNewReq;
-                var pRequest = proposal.get('requested_time');
-                pRequest = pRequest - sOldRequest + sNewRequest;
-                proposal.set('requested_time', pRequest);
-            }
+            this.updateProposalTime((sOldRep*sOldReq),
+                                    (sNewRep*sNewReq), proposal, req);
             // grades are also complicated
             var sOldGrade = originalValues['grade'];
             var sNewGrade = session.get('grade');
