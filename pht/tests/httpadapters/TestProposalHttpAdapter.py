@@ -30,6 +30,16 @@ class TestProposalHttpAdapter(TestCase):
     # must use django.test.TestCase if we want fixtures
     fixtures = ['proposal_GBT12A-002.json', 'scheduler.json']
 
+    def setUp(self):
+
+        # again, I'm too lazy to fix the fixture - so add a code here
+        ot = ObservingType.objects.get(type = 'Spectroscopy')
+        ot.code = 'S'
+        ot.save()
+        sc = ScientificCategory.objects.get(category = 'Interstellar Medium')
+        sc.code = 'ISM'
+        sc.save()
+
     def test_copy(self):
         proposal = Proposal.objects.get(pcode = 'GBT12A-002')
 
