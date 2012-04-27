@@ -47,6 +47,10 @@ Ext.define('PHT.controller.PhtController', {
         });
     },
 
+    // abstract function
+    onDelete: function(records) {
+    },
+
     confirmDeleteMultiple: function(store, records, title) {
        Ext.Msg.show({
             title: title,
@@ -56,6 +60,7 @@ Ext.define('PHT.controller.PhtController', {
             scope: this,
             fn: function(id) {
                 if (id == 'yes') {
+                    this.onDelete(records);
                     store.remove(records);
                     store.sync();
                 }

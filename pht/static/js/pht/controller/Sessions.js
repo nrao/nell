@@ -207,6 +207,34 @@ Ext.define('PHT.controller.Sessions', {
         view.down('form').loadRecord(session);
     },
 
+    editSelectedSessions: function(button) {
+        var grid = button.up('grid');
+        this.selectedSessions = grid.getSelectionModel().getSelection();
+
+        if (this.selectedSessions.length <= 1) {
+            this.editSession(grid, this.selectedSessions[0]);
+        } else {
+            var template = Ext.create('PHT.model.Session');
+            var view = Ext.widget('sessionedit');
+            var fields = view.down('form').getForm().getFields();
+            fields.each(function(item, index, length) {
+                var disabledItems = ['pcode',
+                             'thermal_night',
+                                 'rfi_night',
+                             'optical_night',
+                              'transit_flat',
+                                'guaranteed',
+                   'session_teim_calculated',
+                                    ];
+                if (disabledItems.indexOf(item.getName()) > -1) {
+                    item.disable();
+                }
+                item.allowBlank = true;
+            }, this);
+            view.down('form').loadRecord(template);
+        }
+    },
+
     deleteSession: function(button) {
         var grid = button.up('grid');
         var sessions = grid.getSelectionModel().getSelection();
@@ -214,6 +242,31 @@ Ext.define('PHT.controller.Sessions', {
                       sessions,
                       'Deleting Selected Sessions'
         );              
+    },
+
+    // when a session is deleted, we must make sure the proposal is 
+    // updated appropriately.
+    onDelete: function(records) {
+        if (records.length == 0) {
+            return;
+        }
+        
+        // get the session's proposal
+        var pcode = records[0].get('pcode');
+        var store = this.getProposalsStore();
+        var ind = store.find('pcode', pcode);
+        var proposal = store.getAt(ind);
+
+        // simple enough - we need to subtract out the times 
+        for (var i=0; i < records.length; i++) {
+            var session = records[i];
+            this.updateProposalTimesFromSession(session, proposal, store, this.sub); 
+        }    
+
+        // now deal with grades
+        var newGrades = this.getProposalGrades(pcode, records);
+        proposal.set('grades', newGrades.join(','));
+
     },
 
     duplicateSession: function(button) {
@@ -262,35 +315,56 @@ Ext.define('PHT.controller.Sessions', {
         });
     },
 
+    // so we can pass in the '+' operator like a function
+    add: function(a, b) {
+        return a + b;
+    },
+
+    
+    // so we can pass in the '+' operator like a function (Haskell?)
+    sub: function(a, b) {
+        return a - b;
+    },
+
+    updateProposalTimesFromSession: function(session, proposal, store, op) {
+        // simple enough - we need to add or subtract these new values
+        var repeats = parseFloat(session.get('repeats'));
+        var requested = parseFloat(session.get('requested_time'));
+        var allocated = parseFloat(session.get('allocated_time'));
+        // update the proposal where appropriate
+        if ((!isNaN(repeats)) && (!isNaN(requested))) {
+            var pReq = parseFloat(proposal.get('requested_time'));
+            if (!isNaN(pReq)) {
+                pReq = op(pReq, (repeats * requested));
+            } else {
+                pReq = repeats * request;
+            }
+            proposal.set('requested_time', pReq);
+
+        }    
+        if (!isNaN(allocated)) {
+            var pAlloc = parseFloat(proposal.get('allocated_time'));
+            if (!isNaN(pAlloc)) {
+                pAlloc = op(pAlloc, allocated);
+            } else {
+                pAlloc = allocated;
+            }
+            proposal.set('allocated_time', pAlloc);
+        }    
+        store.sync()
+    },
+
     // make sure the proposal updates correctly when a session is duplicated
     duplicateSessionForProposal: function(session) {
-        // simple enough - we need to add on these new values
-        var repeats = session.get('repeats');
-        var requested = session.get('requested_time');
-        var allocated = session.get('allocated_time');
+
         // get the session's proposal
         var pcode = session.get('pcode');
         var store = this.getProposalsStore();
         var ind = store.find('pcode', pcode);
         var proposal = store.getAt(ind);
-        // update the proposal where appropriate
-        if ((repeats != null) && (requested != null)) {
-            var pReq = proposal.get('requested_time');
-            if (pReq != null) {
-                proposal.set('requested_time', pReq + (repeats * requested));
-            } else {
-                proposal.set('requested_time', (repeats * requested));
-            }
-        }    
-        if (allocated != null) {
-            var pAlloc = proposal.get('allocated_time');
-            if (pAlloc != null) {
-                proposal.set('allocated_time', pAlloc + allocated);
-            } else {
-                proposal.set('allocated_time', allocated);
-            }
-        }    
-        store.sync()
+
+        this.updateProposalTimesFromSession(session, proposal, store, this.add); 
+
     },
 
     // update the given object with the value for the given fields
@@ -329,7 +403,6 @@ Ext.define('PHT.controller.Sessions', {
                 values = this.getValues(record, values, sessFields);
                 originalValues[sId] = values;
             }
-            console.log(originalValues);
         }
 
         // here we actually change this session
@@ -423,46 +496,59 @@ Ext.define('PHT.controller.Sessions', {
             var proposal = store.getAt(ind);
             // allocated is the least complicated
             var alloc = 'allocated_time';
-            sOldAlloc = parseInt(originalValues[alloc]);
-            sNewAlloc = parseInt(session.get(alloc));
+            sOldAlloc = parseFloat(originalValues[alloc]);
+            sNewAlloc = parseFloat(session.get(alloc));
             this.updateProposalTime(sOldAlloc, sNewAlloc, proposal, alloc);
             // requested time is a little more complicated
             var req = 'requested_time';
-            sOldReq = parseInt(originalValues[req]);
-            sNewReq = parseInt(session.get(req));
+            sOldReq = parseFloat(originalValues[req]);
+            sNewReq = parseFloat(session.get(req));
             var rep = 'repeats';
-            sOldRep = parseInt(originalValues[rep]);
-            sNewRep = parseInt(session.get(rep));
+            sOldRep = parseFloat(originalValues[rep]);
+            sNewRep = parseFloat(session.get(rep));
             this.updateProposalTime((sOldRep*sOldReq),
                                     (sNewRep*sNewReq), proposal, req);
             // grades are also complicated
             var sOldGrade = originalValues['grade'];
             var sNewGrade = session.get('grade');
             if (sOldGrade != sNewGrade) {
-                var gradesStr = proposal.get('grades');
-                var grades = gradesStr.split(',');
-                // what a pain in the ass - 
-                // we need to look at all other sessions to figure
-                // out how to change the proposal's grades
-                sStore = this.getSessionsStore();
-                newGrades = []
-                // find each session w/ for this proposal
-                ind = sStore.find('pcode', pcode);
-                while (ind != -1) {
-                    // get it's grade
-                    var s = sStore.getAt(ind);
-                    var g = s.get('grade');
-                    // and see if we need to add it to the proposal's
-                    if (newGrades.indexOf(g) == -1) {
-                        newGrades.push(g);
-                    }
-                    // is there another one?
-                    ind = sStore.find('pcode', pcode, ind+1);
-                }    
+                var none = [];
+                var newGrades = this.getProposalGrades(pcode, none);
                 proposal.set('grades', newGrades.join(','));
             }
             store.sync();
         }
+    },
+
+    getProposalGrades: function(pcode, avoidSessions) {
+        // builid up a list of session ids to avoid
+        var avoidIds = [];
+        for (var i=0; i < avoidSessions.length; i++) {
+            var session = avoidSessions[i];
+            avoidIds.push(session.get('id'));
+        }
+
+        // what a pain in the ass - 
+        // we need to look at all other sessions to figure
+        // out how to change the proposal's grades
+        sStore = this.getSessionsStore();
+        newGrades = []
+        // find each session w/ for this proposal
+        ind = sStore.find('pcode', pcode);
+        while (ind != -1) {
+            var s = sStore.getAt(ind);
+            // do we avoid using this session?
+            if (avoidIds.indexOf(s.get('id')) == -1) { 
+                var g = s.get('grade');
+                // and see if we need to add it to the proposal's
+                if (newGrades.indexOf(g) == -1) {
+                    newGrades.push(g);
+                }
+            }    
+            // is there another one?
+            ind = sStore.find('pcode', pcode, ind+1);
+        }     
+        return newGrades
     },
 
     // some of the fields shown for the session are read only and
@@ -479,32 +565,4 @@ Ext.define('PHT.controller.Sessions', {
         session.set('inner_interval', session.get('interval_time'));
     },
 
-    editSelectedSessions: function(button) {
-        var grid = button.up('grid');
-        this.selectedSessions = grid.getSelectionModel().getSelection();
-
-        if (this.selectedSessions.length <= 1) {
-            this.editSession(grid, this.selectedSessions[0]);
-        } else {
-            var template = Ext.create('PHT.model.Session');
-            var view = Ext.widget('sessionedit');
-            var fields = view.down('form').getForm().getFields();
-            fields.each(function(item, index, length) {
-                var disabledItems = ['pcode',
-                             'thermal_night',
-                                 'rfi_night',
-                             'optical_night',
-                              'transit_flat',
-                                'guaranteed',
-                   'session_teim_calculated',
-                                    ];
-                if (disabledItems.indexOf(item.getName()) > -1) {
-                    item.disable();
-                }
-                item.allowBlank = true;
-            }, this);
-            view.down('form').loadRecord(template);
-        }
-    
-    },
 });
