@@ -35,6 +35,7 @@ from scheduler.models import Project
 from scheduler.models import Observing_Type 
 from scheduler.models import Period as DSSPeriod
 from scheduler.models import Semester as DSSSemester
+from scheduler.models import Sesshun as DSSSession
 
 from utilities import AnalogSet
 from utilities import TimeAgent
@@ -183,6 +184,9 @@ class SemesterTimeAccounting(object):
 
         # Galactic Center goes from 15 to 20 hours [,)
         self.gcHrs = (15, 21) 
+
+        # for making sure we don't count a given session > once
+        self.preAssignedSessions = []
 
         # initialize all the buckets we'll be calculating
         self.totalAvailableHrs = SemesterTimes() 
@@ -374,7 +378,7 @@ class SemesterTimeAccounting(object):
         total = 0
         totals = {'A' : 0.0, 'B' : 0.0, 'C' : 0.0, 'None' : 0.0}
         for s in self.carryOverSessions:
-            print s, s.session_type, s.grade, s.next_semester.time 
+            print s, s.session_type, s.grade, s.next_semester.time, self.getTimeType(s) 
             if s.grade is not None:
                 totals[s.grade.grade] += s.next_semester.time
             else:
@@ -400,13 +404,30 @@ class SemesterTimeAccounting(object):
 
     def getMaintenancePeriods(self):
         "What maintenance periods have been scheduled for this semester?"
-        return self.getProjectPeriods('Maintenance')
+        allPs = self.getProjectPeriods('Maintenance')
+        # this list of periods includes all periods from elective
+        # sessions; in this case, we only want one period per elective
+        ps = []
+        electives = []
+        for p in allPs:
+            if p.session.session_type.type == 'elective':
+                if p.elective is not None and p.elective not in electives:
+                    # use this period
+                    ps.append(p)
+                    # don't use periods from other electives
+                    electives.append(p.elective)
+            else:
+                ps.append(p)
+        return ps
 
     def getShutdownPeriods(self):
         "What shutdown periods have been scheduled for this semester?"
         return self.getProjectPeriods('Shutdown')
 
     def getProjectPeriods(self, pcode):    
+        ss = DSSSession.objects.filter(project__pcode = pcode)
+        self.preAssignedSessions.extend(ss)
+        
         ps = DSSPeriod.objects.filter( \
             session__project__pcode = pcode
           , start__gt = self.semester.start()
@@ -420,11 +441,12 @@ class SemesterTimeAccounting(object):
         testing = Observing_Type.objects.get(type='testing')
         commissioning = Observing_Type.objects.get(type='commissioning')
         calibration = Observing_Type.objects.get(type = 'calibration')
-        return Session.objects.filter(Q(semester__semester = sem) 
+        ss = Session.objects.filter(Q(semester__semester = sem) 
                                     , Q(observing_type = testing) \
                                     | Q(observing_type = commissioning)\
                                     | Q(observing_type = calibration))
-
+        self.preAssignedSessions.extend(ss)
+        return ss
 
     def getHours(self, periods):
 
@@ -546,8 +568,10 @@ class SemesterTimeAccounting(object):
 
         all = SemesterTimes()
         for s in ss:
-            t = self.getSessionHours(s)
-            all += t
+            if s.allotment is not None and \
+              s.allotment.allocated_time is not None:
+                t = self.getSessionHours(s)
+                all += t
         return all
 
     def getTimeType(self, session):
@@ -580,6 +604,12 @@ class SemesterTimeAccounting(object):
             
             
     def getGCHoursFromSession(self, session):
+        if session.allotment is None \
+          or session.allotment.allocated_time is None \
+          or session.target is None \
+          or session.target.min_lst is None \
+          or session.target.max_lst is None:
+            return 0.0, 0.0
         # use max/min LST as compared to the Galctic Center
         s = (rad2hr(session.target.min_lst)
            , rad2hr(session.target.max_lst))
@@ -594,9 +624,12 @@ class SemesterTimeAccounting(object):
         In other words, they contribute to carry over.
         """
 
+        preAssigned = [s.name for s in self.preAssignedSessions]
+
         # TBF: how to do the not None query?
         ss = Session.objects.filter(next_semester__complete = False).order_by('name')
-        return [s for s in ss if s.dss_session is not None]
+        ss2 = [s for s in ss if s.dss_session is not None and s.name not in preAssigned]
+        return ss2
             
     def getCarryOver(self, sessions):
         """

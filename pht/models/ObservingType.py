@@ -34,6 +34,7 @@ class ObservingType(models.Model):
     def jsonDict(self):
         return {'id'   : self.id
               , 'type' : self.type
+              , 'code' : self.code
                }
 
     @staticmethod

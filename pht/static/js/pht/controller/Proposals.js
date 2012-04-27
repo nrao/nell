@@ -77,6 +77,9 @@ Ext.define('PHT.controller.Proposals', {
             'proposalallocate button[action=save]': {
                 click: this.allocateProposal
             },            
+            'proposalallocate button[action=clear]': {
+                click: this.allocateClearProposal
+            },            
             'proposalimport button[action=import]': {
                 click: this.importProposal
             },            
@@ -119,7 +122,8 @@ Ext.define('PHT.controller.Proposals', {
         // what was entered in the form?
         var values = form.getValues();
         var grade = values['grade']
-        var scale = values['time_scale']
+        var scale = values['scale']
+        var time  = values['time']
         // we want only sessions for this proposal
         var pcode = win.pcode;
         var store = this.getStore('Sessions');
@@ -128,6 +132,8 @@ Ext.define('PHT.controller.Proposals', {
         // We do this on the client side instead of the server side
         // because it makes refreshing the sessions easier.
         var cnt = store.getCount();
+        var pAllocated = 0.0;
+        
         for (i=0; i < cnt; i++) {
             var session = store.getAt(i);
             // change session's grade
@@ -135,16 +141,66 @@ Ext.define('PHT.controller.Proposals', {
                 session.set('grade', grade);
             }
             // change session's allocated time.
-            if ((scale != null) && (scale != '')) {
-                var requested = parseFloat(session.get('requested_time'));
-                var repeats = parseFloat(session.get('repeats'));
-                var allocated = requested * repeats * (parseFloat(scale)/100.0);
+            if ((time != null) && (time != '')) {
+                // is the time value an absolute value,
+                // or a scaling factor?
+                if (scale == 'true') {
+                    var requested = parseFloat(session.get('requested_time'));
+                    var repeats = parseFloat(session.get('repeats'));
+                    var allocated = requested * repeats * (parseFloat(time)/100.0);
+                } else {
+                    var allocated = parseFloat(time);
+                }
+                pAllocated += allocated
                 session.set('allocated_time', allocated);
             }
             session.save()
         }
         store.sync();
-        win.hide()
+
+        // update the proposal
+        var pStore = this.getStore('Proposals');
+        pStore.filter('pcode', pcode);
+        var cnt = pStore.getCount();
+        for (i=0; i < cnt; i++) {
+            var proposal = pStore.getAt(i);
+            if ((time != null) && (time != '')) {
+                proposal.set('allocated_time', pAllocated);
+            }
+            if ((grade != null) && (grade != '')) {
+                proposal.set('grades', grade);
+            }
+        }
+        pStore.sync();
+        
+        win.hide();
+    },
+
+    // clear all sessions' grades to None and times to zero
+    allocateClearProposal: function(button) {
+        var win = button.up('window')
+        var pcode = win.pcode;
+        // sessions
+        var store = this.getStore('Sessions');
+        store.filter('pcode', pcode);
+        var cnt = store.getCount();
+        for (i=0; i < cnt; i++) {
+            var session = store.getAt(i);
+            session.set('allocated_time', 0.0);
+            session.set('grade', null);
+        }    
+        store.sync()
+        // now the proposal
+        var pStore = this.getStore('Proposals');
+        pStore.filter('pcode', pcode);
+        var cnt = pStore.getCount();
+        for (i=0; i < cnt; i++) {
+            var proposal = pStore.getAt(i);
+            proposal.set('allocated_time', 0.0);
+            proposal.set('grades', '');
+        }
+        pStore.sync();
+        win.hide();
     },
 
     proposalSelected: function(grid, record) {

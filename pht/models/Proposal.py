@@ -83,6 +83,12 @@ class Proposal(models.Model):
                 if s.allotment is not None \
                 and s.allotment.allocated_time is not None])
 
+    def grades(self):
+        "Return unique list of grades"
+        return sorted(list(set([s.grade.grade \
+            for s in self.session_set.order_by('grade') \
+                if s.grade is not None])))
+
     # *** Section: accessing the corresponding DSS project
     def dssAllocatedTime(self):
         "How much was the corresponding DSS project allocated?"

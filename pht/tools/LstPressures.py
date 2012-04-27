@@ -239,14 +239,24 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         # convert this to UT
         
+    def binLst(self, lstRads):
+        """
+        We use floor to do this, but be careful of LSTs of 10:00:00
+        in the UI coming back from rad2hr as 9.99999999999999
+        """
+        return int(math.floor(float("%.6f" % rad2hr(lstRads))))
+
     def getLstWeightsForSession(self, session):
         "Simple: LST's within min/max are on, rest are off."
         ws = self.newHrs() #[0.0] * self.hrs
-        minLst = int(math.floor(rad2hr(session.target.min_lst)))
-        maxLst = int(math.floor(rad2hr(session.target.max_lst)))
+        minLst = self.binLst(session.target.min_lst) 
+        maxLst = self.binLst(session.target.max_lst) 
         if (0 > minLst or minLst > 24.0) or (0 > maxLst or maxLst > 24.0):
             print "Illegal LST min/max: ", minLst, maxLst, session
             return ws
+        # special case?
+        if minLst == maxLst:
+            maxLst = minLst + 1
         # wrap around?
         if minLst > maxLst:
             ons = [(0, maxLst), (minLst, self.hrs)]

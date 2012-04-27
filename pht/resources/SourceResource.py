@@ -41,10 +41,16 @@ def get_src_args(*args):
 
 class SourceResource(Resource):
 
+    def __init__(self):
+        self.root = 'sources'
+
     def create(self, request, *args, **kws):
         adapter  = SourceHttpAdapter()
         adapter.initFromPost(json.loads(request.raw_post_data))
-        return HttpResponse(json.dumps(adapter.jsonDict())
+        sources = [adapter.jsonDict()]
+        return HttpResponse(json.dumps({'success' : 'ok' 
+                                      , self.root : sources
+                            })
                           , content_type = 'application/json')
 
     def read(self, request, *args, **kws):
