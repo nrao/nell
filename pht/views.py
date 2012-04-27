@@ -16,12 +16,12 @@ from pht.tools.PlotLstPressures import PlotLstPressures
 from httpadapters import *
 from tools.database import PstInterface, BulkSourceImport
 from tools.reports import *
-import math
+import settings
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg 
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
-import numpy
+import numpy, math
 
 def notify(request):
     return HttpResponse(json.dumps({"success" : "ok" })
@@ -30,7 +30,7 @@ def notify(request):
 @login_required
 @admin_only
 def root(request):
-    return render_to_response("pht/root.html", {})
+    return render_to_response("pht/root.html", {'extjs' : settings.EXTJS_URL})
 
 @login_required
 @admin_only
