@@ -43,6 +43,9 @@ class ProposalRanking(Report):
     def colWidths(self):
         return [20, 20, 80, 310, 20, 50, 20, 20, 20, 20, 20, 20, 30, 20, 40]
 
+    def genHeaderStr(self):
+        return 'Pro\tPI\tTitle\t\tBand\t#S\tSRP\tRefs\tRk\tNorm. SRP\tRk\tObs Type\tReq Hrs\tTotalRef Hrs'
+
     def genHeader(self):
         return [Paragraph('<b>Pro</b>', self.styleSheet)
               , Paragraph('<b>Ptm/Oh </b>', self.styleSheet)
@@ -61,33 +64,61 @@ class ProposalRanking(Report):
               , Paragraph('<b>Total Ref Hrs</b>', self.styleSheet)
               ]
 
-    def genRow(self, proposal):
-        pi_name   = proposal.pi.getLastFirstName() if proposal.pi is not None else ''
-        obs_types = [ot.code for ot in proposal.observing_types.all()]
-        draftRank = str(self.proposalsDraft.index(proposal) + 1)
-        rank      = str(self.proposals.index(proposal) + 1)
-        draftScore = str(proposal.draft_normalizedSRPScore) \
-                       if proposal.draft_normalizedSRPScore is not None else ''
-        score      = str(proposal.normalizedSRPScore) \
-                       if proposal.normalizedSRPScore is not None else ''
+    def genRowData(self, proposal):
+        code      = proposal.pcode.split('-')
         students  = len(proposal.author_set.filter(thesis_observing = True))
-        thesis    = str(students) if students > 0 else ''
-        code    = proposal.pcode.split('-')
-        code    = code[1] if len(code) > 1 else proposal.pcode
-        return [Paragraph(code, self.styleSheet)
+        obs_types = [ot.code for ot in proposal.observing_types.all()]
+        data = {'pi_name'    : proposal.pi.getLastFirstName() if proposal.pi is not None else ''
+              , 'title'      : proposal.title
+              , 'bands'      : proposal.bands()
+              , 'num_srcs'   : str(len(proposal.source_set.all()))
+              , 'num_refs'   : str(proposal.num_refs)
+              , 'draftRank'  : str(self.proposalsDraft.index(proposal) + 1)
+              , 'rank'       : str(self.proposals.index(proposal) + 1)
+              , 'draftScore' : str(proposal.draft_normalizedSRPScore) \
+                               if proposal.draft_normalizedSRPScore is not None else ''
+              , 'score'      : str(proposal.normalizedSRPScore) \
+                               if proposal.normalizedSRPScore is not None else ''
+              , 'thesis'     : str(students) if students > 0 else ''
+              , 'code'       : code[1] if len(code) > 1 else proposal.pcode
+              , 'obs_types'  : ''.join(obs_types)
+              , 'rq_time'    : str(proposal.requestedTime())
+              }
+        return data
+
+    def genRowDataOrdered(self, proposal):
+        data = self.genRowData(proposal)
+        return '\t'.join([data['code']
+              , data['pi_name']
+              , data['title']
+              , data['thesis']
+              , data['bands']
+              , data['num_srcs']
+              , data['draftScore']
+              , data['num_refs']
+              , data['draftRank']
+              , data['score']
+              , data['rank']
+              , data['obs_types']
+              , data['rq_time']
+              ])
+
+    def genRow(self, proposal):
+        data = self.genRowData(proposal)
+        return [Paragraph(data['code'], self.styleSheet)
               , ''
-              , Paragraph(pi_name, self.styleSheet)
-              , Paragraph(proposal.title, self.styleSheet)
-              , Paragraph(thesis, self.styleSheet)
-              , Paragraph(proposal.bands(), self.styleSheet)
-              , Paragraph(str(len(proposal.source_set.all())), self.styleSheet)
-              , Paragraph(draftScore, self.styleSheet)
-              , Paragraph(str(proposal.num_refs), self.styleSheet)
-              , Paragraph(draftRank, self.styleSheet)
-              , Paragraph(score, self.styleSheet)
-              , Paragraph(rank, self.styleSheet)
-              , Paragraph(''.join(obs_types), self.styleSheet)
-              , Paragraph(str(proposal.requestedTime()), self.styleSheet)
+              , Paragraph(data['pi_name'], self.styleSheet)
+              , Paragraph(data['title'], self.styleSheet)
+              , Paragraph(data['thesis'], self.styleSheet)
+              , Paragraph(data['bands'], self.styleSheet)
+              , Paragraph(data['num_srcs'], self.styleSheet)
+              , Paragraph(data['draftScore'], self.styleSheet)
+              , Paragraph(data['num_refs'], self.styleSheet)
+              , Paragraph(data['draftRank'], self.styleSheet)
+              , Paragraph(data['score'], self.styleSheet)
+              , Paragraph(data['rank'], self.styleSheet)
+              , Paragraph(data['obs_types'], self.styleSheet)
+              , Paragraph(data['rq_time'], self.styleSheet)
               , ''
               ]
 

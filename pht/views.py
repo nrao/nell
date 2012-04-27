@@ -1,4 +1,4 @@
-from django.shortcuts               import render_to_response
+from django.shortcuts               import render_to_response, render
 from django.http  import HttpResponse, HttpResponseNotFound
 from django.contrib.auth.decorators import login_required
 from datetime   import datetime, timedelta
@@ -507,6 +507,21 @@ def proposal_ranking(request):
     ps = ProposalRanking(response)
     ps.report(semester = semester)
 
+    return response
+
+@login_required
+@admin_only
+def proposal_ranking_export(request):
+    semester  = request.GET.get('semester')
+    ps        = ProposalRanking(None)
+    proposals = [ps.genRowDataOrdered(p) for p in ps.getProposals(semester)]
+    header    = ps.genHeaderStr()
+    response  = render(request
+                    , "pht/proposalRanking.txt"
+                    , {'proposals' : proposals
+                     , 'header' : header} 
+                    , content_type = 'text/plain')
+    response['Content-Disposition'] = 'attachment; filename=proposalRanking.txt'
     return response
 
 @login_required
