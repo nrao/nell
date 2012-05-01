@@ -314,8 +314,8 @@ class TestLstPressures(TestCase):
         # set night time flag
         self.session.flags.thermal_night = True
         ps = lst.getPressuresForSession(self.session)
-        # changes non-zero ones by a little bit.
-        exp = [0.54267161410018538, 0.54025974025974011, 0.53784786641929494, 0.54025974025974011, 0.54025974025974011, 0.54267161410018538, 0.54508348794063066, 0.54267161410018538, 0.54267161410018538, 0.54267161410018538, 0.54267161410018538, 0.54025974025974011]
+        # changes non-zero ones 
+        exp = [ 0.39811543, 0.32155477, 0.3138987, 0.32155477, 0.32155477, 0.41342756, 0.50530035, 0.59717314, 0.68904594, 0.78091873, 0.87279152, 0.96466431]
         exp.extend([0.0]*12)
         for i in range(len(exp)):
             self.assertAlmostEqual(exp[i], ps[i], 3)
