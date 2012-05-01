@@ -454,13 +454,18 @@ class TestLstPressures(TestCase):
     def test_computeThermalNightWeights(self):
 
         lst = LstPressures()
-        ws, ex = lst.computeThermalNightWeights(month = 1, numDays = 30)
+        # time range: Jan 1 - 30, 2012
+        start = datetime(2012, 1, 1)
+        ws, ex = lst.computeThermalNightWeights(start = start, numDays = 30)
         exp = [30, 30, 24, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 16, 30, 30, 30, 30, 30, 30, 30, 30, 30]
         self.assertEquals(exp, ex)
-        ws, ex = lst.computeThermalNightWeights(month = 6, numDays = 30)
+        # time range: June 1 - 30, 2012
+        start2 = datetime(2012, 6, 1)
+        ws, ex = lst.computeThermalNightWeights(start = start2, numDays = 30)
         exp = [30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 17, 2, 0, 0, 0, 0, 12, 26, 30]
         self.assertEquals(exp, ex)
-        ws, ex = lst.computeThermalNightWeights()
+        # time range: Jan 1 - Dec 31, 2012
+        ws, ex = lst.computeThermalNightWeights(start = start, numDays = 365)
         exp = [225, 224, 223, 224, 224, 225, 226, 225, 225, 225, 225, 224, 225, 227, 229, 235, 242, 250, 256, 256, 249, 241, 233, 228]
         self.assertEquals(exp, ex)
         self.assertEqual(ex[0]/365., ws[0])
@@ -472,10 +477,13 @@ class TestLstPressures(TestCase):
 
         # Note that the exclusion zone here is smaller than that 
         # for PTCS night time
-        ws, ex = lst.computeOpticalNightWeights(month = 1, numDays = 30)
+        # time range: Jan 1 - 30, 2012
+        start = datetime(2012, 1, 1)
+        ws, ex = lst.computeOpticalNightWeights(start = start, numDays = 30)
         exp = [12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 16, 30, 30, 30, 30, 30, 30, 30, 30, 24]
         self.assertEqual(exp, ex)
-        ws, ex = lst.computeOpticalNightWeights()
+        # time range: Jan 1 - Dec 31, 2012
+        ws, ex = lst.computeOpticalNightWeights(start = start, numDays = 365)
         exp = [186, 187, 187, 188, 188, 189, 189, 189, 188, 188, 188, 187, 187, 186, 185, 185, 184, 183, 183, 183, 183, 184, 185, 186]
         self.assertEqual(exp, ex)
        
@@ -497,13 +505,17 @@ class TestLstPressures(TestCase):
     def test_computeRfiWeights(self):
 
         lst = LstPressures()
-        ws, ex = lst.computeRfiWeights(numDays = 1, month = 1)
+        # Jan 1, 2012
+        start = datetime(2012, 1, 1)
+        ws, ex = lst.computeRfiWeights(start = start, numDays = 1) #numDays = 1, month = 1)
         exp = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         self.assertEqual(exp, ex)
-        ws, ex = lst.computeRfiWeights(numDays = 30, month = 1)
+        # Jan 1 - 30, 2012
+        ws, ex = lst.computeRfiWeights(start = start, numDays = 30)
         exp = [30, 30, 21, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 25, 30, 30, 30, 30, 30, 30, 30, 30] 
         self.assertEqual(exp, ex)
-        ws, ex = lst.computeRfiWeights()
+        # Jan 1 - Dec 31, 2012
+        ws, ex = lst.computeRfiWeights(start = start, numDays = 365)
         exp =[198, 199, 199, 198, 198, 198, 183, 183, 183, 177, 168, 167, 168, 168, 168, 168, 167, 169, 183, 183, 182, 189, 198, 198]
         self.assertEqual(exp, ex)
 

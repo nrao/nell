@@ -128,7 +128,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.sun = Sun()
         
         # what example year do we compute flags for?
-        self.year = 2012
+        #self.year = 2012
         
         sems = DSSSemester.getFutureSemesters()
         self.nextSemester = sems[0]
@@ -179,23 +179,31 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                  }
 
 
-    def computeThermalNightWeights(self, numDays = 365, month = 1):
+    def computeThermalNightWeights(self, start = None, numDays = None): 
         "Computes the weights for the PTCS night time flag,"
         return self.computeRiseSetPressure(self.sun.getPTCSRiseSet
-                                         , numDays = numDays
-                                         , month = month)
+                                         , start = start
+                                         , numDays = numDays)
        
-    def computeOpticalNightWeights(self, numDays = 365, month = 1):
+    def computeOpticalNightWeights(self, start = None, numDays = None): 
         "Computes the weights for the optical flag,"
         return self.computeRiseSetPressure(self.sun.getRiseSet
-                                         , numDays = numDays
-                                         , month = month)
+                                         , start = start
+                                         , numDays = numDays)
    
-    def computeRiseSetPressure(self, riseSetFn, numDays = 365, month = 1):
+    def computeRiseSetPressure(self, riseSetFn, start = None, numDays = None): 
         "Computes the weights for a time of day constraint."
+
+        if start is None:
+            # start at start of semester
+            start = self.nextSemesterStart 
+        if numDays is None:
+            # do the length of the semester
+            numDays = (self.nextSemesterEnd - self.nextSemesterStart).days 
+        print start, numDays
         # when is daytime for each day of the year? UTC?
         exCnt = [0]*24
-        start = date(self.year, month, 1)
+        #start = date(self.year, month, 1)
         for days in range(numDays):
             # when is day light for this day, UTC? 
             dt = start + timedelta(days = days)
@@ -220,10 +228,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         weights = [e/float(numDays) for e in exCnt]
         return (weights, exCnt)
 
-    def computeRfiWeights(self, numDays = 365, month = 1):
+    def computeRfiWeights(self, start = None, numDays = None): 
         return self.computeRiseSetPressure(self.getRfiRiseSet
                                          , numDays = numDays
-                                         , month = month)
+                                         , start = start)
 
     def getRfiRiseSet(self, date):
         "Gives the time high RFI start and ends for the given date."
