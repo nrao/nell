@@ -1,4 +1,4 @@
-from django.shortcuts               import render_to_response
+from django.shortcuts               import render_to_response, render
 from django.http  import HttpResponse, HttpResponseNotFound
 from django.contrib.auth.decorators import login_required
 from datetime   import datetime, timedelta
@@ -16,12 +16,12 @@ from pht.tools.PlotLstPressures import PlotLstPressures
 from httpadapters import *
 from tools.database import PstInterface, BulkSourceImport
 from tools.reports import *
-import math
+import settings
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg 
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
-import numpy
+import numpy, math
 
 def notify(request):
     return HttpResponse(json.dumps({"success" : "ok" })
@@ -30,7 +30,7 @@ def notify(request):
 @login_required
 @admin_only
 def root(request):
-    return render_to_response("pht/root.html", {})
+    return render_to_response("pht/root.html", {'extjs' : settings.EXTJS_URL})
 
 @login_required
 @admin_only
@@ -507,6 +507,21 @@ def proposal_ranking(request):
     ps = ProposalRanking(response)
     ps.report(semester = semester)
 
+    return response
+
+@login_required
+@admin_only
+def proposal_ranking_export(request):
+    semester  = request.GET.get('semester')
+    ps        = ProposalRanking(None)
+    proposals = [ps.genRowDataOrdered(p) for p in ps.getProposals(semester)]
+    header    = ps.genHeaderStr()
+    response  = render(request
+                    , "pht/proposalRanking.txt"
+                    , {'proposals' : proposals
+                     , 'header' : header} 
+                    , content_type = 'text/plain')
+    response['Content-Disposition'] = 'attachment; filename=proposalRanking.txt'
     return response
 
 @login_required

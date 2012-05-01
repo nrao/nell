@@ -49,9 +49,7 @@ class Report(object):
                      self.title + " for Semester %s" % self.semester
 
         data = [self.genHeader()]
-        self.proposals = self.order(
-         [p for p in Proposal.objects.all() if 'TGBT' not in p.pcode] if semester is None else
-         [p for p in Proposal.objects.filter(semester__semester = semester) if 'TGBT' not in p.pcode])
+        self.getProposals(semester)
         data.extend(map(self.genRow, self.proposals))
         t = Table(data, colWidths = self.colWidths())
         self.tableStyle = TableStyle([
@@ -66,6 +64,12 @@ class Report(object):
 
         # write the document to disk (or something)
         self.doc.build([t], onFirstPage = self.makeHeaderFooter, onLaterPages = self.makeHeaderFooter)
+
+    def getProposals(self, semester):
+        self.proposals = self.order(
+         [p for p in Proposal.objects.all() if 'TGBT' not in p.pcode] if semester is None else
+         [p for p in Proposal.objects.filter(semester__semester = semester) if 'TGBT' not in p.pcode])
+        return self.proposals
 
     def makeHeaderFooter(self, canvas, doc):
         canvas.saveState() 
