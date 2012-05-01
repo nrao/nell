@@ -128,7 +128,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.sun = Sun()
         
         # what example year do we compute flags for?
-        self.year = 2012
+        #self.year = 2012
         
         sems = DSSSemester.getFutureSemesters()
         self.nextSemester = sems[0]
@@ -179,23 +179,30 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                  }
 
 
-    def computeThermalNightWeights(self, numDays = 365, month = 1):
+    def computeThermalNightWeights(self, start = None, numDays = None): 
         "Computes the weights for the PTCS night time flag,"
         return self.computeRiseSetPressure(self.sun.getPTCSRiseSet
-                                         , numDays = numDays
-                                         , month = month)
+                                         , start = start
+                                         , numDays = numDays)
        
-    def computeOpticalNightWeights(self, numDays = 365, month = 1):
+    def computeOpticalNightWeights(self, start = None, numDays = None): 
         "Computes the weights for the optical flag,"
         return self.computeRiseSetPressure(self.sun.getRiseSet
-                                         , numDays = numDays
-                                         , month = month)
+                                         , start = start
+                                         , numDays = numDays)
    
-    def computeRiseSetPressure(self, riseSetFn, numDays = 365, month = 1):
+    def computeRiseSetPressure(self, riseSetFn, start = None, numDays = None): 
         "Computes the weights for a time of day constraint."
+
+        if start is None:
+            # start at start of semester
+            start = self.nextSemesterStart 
+        if numDays is None:
+            # do the length of the semester
+            numDays = (self.nextSemesterEnd - self.nextSemesterStart).days 
         # when is daytime for each day of the year? UTC?
         exCnt = [0]*24
-        start = date(self.year, month, 1)
+        #start = date(self.year, month, 1)
         for days in range(numDays):
             # when is day light for this day, UTC? 
             dt = start + timedelta(days = days)
@@ -220,10 +227,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         weights = [e/float(numDays) for e in exCnt]
         return (weights, exCnt)
 
-    def computeRfiWeights(self, numDays = 365, month = 1):
+    def computeRfiWeights(self, start = None, numDays = None): 
         return self.computeRiseSetPressure(self.getRfiRiseSet
                                          , numDays = numDays
-                                         , month = month)
+                                         , start = start)
 
     def getRfiRiseSet(self, date):
         "Gives the time high RFI start and ends for the given date."
@@ -751,8 +758,86 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         rs = ["%7.2f" % results[i] for i in range(len(results))]
         return label + ": " + ' '.join(rs)
             
-
     def initFlagWeights(self):
+        "These are what you get from 12B"
+
+        # TBF: These get computed by methods in this class,
+        # but no need to do it at start up every time.
+        self.thermalNightWeights = numpy.array([0.28415300546448086,
+            0.22950819672131148,
+            0.22404371584699453,
+            0.22950819672131148,
+            0.22950819672131148,
+            0.29508196721311475,
+            0.36065573770491804,
+            0.42622950819672129,
+            0.49180327868852458,
+            0.55737704918032782,
+            0.62295081967213117,
+            0.68852459016393441,
+            0.7595628415300546,
+            0.83606557377049184,
+            0.92349726775956287,
+            1.0,
+            1.0,
+            1.0,
+            0.98907103825136611,
+            0.86885245901639341,
+            0.72677595628415304,
+            0.5901639344262295,
+            0.46994535519125685,
+            0.36612021857923499])
+        self.opticalNightWeights = numpy.array([0.071038251366120214,
+            0.027322404371584699,
+            0.087431693989071038,
+            0.15846994535519127,
+            0.22404371584699453,
+            0.29508196721311475,
+            0.36065573770491804,
+            0.42622950819672129,
+            0.49180327868852458,
+            0.55737704918032782,
+            0.62295081967213117,
+            0.68852459016393441,
+            0.7595628415300546,
+            0.83606557377049184,
+            0.92349726775956287,
+            0.98907103825136611,
+            0.86338797814207646,
+            0.72677595628415304,
+            0.5901639344262295,
+            0.46994535519125685,
+            0.36612021857923499,
+            0.27868852459016391,
+            0.20765027322404372,
+            0.13661202185792351])
+        self.rfiWeights     = numpy.array([0.28415300546448086,
+            0.20218579234972678,
+            0.11475409836065574,
+            0.087431693989071038,
+            0.13661202185792351,
+            0.21857923497267759,
+            0.30601092896174864,
+            0.38797814207650272,
+            0.46994535519125685,
+            0.51912568306010931,
+            0.55191256830601088,
+            0.63387978142076506,
+            0.72131147540983609,
+            0.80327868852459017,
+            0.88524590163934425,
+            0.91803278688524592,
+            0.86338797814207646,
+            0.78142076502732238,
+            0.69945355191256831,
+            0.61748633879781423,
+            0.5300546448087432,
+            0.48087431693989069,
+            0.44808743169398907,
+            0.36612021857923499])
+    
+    def initFlagWeights2012(self):
+        "These are what you get from 2012"
 
         # TBF: These get computed by methods in this class,
         # but no need to do it at start up every time.
