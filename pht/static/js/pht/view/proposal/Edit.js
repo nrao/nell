@@ -15,6 +15,7 @@ Ext.define('PHT.view.proposal.Edit', {
                         });
         this.friendCombo = Ext.create('Ext.form.field.ComboBox', {
                             name: 'friend_id',
+                            forceSelection: true,
                             fieldLabel: 'Friend',
                             store : 'Friends',
                             queryMode: 'local',

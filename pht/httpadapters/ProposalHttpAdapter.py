@@ -118,10 +118,16 @@ class ProposalHttpAdapter(PhtHttpAdapter):
 
         dtfmt         = "%m/%d/%Y"
         dt            = data.get('submit_date')
-        pi_id         = data.get('pi_id')
-        pi            = Author.objects.get(id = pi_id) if pi_id is not None else None
-        friend_id     = data.get('friend_id')
-        friend        = DSSUser.objects.get(id = friend_id) if friend_id is not None else None
+        try:
+            pi_id         = data.get('pi_id')
+            pi            = Author.objects.get(id = pi_id) if pi_id is not None else None
+        except:
+            pi = None
+        try:    
+            friend_id     = data.get('friend_id')
+            friend        = DSSUser.objects.get(id = friend_id) if friend_id is not None else None
+        except:
+            friend = None
         print friend_id, friend
         proposalType  = ProposalType.objects.get(type = data.get('proposal_type'))
         status        = Status.objects.get(name = data.get('status'))
