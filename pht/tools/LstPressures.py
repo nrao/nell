@@ -202,7 +202,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             numDays = (self.nextSemesterEnd - self.nextSemesterStart).days 
         # when is daytime for each day of the year? UTC?
         exCnt = [0]*24
-        #start = date(self.year, month, 1)
         for days in range(numDays):
             # when is day light for this day, UTC? 
             dt = start + timedelta(days = days)
@@ -219,12 +218,15 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             else:
                 ex = [(minHr, maxHr)]
                 
-            # now tally up the LST bins that get excluded    
+            # now tally up the LST bins that during day light    
             for s, e in ex:
                 for h in range(s,e):
                     exCnt[h] += 1
-        # finally convert these counts to weights
-        weights = [e/float(numDays) for e in exCnt]
+        # Convert these counts to weights.
+        # Note that we were tallying daylight, so invert this
+        # so that we are penalizing daylight.
+        weights = [(1.0 - (e/float(numDays))) for e in exCnt]
+        exCnt = [(numDays - cnt) for cnt in exCnt]
         return (weights, exCnt)
 
     def computeRfiWeights(self, start = None, numDays = None): 
@@ -759,6 +761,84 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         return label + ": " + ' '.join(rs)
             
     def initFlagWeights(self):
+        "These are what you get from 12B"
+
+        # TBF: These get computed by methods in this class,
+        # but no need to do it at start up every time.
+        self.thermalNightWeights = numpy.array([0.71584699453551914,
+            0.77049180327868849,
+            0.77595628415300544,
+            0.77049180327868849,
+            0.77049180327868849,
+            0.70491803278688525,
+            0.63934426229508201,
+            0.57377049180327866,
+            0.50819672131147542,
+            0.44262295081967218,
+            0.37704918032786883,
+            0.31147540983606559,
+            0.2404371584699454,
+            0.16393442622950816,
+            0.076502732240437132,
+            0.0,
+            0.0,
+            0.0,
+            0.010928961748633892,
+            0.13114754098360659,
+            0.27322404371584696,
+            0.4098360655737705,
+            0.53005464480874309,
+            0.63387978142076506])
+        self.opticalNightWeights = numpy.array([0.92896174863387981,
+            0.97267759562841527,
+            0.91256830601092898,
+            0.84153005464480879,
+            0.77595628415300544,
+            0.70491803278688525,
+            0.63934426229508201,
+            0.57377049180327866,
+            0.50819672131147542,
+            0.44262295081967218,
+            0.37704918032786883,
+            0.31147540983606559,
+            0.2404371584699454,
+            0.16393442622950816,
+            0.076502732240437132,
+            0.010928961748633892,
+            0.13661202185792354,
+            0.27322404371584696,
+            0.4098360655737705,
+            0.53005464480874309,
+            0.63387978142076506,
+            0.72131147540983609,
+            0.79234972677595628,
+            0.86338797814207646])
+        self.rfiWeights     = numpy.array([0.71584699453551914,
+            0.79781420765027322,
+            0.88524590163934425,
+            0.91256830601092898,
+            0.86338797814207646,
+            0.78142076502732238,
+            0.69398907103825136,
+            0.61202185792349728,
+            0.53005464480874309,
+            0.48087431693989069,
+            0.44808743169398912,
+            0.36612021857923494,
+            0.27868852459016391,
+            0.19672131147540983,
+            0.11475409836065575,
+            0.081967213114754078,
+            0.13661202185792354,
+            0.21857923497267762,
+            0.30054644808743169,
+            0.38251366120218577,
+            0.4699453551912568,
+            0.51912568306010931,
+            0.55191256830601088,
+            0.63387978142076506])
+
+    def initFlagWeightsBad(self):
         "These are what you get from 12B"
 
         # TBF: These get computed by methods in this class,
