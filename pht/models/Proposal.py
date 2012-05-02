@@ -33,6 +33,7 @@ from ProposalComments   import ProposalComments
 from Receiver           import Receiver
 
 from scheduler.models   import Project as DSSProject 
+from scheduler.models   import User as DSSUser 
 
 from utilities          import TimeAccounting
 
@@ -46,6 +47,7 @@ class Proposal(models.Model):
     observing_types = models.ManyToManyField(ObservingType)
     status          = models.ForeignKey(Status)
     semester        = models.ForeignKey(Semester, null = True)
+    friend          = models.ForeignKey(DSSUser, null = True)
     pi              = models.ForeignKey('Author', related_name = "pi_on", null = True)
     investigators   = models.ManyToManyField('Author', related_name = 'investigator_on')
     sci_categories  = models.ManyToManyField(ScientificCategory)

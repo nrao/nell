@@ -13,6 +13,15 @@ Ext.define('PHT.view.proposal.Edit', {
                             displayField: 'name',
                             valueField: 'id'
                         });
+        this.friendCombo = Ext.create('Ext.form.field.ComboBox', {
+                            name: 'friend_id',
+                            fieldLabel: 'Friend',
+                            store : 'Friends',
+                            queryMode: 'local',
+                            lastQuery: '',
+                            displayField: 'name',
+                            valueField: 'id'
+                        });
         this.items = [
             {
                 xtype: 'phtform',
@@ -35,6 +44,7 @@ Ext.define('PHT.view.proposal.Edit', {
                             allowBlank: false,
                         },
                         this.piCombo,
+                        this.friendCombo,
                         {
                             xtype: 'combo',
                             name: 'semester',

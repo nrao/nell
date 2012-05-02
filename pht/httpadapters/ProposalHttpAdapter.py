@@ -28,6 +28,8 @@ from PhtHttpAdapter      import PhtHttpAdapter
 from SessionHttpAdapter  import SessionHttpAdapter
 from SourceHttpAdapter   import SourceHttpAdapter
 
+from scheduler.models import User as DSSUser
+
 class ProposalHttpAdapter(PhtHttpAdapter):
 
     def __init__(self, proposal = None):
@@ -43,6 +45,8 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         obs_types      = [ot.type for ot in self.proposal.observing_types.all()]
         obs_type_codes = [ot.code for ot in self.proposal.observing_types.all()]
         semester = self.proposal.semester.semester if self.proposal.semester is not None else None
+        friend_id   = self.proposal.friend.id if self.proposal.friend is not None else None
+        friend_name = self.proposal.friend.__str__() if self.proposal.friend is not None else None
         pi_id   = self.proposal.pi.id if self.proposal.pi is not None else None
         pi_name = self.proposal.pi.getLastFirstName() if self.proposal.pi is not None else None
         dss_pcode = self.proposal.dss_project.pcode if self.proposal.dss_project is not None else 'unknown'
@@ -56,6 +60,8 @@ class ProposalHttpAdapter(PhtHttpAdapter):
               , 'semester'         : semester
               , 'pi_id'            : pi_id 
               , 'pi_name'          : pi_name
+              , 'friend_id'        : friend_id 
+              , 'friend_name'      : friend_name
               , 'authors'          : authors
               , 'sci_categories'   : sci_categories
               , 'sci_cat_codes'    : sci_cat_codes
@@ -114,6 +120,9 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         dt            = data.get('submit_date')
         pi_id         = data.get('pi_id')
         pi            = Author.objects.get(id = pi_id) if pi_id is not None else None
+        friend_id     = data.get('friend_id')
+        friend        = DSSUser.objects.get(id = friend_id) if friend_id is not None else None
+        print friend_id, friend
         proposalType  = ProposalType.objects.get(type = data.get('proposal_type'))
         status        = Status.objects.get(name = data.get('status'))
         semester      = Semester.objects.get(semester = data.get('semester'))
@@ -123,6 +132,7 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         self.proposal.proposal_type   = proposalType
         # TBF: authors is very complicated, need to fix this
         self.proposal.pi              = pi
+        self.proposal.friend          = friend
         self.proposal.status          = status
         self.proposal.semester        = semester
         self.proposal.pcode           = data.get('pcode')
