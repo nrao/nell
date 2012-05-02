@@ -128,7 +128,6 @@ class ProposalHttpAdapter(PhtHttpAdapter):
             friend        = DSSUser.objects.get(id = friend_id) if friend_id is not None else None
         except:
             friend = None
-        print friend_id, friend
         proposalType  = ProposalType.objects.get(type = data.get('proposal_type'))
         status        = Status.objects.get(name = data.get('status'))
         semester      = Semester.objects.get(semester = data.get('semester'))
