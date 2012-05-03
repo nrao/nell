@@ -33,6 +33,7 @@ from pht.models         import SessionGrade
 from pht.models         import SessionType
 from pht.httpadapters   import SessionHttpAdapter
 from scheduler.models   import Period as DSSPeriod
+from utilities          import TimeAgent
 
 class TestLstPressures(TestCase):
 
@@ -555,3 +556,36 @@ class TestLstPressures(TestCase):
         exp = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.65616762656011396, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.75337457147246312, 2.0, 2.0, 1.6315264423378473, 1.0]
         for i in range(len(exp)):
             self.assertAlmostEqual(exp[i], ps3[i], 3)
+
+    def test_use_case_1(self):
+
+        lst = LstPressures()
+
+        # Consider a 24 hour long session that is circumpolar.
+        # Date: September 21, 2012
+        # Sunrise: approximately 7:14 EDT
+        # Sunset: approximately 19:14 EDT
+        start = datetime(2012, 9, 21) 
+        rise, set =  lst.sun.getRiseSet(start)
+        rise = TimeAgent.utc2est(rise)
+        set = TimeAgent.utc2est(set)
+        self.assertEqual(rise, datetime(2012, 9, 21, 7, 6, 21))
+        self.assertEqual(set,  datetime(2012, 9, 21, 19, 17, 25))
+
+        # Optical Nighttime flag should be 1 from 00:00 EDT to 07:00 EDT
+        # and 20:00 EDT to 24:00 EDT.  This corresponds to
+        #roughly 18:00-05:00 LST.
+        ws, ex = lst.computeOpticalNightWeights(start = start, numDays = 1)
+        # 1 from 0 - 4, and 18 - 23:
+        exp = [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+        self.assertEquals(exp, ex) 
+
+        # Thermal Nighttime flag would then be 21:00-05:00 LST
+        ws, ex = lst.computeThermalNightWeights(start = start, numDays = 1)
+        exp = [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1]
+        self.assertEquals(exp, ex) 
+        
+        # RFI is between 8 AM and 8 PM EST.
+        ws, ex = lst.computeRfiWeights(start = start, numDays = 1)
+        exp = [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+        self.assertEquals(exp, ex)
