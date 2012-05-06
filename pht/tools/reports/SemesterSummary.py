@@ -36,7 +36,7 @@ from Report import Report
 
 from pht.tools.SemesterTimeAccounting import SemesterTimeAccounting
  
-class SemesterSummary(object):
+class SemesterSummary(Report):
 
     """
     This class is responsible for producing a report on the overall
@@ -44,28 +44,29 @@ class SemesterSummary(object):
     """
 
     def __init__(self, filename, semester = None):
+        super(SemesterSummary, self).__init__(filename)
 
         self.semester = semester
 
         # portrait or landscape?
-        w, h      = letter
-        self.orientation = 'portrait'
-        if self.orientation == 'portrait':
-            pagesize = (w, h)
-        else:
-            pagesize = (h, w)
+        #w, h      = letter
+        #self.orientation = 'portrait'
+        #if self.orientation == 'portrait':
+        #    pagesize = (w, h)
+        #else:
+        #    pagesize = (h, w)
 
         # set up the page    
-        self.doc  = SimpleDocTemplate(filename, pagesize=pagesize)
-        self.styleSheet = getSampleStyleSheet()['Normal']
-        self.styleSheet.fontSize = 7
+        #self.doc  = SimpleDocTemplate(filename, pagesize=pagesize)
+        #self.styleSheet = getSampleStyleSheet()['Normal']
+        #self.styleSheet.fontSize = 7
 
-        self.tableStyle = TableStyle([
-            ('TOPPADDING', (0, 0), (-1, -1), 0),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
-            ('LINEABOVE', (0, 1), (-1, 1), 1, colors.black),
-            ('BOX', (0, 0), (-1, -1), 1, colors.black),
-        ])
+        #self.tableStyle = TableStyle([
+        #    ('TOPPADDING', (0, 0), (-1, -1), 0),
+        #    ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+        #    ('LINEABOVE', (0, 1), (-1, 1), 1, colors.black),
+        #    ('BOX', (0, 0), (-1, -1), 1, colors.black),
+        #])
 
         self.ta = SemesterTimeAccounting(semester = semester)
 
@@ -88,7 +89,7 @@ class SemesterSummary(object):
         t3 = self.getAvailableNewAstronomyTableGradeA()
         t4 = self.getAvailableNewAstronomyTable()
 
-        b = Paragraph('<br/>', self.styleSheet)
+        b = self.getBreak()
 
         tables = [t0, b, t1, b, t2, b]
         for g in ['A', 'B', 'C']:
@@ -209,9 +210,9 @@ class SemesterSummary(object):
         return self.getAvailableTable(txt
                                     , self.ta.newAstroAvailAllGradeHrs)
 
-    def pg(self, text):
-        "Shortcut to Paragraph"
-        return Paragraph(text, self.styleSheet)
+    #def pg(self, text):
+    #    "Shortcut to Paragraph"
+    #    return Paragraph(text, self.styleSheet)
 
     def hrsPg(self, text, hrs):
         "This is common enough when reporting on hours"
@@ -220,19 +221,19 @@ class SemesterSummary(object):
               , self.pg("GC[%5.2f]" % hrs[1]) # hrs in Gal. Center
                ]
 
-    def genFooter(self, canvas, doc):
-        pass
-
-    def makeHeaderFooter(self, canvas, doc):
-        canvas.saveState() 
-        canvas.setFont('Times-Roman', 20) 
-        w, h = letter
-
-        if self.orientation == 'portrait':
-            canvas.drawString(20, h-40, self.title)
-        else:
-            canvas.drawString(w, w-40, self.title)
-        self.genFooter(canvas, doc)
+    #def genFooter(self, canvas, doc):
+    #    pass
+#
+#    def makeHeaderFooter(self, canvas, doc):
+#        canvas.saveState() 
+#        canvas.setFont('Times-Roman', 20) 
+#        w, h = letter
+#
+#        if self.orientation == 'portrait':
+#            canvas.drawString(20, h-40, self.title)
+#        else:
+#            canvas.drawString(w, w-40, self.title)
+#        self.genFooter(canvas, doc)
 
 if __name__ == '__main__':
 

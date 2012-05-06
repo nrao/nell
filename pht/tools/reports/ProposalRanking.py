@@ -31,10 +31,10 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units  import inch
 
-from pht.models import *
-from Report import Report
+from pht.models     import *
+from ProposalReport import ProposalReport
  
-class ProposalRanking(Report):
+class ProposalRanking(ProposalReport):
 
     def __init__(self, filename):
         super(ProposalRanking, self).__init__(filename)
