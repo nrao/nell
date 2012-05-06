@@ -206,27 +206,24 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             # when is day light for this day, UTC? 
             dt = start + timedelta(days = days)
             # use the given function to compute rise/set for this day
-            r, s =riseSetFn(dt) 
+            rise, set =riseSetFn(dt) 
             # LSTs for these UTC datetimes?
-            minLst = sla.Absolute2RelativeLST(r) 
-            maxLst = sla.Absolute2RelativeLST(s)
+            # Note: set is the minLst, rise is the max, because
+            # we want to penalize daytime
+            minLst = sla.Absolute2RelativeLST(set) 
+            maxLst = sla.Absolute2RelativeLST(rise) 
             # what bins do those fall into?
-            minHr = int(math.floor(minLst))
-            maxHr = int(math.floor(maxLst))
-            if minHr > maxHr:
-                ex = [(0,maxHr), (minHr, 24)]
-            else:
-                ex = [(minHr, maxHr)]
-                
-            # now tally up the LST bins that during day light    
+            ex = self.getLstRange(minLst, maxLst)    
+            # now tally up the LST bins that are during night time    
             for s, e in ex:
                 for h in range(s,e):
                     exCnt[h] += 1
+            #todayStr = ",".join(["%d" % t for t in today])        
+            #print "%s, %s, %5.2f, %5.2f, [%s]" % (rise.strftime("%H:%M:%S")
+            #                            , set.strftime("%H:%M:%S")
+            #                            , minLst, maxLst, todayStr)
         # Convert these counts to weights.
-        # Note that we were tallying daylight, so invert this
-        # so that we are penalizing daylight.
-        weights = [(1.0 - (e/float(numDays))) for e in exCnt]
-        exCnt = [(numDays - cnt) for cnt in exCnt]
+        weights = [(e/float(numDays)) for e in exCnt]
         return (weights, exCnt)
 
     def computeRfiWeights(self, start = None, numDays = None): 
@@ -245,24 +242,13 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         set  = TimeAgent.est2utc(set)
         return (rise, set)
 
-
-        # convert this to UT
-        
-    def binLst(self, lstRads):
-        """
-        We use floor to do this, but be careful of LSTs of 10:00:00
-        in the UI coming back from rad2hr as 9.99999999999999
-        """
-        return int(math.floor(float("%.6f" % rad2hr(lstRads))))
-
-    def getLstWeightsForSession(self, session):
-        "Simple: LST's within min/max are on, rest are off."
-        ws = self.newHrs() #[0.0] * self.hrs
-        minLst = self.binLst(session.target.min_lst) 
-        maxLst = self.binLst(session.target.max_lst) 
+    def getLstRange(self, minLst, maxLst):
+        "How do we convert float min/max LST to int defined range?"
+        minLst = self.binLst(minLst) 
+        maxLst = self.binLst(maxLst) 
         if (0 > minLst or minLst > 24.0) or (0 > maxLst or maxLst > 24.0):
-            print "Illegal LST min/max: ", minLst, maxLst, session
-            return ws
+            print minLst, maxLst
+            raise "Illegal LST min/max: ", minLst, maxLst #, session
         # special case?
         if minLst == maxLst:
             maxLst = minLst + 1
@@ -271,6 +257,20 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             ons = [(0, maxLst), (minLst, self.hrs)]
         else:
             ons = [(minLst, maxLst)]
+        return ons
+
+    def binLst(self, lstHrs):
+        """
+        We use floor to do this, but be careful of LSTs of 10:00:00
+        in the UI coming back from rad2hr as 9.99999999999999
+        """
+        return int(math.floor(float("%.6f" % lstHrs))) #rad2hr(lstRads))))
+
+    def getLstWeightsForSession(self, session):
+        "Simple: LST's within min/max are on, rest are off."
+        ws = self.newHrs() 
+        ons = self.getLstRange(rad2hr(session.target.min_lst)
+                             , rad2hr(session.target.max_lst))
         for minLst, maxLst in ons:
             for b in range(minLst, maxLst):
                 ws[b] = 1.0

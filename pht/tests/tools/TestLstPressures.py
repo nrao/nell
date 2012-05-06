@@ -418,6 +418,16 @@ class TestLstPressures(TestCase):
         exp.extend([1.0]*2)
         self.assertEqual(exp, ws.tolist())
 
+        # one more ...
+        self.session.target.min_lst = hr2rad(15.91) #1.73)
+        self.session.target.max_lst = hr2rad(1.73) #15.91)
+        ws = lst.getLstWeightsForSession(self.session)
+        exp =  [1]
+        exp.extend([0]*14)
+        exp.extend([1]*9)
+        self.assertEqual(exp, ws.tolist())
+
+
     def test_modifyWeightsForLstExclusion(self):
 
         lst = LstPressures()
