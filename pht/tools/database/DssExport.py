@@ -88,6 +88,10 @@ class DssExport(object):
             pa = dss.Project_Allotment(project = project, allotment = allotment)
             pa.save()
 
+        # friend
+        if proposal.friend:
+            friend = dss.Friend.objects.create(project = project, user = proposal.friend)
+
         # investigators
         try:
             dss_pi = dss.User.objects.get(pst_id = proposal.pi.pst_person_id)
@@ -248,6 +252,5 @@ class DssExport(object):
 if __name__ == '__main__':
     proposals = [p.pcode for p in Proposal.objects.filter(semester__semester = '12B') 
                    if p.allocatedTime() > 0]
-    proposals = ['GBT12A-473']
     print 'Importing', len(proposals), 'proposals.'
     DssExport(quiet = False).exportProposals(proposals)
