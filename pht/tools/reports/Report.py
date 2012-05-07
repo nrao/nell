@@ -84,7 +84,6 @@ class Report(object):
         canvas.setFont('Times-Roman', 20) 
         w, h = letter
 
-        print "report: ", self.orientation
         if self.orientation == 'portrait':
             canvas.drawString(20, h-40, self.title)
         else:
