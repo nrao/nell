@@ -6,6 +6,7 @@ Ext.define('PHT.controller.Proposals', {
     extend: 'PHT.controller.PhtController',
    
     models: [
+        'Friend',
         'ObservingType',
         'PrimaryInvestigator',
         'Proposal',
@@ -18,6 +19,7 @@ Ext.define('PHT.controller.Proposals', {
     ],
 
     stores: [
+        'Friends',
         'ObservingTypes',
         'PrimaryInvestigators',
         'Proposals',

@@ -7,6 +7,8 @@ Ext.define('PHT.model.Proposal', {
            , 'obs_type_codes'
            , 'status'
            , 'semester'
+           , 'friend_name'
+           , 'friend_id'
            , 'pi_name'
            , 'pi_id'
            , 'authors'

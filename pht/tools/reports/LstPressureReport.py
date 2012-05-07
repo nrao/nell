@@ -34,8 +34,9 @@ from reportlab.lib.units  import inch
 
 from pht.tools.LstPressures import LstPressures
 from pht.models import *
+from Report import Report
 
-class LstPressureReport(object):
+class LstPressureReport(Report):
 
     """
     This class is responsible for producing a report on the LST
@@ -44,27 +45,19 @@ class LstPressureReport(object):
     """
 
     def __init__(self, filename):
+        super(LstPressureReport, self).__init__(filename
+                                              , orientation = 'landscape' 
+                                              , topMargin = 50
+                                               )
 
-        # portrait or landscape?
-        w, h      = letter
-        self.orientation = 'landscape'
-        if self.orientation == 'portrait':
-            pagesize = (w, h)
-        else:
-            pagesize = (h, w)
-
-        # set up the page    
-        self.doc  = SimpleDocTemplate(filename
-                                    , pagesize=pagesize
-                                    , topMargin=50)
-
-        self.styleSheet = getSampleStyleSheet()['Normal']
+        # make first style sheet font a little smaller
         self.styleSheet.fontSize = 6
 
-        # for headers
+        # a second style sheet for headers
         self.styleSheet2 = getSampleStyleSheet()['Normal']
         self.styleSheet2.fontSize = 8
 
+        # redefine table style to include an inner grid
         self.tableStyle = TableStyle([
             ('TOPPADDING', (0, 0), (-1, -1), 0),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
@@ -210,12 +203,6 @@ class LstPressureReport(object):
         rows.extend(dataRows)
         return rows
 
-    def pg(self, text, bold = False):
-        "Shortcut to Paragraph"
-        if bold:
-            text = "<b>%s</b>" % text
-        return Paragraph(text, self.styleSheet)       
-
     def tableHeader(self, text):
         return Paragraph("<b>%s</b>" % text, self.styleSheet2)       
 
@@ -224,23 +211,6 @@ class LstPressureReport(object):
         rowData = [self.pg("%5.2f" % d) for d in data]
         row.extend(rowData)
         return row
-
-    def getBreak(self):
-        return Paragraph('<br/>', self.styleSheet)
-
-    def genFooter(self, canvas, doc):
-        pass
-
-    def makeHeaderFooter(self, canvas, doc):
-        canvas.saveState() 
-        canvas.setFont('Times-Roman', 20) 
-        w, h = letter
-
-        if self.orientation == 'portrait':
-            canvas.drawString(20, h-40, self.title)
-        else:
-            canvas.drawString(w-self.titleOffset, w-40, self.title)
-        self.genFooter(canvas, doc)
 
     def createDebugElements(self):
 
