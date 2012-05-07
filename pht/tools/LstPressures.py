@@ -178,6 +178,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                  , 'C' : Pressures()
                  }
 
+        # for holding what to do with overfilled weather bins
+        self.changes = Pressures()
+
 
     def computeThermalNightWeights(self, start = None, numDays = None): 
         "Computes the weights for the PTCS night time flag,"
@@ -202,29 +205,28 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             numDays = (self.nextSemesterEnd - self.nextSemesterStart).days 
         # when is daytime for each day of the year? UTC?
         exCnt = [0]*24
-        #start = date(self.year, month, 1)
         for days in range(numDays):
             # when is day light for this day, UTC? 
             dt = start + timedelta(days = days)
             # use the given function to compute rise/set for this day
-            r, s =riseSetFn(dt) 
+            rise, set =riseSetFn(dt) 
             # LSTs for these UTC datetimes?
-            minLst = sla.Absolute2RelativeLST(r) 
-            maxLst = sla.Absolute2RelativeLST(s)
+            # Note: set is the minLst, rise is the max, because
+            # we want to penalize daytime
+            minLst = sla.Absolute2RelativeLST(set) 
+            maxLst = sla.Absolute2RelativeLST(rise) 
             # what bins do those fall into?
-            minHr = int(math.floor(minLst))
-            maxHr = int(math.floor(maxLst))
-            if minHr > maxHr:
-                ex = [(0,maxHr), (minHr, 24)]
-            else:
-                ex = [(minHr, maxHr)]
-                
-            # now tally up the LST bins that get excluded    
+            ex = self.getLstRange(minLst, maxLst)    
+            # now tally up the LST bins that are during night time    
             for s, e in ex:
                 for h in range(s,e):
                     exCnt[h] += 1
-        # finally convert these counts to weights
-        weights = [e/float(numDays) for e in exCnt]
+            #todayStr = ",".join(["%d" % t for t in today])        
+            #print "%s, %s, %5.2f, %5.2f, [%s]" % (rise.strftime("%H:%M:%S")
+            #                            , set.strftime("%H:%M:%S")
+            #                            , minLst, maxLst, todayStr)
+        # Convert these counts to weights.
+        weights = [(e/float(numDays)) for e in exCnt]
         return (weights, exCnt)
 
     def computeRfiWeights(self, start = None, numDays = None): 
@@ -243,24 +245,13 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         set  = TimeAgent.est2utc(set)
         return (rise, set)
 
-
-        # convert this to UT
-        
-    def binLst(self, lstRads):
-        """
-        We use floor to do this, but be careful of LSTs of 10:00:00
-        in the UI coming back from rad2hr as 9.99999999999999
-        """
-        return int(math.floor(float("%.6f" % rad2hr(lstRads))))
-
-    def getLstWeightsForSession(self, session):
-        "Simple: LST's within min/max are on, rest are off."
-        ws = self.newHrs() #[0.0] * self.hrs
-        minLst = self.binLst(session.target.min_lst) 
-        maxLst = self.binLst(session.target.max_lst) 
+    def getLstRange(self, minLst, maxLst):
+        "How do we convert float min/max LST to int defined range?"
+        minLst = self.binLst(minLst) 
+        maxLst = self.binLst(maxLst) 
         if (0 > minLst or minLst > 24.0) or (0 > maxLst or maxLst > 24.0):
-            print "Illegal LST min/max: ", minLst, maxLst, session
-            return ws
+            print minLst, maxLst
+            raise "Illegal LST min/max: ", minLst, maxLst #, session
         # special case?
         if minLst == maxLst:
             maxLst = minLst + 1
@@ -269,6 +260,20 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             ons = [(0, maxLst), (minLst, self.hrs)]
         else:
             ons = [(minLst, maxLst)]
+        return ons
+
+    def binLst(self, lstHrs):
+        """
+        We use floor to do this, but be careful of LSTs of 10:00:00
+        in the UI coming back from rad2hr as 9.99999999999999
+        """
+        return int(math.floor(float("%.6f" % lstHrs))) #rad2hr(lstRads))))
+
+    def getLstWeightsForSession(self, session):
+        "Simple: LST's within min/max are on, rest are off."
+        ws = self.newHrs() 
+        ons = self.getLstRange(rad2hr(session.target.min_lst)
+                             , rad2hr(session.target.max_lst))
         for minLst, maxLst in ons:
             for b in range(minLst, maxLst):
                 ws[b] = 1.0
@@ -567,8 +572,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         #self.pressuresBySession[s.name] = (carryover, ps, sum(ps))
 
         # now figure out the availability        
-        changes = self.weather.getAvailabilityChanges(self.gradePs['A'])
-        self.gradePs['A'] += changes
+        self.changes = self.weather.getAvailabilityChanges(self.gradePs['A'])
+        self.gradePs['A'] += self.changes
 
         # What's *really* available for this semester?
         self.remainingTotalPs = self.weather.availabilityTotal - \
@@ -686,6 +691,12 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 print self.formatResults("      %s_%s" % (w, g)
                                        , self.gradePs[g].getType(w))
 
+        print ""
+        print "Changes from overfilled Weather bins: "
+        for w in self.weatherTypes:
+            print self.formatResults("      %s" % (w)
+                                   , self.changes.getType(w))
+
         if len(self.sessions) != len(self.pressuresBySession):
             print "R U Missing sessions?: ", len(self.sessions), len(self.pressuresBySession)
 
@@ -759,6 +770,84 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         return label + ": " + ' '.join(rs)
             
     def initFlagWeights(self):
+        "These are what you get from 12B"
+
+        # TBF: These get computed by methods in this class,
+        # but no need to do it at start up every time.
+        self.thermalNightWeights = numpy.array([0.71584699453551914,
+            0.77049180327868849,
+            0.77595628415300544,
+            0.77049180327868849,
+            0.77049180327868849,
+            0.70491803278688525,
+            0.63934426229508201,
+            0.57377049180327866,
+            0.50819672131147542,
+            0.44262295081967218,
+            0.37704918032786883,
+            0.31147540983606559,
+            0.2404371584699454,
+            0.16393442622950816,
+            0.076502732240437132,
+            0.0,
+            0.0,
+            0.0,
+            0.010928961748633892,
+            0.13114754098360659,
+            0.27322404371584696,
+            0.4098360655737705,
+            0.53005464480874309,
+            0.63387978142076506])
+        self.opticalNightWeights = numpy.array([0.92896174863387981,
+            0.97267759562841527,
+            0.91256830601092898,
+            0.84153005464480879,
+            0.77595628415300544,
+            0.70491803278688525,
+            0.63934426229508201,
+            0.57377049180327866,
+            0.50819672131147542,
+            0.44262295081967218,
+            0.37704918032786883,
+            0.31147540983606559,
+            0.2404371584699454,
+            0.16393442622950816,
+            0.076502732240437132,
+            0.010928961748633892,
+            0.13661202185792354,
+            0.27322404371584696,
+            0.4098360655737705,
+            0.53005464480874309,
+            0.63387978142076506,
+            0.72131147540983609,
+            0.79234972677595628,
+            0.86338797814207646])
+        self.rfiWeights     = numpy.array([0.71584699453551914,
+            0.79781420765027322,
+            0.88524590163934425,
+            0.91256830601092898,
+            0.86338797814207646,
+            0.78142076502732238,
+            0.69398907103825136,
+            0.61202185792349728,
+            0.53005464480874309,
+            0.48087431693989069,
+            0.44808743169398912,
+            0.36612021857923494,
+            0.27868852459016391,
+            0.19672131147540983,
+            0.11475409836065575,
+            0.081967213114754078,
+            0.13661202185792354,
+            0.21857923497267762,
+            0.30054644808743169,
+            0.38251366120218577,
+            0.4699453551912568,
+            0.51912568306010931,
+            0.55191256830601088,
+            0.63387978142076506])
+
+    def initFlagWeightsBad(self):
         "These are what you get from 12B"
 
         # TBF: These get computed by methods in this class,

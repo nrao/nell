@@ -135,7 +135,6 @@ class ProposalHttpAdapter(PhtHttpAdapter):
 
         self.proposal.pst_proposal_id = data.get('pst_proposal_id')
         self.proposal.proposal_type   = proposalType
-        # TBF: authors is very complicated, need to fix this
         self.proposal.pi              = pi
         self.proposal.friend          = friend
         self.proposal.status          = status

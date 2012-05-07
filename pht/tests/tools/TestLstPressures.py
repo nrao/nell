@@ -33,6 +33,7 @@ from pht.models         import SessionGrade
 from pht.models         import SessionType
 from pht.httpadapters   import SessionHttpAdapter
 from scheduler.models   import Period as DSSPeriod
+from utilities          import TimeAgent
 
 class TestLstPressures(TestCase):
 
@@ -315,7 +316,7 @@ class TestLstPressures(TestCase):
         self.session.flags.thermal_night = True
         ps = lst.getPressuresForSession(self.session)
         # changes non-zero ones 
-        exp = [ 0.39811543, 0.32155477, 0.3138987, 0.32155477, 0.32155477, 0.41342756, 0.50530035, 0.59717314, 0.68904594, 0.78091873, 0.87279152, 0.96466431]
+        exp = [0.63214550853749085, 0.68040089086859701, 0.68522642910170761, 0.68040089086859701, 0.68040089086859701, 0.62249443207126953, 0.56458797327394228, 0.50668151447661469, 0.44877505567928738, 0.39086859688195996, 0.33296213808463254, 0.27505567928730518]
         exp.extend([0.0]*12)
         for i in range(len(exp)):
             self.assertAlmostEqual(exp[i], ps[i], 3)
@@ -417,6 +418,16 @@ class TestLstPressures(TestCase):
         exp.extend([1.0]*2)
         self.assertEqual(exp, ws.tolist())
 
+        # one more ...
+        self.session.target.min_lst = hr2rad(15.91) #1.73)
+        self.session.target.max_lst = hr2rad(1.73) #15.91)
+        ws = lst.getLstWeightsForSession(self.session)
+        exp =  [1]
+        exp.extend([0]*14)
+        exp.extend([1]*9)
+        self.assertEqual(exp, ws.tolist())
+
+
     def test_modifyWeightsForLstExclusion(self):
 
         lst = LstPressures()
@@ -457,16 +468,16 @@ class TestLstPressures(TestCase):
         # time range: Jan 1 - 30, 2012
         start = datetime(2012, 1, 1)
         ws, ex = lst.computeThermalNightWeights(start = start, numDays = 30)
-        exp = [30, 30, 24, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 16, 30, 30, 30, 30, 30, 30, 30, 30, 30]
+        exp = [0, 0, 6, 18, 30, 30, 30, 30, 30, 30, 30, 30, 30, 29, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.assertEquals(exp, ex)
         # time range: June 1 - 30, 2012
         start2 = datetime(2012, 6, 1)
         ws, ex = lst.computeThermalNightWeights(start = start2, numDays = 30)
-        exp = [30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 17, 2, 0, 0, 0, 0, 12, 26, 30]
+        exp = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 28, 30, 30, 30, 30, 18, 4, 0]
         self.assertEquals(exp, ex)
         # time range: Jan 1 - Dec 31, 2012
         ws, ex = lst.computeThermalNightWeights(start = start, numDays = 365)
-        exp = [225, 224, 223, 224, 224, 225, 226, 225, 225, 225, 225, 224, 225, 227, 229, 235, 242, 250, 256, 256, 249, 241, 233, 228]
+        exp = [140, 141, 142, 141, 141, 140, 139, 140, 140, 140, 140, 141, 140, 138, 136, 130, 123, 115, 109, 109, 116, 124, 132, 137]
         self.assertEquals(exp, ex)
         self.assertEqual(ex[0]/365., ws[0])
         self.assertEqual(ex[12]/365., ws[12])
@@ -480,11 +491,11 @@ class TestLstPressures(TestCase):
         # time range: Jan 1 - 30, 2012
         start = datetime(2012, 1, 1)
         ws, ex = lst.computeOpticalNightWeights(start = start, numDays = 30)
-        exp = [12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 16, 30, 30, 30, 30, 30, 30, 30, 30, 24]
+        exp = [18, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 29, 14, 0, 0, 0, 0, 0, 0, 0, 0, 6]
         self.assertEqual(exp, ex)
         # time range: Jan 1 - Dec 31, 2012
         ws, ex = lst.computeOpticalNightWeights(start = start, numDays = 365)
-        exp = [186, 187, 187, 188, 188, 189, 189, 189, 188, 188, 188, 187, 187, 186, 185, 185, 184, 183, 183, 183, 183, 184, 185, 186]
+        exp = [179, 178, 178, 177, 177, 176, 176, 176, 177, 177, 177, 178, 178, 179, 180, 180, 181, 182, 182, 182, 182, 181, 180, 179]
         self.assertEqual(exp, ex)
        
     def test_getRfiRiseSet(self):
@@ -508,15 +519,15 @@ class TestLstPressures(TestCase):
         # Jan 1, 2012
         start = datetime(2012, 1, 1)
         ws, ex = lst.computeRfiWeights(start = start, numDays = 1) #numDays = 1, month = 1)
-        exp = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        exp = [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.assertEqual(exp, ex)
         # Jan 1 - 30, 2012
         ws, ex = lst.computeRfiWeights(start = start, numDays = 30)
-        exp = [30, 30, 21, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 25, 30, 30, 30, 30, 30, 30, 30, 30] 
+        exp = [0, 0, 9, 25, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 20, 5, 0, 0, 0, 0, 0, 0, 0, 0]
         self.assertEqual(exp, ex)
         # Jan 1 - Dec 31, 2012
         ws, ex = lst.computeRfiWeights(start = start, numDays = 365)
-        exp =[198, 199, 199, 198, 198, 198, 183, 183, 183, 177, 168, 167, 168, 168, 168, 168, 167, 169, 183, 183, 182, 189, 198, 198]
+        exp = [167, 166, 166, 167, 167, 167, 182, 182, 182, 188, 197, 198, 197, 197, 197, 197, 198, 196, 182, 182, 183, 176, 167, 167]
         self.assertEqual(exp, ex)
 
     def test_getPressuresFromPeriod(self):
@@ -555,3 +566,36 @@ class TestLstPressures(TestCase):
         exp = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.65616762656011396, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.75337457147246312, 2.0, 2.0, 1.6315264423378473, 1.0]
         for i in range(len(exp)):
             self.assertAlmostEqual(exp[i], ps3[i], 3)
+
+    def test_use_case_1(self):
+
+        lst = LstPressures()
+
+        # Consider a 24 hour long session that is circumpolar.
+        # Date: September 21, 2012
+        # Sunrise: approximately 7:14 EDT
+        # Sunset: approximately 19:14 EDT
+        start = datetime(2012, 9, 21) 
+        rise, set =  lst.sun.getRiseSet(start)
+        rise = TimeAgent.utc2est(rise)
+        set = TimeAgent.utc2est(set)
+        self.assertEqual(rise, datetime(2012, 9, 21, 7, 6, 21))
+        self.assertEqual(set,  datetime(2012, 9, 21, 19, 17, 25))
+
+        # Optical Nighttime flag should be 1 from 00:00 EDT to 07:00 EDT
+        # and 20:00 EDT to 24:00 EDT.  This corresponds to
+        #roughly 18:00-05:00 LST.
+        ws, ex = lst.computeOpticalNightWeights(start = start, numDays = 1)
+        # 1 from 0 - 4, and 18 - 23:
+        exp = [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+        self.assertEquals(exp, ex) 
+
+        # Thermal Nighttime flag would then be 21:00-05:00 LST
+        ws, ex = lst.computeThermalNightWeights(start = start, numDays = 1)
+        exp = [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1]
+        self.assertEquals(exp, ex) 
+        
+        # RFI is between 8 AM and 8 PM EST.
+        ws, ex = lst.computeRfiWeights(start = start, numDays = 1)
+        exp = [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+        self.assertEquals(exp, ex)
