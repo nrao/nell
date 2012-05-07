@@ -178,6 +178,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                  , 'C' : Pressures()
                  }
 
+        # for holding what to do with overfilled weather bins
+        self.changes = Pressures()
+
 
     def computeThermalNightWeights(self, start = None, numDays = None): 
         "Computes the weights for the PTCS night time flag,"
@@ -569,8 +572,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         #self.pressuresBySession[s.name] = (carryover, ps, sum(ps))
 
         # now figure out the availability        
-        changes = self.weather.getAvailabilityChanges(self.gradePs['A'])
-        self.gradePs['A'] += changes
+        self.changes = self.weather.getAvailabilityChanges(self.gradePs['A'])
+        self.gradePs['A'] += self.changes
 
         # What's *really* available for this semester?
         self.remainingTotalPs = self.weather.availabilityTotal - \
@@ -687,6 +690,12 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             for g in self.grades:
                 print self.formatResults("      %s_%s" % (w, g)
                                        , self.gradePs[g].getType(w))
+
+        print ""
+        print "Changes from overfilled Weather bins: "
+        for w in self.weatherTypes:
+            print self.formatResults("      %s" % (w)
+                                   , self.changes.getType(w))
 
         if len(self.sessions) != len(self.pressuresBySession):
             print "R U Missing sessions?: ", len(self.sessions), len(self.pressuresBySession)
