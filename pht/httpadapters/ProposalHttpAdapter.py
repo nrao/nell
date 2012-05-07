@@ -190,10 +190,5 @@ class ProposalHttpAdapter(PhtHttpAdapter):
             sAdapter = SessionHttpAdapter(s)
             new_s = sAdapter.copy(new_pcode)
             
-            # Session Sources
-            for source in s.sources.all():
-                new_source = adapter.proposal.source_set.get(pst_source_id = source.pst_source_id)
-                new_s.sources.add(new_source)
-            
         return adapter.proposal
         

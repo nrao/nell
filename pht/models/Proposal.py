@@ -83,6 +83,21 @@ class Proposal(models.Model):
                 if s.allotment is not None \
                 and s.allotment.allocated_time is not None])
 
+    def allocatedTimeByGrade(self):
+        "Sum the session times by grade."
+        allotments = {}
+        for s in self.session_set.all():
+            if s.allotment is not None and s.allotment.allocated_time is not None:
+                if allotments.has_key(s.grade.grade):
+                    allotments[s.grade.grade] += s.allotment.allocated_time
+                else:
+                    allotments[s.grade.grade] = s.allotment.allocated_time
+        return allotments.iteritems()
+
+    def isThesis(self):
+        students  = len(self.author_set.filter(thesis_observing = True))
+        return students, students > 0
+
     def grades(self):
         "Return unique list of grades"
         return sorted(list(set([s.grade.grade \

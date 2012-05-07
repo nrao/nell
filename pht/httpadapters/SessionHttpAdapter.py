@@ -623,6 +623,12 @@ class SessionHttpAdapter(PhtHttpAdapter):
         data['name']  = self.session.name.replace(self.session.proposal.pcode, new_pcode)
         adapter = SessionHttpAdapter()
         adapter.initFromPost(data)
+
+        # Session Sources
+        for source in self.session.sources.all():
+            new_source = self.session.proposal.source_set.get(pst_source_id = source.pst_source_id)
+            adapter.sources.add(new_source)
+            
         return adapter.session
     
 if __name__ == '__main__':
