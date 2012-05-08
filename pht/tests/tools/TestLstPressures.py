@@ -618,11 +618,13 @@ class TestLstPressures(TestCase):
                                                   , carryover
                                                   , lst.weather.availability
                                                    )
+        expC = Pressures()
         # assert that there was no change
         for w in ['poor', 'good', 'excellent']:
             for i in range(lst.hrs):
                 self.assertEquals(gradeA.getType(w)[i]
                                 , alloc.getType(w)[i])
+                self.assertEquals(0.0, expC.getType(w)[i])
 
     def test_adjustForOverfilledWeather_2(self):
 
@@ -648,10 +650,15 @@ class TestLstPressures(TestCase):
         exp.poor = numpy.array([45.5]*lst.hrs)
         exp.good = numpy.array([29.0]*lst.hrs)
         exp.excellent = numpy.array([25.0]*lst.hrs)
+        expC = Pressures() 
+        expC.poor = numpy.array([14.]*lst.hrs)
+        expC.good = numpy.array([14.]*lst.hrs)
         for w in ['poor', 'good', 'excellent']:
             for i in range(lst.hrs):
                 self.assertEquals(exp.getType(w)[i]
                                 , alloc.getType(w)[i])
+                self.assertEquals(expC.getType(w)[i]
+                                , chg.getType(w)[i])
 
     def test_adjustForOverfilledWeather_3(self):
 
@@ -677,7 +684,13 @@ class TestLstPressures(TestCase):
         exp.poor = numpy.array([45.5]*lst.hrs)
         exp.good = numpy.array([35.25]*lst.hrs)
         exp.excellent = numpy.array([38.75]*lst.hrs)
+        expC = Pressures() 
+        expC.poor = numpy.array([34.]*lst.hrs)
+        expC.good = numpy.array([20.25]*lst.hrs)
+        expC.excellent = numpy.array([13.75]*lst.hrs)
         for w in ['poor', 'good', 'excellent']:
             for i in range(lst.hrs):
                 self.assertEquals(exp.getType(w)[i]
                                 , alloc.getType(w)[i])                                
+                self.assertEquals(expC.getType(w)[i]
+                                , chg.getType(w)[i])

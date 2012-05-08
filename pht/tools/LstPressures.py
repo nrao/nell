@@ -649,6 +649,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         tmp = Pressures()
         allocated = Pressures()
         remainder = Pressures()
+        changes = Pressures()
 
         for i in range(self.hrs):
             # init the allocation
@@ -659,6 +660,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             tmp.poor[i] = gradeA.poor[i] + carryover.poor[i]
             if tmp.poor[i] > availability.poor[i]:
                 remainder.poor[i] = tmp.poor[i] - availability.poor[i]
+                changes.poor[i] = remainder.poor[i]
                 # take time out of poor
                 allocated.poor[i] = availability.poor[i] - carryover.poor[i]
                 # and give it to good 
@@ -670,11 +672,15 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                     allocated.good[i] = availability.good[i] - carryover.good[i]
                     # and give it to excellent
                     allocated.excellent[i] = gradeA.excellent[i] + remainder.good[i]
+                    # record this change
+                    changes.excellent[i] = remainder.good[i]
+                    changes.good[i] = changes.poor[i] - changes.excellent[i]
                 else:
                     # not too much to give all to good
                     allocated.good[i] = gradeA.good[i] + remainder.poor[i]
+                    changes.good[i] = remainder.poor[i]
 
-        return (allocated, remainder)
+        return (allocated, changes)
 
     def almostEqual(self, xs, ys):
         "Two numpy arrays are almost equal?"
