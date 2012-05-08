@@ -34,6 +34,8 @@ from pht.models         import SessionType
 from pht.httpadapters   import SessionHttpAdapter
 from scheduler.models   import Period as DSSPeriod
 from utilities          import TimeAgent
+from pht.tools.LstPressureWeather import Pressures
+import numpy
 
 class TestLstPressures(TestCase):
 
@@ -599,3 +601,96 @@ class TestLstPressures(TestCase):
         ws, ex = lst.computeRfiWeights(start = start, numDays = 1)
         exp = [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
         self.assertEquals(exp, ex)
+
+    def test_adjustForOverfilledWeather_1(self):
+
+        lst = LstPressures()
+
+        # setup to be like use case 3.4.1
+        gradeA = Pressures()
+        gradeA.poor = numpy.array([28.0]*lst.hrs)
+        gradeA.good = numpy.array([35.0]*lst.hrs)
+        gradeA.excellent = numpy.array([25.0]*lst.hrs)
+        carryover = Pressures()
+        carryover.poor = numpy.array([22.0]*lst.hrs)
+
+        alloc, chg = lst.adjustForOverfilledWeather(gradeA
+                                                  , carryover
+                                                  , lst.weather.availability
+                                                   )
+        expC = Pressures()
+        # assert that there was no change
+        for w in ['poor', 'good', 'excellent']:
+            for i in range(lst.hrs):
+                self.assertEquals(gradeA.getType(w)[i]
+                                , alloc.getType(w)[i])
+                self.assertEquals(0.0, expC.getType(w)[i])
+
+    def test_adjustForOverfilledWeather_2(self):
+
+        lst = LstPressures()
+
+        # setup to be like use case 3.4.2
+        gradeA = Pressures()
+        gradeA.poor = numpy.array([59.5]*lst.hrs)
+        gradeA.good = numpy.array([15.0]*lst.hrs)
+        gradeA.excellent = numpy.array([25.0]*lst.hrs)
+        carryover = Pressures()
+        carryover.poor = numpy.array([45.0]*lst.hrs)
+        carryover.good = numpy.array([10.0]*lst.hrs)
+        carryover.excellent = numpy.array([0.0]*lst.hrs)
+
+        alloc, chg = lst.adjustForOverfilledWeather(gradeA
+                                                  , carryover
+                                                  , lst.weather.availability
+                                                   )
+
+        # here's the change we expect
+        exp = Pressures() 
+        exp.poor = numpy.array([45.5]*lst.hrs)
+        exp.good = numpy.array([29.0]*lst.hrs)
+        exp.excellent = numpy.array([25.0]*lst.hrs)
+        expC = Pressures() 
+        expC.poor = numpy.array([14.]*lst.hrs)
+        expC.good = numpy.array([14.]*lst.hrs)
+        for w in ['poor', 'good', 'excellent']:
+            for i in range(lst.hrs):
+                self.assertEquals(exp.getType(w)[i]
+                                , alloc.getType(w)[i])
+                self.assertEquals(expC.getType(w)[i]
+                                , chg.getType(w)[i])
+
+    def test_adjustForOverfilledWeather_3(self):
+
+        lst = LstPressures()
+
+        # setup to be like use case 3.4.3
+        gradeA = Pressures()
+        gradeA.poor = numpy.array([79.5]*lst.hrs)
+        gradeA.good = numpy.array([15.0]*lst.hrs)
+        gradeA.excellent = numpy.array([25.0]*lst.hrs)
+        carryover = Pressures()
+        carryover.poor = numpy.array([45.0]*lst.hrs)
+        carryover.good = numpy.array([10.0]*lst.hrs)
+        carryover.excellent = numpy.array([0.0]*lst.hrs)
+
+        alloc, chg = lst.adjustForOverfilledWeather(gradeA
+                                                  , carryover
+                                                  , lst.weather.availability
+                                                   )
+
+        # here's the change we expect
+        exp = Pressures() 
+        exp.poor = numpy.array([45.5]*lst.hrs)
+        exp.good = numpy.array([35.25]*lst.hrs)
+        exp.excellent = numpy.array([38.75]*lst.hrs)
+        expC = Pressures() 
+        expC.poor = numpy.array([34.]*lst.hrs)
+        expC.good = numpy.array([20.25]*lst.hrs)
+        expC.excellent = numpy.array([13.75]*lst.hrs)
+        for w in ['poor', 'good', 'excellent']:
+            for i in range(lst.hrs):
+                self.assertEquals(exp.getType(w)[i]
+                                , alloc.getType(w)[i])                                
+                self.assertEquals(expC.getType(w)[i]
+                                , chg.getType(w)[i])

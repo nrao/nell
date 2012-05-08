@@ -162,27 +162,6 @@ T_excellent_i = T_i * f_excellent / (f_good + f_excellent)
 For excellent weather fixed sessions:
 T_excellent_i = T_i
 
-
-For all sessions:
-If the time in poor weather for sessions given a Group A ranking exceeds
-the time available in a semester for the poor weather then the amount of
-time exceeding the poor weather semester time will count against good
-and excellent weather in the ratio of f_good and f_excellent.  For example
-if T_poor_i = 1000 and T_poor_available_i = 600 then the extra 400 hours 
-is split amongst T_good_availabe_i and T_excellent_available_i.  The fraction
-going to the good weather is determined by
-
-(T_poor_i - T_poor_available_i ) * f_good / (f_good + f_excellent)
-
-and the fraction going to excellent weather is determined by
-
-(T_poor_i - T_poor_available_i ) * f_excellent / (f_good + f_excellent)
-
-The faction of poor weather time is then capped at
-
-T_poor_i = T_poor_available_i
-
-Again, note that this is only for time assigned to Group A.
     """
 
     def __init__(self
@@ -230,27 +209,6 @@ Again, note that this is only for time assigned to Group A.
         for wt in self.wTypes:
             available = numpy.array([totalAvail*self.shares[wt]]*self.hrs)
             self.availability.setType(wt, available)
-
-    def getAvailabilityChanges(self, gradeAPressure):
-        "The amount of time for grade A affects availability"
-
-        changes = Pressures()
-        goodShare = self.shares['Good']
-        excellentShare = self.shares['Excellent']
-
-        for i in range(self.hrs):
-            if gradeAPressure.poor[i] > self.availability.poor[i]:
-                # spread out the difference between what's available
-                # for poor and excellent 
-                diff = gradeAPressure.poor[i] - self.availability.poor[i]
-                base = goodShare + excellentShare
-                changes.good[i] = (diff * goodShare) / base 
-                changes.excellent[i] = (diff * excellentShare) / base 
-                # cap the poor time
-                changes.poor[i] = -1.0 * diff
-
-        return changes
-
 
     def binSession(self, session, pressures):
  
