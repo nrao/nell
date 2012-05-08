@@ -177,6 +177,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                  , 'B' : Pressures()
                  , 'C' : Pressures()
                  }
+        self.originalGradePs = { 'A' : Pressures()
+                               , 'B' : Pressures()
+                               , 'C' : Pressures()
+                               }
 
         # for holding what to do with overfilled weather bins
         self.changes = Pressures()
@@ -571,9 +575,14 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # for reporting
         #self.pressuresBySession[s.name] = (carryover, ps, sum(ps))
 
-        # now figure out the availability        
-        self.changes = self.weather.getAvailabilityChanges(self.gradePs['A'])
-        self.gradePs['A'] += self.changes
+        # make sure we have a record of what the original pressure was
+        # before we adjusted for overfilled weather
+        self.originalGradePs = self.gradePs.copy()
+        self.gradePs['A'], self.changes = self.adjustForOverfilledWeather(\
+            self.gradePs['A']
+          , self.carryoverPs
+          , self.weather.availability
+         )
 
         # What's *really* available for this semester?
         self.remainingTotalPs = self.weather.availabilityTotal - \
@@ -619,6 +628,53 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
            
         self.pressures = output   
         return output        
+
+    def adjustForOverfilledWeather(self, gradeA, carryover, availability):
+        """
+        When there's too much hours in the poor weather category, it
+        eats up the good weather; and if there's too much good weather,
+        that eats up the excellent weather.  Specifically:
+
+        If Grade A (Poor Weather) + Carryover (Poor Weather) > Availability (Poor Weather) then
+           * Remainder (Poor Weather) = Grade A (Poor Weather) + Carryover (Poor Weather) - Availability (Poor Weather)
+           * Grade A (Poor Weather) = Availability (Poor Weather) - Carryover (Poor Weather)
+           * and then consider the Remainder (Poor Weather) time for Good Weather (and so on to Excellent Weather):
+           * if Grade A (Good Weather) + Carryover (Good Weather) + Remainder (Poor Weather) &gt; Availability (Good Weather) then 
+               * Remainder (Good Weather) = Grade A (Good Weather) + Carryover (Good Weather) + Remainder (Poor Weather) - Availability (Good Weather)
+               * Grade A (Good Weather) = Availability (Good Weather) - Carryover (Good Weather) 
+           * else
+               * Grade A (Good Weather) += Remainder (Poor Weather)
+        """
+
+        tmp = Pressures()
+        allocated = Pressures()
+        remainder = Pressures()
+
+        for i in range(self.hrs):
+            # init the allocation
+            allocated.poor[i] = gradeA.poor[i]
+            allocated.good[i] = gradeA.good[i]
+            allocated.excellent[i] = gradeA.excellent[i]
+            # too much poor?
+            tmp.poor[i] = gradeA.poor[i] + carryover.poor[i]
+            if tmp.poor[i] > availability.poor[i]:
+                remainder.poor[i] = tmp.poor[i] - availability.poor[i]
+                # take time out of poor
+                allocated.poor[i] = availability.poor[i] - carryover.poor[i]
+                # and give it to good 
+                tmp.good[i] = gradeA.good[i] + carryover.good[i] + remainder.poor[i]
+                # but is this too much?
+                if tmp.good[i] > availability.good[i]:
+                    remainder.good[i] = tmp.good[i] - availability.good[i]
+                    # take time from good
+                    allocated.good[i] = availability.good[i] - carryover.good[i]
+                    # and give it to excellent
+                    allocated.excellent[i] = gradeA.excellent[i] + remainder.good[i]
+                else:
+                    # not too much to give all to good
+                    allocated.good[i] = gradeA.good[i] + remainder.poor[i]
+
+        return (allocated, remainder)
 
     def almostEqual(self, xs, ys):
         "Two numpy arrays are almost equal?"
@@ -690,6 +746,11 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             for g in self.grades:
                 print self.formatResults("      %s_%s" % (w, g)
                                        , self.gradePs[g].getType(w))
+        print ""
+        print "Original (non-adjusted) Grade A Next Semester Astromony: "
+        for w in self.weatherTypes:
+            print self.formatResults("      %s" % w
+                                   , self.originalGradePs['A'].getType(w))
 
         print ""
         print "Changes from overfilled Weather bins: "
