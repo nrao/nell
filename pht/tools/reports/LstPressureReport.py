@@ -254,6 +254,16 @@ class LstPressureReport(object):
             for msg in msgs:
                 els.append(self.pg(msg))
 
+        # details on changes
+        els.append(self.getBreak()) 
+        els.append(self.pg("Original Grade A Pressure before Adjustments"
+                         , bold = True))
+        els.append(self.createOriginalGradePsTable())
+        els.append(self.getBreak()) 
+        els.append(self.pg("Adjustments made to Grade A Pressures"
+                         , bold = True))
+        els.append(self.createChangesTable())
+
         # non traditional sessions
         if len(self.lst.badSessions) > 0:
             ss = self.createSessionElements("Session's without pressures (bad):"
@@ -300,6 +310,42 @@ class LstPressureReport(object):
         for s in sessions:
             els.append(self.pg(s.__str__()))
         return els
+
+    def createOriginalGradePsTable(self):
+
+        # different from the other tables
+        rows = [self.createLstRow()]
+        for w in self.lst.weatherTypes:
+            if w == 'Excellent':
+                label = 'Ex_A'
+            else:
+                label = '%s_A' % w
+            row= self.createRow(label
+                              , self.lst.originalGradePs['A'].getType(w)
+                              , self.fltFrmt)
+            rows.append(row)                  
+                                         
+        t = Table(rows, colWidths = [30]*self.lst.hrs)
+        t.setStyle(self.tableStyle)
+        return t
+
+    def createChangesTable(self):
+
+        # different from the other tables
+        rows = [self.createLstRow()]
+        for w in self.lst.weatherTypes:
+            if w == 'Excellent':
+                label = 'Ex_A'
+            else:
+                label = '%s_A' % w
+            row= self.createRow(label
+                              , self.lst.changes.getType(w)
+                              , self.fltFrmt)
+            rows.append(row)                  
+                                         
+        t = Table(rows, colWidths = [30]*self.lst.hrs)
+        t.setStyle(self.tableStyle)
+        return t
 
 if __name__ == '__main__':
 
