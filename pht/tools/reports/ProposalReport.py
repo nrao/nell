@@ -32,8 +32,9 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units  import inch
 
 from pht.models import *
+from Report import Report
  
-class ProposalReport(object):
+class ProposalReport(Report):
 
     """
     This is an abstract class for the Proposal reports, like
@@ -41,10 +42,8 @@ class ProposalReport(object):
     """
 
     def __init__(self, filename):
-        w, h      = letter
-        self.doc  = SimpleDocTemplate(filename, pagesize=(h, w))
-        self.styleSheet = getSampleStyleSheet()['Normal']
-        self.styleSheet.fontSize = 7
+        super(ProposalReport, self).__init__(filename
+                                           , orientation = 'landscape') 
         self.title = ''
         self.proposals = []
 
@@ -57,12 +56,6 @@ class ProposalReport(object):
         self.getProposals(semester)
         data.extend(map(self.genRow, self.proposals))
         t = Table(data, colWidths = self.colWidths())
-        self.tableStyle = TableStyle([
-            ('TOPPADDING', (0, 0), (-1, -1), 0),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
-            ('LINEABOVE', (0, 1), (-1, 1), 1, colors.black),
-            ('BOX', (0, 0), (-1, -1), 1, colors.black),
-        ])
         for i in range(6, len(self.proposals), 5):
             self.tableStyle.add('LINEABOVE', (0, i),(-1, i), 1, colors.black)
         t.setStyle(self.tableStyle)

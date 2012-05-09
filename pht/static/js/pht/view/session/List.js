@@ -8,7 +8,7 @@ Ext.define('PHT.view.session.List' ,{
         var grid = this;
         this.proposalCombo = Ext.create('Ext.form.field.ComboBox', {
             name: 'pcode',
-            store: 'ProposalCodes',
+            store: 'Proposals', 
             queryMode: 'local',
             displayField: 'pcode',
             valueField: 'pcode',

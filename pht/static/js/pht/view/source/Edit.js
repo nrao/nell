@@ -30,7 +30,7 @@ Ext.define('PHT.view.source.Edit', {
                         xtype: 'combo',
                         name: 'pcode',
                         fieldLabel: 'PCODE',
-                        store : 'ProposalCodes',
+                        store : 'Proposals',
                         queryMode: 'local',
                         displayField: 'pcode',
                         valueField: 'pcode',

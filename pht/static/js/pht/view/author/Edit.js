@@ -14,7 +14,7 @@ Ext.define('PHT.view.author.Edit', {
             {
                 name: 'pcode',
                 fieldLabel: 'PCODE',
-                store: 'ProposalCodes',
+                store: 'Proposals',
                 queryMode: 'local',
                 displayField: 'pcode',
                 valueField: 'pcode',
