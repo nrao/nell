@@ -62,6 +62,10 @@ Ext.define('PHT.controller.PhtController', {
                 if (id == 'yes') {
                     this.onDelete(records);
                     store.remove(records);
+                    // TBF: we need a callback for when the server
+                    // is done, so that we can update other related
+                    // stores - but there won't be callbacks for sync
+                    // until Ext JS 4.1
                     store.sync();
                 }
             }
