@@ -108,6 +108,11 @@ Ext.define('PHT.controller.PhtController', {
         return newRecord;
     },
 
+    // here so it can be overridden by children
+    setRecord: function(record, values) {
+            record.set(values);
+    },
+
     updateRecord: function(button, selectedRecords, store) {
         var win      = button.up('window'),
             form     = win.down('form'),
@@ -122,9 +127,10 @@ Ext.define('PHT.controller.PhtController', {
             if (!(f.isValid())) {
                 return;
             }
-    
-            record.set(values);
-            // Is this a new session?
+   
+            this.setRecord(record, values);
+
+            // Is this a new record?
             if (record.get('id') == '') {
                 // save on the server side 
                 record.save({
