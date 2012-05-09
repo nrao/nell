@@ -1,1 +1,2 @@
 from TestProposalHttpAdapter import TestProposalHttpAdapter
+from TestSessionHttpAdapter import TestSessionHttpAdapter
