@@ -537,16 +537,11 @@ def semester_summary(request):
 
     return response
 
-
-def isFriend(user):
-    au = user.auth_user
-    return (au.is_staff if au is not None else False) and user.username != "dss"
-
 @login_required
 @admin_only
 def friends(request):
         users = [u for u in User.objects.all().order_by('last_name')
-                   if isFriend(u)]
+                   if u.isFriend() and u.username != 'dss']
         friends = [{'name' : u.__str__()
                   , 'id' : u.id} for u in users]
         return HttpResponse(json.dumps({"success" : "ok"
