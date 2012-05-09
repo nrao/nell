@@ -31,7 +31,7 @@ Ext.define('PHT.view.session.Form', {
                 xtype: 'combo',
                 name: 'pcode',
                 fieldLabel: 'PCODE',
-                store: 'ProposalCodes', // MVC baby!
+                store: 'Proposals', 
                 queryMode: 'local',
                 displayField: 'pcode',
                 valueField: 'pcode',

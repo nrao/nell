@@ -29,7 +29,7 @@ Ext.define('PHT.view.proposal.Import', {
                     xtype: 'combo',
                     name: 'pcode',
                     fieldLabel: 'PCODE',
-                    store: 'ProposalCodes', 
+                    store: 'Proposals', 
                     queryMode: 'local',
                     displayField: 'pcode',
                     valueField: 'pcode',

@@ -19,7 +19,7 @@ Ext.define('PHT.view.plot.Window', {
 
         this.proposalCombo = Ext.create('Ext.form.field.ComboBox', {
             name: 'pcode',
-            store: 'ProposalCodes',
+            store: 'Proposals',
             queryMode: 'local',
             displayField: 'pcode',
             valueField: 'pcode',
