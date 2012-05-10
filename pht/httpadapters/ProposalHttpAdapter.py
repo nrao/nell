@@ -100,11 +100,10 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         curr.execute(query)
         data['allocated_time'] = curr.fetchone()[0]
         # now the hard time - all the DSS project's time accounting!
-        # TBF
-        data['dss_total_time'] = None
-        data['billed_time'] = None
-        data['scheduled_time'] = None
-        data['remaining_time'] = None
+        tb_data = ProposalHttpAdapter.jsonProjectTimeAccounting(curr
+            , id
+            , data['dss_pcode'])
+        data.update(tb_data)
 
         # now a little clean up
         if data['allocated_time'] is None:
@@ -118,6 +117,45 @@ class ProposalHttpAdapter(PhtHttpAdapter):
             data[f] = data[f].strftime(frmt)
             
         return data
+
+    @staticmethod
+    def jsonProjectTimeAccounting(curr, proposal_id, dss_pcode):
+
+        # init
+        tb_data = {}
+        tb_data['dss_total_time'] = 0
+        tb_data['billed_time'] = 0
+        tb_data['scheduled_time'] = 0
+        tb_data['remaining_time'] = 0
+
+        # anything to compute?
+        if dss_pcode is None:
+            return tb_data
+
+        fields = ['billed_time', 'scheduled_time', 'remaining_time']
+
+        # what are the sessions and their total time?
+        query = """
+          select s.id, a.total_time
+          from (((pht_proposals as p left outer join projects as pj on pj.id = p.dss_project_id) 
+            left outer join sessions as s on pj.id = s.project_id) 
+            left outer join allotment as a on s.allotment_id = a.id) 
+          where p.id = %s
+        """ % proposal_id
+        curr.execute(query)
+        results = curr.fetchall()
+
+        # for each session, get their time accounting
+        for sId, totalTime in results:
+            if totalTime is not None:
+                tb_data['dss_total_time'] += totalTime
+            ta = SessionHttpAdapter.jsonSessionTimeAccounting(curr
+                                                           , sId
+                                                           , totalTime)
+            for f in fields:
+                if ta[f] is not None:
+                    tb_data[f] += ta[f]
+        return tb_data 
 
     @staticmethod
     def jsonDictAllHP():

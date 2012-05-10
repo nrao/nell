@@ -123,44 +123,9 @@ class SessionHttpAdapter(PhtHttpAdapter):
           ["%.2f-%.2f" % (low, hi) for low, hi in params[t]]) 
                                        for t in ('LST Include', 'LST Exclude')]
 
-        if data['dss_session_id'] is not None:
-            query = """
-                select sum((pa.scheduled - 
-                  (pa.other_session_weather + pa.other_session_rfi + pa.other_session_other) - 
-                  (pa.lost_time_weather + pa.lost_time_rfi + pa.lost_time_other)) - 
-                  pa.not_billable) as billed_time, 
-                  sum(pa.scheduled) as scheduled_time 
-                from periods as p 
-                  join periods_accounting as pa on pa.id = p.accounting_id 
-                where p.session_id = %s
-            """ % data['dss_session_id']
-            curr.execute(query)
-            tb_keys = [d.name for d in curr.description]
-            tb_data = dict(zip(tb_keys, curr.fetchone()))
-            if tb_data['billed_time'] is not None:
-                tb_data['remaining_time'] = data['dss_total_time'] - tb_data['billed_time']
-            else:
-                tb_data['remaining_time'] = data['dss_total_time'] 
-
-            query = """
-                select start, duration 
-                from periods 
-                where session_id = %s and state_id <> 3 
-                order by start desc limit 1
-            """ % (data['dss_session_id'])
-            curr.execute(query)
-            result = curr.fetchone()
-            if result is not None:
-                last_date = result[0] + timedelta(hours = result[1])
-                tb_data['last_date_scheduled'] = formatExtDate(last_date)
-            else:
-                tb_data['last_date_scheduled'] = None
-        else:
-            tb_data = {}
-            tb_data['billed_time']         = None
-            tb_data['scheduled_time']      = None
-            tb_data['remaining_time']      = None
-            tb_data['last_date_scheduled'] = None
+        tb_data = SessionHttpAdapter.jsonSessionTimeAccounting(curr
+                     , data['dss_session_id']
+                     , data['dss_total_time'])
         data.update(tb_data)
 
         # add in the total requested time - simple math
@@ -172,6 +137,53 @@ class SessionHttpAdapter(PhtHttpAdapter):
             data['requested_total'] = None
 
         return data
+
+    @staticmethod
+    def jsonSessionTimeAccounting(curr, session_id, dss_total_time):
+
+        # init
+        tb_data = {}
+        tb_data['billed_time']         = None
+        tb_data['scheduled_time']      = None
+        tb_data['remaining_time']      = None
+        tb_data['last_date_scheduled'] = None
+
+        # anything to actually compute?
+        if session_id is None:
+            return tb_data
+
+        query = """
+            select sum((pa.scheduled - 
+              (pa.other_session_weather + pa.other_session_rfi + pa.other_session_other) - 
+              (pa.lost_time_weather + pa.lost_time_rfi + pa.lost_time_other)) - 
+              pa.not_billable) as billed_time, 
+              sum(pa.scheduled) as scheduled_time 
+            from periods as p 
+              join periods_accounting as pa on pa.id = p.accounting_id 
+            where p.session_id = %s
+        """ % session_id
+        curr.execute(query)
+        tb_keys = [d.name for d in curr.description]
+        tb_data = dict(zip(tb_keys, curr.fetchone()))
+        if tb_data['billed_time'] is not None:
+            tb_data['remaining_time'] = dss_total_time - tb_data['billed_time']
+        else:
+            tb_data['remaining_time'] = dss_total_time 
+        query = """
+            select start, duration 
+            from periods 
+            where session_id = %s and state_id <> 3 
+            order by start desc limit 1
+        """ % (session_id)
+        curr.execute(query)
+        result = curr.fetchone()
+        if result is not None:
+            last_date = result[0] + timedelta(hours = result[1])
+            tb_data['last_date_scheduled'] = formatExtDate(last_date)
+        else:
+            tb_data['last_date_scheduled'] = None
+
+        return tb_data
 
     @staticmethod
     def jsonDictAllHP():
