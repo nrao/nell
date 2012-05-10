@@ -21,6 +21,7 @@
 #       Green Bank, WV 24944-0002 USA
 
 from datetime import datetime
+import settings, pg, psycopg2
 
 from pht.models import *
 from AuthorHttpAdapter   import AuthorHttpAdapter
@@ -38,6 +39,142 @@ class ProposalHttpAdapter(PhtHttpAdapter):
     def setProposal(self, proposal):
         self.proposal = proposal
 
+    @staticmethod
+    def jsonDictHP(curr, keys, values):
+        data = dict(zip(keys, values))
+        id = data['proposal_id']
+        # collect observing types
+        query = """
+          select ot.type, ot.code 
+          from pht_proposals_observing_types as pot join pht_observing_types as ot on ot.id = pot.observingtype_id  
+          where pot.proposal_id = %s
+        """ % id
+        curr.execute(query)
+        results = curr.fetchall()
+        data['observing_types'] = [t for t, c in results]
+        data['obs_type_codes'] = [c for t, c in results]
+        # science categories
+        query = """
+          select sc.category, sc.code 
+          from pht_proposals_sci_categories as psc join pht_scientific_categories as sc on sc.id = psc.scientificcategory_id  
+          where psc.proposal_id = %s
+        """ % id
+        curr.execute(query)
+        results = curr.fetchall()
+        data['sci_categories'] = [t for t, c in results]
+        data['sci_cat_codes']  = [c for t, c in results]
+        # authors 
+        query = """
+            select a.last_name, a.first_name
+            from pht_authors as a 
+            where a.proposal_id = %s
+        """ % id
+        curr.execute(query)
+        results = curr.fetchall()
+        data['authors'] = '; '.join(["%s, %s" % (last, first) for last, first in results])
+        # stuff from the associated sessions: grades, times, etc.
+        # grades
+        query = """
+          select distinct(g.grade)
+          from pht_sessions as s join pht_session_grades as g on s.grade_id = g.id 
+          where proposal_id = %s
+          order by g.grade
+        """ % id  
+        curr.execute(query)
+        data['grades']  = ', '.join([g for g in curr.fetchall()])
+        # requested time
+        query = """
+          select sum(a.requested_time * a.repeats) 
+          from pht_sessions as s join pht_allotements as a on s.allotment_id = a.id 
+          where proposal_id = %s
+        """ % id
+        curr.execute(query)
+        data['requested_time'] = curr.fetchone()[0]
+        # allocated time
+        query = """
+          select sum(a.allocated_time) 
+          from pht_sessions as s join pht_allotements as a on s.allotment_id = a.id 
+          where proposal_id = %s
+        """ % id
+        curr.execute(query)
+        data['allocated_time'] = curr.fetchone()[0]
+        # now the hard time - all the DSS project's time accounting!
+        # TBF
+        data['dss_total_time'] = None
+        data['billed_time'] = None
+        data['scheduled_time'] = None
+        data['remaining_time'] = None
+
+        # now a little clean up
+        if data['allocated_time'] is None:
+            data['allocated_time'] = 0
+        if data['requested_time'] is None:
+            data['requested_time'] = 0
+        # date formatting    
+        frmt = "%m/%d/%Y"
+        fields = ['create_date', 'submit_date', 'modify_date']
+        for f in fields:
+            data[f] = data[f].strftime(frmt)
+            
+        # TBF: total fucking kluge
+        data['normalizedSRPScore'] = None
+
+        return data
+
+    @staticmethod
+    def jsonDictAllHP():
+        conn = psycopg2.connect(host   = settings.DATABASES['default']['HOST']
+                              , user   = settings.DATABASES['default']['USER']
+                              , password = settings.DATABASES['default']['PASSWORD']
+                              , database = settings.DATABASES['default']['NAME']
+                            )
+        curr = conn.cursor()
+        # TBF: missing
+        #  p.normalizedSRPScore
+        query = """
+        SELECT
+          p.pcode as id,
+          p.id as proposal_id,
+          p.pst_proposal_id,
+          pt.type as proposal_type,
+          ps.name as status,
+          s.semester,
+          a.id as pi_id,
+          a.last_name || ', ' || a.first_name as pi_name,
+          u.id as friend_id,
+          u.last_name || ', ' || u.first_name as friend_name,
+          p.pcode,
+          p.create_date,
+          p.modify_date,
+          p.submit_date,
+          p.title,
+          p.abstract,
+          p.spectral_line,
+          p.joint_proposal,
+          p.next_semester_complete as next_sem_complete,
+          pj.pcode as dss_pcode,
+          pj.complete,
+          c.nrao_comment,
+          c.srp_to_pi,
+          c.srp_to_tac,
+          c.tech_review_to_pi,
+          c.tech_review_to_tac,
+          c.tac_to_pi
+
+        FROM (((((((
+          pht_proposals as p
+          left outer join pht_proposal_types as pt on pt.id = p.proposal_type_id)
+          left outer join pht_status as ps on ps.id = p.status_id)
+          left outer join pht_semesters as s on s.id = p.semester_id)
+          left outer join pht_authors as a on a.id = p.pi_id)
+          left outer join users as u on u.id = p.friend_id)
+          left outer join projects as pj on pj.id = p.dss_project_id)
+          left outer join pht_proposal_comments as c on c.id = p.comments_id)
+        """
+        curr.execute(query)
+        keys = [d.name for d in curr.description]
+        return [ProposalHttpAdapter.jsonDictHP(curr, keys, values) for values in curr.fetchall()]
+
     def jsonDict(self):
         authors        = '; '.join([a.getLastFirstName() for a in self.proposal.author_set.all()])
         sci_categories = [sc.category for sc in self.proposal.sci_categories.all()]
@@ -49,9 +186,10 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         friend_name = self.proposal.friend.__str__() if self.proposal.friend is not None else None
         pi_id   = self.proposal.pi.id if self.proposal.pi is not None else None
         pi_name = self.proposal.pi.getLastFirstName() if self.proposal.pi is not None else None
-        dss_pcode = self.proposal.dss_project.pcode if self.proposal.dss_project is not None else 'unknown'
+        dss_pcode = self.proposal.dss_project.pcode if self.proposal.dss_project is not None else None #'unknown'
 
         data = {'id'               : self.proposal.pcode
+              , 'proposal_id'      : self.proposal.id
               , 'pst_proposal_id'  : self.proposal.pst_proposal_id
               , 'proposal_type'    : self.proposal.proposal_type.type
               , 'observing_types'  : obs_types
@@ -96,11 +234,12 @@ class ProposalHttpAdapter(PhtHttpAdapter):
                        , 'tac_to_pi'         : self.proposal.comments.tac_to_pi
                         })
         else:
-            data.update({'nrao_comment'     : ''
-                       , 'srp_to_pi'        : ''
-                       , 'srp_to_tac'       : ''
-                       , 'tech_review_to_pi': ''
-                       , 'tech_review_to_tac': ''
+            data.update({'nrao_comment'      : None #''
+                       , 'srp_to_pi'         : None #''
+                       , 'srp_to_tac'        : None #''
+                       , 'tech_review_to_pi' : None #''
+                       , 'tech_review_to_tac': None #''
+                       , 'tac_to_pi'         : None #''
                         })
         return data
 
