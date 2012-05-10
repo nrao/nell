@@ -140,7 +140,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
             if tb_data['billed_time'] is not None:
                 tb_data['remaining_time'] = data['dss_total_time'] - tb_data['billed_time']
             else:
-                tb_data['remaining_time'] = None
+                tb_data['remaining_time'] = data['dss_total_time'] 
 
             query = """
                 select start, duration 
@@ -260,6 +260,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
           left outer join pht_session_separations as ssm on ssm.id = m.outer_separation_id)
           left outer join sessions as dss on dss.id = s.dss_session_id)
           left outer join allotment as dss_a on dss_a.id = dss.allotment_id
+        order by s.name  
         """
         curr.execute(query)
         keys = [d.name for d in curr.description]
