@@ -81,7 +81,8 @@ class ProposalHttpAdapter(PhtHttpAdapter):
           order by g.grade
         """ % id  
         curr.execute(query)
-        data['grades']  = ', '.join([g for g in curr.fetchall()])
+        results = curr.fetchall()
+        data['grades']  = ','.join([g for g, in results])
         # requested time
         query = """
           select sum(a.requested_time * a.repeats) 
@@ -116,9 +117,6 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         for f in fields:
             data[f] = data[f].strftime(frmt)
             
-        # TBF: total fucking kluge
-        data['normalizedSRPScore'] = None
-
         return data
 
     @staticmethod
@@ -129,8 +127,6 @@ class ProposalHttpAdapter(PhtHttpAdapter):
                               , database = settings.DATABASES['default']['NAME']
                             )
         curr = conn.cursor()
-        # TBF: missing
-        #  p.normalizedSRPScore
         query = """
         SELECT
           p.pcode as id,
@@ -154,6 +150,7 @@ class ProposalHttpAdapter(PhtHttpAdapter):
           p.next_semester_complete as next_sem_complete,
           pj.pcode as dss_pcode,
           pj.complete,
+          p."normalizedSRPScore",
           c.nrao_comment,
           c.srp_to_pi,
           c.srp_to_tac,
@@ -170,6 +167,8 @@ class ProposalHttpAdapter(PhtHttpAdapter):
           left outer join users as u on u.id = p.friend_id)
           left outer join projects as pj on pj.id = p.dss_project_id)
           left outer join pht_proposal_comments as c on c.id = p.comments_id)
+
+        ORDER BY p.pcode  
         """
         curr.execute(query)
         keys = [d.name for d in curr.description]
