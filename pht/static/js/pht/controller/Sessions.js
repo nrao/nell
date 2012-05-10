@@ -133,7 +133,7 @@ Ext.define('PHT.controller.Sessions', {
 
     notify: function(data) {
         if (data['notification'] == 'proposalSelected') {
-            this.sessionListWindow.down('sessionlist').setProposal(data.pcode);
+            this.sessionList.setProposal(data.pcode);
         }
     },
 
@@ -181,13 +181,19 @@ Ext.define('PHT.controller.Sessions', {
         this.sessionListWindow = sessionListWindow;
     },
 
+    setSessionList: function(sessionList) {
+        this.sessionList = sessionList;
+    },
+
+
     proposalSessions: function(button) {
         var win = button.up('window');
             form = win.down('form');
             proposal = form.getRecord();
         var pcode = proposal.get('pcode');
-        this.sessionListWindow.down('sessionlist').setProposal(pcode);
-        this.sessionListWindow.show();
+        this.sessionList.setProposal(pcode);
+        //this.sessionListWindow.down('sessionlist').setProposal(pcode);
+        //this.sessionListWindow.show();
     },
 
     clearFilter: function(button) {

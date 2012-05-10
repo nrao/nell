@@ -50,7 +50,10 @@ Ext.define('PHT.controller.Proposals', {
         this.control({
             'proposallist' : {
                 itemdblclick: this.editProposal,
-                itemclick: this.proposalSelected,
+                itemclick: function(grid, record) {
+                    this.proposalSelected(grid, record);
+                    this.editProposal(grid, record);
+                },
             },
             'proposallist toolbar button[action=create]': {
                 click: this.createProposal
@@ -343,9 +346,10 @@ Ext.define('PHT.controller.Proposals', {
     },
     
     editProposal: function(grid, record) {
-        var view   = Ext.widget('proposaledit');
+        var view = grid.up('viewport').down('proposaledit');
         view.filterPis(record.get('pcode'));
-        view.down('form').loadRecord(record);        
+        view.setRecord(record);
+        view.loadRecord(record);        
     },   
 
     editSelectedProposals: function(button) {

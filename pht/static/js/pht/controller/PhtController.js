@@ -105,9 +105,15 @@ Ext.define('PHT.controller.PhtController', {
     },
 
     updateRecord: function(button, selectedRecords, store) {
-        var win      = button.up('window'),
-            form     = win.down('form'),
-            record = form.getRecord(),
+        console.log('update');
+        var win      = button.up('window');
+        if (!win) {
+            var form = button.up('form');
+        } else {
+            var form   = win.down('form');
+        }
+        console.log(form);
+        var record = form.getRecord(),
             values   = form.getValues();
 
         // editing one, or multiple records?

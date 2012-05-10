@@ -55,7 +55,9 @@ Ext.application({
                     maxSize: 250,
                     cmargins: '5 0 0 0',
                     collapsed: true,
-                },{
+                }
+                /*
+                ,{
                     title: 'Navigation',
                     region:'west',
                     xtype: 'proposalnavigate',
@@ -65,15 +67,68 @@ Ext.application({
                     bodyStyle: 'padding-top: 0px; padding-bottom: 0px',
                     border: 0,
                     width: 200,
-                },{
-                    collapsible: false,
+                }
+                */
+                ,{
                     region:'center',
                     margins: '0 0 0 0',
-                    layout: 'fit',
+                    layout: 'border',
+                    collapsible: false,
+                    border: false,
+                    margins: '0 0 0 0',
+                    cmargins: '0 0 0 0',
+                    padding: '0 0 0 0',
+                    defaults: {
+                        collapsible: false,
+                        split: true,
+                        bodyStyle: 'padding:0px',
+                        margins: '0 0 0 0',
+                    },
+
+                    items: [
+                        {
+                            region: 'north',
+                            xtype: 'proposallist',
+                            height: '20%',
+                        },
+                        {
+                            region: 'center',
+                            layout: 'fit',
+                            xtype: 'sessionlist',
+                            height: '20%',
+                        },
+                        {
+                            region: 'south',
+                            layout: 'border',
+                            height: '60%',
+                            defaults: {
+                                collapsible: false,
+                                split: true,
+                                bodyStyle: 'padding:0px',
+                                margins: '0 0 0 0',
+                            },
+
+                            items: [
+                                {
+                                    region: 'center',
+                                    layout: 'fit',
+                                    xtype: 'proposaledit',
+                                    width: '50%',
+                                },
+                                {
+                                    region: 'east',
+                                    layout: 'fit',
+                                    xtype: 'panel',
+                                    width: '50%',
+                                },
+                            ],
+                        },
+                    ],
                 }]
             }
         );
 
+        /*
         // render explorers to center 
         var propListWin = Ext.create('PHT.view.proposal.ListWindow', {
             renderTo: viewport.layout.regions.center.getEl(),
@@ -87,6 +142,7 @@ Ext.application({
         // load the store explicitly so loading message appears
         var sessList = sessListWin.down('sessionlist');
         sessList.store.load();
+        */
         var proposalSources = Ext.create('PHT.view.source.ProposalListWindow', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
@@ -128,7 +184,9 @@ Ext.application({
         });
         var toolsMenu = Ext.create('Ext.menu.Menu', {
             id : 'toolsMenu',
-            items : [{
+            items : [
+                /*
+                {
                 text: 'Proposal Explorer',
                 handler: function() {
                     propListWin.show();
@@ -138,6 +196,7 @@ Ext.application({
                 handler: function() {
                     sessListWin.show();
                 }},
+                */
                 {
                 text: 'Proposal Sources',
                 handler: function() {
@@ -273,6 +332,7 @@ Ext.application({
             text: 'Reports',
             menu: reportsMenu
         });
+        /*
         viewport.layout.regions.center.add(propListWin);
         viewport.layout.regions.center.add(sessListWin);
         viewport.layout.regions.center.add(proposalAuthors);
@@ -281,14 +341,16 @@ Ext.application({
         viewport.layout.regions.center.add(overviewCalendarWin);
         viewport.layout.regions.center.add(plot);
         viewport.layout.regions.center.add(tac);
-        propListWin.show();
-        sessListWin.show();
-        tac.show();
+        */
+        //propListWin.show();
+        //sessListWin.show();
+        tac.hide();
         this.getController('OverviewCalendar').setOverviewCalendarWindow(overviewCalendarWin);
         this.getController('Sources').setProposalSourcesWindow(proposalSources);
         this.getController('Sources').setSessionSourcesWindow(sessionSources);
         this.getController('Authors').setProposalAuthorsWindow(proposalAuthors);
-        this.getController('Sessions').setSessionListWindow(sessListWin);
+        //this.getController('Sessions').setSessionListWindow(sessListWin);
+        this.getController('Sessions').setSessionList(viewport.down('sessionlist'));
         this.getController('Sessions').setPeriodsWindow(overviewCalendarWin);
         this.getController('Periods').setPeriodsWindow(overviewCalendarWin);
         this.getController('Sessions').addObserver(this.getController('Sources'));

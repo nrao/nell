@@ -13,7 +13,6 @@ Ext.define('PHT.view.plot.LstPressurePlot', {
     },  
 
     initComponent: function() {
-        console.log('initComponent plot');
         var me = this;
         this.axes = [{
             // X-Axis:
