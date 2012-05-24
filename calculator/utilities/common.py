@@ -34,6 +34,8 @@ def get_results_dict(request):
     """
 
     explicit, leftovers, input = splitResults(request)
+    #for l in leftovers:
+    #    print l
 
     # filter out leftovers that don't have a display
     leftovers = [r for r in leftovers if r['display'] is not None]
@@ -50,6 +52,8 @@ def get_results_dict(request):
     explicit  = dict([splitKey(e) for e in explicit])
     # Also make a dict of the inputs for desiding on how to display stuff.
     ivalues   = dict([splitKey(i) for i in input])
+
+    #print ivalues.get('effective_bw'), ivalues.get('duty_cycle')
 
     # create a small custom dictionary to handle a few units issues
     units     = {}
@@ -209,28 +213,30 @@ def getMessages(request):
         if not (topo_freq >= rx_low and topo_freq <= rx_hi):
             messages.append({'type' : 'Warning', 'msg' : 'Topocentric frequnecy is beyond the nominal range for the selected receiver.'})
 
-    # sensitivity vs. confusion limit?
-    sensitivity = results.get("sigma", {}).get("value")
-    confusion_limit = results.get("confusion_limit", {}).get("value")
-    if sensitivity != '' and confusion_limit != '' and sensitivity < confusion_limit:
-        messages.append({'type' : 'Warning', 'msg' : 'Sensitivity is less than the confusion limit.'})
+    mode       = ivalues.get('mode', {}).get('value')
+    if mode != 'Pulsar':
+        # sensitivity vs. confusion limit?
+        sensitivity = results.get("sigma", {}).get("value")
+        confusion_limit = results.get("confusion_limit", {}).get("value")
+        if sensitivity != '' and confusion_limit != '' and sensitivity < confusion_limit:
+            messages.append({'type' : 'Warning', 'msg' : 'Sensitivity is less than the confusion limit.'})
 
-    # 1/F gain variations?
-    backend    = ivalues.get('backend', {}).get('value')
-    bandwidth  = ivalues.get('bw', {}).get('value')
-    time       = ivalues.get('time', {}).get('value')
-    conversion = ivalues.get('conversion', {}).get('value')
-    t_tot      = results.get('t_tot', {}).get('value')
-    msg = {'type' : 'Warning', 'msg' : 'Time*(Bandwidth resolution) exceeds the suggested limit for 1/F gain variations.  Advanced observing techniques may be required to reach your scientific goals.  Please address this issue in your technical justification.'}
-    if rx != '' and bandwidth != '' and time != '' and t_tot != '' and conversion != '' and None not in (rx, bandwidth, time, t_tot, conversion):
-        limit = sex2float(time) * float(bandwidth) if conversion == 'Time to Sensitivity' else \
-                sex2float(t_tot) * float(bandwidth)
-        if backend == 'Mustang' and limit >= 1e5:
-            messages.append(msg)
-        elif backend == 'Caltech Continuum Backend' and 'Ka' in rx and limit >= 1e5:
-            messages.append(msg)
-        elif limit >= 1e3:
-            messages.append(msg)
+        # 1/F gain variations?
+        backend    = ivalues.get('backend', {}).get('value')
+        bandwidth  = ivalues.get('bw', {}).get('value')
+        time       = ivalues.get('time', {}).get('value')
+        conversion = ivalues.get('conversion', {}).get('value')
+        t_tot      = results.get('t_tot', {}).get('value')
+        msg = {'type' : 'Warning', 'msg' : 'Time*(Bandwidth resolution) exceeds the suggested limit for 1/F gain variations.  Advanced observing techniques may be required to reach your scientific goals.  Please address this issue in your technical justification.'}
+        if rx != '' and bandwidth != '' and time != '' and t_tot != '' and conversion != '' and None not in (rx, bandwidth, time, t_tot, conversion):
+            limit = sex2float(time) * float(bandwidth) if conversion == 'Time to Sensitivity' else \
+                    sex2float(t_tot) * float(bandwidth)
+            if backend == 'Mustang' and limit >= 1e5:
+                messages.append(msg)
+            elif backend == 'Caltech Continuum Backend' and 'Ka' in rx and limit >= 1e5:
+                messages.append(msg)
+            elif limit >= 1e3:
+                messages.append(msg)
 
     return messages
 
