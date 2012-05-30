@@ -601,17 +601,22 @@ def _get_maintenance_activity_group_by_date(date, rank):
     week = date - timedelta(date.weekday())
     groups = Maintenance_Activity_Group.get_maintenance_activity_groups(week)
 
-    if len(groups) == 0:
+    if not groups:
         return None
 
     if rank.upper() == 'X':
         def comp_mag(mag):
-            return TimeAgent.truncateDt(mag.get_start()) == date
+            return (TimeAgent.truncateDt(mag.get_start()) == date) and (mag.rank.upper() == 'X')
     else:
         def comp_mag(mag):
-            return mag.rank == rank.upper()
+            return mag.rank.upper() == rank.upper()
 
-    return filter(comp_mag, groups)[0]
+    groups = filter(comp_mag, groups)
+
+    if groups:
+        return groups[0]
+    else:
+        return None
 
 ######################################################################
 # def _process_activity(request, ma, form)
