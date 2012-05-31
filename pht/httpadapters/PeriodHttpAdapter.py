@@ -41,9 +41,12 @@ class PeriodHttpAdapter(PhtHttpAdapter):
 
     def jsonDict(self):
 
+        observingType = self.period.session.observing_type.type \
+            if self.period.session.observing_type is not None else None
         sessType = self.period.session.session_type.type \
             if self.period.session.session_type is not None else None
         sessionJson = {'receivers' : self.period.session.get_receivers() 
+                     , 'observing_type' : observingType
                      , 'type' : sessType}
         handle = "%s (%s)" % (self.period.session.name
                             , self.period.session.proposal.pcode)
