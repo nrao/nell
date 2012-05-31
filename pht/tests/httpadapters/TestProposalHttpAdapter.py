@@ -82,16 +82,15 @@ class TestProposalHttpAdapter(TransactionTestCase):
         #    if k != 'abstract':
         #        print k, " : ", sqlJson[k]
         # still some issues w/ time accounting to figure out
-        ignoreFields = ['dss_total_time'
-                      , 'billed_time'
-                      , 'scheduled_time'
-                      , 'remaining_time'
-                       ]
         #self.assertEqual(ormJson, sqlJson)
         fields = sorted(ormJson.keys())
+        ignoreFields = [] 
         for f in fields:
             if f not in ignoreFields:
                 self.assertEqual(ormJson.get(f)
                                , sqlJson.get(f))
+            #else:
+            #    print "ORM: ", ormJson.get(f)
+            #    print "SQL: ", sqlJson.get(f)
 
         
