@@ -122,17 +122,35 @@ class ProposalHttpAdapter(PhtHttpAdapter):
     def jsonProjectTimeAccounting(curr, proposal_id, dss_pcode):
 
         # init
+        fields = ['billed_time', 'scheduled_time', 'remaining_time']
         tb_data = {}
-        tb_data['dss_total_time'] = 0
-        tb_data['billed_time'] = 0
-        tb_data['scheduled_time'] = 0
-        tb_data['remaining_time'] = 0
+        for f in fields:
+            tb_data[f] = None
+        tb_data['dss_total_time'] = None
 
         # anything to compute?
         if dss_pcode is None:
             return tb_data
 
-        fields = ['billed_time', 'scheduled_time', 'remaining_time']
+        # prepare computation
+        for f in fields:
+            tb_data[f] = 0
+        tb_data['dss_total_time'] = 0
+
+        # what's the total time for this project?
+        query = """
+          select p.id, a.total_time 
+          from (((pht_proposals as p left outer join projects as pj on pj.id = p.dss_project_id) 
+            left outer join projects_allotments as pa on pa.project_id = pj.id ) 
+            left outer join allotment as a on pa.allotment_id = a.id) 
+          where p.id = %s
+        """ % proposal_id
+        curr.execute(query)
+        results = curr.fetchall()
+        for _, totalTime in results:
+            if totalTime is not None:
+                tb_data['dss_total_time'] += totalTime
+        projTotalTime = tb_data['dss_total_time']        
 
         # what are the sessions and their total time?
         query = """
@@ -147,14 +165,19 @@ class ProposalHttpAdapter(PhtHttpAdapter):
 
         # for each session, get their time accounting
         for sId, totalTime in results:
-            if totalTime is not None:
-                tb_data['dss_total_time'] += totalTime
+            #if totalTime is not None:
+            #    tb_data['dss_total_time'] += totalTime
             ta = SessionHttpAdapter.jsonSessionTimeAccounting(curr
                                                            , sId
                                                            , totalTime)
+            # most of these session fields just sum up for the proj 
             for f in fields:
-                if ta[f] is not None:
+                if ta[f] is not None and ta[f] != 'remaining_time':
                     tb_data[f] += ta[f]
+            # except remaining time uses the project total time, 
+            # NOT the sum of the session's total time
+            tb_data['remaining_time'] = projTotalTime - tb_data['billed_time']
+
         return tb_data 
 
     @staticmethod

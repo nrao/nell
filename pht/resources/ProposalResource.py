@@ -46,10 +46,11 @@ class ProposalResource(Resource):
             limit = request.GET.get('limit', 25)
             end   = int(start) + int(limit)
             """
-            proposals = Proposal.objects.all().order_by('pcode')
+            propJson = ProposalHttpAdapter.jsonDictAllHP()
+
             return HttpResponse(json.dumps({"success" : "ok"
-                                          , "proposals" : [ProposalHttpAdapter(p).jsonDict() for p in proposals]
-                                          , "total" : len(proposals)
+                                          , "proposals" : propJson
+                                          , "total" : len(propJson)
                                            })
                               , content_type = 'application/json')
 
