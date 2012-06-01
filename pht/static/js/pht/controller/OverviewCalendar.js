@@ -113,9 +113,13 @@ Ext.define('PHT.controller.OverviewCalendar', {
                         // draw the dss periods and parse rcvr info
                         for (r in records) {
                             dayIndex = this.insertPeriod(records[r], startDate, numDays, drawComponent, 'dss');
-                            rcvrs = this.getDssPeriodReceivers(records[r]);
-                            for (j in rcvrs){
-                                rcvrDays[dayIndex][rcvrs[j]] = 1;
+                            // In theory this shouldn't happen because we
+                            // are filtering DSS periods on server side
+                            if (dayIndex != -1) {
+                                rcvrs = this.getDssPeriodReceivers(records[r]);
+                                for (j in rcvrs){
+                                    rcvrDays[dayIndex][rcvrs[j]] = 1;
+                                }
                             }
                         }
 
