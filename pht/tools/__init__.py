@@ -2,4 +2,5 @@
 # but why does everything work w/ it commented out?
 #from SemesterTimeAccounting import SemesterTimeAccounting
 from Sun                    import Sun
+from SourceConflicts        import SourceConflicts
 from WindowStatistics       import WindowStatistics
