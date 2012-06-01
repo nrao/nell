@@ -155,12 +155,13 @@ class DssExport(object):
           , max_duration   = max_dur
           , min_duration   = min_dur
         )
+        source = ', '.join([s.target_name for s in pht_session.sources.all()])
         target = dss.Target.objects.create(
             system     = dss.System.objects.get(name = 'J2000')
           , session    = dss_session
           , vertical   = pht_session.target.dec or 0.0
           , horizontal = pht_session.target.ra or 0.0
-          , source     = 'Target Source'
+          , source     = source if len(source) < 256 else source[:256]
         )
 
         for r in pht_session.receivers.all():
@@ -194,6 +195,8 @@ class DssExport(object):
                   , complete       = False
                   , total_time     = period.duration
                 )
+                period.window = window
+                period.save()
                 window_start = \
                   period.start - timedelta(days = pht_session.monitoring.window_size - 1)
                 window_range = dss.WindowRange.objects.create(
@@ -223,7 +226,7 @@ class DssExport(object):
 
     def getDefaultFrequency(self, pht_session):
         "Find the highest center frequency of all the receivers for this session."
-        return max([rx.freq_low + (rx.freq_hi - rx.freq_low) for rx in pht_session.receivers.all()])
+        return max([rx.freq_low + ((rx.freq_hi - rx.freq_low) / 2.) for rx in pht_session.receivers.all()])
 
     def getSessionType(self, pht_session):
         type = 'open' if 'Open' in pht_session.session_type.type \
