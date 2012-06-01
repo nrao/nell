@@ -26,6 +26,37 @@ from pht.utilities import *
 
 class TestUtilities(unittest.TestCase):
 
+    def test_angularDistance(self):
+
+        # common sense
+        d = angularDistance(0.0, 0.0, 0.0, 0.0)
+        self.assertAlmostEqual(0.0, d, 3)
+        d = angularDistance(0.0, 0.0, 0.0, math.pi/2.0)
+        self.assertAlmostEqual(math.pi/2.0, d, 3)
+
+        # from Practical Astronomy w/ Your Calculator, page 53
+        ra1  = hr2rad(5.225)
+        dec1 = deg2rad(-8.225)
+        ra2  = hr2rad(6.737)         
+        dec2 = deg2rad(-16.686)        
+        d = angularDistance(ra1, dec1, ra2, dec2)
+        self.assertAlmostEqual(0.41328374, d, 3)
+
+        # from Ron:
+        ra1  = deg2rad(15.*11.35)
+        dec1 = deg2rad(4.18)
+        ra2  = deg2rad(15.*12.)
+        dec2 = deg2rad(0.26)
+        d = angularDistance(ra1, dec1, ra2, dec2)
+        self.assertAlmostEqual(0.18325, d, 3)
+
+        ra1  = deg2rad(15.*11.41)
+        dec1 = deg2rad(3.83)
+        ra2  = deg2rad(15.*12.)
+        dec2 = deg2rad(15.)
+        d = angularDistance(ra1, dec1, ra2, dec2)
+        self.assertAlmostEqual(0.24727, d, 3)
+
     def test_genDateTimesFromDays(self):
 
         days = [1,3,5]
