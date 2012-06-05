@@ -162,3 +162,17 @@ class TestUtilities(unittest.TestCase):
         self.assertAlmostEquals(0.0,         sexDeg2rad('00:00:00.0'), 2)
         self.assertAlmostEquals(math.pi/2.0, sexDeg2rad('90:00:00.0'), 2)
         self.assertAlmostEquals(2.0*math.pi, sexDeg2rad('359:59:59.9'), 2)
+
+    def test_conversions(self):
+
+        # test identity - use a range of degrees
+        xs = range(0, 364)
+        for x in xs:
+            self.assertAlmostEquals(x, rad2deg(deg2rad(x)), 5)
+            self.assertAlmostEquals(x
+                , rad2deg(hr2rad(rad2hr(deg2rad(x)))), 5)
+            self.assertAlmostEquals(x
+                , arcMin2deg(deg2arcMin(x)), 5)
+            self.assertAlmostEquals(x
+                , rad2deg(arcMin2rad(rad2arcMin(deg2rad(x)))), 5)
+

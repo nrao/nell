@@ -49,6 +49,26 @@ def rad2hr(rad):
         return None
     return 12 * rad / math.pi
 
+def arcMin2rad(arcMin):
+    if arcMin is None:
+        return None
+    return deg2rad(arcMin2deg(arcMin))    
+
+def arcMin2deg(arcMin):
+    if arcMin is None:
+        return None
+    return arcMin/60.0    
+    
+def deg2arcMin(deg):
+    if deg is None:
+        return None
+    return 60.0*deg
+
+def rad2arcMin(rad):
+    if rad is None:
+        return None
+    return deg2arcMin(rad2deg(rad))    
+
 def sexigesimelFormTwo2float(value):
     return sexigesimel2float(value, deliminator = " ")
 
