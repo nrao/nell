@@ -196,6 +196,60 @@ class TestSourceConflicts(TestCase):
         rad = sc.calcSearchRadiusForRcvr('C')
         self.assertAlmostEquals(0.0014544, rad, 7)
 
+    def test_findConflicts(self):
+
+        s = self.proposal.session_set.all()[0]
+        src0 = self.proposal.source_set.all()[0]
+        tpcode = self.proposal.pcode
+
+        # create a new proposal w/ sessions and sources
+        newP = self.createProposal() 
+        newS = self.createSession(newP)
+        newS.receivers.add(Receiver.objects.get(abbreviation = 'Q'))
+        newS.receivers.add(Receiver.objects.get(abbreviation = '800'))
+        newS.save()
+        # make conflict
+        src1 = self.createSrc(newP) 
+        src1.target_name = src0.target_name
+        src1.ra = src0.ra 
+        src1.dec = src0.dec 
+        src1.save()
+        # make another conflict
+        src2 = self.createSrc(newP) 
+        src2.target_name = src0.target_name + "!"
+        src2.ra = src0.ra + (src0.ra*0.0002)
+        src2.dec = src0.dec - (src0.dec*0.0002)
+        src2.save()
+
+        # turn the crank
+        sc = SourceConflicts()
+        sc.findConflicts()
+        cf = sc.conflicts
+
+        # check the results
+        self.assertEqual(2, len(cf))
+        self.assertEqual(['GBT10A-009','GBT12A-002'], sorted(cf.keys()))
+        # we've already tested these results below in the other test
+        scf1 = cf['GBT12A-002']['conflicts']
+        self.assertEqual(2, len(scf1))
+        # but not for conflicts for this newly created proposal
+        c = cf['GBT10A-009']
+        self.assertEqual('GBT10A-009', c['proposal'].pcode)
+        self.assertEqual('800', c['lowestRx'].abbreviation)
+        self.assertAlmostEqual(0.0090175344, c['searchRadius'], 5)
+        # the conflicts are the mirror of eachother
+        scf2 = c['conflicts']
+        self.assertAlmostEqual(2, len(scf2))
+        for i in range(2):    
+            self.assertEqual(scf1[i]['targetSrc']
+                           , scf2[i]['searchedSrc'])
+            self.assertEqual(scf2[i]['targetSrc']
+                           , scf1[i]['searchedSrc'])
+            self.assertAlmostEqual(scf1[i]['distance']
+                                 , scf2[i]['distance'], 5)
+            
+
+
     def test_findConflictsBetweenProposals(self):
 
         s = self.proposal.session_set.all()[0]

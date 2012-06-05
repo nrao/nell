@@ -27,10 +27,10 @@ class SourceConflicts(object):
 
     def __init__(self, semester = None):
 
-        if semester is None:
-            self.semester = '12B'
-        else:
-            self.semester = semester
+        #if semester is None:
+        #    self.semester = '12B'
+        #else:
+        self.semester = semester
 
         self.initSearchRadi()    
 
@@ -38,6 +38,10 @@ class SourceConflicts(object):
         self.distances = {}
 
         # here's where we put conflicts when we find them
+        # structure's first level: proposal being searched details
+        # then for each proposal: a list of conflict descriptions,
+        # including src's conflicting, the distance between them,
+        # and the level of the conflict
         self.conflicts = {}
 
     def initSearchRadi(self):
@@ -77,20 +81,22 @@ class SourceConflicts(object):
             if self.semester is not None:
                 proposals = Proposal.objects.filter(semester__semester = self.semester)
             else: 
-                proposals = Proposal.objects.all()
+                proposals = Proposal.objects.all().order_by('pcode')
 
         # which proposals to check against?
         if allProposals is None:
-            allProposals = Proposal.objects.all()
+            allProposals = Proposal.objects.all().order_by('pcode')
 
         # start checking
         for p in proposals:
             self.findConflictsForProposal(p, allProposals)
 
-    def findConflicstsForProposal(self, proposal, allProposals):
+    def findConflictsForProposal(self, proposal, allProposals):
 
         for p in allProposals:
-            self.findConflictsBetweenProposals(proposal, p)
+            # don't check against one's self
+            if p.id != proposal.id:
+                self.findConflictsBetweenProposals(proposal, p)
 
     def findConflictsBetweenProposals(self, targetProp, searchedProp):
         """
