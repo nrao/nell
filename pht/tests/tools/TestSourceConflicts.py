@@ -26,6 +26,7 @@ from datetime import datetime, date, timedelta
 
 from pht.models import *
 from pht.utilities import *
+from pht.httpadapters.SessionHttpAdapter import SessionHttpAdapter
 from pht.tools.SourceConflicts import SourceConflicts
 
 class TestSourceConflicts(TestCase):
@@ -50,6 +51,59 @@ class TestSourceConflicts(TestCase):
         s.allotment.save()
         s.save()
         self.session = s
+
+    # TBF: stick this in a utility somewhere        
+    def createSession(self, p):
+        "Create a new session for the tests"
+
+        sem = Semester.objects.get(semester = '12A')
+        data  = {
+            'name' : 'nextSemesterSession'
+          , 'pcode' : p.pcode
+          , 'grade' : 'A'  
+          , 'semester' : sem
+          , 'requested_time' : 3.5  
+          , 'allocated_time' : 3.5  
+          , 'session_type' : 'Open - Low Freq'
+          , 'observing_type' : 'continuum' 
+          , 'weather_type' : 'Poor'
+          , 'repeats' : 2 
+          , 'min_lst' : '10:00:00.0' 
+          , 'max_lst' : '20:00:00.0' 
+          , 'elevation_min' : '00:00:00.0' 
+          , 'next_sem_complete' : False
+          , 'next_sem_time' : 1.0
+          , 'receivers' : 'L'
+        }
+
+        adapter = SessionHttpAdapter()
+        adapter.initFromPost(data)
+        # just so that is HAS a DSS session.
+        #adapter.session.dss_session = self.maintProj.sesshun_set.all()[0]
+        adapter.session.save()
+        return adapter.session
+
+    def createProposal(self):
+        proposalType  = ProposalType.objects.get(type = "Director's Discretionary Time")
+        status        = Status.objects.get(name = 'Submitted')
+        abstract      = '' 
+        semester      = Semester.objects.get(semester = '10A')
+        name          = ''
+        pcode         = 'GBT10A-009'
+        proposal = Proposal(pst_proposal_id = 0
+                      , proposal_type   = proposalType
+                      , status          = status
+                      , semester        = semester
+                      , pcode           = pcode
+                      , create_date     = datetime.now()
+                      , modify_date     = datetime.now()
+                      , submit_date     = datetime.now()
+                      , title           = name
+                      , abstract        = abstract
+                      , joint_proposal  = False 
+                      )
+        proposal.save()
+        return proposal
 
     def createSrc(self, proposal, ra = 0.0, dec = 0.0):
         src = Source(proposal = proposal
@@ -118,18 +172,89 @@ class TestSourceConflicts(TestCase):
         key = (src1.id, src2.id)
         self.assertAlmostEqual(0.0, sc.distances[key], 3)
       
-
     def test_getLowestRcvr(self):
+
+        # test the simplest case of one sess w/ one rcvr
         sc = SourceConflicts()
         lr = sc.getLowestRcvr(self.proposal)
         r  = self.session.receivers.all()[0]
         self.assertEqual(r, lr)
 
+        # now add another sess w/ more then one rcvr
+        s = self.createSession(self.proposal)
+        s.receivers.add(Receiver.objects.get(abbreviation = 'Q'))
+        s.receivers.add(Receiver.objects.get(abbreviation = '800'))
+        s.save()
+        lr = sc.getLowestRcvr(self.proposal)
+        self.assertEqual('800', lr.abbreviation) 
+
+
     def test_calcSearchRadiusForRcvr(self):
+        # a silly test really - they ALL get calculated in the __init__
         sc = SourceConflicts()
         r  = Receiver.objects.get(name = 'Rcvr4_6') 
         rad = sc.calcSearchRadiusForRcvr('C')
         self.assertAlmostEquals(0.0014544, rad, 7)
 
-        
-      
+    def test_findConflictsBetweenProposals(self):
+
+        s = self.proposal.session_set.all()[0]
+        src0 = self.proposal.source_set.all()[0]
+        tpcode = self.proposal.pcode
+
+        # create a new proposal w/ sessions and sources
+        newP = self.createProposal() 
+        newS = self.createSession(newP)
+        newS.receivers.add(Receiver.objects.get(abbreviation = 'Q'))
+        newS.receivers.add(Receiver.objects.get(abbreviation = '800'))
+        newS.save()
+        src1 = self.createSrc(newP) 
+        src2 = self.createSrc(newP) 
+                      
+        # Look for conflicts - there should be none 
+        sc = SourceConflicts()
+        sc.findConflictsBetweenProposals(self.proposal, newP)
+        self.assertEqual(1, len(sc.conflicts.keys()))
+        self.assertEqual(tpcode, sc.conflicts[tpcode]['proposal'].pcode)
+        self.assertEqual('Rcvr4_6', sc.conflicts[tpcode]['lowestRx'].name)
+        self.assertAlmostEqual(0.0014544410433286077
+                             , sc.conflicts[tpcode]['searchRadius']
+                             , 6)
+        self.assertEqual(0, len(sc.conflicts[tpcode]['conflicts']))                             
+        # now make a conflict
+        src1.target_name = src0.target_name
+        src1.ra = src0.ra 
+        src1.dec = src0.dec 
+        src1.save()
+
+        # make sure we detect it
+        sc.conflicts = {}
+        sc.distances = {}
+        sc.findConflictsBetweenProposals(self.proposal, newP)
+        self.assertEqual(1, len(sc.conflicts[tpcode]['conflicts'])) 
+        # check out the only conflict
+        cf = sc.conflicts[tpcode]['conflicts'][0]
+        self.assertEqual(src0.id, cf['targetSrc'].id)
+        self.assertEqual(src1.id, cf['searchedSrc'].id)
+        self.assertEqual('GBT10A-009', cf['searchedProp'].pcode)
+        self.assertEqual(0, cf['level'])
+        self.assertAlmostEqual(0.00000, cf['distance'], 5)
+
+        # make another conflict - a little more subtle
+        src2.target_name = src0.target_name + "!"
+        src2.ra = src0.ra + (src0.ra*0.0002)
+        src2.dec = src0.dec - (src0.dec*0.0002)
+        src2.save()
+
+        # make sure we detect both 
+        sc.conflicts = {}
+        sc.distances = {}
+        sc.findConflictsBetweenProposals(self.proposal, newP)
+        # check out the new conflict
+        self.assertEqual(2, len(sc.conflicts[tpcode]['conflicts'])) 
+        cf = sc.conflicts[tpcode]['conflicts'][1]
+        self.assertEqual(src0.id, cf['targetSrc'].id)
+        self.assertEqual(src2.id, cf['searchedSrc'].id)
+        self.assertEqual('GBT10A-009', cf['searchedProp'].pcode)
+        self.assertEqual(0, cf['level'])
+        self.assertAlmostEqual(0.0009417, cf['distance'], 5)

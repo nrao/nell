@@ -92,31 +92,49 @@ class SourceConflicts(object):
         for p in allProposals:
             self.findConflictsBetweenProposals(proposal, p)
 
-    def findConflictsBetweenProposals(targetProp, searchedProp):
+    def findConflictsBetweenProposals(self, targetProp, searchedProp):
         """
         targetProp - the proposal that we use to determine the search rad
         searchedProp - checking srcs in targetProp against one's in here
         """
 
-        rad = self.getSearchRadius(targetProp)        
-        trgSrcs = targetProp.sources.all()
-        srchSrcs = searchedProp.sources.all()
+        #rad = self.getSearchRadius(targetProp)        
+        lowestRx = self.getLowestRcvr(targetProp)
+        rad = self.searchRadi.get(lowestRx.abbreviation, None)
+        tpcode = targetProp.pcode
+        # init the results
+        self.conflicts[tpcode] = {'proposal' : targetProp
+                                , 'lowestRx' : lowestRx
+                                , 'searchRadius' : rad
+                                , 'conflicts' : []
+                                 }
+        # now look for conflicts, source against source
+        trgSrcs = targetProp.source_set.all().order_by('target_name')
+        srchSrcs = searchedProp.source_set.all().order_by('target_name')
         for trgSrc in trgSrcs:
             for srchSrc in srchSrcs:
-                d = self.sourceAngularDistance(trgSrc, srchSrc)
+                d = self.getAngularDistance(trgSrc, srchSrc)
                 if d <= rad:
-                    print "Too close!"
-                    if not self.conflicts.has_key(targetProp.pcode):
-                        self.conflicts[targetProp.pcode] = {}
+                    srcConflict = {
+                        'targetSrc' : trgSrc
+                      , 'searchedSrc' : srchSrc
+                      , 'searchedProp' : searchedProp
+                      , 'distance' : d
+                      , 'level' : 0
+                    }
+                    self.conflicts[tpcode]['conflicts'].append(srcConflict)
 
 
     def getLowestRcvr(self, proposal):
-        # TBF: use all rx's of the proposal, or do this by session?
+        """"
+        Of all the receivers used by all given proposal's sessions, 
+        which has the lowest frequency?
+        """
         lowest = None
         for s in proposal.session_set.all():
             rxs = s.receivers.all().order_by('freq_low')
             if len(rxs) > 0:
-                if lowest is None or lowestRx.freq_low > rxs[0].freq_low:
+                if lowest is None or lowest.freq_low > rxs[0].freq_low:
                     lowest = rxs[0]
         return lowest            
 
@@ -128,7 +146,7 @@ class SourceConflicts(object):
         if lowestRcvr is None:
             return None
         else:
-            return self.searchRadi[lowestRcvr]
+            return self.searchRadi[lowestRcvr.abbreviation]
 
     def calcSearchRadiusForRcvr(self, rcvr):        
         "Search Radius (arc-mins) = 2*HPBW of lowest receiver."
