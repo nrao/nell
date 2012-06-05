@@ -213,7 +213,7 @@ Ext.define('PHT.controller.Proposals', {
         this.notifyObservers({notification: 'proposalSelected'
                             , pcode : pcode});
         // part of this controller, so we don't need notification
-        this.tacToolWindow.setProposal(pcode, record);
+        this.tacTool.setProposal(pcode, record);
     },
 
     // How to respond to click's on the navigation tree?
@@ -381,8 +381,8 @@ Ext.define('PHT.controller.Proposals', {
         this.selectedProposals = [];                  
     },
 
-    setTacToolWindow: function(tacToolWindow) {
-        this.tacToolWindow = tacToolWindow;
-        this.tacToolWindow.setProposalsStore(this.getProposalsStore());
+    setTacTool: function(tacTool) {
+        this.tacTool = tacTool;
+        this.tacTool.setProposalsStore(this.getProposalsStore());
     },
 });

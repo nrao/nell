@@ -48,8 +48,7 @@ Ext.define('PHT.controller.Authors', {
     },
 
     proposalAuthors: function(button) {
-        var win = button.up('window');
-            form = win.down('form');
+        var form = button.up('form'),
             proposal = form.getRecord();
         var pcode = proposal.get('pcode');
         this.proposalAuthorsWindow.down('authorlist').setProposal(pcode);

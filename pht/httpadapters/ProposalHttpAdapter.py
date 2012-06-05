@@ -172,6 +172,18 @@ class ProposalHttpAdapter(PhtHttpAdapter):
             self.proposal.sci_categories.add(cat)
 
         # comments
+        try:
+            self.update_comments(data)
+        except AttributeError:
+            self.proposal.comments = ProposalComments()
+            self.proposal.comments.save()
+            self.proposal.save()
+            self.update_comments(data)
+
+        self.proposal.save()    
+        self.notify(self.proposal)
+
+    def update_comments(self, data):
         self.proposal.comments.nrao_comment = data.get('nrao_comment')
         self.proposal.comments.srp_to_pi = data.get('srp_to_pi')
         self.proposal.comments.srp_to_tac = data.get('srp_to_tac')
@@ -179,9 +191,6 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         self.proposal.comments.tech_review_to_tac = data.get('tech_review_to_tac')
         self.proposal.comments.tac_to_pi = data.get('tac_to_pi')
         self.proposal.comments.save()
-
-        self.proposal.save()    
-        self.notify(self.proposal)
 
     def copy(self, new_pcode):
         data = self.jsonDict()

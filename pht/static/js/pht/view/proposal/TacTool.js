@@ -5,15 +5,34 @@ The following should be editable in the GB PHT. TAC comments to PI, NRAO Comment
 */
 
 Ext.define('PHT.view.proposal.TacTool', {
-    //extend: 'Ext.window.Window',
-    extend: 'PHT.view.Edit',
+    extend: 'PHT.view.Form',
     alias : 'widget.tactool',
     title : 'TAC Tool',
-    autoscroll: true,
-    layout: 'fit',
-    height: '70%',
-    x: 700,
-    y: 225,
+    autoScroll: true,
+    border: false,
+    trackResetOnLoad: true,
+    fieldDefaults: {
+       labelStyle: 'font-weight:bold',
+    },
+    defaults: {
+        width: 450,
+        height: 100,
+        allowBlank: true,
+        labelStyle: '',    
+        layout: 'fit',
+    },
+
+    listeners: {
+        // enable the save button when a change is made
+        dirtychange: function(form, dirty) {
+            if (dirty) {
+                this.saveBtn.enable(true);
+            } else {
+                this.saveBtn.disable(true);
+            }
+       }
+    },
+
     initComponent: function() {
         var me = this;
         this.proposalCombo = Ext.create('Ext.form.field.ComboBox', {
@@ -32,35 +51,8 @@ Ext.define('PHT.view.proposal.TacTool', {
             },
         });
 
-        this.allocateBtn = Ext.create('Ext.button.Button', {
-            text: 'Allocate',
-            action: 'allocate',
-        });
-
-        this.dockedItems = [{
-            xtype: 'toolbar',
-            items: [
-                this.proposalCombo,        
-                { xtype: 'tbseparator'},
-                this.allocateBtn,
-            ]},
-        ];
-
-        this.items = [{
-            xtype: 'phtform',
-            autoScroll: true,
-            border: false,
-            trackResetOnLoad: true,
-            fieldDefaults: {
-               labelStyle: 'font-weight:bold',
-            },
-            defaults: {
-                width: 500,
-                height: 100,
-                allowBlank: true,
-                labelStyle: '',    
-            },
-            items: [{
+        this.items = [
+            {
                 xtype: 'textarea',
                 name : 'nrao_comment',
                 fieldLabel: 'NRAO Comment',
@@ -90,12 +82,32 @@ Ext.define('PHT.view.proposal.TacTool', {
                 xtype: 'textarea',
                 name : 'tac_to_pi',
                 fieldLabel: 'TAC Comments to PI',
-            }],
-            
         }];
+        console.log(this.items);
 
-        // must init for parent class
-        this.buttons = [];
+        this.allocateBtn = Ext.create('Ext.button.Button', {
+            text: 'Allocate',
+            action: 'allocate',
+        });
+   
+        this.saveBtn = Ext.create('Ext.Button', {
+            text: 'Save',
+            action: 'save',
+            disabled: true,
+        });
+
+        this.buttons = [
+            this.saveBtn,
+        ];
+
+        this.dockedItems = [{
+            xtype: 'toolbar',
+            items: [
+                this.proposalCombo,        
+                { xtype: 'tbseparator'},
+                this.allocateBtn,
+            ]},
+        ];
 
         this.callParent(arguments);
     },
@@ -113,11 +125,6 @@ Ext.define('PHT.view.proposal.TacTool', {
     setProposal: function(pcode, proposal) {
         this.proposalCombo.setValue(pcode);
         // load the proposal
-        var form = this.down('form');
-        form.loadRecord(proposal);
+        this.loadRecord(proposal);
     },
-
-    close: function() {
-        this.hide();
-    }
 });            

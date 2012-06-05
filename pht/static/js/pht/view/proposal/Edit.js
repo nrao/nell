@@ -5,7 +5,6 @@ Ext.define('PHT.view.proposal.Edit', {
     border: false,
     trackResetOnLoad: true,
     autoScroll: true,
-    width: '50%',
     fieldDefaults: {
         labelStyle: 'font-weight:bold',
     },
@@ -44,10 +43,11 @@ Ext.define('PHT.view.proposal.Edit', {
         this.items = [
             {
                 // Upper half has two columns
+                xtype: 'panel',
                 layout: 'column',
                 items:[{
                     // first column
-                    columnWidth: 0.5,
+                    columnWidth: 0.333333,
                     border: false,
                     items: [{
                         xtype: 'textfield',
@@ -92,7 +92,7 @@ Ext.define('PHT.view.proposal.Edit', {
                 },
                 {
                     // second column
-                    columnWidth: 0.5,
+                    columnWidth: 0.333333,
                     border: false,
                     items: [{
                         xtype: 'combo',
@@ -131,11 +131,9 @@ Ext.define('PHT.view.proposal.Edit', {
     
                     }]
                 },
-                ],    
-            },
                 {
                     // third column
-                    //columnWidth: 0.333,
+                    columnWidth: 0.333333,
                     border: false,
                     items: [{
                         xtype: 'textfield',
@@ -197,8 +195,9 @@ Ext.define('PHT.view.proposal.Edit', {
                         fieldCls: "x-pht-formfield-readonly",
                         labelStyle: '',
                     }]
-
                 },
+                ],
+            },
             {
                 // lower half is for wider widgets
                 border: false,
@@ -266,10 +265,6 @@ Ext.define('PHT.view.proposal.Edit', {
                 text: 'Cancel',
                 scope: this,
                 handler: this.reset,
-            },
-            {
-                text: 'Sessions',
-                action: 'sessions'
             },
             {
                 text: 'Sources',

@@ -110,16 +110,15 @@ Ext.application({
 
                             items: [
                                 {
+                                    region: 'east',
+                                    layout: 'fit',
+                                    xtype: 'tactool',
+                                    width: 500,
+                                },
+                                {
                                     region: 'center',
                                     layout: 'fit',
                                     xtype: 'proposaledit',
-                                    width: '50%',
-                                },
-                                {
-                                    region: 'east',
-                                    layout: 'fit',
-                                    xtype: 'panel',
-                                    width: '50%',
                                 },
                             ],
                         },
@@ -128,21 +127,6 @@ Ext.application({
             }
         );
 
-        /*
-        // render explorers to center 
-        var propListWin = Ext.create('PHT.view.proposal.ListWindow', {
-            renderTo: viewport.layout.regions.center.getEl(),
-        });
-        // load the store explicitly so loading message appears
-        var propList = propListWin.down('proposallist');
-        propList.store.load(); 
-        var sessListWin = Ext.create('PHT.view.session.ListWindow', {
-            renderTo: viewport.layout.regions.center.getEl(),
-        });
-        // load the store explicitly so loading message appears
-        var sessList = sessListWin.down('sessionlist');
-        sessList.store.load();
-        */
         var proposalSources = Ext.create('PHT.view.source.ProposalListWindow', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
@@ -158,9 +142,11 @@ Ext.application({
         var plot = Ext.create('PHT.view.plot.Window', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
+        /*
         var tac = Ext.create('PHT.view.proposal.TacTool', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
+        */
         var lstReportWin = Ext.create('PHT.view.plot.LstReportWindow', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
@@ -185,18 +171,6 @@ Ext.application({
         var toolsMenu = Ext.create('Ext.menu.Menu', {
             id : 'toolsMenu',
             items : [
-                /*
-                {
-                text: 'Proposal Explorer',
-                handler: function() {
-                    propListWin.show();
-                }},
-                {
-                text: 'Session Explorer',
-                handler: function() {
-                    sessListWin.show();
-                }},
-                */
                 {
                 text: 'Proposal Sources',
                 handler: function() {
@@ -222,11 +196,13 @@ Ext.application({
                 handler: function() {
                     plot.show();
                 }},
+                /*
                 {
                 text: 'TAC Tool',
                 handler: function() {
                     tac.show();
                 }},
+                */
             ]
         });
         var editMenu = Ext.create('Ext.menu.Menu', {
@@ -332,24 +308,11 @@ Ext.application({
             text: 'Reports',
             menu: reportsMenu
         });
-        /*
-        viewport.layout.regions.center.add(propListWin);
-        viewport.layout.regions.center.add(sessListWin);
-        viewport.layout.regions.center.add(proposalAuthors);
-        viewport.layout.regions.center.add(proposalSources);
-        viewport.layout.regions.center.add(sessionSources);
-        viewport.layout.regions.center.add(overviewCalendarWin);
-        viewport.layout.regions.center.add(plot);
-        viewport.layout.regions.center.add(tac);
-        */
-        //propListWin.show();
-        //sessListWin.show();
-        tac.hide();
+        //tac.hide();
         this.getController('OverviewCalendar').setOverviewCalendarWindow(overviewCalendarWin);
         this.getController('Sources').setProposalSourcesWindow(proposalSources);
         this.getController('Sources').setSessionSourcesWindow(sessionSources);
         this.getController('Authors').setProposalAuthorsWindow(proposalAuthors);
-        //this.getController('Sessions').setSessionListWindow(sessListWin);
         this.getController('Sessions').setSessionList(viewport.down('sessionlist'));
         this.getController('Sessions').setPeriodsWindow(overviewCalendarWin);
         this.getController('Periods').setPeriodsWindow(overviewCalendarWin);
@@ -357,7 +320,8 @@ Ext.application({
         this.getController('Proposals').addObserver(this.getController('Sources'));
         this.getController('Proposals').addObserver(this.getController('Sessions'));
         this.getController('Proposals').addObserver(this.getController('Dashboard'));
-        this.getController('Proposals').setTacToolWindow(tac);
+        //this.getController('Proposals').setTacToolWindow(tac);
+        this.getController('Proposals').setTacTool(viewport.down('tactool'));
         
         // TBF: better place for VTypes?
         // See: http://www.sencha.com/forum/archive/index.php/t-140812.html?s=01edc6b9436d419b2dae5754d39d9e04
