@@ -19,13 +19,16 @@
 #       National Radio Astronomy Observatory
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
+from django.core.management import setup_environ
+import settings
+setup_environ(settings)
 
 from pht.models import *
 from pht.utilities import *
 
 class SourceConflicts(object):
 
-    def __init__(self, semester = None):
+    def __init__(self, semester = None, quiet = True):
 
         #if semester is None:
         #    self.semester = '12B'
@@ -43,6 +46,11 @@ class SourceConflicts(object):
         # including src's conflicting, the distance between them,
         # and the level of the conflict
         self.conflicts = {}
+
+        # for reporting
+        self.quiet = quiet
+        self.targetProposals = []
+        self.checkedProposals = []
 
     def initSearchRadi(self):
         "Map receivers to their Search Radi"
@@ -79,7 +87,8 @@ class SourceConflicts(object):
         # which proposals to check?
         if proposals is None:
             if self.semester is not None:
-                proposals = Proposal.objects.filter(semester__semester = self.semester)
+                proposals = Proposal.objects.filter(semester__semester = self.semester).order_by('pcode')
+
             else: 
                 proposals = Proposal.objects.all().order_by('pcode')
 
@@ -87,48 +96,73 @@ class SourceConflicts(object):
         if allProposals is None:
             allProposals = Proposal.objects.all().order_by('pcode')
 
+        # for reporting
+        self.targetProposals = [p.pcode for p in proposals]
+        self.checkedProposals = [p.pcode for p in allProposals]
+
         # start checking
         for p in proposals:
             self.findConflictsForProposal(p, allProposals)
 
     def findConflictsForProposal(self, proposal, allProposals):
 
+        # init the results
+        lowestRx = self.getLowestRcvr(proposal)
+        rad = self.searchRadi.get(lowestRx.abbreviation, None)
+        pcode = proposal.pcode
+        self.conflicts[pcode] = {'proposal' : proposal
+                               , 'lowestRx' : lowestRx
+                               , 'searchRadius' : rad
+                               , 'conflicts' : []
+                                 }
+            
         for p in allProposals:
             # don't check against one's self
             if p.id != proposal.id:
-                self.findConflictsBetweenProposals(proposal, p)
+                self.findConflictsBetweenProposals(proposal, p, rad)
 
-    def findConflictsBetweenProposals(self, targetProp, searchedProp):
+    def findConflictsBetweenProposals(self
+                                    , targetProp
+                                    , searchedProp
+                                    , searchRadius = None):
         """
         targetProp - the proposal that we use to determine the search rad
         searchedProp - checking srcs in targetProp against one's in here
         """
 
-        #rad = self.getSearchRadius(targetProp)        
-        lowestRx = self.getLowestRcvr(targetProp)
-        rad = self.searchRadi.get(lowestRx.abbreviation, None)
         tpcode = targetProp.pcode
-        # init the results
-        self.conflicts[tpcode] = {'proposal' : targetProp
-                                , 'lowestRx' : lowestRx
-                                , 'searchRadius' : rad
-                                , 'conflicts' : []
-                                 }
+
+        if searchRadius is None:
+            lowestRx = self.getLowestRcvr(targetProp)
+            searchRadius = self.searchRadi.get(lowestRx.abbreviation
+                                             , None)
+
+        # do we need to update our results cache?
+        if not self.conflicts.has_key(tpcode):
+            self.conflicts[tpcode] = {'proposal' : targetProp
+                                    , 'lowestRx' : lowestRx
+                                    , 'searchRadius' : searchRadius
+                                    , 'conflicts' : []
+                                     }
+
         # now look for conflicts, source against source
         trgSrcs = targetProp.source_set.all().order_by('target_name')
         srchSrcs = searchedProp.source_set.all().order_by('target_name')
         for trgSrc in trgSrcs:
             for srchSrc in srchSrcs:
-                d = self.getAngularDistance(trgSrc, srchSrc)
-                if d <= rad:
-                    srcConflict = {
+                try:
+                    d = self.getAngularDistance(trgSrc, srchSrc)
+                    if d <= searchRadius:
+                        srcConflict = {
                         'targetSrc' : trgSrc
                       , 'searchedSrc' : srchSrc
                       , 'searchedProp' : searchedProp
                       , 'distance' : d
                       , 'level' : 0
-                    }
-                    self.conflicts[tpcode]['conflicts'].append(srcConflict)
+                        }
+                        self.conflicts[tpcode]['conflicts'].append(srcConflict)
+                except:
+                    print "could not calc distance"
 
 
     def getLowestRcvr(self, proposal):
@@ -182,6 +216,43 @@ class SourceConflicts(object):
                              , src2.ra
                              , src2.dec)
         
+    def report(self):
 
+        self.write("SOURCE CONFLICTS")
+        self.write("Proposals targeted (%d):" % len(self.targetProposals))
+        for p in self.targetProposals:
+           self.write("    %s" % p)
+        self.write("Proposals checked (%d):" % len(self.checkedProposals))
+        for p in self.checkedProposals:
+           self.write("    %s" % p)
+        numConflicts = 0   
+        for pcode in sorted(self.conflicts.keys()):
+            pconflict = self.conflicts[pcode]
+            self.write('')
+            self.write("Sources Found in other Proposals for %s: (%d)" % \
+                (pcode, len(pconflict['conflicts'])))
+            self.write("    Lowest Rx: %s, Search Radius ('): %s" % \
+                (pconflict['lowestRx']
+               , rad2arcMin(pconflict['searchRadius'])))
+            numConflicts += len(pconflict['conflicts'])    
+            for c in pconflict['conflicts']:
+                self.write("    Target: %s; Checked: %s; Prop: %s; Dist. ('): %s"\
+                    % (c['targetSrc'].target_name
+                     , c['searchedSrc'].target_name
+                     , c['searchedProp'].pcode
+                     , rad2arcMin(c['distance'])))
+        
+        self.write("Found %d individual source conflicts" % numConflicts)
+
+    def write(self, line):
+        # anything fancy?  nope ...
+        print line
+
+        
+if __name__ == '__main__':
+    semester = '12B'
+    sc = SourceConflicts(semester = semester, quiet = False)
+    sc.findConflicts()
+    sc.report()
             
 
