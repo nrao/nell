@@ -51,23 +51,85 @@ class TestSourceConflicts(TestCase):
         s.save()
         self.session = s
 
-    def test_sourceAnglularDistance(self):
+    def createSrc(self, proposal, ra = 0.0, dec = 0.0):
+        src = Source(proposal = proposal
+                  , ra = ra
+                  , dec = dec
+                     )
+        src.save()
+        return src
+
+    def test_calcAnglularDistance(self):
+
         src1 = Source(ra = 0.0
                     , dec = 0.0)
         src2 = Source(ra = 0.0
                     , dec = 0.0)
 
         sc = SourceConflicts()
-        d = sc.sourceAngularDistance(src1, src2)
+        d = sc.calcAngularDistance(src1, src2)
         self.assertAlmostEqual(0.0, d, 3)
    
-        # TBF
+        # from Carl's report For GBT12B-364:
+        # source NGC 1266
+        src1.ra = 0.85526951111895499
+        src1.dec = -0.042364958710075701
+        # source NGC1266, GBT10A-014
+        src2.ra = 0.85526223891373798 #sexHrs2rad('03:16:00.0')
+        src2.dec = -0.0423630194553513 #sexDeg2rad('-02:25:37.0')
+        d = sc.calcAngularDistance(src1, src2)
+        self.assertAlmostEqual(0.0258519896867, rad2arcMin(d), 5)
+        #print "deltaRa: ", rad2arcMin(abs(src2.ra - src1.ra))
+        #print "deltaDec: ", rad2arcMin(abs(src2.dec - src1.dec))
 
-    def test_getSearchRadius(self):
+        # source NGC 3665
+        src1.ra = 2.9876837023847602
+        src1.dec = 0.67653858425479396
+        # source SDSS J112346 ...; GBT08A-033
+        src2.ra = 2.9835247282213602 #sexHrs2rad('11:23:46')
+        src2.dec = 0.67338971939598802 #sexDeg2rad('38:34:56')
+        d = sc.calcAngularDistance(src1, src2)
+        self.assertAlmostEqual(15.549314042, rad2arcMin(d), 5)
+        #print "deltaRa: ", rad2arcMin(abs(src2.ra - src1.ra))
+        #print "deltaDec: ", rad2arcMin(abs(src2.dec - src1.dec))
 
-        
+
+    def test_getAnglularDistance(self):
+        src1 = self.createSrc(self.proposal)
+        src2 = self.createSrc(self.proposal)
+
         sc = SourceConflicts()
-        rad = sc.getSearchRadius(self.proposal)
-        print self.session.receivers.all()
+
+        self.assertEqual(0, len(sc.distances))
+
+        # calculate it and stick it in the cache!
+        d = sc.getAngularDistance(src1, src2)
+        self.assertAlmostEqual(0.0, d, 3)
+
+        self.assertEqual(1, len(sc.distances))
+        key = (src1.id, src2.id)
+        self.assertAlmostEqual(0.0, sc.distances[key], 3)
+      
+        # make sure we use the cache when switching sources around
+        d = sc.getAngularDistance(src2, src1)
+        self.assertAlmostEqual(0.0, d, 3)
+
+        self.assertEqual(1, len(sc.distances))
+        key = (src1.id, src2.id)
+        self.assertAlmostEqual(0.0, sc.distances[key], 3)
+      
+
+    def test_getLowestRcvr(self):
+        sc = SourceConflicts()
+        lr = sc.getLowestRcvr(self.proposal)
+        r  = self.session.receivers.all()[0]
+        self.assertEqual(r, lr)
+
+    def test_calcSearchRadiusForRcvr(self):
+        sc = SourceConflicts()
+        r  = Receiver.objects.get(name = 'Rcvr4_6') 
+        rad = sc.calcSearchRadiusForRcvr('C')
+        self.assertAlmostEquals(0.0014544, rad, 7)
+
         
       

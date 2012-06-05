@@ -32,13 +32,21 @@ class SourceConflicts(object):
         else:
             self.semester = semester
 
-        self.initHPBWs()
+        self.initSearchRadi()    
 
-    def initHPBWs(self):
-        "Map receivers to their Half Power Beam Widths (arc-mins)"
+        # cache of src to src angular distance
+        self.distances = {}
+
+        # here's where we put conflicts when we find them
+        self.conflicts = {}
+
+    def initSearchRadi(self):
+        "Map receivers to their Search Radi"
 
         self.hpbw = {
-          'RRI' : 123.5
+          'NS'  : 0.0 # TBF
+        , 'Z'   : 0.0 # TBF
+        , 'RRI' : 123.5
         , '342' : 36.5
         , '450' : 27.5
         , '600' : 20.7
@@ -48,13 +56,18 @@ class SourceConflicts(object):
         , 'S' : 4.1
         , 'C' : 2.5
         , 'X' : 1.3
-        , 'Ku' : 0.830
+        , 'Hol' : 0.0 # TBF
+        , 'K' : 0.830 # Ku?
         , 'KFPA' : 0.560
         , 'Ka' : 0.376
         , 'Q' : 0.249
         , 'W' : 0.160
         , 'MBA' : 0.160 
         }
+
+        self.searchRadi = {}
+        for r in self.hpbw.keys():
+            self.searchRadi[r] = self.calcSearchRadiusForRcvr(r)
 
     def findConflicts(self, proposals = None, allProposals = None):
         "Main entry point: find all source conflicts"
@@ -93,6 +106,8 @@ class SourceConflicts(object):
                 d = self.sourceAngularDistance(trgSrc, srchSrc)
                 if d <= rad:
                     print "Too close!"
+                    if not self.conflicts.has_key(targetProp.pcode):
+                        self.conflicts[targetProp.pcode] = {}
 
 
     def getLowestRcvr(self, proposal):
@@ -103,6 +118,7 @@ class SourceConflicts(object):
             if len(rxs) > 0:
                 if lowest is None or lowestRx.freq_low > rxs[0].freq_low:
                     lowest = rxs[0]
+        return lowest            
 
     def getSearchRadius(self, proposal):
         """
@@ -111,10 +127,31 @@ class SourceConflicts(object):
         lowestRcvr = self.getLowestRcvr(proposal)
         if lowestRcvr is None:
             return None
+        else:
+            return self.searchRadi[lowestRcvr]
+
+    def calcSearchRadiusForRcvr(self, rcvr):        
+        "Search Radius (arc-mins) = 2*HPBW of lowest receiver."
         # get HPWB, *2, convert to degress, then to radians
-        return deg2rad(self.hpbw[lowestRcvr.abbreviation] * 2.0 * (1/60.))            
+        return arcMin2rad(self.hpbw[rcvr] * 2.0)            
                     
-    def sourceAngularDistance(self, src1, src2):
+    def getAngularDistance(self, src1, src2):
+        "Use a cache for the angular dist between two sources."
+        # the cache is important because each proposal checks
+        # against the others, we want to avoid recalculating
+        # these symettrical distances.
+        key1 = (src1.id, src2.id)
+        key2 = (src2.id, src1.id)
+        if self.distances.has_key(key1):
+            dist = self.distances[key1]
+        elif self.distances.has_key(key2):
+            dist = self.distances[key2]
+        else:
+            dist = self.calcAngularDistance(src1, src2)
+            self.distances[key1] = dist
+        return dist    
+                    
+    def calcAngularDistance(self, src1, src2):
         "Ang. Dist. between two source objs: all in radians"
         return angularDistance(src1.ra
                              , src1.dec
