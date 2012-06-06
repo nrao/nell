@@ -44,11 +44,13 @@ class SourceConflicts(object):
         # structure's first level: proposal being searched details
         # then for each proposal: a list of conflict descriptions,
         # including src's conflicting, the distance between them,
-        # and the level of the conflict
+        # and the level of the conflict.  If this gets any bigger
+        # we need to define some classes I think.
         self.conflicts = {}
 
         # for reporting
         self.quiet = quiet
+        self.badDistances = []
         self.targetProposals = []
         self.checkedProposals = []
 
@@ -150,9 +152,11 @@ class SourceConflicts(object):
         srchSrcs = searchedProp.source_set.all().order_by('target_name')
         for trgSrc in trgSrcs:
             for srchSrc in srchSrcs:
+                conflict = False
                 try:
                     d = self.getAngularDistance(trgSrc, srchSrc)
                     if d <= searchRadius:
+                        conflict = True
                         srcConflict = {
                         'targetSrc' : trgSrc
                       , 'searchedSrc' : srchSrc
@@ -163,8 +167,29 @@ class SourceConflicts(object):
                         self.conflicts[tpcode]['conflicts'].append(srcConflict)
                 except:
                     print "could not calc distance"
+                    srcConflict = {
+                        'targetSrc' : trgSrc
+                      , 'searchedSrc' : srchSrc
+                      , 'searchedProp' : searchedProp
+                        }
+                    self.badDistances.append(srcConflict)
+                if conflict:
+                    # see if it's even worse - check the other levels
+                    if self.hasSameRcvrConflict(targetProp, searchedProp):
+                        self.conflicts[tpcode]['conflicts'][-1]['level'] = 1
+                        # check the next level - proprietary period!
+                        if self.withinPropietaryDate(srchSrc, searchedProp):
+                            self.conflicts[tpcode]['conflicts'][-1]['level'] = 2
+                            
+    
+    def hasSameRcvrConflict(self, targetProp, searchedProp):
+        # TBF
+        return False
 
-
+    def withinProprietaryDate(self, srchSrc, searchedProp):
+        # TBF
+        return False
+                    
     def getLowestRcvr(self, proposal):
         """"
         Of all the receivers used by all given proposal's sessions, 
@@ -236,13 +261,16 @@ class SourceConflicts(object):
                , rad2arcMin(pconflict['searchRadius'])))
             numConflicts += len(pconflict['conflicts'])    
             for c in pconflict['conflicts']:
-                self.write("    Target: %s; Checked: %s; Prop: %s; Dist. ('): %s"\
+                self.write("    Target: %s; Checked: %s; Prop: %s; Dist. ('): %s; Level: %d"\
                     % (c['targetSrc'].target_name
                      , c['searchedSrc'].target_name
                      , c['searchedProp'].pcode
-                     , rad2arcMin(c['distance'])))
+                     , rad2arcMin(c['distance'])
+                     , c['level']))
         
+        self.write("")
         self.write("Found %d individual source conflicts" % numConflicts)
+        self.write("Number of distances that could not be calculated: %d" % len(self.badDistances))
 
     def write(self, line):
         # anything fancy?  nope ...
