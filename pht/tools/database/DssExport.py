@@ -155,6 +155,11 @@ class DssExport(object):
           , max_duration   = max_dur
           , min_duration   = min_dur
         )
+
+        # Associate the new DSS session with its PHT session
+        pht_session.dss_session = dss_session
+        pht_session.save()
+
         source = ', '.join([s.target_name for s in pht_session.sources.all()])
         target = dss.Target.objects.create(
             system     = dss.System.objects.get(name = 'J2000')
@@ -206,12 +211,24 @@ class DssExport(object):
                 )
 
     def createPeriod(self, pht_period, dss_session):
-        return dss.Period.objects.create(
+        period = dss.Period.objects.create(
             session = dss_session
           , state   = dss.Period_State.objects.get(name = 'Pending')
           , start   = pht_period.start
           , duration = pht_period.duration
+          , score    = -1.0
           )
+        pa = dss.Period_Accounting(scheduled = 0.0)
+        pa.save()
+        period.accounting = pa
+        period.save()
+        self.addPeriodReceivers(period, [r.abbreviation for r in pht_period.session.receivers.all()])
+        return period
+
+    def addPeriodReceivers(self, dss_period, abbreviations):
+        for abbr in abbreviations:
+            rp = dss.Period_Receiver(receiver = dss.Receiver.objects.get(abbreviation = abbr), period = dss_period)
+            rp.save()
 
     def getMinMaxDuration(self, pht_session):
         period_time = pht_session.allotment.period_time
