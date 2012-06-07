@@ -26,6 +26,37 @@ from pht.utilities import *
 
 class TestUtilities(unittest.TestCase):
 
+    def test_angularDistance(self):
+
+        # common sense
+        d = angularDistance(0.0, 0.0, 0.0, 0.0)
+        self.assertAlmostEqual(0.0, d, 3)
+        d = angularDistance(0.0, 0.0, 0.0, math.pi/2.0)
+        self.assertAlmostEqual(math.pi/2.0, d, 3)
+
+        # from Practical Astronomy w/ Your Calculator, page 53
+        ra1  = hr2rad(5.225)
+        dec1 = deg2rad(-8.225)
+        ra2  = hr2rad(6.737)         
+        dec2 = deg2rad(-16.686)        
+        d = angularDistance(ra1, dec1, ra2, dec2)
+        self.assertAlmostEqual(0.41328374, d, 3)
+
+        # from Ron:
+        ra1  = deg2rad(15.*11.35)
+        dec1 = deg2rad(4.18)
+        ra2  = deg2rad(15.*12.)
+        dec2 = deg2rad(0.26)
+        d = angularDistance(ra1, dec1, ra2, dec2)
+        self.assertAlmostEqual(0.18325, d, 3)
+
+        ra1  = deg2rad(15.*11.41)
+        dec1 = deg2rad(3.83)
+        ra2  = deg2rad(15.*12.)
+        dec2 = deg2rad(15.)
+        d = angularDistance(ra1, dec1, ra2, dec2)
+        self.assertAlmostEqual(0.24727, d, 3)
+
     def test_genDateTimesFromDays(self):
 
         days = [1,3,5]
@@ -131,3 +162,17 @@ class TestUtilities(unittest.TestCase):
         self.assertAlmostEquals(0.0,         sexDeg2rad('00:00:00.0'), 2)
         self.assertAlmostEquals(math.pi/2.0, sexDeg2rad('90:00:00.0'), 2)
         self.assertAlmostEquals(2.0*math.pi, sexDeg2rad('359:59:59.9'), 2)
+
+    def test_conversions(self):
+
+        # test identity - use a range of degrees
+        xs = range(0, 364)
+        for x in xs:
+            self.assertAlmostEquals(x, rad2deg(deg2rad(x)), 5)
+            self.assertAlmostEquals(x
+                , rad2deg(hr2rad(rad2hr(deg2rad(x)))), 5)
+            self.assertAlmostEquals(x
+                , arcMin2deg(deg2arcMin(x)), 5)
+            self.assertAlmostEquals(x
+                , rad2deg(arcMin2rad(rad2arcMin(deg2rad(x)))), 5)
+

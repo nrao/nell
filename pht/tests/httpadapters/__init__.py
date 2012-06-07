@@ -1,2 +1,3 @@
+from TestPeriodHttpAdapter   import TestPeriodHttpAdapter
 from TestProposalHttpAdapter import TestProposalHttpAdapter
-from TestSessionHttpAdapter import TestSessionHttpAdapter
+from TestSessionHttpAdapter  import TestSessionHttpAdapter

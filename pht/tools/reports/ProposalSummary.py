@@ -58,7 +58,9 @@ class ProposalSummary(ProposalReport):
         obs_types = [ot.code for ot in proposal.observing_types.all()]
         students  = len(proposal.author_set.filter(thesis_observing = True))
         thesis    = str(students)
-        return [Paragraph('%s' % proposal.id, self.styleSheet)
+        code      = proposal.pcode.split('-')
+        pcode     = code[1] if len(code) > 1 else proposal.pcode
+        return [Paragraph('%s' % pcode, self.styleSheet)
               , Paragraph(proposal.title, self.styleSheet)
               , Paragraph(pi_name, self.styleSheet)
               , Paragraph(str(proposal.requestedTime()), self.styleSheet)

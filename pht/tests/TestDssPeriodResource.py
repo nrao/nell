@@ -28,9 +28,10 @@ from django.contrib.auth import models as m
 from datetime            import datetime
 import math
 
-from scheduler.models    import *
-from scheduler.tests.utils    import create_sesshun
-from scheduler.httpadapters   import PeriodHttpAdapter
+from scheduler.models       import *
+from scheduler.tests.utils  import create_sesshun
+from scheduler.httpadapters import PeriodHttpAdapter
+from pht.httpadapters       import DssPeriodHttpAdapter
 
 class TestDssPeriodResource(TestCase):
     # must use django.test.TestCase if we want fixtures
@@ -67,6 +68,8 @@ class TestDssPeriodResource(TestCase):
                     , 'time'    : '00:00'
                     , 'duration' : 1.0
                     , 'backup'   : True}
+
+        # create the dss period            
         self.period  = Period()
         adapter = PeriodHttpAdapter(self.period)
         adapter.init_from_post(self.fdata, 'UTC')
@@ -81,64 +84,11 @@ class TestDssPeriodResource(TestCase):
         results = self.eval_response(response.content)
 
         self.failUnlessEqual(response.status_code, 200)
-        self.assertEqual(self.period.session.name, results['session']['name'])
-        self.assertEqual(self.period.session.id, results['session']['id'])
+        self.assertEqual(self.period.session.observing_type.type, results['session']['science'])
+        self.assertEqual(self.period.session.session_type.type, results['session']['type'])
         self.assertEqual(self.period.duration, results['duration'])
         self.assertEqual(self.fdata['date'], results['date'])
         self.assertEqual(self.fdata['time'], results['time'])
 
-    def test_delete(self):
-        before   = len(Period.objects.all())
-        response = self.client.delete("/pht/dss/periods/UTC/%d" % self.period.id)
-        after    = len(Period.objects.all())
-        self.failUnlessEqual(response.status_code, 200)
-        self.assertEqual(before - after, 1)
 
-    def test_post(self):
-                   
-        before   = len(Period.objects.all())
-        response = self.client.post("/pht/dss/periods/UTC" 
-                                  , json.dumps(self.fdata)
-                                  , content_type='application/json')
-        results = self.eval_response(response.content)
-
-        self.failUnlessEqual(response.status_code, 200)
-
-        after   = len(Period.objects.all())
-        self.assertEqual(1, after - before)
-
-        # TBF: need to solve session name uniqueness issue
-        #fields = ['session', 'session_id', 'duration', 'date', 'time']
-        fields = ['session', 'duration', 'date', 'time']
-        for field in fields[1:]:
-            self.assertEqual(results.get(field)
-                           , self.fdata.get(field))
-
-    def test_put(self):
-
-        # change the current period
-        data = self.fdata.copy()
-        # TBF: can't do this till we fix the fixture that has the non-unique sess names
-        # change the period's session's handle to the other one
-        #handles = ["%s (%s)" % (s.name, s.proposal.pcode) \
-        #    for s in Session.objects.all().order_by('id')]
-        #handle = handles[0] if handles[0] != self.period_data['handle'] else handles[1]    
-        #data['handle'] = handle
-        data['duration'] = 3.0
-        data['date'] = '01/13/2011'
-        data['time'] = '14:15'
-
-        before   = len(Period.objects.all())
-        response = self.client.put("/pht/dss/periods/UTC/%s" % self.period.id
-                                 , json.dumps(data)
-                                 , content_type='application/json')
-        after    = len(Period.objects.all())
-        results = self.eval_response(response.content)
-
-        self.failUnlessEqual(response.status_code, 200)
-        pAgain = Period.objects.get(id = self.period.id) # Get fresh instance from db
-        #self.assertNotEqual(pAgain.session.id, self.period_data['session_id'])
-        self.assertEqual(pAgain.duration, 3.0)
-        self.assertEqual(pAgain.start, datetime(2011, 1, 13, 14, 15))
-        self.assertEqual(before - after, 0)
         

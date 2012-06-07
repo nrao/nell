@@ -49,6 +49,26 @@ def rad2hr(rad):
         return None
     return 12 * rad / math.pi
 
+def arcMin2rad(arcMin):
+    if arcMin is None:
+        return None
+    return deg2rad(arcMin2deg(arcMin))    
+
+def arcMin2deg(arcMin):
+    if arcMin is None:
+        return None
+    return arcMin/60.0    
+    
+def deg2arcMin(deg):
+    if deg is None:
+        return None
+    return 60.0*deg
+
+def rad2arcMin(rad):
+    if rad is None:
+        return None
+    return deg2arcMin(rad2deg(rad))    
+
 def sexigesimelFormTwo2float(value):
     return sexigesimel2float(value, deliminator = " ")
 
@@ -164,4 +184,21 @@ def genDateTimesFromDays(start, days):
         dts.append(dt)
     return dts    
 
-    
+# Angular distance between two points whose coordinates are (x1, y1) and (x2, y2):
+# d = inserse cosine of (sin y1 sin y2 + cos y1 cos y2 (x1 - x2))
+# Or, from Ron's Tcl code:
+# d = set angSep [expr {acos(sin($y0)*sin($y1) + cos($y0)*cos($y1)*cos($x0-$x1))}]
+# Or, from Antioch!
+#> angularDistance :: (Radians, Radians) -> (Radians, Radians) -> Radians
+#> angularDistance (ra, dec) (ra', dec') = acos $ a + (b*c)
+#>   where
+#>     a = (sin dec) * (sin dec')
+#>     b = (cos dec) * (cos dec')
+#>     c = cos (ra - ra')
+ 
+def angularDistance( ra1, dec1, ra2, dec2): 
+    "Angular Distance between two points (all radians)"
+    a = math.sin(dec1) * math.sin(dec2)
+    b = math.cos(dec1) * math.cos(dec2)
+    c = math.cos(ra1 - ra2)
+    return math.acos(a + (b*c))
