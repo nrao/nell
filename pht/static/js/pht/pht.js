@@ -112,13 +112,15 @@ Ext.application({
                                 {
                                     region: 'east',
                                     layout: 'fit',
-                                    xtype: 'tactool',
+                                    xtype: 'panel',
                                     width: 500,
+                                    items: [{xtype: 'tactool'}],
                                 },
                                 {
                                     region: 'center',
                                     layout: 'fit',
-                                    xtype: 'proposaledit',
+                                    xtype: 'panel',
+                                    items: [{xtype: 'proposaledit'}],
                                 },
                             ],
                         },
@@ -142,11 +144,6 @@ Ext.application({
         var plot = Ext.create('PHT.view.plot.Window', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
-        /*
-        var tac = Ext.create('PHT.view.proposal.TacTool', {
-            renderTo: viewport.layout.regions.center.getEl(),
-        });
-        */
         var lstReportWin = Ext.create('PHT.view.plot.LstReportWindow', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
@@ -196,13 +193,6 @@ Ext.application({
                 handler: function() {
                     plot.show();
                 }},
-                /*
-                {
-                text: 'TAC Tool',
-                handler: function() {
-                    tac.show();
-                }},
-                */
             ]
         });
         var editMenu = Ext.create('Ext.menu.Menu', {
@@ -320,7 +310,6 @@ Ext.application({
         this.getController('Proposals').addObserver(this.getController('Sources'));
         this.getController('Proposals').addObserver(this.getController('Sessions'));
         this.getController('Proposals').addObserver(this.getController('Dashboard'));
-        //this.getController('Proposals').setTacToolWindow(tac);
         this.getController('Proposals').setTacTool(viewport.down('tactool'));
         
         // TBF: better place for VTypes?

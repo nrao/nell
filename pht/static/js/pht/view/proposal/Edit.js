@@ -1,24 +1,7 @@
 Ext.define('PHT.view.proposal.Edit', {
-    extend: 'PHT.view.Form',
+    extend: 'PHT.view.FormPanel',
     alias : 'widget.proposaledit',
     title : 'Edit Proposal',
-    border: false,
-    trackResetOnLoad: true,
-    autoScroll: true,
-    fieldDefaults: {
-        labelStyle: 'font-weight:bold',
-    },
-
-    listeners: {
-        // enable the save button when a change is made
-        dirtychange: function(form, dirty) {
-            if (dirty) {
-                this.saveBtn.enable(true);
-            } else {
-                this.saveBtn.disable(true);
-            }
-       }
-    },
 
     initComponent: function() {
         this.piCombo = Ext.create('Ext.form.field.ComboBox', {
@@ -43,7 +26,6 @@ Ext.define('PHT.view.proposal.Edit', {
         this.items = [
             {
                 // Upper half has two columns
-                xtype: 'panel',
                 layout: 'column',
                 items:[{
                     // first column
@@ -253,19 +235,7 @@ Ext.define('PHT.view.proposal.Edit', {
             },
         ];
 
-        this.saveBtn = Ext.create('Ext.Button', {
-            text: 'Save',
-            action: 'save',
-            disabled: true,
-        });
-
         this.buttons = [
-            this.saveBtn,
-            {
-                text: 'Cancel',
-                scope: this,
-                handler: this.reset,
-            },
             {
                 text: 'Sources',
                 action: 'sources'
@@ -277,14 +247,6 @@ Ext.define('PHT.view.proposal.Edit', {
         ];
 
         this.callParent(arguments);
-    },
-
-    setRecord: function(record){
-        this.record = record;
-    },
-
-    reset: function(button) {
-        this.loadRecord(this.record);
     },
 
     filterPis: function(pcode) {

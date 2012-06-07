@@ -5,32 +5,15 @@ The following should be editable in the GB PHT. TAC comments to PI, NRAO Comment
 */
 
 Ext.define('PHT.view.proposal.TacTool', {
-    extend: 'PHT.view.Form',
+    extend: 'PHT.view.FormPanel',
     alias : 'widget.tactool',
     title : 'TAC Tool',
-    autoScroll: true,
-    border: false,
-    trackResetOnLoad: true,
-    fieldDefaults: {
-       labelStyle: 'font-weight:bold',
-    },
     defaults: {
         width: 450,
         height: 100,
         allowBlank: true,
         labelStyle: '',    
         layout: 'fit',
-    },
-
-    listeners: {
-        // enable the save button when a change is made
-        dirtychange: function(form, dirty) {
-            if (dirty) {
-                this.saveBtn.enable(true);
-            } else {
-                this.saveBtn.disable(true);
-            }
-       }
     },
 
     initComponent: function() {
@@ -83,23 +66,12 @@ Ext.define('PHT.view.proposal.TacTool', {
                 name : 'tac_to_pi',
                 fieldLabel: 'TAC Comments to PI',
         }];
-        console.log(this.items);
 
         this.allocateBtn = Ext.create('Ext.button.Button', {
             text: 'Allocate',
             action: 'allocate',
         });
    
-        this.saveBtn = Ext.create('Ext.Button', {
-            text: 'Save',
-            action: 'save',
-            disabled: true,
-        });
-
-        this.buttons = [
-            this.saveBtn,
-        ];
-
         this.dockedItems = [{
             xtype: 'toolbar',
             items: [
@@ -108,6 +80,8 @@ Ext.define('PHT.view.proposal.TacTool', {
                 this.allocateBtn,
             ]},
         ];
+
+        this.buttons = [];
 
         this.callParent(arguments);
     },
@@ -126,5 +100,6 @@ Ext.define('PHT.view.proposal.TacTool', {
         this.proposalCombo.setValue(pcode);
         // load the proposal
         this.loadRecord(proposal);
+        this.setRecord(proposal);
     },
 });            
