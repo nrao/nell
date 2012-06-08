@@ -96,6 +96,14 @@ class TestLstPressures(TestCase):
         grades = ['A', 'B', 'C']
         types = ["%s_%s" % (w, g) for w in wtypes for g in grades]
 
+        # make sure are session belongs to a future semester, 
+        # no matter when we are running this test
+        lst = LstPressures()
+        semName = lst.futureSemesters[0]
+        futureSem, _ = Semester.objects.get_or_create(semester = semName)
+        self.session.proposal.semester  = futureSem
+        self.session.proposal.save()
+
         # make sure we start off blank, by adjusting the session
         time = self.session.allotment.allocated_time 
         req  = self.session.allotment.requested_time 
@@ -103,7 +111,6 @@ class TestLstPressures(TestCase):
         self.session.allotment.requested_time = 0.0
         self.session.allotment.save()
 
-        lst = LstPressures()
         ps = lst.getPressures()
         for i, p in enumerate(ps):
             self.assertEqual(float(i), p['LST'])
@@ -157,6 +164,13 @@ class TestLstPressures(TestCase):
     def test_getPressures2(self):
 
         lst = LstPressures()
+
+        # make sure are session belongs to a future semester, 
+        # no matter when we are running this test
+        semName = lst.futureSemesters[0]
+        futureSem, _ = Semester.objects.get_or_create(semester = semName)
+        self.session.proposal.semester  = futureSem
+        self.session.proposal.save()
 
         wtypes = ['Poor', 'Good', 'Excellent']
         grades = ['A', 'B', 'C']
@@ -238,6 +252,13 @@ class TestLstPressures(TestCase):
         """
 
         lst = LstPressures()
+
+        # make sure are session belongs to a future semester, 
+        # no matter when we are running this test
+        semName = lst.futureSemesters[0]
+        futureSem, _ = Semester.objects.get_or_create(semester = semName)
+        self.session.proposal.semester  = futureSem
+        self.session.proposal.save()
 
         # 1
         self.session.target.min_lst = hr2rad(0.0)
@@ -694,3 +715,25 @@ class TestLstPressures(TestCase):
                                 , alloc.getType(w)[i])                                
                 self.assertEquals(expC.getType(w)[i]
                                 , chg.getType(w)[i])
+
+    def test_isCarryover(self):
+
+        lst = LstPressures()
+
+        # our session is in 12A; for testing, do some time travel
+
+        # today is long before that - of course our session is new!
+        dt = datetime(2009, 10, 1)
+        carryover = lst.isCarryover(self.session, today = dt)
+        self.assertEqual(False, carryover)
+
+        # today is in 12A - same semester! so now we're carryover
+        dt = datetime(2012, 6, 1)
+        carryover = lst.isCarryover(self.session, today = dt)
+        self.assertEqual(True, carryover)
+
+        # today is in 12B - this session was in our past - it's carryover
+        dt = datetime(2012, 10, 1)
+        carryover = lst.isCarryover(self.session, today = dt)
+        self.assertEqual(True, carryover)
+
