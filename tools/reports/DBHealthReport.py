@@ -731,6 +731,18 @@ def GenerateReport():
     values = Period.objects.filter(duration__gt = 24.0)
     print_values(outfile, values)
 
+    outfile.write("\n\nPeriods in the future whose receivers are different then their sessions.")
+    fps = Period.objects.filter(start__gt = datetime.now()).order_by('start')
+    # Here we compare what the period currently has, with the function that
+    # the period was initialized with 
+    bps = [p for p in fps if p.receiver_list_simple() != ", ".join(p.session.rcvrs_specified())] 
+    values = ["%s at %s; %s vs. %s" % (p.session.name
+                                     , p.start
+                                     , p.receiver_list_simple()
+                                     , ", ".join(p.session.rcvrs_specified())) \
+               for p in bps]
+    print_values(outfile, values)
+
     outfile.write("\n\nPeriods which have been observed when none of their receivers were up:")
     start = datetime(2009, 10, 10) # don't bother looking before this
     end = datetime.utcnow() - timedelta(days=1) # leave a day buffer
