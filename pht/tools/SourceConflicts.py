@@ -23,8 +23,9 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from pht.models import *
+from pht.models    import *
 from pht.utilities import *
+from sets          import Set
 
 class SourceConflicts(object):
 
@@ -58,8 +59,8 @@ class SourceConflicts(object):
         "Map receivers to their Search Radi"
 
         self.hpbw = {
-          'NS'  : 0.0 # TBF
-        , 'Z'   : 0.0 # TBF
+          'NS'  : 0.0 
+        , 'Z'   : 0.376 # same as Ka 
         , 'RRI' : 123.5
         , '342' : 36.5
         , '450' : 27.5
@@ -70,9 +71,10 @@ class SourceConflicts(object):
         , 'S' : 4.1
         , 'C' : 2.5
         , 'X' : 1.3
-        , 'Hol' : 0.0 # TBF
-        , 'K' : 0.830 # Ku?
+        , 'Hol' : 0.0 
+        , 'Ku' : 0.830 
         , 'KFPA' : 0.560
+        , 'K' : 0.560
         , 'Ka' : 0.376
         , 'Q' : 0.249
         , 'W' : 0.160
@@ -183,8 +185,13 @@ class SourceConflicts(object):
                             
     
     def hasSameRcvrConflict(self, targetProp, searchedProp):
-        # TBF
-        return False
+        """
+        This couldn't be simpler: compare the union of the 
+        receivers used at the proposal level.
+        """
+        targetRcvrs = Set(list(targetProp.bands()))
+        searchedRcvrs = Set(list(searchedProp.bands()))
+        return len(list(targetRcvrs.intersection(searchedRcvrs))) > 0
 
     def withinProprietaryDate(self, srchSrc, searchedProp):
         # TBF
