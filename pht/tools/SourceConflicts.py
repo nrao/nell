@@ -23,9 +23,11 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
+from scheduler     import models as dss
 from pht.models    import *
 from pht.utilities import *
 from sets          import Set
+from datetime      import datetime, timedelta
 
 class SourceConflicts(object):
 
@@ -157,7 +159,7 @@ class SourceConflicts(object):
                 conflict = False
                 try:
                     d = self.getAngularDistance(trgSrc, srchSrc)
-                    if d <= searchRadius:
+                    if d <= searchRadius and self.passesInclusionCheck(searchedProp):
                         conflict = True
                         srcConflict = {
                         'targetSrc' : trgSrc
@@ -193,9 +195,44 @@ class SourceConflicts(object):
         searchedRcvrs = Set(list(searchedProp.bands()))
         return len(list(targetRcvrs.intersection(searchedRcvrs))) > 0
 
-    def withinProprietaryDate(self, srchSrc, searchedProp):
-        # TBF
-        return False
+    def passesInclusionCheck(self, searchedProp):
+        """
+        This method checks to see if the searched proposal pass an inclusion check.
+        Exclusion Rule: If the grade is B or C and the semester is prior to the current 
+                        semester (proposed semester - 1 year) and the proposal had no 
+                        observing time then ignore the proposal. 
+                        If no last observed date and grade A then include proposal. 
+                        If no last observed date and the grade is B or C and proposal 
+                        is in the current semester then include proposal.
+        """
+        # Get the grade of the proposal
+        grades = sorted(searchedProp.grades())
+        if len(grades) >= 1:
+            grade = grades[0]
+        else:
+            return False # If there's no grade, ignore proposal.
+
+        periods = searchedProp.dss_project.get_observed_periods() if searchedProp.dss_project is not None else []
+        # Rule 1
+        if grade in ('B', 'C') and \
+           searchedProp.semester.semester < dss.Semester.getCurrentSemester().semester and \
+           len(periods) == 0:
+            print 'Too old and shitty'
+            return False
+        # Rule 2
+        elif len(periods) == 0 and grade == 'A':
+            return True
+        # Rule 3
+        elif len(periods) == 0 and grade in ('B', 'C') and \
+           searchedProp.semester.semester == dss.Semester.getCurrentSemester().semester:
+            return True
+        return True # We shouldn't get here, but if we do might as well include proposal.
+
+    def withinProprietaryDate(self, srchSrc, searchedProp, now = datetime.now()):
+        "Any observations within a year?"
+        refTime = now - timedelta(days = 365)
+        periods = [p for p in searchedProp.dss_project.get_observed_periods() if p.start > refTime]
+        return len(periods) > 0
                     
     def getLowestRcvr(self, proposal):
         """"

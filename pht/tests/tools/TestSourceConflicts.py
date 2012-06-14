@@ -24,6 +24,8 @@ from django.test         import TestCase
 
 from datetime import datetime, date, timedelta
 
+from scheduler  import models as dss
+from pht.tools.database import DssExport
 from pht.models import *
 from pht.utilities import *
 from pht.httpadapters.SessionHttpAdapter import SessionHttpAdapter
@@ -40,6 +42,10 @@ class TestSourceConflicts(TestCase):
         # get the one proposal and it's one session
         proposal = Proposal.objects.all()[0]
         self.proposal = proposal
+        for s in self.proposal.session_set.all():
+            s.grade = SessionGrade.objects.get(grade = 'A')
+            s.save()
+
         s = proposal.session_set.all()[0]
 
         # give it some values so it will show up in plot
@@ -171,6 +177,30 @@ class TestSourceConflicts(TestCase):
         rad = sc.calcSearchRadiusForRcvr('C')
         self.assertAlmostEquals(0.0014544, rad, 7)
 
+    def test_withinProprietaryDate(self):
+
+        s = self.proposal.session_set.all()[0]
+        src0 = self.proposal.source_set.all()[0]
+        tpcode = self.proposal.pcode
+
+        # Need a DSS Project for this
+        export   = DssExport()
+        project  = export.exportProposal(tpcode)
+        proposal = Proposal.objects.get(pcode = tpcode)
+        period   = dss.Period.objects.create(session = project.sesshun_set.all()[0]
+                                           , start = datetime(2012, 6, 10)
+                                           , duration = 8
+                                           , state = dss.Period_State.objects.get(name = 'Scheduled')
+                                           )
+
+        # turn the crank
+        sc = SourceConflicts()
+        result = sc.withinProprietaryDate(src0, proposal, now = datetime(2012, 6, 12))
+        self.assertTrue(result)
+
+        result = sc.withinProprietaryDate(src0, proposal, now = datetime(2013, 6, 12))
+        self.assertTrue(not result)
+
     def test_findConflicts(self):
 
         s = self.proposal.session_set.all()[0]
@@ -180,6 +210,7 @@ class TestSourceConflicts(TestCase):
         # create a new proposal w/ sessions and sources
         newP = self.createProposal() 
         newS = self.createSession(newP)
+        newS.grade = SessionGrade.objects.get(grade = 'A')
         newS.receivers.add(Receiver.objects.get(abbreviation = 'Q'))
         newS.receivers.add(Receiver.objects.get(abbreviation = '800'))
         newS.save()
