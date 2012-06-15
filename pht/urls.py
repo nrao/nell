@@ -33,6 +33,7 @@ urlpatterns = patterns(''
    , url(r'^calendar/lstrange$',                 lst_range)
    , url(r'^import/semester$',                   import_semester)
    , url(r'^import/pst$',                        import_pst_proposals)
+   , url(r'^proposals/export$',                  proposals_export)
    , url(r'^proposals/([^/]+)/authors$',         login_required(authorResource.requestHandler))
    , url(r'^proposals/([^/]+)/authors/([^/]+)$', login_required(authorResource.requestHandler))
    , url(r'^proposals/([^/]+)/sources$',         proposal_sources)

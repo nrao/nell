@@ -496,6 +496,41 @@ def lst_pressure_report(request, *args, **kws):
 
     return response
 
+def mkProposalView(proposal, keys):
+    retval = []
+    for k in keys:
+        field = proposal.get(k)
+        if type(field) == list:
+            field = ', '.join(field)
+        if field is None:
+            field = ''
+        try:
+            field = field.replace('\n', '<br/>').replace('\r', '<br/>')
+        except:
+            pass
+        retval.append(field)
+    return '\t'.join(map(str, retval))
+
+@login_required
+@admin_only
+def proposals_export(request):
+    semester  = request.GET.get('semester')
+    proposals = [ProposalHttpAdapter(p).jsonDict() 
+                   for p in Proposal.objects.filter(semester__semester = semester)]
+    ignoredKeys = ('nrao_comment', 'srp_to_pi', 'srp_to_tac', 
+                   'tech_review_to_pi', 'tech_review_to_tac', 'tac_to_pi')
+    keys      = [k for k in proposals[0].keys() if k not in ignoredKeys]
+    keys.remove('id')
+    keys.insert(0, 'id')
+    proposals = [mkProposalView(p, keys) for p in proposals]
+    proposals.insert(0, '\t'.join(keys))
+    response  = render(request
+                    , "pht/proposals.txt"
+                    , {'proposals' : proposals }
+                    , content_type = 'text/plain')
+    response['Content-Disposition'] = 'attachment; filename=proposals_' + semester + '.txt'
+    return response
+
 @login_required
 @admin_only
 def proposal_ranking(request):
