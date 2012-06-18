@@ -22,46 +22,34 @@
 
 import simplejson as json
 from django.test      import TransactionTestCase, TestCase
-from pht.httpadapters import ProposalHttpAdapter
+from pht.httpadapters import PeriodHttpAdapter
 from pht.models       import *
+from datetime         import datetime
 
-class TestProposalHttpAdapter(TransactionTestCase):
+class TestPeriodHttpAdapter(TransactionTestCase):
 
     # must use django.test.TestCase if we want fixtures
     fixtures = ['proposal_GBT12A-002.json', 'scheduler.json']
 
     def setUp(self):
 
-        # again, I'm too lazy to fix the fixture - so add a code here
-        ot = ObservingType.objects.get(type = 'Spectroscopy')
-        ot.code = 'S'
-        ot.save()
-        sc = ScientificCategory.objects.get(category = 'Interstellar Medium')
-        sc.code = 'ISM'
-        sc.save()
-
         # set this in order to diff these ridiculously long
         # Json dictionaries
         self.maxDiff = None
 
-    def test_copy(self):
-        proposal = Proposal.objects.get(pcode = 'GBT12A-002')
+        # creat a period
+        p = Proposal.objects.all()[0]
+        s = p.session_set.all()[0]
 
-        # Fix up test session
-        for s in proposal.session_set.all():
-            n = SessionNextSemester()
-            n.save()
-            s.next_semester = n
-            s.save()
-
-        adapter = ProposalHttpAdapter(proposal)
-        new_proposal = adapter.copy('GBT12A-003')
-        self.assertTrue(new_proposal.source_set.all() > 0)
-        self.assertTrue(new_proposal.session_set.all() > 0)
+        p = Period( session = s
+                  , start = datetime(2012, 1, 1, 12)
+                  , duration = 2.0
+                  )
+        p.save()
 
     def test_jsonDictAllHP(self):
-        p = Proposal.objects.all()[0]
-        pa = ProposalHttpAdapter(proposal = p)
+        p = Period.objects.all()[0]
+        pa = PeriodHttpAdapter(period = p)
         # here's what the json for this session looks like when
         # we use the ORM
         ormJson = pa.jsonDict()
@@ -89,8 +77,4 @@ class TestProposalHttpAdapter(TransactionTestCase):
             if f not in ignoreFields:
                 self.assertEqual(ormJson.get(f)
                                , sqlJson.get(f))
-            #else:
-            #    print "ORM: ", ormJson.get(f)
-            #    print "SQL: ", sqlJson.get(f)
 
-        

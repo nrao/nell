@@ -123,44 +123,9 @@ class SessionHttpAdapter(PhtHttpAdapter):
           ["%.2f-%.2f" % (low, hi) for low, hi in params[t]]) 
                                        for t in ('LST Include', 'LST Exclude')]
 
-        if data['dss_session_id'] is not None:
-            query = """
-                select sum((pa.scheduled - 
-                  (pa.other_session_weather + pa.other_session_rfi + pa.other_session_other) - 
-                  (pa.lost_time_weather + pa.lost_time_rfi + pa.lost_time_other)) - 
-                  pa.not_billable) as time_billed, 
-                  sum(pa.scheduled) as scheduled_time 
-                from periods as p 
-                  join periods_accounting as pa on pa.id = p.accounting_id 
-                where p.session_id = %s
-            """ % data['dss_session_id']
-            curr.execute(query)
-            tb_keys = [d.name for d in curr.description]
-            tb_data = dict(zip(tb_keys, curr.fetchone()))
-            if tb_data['time_billed'] is not None:
-                tb_data['remaining_time'] = data['dss_total_time'] - tb_data['time_billed']
-            else:
-                tb_data['remaining_time'] = None
-
-            query = """
-                select start, duration 
-                from periods 
-                where session_id = %s and state_id <> 3 
-                order by start desc limit 1
-            """ % (data['dss_session_id'])
-            curr.execute(query)
-            result = curr.fetchone()
-            if result is not None:
-                last_date = result[0] + timedelta(hours = result[1])
-                tb_data['last_date_scheduled'] = formatExtDate(last_date)
-            else:
-                tb_data['last_date_scheduled'] = None
-        else:
-            tb_data = {}
-            tb_data['time_billed']         = None
-            tb_data['scheduled_time']      = None
-            tb_data['remaining_time']      = None
-            tb_data['last_date_scheduled'] = None
+        tb_data = SessionHttpAdapter.jsonSessionTimeAccounting(curr
+                     , data['dss_session_id']
+                     , data['dss_total_time'])
         data.update(tb_data)
 
         # add in the total requested time - simple math
@@ -172,6 +137,53 @@ class SessionHttpAdapter(PhtHttpAdapter):
             data['requested_total'] = None
 
         return data
+
+    @staticmethod
+    def jsonSessionTimeAccounting(curr, session_id, dss_total_time):
+
+        # init
+        tb_data = {}
+        tb_data['billed_time']         = None
+        tb_data['scheduled_time']      = None
+        tb_data['remaining_time']      = None
+        tb_data['last_date_scheduled'] = None
+
+        # anything to actually compute?
+        if session_id is None:
+            return tb_data
+
+        query = """
+            select sum((pa.scheduled - 
+              (pa.other_session_weather + pa.other_session_rfi + pa.other_session_other) - 
+              (pa.lost_time_weather + pa.lost_time_rfi + pa.lost_time_other)) - 
+              pa.not_billable) as billed_time, 
+              sum(pa.scheduled) as scheduled_time 
+            from periods as p 
+              join periods_accounting as pa on pa.id = p.accounting_id 
+            where p.session_id = %s
+        """ % session_id
+        curr.execute(query)
+        tb_keys = [d.name for d in curr.description]
+        tb_data = dict(zip(tb_keys, curr.fetchone()))
+        if tb_data['billed_time'] is not None:
+            tb_data['remaining_time'] = dss_total_time - tb_data['billed_time']
+        else:
+            tb_data['remaining_time'] = dss_total_time 
+        query = """
+            select start, duration 
+            from periods 
+            where session_id = %s and state_id <> 3 
+            order by start desc limit 1
+        """ % (session_id)
+        curr.execute(query)
+        result = curr.fetchone()
+        if result is not None:
+            last_date = result[0] + timedelta(hours = result[1])
+            tb_data['last_date_scheduled'] = formatExtDate(last_date)
+        else:
+            tb_data['last_date_scheduled'] = None
+
+        return tb_data
 
     @staticmethod
     def jsonDictAllHP():
@@ -260,6 +272,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
           left outer join pht_session_separations as ssm on ssm.id = m.outer_separation_id)
           left outer join sessions as dss on dss.id = s.dss_session_id)
           left outer join allotment as dss_a on dss_a.id = dss.allotment_id
+        order by s.name  
         """
         curr.execute(query)
         keys = [d.name for d in curr.description]
@@ -277,7 +290,8 @@ class SessionHttpAdapter(PhtHttpAdapter):
         include, exclude = self.session.get_lst_string()
         monitoringStart = self.session.monitoring.start_time
         sci_categories = [sc.category for sc in self.session.proposal.sci_categories.all()]
-        dss_sess_name = self.session.dss_session.name if self.session.dss_session is not None else 'unknown'        
+        dss_sess_name = self.session.dss_session.name if self.session.dss_session is not None else None        
+        dss_sess_id = self.session.dss_session.id if self.session.dss_session is not None else None        
         solar_avoid = self.session.target.solar_avoid
         if solar_avoid is not None:
             solar_avoid = rad2deg(solar_avoid)
@@ -290,6 +304,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
         data = {'id'                      : self.session.id
               , 'name'                    : self.session.name
               , 'pcode'                   : self.session.proposal.pcode
+              , 'proposal_id'             : self.session.proposal.id
               , 'pst_session_id'          : self.session.pst_session_id
               , 'other_receiver'          : self.session.other_receiver
               , 'other_backend'           : self.session.other_backend
@@ -361,6 +376,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'pst_elevation_min'       : self.session.target.pst_elevation_min
               # stuff from the DSS session (readonly)
               , 'dss_session'             : dss_sess_name
+              , 'dss_session_id'          : dss_sess_id
               , 'dss_total_time'          : self.session.dssAllocatedTime()
               , 'billed_time'             : self.session.billedTime()
               , 'scheduled_time'          : self.session.scheduledTime()

@@ -42,6 +42,8 @@ class TestDssExport(TestCase):
         self.session.allotment.allocated_time = self.session.allotment.requested_time
         self.session.allotment.save()
         self.session.grade = SessionGrade.objects.get(grade = 'A')
+        for source in self.proposal.source_set.all():
+            self.session.sources.add(source)
         self.session.save()
 
     def test_exportProposal(self):

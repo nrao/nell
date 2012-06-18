@@ -40,9 +40,9 @@ class PeriodResource(Resource):
             return HttpResponse(json.dumps(adapter.jsonDict())
                               , content_type = 'application/json')
         else:
-            periods = Period.objects.all().order_by('start')
+            pjson = PeriodHttpAdapter.jsonDictAllHP()
             return HttpResponse(json.dumps({"success" : "ok"
-                                          , "periods" : [PeriodHttpAdapter(p).jsonDict() for p in periods]
+                                          , "periods" : pjson
                                            })
                               , content_type = 'application/json')
 

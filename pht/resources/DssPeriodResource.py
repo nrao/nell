@@ -25,28 +25,20 @@ import simplejson as json
 from datetime import datetime
 
 from Resource               import Resource
-from scheduler.httpadapters import PeriodHttpAdapter
+from pht.httpadapters       import DssPeriodHttpAdapter
 from scheduler.models       import Period
 from nell.utilities         import TimeAgent
 
 class DssPeriodResource(Resource):
 
+    """
+    We only need to support the reading of DSS periods in the PHT,
+    so we only need the read function here.
+    """
+
     def __init__(self):
         self.root    = 'periods'
-        self.adapter = PeriodHttpAdapter(None)
-
-    def create(self, request, *args, **kws):
-        tz, = args
-        p   = Period()
-        self.adapter.load(p)
-        self.adapter.init_from_post(json.loads(request.raw_post_data), tz)
-        # Query the database to insure data is in the correct data type
-        p = Period.objects.get(id = p.id)
-        self.adapter.load(p)
-    
-        #revision.comment = self.get_rev_comment(request, p, "create_worker")
-        return HttpResponse(json.dumps(self.adapter.jsondict(tz))
-                          , mimetype = "text/plain")
+        self.adapter = DssPeriodHttpAdapter(None)
 
     def read(self, request, *args, **kws):
         if len(args) == 1:
@@ -58,32 +50,18 @@ class DssPeriodResource(Resource):
             start        = dt if tz == 'UTC' else TimeAgent.est2utc(dt)
             duration     = int(daysPeriods) * 24 * 60
             periods      = Period.get_periods(start, duration)
+            pjson = [DssPeriodHttpAdapter(p).jsondict(tz) for p in periods]
             return HttpResponse(
                 json.dumps(dict(total   = len(periods)
-                              , periods = [PeriodHttpAdapter(p).jsondict(tz) for p in periods]
+                              , periods = pjson
                               , success = 'ok'))
               , content_type = "application/json")
         else:
             tz, id = args
             p      = Period.objects.get(id = id)
             return HttpResponse(
-                json.dumps(dict(PeriodHttpAdapter(p).jsondict(tz)
+                json.dumps(dict(DssPeriodHttpAdapter(p).jsondict(tz)
                               , success = 'ok'))
               , content_type = "application/json")
 
-    def update(self, request, *args, **kws):
-        tz, id,  = args
-        adapter  = PeriodHttpAdapter(Period.objects.get(id = id))
-        data     = json.loads(request.raw_post_data)
-        m, d, y  = data.get('date').split('/')
-        data['date'] = '%s-%s-%s' % (y, m, d)
-        adapter.update_from_post(data, tz)
-        return HttpResponse(json.dumps({"success" : "ok"})
-                          , content_type = 'application/json')
 
-    def delete(self, request, *args, **kws):
-        tz, id, = args
-        period  = Period.objects.get(id = id)
-        period.delete()
-        return HttpResponse(json.dumps({"success" : "ok"})
-                          , content_type = 'application/json')

@@ -227,15 +227,6 @@ class TestViews(TestCase):
         self.assertEqual(tree, results)
 
     # Proposal CRUD
-    def test_proposals(self):
-        response = self.client.get("/pht/proposals")
-        results = self.eval_response(response.content)
-
-        self.failUnlessEqual(response.status_code, 200)
-        self.assertEqual(self.proposal.pcode, results['proposals'][0]['pcode'])
-        self.assertEqual(self.proposal.title, results['proposals'][0]['title'])
-        self.assertEqual(self.proposal.proposal_type.type, results['proposals'][0]['proposal_type'])
-
     def test_proposal_get(self):
         response = self.client.get("/pht/proposals/%s" % self.proposal.pcode)
         results = self.eval_response(response.content)
@@ -327,15 +318,6 @@ class TestViews(TestCase):
         self.assertEqual(before - after, 1)
 
     # Session CRUD
-    def test_sessions(self):
-        sess = self.proposal.session_set.all()[0]
-        response = self.client.get("/pht/sessions")
-        results = self.eval_response(response.content)
-
-        self.failUnlessEqual(response.status_code, 200)
-        #self.assertEqual(self.proposal.pcode, results['sessions'][0]['pcode'])
-        #self.assertEqual(sess.name, results['sessions'][0]['name'])
-
     def test_session_get(self):
         sess = self.proposal.session_set.all()[0]
         response = self.client.get("/pht/sessions/%s" % sess.id)

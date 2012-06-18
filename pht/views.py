@@ -498,6 +498,70 @@ def lst_pressure_report(request, *args, **kws):
 
 @login_required
 @admin_only
+def proposals_export(request):
+    semester  = request.GET.get('semester')
+    if semester is not None:
+        proposals = [ProposalHttpAdapter(p).jsonDict() 
+                       for p in Proposal.objects.filter(semester__semester = semester)]
+    else:
+        proposals = [ProposalHttpAdapter(p).jsonDict() for p in Proposal.objects.all()]
+        semester  = 'all'
+    ignoredKeys = ('nrao_comment', 'srp_to_pi', 'srp_to_tac', 
+                   'tech_review_to_pi', 'tech_review_to_tac', 'tac_to_pi')
+    keys      = [k for k in proposals[0].keys() if k not in ignoredKeys]
+    keys.remove('id')
+    keys.insert(0, 'id')
+    proposals = [makeTabView(p, keys) for p in proposals]
+    proposals.insert(0, '\t'.join(keys))
+    response  = render(request
+                    , "pht/listDataViewNoHeader.txt"
+                    , {'listData' : proposals }
+                    , content_type = 'text/plain')
+    response['Content-Disposition'] = 'attachment; filename=proposals_' + semester + '.txt' 
+    return response
+
+@login_required
+@admin_only
+def sessions_export(request):
+    semester  = request.GET.get('semester')
+    if semester is not None:
+        sessions = [SessionHttpAdapter(s).jsonDict() 
+                       for s in Session.objects.filter(proposal__semester__semester = semester)]
+    else:
+        sessions = [SessionHttpAdapter(s).jsonDict() for s in Session.objects.all()]
+        semester = 'all'
+    keys     = sessions[0].keys()
+    sessions = [makeTabView(s, keys) for s in sessions]
+    sessions.insert(0, '\t'.join(keys))
+    response  = render(request
+                    , "pht/listDataViewNoHeader.txt"
+                    , {'listData' : sessions }
+                    , content_type = 'text/plain')
+    response['Content-Disposition'] = 'attachment; filename=sessions_' + semester + '.txt'
+    return response
+
+@login_required
+@admin_only
+def sources_export(request):
+    semester  = request.GET.get('semester')
+    if semester is not None:
+        sources = [SourceHttpAdapter(s).jsonDict() 
+                       for s in Source.objects.filter(proposal__semester__semester = semester)]
+    else:
+        sources  = [SourceHttpAdapter(s).jsonDict() for s in Source.objects.all()]
+        semester = 'all'
+    keys    = sources[0].keys()
+    sources = [makeTabView(s, keys) for s in sources]
+    sources.insert(0, '\t'.join(keys))
+    response  = render(request
+                    , "pht/listDataViewNoHeader.txt"
+                    , {'listData' : sources }
+                    , content_type = 'text/plain')
+    response['Content-Disposition'] = 'attachment; filename=sources_' + semester + '.txt'
+    return response
+
+@login_required
+@admin_only
 def proposal_ranking(request):
     semester = request.GET.get('semester')
     # Create the HttpResponse object with the appropriate PDF headers.
@@ -537,16 +601,11 @@ def semester_summary(request):
 
     return response
 
-
-def isFriend(user):
-    au = user.auth_user
-    return (au.is_staff if au is not None else False) and user.username != "dss"
-
 @login_required
 @admin_only
 def friends(request):
         users = [u for u in User.objects.all().order_by('last_name')
-                   if isFriend(u)]
+                   if u.isFriend() and u.username != 'dss']
         friends = [{'name' : u.__str__()
                   , 'id' : u.id} for u in users]
         return HttpResponse(json.dumps({"success" : "ok"

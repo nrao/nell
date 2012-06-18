@@ -62,6 +62,10 @@ Ext.define('PHT.controller.PhtController', {
                 if (id == 'yes') {
                     this.onDelete(records);
                     store.remove(records);
+                    // TBF: we need a callback for when the server
+                    // is done, so that we can update other related
+                    // stores - but there won't be callbacks for sync
+                    // until Ext JS 4.1
                     store.sync();
                 }
             }
@@ -104,6 +108,11 @@ Ext.define('PHT.controller.PhtController', {
         return newRecord;
     },
 
+    // here so it can be overridden by children
+    setRecord: function(record, values) {
+            record.set(values);
+    },
+
     updateRecord: function(button, selectedRecords, store) {
         console.log('update');
         var win      = button.up('window');
@@ -124,9 +133,10 @@ Ext.define('PHT.controller.PhtController', {
             if (!(f.isValid())) {
                 return;
             }
-    
-            record.set(values);
-            // Is this a new session?
+   
+            this.setRecord(record, values);
+
+            // Is this a new record?
             if (record.get('id') == '') {
                 // save on the server side 
                 record.save({

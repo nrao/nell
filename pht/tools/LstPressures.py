@@ -514,6 +514,19 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         else:
             return True
 
+    def isCarryover(self, session, today = datetime.today()):
+        """
+        What's NOT carryover?  Any Session that belongs to a 
+        Proposal whose semester hasn't started yet.
+        """
+
+        # We used to just do this - but transferring 12B to DSS broke it
+        #return session.dss_session is not None
+
+        sem = session.proposal.semester
+        currentSem = DSSSemester.getCurrentSemester(today = today)
+        return sem.semester <= currentSem.semester
+        
     def getPressures(self, sessions = None):
         """
         Returns a dictionary of pressures by LST for different 
@@ -535,7 +548,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         # fill the buckets
         for s in sessions:
-            carryover = s.dss_session is not None
+            carryover = self.isCarryover(s) 
             # sessions from future semesters we completely ignore
             if self.isSessionForFutureSemester(s):
                 self.futureSessions.append(s)

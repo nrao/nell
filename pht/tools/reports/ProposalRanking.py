@@ -38,7 +38,7 @@ class ProposalRanking(ProposalReport):
 
     def __init__(self, filename):
         super(ProposalRanking, self).__init__(filename)
-        self.title = 'GBT Proposal unWeighted Panel Ranking List'
+        self.title = 'GBT Proposal Linear Ranking List'
 
     def colWidths(self):
         return [20, 20, 80, 310, 20, 50, 20, 20, 20, 20, 20, 20, 30, 20, 40]
@@ -64,8 +64,19 @@ class ProposalRanking(ProposalReport):
               , Paragraph('<b>Total Ref Hrs</b>', self.styleSheet)
               ]
 
-    def genRowData(self, proposal):
+    def getProposalCode(self, proposal):
+        """
+        GBT12A-001 -> G001
+        VLBA12B-023 -> V023
+        GLST12345 -> GLST12345
+        """
         code      = proposal.pcode.split('-')
+        if len(code) > 1:
+            return code[0][0] + code[1]    
+        else:
+            return proposal.pcode
+        
+    def genRowData(self, proposal):
         students  = len(proposal.author_set.filter(thesis_observing = True))
         obs_types = [ot.code for ot in proposal.observing_types.all()]
         data = {'pi_name'    : proposal.pi.getLastFirstName() if proposal.pi is not None else ''
@@ -80,7 +91,7 @@ class ProposalRanking(ProposalReport):
               , 'score'      : str(proposal.normalizedSRPScore) \
                                if proposal.normalizedSRPScore is not None else ''
               , 'thesis'     : str(students) if students > 0 else ''
-              , 'code'       : code[1] if len(code) > 1 else proposal.pcode
+              , 'code'       : self.getProposalCode(proposal) 
               , 'obs_types'  : ''.join(obs_types)
               , 'rq_time'    : str(proposal.requestedTime())
               }

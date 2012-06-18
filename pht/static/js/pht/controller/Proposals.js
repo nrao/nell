@@ -373,6 +373,21 @@ Ext.define('PHT.controller.Proposals', {
         }
     },
 
+    // overrid this simple function so that we can add the pi's name
+    // which is needed to see the explorer update.
+    setRecord: function(record, values) {
+            // first, get the Primary Investigator record
+            // that corresponds to the id we've got
+            var store = this.getPrimaryInvestigatorsStore()
+            var pi_id = values['pi_id'];
+            var ind = store.find('id', pi_id);
+            var pi = store.getAt(ind);
+            // now extract their name and add it to our values
+            var pi_name = pi.get('name');
+            values['pi_name'] = pi_name;
+            record.set(values);
+    },
+
     updateProposal: function(button) {
         this.updateRecord(button
                         , this.selectedProposals

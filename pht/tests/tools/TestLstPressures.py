@@ -35,6 +35,7 @@ from pht.httpadapters   import SessionHttpAdapter
 from scheduler.models   import Period as DSSPeriod
 from utilities          import TimeAgent
 from pht.tools.LstPressureWeather import Pressures
+from pht.tests.utils    import *
 import numpy
 
 class TestLstPressures(TestCase):
@@ -61,40 +62,22 @@ class TestLstPressures(TestCase):
 
     def createSession(self):
         "Create a new session for the tests"
-
         p = Proposal.objects.all()[0]
-        sem = Semester.objects.get(semester = '12A')
-        data  = {
-            'name' : 'nextSemesterSession'
-          , 'pcode' : p.pcode
-          , 'grade' : 'A'  
-          , 'semester' : sem
-          , 'requested_time' : 3.5  
-          , 'allocated_time' : 3.5  
-          , 'session_type' : 'Open - Low Freq'
-          , 'observing_type' : 'continuum' 
-          , 'weather_type' : 'Poor'
-          , 'repeats' : 2 
-          , 'min_lst' : '10:00:00.0' 
-          , 'max_lst' : '20:00:00.0' 
-          , 'elevation_min' : '00:00:00.0' 
-          , 'next_sem_complete' : False
-          , 'next_sem_time' : 1.0
-          , 'receivers' : 'L'
-        }
-
-        adapter = SessionHttpAdapter()
-        adapter.initFromPost(data)
-        # just so that is HAS a DSS session.
-        #adapter.session.dss_session = self.maintProj.sesshun_set.all()[0]
-        adapter.session.save()
-        return adapter.session
+        return createSession(p)
 
     def test_getPressures(self):
 
         wtypes = ['Poor', 'Good', 'Excellent']
         grades = ['A', 'B', 'C']
         types = ["%s_%s" % (w, g) for w in wtypes for g in grades]
+
+        # make sure are session belongs to a future semester, 
+        # no matter when we are running this test
+        lst = LstPressures()
+        semName = lst.futureSemesters[0]
+        futureSem, _ = Semester.objects.get_or_create(semester = semName)
+        self.session.proposal.semester  = futureSem
+        self.session.proposal.save()
 
         # make sure we start off blank, by adjusting the session
         time = self.session.allotment.allocated_time 
@@ -103,7 +86,6 @@ class TestLstPressures(TestCase):
         self.session.allotment.requested_time = 0.0
         self.session.allotment.save()
 
-        lst = LstPressures()
         ps = lst.getPressures()
         for i, p in enumerate(ps):
             self.assertEqual(float(i), p['LST'])
@@ -157,6 +139,13 @@ class TestLstPressures(TestCase):
     def test_getPressures2(self):
 
         lst = LstPressures()
+
+        # make sure are session belongs to a future semester, 
+        # no matter when we are running this test
+        semName = lst.futureSemesters[0]
+        futureSem, _ = Semester.objects.get_or_create(semester = semName)
+        self.session.proposal.semester  = futureSem
+        self.session.proposal.save()
 
         wtypes = ['Poor', 'Good', 'Excellent']
         grades = ['A', 'B', 'C']
@@ -238,6 +227,13 @@ class TestLstPressures(TestCase):
         """
 
         lst = LstPressures()
+
+        # make sure are session belongs to a future semester, 
+        # no matter when we are running this test
+        semName = lst.futureSemesters[0]
+        futureSem, _ = Semester.objects.get_or_create(semester = semName)
+        self.session.proposal.semester  = futureSem
+        self.session.proposal.save()
 
         # 1
         self.session.target.min_lst = hr2rad(0.0)
@@ -694,3 +690,25 @@ class TestLstPressures(TestCase):
                                 , alloc.getType(w)[i])                                
                 self.assertEquals(expC.getType(w)[i]
                                 , chg.getType(w)[i])
+
+    def test_isCarryover(self):
+
+        lst = LstPressures()
+
+        # our session is in 12A; for testing, do some time travel
+
+        # today is long before that - of course our session is new!
+        dt = datetime(2009, 10, 1)
+        carryover = lst.isCarryover(self.session, today = dt)
+        self.assertEqual(False, carryover)
+
+        # today is in 12A - same semester! so now we're carryover
+        dt = datetime(2012, 6, 1)
+        carryover = lst.isCarryover(self.session, today = dt)
+        self.assertEqual(True, carryover)
+
+        # today is in 12B - this session was in our past - it's carryover
+        dt = datetime(2012, 10, 1)
+        carryover = lst.isCarryover(self.session, today = dt)
+        self.assertEqual(True, carryover)
+

@@ -155,12 +155,18 @@ class DssExport(object):
           , max_duration   = max_dur
           , min_duration   = min_dur
         )
+
+        # Associate the new DSS session with its PHT session
+        pht_session.dss_session = dss_session
+        pht_session.save()
+
+        source = ', '.join([s.target_name for s in pht_session.sources.all()])
         target = dss.Target.objects.create(
             system     = dss.System.objects.get(name = 'J2000')
           , session    = dss_session
           , vertical   = pht_session.target.dec or 0.0
           , horizontal = pht_session.target.ra or 0.0
-          , source     = 'Target Source'
+          , source     = source if len(source) < 256 else source[:256]
         )
 
         for r in pht_session.receivers.all():
@@ -194,6 +200,8 @@ class DssExport(object):
                   , complete       = False
                   , total_time     = period.duration
                 )
+                period.window = window
+                period.save()
                 window_start = \
                   period.start - timedelta(days = pht_session.monitoring.window_size - 1)
                 window_range = dss.WindowRange.objects.create(
@@ -203,12 +211,24 @@ class DssExport(object):
                 )
 
     def createPeriod(self, pht_period, dss_session):
-        return dss.Period.objects.create(
+        period = dss.Period.objects.create(
             session = dss_session
           , state   = dss.Period_State.objects.get(name = 'Pending')
           , start   = pht_period.start
           , duration = pht_period.duration
+          , score    = -1.0
           )
+        pa = dss.Period_Accounting(scheduled = 0.0)
+        pa.save()
+        period.accounting = pa
+        period.save()
+        self.addPeriodReceivers(period, [r.abbreviation for r in pht_period.session.receivers.all()])
+        return period
+
+    def addPeriodReceivers(self, dss_period, abbreviations):
+        for abbr in abbreviations:
+            rp = dss.Period_Receiver(receiver = dss.Receiver.objects.get(abbreviation = abbr), period = dss_period)
+            rp.save()
 
     def getMinMaxDuration(self, pht_session):
         period_time = pht_session.allotment.period_time
@@ -223,7 +243,7 @@ class DssExport(object):
 
     def getDefaultFrequency(self, pht_session):
         "Find the highest center frequency of all the receivers for this session."
-        return max([rx.freq_low + (rx.freq_hi - rx.freq_low) for rx in pht_session.receivers.all()])
+        return max([rx.freq_low + ((rx.freq_hi - rx.freq_low) / 2.) for rx in pht_session.receivers.all()])
 
     def getSessionType(self, pht_session):
         type = 'open' if 'Open' in pht_session.session_type.type \

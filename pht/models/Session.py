@@ -51,7 +51,8 @@ from utilities     import TimeAgent
 class Session(models.Model):
 
     proposal                = models.ForeignKey(Proposal)
-    dss_session             = models.ForeignKey(DSSSession, null = True)
+    dss_session             = models.ForeignKey(DSSSession, null = True
+                                              , on_delete = models.SET_NULL, related_name = 'pht_sessions')
     sources                 = models.ManyToManyField(Source)
     receivers               = models.ManyToManyField(Receiver, related_name = 'sessions')
     backends                = models.ManyToManyField(Backend)

@@ -113,9 +113,13 @@ Ext.define('PHT.controller.OverviewCalendar', {
                         // draw the dss periods and parse rcvr info
                         for (r in records) {
                             dayIndex = this.insertPeriod(records[r], startDate, numDays, drawComponent, 'dss');
-                            rcvrs = this.getDssPeriodReceivers(records[r]);
-                            for (j in rcvrs){
-                                rcvrDays[dayIndex][rcvrs[j]] = 1;
+                            // In theory this shouldn't happen because we
+                            // are filtering DSS periods on server side
+                            if (dayIndex != -1) {
+                                rcvrs = this.getDssPeriodReceivers(records[r]);
+                                for (j in rcvrs){
+                                    rcvrDays[dayIndex][rcvrs[j]] = 1;
+                                }
                             }
                         }
 
@@ -213,9 +217,10 @@ Ext.define('PHT.controller.OverviewCalendar', {
     getDssPeriodDate: function(dateStr) {
         dateStr = dateStr.split('-');
         periodDate = new Date();
+        // Set the day first to avoid illegal dates like Feb 31st.
+        periodDate.setUTCDate(dateStr[2]);
         periodDate.setUTCFullYear(dateStr[0]);
         periodDate.setUTCMonth(dateStr[1] - 1);
-        periodDate.setUTCDate(dateStr[2]);
         periodDate.setUTCHours(0);
         periodDate.setUTCMinutes(0);
         periodDate.setUTCSeconds(0);
@@ -226,9 +231,10 @@ Ext.define('PHT.controller.OverviewCalendar', {
     getPhtPeriodDate: function(dateStr) {
         dateStr = dateStr.split('/');
         periodDate = new Date();
+        // Set the day first to avoid illegal dates like Feb 31st.
+        periodDate.setUTCDate(dateStr[1]);
         periodDate.setUTCFullYear(dateStr[2]);
         periodDate.setUTCMonth(dateStr[0] - 1);
-        periodDate.setUTCDate(dateStr[1]);
         periodDate.setUTCHours(0);
         periodDate.setUTCMinutes(0);
         periodDate.setUTCSeconds(0);

@@ -20,7 +20,7 @@ Ext.define('PHT.view.proposal.TacTool', {
         var me = this;
         this.proposalCombo = Ext.create('Ext.form.field.ComboBox', {
             name: 'pcode',
-            store: 'ProposalCodes',
+            store: 'Proposals', 
             queryMode: 'local',
             displayField: 'pcode',
             valueField: 'pcode',
