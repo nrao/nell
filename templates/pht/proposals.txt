@@ -1,2 +1,0 @@
-{% for p in proposals %} {{p}} 
-{% endfor %}

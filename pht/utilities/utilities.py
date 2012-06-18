@@ -202,3 +202,19 @@ def angularDistance( ra1, dec1, ra2, dec2):
     b = math.cos(dec1) * math.cos(dec2)
     c = math.cos(ra1 - ra2)
     return math.acos(a + (b*c))
+
+def makeTabView(item, keys):
+    retval = []
+    for k in keys:
+        field = item.get(k)
+        if type(field) == list:
+            field = ', '.join(field)
+        if field is None:
+            field = ''
+        try:
+            field = field.replace('\n', '<br/>').replace('\r', '<br/>')
+        except:
+            pass
+        retval.append(field)
+    return '\t'.join(map(str, retval))
+
