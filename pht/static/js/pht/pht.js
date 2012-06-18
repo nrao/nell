@@ -141,6 +141,7 @@ Ext.application({
         var overviewCalendarWin = Ext.create('PHT.view.overview.Window', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
+        overviewCalendarWin.maximize();
         var plot = Ext.create('PHT.view.plot.Window', {
             renderTo: viewport.layout.regions.center.getEl(),
         });
