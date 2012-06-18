@@ -207,6 +207,24 @@ Ext.application({
             autoScroll: true,
             }
         );
+        var proposalExportMenu = Ext.create('Ext.menu.Menu', {
+            id: 'proposalExportMenu', 
+            items: [],
+            autoScroll: true,
+            }
+        );
+        var sessionExportMenu = Ext.create('Ext.menu.Menu', {
+            id: 'sessionExportMenu', 
+            items: [],
+            autoScroll: true,
+            }
+        );
+        var sourceExportMenu = Ext.create('Ext.menu.Menu', {
+            id: 'sourceExportMenu', 
+            items: [],
+            autoScroll: true,
+            }
+        );
         var store = this.getController('Proposals').getSemestersStore();
         store.load({
             scope: this,
@@ -231,30 +249,63 @@ Ext.application({
                             window.open('/pht/reports/semester_summary?semester=' + semester);
                         }
                     });
+                    proposalExportMenu.add({
+                        text: semester,
+                        handler: function() {
+                            window.open('/pht/proposals/export?semester=' + semester);
+                        }
+                    });
+                    sessionExportMenu.add({
+                        text: semester,
+                        handler: function() {
+                            window.open('/pht/sessions/export?semester=' + semester);
+                        }
+                    });
+                    sourceExportMenu.add({
+                        text: semester,
+                        handler: function() {
+                            window.open('/pht/sources/export?semester=' + semester);
+                        }
+                    });
                 });
             }
         });
         var reportsMenu = Ext.create('Ext.menu.Menu', {
             id : 'reportsMenu',
             items : [{
-                text: 'Proposal Summary',
-                menu: proposalSummaryMenu
+                    text: 'Proposal Summary',
+                    menu: proposalSummaryMenu
                 },
                 {
-                text: 'Proposal Ranking',
-                menu: proposalRankingMenu
+                    text: 'Proposal Ranking',
+                    menu: proposalRankingMenu
                 },
                 {
-                text: 'Semester Summary',
-                menu: semesterSummaryMenu
+                    text: 'Semester Summary',
+                    menu: semesterSummaryMenu
                 },
                 {
-                text: 'LST Pressures',
-                //menu: semesterSummaryMenu
-                handler: function() {
-                   lstReportWin.show() 
-                  },
-                }
+                    text: 'LST Pressures',
+                    //menu: semesterSummaryMenu
+                    handler: function() {
+                       lstReportWin.show() 
+                    },
+                },
+                {
+                    xtype: 'menuseparator'
+                },
+                {
+                    text: 'Export Proposals',
+                    menu: proposalExportMenu
+                },
+                {
+                    text: 'Export Sessions',
+                    menu: sessionExportMenu
+                },
+                {
+                    text: 'Export Sources',
+                    menu: sourceExportMenu
+                },
             ]
         });
         tb.add({
