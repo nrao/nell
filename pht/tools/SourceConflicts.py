@@ -182,7 +182,7 @@ class SourceConflicts(object):
                     if self.hasSameRcvrConflict(targetProp, searchedProp):
                         self.conflicts[tpcode]['conflicts'][-1]['level'] = 1
                         # check the next level - proprietary period!
-                        if self.withinPropietaryDate(srchSrc, searchedProp):
+                        if self.withinProprietaryDate(srchSrc, searchedProp):
                             self.conflicts[tpcode]['conflicts'][-1]['level'] = 2
                             
     
@@ -217,7 +217,7 @@ class SourceConflicts(object):
         if grade in ('B', 'C') and \
            searchedProp.semester.semester < dss.Semester.getCurrentSemester().semester and \
            len(periods) == 0:
-            print 'Too old and shitty'
+            print searchedProp.pcode, 'is too old and shitty'
             return False
         # Rule 2
         elif len(periods) == 0 and grade == 'A':
@@ -230,8 +230,12 @@ class SourceConflicts(object):
 
     def withinProprietaryDate(self, srchSrc, searchedProp, now = datetime.now()):
         "Any observations within a year?"
-        refTime = now - timedelta(days = 365)
-        periods = [p for p in searchedProp.dss_project.get_observed_periods() if p.start > refTime]
+        if searchedProp.dss_project is not None:
+            refTime = now - timedelta(days = 365)
+            periods = [p for p in searchedProp.dss_project.get_observed_periods() if p.start > refTime]
+        else: 
+            # No dss_project, no periods
+            periods = []
         return len(periods) > 0
                     
     def getLowestRcvr(self, proposal):
@@ -305,11 +309,13 @@ class SourceConflicts(object):
                , rad2arcMin(pconflict['searchRadius'])))
             numConflicts += len(pconflict['conflicts'])    
             for c in pconflict['conflicts']:
-                self.write("    Target: %s; Checked: %s; Prop: %s; Dist. ('): %s; Level: %d"\
+                self.write("    Target: %s; Checked: %s; Prop: %s; Dist. ('): %s; DeltaRa('): %s; DeltaDec ('): %s; Level: %d"\
                     % (c['targetSrc'].target_name
                      , c['searchedSrc'].target_name
                      , c['searchedProp'].pcode
                      , rad2arcMin(c['distance'])
+                     , rad2arcMin(abs(c['targetSrc'].ra - c['searchedSrc'].ra))
+                     , rad2arcMin(abs(c['targetSrc'].dec - c['searchedSrc'].dec))
                      , c['level']))
         
         self.write("")
