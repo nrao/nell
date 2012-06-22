@@ -211,9 +211,11 @@ class DssExport(object):
                 )
 
     def createPeriod(self, pht_period, dss_session):
+        sType = dss_session.session_type.type
         period = dss.Period.objects.create(
             session = dss_session
-          , state   = dss.Period_State.objects.get(name = 'Pending')
+          , state   = dss.Period_State.objects.get(name = 'Scheduled') if sType == 'fixed' else \
+                        dss.Period_State.objects.get(name = 'Pending') 
           , start   = pht_period.start
           , duration = pht_period.duration
           , score    = -1.0
