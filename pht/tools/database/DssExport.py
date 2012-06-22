@@ -272,7 +272,13 @@ class DssExport(object):
         return g + .2 if '+' in grade else (g - .2 if '-' in grade else g)
 
 if __name__ == '__main__':
+    from utilities.database.external import AstridDB
+    addAstrid = False # Too nervious about this to add to astrid by fault.
+
     proposals = [p.pcode for p in Proposal.objects.filter(semester__semester = '12B') 
                    if p.allocatedTime() > 0]
     print 'Importing', len(proposals), 'proposals.'
     DssExport(quiet = False).exportProposals(proposals)
+    if addAstrid:
+        astridDB = AstridDB(dbname = 'turtle')
+        astridDB.addProjects(proposals)
