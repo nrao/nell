@@ -76,8 +76,9 @@ class SourceConflictsReport(Report):
               , Paragraph(propConflict['proposal'].pi.getLastFirstName(), self.styleSheet)
               , Paragraph("Search Radius('): %.3f" % rad2arcMin(propConflict['searchRadius']), self.styleSheet)
               , Paragraph("Lowest Rx: %s" % propConflict['lowestRx'], self.styleSheet)
+              , Paragraph(propConflict['proposal'].spectral_line or '', self.styleSheet)
               ]
-        table = Table([data], colWidths = [300, 100, 100, 100])
+        table = Table([data], colWidths = [250, 100, 100, 100, 150])
         return [Paragraph('Sources Found in other Proposals for %s' % pcode, self.headerStyleSheet)
               , self.getBreak()
               , table
@@ -94,30 +95,34 @@ class SourceConflictsReport(Report):
 
     def genHeader(self):
         return [Paragraph('<b>Source</b>', self.styleSheet)
+              , Paragraph('<b>Proposal </b>', self.styleSheet)
               , Paragraph('<b>Chk. Source </b>', self.styleSheet)
+              , Paragraph('<b>Sp. Line </b>', self.styleSheet)
               , Paragraph('<b>Ra </b>', self.styleSheet)
               , Paragraph('<b>Dec</b>', self.styleSheet)
-              , Paragraph('<b>Proposal </b>', self.styleSheet)
               , Paragraph("<b>Distance (')</b>", self.styleSheet)
               , Paragraph("<b>DeltaRa (') </b>", self.styleSheet)
               , Paragraph("<b>DeltaDec (') </b>", self.styleSheet)
-              , Paragraph("<b>Level</b>", self.styleSheet)
               ]
 
     def genRow(self, conflict):
+        spLine = conflict['searchedProp'].spectral_line
+        searchedProp = conflict['searchedProp'].pcode
+        if conflict['lastObsDate'] is not None:
+            searchedProp += ' (%s)' % conflict['lastObsDate'].strftime('%m/%d/%Y')
         return [Paragraph(conflict['targetSrc'].target_name, self.styleSheet)
+              , Paragraph(searchedProp, self.styleSheet)
               , Paragraph(conflict['searchedSrc'].target_name, self.styleSheet)
-              , Paragraph('%.4f' % conflict['searchedSrc'].ra, self.styleSheet)
-              , Paragraph('%.4f' % conflict['searchedSrc'].dec, self.styleSheet)
-              , Paragraph(conflict['searchedProp'].pcode, self.styleSheet)
+              , Paragraph(spLine[:100] if spLine is not None else '', self.styleSheet)
+              , Paragraph(float2sexigesimel(conflict['searchedSrc'].ra), self.styleSheet)
+              , Paragraph(float2sexigesimel(conflict['searchedSrc'].dec), self.styleSheet)
               , Paragraph('%.4f' % rad2arcMin(conflict['distance']), self.styleSheet)
               , Paragraph('%.4f' % rad2arcMin(abs(conflict['targetSrc'].ra - conflict['searchedSrc'].ra)), self.styleSheet)
               , Paragraph('%.4f' % rad2arcMin(abs(conflict['targetSrc'].dec - conflict['searchedSrc'].dec)), self.styleSheet)
-              , Paragraph('%s' % conflict['level'], self.styleSheet)
               ]
 
     def colWidths(self):
-        return [150, 150, 40, 60, 60, 60, 60, 60, 60]
+        return [150, 100, 150, 100, 40, 60, 50, 50, 60]
 
     def makeHeaderFooter(self, canvas, doc):
         canvas.saveState() 
