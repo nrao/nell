@@ -28,6 +28,7 @@ from pht.models    import *
 from pht.utilities import *
 from sets          import Set
 from datetime      import datetime, timedelta
+import copy
 
 class SourceConflicts(object):
 
@@ -56,6 +57,9 @@ class SourceConflicts(object):
         self.badDistances = []
         self.targetProposals = []
         self.checkedProposals = []
+
+    def setSemester(self, semester):
+        self.semester = semester
 
     def initSearchRadi(self):
         "Map receivers to their Search Radi"
@@ -188,7 +192,12 @@ class SourceConflicts(object):
                         if proprietaryPeriod:
                             self.conflicts[tpcode]['conflicts'][-1]['level'] = 2
                             
-    
+    def filterConflicts(self, level):
+        self.filteredConflicts = {}
+        for k, v in self.conflicts.iteritems():
+            self.filteredConflicts[k] = copy.copy(self.conflicts[k])
+            self.filteredConflicts[k]['conflicts'] = [c for c in self.conflicts[k]['conflicts'] if c['level'] == level]
+
     def hasSameRcvrConflict(self, targetProp, searchedProp):
         """
         This couldn't be simpler: compare the union of the 

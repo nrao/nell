@@ -45,21 +45,12 @@ class SourceConflictsReport(Report):
         self.headerStyleSheet = getSampleStyleSheet()['Normal']
         self.headerStyleSheet.fontSize = 15
 
-    def report(self, semester = None):
-        self.semester = semester
-        self.sc       = SourceConflicts(semester = semester)
+    def report(self, conflicts, semester = None, level = 0):
+        self.conflicts = conflicts
+        self.conflictedProposals = sorted([k for k in self.conflicts.keys() if len(self.conflicts[k]['conflicts']) > 0])
+        self.title = self.title if semester is None else \
+                     self.title + " for Semester %s" % semester
 
-        # TBF: Remove this later.  Limiting search space for testing.
-        self.sc.findConflicts(
-           proposals = Proposal.objects.filter(semester__semester = '12B').order_by('pcode')
-           #proposals = Proposal.objects.filter(semester__semester = '12B').order_by('pcode')[:5]
-         #, allProposals = Proposal.objects.filter(semester__semester = '12A'))
-         , allProposals = Proposal.objects.all())
-
-        self.conflictedProposals = sorted([k for k in self.sc.conflicts.keys() if len(self.sc.conflicts[k]['conflicts']) > 0])
-
-        self.title = self.title if self.semester is None else \
-                     self.title + " for Semester %s" % self.semester
 
         data = []
         for pcode in self.conflictedProposals:
@@ -71,7 +62,7 @@ class SourceConflictsReport(Report):
         self.doc.build(data, onFirstPage = self.makeHeaderFooter, onLaterPages = self.makeHeaderFooter)
 
     def genRecordHeader(self, pcode):
-        propConflict = self.sc.conflicts[pcode]
+        propConflict = self.conflicts[pcode]
         data = [Paragraph(propConflict['proposal'].title, self.styleSheet)
               , Paragraph(propConflict['proposal'].pi.getLastFirstName(), self.styleSheet)
               , Paragraph("Search Radius('): %.3f" % rad2arcMin(propConflict['searchRadius']), self.styleSheet)
@@ -85,7 +76,7 @@ class SourceConflictsReport(Report):
               ]
 
     def genTable(self, pcode):
-        propConflict = self.sc.conflicts[pcode]
+        propConflict = self.conflicts[pcode]
 
         data = [self.genHeader()]
         data.extend(map(self.genRow, propConflict['conflicts']))
@@ -153,5 +144,30 @@ class SourceConflictsReport(Report):
         return '%s, %s' % (days[dt.weekday()],  dt.strftime('%B %d, %Y'))
 
 if __name__ == '__main__':
-    scr = SourceConflictsReport('sourceConflictsReport.pdf')
-    scr.report()
+    import sys
+    try:
+        semester, level = sys.argv[1:]
+    except:
+        print "Usage: SourceConflictsReport.py <semester> <level>"
+        sys.exit()
+    sc = SourceConflicts(semester = semester)
+    # TBF: Remove this later.  Limiting search space for testing.
+    sc.findConflicts(
+       proposals = Proposal.objects.filter(semester__semester = semester).order_by('pcode')
+       #proposals = Proposal.objects.filter(semester__semester = semester).order_by('pcode')[:5]
+     #, allProposals = Proposal.objects.filter(semester__semester = '12A'))
+     , allProposals = Proposal.objects.all())
+    if level == 'all':
+        sc.filterConflicts(0)
+        scr = SourceConflictsReport('sourceConflictsReportLevel0.pdf')
+        scr.report(sc.filteredConflicts, semester = semester, level = 0)
+        sc.filterConflicts(1)
+        scr = SourceConflictsReport('sourceConflictsReportLevel1.pdf')
+        scr.report(sc.filteredConflicts, semester = semester, level = 1)
+        sc.filterConflicts(2)
+        scr = SourceConflictsReport('sourceConflictsReportLevel2.pdf')
+        scr.report(sc.filteredConflicts, semester = semester, level = 2)
+    else:
+        sc.filterConflicts(int(level))
+        scr = SourceConflictsReport('sourceConflictsReportLevel' + level + '.pdf')
+        scr.report(sc.filteredConflicts, semester = semester, level = int(level))
