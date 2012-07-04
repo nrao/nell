@@ -129,8 +129,7 @@ Ext.define('PHT.controller.Sources', {
     },
 
     proposalSources: function(button) {
-        var win = button.up('window');
-            form = win.down('form');
+        var form = button.up('form'),
             proposal = form.getRecord();
         var pcode = proposal.get('pcode');
         this.proposalSourcesWindow.down('proposalsourcelist').setProposal(pcode);
@@ -138,10 +137,10 @@ Ext.define('PHT.controller.Sources', {
     },
 
     sessionSources: function(button) {
-        var win     = button.up('window');
-            form    = win.down('form');
+        var win     = button.up('window'),
+            form    = win.down('form'),
             session = form.getRecord();
-        var pcode      = session.get('pcode');
+        var pcode      = session.get('pcode'),
             session_id = session.get('id');
 
         this.sessionSourcesWindow.down('sessionsourcelist').setProposal(pcode);

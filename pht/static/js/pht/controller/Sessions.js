@@ -59,9 +59,6 @@ Ext.define('PHT.controller.Sessions', {
             'sessionedit button[action=save]': {
                 click: this.updateSession
             },             
-            'proposaledit button[action=sessions]': {
-                click: this.proposalSessions
-            },             
             'sessionedit button[action=calculateLSTs]': {
                 click: this.calculateLSTs
             },             
@@ -133,7 +130,7 @@ Ext.define('PHT.controller.Sessions', {
 
     notify: function(data) {
         if (data['notification'] == 'proposalSelected') {
-            this.sessionListWindow.down('sessionlist').setProposal(data.pcode);
+            this.sessionList.setProposal(data.pcode);
         }
     },
 
@@ -181,14 +178,10 @@ Ext.define('PHT.controller.Sessions', {
         this.sessionListWindow = sessionListWindow;
     },
 
-    proposalSessions: function(button) {
-        var win = button.up('window');
-            form = win.down('form');
-            proposal = form.getRecord();
-        var pcode = proposal.get('pcode');
-        this.sessionListWindow.down('sessionlist').setProposal(pcode);
-        this.sessionListWindow.show();
+    setSessionList: function(sessionList) {
+        this.sessionList = sessionList;
     },
+
 
     clearFilter: function(button) {
         var store = this.getStore('Sessions');

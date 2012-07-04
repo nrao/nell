@@ -50,7 +50,10 @@ Ext.define('PHT.controller.Proposals', {
         this.control({
             'proposallist' : {
                 itemdblclick: this.editProposal,
-                itemclick: this.proposalSelected,
+                itemclick: function(grid, record) {
+                    this.proposalSelected(grid, record);
+                    this.editProposal(grid, record);
+                },
             },
             'proposallist toolbar button[action=create]': {
                 click: this.createProposal
@@ -210,7 +213,7 @@ Ext.define('PHT.controller.Proposals', {
         this.notifyObservers({notification: 'proposalSelected'
                             , pcode : pcode});
         // part of this controller, so we don't need notification
-        this.tacToolWindow.setProposal(pcode, record);
+        this.tacTool.setProposal(pcode, record);
     },
 
     // How to respond to click's on the navigation tree?
@@ -343,9 +346,10 @@ Ext.define('PHT.controller.Proposals', {
     },
     
     editProposal: function(grid, record) {
-        var view   = Ext.widget('proposaledit');
+        var view = grid.up('viewport').down('proposaledit');
         view.filterPis(record.get('pcode'));
-        view.down('form').loadRecord(record);        
+        view.setRecord(record);
+        view.loadRecord(record);        
     },   
 
     editSelectedProposals: function(button) {
@@ -369,6 +373,21 @@ Ext.define('PHT.controller.Proposals', {
         }
     },
 
+    // overrid this simple function so that we can add the pi's name
+    // which is needed to see the explorer update.
+    setRecord: function(record, values) {
+            // first, get the Primary Investigator record
+            // that corresponds to the id we've got
+            var store = this.getPrimaryInvestigatorsStore()
+            var pi_id = values['pi_id'];
+            var ind = store.find('id', pi_id);
+            var pi = store.getAt(ind);
+            // now extract their name and add it to our values
+            var pi_name = pi.get('name');
+            values['pi_name'] = pi_name;
+            record.set(values);
+    },
+
     updateProposal: function(button) {
         this.updateRecord(button
                         , this.selectedProposals
@@ -377,8 +396,8 @@ Ext.define('PHT.controller.Proposals', {
         this.selectedProposals = [];                  
     },
 
-    setTacToolWindow: function(tacToolWindow) {
-        this.tacToolWindow = tacToolWindow;
-        this.tacToolWindow.setProposalsStore(this.getProposalsStore());
+    setTacTool: function(tacTool) {
+        this.tacTool = tacTool;
+        this.tacTool.setProposalsStore(this.getProposalsStore());
     },
 });

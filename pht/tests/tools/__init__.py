@@ -11,4 +11,5 @@ from TestProposalRanking  import TestProposalRanking
 from TestProposalSummary  import TestProposalSummary
 from TestSemesterTimeAccounting import TestSemesterTimeAccounting
 from TestSemesterSummary import TestSemesterSummary
+from TestSourceConflicts import TestSourceConflicts
 from TestSun                    import TestSun

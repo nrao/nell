@@ -251,7 +251,9 @@
       {% if event.project_type == "A" %}
         <td>
           {# output the project title as an anchor link to the proposal's page on the rescal #}
-          <a href="#" onClick="window.open('http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{event.pcode}}', 'Proposal Cover Page', 'width=1000, height=700, scrollbars=yes');return true;">{{event.project_title}}</a>
+          <!--<a href="#" onClick="window.open('http://gbrescal.gb.nrao.edu/gbtobs/proposals.dbw?view=viewproposal&propcode={{event.pcode}}', 'Proposal Cover Page', 'width=1000, height=700, scrollbars=yes');return true;">{{event.project_title}}</a>
+          -->
+          <a href="#" onClick="window.open('/project/{{event.pcode}}/public', 'Public Project Page', 'width=1000, height=700, scrollbars=yes');return true;">{{event.project_title}}</a>
 
           {% if not event.moc_met and event.moc_ack %}
             <img src="/static/images/checked.png" />

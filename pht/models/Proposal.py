@@ -42,7 +42,7 @@ from datetime           import datetime
 class Proposal(models.Model):
 
     pst_proposal_id = models.IntegerField(null = True)
-    dss_project     = models.ForeignKey(DSSProject, null = True)
+    dss_project     = models.ForeignKey(DSSProject, null = True, on_delete = models.SET_NULL)
     proposal_type   = models.ForeignKey(ProposalType)
     observing_types = models.ManyToManyField(ObservingType)
     status          = models.ForeignKey(Status)

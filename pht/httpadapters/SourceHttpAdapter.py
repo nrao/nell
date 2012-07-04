@@ -40,6 +40,7 @@ class SourceHttpAdapter(PhtHttpAdapter):
 
         return {'id'                      : self.source.id
               , 'pcode'                   : self.source.proposal.pcode
+              , 'sessions'                : ', '.join(map(str, self.source.session_set.all()))
               , 'pst_source_id'           : self.source.pst_source_id
               , 'target_name'             : self.source.target_name
               , 'ra'                      : rad2sexHrs(self.source.ra)

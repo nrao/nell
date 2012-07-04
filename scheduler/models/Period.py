@@ -109,8 +109,17 @@ class Period(models.Model):
         return ", ".join(ranges)
 
     def receiver_list(self):
+        "Simply what JSON returns"
         return self.get_rcvrs_json()
 
+    def receiver_list_simple(self):
+        "Removes redudancies, and makes sure it's ordered"
+        rcvrs = []
+        for r in self.receivers.all().order_by('abbreviation'):
+            if r.abbreviation not in rcvrs:
+                rcvrs.append(r.abbreviation)
+        return ", ".join(rcvrs)       
+    
     def get_rcvrs_json(self):
         rcvrs = [r.abbreviation for r in self.receivers.all()]
         return ", ".join(rcvrs)

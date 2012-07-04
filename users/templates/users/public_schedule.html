@@ -216,7 +216,12 @@
     {# data for 'Project Title' column                              #}
 
       {% if event.project_type == "A" %}
-        <td><a href="/project/{{event.pcode}}/public">{{event.project_title}}</a></td>
+        <td>
+          <!--
+          <a href="/project/{{event.pcode}}/public">{{event.project_title}}</a>
+          -->
+          <a href="#" onClick="window.open('/project/{{event.pcode}}/public', 'Public Project Page', 'width=1000, height=700, scrollbars=yes');return true;">{{event.project_title}}</a>
+        </td>
       {% else %}
         {% if event.project_type == "M" %}
           <td>{{event.project_title}}{{rschedule|get_receiver_change:day}}</td>

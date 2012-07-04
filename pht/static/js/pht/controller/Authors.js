@@ -5,12 +5,14 @@ Ext.define('PHT.controller.Authors', {
         'Author',
         'Proposal',
         'PstUser',
+        'PrimaryInvestigator',
     ],
 
     stores: [
         'Authors',
         'Proposals',
         'PstUsers',
+        'PrimaryInvestigators',
     ],
 
     views: [
@@ -48,8 +50,7 @@ Ext.define('PHT.controller.Authors', {
     },
 
     proposalAuthors: function(button) {
-        var win = button.up('window');
-            form = win.down('form');
+        var form = button.up('form'),
             proposal = form.getRecord();
         var pcode = proposal.get('pcode');
         this.proposalAuthorsWindow.down('authorlist').setProposal(pcode);
@@ -92,7 +93,14 @@ Ext.define('PHT.controller.Authors', {
         author.set(values);
         // Is this a new proposal?
         if (author.get('id') == '') {
-            author.save();
+            author.save({
+                scope : this,
+                callback: function(records, operation, success) {
+                    // once this new author has been saved, reload
+                    // this store so that lists of PIs are updated
+                    this.getPrimaryInvestigatorsStore().load()
+                }
+            });
             this.getAuthorsStore().insert(0, [author]);
         } else {
             this.getAuthorsStore().sync();
