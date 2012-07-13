@@ -195,10 +195,10 @@ class TestSourceConflicts(TestCase):
 
         # turn the crank
         sc = SourceConflicts()
-        result = sc.withinProprietaryDate(src0, proposal, now = datetime(2012, 6, 12))
+        _, result = sc.withinProprietaryDate(src0, proposal, now = datetime(2012, 6, 12))
         self.assertTrue(result)
 
-        result = sc.withinProprietaryDate(src0, proposal, now = datetime(2013, 6, 12))
+        _, result = sc.withinProprietaryDate(src0, proposal, now = datetime(2013, 6, 12))
         self.assertTrue(not result)
 
     def test_findConflicts(self):
