@@ -116,7 +116,9 @@ Ext.define('PHT.controller.PhtController', {
     updateRecord: function(button, selectedRecords, store) {
         console.log('update');
         var win      = button.up('window');
+        var nowin    = false;
         if (!win) {
+            nowin = true;
             var form = button.up('form');
         } else {
             var form   = win.down('form');
@@ -177,7 +179,7 @@ Ext.define('PHT.controller.PhtController', {
             store.sync();
             // clean up
             selectedRecords = [];
-            win.close();
+            if (!nowin) { win.close();}
         }
     },    
     

@@ -196,25 +196,6 @@ Ext.application({
                 }},
             ]
         });
-        var editMenu = Ext.create('Ext.menu.Menu', {
-            id : 'editMenu',
-            items : [{
-                text: 'New',
-                menu: Ext.create('Ext.menu.Menu', {
-                    id : 'newMenu',
-                    items : [{
-                        text: 'Proposal',
-                        handler: this.createProposal
-                        },
-                        {
-                        text: 'Session',
-                        handler: this.createSession
-                        }
-                    ]
-                    })
-                }
-            ]
-        });
         var proposalSummaryMenu = Ext.create('Ext.menu.Menu', {
             id: 'proposalSummaryMenu', 
             items: [],
@@ -333,10 +314,6 @@ Ext.application({
                     menu: sourceExportMenu
                 },
             ]
-        });
-        tb.add({
-            text: 'Edit',
-            menu: editMenu
         });
         tb.add({
             text: 'Tools',
@@ -460,18 +437,6 @@ Ext.application({
             elevationFieldText: 'Must be a value in Degrees, in sexigesimel format (+/- DDD:MM:SS.S), between 0 and 90.',
             elevationFieldMask: /[\d\.\:\+\-]/i,
         });
-    },
-
-    // TBF: should this be in the controller?
-    createProposal: function(button) {
-        var proposal = Ext.create('PHT.model.Proposal', {});
-        var view = Ext.widget('proposaledit');
-        view.down('form').loadRecord(proposal);
-    },
-    createSession: function(button) {
-        var session = Ext.create('PHT.model.Session', {});
-        var view = Ext.widget('sessionedit');
-        view.down('form').loadRecord(session);
     },
 });
 

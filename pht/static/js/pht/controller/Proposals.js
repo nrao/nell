@@ -332,8 +332,8 @@ Ext.define('PHT.controller.Proposals', {
 
     createProposal: function(button) {
         var proposal = Ext.create('PHT.model.Proposal');
-        var view = Ext.widget('proposaledit');
-        view.down('form').loadRecord(proposal);
+        var view = button.up('viewport').down('proposaledit');
+        view.loadRecord(proposal);
     },
 
     deleteProposal: function(button) {
@@ -360,16 +360,9 @@ Ext.define('PHT.controller.Proposals', {
             this.editProposal(grid, this.selectedProposals[0]);
         } else {
             var template = Ext.create('PHT.model.Proposal');
-            var view = Ext.widget('proposaledit');
-            var fields = view.down('form').getForm().getFields();
-            fields.each(function(item, index, length) {
-                var disabledItems = ['pcode', 'pi_id', 'joint_proposal'];
-                if (disabledItems.indexOf(item.getName()) > -1) {
-                    item.disable();
-                }
-                item.allowBlank = true;
-            }, this);
-            view.down('form').loadRecord(template);
+            var view = button.up('viewport').down('proposaledit');
+            view.prepMultiEditFields();
+            view.loadRecord(template);
         }
     },
 
@@ -394,6 +387,8 @@ Ext.define('PHT.controller.Proposals', {
                         , this.getProposalsStore()
                          );
         this.selectedProposals = [];                  
+        var view = button.up('viewport').down('proposaledit');
+        view.resetMultiEditFields();
     },
 
     setTacTool: function(tacTool) {

@@ -257,4 +257,30 @@ Ext.define('PHT.view.proposal.Edit', {
         pistore.filter("pcode", pcode);
         pistore.sort("name");
     },
+
+    prepMultiEditFields: function() {
+        var fields = this.getForm().getFields();
+        this.blankState = {};
+        var me = this;
+        fields.each(function(item, index, length) {
+            var disabledItems = ['pcode', 'pi_id', 'joint_proposal'];
+            if (disabledItems.indexOf(item.getName()) > -1) {
+                item.disable();
+            }
+            me.blankState[item.getName()] = item.allowBlank;
+            item.allowBlank = true;
+        });
+    },
+
+    resetMultiEditFields: function() {
+        var fields = this.getForm().getFields();
+        var me     = this;
+        fields.each(function(item, index, length) {
+            var disabledItems = ['pcode', 'pi_id', 'joint_proposal'];
+            if (disabledItems.indexOf(item.getName()) > -1) {
+                item.enable();
+            }
+            item.allowBlank = me.blankState[item.getName()];
+        });
+    },
 });
