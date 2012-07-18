@@ -272,13 +272,30 @@ class DssExport(object):
         return g + .2 if '+' in grade else (g - .2 if '-' in grade else g)
 
 if __name__ == '__main__':
+    import sys
     from utilities.database.external import AstridDB
-    addAstrid = False # Too nervious about this to add to astrid by fault.
 
-    proposals = [p.pcode for p in Proposal.objects.filter(semester__semester = '12B') 
-                   if p.allocatedTime() > 0]
-    print 'Importing', len(proposals), 'proposals.'
-    DssExport(quiet = False).exportProposals(proposals)
-    if addAstrid:
-        astridDB = AstridDB(dbname = 'turtle')
-        astridDB.addProjects(proposals)
+    def usage():
+        print 'Usage: python pht/tools/database/DssExport.py <import type: 1 or semester> <pcode or semester>'
+        sys.exit()
+
+    try:
+        if sys.argv[1] == '1':
+            proposals = [sys.argv[2]]
+            print 'Importing', proposals
+            DssExport(quiet = False).exportProposals(proposals)
+        elif sys.argv[1] == 'semester':
+            semester  = sys.argv[2]
+            proposals = [p.pcode for p in Proposal.objects.filter(semester__semester = semester) 
+                           if p.allocatedTime() > 0]
+            print 'Importing', len(proposals), 'proposals', 'for semester', semester
+            DssExport(quiet = False).exportProposals(proposals)
+        else:
+            usage()
+        addAstrid = False # Too nervious about this to add to astrid by fault.
+        if addAstrid:
+            astridDB = AstridDB(dbname = 'turtle')
+            astridDB.addProjects(proposals)
+    except IndexError:
+        usage()
+
