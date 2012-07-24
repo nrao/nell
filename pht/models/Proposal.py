@@ -241,7 +241,8 @@ class Proposal(models.Model):
                           , submit_date     = submit_date 
                           , title           = result['TITLE']
                           , abstract        = result['ABSTRACT']
-                          , joint_proposal  = False #result['joint_proposal']
+                          #  hack, hack, hack
+                          , joint_proposal  = result['JOINT_PROPOSAL_TYPE'].lower() != 'not a joint proposal'
                           )
 
         proposal.save()

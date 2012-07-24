@@ -22,6 +22,8 @@ urlpatterns = patterns(''
    , url(r'^notify$',                            notify)
    , url(r'^$',                                  root)
    , url(r'^reports/proposalsummary$',           proposal_summary)
+   , url(r'^reports/otherproposalsummary$',      other_proposal_summary)
+   , url(r'^reports/jointproposalsummary$',      joint_proposal_summary)
    , url(r'^reports/proposalranking$',           proposal_ranking)
    , url(r'^reports/proposalranking/export$',    proposal_ranking_export)
    , url(r'^reports/semester_summary$',          semester_summary)

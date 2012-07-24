@@ -40,6 +40,9 @@ class ProposalSummary(ProposalReport):
         super(ProposalSummary, self).__init__(filename)
         self.title = 'Proposal Summary'
 
+    def setTitle(self, title):
+        self.title = title
+
     def genHeader(self):
         return [Paragraph('<b># </b>', self.styleSheet)
               , Paragraph('<b>Title </b>', self.styleSheet)
@@ -59,7 +62,7 @@ class ProposalSummary(ProposalReport):
         students  = len(proposal.author_set.filter(thesis_observing = True))
         thesis    = str(students)
         code      = proposal.pcode.split('-')
-        pcode     = code[1] if len(code) > 1 else proposal.pcode
+        pcode     = code[1] if len(code) > 1 and 'GBT' in proposal.pcode else proposal.pcode
         return [Paragraph('%s' % pcode, self.styleSheet)
               , Paragraph(proposal.title, self.styleSheet)
               , Paragraph(pi_name, self.styleSheet)
@@ -72,7 +75,7 @@ class ProposalSummary(ProposalReport):
               ]
 
     def colWidths(self):
-        return [20, 310, 80, 40, 30, 50, 50, 50, 120]
+        return [50, 300, 80, 40, 30, 50, 50, 50, 120]
 
     def genFooter(self, canvas, doc):
         dateStr = self.getDateStr()

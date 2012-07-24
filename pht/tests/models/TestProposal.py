@@ -84,6 +84,7 @@ class TestProposal(TestCase):
                     , 'TITLE' : 'Lynrd Sknyrd'
                     , 'ABSTRACT' : 'What song do you wanna hear?'
                     , 'proposal_id' : 0
+                    , 'JOINT_PROPOSAL_TYPE' : 'Not a joint Proposal'
                     }
         proposal = Proposal.createFromSqlResult(sqlResult)
         proposal.dss_project = self.project

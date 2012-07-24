@@ -466,12 +466,47 @@ def lst_range(request):
 @admin_only
 def proposal_summary(request):
     semester = request.GET.get('semester')
+    filename = 'proposalSummary%s.pdf' % ('_' + semester) if semester is not None else ''
     # Create the HttpResponse object with the appropriate PDF headers.
     response = HttpResponse(mimetype='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename=proposalSummary.pdf'
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
 
     ps = ProposalSummary(response)
     ps.report(semester = semester)
+
+    return response
+
+@login_required
+@admin_only
+def other_proposal_summary(request):
+    semester = request.GET.get('semester')
+    filename = 'otherProposalSummary%s.pdf' % ('_' + semester) if semester is not None else ''
+    # Create the HttpResponse object with the appropriate PDF headers.
+    response = HttpResponse(mimetype='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename 
+
+    ps = ProposalSummary(response)
+    ps.setTitle('Summary of Other Proposals')
+    def filterProposals(proposal):
+        return 'GBT' not in proposal.pcode and proposal.pcode != 'Maintenance'
+    ps.report(semester = semester, filter = filterProposals)
+
+    return response
+
+@login_required
+@admin_only
+def joint_proposal_summary(request):
+    semester = request.GET.get('semester')
+    filename = 'jointProposalSummary%s.pdf' % ('_' + semester) if semester is not None else ''
+    # Create the HttpResponse object with the appropriate PDF headers.
+    response = HttpResponse(mimetype='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename 
+
+    ps = ProposalSummary(response)
+    ps.setTitle('Joint Proposals')
+    def filterProposals(proposal):
+        return proposal.joint_proposal
+    ps.report(semester = semester, filter = filterProposals)
 
     return response
 

@@ -202,6 +202,18 @@ Ext.application({
             autoScroll: true,
             }
         );
+        var otherProposalSummaryMenu = Ext.create('Ext.menu.Menu', {
+            id: 'otherProposalSummaryMenu', 
+            items: [],
+            autoScroll: true,
+            }
+        );
+        var jointProposalSummaryMenu = Ext.create('Ext.menu.Menu', {
+            id: 'jointProposalSummaryMenu', 
+            items: [],
+            autoScroll: true,
+            }
+        );
         var proposalRankingMenu = Ext.create('Ext.menu.Menu', {
             id: 'proposalRankingMenu', 
             items: [],
@@ -244,6 +256,18 @@ Ext.application({
                             window.open('/pht/reports/proposalsummary?semester=' + semester);
                         }
                     });
+                    otherProposalSummaryMenu.add({
+                        text: semester,
+                        handler: function() {
+                            window.open('/pht/reports/otherproposalsummary?semester=' + semester);
+                        }
+                    });
+                    jointProposalSummaryMenu.add({
+                        text: semester,
+                        handler: function() {
+                            window.open('/pht/reports/jointproposalsummary?semester=' + semester);
+                        }
+                    });
                     proposalRankingMenu.add({
                         text: semester,
                         handler: function() {
@@ -282,6 +306,14 @@ Ext.application({
             items : [{
                     text: 'Proposal Summary',
                     menu: proposalSummaryMenu
+                },
+                {
+                    text: 'Summary of Other Proposal',
+                    menu: otherProposalSummaryMenu
+                },
+                {
+                    text: 'Joint Proposal Summary',
+                    menu: jointProposalSummaryMenu
                 },
                 {
                     text: 'Proposal Ranking',
