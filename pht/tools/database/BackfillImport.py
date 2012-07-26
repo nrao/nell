@@ -151,9 +151,9 @@ class BackfillImport(PstImport):
         if grade > 4.0:
             phtGrade = 'A'
         elif grade < 1.0:    
-            phtGrade = 'D'
+            phtGrade = 'N'
         else:
-            gradeMap = {4.0 : 'A', 3.0: 'B', 2.0: 'C', 1.0: 'D'}
+            gradeMap = {4.0 : 'A', 3.0: 'B', 2.0: 'C', 1.0: 'N'}
             phtGrade = gradeMap.get(grade)
         return phtGrade    
         
