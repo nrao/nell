@@ -24,11 +24,22 @@ from django.test         import TestCase
 
 from pht.tools.reports.LstPressureReport import LstPressureReport
 from scheduler.models  import Observing_Type
+from scheduler.models  import Semester as DSSSemester
 
 class TestLstPressureReport(TestCase):
 
     fixtures = ['proposal_GBT12A-002.json', 'scheduler.json']
 
+    def setUp(self):
+
+        # too lazy to re create 'scheduler.json', so put in the
+        # future semesters we need
+        for i in range(13, 33):
+            for sem in ['A', 'B']:
+                semester = "%s%s" % (i, sem)
+                s = DSSSemester(semester = semester)
+                s.save()
+    
     def test_report(self):
 
         # I'm too lazy to fix the scheduler.json - missing commissioning

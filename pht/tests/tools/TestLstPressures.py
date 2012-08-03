@@ -33,6 +33,7 @@ from pht.models         import SessionGrade
 from pht.models         import SessionType
 from pht.httpadapters   import SessionHttpAdapter
 from scheduler.models   import Period as DSSPeriod
+from scheduler.models   import Semester as DSSSemester
 from utilities          import TimeAgent
 from pht.tools.LstPressureWeather import Pressures
 from pht.tests.utils    import *
@@ -59,6 +60,14 @@ class TestLstPressures(TestCase):
         s.allotment.save()
         s.save()
         self.session = s
+
+        # too lazy to re create 'scheduler.json', so put in the
+        # future semesters we need
+        for i in range(13, 33):
+            for sem in ['A', 'B']:
+                semester = "%s%s" % (i, sem)
+                s = DSSSemester(semester = semester)
+                s.save()
 
     def createSession(self):
         "Create a new session for the tests"
