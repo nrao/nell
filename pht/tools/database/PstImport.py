@@ -84,7 +84,8 @@ class PstImport(PstInterface):
             , 'W-band MM4 (85-93.3 GHz)'        : 'W'
             , 'W-band Shared Risk (68-92 GHz)'  : 'W'
             , 'X-Band (8.0-10.0 GHz)'           : 'X'
-       }
+        }
+        self.frontendMapLower = dict([(k.lower(), v) for k, v in self.frontendMap.iteritems()])
 
 
         # PST backends to PHT backend abbreviations
@@ -105,6 +106,7 @@ class PstImport(PstInterface):
             'VEGAS': 'Vegas',
             'VEGAS Shared Risk': 'Vegas',
             'Zpectrometer': 'Zpect'}
+        self.backendMapLower = dict([(k.lower(), v) for k, v in self.backendMap.iteritems()])
 
     def importProposalsByPhtPcode(self, pcodes):
         "Handles differences in PST/PHT pcodes"
@@ -465,18 +467,18 @@ class PstImport(PstInterface):
     def importResources(self, session):
         "Get the front & back ends associated with this session."
 
-        type = self.fetchTypeOfResource(session.pst_session_id)
+        # Assume this is a GBT session and try to import its resources
+        success = self.importGBTResource(session)
 
-        # if it ain't GBT or VLBA, we don't bother
-        if type is not None and type == 'GBT':
-            self.importGBTResource(session)
-        elif type is not None and type == 'VLBA':
+        # If we failed to import the GBT resources assume its VLBA
+        if not success:
             b = Backend.objects.get(abbreviation = 'gbtVLBA')
             session.backends.add(b)
             session.save()
 
     def fetchTypeOfResource(self, pst_sess_id):    
         "We need to know if this is for GBT or VLA, or what."
+        # This relation is not always set in the PST.  Use at your own risk.
 
         q = """select r.TELESCOPE 
         from RESOURCES as r, sessionPair as sp, session as s 
@@ -488,6 +490,19 @@ class PstImport(PstInterface):
         if rows is None:
             return None
         return rows[0]
+
+    def findReceiver(self, rx):
+        rcvr = self.frontendMap.get(rx) or self.frontendMapLower.get(rx.lower())
+        if rcvr is None:
+            for k, v in self.frontendMap.iteritems():
+                if v.lower() + '-band' in rx.lower():
+                    rcvr = v
+                    break
+        return rcvr
+
+    def findBackend(self, backend):
+        backend = self.backendMap.get(backend) or self.backendMapLower.get(backend.lower())
+        return backend
 
     def importGBTResource(self, session):
         "Turn PST resource info into our front & back end objects."
@@ -502,10 +517,12 @@ class PstImport(PstInterface):
         """ % session.pst_session_id
         self.cursor.execute(q)
         rows = self.cursor.fetchall()
+        if len(rows) == 0:
+            return False
         self.initMap()
         for r in rows:
             # associate the front end w/ this session
-            rcvr = self.frontendMap.get(r[0], None)
+            rcvr = self.findReceiver(r[0])
             if rcvr is not None and rcvr != 'None':
                 rcvr = Receiver.get_rcvr(rcvr)
                 session.receivers.add(rcvr)
@@ -515,12 +532,13 @@ class PstImport(PstInterface):
             elif rcvr is None:
                 self.badFrontends.append((session, r[0]))
             # associate the front end w/ this session
-            backend = self.backendMap.get(r[1], None)
+            backend = self.findBackend(r[1])
             if backend is not None and backend != 'None':
                 backend = Backend.objects.get(abbreviation = backend)
                 session.backends.add(backend)
             elif backend is None:
                 self.badBackends.append((session, r[1]))
+        return True
     
     def checkForNightTimeRx(self, session, rcvr):
         if rcvr.abbreviation == 'W' or rcvr.abbreviation == 'MBA':

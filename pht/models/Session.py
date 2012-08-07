@@ -250,7 +250,8 @@ class Session(models.Model):
 
     def determineFreqCategory(self):
         "From the receivers: High Frequency 1, 2, or Low Frequency?"
-        category = None
+        # Lets assume the default category is LF rather than None.
+        category = 'LF'
         highFreq2 = ['MBA', 'W', 'KFPA']
         highFreq1 = ['X', 'Ku', 'Ka', 'Q']
         r = self.get_highest_receiver()
