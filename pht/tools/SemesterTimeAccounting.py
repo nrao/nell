@@ -105,10 +105,10 @@ class Times(object):
         ):
 
         self.type = type
-        self.total = total
-        self.lowFreq = lowFreq 
-        self.hiFreq1 = hiFreq1
-        self.hiFreq2 = hiFreq2
+        self.total = total or 0.0
+        self.lowFreq = lowFreq or 0.0
+        self.hiFreq1 = hiFreq1 or 0.0
+        self.hiFreq2 = hiFreq2 or 0.0
 
     def __str__(self):
 
@@ -147,6 +147,10 @@ class Times(object):
 
     def factor(self, f):
         "Create new object with all fields multiplied by factor."
+        self.total   = self.total or 0.0
+        self.lowFreq = self.lowFreq or 0.0
+        self.hiFreq1 = self.hiFreq1 or 0.0
+        self.hiFreq2 = self.hiFreq2 or 0.0
         return Times( \
             total = self.total * f
           , lowFreq = self.lowFreq * f
@@ -176,7 +180,10 @@ class SemesterTimeAccounting(object):
 
         self.sun = Sun()
 
-        self.semester = DSSSemester.objects.get(semester = semester)
+        try:
+            self.semester = DSSSemester.objects.get(semester = semester)
+        except DSSSemester.DoesNotExist:
+            self.semester = DSSSemester.objects.create(semester =  semester)
 
         self.timeRange = (self.semester.start()
                         , self.semester.end())
