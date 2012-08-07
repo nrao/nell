@@ -20,7 +20,8 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from django.db                 import models
+from django.db          import models
+from datetime           import datetime
 
 from Author             import Author
 from Backend            import Backend
@@ -36,8 +37,6 @@ from scheduler.models   import Project as DSSProject
 from scheduler.models   import User as DSSUser 
 
 from utilities          import TimeAccounting
-
-from datetime           import datetime
 
 class Proposal(models.Model):
 
@@ -194,7 +193,7 @@ class Proposal(models.Model):
         return sems.keys()
 
     @staticmethod
-    def createFromDssProject(project):
+    def createFromDssProject(project, pst):
         """
         Creates a new Proposal instance initialized using a DSS Project.
         """
@@ -212,7 +211,7 @@ class Proposal(models.Model):
                           , submit_date     = datetime.now()
                           , title           = project.name
                           , abstract        = abstract
-                          , joint_proposal  = False 
+                          , joint_proposal  = pst.isJointProposal(project.pcode)
                           )
 
         proposal.save()
@@ -241,7 +240,6 @@ class Proposal(models.Model):
                           , submit_date     = submit_date 
                           , title           = result['TITLE']
                           , abstract        = result['ABSTRACT']
-                          #  hack, hack, hack
                           , joint_proposal  = result['JOINT_PROPOSAL_TYPE'].lower() != 'not a joint proposal'
                           )
 

@@ -27,6 +27,7 @@ setup_environ(settings)
 from datetime         import datetime
 
 from BackfillImport import BackfillImport
+from PstInterface   import PstInterface
 from pht.models       import *
 from scheduler        import models as dss
 
@@ -36,13 +37,14 @@ class DssImport(object):
         self.quiet = quiet
         self.projects = projects
         self.backfill = BackfillImport()
+        self.pst      = PstInterface()
 
     def importProjects(self):
         for p in self.projects:
             self.importProject(p)
 
     def importProject(self, project):
-        proposal = Proposal.createFromDssProject(project)
+        proposal = Proposal.createFromDssProject(project, self.pst)
         self.backfill.importDssSessions(project, proposal)
 
 if __name__ == '__main__':

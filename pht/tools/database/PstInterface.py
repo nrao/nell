@@ -78,6 +78,16 @@ class PstInterface(object):
         row  = self.cursor.fetchone()
         return dict(zip(keys, map(self.safeUnicode, row)))
 
+    def isJointProposal(self, pcode):
+        pcode    = pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/')
+        q = "select JOINT_PROPOSAL_TYPE from proposal where PROP_ID = '%s'" % pcode
+        self.cursor.execute(q)
+        row = self.cursor.fetchone()
+        if row is not None:
+            return row[0].lower() != 'not a joint proposal'
+        else:
+            return False
+
     def getAuthor(self, author_id):
         q = """
             select * from author where author_id = %s
