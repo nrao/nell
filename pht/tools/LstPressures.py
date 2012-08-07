@@ -485,7 +485,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         # put it all togethor to calculate pressures
         weightSum = sum(ws * fs)
-        if weightSum != 0:
+        if weightSum != 0 and totalTime is not None:
             ps = [(totalTime * ws[i] * fs[i]) / weightSum \
                 for i in range(self.hrs)]
         else:
