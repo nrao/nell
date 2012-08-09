@@ -79,14 +79,11 @@ class TestLstPressures(TestCase):
         wtypes = ['Poor', 'Good', 'Excellent']
         grades = ['A', 'B', 'C']
         types = ["%s_%s" % (w, g) for w in wtypes for g in grades]
-
-        # make sure are session belongs to a future semester, 
-        # no matter when we are running this test
-        lst = LstPressures()
-        semName = lst.futureSemesters[0]
-        futureSem, _ = Semester.objects.get_or_create(semester = semName)
-        self.session.proposal.semester  = futureSem
-        self.session.proposal.save()
+        # Make sure are session belongs to the next semester,
+        # no matter when we are running this test.
+        # This is a 12A session, that starts 2012-02-01.
+        today = datetime(2012, 1, 15)
+        lst = LstPressures(today = today)
 
         # make sure we start off blank, by adjusting the session
         time = self.session.allotment.allocated_time 
@@ -147,7 +144,11 @@ class TestLstPressures(TestCase):
 
     def test_getPressures2(self):
 
-        lst = LstPressures()
+        # Make sure are session belongs to the next semester,
+        # no matter when we are running this test.
+        # This is a 12A session, that starts 2012-02-01.
+        today = datetime(2012, 1, 15)
+        lst = LstPressures(today = today)
 
         # make sure are session belongs to a future semester, 
         # no matter when we are running this test
@@ -235,14 +236,11 @@ class TestLstPressures(TestCase):
         6 22:30 08:59  22,23,[0-7]
         """
 
-        lst = LstPressures()
-
-        # make sure are session belongs to a future semester, 
-        # no matter when we are running this test
-        semName = lst.futureSemesters[0]
-        futureSem, _ = Semester.objects.get_or_create(semester = semName)
-        self.session.proposal.semester  = futureSem
-        self.session.proposal.save()
+        # Make sure are session belongs to the next semester,
+        # no matter when we are running this test.
+        # This is a 12A session, that starts 2012-02-01.
+        today = datetime(2012, 1, 15)
+        lst = LstPressures(today = today)
 
         # 1
         self.session.target.min_lst = hr2rad(0.0)
