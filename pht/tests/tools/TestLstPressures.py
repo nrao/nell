@@ -32,6 +32,7 @@ from pht.models         import Session
 from pht.models         import SessionGrade
 from pht.models         import SessionType
 from pht.httpadapters   import SessionHttpAdapter
+from scheduler.models   import Sesshun as DSSSesshun
 from scheduler.models   import Period as DSSPeriod
 from scheduler.models   import Semester as DSSSemester
 from utilities          import TimeAgent
@@ -307,10 +308,12 @@ class TestLstPressures(TestCase):
                 xs[hr] = 1.0
         return xs
 
-    def test_getPressuresForSession(self):
+    def test_calculatePressure(self):
 
         lst = LstPressures()
-        ps = lst.getPressuresForSession(self.session)
+        totaltime = 6.5
+        #ps = lst.getPressuresForSessionOld(self.session)
+        ps = lst.calculatePressure(self.session, totaltime)
         exp  = [0.54166]*12
         off = [0.0]*12
         exp.extend(off)
@@ -319,7 +322,9 @@ class TestLstPressures(TestCase):
  
         # set night time flag
         self.session.flags.thermal_night = True
-        ps = lst.getPressuresForSession(self.session)
+        #ps = lst.getPressuresForSessionOld(self.session)
+        totaltime = 6.5
+        ps = lst.calculatePressure(self.session, totaltime)
         # changes non-zero ones 
         exp = [0.63214550853749085, 0.68040089086859701, 0.68522642910170761, 0.68040089086859701, 0.68040089086859701, 0.62249443207126953, 0.56458797327394228, 0.50668151447661469, 0.44877505567928738, 0.39086859688195996, 0.33296213808463254, 0.27505567928730518]
         exp.extend([0.0]*12)
@@ -698,24 +703,36 @@ class TestLstPressures(TestCase):
                 self.assertEquals(expC.getType(w)[i]
                                 , chg.getType(w)[i])
 
-    def test_isCarryover(self):
+    def test_getSessionCategories(self):
 
-        lst = LstPressures()
 
         # our session is in 12A; for testing, do some time travel
+        # today is long before that 
+        dt = datetime(2009, 1, 1)
+        lst = LstPressures(today = dt)
+        cat, subcat = lst.getSessionCategories(self.session)
+        self.assertEqual('ignored', cat)
+        self.assertEqual('future', subcat)
+        
 
-        # today is long before that - of course our session is new!
-        dt = datetime(2009, 10, 1)
-        carryover = lst.isCarryover(self.session, today = dt)
-        self.assertEqual(False, carryover)
-
+        # today is one semester before that 
+        dt = datetime(2012, 1, 1)
+        lst = LstPressures(today = dt)
+        cat, subcat = lst.getSessionCategories(self.session)
+        self.assertEqual('allocated', cat)
+        
         # today is in 12A - same semester! so now we're carryover
+        # if we assign it a dss session
+        s = DSSSesshun()
+        self.session.dss_session = s
         dt = datetime(2012, 6, 1)
-        carryover = lst.isCarryover(self.session, today = dt)
-        self.assertEqual(True, carryover)
+        lst = LstPressures(today = dt)
+        cat, subcat = lst.getSessionCategories(self.session)
+        self.assertEqual('carryover', cat)
 
-        # today is in 12B - this session was in our past - it's carryover
+        # today is in 12B - this session was in our past - it's still carryover
         dt = datetime(2012, 10, 1)
-        carryover = lst.isCarryover(self.session, today = dt)
-        self.assertEqual(True, carryover)
+        lst = LstPressures(today = dt)
+        cat, subcat = lst.getSessionCategories(self.session)
+        self.assertEqual('carryover', cat)
 

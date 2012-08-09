@@ -303,16 +303,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             fs = fs * self.rfiWeights 
         return fs
 
-    def useCarryOverPeriods(self, session):
-        """
-        We figure out the carry over for Maintenance
-        and Shutdown sessions from their periods.
-        """
-
-        # TBF: needs improvement
-        pcodes = ['Maintenance', 'Shutdown']
-        return session.proposal.pcode in pcodes
-
     def usePeriodsForPressures(self, session):
         "What sessions should use their periods for computing pressures?"
         pcodes = ['Maintenance', 'Shutdown']
@@ -414,79 +404,11 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             
         return ps 
 
-
-    def getPressuresForSession(self, session, carryover = False):
-        """
-        Take into account different attributes of given session
-        to return it's LST Pressure at each LST (0..23)
-        """
-        
-        # first, is this session setup so we can do this?
-        if session.target is None or session.allotment is None \
-            or session.target.min_lst is None \
-            or session.target.max_lst is None:
-            self.badSessions.append(session)
-            # for reporting
-            self.pressuresBySession[session.__str__()] = \
-                ('bad', self.newHrs(), 0.0)
-            return [0.0] * self.hrs
-
-        # TBF: is this right?
-        # Carryover we get the time differently
-        if carryover:
-            # how is carryover to be added to?
-            if self.carryOverUseNextSemester:
-                totalTime = 0.0
-                if session.next_semester is not None \
-                    and session.next_semester.complete == False:
-                    totalTime = session.next_semester.time
-            else:
-                ta = TimeAccounting()
-                totalTime = ta.getTimeRemaining(session.dss_session)
-            bucket = "carryover"
-        else:    
-            # which time attribute of the session to use?
-            if session.allotment.semester_time is not None and \
-                session.allotment.semester_time > 0.0:
-                totalTime = session.allotment.semester_time
-                bucket = "semester"
-            # allocated or requested time?
-            elif session.allotment.allocated_time is not None:
-                totalTime = session.allotment.allocated_time
-                bucket = "allocated"
-            else:
-                totalTime = session.getTotalRequestedTime()
-                bucket = "requested"
-
-        hrs = 24
-        bins = [0.0] * hrs 
-        w = [0.0] * hrs
-        f = [1.0] * hrs
-        
-        ws = self.getLstWeightsForSession(session)
-
-        # now take into account LST exclusion
-        ws = self.modifyWeightsForLstExclusion(session, ws)
-
-        # now look at the flags
-        fs = self.getFlagWeightsForSession(session)
-
-        # put it all togethor to calculate pressures
-        weightSum = sum(ws * fs)
-        if weightSum != 0 and totalTime is not None:
-            ps = [(totalTime * ws[i] * fs[i]) / weightSum \
-                for i in range(self.hrs)]
-        else:
-            ps = [0.0]*self.hrs
-
-        ps = numpy.array(ps)    
-
-        # for reporting
-        self.pressuresBySession[session.__str__()] = (bucket, ps, sum(ps))
-
-        return ps
-
     def calculatePressure(self, session, totalTime):
+        """
+        The heart of the algorithm for finding how a sessions
+        time gets spread across it's LST range.
+        """
 
         hrs = 24
         bins = [0.0] * hrs 
@@ -528,22 +450,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             return session.grade.grade not in self.grades
         else:
             return True
-
-    def isCarryover(self, session, today = None): 
-        """
-        What's NOT carryover?  Any Session that belongs to a 
-        Proposal whose semester hasn't started yet.
-        """
-
-        # We used to just do this - but transferring 12B to DSS broke it
-        #return session.dss_session is not None
-
-        sem = session.proposal.semester
-        if today is None:
-            currentSem = self.currentSemester
-        else:    
-            currentSem = DSSSemester.getCurrentSemester(today = today)
-        return sem.semester <= currentSem.semester
 
     def getPressures(self, sessions = None):
         """
@@ -609,22 +515,29 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
 
     def accumulatePressure(self, session, category, ps):
+        """
+        Once we have the pressure for a particular session,
+        how does it contribute to the big picture?
+        """
 
         # accum pressure in total 
         self.totalPs += ps
-        # We really keep carryover separate
-        # Also track carryover by weather type
+
+        # use category like you think you would
         if category == 'carryover':
             self.carryoverTotalPs += ps
             self.carryoverPs += self.weather.binSession(session, ps)
         elif category == 'allocated':
-            if session.allotment.allocated_time is not None: 
-                self.newAstronomyTotalPs += ps
-                if session.grade is not None and not self.hasFailingGrade(session):
-                    self.newAstronomyGradeTotalPs += ps
-                    wps = self.weather.binSession(session, ps)
-                    grade = session.grade.grade
-                    self.gradePs[grade] += wps
+            # TBF: a few of these totals and checks aren't
+            # necessary anymore because we're not letting
+            # sessions w/ out passing grades to fall into
+            # this category
+            self.newAstronomyTotalPs += ps
+            if session.grade is not None and not self.hasFailingGrade(session):
+                self.newAstronomyGradeTotalPs += ps
+                wps = self.weather.binSession(session, ps)
+                grade = session.grade.grade
+                self.gradePs[grade] += wps
         elif category == 'requested':
             # this goes into the requested bucket
             self.requestedTotalPs += ps
@@ -659,6 +572,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         return totalTime
 
     def getSessionCategories(self, session):
+        "What category & sub-category to put this session into?"
 
         if session.target is None or session.target.min_lst is None or session.target.max_lst is None:
             return ('ignored', 'bad_lst')
@@ -692,85 +606,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                     return ('ignored', '')
             else:    
                 return ('ignored', '')    
-
-    def getPressuresOld(self, sessions = None):
-        """
-        Returns a dictionary of pressures by LST for different 
-        categories.  This format is specified to easily convert
-        to the format expected by the web browser client (Ext store).
-        For example:
-        [
-         {'LST': 0.0, 'total': 2.0, 'A': 1.0, 'B': 1.0},
-         {'LST': 1.0, 'total': 3.0, 'A': 2.0, 'B': 1.0},
-        ]
-        """
-        
-        self.initPressures()
-
-        # what sessions are we doing this for?
-        if sessions is None:
-            sessions = Session.objects.all().order_by('name')
-        self.sessions = sessions    
-
-        # fill the buckets
-        for s in sessions:
-            carryover = self.isCarryover(s) 
-            # sessions from future semesters we completely ignore
-            if self.isSessionForFutureSemester(s):
-                self.futureSessions.append(s)
-                # for reporting
-                self.pressuresBySession[s.__str__()] = \
-                    ('future', self.newHrs(), 0.0)
-                continue # move on to next session
-            if self.useCarryOverPeriods(s):
-                ps = self.getPressuresFromSessionsPeriods(s)
-            else:
-                ps = self.getPressuresForSession(s, carryover)
-            # accum pressure in total 
-            self.totalPs += ps
-            # We really keep carryover separate
-            # Also track carryover by weather type
-            if carryover:
-                self.carryoverTotalPs += ps
-                self.carryoverPs += self.weather.binSession(s, ps)
-            else:
-                if s.allotment.allocated_time is not None: 
-                    self.newAstronomyTotalPs += ps
-                    if s.grade is not None and not self.hasFailingGrade(s):
-                        self.newAstronomyGradeTotalPs += ps
-                        wps = self.weather.binSession(s, ps)
-                        grade = s.grade.grade
-                        self.gradePs[grade] += wps
-                    else:    
-                        # for reporting    
-                        if s.grade is None:
-                            self.noGrades.append(s)    
-                        else:
-                            self.failingSessions.append(s)
-                else:
-                    # this goes into the requested bucket
-                    self.requestedTotalPs += ps
-                    self.requestedPs += self.weather.binSession(s, ps)
-        # for reporting
-        #self.pressuresBySession[s.name] = (carryover, ps, sum(ps))
-
-        # make sure we have a record of what the original pressure was
-        # before we adjusted for overfilled weather
-        self.originalGradePs = self.gradePs.copy()
-        self.gradePs['A'], self.changes = self.adjustForOverfilledWeather(\
-            self.gradePs['A']
-          , self.carryoverPs
-          , self.weather.availability
-         )
-
-        # What's *really* available for this semester?
-        self.remainingTotalPs = self.weather.availabilityTotal - \
-            self.carryoverTotalPs
-        self.remainingPs = self.weather.availability - self.carryoverPs
-            
-
-        # now convert the buckets to expected output
-        return self.jsonDict()
 
     def jsonDict(self):
         """
