@@ -41,6 +41,20 @@ from pht.tools.LstPressureWeather import Pressures
 
 import numpy
 
+# Session Categories
+CARRYOVER = 'carryover'
+ALLOCATED = 'allocated'
+REQUESTED = 'requested'
+IGNORED = 'ignored'
+
+# Session sub-Categories
+BADLST = 'bad_lst'
+FUTURE = 'future'
+SEMESTER = 'semester'
+PERIODS = 'periods'
+CARRYOVER_BAD_GRADE = 'carryover_bad_grade'
+CARRYOVER_NO_DSS = 'carryover_no_dss'
+
 class LstPressures(object):
 
     """
@@ -475,7 +489,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             if not self.usePeriodsForPressures(s): 
                 # compute pressures from LST and allotted time
                 cat, subcat = self.getSessionCategories(s)
-                if cat != 'ignored':
+                if cat != IGNORED:
                     # which time to use depends on the categories
                     time = self.getSessionTime(s, cat, subcat)
                     # what's this sessions LST pressure?
@@ -487,8 +501,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                     ps = self.newHrs()
             else:
                 # compute pressures from periods
-                cat = 'carryover'
-                subcat = 'periods'
+                cat = CARRYOVER 
+                subcat = PERIODS 
                 ps = self.getPressuresFromSessionsPeriods(s)
                 self.accumulatePressure(s, cat, ps)
 
@@ -524,10 +538,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.totalPs += ps
 
         # use category like you think you would
-        if category == 'carryover':
+        if category == CARRYOVER:
             self.carryoverTotalPs += ps
             self.carryoverPs += self.weather.binSession(session, ps)
-        elif category == 'allocated':
+        elif category == ALLOCATED:
             # TBF: a few of these totals and checks aren't
             # necessary anymore because we're not letting
             # sessions w/ out passing grades to fall into
@@ -538,7 +552,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 wps = self.weather.binSession(session, ps)
                 grade = session.grade.grade
                 self.gradePs[grade] += wps
-        elif category == 'requested':
+        elif category == REQUESTED:
             # this goes into the requested bucket
             self.requestedTotalPs += ps
             self.requestedPs += self.weather.binSession(session, ps)
@@ -551,7 +565,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         category the session belongs to, among other things.
         """
         totalTime = 0.0
-        if category == 'carryover':
+        if category == CARRYOVER:
            # which method for determining carryover time to use?
            if self.carryOverUseNextSemester:
                 if session.next_semester is not None \
@@ -561,13 +575,13 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                # TBF: check DSS complete flag
                ta = TimeAccounting()
                totalTime = ta.getTimeRemaining(session.dss_session)
-        elif category == 'allocated':    
+        elif category == ALLOCATED:    
             # which time attribute of the session to use?
-            if subCategory == 'semester':
+            if subCategory == SEMESTER:
                 totalTime = session.allotment.semester_time
             else:
                 totalTime = session.allotment.allocated_time
-        elif category == 'requested':
+        elif category == REQUESTED:
             totalTime = session.getTotalRequestedTime()
         return totalTime
 
@@ -575,13 +589,13 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         "What category & sub-category to put this session into?"
 
         if session.target is None or session.target.min_lst is None or session.target.max_lst is None:
-            return ('ignored', 'bad_lst')
+            return (IGNORED, BADLST)
 
         if session.dss_session is not None \
             and session.semester.semester <= self.currentSemester.semester \
             and session.grade is not None \
             and session.grade.grade in ['A', 'B', 'C']:
-            return ('carryover', '')
+            return (CARRYOVER, '')
         elif session.semester.semester == self.nextSemester.semester \
             and session.allotment is not None \
             and session.allotment.allocated_time is not None \
@@ -589,23 +603,23 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             and session.grade.grade in ['A', 'B', 'C']:
             if session.allotment.semester_time is not None and \
                 session.allotment.semester_time > 0.0:
-                return ('allocated', 'semester')
-            return ('allocated', '')
+                return (ALLOCATED, SEMESTER)
+            return (ALLOCATED, '')
         elif session.semester.semester == self.nextSemester.semester:
-            return ('requested', '')
+            return (REQUESTED, '')
         else:
             # ignored, now figure out why:
             if session.semester.semester > self.nextSemester.semester:
-                return ('ignored', 'future')
+                return (IGNORED, FUTURE)
             elif session.semester.semester <= self.currentSemester.semester:
                 if (session.grade is None or session.grade.grade not in ['A', 'B', 'C']):
-                    return ('ignored', 'carryover_bad_grade')
+                    return (IGNORED, CARRYOVER_BAD_GRADE)
                 elif session.dss_session is None:
-                    return ('ignored', 'carryover_no_dss')
+                    return (IGNORED, CARRYOVER_NO_DSS)
                 else:
-                    return ('ignored', '')
+                    return (IGNORED, '')
             else:    
-                return ('ignored', '')    
+                return (IGNORED, '')    
 
     def jsonDict(self):
         """
@@ -796,15 +810,15 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         # more debugging
         print ""
-        self.badSessions = self.findProcessedSessions('ignored', 'bad_lst')
+        self.badSessions = self.findProcessedSessions(IGNORED, BAD_LST)
         print "Bad Sessions: %d" % len(self.badSessions)
         for b in self.badSessions:
             print "    ", b
-        self.futureSessions = self.findProcessedSessions('ignored', 'future')
+        self.futureSessions = self.findProcessedSessions(IGNORED, FUTURE)
         print "Future Sessions: %d" % len(self.futureSessions)
         for s in self.futureSessions:
             print "    ", s
-        self.semesterSessions = self.findProcessedSessions('allocated', 'semester')
+        self.semesterSessions = self.findProcessedSessions(ALLOCATED, SEMESTER)
         print "Sessions using semester time: %d" % len(self.semesterSessions)
         for s in self.semesterSessions:
             print "    ", s
@@ -1085,8 +1099,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
 
 if __name__ == '__main__':
-    today = datetime(2012, 7, 30)
-    lst = LstPressures(today = today)
+    #today = datetime(2012, 7, 30)
+    #lst = LstPressures(today = today)
+    lst = LstPressures()
 
     ps = lst.getPressures()
     lst.report()
