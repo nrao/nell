@@ -545,7 +545,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             currentSem = DSSSemester.getCurrentSemester(today = today)
         return sem.semester <= currentSem.semester
 
-    def getPressuresNew(self, sessions = None):
+    def getPressures(self, sessions = None):
         """
         Returns a dictionary of pressures by LST for different 
         categories.  This format is specified to easily convert
@@ -693,7 +693,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             else:    
                 return ('ignored', '')    
 
-    def getPressures(self, sessions = None):
+    def getPressuresOld(self, sessions = None):
         """
         Returns a dictionary of pressures by LST for different 
         categories.  This format is specified to easily convert
@@ -1253,7 +1253,7 @@ if __name__ == '__main__':
     today = datetime(2012, 7, 30)
     lst = LstPressures(today = today)
 
-    ps = lst.getPressuresNew()
+    ps = lst.getPressures()
     lst.report()
 
     #exp = []
