@@ -254,8 +254,11 @@ class LstPressureReport(Report):
         els.append(self.pg("Session Details:", bold = True))
         data = [self.createLstRow()]
         for name in sorted(self.lst.pressuresBySession.keys()):
-            bucket, ps, total = self.lst.pressuresBySession[name]
-            label = "%s: (%s, %5.2f)" % (name, bucket, total)
+            cat, subcat, ps, total = self.lst.pressuresBySession[name]
+            if subcat == '':
+                label = "%s: (%s, %5.2f)" % (name, cat, total)
+            else:    
+                label = "%s: (%s, %s, %5.2f)" % (name, cat, subcat, total)
             data.append(self.getDataRow(label, ps))
         widths = [120]
         widths.extend([25]*(self.lst.hrs-1))
