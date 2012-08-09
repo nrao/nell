@@ -247,14 +247,7 @@ class LstPressureReport(Report):
             ss = self.createSessionElements("Session's using semester time:"
                                          , self.lst.semesterSessions)
             els.extend(ss)
-        if len(self.lst.noGrades) > 0:
-            ss = self.createSessionElements("Session's without grades:"
-                                         , self.lst.noGrades)
-            els.extend(ss)
-        if len(self.lst.failingSessions) > 0:
-            ss = self.createSessionElements("Session's with failing grades:"
-                                         , self.lst.failingSessions)
-            els.extend(ss)
+
 
         # session details
         els.append(self.getBreak())

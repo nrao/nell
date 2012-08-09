@@ -113,14 +113,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # for reporting
         self.sessions = []
         self.badSessions = []
-        self.noPeriods = []
-        self.noGrades = []
-        self.carryoverSessions = []
-        self.carryoverSessionPeriods = []
         self.pressuresBySession = {}
         self.futureSessions = []
         self.semesterSessions = []
-        self.failingSessions = []
         self.pressures = [] 
 
         # for computing day light hours
@@ -144,7 +139,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         self.initPressures()
         self.initFlagWeights()
-
 
     def newHrs(self):
         return numpy.array([0.0]*self.hrs)
@@ -352,11 +346,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             periods = self.getElectiveSessionPeriods(session)
         else:
             periods = self.getSessionPeriods(session)
-        # for reporting
-        if len(periods) == 0:
-            self.noPeriods.append(session)
-        else:
-            self.carryoverSessionPeriods.append(session)
         return periods    
 
     def getElectiveSessionPeriods(self, session):
@@ -454,16 +443,12 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             else:
                 ta = TimeAccounting()
                 totalTime = ta.getTimeRemaining(session.dss_session)
-            # reporting
-            self.carryoverSessions.append(session)
             bucket = "carryover"
         else:    
             # which time attribute of the session to use?
             if session.allotment.semester_time is not None and \
                 session.allotment.semester_time > 0.0:
                 totalTime = session.allotment.semester_time
-                # reporting
-                self.semesterSessions.append(session)
                 bucket = "semester"
             # allocated or requested time?
             elif session.allotment.allocated_time is not None:
@@ -640,12 +625,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                     wps = self.weather.binSession(session, ps)
                     grade = session.grade.grade
                     self.gradePs[grade] += wps
-                else:    
-                    # for reporting    
-                    if s.grade is None:
-                        self.noGrades.append(session)    
-                    else:
-                        self.failingSessions.append(session)
         elif category == 'requested':
             # this goes into the requested bucket
             self.requestedTotalPs += ps
@@ -660,6 +639,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         """
         totalTime = 0.0
         if category == 'carryover':
+           # which method for determining carryover time to use?
            if self.carryOverUseNextSemester:
                 if session.next_semester is not None \
                     and session.next_semester.complete == False:
@@ -668,18 +648,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                # TBF: check DSS complete flag
                ta = TimeAccounting()
                totalTime = ta.getTimeRemaining(session.dss_session)
-            # reporting
-            #self.carryoverSessions.append(session)
         elif category == 'allocated':    
             # which time attribute of the session to use?
-            #if session.allotment.semester_time is not None and \
-            #    session.allotment.semester_time > 0.0:
-            #    totalTime = session.allotment.semester_time
             if subCategory == 'semester':
                 totalTime = session.allotment.semester_time
-                # reporting
-                self.semesterSessions.append(session)
-            #elif session.allotment.allocated_time is not None:
             else:
                 totalTime = session.allotment.allocated_time
         elif category == 'requested':
@@ -889,6 +861,11 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         return (allocated, changes)
 
+    def findProcessedSessions(self, category, subCategory):
+        "Grab sessions of certain category from the list"
+        sessNames = [name for name, data in self.pressuresBySession.items() if category == data[0] and subCategory == data[1]]
+        return [s for s in self.sessions if s.__str__() in sessNames]
+
     def almostEqual(self, xs, ys):
         "Two numpy arrays are almost equal?"
         eps = 0.001
@@ -984,30 +961,17 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         # more debugging
         print ""
-        print "Carry over sessions: %d" % len(self.carryoverSessions)
-        for s in self.carryoverSessions:
-            print "    ", s, s.weather_type
-        print "Carry over sessions w/ periods: %d" % \
-            len(self.carryoverSessionPeriods)
-        for s in self.carryoverSessionPeriods:
-            print "    ", s, s.weather_type
-        print "No Periods for Sessions: %d" % len(self.noPeriods)
-        for s in self.noPeriods:
-            print "    ", s
-        print "Sessions counted towards astronomy w/ out grades: %d" % len(self.noGrades)    
-        for s in self.noGrades:
-            print "    ", s
+        self.badSessions = self.findProcessedSessions('ignored', 'bad_lst')
         print "Bad Sessions: %d" % len(self.badSessions)
         for b in self.badSessions:
             print "    ", b
+        self.futureSessions = self.findProcessedSessions('ignored', 'future')
         print "Future Sessions: %d" % len(self.futureSessions)
         for s in self.futureSessions:
             print "    ", s
+        self.semesterSessions = self.findProcessedSessions('allocated', 'semester')
         print "Sessions using semester time: %d" % len(self.semesterSessions)
         for s in self.semesterSessions:
-            print "    ", s
-        print "Sessions with failing grade: %d" % len(self.failingSessions)
-        for s in self.failingSessions:
             print "    ", s
 
         # everybodies pressure!
@@ -1027,9 +991,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             if sum(ps) > 0.0:
                 lbl = "%s (%s, %5.2f)" % (k, bucket, total)
                 print self.formatResults(lbl, ps, lblFrmt = "%35s")
-
-        print "newAstronomyTotalPs", self.newAstronomyTotalPs
-        print "newAstronomyGradeTotalPs", self.newAstronomyGradeTotalPs
 
         # for Brian Truitt:
         print "Remaining Hours by LST (0-23)"
