@@ -97,7 +97,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
     """
         
 
-    def __init__(self, carryOverUseNextSemester = True):
+    def __init__(self, carryOverUseNextSemester = True, today = None):
 
         self.hrs = 24
         self.bins = [0.0]*self.hrs
@@ -105,7 +105,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # when calculating carry over, use the next semester field,
         # OR the current time remaining?
         self.carryOverUseNextSemester = carryOverUseNextSemester
-
 
         # for computing pressures based on weather type, on 
         # holding these results
@@ -127,16 +126,17 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # for computing day light hours
         self.sun = Sun()
         
-        # what example year do we compute flags for?
-        #self.year = 2012
-        
-        sems = DSSSemester.getFutureSemesters()
+        if today is None:
+            today = datetime.today()
+
+        self.currentSemester = DSSSemester.getCurrentSemester(today = today)
+        sems = DSSSemester.getFutureSemesters(today = today)
         self.nextSemester = sems[0]
         self.nextSemesterStart = self.nextSemester.start()
         self.nextSemesterEnd   = self.nextSemester.end()
         # TBF: need future semesters in DSSSemester DB:
-        #self.futureSemesters = [s.semester for s in sems[1:]]
-        self.futureSemesters = ['13A', '13B', '14A', '14B', '15A', '15B']
+        self.futureSemesters = [s.semester for s in sems][1:] 
+        #['13A', '13B', '14A', '14B', '15A', '15B']
 
         # TBF: get from DB?
         self.grades = ['A', 'B', 'C']
@@ -319,6 +319,11 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         pcodes = ['Maintenance', 'Shutdown']
         return session.proposal.pcode in pcodes
 
+    def usePeriodsForPressures(self, session):
+        "What sessions should use their periods for computing pressures?"
+        pcodes = ['Maintenance', 'Shutdown']
+        return session.proposal.pcode in pcodes
+
     def getPressuresFromSessionsPeriods(self, session):
         """
         We figure out the carry over for Maintenance
@@ -326,8 +331,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         """
         periods = self.getSessionNextSemesterPeriods(session)
         ps = self.getPressuresFromPeriods(periods)
-        # for reporting
-        self.pressuresBySession[session.__str__()] = ('periods', ps, sum(ps))
         return ps
 
     def getPressuresFromPeriods(self, periods):    
@@ -498,6 +501,33 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         return ps
 
+    def calculatePressure(self, session, totalTime):
+
+        hrs = 24
+        bins = [0.0] * hrs 
+        w = [0.0] * hrs
+        f = [1.0] * hrs
+        
+        ws = self.getLstWeightsForSession(session)
+
+        # now take into account LST exclusion
+        ws = self.modifyWeightsForLstExclusion(session, ws)
+
+        # now look at the flags
+        fs = self.getFlagWeightsForSession(session)
+
+        # put it all togethor to calculate pressures
+        weightSum = sum(ws * fs)
+        if weightSum != 0 and totalTime is not None:
+            ps = [(totalTime * ws[i] * fs[i]) / weightSum \
+                for i in range(self.hrs)]
+        else:
+            ps = [0.0]*self.hrs
+
+        ps = numpy.array(ps)    
+
+        return ps
+
     def isSessionForFutureSemester(self, session):
         """
         Large projects may have some sessions assigned to future semesters,
@@ -514,7 +544,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         else:
             return True
 
-    def isCarryover(self, session, today = datetime.today()):
+    def isCarryover(self, session, today = None): 
         """
         What's NOT carryover?  Any Session that belongs to a 
         Proposal whose semester hasn't started yet.
@@ -524,9 +554,173 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         #return session.dss_session is not None
 
         sem = session.proposal.semester
-        currentSem = DSSSemester.getCurrentSemester(today = today)
+        if today is None:
+            currentSem = self.currentSemester
+        else:    
+            currentSem = DSSSemester.getCurrentSemester(today = today)
         return sem.semester <= currentSem.semester
+
+    def getPressuresNew(self, sessions = None):
+        """
+        Returns a dictionary of pressures by LST for different 
+        categories.  This format is specified to easily convert
+        to the format expected by the web browser client (Ext store).
+        For example:
+        [
+         {'LST': 0.0, 'total': 2.0, 'A': 1.0, 'B': 1.0},
+         {'LST': 1.0, 'total': 3.0, 'A': 2.0, 'B': 1.0},
+        ]
+        """
         
+        self.initPressures()
+
+        # what sessions are we doing this for?
+        if sessions is None:
+            sessions = Session.objects.all().order_by('name')
+        self.sessions = sessions         
+
+        for s in sessions:
+            # two distince ways to compute pressures
+            if not self.usePeriodsForPressures(s): 
+                # compute pressures from LST and allotted time
+                cat, subcat = self.getSessionCategories(s)
+                if cat != 'ignored':
+                    # which time to use depends on the categories
+                    time = self.getSessionTime(s, cat, subcat)
+                    # what's this sessions LST pressure?
+                    ps = self.calculatePressure(s, time)
+                    # how to track this pressure in the big picture?
+                    self.accumulatePressure(s, cat, ps)
+                else:
+                    # ignored sessions get zeros for pressure
+                    ps = self.newHrs()
+            else:
+                # compute pressures from periods
+                cat = 'carryover'
+                subcat = 'periods'
+                ps = self.getPressuresFromSessionsPeriods(s)
+                self.accumulatePressure(s, cat, ps)
+
+            #reporting
+            self.pressuresBySession[s.__str__()] = (cat, subcat, ps, sum(ps))
+
+
+        # make sure we have a record of what the original pressure was
+        # before we adjusted for overfilled weather
+        self.originalGradePs = self.gradePs.copy()
+        self.gradePs['A'], self.changes = self.adjustForOverfilledWeather(\
+            self.gradePs['A']
+          , self.carryoverPs
+          , self.weather.availability
+         )
+
+        # What's *really* available for this semester?
+        self.remainingTotalPs = self.weather.availabilityTotal - \
+            self.carryoverTotalPs
+        self.remainingPs = self.weather.availability - self.carryoverPs
+            
+        # now convert the buckets to expected output
+        return self.jsonDict()
+
+
+    def accumulatePressure(self, session, category, ps):
+
+        # accum pressure in total 
+        self.totalPs += ps
+        # We really keep carryover separate
+        # Also track carryover by weather type
+        if category == 'carryover':
+            self.carryoverTotalPs += ps
+            self.carryoverPs += self.weather.binSession(session, ps)
+        elif category == 'allocated':
+            if session.allotment.allocated_time is not None: 
+                self.newAstronomyTotalPs += ps
+                if session.grade is not None and not self.hasFailingGrade(session):
+                    self.newAstronomyGradeTotalPs += ps
+                    wps = self.weather.binSession(session, ps)
+                    grade = session.grade.grade
+                    self.gradePs[grade] += wps
+                else:    
+                    # for reporting    
+                    if s.grade is None:
+                        self.noGrades.append(session)    
+                    else:
+                        self.failingSessions.append(session)
+        elif category == 'requested':
+            # this goes into the requested bucket
+            self.requestedTotalPs += ps
+            self.requestedPs += self.weather.binSession(session, ps)
+        else:
+            raise 'unhandled category'
+
+    def getSessionTime(self, session, category, subCategory):
+        """
+        The time we use for the pressure depends on what
+        category the session belongs to, among other things.
+        """
+        totalTime = 0.0
+        if category == 'carryover':
+           if self.carryOverUseNextSemester:
+                if session.next_semester is not None \
+                    and session.next_semester.complete == False:
+                    totalTime = session.next_semester.time
+           else:
+               # TBF: check DSS complete flag
+               ta = TimeAccounting()
+               totalTime = ta.getTimeRemaining(session.dss_session)
+            # reporting
+            #self.carryoverSessions.append(session)
+        elif category == 'allocated':    
+            # which time attribute of the session to use?
+            #if session.allotment.semester_time is not None and \
+            #    session.allotment.semester_time > 0.0:
+            #    totalTime = session.allotment.semester_time
+            if subCategory == 'semester':
+                totalTime = session.allotment.semester_time
+                # reporting
+                self.semesterSessions.append(session)
+            #elif session.allotment.allocated_time is not None:
+            else:
+                totalTime = session.allotment.allocated_time
+        elif category == 'requested':
+            totalTime = session.getTotalRequestedTime()
+        return totalTime
+
+    def getSessionCategories(self, session):
+
+        if session.target is None or session.target.min_lst is None or session.target.max_lst is None:
+            return ('ignored', 'bad_lst')
+
+        if session.dss_session is not None \
+            and session.semester.semester <= self.currentSemester.semester \
+            and session.grade is not None \
+            and session.grade.grade in ['A', 'B', 'C']:
+            return ('carryover', '')
+        elif session.semester.semester == self.nextSemester.semester \
+            and session.allotment is not None \
+            and session.allotment.allocated_time is not None \
+            and session.grade is not None \
+            and session.grade.grade in ['A', 'B', 'C']:
+            if session.allotment.semester_time is not None and \
+                session.allotment.semester_time > 0.0:
+                return ('allocated', 'semester')
+            return ('allocated', '')
+        elif session.semester.semester == self.nextSemester.semester:
+            return ('requested', '')
+        else:
+            # ignored, now figure out why:
+            if session.semester.semester > self.nextSemester.semester:
+                return ('ignored', 'future')
+            elif session.semester.semester <= self.currentSemester.semester:
+                if (session.grade is None or session.grade.grade not in ['A', 'B', 'C']):
+                    return ('ignored', 'carryover_bad_grade')
+                elif session.dss_session is None:
+                    return ('ignored', 'carryover_no_dss')
+                else:
+                    return ('ignored', '')
+            else:    
+                return ('ignored', '')    
+
     def getPressures(self, sessions = None):
         """
         Returns a dictionary of pressures by LST for different 
@@ -820,16 +1014,22 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         print ""
         print "Pressures by Session: "
         for k in sorted(self.pressuresBySession.keys()):
-            bucket, ps, total = self.pressuresBySession[k]
-            lbl = "%s (%s, %5.2f)" % (k, bucket, total)
+            bucket, sb, ps, total = self.pressuresBySession[k]
+            if sb == '':
+                lbl = "%s (%s, %5.2f)" % (k, bucket, total)
+            else:
+                lbl = "%s (%s, %s, %5.2f)" % (k, bucket, sb, total)
             print self.formatResults(lbl, ps, lblFrmt = "%35s")
         print ""
         print "Non-Zero Pressures by Session: "
         for k in sorted(self.pressuresBySession.keys()):
-            bucket, ps, total = self.pressuresBySession[k]
+            bucket, sb, ps, total = self.pressuresBySession[k]
             if sum(ps) > 0.0:
                 lbl = "%s (%s, %5.2f)" % (k, bucket, total)
                 print self.formatResults(lbl, ps, lblFrmt = "%35s")
+
+        print "newAstronomyTotalPs", self.newAstronomyTotalPs
+        print "newAstronomyGradeTotalPs", self.newAstronomyGradeTotalPs
 
         # for Brian Truitt:
         print "Remaining Hours by LST (0-23)"
@@ -1089,8 +1289,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
 
 if __name__ == '__main__':
-    lst = LstPressures()
-    ps = lst.getPressures()
+    today = datetime(2012, 7, 30)
+    lst = LstPressures(today = today)
+
+    ps = lst.getPressuresNew()
     lst.report()
 
     #exp = []
