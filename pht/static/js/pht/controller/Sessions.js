@@ -5,6 +5,7 @@ Ext.define('PHT.controller.Sessions', {
         'Backend',
         'Receiver',
         'Session',
+        'SessionName',
         'SessionGrade',
         'SessionType',
         'SessionObservingType',
@@ -18,6 +19,7 @@ Ext.define('PHT.controller.Sessions', {
         'Proposals',
         'Receivers',
         'Sessions',
+        'SessionNames',
         'SessionGrades',
         'SessionTypes',
         'SessionObservingTypes',
@@ -422,6 +424,7 @@ Ext.define('PHT.controller.Sessions', {
             this.updateProposalExplorerMulti(this.selectedSessions, originalValues, sessFields);
         }
         this.getSessionsStore().sync();
+        this.getSessionNamesStore().load();
         this.selectedSessions = [];                 
     },
 

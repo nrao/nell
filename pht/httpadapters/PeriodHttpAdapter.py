@@ -92,6 +92,7 @@ class PeriodHttpAdapter(PhtHttpAdapter):
           p.id,
           s.name as session,
           s.id as session_id,
+          s.dss_session_id,
           pr.pcode,
           p.start as start_datetime,
           p.duration,
