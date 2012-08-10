@@ -810,7 +810,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         # more debugging
         print ""
-        self.badSessions = self.findProcessedSessions(IGNORED, BAD_LST)
+        self.badSessions = self.findProcessedSessions(IGNORED, BADLST)
         print "Bad Sessions: %d" % len(self.badSessions)
         for b in self.badSessions:
             print "    ", b
