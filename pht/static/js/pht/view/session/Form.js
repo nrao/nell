@@ -501,7 +501,7 @@ Ext.define('PHT.view.session.Form', {
                         xtype: 'checkboxfield',
                         fieldLabel: 'Currently Complete?',
                         //boxLabel: 'Currently Complete?',
-                        name: 'complete',
+                        name: 'dss_session_complete',
                         uncheckedValue: 'false',
                         inputValue: 'true',
                         readOnly: true,

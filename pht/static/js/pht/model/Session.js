@@ -75,6 +75,7 @@ Ext.define('PHT.model.Session', {
            // dss session (readonly)
            , 'dss_session'
            , 'dss_total_time'
+           , 'dss_session_complete'
            , 'billed_time'
            , 'scheduled_time'
            , 'remaining_time'
