@@ -485,7 +485,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.sessions = sessions         
 
         for s in sessions:
-            # two distince ways to compute pressures
+            # two distinct ways to compute pressures
             if not self.usePeriodsForPressures(s): 
                 # compute pressures from LST and allotted time
                 cat, subcat = self.getSessionCategories(s)
@@ -572,9 +572,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                     and session.next_semester.complete == False:
                     totalTime = session.next_semester.time
            else:
-               # TBF: check DSS complete flag
-               ta = TimeAccounting()
-               totalTime = ta.getTimeRemaining(session.dss_session)
+               if not session.dss_session.isComplete(): 
+                   ta = TimeAccounting()
+                   totalTime = ta.getTimeRemaining(session.dss_session)
+                   totalTime = totalTime if totalTime >= 0.0 else 0.0
         elif category == ALLOCATED:    
             # which time attribute of the session to use?
             if subCategory == SEMESTER:

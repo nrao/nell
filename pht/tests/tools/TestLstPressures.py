@@ -22,10 +22,8 @@
 
 from django.test         import TestCase
 
-from datetime import datetime, date, timedelta
-
-from pht.utilities import *
-from pht.tools.LstPressures import LstPressures
+from datetime           import datetime, date, timedelta
+from pht.utilities      import *
 from pht.models         import Proposal
 from pht.models         import Semester
 from pht.models         import Session
@@ -34,10 +32,15 @@ from pht.models         import SessionType
 from pht.httpadapters   import SessionHttpAdapter
 from scheduler.models   import Sesshun as DSSSesshun
 from scheduler.models   import Period as DSSPeriod
+from scheduler.models   import Project as DSSProject
 from scheduler.models   import Semester as DSSSemester
+from scheduler.models   import Status as DSSStatus
 from utilities          import TimeAgent
-from pht.tools.LstPressureWeather import Pressures
 from pht.tests.utils    import *
+from scheduler.tests.utils        import create_sesshun
+from pht.tools.LstPressures       import LstPressures
+from pht.tools.LstPressures       import *
+from pht.tools.LstPressureWeather import Pressures
 import numpy
 
 class TestLstPressures(TestCase):
@@ -736,3 +739,124 @@ class TestLstPressures(TestCase):
         cat, subcat = lst.getSessionCategories(self.session)
         self.assertEqual('carryover', cat)
 
+    def test_getSessionTime(self):
+        lst = LstPressures()
+        self.assertEquals(0.0
+                        , lst.getSessionTime(self.session, IGNORED, ''))
+        self.assertEquals(21.0
+                        , lst.getSessionTime(self.session, REQUESTED, ''))
+        self.assertEquals(6.5
+                        , lst.getSessionTime(self.session, ALLOCATED, ''))
+        self.session.allotment.semester_time = 5.0                
+        self.assertEquals(5.0
+                        , lst.getSessionTime(self.session
+                                           , ALLOCATED
+                                           , SEMESTER))
+        # carryover gets more complicated: first use the next_semester
+        lst.carryOverUseNextSemester = True
+        next_semester = SessionNextSemester(complete = False
+                                          , time = 0.0
+                                          , repeats = 0) 
+        next_semester.save()
+        self.session.next_semester = next_semester 
+        self.session.save()
+        self.assertEquals(0.0
+                        , lst.getSessionTime(self.session, CARRYOVER, ''))
+        self.session.next_semester.time = 5.0 
+        self.assertEquals(5.0
+                        , lst.getSessionTime(self.session, CARRYOVER, ''))
+        self.session.next_semester.complete = True 
+        self.assertEquals(0.0
+                        , lst.getSessionTime(self.session, CARRYOVER, ''))
+        # TBF: what about next_semester.repeats?                
+        # now, get it from the time remaining in the DSS session:
+        lst.carryOverUseNextSemester = False
+        s = create_sesshun()
+        self.session.dss_session = s
+        self.assertEquals(3.0
+                        , lst.getSessionTime(self.session, CARRYOVER, ''))
+        # make it unscheduable two different ways
+        self.session.dss_session.status.complete = True
+        self.assertEquals(0.0
+                        , lst.getSessionTime(self.session, CARRYOVER, ''))
+        self.session.dss_session.status.complete = False
+        self.session.dss_session.project.complete = True
+        self.assertEquals(0.0
+                        , lst.getSessionTime(self.session, CARRYOVER, ''))
+
+        self.session.dss_session.project.complete = False
+        self.session.dss_session.allotment.total_time = -1.0
+        self.assertEquals(0.0
+                        , lst.getSessionTime(self.session, CARRYOVER, ''))
+
+    def test_accumulatePressure(self):
+
+        lst = LstPressures()
+        error, msgs = lst.checkPressures()
+        self.assertEquals(True, error)
+
+        # accum something
+        ps = lst.newHrs()
+        ps[0] = 1.0
+        ps[1] = 1.0
+        lst.accumulatePressure(self.session, CARRYOVER, ps)
+        error, msgs = lst.checkPressures()
+        self.assertEquals(True, error)
+        self.assertEquals(ps.tolist(), lst.totalPs.tolist())
+        self.assertEquals(ps.tolist(), lst.carryoverTotalPs.tolist())
+        self.assertEquals(ps.tolist(), lst.carryoverPs.poor.tolist())
+
+        # accum something else in carryover
+        ps[12] = 1.0
+        ps[13] = 1.0
+        lst.accumulatePressure(self.session, CARRYOVER, ps)
+        error, msgs = lst.checkPressures()
+        self.assertEquals(True, error)
+        exp = lst.newHrs()
+        exp[0] = 2.0
+        exp[1] = 2.0
+        exp[12] = 1.0
+        exp[13] = 1.0
+        self.assertEquals(exp.tolist(), lst.totalPs.tolist())
+        self.assertEquals(exp.tolist(), lst.carryoverTotalPs.tolist())
+        self.assertEquals(exp.tolist(), lst.carryoverPs.poor.tolist())
+
+        # now add allocated
+        ps = lst.newHrs()
+        ps[5] = 1.0
+        ps[6] = 1.0
+        lst.accumulatePressure(self.session, ALLOCATED, ps)
+        error, msgs = lst.checkPressures()
+        self.assertEquals(True, error)
+        # carryover shouldn't change
+        self.assertEquals(exp.tolist(), lst.carryoverTotalPs.tolist())
+        self.assertEquals(exp.tolist(), lst.carryoverPs.poor.tolist())
+        # and allocated is simple
+        self.assertEquals(ps.tolist()
+                        , lst.newAstronomyGradeTotalPs.tolist())
+        for grade in ['A', 'B', 'C']:
+            for w in ['poor', 'good', 'excellent']:
+                if grade != 'A' and w != 'poor':
+                    self.assertEquals(lst.newHrs().tolist()
+                                    , lst.gradePs[grade].getType(w).tolist())
+        self.assertEquals(ps.tolist()
+                          , lst.gradePs['A'].poor.tolist())
+        # but the total has changed                
+        exp2 = lst.newHrs()
+        exp2[0] = 2.0
+        exp2[1] = 2.0
+        exp2[5] = 1.0
+        exp2[6] = 1.0
+        exp2[12] = 1.0
+        exp2[13] = 1.0
+        self.assertEquals(exp2.tolist(), lst.totalPs.tolist())
+        
+        
+        
+
+
+
+
+                        
+                        
+        
