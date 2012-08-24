@@ -78,8 +78,27 @@ Ext.define('PHT.controller.Plots', {
         var type = win.plotTypesCombo.value;
         if ((type != null) && (type != '')) {
             var url = 'lst_pressure/print/' + type.toLowerCase();
-            window.open(url);
-        }    
+            // adjust weather bins?
+            var adjustWeather = win.down('checkboxfield').value
+            console.log('adjust:');
+            console.log(adjustWeather);
+            if (adjustWeather == true) {
+                adjust = 'true'
+            } else {
+                adjust = 'false'
+            }
+            url += "?adjustWeatherBins=" + adjust
+            // how to handle carryover?
+            var carryover = win.carryoverTypesCombo.value 
+            if ((carryover != null) & (carryover != "")) {
+                if (carryover == 'Next Semester Time') {
+                    url += '&carryOverUseNextSemester=true'
+                } else {
+                    url += '&carryOverUseNextSemester=false'
+                }
+            }    
+                window.open(url);
+            }    
     },
 
     updatePlot: function(button) {

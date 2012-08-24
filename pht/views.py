@@ -141,8 +141,16 @@ def print_lst_pressure(request, *args, **kws):
  
     type = args[0]
     
+    # interpret request
+    carryover = request.GET.get('carryOverUseNextSemester', 'true')
+    carryover = carryover == 'true'
+    adjust = request.GET.get('adjustWeatherBins', 'true')
+    adjust = adjust == 'true'
+
     plot = PlotLstPressures()
-    plot.plot(type)
+    plot.plot(type
+            , carryOverUseNextSemester = carryover
+            , adjustWeatherBins = adjust)
 
     response=HttpResponse(content_type='image/png')
     plot.canvas.print_png(response)

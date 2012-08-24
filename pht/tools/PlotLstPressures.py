@@ -56,9 +56,15 @@ class PlotLstPressures(object):
         self.axes = self.figure.add_axes([0.1, 0.1, 0.6, 0.8])
         self.canvas = None
 
-    def plot(self, type):
+    def plot(self
+           , type
+           , carryOverUseNextSemester = True
+           , adjustWeatherBins = True
+            ):
 
         # calculate stuff
+        self.lst.carryOverUseNextSemester = carryOverUseNextSemester
+        self.lst.adjustWeatherBins = adjustWeatherBins
         self.lst.getPressures()
 
         # what type of plot?
