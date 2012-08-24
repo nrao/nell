@@ -73,13 +73,20 @@ class LstPressureReport(Report):
 
         self.fltFrmt = "%5.2f"
 
-    def report(self, sessions = None, debug = False):
+    def report(self
+             , sessions = None
+             , debug = False
+             , carryOverUseNextSemester = True
+             , adjustWeatherBins = True
+              ):
 
         if sessions is not None:
             self.title += " for %s" % ",".join([s.name for s in sessions])
             self.titleOffset = 100 + len(self.title) 
 
         # crunch the numbers
+        self.lst.carryOverUseNextSemester = carryOverUseNextSemester
+        self.lst.adjustWeatherBins = adjustWeatherBins
         self.lst.getPressures(sessions) 
 
         # now mak'm pretty
@@ -215,6 +222,15 @@ class LstPressureReport(Report):
     def createDebugElements(self):
 
         els = [self.pg("Debug Info:", bold = True)]
+
+        # how did we calculate pressures?
+        method = "Next Semester Time" if self.lst.carryOverUseNextSemester else "Remaining Time"
+        msg = "Calculated Carryover using " + method
+        els.append(self.getBreak())
+        els.append(self.pg(msg))
+        msg = "Adjusted Weather Bins? " + str(self.lst.adjustWeatherBins)
+        els.append(self.getBreak())
+        els.append(self.pg(msg))
 
         # warnings ?
         valid, msgs = self.lst.checkPressures()

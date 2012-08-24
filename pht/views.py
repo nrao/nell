@@ -102,22 +102,32 @@ def lst_pressure(request, *args, **kws):
     # specific ones?
     filters = request.GET.get('filter', None)
 
-    # TBF: even though it's possible to have two filters at once
-    # we will just use one of them
+    # TBF: even though it's possible to have the two project/session 
+    # filters at once we will just use one of them
+    ss = None
+    carryOverUseNextSemester = True
+    adjustWeatherBins = True
     if filters is not None:
+        filters = filters.replace('true', 'True')
+        filters = filters.replace('false', 'False')
         filters = eval(filters)
         for filter in filters:
             prop = filter.get('property')
             value = filter.get('value')
             if prop == 'pcode':
                 ss = Session.objects.filter(proposal__pcode = value)
-            else:
+            elif prop == 'session':
                 ss = Session.objects.filter(id = value)
-    else:
-        ss = None
+            elif prop == 'carryover':
+                carryOverUseNextSemester = value == 'Next Semester Time'
+            elif prop == 'adjust':
+                adjustWeatherBins = value 
+    #else:
+    #    ss = None
         
     # calcualte the LST pressures    
-    lst = LstPressures()
+    lst = LstPressures(carryOverUseNextSemester = carryOverUseNextSemester
+                     , adjustWeatherBins = adjustWeatherBins)
     pressure = lst.getPressures(sessions = ss)
 
     return HttpResponse(json.dumps({"success" : "ok"
@@ -513,9 +523,15 @@ def joint_proposal_summary(request):
 @login_required
 @admin_only
 def lst_pressure_report(request, *args, **kws):
-    #print "lst: ", request.GET, args, kws
+
+    # interpret request
     debug = request.GET.get('debug', 'false')
     debug = debug == 'true'
+    adjust = request.GET.get('adjustWeatherBins', 'false')
+    adjust = adjust == 'true'
+    carryover = request.GET.get('carryOverUseNextSemester', 'false')
+    carryover = carryover == 'true'
+    sessionId = request.GET.get('session', None)
     sessionId = request.GET.get('session', None)
     sessions = None
     if sessionId is not None:
@@ -527,7 +543,11 @@ def lst_pressure_report(request, *args, **kws):
     response['Content-Disposition'] = 'attachment; filename=LstPressureReport.pdf'
 
     lst = LstPressureReport(response)
-    lst.report(sessions = sessions, debug = debug)
+    lst.report(sessions = sessions
+             , debug = debug
+             , carryOverUseNextSemester = carryover
+             , adjustWeatherBins = adjust
+              )
 
     return response
 
