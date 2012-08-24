@@ -40,6 +40,7 @@ from pht.tools.LstPressureWeather import LstPressureWeather
 from pht.tools.LstPressureWeather import Pressures
 
 import numpy
+import sys
 
 # Session Categories
 CARRYOVER = 'carryover'
@@ -111,7 +112,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
     """
         
 
-    def __init__(self, carryOverUseNextSemester = True, today = None):
+    def __init__(self
+               , carryOverUseNextSemester = True
+               , adjustWeatherBins = True
+               , today = None):
 
         self.hrs = 24
         self.bins = [0.0]*self.hrs
@@ -119,6 +123,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # when calculating carry over, use the next semester field,
         # OR the current time remaining?
         self.carryOverUseNextSemester = carryOverUseNextSemester
+
+        # should we make adjustments when there's TOO much excellent
+        # weather requested?
+        self.adjustWeatherBins = adjustWeatherBins
 
         # for computing pressures based on weather type, on 
         # holding these results
@@ -513,11 +521,12 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # make sure we have a record of what the original pressure was
         # before we adjusted for overfilled weather
         self.originalGradePs = self.gradePs.copy()
-        self.gradePs['A'], self.changes = self.adjustForOverfilledWeather(\
-            self.gradePs['A']
-          , self.carryoverPs
-          , self.weather.availability
-         )
+        if self.adjustWeatherBins:
+            self.gradePs['A'], self.changes = self.adjustForOverfilledWeather(\
+                self.gradePs['A']
+              , self.carryoverPs
+              , self.weather.availability
+             )
 
         # What's *really* available for this semester?
         self.remainingTotalPs = self.weather.availabilityTotal - \
@@ -823,6 +832,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         # more debugging
         print ""
+        print "Adjusting Weather Bins? ", self.adjustWeatherBins
+        print "Carryover using: ", 'Next Semester' if self.carryOverUseNextSemester else 'Time Remaining'
+        print ""
         self.badSessions = self.findProcessedSessions(IGNORED, BADLST)
         print "Bad Sessions: %d" % len(self.badSessions)
         for b in self.badSessions:
@@ -1112,11 +1124,39 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
 
 if __name__ == '__main__':
-    #today = datetime(2012, 7, 30)
-    #lst = LstPressures(today = today)
-    lst = LstPressures()
-    #lst = LstPressures(carryOverUseNextSemester = False)
 
+    # we can pass in a few args.  Yeah, I know this ain't pretty.
+    carryOverUseNextSemester = True
+    adjustWeatherBins = True
+    if len(sys.argv) > 1:
+        try:
+            for arg in sys.argv[1:]:
+                key = arg.split('=')[0]
+                value = arg.split('=')[1]
+                if key == '-carryOverUseNextSemester':
+                    if value == 'True':
+                        v = True
+                    elif value == 'False':
+                        v = False
+                    else:
+                        raise 'True or False Only'
+                    carryOverUseNextSemester = v
+                elif key == '-adjustWeatherBins':
+                    if value == 'True':
+                        v = True
+                    elif value == 'False':
+                        v = False
+                    else:
+                        raise 'True or False Only'
+                    adjustWeatherBins = v
+                else:
+                    raise 'Unrecognized option: %s' % arg 
+        except:
+            print "Usage: python LstPressures.py [-carryOverUseNextSemester=[True,False]] [-adjustWeatherBins=[True,False]]"
+            sys.exit(1)
+       
+    lst = LstPressures(carryOverUseNextSemester = carryOverUseNextSemester
+                     , adjustWeatherBins = adjustWeatherBins)
     ps = lst.getPressures()
     lst.report()
 
