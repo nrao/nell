@@ -711,10 +711,22 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         return (allocated, changes)
 
-    def findProcessedSessions(self, category, subCategory):
+    def findProcessedSessions(self, category, subCategory = None):
         "Grab sessions of certain category from the list"
-        sessNames = [name for name, data in self.pressuresBySession.items() if category == data[0] and subCategory == data[1]]
+        if subCategory is None:
+            sessNames = [name for name, data in self.pressuresBySession.items() if category == data[0] ]
+        else:
+            sessNames = [name for name, data in self.pressuresBySession.items() if category == data[0] and subCategory == data[1]]
         return [s for s in self.sessions if s.__str__() in sessNames]
+
+    def getIgnoredRequestedTime(self):
+        """
+        Goes through our pressure history, and returns the totla
+        hours that got ignored.
+        """
+        #return sum([data[3] for name, data in self.pressuresBySession.items() if data[0] == IGNORED])
+        ss = self.findProcessedSessions(IGNORED)
+        return sum([s.allotment.requested_time for s in ss])
 
     def almostEqual(self, xs, ys):
         "Two numpy arrays are almost equal?"
@@ -737,7 +749,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         for w in self.weatherTypes:
             totalCarryover += self.carryoverPs.getType(w)
         if not self.almostEqual(totalCarryover, self.carryoverTotalPs):
-            msgs.append("Total Carry Over != All Weather Types")
+            msgs.append("Total Carry Over != All Weather Types ( %5.2f vs. %5.2f)" % (self.carryoverTotalPs.sum(), totalCarryover.sum()))
         
         # new astronomy requested
         totalRequested = self.newHrs() #numpy.array([0.0]*self.hrs)
@@ -1103,6 +1115,7 @@ if __name__ == '__main__':
     #today = datetime(2012, 7, 30)
     #lst = LstPressures(today = today)
     lst = LstPressures()
+    #lst = LstPressures(carryOverUseNextSemester = False)
 
     ps = lst.getPressures()
     lst.report()

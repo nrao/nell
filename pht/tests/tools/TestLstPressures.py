@@ -708,7 +708,6 @@ class TestLstPressures(TestCase):
 
     def test_getSessionCategories(self):
 
-
         # our session is in 12A; for testing, do some time travel
         # today is long before that 
         dt = datetime(2009, 1, 1)
@@ -851,12 +850,297 @@ class TestLstPressures(TestCase):
         exp2[13] = 1.0
         self.assertEquals(exp2.tolist(), lst.totalPs.tolist())
         
+    def test_proposalLifeCycles(self):
+        "Tests to match the use case 'Proposal Life Cycles & Cats.'"
+
+        gradeA = SessionGrade.objects.get(grade = 'A')
+        gradeD = SessionGrade.objects.get(grade = 'D')
+        dss12A = DSSSemester.objects.get(semester = '12A')
+        dss12B = DSSSemester.objects.get(semester = '12B')
+        s12A   = Semester.objects.get(semester = '12A')
+        s12B   = Semester.objects.get(semester = '12B')
+        s13A   = Semester(semester = '13A')
+        s13A.save()
+        s13B   = Semester(semester = '13B')
+        s13B.save()
+
+        # The first time we used the PHT and tried to calculate pressures was during 12A; our new proposals were for 12B. At first, all we had were these fresh 12B proposals, none of which had been assigned a grade or allocated time, and they all were for the 12B semester. Therefore, all our sessions fell into the same category: requested.
+        today = dss12A.end() - timedelta(days = 60)
+        lst = LstPressures(today = today
+                         , carryOverUseNextSemester = False)
+
+        # create 12B sessions
+        # TBF: give these meaningfull names, like in 13A below
+        times = [50.0, 45.0, 5.0, 40.0, 10.0]
+        for i in range(len(times)):
+            s = self.createSession()
+            s.name = "test-%d" % i 
+            s.semester = s12B
+            s.save()
+            s.allotment.requested_time = times[i]
+            s.allotment.allocated_time = 0.0
+            s.grade = None
+            s.allotment.repeats = 1.0
+            s.allotment.save()
+            s.save()
+
+        # Then we had to start figuring out the carryover, so we pulled over from the DSS only those projects and sessions that were not complete and made corresponding legacy PHT proposals & sessions. These all fell into the carryover category, and we used time remaining for computing their pressure. 
+        # Create one session to represent all this carryover
+        s = self.createSession()
+        s.name = "carryover-1"
+        s.semester = s12A
+        s.save()
+        next_semester = SessionNextSemester(complete = False
+                                          , time = 75.0)
+        next_semester.save()              
+        s.next_semester = next_semester
+        dssSess = create_sesshun()
+        dssSess.allotment.total_time  = 110
+        dssSess.allotment.save()
+        s.dss_session = dssSess
+        s.save()
+
+        # Here's a table showing their total time:
+        # Category 	Hours 	Composition
+        # requested 	150.0 	the new proposals for 12B
+        # carryover 	110.0 	legacy projects from 12A and earlier 
+        sessions = Session.objects.all().exclude(name = 'He_ELD_5G').order_by('name')
+        ps = lst.getPressures(sessions = sessions)
+        self.assertEqual(110.0, lst.carryoverTotalPs.sum())
+        self.assertEqual(150.0, lst.requestedTotalPs.sum())
         
+        # Then we started editing these 12B proposals: some get assigned a passing grade and time, other's get a failing grade and no time, and a few exceptional sessions get assigned a semester past 12B. 
+
+        # get's a failing grade
+        s = Session.objects.get(name = 'test-0')
+        s.grade = gradeD
+        s.save()
+
+        # get's a passing grade & time!
+        s = Session.objects.get(name = 'test-3')
+        s.grade = gradeA
+        s.allotment.allocated_time = s.allotment.requested_time 
+        s.allotment.save()
+        s.save()
+
+        # get's passing grade & time, but for future semester
+        s = Session.objects.get(name = 'test-4')
+        s.grade = gradeA
+        s.allotment.allocated_time = s.allotment.requested_time 
+        s.allotment.save()
+        s.semester = s13B
+        s.save()
+
+        # That changes our table:   
+        # Category 	Hours 	Composition
+        # requested 	100.0 	the new proposals for 12B
+        # allocated 	40.0 	the new proposal for 12B that will become DSS projects
+        # ignored 	10.0 	right now, all that's contributing to this are the 'future' sessions
+        # carryover 	110.0 	legacy projects from 12A and earlier 
+        sessions = Session.objects.all().exclude(name = 'He_ELD_5G').order_by('name')
+        ps = lst.getPressures(sessions = sessions)
+        self.assertEqual(110.0, lst.carryoverTotalPs.sum())
+        self.assertEqual(100.0, lst.requestedTotalPs.sum())
+        self.assertEqual(40.0, lst.newAstronomyTotalPs.sum())
+        self.assertEqual(10.0, lst.getIgnoredRequestedTime())
         
+        # now use time remaining
+        lst = LstPressures(today = today
+                         , carryOverUseNextSemester = True)
+        sessions = Session.objects.all().exclude(name = 'He_ELD_5G').order_by('name')
+        ps = lst.getPressures(sessions = sessions)
+        self.assertEqual(75.0, lst.carryoverTotalPs.sum())
+        self.assertEqual(100.0, lst.requestedTotalPs.sum())
+        self.assertEqual(40.0, lst.newAstronomyTotalPs.sum())
+        self.assertEqual(10.0, lst.getIgnoredRequestedTime())
+                         
+        # TAC meeting is held: one more future semester (5 hrs), allocated goes up by 45, requested goes doesn by 50.`
+        s = Session.objects.get(allotment__requested_time = 5.0)
+        s.grade = gradeA
+        s.semester = s13B
+        s.save()
+        s.allotment.allocated_time = s.allotment.requested_time
+        s.allotment.save()
 
+        s = Session.objects.get(allotment__requested_time = 45.0)
+        s.grade = gradeA
+        s.save()
+        s.allotment.allocated_time = s.allotment.requested_time
+        s.allotment.save()
 
+        # Category 	Hours 	Composition
+        # requested 	50.0 	the new proposals for 12B that won't become DSS projects
+        # allocated 	85.0 	the new proposal for 12B that will become DSS projects
+        # ignored 	15.0 	right now, all that's contributing to this are the 'future' sessions
+        # carryover 	110.0 	legacy projects from 12A and earlier 
+        sessions = Session.objects.all().exclude(name = 'He_ELD_5G').order_by('name')
+        ps = lst.getPressures(sessions = sessions)
+        self.assertEqual(75.0, lst.carryoverTotalPs.sum())
+        self.assertEqual(50.0, lst.requestedTotalPs.sum())
+        self.assertEqual(85.0, lst.newAstronomyTotalPs.sum())
+        self.assertEqual(15.0, lst.getIgnoredRequestedTime())
+                         
 
+        # Finally, 12B is about to start, so all the allocated sessions need to have equivalent sessions in the DSS. These are created, and it has no affect on our table above at all.
+        for i in [1, 3]:
+            s = Session.objects.get(name = "test-%d" % i)
+            next_semester = SessionNextSemester(complete = False
+                                              , time = times[i])
+            next_semester.save()              
+            s.next_semester = next_semester
+            dssSess = create_sesshun()
+            dssSess.allotment.total_time = times[i]
+            dssSess.allotment.save()
+            s.dss_session = dssSess
+            s.save()
+        sessions = Session.objects.all().exclude(name = 'He_ELD_5G').order_by('name')
+        ps = lst.getPressures(sessions = sessions)
+        self.assertEqual(75.0, lst.carryoverTotalPs.sum())
+        self.assertEqual(50.0, lst.requestedTotalPs.sum())
+        self.assertEqual(85.0, lst.newAstronomyTotalPs.sum())
+        self.assertEqual(15.0, lst.getIgnoredRequestedTime())
+                         
 
-                        
+        # Finally, 12B is about to start, so all the allocated sessions need to have equivalent sessions in the DSS. These are created, and it has no affect on our table above at all.
+
+        # The Second Semester!
+
+        # The first day of 12B arrives, but we have not yet imported any new proposals for 13A into the PHT. Our allocated category now moves into carryover, and the proposals in requested get moved to ignored, because the term 'current semester' has moved from 12B to 13A (see Note 1).
+
+        today = dss12B.start() + timedelta(days = 3)
+        # go back to using time remaining, since the new
+        # carryover doesn't have next semester yet
+        lst = LstPressures(today = today
+                         , carryOverUseNextSemester = False)
+        ps = lst.getPressures(sessions = sessions)                 
+        # Category 	Hours 	Composition
+        # ignored 	65.0 	Sessions for 12B with failing grade, and 'future' sessions (see Note 2)
+        # carryover 	195.0 	legacy projects from 12B and earlier
+        self.assertEqual(195.0, lst.carryoverTotalPs.sum())
+        self.assertEqual(65.0, lst.getIgnoredRequestedTime())
+        #remaining = 0.0
+        #next = 0.0
+        #for sname, data in lst.pressuresBySession.items():
+        #    print sname, data[0], data[3]
+        #    if data[0] == CARRYOVER:
+        #        name = sname.split(' ')[0]
+        #        print sname, " is CARRYOVER!"
+        #        s = Session.objects.get(name = name)
+        #        print s.dss_session.allotment.total_time
+        #        remaining += s.dss_session.allotment.total_time
+        #        print s.next_semester.time
+        #        next += s.next_semester.time
+        #        print s.next_semester.complete
+        #print "remaining: ", remaining
+        #print "next: ", next
+
+        # Now we import new proposals for 13A (on the second day of 12B). This essentially adds a new row to our table:
+        
+        newSess2 = [('2bReq1', 30.0)
+                  , ('2bAlloc1', 45.0)
+                  , ('2bAlloc2', 20.0)
+                  , ('2bFuture1', 5.0)
+                   ]
+        for name, time in newSess2:
+            s = self.createSession()
+            s.name = name 
+            s.semester = s13A
+            s.save()
+            s.allotment.requested_time = time
+            s.allotment.allocated_time = 0.0
+            s.grade = None
+            s.allotment.repeats = 1.0
+            s.allotment.save()
+            s.save()
+
+        # Category 	Hours 	Composition
+        # requested 	100.0 	the new proposals for 13A
+        # ignored 	65.0 	Sessions for 12B with failing grade, and 'future' sessions (see Note 2)
+        # carryover 	195.0 	legacy projects from 12B and earlier
+        sessions = Session.objects.all().exclude(name = 'He_ELD_5G').order_by('name')
+        ps = lst.getPressures(sessions = sessions)
+        self.assertEqual(195.0, lst.carryoverTotalPs.sum())
+        self.assertEqual(100.0, lst.requestedTotalPs.sum())
+        self.assertEqual(65.0, lst.getIgnoredRequestedTime())
+        
+        # Then we start editing these 13A proposals: some get assigned a passing grade and time, other's get a failing grade and no time, and a few exceptional sessions get assigned a semester past 13A. 
+        s = Session.objects.get(name = '2bAlloc1')
+        s.allotment.allocated_time = s.allotment.requested_time
+        s.allotment.save()
+        s.grade = gradeA
+        s.save()
+       
+        s = Session.objects.get(name = '2bFuture1')
+        s.allotment.allocated_time = s.allotment.requested_time
+        s.allotment.save()
+        s.grade = gradeA
+        s.semester = s13B
+        s.save()
+        
+        s = Session.objects.get(name = '2bReq1')
+        s.grade = gradeD
+        s.save()
+
+        # That changes our table:
+        # Category 	Hours 	Composition
+        # requested 	50.0 	the new proposals for 13A
+        # allocated 	45.0 	the new 13A proposals that will get scheduled.
+        # ignored 	70.0 	Sessions for 12B with failing grade, and 'future' sessions (see Note 2)
+        # carryover 	195.0 	legacy projects from 12B and earlier
+        sessions = Session.objects.all().exclude(name = 'He_ELD_5G').order_by('name')
+        ps = lst.getPressures(sessions = sessions)
+        self.assertEqual(195.0, lst.carryoverTotalPs.sum())
+        self.assertEqual(50.0, lst.requestedTotalPs.sum())
+        self.assertEqual(70.0, lst.getIgnoredRequestedTime())
+        self.assertEqual(45.0, lst.newAstronomyTotalPs.sum())
+        
+        # As we get closer to the TAC meeting, and the actual start of the 13A semester, we want the carryover to actually reflect what time is left at the start of 13A, not the current time remaining.  
+        # If we go back to using next semester, we should see the carryover go down:
+        lst.carryOverUseNextSemester = True # change how carryover calc!
+        ps = lst.getPressures(sessions = sessions)
+        self.assertEqual(160.0, lst.carryoverTotalPs.sum())
+        self.assertEqual(50.0, lst.requestedTotalPs.sum())
+        self.assertEqual(70.0, lst.getIgnoredRequestedTime())
+        self.assertEqual(45.0, lst.newAstronomyTotalPs.sum())
+
+        
+        # So, a DSS lookahead simulation is run, and this is used to enter in next semester values for some carryover sessions 
+        s = Session.objects.get(name = 'test-1')
+        s.next_semester.time = 35.0 # observed 10 hrs
+        s.next_semester.save()
+        
+        # This changes the number in our table:
+        # Category 	Hours 	Composition
+        # requested 	50.0 	the new proposals for 13A
+        # allocated 	45.0 	the new 13A proposals that will get scheduled.
+        # ignored 	70.0 	Sessions for 12B with failing grade, and 'future' sessions
+        # carryover 	150.0 	legacy projects from 12B and earlier
+        sessions = Session.objects.all().exclude(name = 'He_ELD_5G').order_by('name')
+        lst.carryOverUseNextSemester = True # change how carryover calc!
+        ps = lst.getPressures(sessions = sessions)
+        self.assertEqual(150.0, lst.carryoverTotalPs.sum())
+        self.assertEqual(50.0, lst.requestedTotalPs.sum())
+        self.assertEqual(70.0, lst.getIgnoredRequestedTime())
+        self.assertEqual(45.0, lst.newAstronomyTotalPs.sum())
+        
+        # The editing process continues, and the TAC meeting is held. The final decisions for these new proposals are finally made.
+        s = Session.objects.get(name = '2bAlloc2')
+        s.allotment.allocated_time = s.allotment.requested_time
+        s.allotment.save()
+        s.grade = gradeA
+        s.save()
+
+        # Here's what our numbers look like now:
+        # Category 	Hours 	Composition
+        # requested 	30.0 	the new proposals for 13A
+        # allocated 	65.0 	the new 13A proposals that will get scheduled.
+        # ignored 	70.0 	Sessions for 12B with failing grade, and 'future' sessions
+        # carryover 	150.0 	legacy projects from 12B and earlier                         
+        sessions = Session.objects.all().exclude(name = 'He_ELD_5G').order_by('name')
+        ps = lst.getPressures(sessions = sessions)
+        self.assertEqual(150.0, lst.carryoverTotalPs.sum())
+        self.assertEqual(30.0, lst.requestedTotalPs.sum())
+        self.assertEqual(70.0, lst.getIgnoredRequestedTime())
+        self.assertEqual(65.0, lst.newAstronomyTotalPs.sum())
                         
         
