@@ -229,7 +229,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             # when is day light for this day, UTC? 
             dt = start + timedelta(days = days)
             # use the given function to compute rise/set for this day
-            rise, set =riseSetFn(dt) 
+            rise, set = riseSetFn(dt) 
+
             # LSTs for these UTC datetimes?
             # Note: set is the minLst, rise is the max, because
             # we want to penalize daytime
@@ -488,11 +489,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.initPressures()
 
         # what sessions are we doing this for?
-        if sessions is None:
-            sessions = Session.objects.all().order_by('name')
-        self.sessions = sessions         
+        self.sessions = sessions or Session.objects.all().order_by('name')
 
-        for s in sessions:
+        for s in self.sessions:
             # two distinct ways to compute pressures
             if not self.usePeriodsForPressures(s): 
                 # compute pressures from LST and allotted time
@@ -516,7 +515,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
             #reporting
             self.pressuresBySession[s.__str__()] = (cat, subcat, ps, sum(ps))
-
 
         # make sure we have a record of what the original pressure was
         # before we adjusted for overfilled weather
