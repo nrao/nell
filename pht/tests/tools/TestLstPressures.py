@@ -50,6 +50,7 @@ class TestLstPressures(TestCase):
 
     def setUp(self):
 
+
         # get the one proposal and it's one session
         proposal = Proposal.objects.all()[0]
         s = proposal.session_set.all()[0]
@@ -72,6 +73,39 @@ class TestLstPressures(TestCase):
                 semester = "%s%s" % (i, sem)
                 s = DSSSemester(semester = semester)
                 s.save()
+
+        self.lst = LstPressures()
+
+    def printSession(self, s):
+        "For reporting"
+
+        print "name: %s" % s.name
+        print "allocatted hours: %5.2f" % s.allotment.allocated_time
+        print "min/max LST (hrs): (%5.2f, %5.2f)" % (rad2hr(s.target.min_lst)
+                                                   , rad2hr(s.target.max_lst)) 
+        #print "LST range (bin): ", self.lst.getLstRange(s.target.min_lst, s.target.max_lst)
+        if s.weather_type.type != 'Poor':
+            print "Weather Type: ", s.weather_type.type
+        if s.grade.grade != 'A':    
+            print "Grade: ", s.grade.grade
+        if s.session_type.type[:4] != 'Open':
+            print "Session Type: ", s.session_type.type
+
+        if len( s.get_lst_parameters()['LST Exclude'] ) > 0:
+            print "LST Exclusion Range: ", s.get_lst_parameters()['LST Exclude']
+        if s.flags.thermal_night or s.flags.optical_night or s.flags.rfi_night:
+            print "Flags: thermal=%s, optical=%s, rfi=%s" % (s.flags.thermal_night, s.flags.optical_night, s.flags.rfi_night)
+            
+            
+    def printLSTs(self):        
+        "For reporting"
+        label = "%7s" % "LST:"
+        print label + " ".join(["%5d" % x for x in range(24)])
+
+    def printPressures(self, ps, label = None):
+        "For reporting"
+        label = "     " if label is None else "%7s" % label
+        print label + " ".join(["%5.2f" % x for x in ps])
 
     def createSession(self):
         "Create a new session for the tests"
@@ -156,10 +190,10 @@ class TestLstPressures(TestCase):
 
         # make sure are session belongs to a future semester, 
         # no matter when we are running this test
-        semName = lst.futureSemesters[0]
-        futureSem, _ = Semester.objects.get_or_create(semester = semName)
-        self.session.proposal.semester  = futureSem
-        self.session.proposal.save()
+        #semName = lst.futureSemesters[0]
+        #futureSem, _ = Semester.objects.get_or_create(semester = semName)
+        #self.session.proposal.semester  = futureSem
+        #self.session.proposal.save()
 
         wtypes = ['Poor', 'Good', 'Excellent']
         grades = ['A', 'B', 'C']
@@ -187,7 +221,7 @@ class TestLstPressures(TestCase):
             self.assertEqual(0.0, ps[hr]['Total'])
             for t in types:
                 self.assertEqual(0.0, ps[hr][t])
-
+        
         # add a new session and make sure it shows up
         s = self.createSession()
         # covers this LST range:
@@ -255,6 +289,7 @@ class TestLstPressures(TestCase):
         off = [0.0]*23
         exp.extend(off)
         self.assertEqual(exp, self.nonZeroResults(ps))
+        
 
         # 2
         self.session.target.min_lst = hr2rad(0.0)
@@ -266,6 +301,7 @@ class TestLstPressures(TestCase):
         exp.extend(off)
         self.assertEqual(exp, self.nonZeroResults(ps))
        
+
         # 3
         self.session.target.min_lst = hr2rad(0.5)
         self.session.target.max_lst = hr2rad(1.5)
@@ -274,6 +310,7 @@ class TestLstPressures(TestCase):
         exp = [1.0]
         exp.extend([0.0]*23)
         self.assertEqual(exp, self.nonZeroResults(ps))
+
 
         # 4
         self.session.target.min_lst = hr2rad(10.0)
@@ -293,6 +330,7 @@ class TestLstPressures(TestCase):
         exp = [1.0]*10
         exp.extend([0.0]*14)
         self.assertEqual(exp, self.nonZeroResults(ps))
+
 
         # 6
         self.session.target.min_lst = hr2rad(22.5)
@@ -443,7 +481,8 @@ class TestLstPressures(TestCase):
 
     def test_modifyWeightsForLstExclusion(self):
 
-        lst = LstPressures()
+        today = datetime(2012, 1, 15)
+        lst = LstPressures(today = today)
         ws = [1.0]*24
 
         # this session doesn't have lst exclusion
