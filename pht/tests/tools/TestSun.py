@@ -78,6 +78,24 @@ class TestSun(TestCase):
         self.assertEqual(datetime(2012, 6, 26, 0, 45)
                        , TimeAgent.quarter(set)) 
 
+        # close to the summer solstice
+        dts = (date(2012, 8, 1)
+             , date(2012, 8, 2)
+             , date(2012, 8, 3)
+             , date(2013, 1, 29)
+             , date(2013, 1, 30)
+             )
+        expected = ((datetime(2012, 8, 1, 10, 21, 31), datetime(2012, 8, 2, 0, 30, 12))
+                  , (datetime(2012, 8, 2, 10, 22, 24), datetime(2012, 8, 3, 0, 29, 12))
+                  , (datetime(2012, 8, 3, 10, 23, 16), datetime(2012, 8, 4, 0, 28, 10))
+                  , (datetime(2013, 1, 29, 12, 26, 38), datetime(2013, 1, 29, 22, 38, 52))
+                  , (datetime(2013, 1, 30, 12, 25, 49), datetime(2013, 1, 30, 22, 40, 0))
+                    )
+        for dt, (exp_rise, exp_set) in zip(dts, expected):
+            rise, set = sun.getRiseSet(dt)
+            self.assertEqual(exp_rise, rise) 
+            self.assertEqual(exp_set, set) 
+
     def test_getPTCSRiseSet(self):
 
         sun = Sun()

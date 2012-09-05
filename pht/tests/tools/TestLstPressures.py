@@ -261,6 +261,93 @@ class TestLstPressures(TestCase):
             for t in types:
                 self.assertEqual(0.0, ps[hr][t])
 
+    def checkPressures(self, ps, expected):
+        grades = ['A', 'B', 'C']
+        wtypes = ['Poor', 'Good', 'Excellent']
+        types = ["%s_%s" % (w, g) for w in wtypes for g in grades]
+
+        # make sure it shows up in it's LST range
+        for hr in range(6, 18):
+            self.assertAlmostEqual(sum(expected), ps[hr]['Total'], 3)
+            self.assertAlmostEqual(expected[0], ps[hr]['Poor_A'], 3)
+            self.assertAlmostEqual(expected[1], ps[hr]['Good_A'], 3)
+            self.assertAlmostEqual(expected[2], ps[hr]['Excellent_A'], 3)
+
+        # make sure it doesn't show up out of it's range
+        hrs = range(0, 6)
+        hrs.extend(range(18, 24))
+        for hr in hrs:
+            self.assertEqual(float(hr), ps[hr]['LST'])
+            self.assertEqual(0.0, ps[hr]['Total'])
+            for t in types:
+                self.assertEqual(0.0, ps[hr][t])
+
+    def test_getPressuresFixed(self):
+        """
+        This test reflects use case 3.6.1.
+        """
+
+        # Make sure are session belongs to the next semester,
+        # no matter when we are running this test.
+        # This is a 12A session, that starts 2012-02-01.
+        today = datetime(2012, 1, 15)
+        lst = LstPressures(today = today)
+
+
+        # make this session a fixed session, and watch the hours 
+        # get distributed across the weathers
+        self.session.session_type = SessionType.objects.get(type = 'Fixed')
+        self.session.allotment.allocated_time = 12
+        self.session.allotment.save()
+        self.session.target.min_lst = hr2rad(6)
+        self.session.target.max_lst = hr2rad(18)
+        self.session.target.save()
+        self.session.save()
+
+        # calc pressures
+        ps = lst.getPressures()
+        total = 1
+        expected = (total * 0.50, total * 0.25, total * 0.25)
+        self.checkPressures(ps, expected)
+        
+    def test_getPressuresWindowed(self):
+        """
+        This test reflects use case 3.6.2.
+        """
+
+        # Make sure are session belongs to the next semester,
+        # no matter when we are running this test.
+        # This is a 12A session, that starts 2012-02-01.
+        today = datetime(2012, 1, 15)
+        lst = LstPressures(today = today)
+
+        # make this session a fixed session, and watch the hours 
+        # get distributed across the weathers
+        self.session.session_type = SessionType.objects.get(type = 'Windowed')
+        self.session.monitoring.window_size = 2
+        self.session.monitoring.save()
+        self.session.allotment.allocated_time = 12
+        self.session.allotment.save()
+        self.session.target.min_lst = hr2rad(6)
+        self.session.target.max_lst = hr2rad(18)
+        self.session.target.save()
+        self.session.save()
+
+        # calc pressures
+        ps = lst.getPressures()
+
+        total = 1
+        expected = (total * 0.50, total * 0.25, total * 0.25)
+        self.checkPressures(ps, expected)
+
+        self.session.monitoring.window_size = 20
+        self.session.monitoring.save()
+
+        # calc pressures
+        ps = lst.getPressures()
+        expected = (total * 0.75, total * 0.125, total * 0.125)
+        self.checkPressures(ps, expected)
+        
     def test_getPressures3(self):
         """it's a trilogy.
         Here are the examples I'll be using in my unit tests:
@@ -549,6 +636,35 @@ class TestLstPressures(TestCase):
         ws, ex = lst.computeOpticalNightWeights(start = start, numDays = 365)
         exp = [179, 178, 178, 177, 177, 176, 176, 176, 177, 177, 177, 178, 178, 179, 180, 180, 181, 182, 182, 182, 182, 181, 180, 179]
         self.assertEqual(exp, ex)
+
+        # Testing use case 3.3.1
+        start = datetime(2012, 8, 1)
+        ws, ex = lst.computeOpticalNightWeights(start = start, numDays = 1)
+        exp = [1]
+        exp.extend([0] * 14)
+        exp.extend([1] * 9)
+        self.assertEqual(exp, ex)
+
+        start = datetime(2012, 8, 2)
+        ws, ex = lst.computeOpticalNightWeights(start = start, numDays = 1)
+        self.assertEqual(exp, ex)
+
+        start = datetime(2012, 8, 3)
+        ws, ex = lst.computeOpticalNightWeights(start = start, numDays = 1)
+        exp[15] = 0
+        self.assertEqual(exp, ex)
+
+        start = datetime(2013, 1, 29)
+        ws, ex = lst.computeOpticalNightWeights(start = start, numDays = 1)
+        exp = [0]
+        exp.extend([1] * 14)
+        exp.extend([0] * 9)
+        self.assertEqual(exp, ex)
+
+        start = datetime(2013, 1, 30)
+        ws, ex = lst.computeOpticalNightWeights(start = start, numDays = 1)
+        exp[1] = 0
+        self.assertEqual(exp, ex)
        
     def test_getRfiRiseSet(self):
 
@@ -580,6 +696,33 @@ class TestLstPressures(TestCase):
         # Jan 1 - Dec 31, 2012
         ws, ex = lst.computeRfiWeights(start = start, numDays = 365)
         exp = [167, 166, 166, 167, 167, 167, 182, 182, 182, 188, 197, 198, 197, 197, 197, 197, 198, 196, 182, 182, 183, 176, 167, 167]
+        self.assertEqual(exp, ex)
+
+        # Testing use case 3.3.3
+        start = datetime(2012, 8, 1)
+        ws, ex = lst.computeRfiWeights(start = start, numDays = 1)
+        exp = [1, 1, 1]
+        exp.extend([0] * 12)
+        exp.extend([1] * 9)
+        self.assertEqual(exp, ex)
+
+        start = datetime(2012, 8, 2)
+        ws, ex = lst.computeRfiWeights(start = start, numDays = 1)
+        self.assertEqual(exp, ex)
+
+        start = datetime(2012, 8, 3)
+        ws, ex = lst.computeRfiWeights(start = start, numDays = 1)
+        self.assertEqual(exp, ex)
+
+        start = datetime(2013, 1, 29)
+        ws, ex = lst.computeRfiWeights(start = start, numDays = 1)
+        exp = [0, 0, 0, 0]
+        exp.extend([1] * 12)
+        exp.extend([0] * 8)
+        self.assertEqual(exp, ex)
+
+        start = datetime(2013, 1, 30)
+        ws, ex = lst.computeRfiWeights(start = start, numDays = 1)
         self.assertEqual(exp, ex)
 
     def test_getPressuresFromPeriod(self):
