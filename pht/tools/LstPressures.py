@@ -881,8 +881,26 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         rs = ["%7.2f" % results[i] for i in range(len(results))]
         return label + ": " + ' '.join(rs)
             
+    def getPressureWeights(self, category):
+        catMap = {'RFI'     : self.computeRfiWeights
+                , 'Optical' : self.computeOpticalNightWeights
+                , 'Thermal' : self.computeThermalNightWeights
+                }
+        weights = PressureWeight.GetWeights(self.nextSemester.semester, category)
+        compute = False
+        if not weights:
+            compute = True
+            weights = catMap[category](self.nextSemesterStart
+                                , (self.nextSemesterEnd - self.nextSemesterStart).days)
+            PressureWeight.LoadWeights(self.nextSemester.semester, category, weights)
+        return weights, compute
+
     def initFlagWeights(self):
         "These are what you get from 12B"
+
+        #self.rfiWeights, _          = self.getPressureWeights('RFI')
+        #self.opticalNightWeights, _ = self.getPressureWeights('Optical')
+        #self.thermalNightWeights, _ = self.getPressureWeights('Thermal')
 
         # TBF: These get computed by methods in this class,
         # but no need to do it at start up every time.

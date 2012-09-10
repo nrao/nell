@@ -681,6 +681,13 @@ class TestLstPressures(TestCase):
         exp = (datetime(2012, 6, 1, 12), datetime(2012, 6, 2, 0))
         self.assertEqual(exp, rs)
 
+    def test_getPressureWeights(self):
+        lst = LstPressures()
+        cat     = 'RFI'
+        weights, computed = lst.getPressureWeights(cat)
+        print computed
+        print weights
+
     def test_computeRfiWeights(self):
 
         lst = LstPressures()

@@ -1,5 +1,6 @@
 from TestAuthor             import TestAuthor
 from TestObservingType      import TestObservingType
+from TestPressureWeight     import TestPressureWeight
 from TestProposal           import TestProposal
 from TestProposalType       import TestProposalType
 from TestScientificCategory import TestScientificCategory
