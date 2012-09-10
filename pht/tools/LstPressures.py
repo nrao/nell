@@ -271,7 +271,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         minLst = self.binLst(minLst) 
         maxLst = self.binLst(maxLst) 
         if (0 > minLst or minLst > 24.0) or (0 > maxLst or maxLst > 24.0):
-            print minLst, maxLst
             raise "Illegal LST min/max: ", minLst, maxLst #, session
         # special case?
         if minLst == maxLst:

@@ -215,23 +215,12 @@ T_excellent_i = T_i
         if session.session_type is None:
             return Pressures() 
 
-        # in case pressures is a list
-        pressures = numpy.array(pressures)
-
-        type = session.session_type
-        if type == self.sFixed:
-            ps = self.binFixedSession(session, pressures)
-        elif type == self.sWindowed:
-            ps = self.binWindowedSession(session, pressures)
-        elif type == self.sElective:
-            #ps = self.binElectiveSession(session, pressures)
-            # TBF: for now, treat Electives like Fixed 
-            ps = self.binFixedSession(session, pressures)
-        else:
-            # must be one of the 3 open types
-            ps = self.binOpenSession(session, pressures)
-        
-        return ps
+        typeMap = {self.sFixed    : self.binFixedSession
+                 , self.sWindowed : self.binWindowedSession
+                   # TBF: for now, treat Electives like Fixed 
+                 , self.sElective : self.binFixedSession
+                 }
+        return typeMap.get(session.session_type, self.binOpenSession)(session, numpy.array(pressures))
 
     def binOpenSession(self, session, pressure):
         wType = session.weather_type.type
