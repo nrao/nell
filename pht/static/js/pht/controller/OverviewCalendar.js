@@ -99,13 +99,15 @@ Ext.define('PHT.controller.OverviewCalendar', {
 
                         // draw the pht periods and parse rcvr info
                         for (p in phtPeriods) {
-                            dayIndex = this.insertPeriod(phtPeriods[p], startDate, numDays, drawComponent, 'pht');
-                            // TBF: we need to filter these periods by date,
-                            // instead of getting them ALL and checking this.
-                            if (dayIndex != -1) {
-                                rcvrs = this.getPhtPeriodReceivers(phtPeriods[p]);
-                                for (j in rcvrs){
-                                    rcvrDays[dayIndex][rcvrs[j]] = 1;
+                            if (phtPeriods[p].get('dss_session_id') == null){
+                                dayIndex = this.insertPeriod(phtPeriods[p], startDate, numDays, drawComponent, 'pht');
+                                // TBF: we need to filter these periods by date,
+                                // instead of getting them ALL and checking this.
+                                if (dayIndex != -1) {
+                                    rcvrs = this.getPhtPeriodReceivers(phtPeriods[p]);
+                                    for (j in rcvrs){
+                                        rcvrDays[dayIndex][rcvrs[j]] = 1;
+                                    }
                                 }
                             }
                         }

@@ -30,6 +30,12 @@ class TestEmailTemplate(NellTestCase):
     def setUp(self):
         super(TestEmailTemplate, self).setUp()
 
+        # TBF: our initial DB is lacking some future semesters
+        for year in range(13, 33):
+            for sem in ['A', 'B']:
+                s = Semester(semester = "%s%s" % (year, sem))
+                s.save()
+
         self.templates = [("Blank", "", "")
                    , ("First"
                    , "<pcode> is done"

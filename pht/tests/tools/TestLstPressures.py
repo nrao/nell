@@ -320,7 +320,7 @@ class TestLstPressures(TestCase):
         # This is a 12A session, that starts 2012-02-01.
         today = datetime(2012, 1, 15)
         lst = LstPressures(today = today)
-
+        
         # make this session a fixed session, and watch the hours 
         # get distributed across the weathers
         self.session.session_type = SessionType.objects.get(type = 'Windowed')
@@ -585,7 +585,14 @@ class TestLstPressures(TestCase):
         # get the refreshed session
         s = Session.objects.get(id = self.session.id)
         ws3 = lst.modifyWeightsForLstExclusion(s, ws)
-        
+       
+        exp = [1]*4
+        exp.extend([0]*3)
+        exp.extend([1]*14)
+        exp.extend([0]*2)
+        exp.extend([1])
+        self.assertEqual(exp, ws3)
+
     def test_getFlagWeightsForSession(self):
 
         lst = LstPressures()

@@ -31,6 +31,15 @@ from datetime                import datetime, timedelta
 
 class TestViewsPTC(PeriodsTestCase):
 
+    def setUp(self):
+        PeriodsTestCase.setUp(self)
+
+        # too lazy to fix fixture: add needed future semesters:
+        for i in range(13,33):
+            for j in ['A', 'B']:
+                s = Semester(semester = "%d%s" % (i, j))
+                s.save()
+
     def test_scheduling_email(self):
 
         # we need to create some periods for NOW to show up in the email
