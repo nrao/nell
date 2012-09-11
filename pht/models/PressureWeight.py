@@ -48,6 +48,6 @@ class PressureWeight(models.Model):
     @staticmethod
     def LoadWeights(semester, category, values):
         cat, _ = PressureWeightCategory.objects.get_or_create(name = category)
-        sem    = Semester.objects.get(semester = semester)
+        sem, _ = Semester.objects.get_or_create(semester = semester)
         for i, v in enumerate(values):
             PressureWeight.objects.create(lst = i, value = v, category = cat, semester = sem)

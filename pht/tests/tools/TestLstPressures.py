@@ -437,8 +437,9 @@ class TestLstPressures(TestCase):
         return xs
 
     def test_calculatePressure(self):
-
-        lst = LstPressures()
+        # Make sure we're in 12A
+        today   = datetime(2012, 3, 1)
+        lst = LstPressures(today = today)
         totaltime = 6.5
         #ps = lst.getPressuresForSessionOld(self.session)
         ps = lst.calculatePressure(self.session, totaltime)
@@ -569,8 +570,8 @@ class TestLstPressures(TestCase):
     def test_modifyWeightsForLstExclusion(self):
 
         today = datetime(2012, 1, 15)
-        lst = LstPressures(today = today)
-        ws = [1.0]*24
+        lst   = LstPressures(today = today)
+        ws    = [1.0]*24
 
         # this session doesn't have lst exclusion
         ws2 = lst.modifyWeightsForLstExclusion(self.session, ws)
@@ -682,11 +683,16 @@ class TestLstPressures(TestCase):
         self.assertEqual(exp, rs)
 
     def test_getPressureWeights(self):
-        lst = LstPressures()
+        today   = datetime(2012, 1, 1)
+        lst     = LstPressures(today = today, initFlagWeights = False)
         cat     = 'RFI'
         weights, computed = lst.getPressureWeights(cat)
-        print computed
-        print weights
+        self.assertTrue(computed)
+        self.assertEqual(len(weights), 24)
+        weights2, computed = lst.getPressureWeights(cat)
+        self.assertTrue(not computed)
+        for i in range(len(weights)):
+            self.assertAlmostEqual(weights[i], weights2[i], 4)
 
     def test_computeRfiWeights(self):
 
