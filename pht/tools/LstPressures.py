@@ -880,7 +880,28 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         label = lblFrmt % label
         rs = ["%7.2f" % results[i] for i in range(len(results))]
         return label + ": " + ' '.join(rs)
-            
+           
+    def reportSocorroFormat(self, semester):
+        """
+        Each row looks like this:
+        (6529),3.00,3.00,3.00,3.00,3.00,3.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00
+        where the first column is the session id, and they are ordered
+        by id.
+        """
+
+        # we're going to assume that we've already called getPressures,
+        # we'll now use the stored results to create this.
+
+        ss = Session.objects.filter(semester__semester = semester).order_by('id')
+        for s in ss:
+           # extract the lst pressures from the stored results
+           cat, sc, ps, total = self.pressuresBySession[s.__str__()]
+           # socorro only cares about the sessions that have been allocated time
+           if cat != ALLOCATED:
+               ps = [0.0]*24
+           psStr = ",".join(["%4.2f" % ps[i] for i in range(len(ps))])
+           print "(%d),%s" % (s.id, psStr)
+
     def initFlagWeights(self):
         "These are what you get from 12B"
 
@@ -1153,14 +1174,17 @@ if __name__ == '__main__':
             sys.exit(1)
        
     lst = LstPressures(carryOverUseNextSemester = carryOverUseNextSemester
-                     , adjustWeatherBins = adjustWeatherBins)
+                     , adjustWeatherBins = adjustWeatherBins
+                     , today = datetime(2012, 3, 1)
+                      )
     ps = lst.getPressures()
-    lst.report()
+    lst.reportSocorroFormat('12B')
+    #lst.report()
 
     #exp = []
     #eps = 0.001
     #for i in range(len(ps)):
-    #    keys = ps[i].keys()
+    #    keys = ps[i].ke#ys()
     #    for k in keys:
     #        if not (abs(exp[i][k] - ps[i][k]) < eps):
     #            print "Lst: %f, Key: %s" % (i, k)
