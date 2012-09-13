@@ -521,7 +521,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # before we adjusted for overfilled weather
         self.originalGradePs = self.gradePs.copy()
         if self.adjustWeatherBins:
-            self.gradePs['A'], self.changes = self.adjustForOverfilledWeather(\
+            self.gradePs['A'], self.changes = self.adjustForOverfilledWeather(
                 self.gradePs['A']
               , self.carryoverPs
               , self.weather.availability
@@ -677,7 +677,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
            * Grade A (Poor Weather) = Availability (Poor Weather) - Carryover (Poor Weather)
            * and then consider the Remainder (Poor Weather) time for Good Weather (and so on to Excellent Weather):
            * if Grade A (Good Weather) + Carryover (Good Weather) + Remainder (Poor Weather) &gt; Availability (Good Weather) then 
-               * Remainder (Good Weather) = Grade A (Good Weather) + Carryover (Good Weather) + Remainder (Poor Weather) - Availability (Good Weather)
+
+           * Remainder (Good Weather) = Grade A (Good Weather) + Carryover (Good Weather) + Remainder (Poor Weather) - Availability (Good Weather)
                * Grade A (Good Weather) = Availability (Good Weather) - Carryover (Good Weather) 
            * else
                * Grade A (Good Weather) += Remainder (Poor Weather)
@@ -698,8 +699,12 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             if tmp.poor[i] > availability.poor[i]:
                 remainder.poor[i] = tmp.poor[i] - availability.poor[i]
                 changes.poor[i] = remainder.poor[i]
+                print 'Changed poor', i, changes.poor[i]
                 # take time out of poor
                 allocated.poor[i] = availability.poor[i] - carryover.poor[i]
+                print 'Allocated poor', i, allocated.poor[i]
+                print 'Avaliability port', i, availability.poor[i]
+                print 'Carryover port', i, carryover.poor[i]
                 # and give it to good 
                 tmp.good[i] = gradeA.good[i] + carryover.good[i] + remainder.poor[i]
                 # but is this too much?
@@ -883,6 +888,27 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         rs = ["%7.2f" % results[i] for i in range(len(results))]
         return label + ": " + ' '.join(rs)
             
+    def reportSocorroFormat(self, semester):
+        """
+        Each row looks like this:
+        (6529),3.00,3.00,3.00,3.00,3.00,3.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00
+        where the first column is the session id, and they are ordered
+        by id.
+        """
+
+        # we're going to assume that we've already called getPressures,
+        # we'll now use the stored results to create this.
+
+        ss = Session.objects.filter(semester__semester = semester).order_by('id')
+        for s in ss:
+           # extract the lst pressures from the stored results
+           cat, sc, ps, total = self.pressuresBySession[s.__str__()]
+           # socorro only cares about the sessions that have been allocated time
+           if cat != ALLOCATED:
+               ps = [0.0]*24
+           psStr = ",".join(["%4.2f" % ps[i] for i in range(len(ps))])
+           print "(%d),%s" % (s.id, psStr)
+
     def getPressureWeights(self, category):
         catMap = {'RFI'     : self.computeRfiWeights
                 , 'Optical' : self.computeOpticalNightWeights
@@ -896,94 +922,13 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                                 , (self.nextSemesterEnd - self.nextSemesterStart).days)
             PressureWeight.LoadWeights(self.nextSemester.semester, category, weights)
         return weights, compute
-
+           
     def initFlagWeights(self):
         "These are what you get from 12B"
 
         self.rfiWeights           = numpy.array(self.getPressureWeights('RFI')[0])
         self.opticalNightWeights  = numpy.array(self.getPressureWeights('Optical')[0])
         self.thermalNightWeights  = numpy.array(self.getPressureWeights('Thermal')[0])
-        return
-
-        
-        # TBF: These get computed by methods in this class,
-        # but no need to do it at start up every time.
-        self.thermalNightWeights = numpy.array([0.71584699453551914,
-            0.77049180327868849,
-            0.77595628415300544,
-            0.77049180327868849,
-            0.77049180327868849,
-            0.70491803278688525,
-            0.63934426229508201,
-            0.57377049180327866,
-            0.50819672131147542,
-            0.44262295081967218,
-            0.37704918032786883,
-            0.31147540983606559,
-            0.2404371584699454,
-            0.16393442622950816,
-            0.076502732240437132,
-            0.0,
-            0.0,
-            0.0,
-            0.010928961748633892,
-            0.13114754098360659,
-            0.27322404371584696,
-            0.4098360655737705,
-            0.53005464480874309,
-            0.63387978142076506])
-        self.opticalNightWeights = numpy.array([0.92896174863387981,
-            0.97267759562841527,
-            0.91256830601092898,
-            0.84153005464480879,
-            0.77595628415300544,
-            0.70491803278688525,
-            0.63934426229508201,
-            0.57377049180327866,
-            0.50819672131147542,
-            0.44262295081967218,
-            0.37704918032786883,
-            0.31147540983606559,
-            0.2404371584699454,
-            0.16393442622950816,
-            0.076502732240437132,
-            0.010928961748633892,
-            0.13661202185792354,
-            0.27322404371584696,
-            0.4098360655737705,
-            0.53005464480874309,
-            0.63387978142076506,
-            0.72131147540983609,
-            0.79234972677595628,
-            0.86338797814207646])
-        self.rfiWeights     = numpy.array([0.71584699453551914,
-            0.79781420765027322,
-            0.88524590163934425,
-            0.91256830601092898,
-            0.86338797814207646,
-            0.78142076502732238,
-            0.69398907103825136,
-            0.61202185792349728,
-            0.53005464480874309,
-            0.48087431693989069,
-            0.44808743169398912,
-            0.36612021857923494,
-            0.27868852459016391,
-            0.19672131147540983,
-            0.11475409836065575,
-            0.081967213114754078,
-            0.13661202185792354,
-            0.21857923497267762,
-            0.30054644808743169,
-            0.38251366120218577,
-            0.4699453551912568,
-            0.51912568306010931,
-            0.55191256830601088,
-            0.63387978142076506])
-        print 'before ------------------------------------------------'
-        print self.rfiWeights
-        print self.opticalNightWeights
-        print self.thermalNightWeights
 
     def initFlagWeightsBad(self):
         "These are what you get from 12B"
@@ -1179,14 +1124,17 @@ if __name__ == '__main__':
             sys.exit(1)
        
     lst = LstPressures(carryOverUseNextSemester = carryOverUseNextSemester
-                     , adjustWeatherBins = adjustWeatherBins)
+                     , adjustWeatherBins = adjustWeatherBins
+                     , today = datetime(2012, 3, 1)
+                      )
     ps = lst.getPressures()
-    lst.report()
+    lst.reportSocorroFormat('12B')
+    #lst.report()
 
     #exp = []
     #eps = 0.001
     #for i in range(len(ps)):
-    #    keys = ps[i].keys()
+    #    keys = ps[i].ke#ys()
     #    for k in keys:
     #        if not (abs(exp[i][k] - ps[i][k]) < eps):
     #            print "Lst: %f, Key: %s" % (i, k)
