@@ -47,7 +47,7 @@ Ext.define('PHT.controller.OverviewCalendar', {
 
     drawCalendar: function(){
         this.oc.removeAll(true);
-        var numDays       = this.oc.numDaysCombo.getValue();
+        var numDays       = parseInt(this.oc.numDaysCombo.getValue());
         var drawComponent = this.oc.genDrawComponent(numDays);
         this.insertPeriods(drawComponent, numDays);
         this.oc.add(drawComponent);

@@ -4,6 +4,7 @@ Ext.define('PHT.view.proposal.Edit', {
     title : 'Edit Proposal',
 
     initComponent: function() {
+        this.blankState = {};
         this.piCombo = Ext.create('Ext.form.field.ComboBox', {
                             name: 'pi_id',
                             fieldLabel: 'Primary Investigator',
@@ -260,27 +261,24 @@ Ext.define('PHT.view.proposal.Edit', {
 
     prepMultiEditFields: function() {
         var fields = this.getForm().getFields();
-        this.blankState = {};
-        var me = this;
         fields.each(function(item, index, length) {
             var disabledItems = ['pcode', 'pi_id', 'joint_proposal'];
             if (disabledItems.indexOf(item.getName()) > -1) {
                 item.disable();
             }
-            me.blankState[item.getName()] = item.allowBlank;
+            this.blankState[item.getName()] = item.allowBlank;
             item.allowBlank = true;
-        });
+        }, this);
     },
 
     resetMultiEditFields: function() {
         var fields = this.getForm().getFields();
-        var me     = this;
         fields.each(function(item, index, length) {
             var disabledItems = ['pcode', 'pi_id', 'joint_proposal'];
             if (disabledItems.indexOf(item.getName()) > -1) {
                 item.enable();
             }
-            item.allowBlank = me.blankState[item.getName()];
-        });
+            item.allowBlank = this.blankState[item.getName()];
+        }, this);
     },
 });
