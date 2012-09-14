@@ -599,11 +599,13 @@ class PstImport(PstInterface):
         result = None
         pi = ''
         tac = ''
-        for row in self.cursor.fetchall():
-            pi  += ' \n' + row[0]
-            tac += ' \n' + row[1]
-        if pi != '' and tac != '':
-            result = (pi, tac)
+        rows = self.cursor.fetchall()
+        for row in rows:
+            if row[0] is not None and row[1] is not None:
+                pi  += ' \n' + row[0]
+                tac += ' \n' + row[1]
+            if pi != '' and tac != '':
+                result = (pi, tac)
         return result    
 
     def fetchSRPComments(self, proposal_id):

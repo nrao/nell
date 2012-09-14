@@ -4,6 +4,7 @@ Ext.define('PHT.model.Period', {
            , 'session'
            , 'session_json'
            , 'session_id'
+           , 'dss_session_id'
            , 'pcode'
            , 'handle'
            , 'date'

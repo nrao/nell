@@ -115,6 +115,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
     def __init__(self
                , carryOverUseNextSemester = True
                , adjustWeatherBins = True
+               , initFlagWeights = True
                , today = None):
 
         self.hrs = 24
@@ -160,7 +161,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.weatherTypes = ['Poor', 'Good', 'Excellent']
 
         self.initPressures()
-        self.initFlagWeights()
+        if initFlagWeights:
+            self.initFlagWeights()
 
     def newHrs(self):
         return numpy.array([0.0]*self.hrs)
@@ -901,10 +903,30 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                ps = [0.0]*24
            psStr = ",".join(["%4.2f" % ps[i] for i in range(len(ps))])
            print "(%d),%s" % (s.id, psStr)
+            
+    def getPressureWeights(self, category):
+        catMap = {'RFI'     : self.computeRfiWeights
+                , 'Optical' : self.computeOpticalNightWeights
+                , 'Thermal' : self.computeThermalNightWeights
+                }
+        weights = PressureWeight.GetWeights(self.nextSemester.semester, category)
+        compute = False
+        if not weights:
+            compute    = True
+            weights, _ = catMap[category](self.nextSemesterStart
+                                , (self.nextSemesterEnd - self.nextSemesterStart).days)
+            PressureWeight.LoadWeights(self.nextSemester.semester, category, weights)
+        return weights, compute
 
     def initFlagWeights(self):
         "These are what you get from 12B"
 
+        self.rfiWeights           = numpy.array(self.getPressureWeights('RFI')[0])
+        self.opticalNightWeights  = numpy.array(self.getPressureWeights('Optical')[0])
+        self.thermalNightWeights  = numpy.array(self.getPressureWeights('Thermal')[0])
+        return
+
+        
         # TBF: These get computed by methods in this class,
         # but no need to do it at start up every time.
         self.thermalNightWeights = numpy.array([0.71584699453551914,
@@ -979,6 +1001,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             0.51912568306010931,
             0.55191256830601088,
             0.63387978142076506])
+        print 'before ------------------------------------------------'
+        print self.rfiWeights
+        print self.opticalNightWeights
+        print self.thermalNightWeights
 
     def initFlagWeightsBad(self):
         "These are what you get from 12B"

@@ -9,6 +9,8 @@ from Period                   import Period
 from Proposal                 import Proposal
 from ProposalComments         import ProposalComments
 from ProposalType             import ProposalType
+from PressureWeight           import PressureWeight
+from PressureWeightCategory   import PressureWeightCategory
 from Receiver                 import Receiver
 from ResourceGroup            import ResourceGroup
 from Resource                 import Resource

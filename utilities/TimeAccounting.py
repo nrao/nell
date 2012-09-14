@@ -249,6 +249,26 @@ class TimeAccounting:
 
         return dct                
 
+    def reportDateRange(self, proj, start, end):
+        print 'Calculating total scheduled and observed times for project %s from %s to %s' % (proj.pcode, start, end)
+        stats = {}
+        for s in proj.sesshun_set.all():
+            ps = s.period_set.filter(start__range=(start, end + timedelta(days = 1)))
+            stats["Total Scheduled"] = stats.get("Total Scheduled", 0) + sum(p.accounting.get_time('scheduled') for p in ps)
+            stats["Total Observed"]  = stats.get("Total Observed", 0) + sum(p.accounting.get_time('observed') for p in ps)
+        for k in stats:
+            print k + ':', stats[k]
+
+    def reportObservingTypeDateRange(self, type, sessions, start, end):
+        print 'Calculating totals for science category %s from %s to %s' % (type, start, end)
+        stats = {}
+        for s in sessions:
+            ps = s.period_set.filter(start__range=(start, end + timedelta(days = 1)))
+            stats["Total Scheduled"] = stats.get("Total Scheduled", 0) + sum(p.accounting.get_time('scheduled') for p in ps)
+            stats["Total Observed"]  = stats.get("Total Observed", 0) + sum(p.accounting.get_time('observed') for p in ps)
+        for k in stats:
+            print k + ':', stats[k]
+
     def update_from_post(self, proj, dct):
         "Sets all appropriate time accounting fields in tiered objects"
 

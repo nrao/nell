@@ -254,8 +254,9 @@ class SessionHttpAdapter(PhtHttpAdapter):
           ns.repeats as next_sem_repeats,
           dss.name as dss_session,
           dss.id as dss_session_id,
-          dss_a.total_time as dss_total_time
-        from ((((((((((((((
+          dss_a.total_time as dss_total_time,
+          dss_s.complete as dss_session_complete
+        from (((((((((((((((
           pht_sessions as s 
           left outer join pht_allotements as a on a.id = s.allotment_id) 
           left outer join pht_session_flags as f on s.flags_id = f.id) 
@@ -271,7 +272,8 @@ class SessionHttpAdapter(PhtHttpAdapter):
           left outer join pht_session_grades as sg on sg.id = s.grade_id)
           left outer join pht_session_separations as ssm on ssm.id = m.outer_separation_id)
           left outer join sessions as dss on dss.id = s.dss_session_id)
-          left outer join allotment as dss_a on dss_a.id = dss.allotment_id
+          left outer join allotment as dss_a on dss_a.id = dss.allotment_id)
+          left outer join status as dss_s on dss_s.id = dss.status_id
         order by s.name  
         """
         curr.execute(query)
@@ -292,6 +294,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
         sci_categories = [sc.category for sc in self.session.proposal.sci_categories.all()]
         dss_sess_name = self.session.dss_session.name if self.session.dss_session is not None else None        
         dss_sess_id = self.session.dss_session.id if self.session.dss_session is not None else None        
+        dss_sess_cmp = self.session.dss_session.status.complete if self.session.dss_session is not None else None        
         solar_avoid = self.session.target.solar_avoid
         if solar_avoid is not None:
             solar_avoid = rad2deg(solar_avoid)
@@ -377,6 +380,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
               # stuff from the DSS session (readonly)
               , 'dss_session'             : dss_sess_name
               , 'dss_session_id'          : dss_sess_id
+              , 'dss_session_complete'    : dss_sess_cmp
               , 'dss_total_time'          : self.session.dssAllocatedTime()
               , 'billed_time'             : self.session.billedTime()
               , 'scheduled_time'          : self.session.scheduledTime()
