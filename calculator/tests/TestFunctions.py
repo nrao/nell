@@ -93,7 +93,7 @@ class TestFunctions(TestCase):
 
         
     def test_sourceSizeCorrection(self):
-        correction = sourceSizeCorrection(6, 8)
+        correction = sourceSizeCorrectionS(6, 8)
         self.assertAlmostEqual(correction, 0.828, 3)
 
     def test_getKs(self):
@@ -164,3 +164,7 @@ class TestFunctions(TestCase):
     def test_calculateAttenuation(self):
         attenuation = calculateAttenuation(2.11, 1420)
         self.assertAlmostEqual(attenuation, 0.961, 3)
+
+    def test_getAppEff(self):
+        appEff = getAppEff(0.3, 30, 90, 0.7)
+        self.assertAlmostEqual(appEff, 0.2535, 4)
