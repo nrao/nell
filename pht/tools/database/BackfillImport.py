@@ -160,5 +160,5 @@ class BackfillImport(PstImport):
 
 if __name__ == '__main__':
     dss = BackfillImport(quiet = False)
-    #dss_projects = Project.objects.filter(complete = True).filter(semester__semester__gte = '11A')
+    dss_projects = Project.objects.filter(complete = True).filter(semester__semester__gte = '11A')
     dss.importProjects(dss_projects = dss_projects)

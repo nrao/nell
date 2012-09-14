@@ -68,11 +68,16 @@ class TestResultCalculations(unittest.TestCase):
         self.assertAlmostEqual(21.112, value, 3)
 
     def test_aperture_eff(self):
+        self.results.set('declination', 38.43)
+        self.results.set('min_elevation', 5)
         value, _, _, _, _ = self.results.get('aperture_eff')
         self.assertAlmostEqual(0.6999, value, 3)
 
     def test_extended_source_eff(self):
+        self.results.set('declination', 38.43)
+        self.results.set('min_elevation', 5)
         self.results.set('source_diameter_slider', 2)
+        self.results.set('units', 'flux')
         value, _, _, _, _ = self.results.get('extended_source_eff')
         self.assertAlmostEqual(0.690, value, 3)
 
@@ -91,7 +96,7 @@ class TestResultCalculations(unittest.TestCase):
 
         self.results.set('units', 'ta')
         value, _, _, _, _ = self.results.get('confusion_limit')
-        self.assertAlmostEqual(119.771, value, 3)
+        self.assertAlmostEqual(119.792, value, 3)
 
     def test_airmass(self):
         def getResults(dec):

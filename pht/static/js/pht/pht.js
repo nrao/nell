@@ -130,23 +130,23 @@ Ext.application({
         );
 
         var proposalSources = Ext.create('PHT.view.source.ProposalListWindow', {
-            renderTo: viewport.layout.regions.center.getEl(),
+            //renderTo: viewport.layout.regions.center.getEl(),
         });
         var proposalAuthors = Ext.create('PHT.view.author.ListWindow', {
-            renderTo: viewport.layout.regions.center.getEl(),
+            //renderTo: viewport.layout.regions.center.getEl(),
         });
         var sessionSources = Ext.create('PHT.view.source.SessionListWindow', {
-            renderTo: viewport.layout.regions.center.getEl(),
+            //renderTo: viewport.layout.regions.center.getEl(),
         });
         var overviewCalendarWin = Ext.create('PHT.view.overview.Window', {
-            renderTo: viewport.layout.regions.center.getEl(),
+            //renderTo: viewport.layout.regions.center.getEl(),
         });
-        overviewCalendarWin.maximize();
+        //overviewCalendarWin.maximize();
         var plot = Ext.create('PHT.view.plot.Window', {
-            renderTo: viewport.layout.regions.center.getEl(),
+            //renderTo: viewport.layout.regions.center.getEl(),
         });
         var lstReportWin = Ext.create('PHT.view.plot.LstReportWindow', {
-            renderTo: viewport.layout.regions.center.getEl(),
+            //renderTo: viewport.layout.regions.center.getEl(),
         });
 
         // setup menus
