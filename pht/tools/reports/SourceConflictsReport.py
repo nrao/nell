@@ -52,11 +52,12 @@ class SourceConflictsReport(Report):
                      self.title + " for Semester %s" % semester
 
 
-        data = []
+        rows = []
         for pcode in self.conflictedProposals:
-            data.extend(self.genRecordHeader(pcode))
-            data.append(self.genTable(pcode))
-            data.append(PageBreak())
+            rows.extend(self.genRecordHeader(pcode))
+            rows.append(self.genTable(pcode))
+            rows.append(PageBreak())
+        data = rows or [Paragraph("No conflicts", self.styleSheet)]
 
         # write the document to disk (or something)
         self.doc.build(data, onFirstPage = self.makeHeaderFooter, onLaterPages = self.makeHeaderFooter)
@@ -159,15 +160,15 @@ if __name__ == '__main__':
      , allProposals = Proposal.objects.all())
     if level == 'all':
         sc.filterConflicts(0)
-        scr = SourceConflictsReport('sourceConflictsReportLevel0.pdf')
+        scr = SourceConflictsReport('sourceConflictsReport%sLevel0.pdf' % semester)
         scr.report(sc.filteredConflicts, semester = semester, level = 0)
         sc.filterConflicts(1)
-        scr = SourceConflictsReport('sourceConflictsReportLevel1.pdf')
+        scr = SourceConflictsReport('sourceConflictsReport%sLevel1.pdf' % semester)
         scr.report(sc.filteredConflicts, semester = semester, level = 1)
         sc.filterConflicts(2)
-        scr = SourceConflictsReport('sourceConflictsReportLevel2.pdf')
+        scr = SourceConflictsReport('sourceConflictsReport%sLevel2.pdf' % semester)
         scr.report(sc.filteredConflicts, semester = semester, level = 2)
     else:
         sc.filterConflicts(int(level))
-        scr = SourceConflictsReport('sourceConflictsReportLevel' + level + '.pdf')
+        scr = SourceConflictsReport('sourceConflictsReport%sLevel%s.pdf' % (semester, level))
         scr.report(sc.filteredConflicts, semester = semester, level = int(level))

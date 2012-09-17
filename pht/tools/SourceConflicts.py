@@ -165,21 +165,20 @@ class SourceConflicts(object):
                     d = self.getAngularDistance(trgSrc, srchSrc)
                     if d <= searchRadius and self.passesInclusionCheck(searchedProp):
                         conflict = True
-                        srcConflict = {
-                        'targetSrc' : trgSrc
-                      , 'searchedSrc' : srchSrc
-                      , 'searchedProp' : searchedProp
-                      , 'distance' : d
-                      , 'level' : 0
+                        srcConflict = {'targetSrc' : trgSrc
+                                     , 'searchedSrc' : srchSrc
+                                     , 'searchedProp' : searchedProp
+                                     , 'distance' : d
+                                     , 'level' : 0
                         }
                         self.conflicts[tpcode]['conflicts'].append(srcConflict)
                 except:
-                    print "could not calc distance"
-                    srcConflict = {
-                        'targetSrc' : trgSrc
-                      , 'searchedSrc' : srchSrc
-                      , 'searchedProp' : searchedProp
-                        }
+                    if not self.quiet:
+                        print "could not calc distance"
+                    srcConflict = {'targetSrc' : trgSrc
+                                 , 'searchedSrc' : srchSrc
+                                 , 'searchedProp' : searchedProp
+                    }
                     self.badDistances.append(srcConflict)
                 if conflict:
                     lastObsDate, proprietaryPeriod = self.withinProprietaryDate(srchSrc, searchedProp)
@@ -229,7 +228,8 @@ class SourceConflicts(object):
         if grade in ('B', 'C') and \
            searchedProp.semester.semester < dss.Semester.getCurrentSemester().semester and \
            len(periods) == 0:
-            print searchedProp.pcode, 'is too old and shitty'
+            if not self.quiet:
+                print searchedProp.pcode, 'is too old and shitty'
             return False
         # Rule 2
         elif len(periods) == 0 and grade == 'A':
