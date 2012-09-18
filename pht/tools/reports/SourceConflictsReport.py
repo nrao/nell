@@ -154,8 +154,8 @@ if __name__ == '__main__':
     sc = SourceConflicts(semester = semester)
     # TBF: Remove this later.  Limiting search space for testing.
     sc.findConflicts(
-       proposals = Proposal.objects.filter(semester__semester = semester).order_by('pcode')
-       #proposals = Proposal.objects.filter(semester__semester = semester).order_by('pcode')[:5]
+       #proposals = Proposal.objects.filter(semester__semester = semester).order_by('pcode')
+       proposals = Proposal.objects.filter(semester__semester = semester).order_by('pcode')[:5]
      #, allProposals = Proposal.objects.filter(semester__semester = '12A'))
      , allProposals = Proposal.objects.all())
     if level == 'all':

@@ -150,9 +150,9 @@ class Proposal(models.Model):
 
     def bands(self):
         "What are the bands associated with this proposal?"
-        return ''.join([r.abbreviation for r in Receiver.objects.raw(
+        return ''.join([r.code for r in Receiver.objects.raw(
             """
-            select distinct r.id, r.abbreviation 
+            select distinct r.id, r.code
             from ((pht_sessions as s 
               join pht_proposals as p on p.id = s.proposal_id ) 
               join pht_sessions_receivers as sr on s.id = sr.session_id) 
