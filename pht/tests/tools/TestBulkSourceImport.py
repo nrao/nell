@@ -80,7 +80,7 @@ class TestBulkSourceImport(TestCase):
         ex2 = "NGC3242; PNe; Equatorial; quack; 10:24:46.1; -18:38:32; Barycentric; Optical; 4.70;"
         src, err = i.tryImportFromLine(ex2, 0, self.proposal.id)
         self.assertTrue(src is None)
-        expErr = "Error on line 0: SourceCoordinateEpoch matching query does not exist. Lookup parameters were {'epoch': 'quack'}"
+        expErr = "Error on line 0: SourceCoordinateEpoch matching query does not exist."
         self.assertEqual(expErr, err) 
 
         # a line that's too short
