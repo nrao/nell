@@ -112,9 +112,10 @@ Ext.define('PHT.controller.Proposals', {
 
     // load the form for allocating grades and time to proposal
     allocateForm: function(button) {
-        var win = button.up('window')
+        var view     = button.up('viewport').down('tactool');
         var allocate = Ext.create('PHT.view.proposal.Allocate');
-        var pcode = win.proposalCombo.getValue();
+        var pcode    = view.proposalCombo.getValue();
+        
         allocate.setProposal(pcode);
         allocate.setTitle('Allocate for Proposal ' + pcode);
         allocate.show();
@@ -165,17 +166,14 @@ Ext.define('PHT.controller.Proposals', {
 
         // update the proposal
         var pStore = this.getStore('Proposals');
-        pStore.filter('pcode', pcode);
-        var cnt = pStore.getCount();
-        for (i=0; i < cnt; i++) {
-            var proposal = pStore.getAt(i);
-            if ((time != null) && (time != '')) {
-                proposal.set('allocated_time', pAllocated);
-            }
-            if ((grade != null) && (grade != '')) {
-                proposal.set('grades', grade);
-            }
+        var proposal = pStore.findRecord('pcode', pcode);
+        if ((time != null) && (time != '')) {
+            proposal.set('allocated_time', pAllocated);
         }
+        if ((grade != null) && (grade != '')) {
+            proposal.set('grades', grade);
+        }
+        
         pStore.sync();
         
         win.hide();
@@ -195,15 +193,11 @@ Ext.define('PHT.controller.Proposals', {
             session.set('grade', null);
         }    
         store.sync()
-        // now the proposal
+        // update the proposal
         var pStore = this.getStore('Proposals');
-        pStore.filter('pcode', pcode);
-        var cnt = pStore.getCount();
-        for (i=0; i < cnt; i++) {
-            var proposal = pStore.getAt(i);
-            proposal.set('allocated_time', 0.0);
-            proposal.set('grades', '');
-        }
+        var proposal = pStore.findRecord('pcode', pcode);
+        proposal.set('allocated_time', 0.0);
+        proposal.set('grades', '');
         pStore.sync();
         win.hide();
     },
