@@ -45,11 +45,13 @@ class SourceConflictsReport(Report):
         self.headerStyleSheet = getSampleStyleSheet()['Normal']
         self.headerStyleSheet.fontSize = 15
 
-    def report(self, conflicts, semester = None, level = 0):
+    def report(self, conflicts, semester = None, pcode = None, level = 0):
         self.conflicts = conflicts
         self.conflictedProposals = sorted([k for k in self.conflicts.keys() if len(self.conflicts[k]['conflicts']) > 0])
         self.title = self.title if semester is None else \
                      self.title + " for Semester %s" % semester
+        self.title = self.title if pcode is None else \
+                     self.title + " for %s" % pcode
 
 
         rows = []
@@ -145,30 +147,36 @@ class SourceConflictsReport(Report):
         return '%s, %s' % (days[dt.weekday()],  dt.strftime('%B %d, %Y'))
 
 if __name__ == '__main__':
-    import sys
-    try:
-        semester, level = sys.argv[1:]
-    except:
-        print "Usage: SourceConflictsReport.py <semester> <level>"
-        sys.exit()
-    sc = SourceConflicts(semester = semester)
-    # TBF: Remove this later.  Limiting search space for testing.
-    sc.findConflicts(
-       proposals = Proposal.objects.filter(semester__semester = semester).order_by('pcode')
-       #proposals = Proposal.objects.filter(semester__semester = semester).order_by('pcode')[:5]
-     #, allProposals = Proposal.objects.filter(semester__semester = '12A'))
-     , allProposals = Proposal.objects.all())
-    if level == 'all':
-        sc.filterConflicts(0)
-        scr = SourceConflictsReport('sourceConflictsReport%sLevel0.pdf' % semester)
-        scr.report(sc.filteredConflicts, semester = semester, level = 0)
-        sc.filterConflicts(1)
-        scr = SourceConflictsReport('sourceConflictsReport%sLevel1.pdf' % semester)
-        scr.report(sc.filteredConflicts, semester = semester, level = 1)
-        sc.filterConflicts(2)
-        scr = SourceConflictsReport('sourceConflictsReport%sLevel2.pdf' % semester)
-        scr.report(sc.filteredConflicts, semester = semester, level = 2)
+    import argparse
+    parser = argparse.ArgumentParser(description='Command line tool for running GB PHT Source Conflict Reports.  Specify at least a semester or pcode.')
+    parser.add_argument('-s','--semester', dest="semester", help='Semester of the proposals you wish to check for source conflicts.')
+    parser.add_argument('-p','--pcode', dest="pcode", help='Run source conflicts for a given pcode (Ex. GBT12B-100)')
+    parser.add_argument('-l','--level', dest="level", type = int, default = -1, help='Level of conflicts to check.  Options are "0", "1", "2" (defaults to all).')
+
+    args = parser.parse_args()
+
+    sc = SourceConflicts(semester = args.semester)
+    if args.pcode is not None:
+        sc.findConflicts(proposals = Proposal.objects.filter(pcode = args.pcode))
+        filename = args.pcode
     else:
-        sc.filterConflicts(int(level))
-        scr = SourceConflictsReport('sourceConflictsReport%sLevel%s.pdf' % (semester, level))
-        scr.report(sc.filteredConflicts, semester = semester, level = int(level))
+        sc.findConflicts(
+            #  Uncomment for testing.
+            #proposals = Proposal.objects.filter(semester__semester = args.semester)[:5]
+            )
+        filename = args.semester
+
+    if args.level == -1:
+        sc.filterConflicts(0)
+        scr = SourceConflictsReport('sourceConflictsReport%sLevel0.pdf' % filename)
+        scr.report(sc.filteredConflicts, semester = args.semester, pcode = args.pcode, level = 0)
+        sc.filterConflicts(1)
+        scr = SourceConflictsReport('sourceConflictsReport%sLevel1.pdf' % filename)
+        scr.report(sc.filteredConflicts, semester = args.semester, pcode = args.pcode, level = 1)
+        sc.filterConflicts(2)
+        scr = SourceConflictsReport('sourceConflictsReport%sLevel2.pdf' % filename)
+        scr.report(sc.filteredConflicts, semester = args.semester, pcode = args.pcode, level = 2)
+    else:
+        sc.filterConflicts(args.level)
+        scr = SourceConflictsReport('sourceConflictsReport%sLevel%s.pdf' % (filename, args.level))
+        scr.report(sc.filteredConflicts, semester = args.semester, pcode = args.pcode, level = args.level)
