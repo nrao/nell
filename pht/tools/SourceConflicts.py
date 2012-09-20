@@ -195,7 +195,7 @@ class SourceConflicts(object):
         self.filteredConflicts = {}
         for k, v in self.conflicts.iteritems():
             self.filteredConflicts[k] = copy.copy(self.conflicts[k])
-            self.filteredConflicts[k]['conflicts'] = [c for c in self.conflicts[k]['conflicts'] if c['level'] == level]
+            self.filteredConflicts[k]['conflicts'] = [c for c in self.conflicts[k]['conflicts'] if level <= c['level']]
 
     def hasSameRcvrConflict(self, targetProp, searchedProp):
         """
