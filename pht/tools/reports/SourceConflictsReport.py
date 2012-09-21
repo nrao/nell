@@ -92,14 +92,15 @@ class SourceConflictsReport(Report):
         return t
 
     def genProposalsTable(self, pcode):
-        def genProposalInfo(conflict):
+        def genProposalInfo(conflictedPcode):
+            conflict     = [c for c in self.conflicts[pcode]['conflicts'] if c['searchedProp'].pcode == conflictedPcode][0]
             searched     = conflict['searchedProp']
             complete     = ''
             thisSemester = 'V' if DssSemester.getCurrentSemester().semester == searched.semester.semester else 'S'
-            if conflict['searchedProp'].dss_project is not None and conflict['searchedProp'].dss_project.complete:
+            if searched.dss_project is not None and searched.dss_project.complete:
                 complete = 'C' 
 
-            lastObsDate = conflict.get('lastObsDate').strftime('%m/%d/%Y') if conflict.get('lastObsData') is not None else ''
+            lastObsDate = conflict['lastObsDate'].strftime('%m/%d/%Y') if conflict['lastObsDate']is not None else ''
             return [Paragraph(searched.pcode, self.styleSheet)
                   , Paragraph(lastObsDate, self.styleSheet)
                   , Paragraph(', '.join(set([s.grade.grade for s in searched.session_set.all()]))
@@ -120,7 +121,9 @@ class SourceConflictsReport(Report):
                , Paragraph('<b>Complete</b>', self.styleSheet)
                , Paragraph('<b>Spec Line</b>', self.styleSheet)
                  ]]
-        data.extend(map(genProposalInfo, self.conflicts[pcode]['conflicts']))
+        conflictedPcodes = set([c['searchedProp'].pcode for c in self.conflicts[pcode]['conflicts']])
+        #data.extend(map(genProposalInfo, self.conflicts[pcode]['conflicts']))
+        data.extend(map(genProposalInfo, conflictedPcodes))
         t = Table(data, colWidths = [60, 50, 50, 280, 100, 20, 50, 150])
         t.setStyle(self.tableStyle)
         return t
