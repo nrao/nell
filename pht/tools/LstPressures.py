@@ -590,9 +590,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         elif category == ALLOCATED:    
             # which time attribute of the session to use?
             if subCategory == SEMESTER:
-                totalTime = session.allotment.semester_time
+                # TBF: getTotalSemesterTime ?
+                totalTime = session.allotment.semester_time 
             else:
-                totalTime = session.allotment.allocated_time
+                totalTime = session.getTotalAllocatedTime() #session.allotment.allocated_time
         elif category == REQUESTED:
             totalTime = session.getTotalRequestedTime()
         return totalTime
@@ -611,6 +612,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         elif session.semester.semester == self.nextSemester.semester \
             and session.allotment is not None \
             and session.allotment.allocated_time is not None \
+            and session.allotment.allocated_repeats is not None \
             and session.grade is not None \
             and session.grade.grade in ['A', 'B', 'C']:
             if session.allotment.semester_time is not None and \

@@ -91,14 +91,29 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         """ % id
         curr.execute(query)
         data['requested_time'] = curr.fetchone()[0]
-        # allocated time
+        # allocated time - we have to take into account whether
+        # outer_repeats is being used or not:
+        # First sum them w/ out outer_repeats
         query = """
-          select sum(a.allocated_time) 
-          from pht_sessions as s join pht_allotements as a on s.allotment_id = a.id 
-          where proposal_id = %s
+          select sum(a.allocated_time * a.allocated_repeats) 
+          from (pht_sessions as s join pht_allotements as a on s.allotment_id = a.id) 
+          left outer join pht_monitoring as m on s.monitoring_id = m.id
+          where proposal_id = %s and (m.outer_repeats IS NULL or m.outer_repeats = 0)
         """ % id
         curr.execute(query)
-        data['allocated_time'] = curr.fetchone()[0]
+        time1 = curr.fetchone()[0]
+        time1 = time1 if time1 is not None else 0.0
+        # Next, sum them WITH outer_repeats
+        query = """
+          select sum(a.allocated_time * a.allocated_repeats * m.outer_repeats) 
+          from (pht_sessions as s join pht_allotements as a on s.allotment_id = a.id) 
+          left outer join pht_monitoring as m on s.monitoring_id = m.id
+          where proposal_id = %s and (m.outer_repeats IS NOT NULL or m.outer_repeats != 0)
+        """ % id
+        curr.execute(query)
+        time2 = curr.fetchone()[0]
+        time2 = time1 if time1 is not None else 0.0
+        data['allocated_time'] = time1 + time2 
         # now the hard time - all the DSS project's time accounting!
         tb_data = ProposalHttpAdapter.jsonProjectTimeAccounting(curr
             , id

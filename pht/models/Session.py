@@ -144,6 +144,21 @@ class Session(models.Model):
 
     # *** End Section: accessing the corresponding DSS project
 
+    def getTotalAllocatedTime(self):
+        "Total = time * repeats [* outer_repeats]"
+        if self.allotment is not None and \
+          self.allotment.allocated_time is not None and \
+          self.allotment.allocated_repeats is not None:
+            total = self.allotment.allocated_time * self.allotment.allocated_repeats
+            if self.monitoring is None or \
+              self.monitoring.outer_repeats is None or \
+              self.monitoring.outer_repeats == 0:
+                return total
+            else:
+                return total * self.monitoring.outer_repeats
+        else:
+            return None
+
     def getTotalRequestedTime(self):
         "Total = requested * repeats"
         if self.allotment is not None and \
@@ -354,7 +369,7 @@ class Session(models.Model):
         return self.monitoring is not None \
             and self.allotment is not None \
             and self.monitoring.start_time is not None \
-            and self.allotment.repeats is not None \
+            and self.allotment.allocated_repeats is not None \
             and self.allotment.period_time is not None \
             and self.separation is not None \
             and self.interval_time is not None
@@ -464,7 +479,7 @@ class Session(models.Model):
 
         # gather what we need
         start = self.monitoring.start_time 
-        repeats = self.allotment.repeats 
+        repeats = self.allotment.allocated_repeats 
         duration = self.allotment.period_time 
         interval = self.interval_time
         sep = 1 if self.separation.separation == 'day' else 7
@@ -490,7 +505,7 @@ class Session(models.Model):
 
         # gather what we need - inner
         start = self.monitoring.start_time 
-        repeats = self.allotment.repeats 
+        repeats = self.allotment.allocated_repeats 
         duration = self.allotment.period_time 
         interval = self.interval_time
         sep = 1 if self.separation.separation == 'day' else 7

@@ -321,8 +321,44 @@ Ext.define('PHT.controller.Sessions', {
         return a - b;
     },
 
+    getTotalRequestedTime: function(session) {
+        var repeats = parseFloat(session.get('repeats'));
+        var requested = parseFloat(session.get('requested_time'));
+        if ((!isNaN(repeats)) && (!isNaN(requested))) {
+            return repeats * requested;
+        } else {
+            return null; 
+        }
+    },
+
+    getTotalAllocatedTime: function(session) {
+        var repeats = parseFloat(session.get('allocated_repeats'));
+        var allocated = parseFloat(session.get('allocated_time'));
+        var outer_repeats = parseFloat(session.get('outer_repeats'));
+        if ((!isNaN(repeats)) && (!isNaN(allocated))) {
+            return repeats * allocated;
+        } else {
+            return null; 
+        }
+    },
+
+    // Try an add or subtract operation using the first param.
+    tryOp: function(tryThis, that, op) {
+        if (!isNaN(tryThis)) {
+            return op(tryThis, that);
+        } else {
+            return that;
+        }    
+    },
+
     updateProposalTimesFromSession: function(session, proposal, store, op) {
+
+        console.log('updateProposalTimesFromSession');
+        console.log(session);
+        console.log(proposal);
+        console.log(op);
         // simple enough - we need to add or subtract these new values
+        /*
         var repeats = parseFloat(session.get('repeats'));
         var requested = parseFloat(session.get('requested_time'));
         var allocated = parseFloat(session.get('allocated_time'));
@@ -336,7 +372,17 @@ Ext.define('PHT.controller.Sessions', {
             }
             proposal.set('requested_time', pReq);
 
-        }    
+        } 
+        */
+        var requested = this.getTotalRequestedTime(session);
+        if (requested != null) {
+            var pReq = parseFloat(proposal.get('requested_time'));
+            pReq = this.tryOp(pReq, requested, op)
+            proposal.set('requested_time', pReq);
+        }
+
+
+        /*
         if (!isNaN(allocated)) {
             var pAlloc = parseFloat(proposal.get('allocated_time'));
             if (!isNaN(pAlloc)) {
@@ -345,7 +391,15 @@ Ext.define('PHT.controller.Sessions', {
                 pAlloc = allocated;
             }
             proposal.set('allocated_time', pAlloc);
-        }    
+        } 
+        */
+
+        var allocated = this.getTotalAllocatedTime(session);
+        if (allocated != null) {
+            var pAlloc = parseFloat(proposal.get('allocated_time'));
+            pAlloc = this.tryOp(pAlloc, allocated, op)
+            proposal.set('allocated_time', pAlloc);
+        }
         store.sync()
     },
 
@@ -384,6 +438,7 @@ Ext.define('PHT.controller.Sessions', {
         sessFields = ['requested_time',
                       'repeats',
                       'allocated_time',
+                      'allocated_repeats',
                       'grade']
         if (this.selectedSessions.length <= 1) {
             record   = form.getRecord()

@@ -79,20 +79,25 @@ class Proposal(models.Model):
 
     def allocatedTime(self):
         "Simply the sum of the sessions' time"
-        return sum([s.allotment.allocated_time \
+        #return sum([s.allotment.allocated_time \
+        #    for s in self.session_set.all() \
+        #        if s.allotment is not None \
+        #        and s.allotment.allocated_time is not None])
+        return sum([s.getTotalAllocatedTime() \
             for s in self.session_set.all() \
-                if s.allotment is not None \
-                and s.allotment.allocated_time is not None])
+            if s.getTotalAllocatedTime() is not None])
 
     def allocatedTimeByGrade(self):
         "Sum the session times by grade."
         allotments = {}
         for s in self.session_set.all():
-            if s.allotment is not None and s.allotment.allocated_time is not None:
+            #if s.allotment is not None and s.allotment.allocated_time is not None:
+            time = s.getTotalAllocatedTime()
+            if time is not None:
                 if allotments.has_key(s.grade.grade):
-                    allotments[s.grade.grade] += s.allotment.allocated_time
+                    allotments[s.grade.grade] += time
                 else:
-                    allotments[s.grade.grade] = s.allotment.allocated_time
+                    allotments[s.grade.grade] = time
         return allotments.iteritems()
 
     def isThesis(self):
