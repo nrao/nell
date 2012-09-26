@@ -35,7 +35,7 @@ from pht.models import *
 from Report import Report
  
 def defaultFilter(proposal):
-    return 'TGBT' not in proposal.pcode and 'GBT' in proposal.pcode
+    return 'TGBT' not in proposal.pcode # and 'GBT' in proposal.pcode
 
 class ProposalReport(Report):
 
@@ -59,7 +59,6 @@ class ProposalReport(Report):
         self.getProposals(semester, filter = filter)
         data.extend(map(self.genRow, self.proposals))
         data.append([])
-        data.append(self.genStats())
         proposalTable = Table(data, colWidths = self.colWidths())
         for i in range(6, len(self.proposals), 5):
             self.tableStyle.add('LINEABOVE', (0, i),(-1, i), 1, colors.black)
@@ -68,7 +67,7 @@ class ProposalReport(Report):
         bandStatsTable = self.genBandStatsTable()
 
         # write the document to disk (or something)
-        self.doc.build([proposalTable, PageBreak(), bandStatsTable]
+        self.doc.build([proposalTable, self.genStats(), PageBreak(), bandStatsTable]
                      , onFirstPage = self.makeHeaderFooter
                      , onLaterPages = self.makeHeaderFooter)
 
@@ -115,16 +114,7 @@ class ProposalReport(Report):
         stats = '<br/>'.join(['<b>%s: %s for %s hours (%.2f days)</b>' % (t, n, h, h / 24.)
                               for t, (n, h) in typeStats.iteritems()])
         stats += '<br/><b>Number of proposals %s for %s hours (%.2f days)</b>' % (numProp, reqhours, reqdays)
-        return [Paragraph('', self.styleSheet)
-              , Paragraph(stats, self.styleSheet)
-              , Paragraph('', self.styleSheet)
-              , Paragraph('', self.styleSheet)
-              , Paragraph('', self.styleSheet)
-              , Paragraph('', self.styleSheet)
-              , Paragraph('', self.styleSheet)
-              , Paragraph('', self.styleSheet)
-              , Paragraph('', self.styleSheet)
-              ]
+        return Paragraph(stats, self.styleSheet)
 
     def getProposals(self, semester, filter = None):
         if filter is None:
