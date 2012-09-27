@@ -179,8 +179,8 @@ class TestSourceConflicts(TestCase):
 
     def test_withinProprietaryDate(self):
 
-        s = self.proposal.session_set.all()[0]
-        src0 = self.proposal.source_set.all()[0]
+        s      = self.proposal.session_set.all()[0]
+        src0   = self.proposal.source_set.all()[0]
         tpcode = self.proposal.pcode
 
         # Need a DSS Project for this
@@ -195,10 +195,10 @@ class TestSourceConflicts(TestCase):
 
         # turn the crank
         sc = SourceConflicts()
-        _, result = sc.withinProprietaryDate(src0, proposal, now = datetime(2012, 6, 12))
+        _, result = sc.withinProprietaryDate(proposal, now = datetime(2012, 6, 12))
         self.assertTrue(result)
 
-        _, result = sc.withinProprietaryDate(src0, proposal, now = datetime(2013, 6, 12))
+        _, result = sc.withinProprietaryDate(proposal, now = datetime(2013, 6, 12))
         self.assertTrue(not result)
 
     def test_findConflicts(self):

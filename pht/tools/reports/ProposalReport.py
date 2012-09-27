@@ -35,7 +35,7 @@ from pht.models import *
 from Report import Report
  
 def defaultFilter(proposal):
-    return 'TGBT' not in proposal.pcode # and 'GBT' in proposal.pcode
+    return 'TGBT' not in proposal.pcode
 
 class ProposalReport(Report):
 
