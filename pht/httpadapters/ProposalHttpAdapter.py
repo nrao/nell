@@ -112,7 +112,7 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         """ % id
         curr.execute(query)
         time2 = curr.fetchone()[0]
-        time2 = time1 if time1 is not None else 0.0
+        time2 = time2 if time2 is not None else 0.0
         data['allocated_time'] = time1 + time2 
         # now the hard time - all the DSS project's time accounting!
         tb_data = ProposalHttpAdapter.jsonProjectTimeAccounting(curr
