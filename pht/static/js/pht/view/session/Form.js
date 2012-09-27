@@ -3,7 +3,7 @@ Ext.define('PHT.view.session.Form', {
     alias:  'widget.sessionform',
     bodyStyle:'padding:5px',
     trackResetOnLoad: true,
-    width: 600,
+    width: 675,
     fieldDefaults: {
         labelAlign: 'top',
         msgTarget: 'side',
