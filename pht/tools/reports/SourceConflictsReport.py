@@ -31,6 +31,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle, 
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units  import inch
 
+from scheduler.models import Semester as DssSemester
 from pht.models import *
 from pht.utilities import *
 from pht.tools.SourceConflicts import SourceConflicts
@@ -45,18 +46,24 @@ class SourceConflictsReport(Report):
         self.headerStyleSheet = getSampleStyleSheet()['Normal']
         self.headerStyleSheet.fontSize = 15
 
-    def report(self, conflicts, semester = None, level = 0):
+    def report(self, conflicts, semester = None, pcode = None, level = 0):
         self.conflicts = conflicts
         self.conflictedProposals = sorted([k for k in self.conflicts.keys() if len(self.conflicts[k]['conflicts']) > 0])
         self.title = self.title if semester is None else \
                      self.title + " for Semester %s" % semester
+        self.title = self.title if pcode is None else \
+                     self.title + " for %s" % pcode
 
 
-        data = []
+        rows = []
         for pcode in self.conflictedProposals:
-            data.extend(self.genRecordHeader(pcode))
-            data.append(self.genTable(pcode))
-            data.append(PageBreak())
+            rows.extend(self.genRecordHeader(pcode))
+            rows.append(self.genTable(pcode))
+            rows.append(self.getBreak())
+            rows.append(Paragraph('Conflicted Proposal Information', self.styleSheet))
+            rows.append(self.genProposalsTable(pcode))
+            rows.append(PageBreak())
+        data = rows or [Paragraph("No conflicts", self.styleSheet)]
 
         # write the document to disk (or something)
         self.doc.build(data, onFirstPage = self.makeHeaderFooter, onLaterPages = self.makeHeaderFooter)
@@ -84,6 +91,43 @@ class SourceConflictsReport(Report):
         t.setStyle(self.tableStyle)
         return t
 
+    def genProposalsTable(self, pcode):
+        def genProposalInfo(conflictedPcode):
+            conflict     = [c for c in self.conflicts[pcode]['conflicts'] if c['searchedProp'].pcode == conflictedPcode][0]
+            searched     = conflict['searchedProp']
+            complete     = ''
+            thisSemester = 'V' if DssSemester.getCurrentSemester().semester == searched.semester.semester else 'S'
+            if searched.dss_project is not None and searched.dss_project.complete:
+                complete = 'C' 
+
+            lastObsDate = conflict['lastObsDate'].strftime('%m/%d/%Y') if conflict['lastObsDate']is not None else ''
+            return [Paragraph(searched.pcode, self.styleSheet)
+                  , Paragraph(lastObsDate, self.styleSheet)
+                  , Paragraph(', '.join(set([s.grade.grade for s in searched.session_set.all()]))
+                            , self.styleSheet)
+                  , Paragraph(searched.title, self.styleSheet)
+                  , Paragraph(searched.pi.getLastFirstName(), self.styleSheet)
+                  , Paragraph(thisSemester, self.styleSheet)
+                  , Paragraph(complete, self.styleSheet)
+                  , Paragraph(searched.spectral_line or '', self.styleSheet)
+                    ]
+            
+        data = [[Paragraph('<b>Pcode</b>', self.styleSheet)
+               , Paragraph('<b>Last Obs</b>', self.styleSheet)
+               , Paragraph('<b>Grades</b>', self.styleSheet)
+               , Paragraph('<b>Title</b>', self.styleSheet)
+               , Paragraph('<b>PI</b>', self.styleSheet)
+               , Paragraph('', self.styleSheet)
+               , Paragraph('<b>Complete</b>', self.styleSheet)
+               , Paragraph('<b>Spec Line</b>', self.styleSheet)
+                 ]]
+        conflictedPcodes = set([c['searchedProp'].pcode for c in self.conflicts[pcode]['conflicts']])
+        #data.extend(map(genProposalInfo, self.conflicts[pcode]['conflicts']))
+        data.extend(map(genProposalInfo, conflictedPcodes))
+        t = Table(data, colWidths = [60, 50, 50, 280, 100, 20, 50, 150])
+        t.setStyle(self.tableStyle)
+        return t
+
     def genHeader(self):
         return [Paragraph('<b>Source</b>', self.styleSheet)
               , Paragraph('<b>Proposal </b>', self.styleSheet)
@@ -105,8 +149,8 @@ class SourceConflictsReport(Report):
               , Paragraph(searchedProp, self.styleSheet)
               , Paragraph(conflict['searchedSrc'].target_name, self.styleSheet)
               , Paragraph(spLine[:100] if spLine is not None else '', self.styleSheet)
-              , Paragraph(float2sexigesimel(conflict['searchedSrc'].ra), self.styleSheet)
-              , Paragraph(float2sexigesimel(conflict['searchedSrc'].dec), self.styleSheet)
+              , Paragraph(rad2sexHrs(conflict['searchedSrc'].ra), self.styleSheet)
+              , Paragraph(rad2sexDeg(conflict['searchedSrc'].dec), self.styleSheet)
               , Paragraph('%.4f' % rad2arcMin(conflict['distance']), self.styleSheet)
               , Paragraph('%.4f' % rad2arcMin(abs(conflict['targetSrc'].ra - conflict['searchedSrc'].ra)), self.styleSheet)
               , Paragraph('%.4f' % rad2arcMin(abs(conflict['targetSrc'].dec - conflict['searchedSrc'].dec)), self.styleSheet)
@@ -144,30 +188,37 @@ class SourceConflictsReport(Report):
         return '%s, %s' % (days[dt.weekday()],  dt.strftime('%B %d, %Y'))
 
 if __name__ == '__main__':
-    import sys
-    try:
-        semester, level = sys.argv[1:]
-    except:
-        print "Usage: SourceConflictsReport.py <semester> <level>"
-        sys.exit()
-    sc = SourceConflicts(semester = semester)
-    # TBF: Remove this later.  Limiting search space for testing.
-    sc.findConflicts(
-       proposals = Proposal.objects.filter(semester__semester = semester).order_by('pcode')
-       #proposals = Proposal.objects.filter(semester__semester = semester).order_by('pcode')[:5]
-     #, allProposals = Proposal.objects.filter(semester__semester = '12A'))
-     , allProposals = Proposal.objects.all())
-    if level == 'all':
-        sc.filterConflicts(0)
-        scr = SourceConflictsReport('sourceConflictsReportLevel0.pdf')
-        scr.report(sc.filteredConflicts, semester = semester, level = 0)
-        sc.filterConflicts(1)
-        scr = SourceConflictsReport('sourceConflictsReportLevel1.pdf')
-        scr.report(sc.filteredConflicts, semester = semester, level = 1)
-        sc.filterConflicts(2)
-        scr = SourceConflictsReport('sourceConflictsReportLevel2.pdf')
-        scr.report(sc.filteredConflicts, semester = semester, level = 2)
+    import argparse
+    parser = argparse.ArgumentParser(description='Command line tool for running GB PHT Source Conflict Reports.  Specify at least a semester or pcode.')
+    parser.add_argument('-s','--semester', dest="semester", help='Semester of the proposals you wish to check for source conflicts.')
+    parser.add_argument('-p','--pcode', dest="pcode", help='Run source conflicts for a given pcode (Ex. GBT12B-100)')
+    parser.add_argument('-l','--level', dest="level", type = int, default = -1, help='Level of conflicts to check.  Options are "0", "1", "2" (defaults to all).')
+
+    args = parser.parse_args()
+
+    sc = SourceConflicts(semester = args.semester)
+    if args.pcode is not None:
+        sc.findConflicts(proposals = Proposal.objects.filter(pcode = args.pcode))
+        filename = args.pcode
     else:
-        sc.filterConflicts(int(level))
-        scr = SourceConflictsReport('sourceConflictsReportLevel' + level + '.pdf')
-        scr.report(sc.filteredConflicts, semester = semester, level = int(level))
+        sc.findConflicts(
+            #  Uncomment for testing.
+            #proposals = Proposal.objects.filter(semester__semester = args.semester)[:5]
+            )
+        filename = args.semester
+
+    levelMap = ['all', 'sameReceiver', 'sameReceiver-proprietaryPeriod']
+    if args.level == -1:
+        sc.filterConflicts(0)
+        scr = SourceConflictsReport('sourceConflictsReport-%s-all.pdf' % filename)
+        scr.report(sc.filteredConflicts, semester = args.semester, pcode = args.pcode, level = 0)
+        sc.filterConflicts(1)
+        scr = SourceConflictsReport('sourceConflictsReport-%s-sameReceiver.pdf' % filename)
+        scr.report(sc.filteredConflicts, semester = args.semester, pcode = args.pcode, level = 1)
+        sc.filterConflicts(2)
+        scr = SourceConflictsReport('sourceConflictsReport-%s-sameReceiver-proprietaryPeriod.pdf' % filename)
+        scr.report(sc.filteredConflicts, semester = args.semester, pcode = args.pcode, level = 2)
+    else:
+        sc.filterConflicts(args.level)
+        scr = SourceConflictsReport('sourceConflictsReport-%s-%s.pdf' % (filename, levelMap[args.level]))
+        scr.report(sc.filteredConflicts, semester = args.semester, pcode = args.pcode, level = args.level)

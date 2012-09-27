@@ -702,7 +702,14 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             # too much poor?
             tmp.poor[i] = gradeA.poor[i] + carryover.poor[i]
             if tmp.poor[i] > availability.poor[i]:
-                remainder.poor[i] = tmp.poor[i] - availability.poor[i]
+                if carryover.poor[i] < availability.poor[i]:
+                    remainder.poor[i] = tmp.poor[i] - availability.poor[i]
+                    # take time out of poor
+                    allocated.poor[i] = availability.poor[i] - carryover.poor[i]
+                else:
+                    # just move grade A if carryover more than availability
+                    remainder.poor[i] = gradeA.poor[i]
+                    allocated.poor[i] = 0
                 changes.poor[i] = remainder.poor[i]
                 # take time out of poor
                 allocated.poor[i] = availability.poor[i] - carryover.poor[i]
@@ -710,9 +717,13 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 tmp.good[i] = gradeA.good[i] + carryover.good[i] + remainder.poor[i]
                 # but is this too much?
                 if tmp.good[i] > availability.good[i]:
-                    remainder.good[i] = tmp.good[i] - availability.good[i]
-                    # take time from good
-                    allocated.good[i] = availability.good[i] - carryover.good[i]
+                    if carryover.good[i] < availability.good[i]:
+                        remainder.good[i] = tmp.good[i] - availability.good[i] if carryover.good[i] < availability.good[i] else gradeA.good[i] + remainder.poor[i]
+                        # take time from good
+                        allocated.good[i] = availability.good[i] - carryover.good[i]
+                    else:
+                        remainder.good[i] = gradeA.good[i] + remainder.poor[i]
+                        allocated.good[i] = 0
                     # and give it to excellent
                     allocated.excellent[i] = gradeA.excellent[i] + remainder.good[i]
                     # record this change

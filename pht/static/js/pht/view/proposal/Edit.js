@@ -266,6 +266,7 @@ Ext.define('PHT.view.proposal.Edit', {
             if (disabledItems.indexOf(item.getName()) > -1) {
                 item.disable();
             }
+            console.log(item.getName());
             this.blankState[item.getName()] = item.allowBlank;
             item.allowBlank = true;
         }, this);
@@ -278,7 +279,10 @@ Ext.define('PHT.view.proposal.Edit', {
             if (disabledItems.indexOf(item.getName()) > -1) {
                 item.enable();
             }
-            item.allowBlank = this.blankState[item.getName()];
+            var blankState = this.blankState[item.getName()];
+            if (blankState != undefined){
+                item.allowBlank = blankState;
+            }
         }, this);
     },
 });

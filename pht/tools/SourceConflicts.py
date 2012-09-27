@@ -139,7 +139,6 @@ class SourceConflicts(object):
         targetProp - the proposal that we use to determine the search rad
         searchedProp - checking srcs in targetProp against one's in here
         """
-
         tpcode = targetProp.pcode
 
         if searchRadius is None:
@@ -165,30 +164,28 @@ class SourceConflicts(object):
                     d = self.getAngularDistance(trgSrc, srchSrc)
                     if d <= searchRadius and self.passesInclusionCheck(searchedProp):
                         conflict = True
-                        srcConflict = {
-                        'targetSrc' : trgSrc
-                      , 'searchedSrc' : srchSrc
-                      , 'searchedProp' : searchedProp
-                      , 'distance' : d
-                      , 'level' : 0
+                        srcConflict = {'targetSrc' : trgSrc
+                                     , 'searchedSrc' : srchSrc
+                                     , 'searchedProp' : searchedProp
+                                     , 'distance' : d
+                                     , 'level' : 0
                         }
                         self.conflicts[tpcode]['conflicts'].append(srcConflict)
                 except:
-                    print "could not calc distance"
-                    srcConflict = {
-                        'targetSrc' : trgSrc
-                      , 'searchedSrc' : srchSrc
-                      , 'searchedProp' : searchedProp
-                        }
+                    if not self.quiet:
+                        print "could not calc distance"
+                    srcConflict = {'targetSrc' : trgSrc
+                                 , 'searchedSrc' : srchSrc
+                                 , 'searchedProp' : searchedProp
+                    }
                     self.badDistances.append(srcConflict)
                 if conflict:
-                    lastObsDate, proprietaryPeriod = self.withinProprietaryDate(srchSrc, searchedProp)
+                    lastObsDate, proprietaryPeriod = self.withinProprietaryDate(searchedProp)
                     self.conflicts[tpcode]['conflicts'][-1]['lastObsDate'] = lastObsDate
                     # see if it's even worse - check the other levels
                     if self.hasSameRcvrConflict(targetProp, searchedProp):
                         self.conflicts[tpcode]['conflicts'][-1]['level'] = 1
                         # check the next level - proprietary period!
-                        #if self.withinProprietaryDate(srchSrc, searchedProp):
                         if proprietaryPeriod:
                             self.conflicts[tpcode]['conflicts'][-1]['level'] = 2
                             
@@ -196,7 +193,7 @@ class SourceConflicts(object):
         self.filteredConflicts = {}
         for k, v in self.conflicts.iteritems():
             self.filteredConflicts[k] = copy.copy(self.conflicts[k])
-            self.filteredConflicts[k]['conflicts'] = [c for c in self.conflicts[k]['conflicts'] if c['level'] == level]
+            self.filteredConflicts[k]['conflicts'] = [c for c in self.conflicts[k]['conflicts'] if level <= c['level']]
 
     def hasSameRcvrConflict(self, targetProp, searchedProp):
         """
@@ -229,7 +226,8 @@ class SourceConflicts(object):
         if grade in ('B', 'C') and \
            searchedProp.semester.semester < dss.Semester.getCurrentSemester().semester and \
            len(periods) == 0:
-            print searchedProp.pcode, 'is too old and shitty'
+            if not self.quiet:
+                print searchedProp.pcode, 'is too old and shitty'
             return False
         # Rule 2
         elif len(periods) == 0 and grade == 'A':
@@ -240,7 +238,7 @@ class SourceConflicts(object):
             return True
         return True # We shouldn't get here, but if we do might as well include proposal.
 
-    def withinProprietaryDate(self, srchSrc, searchedProp, now = datetime.now()):
+    def withinProprietaryDate(self, searchedProp, now = datetime.now()):
         "Any observations within a year?"
         lastObsDate = None
         if searchedProp.dss_project is not None:

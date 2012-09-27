@@ -77,35 +77,44 @@ class ProposalReport(Report):
                , Paragraph('<b>#Proposals</b>', self.styleSheet)
                , Paragraph('<b>Req Hrs</b>', self.styleSheet)
                ]]
-        bandStats = {'NoBand' : (0, 0)}
+        bandStats = {}
         for rcvr in Receiver.objects.all():
             bandStats[rcvr.code] = (0, 0)
-            
+
         for p in self.proposals:
             bands = p.bands()
-            band  = bands[0] if len(bands) > 0 else 'NoBand'
-            #if band not in bandStats.keys():
-            if False:
-                bandStats[band] = (1, p.requestedTime())
-            else:
-                num, time = bandStats[band]
-                bandStats[band] = (num + 1, time + p.requestedTime())
+            backends = p.backends()
+            if 'Z' in backends:
+                bands += 'Z'
+            for band in bands:
+                num, time = bandStats.get(band, (0,0))
+                bandStats[band] = (num + 1, time + (p.requestedTime() / float(len(bands))))
+    
         sortedBandStats = sorted(bandStats.iteritems(), key = lambda stat: stat[0])
         for band, stats in sortedBandStats:
             data.append([Paragraph(band, self.styleSheet)
                        , Paragraph('%s' % stats[0], self.styleSheet)
-                       , Paragraph('%s' % stats[1], self.styleSheet)
+                       , Paragraph('%s' % round(stats[1], 2), self.styleSheet)
                        ])
         bandStatsTable = Table(data, colWidths = [50, 50, 50])
         bandStatsTable.setStyle(self.tableStyle)
 
         return bandStatsTable
+
     def genStats(self):
+        
         numProp  = len(self.proposals)
         reqhours = sum([p.requestedTime() for p in self.proposals])
+        typeStats = {}
+        for p in self.proposals:
+            num, hrs = typeStats.get(p.proposal_type.type, (0, 0))
+            typeStats[p.proposal_type.type] = num + 1, hrs + p.requestedTime()
+            
         reqdays  = reqhours / 24.
 
-        stats = '<b>Number of proposals %s for %s hours (%.2f days)</b>' % (numProp, reqhours, reqdays)
+        stats = '<br/>'.join(['<b>%s: %s for %s hours (%.2f days)</b>' % (t, n, h, h / 24.)
+                              for t, (n, h) in typeStats.iteritems()])
+        stats += '<br/><b>Number of proposals %s for %s hours (%.2f days)</b>' % (numProp, reqhours, reqdays)
         return [Paragraph('', self.styleSheet)
               , Paragraph(stats, self.styleSheet)
               , Paragraph('', self.styleSheet)
