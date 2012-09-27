@@ -137,8 +137,10 @@ Ext.define('PHT.controller.PhtController', {
             this.setRecord(record, values);
 
             // Is this a new record?
-            if (record.get('id') == '') {
-                // save on the server side 
+            console.log(record);
+
+            if (record.phantom){
+                // save on the server side
                 record.save({
                     callback: function(obj) {
                         // TBF: just used this object?
