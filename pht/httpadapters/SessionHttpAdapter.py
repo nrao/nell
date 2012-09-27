@@ -248,7 +248,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
           f.optical_night,
           f.transit_flat,
           f.guaranteed,
-          a.repeats as inner_repeats,
+          a.allocated_repeats as inner_repeats,
           s.interval_time as inner_interval,
           m.start_time,
           m.window_size,
@@ -314,8 +314,8 @@ class SessionHttpAdapter(PhtHttpAdapter):
         #    and self.session.allotment.repeats is not None:
         #    requested_total = self.session.allotment.requested_time \
         #        * self.session.allotment.repeats
-        requested_total = session.getTotalRequestedTime()
-        allocated_total = session.getTotalAllocatedTime()
+        requested_total = self.session.getTotalRequestedTime()
+        allocated_total = self.session.getTotalAllocatedTime()
 
         data = {'id'                      : self.session.id
               , 'name'                    : self.session.name
@@ -345,8 +345,8 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'requested_time'          : self.session.allotment.requested_time
               , 'repeats'                 : self.session.allotment.repeats
               , 'allocated_time'          : self.session.allotment.allocated_time
-              , 'allocated_repeats'          : self.session.allotment.allocated_repeats
-              , 'allocated_total'          : allocated_total 
+              , 'allocated_repeats'       : self.session.allotment.allocated_repeats
+              , 'allocated_total'         : allocated_total 
               , 'semester_time'           : self.session.allotment.semester_time
               , 'period_time'             : self.session.allotment.period_time
               , 'low_freq_time'           : self.session.allotment.low_freq_time
@@ -373,7 +373,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'receivers_granted'       : self.session.get_receivers_granted()
               # monitoring
               # first some duplicates (readonly):
-              , 'inner_repeats'           : self.session.allotment.repeats
+              , 'inner_repeats'           : self.session.allotment.allocated_repeats
               , 'inner_separation'        : separation
               , 'inner_interval'          : self.session.interval_time
               # now stuff that is unique
