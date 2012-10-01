@@ -62,6 +62,7 @@ class TestLstPressures(TestCase):
         s.target.save()
         time = 6.5 # hrs
         s.allotment.allocated_time = time # hrs
+        s.allotment.allocated_repeats = 1 
         s.allotment.save()
         s.save()
         self.session = s
@@ -1081,6 +1082,7 @@ class TestLstPressures(TestCase):
             s.save()
             s.allotment.requested_time = times[i]
             s.allotment.allocated_time = 0.0
+            s.allotment.allocated_repeats = 1 
             s.grade = None
             s.allotment.repeats = 1.0
             s.allotment.save()
@@ -1250,6 +1252,7 @@ class TestLstPressures(TestCase):
             s.save()
             s.allotment.requested_time = time
             s.allotment.allocated_time = 0.0
+            s.allotment.allocated_repeats = 1 
             s.grade = None
             s.allotment.repeats = 1.0
             s.allotment.save()
@@ -1296,7 +1299,6 @@ class TestLstPressures(TestCase):
         self.assertEqual(70.0, lst.getIgnoredRequestedTime())
         self.assertEqual(45.0, lst.newAstronomyTotalPs.sum())
         
-        # As we get closer to the TAC meeting, and the actual start of the 13A semester, we want the carryover to actually reflect what time is left at the start of 13A, not the current time remaining.  
         # If we go back to using next semester, we should see the carryover go down:
         lst.carryOverUseNextSemester = True # change how carryover calc!
         ps = lst.getPressures(sessions = sessions)

@@ -135,7 +135,17 @@ class SessionHttpAdapter(PhtHttpAdapter):
             data['requested_total'] = requested * repeats
         except:    
             data['requested_total'] = None
-
+        # add in the total allocated time - not such simple math
+        allocated = data['allocated_time']
+        repeats = data['allocated_repeats']
+        outer = data['outer_repeats']
+        try:
+            total = allocated * repeats
+            if outer is not None and outer > 0:
+                total = total * outer
+            data['allocated_total'] = total    
+        except:    
+            data['allocated_total'] = None
         return data
 
     @staticmethod
@@ -219,6 +229,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
           a.requested_time,
           a.repeats,
           a.allocated_time,
+          a.allocated_repeats,
           a.semester_time,
           a.period_time,
           a.low_freq_time,
@@ -237,7 +248,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
           f.optical_night,
           f.transit_flat,
           f.guaranteed,
-          a.repeats as inner_repeats,
+          a.allocated_repeats as inner_repeats,
           s.interval_time as inner_interval,
           m.start_time,
           m.window_size,
@@ -298,11 +309,13 @@ class SessionHttpAdapter(PhtHttpAdapter):
         solar_avoid = self.session.target.solar_avoid
         if solar_avoid is not None:
             solar_avoid = rad2deg(solar_avoid)
-        requested_total = None
-        if self.session.allotment.requested_time is not None \
-            and self.session.allotment.repeats is not None:
-            requested_total = self.session.allotment.requested_time \
-                * self.session.allotment.repeats
+        #requested_total = None
+        #if self.session.allotment.requested_time is not None \
+        #    and self.session.allotment.repeats is not None:
+        #    requested_total = self.session.allotment.requested_time \
+        #        * self.session.allotment.repeats
+        requested_total = self.session.getTotalRequestedTime()
+        allocated_total = self.session.getTotalAllocatedTime()
 
         data = {'id'                      : self.session.id
               , 'name'                    : self.session.name
@@ -332,6 +345,8 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'requested_time'          : self.session.allotment.requested_time
               , 'repeats'                 : self.session.allotment.repeats
               , 'allocated_time'          : self.session.allotment.allocated_time
+              , 'allocated_repeats'       : self.session.allotment.allocated_repeats
+              , 'allocated_total'         : allocated_total 
               , 'semester_time'           : self.session.allotment.semester_time
               , 'period_time'             : self.session.allotment.period_time
               , 'low_freq_time'           : self.session.allotment.low_freq_time
@@ -358,7 +373,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'receivers_granted'       : self.session.get_receivers_granted()
               # monitoring
               # first some duplicates (readonly):
-              , 'inner_repeats'           : self.session.allotment.repeats
+              , 'inner_repeats'           : self.session.allotment.allocated_repeats
               , 'inner_separation'        : separation
               , 'inner_interval'          : self.session.interval_time
               # now stuff that is unique
@@ -461,6 +476,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
         self.session.allotment.repeats = self.getFloat(data, 'repeats') #data.get('repeats')
         self.session.allotment.requested_time = self.getFloat(data, 'requested_time')
         self.session.allotment.allocated_time = self.getFloat(data, 'allocated_time')
+        self.session.allotment.allocated_repeats = self.getFloat(data, 'allocated_repeats')
         self.session.allotment.semester_time = self.getFloat(data, 'semester_time')
         self.session.allotment.period_time = self.getFloat(data, 'period_time')
         self.session.allotment.low_freq_time = self.getFloat(data, 'low_freq_time')

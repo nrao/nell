@@ -43,6 +43,21 @@ class TestSession(TestCase):
         self.session.allotment.repeats = 1
         self.session.allotment.save()
 
+    def test_getTotalAllocatedTime(self):
+
+        self.assertEqual(None, self.session.getTotalAllocatedTime())
+        self.session.allotment.allocated_time = 21.0
+        self.session.allotment.allocated_repeats = 1
+        self.session.allotment.save()
+
+        self.assertEqual(21.0, self.session.getTotalAllocatedTime())
+        self.session.allotment.allocated_repeats = 2
+        self.session.allotment.save()
+        self.assertEqual(42.0, self.session.getTotalAllocatedTime())
+        self.session.monitoring.outer_repeats = 3
+        self.session.monitoring.save()
+        self.assertEqual(42.0*3, self.session.getTotalAllocatedTime())
+
     def test_determineFreqCategory(self):
         self.assertEqual('LF', self.session.determineFreqCategory())
 
@@ -116,7 +131,7 @@ class TestSession(TestCase):
         week = SessionSeparation.objects.get(separation = 'week')
         self.session.monitoring.start_time = start
         self.session.allotment.period_time = dur
-        self.session.allotment.repeats = 3
+        self.session.allotment.allocated_repeats = 3
         self.session.interval_time = 3
         self.session.separation = day
         self.session.monitoring.outer_repeats = 3
@@ -157,7 +172,7 @@ class TestSession(TestCase):
         day = SessionSeparation.objects.get(separation = 'day')
         self.session.monitoring.start_time = start
         self.session.allotment.period_time = dur
-        self.session.allotment.repeats = 5
+        self.session.allotment.allocated_repeats = 5
         self.session.interval_time = 4
         self.session.separation = day
         self.session.allotment.save()

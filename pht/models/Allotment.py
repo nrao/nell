@@ -27,6 +27,7 @@ class Allotment(models.Model):
     repeats        = models.IntegerField(null = True)
     requested_time = models.FloatField(null = True) # hrs
     allocated_time = models.FloatField(null = True) # hrs
+    allocated_repeats = models.IntegerField(null = True, default = 1) # hrs
     semester_time  = models.FloatField(null = True) # hrs
     period_time    = models.FloatField(null = True) # hrs
     low_freq_time  = models.FloatField(null = True) # hrs
