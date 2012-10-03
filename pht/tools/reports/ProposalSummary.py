@@ -107,6 +107,9 @@ class ProposalSummary(ProposalReport):
         t.wrapOn(canvas, 3*72, 2*72)
         t.drawOn(canvas, 10, 10)
 
+    def order(self, proposals):
+        return sorted(proposals, key = lambda p: p.normalizedSRPScore)
+
 if __name__ == '__main__':
     import sys
     if len(sys.argv) < 2:
