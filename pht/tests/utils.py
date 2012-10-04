@@ -33,6 +33,7 @@ def createSession(p):
       , 'semester' : sem
       , 'requested_time' : 3.5  
       , 'allocated_time' : 3.5  
+      , 'allocated_repeats' : 1  
       , 'session_type' : 'Open - Low Freq'
       , 'observing_type' : 'continuum' 
       , 'weather_type' : 'Poor'

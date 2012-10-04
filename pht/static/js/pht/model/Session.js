@@ -29,6 +29,8 @@ Ext.define('PHT.model.Session', {
            , 'requested_time'
            , 'requested_total'
            , 'allocated_time'
+           , 'allocated_repeats'
+           , 'allocated_total'
            , 'semester_time'
            , 'period_time'
            , 'low_freq_time'
