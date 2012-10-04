@@ -410,6 +410,10 @@ Ext.define('PHT.controller.Sessions', {
         // First, editing one, or multiple records?
         if (this.selectedSessions.length <= 1) {
             var record   = form.getRecord();
+            var sTypeStore = this.getSessionTypesStore();
+            var sType = sTypeStore.getAt(
+                sTypeStore.find('type', record.get('session_type')));
+            record.set('session_type_code', sType.get('abbreviation'));
             var f = form.getForm();
             if (f.isValid()) {
                 this.updateReadOnlyFields(record);
@@ -417,8 +421,12 @@ Ext.define('PHT.controller.Sessions', {
                 form.loadRecord(record);
             }        
         } else {
+            var sTypeStore = this.getSessionTypesStore();
             for (i=0; i < this.selectedSessions.length; i++) {
                 record = this.selectedSessions[i];
+                var sType = sTypeStore.getAt(
+                    sTypeStore.find('type', record.get('session_type')));
+                record.set('session_type_code', sType.get('abbreviation'));
                 this.updateReadOnlyFields(record);
             }
             this.updateProposalExplorerMulti(this.selectedSessions, originalValues, sessFields);

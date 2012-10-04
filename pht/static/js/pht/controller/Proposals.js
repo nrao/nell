@@ -368,10 +368,12 @@ Ext.define('PHT.controller.Proposals', {
             var store = this.getPrimaryInvestigatorsStore()
             var pi_id = values['pi_id'];
             var ind = store.find('id', pi_id);
-            var pi = store.getAt(ind);
-            // now extract their name and add it to our values
-            var pi_name = pi.get('name');
-            values['pi_name'] = pi_name;
+            if (ind > 0) {
+                var pi = store.getAt(ind);
+                // now extract their name and add it to our values
+                var pi_name = pi.get('name');
+                values['pi_name'] = pi_name;
+            }
             record.set(values);
     },
 

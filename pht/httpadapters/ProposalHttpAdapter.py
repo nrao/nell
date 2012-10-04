@@ -379,7 +379,7 @@ class ProposalHttpAdapter(PhtHttpAdapter):
             self.proposal.save()
             self.update_comments(data)
 
-        self.proposal.save()    
+        self.proposal.save()
         self.notify(self.proposal)
 
     def update_comments(self, data):
