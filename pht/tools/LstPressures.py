@@ -710,7 +710,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                     # just move grade A if carryover more than availability
                     remainder.poor[i] = gradeA.poor[i]
                     allocated.poor[i] = 0
-
                 changes.poor[i] = remainder.poor[i]
                 # take time out of poor
                 allocated.poor[i] = availability.poor[i] - carryover.poor[i]
