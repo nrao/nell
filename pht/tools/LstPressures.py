@@ -24,6 +24,8 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
+from django.db.models import Q
+
 from datetime import date, datetime, timedelta
 from utilities import SLATimeAgent as sla
 from utilities import TimeAgent
@@ -129,18 +131,19 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # weather requested?
         self.adjustWeatherBins = adjustWeatherBins
 
-        # for computing pressures based on weather type, on 
-        # holding these results
-        self.weather = LstPressureWeather()
 
         # for reporting
+        self.pressures = [] 
         self.sessions = []
         self.badSessions = []
         self.pressuresBySession = {}
         self.weatherPressuresBySession = {}
         self.futureSessions = []
         self.semesterSessions = []
-        self.pressures = [] 
+        self.maintenancePs = Pressures() 
+        self.shutdownPs = Pressures() 
+        self.testingPs = Pressures() 
+
 
         # for computing day light hours
         self.sun = Sun()
@@ -157,13 +160,23 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.futureSemesters = [s.semester for s in sems][1:] 
         #['13A', '13B', '14A', '14B', '15A', '15B']
 
+        # for computing pressures based on weather type, on 
+        # holding these results
+        self.weather = LstPressureWeather(semester = self.nextSemester.semester)
+
         # TBF: get from DB?
         self.grades = ['A', 'B', 'C']
         self.weatherTypes = ['Poor', 'Good', 'Excellent']
+        self.weatherMap = {'poor' : 'Low Freq'
+                         , 'good' : 'Hi Freq 1'
+                         , 'excellent' : 'Hi Freq 2'
+                          }
 
         self.initPressures()
         if initFlagWeights:
             self.initFlagWeights()
+
+        self.testSessions = self.getTestSessions()
 
     def newHrs(self):
         return numpy.array([0.0]*self.hrs)
@@ -177,6 +190,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # next semesters committed time to maintenance, testing etc.
         self.carryoverTotalPs = numpy.array([0.0]*self.hrs)
         self.carryoverPs = Pressures() 
+        self.carryoverGradePs = { 'A' : Pressures()
+                                , 'B' : Pressures()
+                                , 'C' : Pressures()
+                                }
 
         # Available time for the semester - carryover
         self.remainingTotalPs = self.newHrs()
@@ -192,6 +209,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.newAstronomyTotalPs = numpy.array([0.0]*self.hrs)
         # the sum of grades A, B, C
         self.newAstronomyGradeTotalPs = numpy.array([0.0]*self.hrs)
+        # TBF: use copy of dictionary above
         self.gradePs = { 'A' : Pressures()
                  , 'B' : Pressures()
                  , 'C' : Pressures()
@@ -328,6 +346,18 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             fs = fs * self.rfiWeights 
         return fs
 
+    def getTestSessions(self):
+        "What are the testing sessions for this semester?"
+        sem = self.nextSemester.semester
+        testing = Observing_Type.objects.get(type='testing')
+        commissioning = Observing_Type.objects.get(type='commissioning')
+        calibration = Observing_Type.objects.get(type = 'calibration')
+        ss = Session.objects.filter(Q(semester__semester = sem) 
+                                    , Q(observing_type = testing) \
+                                    | Q(observing_type = commissioning)\
+                                    | Q(observing_type = calibration))
+        return ss
+
     def usePeriodsForPressures(self, session):
         "What sessions should use their periods for computing pressures?"
         pcodes = ['Maintenance', 'Shutdown']
@@ -380,6 +410,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         return ps
 
     def getSessionPeriods(self, session):
+        print "getting periods for session: ", session
         #assert session.session_type.type != 'Elective'
         return DSSPeriod.objects.filter( \
             session = session.dss_session
@@ -395,12 +426,15 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         blocked.
         """
 
-        ps = [0.0] * self.hrs
 
         start = period.start
         dur   = period.duration
         end   = period.end()
         
+        # for periods < 24 hours long (99% of them), this will be 0.0
+        days = (end - start).days
+        ps = [days] * self.hrs
+
         # convert local time range to LST range
         lstStart = sla.Absolute2RelativeLST(start)
         lstEnd = sla.Absolute2RelativeLST(end)
@@ -421,11 +455,11 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                     # by how much?
                     if hr >= s and hr+1 < e:
                         # the whole thing
-                        ps[hr] = 1.0
+                        ps[hr] += 1.0
                     elif hr < s and (hr+1) > s:
-                        ps[hr] = (hr+1) - s
+                        ps[hr] += (hr+1) - s
                     else:
-                        ps[hr] = e - hr
+                        ps[hr] += e - hr
             
         return ps 
 
@@ -517,7 +551,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
             #reporting
             self.pressuresBySession[s.__str__()] = (cat, subcat, ps, sum(ps))
-
         # make sure we have a record of what the original pressure was
         # before we adjusted for overfilled weather
         self.originalGradePs = self.gradePs.copy()
@@ -528,11 +561,22 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
               , self.weather.availability
              )
 
+        
+        # here's some more measures of 'availability':
+        # what's available after all the pre-assigned maintenance,
+        # testing, and shutdown?
+        preAssignedPs = self.maintenancePs + self.shutdownPs + self.testingPs
+        self.postMaintAvailabilityPs = self.weather.availability - preAssignedPs 
+
+        # what's available after just grade A carryover?
+        self.remainingFromGradeACarryoverPs = self.postMaintAvailabilityPs - self.carryoverGradePs['A']
+
+
         # What's *really* available for this semester?
         self.remainingTotalPs = self.weather.availabilityTotal - \
             self.carryoverTotalPs
         self.remainingPs = self.weather.availability - self.carryoverPs
-            
+
         # now convert the buckets to expected output
         return self.jsonDict()
 
@@ -549,7 +593,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # use category like you think you would
         if category == CARRYOVER:
             self.carryoverTotalPs += ps
-            self.carryoverPs += self.weather.binSession(session, ps)
+            wps = self.weather.binSession(session, ps)
+            self.carryoverPs += wps 
         elif category == ALLOCATED:
             # TBF: a few of these totals and checks aren't
             # necessary anymore because we're not letting
@@ -566,9 +611,29 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         elif category == REQUESTED:
             # this goes into the requested bucket
             self.requestedTotalPs += ps
-            self.requestedPs += self.weather.binSession(session, ps)
+            wps = self.weather.binSession(session, ps)
+            self.requestedPs += wps 
         else:
             raise 'unhandled category'
+
+        # special cases that need the pressures binned by weather
+        if self.usePeriodsForPressures(session):
+            if session.proposal.pcode == 'Maintenance':
+                self.maintenancePs += wps 
+            elif session.proposal.pcode == 'Shutdown':
+                self.shutdownPs += wps
+            else:
+                raise "Only Maintenance and Shutdown should use periods"
+        elif session in self.testSessions:                
+            self.testingPs += wps
+        elif category == CARRYOVER:
+            if session in self.testSessions:
+                print "WARNING: adding test session to astro carryover: ", session
+            # Maintenance, Shutdown and testing was carryover (above)
+            # , but we want to report on all the other carryover by grade
+            if session.grade is not None and not self.hasFailingGrade(session):
+                grade = session.grade.grade
+                self.carryoverGradePs[grade] += wps
 
     def getSessionTime(self, session, category, subCategory):
         """
@@ -812,6 +877,13 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             for g in self.grades:
                 print self.formatResults("      %s_%s" % (w, g)
                                        , self.gradePs[g].getType(w))
+
+        print ""
+        print "Next Semester Astronomy Summary: "
+        for g in self.grades:
+            print self.formatResults("      %s" % g
+                                   , self.gradePs[g].allTypes())
+
         print ""
         print "Original (non-adjusted) Grade A Next Semester Astromony: "
         for w in self.weatherTypes:
@@ -853,6 +925,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         for s in self.semesterSessions:
             print "    ", s
 
+   
+
         # everybodies pressure!
         print ""
         print "Pressures by Session: "
@@ -872,9 +946,13 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 print self.formatResults(lbl, ps, lblFrmt = "%35s")
 
         # for Brian Truitt:
-        print "Remaining Hours by LST (0-23)"
-        for r in self.remainingTotalPs:
-            print "%5.2f" % r
+        #print "Remaining Hours by LST (0-23)"
+        #for r in self.remainingTotalPs:
+        #    print "%5.2f" % r
+
+    def sessionKey2Id(self, key):
+        "name (id) -> id"
+        return int(key.split(' ')[-1][1:-1])
 
     def reportPressures(self, label, total, wTypes):
         "Report on pressures and how they break down by weather."
@@ -888,7 +966,108 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         label = lblFrmt % label
         rs = ["%7.2f" % results[i] for i in range(len(results))]
         return label + ": " + ' '.join(rs)
-    
+   
+    def reportSemesterSummary(self):
+
+        print "Time Analysis for Semester %s" % self.nextSemester.semester
+        print "%s - %s" % (self.nextSemesterStart, self.nextSemesterEnd)
+        print ""
+        print "Hours in Semester: %5.2f    GC[%5.2f]" % (self.weather.availability.total()
+                                                       , self.weather.availability.total(gc = True)
+                                                        )
+        print "Maintenance Hours: %5.2f    GC[%5.2f]" % (self.maintenancePs.total()
+                                                       , self.maintenancePs.total(gc = True)
+                                                        )
+        print "Test, Comm, Calib Hours: %5.2f    GC[%5.2f]" % (self.testingPs.total()                                                 , self.testingPs.total(gc = True)
+                                                        )
+        print "Shutdown Hours: %5.2f    GC[%5.2f]" % (self.shutdownPs.total() 
+                                                    , self.shutdownPs.total(gc =True)
+                                                      )
+        print ""
+        label = "Avialbable for ALL Astronomy during %s" % self.nextSemester.semester
+        self.reportSemesterSummaryTable(label, self.postMaintAvailabilityPs)
+        for g in self.grades:
+            print ""
+            self.reportSemesterSummaryCarryover(g.upper()
+                                              , self.carryoverGradePs[g.upper()])
+
+
+        print ""
+        label = "Available for NEW Astronomy during 12B (Grade A Carry)"
+        self.reportSemesterSummaryTable(label
+                                      , self.remainingFromGradeACarryoverPs)
+
+        print ""
+        label = "Available for NEW Astronomy during 12B (All Grades)"
+        self.reportSemesterSummaryTable(label
+                                      , self.remainingPs)
+
+    def reportSemesterSummaryCarryover(self, grade, ps):
+        print "Group %s Time: " % grade
+        print self.formatSummaryHrs("Hours Total:", ps)
+        for w in self.weatherTypes:
+            print self.formatSummaryHrs("Hours for %s:" % self.weatherMap[w.lower()], ps, type = w.lower())
+        
+    def reportSemesterSummaryTable(self, label, ps):
+        print label 
+        print self.formatSummaryHrs("Hours Total:", ps)
+        for w in self.weatherTypes:
+            print self.formatSummaryHrs("Hours for %s:" % self.weatherMap[w.lower()], ps, type = w.lower())
+        
+        
+
+
+    def formatSummaryHrs(self, label, ps, type = None):
+        
+        return "%25s %5.2f    GC[%5.2f]" % (label
+                                          , ps.total(type = type)
+                                          , ps.total(type = type
+                                                   , gc = True))
+
+    def reportSocorroGrade(self, grade):
+        "For comparing our pressures to the table under Soc's plots"
+
+        # grade A Allocated, broken down by session
+        print ""
+        print "Grade %s Pressures by Session: " % grade
+        gradeAtotal = self.newHrs()
+        gradeAnum = 0 
+        gradeAallocated = 0.0 
+        pids = {}
+        for k in sorted(self.pressuresBySession.keys()):
+            bucket, sb, ps, total = self.pressuresBySession[k]
+            #try:
+            #if 'VLBA' not in k:
+            if 1:
+                id = self.sessionKey2Id(k)
+                s = Session.objects.get(id = id)
+                if bucket == ALLOCATED and s.grade.grade == grade:
+                    pid = s.proposal.id
+                    if not pids.has_key(pid):
+                        pids[pid] = 1
+                    else:
+                        pids[pid] += 1
+                    gradeAtotal += ps
+                    gradeAnum += 1
+                    if s.allotment.semester_time is not None and sb == 'semester':
+                        gradeAallocated += s.allotment.semester_time
+                    else:    
+                        gradeAallocated += s.getTotalAllocatedTime()
+                    lbl = "%s %s (%s, %s, %5.2f vs %5.2f vs %5.2f)" % (k, s.semester.semester, bucket, sb, total, s.getTotalAllocatedTime(), sum(ps))
+                    print self.formatResults(lbl, ps, lblFrmt = "%35s")
+                    
+        print self.formatResults("Grade A Total: ", gradeAtotal, lblFrmt = "%35s")
+        print "Grade A Total across LSTs: %5.2f" % sum(gradeAtotal)
+        print "Grade A allocated: %5.2f" % gradeAallocated  
+        # print table of proposal ID's
+        t = 0
+        ks = sorted(pids.keys())
+        print "| Proposal ID | Count |" 
+        for k in ks:
+            print "| %12d | %7d |" % (k, pids[k]) 
+            t += pids[k]
+        print "Count total: %d" % t 
+
     def socorroFormat(self, session, ps):
         """
         Each row looks like this:
@@ -1174,14 +1353,18 @@ if __name__ == '__main__':
        
     lst = LstPressures(carryOverUseNextSemester = carryOverUseNextSemester
                      , adjustWeatherBins = adjustWeatherBins
-                     , today = datetime(2012, 3, 1)
+    #                 , today = datetime(2012, 3, 1)
                       )
     #s = Session.objects.get(id = 7569)                  
     #ps = lst.getPressures(sessions = [s])
+    #ss = Session.objects.all().exclude(semester__semester = '13A')
+    #ss = Session.objects.filter(proposal__pcode = 'GBT12B-385')
+    #ps = lst.getPressures(ss)
     ps = lst.getPressures()
     #lst.reportSocorroFormat('12B')
     #lst.reportSocorroWeatherFormat('12B')
     lst.report()
+    #lst.reportSemesterSummary()
 
     #exp = []
     #eps = 0.001
