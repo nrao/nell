@@ -92,6 +92,25 @@ class Pressures(object):
     def getType(self, type):
         return self.__getattribute__(type.lower())
 
+    def allTypes(self):
+        "Ignore the pressure distinctions by weather type"
+        return self.poor + self.good + self.excellent
+
+    def total(self, gc = False, type = None):
+        "What are all these LST pressures, added up?"
+        total = 0.0
+        if type is None:
+            types = ['poor', 'good', 'excellent']
+        else:
+            types = [type]
+        for t in types:
+            if not gc:
+                total += sum(self.getType(t))
+            else:
+                # just sum up across the galactic center
+                total += sum(self.getType(t)[15:21])
+        return total        
+
 class LstPressureWeather(object):
 
     """
