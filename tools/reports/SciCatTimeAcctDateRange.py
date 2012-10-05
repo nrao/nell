@@ -41,7 +41,9 @@ def report(cat, start, end):
     startDate = datetime.strptime(start, '%m-%d-%Y')
     e         = datetime.strptime(end, '%m-%d-%Y')
     endDate   = datetime(e.year, e.month, e.day, 23, 59, 59)
-    sessions  = Sesshun.objects.filter(observing_type = ot)
+    #sessions  = Sesshun.objects.filter(observing_type = ot)
+    sessions  = Sesshun.objects.filter(frequency__gte = 18)
+    #sessions = [s for s in Sesshun.objects.all() if any( [r in s.rcvrs_specified() for r in ('K', 'Ka', 'Q', 'MBA', 'KFPA', 'W')])]
     ta = TimeAccounting()
     ta.reportObservingTypeDateRange(cat, sessions, startDate, endDate)
 

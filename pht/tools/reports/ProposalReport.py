@@ -40,7 +40,7 @@ def defaultFilter(proposal):
 class ProposalReport(Report):
 
     """
-    This is an abstract class for the Proposal reports, like
+    This is an abstract class for the Proposal table reports, like
     Proposal Ranking, etc.
     """
 

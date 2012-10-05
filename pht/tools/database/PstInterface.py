@@ -113,9 +113,22 @@ class PstInterface(object):
         self.cursor.execute(q)
         return dict([(k, v if v is not None and v != 'None' else '') for k, v in self.fetchoneDict().iteritems()])
 
+    def getProposalTechnicalReviews(self, pcode):
+        pcode = pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/')
+        q = """
+        select tr.commentsForAuthors, tr.commentsForTAC, person.firstName, person.lastName
+        from (((proposal as p 
+          join proposal_reviews as pr on pr.proposal_id = p.proposal_id) 
+          join technical_reviews as tr on tr.review_id = pr.review_id)
+          join referees as ref on ref.referee_id = pr.referee_id)
+          join person on person.person_id = ref.person_id
+        where PROP_ID = '%s'
+        """ % pcode
+        self.cursor.execute(q)
+        return self.cursor.fetchall()
+        
     def getSrcField(self, field, table):
         q = "select DISTINCT %s from %s order by %s" % (field, table, field)
-        print q
         self.cursor.execute(q)
         keys = self.getKeys()
         return [dict(zip(keys, map(self.safeUnicode, row))) for row in self.cursor.fetchall()]
