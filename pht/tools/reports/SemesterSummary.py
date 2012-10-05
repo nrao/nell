@@ -149,6 +149,7 @@ class SemesterSummary(Report):
                   , self.ta.carryOver[grade]['fixed'].gc.total)
         hrsTotal = (self.ta.carryOver[grade]['times'].total.total
                   , self.ta.carryOver[grade]['times'].gc.total)
+        hrsTotal = (hrsTotal[0] + hrsFixed[0], hrsTotal[1] + hrsFixed[1])          
         hrsLowFreq = (self.ta.carryOver[grade]['times'].total.lowFreq
                     , self.ta.carryOver[grade]['times'].gc.lowFreq)
         hrsHiFreq1 = (self.ta.carryOver[grade]['times'].total.hiFreq1
@@ -157,7 +158,7 @@ class SemesterSummary(Report):
                     , self.ta.carryOver[grade]['times'].gc.hiFreq2)
         
         data = [[self.pg('Group %s time' % grade)]
-               , self.hrsPg('Hours Total', hrsTotal)  
+               , self.hrsPg('Hours Total', hrsTotal + hrsFixed)  
                , self.hrsPg('Fixed Hours', hrsFixed)
                , self.hrsPg('Hours for Low Freq', hrsLowFreq)
                , self.hrsPg('Hours for Hi Freq 1', hrsHiFreq1)
