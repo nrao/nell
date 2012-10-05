@@ -173,6 +173,18 @@ class SemesterTimeAccounting(object):
     time accounting quantities.
     For each quantity, there are two types: total, and those covered
     by the Galactic Center.
+    Here are the rules:
+    totalAv = total available time for the semester; simply the days in the semester * 24 hours.
+    preAssigned = pre assigned time for the semester; sum of the hours for Maintenance, Shutdown, and testing
+    astroAv = totalAv - preAssigned
+    carryover = hours from carryover - that is proposals from previous semesters *not* included in preAssigned. carryover = coA + coB + coC
+    coA, coB, coC = the carryover broken down by grade; 
+    newAstroAv = available for NEW astronomy in the semester.  newAstroAv = totalAv - preAssigned - carryover
+    newAstroAvCoA = available for NEW astronomy in the semester only taking grade A carryover into account.  newAstroAvCoA = totalAv - preAssigned - coA
+
+    Here's a summary of the rules:
+    astroAv = totalAv - preAssigned
+    newAstroAv = totalAv - preAssigned - carryover
     """
 
     def __init__(self, semester):
@@ -202,8 +214,8 @@ class SemesterTimeAccounting(object):
         self.testHrs = SemesterTimes()
         self.astronomyAvailableHrs = SemesterTimes()
         self.carryOver = {}
-        self.newAstronomyGradeAHrs = SemesterTimes()
-        self.newAstronomyAllGradeHrs = SemesterTimes()
+        #self.newAstronomyGradeAHrs = SemesterTimes()
+        #self.newAstronomyAllGradeHrs = SemesterTimes()
 
         self.lowFreqPercent = 0.50
         self.hiFreq1Percent = 0.25
@@ -228,7 +240,15 @@ class SemesterTimeAccounting(object):
         
         preAssigned = self.maintHrs + self.shutdownHrs + self.testHrs
         avail = preAssigned  + self.astronomyAvailableHrs
+
+
         assert avail.total == self.totalAvailableHrs.total
+
+        gradeACarryOver = self.carryOver['A']['times'].total.total + self.carryOver['A']['fixed'].total.total
+        assert self.newAstroAvailGradeAHrs.total.total == avail.total.total - preAssigned.total.total - gradeACarryOver   
+
+        totalCarryOver = sum([(self.carryOver[g]['times'].total.total + self.carryOver[g]['fixed'].total.total) for g in self.grades])
+        assert self.newAstroAvailAllGradeHrs.total.total == avail.total.total - preAssigned.total.total - totalCarryOver   
 
     def calcTotalAvailableHours(self):
 
@@ -699,8 +719,9 @@ class SemesterTimeAccounting(object):
         return SemesterTimes(total = t, gc = gc) 
         
 if __name__ == '__main__':
-    ta = SemesterTimeAccounting(semester = '12B') 
+    ta = SemesterTimeAccounting(semester = '13A') 
     ta.calculateTimeAccounting()
+    ta.checkTimes()
     ta.report()
        
        
