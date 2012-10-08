@@ -881,12 +881,12 @@ class TestLstPressures(TestCase):
 
         # here's the change we expect
         exp = Pressures() 
-        exp.poor = numpy.array([45.5]*lst.hrs)
-        exp.good = numpy.array([29.0]*lst.hrs)
+        exp.poor = numpy.array([46.0]*lst.hrs)
+        exp.good = numpy.array([28.5]*lst.hrs)
         exp.excellent = numpy.array([25.0]*lst.hrs)
         expC = Pressures() 
-        expC.poor = numpy.array([14.]*lst.hrs)
-        expC.good = numpy.array([14.]*lst.hrs)
+        expC.poor = numpy.array([13.5]*lst.hrs)
+        expC.good = numpy.array([13.5]*lst.hrs)
         for w in ['poor', 'good', 'excellent']:
             for i in range(lst.hrs):
                 self.assertEquals(exp.getType(w)[i]
@@ -918,13 +918,13 @@ class TestLstPressures(TestCase):
 
         # here's the change we expect
         exp = Pressures() 
-        exp.poor = numpy.array([45.5]*lst.hrs)
-        exp.good = numpy.array([35.25]*lst.hrs)
-        exp.excellent = numpy.array([38.75]*lst.hrs)
+        exp.poor = numpy.array([46.0]*lst.hrs)
+        exp.good = numpy.array([35.5]*lst.hrs)
+        exp.excellent = numpy.array([38.0]*lst.hrs)
         expC = Pressures() 
-        expC.poor = numpy.array([34.]*lst.hrs)
-        expC.good = numpy.array([20.25]*lst.hrs)
-        expC.excellent = numpy.array([13.75]*lst.hrs)
+        expC.poor = numpy.array([33.5]*lst.hrs)
+        expC.good = numpy.array([20.5]*lst.hrs)
+        expC.excellent = numpy.array([13.00]*lst.hrs)
         for w in ['poor', 'good', 'excellent']:
             for i in range(lst.hrs):
                 self.assertEquals(exp.getType(w)[i]

@@ -196,7 +196,7 @@ T_excellent_i = T_i
                 ):
 
         self.semester = DSSSemester.objects.get(semester = semester)
-        self.numDays = (self.semester.end() - self.semester.start()).days
+        self.numDays = self.semester.numDays() 
 
         self.wPoor = WeatherType.objects.get(type = 'Poor')
         self.wGood = WeatherType.objects.get(type = 'Good')

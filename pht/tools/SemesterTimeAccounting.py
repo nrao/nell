@@ -433,7 +433,7 @@ class SemesterTimeAccounting(object):
             s = self.semester
         else:    
             s = DSSSemester.objects.get(semester = semester)
-        return (s.end() - s.start()).days
+        return s.numDays() #(s.end() - s.start()).days
 
     def getGCHrs(self, hrs):
         """
