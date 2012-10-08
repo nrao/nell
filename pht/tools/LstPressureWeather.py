@@ -40,6 +40,10 @@ from scheduler.models import Semester as DSSSemester
 
 HRS = 24
 
+# Galactic Center LST range
+GC0 = 16
+GC1 = 21
+
 class Pressures(object):
 
     def __init__(self, poor = None, good = None, excellent = None):
@@ -108,7 +112,7 @@ class Pressures(object):
                 total += sum(self.getType(t))
             else:
                 # just sum up across the galactic center
-                total += sum(self.getType(t)[15:21])
+                total += sum(self.getType(t)[GC0:GC1])
         return total        
 
 class LstPressureWeather(object):
