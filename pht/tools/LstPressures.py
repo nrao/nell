@@ -41,6 +41,7 @@ from pht.tools.Sun    import Sun
 from pht.tools.LstPressureWeather import LstPressureWeather
 from pht.tools.LstPressureWeather import Pressures
 
+from copy import deepcopy
 import numpy
 import sys
 
@@ -151,14 +152,16 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         if today is None:
             today = datetime.today()
 
+        # Example: if today is march 1, 2012, then the current semester
+        # is 12A, but what we want to calculate things for is the
+        # next semester, which is 12B.  All semesters after that are
+        # 'future semesters' (13A, 13B, 14A, etc.)
         self.currentSemester = DSSSemester.getCurrentSemester(today = today)
         sems = DSSSemester.getFutureSemesters(today = today)
         self.nextSemester = sems[0]
         self.nextSemesterStart = self.nextSemester.start()
         self.nextSemesterEnd   = self.nextSemester.end()
-        # TBF: need future semesters in DSSSemester DB:
         self.futureSemesters = [s.semester for s in sems][1:] 
-        #['13A', '13B', '14A', '14B', '15A', '15B']
 
         # for computing pressures based on weather type, on 
         # holding these results
@@ -178,9 +181,17 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         self.testSessions = self.getTestSessions()
 
+        self.fixedType = SessionType.objects.get(type = 'Fixed')
+
     def newHrs(self):
         return numpy.array([0.0]*self.hrs)
 
+    def newPressuresByGrade(self):
+        return deepcopy({ 'A' : Pressures()
+                        , 'B' : Pressures()
+                        , 'C' : Pressures()
+                        })
+                        
     def initPressures(self):
         # init our buckets:
         # This is *everything* 
@@ -190,9 +201,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # next semesters committed time to maintenance, testing etc.
         self.carryoverTotalPs = numpy.array([0.0]*self.hrs)
         self.carryoverPs = Pressures() 
-        self.carryoverGradePs = { 'A' : Pressures()
-                                , 'B' : Pressures()
-                                , 'C' : Pressures()
+        self.carryoverGradePs = { 'fixed' : self.newPressuresByGrade()
+                                , 'rest'  : self.newPressuresByGrade()
+                                , 'total' : self.newPressuresByGrade()
                                 }
 
         # Available time for the semester - carryover
@@ -209,15 +220,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.newAstronomyTotalPs = numpy.array([0.0]*self.hrs)
         # the sum of grades A, B, C
         self.newAstronomyGradeTotalPs = numpy.array([0.0]*self.hrs)
-        # TBF: use copy of dictionary above
-        self.gradePs = { 'A' : Pressures()
-                 , 'B' : Pressures()
-                 , 'C' : Pressures()
-                 }
-        self.originalGradePs = { 'A' : Pressures()
-                               , 'B' : Pressures()
-                               , 'C' : Pressures()
-                               }
+        self.gradePs = self.newPressuresByGrade()
+        self.originalGradePs = self.newPressuresByGrade()
 
         # for holding what to do with overfilled weather bins
         self.changes = Pressures()
@@ -569,7 +573,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.postMaintAvailabilityPs = self.weather.availability - preAssignedPs 
 
         # what's available after just grade A carryover?
-        self.remainingFromGradeACarryoverPs = self.postMaintAvailabilityPs - self.carryoverGradePs['A']
+        self.remainingFromGradeACarryoverPs = self.postMaintAvailabilityPs - self.carryoverGradePs['total']['A']
 
 
         # What's *really* available for this semester?
@@ -633,7 +637,12 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             # , but we want to report on all the other carryover by grade
             if session.grade is not None and not self.hasFailingGrade(session):
                 grade = session.grade.grade
-                self.carryoverGradePs[grade] += wps
+                if session.session_type is not None and \
+                    session.session_type == self.fixedType:
+                    self.carryoverGradePs["fixed"][grade] += wps
+                else:    
+                    self.carryoverGradePs["rest"][grade] += wps
+                self.carryoverGradePs['total'][grade] += wps    
 
     def getSessionTime(self, session, category, subCategory):
         """
@@ -989,7 +998,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         for g in self.grades:
             print ""
             self.reportSemesterSummaryCarryover(g.upper()
-                                              , self.carryoverGradePs[g.upper()])
+                                              , self.carryoverGradePs) 
 
 
         print ""
@@ -1004,9 +1013,11 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
     def reportSemesterSummaryCarryover(self, grade, ps):
         print "Group %s Time: " % grade
-        print self.formatSummaryHrs("Hours Total:", ps)
+        g = grade.upper()
+        print self.formatSummaryHrs("Hours Total:", ps['total'][g])
+        print self.formatSummaryHrs("Hours Fixed:", ps['fixed'][g])
         for w in self.weatherTypes:
-            print self.formatSummaryHrs("Hours for %s:" % self.weatherMap[w.lower()], ps, type = w.lower())
+            print self.formatSummaryHrs("Hours for %s:" % self.weatherMap[w.lower()], ps['rest'][g], type = w.lower())
         
     def reportSemesterSummaryTable(self, label, ps):
         print label 
@@ -1359,12 +1370,14 @@ if __name__ == '__main__':
     #ps = lst.getPressures(sessions = [s])
     #ss = Session.objects.all().exclude(semester__semester = '13A')
     #ss = Session.objects.filter(proposal__pcode = 'GBT12B-385')
+    #s = Session.objects.get(name = 'BB303-01')
+    #ss = [s]
     #ps = lst.getPressures(ss)
     ps = lst.getPressures()
     #lst.reportSocorroFormat('12B')
     #lst.reportSocorroWeatherFormat('12B')
-    lst.report()
-    #lst.reportSemesterSummary()
+    #lst.report()
+    lst.reportSemesterSummary()
 
     #exp = []
     #eps = 0.001
