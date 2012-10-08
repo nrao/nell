@@ -94,6 +94,11 @@ class Semester(models.Model):
 
         return datetime(year, month, day)
 
+    def numDays(self):
+        # need to add one day, since end gives us the *last day* of 
+        # the semester, not the start of the next.
+        return (self.end() - self.start()).days + 1
+
     @staticmethod
     def getFutureSemesters(today = datetime.today()):
         "Returns a list of Semesters that start on or after the given date."
