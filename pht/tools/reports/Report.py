@@ -44,16 +44,16 @@ class Report(object):
         w, h      = letter
         self.orientation = orientation 
         if self.orientation == 'portrait':
-            pagesize = (w, h)
+            self.pagesize = (w, h)
         else:
-            pagesize = (h, w)
+            self.pagesize = (h, w)
 
         # set up the page    
         if topMargin is None:
-            self.doc  = SimpleDocTemplate(filename, pagesize=pagesize)
+            self.doc  = SimpleDocTemplate(filename, pagesize = self.pagesize)
         else:    
             self.doc  = SimpleDocTemplate(filename
-                                        , pagesize=pagesize
+                                        , pagesize = self.pagesize
                                         , topMargin = topMargin)
 
         self.styleSheet = getSampleStyleSheet()['Normal']

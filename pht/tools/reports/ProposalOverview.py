@@ -26,7 +26,7 @@ setup_environ(settings)
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units  import inch
@@ -38,12 +38,30 @@ from pht.tools.database import PstInterface
 class ProposalOverview(Report):
 
     def __init__(self, filename):
+        self.filename = filename
         super(ProposalOverview, self).__init__(filename, orientation = 'portrait')
 
     def setRankProposals(self, proposals):
         self.rankedProposals = sorted(proposals, key = lambda p: p.normalizedSRPScore)
-        
+
+    def semesterReport(self, proposals):
+        contents = []
+        for overview in map(self.genOverview, proposals):
+            contents.extend(overview)
+            contents.append(PageBreak())
+            
+        self.doc.build(contents
+                     , onFirstPage = self.makeFooter
+                     , onLaterPages = self.makeFooter)
+                       
     def report(self, proposal):
+        overview = self.genOverview(proposal)
+
+        self.doc.build(overview
+                     , onFirstPage = self.makeFooter
+                     , onLaterPages = self.makeFooter)
+                     
+    def genOverview(self,proposal):
         data = [[self.pg('<b>%s</b>' % proposal.pcode)
               , self.pg(proposal.title)
                 ]]
@@ -70,25 +88,22 @@ class ProposalOverview(Report):
                          ],
                           ]
         proposalTable = Table(proposalData, colWidths = [100, 100, 100, 100, 100])
-        mainData = [[proposalHeader], [proposalTable]]
-        main = Table(mainData, colWidths = [500])
-        main.setStyle(self.tableStyle)
-        
-        # write the document to disk (or something)
-        docData = [main]
-        docData.extend(self.genComments(proposal))
-        self.doc.build(docData
-                     , onFirstPage = self.makeFooter
-                     , onLaterPages = self.makeFooter)
-
+        psumContent = [[proposalHeader], [proposalTable]]
+        summary = Table(psumContent, colWidths = [500])
+        summary.setStyle(self.tableStyle)
+        overview = [summary]
+        overview.extend(self.genComments(proposal))
+        return overview
 
     def genComments(self, proposal):
         # Need to fetch some comments from the PST DB
         pst      = PstInterface()
         reviews  = pst.getProposalTechnicalReviews(proposal.pcode)
         ps       = ParagraphStyle(name = 'Heading1', fontSize = 10, leading = 16)
+        sciComment = proposal.comments.srp_to_pi if proposal.comments is not None else ''
+        sciComment = sciComment.replace('\n\n', '<br/><br/>') if sciComment is not None else ''
         contents = [Paragraph('<b>Scientific Ratings</b>', ps)
-                  , self.pg(proposal.comments.srp_to_pi.replace('\n\n', '<br/><br/>'))
+                  , self.pg(sciComment)
                   , Paragraph('<b>Technical Ratings</b>', ps)
                     ]
         reviewStyle  = ParagraphStyle(name = 'Review', fontSize = 8, leftIndent = 20)
@@ -103,8 +118,9 @@ class ProposalOverview(Report):
                , Paragraph('<b>To Selection Committee</b>', reviewStyle)
                , Paragraph(tech4Tac.replace('\n', '<br/>'), reviewStyle2)
                         ])
+        nraoComment = (proposal.comments.nrao_comment if proposal.comments is not None else '') or ''
         contents.extend([Paragraph('<b>NRAO Comments</b>', ps)
-                       , Paragraph(proposal.comments.nrao_comment, reviewStyle)
+                       , Paragraph(nraoComment, reviewStyle)
                          ])
         return contents
                 
@@ -113,12 +129,24 @@ class ProposalOverview(Report):
 
         
 if __name__ == '__main__':
-    import sys
-    if len(sys.argv) < 2:
-        print 'Usage: ProposalOverview.py <pcode>'
-        sys.exit()
-    pcode    = sys.argv[1]
-    proposal = Proposal.objects.get(pcode = pcode)
-    ps = ProposalOverview('proposalOverview_%s.pdf' % pcode)
-    ps.setRankProposals(Proposal.objects.filter(semester__semester = proposal.semester.semester))
-    ps.report(proposal)
+    import argparse
+    parser = argparse.ArgumentParser(description='Command line tool for running GB PHT Proposal Overview reports.  Specify at least a semester or pcode.')
+    parser.add_argument('-s','--semester', dest="semester", help='Semester of the proposals.')
+    parser.add_argument('-p','--pcode', dest="pcode", help='Run report for a given pcode (Ex. GBT12B-100)')
+    parser.add_argument('-t','--test', dest="test", type = bool, default = False, help='Include testing and commissioning proposals.')
+
+    args = parser.parse_args()
+
+    if args.pcode is not None:
+        proposal = Proposal.objects.get(pcode = args.pcode)
+        ps = ProposalOverview('proposalOverview_%s.pdf' % args.pcode)
+        ps.setRankProposals(Proposal.objects.filter(semester__semester = proposal.semester.semester))
+        ps.report(proposal)
+    elif args.semester is not None:
+        proposals = Proposal.objects.filter(semester__semester = args.semester).order_by('pcode')
+        if not args.test:
+            proposals = [p for p in proposals if 'TGBT' not in p.pcode]
+        ps = ProposalOverview('proposalOverview_%s.pdf' % args.semester)
+        ps.setRankProposals(proposals)
+        ps.semesterReport(proposals)
+        

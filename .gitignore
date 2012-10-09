@@ -4,6 +4,7 @@
 *.prof
 *.swp
 *.log
+*.pdf
 \#*\#
 
 settings.py
