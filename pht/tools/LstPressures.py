@@ -163,6 +163,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.nextSemesterEnd   = self.nextSemester.end()
         self.futureSemesters = [s.semester for s in sems][1:] 
 
+        self.timeRange = (self.nextSemesterStart
+                        , self.nextSemesterEnd)
+        self.published = None
+
         # for computing pressures based on weather type, on 
         # holding these results
         self.weather = LstPressureWeather(semester = self.nextSemester.semester)
@@ -414,7 +418,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         return ps
 
     def getSessionPeriods(self, session):
-        print "getting periods for session: ", session
         #assert session.session_type.type != 'Elective'
         return DSSPeriod.objects.filter( \
             session = session.dss_session
@@ -525,7 +528,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
          {'LST': 1.0, 'total': 3.0, 'A': 2.0, 'B': 1.0},
         ]
         """
-        
+    
+        self.published = datetime.now()
+
         self.initPressures()
 
         # what sessions are we doing this for?
