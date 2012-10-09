@@ -137,6 +137,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.sessions = []
         self.badSessions = []
         self.pressuresBySession = {}
+        self.weatherPressuresBySession = {}
         self.futureSessions = []
         self.semesterSessions = []
         self.pressures = [] 
@@ -558,6 +559,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             if session.grade is not None and not self.hasFailingGrade(session):
                 self.newAstronomyGradeTotalPs += ps
                 wps = self.weather.binSession(session, ps)
+                # reporting: keep track of this for comparisons w/ Socorro
+                self.weatherPressuresBySession[session.__str__()] = wps
                 grade = session.grade.grade
                 self.gradePs[grade] += wps
         elif category == REQUESTED:
@@ -587,9 +590,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         elif category == ALLOCATED:    
             # which time attribute of the session to use?
             if subCategory == SEMESTER:
-                totalTime = session.allotment.semester_time
+                # TBF: getTotalSemesterTime ?
+                totalTime = session.allotment.semester_time 
             else:
-                totalTime = session.allotment.allocated_time
+                totalTime = session.getTotalAllocatedTime() #session.allotment.allocated_time
         elif category == REQUESTED:
             totalTime = session.getTotalRequestedTime()
         return totalTime
@@ -608,6 +612,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         elif session.semester.semester == self.nextSemester.semester \
             and session.allotment is not None \
             and session.allotment.allocated_time is not None \
+            and session.allotment.allocated_repeats is not None \
             and session.grade is not None \
             and session.grade.grade in ['A', 'B', 'C']:
             if session.allotment.semester_time is not None and \
@@ -705,13 +710,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                     # just move grade A if carryover more than availability
                     remainder.poor[i] = gradeA.poor[i]
                     allocated.poor[i] = 0
-
                 changes.poor[i] = remainder.poor[i]
-                #print '-----------------------------------------------------'
-                #print 'Changed poor', i, changes.poor[i]
-                #print 'Allocated poor', i, allocated.poor[i]
-                #print 'Avaliability poor', i, availability.poor[i]
-                #print 'Carryover poor', i, carryover.poor[i]
+                # take time out of poor
+                allocated.poor[i] = availability.poor[i] - carryover.poor[i]
                 # and give it to good 
                 tmp.good[i] = gradeA.good[i] + carryover.good[i] + remainder.poor[i]
                 # but is this too much?
@@ -898,14 +899,19 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         label = lblFrmt % label
         rs = ["%7.2f" % results[i] for i in range(len(results))]
         return label + ": " + ' '.join(rs)
-            
-    def reportSocorroFormat(self, semester):
+    
+    def socorroFormat(self, session, ps):
         """
         Each row looks like this:
         (6529),3.00,3.00,3.00,3.00,3.00,3.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00
         where the first column is the session id, and they are ordered
         by id.
         """
+        psStr = ",".join(["%4.2f" % ps[i] for i in range(len(ps))])
+        return "(%d),%s" % (session.id, psStr)
+       
+    def reportSocorroFormat(self, semester):
+        "A report for comparing pressures of each session w/ Socorro's"
 
         # we're going to assume that we've already called getPressures,
         # we'll now use the stored results to create this.
@@ -917,9 +923,38 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
            # socorro only cares about the sessions that have been allocated time
            if cat != ALLOCATED:
                ps = [0.0]*24
-           psStr = ",".join(["%4.2f" % ps[i] for i in range(len(ps))])
-           print "(%d),%s" % (s.id, psStr)
-            
+           print self.socorroFormat(s, ps)
+
+    def reportSocorroWeatherFormat(self, semester):
+        "A report for comparing weather pressures of each session w/ Socorro's"
+
+        # we're going to assume that we've already called getPressures,
+        # we'll now use the stored results to create this.
+
+        ss = Session.objects.filter(semester__semester = semester).order_by('id')
+
+        # this is completely inefficient, but who cares:
+        for w in ['Poor', 'Good', 'Excellent']:
+            print w
+            for s in ss:
+                if self.weatherPressuresBySession.has_key(s.__str__()) and \
+                   self.pressuresBySession.has_key(s.__str__()):
+
+                    # we need to know if time was allocated
+                    cat, sc, ps, total = self.pressuresBySession[s.__str__()]
+                    # socorro only cares about the sessions that have been allocated time
+                    if cat != ALLOCATED:
+                        ps = [0.0]*24
+                    else:    
+                        # extract the lst pressures from the stored results
+                        wps = self.weatherPressuresBySession[s.__str__()]
+                        ps = wps.getType(w)
+                else:
+                    ps = [0.0]*24
+
+                print self.socorroFormat(s, ps)
+
+
     def getPressureWeights(self, category):
         catMap = {'RFI'     : self.computeRfiWeights
                 , 'Optical' : self.computeOpticalNightWeights
@@ -1152,9 +1187,12 @@ if __name__ == '__main__':
                      , adjustWeatherBins = adjustWeatherBins
                      , today = datetime(2012, 3, 1)
                       )
+    #s = Session.objects.get(id = 7569)                  
+    #ps = lst.getPressures(sessions = [s])
     ps = lst.getPressures()
-    lst.reportSocorroFormat('12B')
-    #lst.report()
+    #lst.reportSocorroFormat('12B')
+    #lst.reportSocorroWeatherFormat('12B')
+    lst.report()
 
     #exp = []
     #eps = 0.001

@@ -127,8 +127,11 @@ class DssExport(object):
             self.exportSession(s, project)
 
     def exportSession(self, pht_session, project):
+
+        allocated = pht_session.getTotalAllocatedTime()
+
         # Don't create the DSS session if it hasn't been allocated time.
-        if pht_session.allotment.allocated_time is None:
+        if allocated is None:
             return
 
         status = dss.Status.objects.create(
@@ -138,9 +141,9 @@ class DssExport(object):
           , backup     = False
         )
         allotment = dss.Allotment.objects.create(
-            psc_time          = pht_session.allotment.allocated_time 
-          , total_time        = pht_session.allotment.allocated_time
-          , max_semester_time = pht_session.allotment.allocated_time
+            psc_time          = allocated 
+          , total_time        = allocated
+          , max_semester_time = allocated
           , grade             = self.mapGrade(pht_session.grade.grade)
         )
         min_dur, max_dur = self.getMinMaxDuration(pht_session)
@@ -234,7 +237,7 @@ class DssExport(object):
 
     def getMinMaxDuration(self, pht_session):
         period_time = pht_session.allotment.period_time
-        duration    = pht_session.allotment.allocated_time / pht_session.allotment.repeats
+        duration = pht_session.getTotalAllocatedTime() / pht_session.allotment.allocated_repeats
 
         if pht_session.session_type.type in ('Fixed', 'Windowed', 'Elective'):
             return duration, duration
@@ -293,10 +296,8 @@ if __name__ == '__main__':
             DssExport(quiet = False).exportProposals(proposals)
         else:
             usage()
-        addAstrid = False # Too nervious about this to add to astrid by fault.
-        if addAstrid:
-            astridDB = AstridDB(dbname = 'turtle')
-            astridDB.addProjects(proposals)
+        astridDB = AstridDB(dbname = 'turtle')
+        astridDB.addProjects(proposals)
     except IndexError:
         usage()
 

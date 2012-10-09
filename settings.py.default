@@ -38,6 +38,7 @@ DOC_ROOT          = NELL_ROOT + '/docs/www'
 MEDIA             = '/home/dss.gb.nrao.edu/active/python/lib/python2.5/site-packages/django/contrib/admin/media' 
 SC_EQUATION_DEFS  = NELL_ROOT + '/calculator/data/equations.cfg'
 PHT_UPDATES_URL   = 'http://localhost:9000/pht/notify'
+PHT_UPDATES_SEMESTER = '12B'
 SETTINGS_CONF     = '/home/dss/release/conf/settings.cfg'
 config = ConfigParser.RawConfigParser()
 config.read(SETTINGS_CONF)

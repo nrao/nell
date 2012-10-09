@@ -137,8 +137,6 @@ Ext.define('PHT.controller.PhtController', {
             this.setRecord(record, values);
 
             // Is this a new record?
-            console.log(record);
-
             if (record.phantom){
                 // save on the server side
                 record.save({

@@ -28,7 +28,8 @@ class PhtHttpAdapter(object):
         transaction.commit()
 
         try:
-            fh = urllib2.urlopen(settings.PHT_UPDATES_URL + '?proposalIds=' + str(proposal.id))
+            url = settings.PHT_UPDATES_URL + '?semester=%s&proposalIds=%s' % (settings.PHT_UPDATES_SEMESTER, str(proposal.id))
+            fh = urllib2.urlopen(url)
             #fh = urllib2.urlopen(settings.PHT_UPDATES_URL
             #                   , data = urllib.urlencode({'proposalIds' : proposal.id}))
         except urllib2.URLError:
