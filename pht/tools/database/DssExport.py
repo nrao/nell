@@ -296,10 +296,8 @@ if __name__ == '__main__':
             DssExport(quiet = False).exportProposals(proposals)
         else:
             usage()
-        addAstrid = False # Too nervious about this to add to astrid by fault.
-        if addAstrid:
-            astridDB = AstridDB(dbname = 'turtle')
-            astridDB.addProjects(proposals)
+        astridDB = AstridDB(dbname = 'turtle')
+        astridDB.addProjects(proposals)
     except IndexError:
         usage()
 
