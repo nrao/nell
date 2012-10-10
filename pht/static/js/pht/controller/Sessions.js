@@ -409,7 +409,6 @@ Ext.define('PHT.controller.Sessions', {
             }
             this.updateProposalExplorerMulti(this.selectedSessions, originalValues, sessFields);
         }
-        this.getSessionsStore().sync();
         this.getSessionNamesStore().load();
         this.selectedSessions = [];                 
     },
