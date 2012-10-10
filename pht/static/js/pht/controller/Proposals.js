@@ -40,6 +40,7 @@ Ext.define('PHT.controller.Proposals', {
         'proposal.ListWindow',
         'proposal.Edit',
         'proposal.Import',
+        'proposal.Export',
         'proposal.Navigate',
         'proposal.TacTool',
         'proposal.Allocate',
@@ -87,6 +88,9 @@ Ext.define('PHT.controller.Proposals', {
             },            
             'proposalimport button[action=import]': {
                 click: this.importProposal
+            },            
+            'proposalexport button[action=export]': {
+                click: this.exportProposal
             },            
             'proposalnavigate': {
                 itemclick: this.editTreeNode
@@ -264,6 +268,12 @@ Ext.define('PHT.controller.Proposals', {
         f.setValues({pstProposalsCheckbox : 'on'});
     },
 
+    exportProposalsForm: function() {
+        var view = Ext.widget('proposalexport');
+        var form = view.down('form');
+        var f = form.getForm()
+    },
+
     refresh: function() {
         this.getProposalsStore().load();
         this.getProposalTreeStore().load();
@@ -296,7 +306,7 @@ Ext.define('PHT.controller.Proposals', {
             Ext.Ajax.request({
                 url: '/pht/import/semester',
                 params: {
-                    semester: values.semester
+                    semester: values.semester,
                 },
                 method: 'POST',
                 timeout: 300000,
@@ -319,6 +329,45 @@ Ext.define('PHT.controller.Proposals', {
                     me.refresh();
                 },
             });     
+        } else {
+            win.close();
+        }
+    },
+    
+    exportProposal: function(button) {
+        var me     = this;
+        var win    = button.up('window');
+            form   = win.down('form');
+            values = form.getValues();
+
+        win.setLoading(true);
+        if (values.proposalsCheckbox == 'on'){
+            Ext.Ajax.request({
+                url: '/pht/export',
+                params: {
+                    proposals: values.pcode,
+                    astrid:   values.astrid
+                },
+                method: 'POST',
+                timeout: 300000,
+                success: function(response) {
+                    win.close();
+                },
+             });
+        } else if (values.semesterCheckbox == 'on') {
+            Ext.Ajax.request({
+                url: '/pht/export/semester',
+                params: {
+                    semester: values.semester,
+                    astrid:   values.astrid
+                },
+                method: 'POST',
+                timeout: 300000,
+                success: function(response) {
+                    win.close();
+                },
+                
+             });
         } else {
             win.close();
         }

@@ -6,11 +6,12 @@ from datetime   import datetime, timedelta
 import simplejson as json
 
 from utilities import *
+from nell.utilities.database.external import AstridDB
 from nell.utilities import SLATimeAgent
 from users.decorators import admin_only
 from scheduler.models import *
 from models import *
-from pht.tools.database import PstImport
+from pht.tools.database import PstImport, DssExport
 from pht.tools.LstPressures import LstPressures
 from pht.tools.PlotLstPressures import PlotLstPressures
 from httpadapters import *
@@ -156,6 +157,39 @@ def print_lst_pressure(request, *args, **kws):
     plot.canvas.print_png(response)
     return response
 
+@login_required
+@admin_only
+def export_proposals(request, *args, **kws):
+    if request.method == 'POST':
+        astrid = request.POST.get('astrid')
+        pcodes = request.POST.getlist('proposals')
+        DssExport(quiet = True).exportProposals(pcodes)
+        if astrid == 'true':
+            astridDB = AstridDB(dbname = 'turtle')
+            astridDB.addProjects(proposals, quiet = True)
+    return HttpResponse(json.dumps({"success" : "ok"})
+                      , content_type = 'application/json')
+
+@login_required
+@admin_only
+def export_semester(request, *args, **kws):
+    if request.method == 'POST':
+        astrid = request.POST.get('astrid')
+        print astrid
+        semester = request.POST.get('semester')
+        if semester is not None:
+            proposals = [p.pcode
+                         for p in Proposal.objects.filter(
+                           semester__semester = semester)
+                         if p.allocatedTime() > 0]
+            DssExport(quiet = True).exportProposals(proposals)
+            if astrid:
+                astridDB = AstridDB(dbname = 'turtle', quiet = True)
+                astridDB.addProjects(proposals)
+
+    return HttpResponse(json.dumps({"success" : "ok"})
+                      , content_type = 'application/json')
+                                  
 @login_required
 @admin_only
 def import_proposals(request, *args, **kws):

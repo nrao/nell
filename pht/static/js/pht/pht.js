@@ -150,8 +150,8 @@ Ext.application({
         });
 
         // setup menus
-        var importMenu = Ext.create('Ext.menu.Menu', {
-            id : 'importMenu',
+        var xferMenu = Ext.create('Ext.menu.Menu', {
+            id : 'xferMenu',
             items : [{
                 text: 'Reimport Proposal(s)',
                 handler: this.getController('Proposals').importProposalFormByProposal
@@ -163,6 +163,10 @@ Ext.application({
                 {
                 text: "Import PST Proposal(s)",
                 handler: this.getController('Proposals').importProposalFormByPstProposal
+                },
+                {
+                text: "Transfer Proposal(s) to the DSS",
+                handler: this.getController('Proposals').exportProposalsForm
                 },
             ]
         });
@@ -352,8 +356,8 @@ Ext.application({
             menu: toolsMenu
         });
         tb.add({
-            text: 'Import',
-            menu: importMenu
+            text: 'Transfer',
+            menu: xferMenu
         });
         tb.add({
             text: 'Reports',

@@ -546,7 +546,6 @@ class SessionHttpAdapter(PhtHttpAdapter):
         self.session.save()
         self.notify(self.session.proposal)
 
-
     def update_rcvrs_granted(self, data):
         "Converts comma-separated string to objects."
 
