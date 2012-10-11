@@ -75,6 +75,10 @@ class TestLstPressures(TestCase):
                 s = DSSSemester(semester = semester)
                 s.save()
 
+        # again, too lazy to fix the fixture: add these observing types
+        t = 'commissioning'
+        ot, created = Observing_Type.objects.get_or_create(type = t)
+
         self.lst = LstPressures()
 
     def printSession(self, s):
@@ -763,6 +767,7 @@ class TestLstPressures(TestCase):
         self.assertEqual(1.0, ps[21])
         self.assertAlmostEqual(0.63152644233784727, ps[22], 3)
         self.assertEqual(0.0, ps[23])
+        self.assertAlmostEqual(sum(ps), 3.00, 1)
 
 
         # make one that wraps around
@@ -775,6 +780,7 @@ class TestLstPressures(TestCase):
         self.assertEqual([1.0]*4, ps2[20:])
         self.assertAlmostEqual(0.65616762656011396,ps2[7],3)
         self.assertAlmostEqual(0.37668728573623156,ps2[19],3)
+        self.assertAlmostEqual(sum(ps2), 12.00, 1)
 
         # combine the periods
         periods = [p, p2]
@@ -782,6 +788,17 @@ class TestLstPressures(TestCase):
         exp = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.65616762656011396, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.75337457147246312, 2.0, 2.0, 1.6315264423378473, 1.0]
         for i in range(len(exp)):
             self.assertAlmostEqual(exp[i], ps3[i], 3)
+
+        # does this work for a 24 hour period?
+        p3 = DSSPeriod(start = datetime(2012, 4, 5, 12)
+                     , duration = 24.0
+                      )
+        ps3 = lst.getPressuresFromPeriod(p3)
+        for i in range(len(ps3)):
+            if i == 19:
+                self.assertAlmostEqual(1.3766, ps3[i], 2)
+            else:    
+                self.assertEqual(1.0, ps3[i])
 
     def test_use_case_1(self):
 
@@ -842,7 +859,10 @@ class TestLstPressures(TestCase):
 
     def test_adjustForOverfilledWeather_2(self):
 
-        lst = LstPressures()
+        # we need the availability to be that of 12A
+        # 12A starts 2012, 2, 1
+        today = datetime(2012, 1, 15)
+        lst = LstPressures(today = today)
 
         # setup to be like use case 3.4.2
         gradeA = Pressures()
@@ -861,12 +881,12 @@ class TestLstPressures(TestCase):
 
         # here's the change we expect
         exp = Pressures() 
-        exp.poor = numpy.array([45.5]*lst.hrs)
-        exp.good = numpy.array([29.0]*lst.hrs)
+        exp.poor = numpy.array([46.0]*lst.hrs)
+        exp.good = numpy.array([28.5]*lst.hrs)
         exp.excellent = numpy.array([25.0]*lst.hrs)
         expC = Pressures() 
-        expC.poor = numpy.array([14.]*lst.hrs)
-        expC.good = numpy.array([14.]*lst.hrs)
+        expC.poor = numpy.array([13.5]*lst.hrs)
+        expC.good = numpy.array([13.5]*lst.hrs)
         for w in ['poor', 'good', 'excellent']:
             for i in range(lst.hrs):
                 self.assertEquals(exp.getType(w)[i]
@@ -876,7 +896,10 @@ class TestLstPressures(TestCase):
 
     def test_adjustForOverfilledWeather_3(self):
 
-        lst = LstPressures()
+        # we need the availability to be that of 12A
+        # 12A starts 2012, 2, 1
+        today = datetime(2012, 1, 15)
+        lst = LstPressures(today = today)
 
         # setup to be like use case 3.4.3
         gradeA = Pressures()
@@ -895,13 +918,13 @@ class TestLstPressures(TestCase):
 
         # here's the change we expect
         exp = Pressures() 
-        exp.poor = numpy.array([45.5]*lst.hrs)
-        exp.good = numpy.array([35.25]*lst.hrs)
-        exp.excellent = numpy.array([38.75]*lst.hrs)
+        exp.poor = numpy.array([46.0]*lst.hrs)
+        exp.good = numpy.array([35.5]*lst.hrs)
+        exp.excellent = numpy.array([38.0]*lst.hrs)
         expC = Pressures() 
-        expC.poor = numpy.array([34.]*lst.hrs)
-        expC.good = numpy.array([20.25]*lst.hrs)
-        expC.excellent = numpy.array([13.75]*lst.hrs)
+        expC.poor = numpy.array([33.5]*lst.hrs)
+        expC.good = numpy.array([20.5]*lst.hrs)
+        expC.excellent = numpy.array([13.00]*lst.hrs)
         for w in ['poor', 'good', 'excellent']:
             for i in range(lst.hrs):
                 self.assertEquals(exp.getType(w)[i]
