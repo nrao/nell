@@ -161,12 +161,12 @@ def print_lst_pressure(request, *args, **kws):
 @admin_only
 def export_proposals(request, *args, **kws):
     if request.method == 'POST':
-        astrid = request.POST.get('astrid')
-        pcodes = request.POST.getlist('proposals')
-        DssExport(quiet = True).exportProposals(pcodes)
-        if astrid == 'true':
-            astridDB = AstridDB(dbname = 'turtle')
-            astridDB.addProjects(proposals, quiet = True)
+        astrid = request.POST.get('astrid', 'false') == 'true'
+        proposals = request.POST.getlist('proposals')
+        DssExport(quiet = True).exportProposals(proposals)
+        if astrid:
+            astridDB = AstridDB(dbname = None, quiet = True)
+            astridDB.addProjects(proposals)
     return HttpResponse(json.dumps({"success" : "ok"})
                       , content_type = 'application/json')
 
@@ -174,8 +174,7 @@ def export_proposals(request, *args, **kws):
 @admin_only
 def export_semester(request, *args, **kws):
     if request.method == 'POST':
-        astrid = request.POST.get('astrid')
-        print astrid
+        astrid = request.POST.get('astrid', 'false') == 'true'
         semester = request.POST.get('semester')
         if semester is not None:
             proposals = [p.pcode
@@ -184,7 +183,7 @@ def export_semester(request, *args, **kws):
                          if p.allocatedTime() > 0]
             DssExport(quiet = True).exportProposals(proposals)
             if astrid:
-                astridDB = AstridDB(dbname = 'turtle', quiet = True)
+                astridDB = AstridDB(dbname = None, quiet = True)
                 astridDB.addProjects(proposals)
 
     return HttpResponse(json.dumps({"success" : "ok"})

@@ -23,7 +23,7 @@
 from datetime                          import datetime, timedelta
 from utilities                         import getConfigValue
 import MySQLdb as m
-
+import settings
 
 class AstridDB(object):
 
@@ -43,11 +43,10 @@ class AstridDB(object):
         self.quiet = quiet
         self.filename = "AstridDBReport.txt"
 
-        self.configFile = "/home/gbt/etc/config/system.conf"             
-        self.host   = self.getConfigValue(host,   "DatabaseHost")
-        self.dbname = self.getConfigValue(dbname, "Turtle_Database_User")
-        self.user   = self.getConfigValue(user,   "Turtle_Database_User")
-        self.passwd = self.getConfigValue(passwd, "Turtle_Database_Passwd")
+        self.host   = self.getConfigValue(host,   "HOST")
+        self.dbname = self.getConfigValue(dbname, "NAME")
+        self.user   = self.getConfigValue(user,   "USER")
+        self.passwd = self.getConfigValue(passwd, "PASSWORD")
 
         self.db = m.connect(host   = self.host
                           , user   = self.user
@@ -75,7 +74,7 @@ class AstridDB(object):
         if value is not None:
             return value
         else:
-            return getConfigValue(None, keyword, self.configFile)
+            return settings.ASTRIDDB.get(keyword)
 
     def addProjects(self, pcodes):
         """
