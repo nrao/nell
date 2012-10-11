@@ -78,6 +78,12 @@ DATABASES = {
     }
 }
 
+ASTRIDDB = {'HOST' : config.get('astrid', 'DatabaseHost')
+          , 'NAME' : config.get('astrid', 'Turtle_Database')
+          , 'USER' : config.get('astrid', 'Turtle_Database_User')
+          , 'PASSWORD' : config.get('astrid', 'Turtle_Database_Passwd')
+            }
+
 BENCHMARK_DB_NAME = None      # Set to 'benchmark' for nightly unit tests
                               # or a personal database for your own tests
                               # or leave as None to not save benchmarks
