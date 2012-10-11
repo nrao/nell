@@ -40,8 +40,9 @@ from scheduler.models import Semester as DSSSemester
 
 HRS = 24
 
-# Galactic Center LST range
-GC0 = 16
+# Galactic Center LST range, used like ps[GC0:GC1], so 
+# endpoint is exclusive
+GC0 = 15
 GC1 = 21
 
 class Pressures(object):
