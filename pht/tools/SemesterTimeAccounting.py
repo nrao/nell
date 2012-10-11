@@ -42,6 +42,9 @@ from utilities import TimeAgent
 from utilities import SLATimeAgent as sla
 
 from pht.tools.Sun import Sun
+from pht.tools.LstPressureWeather import LstPressureWeather
+
+import numpy
 
 class SemesterTimes(object):
 
@@ -117,6 +120,15 @@ class Times(object):
 
     def __repr__(self):
         return self.__str__()
+ 
+    def sum(self):
+        return self.lowFreq + self.hiFreq1 + self.hiFreq2
+
+    def fromWeather(self, w):
+        self.lowFreq = sum(w.poor)
+        self.hiFreq1 = sum(w.good)
+        self.hiFreq2 = sum(w.excellent)
+        self.total = self.sum()
 
     def __add__(self, other):
         "Override addition to add all the fields"
@@ -164,7 +176,7 @@ class Times(object):
         return abs(v1 - v2) < eps
 
     def check(self):
-        assert self.total == (self.lowFreq + self.hiFreq1 + self.hiFreq2)
+        assert self.total == self.sum() #(self.lowFreq + self.hiFreq1 + self.hiFreq2)
 
 class SemesterTimeAccounting(object):
 
@@ -173,12 +185,25 @@ class SemesterTimeAccounting(object):
     time accounting quantities.
     For each quantity, there are two types: total, and those covered
     by the Galactic Center.
+    Here are the rules:
+    totalAv = total available time for the semester; simply the days in the semester * 24 hours.
+    preAssigned = pre assigned time for the semester; sum of the hours for Maintenance, Shutdown, and testing
+    astroAv = totalAv - preAssigned
+    carryover = hours from carryover - that is proposals from previous semesters *not* included in preAssigned. carryover = coA + coB + coC
+    coA, coB, coC = the carryover broken down by grade; 
+    newAstroAv = available for NEW astronomy in the semester.  newAstroAv = totalAv - preAssigned - carryover
+    newAstroAvCoA = available for NEW astronomy in the semester only taking grade A carryover into account.  newAstroAvCoA = totalAv - preAssigned - coA
+
+    Here's a summary of the rules:
+    astroAv = totalAv - preAssigned
+    newAstroAv = totalAv - preAssigned - carryover
     """
 
     def __init__(self, semester):
 
 
         self.sun = Sun()
+        self.weather = LstPressureWeather(semester = semester)
 
         try:
             self.semester = DSSSemester.objects.get(semester = semester)
@@ -202,8 +227,8 @@ class SemesterTimeAccounting(object):
         self.testHrs = SemesterTimes()
         self.astronomyAvailableHrs = SemesterTimes()
         self.carryOver = {}
-        self.newAstronomyGradeAHrs = SemesterTimes()
-        self.newAstronomyAllGradeHrs = SemesterTimes()
+        #self.newAstronomyGradeAHrs = SemesterTimes()
+        #self.newAstronomyAllGradeHrs = SemesterTimes()
 
         self.lowFreqPercent = 0.50
         self.hiFreq1Percent = 0.25
@@ -228,7 +253,15 @@ class SemesterTimeAccounting(object):
         
         preAssigned = self.maintHrs + self.shutdownHrs + self.testHrs
         avail = preAssigned  + self.astronomyAvailableHrs
+
+
         assert avail.total == self.totalAvailableHrs.total
+
+        gradeACarryOver = self.carryOver['A']['times'].total.total + self.carryOver['A']['fixed'].total.total
+        assert self.newAstroAvailGradeAHrs.total.total == avail.total.total - preAssigned.total.total - gradeACarryOver   
+
+        totalCarryOver = sum([(self.carryOver[g]['times'].total.total + self.carryOver[g]['fixed'].total.total) for g in self.grades])
+        assert self.newAstroAvailAllGradeHrs.total.total == avail.total.total - preAssigned.total.total - totalCarryOver   
 
     def calcTotalAvailableHours(self):
 
@@ -297,6 +330,7 @@ class SemesterTimeAccounting(object):
             times = carryover[g]['times']
             fixed = carryover[g]['fixed']
             carryOverTotals += times + fixed
+
         return available - carryOverTotals
 
     def report(self):
@@ -399,7 +433,7 @@ class SemesterTimeAccounting(object):
             s = self.semester
         else:    
             s = DSSSemester.objects.get(semester = semester)
-        return (s.end() - s.start()).days
+        return s.numDays() #(s.end() - s.start()).days
 
     def getGCHrs(self, hrs):
         """
@@ -592,13 +626,14 @@ class SemesterTimeAccounting(object):
 
         t = Times()          
 
-        timeType = self.getTimeType(s)
+        # do this right with the LstPressureWeather class; 
+        # but we don't care about the LST distruibution
+        ps = [s.allotment.allocated_time]
+        ps.extend([0.0]*23)
+        ps = numpy.array(ps)
+        wps = self.weather.binSession(s, ps)
+        t.fromWeather(wps)
 
-        # add alloted time to this time type 
-        t.__setattr__(timeType, s.allotment.allocated_time)
-
-        # add to other categories
-        t.total  = s.allotment.allocated_time
         gcHrs, nonGCHrs = self.getGCHoursFromSession(s)
         if gcHrs + nonGCHrs != 0.0:
             gcFrac = gcHrs / (gcHrs + nonGCHrs) 
@@ -618,10 +653,21 @@ class SemesterTimeAccounting(object):
           or session.target.max_lst is None:
             return 0.0, 0.0
         # use max/min LST as compared to the Galctic Center
-        s = (rad2hr(session.target.min_lst)
-           , rad2hr(session.target.max_lst))
+        min_lst = rad2hr(session.target.min_lst)
+        max_lst = rad2hr(session.target.max_lst)
+        # check for overlap
+        if min_lst > max_lst:
+            ss = [(0.0, max_lst), (min_lst, 24.0)]
+        else:
+            ss = [(min_lst, max_lst)]
         dur = session.allotment.allocated_time
-        gcHrs, nonGCHrs = self.findOverlap(s, self.gcHrs, dur)
+        # now find overlaps for each range w/ the Gal. Center
+        gcHrs = 0.0
+        nonGCHrs = 0.0
+        for s in ss:
+            gc, nonGC = self.findOverlap(s, self.gcHrs, dur)
+            gcHrs += gc
+            nonGCHrs += nonGC
         return gcHrs, nonGCHrs                                 
 
     def getCarryOverSessions(self):
@@ -679,13 +725,15 @@ class SemesterTimeAccounting(object):
         semester's carryover?
         """
 
-        timeType = self.getTimeType(s)
+        t = Times(type = 'Total')          
 
         # add next semester's time to this time type 
-        t = Times(type = 'Total')          
-        time = s.next_semester.time
-        t.__setattr__(timeType, time)
-        t.total = time
+        time = s.next_semester.time if s.next_semester.time is not None else 0.0
+        ps = [time]      
+        ps.extend([0.0]*23) 
+        ps = numpy.array(ps)
+        wps = self.weather.binSession(s, ps)  
+        t.fromWeather(wps)  
 
         # how much of this time is Galactic Center time?
         gcHrs, nonGcHrs = self.getGCHoursFromSession(s)
@@ -699,8 +747,9 @@ class SemesterTimeAccounting(object):
         return SemesterTimes(total = t, gc = gc) 
         
 if __name__ == '__main__':
-    ta = SemesterTimeAccounting(semester = '12B') 
+    ta = SemesterTimeAccounting(semester = '13A') 
     ta.calculateTimeAccounting()
+    ta.checkTimes()
     ta.report()
        
        

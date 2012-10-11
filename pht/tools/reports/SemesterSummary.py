@@ -24,7 +24,7 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from datetime      import datetime
+from datetime      import datetime, timedelta
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle
@@ -32,9 +32,10 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units  import inch
 
 from pht.models import *
+from scheduler.models import Semester as DSSSemester
 from Report import Report
 
-from pht.tools.SemesterTimeAccounting import SemesterTimeAccounting
+from pht.tools.LstPressures import LstPressures
  
 class SemesterSummary(Report):
 
@@ -48,27 +49,12 @@ class SemesterSummary(Report):
 
         self.semester = semester
 
-        # portrait or landscape?
-        #w, h      = letter
-        #self.orientation = 'portrait'
-        #if self.orientation == 'portrait':
-        #    pagesize = (w, h)
-        #else:
-        #    pagesize = (h, w)
-
-        # set up the page    
-        #self.doc  = SimpleDocTemplate(filename, pagesize=pagesize)
-        #self.styleSheet = getSampleStyleSheet()['Normal']
-        #self.styleSheet.fontSize = 7
-
-        #self.tableStyle = TableStyle([
-        #    ('TOPPADDING', (0, 0), (-1, -1), 0),
-        #    ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
-        #    ('LINEABOVE', (0, 1), (-1, 1), 1, colors.black),
-        #    ('BOX', (0, 0), (-1, -1), 1, colors.black),
-        #])
-
-        self.ta = SemesterTimeAccounting(semester = semester)
+        # In order to calculate the pressures for the right semester
+        # we need to tell this class that we are a few days before
+        # this semester starts:
+        s = DSSSemester.objects.get(semester = semester)
+        today = (s.start() - timedelta(days = 10))
+        self.lst = LstPressures(today = today)
 
         self.title = 'Semester Summary'
 
@@ -77,7 +63,8 @@ class SemesterSummary(Report):
         if semester is not None:
             self.semester = semester
 
-        self.ta.calculateTimeAccounting()
+        # crunch the numbers we need for this report
+        self.lst.getPressures()
         
         self.title = self.title if self.semester is None else \
                      self.title + " for Semester %s" % self.semester
@@ -92,7 +79,7 @@ class SemesterSummary(Report):
         b = self.getBreak()
 
         tables = [t0, b, t1, b, t2, b]
-        for g in ['A', 'B', 'C']:
+        for g in self.lst.grades: 
             tables.append(self.getBacklogTableForGrade(g))
             tables.append(b)
         tables.extend([t3, b, t4, b])    
@@ -106,8 +93,8 @@ class SemesterSummary(Report):
 
         data = [[Paragraph('Time Analysis for Semester %s' % self.semester, self.styleSheet)
                 ]
-              , [Paragraph('%s - %s' % (self.ta.timeRange), self.styleSheet)]
-              , [Paragraph('As of %s' % self.ta.published, self.styleSheet)]
+              , [Paragraph('%s - %s' % (self.lst.timeRange), self.styleSheet)]
+              , [Paragraph('As of %s' % self.lst.published, self.styleSheet)]
                ]
 
         t = Table(data, colWidths = [300])
@@ -118,21 +105,20 @@ class SemesterSummary(Report):
 
     def getStartingHoursTable(self):
 
-        hrsInSemester = (self.ta.totalAvailableHrs.total.total 
-                       , self.ta.totalAvailableHrs.gc.total)
-        hrsMaint      = (self.ta.maintHrs.total.total
-                       , self.ta.maintHrs.gc.total)  
-        hrsShutdown   = (self.ta.shutdownHrs.total.total
-                       , self.ta.shutdownHrs.gc.total)  
-        hrsTests      = (self.ta.testHrs.total.total
-                       , self.ta.testHrs.gc.total)  
+        hrsInSemester = (self.lst.weather.availability.total()
+                       , self.lst.weather.availability.total(gc = True))
+        hrsMaint      = (self.lst.maintenancePs.total()
+                       , self.lst.maintenancePs.total(gc = True))
+        hrsShutdown   = (self.lst.shutdownPs.total()
+                       , self.lst.shutdownPs.total(gc = True))
+        hrsTests      = (self.lst.testingPs.total()
+                       , self.lst.testingPs.total(gc = True))
 
         data = [self.hrsPg('Hours in Semester', hrsInSemester)
               , self.hrsPg('Maintenance Hours', hrsMaint)
               , self.hrsPg('Test, Comm, Calib Hours', hrsTests)
               , self.hrsPg('Shutdown Hours', hrsShutdown)
                 ]
-
 
         t = Table(data, colWidths = [100, 100, 100])
         t.setStyle(self.tableStyle)
@@ -141,28 +127,31 @@ class SemesterSummary(Report):
     def getAvailableAllAstronomyTable(self):
         txt = 'Available for ALL Astronomy during %s' % self.semester
         return self.getAvailableTable(txt
-                                    , self.ta.astronomyAvailableHrs)
+                                    #, self.ta.astronomyAvailableHrs)
+                                    , self.lst.postMaintAvailabilityPs)
 
     def getBacklogTableForGrade(self, grade):
 
-        hrsFixed = (self.ta.carryOver[grade]['fixed'].total.total
-                  , self.ta.carryOver[grade]['fixed'].gc.total)
-        hrsTotal = (self.ta.carryOver[grade]['times'].total.total
-                  , self.ta.carryOver[grade]['times'].gc.total)
-        hrsLowFreq = (self.ta.carryOver[grade]['times'].total.lowFreq
-                    , self.ta.carryOver[grade]['times'].gc.lowFreq)
-        hrsHiFreq1 = (self.ta.carryOver[grade]['times'].total.hiFreq1
-                    , self.ta.carryOver[grade]['times'].gc.hiFreq1)
-        hrsHiFreq2 = (self.ta.carryOver[grade]['times'].total.hiFreq2
-                    , self.ta.carryOver[grade]['times'].gc.hiFreq2)
-        
+        g = grade
+        t = True
+        hrsFixed = (self.lst.carryoverGradePs['fixed'][g].total()
+                  , self.lst.carryoverGradePs['fixed'][g].total(gc = t))
+        hrsTotal = (self.lst.carryoverGradePs['total'][g].total()
+                  , self.lst.carryoverGradePs['total'][g].total(gc = t))
+
         data = [[self.pg('Group %s time' % grade)]
                , self.hrsPg('Hours Total', hrsTotal)  
                , self.hrsPg('Fixed Hours', hrsFixed)
-               , self.hrsPg('Hours for Low Freq', hrsLowFreq)
-               , self.hrsPg('Hours for Hi Freq 1', hrsHiFreq1)
-               , self.hrsPg('Hours for Hi Freq 2', hrsHiFreq2)               
                ]
+
+        r = 'rest'
+        for w in self.lst.weatherTypes:
+            w = w.lower()
+            hrs = (self.lst.carryoverGradePs[r][g].total(type = w)
+                 , self.lst.carryoverGradePs[r][g].total(type = w
+                                                       , gc = t))
+            label = 'Hours for %s' % self.lst.weatherMap[w]        
+            data.append(self.hrsPg(label, hrs))
 
         t = Table(data, colWidths = [100, 100, 100])
         t.setStyle(self.tableStyle)
@@ -171,16 +160,14 @@ class SemesterSummary(Report):
     def getAvailableHrs(self, available):
         "Reorganize our data."
 
-        hrsTotal = (available.total.total
-                    , available.gc.total)
-        hrsLowFreq = (available.total.lowFreq
-                    , available.gc.lowFreq)
-        hrsHiFreq1 = (available.total.hiFreq1
-                    , available.gc.hiFreq1)
-        hrsHiFreq2 = (available.total.hiFreq2
-                    , available.gc.hiFreq2)
+        hrsTotal = (available.total(), available.total(gc = True))
+        hrs = []
+        for w in self.lst.weatherTypes:
+            w = w.lower()
+            hrs.append((available.total(type = w)
+                      , available.total(type = w, gc = True)))
 
-        return (hrsTotal, hrsLowFreq, hrsHiFreq1, hrsHiFreq2)            
+        return (hrsTotal, hrs[0], hrs[1], hrs[2])            
         
     def getAvailableTable(self, text, available):
         "Worker function for creating a table of available hours."
@@ -202,17 +189,13 @@ class SemesterSummary(Report):
     def getAvailableNewAstronomyTableGradeA(self):
         txt = 'Available for NEW Astronomy during %s (Grade A Carry Over Only)' % self.semester
         return self.getAvailableTable(txt
-                                    , self.ta.newAstroAvailGradeAHrs)
+            , self.lst.remainingFromGradeACarryoverPs)
 
 
     def getAvailableNewAstronomyTable(self):
         txt = 'Available for NEW Astronomy during %s (All Grades Carry Over)' % self.semester
         return self.getAvailableTable(txt
-                                    , self.ta.newAstroAvailAllGradeHrs)
-
-    #def pg(self, text):
-    #    "Shortcut to Paragraph"
-    #    return Paragraph(text, self.styleSheet)
+                                    , self.lst.remainingPs)
 
     def hrsPg(self, text, hrs):
         "This is common enough when reporting on hours"
@@ -221,24 +204,11 @@ class SemesterSummary(Report):
               , self.pg("GC[%5.2f]" % hrs[1]) # hrs in Gal. Center
                ]
 
-    #def genFooter(self, canvas, doc):
-    #    pass
-#
-#    def makeHeaderFooter(self, canvas, doc):
-#        canvas.saveState() 
-#        canvas.setFont('Times-Roman', 20) 
-#        w, h = letter
-#
-#        if self.orientation == 'portrait':
-#            canvas.drawString(20, h-40, self.title)
-#        else:
-#            canvas.drawString(w, w-40, self.title)
-#        self.genFooter(canvas, doc)
 
 if __name__ == '__main__':
 
     f = file('SemesterSummary.pdf', 'w')
-    ss = SemesterSummary(f, semester = '12B')
+    ss = SemesterSummary(f, semester = '13A')
     ss.report()
 
 

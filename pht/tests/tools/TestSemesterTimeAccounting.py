@@ -140,8 +140,8 @@ class TestSemesterTimeAccounting(TestCase):
         return adapter.session
         
     def test_getSemesterDays(self):
-        self.assertEqual(181, self.ta.getSemesterDays())
-        self.assertEqual(183, self.ta.getSemesterDays(semester = '12B'))
+        self.assertEqual(182, self.ta.getSemesterDays())
+        self.assertEqual(184, self.ta.getSemesterDays(semester = '12B'))
     
     def test_getGCHrs(self):
         self.assertEqual(6.0, self.ta.getGCHrs(24.0))
@@ -388,9 +388,10 @@ class TestSemesterTimeAccounting(TestCase):
         self.ta.calculateTimeAccounting()
 
         # check the buckets
+        numDays = 182 #self.ta.numDays
         totalAv = self.ta.totalAvailableHrs
-        self.assertEqual(181*24, totalAv.total.total)
-        self.assertEqual((181*24)*(6/24.), totalAv.gc.total)
+        self.assertEqual(numDays*24, totalAv.total.total)
+        self.assertEqual((numDays*24)*(6/24.), totalAv.gc.total)
         # TBF: other totalAv.total fields?
 
         # there are maint. periods to account for
@@ -421,13 +422,13 @@ class TestSemesterTimeAccounting(TestCase):
         self.ta.checkTimes()
 
         # check the hours available to astronomy
-        expAvT = Times(total = 4332.
-                  , lowFreq = 2166.0
-                  , hiFreq1 = 1083.0
-                  , hiFreq2 = 1083.0
+        expAvT = Times(total = 4356.
+                  , lowFreq = 2178.0
+                  , hiFreq1 = 1089.0
+                  , hiFreq2 = 1089.0
                    )
         self.assertEqual(expAvT, self.ta.astronomyAvailableHrs.total) 
-        expAvGC = Times(total = 1080.6441)
+        expAvGC = Times(total = 1086.6441)
         self.assertAlmostEqual(expAvGC.total
                              , self.ta.astronomyAvailableHrs.gc.total, 3)
 
@@ -442,8 +443,8 @@ class TestSemesterTimeAccounting(TestCase):
 
         # these should not have changed
         totalAv = self.ta.totalAvailableHrs
-        self.assertEqual(181*24, totalAv.total.total)
-        self.assertEqual((181*24)*(6/24.), totalAv.gc.total)
+        self.assertEqual(numDays*24, totalAv.total.total)
+        self.assertEqual((numDays*24)*(6/24.), totalAv.gc.total)
 
         # but now we have testing
         exp = Times(total = 2.5
