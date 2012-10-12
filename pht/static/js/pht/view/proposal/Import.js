@@ -63,7 +63,7 @@ Ext.define('PHT.view.proposal.Import', {
                 },
                  {
                     xtype: 'checkbox',
-                    fieldLabel: 'Just import SRP scores',
+                    fieldLabel: 'SRP scores & comments only',
                     name: 'srp',
                     id: 'srp',
                     uncheckedValue: 'false',

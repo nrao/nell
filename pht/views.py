@@ -221,8 +221,9 @@ def import_semester(request, *args, **kws):
         if semester is not None:
             pst.importProposals(semester)
         if srp:
-            proposals = Proposal.objects.filter(semester__semester = semester)
+            proposals = Proposal.objects.filter(semester__semester = semester).exclude(pst_proposal_id = 0)
             map(pst.fetchSRPScore, proposals)
+            map(pst.fetchComments, proposals)
 
     return HttpResponse(json.dumps({"success" : "ok"})
                       , content_type = 'application/json')
