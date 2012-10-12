@@ -61,6 +61,16 @@ Ext.define('PHT.view.proposal.Import', {
                     displayField: 'semester',
                     valueField: 'semester',
                 },
+                 {
+                    xtype: 'checkbox',
+                    fieldLabel: 'Just import SRP scores',
+                    name: 'srp',
+                    id: 'srp',
+                    uncheckedValue: 'false',
+                    inputValue: 'true',
+                    value: 'true',
+                    labelStyle: '',
+                 },
             ]
         });
 

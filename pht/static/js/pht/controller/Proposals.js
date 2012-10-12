@@ -307,6 +307,7 @@ Ext.define('PHT.controller.Proposals', {
                 url: '/pht/import/semester',
                 params: {
                     semester: values.semester,
+                    srp:      values.srp,
                 },
                 method: 'POST',
                 timeout: 300000,

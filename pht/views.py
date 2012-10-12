@@ -217,8 +217,13 @@ def import_semester(request, *args, **kws):
     if request.method == 'POST':
         pst      = PstImport()
         semester = request.POST.get('semester')
+        srp      = request.POST.get('srp', 'false') == 'true'
         if semester is not None:
             pst.importProposals(semester)
+        if srp:
+            proposals = Proposal.objects.filter(semester__semester = semester)
+            map(pst.fetchSRPScore, proposals)
+
     return HttpResponse(json.dumps({"success" : "ok"})
                       , content_type = 'application/json')
                                   
