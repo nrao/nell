@@ -473,6 +473,7 @@ Ext.application({
             elevationFieldText: 'Must be a value in Degrees, in sexigesimel format (+/- DDD:MM:SS.S), between 0 and 90.',
             elevationFieldMask: /[\d\.\:\+\-]/i,
         });
+
     },
 });
 

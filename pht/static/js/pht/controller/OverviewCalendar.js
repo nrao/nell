@@ -81,6 +81,7 @@ Ext.define('PHT.controller.OverviewCalendar', {
                 var startFmted = startDate.getUTCFullYear() + '-' + (startDate.getUTCMonth()+1) + '-' + startDate.getUTCDate();
                 dssStore.getProxy().extraParams = {startPeriods : startFmted,
                                                    daysPeriods  : numDays};
+
                 dssStore.load({
                     scope: this,
                     callback: function(records, operation, success) {
@@ -179,7 +180,7 @@ Ext.define('PHT.controller.OverviewCalendar', {
                         });
 
                     }
-                });    
+                });
             }
         });
 
