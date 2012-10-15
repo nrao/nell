@@ -523,13 +523,18 @@ def lst_range(request):
 @admin_only
 def proposal_summary(request):
     semester = request.GET.get('semester')
+    allocated = request.GET.get('allocated', 'false') == 'true'
     filename = 'proposalSummary%s.pdf' % ('_' + semester) if semester is not None else ''
     # Create the HttpResponse object with the appropriate PDF headers.
     response = HttpResponse(mimetype='application/pdf')
     response['Content-Disposition'] = 'attachment; filename=%s' % filename
 
     ps = ProposalSummary(response)
-    ps.report(semester = semester)
+    
+    if allocated:
+        ps.report(semester = semester, filter = lambda p : p.allocatedTime() > 0)
+    else:
+        ps.report(semester = semester)
 
     return response
 
