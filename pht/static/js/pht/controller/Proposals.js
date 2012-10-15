@@ -165,7 +165,7 @@ Ext.define('PHT.controller.Proposals', {
                     var allocated = parseFloat(time) / repeats;
                     var allocatedRepeats = repeats;
                 }
-                pAllocated += allocated
+                pAllocated += allocated * allocatedRepeats
                 session.set('allocated_time', allocated);
                 session.set('allocated_repeats', allocatedRepeats);
                 session.set('allocated_total', allocated * allocatedRepeats);
