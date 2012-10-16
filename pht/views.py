@@ -532,7 +532,7 @@ def proposal_summary(request):
     ps = ProposalSummary(response)
     
     if allocated:
-        ps.report(semester = semester, filter = lambda p : p.allocatedTime() > 0)
+        ps.report(semester = semester, filter = lambda p : p.allocatedTime() > 0 and 'TGBT' not in p.pcode)
     else:
         ps.report(semester = semester)
 

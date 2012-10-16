@@ -44,6 +44,7 @@ Ext.define('PHT.controller.Proposals', {
         'proposal.Navigate',
         'proposal.TacTool',
         'proposal.Allocate',
+        'proposal.ProposalSummaryForm',
     ],
 
     init: function() {
@@ -91,6 +92,9 @@ Ext.define('PHT.controller.Proposals', {
             },            
             'proposalexport button[action=export]': {
                 click: this.exportProposal
+            },            
+            'proposalsummaryform button[action=submit]': {
+                click: this.proposalSummary
             },            
             'proposalnavigate': {
                 itemclick: this.editTreeNode
@@ -274,6 +278,10 @@ Ext.define('PHT.controller.Proposals', {
         var f = form.getForm()
     },
 
+    proposalSummaryForm: function() {
+        var view = Ext.widget('proposalsummaryform');
+    },
+
     refresh: function() {
         this.getProposalsStore().load();
         this.getProposalTreeStore().load();
@@ -372,6 +380,16 @@ Ext.define('PHT.controller.Proposals', {
         } else {
             win.close();
         }
+    },
+
+    proposalSummary: function(button) {
+        var win    = button.up('window'),
+            form   = win.down('form'),
+            values = form.getValues();
+        var url = '/pht/reports/proposalsummary?semester=' + values.semester
+                  + '&allocated=' + values.allocated;
+        window.open(url);
+        win.close();
     },
 
     createProposal: function(button) {
