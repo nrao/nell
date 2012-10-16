@@ -161,12 +161,18 @@ Ext.define('PHT.controller.Proposals', {
                 if (scale == 'true') {
                     var requested = parseFloat(session.get('requested_time'));
                     var repeats = parseFloat(session.get('repeats'));
-                    var allocated = requested * repeats * (parseFloat(time)/100.0);
+                    //var allocated = requested * repeats * (parseFloat(time)/100.0);
+                    var allocatedRepeats = repeats
+                    var allocated = requested * (parseFloat(time)/100.0);
                 } else {
-                    var allocated = parseFloat(time);
+                    var repeats = parseFloat(session.get('repeats'));
+                    var allocated = parseFloat(time) / repeats;
+                    var allocatedRepeats = repeats;
                 }
-                pAllocated += allocated
+                pAllocated += allocated * allocatedRepeats
                 session.set('allocated_time', allocated);
+                session.set('allocated_repeats', allocatedRepeats);
+                session.set('allocated_total', allocated * allocatedRepeats);
             }
             session.save()
         }
