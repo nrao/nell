@@ -254,12 +254,6 @@ Ext.application({
             callback: function(records, operation, success) {
                 store.each(function(r){
                     var semester = r.get('semester');
-                    proposalSummaryMenu.add({
-                        text: semester,
-                        handler: function() {
-                            window.open('/pht/reports/proposalsummary?semester=' + semester);
-                        }
-                    });
                     otherProposalSummaryMenu.add({
                         text: semester,
                         handler: function() {
@@ -307,9 +301,10 @@ Ext.application({
         });
         var reportsMenu = Ext.create('Ext.menu.Menu', {
             id : 'reportsMenu',
-            items : [{
-                    text: 'Proposal Summary',
-                    menu: proposalSummaryMenu
+            items : [
+                {
+                text: 'Proposal Summary',
+                handler: this.getController('Proposals').proposalSummaryForm
                 },
                 {
                     text: 'Summary of Other Proposal',
