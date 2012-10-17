@@ -197,26 +197,61 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                         })
                         
     def initPressures(self):
+        """
+        Here are the rules:
+        totalAv = total available time for the semester; simply the days in the semester * 24 hours.
+        preAssigned = pre assigned time for the semester; sum of the hours for Maintenance, Shutdown, and testing
+        astroAv = totalAv - preAssigned
+        carryover = hours from carryover - that is proposals from previous semesters *not* included in preAssigned. carryover = coA + coB + coC
+        coA, coB, coC = the carryover broken down by grade; 
+        newAstroAv = available for NEW astronomy in the semester.  newAstroAv = totalAv - preAssigned - carryover
+        newAstroAvCoA = available for NEW astronomy in the semester only taking grade A carryover into account.  newAstroAvCoA = totalAv - preAssigned - coA
+    
+        Here's a summary of the rules:
+        astroAv = totalAv - preAssigned
+        newAstroAv = totalAv - preAssigned - carryover
+        """
+    
         # init our buckets:
         # This is *everything* 
         self.totalPs  = numpy.array([0.0]*self.hrs)
 
+        # totalAv: self.weather.availability
+
+        # pre-assigned:
+        self.maintenancePs = Pressures() 
+        self.shutdownPs = Pressures() 
+        self.testingPs = Pressures() 
+        self.preAssignedPs = self.maintenancePs \
+                           + self.shutdownPs \
+                           + self.testingPs
+
         # Stuff left over from previous semester's, and the
         # next semesters committed time to maintenance, testing etc.
+        # totalCarryover = astroCarryover + preAssigned
         self.carryoverTotalPs = numpy.array([0.0]*self.hrs)
         self.carryoverPs = Pressures() 
+
+        # astroCarryover = totalCarryover - preAssigned
+        # astroCarryover = coA + coB + coC (sum of grades)
         self.carryoverGradePs = { 'fixed' : self.newPressuresByGrade()
                                 , 'rest'  : self.newPressuresByGrade()
                                 , 'total' : self.newPressuresByGrade()
                                 }
 
-        # Available time for the semester - carryover
+        # Available time for the semester - all carryover
+        # self.weather.availability - totalCarryover
         self.remainingTotalPs = self.newHrs()
         self.remainingPs = Pressures()
 
+        # newAstroAv = available for NEW astronomy in the semester.  newAstroAv = totalAv - preAssigned - astroCarryover
+        self.remainingFromAllGradesCarryoverPs = Pressures()
+        # newAstroAvCoA = available for NEW astronomy in the semester only taking grade A carryover into account.  newAstroAvCoA = totalAv - preAssigned - coA
+        self.remainingFromGradeACarryoverPs = Pressures()
+
         # The new stuff that people have submitted proposals for,
         # before having been allocated time
-        self.requestedTotalPs = numpy.array([0.0]*self.hrs)
+        self.requestedTotalPs = self.newHrs() 
         self.requestedPs = Pressures() 
 
         # The new stuff htat people have submitted proposal for,
@@ -230,6 +265,31 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # for holding what to do with overfilled weather bins
         self.changes = Pressures()
 
+
+    def assertPressures(self):
+        "Asserts that we have self-consistency"
+
+        assert self.postMaintAvailabilityPs == self.weather.availability - self.preAssignedPs
+         
+        totalCarryover = self.preAssignedPs \
+                                + self.carryoverGradePs['total']['A'] \
+                                + self.carryoverGradePs['total']['B'] \
+                                + self.carryoverGradePs['total']['C'] 
+        assert abs(self.carryoverPs.total() - totalCarryover.total()) < 0.01
+
+        total = self.carryoverTotalPs + self.newAstronomyTotalPs + \
+            self.requestedTotalPs
+        assert self.almostEqual(self.totalPs, total)
+        assert self.almostEqual(self.carryoverPs.allTypes()
+                              , self.carryoverTotalPs)
+        assert self.almostEqual(self.requestedPs.allTypes()
+                              , self.requestedTotalPs)
+
+        # new astronomy allocated
+        totalNewAstro = self.newHrs() 
+        for g in self.grades:
+            totalNewAstro += self.gradePs[g].allTypes()
+        assert self.almostEqual(totalNewAstro, self.newAstronomyGradeTotalPs)
 
     def computeThermalNightWeights(self, start = None, numDays = None): 
         "Computes the weights for the PTCS night time flag,"
@@ -574,17 +634,27 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # here's some more measures of 'availability':
         # what's available after all the pre-assigned maintenance,
         # testing, and shutdown?
-        preAssignedPs = self.maintenancePs + self.shutdownPs + self.testingPs
-        self.postMaintAvailabilityPs = self.weather.availability - preAssignedPs 
+        self.preAssignedPs = self.maintenancePs + self.shutdownPs + self.testingPs
+        self.postMaintAvailabilityPs = self.weather.availability - self.preAssignedPs 
 
         # what's available after just grade A carryover?
         self.remainingFromGradeACarryoverPs = self.postMaintAvailabilityPs - self.carryoverGradePs['total']['A']
 
+        # what's available after all grades?
+        allGrades = self.carryoverGradePs['total']['A'] \
+                  + self.carryoverGradePs['total']['B'] \
+                  + self.carryoverGradePs['total']['C']
+        self.remainingFromAllGradesCarryoverPs = self.postMaintAvailabilityPs - allGrades 
+
 
         # What's *really* available for this semester?
+        # note that *this* carryover includes maint, shutdown, & testing
         self.remainingTotalPs = self.weather.availabilityTotal - \
             self.carryoverTotalPs
         self.remainingPs = self.weather.availability - self.carryoverPs
+
+        # fail if shit doesn't add up?
+        self.assertPressures()
 
         # now convert the buckets to expected output
         return self.jsonDict()
@@ -604,6 +674,29 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             self.carryoverTotalPs += ps
             wps = self.weather.binSession(session, ps)
             self.carryoverPs += wps 
+
+            # special cases that need the pressures binned by weather
+            if self.usePeriodsForPressures(session):
+                if session.proposal.pcode == 'Maintenance':
+                    self.maintenancePs += wps 
+                elif session.proposal.pcode == 'Shutdown':
+                    self.shutdownPs += wps
+                else:
+                    raise "Only Maintenance and Shutdown should use periods"
+            elif session in self.testSessions:                
+                self.testingPs += wps
+            else:
+                # Maintenance, Shutdown and testing was pre-assigned (above)
+                # , but we want to report on all the other carryover by grade
+                if session.grade is not None and not self.hasFailingGrade(session):
+                    grade = session.grade.grade
+                    if session.session_type is not None and \
+                        session.session_type == self.fixedType:
+                        self.carryoverGradePs["fixed"][grade] += wps
+                    else:    
+                        self.carryoverGradePs["rest"][grade] += wps
+                    self.carryoverGradePs['total'][grade] += wps 
+
         elif category == ALLOCATED:
             # TBF: a few of these totals and checks aren't
             # necessary anymore because we're not letting
@@ -625,30 +718,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         else:
             raise 'unhandled category'
 
-        # special cases that need the pressures binned by weather
-        if self.usePeriodsForPressures(session):
-            if session.proposal.pcode == 'Maintenance':
-                self.maintenancePs += wps 
-            elif session.proposal.pcode == 'Shutdown':
-                self.shutdownPs += wps
-            else:
-                raise "Only Maintenance and Shutdown should use periods"
-        elif session in self.testSessions:                
-            self.testingPs += wps
-        elif category == CARRYOVER:
-            if session in self.testSessions:
-                print "WARNING: adding test session to astro carryover: ", session
-            # Maintenance, Shutdown and testing was carryover (above)
-            # , but we want to report on all the other carryover by grade
-            if session.grade is not None and not self.hasFailingGrade(session):
-                grade = session.grade.grade
-                if session.session_type is not None and \
-                    session.session_type == self.fixedType:
-                    self.carryoverGradePs["fixed"][grade] += wps
-                else:    
-                    self.carryoverGradePs["rest"][grade] += wps
-                self.carryoverGradePs['total'][grade] += wps    
-
     def getSessionTime(self, session, category, subCategory):
         """
         The time we use for the pressure depends on what
@@ -657,7 +726,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         totalTime = 0.0
         if category == CARRYOVER:
            # which method for determining carryover time to use?
-           if self.carryOverUseNextSemester:
+           if session in self.testSessions:
+               totalTime = session.getTotalAllocatedTime()
+           elif self.carryOverUseNextSemester:
                 if session.next_semester is not None \
                     and session.next_semester.complete == False:
                     totalTime = session.next_semester.time
@@ -683,10 +754,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         if session.target is None or session.target.min_lst is None or session.target.max_lst is None:
             return (IGNORED, BADLST)
 
-        if session.dss_session is not None \
+        if session in self.testSessions or (session.dss_session is not None \
             and session.semester.semester <= self.currentSemester.semester \
             and session.grade is not None \
-            and session.grade.grade in ['A', 'B', 'C']:
+            and session.grade.grade in ['A', 'B', 'C']):
             return (CARRYOVER, '')
         elif session.semester.semester == self.nextSemester.semester \
             and session.allotment is not None \
@@ -949,6 +1020,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         print "Sessions using semester time: %d" % len(self.semesterSessions)
         for s in self.semesterSessions:
             print "    ", s
+        print "Number of Testing Sessions: %d" % len(self.testSessions)    
+        for s in self.testSessions:    
+            print "    ", s
 
    
 
@@ -1025,7 +1099,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         print ""
         label = "Available for NEW Astronomy during 12B (All Grades)"
         self.reportSemesterSummaryTable(label
-                                      , self.remainingPs)
+                                      , self.remainingFromAllGradesCarryoverPs)
 
     def reportSemesterSummaryCarryover(self, grade, ps):
         print "Group %s Time: " % grade
@@ -1392,8 +1466,9 @@ if __name__ == '__main__':
     ps = lst.getPressures()
     #lst.reportSocorroFormat('12B')
     #lst.reportSocorroWeatherFormat('12B')
-    #lst.report()
+    lst.report()
     lst.reportSemesterSummary()
+
 
     #exp = []
     #eps = 0.001
