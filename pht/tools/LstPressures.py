@@ -226,6 +226,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                            + self.shutdownPs \
                            + self.testingPs
 
+        self.postMaintAvailabilityPs = Pressures()
+
         # Stuff left over from previous semester's, and the
         # next semesters committed time to maintenance, testing etc.
         # totalCarryover = astroCarryover + preAssigned
@@ -576,6 +578,35 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             return session.grade.grade not in self.grades
         else:
             return True
+
+    def getOriginalRequestedPressures(self, sessions = None):
+        """
+        Specialty function needed only by Semester Summary Report.
+        Get all sessions associated with proposals of the next semester,
+        and find their pressures based off of their requested time.
+        """
+
+        if sessions is None:
+            sessions = Session.objects.filter(proposal__semester = \
+                self.nextSemester).order_by('name')
+            # filter out the test sessions    
+            sessions = [s for s in sessions if s not in self.testSessions]   
+
+        self.originalRequestedPs = Pressures()
+        for s in sessions:
+            wps = self.getRequestedPressure(s)
+            self.originalRequestedPs += wps
+
+        return self.originalRequestedPs    
+
+    def getRequestedPressure(self, session):
+        "What was this session's original requested pressure?" 
+        # get the requested time for this session
+        time = self.getSessionTime(session, REQUESTED, "")
+        # calculate the pressure
+        ps = self.calculatePressure(session, time)
+        # bin the pressure into the weather bins
+        return self.weather.binSession(session, ps)
 
     def getPressures(self, sessions = None):
         """
