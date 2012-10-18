@@ -55,6 +55,13 @@ def rmBackups(db_bkup_dir, backups_to_remove):
         print "Removing:", cmd
         os.system(cmd)
 
+def updateSymLink(db_bkup_dir, db):
+    backups = [b for b in os.listdir(db_bkup_dir) if db in b]
+    backups.sort()
+    latest = backups[-1]
+    os.system('rm %s/%s' % (db_bkup_dir, db))
+    os.system('ln -s %s/%s %s/%s' % (db_bkup_dir, latest, db_bkup_dir, db))
+    
 if __name__ == "__main__":
     try:
         db, = sys.argv[1:]
@@ -77,6 +84,8 @@ if __name__ == "__main__":
         rmBackups(db_bkup_dir, [b for b in os.listdir(db_bkup_dir) if db in b and ndaysold(N, db, b)])
     else:
         print "No backup removal supported for %s."  % db
+
+    updateSymLink(db_bkup_dir, db)
 
     print "Cleaning up Cleo forecast files."
     os.system("rm /home/dss/release/antioch/admin/CleoDBImport_*; rm -rf /home/dss/release/antioch/admin/Forecasts*")
