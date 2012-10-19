@@ -315,6 +315,10 @@ Ext.application({
                     menu: jointProposalSummaryMenu
                 },
                 {
+                text: 'Proposal Worksheet',
+                handler: this.getController('Proposals').proposalWorksheetForm
+                },
+                {
                     text: 'Proposal Ranking',
                     menu: proposalRankingMenu
                 },
