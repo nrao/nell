@@ -234,7 +234,10 @@ def adjustDateTimeTz(tz_pref, dt, to_utc = False):
     if dt is None:
         return
     fmt = '%Y-%m-%d %H:%M:%S %Z%z'
-    tz  = pytz.timezone(tz_pref)
+    try: 
+        tz  = pytz.timezone(tz_pref)
+    except pytz.UnknownTimeZoneError:
+        return dt
     utc = pytz.utc
     if to_utc:
         return tz.localize(dt).astimezone(utc)
