@@ -21,6 +21,7 @@ urlpatterns = patterns(''
     , {'document_root': settings.STATIC_PHT})
    , url(r'^notify$',                            notify)
    , url(r'^$',                                  root)
+   , url(r'^reports/proposalworksheet$',         proposal_worksheet)
    , url(r'^reports/proposalsummary$',           proposal_summary)
    , url(r'^reports/otherproposalsummary$',      other_proposal_summary)
    , url(r'^reports/jointproposalsummary$',      joint_proposal_summary)

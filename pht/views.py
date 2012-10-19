@@ -521,6 +521,25 @@ def lst_range(request):
 
 @login_required
 @admin_only
+def proposal_worksheet(request):
+    semester = request.GET.get('semester')
+    allocated = request.GET.get('allocated', 'false') == 'true'
+    filename = 'proposalWorksheet%s.pdf' % ('_' + semester) if semester is not None else ''
+    # Create the HttpResponse object with the appropriate PDF headers.
+    response = HttpResponse(mimetype='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+
+    ps = ProposalWorksheet(response)
+    
+    if allocated:
+        ps.reports(semester = semester, filter = lambda p : p.allocatedTime() > 0 and 'TGBT' not in p.pcode)
+    else:
+        ps.reports(semester = semester)
+
+    return response
+
+@login_required
+@admin_only
 def proposal_summary(request):
     semester = request.GET.get('semester')
     allocated = request.GET.get('allocated', 'false') == 'true'

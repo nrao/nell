@@ -45,6 +45,7 @@ Ext.define('PHT.controller.Proposals', {
         'proposal.TacTool',
         'proposal.Allocate',
         'proposal.ProposalSummaryForm',
+        'proposal.ProposalWorksheetForm',
     ],
 
     init: function() {
@@ -95,6 +96,9 @@ Ext.define('PHT.controller.Proposals', {
             },            
             'proposalsummaryform button[action=submit]': {
                 click: this.proposalSummary
+            },            
+            'proposalworksheetform button[action=submit]': {
+                click: this.proposalWorksheet
             },            
             'proposalnavigate': {
                 itemclick: this.editTreeNode
@@ -282,6 +286,10 @@ Ext.define('PHT.controller.Proposals', {
         var view = Ext.widget('proposalsummaryform');
     },
 
+    proposalWorksheetForm: function() {
+        var view = Ext.widget('proposalworksheetform');
+    },
+
     refresh: function() {
         this.getProposalsStore().load();
         this.getProposalTreeStore().load();
@@ -383,10 +391,20 @@ Ext.define('PHT.controller.Proposals', {
     },
 
     proposalSummary: function(button) {
+        var url = '/pht/reports/proposalsummary';
+        this.semesterSomethingSubmit(button, url);
+    },
+
+    proposalWorksheet: function(button) {
+        var url = '/pht/reports/proposalworksheet';
+        this.semesterSomethingSubmit(button, url);
+    },
+    
+    semesterSomethingSubmit: function(button, baseurl) {
         var win    = button.up('window'),
             form   = win.down('form'),
             values = form.getValues();
-        var url = '/pht/reports/proposalsummary?semester=' + values.semester
+        var url = baseurl + '?semester=' + values.semester
                   + '&allocated=' + values.allocated;
         window.open(url);
         win.close();
