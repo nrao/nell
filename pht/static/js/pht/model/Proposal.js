@@ -41,6 +41,7 @@ Ext.define('PHT.model.Proposal', {
            , 'tech_review_to_pi'
            , 'tech_review_to_tac'
            , 'tac_to_pi'
+           , 'tac_to_tac'
            ], 
     proxy: {
         type: 'rest',
