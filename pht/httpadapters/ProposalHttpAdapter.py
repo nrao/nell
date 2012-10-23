@@ -232,7 +232,8 @@ class ProposalHttpAdapter(PhtHttpAdapter):
           c.srp_to_tac,
           c.tech_review_to_pi,
           c.tech_review_to_tac,
-          c.tac_to_pi
+          c.tac_to_pi,
+          c.tac_to_tac
 
         FROM (((((((
           pht_proposals as p
@@ -307,6 +308,7 @@ class ProposalHttpAdapter(PhtHttpAdapter):
                        , 'tech_review_to_pi': self.proposal.comments.tech_review_to_pi
                        , 'tech_review_to_tac': self.proposal.comments.tech_review_to_tac
                        , 'tac_to_pi'         : self.proposal.comments.tac_to_pi
+                       , 'tac_to_tac'        : self.proposal.comments.tac_to_tac
                         })
         else:
             data.update({'nrao_comment'      : None #''
@@ -315,6 +317,7 @@ class ProposalHttpAdapter(PhtHttpAdapter):
                        , 'tech_review_to_pi' : None #''
                        , 'tech_review_to_tac': None #''
                        , 'tac_to_pi'         : None #''
+                       , 'tac_to_tac'        : None #''
                         })
         return data
 
@@ -404,6 +407,7 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         self.proposal.comments.tech_review_to_pi = data.get('tech_review_to_pi')
         self.proposal.comments.tech_review_to_tac = data.get('tech_review_to_tac')
         self.proposal.comments.tac_to_pi = data.get('tac_to_pi')
+        self.proposal.comments.tac_to_tac = data.get('tac_to_tac')
         self.proposal.comments.save()
 
     def copy(self, new_pcode):
