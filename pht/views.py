@@ -219,11 +219,12 @@ def import_semester(request, *args, **kws):
         semester = request.POST.get('semester')
         srp      = request.POST.get('srp', 'false') == 'true'
         if semester is not None:
-            pst.importProposals(semester)
-        if srp:
-            proposals = Proposal.objects.filter(semester__semester = semester).exclude(pst_proposal_id = 0)
-            map(pst.fetchSRPScore, proposals)
-            map(pst.fetchComments, proposals)
+            if srp:
+                proposals = Proposal.objects.filter(semester__semester = semester).exclude(pst_proposal_id = 0).exclude(pst_proposal_id = None)
+                map(pst.fetchSRPScore, proposals)
+                map(pst.fetchComments, proposals)
+            else:
+                pst.importProposals(semester)
 
     return HttpResponse(json.dumps({"success" : "ok"})
                       , content_type = 'application/json')

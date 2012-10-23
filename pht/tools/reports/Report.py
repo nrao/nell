@@ -68,6 +68,10 @@ class Report(object):
 
         self.titleOffset = 0
 
+    def truncateStr(self, string, length):
+        return string if len(string) <= length else string[:length]
+    
+
     def pg(self, text, bold = False):
         "Shortcut to Paragraph"
         if bold:
