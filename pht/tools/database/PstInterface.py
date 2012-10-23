@@ -88,6 +88,14 @@ class PstInterface(object):
         else:
             return False
 
+    def getRelatedProposals(self, proposal):
+        q = """
+             select RELATED_PROPOSALS
+             from proposal
+             where proposal_id = %s""" % proposal.pst_proposal_id
+        self.cursor.execute(q)
+        return self.cursor.fetchone()[0]
+
     def getAuthor(self, author_id):
         q = """
             select * from author where author_id = %s
