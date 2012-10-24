@@ -138,6 +138,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.sessions = []
         self.badSessions = []
         self.pressuresBySession = {}
+        self.weatherPsBySession = {}
         self.weatherPressuresBySession = {}
         self.futureSessions = []
         self.semesterSessions = []
@@ -475,7 +476,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             e.getRange()[1] > self.nextSemesterStart]
 
         # just get the first period    
-        ps = [e.periods.exclude(state__abbreviation = 'D')[0] \
+        ps = [e.periods.exclude(state__abbreviation = 'D').order_by('start')[0] \
             for e in es]
         return ps
 
@@ -749,6 +750,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         else:
             raise 'unhandled category'
 
+        # reporting
+        self.weatherPsBySession[session.__str__()] = (category, wps)
+
     def getSessionTime(self, session, category, subCategory):
         """
         The time we use for the pressure depends on what
@@ -893,7 +897,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                     allocated.poor[i] = 0
                 changes.poor[i] = remainder.poor[i]
                 # take time out of poor
-                allocated.poor[i] = availability.poor[i] - carryover.poor[i]
+                #allocated.poor[i] = availability.poor[i] - carryover.poor[i]
                 # and give it to good 
                 tmp.good[i] = gradeA.good[i] + carryover.good[i] + remainder.poor[i]
                 # but is this too much?
@@ -1076,9 +1080,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 print self.formatResults(lbl, ps, lblFrmt = "%35s")
 
         # for Brian Truitt:
-        #print "Remaining Hours by LST (0-23)"
-        #for r in self.remainingTotalPs:
-        #    print "%5.2f" % r
+        print "Remaining Hours by LST (0-23)"
+        for r in self.remainingTotalPs:
+            print "%5.2f" % r
 
     def sessionKey2Id(self, key):
         "name (id) -> id"
@@ -1096,7 +1100,23 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         label = lblFrmt % label
         rs = ["%7.2f" % results[i] for i in range(len(results))]
         return label + ": " + ' '.join(rs)
-   
+ 
+    def reportLstContributions(self, lst, grade, wtype):
+
+        print "Contributors to Allocated pressure at LST: %d, Grade: %s, weather: %s" % \
+            (lst, grade, wtype)
+        total = 0.0    
+        for name in sorted(self.weatherPsBySession.keys()):
+            cat, wps = self.weatherPsBySession[name]
+            sId = self.sessionKey2Id(name)
+            s = Session.objects.get(id = sId)
+            if cat == ALLOCATED and s.grade.grade == grade:
+                ps = wps.getType(wtype)
+                if ps[lst] > 0.0:
+                    print name, ps[lst]
+                    total += ps[lst]
+        print "Total: ", total        
+
     def reportSemesterSummary(self):
 
         print "Time Analysis for Semester %s" % self.nextSemester.semester
@@ -1155,6 +1175,46 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                                           , ps.total(type = type)
                                           , ps.total(type = type
                                                    , gc = True))
+
+    def compareNewAstronomyPressures(self):
+        
+        self.compareNewAstronomyPressuresAll()
+        for w in self.weatherTypes:
+            self.compareNewAstronomyPressuresByType(w.lower())
+
+
+    def compareNewAstronomyPressuresAll(self):
+        f = '/users/pmargani/webtest.txt'
+        socPs = self.getSocorroPressures(f) 
+        #print "SOC: ", socPs
+
+        # get our equivalent:
+        for g in self.grades:
+            soc = socPs[g]
+            gb = self.gradePs[g].allTypes()
+            print "Grade: ", g
+            print gb - soc
+
+    def compareNewAstronomyPressuresByType(self, wtype):
+
+        print "Type: ", wtype
+        #f = '/users/pmargani/webtest.txt'
+        #f = '/users/pmargani/webtest_excellent.txt'
+        #f = '/users/pmargani/webtest_good.txt'
+        #f = '/users/pmargani/webtest_poor.txt'
+        f = '/users/pmargani/webtest_%s.txt' % wtype
+        socPs = self.getSocorroPressures(f) 
+        #print "SOC: ", socPs
+
+        # get our equivalent:
+        for g in self.grades:
+            soc = socPs[g]
+            #gb = self.gradePs[g].getType('Excellent')
+            #gb = self.gradePs[g].getType('Good')
+            #gb = self.gradePs[g].getType('Poor')
+            gb = self.gradePs[g].getType(wtype)
+            print "Grade: ", g
+            print gb - soc
 
     def reportSocorroGrade(self, grade):
         "For comparing our pressures to the table under Soc's plots"
@@ -1289,6 +1349,42 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.rfiWeights           = numpy.array(self.getPressureWeights('RFI')[0])
         self.opticalNightWeights  = numpy.array(self.getPressureWeights('Optical')[0])
         self.thermalNightWeights  = numpy.array(self.getPressureWeights('Thermal')[0])
+
+    def getSocorroPressures(self, filename):
+        
+        f = open(filename, 'r')
+        ls = f.readlines()
+        pressures = {}
+        for l in ls:
+            # yields: ['A ', '12.2 ', '2.3 ', ..'34.55\n']
+            parts = l.split('\t')
+            # don't include grade
+            ps = parts[1:]
+            # get rid of trailing \n
+            ps[23] = ps[23][:-2]
+            #print ps
+            # convert to array of floats
+            ps = [float(p.strip()) for p in ps]
+            pressures[parts[0].strip()] = ps
+        return pressures
+
+    def getSocLstPressure(self, filename):
+        # parse lines like:
+        # GBT13A-210 	GBT13A-210 - 1 	7.0
+        f = open(filename, 'r')
+        ls = f.readlines()
+        pressures = {}
+        total = 0.0
+        for l in ls:
+            parts = l.split('\t')
+            pcode = parts[0].strip()
+            session = parts[1].strip()
+            ps = float(parts[2][:-2].strip())
+            print session, ps
+            pressures[session] = ps
+            total += ps
+        print "total: ", total    
+        return pressures    
 
     def initFlagWeightsBad(self):
         "These are what you get from 12B"
