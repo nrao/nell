@@ -56,12 +56,9 @@ class ProposalSummary(ProposalReport):
               ]
 
     def genRow(self, proposal):
-        def truncateStr(string, length):
-            return string if len(string) <= length else string[:length]
-    
-        title     = truncateStr(proposal.title, 65)
+        title     = self.truncateStr(proposal.title, 65)
         pi_name   = proposal.pi.getLastFirstName() if proposal.pi is not None else ''
-        pi_name   = truncateStr(pi_name, 20)
+        pi_name   = self.truncateStr(pi_name, 20)
         email     = proposal.pi.email if proposal.pi is not None else ''
         obs_types = [ot.code for ot in proposal.observing_types.all()]
         students  = len(proposal.author_set.filter(thesis_observing = True))

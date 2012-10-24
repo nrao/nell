@@ -33,6 +33,7 @@ from reportlab.lib.units  import inch
 
 from Report             import Report
 from pht.models         import Proposal
+from pht.tools.database import PstInterface
 
 def defaultFilter(proposal):
     return 'TGBT' not in proposal.pcode
@@ -40,11 +41,17 @@ def defaultFilter(proposal):
 class ProposalWorksheet(Report):
 
     def __init__(self, filename):
-        self.filename = filename
+        self.filename     = filename
+        self.pstInterface = PstInterface()
         super(ProposalWorksheet, self).__init__(filename, orientation = 'portrait')
 
     def genHeader(self, proposal):
         pi_name  = proposal.pi.getLastFirstName() if proposal.pi is not None else ''
+        joint    = 'J' if proposal.joint_proposal else ''
+        students = len(proposal.author_set.filter(thesis_observing = True))
+        related  = self.pstInterface.getRelatedProposals(proposal) or ''
+        related  = self.truncateStr(related, 70)
+
         content = [[self.pg('<b>%s</b>' % proposal.pcode)
                   , self.pg(pi_name)
                   , self.pg('%s - %s' % (proposal.requestedTime(), proposal.bands()))
@@ -52,8 +59,8 @@ class ProposalWorksheet(Report):
                     ],
                    [self.pg('')
                   , self.pg('')
-                  , self.pg('')
-                  , self.pg('')
+                  , self.pg('S: %i %s' % (students, joint))
+                  , self.pg(related)
                   , self.pg(''.join([o.code for o in proposal.observing_types.all()]))
                     ]]
         proposalHeader = Table(content, colWidths = [50, 75, 50, 300, 50])
