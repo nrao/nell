@@ -911,6 +911,7 @@ class TestLstPressures(TestCase):
         carryover.good = numpy.array([10.0]*lst.hrs)
         carryover.excellent = numpy.array([0.0]*lst.hrs)
 
+        
         alloc, chg = lst.adjustForOverfilledWeather(gradeA
                                                   , carryover
                                                   , lst.weather.availability
@@ -929,6 +930,44 @@ class TestLstPressures(TestCase):
             for i in range(lst.hrs):
                 self.assertEquals(exp.getType(w)[i]
                                 , alloc.getType(w)[i])                                
+                self.assertEquals(expC.getType(w)[i]
+                                , chg.getType(w)[i])
+
+    def test_adjustForOverfilledWeather_4(self):
+
+        # we need the availability to be that of 12A
+        # 12A starts 2012, 2, 1
+        today = datetime(2012, 1, 15)
+        lst = LstPressures(today = today)
+
+        # WAY TOO MUCH TIME
+        time = 100.0
+        gradeA = Pressures()
+        gradeA.poor = numpy.array([time]*lst.hrs)
+        gradeA.good = numpy.array([time]*lst.hrs)
+        gradeA.excellent = numpy.array([time]*lst.hrs)
+        carryover = Pressures()
+        carryover.poor = numpy.array([time]*lst.hrs)
+        carryover.good = numpy.array([time]*lst.hrs)
+        carryover.excellent = numpy.array([time]*lst.hrs)
+
+        alloc, chg = lst.adjustForOverfilledWeather(gradeA
+                                                  , carryover
+                                                  , lst.weather.availability
+                                                   )
+        # here's the change we expect
+        exp = Pressures() 
+        exp.poor = numpy.array([0.0]*lst.hrs)
+        exp.good = numpy.array([0.0]*lst.hrs)
+        exp.excellent = numpy.array([300.0]*lst.hrs)
+        expC = Pressures() 
+        expC.poor = numpy.array([100.0]*lst.hrs)
+        expC.good = numpy.array([-100.0]*lst.hrs)
+        expC.excellent = numpy.array([200.0]*lst.hrs)
+        for w in ['poor', 'good', 'excellent']:
+            for i in range(lst.hrs):
+                self.assertEquals(exp.getType(w)[i]
+                                , alloc.getType(w)[i]) 
                 self.assertEquals(expC.getType(w)[i]
                                 , chg.getType(w)[i])
 
