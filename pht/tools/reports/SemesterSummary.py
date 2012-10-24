@@ -47,6 +47,18 @@ class SemesterSummary(Report):
     def __init__(self, filename, semester = None):
         super(SemesterSummary, self).__init__(filename)
 
+        # save off original table style
+        self.tableStyleNoSpan = self.tableStyle
+
+        # redefine the table sytle to include a span
+        self.tableStyle = TableStyle([
+            ('SPAN', (0, 0), (-1,0)),
+            ('TOPPADDING', (0, 0), (-1, -1), 0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+            ('LINEABOVE', (0, 1), (-1, 1), 1, colors.black),
+            ('BOX', (0, 0), (-1, -1), 1, colors.black),
+        ])
+        
         self.semester = semester
 
         # In order to calculate the pressures for the right semester
@@ -65,6 +77,7 @@ class SemesterSummary(Report):
 
         # crunch the numbers we need for this report
         self.lst.getPressures()
+        self.lst.getOriginalRequestedPressures()
         
         self.title = self.title if self.semester is None else \
                      self.title + " for Semester %s" % self.semester
@@ -75,6 +88,7 @@ class SemesterSummary(Report):
         t2 = self.getAvailableAllAstronomyTable()
         t3 = self.getAvailableNewAstronomyTableGradeA()
         t4 = self.getAvailableNewAstronomyTable()
+        t5 = self.getTotalRequestedTable()
 
         b = self.getBreak()
 
@@ -82,7 +96,8 @@ class SemesterSummary(Report):
         for g in self.lst.grades: 
             tables.append(self.getBacklogTableForGrade(g))
             tables.append(b)
-        tables.extend([t3, b, t4, b])    
+
+        tables.extend([t3, b, t4, b, t5])    
 
         # write the document to disk (or something)
         self.doc.build(tables
@@ -91,10 +106,10 @@ class SemesterSummary(Report):
 
     def getIntroTable(self):
 
-        data = [[Paragraph('Time Analysis for Semester %s' % self.semester, self.styleSheet)
+        data = [[self.pg('Time Analysis for Semester %s' % self.semester, bold = True)
                 ]
-              , [Paragraph('%s - %s' % (self.lst.timeRange), self.styleSheet)]
-              , [Paragraph('As of %s' % self.lst.published, self.styleSheet)]
+              , [self.pg('%s - %s' % (self.lst.timeRange))]
+              , [self.pg('As of %s' % self.lst.published)]
                ]
 
         t = Table(data, colWidths = [300])
@@ -114,14 +129,14 @@ class SemesterSummary(Report):
         hrsTests      = (self.lst.testingPs.total()
                        , self.lst.testingPs.total(gc = True))
 
-        data = [self.hrsPg('Hours in Semester', hrsInSemester)
+        data = [self.hrsPg('Hours in Semester', hrsInSemester, bold = True)
               , self.hrsPg('Maintenance Hours', hrsMaint)
               , self.hrsPg('Test, Comm, Calib Hours', hrsTests)
               , self.hrsPg('Shutdown Hours', hrsShutdown)
                 ]
 
         t = Table(data, colWidths = [100, 100, 100])
-        t.setStyle(self.tableStyle)
+        t.setStyle(self.tableStyleNoSpan)
         return t
 
     def getAvailableAllAstronomyTable(self):
@@ -139,7 +154,7 @@ class SemesterSummary(Report):
         hrsTotal = (self.lst.carryoverGradePs['total'][g].total()
                   , self.lst.carryoverGradePs['total'][g].total(gc = t))
 
-        data = [[self.pg('Group %s time' % grade)]
+        data = [[self.pg('Group %s time' % grade, bold = True)]
                , self.hrsPg('Hours Total', hrsTotal)  
                , self.hrsPg('Fixed Hours', hrsFixed)
                ]
@@ -174,7 +189,7 @@ class SemesterSummary(Report):
         hrsTotal, hrsLowFreq, hrsHiFreq1, hrsHiFreq2 = \
             self.getAvailableHrs(available)
 
-        data = [[self.pg(text)
+        data = [[self.pg(text, bold = True)
                 ]
               , self.hrsPg('Hours Total', hrsTotal)  
               , self.hrsPg('Hours for Low Freq', hrsLowFreq)
@@ -197,8 +212,16 @@ class SemesterSummary(Report):
         return self.getAvailableTable(txt
                                     , self.lst.remainingPs)
 
-    def hrsPg(self, text, hrs):
+    def getTotalRequestedTable(self):
+        txt = 'Originally Requested Astronomy for semester %s' % self.semester
+        return self.getAvailableTable(txt
+                                    , self.lst.originalRequestedPs)
+        
+
+    def hrsPg(self, text, hrs, bold = False):
         "This is common enough when reporting on hours"
+        if bold:
+            text =  "<b>%s</b>" % text
         return [self.pg(text) # label
               , self.pg("%5.2f" % hrs[0]) # total hrs
               , self.pg("GC[%5.2f]" % hrs[1]) # hrs in Gal. Center

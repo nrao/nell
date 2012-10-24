@@ -65,6 +65,10 @@ Ext.define('PHT.view.proposal.TacTool', {
                 xtype: 'textarea',
                 name : 'tac_to_pi',
                 fieldLabel: 'TAC Comments to PI',
+            },{
+                xtype: 'textarea',
+                name : 'tac_to_tac',
+                fieldLabel: 'TAC Comments (internal)',
         }];
 
         this.allocateBtn = Ext.create('Ext.button.Button', {

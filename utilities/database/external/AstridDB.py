@@ -95,7 +95,7 @@ class AstridDB(object):
             else:
                 self.add("Astrid Code %s already exists\n" % astridCode)
         self.add("Successfully added %d new project codes\n" % count)        
-        self.writeReport()
+        #self.writeReport()
 
     def dssCode2astridCode(self, pcode):
         "Simple algorithm for converting DSS codes to Astrid codes."
