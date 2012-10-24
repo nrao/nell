@@ -35,7 +35,7 @@ def checkSessions(sessions):
     f = open('flaggedSessions_old.txt', 'r')
     contents = f.readlines()
     numSessions = int(contents[0].replace('\n', ''))
-    if numSessions < len(sessions):
+    if numSessions > len(sessions):
         soundTheAlarm(sessions, contents)
     f.close()
 
