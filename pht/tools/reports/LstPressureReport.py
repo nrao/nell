@@ -250,6 +250,22 @@ class LstPressureReport(Report):
                          , bold = True))
         els.append(self.createChangesTable())
 
+        # breakdown of pre-assigned time
+        els.append(self.getBreak()) 
+        els.append(self.pg("Maintenance Pressure", bold = True))
+        els.append(self.createPressureTable(self.lst.maintenancePs.allTypes()
+                                          , self.lst.maintenancePs))
+        els.append(self.getBreak()) 
+        els.append(self.pg("Shutdown Pressure", bold = True))
+        els.append(self.createPressureTable(self.lst.shutdownPs.allTypes()
+                                          , self.lst.shutdownPs))
+        els.append(self.getBreak()) 
+        els.append(self.pg("Testing Pressure", bold = True))
+        els.append(self.createPressureTable(self.lst.testingPs.allTypes()
+                                          , self.lst.testingPs))
+        els.append(self.getBreak()) 
+
+
         # non traditional sessions
         if len(self.lst.badSessions) > 0:
             ss = self.createSessionElements("Session's without pressures (bad):"
