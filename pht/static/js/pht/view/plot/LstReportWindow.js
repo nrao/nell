@@ -42,7 +42,7 @@ Ext.define('PHT.view.plot.LstReportWindow', {
             items: [{
                 xtype: 'checkboxfield',
                 name: 'debug',
-                fieldLabel: 'Debug?',
+                fieldLabel: 'Details?',
                 uncheckedValue: 'false',
                 inputValue: 'true',
                 labelAlign: 'left',
