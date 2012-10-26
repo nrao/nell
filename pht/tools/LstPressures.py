@@ -1080,9 +1080,25 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 print self.formatResults(lbl, ps, lblFrmt = "%35s")
 
         # for Brian Truitt:
-        print "Remaining Hours by LST (0-23)"
-        for r in self.remainingTotalPs:
-            print "%5.2f" % r
+        print "Remaining Hours (poor, good, excellent) by LST (0-23)"
+        #for r in self.remainingTotalPs:
+        for hr in range(self.hrs):
+            print "%.2f,%.2f,%.2f" % (self.remainingPs.poor[hr]
+                                    , self.remainingPs.good[hr]
+                                    , self.remainingPs.excellent[hr])
+
+        # for Toney
+        print ""
+        print "Preassigned pressures:"
+        self.reportPressures("Maintenance"
+                           , self.maintenancePs.allTypes()
+                           , self.maintenancePs)
+        self.reportPressures("Shutdown"
+                           , self.shutdownPs.allTypes()
+                           , self.shutdownPs)
+        self.reportPressures("Testing"
+                           , self.testingPs.allTypes()
+                           , self.testingPs)
 
     def sessionKey2Id(self, key):
         "name (id) -> id"
@@ -1595,6 +1611,7 @@ if __name__ == '__main__':
     #lst.reportSocorroWeatherFormat('12B')
     lst.report()
     lst.reportSemesterSummary()
+    #lst.compareNewAstronomyPressures()
 
 
     #exp = []
