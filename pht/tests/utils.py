@@ -20,8 +20,9 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from pht.models import Semester
+from pht.models import *
 from pht.httpadapters import SessionHttpAdapter
+from datetime import datetime
 
 def createSession(p):
     "Create a new session for the tests"
@@ -52,3 +53,25 @@ def createSession(p):
     #adapter.session.dss_session = self.maintProj.sesshun_set.all()[0]
     adapter.session.save()
     return adapter.session
+
+def createProposal():
+    proposalType  = ProposalType.objects.get(type = "Director's Discretionary Time")
+    status        = Status.objects.get(name = 'Submitted')
+    abstract      = '' 
+    semester      = Semester.objects.get(semester = '10A')
+    name          = ''
+    pcode         = 'GBT10A-009'
+    proposal = Proposal(pst_proposal_id = 0
+                  , proposal_type   = proposalType
+                  , status          = status
+                  , semester        = semester
+                  , pcode           = pcode
+                  , create_date     = datetime.now()
+                  , modify_date     = datetime.now()
+                  , submit_date     = datetime.now()
+                  , title           = name
+                  , abstract        = abstract
+                  , joint_proposal  = False 
+                  )
+    proposal.save()
+    return proposal    

@@ -64,28 +64,6 @@ class TestSourceConflicts(TestCase):
         "Create a new session for the tests"
         return createSession(p)
 
-    def createProposal(self):
-        proposalType  = ProposalType.objects.get(type = "Director's Discretionary Time")
-        status        = Status.objects.get(name = 'Submitted')
-        abstract      = '' 
-        semester      = Semester.objects.get(semester = '10A')
-        name          = ''
-        pcode         = 'GBT10A-009'
-        proposal = Proposal(pst_proposal_id = 0
-                      , proposal_type   = proposalType
-                      , status          = status
-                      , semester        = semester
-                      , pcode           = pcode
-                      , create_date     = datetime.now()
-                      , modify_date     = datetime.now()
-                      , submit_date     = datetime.now()
-                      , title           = name
-                      , abstract        = abstract
-                      , joint_proposal  = False 
-                      )
-        proposal.save()
-        return proposal
-
     def createSrc(self, proposal, ra = 0.0, dec = 0.0):
         src = Source(proposal = proposal
                   , ra = ra
@@ -208,7 +186,7 @@ class TestSourceConflicts(TestCase):
         tpcode = self.proposal.pcode
 
         # create a new proposal w/ sessions and sources
-        newP = self.createProposal() 
+        newP = createProposal() 
         newS = self.createSession(newP)
         newS.grade = SessionGrade.objects.get(grade = 'A')
         newS.receivers.add(Receiver.objects.get(abbreviation = 'Q'))
@@ -263,7 +241,7 @@ class TestSourceConflicts(TestCase):
         tpcode = self.proposal.pcode
 
         # create a new proposal w/ sessions and sources
-        newP = self.createProposal() 
+        newP = createProposal() 
         newS = self.createSession(newP)
         newS.receivers.add(Receiver.objects.get(abbreviation = 'Q'))
         newS.receivers.add(Receiver.objects.get(abbreviation = '800'))
