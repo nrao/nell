@@ -42,6 +42,7 @@ from pht.tools.LstPressures       import LstPressures
 from pht.tools.LstPressures       import *
 from pht.tools.LstPressureWeather import Pressures
 import numpy
+from pht.tools.PlotLstPressures import PlotLstPressures
 
 class TestLstPressures(TestCase):
 
@@ -80,6 +81,7 @@ class TestLstPressures(TestCase):
         ot, created = Observing_Type.objects.get_or_create(type = t)
 
         self.lst = LstPressures()
+
 
     def printSession(self, s):
         "For reporting"
@@ -1053,6 +1055,214 @@ class TestLstPressures(TestCase):
         self.assertEquals(0.0
                         , lst.getSessionTime(self.session, CARRYOVER, ''))
 
+    def createTestingSession(self, type, name, semester, time):
+        p = Proposal.objects.all()[0]
+        s = createSession(p)
+        ot, created = Observing_Type.objects.get_or_create(type = type)
+        s.observing_type = ot
+        s.semester = Semester.objects.get(semester = semester) 
+        s.name =  name 
+        s.allotment.allocated_repeats = 1
+        s.allotment.allocated_time = time
+        s.allotment.save()
+        s.save()
+        return s
+
+    def test_testingSessions(self):
+
+        # currently we are in 12B
+        s13A = DSSSemester.objects.get(semester = '13A')
+        today = s13A.start() - timedelta(days = 7)
+        lst = LstPressures(today = today)
+
+        # create a testing session for 13A
+        s = self.createTestingSession('commissioning'
+                                    , 'new rx'
+                                    , '13A'
+                                    , 16.0
+                                      )
+
+        ps = lst.getPressures(sessions = [s])
+        self.assertEqual(1, len(lst.testSessions))
+        self.assertEqual(s, lst.testSessions[0])
+        self.assertEqual(1, len(lst.pressuresBySession.items()))
+        keys = lst.pressuresBySession.keys()
+        cat, subcat, ps, time = lst.pressuresBySession[keys[0]]
+        self.assertEqual('carryover', cat)
+        self.assertEqual('', subcat)
+        self.assertAlmostEqual(16.0, time, 3)
+        exp = [0.]*10
+        exp.extend([1.6]*10)
+        exp.extend([0.]*4)
+        self.assertEqual(exp, ps.tolist())
+
+    def createCarryoverSession(self, name, sem, nextSemTime, remTime):
+        # our carryover is from the previous semester
+        sem = Semester.objects.get(semester = sem)
+        s = self.createSession()
+        s.name = name 
+        s.semester = sem
+        s.save()
+        next_semester = SessionNextSemester(complete = False
+                                          , time = nextSemTime)
+        next_semester.save()              
+        s.next_semester = next_semester
+        dssSess = create_sesshun()
+        dssSess.allotment.total_time  = remTime
+        dssSess.allotment.save()
+        s.dss_session = dssSess
+        s.save()
+        return s
+
+    def test_carryover(self):
+
+        # we're in the last days of 12B
+        s13A = DSSSemester.objects.get(semester = '13A')
+        today = s13A.start() - timedelta(days = 7)
+        lst = LstPressures(today = today)
+
+        nextSemTime = 75.0
+        remainingTime = 110.0
+        # our carryover is from the previous semester
+        s = self.createCarryoverSession('carryover-1'
+                                      , '12A'
+                                      , nextSemTime
+                                      , remainingTime
+                                        )
+   
+        lst.getPressures(sessions = [s])
+        self.assertEqual(1, len(lst.pressuresBySession.items()))
+        keys = lst.pressuresBySession.keys()
+        cat, subcat, ps, time = lst.pressuresBySession[keys[0]]
+        self.assertEqual('carryover', cat)
+        self.assertEqual('', subcat)
+        self.assertAlmostEqual(nextSemTime, time, 3)
+        exp = [0.]*10
+        exp.extend([nextSemTime/10.]*10)
+        exp.extend([0.]*4)
+        self.assertEqual(exp, ps.tolist())
+
+        # now use the time remaining
+        lst.carryOverUseNextSemester = False
+        lst.getPressures(sessions = [s])
+        keys = lst.pressuresBySession.keys()
+        cat, subcat, ps, time = lst.pressuresBySession[keys[0]]
+        self.assertAlmostEqual(remainingTime, time, 3)
+
+        # now set this as complete, and make sure we're ignored 
+        s.dss_session.status.complete = True
+        s.dss_session.status.save()
+        lst.getPressures(sessions = [s])
+        keys = lst.pressuresBySession.keys()
+        cat, subcat, ps, time = lst.pressuresBySession[keys[0]]
+        self.assertEqual('carryover', cat)
+        self.assertEqual('', subcat)
+        self.assertAlmostEqual(0.0, time, 3)
+
+    def createMaintenanceSession(self):
+        maintenance = 'Maintenance'
+
+        # create a maint. proposal
+        p = createProposal()
+        p.pcode = maintenance 
+        p.semester = Semester.objects.get(semester = '12A')
+        p.save()
+
+        # create a fixed type session
+        s = createSession(p)
+        s.session_type = SessionType.objects.get(type = 'Fixed')
+        s.name =  maintenance
+        s.save()
+
+        # now creater a corresponding DSS project and session 
+        dssSess = create_sesshun()
+        s.dss_session = dssSess
+        s.save()        
+        return s
+
+    def test_maintenancePressure(self):
+
+        s = self.createMaintenanceSession()
+
+        # the pressure for this session in 12B should be 
+        # categorized as pre-assigned carrayover, but it should
+        # have no pressure yet because there are no periods
+        # We want to pretend it's right before 13A
+        today = datetime(2013, 1, 15)
+        lst = LstPressures(today = today)
+        
+        ps = lst.getPressures(sessions = [s])
+        self.assertEqual(1, len(lst.pressuresBySession.items()))
+        keys = lst.pressuresBySession.keys()
+        cat, subcat, ps, time = lst.pressuresBySession[keys[0]]
+        self.assertEqual('carryover', cat)
+        self.assertEqual('periods', subcat)
+        self.assertEqual(0.0, time)
+
+        # create periods in the 'next semester'
+        s13A = DSSSemester.objects.get(semester = '13A')
+        periods = self.createMaintenanceDSSPeriods(s.dss_session, s13A)
+        total = sum([p.duration for p in periods])
+
+        ps = lst.getPressures(sessions = [s])
+        self.assertEqual(1, len(lst.pressuresBySession.items()))
+        keys = lst.pressuresBySession.keys()
+        cat, subcat, ps, time = lst.pressuresBySession[keys[0]]
+        self.assertTrue(abs(time - total) < 1.0)
+
+        exp = [  0.
+               , 0.
+               , 0.
+               , 0.03949657
+               , 1.69908683
+               , 3.85921174
+               , 6.01933665
+               , 8.17946156
+               , 10.33958647
+               , 12.55961392
+               , 14.73989875
+               , 16.88243036  
+               , 17.40486829
+               , 17.40486829
+               , 17.40511433
+               , 16.86434499
+               , 14.70422008
+               , 12.50609591
+               , 10.3039078
+               , 8.14378289
+               , 5.98365798
+               , 3.82353307
+               , 1.66340816
+               , 0.02165724
+               ]
+
+        self.assertArrayAlmostEqual(exp, ps)
+
+    def assertArrayAlmostEqual(self, a1, a2):
+        self.assertEqual(len(a1), len(a2))
+        for i in range(len(a1)):
+            self.assertAlmostEqual(a1[i], a2[i], 3)
+
+    def createMaintenanceDSSPeriods(self, s, sem):
+
+        # give a fixed maint. day for each week in the semester
+        dt = sem.start() + timedelta(days = 1)
+        numDays = sem.numDays()
+        weeks = int(numDays/7)
+        dur = 8.0 # hours
+        ps = []
+        for w in range(weeks):
+            dt = dt + timedelta(days = 7)
+
+            if dt < sem.end():
+                p = DSSPeriod(session = s
+                            , start = dt
+                            , duration = dur
+                             )
+                p.save()             
+                ps.append(p)
+        return ps    
+
     def test_accumulatePressure(self):
 
         lst = LstPressures()
@@ -1122,9 +1332,10 @@ class TestLstPressures(TestCase):
         gradeD = SessionGrade.objects.get(grade = 'D')
         dss12A = DSSSemester.objects.get(semester = '12A')
         dss12B = DSSSemester.objects.get(semester = '12B')
+        dss13A = DSSSemester.objects.get(semester = '13A')
         s12A   = Semester.objects.get(semester = '12A')
         s12B   = Semester.objects.get(semester = '12B')
-        s13A   = Semester(semester = '13A')
+        s13A, _ = Semester.objects.get_or_create(semester = '13A')
         s13A.save()
         s13B   = Semester(semester = '13B')
         s13B.save()
@@ -1409,4 +1620,54 @@ class TestLstPressures(TestCase):
         self.assertEqual(70.0, lst.getIgnoredRequestedTime())
         self.assertEqual(65.0, lst.newAstronomyTotalPs.sum())
                         
-        
+
+        # Now add a few more sessions to flesh this whole example 
+        # out a bit more.  This matches Use Case 3.7.3
+        # First, an old carryover that is complete:
+        s = self.createCarryoverSession('carryover-2'
+                                      , '12A'
+                                      , 0.
+                                      , 0.
+                                       )
+        s.dss_session.status.complete = True
+        s.dss_session.status.save()
+        s.next_semester.time = 0
+        s.next_semester.save()
+        # Second, a testing session
+        s = self.createTestingSession('commissioning'
+                                    , 'new rx'
+                                    , '13A'
+                                    , 16.0
+                                      )
+        # and make sure we know about it
+        lst.testSessions = lst.getTestSessions()
+        # Finally, the maintenance
+        s = self.createMaintenanceSession()
+        self.createMaintenanceDSSPeriods(s.dss_session, dss13A)
+
+
+        sessions = Session.objects.all().exclude(name = 'He_ELD_5G').order_by('name')
+        ps = lst.getPressures(sessions = sessions)
+
+
+        self.assertAlmostEqual(150.0 + 200.54 + 16.0 
+                             , lst.carryoverTotalPs.sum(), 1)
+        self.assertEqual(30.0, lst.requestedTotalPs.sum())
+        self.assertEqual(70.0, lst.getIgnoredRequestedTime())
+        self.assertEqual(65.0, lst.newAstronomyTotalPs.sum())        
+    
+        # what are the final sessions used?
+        #pbs = lst.pressuresBySession                
+        #for key, value in pbs.items():
+        #    print key, value[0], value[1], value[3]
+        #ss = Session.objects.all().order_by('name')
+        #print "xxx"
+        #for s in ss:
+        #    print s.name, s.grade.grade, s.semester.semester, s.allotment.allocated_time
+
+        # print a plot of this
+        #plot = PlotLstPressures()
+        #plot.plot('total'
+        #        , carryOverUseNextSemester = True
+        #        , adjustWeatherBins = False)                
+        #0plot.printPlot('total.png')        
