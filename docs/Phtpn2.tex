@@ -1,6 +1,8 @@
 \documentclass{article} 
 \usepackage{dspn}
 \usepackage{epsfig}
+\usepackage{epstopdf}
+\usepackage{graphicx}
 
 %------------------------------------------------------------------------------
 \newcommand{\mydoctitle}     {LST Pressures in the Green Bank Telescope Proposal Handling Tool}
@@ -180,7 +182,7 @@ As mentioned above, which value to use for T-semester depends on the time for wh
 
 However, even once this difference is clarified, there are more devils in the details: 
 
-{\bf Time Remaining}
+\subsubsection{Time Remaining}
 
 If we are calculating carryover pressure via time remaining, then can get very complicated, and we need to decide how accurate we want to be. To be completely accurate, we must follow the same rules followed not just in nell's TimeAccounting class, which accurately gives us the time remainig for a given session, but we must also follow antioch's time accounting methods, which also determine whether the given session should be scheduled at all, based off the projects complete status, the session's complete status, and even such complex factors as maximum semester time.
 
@@ -191,7 +193,7 @@ However, Toney has agreed that this level of accuracy is not needed here. Instea
     If the session's time remaining is negative, use 0.0
     Otherwise, use the time remaining as it is currenlty being calculated via nell's TimeAccounting class. 
 
-{\bf Next Semester Time}
+\subsubsection{Next Semester Time}
 
 There are actually four next semester fields to take into account:
 
@@ -220,6 +222,7 @@ The weather group is determined by receiver: KFPA, MBA and W are in the excellen
 Let g be the fraction of windowed session that are observed away from their default date. (These are the sessions that get moved to poor weather days.) The value of g is an input parameter for a whole semester. The value of g is between 0.0 and 1.0. This value will need to be a parameter we input for a given semster.
 
 Let f-poor, f-good and f-excellent be the fraction of time available for each weather group. We get to set what these fractions are for a given semester and the values are between 0.0 and 1.0. 
+
 \subsection{Open Sessions}
 
 For open sessions the time should go only to the weather condition set for the session in the GB PHT.
@@ -270,13 +273,13 @@ If Grade A (Poor Weather) + Carryover (Poor Weather) > Availability (Poor Weathe
 \subsection{Use Case 1: Binning LSTs}
 
 
-
-\begin{table}
+\begin{table}[htb]
 {\footnotesize
-\caption{Binning LSTs Examples \label{tab:time}}
+\caption{Binning LSTs Examples} 
+\label{binning_lsts}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccc}
 \hline \hline
-{\bf Case} & {\bf Min} & {\bf Max} & {\bf Bins}\\
+{\bf Case} & {\bf Min LST} & {\bf Max LST} & {\bf Bins}\\
 1 & 00:00 & 01:00 & 0\\
 2 &	00:00 & 10:00 &	0,1,2,3,4,5,6,7,8,9 ([0,9])\\
 3 &	00:30 &	01:30 &	0\\
@@ -289,13 +292,20 @@ If Grade A (Poor Weather) + Carryover (Poor Weather) > Availability (Poor Weathe
 }
 \end{table}
 
-\subsection{Use Case 2: Optical Night Flag}
+Table~\ref{binning_lsts} shows examples of how Min. and Max. LSTs are
+translated into LST bins for pressure calculatations.
 
-Here is an example of how the Optical Night Flag weights should be calcualted.  In order to fit all 24 LST bins in the same table, the columns are: Day from August 1, 2012, Sun Rise (UTC), Sun Set (UTC), Sun Rise (LST), Sun Set (LST), followed by the 24 LST hours.   The last two dates are Jan 29 and Jan 30, 2013.
+\subsection{Night Time Flags and Pressures}
 
-\begin{table}
+Here we describe examples of how the various night time flag weights are
+calculated.  In order to fit all 24 LST bins in the same table, the columns are: Day from August 1, 2012, Sun Rise (UTC), Sun Set (UTC), Sun Rise (LST), Sun Set (LST), followed by the 24 LST hours.   The last two dates are Jan 29 and Jan 30, 2013.
+
+\subsubsection{Use Case 2: Optical Night Flag}
+
+\begin{table}[htb]
 {\tiny
-\caption{Optical Night Flag \label{tab:time}}
+\label{optical_night_flag}
+\caption{Optical Night Flag}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
 \hline \hline
 {\bf Day} & {\bf Rise} & {\bf Set} & {\bf R-LST} & {\bf S-LST} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3}\\
@@ -305,20 +315,19 @@ Here is an example of how the Optical Night Flag weights should be calcualted.  
 2 & 10:23:16 & 00:28:10 & 1.89 & 16.01 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1\\
 181 & 12:26:38 & 22:38:52 & 15.72 & 1.95 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
 182 & 12:25:49 & 22:40:00 & 15.77 & 2.03 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
-
-
 \hline \hline
 \end{tabular*}
 }
 \end{table}
 
-\subsection{Use Case 2: Thermal Night Flag}
+Table~\ref{optical_night_flag}  is an example of how the Optical Night Flag weights should be calcualted.  
 
-Here is an example of how the Thermal Night Flag weights should be calcualted.  In order to fit all 24 LST bins in the same table, the columns are: Day from August 1, 2012, Sun Rise (UTC), Sun Set (UTC), Sun Rise (LST), Sun Set (LST), followed by the 24 LST hours.   The last two dates are Jan 29 and Jan 30, 2012.
+\subsubsection{Use Case 2: Thermal Night Flag}
 
-\begin{table}
+\begin{table}[htb]
 {\tiny
-\caption{Thermal Night Flag Examples \label{tab:time}}
+\label{thermal_night_flag}
+\caption{Thermal Night Flag Examples}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
 \hline \hline
 {\bf Date} & {\bf Rise} & {\bf Set} & {\bf R-LST} & {\bf S-LST} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3}\\
@@ -328,21 +337,20 @@ Here is an example of how the Thermal Night Flag weights should be calcualted.  
 2 & 10:23:16 & 03:28:10 & 1.89 & 19.02 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1\\
 181 & 12:26:38 & 01:38:52 & 15.72 & 4.96 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
 182 & 12:25:49 & 01:40:00 & 15.77 & 5.04 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
-
-
-
 \hline \hline
 \end{tabular*}
 }
 \end{table}
 
 
-\subsection{Use Case 3: RFI Night Flag}
-Here is an example of how the Thermal Night Flag weights should be calcualted.  In order to fit all 24 LST bins in the same table, the columns are: Day from August 1, 2012, Sun Rise (UTC), Sun Set (UTC), Sun Rise (LST), Sun Set (LST), followed by the 24 LST hours.   The last two dates are Jan 29 and Jan 30, 2012.
+Table~\ref{thermal_night_flag} is an example of how the Thermal Night Flag weights should be calcualted. 
 
-\begin{table}
+\subsubsection{Use Case 3: RFI Night Flag}
+
+\begin{table}[htb]
 {\tiny
-\caption{Thermal Night Flag Examples \label{tab:time}}
+\label{rfi_night_flag}
+\caption{RFI Night Flag Examples} 
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
 
 \hline \hline
@@ -358,18 +366,18 @@ Here is an example of how the Thermal Night Flag weights should be calcualted.  
 }
 \end{table}
 
+Table~\ref{rfi_night_flag} is an example of how the Thermal Night Flag weights should be calcualted. 
+
 \subsection{Use Case 5: Overfilled Weather Bin Use Cases}
 
 Since the rules for what happens with overfilled weather bins is independent of LST, the following use cases just focus on a generic LST bin.
 
-{\bf Use Case 5.1 Simplest Case}
+\subsubsection{Use Case 5.1 Simplest Case}
 
-Nothing happens: 
-22 + 28 = 50 < 90.5, so nothing needs to get redistributed.
-
-\begin{table}
+\begin{table}[h]
 {\footnotesize
-\caption{Use Case 5.1: Simplest Case \label{tab:time}}
+\caption{Use Case 5.1: Simplest Case}
+\label{use_case_5_1}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
 
 \hline \hline
@@ -382,16 +390,16 @@ Excellent & 45.25 & N/A & 25.0\\
 }
 \end{table}
 
+Table~\ref{use_case_5_1} shows our simplest case, where no hours are
+redistributed.  This is because 22 + 28 = 50, which is less tne 90.5, so nothing needs to get redistributed.
 
-{\bf Use Case 5.2 A little too much Grade A (Poor Weather)}
+\subsubsection{Use Case 5.2 A little too much Grade A (Poor Weather)}
 
-Before
-
-\begin{table}
+\begin{table}[h]
 {\footnotesize
-\caption{Use Case 5.2: Before\label{tab:time}}
+\caption{Use Case 5.2: Before}
+\label{use_case_5_2_before}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
-
 \hline \hline
 {\bf Weather Type} & {\bf Availability} & {\bf Carryover} & {\bf Grade A}\\
 Poor & 90.5 & 45.0 & 59.5\\
@@ -402,22 +410,25 @@ Excellent & 45.25 & 0.0 & 25.0\\
 }
 \end{table}
 
-45 + 59.5 = 104.5 > 90.5, so 
-Remainder (Poor Weather) = 45 + 59.5 - 90.5 = 14
-
-Grade A (Poor Weather) = 90.5 - 45 = 45.5
+Table~\ref{use_case_5_2_before} shows a situation where there is a little too much
+Grade A, Poor Weather time.
+\begin{itemize}
+\item 45 + 59.5 = 104.5 is less then 90.5, so 
+\item Remainder (Poor Weather) = 45 + 59.5 - 90.5 = 14
+\item Grade A (Poor Weather) = 90.5 - 45 = 45.5
+\end{itemize}
 
 How much do we need to add to Grade A (Good Weather)?
 
-15 + 10 + 14 = 39 < 45.25, so
+\begin{itemize}
+\item 15 + 10 + 14 = 39 is less then 45.25, so
+\item Grade A (Good Weather) = 15 + 14 = 29
+\end{itemize}
 
-Grade A (Good Weather) = 15 + 14 = 29
-
-In summary, 14 hours got taken off Grade A (Poor Weather) and put into Grade A (Good Weather) 
-
-\begin{table}
+\begin{table}[h]
 {\footnotesize
-\caption{Use Case 5.2: After\label{tab:time}}
+\caption{Use Case 5.2: After}
+\label{use_case_5_2_after}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
 \hline \hline
 {\bf Weather Type} & {\bf Availability} & {\bf Carryover} & {\bf Grade A}\\
@@ -429,13 +440,15 @@ Excellent & 45.25 & 0.0 & 25.0\\
 }
 \end{table}
 
-{\bf Use Case 5.3: Simply too much Grade A (Poor Weather)}
+Table~\ref{use_case_5_2_after} shows the final result after the distribution
+has been made.  In summary, 14 hours got taken off Grade A (Poor Weather) and put into Grade A (Good Weather) 
 
-Before
+\subsubsection{Use Case 5.3: Simply too much Grade A (Poor Weather)}
 
-\begin{table}
+\begin{table}[htb]
 {\footnotesize
-\caption{Use Case 5.3: Before\label{tab:time}}
+\caption{Use Case 5.3: Before}
+\label{use_case_5_3_before}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
 \hline \hline
 {\bf Weather Type} & {\bf Availability} & {\bf Carryover} & {\bf Grade A}\\
@@ -447,30 +460,25 @@ Excellent & 45.25 & 0.0 & 25.0\\
 }
 \end{table}
 
-45 + 79.5 = 124.5 > 90.5, so
+Table~\ref{use_case_5_3_before} shows a situation where there is way too much
+Grade A, Poor Weather time.
 
-Remainder (Poor Weather) = 45 + 79.5 - 90.5 = 34
+\begin{itemize}
+\item 45 + 79.5 = 124.5 > 90.5, so
+\item Remainder (Poor Weather) = 45 + 79.5 - 90.5 = 34
+\item Grade A (Poor Weather) = 90.5 - 45 = 45.5
+\item How much do we need to add to Grade A (Good Weather)?
+\item 10 + 15 + 34 = 59 > 45.25, so
+\item Remainder (Good Weather) = 10 + 15 + 34 - 45.25 = 13.75
+\item Grade A (Good Weather) = 45.25 - 10.0 = 35.25
+\item Now add this remainder to the excellent weather:
+\item Grade A (Excellent Weather) = 25 + 13.75 = 38.75
+\end{itemize}
 
-Grade A (Poor Weather) = 90.5 - 45 = 45.5
-
-How much do we need to add to Grade A (Good Weather)?
-
-10 + 15 + 34 = 59 > 45.25, so
-
-Remainder (Good Weather) = 10 + 15 + 34 - 45.25 = 13.75
-
-Grade A (Good Weather) = 45.25 - 10.0 = 35.25
-
-Now add this remainder to the excellent weather:
-
-Grade A (Excellent Weather) = 25 + 13.75 = 38.75
-
-In summary, 34 hours were taken from Grade A (Poor), with 20.25 added to Grade A (Good) and 13.75 added to Grade A (Excellent).
-
-After
-\begin{table}
+\begin{table}[h]
 {\footnotesize
-\caption{Use Case 5.3: After\label{tab:time}}
+\caption{Use Case 5.3: After}
+\label{use_case_5_3_after}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccc}
 \hline \hline
 {\bf Weather Type} & {\bf Availability} & {\bf Carryover} & {\bf Grade A}\\
@@ -483,14 +491,19 @@ Excellent & 45.25 & 0.0 & 38.75\\
 \end{table}
 
 
+Table~\ref{use_case_5_3_after} shows the final times after the redistribution
+has been made. 
+
+In summary, 34 hours were taken from Grade A (Poor), with 20.25 added to Grade A (Good) and 13.75 added to Grade A (Excellent).
+
+\clearpage
+
 \subsection{Use Case 6: Pressures from Periods}
 
-    sum of LST weights should equal duration
-    all weights are 1 or 0, except endpoints, that added together should equal one. 
-
-\begin{table}
+\begin{table}[h]
 {\tiny
-\caption{Use Case 6: Pressures from Periods\label{tab:time}}
+\caption{Use Case 6: Pressures from Periods}
+\label{pressures_from_periods}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
 \hline \hline
 {\bf StartDate} & {\bf Duration} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3}\\
@@ -502,11 +515,18 @@ Excellent & 45.25 & 0.0 & 38.75\\
 }
 \end{table}
 
+Table~\ref{pressures_from_periods} shows the results of pressures being
+calculated for different periods.  Note how the sum of LST weights should
+equal the period duration.  Also note how all weights are 1  or 0, except endpoints, that added together should equal one. 
+
 \subsection{Use Case 7: Binning Pressures by Weather Use Cases}
 
-\begin{table}
+The following tables show how sessions of different types get their pressures
+distributed across weather types.
+
+\begin{table}[h]
 {\tiny
-\caption{Use Case 7.1: Fixed Session\label{tab:time}}
+\caption{Use Case 7.1: Fixed Session}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
 \hline \hline
 {\bf WeatherType} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3}\\
@@ -521,9 +541,9 @@ Excellent & 0 & 0 & 0 & 0 & 0 & 0 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .2
 \end{table}
 
 
-\begin{table}
+\begin{table}[h]
 {\tiny
-\caption{Use Case 7.2: Windowed Session (window size = 2 days)\label{tab:time}}
+\caption{Use Case 7.2: Windowed Session (window size = 2 days)}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
 \hline \hline
 {\bf WeatherType} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3}\\
@@ -539,9 +559,9 @@ Excellent & 0 & 0 & 0 & 0 & 0 & 0 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .2
 \end{table}
 
 
-\begin{table}
+\begin{table}[htb]
 {\tiny
-\caption{Use Case 7.3: Windowed Session (window size = 20 days)\label{tab:time}}
+\caption{Use Case 7.3: Windowed Session (window size = 20 days)}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
 \hline \hline
 {\bf WeatherType} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3}\\
@@ -559,13 +579,13 @@ Excellent & 0 & 0 & 0 & 0 & 0 & 0 & .12 & .12 & .12 & .12 & .12 & .12 & .12 & .1
 
 \subsection{Use Case 8: LST Exclusion}
 
-See how taking into account an LST exclusion range modifies that session's coefficients (w-i's).
+Table~\ref{lst_exclusion} shows how taking into account an LST exclusion range modifies that session's coefficients (w-i's).
 
-In our example, the pressure is 1.0 across all LST's; we see the affects of adding an exclusion range of '4.5-7.2,21.2-23.0': 
+In our example, the pressure is 1.0 across all LST's; we see the affects of adding an exclusion range of '4.5-7.2,21.2-23.0'. 
 
-\begin{table}
+\begin{table}[htb]
 {\tiny
-\caption{Use Case 8: LST Exclusion\label{tab:time}}
+\caption{Use Case 8: LST Exclusion}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
 \hline \hline
 {\bf When} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3}\\
@@ -574,6 +594,7 @@ Before & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 &
 After & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 1 &\\
 \hline
 \hline \hline
+\label{lst_exclusion}
 \end{tabular*}
 }
 \end{table}
@@ -582,15 +603,15 @@ After & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 
 
 Here's a rather big use case that tries to examine how pressure categories change over multiple semesters.
 
-{\bf The First Semester}
+\subsubsection{The First Semester}
 
 The first time we used the PHT and tried to calculate pressures was during 12A; our new proposals were for 12B. At first, all we had were these fresh 12B proposals, none of which had been assigned a grade or allocated time, and they all were for the 12B semester. Therefore, all our sessions fell into the same category: requested.
 
 Then we had to start figuring out the carryover, so we pulled over from the DSS only those projects and sessions that were not complete and made corresponding legacy PHT proposals and sessions. These all fell into the carryover category, and we used time remaining for computing their pressure. Here's a table showing their total time:
 
-\begin{table}
+\begin{table}[h]
 {\footnotesize
-\caption{Use Case 9.1: Beginning of first semester\label{tab:time}}
+\caption{Use Case 9.1: Beginning of first semester}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
 \hline \hline
 {\bf Category} & {\bf Hours} & {\bf Composition}\\
@@ -604,9 +625,9 @@ carryover & 110.0 & legacy projects from 12A and earlier\\
 
 Then we started editing these 12B proposals: some get assigned a passing grade and time, other's get a failing grade and no time, and a few exceptional sessions get assigned a semester past 12B. That changes our table:
 
-\begin{table}
+\begin{table}[h]
 {\footnotesize
-\caption{Use Case 9.2: Editing first semester\label{tab:time}}
+\caption{Use Case 9.2: Editing first semester}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
 \hline \hline
 {\bf Category} & {\bf Hours} & {\bf Composition}\\
@@ -622,9 +643,9 @@ carryover & 110.0 & legacy projects from 12A and earlier\\
 
 As we get closer to the TAC meeting, and the actual start of the 12B semester, we want the carryover to actually reflect what time is left at the start of 12B, not the current time remaining. So, a DSS lookahead simulation is run, and this is used to enter in next semester values for each carryover session (some are actually marked off as completed). This changes the number in our table:
 
-\begin{table}
+\begin{table}[h]
 {\footnotesize
-\caption{Use Case 9.3: Use Lookahead, first semester\label{tab:time}}
+\caption{Use Case 9.3: Use Lookahead, first semester}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
 \hline \hline
 {\bf Category} & {\bf Hours} & {\bf Composition}\\
@@ -640,9 +661,9 @@ carryover & 75.0 & legacy projects from 12A and earlier\\
 
 The editing process continues, and the TAC meeting is held. The final decisions for these new proposals are finally made. Here's what our numbers look like now:
 
-\begin{table}
+\begin{table}[h]
 {\footnotesize
-\caption{Use Case 9.4: TAC meeting, first semester\label{tab:time}}
+\caption{Use Case 9.4: TAC meeting, first semester}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
 \hline \hline
 {\bf Category} & {\bf Hours} & {\bf Composition}\\
@@ -658,13 +679,13 @@ carryover & 110.0 & legacy projects from 12A and earlier\\
 
 Finally, 12B is about to start, so all the allocated sessions need to have equivalent sessions in the DSS. These are created, and it has no affect on our table above at all.
 
-{\bf The Second Semester}
+\subsubsection{The Second Semester}
 
 The first day of 12B arrives, but we have not yet imported any new proposals for 13A into the PHT. Our allocated category now moves into carryover, and the proposals in requested get moved to ignored, because the term 'current semester' has moved from 12B to 13A (see Note 1).
 
-\begin{table}
+\begin{table}[h]
 {\footnotesize
-\caption{Use Case 9.5: Beginning of second semester\label{tab:time}}
+\caption{Use Case 9.5: Beginning of second semester}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
 \hline \hline
 {\bf Category} & {\bf Hours} & {\bf Composition}\\
@@ -678,9 +699,9 @@ carryover & 195.0 & legacy projects from 12B and earlier\\
 
 Now we import new proposals for 13A (on the second day of 12B). This essentially adds a new row to our table:
 
-\begin{table}
+\begin{table}[h]
 {\footnotesize
-\caption{Use Case 9.6: New proposals, second semester\label{tab:time}}
+\caption{Use Case 9.6: New proposals, second semester}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
 \hline \hline
 {\bf Category} & {\bf Hours} & {\bf Composition}\\
@@ -695,9 +716,9 @@ carryover & 195.0 & legacy projects from 12B and earlier\\
 
 Then we start editing these 13A proposals: some get assigned a passing grade and time, other's get a failing grade and no time, and a few exceptional sessions get assigned a semester past 13A. That changes our table:
 
-\begin{table}
+\begin{table}[h]
 {\footnotesize
-\caption{Use Case 9.7: Editing, second semester\label{tab:time}}
+\caption{Use Case 9.7: Editing, second semester}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
 \hline \hline
 {\bf Category} & {\bf Hours} & {\bf Composition}\\
@@ -713,9 +734,9 @@ carryover & 195.0 & legacy projects from 12B and earlier\\
 
 As we get closer to the TAC meeting, and the actual start of the 13A semester, we want the carryover to actually reflect what time is left at the start of 13A, not the current time remaining. So, a DSS lookahead simulation is run, and this is used to enter in next semester values for each carryover session (some are actually marked off as completed). This changes the number in our table:
 
-\begin{table}
+\begin{table}[h]
 {\footnotesize
-\caption{Use Case 9.8: Using Lookhead, second semester\label{tab:time}}
+\caption{Use Case 9.8: Using Lookhead, second semester}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
 \hline \hline
 {\bf Category} & {\bf Hours} & {\bf Composition}\\
@@ -731,9 +752,9 @@ carryover & 150.0 & legacy projects from 12B and earlier\\
 
 The editing process continues, and the TAC meeting is held. The final decisions for these new proposals are finally made. Here's what our numbers look like now:
 
-\begin{table}
+\begin{table}[h]
 {\footnotesize
-\caption{Use Case 9.9: TAC meeting, second semester\label{tab:time}}
+\caption{Use Case 9.9: TAC meeting, second semester}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
 \hline \hline
 {\bf Category} & {\bf Hours} & {\bf Composition}\\
@@ -751,7 +772,7 @@ carryover & 150.0 & legacy projects from 12B and earlier\\
 
     Note 2 - this depends on what future sessions are specified. In this example assume they semesters WAY in the future ... need to discuss this further. 
 
-\subsection{Fleshing out the example with more carryover}
+\subsubsection{Fleshing out the example with more carryover}
 
 Adding more carryover, and taking into account Maintenance and Testing Sessions, here's how our example could be fleshed out:
 
@@ -761,9 +782,9 @@ Adding more carryover, and taking into account Maintenance and Testing Sessions,
 
 Carryover:  150.0 + 200.54 + 16.0 = 366.54
 
-\begin{table}
+\begin{table}[h]
 {\footnotesize
-\caption{Use Case 9.10: Final Example\label{tab:time}}
+\caption{Use Case 9.10: Final Example}
 \begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
 \hline \hline
 {\bf Category} & {\bf Hours} & {\bf Composition}\\
@@ -777,8 +798,65 @@ carryover & 366.54 & legacy projects from 12B and earlier, plus maintenance and 
 }
 \end{table}
 
-Here's a visualization of what it looks like now: 
+Figure~\ref{timeline_image} gives a visual example of how the sessions in the PHT and DSS produce an LST Pressure plot.  The timeline above has been generalized such that a specific semester is not specified.  Instead, 'now' is sometime in the Current Semester. 
 
+Each colored oval above represents a PHT session.  Its position in the timeline represents its semester, and its color represents what category it falls into. This color is meant to be close the color of the category in the plot (Figure~\ref{pressure_plot_image}).  For simplicity, all sessions have an LST range between 10 and 20 Hours, are grade A, and have Poor weather.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{LstPressuresTimeLine.jpg}
+\caption{Lst Pressures Timeline}
+\label{fig:timeline_image}
+\end{figure}
+
+Here we briefly explain the category and time that each session contributes 
+to the pressure.
+\begin{table}[htb]
+{\footnotesize
+\caption{Session Legend}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
+\hline \hline
+{\bf Session} & {\bf Semester} & {\bf Category} & {\bf Hours} {\bf Notes}\\
+\hline
+1 & 12A & carryover & 75 & allocated two cycles ago, astronomy with 75 hrs left\\
+2 & 12A & carryover & 0 & allocated two cycles ago, but complete, so 0.0 hrs left\\
+3 & 12A & carryover & 200 & maintenance (pre-assigned), ~200 hrs from periods in Next Semester\\
+4 & 12B &  ignored & 0 & received failing grade during last cycle; never got scheduled\\
+5 & 12B &  carryover & 45 & astronomy allocated last cycle, with 45 hrs left\\
+6 & 12B &  carryover & 40 & allocated last cycle astronomy with 40 hrs left\\
+7 & 13A &  allocated & 45 & this cycle, 45 hrs\\
+8 & 13A &  allocated & 20 & this cycle, 20 hrs\\
+9 & 13A &  requested & 0 & requested this cycle, won’t get scheduled (ignored next cycle), 30 hrs\\
+10 & 13A &  carryover & 16 & testing (pre-assigned this cycle), 16 hrs\\
+11 & 13B &  future & 5 & allocated last cycle to future semester, 5 hrs\\
+12 & 13B &  future & 10 & allocated last cycle to future semester, 10 hrs\\
+13 & 13B &  future & 5 & allocated this cycle to future semester, 5 hrs\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+\begin{figure}[htb]
+\centering
+\includegraphics[width=0.8\textwidth]{total.png}
+\caption{Lst Pressures Plot}
+\label{fig:pressure_plot_image}
+\end{figure}
+
+Some notes on the resulting plot:
+The three colors shown are from carryover (both types), allocated (Poor A specificially), and requested.
+All sessions have an LST range of 10 to 20 Hours.  Thus the spread of all sessions' time across those 10 LST bins.  The exception to this is the pressure from maintenance that is derived off the actual periods.  
+Note that 'ignored' and 'future' sessions do not appear in the plot.
+
+%\begin{figure}
+%\plotone{ProposalLifeCyle.jpg}
+%\caption{Zenith stringency, with contributions from atmospheric
+%  opacity alone (blue line) and from wind alone (green line).
+%  Abscissa: frequency (GHz).  Ordinate: zenith stringency
+%  (dimensionless).
+%\label{zenstringfig}}
+%\end{figure}
+%\clearpage
 \end{document}
 
 
