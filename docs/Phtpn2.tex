@@ -1,5 +1,5 @@
 \documentclass{article} 
-\usepackage{dspn}
+\usepackage{phpn}
 \usepackage{epsfig}
 \usepackage{epstopdf}
 \usepackage{graphicx}
@@ -9,11 +9,11 @@
 
 %------------------------------------------------------------------------------
 \newcommand{\mydoctitle}     {LST Pressures in the Green Bank Telescope Proposal Handling Tool}
-\newcommand{\mydocauthors}   {P. Marganian}
+\newcommand{\mydocauthors}   {P. Marganian \& T. Minter \& K. O'Neil}
 \newcommand{\mydocdate}      {\today}
 \newcommand{\mydocnumber}    {2.0}
-\newcommand{\mydocarchive}   {PHT002}
-\newcommand{\mydockeys}      {PHT, proposals, sessions, projects, scheduling}
+\newcommand{\mydocarchive}   {PH002}
+\newcommand{\mydockeys}      {PH, PHT, proposals, sessions, projects, scheduling}
 
 %------------------------------------------------------------------------------
 % Document starts here with some standard preamble
@@ -52,7 +52,9 @@ What are pressures? In this context, the pressure represents how loaded the GBT 
 
 Note that the user sees this information represented in a plot, or perhaps a report. The display doesn't concern us much here - the calculations are what we're trying to describe.
 
-So, how do we figure this out in the context of the GB PHT? Well, here's what we have to map: a database of proposal information to a presentation of the plots. Here's an example of one presentation: 
+So, how do we figure this out in the context of the GB PHT? Well, here's what we have to map: a database of proposal information to a presentation of the plots. 
+
+Here's an example of one presentation: 
 
 \section{Definitions}
 
@@ -87,7 +89,7 @@ Unless otherwise noted, the following terms can be represented by numbers split 
 \item {\bf Astronomy Available}: {\bf Availability} - {Pre-Assigned}.  By taking away the Maintenance, Shutdown, and Testing already pre-assinged to the Next Semester, you see how much is left for astronomy.
 \end{itemize}
 
-\subsection{Arithmatic}
+\subsection{Arithmetic}
 
 All times can be broken down by weather type.  Generically:
 
@@ -144,20 +146,14 @@ If any flags are set (thermal night, rfi night, daylight night) then we must cal
 
 \section{Pressure Categories and Sessions}
 
-Pressure Categories (carryover, requested, allocated, etc.) are not just required for their own sake, but also determine the actual value used for $T_{\rm semster}$ in Equation~\ref{pressure_eq}. 
+Pressure Categories (carryover, requested, allocated, etc.) are not just required for their own sake, but also determine the actual value used for $T_{\rm semster}$ in Equation~\ref{pressure_eq}.  
+
+For details on time fields in the PHT, see \cite{marganian12a}. 
 
 Here we describe how to decide what category a session belongs to, and what session attribute to use for the $T_{\rm semster}$  value:
 
-%\IF{<Session has a corresponding session in the DSS> \AND <Session's Proposal's Semester \leq Current Semester> \AND <Session does not have a Failing Grade>} 
-%\begin{algorithmic}
-%\IF{<Session has a corresponding session in the DSS> \AND <Session's Proposal's Semester \leq Current Semester> \AND <Session does not have a Failing Grade>} 
-%    <You get time!> 
-%\ENDIF
-%\end{algorithmic}
-
 \begin{algorithmic}
 \IF{Session has a corresponding session in the DSS {\bf and} Session's Proposal's Semester Current Semester {\bf and} Session does not have a Failing Grade}
-%\STATE \begin{itemize} \item do some processing \item do some more processing \end{itemize}
 \STATE
     \begin{itemize}
         \item $category$ = carryover
@@ -841,7 +837,7 @@ The first day of 12B arrives, but we have not yet imported any new proposals for
 {\footnotesize
 \caption{Use Case 9.5: Beginning of second semester}
 \label{use_case_9_5}
-\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccc}
 \hline \hline
 {\bf Category} & {\bf Hours} & {\bf Composition}\\
 \hline
@@ -897,6 +893,8 @@ Table~\ref{use_case_9_7} shows the times after editing the new requests for this
 
 As we get closer to the TAC meeting, and the actual start of the 13A semester, we want the carryover to actually reflect what time is left at the start of 13A, not the current time remaining. So, a DSS lookahead simulation is run, and this is used to enter in next semester values for each carryover session (some are actually marked off as completed). 
 
+\clearpage
+
 \begin{table}[h]
 {\footnotesize
 \caption{Use Case 9.8: Using Lookhead, second semester}
@@ -935,11 +933,13 @@ carryover & 150.0 & legacy projects from 12B and earlier\\
 }
 \end{table}
 
-Table~\ref{use_case_9_8} shows the times after the TAC meeting. 
+Table~\ref{use_case_9_9} shows the times after the TAC meeting. 
 
 Note 1 - there are two sources of time for carryover sessions: either the time remaining from it's associated DSS session, or the PHT session's very own next semester time field. At the begining of the 12B semester, the 'old' carryover is still using the next semester field, but what will the 'new' carryover, that is the 12B sessions be using? If they were to be using the time remaining field, then this would reflect the numbers we have in the first table of 3.7.1. But we currently don't support two sources of time for carryover. We should figure this out. One option is for the source to be chosen by the user - in which case at the beginning of 12B they can choose to use time remaining. 
 
 Note 2 - this depends on what future sessions are specified. In this example assume they semesters WAY in the future ... need to discuss this further. 
+
+\clearpage
 
 \subsubsection{Fleshing out the example with more carryover}
 
@@ -1024,6 +1024,14 @@ Figure~\ref{pressure_lot_image} shows the resulting pressure plot.  Some notes o
 \item All sessions have an LST range of 10 to 20 Hours.  Thus the spread of all sessions' time across those 10 LST bins.  The exception to this is the pressure from maintenance that is derived off the actual periods.  
 \item Note that 'ignored' and 'future' sessions do not appear in the plot.
 \end{itemize}
+
+\clearpage
+
+\begin{thebibliography}{}
+\bibitem[Marganian(2012)]{marganian12a}
+  Marganian, Paul, 2012, ``PHT Time Accounting''
+  PH/PN001.0
+\end{thebibliography}{}
 
 \end{document}
 
