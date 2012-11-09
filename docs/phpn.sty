@@ -1,0 +1,103 @@
+% This is a Latex2e style file 
+\NeedsTeXFormat{LaTeX2e}
+\usepackage{latexsym}
+
+% DS Project Note style
+
+\ProvidesPackage{phpn}[2012/11/10 PN Project Note Style] 
+
+% Need to make sure new packages are loaded: 
+\RequirePackage{times} 
+\RequirePackage{graphicx} 
+ 
+% Author: Dana S. Balser (copied directly from PTCS notes)
+%         Richard Prestage, NRAO Green Bank
+%         Based almost totally on the JAC equivalent by Tim Jenness
+%
+%
+% this template defines a standard for GBT documentation to be processed
+% through LaTeX, pdflatex and latex2HTML.
+%
+% invoke with
+%    \usepackage{gbtdocs}
+
+% Basic page layout (see LaTeX book page 163):  
+%
+%               size 8.5 x 11 inch pages
+%    odd side margin 1.25 inches       
+%   even side margin 1.25 inches       
+%         top margin 1.25 inch
+%        text height 9 inches
+%          tex width 6.25 inches
+%
+%
+% assumed to be set up for single-sided printing, so that the \markright
+% command (i.e. right-hand page) is used. Left hand side of page contains
+% contents of \mydocmarkright, right hand side, page number.
+
+ 
+\setlength {\textwidth}      {6.25in}
+\setlength {\textheight}     {9in}
+\setlength {\topmargin}      {-0.55in}
+\setlength {\oddsidemargin}  {0.25in}
+\setlength {\evensidemargin} {0.25in}
+%
+\pagestyle{myheadings}
+%
+\setlength {\parindent}      {0in}
+\setlength {\parskip}        {\medskipamount}
+\setlength {\unitlength}     {1in}
+ 
+%------------------------------------------------------------------------------
+% Add any \newcommand or \newenvironment commands here
+%------------------------------------------------------------------------------
+ 
+% end of preamble, start of document
+ 
+% This is a new command \mydochead which makes the header.
+
+% Example usage:
+
+%   \mydochead{\mydoctitle}{\mydocauthors}{\mydocdate}{\mydocnumber}%
+%   {\mydocmarkright}
+
+
+\newcommand{\mydochead}[6]{%
+\thispagestyle{empty}
+ 
+{\Large{\textbf{\textsf{Proposal Handling}}}} \hfill
+{\Large{\textbf{\textsf{PH Project Note #4}}}}\\
+
+\begin{center}
+\vspace{0.5in}
+{\Large\bf #1}\\
+\vspace{0.5in}
+{\large #2}\\
+\vspace{0.5in}
+{\large #3}\\
+\end{center}
+
+GBT Archive: {#5} \\
+File: PROPOSAL HANDLING \\
+Keys: {#6} \\ 
+                           
+%
+% end of standard header
+ 
+\markright {PH/PN/#4}
+}
+
+
+% Use this command to insert the table of contents.
+
+\newcommand{\toc}{
+%------------------------------------------------------------------------------
+%  Add this part if you want a table of contents
+ \setlength{\parskip}{0mm}
+ \tableofcontents
+ \setlength{\parskip}{\medskipamount}
+%------------------------------------------------------------------------------
+} 
+
+
+
