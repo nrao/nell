@@ -11,7 +11,7 @@
 \newcommand{\mydoctitle}     {Time Accounting in the Green Bank Telescope Proposal Handling Tool}
 \newcommand{\mydocauthors}   {P. Marganian}
 \newcommand{\mydocdate}      {\today}
-\newcommand{\mydocnumber}    {1.0}
+\newcommand{\mydocnumber}    {1.1}
 \newcommand{\mydocarchive}   {PH001}
 \newcommand{\mydockeys}      {PH, PHT, time accounting, proposals, sessions, projects, scheduling}
 
@@ -33,6 +33,7 @@ This memo describes the way in which time accounting is handled within the Propo
 \vspace{0.5in}
 {\Large\bf History}
 \begin{description}
+\item [1.1] First revision (O'Neil)
 \item [1.0] Original Draft (Marganian)
 \end{description}
 
@@ -40,13 +41,17 @@ This memo describes the way in which time accounting is handled within the Propo
 
 
 \section{Introduction}\label{intro}
-The Robert C. Byrd Green Bank Telescope (GBT) is implementing a new Proposal Handling Tool (PHT) which will replace the current way in which GBT proposals are handled and prepared for scheduling.  This document
-describes the time accounting within the GBT PHT. 
+The Robert C. Byrd Green Bank Telescope (GBT) has implemented a new Proposal Handling Tool (PHT)
+to replace the previous tools for handling GBT proposals and preparing those proposals for scheduling.  
+In addition to replacing the previous proposal handling tools, the new tool is also integrated into
+both the GBT Dynamic Scheduling System (DSS) and the NRAO-wide proposal submission and handling tools.
 
-\section{GBT PHT Overview}
+This document describes the time accounting within the GBT PHT. 
+
+%\section{GBT PHT Overview}
 
 
-\section{Time Fields in GBT PHT}
+\section{Time Fields}
 
 Here we list the various fields used for time accounting in the GBT PHT.   For
 each field, we define it's source (calculated, derived from PST, or provided by user), and provide a
@@ -55,48 +60,50 @@ brief description.
 \subsection{Proposal Time Fields}
 
 The time fields for proposals are simply summations of the corresponding values of the proposal's sessions.
-
-
+\begin{itemize}
+\item {\bf Requested Time}:
+Equation~\ref{proposal_requested_eq} shows how a Proposal's {\it Requested Time}, $R_{\rm p}$, is the summation of it's Sessions' {\it Total Requested Time}, $R_{\rm s}$.
 \begin{equation}
 \label{proposal_requested_eq}
 R_{\rm p} = \sum_i R_{\rm s}  
 \end{equation}
 
-Equation~\ref{proposal_requested_eq} shows how a Proposal's {\bf Requested Time}, $R_{\rm p}$, is the summation of it's Sessions' {\bf Total Requested Time}, $R_{\rm s}$.
-
+\item {\bf Allocated Time}:
+Equation~\ref{proposal_allocated_eq} shows how a Proposal's {\it Allocated Time}, $A_{\rm p}$, is the summation of it's Sessions' {\it Total Allocated Time},  $A_{\rm s}$.
 \begin{equation}
 \label{proposal_allocated_eq}
 A_{\rm p} = \sum_i A_{\rm s}
 \end{equation}
+\end{itemize}
 
-Equation~\ref{proposal_allocated_eq} shows how a Proposal's {\bf Allocated Time}, $A_{\rm p}$, is the summation of it's Sessions' {\bf Total Allocated Time},  $A_{\rm s}$.
-
-\subsection{Session Time Fields}:
+\subsection{Session Time Fields}
 
 Unlike Proposals, there are many time fields associated with Sessions.  In this section we describe these fields: their values' origins, and how they are used.  We also split them up into the requested and allocated fields, and everything else.  Unless otherwise noted, all fields are in $hours$.
 
 \subsubsection{Main Session Time Fields}
-
+\begin{itemize}
+\item {\bf Total Requested Time}:
+Equation~\ref{session_requested_eq} shows how a Session's {\it Total Requested Time}, $R_{\rm s}$ is the product of it's {\it Requested Time}, $q$, and it's {\it Requested Repeats}, $r_{\rm r}$. $q$ and $r_{\rm r}$ are derived from the PST, but also editable by the user.  
 \begin{equation}
 \label{session_requested_eq}
 R_{\rm s} = q r_{\rm r}  
 \end{equation}
 
-Equation~\ref{session_requested_eq} shows how a Session's {\bf Total Requested Time}, $R_{\rm s}$ is the product of it's {\bf Requested Time}, $q$, and it's {\bf Requested Repeats}, $r_{\rm r}$. $q$ and $r_{\rm r}$ are derived from the PST, but also editable by the user.  
-
+\item {\bf Total Allocated Time}
+Equation~\ref{session_allocated_eq} shows how a Session's {\it Total Allocated Time }, $A_{\rm s}$, is the product of it's {\it Allocated Time}, $a$, it's {\it Allcoated Repeats}, $r_{\rm a}$, and it's {\it Outer Repeats}, $r_{\rm o}$.  These fields are all editable by user, and can also be set via the 'Allocated' functionality.  Outer repeats, $r_{\rm o}$, defaults to 1, and is used for Period Generation (see below)
 \begin{equation}
 \label{session_allocated_eq}
 A_{\rm s} = a r_{\rm a} r_{\rm o} 
 \end{equation}
 
-Equation~\ref{session_allocated_eq} shows how a Session's {\bf Total Allocated Time }, $A_{\rm s}$, is the product of it's {\bf Allocated Time}, $a$, it's {\bf Allcoated Repeats}, $r_{\rm a}$, and it's {\bf Outer Repeats}, $r_{\rm o}$.  These fields are all editable by user, and can also be set via the 'Allocated' functionality.  Outer repeats, $r_{\rm o}$, defaults to 1, and is used for Period Generation (see below)
 
+\end{itemize}
 
 \subsubsection{Other Session Time Fields}
 
 There are a number of other Session time fields, none of which, however, affect the Session's allocated or requested time.  These time fields do affect, however, such things as LST Pressure and Period Generation.  None of these fields are derived from the PST, and are all editable by the user.
 
-These fields affect LST Pressures:
+These fields affect {\bf LST Pressures}:
 
 \begin{itemize}
 \item {\bf Semester Time } - Set by user in cases where the session may need to be scheduled over more then one semester, but the time it's scheduled in one semester is maxed out at this value.  When calculating LST Pressure, this value is used when the session's semester is a future semester \cite{marganian12a}.
@@ -104,54 +111,50 @@ These fields affect LST Pressures:
 \item {\bf Time Remaining } - derived from PHT session's DSS session's Time Remaining \cite{marganian10a}.
 \end{itemize}
 
-These fields are used for PHT Period Generation and/or exporting the session to DSS (see below).  Periods can be generated for Fixed Sessions, and, for Windowed Sessions, the periods represent the windows' Default Periods.
+These fields are used for {\bf PHT Period Generation} and/or exporting the session to DSS (see below).  Periods can be generated for Fixed Sessions, and, for Windowed Sessions, the periods represent the windows' Default Periods.
 
 \begin{itemize}
-\item {\bf Start Date } - When the first period should occur.
-\item {\bf Interval  } - The space, in units of {\bf Separation} between each period.
-\item {\bf Period  } - The duration of each period.  
-\item {\bf Separation } - The units of {\bf Interval}, in either days, or weeks.
-\item {\bf Outer Interval } - The space, in units of {\bf Outer Separation} between each inner loop. 
-\item {\bf Outer Separation } - The units of {\bf Outer Interval}, in either days, or weeks.
-\item {\bf Window Size } - The space surrounding each period, in days (only when exporting windowed sessions to DSS) 
+\item {\bf Start Date } - Date on which the first period should occur ("Start Date" in the DSS). 
+\item {\bf Interval  } - The time, in units of {\it Separation}, between each period ("Time between sessions" in DSS).
+\item {\bf Separation } - The units of {\it Interval}, in either days, or weeks.
+\item {\bf Period  } - The duration of each period, in hours ("Required Minimum Duration" and "Required Maximum duration" in DSS;  values are equal).  
+\item {\bf Outer Interval } - The time, in units of {\it Outer Separation}, between each inner loop (no DSS equivilent). 
+\item {\bf Outer Separation } - The units of {\it Outer Interval}, in either days, or weeks.
+\item {\bf Window Size } - The time surrounding each period, in days (used only when exporting windowed sessions to DSS; equivilent to the DSS "Start Date" - "Default Period" date). 
 \end{itemize}
 
-\section{TAC Tool 'Allocate' function}
+\section{'Allocate' function}
 
 The GBT PHT provides a way to allocate time to all the sessions in a proposal via the 'Allocate' function.  This can be done either by specifiying an absolute, or scaled time.  In both methods, the  {\bf Requested Repeats} value is assigned to the {\bf Allocated Repeats value}:
 
 %\begin{equation}
 %\label{allocate_repeats_eq}
 \begin{algorithmic}
-\STATE    $r_{\rm a}$  $r_{\rm r}$
+\STATE    $r_{\rm a}$ $\leftarrow$  $r_{\rm r}$
 \end{algorithmic}
 %\end{equation}
 
 The following equations apply to each Session of the Proposal.
 
 \subsection{'Allocate' Absolute Time}
-
+In Equation~\ref{allocate_absolute_eq}, the $time$ variable is an absolute time, in hours, and $r_a$ is the allocated number of repeats.  
 \begin{equation}
 \label{allocate_absolute_eq}
-    A_{\rm s} = time / r_{\rm a}
+    a = time / r_{\rm a}
 \end{equation}
-
-In Equation~\ref{allocate_absolute_eq}, the $time$ variable is an absolute time, in hours.  
 
 \subsection{'Allocate' Scaled Time}
-
+In Equation~\ref{allocate_scaled_eq}, the $time\_fraction$ variable is a scaling factor, between 0 and 100, and and $r_a$ is again the allocated number of repeats.  
 \begin{equation}
 \label{allocate_scaled_eq}
-    A_{\rm s} = (time/100) r_{\rm a}
+    a = (time\_fraction/100) r_{\rm a}
 \end{equation}
-
-In Equation~\ref{allocate_scaled_eq}, the $time$ variable is a scaling factor, between 0 and 100.  
 
 \section{Period Generation}
 
    As stated above, PHT Periods can be generated for a PHT Session if the proper fields are specified.  But this has no effect on the Session's allocated time.
 
-\section{LST Pressures}:
+\section{LST Pressures}
 
    Generically speaking, the Allocated Total field is used for pressures of incoming (the next semester) sessions.  For other categories of pressure (Carryover, Requested, etc.), different time fields are used.  For more details, see \cite{marganian12a}
 
@@ -163,50 +166,110 @@ In Equation~\ref{allocate_scaled_eq}, the $time$ variable is a scaling factor, b
 \item {\bf Next Semester } - is used for sessions that are considered carryover, and the user has explicitly choosen this field for the LST Pressure calculations.  
 \end{itemize}   
 
-\section{Example}
+\section{Examples}
 
+\subsection{Example 1}
 Here, we describe the time accounting fields of a new proposal and its sessions.  The new proposal gets allocated 100\% of it's time, though changes are made to accomodate monitoring and period generation.
 
 \begin{itemize}
 \item Start off with a proposal imported from PHT
     \begin{itemize}
-    \item Proposal has 2 sessions
-    \item One monitoring (Session 1): 
+    \item Proposal has two sessions
+    \item Session 1 (monitoring): 
         \begin{itemize}
         \item {\bf Requested Repeats} ($r_{\rm r}$) = 8
-        \item {\bf Requested Time} ($q$) = 10
-        \item Following Equation~\ref{session_requested_eq}, {\bf Total Requested Time} ($R_{\rm s}$) = 80
+        \item {\bf Requested Time} ($q$) = 10 hours
+        \item Following Equation~\ref{session_requested_eq}, {\bf Total Requested Time} ($R_{\rm s}$) = 80 hours
         \end{itemize}
-     \item One non-monitoring (Session 2): 
+     \item Session 2 (not monitoring): 
          \begin{itemize}
          \item {\bf Requested Repeats} ($r_{\rm r}$) = 1
-         \item {\bf Requested Time} ($q$) = 20
-         \item Following Equation~\ref{session_requested_eq}, {\bf Total Requested Time} ($R_{\rm s}$) = 20
+         \item {\bf Requested Time} ($q$) = 20 hours
+         \item Following Equation~\ref{session_requested_eq}, {\bf Total Requested Time} ($R_{\rm s}$) = 20 hours
          \end{itemize}
      \item All other fields default (mostly None, or affectively zero)
      \item Proposal's Requested Time, following Equation~\ref{proposal_requested_eq}, (1*8*10) + (1*1*20) = 100.
          
     \end{itemize}
-\item User edits time fields - Sessions allocated 100\% of their time via the 'Allocate' functionality, with $time$ being scaled and set to 100.
+\item User edits time fields - Sessions allocated 100\% of their time via the 'Allocate' functionality, with $time\_fraction$ being scaled and set to 100.
     \begin{itemize}
     \item Session 1: 
         \begin{itemize}
         \item {\bf Outer Repeats} ($r_{\rm o}$) = 1 (by default)
         \item {\bf Allocated Repeats} ($r_{\rm a}$) = 8 (from {\bf Requested Repeats}, $r_{\rm r}$)
-        \item Following Equation~\ref{allocate_scaled_eq}, {\bf Total Allocated Time} ($A_{\rm s}$) = 80
+        \item Following Equation~\ref{allocate_scaled_eq}, {\bf Allocated Time} ($a$) = (100/100)$\times$10 = 10 hours
+        \item Following Equation~\ref{session_allocated_eq}, , {\bf Total Allocated Time} ($A_{\rm s}$) = 10$\times$8$\times$1 = 80 hours
         \end{itemize}
     \item Session 2: 
         \begin{itemize}
         \item {\bf Outer Repeats} ($r_{\rm o}$) = 1 (by default)
         \item {\bf Allocated Repeats} ($r_{\rm a}$) = 1 (from {\bf Requested Repeats}, $r_{\rm r}$)
-        \item Following Equation~\ref{allocate_scaled_eq}, {\bf Total Allocated Time} ($A_{\rm s}$) = 20
+        \item Following Equation~\ref{allocate_scaled_eq}, {\bf Allocated Time} ($a$) = (100/100)$\times$20 = 20 hours
+        \item Following Equation~\ref{session_allocated_eq}, , {\bf Total Allocated Time} ($A_{\rm s}$) = 20$\times$1$\times$1 = 20 hours
          \end{itemize}
      \end{itemize}
-\item Session 1's repeat fields changed to reflect monitoring needs: use of an inner *and* outer loop.  Note that this does *not* change the session's {\bf Total Allocated Time}, $A_{\rm s}$.
+\item Session 1's repeat field is then changed to reflect monitoring needs: use of an inner *and* outer loop.  Note that this does *not* change the session's {\bf Total Allocated Time}, $A_{\rm s}$.
     \begin{itemize}
     \item {\bf Allocated Repeats}, $r_{\rm a}$, from 8 to 4.
     \item {\bf Outer Repeats}, $r_{\rm o}$ from 1 to 2.
-    \item Following Equation~\ref{session_allocated_eq}, {\bf Total Allocated Time} = 80.
+    \item Following Equation~\ref{session_allocated_eq}, {\bf Total Allocated Time} = 10$\times$4$\times$2 = 80.
+    \end{itemize}
+\item Session 1 set up to generate periods. Again, this does not affect allocated time, and periods only add up to match allocated time because these fields were set up correctly. Fields set:
+    \begin{itemize}
+    \item {\bf Start Date } = 2012-02-01
+    \item {\bf Interval } = 7
+    \item {\bf Period } = 10
+    \item {\bf Separation } = 'day'
+    \item {\bf Outer Seperation } = 'day'
+    \item {\bf Outer Interval } = 90
+    \end{itemize}
+\end{itemize}
+
+\subsection{Example 2}
+Here, we use the same information as in Example 1, except the new proposal is scaled to receive only 75\% of its requested time. Changes are again made to accomodate monitoring and period generation.
+
+\begin{itemize}
+\item Start off with a proposal imported from PHT
+    \begin{itemize}
+    \item Proposal has two sessions
+    \item Session 1 (monitoring): 
+        \begin{itemize}
+        \item {\bf Requested Repeats} ($r_{\rm r}$) = 8
+        \item {\bf Requested Time} ($q$) = 10 hours
+        \item Following Equation~\ref{session_requested_eq}, {\bf Total Requested Time} ($R_{\rm s}$) = 80 hours
+        \end{itemize}
+     \item Session 2 (not monitoring): 
+         \begin{itemize}
+         \item {\bf Requested Repeats} ($r_{\rm r}$) = 1
+         \item {\bf Requested Time} ($q$) = 20 hours
+         \item Following Equation~\ref{session_requested_eq}, {\bf Total Requested Time} ($R_{\rm s}$) = 20 hours
+         \end{itemize}
+     \item All other fields default (mostly None, or affectively zero)
+     \item Proposal's Requested Time, following Equation~\ref{proposal_requested_eq}, (1*8*10) + (1*1*20) = 100.
+         
+    \end{itemize}
+\item User edits time fields - Sessions allocated 75\% of their time via the 'Allocate' functionality, with $time\_fraction$ being scaled and set to 75.
+    \begin{itemize}
+    \item Session 1: 
+        \begin{itemize}
+        \item {\bf Outer Repeats} ($r_{\rm o}$) = 1 (by default)
+        \item {\bf Allocated Repeats} ($r_{\rm a}$) = 8 (from {\bf Requested Repeats}, $r_{\rm r}$)
+        \item Following Equation~\ref{allocate_scaled_eq}, {\bf Allocated Time} ($a$) = (75/100)$\times$10 = 7.5 hours
+        \item Following Equation~\ref{session_allocated_eq}, , {\bf Total Allocated Time} ($A_{\rm s}$) = 7.5$\times$8$\times$1 = 60 hours
+        \end{itemize}
+    \item Session 2: 
+        \begin{itemize}
+        \item {\bf Outer Repeats} ($r_{\rm o}$) = 1 (by default)
+        \item {\bf Allocated Repeats} ($r_{\rm a}$) = 1 (from {\bf Requested Repeats}, $r_{\rm r}$)
+        \item Following Equation~\ref{allocate_scaled_eq}, {\bf Allocated Time} ($a$) = (75/100)$\times$20 = 15 hours
+        \item Following Equation~\ref{session_allocated_eq}, , {\bf Total Allocated Time} ($A_{\rm s}$) = 15$\times$1$\times$1 = 15 hours
+         \end{itemize}
+     \end{itemize}
+\item Session 1's repeat field is then changed to reflect monitoring needs: use of an inner *and* outer loop.  Note that this does *not* change the session's {\bf Total Allocated Time}, $A_{\rm s}$.
+    \begin{itemize}
+    \item {\bf Allocated Repeats}, $r_{\rm a}$, from 8 to 4.
+    \item {\bf Outer Repeats}, $r_{\rm o}$ from 1 to 2.
+    \item Following Equation~\ref{session_allocated_eq}, {\bf Total Allocated Time} = 7.5$\times$4$\times$2 = 60.
     \end{itemize}
 \item Session 1 set up to generate periods. Again, this does not affect allocated time, and periods only add up to match allocated time because these fields were set up correctly. Fields set:
     \begin{itemize}
@@ -220,32 +283,9 @@ Here, we describe the time accounting fields of a new proposal and its sessions.
 \end{itemize}
 
 \begin{thebibliography}{}
-\bibitem[Marganian(2012)]{marganian12a}
-  Marganian, Paul, 2012, ``PHT LST Pressures''
-  PH/PN002.0
-\bibitem[Marganian(2010)]{marganian10a}
-  Marganian, Paul, 2010, ``DSS Time Accounting''
-  DS/PN011.0
-\end{thebibliography}{}
+\bibitem[Marganian(2012] {marganian12a} {Marganian, Paul, 2012, {\it PHT LST Pressures} NRAO PH/PN002.0}
+\bibitem[O'Neil \& Marganian(2010)] {marganian10a} {O'Neil, K. \& Marganian, P, 2010, {\it Time Accounting for the GBT DSS} NRAO DSS/PN011.0}
+\end{thebibliography}
 
 \end{document}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
