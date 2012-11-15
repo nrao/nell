@@ -40,34 +40,36 @@ This memo describes the life cycles of Proposals for the Robert C. Byrd Green Ba
 
 
 \section{Introduction}\label{intro}
-The Robert C. Byrd Green Bank Telescope (GBT) is implementing a new Proposal Handling Tool (PHT) which will replace the current way in which GBT proposals are handled and prepared for scheduling.  This document
-describes the proposal life cycle for GBT Proposals within the context of this
-new tool.
+oThe Robert C. Byrd Green Bank Telescope (GBT) has implemented a new Proposal Handling Tool (PHT) to
+replace the previous tools for handling GBT proposals and preparing those proposals for scheduling. In addition
+to replacing the previous proposal handling tools, the new tool is also integrated into both the GBT Dynamic
+Scheduling System (DSS) and the NRAO-wide proposal submission and handling tools.
+
+This document describes the proposal life cycle for GBT Proposals within the context of this new tool.
 
 \section{Definitions}
 
 \begin{itemize}
-\item {\bf Proposal} -
-\item {\bf Proposal Code} - 
-\item {\bf Semester} -
-\item {\bf Current Semester} - 
-\item {\bf Next Semester} - the semester following the Current Semester; most
-new Proposals aim to observe during this semester.
-\item {\bf Telescope Allocation Committe} (TAC) - committee that allocates
-time for telescopes :)
-\item {\bf GBT Dynamic Scheduling System} (DSS) - system used for scheduling
-the GBT.
-\item {\bf Astrid } - Astronomer's integrated desktop; observer's tool for
-observing with the GBT.
-\item {\bf GBT Scheduler} - Toney Minter
-\item {\bf }
+\item {\bf Proposal} - The scientific observing proposal, with its meta-data, which is submitted through the PST and which then may
+eventually get scheduled on the telescope. 
+\item {\bf Proposal Code} -  A unique identification code for the project. For science project this was assigned to the
+project upon its proposal and is typically of the form GBTYYA-XX where YY is the year (e.g. 08), A
+represents the semester to which the project was assigned (currently A, B, or C), and XX is a unique
+number for that year and semester. A typical code is then GBT08A-059.
+\item {\bf Semester} - A 6-month time period within a given year.  
+\item {\bf Current Semester} - The semester which is ongoing.
+\item {\bf Next Semester} - The semester following the Current Semester; most new Proposals aim to observe during the next semester.
+\item {\bf Telescope Allocation Committe} (TAC) - Committee that allocates time for all NRAO telescopes.
+\item {\bf GBT Dynamic Scheduling System} (DSS) - Software system used for scheduling the GBT.
+\item {\bf Astrid } - Astronomer's integrated desktop; observer's tool for observing with the GBT.
+\item {\bf GBT Scheduler} - The person who oversees the scheduling of the GBT.
 \end{itemize}
 
 \section{Overview}
 
-\begin{figure}[htb]
+\begin{figure}[h!]
 \centering
-\includegraphics[width=0.8\textwidth]{ProposalLifeCycle.jpg}
+\includegraphics[width=0.8\textwidth]{ProposalLifeCycle.pdf}
 \caption{GBT Proposal Life Cycle}
 \label{proposal_life_cycle_image}
 \end{figure}
@@ -76,17 +78,17 @@ Figure~\ref{proposal_life_cycle_image} shows the path(s) a GBT Proposal may take
 Here is a brief description of elements of this life cycle.  Note that details
 are explained in other sections.
 
-\begin{itemize}
+\begin{enumerate}
 \item Scientist submits a Proposal into the NRAO Proposal Submission Tool
 (PST) (Sec.~\ref{pst_sec}) before the submission deadline, which is the first day of the Current
 Semester; thus this new Proposal may begin observing by Next Semester.  This
 is the beginning of the Proposal's life cycle.
 \item All new proposals for the Next Semester are imported into the GB PHT (Sec.~\ref{gb_pht_sec}).
-\item Science Review Panels and Technical Reviewers enter comments for each
+\item Science Review Panels and Technical reviewers enter comments for each
 Proposal in the PST.
-\item Comments from Reviewers are later imported into GB PHT.
+\item Comments from reviewers are imported into GB PHT.
 \item GBT Scheduler may optionaly add new Proposals directly into the GB PHT
-\item GBT Scheduler edits Proposal in GB PHT
+\item GBT Scheduler edits Proposals in GB PHT
 \item In preparation for the TAC meeting syncing is enabled between GB PHT and NRAO PHT (Sec.~\ref{nrao_pht_sec})
 \item TAC meeting is held (about the middle of the Current Semester); TAC
 feedback entered into GB PHT; changes propogated into NRAO PHT.  How does this
@@ -102,39 +104,37 @@ knows how much 'carryover' still needs to be observed, and observations are
 archived (Sec.~\ref{archive_sec}).
 \item Once a Proposal has observed enough of it's time on the GBT, it is
 labeled as closed.  This is the end of the Proposal's life cycle.
-
-\end{itemize}
-
-\clearpage
+\end{enumerate}
 
 \section{Proposal Submission Tool}\label{pst_sec}
 
-TBF: what needs to be said about the PST?  
+The NRAO Proposal Submission Tool (PST) is a package for creating and submitting proposals for 
+NRAO telescopes. The PST has been used for GBT observing proposals since June 2005, 
+VLA observing proposals since January 2006, and VLBA/HSA observing proposals since June 2008. 
+The PST will eventually handle ALMA proposals.
+
+The NRAO PST is a one-way interface into the GB and NRAO proposal handling tools.
 
 \section{GB Proposal Handling Tool}\label{gb_pht_sec}
 
-The GB PHT is where all submitted Proposals from the PHT end up.  If a
-Proposal is going to be allocated time and observe on the GBT, that decision
-is entered here.
-
-TBF: go into a detailed timeline here?
+Once a GBT proposal is submitted through the NRAO Proposal Handling Tool and accepted for consideration, it is
+imported into the Green Bank Proposal Handling Tool (GB PHT).  This is the tool which typically used to allocate time, 
+adjust sessions, and assign grades.  Information from this tool is also passed on to the NRAO Proposal Handling tool,
+for record keeping, notification, and archiving purposes.
 
 
 \section{NRAO Proposal Handling Tool}\label{nrao_pht_sec}
 
-TBF: what to say here?
-
+The NRAO Proposal Handling Tool processes the VLA and VLBA proposals in a manner similar to that of the GB PHT.  Additionally, it is the tool used for the NRAO TAC meeting, for sending of all dispositions to project investigators, and the primary archive for proposal information for NRAO telescopes.
 
 \section{GBT Dynamic Scheduling System}\label{dss_sec}
 
-The GBT DSS is used for scheduling observations on the GBT \cite{}.
+The GBT DSS is used for scheduling observations on the GBT.  It is fully described within the NRAO GBT DSS memo series (ihttps://safe.nrao.edu/wiki/bin/view/GB/Dynamic/DynamicProjectNotes).
 
 \subsection{DSS Projects and Sessions}
 
-Once a Proposal has been allocated time by the TAC, it is 'exported' into the
-DSS.  That is to say, the PHT's Proposal is given an associated DSS Project.
-This Project has corresponding session's to the sessions in the Proposal,
-however ...
+Once a Proposal has been allocated time by the TAC, it and its associated sessions and periods (if they exist) are 'exported' into the
+GBT DSS.  That is to say, the PHT's Proposal is given an associated DSS Project.
 
 The Proposal Code is used, without modification, for the DSS Project Code.
 
@@ -163,6 +163,8 @@ When a GBT Proposal is allocated time by the TAC, it is given a corresponding
 DSS Project (Sec.~\ref{dss_sec}) and Astrid Project Code. Unlike the DSS Project
 Code, the GB Proposal Code is modified before it becomes an Astrid Project
 Code:
+
+It is? (KLO)
 
 TBF: rules for turning Proposal Code into Astrid Project Code.
 
@@ -224,6 +226,7 @@ are treated differently when calculating LST Pressures \cite{marganian12b}.
   Marganian, Paul, 2012, ``PHT LST Pressures''
   PH/PN002.0
 \bibitem[Marganian(2010)]{marganian10a}
+FIX THIS! = not the right memo title, etc
   Marganian, Paul, 2010, ``DSS Time Accounting''
   DS/PN011.0
 \end{thebibliography}{}
