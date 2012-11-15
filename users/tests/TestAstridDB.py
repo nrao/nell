@@ -27,9 +27,25 @@ class TestAstridDB(BenchTestCase):
 
     def setUp(self):
 
-        self.pcodes = ["GBTMy-Project", "TGBT-MyLittlePony"]
-        self.acodes = ["AGBTMy_Project", "TGBT_MyLittlePony"] 
-
+        # pcodes should get converted to acodes
+        self.pcodes = ["GBTMy-Project"
+                    , "TGBT-MyLittlePony"
+                    , "GBT12A-001"
+                    , "BB240"
+                    , "VLBA12A-222"
+                      ]
+        self.acodes = ["AGBTMy_Project"
+                     , "TGBT_MyLittlePony"
+                     , "AGBT12A_001"
+                     , "ABB240"
+                     , "AVLB12A_222"
+                      ] 
+        
+        # make sure DB is clean
+        adb = AstridDB(dbname = "turtle_sim", test = True)
+        for acode in self.acodes:
+            adb.removeAstridCode(acode)
+            
     def test_dssCode2astridCode(self):
 
         adb = AstridDB(dbname = "turtle_sim", test = True)
@@ -58,7 +74,6 @@ class TestAstridDB(BenchTestCase):
             adb.removeAstridCode(acode)
             self.assertEquals(False, adb.astridCodeExists(acode))
 
-       
     def test_astridCodeExists(self):
 
         # Note: this is not really a unit test, since it connects

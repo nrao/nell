@@ -101,8 +101,15 @@ class AstridDB(object):
         "Simple algorithm for converting DSS codes to Astrid codes."
 
         astridCode = pcode.replace("-", "_")
+        # don't modify Test proposals
         if astridCode[0] != "T":
-            astridCode = "A" + astridCode
+            if "VLBA" in astridCode:
+                # VLBA can't get the added A cause it makes
+                # the name too long.  So move the original A
+                astridCode = astridCode.replace('VLBA', 'AVLB')
+            else:    
+                # Everybody else just get's A added
+                astridCode = "A" + astridCode
         return astridCode    
 
     def astridCodeExists(self, pcode):
