@@ -52,7 +52,7 @@ This document describes the proposal life cycle for GBT Proposals within the con
 \begin{itemize}
 \item {\bf Proposal} - The scientific observing proposal, with its meta-data, which is submitted through the PST and which then may
 eventually get scheduled on the telescope. 
-\item {\bf Proposal Code} -  A unique identification code for the project. For science project this was assigned to the
+\item {\bf Proposal Code} -  A unique identification code for the project. For science projects, this was assigned to the
 project upon its proposal and is typically of the form GBTYYA-XX where YY is the year (e.g. 08), A
 represents the semester to which the project was assigned (currently A, B, or C), and XX is a unique
 number for that year and semester. A typical code is then GBT08A-059.
@@ -91,17 +91,17 @@ Proposal in the PST.
 \item GBT Scheduler edits Proposals in GB PHT
 \item In preparation for the TAC meeting syncing is enabled between GB PHT and NRAO PHT (Sec.~\ref{nrao_pht_sec})
 \item TAC meeting is held (about the middle of the Current Semester); TAC
-feedback entered into GB PHT; changes propogated into NRAO PHT.  How does this
-tie back into PST?
+feedback entered into GB PHT; changes propogated into NRAO PHT.  
 \item GBT Proposals that have been allocated time are given a Dynamic
 Scheduling System (DSS) (Sec.~\ref{dss_sec}) project so that they can be scheduled on the GBT, and
-a corresponding Astrid Code (version of the Proposal code) so that then can
+a corresponding Astrid Code (version of the Proposal code) so that they can
 actually observe on the GBT (Sec.~\ref{astrid_sec}).
 \item Once the Next Semester starts, Scientists start observing their
 Proposals on the GBT:
-Time Accounting in the DSS feedsback into the GB PHT so that then next TAC
+Time Accounting in the DSS feedsback into the GB PHT so that the next TAC
 knows how much 'carryover' still needs to be observed, and observations are
 archived (Sec.~\ref{archive_sec}).
+\item Resulting data from observations placed into the Archive.
 \item Once a Proposal has observed enough of it's time on the GBT, it is
 labeled as closed.  This is the end of the Proposal's life cycle.
 \end{enumerate}
@@ -118,7 +118,7 @@ The NRAO PST is a one-way interface into the GB and NRAO proposal handling tools
 \section{GB Proposal Handling Tool}\label{gb_pht_sec}
 
 Once a GBT proposal is submitted through the NRAO Proposal Handling Tool and accepted for consideration, it is
-imported into the Green Bank Proposal Handling Tool (GB PHT).  This is the tool which typically used to allocate time, 
+imported into the Green Bank Proposal Handling Tool (GB PHT).  This is the tool which typically is used to allocate time, 
 adjust sessions, and assign grades.  Information from this tool is also passed on to the NRAO Proposal Handling tool,
 for record keeping, notification, and archiving purposes.
 
@@ -140,9 +140,9 @@ The Proposal Code is used, without modification, for the DSS Project Code.
 
 \subsection{Feedback to GB PHT}
 
-As a DSS Project's Sessions are scheduled on the GBT, scientists manage their observing via Astrid (Sec.~\ref{astrid_sec}).  Utilitzing notes from the Operators Logs, the complex time accounting for these observations are determined in the DSS \cite{}.  As the 'time remaining' for a given Project's Session decreases, the GBT Scheduler decides when and if the Project is 'complete', that is, when it should be done with its observations.
+As a DSS Project's Sessions are scheduled on the GBT, scientists manage their observing via Astrid (Sec.~\ref{astrid_sec}).  Utilitzing notes from the Operators Logs, the complex time accounting for these observations are determined in the DSS \cite{oneil11a}.  As the 'time remaining' for a given Project's Session decreases, the GBT Scheduler decides when and if the Project is 'complete', that is, when it should be done with its observations.
 
-The DSS Project's 'time remaining' and 'complete' status are feedback
+The DSS Project's 'time remaining' and 'complete' status are feed back
 programatically to the GB PHT (contrary to Figure~\ref{proposal_life_cycle_image}, the GB PHT and DSS actually share the same database).  This is so that when the next cycle of new
 proposals begins (the Next Semester becomes the Current Semester), any given
 Proposal that has a corresponding DSS Project can be correctly taken into
@@ -164,9 +164,16 @@ DSS Project (Sec.~\ref{dss_sec}) and Astrid Project Code. Unlike the DSS Project
 Code, the GB Proposal Code is modified before it becomes an Astrid Project
 Code:
 
-It is? (KLO)
+\begin{itemize}
+\item All "-" characters replaced with "\_".
+\item If the Proposal Code does {\it not} begin with "T":
+    \begin{itemize}
+    \item If the Proposal Code is for VLBA, then "VLBA" is replaced with "AVLB".
+    \item Othewise, simply append an "A" to the beginning of the Proposal Code.
+    \end{itemize}
+\end{itemize}
 
-TBF: rules for turning Proposal Code into Astrid Project Code.
+Note that previously, the PST 'legacy code' was being used for both DSS Proposal Codes, and Astrid Project Codes (i.e., BB240, etc.)
 
 The Astrid Project Code is used in two significant ways:
 
@@ -178,12 +185,12 @@ database, where they are organized via the Astrid Project Code.
 Astrid Project Code must be chosen, as well as a 'session number' (no relation
 to GB PHT and DSS essions).  The concatenation of these two values forms the
 GBT M\&C Project Code, which in turn determines the directory where the
-observation data is written to.
+observation data is written to.  Also, the Astrid Project Code can be found in the data itself (FITS file headers).
 \end{itemize}
 
 \section{Archive}\label{archive_sec}
 
-TBF: what to say here, especially concerning the project code?
+GBT data is being incorporated into the NRAO archive access tool (AAT).  The Astrid Project Code that is written in the data (FITS files) and forms part of the data directory discussed above is used for the Archive's 'Project Name'.  In addition, this same Astrid Project Code is  modified once again to form the Archive's 'Proposal Name', in a manner that restores it to the value that originated from the PST.    
 
 \section{Proposal Code Summary}\label{pcode_summary_sec}
 
@@ -191,14 +198,16 @@ Here we give a brief summary of the uses of the proposal code from the birth
 of the proposal, through to it's observations on the GBT.
 \begin{itemize}
 \item NRAO PST: Proposal Code originates
-\item GB PHT: Proposal Code loses '\' character
+\item GB PHT: Proposal Code loses forward-slash character
 \item DSS: Proposal Code reused without modification
 \item Astrid: Proposal Code altered to become Astrid Project Code.
 Concatenated with 'session number' to label data.
-\item Archive: TBF?
+\item Archive: Astrid Project Code reused for 'Project Name';  Astrid Project Code modified for 'Proposal Name'
 \end{itemize}
 
-\subsubsection{Proposal Code Example}
+\subsubsection{Proposal Code Examples}
+
+Example 1: GBT Proposal
 
 \begin{itemize}
 \item Scientist submits proposal at 2012-07-31 11:59:59.  It is assigned
@@ -206,7 +215,18 @@ Proposal Code GBT/13A-014
 \item Proposals for semester 13A are imported on 2012-08-01 (first day of semester 12B).  Proposal code is changed to GBT13A-014.
 \item Proposal is allocated time by TAC on 2012-10-13.  Proposals is given an associated DSS Project with Project Code GBT13A-014, and a corresponding Astrid Project Code of AGBT13A\_014.
 \item Scientist observes Project after 13A starts (2013-02-01).  Their first observing session is labeled '01', so their data is stored in 'AGBT13A\_014\_01'.
-\item Archive: TBF?
+\item Archive: Project Name = AGBT13A\_014, Proposal Name = GBT/13A-014
+\end{itemize}
+
+Example 2: VLBA Proposal
+
+\begin{itemize}
+\item Scientist submits proposal at 2012-07-31 11:59:58.  It is assigned
+Proposal Code VLBA/13A-222
+\item Proposals for semester 13A are imported on 2012-08-01 (first day of semester 12B).  Proposal code is changed to VLBA13A-222.
+\item Proposal is allocated time by TAC on 2012-10-13.  Proposals is given an associated DSS Project with Project Code VLBA13A-222, and a corresponding Astrid Project Code of AVLB13A\_222.
+\item Scientist observes Project after 13A starts (2013-02-01).  Their first observing session is labeled '01', so their data is stored in 'AVLB13A\_222\_01'.
+\item Archive: Project Name = AVLB13A\_222, Proposal Name = VLBA/13A-222
 \end{itemize}
 
 \section{Exceptions}\label{exceptions_sec}
@@ -225,10 +245,10 @@ are treated differently when calculating LST Pressures \cite{marganian12b}.
 \bibitem[Marganian(2012)]{marganian12b}
   Marganian, Paul, 2012, ``PHT LST Pressures''
   PH/PN002.0
-\bibitem[Marganian(2010)]{marganian10a}
-FIX THIS! = not the right memo title, etc
-  Marganian, Paul, 2010, ``DSS Time Accounting''
-  DS/PN011.0
+\bibitem[O'Neil(2011)]{oneil11a}
+  O'Neil, Marganian, 2011, ``Time Accounting in the Green Bank Telescope Dynamic Scheduling
+System''
+  DS/PN011.3
 \end{thebibliography}{}
 
 \end{document}
