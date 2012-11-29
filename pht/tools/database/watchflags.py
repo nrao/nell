@@ -1,5 +1,8 @@
-import psycopg2
+from django.core.management import setup_environ
 import settings
+setup_environ(settings)
+
+import psycopg2
 import os
 from datetime import datetime
 from utilities.notifiers.Email import Email
