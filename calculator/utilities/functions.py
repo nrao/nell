@@ -82,6 +82,7 @@ def getAppEff(wavelength, min_elevation, max_elevation, eta_long):
     if wavelength > 3:
         return eta_long
     integrand1, integrand2 = 0, 0
+    min_elevation, max_elevation = map(int, (min_elevation, max_elevation))
     for e in range(min_elevation, max_elevation + 1):
         weight = 90 - e
         integrand1 = integrand1 + weight * math.exp(-1 * math.pow(
