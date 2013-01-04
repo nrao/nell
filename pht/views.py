@@ -456,7 +456,7 @@ def session_calculate_LSTs(request, *args):
 def users(request):
     pst   = PstInterface()
     users = [{'id' : r['person_id']
-            , 'person_id' : r['person_id']
+            , 'person_id' : int(r['person_id'])
             , 'name' : '%s, %s' % (r['lastName'], r['firstName'])}
              for r in pst.getUsers()]
     return HttpResponse(json.dumps({"success" : "ok" , 'users' : users })

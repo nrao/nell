@@ -92,7 +92,7 @@ Ext.define('PHT.controller.Authors', {
 
         author.set(values);
         // Is this a new proposal?
-        if (author.get('id') == '') {
+        if (author.phantom){
             author.save({
                 scope : this,
                 callback: function(records, operation, success) {
