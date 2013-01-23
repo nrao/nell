@@ -326,6 +326,10 @@ class PstImport(PstInterface):
         proposal.save()
 
     def fetchAuthors(self, proposal):
+        "While creating PHT authors for this proposal, also mark who is the contact"
+        # what id are we watching out for, so we can assign contact?
+        contactId = self.getPrincipalContactId(proposal)
+        # now query for all the authors
         q = """
             select person.person_id, a.* 
             from (author as a 
@@ -336,7 +340,22 @@ class PstImport(PstInterface):
         self.cursor.execute(q)
         keys = self.getKeys()
         for row in self.cursor.fetchall():
-            author = Author.createFromSqlResult(dict(zip(keys, map(self.safeUnicode, row))), proposal)
+            result = dict(zip(keys, map(self.safeUnicode, row)))
+            author = Author.createFromSqlResult(result, proposal)
+            # is this author actually the contact as well?
+            if int(author.pst_author_id) == contactId:
+                proposal.contact = author
+                proposal.save()
+
+    def getPrincipalContactId(self, proposal):
+        q = """
+            select contact_id 
+            from proposal
+            where proposal_id = '%s'
+            """ % proposal.pst_proposal_id
+        self.cursor.execute(q)
+        r = self.cursor.fetchone()
+        return int(r[0])
 
     def fixAuthorsBits(self):
         """
@@ -681,6 +700,47 @@ class PstImport(PstInterface):
                 f.write("    New: %s, %s\n" % (v['new'][0], v['new'][1]))
         f.write("Changed %d of %d sessions.\n" % (changed, len(ss)))    
         f.close()    
+
+    def importAllContacts(self):
+        "For adding contacts to already imported proposals"
+        ps = Proposal.objects.all().order_by('pcode')
+        for p in ps:
+            self.importContact(p)
+
+    def importContact(self, proposal):
+        "Import the contact for the given proposal"
+        if proposal.pst_proposal_id is None:
+            return
+
+        q = """
+            select p.contact_id 
+            from proposal as p
+            where p.proposal_id = %d
+            order by p.PROP_ID
+        """ % proposal.pst_proposal_id
+        try:
+            self.cursor.execute(q)
+            r = self.cursor.fetchone()
+            # contact for this proposal?
+            if r is not None:
+                # who IS the contact?
+                authors = Author.objects.filter(pst_author_id = int(r[0]))
+                if len(authors) == 1:
+                    author = authors[0]
+                elif len(authors) == 0:
+                    author = None
+                    print "No contact for ", proposal.pcode
+                else:
+                    author = authors[0]
+                    print "Too many authors: ", proposal.pcode, authors
+                # assign the contact    
+                print proposal.pcode, r, author
+                proposal.contact = author
+                proposal.save()
+                if proposal.contact != proposal.pi:
+                    print "PI Different: ", proposal.pi
+        except:
+            print "Exception with proposal: ", proposal
 
     def reportLine(self, line):
         "Add line to stuff to go into report file, and maybe to stdout too."

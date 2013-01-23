@@ -72,6 +72,23 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         curr.execute(query)
         results = curr.fetchall()
         data['authors'] = '; '.join(["%s, %s" % (last, first) for last, first in results])
+        # principal contact
+        query = """
+            select a.id, a.last_name, a.first_name
+            from pht_proposals as p, pht_authors as a
+            where p.contact_id = a.id AND p.id = %s
+        """ % id     
+        curr.execute(query)
+        results = curr.fetchall()
+        if len(results) > 0:
+            contact_id = int(results[0][0]) 
+            last = str(results[0][1])
+            first = str(results[0][2])
+            name = ("%s, %s") % (last, first)
+        else:
+            contact_id = name = None
+        data['contact_id'] = contact_id     
+        data['contact_name'] = name 
         # stuff from the associated sessions: grades, times, etc.
         # grades
         query = """
@@ -262,6 +279,8 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         friend_name = self.proposal.friend.__str__() if self.proposal.friend is not None else None
         pi_id   = self.proposal.pi.id if self.proposal.pi is not None else None
         pi_name = self.proposal.pi.getLastFirstName() if self.proposal.pi is not None else None
+        contact_id   = self.proposal.contact.id if self.proposal.contact is not None else None
+        contact_name = self.proposal.contact.getLastFirstName() if self.proposal.contact is not None else None
         dss_pcode = self.proposal.dss_project.pcode if self.proposal.dss_project is not None else None #'unknown'
 
         data = {'id'               : self.proposal.pcode
@@ -274,6 +293,8 @@ class ProposalHttpAdapter(PhtHttpAdapter):
               , 'semester'         : semester
               , 'pi_id'            : pi_id 
               , 'pi_name'          : pi_name
+              , 'contact_id'       : contact_id 
+              , 'contact_name'     : contact_name
               , 'friend_id'        : friend_id 
               , 'friend_name'      : friend_name
               , 'authors'          : authors
