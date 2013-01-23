@@ -74,8 +74,10 @@ class TestDssExport(TestCase):
 
     def test_exportProposal(self):
 
-        # add an author to test more code
-        self.addAuthor(self.proposal)
+        # add an author to test more code - make it the contact
+        author = self.addAuthor(self.proposal)
+        self.proposal.contact = author
+        self.proposal.save()
 
         export   = DssExport()
         project  = export.exportProposal(self.proposal.pcode)
@@ -92,6 +94,9 @@ class TestDssExport(TestCase):
         for i in project.investigator_set.all():
             self.assertEqual(i.principal_investigator
                            , i.user.last_name != 'Marganian' 
+                            )
+            self.assertEqual(i.principal_contact
+                           , i.user.last_name == 'Marganian' 
                             )
 
     def genPeriods(self):

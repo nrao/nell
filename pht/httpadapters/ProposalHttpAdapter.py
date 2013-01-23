@@ -361,6 +361,11 @@ class ProposalHttpAdapter(PhtHttpAdapter):
             pi            = Author.objects.get(id = pi_id) if pi_id is not None else None
         except:
             pi = None
+        try:
+            contact_id = data.get('contact_id')
+            contact    = Author.objects.get(id = contact_id) if contact_id is not None else None
+        except:
+            contact = None
         try:    
             friend_id     = data.get('friend_id')
             friend        = DSSUser.objects.get(id = friend_id) if friend_id is not None else None
@@ -374,6 +379,7 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         self.proposal.pst_proposal_id = data.get('pst_proposal_id')
         self.proposal.proposal_type   = proposalType
         self.proposal.pi              = pi
+        self.proposal.contact         = contact
         self.proposal.friend          = friend
         self.proposal.status          = status
         self.proposal.semester        = semester

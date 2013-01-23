@@ -94,18 +94,24 @@ class DssExport(object):
 
         # investigators
         for author in proposal.author_set.all():
+            print author, author.id, proposal.contact
+            pi = ci = False
             # is this author the principal investigator?
-            pi = author.id == proposal.pi.id
-            self.addInvestigator(proposal, author, project, pi)
+            if proposal.pi is not None:
+                pi = author.id == proposal.pi.id
+            if proposal.contact is not None:
+                print proposal.contact.id
+                ci = author.id == proposal.contact.id
+            self.addInvestigator(proposal, author, project, pi, ci)
 
         self.exportSessions(proposal, project)
 
         return project
 
-    def addInvestigator(self, proposal, author, project, pi = False):
+    def addInvestigator(self, proposal, author, project, pi = False, ci = False):
         """
         Adds given author from given proposal as an investigator
-        for given DSS project.
+        for given DSS project.  Also sets appropriate flags (PI, ...)
         """
         try:
             user = dss.User.objects.get(pst_id = author.pst_person_id)
@@ -119,6 +125,9 @@ class DssExport(object):
                            )
         if pi:                   
             i.principal_investigator = True
+        if ci:                   
+            print "setting as contact: ", i, i.user
+            i.principal_contact = True
         i.save()
         
     def exportSessions(self, proposal, project):
