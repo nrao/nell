@@ -163,8 +163,16 @@ class TestPstImport(TestCase):
 
     def test_importProposals_12B(self):
         self.pst.importProposals('12B')
-        self.assertTrue(len(Proposal.objects.all()) > 0)
-        for p in Proposal.objects.all():
+        ps = Proposal.objects.all()
+        self.assertTrue(len(ps) > 0)
+        # before cleaning up, check a few things
+        p = Proposal.objects.get(pcode = 'GBT12B-352')
+        # one of the few exceptions where they use a different pi
+        self.assertTrue(p.pi is not None)
+        self.assertTrue(p.contact is not None)
+        self.assertTrue(p.pi != p.contact)
+        # clean up
+        for p in ps:
             self.assertTrue(len(p.session_set.all()) > 0)
             p.delete()
 

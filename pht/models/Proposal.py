@@ -48,6 +48,7 @@ class Proposal(models.Model):
     semester        = models.ForeignKey(Semester, null = True)
     friend          = models.ForeignKey(DSSUser, null = True)
     pi              = models.ForeignKey('Author', related_name = "pi_on", null = True)
+    contact         = models.ForeignKey('Author', related_name = "contact_on", null = True)
     investigators   = models.ManyToManyField('Author', related_name = 'investigator_on')
     sci_categories  = models.ManyToManyField(ScientificCategory)
     pcode           = models.CharField(max_length = 32, unique = True)

@@ -14,6 +14,15 @@ Ext.define('PHT.view.proposal.Edit', {
                             displayField: 'name',
                             valueField: 'id'
                         });
+        this.contactCombo = Ext.create('Ext.form.field.ComboBox', {
+                            name: 'contact_id',
+                            fieldLabel: 'Primary Contact',
+                            store : 'PrimaryInvestigators',
+                            queryMode: 'local',
+                            lastQuery: '',
+                            displayField: 'name',
+                            valueField: 'id'
+                        });                        
         this.friendCombo = Ext.create('Ext.form.field.ComboBox', {
                             name: 'friend_id',
                             forceSelection: true,
@@ -39,6 +48,7 @@ Ext.define('PHT.view.proposal.Edit', {
                         allowBlank: false,
                     },
                     this.piCombo,
+                    this.contactCombo,
                     this.friendCombo,
                     {
                         xtype: 'combo',

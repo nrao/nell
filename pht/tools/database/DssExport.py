@@ -93,35 +93,43 @@ class DssExport(object):
             friend = dss.Friend.objects.create(project = project, user = proposal.friend)
 
         # investigators
-        try:
-            dss_pi = dss.User.objects.get(pst_id = proposal.pi.pst_person_id)
-        except dss.User.DoesNotExist:
-            dss_pi = self.createDssUser(proposal.pi)
-        except dss.User.MultipleObjectsReturned:
-            dss_pi = dss.User.objects.filter(pst_id = proposal.pi.pst_person_id).exclude(auth_user = None)[0]
-        i = dss.Investigator(project = project
-                           , user    = dss_pi
-                           )
-        i.principal_investigator = True
-        i.save()
-
         for author in proposal.author_set.all():
-            try:
-                user = dss.User.objects.get(pst_id = author.pst_person_id)
-            except dss.User.DoesNotExist:
-                user = self.createDssUser(author)
-            except dss.User.MultipleObjectsReturned:
-                user = dss.User.objects.filter(pst_id = proposal.pi.pst_person_id).exclude(auth_user = None)[0]
-            if user.pst_id != dss_pi.pst_id:
-                i = dss.Investigator(project = project
-                                   , user    = user
-                                   )
-                i.save()
+            print author, author.id, proposal.contact
+            pi = ci = False
+            # is this author the principal investigator?
+            if proposal.pi is not None:
+                pi = author.id == proposal.pi.id
+            if proposal.contact is not None:
+                print proposal.contact.id
+                ci = author.id == proposal.contact.id
+            self.addInvestigator(proposal, author, project, pi, ci)
 
         self.exportSessions(proposal, project)
 
         return project
 
+    def addInvestigator(self, proposal, author, project, pi = False, ci = False):
+        """
+        Adds given author from given proposal as an investigator
+        for given DSS project.  Also sets appropriate flags (PI, ...)
+        """
+        try:
+            user = dss.User.objects.get(pst_id = author.pst_person_id)
+        except dss.User.DoesNotExist:
+            user = self.createDssUser(author)
+        except dss.User.MultipleObjectsReturned:
+            # uh-oh, we got > 1.  Ignore those that don't have authorization 
+            user = dss.User.objects.filter(pst_id = author.pst_person_id).exclude(auth_user = None)[0]
+        i = dss.Investigator(project = project
+                           , user    = user
+                           )
+        if pi:                   
+            i.principal_investigator = True
+        if ci:                   
+            print "setting as contact: ", i, i.user
+            i.principal_contact = True
+        i.save()
+        
     def exportSessions(self, proposal, project):
         for s in proposal.session_set.all():
             self.exportSession(s, project)

@@ -11,6 +11,8 @@ Ext.define('PHT.model.Proposal', {
            , 'friend_id'
            , 'pi_name'
            , 'pi_id'
+           , 'contact_name'
+           , 'contact_id'
            , 'authors'
            , 'sci_categories'
            , 'sci_cat_codes'

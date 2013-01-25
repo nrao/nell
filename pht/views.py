@@ -741,6 +741,8 @@ def friends(request):
 
 @login_required
 @admin_only
+# TBF: misnomer: this is not reall primary investigators, but rather
+# simply authors and their proposal association.
 def pis(request):
     authors = [{'id': a.id, 'name': a.getLastFirstName(), 'pcode': a.proposal.pcode}
                for a in Author.objects.all()]
