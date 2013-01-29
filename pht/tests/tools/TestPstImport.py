@@ -24,6 +24,7 @@ from django.test         import TestCase
 
 from pht.tools.database import PstImport
 from pht.models         import Proposal
+from pht.models         import Receiver
 from pht.models         import ImportReport
 
 class TestPstImport(TestCase):
@@ -32,6 +33,22 @@ class TestPstImport(TestCase):
 
     def setUp(self):
         self.pst = PstImport()
+
+        # too lazy to fix fixtures, so add new rx's here:
+        r = Receiver(name = 'RcvrWide12_18'
+                   , abbreviation = 'KuWide'
+                   , freq_low = 12.0
+                   , freq_hi = 18.0
+                   , code = 'D'
+                     )
+        r.save()             
+        r = Receiver(name = 'Rcvr_PAR15'
+                   , abbreviation = 'MBA1.5'
+                   , freq_low = 80.0
+                   , freq_hi = 100.0
+                   , code = 'G'
+                     )
+        r.save()             
 
     def test_importProposal(self):
         proposal = self.pst.importProposal('GBT/12A-002')
