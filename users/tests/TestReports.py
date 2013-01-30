@@ -32,6 +32,8 @@ from tools.reports.CompletionReport  import GenerateReport as completionReport
 from tools.reports.BlackoutReport  import GenerateBlackoutReport
 from tools.reports.DBHealthReport  import GenerateReport as dbHealth
 from tools.reports.DBHealthReport  import report_overlaps
+from tools.reports.ObservingReport  import generateReport as observingReport
+from tools.reports.ObservingReport  import filterPeriodsByDate as observingFilterPeriods
 from tools.reports.NSFReport  import GenerateReport as nsfReport
 from tools.reports.NSFReport  import normalizePeriodStartStop, getTime
 from tools.reports.NSFReport import filterPeriodsByDate, getScheduledTime, getPeriods 
@@ -476,6 +478,52 @@ Dec 31 21:00 | Jan 01 02:00 | 03:21 |  3.00 | O | S | Unknown   | X         | Tw
 Jan 01 00:00 | Jan 01 05:00 | 06:21 |  1.00 | O | S | Unknown   | L         | One
 Jan 01 01:00 | Jan 01 06:00 | 07:21 |  2.00 | O | S | Unknown   | X         | Two"""
         self.assertTrue(result in ls)
+
+    def test_observingReport(self):
+
+        # Periods look like (UTC, EST subtract 5):
+        # 1 One: 2010-01-01 00:00:00 for  2.00 Hrs
+        # 3 Two: 2010-01-01 02:00:00 for  3.00 Hrs
+        # 2 One: 2010-01-01 05:00:00 for  1.00 Hrs - this one start in Jan, EST
+        # 4 Two: 2010-01-01 06:00:00 for  2.00 Hrs
+
+        # run the report to catch the 2cd half of our periods
+        periods = []
+        quarter = 2
+        year = 2010
+        fiscal_year = 2010
+        for m in [1,2,3]:
+            periods.extend(observingFilterPeriods(datetime(year, m, 1)))
+        pcodes, sch, obs = observingReport('Q%d FY %d' % (quarter, fiscal_year), periods)
+        self.assertEquals([u'GBT09A-001'], pcodes)
+        self.assertEquals({u'GBT09A-001': 3.0}, sch)
+        self.assertEquals({u'GBT09A-001': 2.5}, obs)
+
+        # now make huge period spanning across month boundary and w/ lost time
+        dur = 36.0
+        scheduled = Period_State.get_state("S")
+        pa = Period_Accounting(scheduled = dur, lost_time_rfi = 30.0)
+        pa.save()
+        p = Period(session = self.s1
+                 , start = datetime(2010, 1, 31, 0)
+                 , duration = dur
+                 , state = scheduled
+                 , accounting = pa
+                  )
+        p.save()
+
+        L = (Receiver.get_rcvr('L'))
+        pg = Period_Receiver(period = p, receiver = L)
+        pg.save()
+
+        periods = []
+        for m in [1,2,3]:
+            periods.extend(observingFilterPeriods(datetime(year, m, 1)))
+        pcodes, sch, obs = observingReport('Q%d FY %d' % (quarter, fiscal_year), periods)
+        pcode = u'GBT09A-001'
+        self.assertEquals([pcode], pcodes)
+        self.assertAlmostEquals(sch[pcode], 3.0 + dur, 2)
+        self.assertAlmostEquals(obs[pcode], 2.5 + dur - 30.0, 2)
 
     def test_nsfReport(self):
 

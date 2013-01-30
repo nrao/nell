@@ -30,10 +30,9 @@ from utilities       import TimeAgent
 
 import calendar
 
-ALL_PERIODS = [p for p in Period.objects.all() if p.session.project.is_science() and (p.isScheduled() or p.isCompleted())]
 
 def getPeriods():
-    return ALL_PERIODS
+    return [p for p in Period.objects.all() if p.session.project.is_science() and (p.isScheduled() or p.isCompleted())]
 
 def normalizePeriodStartStop(period, dt):
     """
@@ -59,12 +58,15 @@ def filterPeriodsByDate(start):
     ustop  = TimeAgent.est2utc(stop)
 
     periods = []
-    for p in ALL_PERIODS:
+    for p in getPeriods():
         if (p.start >= ustart or p.end() > ustart) and p.start < ustop:
             start, stop = normalizePeriodStartStop(p, start)
             periods.append([p, start, stop])
 
     return periods
+
+def diffHrs(begin, end):
+    return TimeAgent.timedelta2frachours(end - begin)
 
 def generateReport(label, periods):
     outfile = open("./GBTObservingReport.txt", 'w')
@@ -74,11 +76,17 @@ def generateReport(label, periods):
 
     scheduled = {}
     observed  = {}
+    pids = []
     for p in periods:
         period, start, stop = p
         pcode = period.session.project.pcode
-        scheduled[pcode] = scheduled.get(pcode, 0) + (stop - start).seconds / 3600.
-        observed[pcode] = observed.get(pcode, 0) + (stop - start).seconds / 3600. - period.accounting.lost_time()
+        scheduled[pcode] = scheduled.get(pcode, 0) + diffHrs(start, stop) 
+        # don't double count lost time for periods that might have already
+        # been taken into account - this will happen when periods go over month 
+        # boundaries and have lost time.
+        lostTime = period.accounting.lost_time() if period.id not in pids else 0.0
+        observed[pcode] = observed.get(pcode, 0) + diffHrs(start, stop) - lostTime 
+        pids.append(period.id)
 
     projectNames = scheduled.keys()
     projectNames.sort()
@@ -88,6 +96,8 @@ def generateReport(label, periods):
     outfile.write("Total\t%.2f\t%.2f\n" % (sum([scheduled[p] for p in scheduled.keys()]), sum([observed[p] for p in observed.keys()])))
 
     outfile.close()
+    
+    return (projectNames, scheduled, observed)
 
 def show_help():
     print "\nThe arguments to ObservingReport are:"
