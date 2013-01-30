@@ -129,28 +129,30 @@ def GenerateProjectReport():
             )
 
     semester          = Semester.getCurrentSemester()
-    semester_hrs_left = (semester.end() - datetime.today()).days * 24.
     SEMESTER_HOURS    = (semester.end() - semester.start()).days * 24.
-
+    semester_hrs_left = (semester.end() - datetime.today()).days * 24.
+     
     outfile.write("\nTotal hours in this semester   = %.1f"% SEMESTER_HOURS)
     outfile.write("\nTotal hours left this semester = %.1f\n" % \
                   semester_hrs_left)
 
     ta    = TimeAccounting()
     hours = sum([ta.getTimeLeft(p) for p in open_projects])
+    remainingRatio =  float(hours / semester_hrs_left * 100.) if semester_hrs_left != 0 else 0.0   
 
     outfile.write("\nSum of all incomplete projects' hours remaining = %.1f" % hours)
     outfile.write("\nHours remaining / Trimester Hours               = %.1f%%" % 
                   (hours / SEMESTER_HOURS * 100.))
     outfile.write("\nHours remaining / Trimester Hours Left          = %.1f%%\n" % 
-                  float(hours / semester_hrs_left * 100.))
+                  remainingRatio)
 
     hours = sum([ta.getProjectSchedulableTotalTime(p) for p in open_projects])
+    schedulableRatio =  float(hours / semester_hrs_left * 100.) if semester_hrs_left != 0 else 0.0   
     outfile.write("\nSum of all schedulable time             = %.1f" % \
                   hours)
 
     outfile.write("\nSchedulable time / Trimester Hours      = %.1f%%" % (hours / SEMESTER_HOURS * 100.))  
-    outfile.write("\nSchedulable time / Trimester Hours Left = %.1f%%\n" % (hours / semester_hrs_left * 100.))  
+    outfile.write("\nSchedulable time / Trimester Hours Left = %.1f%%\n" % schedulableRatio)  
 
     outfile.close()
 
