@@ -51,7 +51,7 @@ def normalizePeriodStartStop(period, dt):
     return start, stop
 
 def filterPeriodsByDate(start):
-    "Returns the periods within a given month and year."
+    "Returns the periods (plus lost time) within a given month and year."
     _, day = calendar.monthrange(start.year, start.month)
     stop   = datetime(start.year, start.month, day, 23, 59, 59)
     ustart = TimeAgent.est2utc(start)
@@ -61,7 +61,9 @@ def filterPeriodsByDate(start):
     for p in getPeriods():
         if (p.start >= ustart or p.end() > ustart) and p.start < ustop:
             start, stop = normalizePeriodStartStop(p, start)
-            periods.append([p, start, stop])
+            # normalize lost time too!
+            lostTime = (diffHrs(start, stop)/p.duration) * p.accounting.lost_time()
+            periods.append([p, start, stop, lostTime]) 
 
     return periods
 
@@ -78,13 +80,9 @@ def generateReport(label, periods):
     observed  = {}
     pids = []
     for p in periods:
-        period, start, stop = p
+        period, start, stop, lostTime = p
         pcode = period.session.project.pcode
         scheduled[pcode] = scheduled.get(pcode, 0) + diffHrs(start, stop) 
-        # don't double count lost time for periods that might have already
-        # been taken into account - this will happen when periods go over month 
-        # boundaries and have lost time.
-        lostTime = period.accounting.lost_time() if period.id not in pids else 0.0
         observed[pcode] = observed.get(pcode, 0) + diffHrs(start, stop) - lostTime 
         pids.append(period.id)
 
@@ -95,6 +93,12 @@ def generateReport(label, periods):
         outfile.write("%s\t%.2f\t%.2f\n" % (p, s, o))
     outfile.write("Total\t%.2f\t%.2f\n" % (sum([scheduled[p] for p in scheduled.keys()]), sum([observed[p] for p in observed.keys()])))
 
+    # check for errors
+    outfile.write("\n")
+    for p in projectNames:
+        s, o = scheduled[p], observed[p]
+        if s < 0 or o < 0:
+            outfile.write("Warning: %s\t%.2f\t%.2f\n" % (p, s, o))
     outfile.close()
     
     return (projectNames, scheduled, observed)
@@ -120,7 +124,7 @@ if __name__=='__main__':
     quarter     = int(sys.argv[1])
     fiscal_year = int(sys.argv[2])
 
-    months = quarters[quarter]
+    months = quarters[quarter] 
     year   = fiscal_year if quarter != 1 else fiscal_year - 1
 
     periods = []

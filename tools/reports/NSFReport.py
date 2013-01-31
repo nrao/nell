@@ -33,7 +33,7 @@ import calendar
 
 
 def getPeriods():
-    return [p for p in Period.objects.all() if p.isScheduled() or p.isCompleted()]
+    return [p for p in Period.objects.all().order_by('start') if p.isScheduled() or p.isCompleted()]
 
 def filterPeriods(periods, condition):
     "Filters periods according to some critia, e.g. is science?"
@@ -77,9 +77,19 @@ def getScheduledTime(periods, month):
                  , month)
 
 def getDowntime(periods, month):
-    return sum([p.accounting.lost_time() \
-                for p in filterPeriods(periods
-                                     , 'p.session.project.is_science()')])
+    "This does not use getTime because lost time must be handled carefully"
+                                     
+    ps =  filterPeriods(periods, 'p.session.project.is_science()')
+    ps.sort(key = lambda x: x.start)
+    total = 0.0
+    for p in ps:
+        start, stop = normalizePeriodStartStop(p, month)
+        hrs = TimeAgent.timedelta2frachours(stop - start)
+        # We must normalize the lost time as well
+        lostTime = (hrs/p.duration) * p.accounting.lost_time()
+        total += lostTime
+    return total 
+
 
 def getMaintenance(periods, month):
     return getTime(filterPeriods(periods, 'p.session.project.is_maintenance() and not p.session.project.is_shutdown()')
