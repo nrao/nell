@@ -38,7 +38,6 @@ from tools.reports.NSFReport  import GenerateReport as nsfReport
 from tools.reports.NSFReport  import normalizePeriodStartStop, getTime
 from tools.reports.NSFReport import filterPeriodsByDate, getScheduledTime, getPeriods 
 from tools.reports.NSFReport import getMaintenance, getDowntime, getTesting 
-from tools.reports.MyNSFReport import myFilterPeriodsByDate
 from tools.reports.ProjectReport  import GenerateProjectReport
 from tools.reports.ProjTimeAcctReport  import GenerateProjectTimeAccountingReport
 from tools.reports.ScheduleReport import ScheduleReport
