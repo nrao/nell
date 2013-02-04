@@ -71,7 +71,7 @@ class PstImport(PstInterface):
             , 'L-Band (1.15-1.73 GHz)'          : 'L'
             , 'Mustang'                         : 'MBA'
             , 'Mustang (90 GHz)'                : 'MBA'
-            , 'Mustang-1.5'                     : 'MBA1.5'
+            , 'Mustang 1.5'                     : 'MBA1.5'
             , 'Other'                           : 'None'
             , 'PF1 340 MHz (0.290-0.395 GHz)'   : '342'
             , 'PF1 450 MHz (0.385-0.520 GHz)'   : '450'
