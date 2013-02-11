@@ -283,7 +283,8 @@ class Blackout(models.Model):
         return False
 
     def getStartDate(self):
-        return self.blackout_sequence_set.order_by("start_date")[0].start_date
+        bs = self.blackout_sequence_set.order_by("start_date") 
+        return bs[0].start_date if len(bs) > 0 else None
 
     def getStartDateTZ(self, tz = None):
         if not tz:
@@ -291,7 +292,8 @@ class Blackout(models.Model):
         return tz_to_tz(self.getStartDate(), 'UTC', tz)
 
     def getEndDate(self):
-        return self.blackout_sequence_set.order_by("start_date")[0].end_date
+        bs = self.blackout_sequence_set.order_by("start_date") 
+        return bs[0].end_date if len(bs) > 0 else None
 
     def getEndDateTZ(self, tz = None):
         if not tz:
@@ -309,7 +311,11 @@ class Blackout(models.Model):
         return tz_to_tz(until, 'UTC', tz) if until is not None else until
 
     def getRepeat(self):
-        repeat = self.blackout_sequence_set.order_by("start_date")[0].repeat.repeat
+        bs = self.blackout_sequence_set.order_by("start_date") 
+        if len(bs) > 0:
+            repeat = bs[0].repeat.repeat
+        else: 
+            return None
 
         # 'repeat' should now have the proper repeat.  However, if
         # this is a non-'Once' repeating sequence, and there are more
