@@ -89,6 +89,8 @@ class PstInterface(object):
             return False
 
     def getRelatedProposals(self, proposal):
+        if proposal.pst_proposal_id is None:
+            return None
         q = """
              select RELATED_PROPOSALS
              from proposal
