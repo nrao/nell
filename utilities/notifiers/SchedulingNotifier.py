@@ -204,11 +204,13 @@ class SchedulingNotifier(Notifier):
 
         for p in periods:
 
+            # all observers get an email
             obs = [o.user for o in p.session.project.get_observers()]
-            pc = p.session.project.principal_contact()
 
-            if pc is not None and pc not in obs:
-                obs.append(p.session.project.principal_contact())
+            # all contacts get an email
+            for u in p.session.project.contacts():
+                if u not in obs:
+                    obs.append(u)
 
             for o in obs:
                 for e in o.getEmails():

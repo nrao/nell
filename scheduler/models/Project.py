@@ -117,6 +117,9 @@ class Project(models.Model):
     def get_allotments_display(self):
         return self.allotments.all()
 
+    # TBF: keep this so we don't break anything, but the idea of
+    # "principal" contact is not really enforced, or even hinted
+    # at in the UI, so we really should abandon that language in the model.
     def principal_contact(self):
         "Who is the principal contact for this Project?"
         pc = None
@@ -126,6 +129,11 @@ class Project(models.Model):
                 pc = inv.user
                 break
         return pc        
+
+    def contacts(self):
+        "Which users are contacts for this Project?"
+        return [inv.user for inv in self.investigator_set.all() \
+            if inv.principal_contact]
 
     def principal_investigator(self):
         "Who is the principal investigator for this Project?"

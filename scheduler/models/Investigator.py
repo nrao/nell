@@ -28,6 +28,10 @@ class Investigator(models.Model):
     project                = models.ForeignKey(Project)
     user                   = models.ForeignKey(User)
     observer               = models.BooleanField(default = False)
+    # TBF: keep this language so we don't break anything, but the idea of
+    # "principal" contact is not really enforced, or even hinted
+    # at in the UI, so we really should abandon that language in the model.
+    # In other words, this should just be 'contact'
     principal_contact      = models.BooleanField(default = False)
     principal_investigator = models.BooleanField(default = False)
     priority               = models.IntegerField(default = 1)
