@@ -135,8 +135,9 @@ class DssExport(object):
 
         allocated = pht_session.getTotalAllocatedTime()
 
-        # Don't create the DSS session if it hasn't been allocated time.
-        if allocated is None:
+        # Don't create the DSS session if it hasn't been allocated time or is Failing.
+        if allocated is None or allocated == 0.0 or \
+            pht_session.grade is None or not pht_session.grade.isPassing():
             return
 
         status = dss.Status.objects.create(

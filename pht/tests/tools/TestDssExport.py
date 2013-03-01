@@ -99,6 +99,58 @@ class TestDssExport(TestCase):
                            , i.user.last_name == 'Marganian' 
                             )
 
+    def test_exportProposal2(self):
+
+
+        # now make sure no allocated time keeps it from getting transferred
+        s = self.proposal.session_set.all()[0]
+        original_time =  s.allotment.allocated_time
+        s.allotment.allocated_time = 0.0
+        s.allotment.save()
+
+        export   = DssExport()
+        project  = export.exportProposal(self.proposal.pcode)
+
+        # make sure it wasn't transferred
+        self.assertEqual(self.proposal.pcode, project.pcode)
+        self.assertEqual(len(self.proposal.session_set.all()) - 1
+                       , len(project.sesshun_set.all()))
+
+        # restore the allocated time, but make sure it has a failing grade
+        s = self.proposal.session_set.all()[0]
+        s.allotment.allocated_time = original_time 
+        s.allotment.save()
+        original_grade = s.grade
+        s.grade = SessionGrade.objects.get(grade = 'N*')
+        s.save()
+
+        export   = DssExport()
+        # we can't call exportProposal again, becasuse if the corresponding 
+        # DSS Project exists already, it will go ahead and use it; and deleting
+        # Projects is a pain in the ass.  Instead, just try to import the session.
+        #project  = export.exportProposal(self.proposal.pcode)
+        export.exportSession(s, project) 
+
+        # make sure it still wasn't transferred - get them fresh from DB to be sure
+        proposal = Proposal.objects.get(pcode = self.proposal.pcode)
+        project = dss.Project.objects.get(pcode = project.pcode)
+        self.assertEqual(len(proposal.session_set.all()) - 1
+                       , len(project.sesshun_set.all()))
+
+       
+        # now restore the original grade, and we should see the session get exported
+        s.grade = original_grade
+        s.save()
+
+        export.exportSession(s, project) 
+
+        # make sure it WAS transferred - get them fresh from DB to be sure
+        proposal = Proposal.objects.get(pcode = self.proposal.pcode)
+        project = dss.Project.objects.get(pcode = project.pcode)
+        self.assertEqual(len(proposal.session_set.all())
+                       , len(project.sesshun_set.all()))
+
+
     def genPeriods(self):
         # now set it up for a custom sequence
         start = datetime(2011, 1, 1)
