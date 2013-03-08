@@ -229,7 +229,9 @@ class DssExport(object):
           , duration = pht_period.duration
           , score    = -1.0
           )
-        pa = dss.Period_Accounting(scheduled = 0.0)
+        # Fixed periods come over already as scheduled, so need to show that in accounting  
+        scheduledTime = 0.0 if sType != 'fixed' else pht_period.duration
+        pa = dss.Period_Accounting(scheduled = scheduledTime)
         pa.save()
         period.accounting = pa
         period.save()

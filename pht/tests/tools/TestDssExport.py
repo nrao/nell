@@ -177,8 +177,12 @@ class TestDssExport(TestCase):
         self.assertEqual(len(ps), len(dss_session.period_set.all()))
 
         expected_starts = [p.start for p in ps]
+        dssPs = dss_session.period_set.all().order_by('start')
         self.assertEqual(expected_starts
-                       , [dp.start for dp in dss_session.period_set.all().order_by('start')])
+                        , [dp.start for dp in dssPs])
+
+        for i in range(len(ps)):
+            self.assertEqual(dssPs[i].accounting.scheduled, ps[i].duration)
 
     def test_exportElectiveSession(self):
         self.genPeriods()
@@ -192,7 +196,11 @@ class TestDssExport(TestCase):
         self.assertEqual(dss_session.session_type.type, 'elective')
         self.assertEqual(1, len(dss_session.elective_set.all()))
         self.assertEqual(len(ps), len(dss_session.elective_set.all()[0].periods.all()))
-        self.assertEqual(len(ps), len(dss_session.period_set.all()))
+        dssPs = dss_session.period_set.all().order_by('start')
+        self.assertEqual(len(ps), len(dssPs)) 
+
+        for scheduled in [dp.accounting.scheduled for dp in dssPs]:
+            self.assertEqual(0.0, scheduled)
 
     def test_exportWindowedSession(self):
         self.genPeriods()
