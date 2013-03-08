@@ -277,8 +277,8 @@ def sources_import(request):
 def handle_uploaded_sources(f, pcode):
 
     try:
-        # TBF: where to really put the file?
-        filename = 'sourceImport.txt'
+        # We have to write to /tmp to avoid permission issues 
+        filename = '/tmp/sourceImport.txt'
         destination = open(filename, 'wb+')
         for chunk in f.chunks():
             destination.write(chunk)
