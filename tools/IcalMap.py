@@ -101,8 +101,18 @@ class IcalMap:
 
     def writeSchedule(self, filepath):
         f = open(filepath, 'wb')
-        f.write(self.cal.as_string())
+        f.write(self.getSchedule()) #self.cal.as_string())
         f.close()
 
     def getSchedule(self):
-        return self.cal.as_string()
+      return self.removeErrors(self.cal.as_string())
+
+    def removeErrors(self, icalString):
+        """
+        Errors:
+           * Even though we are adding datetimes as events, icalendar is including the ;VALUE=DATE 
+             as if these were dates.  Just recently Google started chocking on this; we could update
+             the icalendar library, but it's less work to just take this out.
+        """
+        return icalString.replace(';VALUE=DATE', '')
+
