@@ -566,7 +566,6 @@ class SessionHttpAdapter(PhtHttpAdapter):
     def checkFlag(self, data, flagName):
         "We keep having this problem where flags are unintentionally getting reset. Catch it."
         if not self.getBool(data, flagName) and self.session.flags.__getattribute__(flagName):
-            print "flag getting unset: ", flagName
             msg = 'Flag getting unset: (%s, %s)' % (flagName, data)
             self.logger.warning(msg)
 
