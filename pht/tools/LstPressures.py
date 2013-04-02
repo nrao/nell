@@ -1296,9 +1296,6 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         for s in ss:
            # extract the lst pressures from the stored results
            cat, sc, ps, total = self.pressuresBySession[s.__str__()]
-           # socorro only cares about the sessions that have been allocated time
-           if cat != ALLOCATED:
-               ps = [0.0]*24
            print self.socorroFormat(s, ps)
 
     def reportSocorroWeatherFormat(self, semester):
@@ -1607,10 +1604,10 @@ if __name__ == '__main__':
     #ss = [s]
     #ps = lst.getPressures(ss)
     ps = lst.getPressures()
-    #lst.reportSocorroFormat('12B')
+    #lst.reportSocorroFormat('13B')
     #lst.reportSocorroWeatherFormat('12B')
     lst.report()
-    lst.reportSemesterSummary()
+    #lst.reportSemesterSummary()
     #lst.compareNewAstronomyPressures()
 
 

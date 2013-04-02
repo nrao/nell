@@ -25,7 +25,7 @@ import settings
 setup_environ(settings)
 
 from datetime import datetime
-import settings, pg, psycopg2
+import settings, pg, psycopg2, logging
 
 from scheduler.models    import Observing_Type
 from pht.models          import *
@@ -40,6 +40,16 @@ class SessionHttpAdapter(PhtHttpAdapter):
 
     def __init__(self, session = None):
         self.setSession(session)
+        self.initLogger()
+
+    def initLogger(self):
+        "We need a logger to help debug problems in the deployment environment"
+        self.logger = logging.getLogger('phtSessionHttpAdapter')
+        hdlr = logging.FileHandler('/tmp/phtSessionHttpAdapter.log')
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        hdlr.setFormatter(formatter)
+        self.logger.addHandler(hdlr) 
+        self.logger.setLevel(logging.INFO)
 
     def setSession(self, session):
         self.session = session
@@ -414,6 +424,8 @@ class SessionHttpAdapter(PhtHttpAdapter):
 
     def initFromPost(self, data):
 
+        self.logger.info('Creating new Session.')
+
         # init new objects before filling in their fields
         self.session = Session()
         # TBF: why do I have to do it this verbose way?
@@ -437,6 +449,9 @@ class SessionHttpAdapter(PhtHttpAdapter):
         self.updateFromPost(data)
 
     def updateFromPost(self, data):
+
+        msg = "Updatting Session %s: %s" % (data.get('name'), data)
+        self.logger.info(msg)
 
         # we can change which proposal this session belongs to
         pcode = data.get('pcode')
@@ -499,6 +514,8 @@ class SessionHttpAdapter(PhtHttpAdapter):
         self.session.target.save()
 
         # flags
+        for f in ['thermal_night', 'rfi_night', 'optical_night']:
+            self.checkFlag(data, f)
         self.session.flags.thermal_night = self.getBool(data, 'thermal_night')
         self.session.flags.rfi_night = self.getBool(data, 'rfi_night')
         self.session.flags.optical_night = self.getBool(data, 'optical_night')
@@ -546,6 +563,13 @@ class SessionHttpAdapter(PhtHttpAdapter):
         self.session.save()
         self.notify(self.session.proposal)
 
+    def checkFlag(self, data, flagName):
+        "We keep having this problem where flags are unintentionally getting reset. Catch it."
+        if not self.getBool(data, flagName) and self.session.flags.__getattribute__(flagName):
+            msg = 'Flag getting unset: (%s, %s)' % (flagName, data)
+            self.logger.warning(msg)
+
+        #self.session.flags.thermal_night = self.getBool(data, 'thermal_night')
     def update_rcvrs_granted(self, data):
         "Converts comma-separated string to objects."
 
