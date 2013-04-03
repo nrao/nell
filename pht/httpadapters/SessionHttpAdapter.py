@@ -45,7 +45,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
     def initLogger(self):
         "We need a logger to help debug problems in the deployment environment"
         # where to put the actuall log file?
-        if settings.DEBUG:
+        if settings.NELL_ROOT != '/home/dss2.gb.nrao.edu/active/nell':
             # if not production, place in local dir.
             file = 'phtSessionHttpAdapter.log'
         else:
