@@ -44,8 +44,15 @@ class SessionHttpAdapter(PhtHttpAdapter):
 
     def initLogger(self):
         "We need a logger to help debug problems in the deployment environment"
+        # where to put the actuall log file?
+        if settings.DEBUG:
+            # if not production, place in local dir.
+            file = 'phtSessionHttpAdapter.log'
+        else:
+            # for production
+            file = '/tmp/phtSessionHttpAdapter.log'
         self.logger = logging.getLogger('phtSessionHttpAdapter')
-        hdlr = logging.FileHandler('/tmp/phtSessionHttpAdapter.log')
+        hdlr = logging.FileHandler(file) #'/tmp/phtSessionHttpAdapter.log')
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
         hdlr.setFormatter(formatter)
         self.logger.addHandler(hdlr) 
