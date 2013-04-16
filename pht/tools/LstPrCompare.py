@@ -28,6 +28,13 @@ class LstPrCompare:
         self.tolerance = 0.01
         self.gbNightFlagged = self.getNightTimeFlagSessions(self.semester)
 
+        # TBF: use default dict
+        self.nightCats = [g.grade for g in SessionGrade.objects.all()]
+        self.nightCats.extend(['None', 'All'])
+        self.nightDiffs = {}
+        for g in self.nightCats: 
+            self.nightDiffs[g] = numpy.zeros(24)
+   
     def getGbPressures(self, semester):
         self.gbLst.getPressures()
         ss = Session.objects.filter(semester__semester = semester).order_by('id')
@@ -48,6 +55,16 @@ class LstPrCompare:
                    diffs = self.comparePressure(gbId, gbPs, gbId, self.socPs[gbId])
                    if len(diffs) > 0:
                        self.diffs[gbId] = diffs
+            else:
+                # on the other hand, how much are the night time ones off by?
+                gbPs = numpy.array(gbPs)
+                socPs = numpy.array(self.socPs[gbId])
+                diffs = abs(gbPs - socPs)
+                self.nightDiffs['All'] += diffs
+                s = Session.objects.get(id = gbId)
+                grade = s.grade.grade if s.grade is not None else 'None'
+                self.nightDiffs[grade] += diffs
+                
     
         gbIds = set(self.gbPs.keys())                
         socIds = set(self.socPs.keys())                
@@ -125,6 +142,9 @@ class LstPrCompare:
         print "Ignoring %d Sessions using Night Flags" % (len(self.gbNightFlagged))
         for s in self.gbNightFlagged:
             print "  ", s.name, s.id
+        print "But they contribute these diffs:"    
+        for g in sorted(self.nightCats):    
+            print g, ":", self.nightDiffs[g]    
 
     def compare(self):
         "Find notable differences between GB and Soc LST Pressures."
@@ -139,7 +159,7 @@ class LstPrCompare:
 
 if __name__ == '__main__':
 
-    f = 'socPsV2.txt'
+    f = 'socPsV4.txt'
     cmp = LstPrCompare(socFile = f, semester = '13B')
     cmp.compare()
     cmp.report()
