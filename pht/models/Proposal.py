@@ -230,20 +230,27 @@ class Proposal(models.Model):
         an SQL query.
         """
 
+        # locally needed for parsing datetime strings
+        def parseDTString(result, key):
+            frmt = "%Y-%m-%d %H:%M:%S"
+            try:
+                dtstr = result[key]
+                dt = datetime.strptime(dtstr, frmt) 
+            except:
+                dt = datetime.now().strftime(frmt)
+            return dt
+
         pcode         = result['PROP_ID'].replace('/', '')
         proposalType  = ProposalType.objects.get(type = result['PROPOSAL_TYPE'])
         status        = Status.objects.get(name = result['STATUS'].title())
-        submit_date  = result['SUBMITTED_DATE'] \
-            if result['SUBMITTED_DATE'] != 'None' \
-            else datetime.now().strftime("%Y-%M-%d %H:%m:%S")
-
+       
         proposal = Proposal(pst_proposal_id = result['proposal_id']
                           , proposal_type   = proposalType
                           , status          = status
                           , pcode           = pcode
-                          , create_date     = result['CREATED_DATE']
-                          , modify_date     = result['MODIFIED_DATE']
-                          , submit_date     = submit_date 
+                          , create_date     = parseDTString(result, 'CREATED_DATE') 
+                          , modify_date     = parseDTString(result, 'MODIFIED_DATE') 
+                          , submit_date     = parseDTString(result, 'SUBMITTED_DATE') 
                           , title           = result['TITLE']
                           , abstract        = result['ABSTRACT']
                           , joint_proposal  = result['JOINT_PROPOSAL_TYPE'].lower() != 'not a joint proposal'
@@ -260,3 +267,4 @@ class Proposal(models.Model):
         proposal.save()
         return proposal
 
+    
