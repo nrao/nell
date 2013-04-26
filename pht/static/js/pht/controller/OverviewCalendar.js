@@ -240,6 +240,8 @@ Ext.define('PHT.controller.OverviewCalendar', {
         periodDate.setUTCDate(dateStr[1]);
         periodDate.setUTCFullYear(dateStr[2]);
         periodDate.setUTCMonth(dateStr[0] - 1);
+        // set the date again to avoid this whole illegal date nonsense.
+        periodDate.setUTCDate(dateStr[1]);
         periodDate.setUTCHours(0);
         periodDate.setUTCMinutes(0);
         periodDate.setUTCSeconds(0);
