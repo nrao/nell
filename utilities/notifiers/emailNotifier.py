@@ -55,7 +55,7 @@ class emailNotifier:
     def GetFailures(self):
         return self.failed
 
-    def Send(self, email):
+    def Send(self, email, catchErrors=True):
 
         # This loop is necessary due to a bug in smtplib.  It only
         # emails the first person in the "to" list.  So, we need to
@@ -65,7 +65,15 @@ class emailNotifier:
         
         if recp is not None:
             for address in recp:
-                self.failed = self.server.sendmail(email.GetSender(), address, email.GetText())
+                # TBF: more elegant way of deciding where to catch errors?
+                if catchErrors:
+                    try:
+                        self.failed = self.server.sendmail(email.GetSender(), address, email.GetText())
+                    except:
+                        pass
+                else:
+                    self.failed = self.server.sendmail(email.GetSender(), address, email.GetText())
+
 
             if len(self.failed) > 0:
                 raise 'failure in notification:', self.failed
