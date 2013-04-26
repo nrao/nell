@@ -136,9 +136,6 @@ class TestProposal(TestCase):
 
         # now get fresh copy from db
         pdb = Proposal.objects.get(pcode = pcode)
-        print 'modify', sqlResult['MODIFIED_DATE']
-        print 'created', sqlResult['CREATED_DATE']
-        print 'submit', sqlResult['SUBMITTED_DATE']
         self.assertEqual(datetime(2013, 2, 4, 21, 56, 27), pdb.submit_date)
         self.assertEqual(datetime(2013, 2, 4, 21, 57, 56), pdb.modify_date)
         self.assertEqual(datetime(2013, 1, 26, 18, 18, 54), pdb.create_date)
@@ -161,6 +158,13 @@ class TestProposal(TestCase):
         frmt = '%Y-%m-%d %H:%M'
         now = datetime.now().strftime(frmt)
         self.assertEqual(now, pdb.submit_date.strftime(frmt))
-        
+
+        # demonstrate that as long as it's unicode, we're cool
+        pdb.delete()
+        a =  u'dog\xe0\xe1cat'
+        sqlResult['ABSTRACT'] = a 
+        p = Proposal.createFromSqlResult(sqlResult)
+        pdb = Proposal.objects.get(pcode = pcode)
+        self.assertEqual(a, pdb.abstract)
 
 

@@ -375,6 +375,10 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         status        = Status.objects.get(name = data.get('status'))
         semester      = Semester.objects.get(semester = data.get('semester'))
 
+        # watch for bad chars
+        abstract = data.get('abstract', '')
+        abstract = "".join([s if ord(s) < 128 else '?' for s in abstract])
+        self.proposal.abstract        = abstract 
 
         self.proposal.pst_proposal_id = data.get('pst_proposal_id')
         self.proposal.proposal_type   = proposalType
@@ -388,7 +392,6 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         self.proposal.submit_date     = datetime.strptime(dt, dtfmt) 
         self.proposal.total_time      = data.get('total_time', 0.0)
         self.proposal.title           = data.get('title')
-        self.proposal.abstract        = data.get('abstract')
         self.proposal.spectral_line   = data.get('spectral_line')
         self.proposal.joint_proposal  = \
             data.get('joint_proposal') == 'true'

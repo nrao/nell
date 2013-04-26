@@ -65,6 +65,7 @@ class TestProposalHttpAdapter(TransactionTestCase):
         # here's what the json for this session looks like when
         # we use the ORM
         ormJson = pa.jsonDict()
+
         # here's what the json for this session looks like when
         # we use the high performance query of the DB
         sqlJsons = pa.jsonDictAllHP()
@@ -93,4 +94,15 @@ class TestProposalHttpAdapter(TransactionTestCase):
             #    print "ORM: ", ormJson.get(f)
             #    print "SQL: ", sqlJson.get(f)
 
-        
+    def test_from_post(self):
+
+        self.assertEqual(1, len(Proposal.objects.all()))
+
+        p = Proposal.objects.all()[0]
+        pa = ProposalHttpAdapter(proposal = p)
+        ormJson = pa.jsonDict()
+        ormJson['pcode'] = u'GBT12A-003'
+
+        pa.initFromPost(ormJson)
+        self.assertEqual(2, len(Proposal.objects.all()))
+
