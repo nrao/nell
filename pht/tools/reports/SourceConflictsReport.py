@@ -101,10 +101,10 @@ class SourceConflictsReport(Report):
                 complete = 'C' 
 
             lastObsDate = conflict['lastObsDate'].strftime('%m/%d/%Y') if conflict['lastObsDate']is not None else ''
+            grades = ', '.join(set([s.grade.grade if s.grade is not None else '?' for s in searched.session_set.all()]))
             return [Paragraph(searched.pcode, self.styleSheet)
                   , Paragraph(lastObsDate, self.styleSheet)
-                  , Paragraph(', '.join(set([s.grade.grade for s in searched.session_set.all()]))
-                            , self.styleSheet)
+                  , Paragraph(grades, self.styleSheet)
                   , Paragraph(searched.title, self.styleSheet)
                   , Paragraph(searched.pi.getLastFirstName(), self.styleSheet)
                   , Paragraph(thisSemester, self.styleSheet)
