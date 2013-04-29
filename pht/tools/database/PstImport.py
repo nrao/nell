@@ -39,6 +39,8 @@ class PstImport(PstInterface):
         self.badFrontends = []
         self.badBackends = []
 
+        self.thermalNightRcvrs = ['W', 'MBA', 'MBA1.5']
+
         # for reporting
         self.lines = []
         self.quiet = quiet
@@ -552,7 +554,7 @@ class PstImport(PstInterface):
                 self.checkForNightTimeRx(session, rcvr)
             elif rcvr is None:
                 self.badFrontends.append((session, r[0]))
-            # associate the front end w/ this session
+            # associate the back end w/ this session
             backend = self.findBackend(r[1])
             if backend is not None and backend != 'None':
                 backend = Backend.objects.get(abbreviation = backend)
@@ -562,10 +564,8 @@ class PstImport(PstInterface):
         return True
     
     def checkForNightTimeRx(self, session, rcvr):
-        if rcvr.abbreviation == 'W' or rcvr.abbreviation == 'MBA':
+        if rcvr.abbreviation in self.thermalNightRcvrs:
             session.flags.thermal_night = True
-            session.flags.rfi_night     = True
-            session.flags.optical_night = True
             session.flags.save()
 
     def fetchSources(self, proposal):
