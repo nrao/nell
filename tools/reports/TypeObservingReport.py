@@ -28,40 +28,49 @@ setup_environ(settings)
 
 from scheduler.models import *
 from datetime import datetime
-from TypeObservingReport import TypeObservingReport
 
-class ScienceObservingReport(TypeObservingReport):
+class TypeObservingReport:
 
-    "Quick report for Jay Lockman"
+    "Abstract class for family of simple reports on observed time."
+
+    def __init__(self, years=[]):
+        self.setYears(years)
+        
+
+    def setYears(self, years):
+        self.years = years #[2010, 2011, 2012]
+        self.initTypes(self.getTypes())
+
+    def initTypes(self, types):
+        # init data structure
+        self.types = types
+        self.data = {}
+        for y in self.years:
+            self.data[y] = {} 
+            for t in self.types:
+                self.data[y][t] = 0        
 
     def getTypes(self):
-        # get the scientific observing types
-        nonScience = ['calibration'
-                    , 'commissioning'
-                    , 'testing'
-                    , 'maintenance'
-                     ]
-        types = [t.type for t in Observing_Type.objects.all() if t.type not in nonScience]
-        types.append('total')
-        return types
+        return []
 
+    def compute(self):
+        for y in self.years:
+            self.computeForYear(y)
+        
     def computeForYear(self, year):
+        pass
 
-        ps = self.getPeriodsForYear(year)
-        for p in ps:
-            obsTime, type = self.getObsTime(p)
-            # non-science types will be returned as None
-            if type is not None:
-                self.data[year][type] += obsTime 
-                self.data[year]['total'] += obsTime 
+    def getPeriodsForYear(self, year):
+        "Rough cut - does not take into account overlap at end points"
+        start = datetime(year, 1, 1)
+        end   = datetime(year, 12, 31, 23, 59, 59)
+        ps = Period.objects.filter(start__gt = start, start__lt = end).order_by('start')
+        return ps
 
-    def getObsTime(self, period):
-        if not period.session.project.is_science():
-            return (None, None)
-        return (period.accounting.observed(), period.session.observing_type.type)
-       
-if __name__ == '__main__':
+    def report(self):
+        self.compute()
+        for t in self.types:
+            print t
+            for y in self.years:
+                print "  %d: %5.2f" % (y, self.data[y][t])
 
-    r = ScienceObservingReport()
-    r.setYears([2010, 2011, 2012])
-    r.report()

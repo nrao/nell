@@ -40,6 +40,7 @@ from tools.reports.NSFReport import filterPeriodsByDate, getScheduledTime, getPe
 from tools.reports.NSFReport import getMaintenance, getDowntime, getTesting 
 from tools.reports.ProjectReport  import GenerateProjectReport
 from tools.reports.ProjTimeAcctReport  import GenerateProjectTimeAccountingReport
+from tools.reports.ReceiverObservingReport  import ReceiverObservingReport
 from tools.reports.ScheduleReport import ScheduleReport
 from tools.reports.SessionReport  import GenerateReport as sessionReport
 from tools.reports.StartEndReport  import get_projects_between_start_end 
@@ -141,6 +142,23 @@ class TestReports(NellTestCase):
         p.save()
         pg = Period_Receiver(period = p, receiver = X)
         pg.save()
+
+
+    def test_receiverObservingReport(self):
+
+        y = 2010
+        r = ReceiverObservingReport()
+        r.setYears([y])
+        r.compute()
+
+        nonzero = ['L', 'X', 'total']
+        for k, v in r.data[y].items():
+            if k not in nonzero:
+                self.assertEqual(0.0, v)
+
+        self.assertEqual(0.50, r.data[y]['L'])        
+        self.assertEqual(5.00, r.data[y]['X'])        
+        self.assertEqual(5.50, r.data[y]['total'])        
 
     def test_rcvrTimeAccntReport(self):
 

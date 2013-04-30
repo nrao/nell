@@ -30,38 +30,51 @@ from scheduler.models import *
 from datetime import datetime
 from TypeObservingReport import TypeObservingReport
 
-class ScienceObservingReport(TypeObservingReport):
+class ReceiverObservingReport(TypeObservingReport):
 
-    "Quick report for Jay Lockman"
+    "Reports how observing went per receiver per year."
+
+    def __init__(self, years=[]):
+        TypeObservingReport.__init__(self, years=years)
+
+        self.hiFreqs = ['MBA', 'MBA1.5', 'W', 'Q', 'Ka', 'K', 'KFPA', 'Ku'] #, 'KFPA']
+        #self.initTypes(self.getTypes())
 
     def getTypes(self):
-        # get the scientific observing types
-        nonScience = ['calibration'
-                    , 'commissioning'
-                    , 'testing'
-                    , 'maintenance'
-                     ]
-        types = [t.type for t in Observing_Type.objects.all() if t.type not in nonScience]
+        types = [r.abbreviation for r in Receiver.objects.all().order_by('freq_low')]
         types.append('total')
+        types.append('hiFreqs')
         return types
 
     def computeForYear(self, year):
-
+        #self.data['year']['hiFreqs'] = 0.0
         ps = self.getPeriodsForYear(year)
         for p in ps:
-            obsTime, type = self.getObsTime(p)
-            # non-science types will be returned as None
-            if type is not None:
-                self.data[year][type] += obsTime 
-                self.data[year]['total'] += obsTime 
+            # count only science
+            if not p.session.project.is_science():
+                continue
+            obsTime, types = self.getObsTime(p)
+            for type in types:
+                # if there are multiple rxs used, split up 
+                # the time evenly
+                t = obsTime/len(types)
+                self.data[year][type] += t 
+                self.data[year]['total'] += t 
+                if type in self.hiFreqs:
+                    self.data[year]['hiFreqs'] += t
+
 
     def getObsTime(self, period):
-        if not period.session.project.is_science():
-            return (None, None)
-        return (period.accounting.observed(), period.session.observing_type.type)
+        """
+        Returns (observered time, receivers used)
+        The historical record of which receiver a period uses may actually
+        span more then one receiver.
+        """
+        return (period.accounting.observed(), [r.abbreviation for r in period.receivers.all()])
+                       
        
 if __name__ == '__main__':
 
-    r = ScienceObservingReport()
+    r = ReceiverObservingReport()
     r.setYears([2010, 2011, 2012])
     r.report()
