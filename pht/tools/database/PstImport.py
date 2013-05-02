@@ -533,7 +533,7 @@ class PstImport(PstInterface):
         # ignore resource groups, and just get the resources for 
         # this session
         q = """
-        select gr.FRONT_END, gr.BACK_END 
+        select gr.FRONT_END, gr.BACK_END, gr.RECEIVER_OTHER 
         from GBT_RESOURCE as gr, sessionResource as sr 
         where gr.Id = sr.resource_id 
             AND sr.SESSION_ID = %d
@@ -545,15 +545,20 @@ class PstImport(PstInterface):
         self.initMap()
         for r in rows:
             # associate the front end w/ this session
-            rcvr = self.findReceiver(r[0])
-            if rcvr is not None and rcvr != 'None':
-                rcvr = Receiver.get_rcvr(rcvr)
-                session.receivers.add(rcvr)
-                # default this receiver as granted
-                session.receivers_granted.add(rcvr)
-                self.checkForNightTimeRx(session, rcvr)
-            elif rcvr is None:
-                self.badFrontends.append((session, r[0]))
+            if str(r[0]).strip() == 'Other':
+                # special case: use what they gave as the 'other'
+                other = str(r[2]).strip()
+                session.other_receiver = other
+            else:    
+                rcvr = self.findReceiver(r[0])
+                if rcvr is not None and rcvr != 'None':
+                    rcvr = Receiver.get_rcvr(rcvr)
+                    session.receivers.add(rcvr)
+                    # default this receiver as granted
+                    session.receivers_granted.add(rcvr)
+                    self.checkForNightTimeRx(session, rcvr)
+                elif rcvr is None:
+                    self.badFrontends.append((session, r[0]))
             # associate the back end w/ this session
             backend = self.findBackend(r[1])
             if backend is not None and backend != 'None':
