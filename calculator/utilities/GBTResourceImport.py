@@ -31,6 +31,9 @@ class GBTResourceImport(object):
     def __init__(self, filename, silent = False):
         self.silent   = silent
         self.data     = None
+        self.importConfigs(filename)
+
+    def importConfigs(self, filename):     
         file          = open(filename)
         self.raw_data = [[i for n, i in enumerate(l.split('\t')) if n < 11] 
                             for l in file.readlines()[0].split('\r') ]
@@ -44,12 +47,33 @@ class GBTResourceImport(object):
 
     def processRow(self, key, value):
         if key in ('Switching mode', 'Receiver', 'Bandwidth (MHz)', 'Number spectral windows', 'Polarization', 'Mode'):
-            value = [v.strip() for v in value.replace('"{', '').replace('}"', '').split(',')] \
-                        if '{' in value else value.strip()
+            value = self.processEnumeration(value) if '{' in value else value.strip()
         return key, value
 
+    def processEnumeration(self, value):
+        """
+            Lists of values can be specified as comma separated lists, {1,2,3}, or as an
+            integer based range, {1:3}
+        """
+
+        def stripChars(v):
+            return v.replace('{', '').replace('}', '').replace('"', '')
+
+        if ":"  in value:
+            # process a range
+            start, stop = stripChars(value).split(':')
+            r = [str(i) for i in range(int(start), int(stop) + 1)]
+        else:
+            # process a list
+            r = [v.strip() for v in stripChars(value).split(',')] 
+        return r    
+
     def processData(self):
-        self.raw_data = [r for r in self.raw_data if r != ['']]
+        "Go from lists of lists (w/ a header), to a list of processed dicts"
+        # get rid of irrelevant blank lines
+        def isBlankLine(line):
+            return len([l for l in line if l != '']) == 0
+        self.raw_data = [r for r in self.raw_data if not isBlankLine(r)]
         self.raw_data.reverse()
         headers = self.raw_data.pop()
         self.raw_data.reverse()
@@ -57,6 +81,11 @@ class GBTResourceImport(object):
         self.data = [dict([self.processRow(k, v) for k, v in zip(headers, row) if k not in bad_keys]) for row in self.raw_data]
 
     def getResource(self, k, v):
+        """
+            Converts a given type of key-value pair to a retrieved or newly
+            created object from the DB.
+        """
+
         resource_map = {
         'Backend'                : lambda v: Calc_Backend.objects.get_or_create(name = v)
       , 'Mode'                   : lambda v: Mode.objects.get_or_create(name = v)
@@ -71,7 +100,7 @@ class GBTResourceImport(object):
 
         r, created = resource_map[k](v)
         if created and not self.silent:
-            print "Added:", k, r
+            print "Added:", k, r, v
         return r
 
     def createConfigurations(self):
@@ -115,4 +144,5 @@ class GBTResourceImport(object):
                             conf.save()
 
 if __name__ == "__main__":
-    resources = GBTResourceImport("calculator/data/gbt_resources_table.txt")
+    resources = GBTResourceImport("calculator/data/gbt_resources_table.txt",
+    silent = False)
