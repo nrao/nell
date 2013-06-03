@@ -38,8 +38,10 @@ Ext.define('PHT.view.overview.Period', {
         var me = this;
         this.listeners = {
             click: function() {
-                var view   = Ext.widget('periodedit');
-                view.down('form').loadRecord(this.record);        
+                if (me.periodType != 'dss'){
+                    var view   = Ext.widget('periodedit');
+                    view.down('form').loadRecord(this.record);
+                }
             },
             mouseover: function(me, e) {
                 me.tooltip.showAt(e.getXY());
@@ -76,6 +78,7 @@ Ext.define('PHT.view.overview.Period', {
         var sessionType;
         var observingType;
         var boxType;
+        this.setPeriodType(pType);
         if (pType == 'dss') {
             sessionType =  this.record.get('session').type.toLowerCase()
             observingType = this.record.get('session').science.toLowerCase()

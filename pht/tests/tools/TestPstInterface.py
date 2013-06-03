@@ -44,3 +44,13 @@ class TestPstInterface(TestCase):
         expected = {'FIRST_NAME': 'Raju', 'LAST_NAME': 'Baddi'}
         self.assertEqual(expected['FIRST_NAME'], results['FIRST_NAME'])
         self.assertEqual(expected['LAST_NAME'], results['LAST_NAME'])
+
+    def test_getProposalTechnicalReviews(self):
+        pst = PstInterface()
+        reviews = pst.getProposalTechnicalReviews('GBT12B-018')
+        for forAuthors, forTac, _, _ in reviews:
+            self.assertTrue(forAuthors is not None)
+            self.assertTrue(forTac is not None)
+
+        reviews = pst.getProposalTechnicalReviews('foo')
+        self.assertEqual(len(reviews), 0)

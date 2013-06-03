@@ -93,42 +93,51 @@ class DssExport(object):
             friend = dss.Friend.objects.create(project = project, user = proposal.friend)
 
         # investigators
-        try:
-            dss_pi = dss.User.objects.get(pst_id = proposal.pi.pst_person_id)
-        except dss.User.DoesNotExist:
-            dss_pi = self.createDssUser(proposal.pi)
-        except dss.User.MultipleObjectsReturned:
-            dss_pi = dss.User.objects.filter(pst_id = proposal.pi.pst_person_id).exclude(auth_user = None)[0]
-        i = dss.Investigator(project = project
-                           , user    = dss_pi
-                           )
-        i.principal_investigator = True
-        i.save()
-
         for author in proposal.author_set.all():
-            try:
-                user = dss.User.objects.get(pst_id = author.pst_person_id)
-            except dss.User.DoesNotExist:
-                user = self.createDssUser(author)
-            except dss.User.MultipleObjectsReturned:
-                user = dss.User.objects.filter(pst_id = proposal.pi.pst_person_id).exclude(auth_user = None)[0]
-            if user.pst_id != dss_pi.pst_id:
-                i = dss.Investigator(project = project
-                                   , user    = user
-                                   )
-                i.save()
+            pi = ci = False
+            # is this author the principal investigator?
+            if proposal.pi is not None:
+                pi = author.id == proposal.pi.id
+            if proposal.contact is not None:
+                ci = author.id == proposal.contact.id
+            self.addInvestigator(proposal, author, project, pi, ci)
 
         self.exportSessions(proposal, project)
 
         return project
 
+    def addInvestigator(self, proposal, author, project, pi = False, ci = False):
+        """
+        Adds given author from given proposal as an investigator
+        for given DSS project.  Also sets appropriate flags (PI, ...)
+        """
+        try:
+            user = dss.User.objects.get(pst_id = author.pst_person_id)
+        except dss.User.DoesNotExist:
+            user = self.createDssUser(author)
+        except dss.User.MultipleObjectsReturned:
+            # uh-oh, we got > 1.  Ignore those that don't have authorization 
+            user = dss.User.objects.filter(pst_id = author.pst_person_id).exclude(auth_user = None)[0]
+        i = dss.Investigator(project = project
+                           , user    = user
+                           )
+        if pi:                   
+            i.principal_investigator = True
+        if ci:                   
+            i.principal_contact = True
+        i.save()
+        
     def exportSessions(self, proposal, project):
         for s in proposal.session_set.all():
             self.exportSession(s, project)
 
     def exportSession(self, pht_session, project):
-        # Don't create the DSS session if it hasn't been allocated time.
-        if pht_session.allotment.allocated_time is None:
+
+        allocated = pht_session.getTotalAllocatedTime()
+
+        # Don't create the DSS session if it hasn't been allocated time or is Failing.
+        if allocated is None or allocated == 0.0 or \
+            pht_session.grade is None or not pht_session.grade.isPassing():
             return
 
         status = dss.Status.objects.create(
@@ -138,9 +147,9 @@ class DssExport(object):
           , backup     = False
         )
         allotment = dss.Allotment.objects.create(
-            psc_time          = pht_session.allotment.allocated_time 
-          , total_time        = pht_session.allotment.allocated_time
-          , max_semester_time = pht_session.allotment.allocated_time
+            psc_time          = allocated 
+          , total_time        = allocated
+          , max_semester_time = allocated
           , grade             = self.mapGrade(pht_session.grade.grade)
         )
         min_dur, max_dur = self.getMinMaxDuration(pht_session)
@@ -155,12 +164,18 @@ class DssExport(object):
           , max_duration   = max_dur
           , min_duration   = min_dur
         )
+
+        # Associate the new DSS session with its PHT session
+        pht_session.dss_session = dss_session
+        pht_session.save()
+
+        source = ', '.join([s.target_name for s in pht_session.sources.all()])
         target = dss.Target.objects.create(
             system     = dss.System.objects.get(name = 'J2000')
           , session    = dss_session
           , vertical   = pht_session.target.dec or 0.0
           , horizontal = pht_session.target.ra or 0.0
-          , source     = 'Target Source'
+          , source     = source if len(source) < 256 else source[:256]
         )
 
         for r in pht_session.receivers.all():
@@ -194,6 +209,8 @@ class DssExport(object):
                   , complete       = False
                   , total_time     = period.duration
                 )
+                period.window = window
+                period.save()
                 window_start = \
                   period.start - timedelta(days = pht_session.monitoring.window_size - 1)
                 window_range = dss.WindowRange.objects.create(
@@ -203,16 +220,32 @@ class DssExport(object):
                 )
 
     def createPeriod(self, pht_period, dss_session):
-        return dss.Period.objects.create(
+        sType = dss_session.session_type.type
+        period = dss.Period.objects.create(
             session = dss_session
-          , state   = dss.Period_State.objects.get(name = 'Pending')
+          , state   = dss.Period_State.objects.get(name = 'Scheduled') if sType == 'fixed' else \
+                        dss.Period_State.objects.get(name = 'Pending') 
           , start   = pht_period.start
           , duration = pht_period.duration
+          , score    = -1.0
           )
+        # Fixed periods come over already as scheduled, so need to show that in accounting  
+        scheduledTime = 0.0 if sType != 'fixed' else pht_period.duration
+        pa = dss.Period_Accounting(scheduled = scheduledTime)
+        pa.save()
+        period.accounting = pa
+        period.save()
+        self.addPeriodReceivers(period, [r.abbreviation for r in pht_period.session.receivers.all()])
+        return period
+
+    def addPeriodReceivers(self, dss_period, abbreviations):
+        for abbr in abbreviations:
+            rp = dss.Period_Receiver(receiver = dss.Receiver.objects.get(abbreviation = abbr), period = dss_period)
+            rp.save()
 
     def getMinMaxDuration(self, pht_session):
         period_time = pht_session.allotment.period_time
-        duration    = pht_session.allotment.allocated_time / pht_session.allotment.repeats
+        duration = pht_session.getTotalAllocatedTime() / pht_session.allotment.allocated_repeats
 
         if pht_session.session_type.type in ('Fixed', 'Windowed', 'Elective'):
             return duration, duration
@@ -223,7 +256,7 @@ class DssExport(object):
 
     def getDefaultFrequency(self, pht_session):
         "Find the highest center frequency of all the receivers for this session."
-        return max([rx.freq_low + (rx.freq_hi - rx.freq_low) for rx in pht_session.receivers.all()])
+        return max([rx.freq_low + ((rx.freq_hi - rx.freq_low) / 2.) for rx in pht_session.receivers.all()])
 
     def getSessionType(self, pht_session):
         type = 'open' if 'Open' in pht_session.session_type.type \
@@ -243,14 +276,36 @@ class DssExport(object):
         gradeMap = {'A' : 4.0
                   , 'B' : 3.0
                   , 'C' : 2.0
-                  , 'D' : 1.0
+                  , 'N' : 1.0
+                  , 'N*' : 1.0
                    }
 
         g = gradeMap[grade[0]]
         return g + .2 if '+' in grade else (g - .2 if '-' in grade else g)
 
 if __name__ == '__main__':
-    proposals = [p.pcode for p in Proposal.objects.filter(semester__semester = '12B') 
-                   if p.allocatedTime() > 0]
-    print 'Importing', len(proposals), 'proposals.'
-    DssExport(quiet = False).exportProposals(proposals)
+    import sys
+    from utilities.database.external import AstridDB
+
+    def usage():
+        print 'Usage: python pht/tools/database/DssExport.py <import type: 1 or semester> <pcode or semester>'
+        sys.exit()
+
+    try:
+        if sys.argv[1] == '1':
+            proposals = [sys.argv[2]]
+            print 'Importing', proposals
+            DssExport(quiet = False).exportProposals(proposals)
+        elif sys.argv[1] == 'semester':
+            semester  = sys.argv[2]
+            proposals = [p.pcode for p in Proposal.objects.filter(semester__semester = semester) 
+                           if p.allocatedTime() > 0]
+            print 'Importing', len(proposals), 'proposals', 'for semester', semester
+            DssExport(quiet = False).exportProposals(proposals)
+        else:
+            usage()
+        astridDB = AstridDB(dbname = 'turtle')
+        astridDB.addProjects(proposals)
+    except IndexError:
+        usage()
+

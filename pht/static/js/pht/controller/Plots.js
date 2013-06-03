@@ -54,10 +54,21 @@ Ext.define('PHT.controller.Plots', {
         var values = f.getValues();
         var session = values['session'];
         var debug = values['debug'];
+        var carryover = values['carryoverType'];
+        var adjust = values['adjustWeatherBins'];
         var url = 'reports/lst_pressures?debug=' + debug;
         if ((session != null) && (session != '')) {
             url = url + '&session=' + session
         }
+        if ((carryover != null) && (carryover != '')) {
+            if (carryover == 'Next Semester Time') {
+                var useNextSemester = 'true'
+            } else {
+                var useNextSemester = 'false'
+            }
+            url = url + '&carryOverUseNextSemester=' + useNextSemester
+        }
+        url = url + '&adjustWeatherBins=' + adjust
         window.open(url);
         win.hide();
     },
@@ -67,8 +78,27 @@ Ext.define('PHT.controller.Plots', {
         var type = win.plotTypesCombo.value;
         if ((type != null) && (type != '')) {
             var url = 'lst_pressure/print/' + type.toLowerCase();
-            window.open(url);
-        }    
+            // adjust weather bins?
+            var adjustWeather = win.down('checkboxfield').value
+            console.log('adjust:');
+            console.log(adjustWeather);
+            if (adjustWeather == true) {
+                adjust = 'true'
+            } else {
+                adjust = 'false'
+            }
+            url += "?adjustWeatherBins=" + adjust
+            // how to handle carryover?
+            var carryover = win.carryoverTypesCombo.value 
+            if ((carryover != null) & (carryover != "")) {
+                if (carryover == 'Next Semester Time') {
+                    url += '&carryOverUseNextSemester=true'
+                } else {
+                    url += '&carryOverUseNextSemester=false'
+                }
+            }    
+                window.open(url);
+            }    
     },
 
     updatePlot: function(button) {
@@ -89,6 +119,15 @@ Ext.define('PHT.controller.Plots', {
         if ((sname != null) & (sname != "")) {
             filters.push({property: 'session', value: sname})
         }    
+        // how to handle carryover?
+        var carryover = win.carryoverTypesCombo.value 
+        if ((carryover != null) & (carryover != "")) {
+            filters.push({property: 'carryover', value: carryover})
+        }    
+        // adjust weather bins?
+        var adjustWeather = win.down('checkboxfield').value
+        filters.push({property: 'adjust', value: adjustWeather})
+
         if (filters.length == 0) {
             store.load()
         } else {

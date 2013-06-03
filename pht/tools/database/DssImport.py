@@ -27,6 +27,7 @@ setup_environ(settings)
 from datetime         import datetime
 
 from BackfillImport import BackfillImport
+from PstInterface   import PstInterface
 from pht.models       import *
 from scheduler        import models as dss
 
@@ -36,25 +37,24 @@ class DssImport(object):
         self.quiet = quiet
         self.projects = projects
         self.backfill = BackfillImport()
+        self.pst      = PstInterface()
 
     def importProjects(self):
         for p in self.projects:
             self.importProject(p)
 
     def importProject(self, project):
-        proposal = Proposal.createFromDssProject(project)
+        proposal = Proposal.createFromDssProject(project, self.pst)
         self.backfill.importDssSessions(project, proposal)
 
 if __name__ == '__main__':
-    "Main just gets all the testing and maintenance projects."
-    projects = [p for p in dss.Project.objects.raw(
-        """
-        select distinct p.pcode, p.* 
-        from (projects as p 
-          join sessions as s on s.project_id = p.id) 
-          join observing_types as ot on ot.id = s.observing_type_id 
-        where ot.type = 'testing' or ot.type = 'maintenance'
-        order by p.pcode
-        """)]
-    dss = DssImport(projects = projects, quiet = False)
-    dss.importProjects()
+    import argparse
+    parser = argparse.ArgumentParser(description='Tool for importing a DSS project into the GBPHT by pcode.')
+    parser.add_argument('-p','--pcode', dest="pcode", help='Pcode of the project to import. (Ex. GBT12B-100)')
+
+    args = parser.parse_args()
+
+    if args.pcode is not None:
+        project = dss.Project.objects.get(pcode = args.pcode)
+        dss = DssImport(quiet = False)
+        dss.importProject(project)

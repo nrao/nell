@@ -25,6 +25,7 @@ import settings
 setup_environ(settings)
 
 from datetime         import datetime
+import math
 
 from PstImport import PstImport
 from pht.models       import *
@@ -35,18 +36,22 @@ class BackfillImport(PstImport):
     def __init__(self, quiet = True):
         PstImport.__init__(self, quiet = quiet)
 
-    def importProjects(self):
-        dss_projects = Project.objects.filter(complete = False)
-        projects     = [p for p in dss_projects if self.checkPst(p.pcode) and 'GBT' not in p.pcode]
+    def importProjects(self, dss_projects = None):
+        if dss_projects is None:
+            dss_projects = Project.objects.filter(complete = False)
+        projects     = [p for p in dss_projects if self.checkPst(p.pcode)]
         projects_bad = [p for p in dss_projects if not self.checkPst(p.pcode)]
 
-        print [p.pcode for p in projects]
         if not self.quiet:
             print len(projects), 'projects found in the PST.'
             print len(projects_bad), 'projects not found in the PST.'
 
         for project in projects:
-            self.importProject(project)
+            try:
+                proposal = Proposal.objects.get(pcode = project.pcode)
+            except Proposal.DoesNotExist:
+                if not self.quiet: print 'Importing', project.pcode
+                self.importProject(project)
 
     def importProject(self, project):
         pcode    = project.pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/')
@@ -108,7 +113,9 @@ class BackfillImport(PstImport):
             
     def setSessionTarget(self, pht_session, dss_session):
         try:
-            target = Target(ra  = dss_session.target.horizontal
+            ra = dss_session.target.horizontal
+            ra = 2 * math.pi if ra is not None and ra > 2 * math.pi else ra
+            target = Target(ra  = ra
                           , dec = dss_session.target.vertical
                             )
             target.save()
@@ -144,13 +151,14 @@ class BackfillImport(PstImport):
         if grade > 4.0:
             phtGrade = 'A'
         elif grade < 1.0:    
-            phtGrade = 'D'
+            phtGrade = 'N'
         else:
-            gradeMap = {4.0 : 'A', 3.0: 'B', 2.0: 'C', 1.0: 'D'}
+            gradeMap = {4.0 : 'A', 3.0: 'B', 2.0: 'C', 1.0: 'N'}
             phtGrade = gradeMap.get(grade)
         return phtGrade    
         
 
 if __name__ == '__main__':
     dss = BackfillImport(quiet = False)
-    dss.importProjects()
+    dss_projects = Project.objects.filter(complete = True).filter(semester__semester__gte = '11A')
+    dss.importProjects(dss_projects = dss_projects)

@@ -55,7 +55,9 @@ Ext.application({
                     maxSize: 250,
                     cmargins: '5 0 0 0',
                     collapsed: true,
-                },{
+                }
+                /*
+                ,{
                     title: 'Navigation',
                     region:'west',
                     xtype: 'proposalnavigate',
@@ -65,53 +67,91 @@ Ext.application({
                     bodyStyle: 'padding-top: 0px; padding-bottom: 0px',
                     border: 0,
                     width: 200,
-                },{
-                    collapsible: false,
+                }
+                */
+                ,{
                     region:'center',
                     margins: '0 0 0 0',
-                    layout: 'fit',
+                    layout: 'border',
+                    collapsible: false,
+                    border: false,
+                    margins: '0 0 0 0',
+                    cmargins: '0 0 0 0',
+                    padding: '0 0 0 0',
+                    defaults: {
+                        collapsible: false,
+                        split: true,
+                        bodyStyle: 'padding:0px',
+                        margins: '0 0 0 0',
+                    },
+
+                    items: [
+                        {
+                            region: 'north',
+                            xtype: 'proposallist',
+                            height: '20%',
+                        },
+                        {
+                            region: 'center',
+                            layout: 'fit',
+                            xtype: 'sessionlist',
+                            height: '20%',
+                        },
+                        {
+                            region: 'south',
+                            layout: 'border',
+                            height: '60%',
+                            defaults: {
+                                collapsible: false,
+                                split: true,
+                                bodyStyle: 'padding:0px',
+                                margins: '0 0 0 0',
+                            },
+
+                            items: [
+                                {
+                                    region: 'east',
+                                    layout: 'fit',
+                                    xtype: 'panel',
+                                    width: 500,
+                                    items: [{xtype: 'tactool'}],
+                                },
+                                {
+                                    region: 'center',
+                                    layout: 'fit',
+                                    xtype: 'panel',
+                                    items: [{xtype: 'proposaledit'}],
+                                },
+                            ],
+                        },
+                    ],
                 }]
             }
         );
 
-        // render explorers to center 
-        var propListWin = Ext.create('PHT.view.proposal.ListWindow', {
-            renderTo: viewport.layout.regions.center.getEl(),
-        });
-        // load the store explicitly so loading message appears
-        var propList = propListWin.down('proposallist');
-        propList.store.load(); 
-        var sessListWin = Ext.create('PHT.view.session.ListWindow', {
-            renderTo: viewport.layout.regions.center.getEl(),
-        });
-        // load the store explicitly so loading message appears
-        var sessList = sessListWin.down('sessionlist');
-        sessList.store.load();
         var proposalSources = Ext.create('PHT.view.source.ProposalListWindow', {
-            renderTo: viewport.layout.regions.center.getEl(),
+            //renderTo: viewport.layout.regions.center.getEl(),
         });
         var proposalAuthors = Ext.create('PHT.view.author.ListWindow', {
-            renderTo: viewport.layout.regions.center.getEl(),
+            //renderTo: viewport.layout.regions.center.getEl(),
         });
         var sessionSources = Ext.create('PHT.view.source.SessionListWindow', {
-            renderTo: viewport.layout.regions.center.getEl(),
+            //renderTo: viewport.layout.regions.center.getEl(),
         });
         var overviewCalendarWin = Ext.create('PHT.view.overview.Window', {
-            renderTo: viewport.layout.regions.center.getEl(),
+            //renderTo: viewport.layout.regions.center.getEl(),
         });
+        //overviewCalendarWin.maximize();
         var plot = Ext.create('PHT.view.plot.Window', {
-            renderTo: viewport.layout.regions.center.getEl(),
-        });
-        var tac = Ext.create('PHT.view.proposal.TacTool', {
-            renderTo: viewport.layout.regions.center.getEl(),
+            //renderTo: viewport.layout.regions.center.getEl(),
         });
         var lstReportWin = Ext.create('PHT.view.plot.LstReportWindow', {
-            renderTo: viewport.layout.regions.center.getEl(),
+            //renderTo: viewport.layout.regions.center.getEl(),
         });
 
         // setup menus
-        var importMenu = Ext.create('Ext.menu.Menu', {
-            id : 'importMenu',
+        var xferMenu = Ext.create('Ext.menu.Menu', {
+            id : 'xferMenu',
             items : [{
                 text: 'Reimport Proposal(s)',
                 handler: this.getController('Proposals').importProposalFormByProposal
@@ -124,20 +164,15 @@ Ext.application({
                 text: "Import PST Proposal(s)",
                 handler: this.getController('Proposals').importProposalFormByPstProposal
                 },
+                {
+                text: "Transfer Proposal(s) to the DSS",
+                handler: this.getController('Proposals').exportProposalsForm
+                },
             ]
         });
         var toolsMenu = Ext.create('Ext.menu.Menu', {
             id : 'toolsMenu',
-            items : [{
-                text: 'Proposal Explorer',
-                handler: function() {
-                    propListWin.show();
-                }},
-                {
-                text: 'Session Explorer',
-                handler: function() {
-                    sessListWin.show();
-                }},
+            items : [
                 {
                 text: 'Proposal Sources',
                 handler: function() {
@@ -163,34 +198,22 @@ Ext.application({
                 handler: function() {
                     plot.show();
                 }},
-                {
-                text: 'TAC Tool',
-                handler: function() {
-                    tac.show();
-                }},
-            ]
-        });
-        var editMenu = Ext.create('Ext.menu.Menu', {
-            id : 'editMenu',
-            items : [{
-                text: 'New',
-                menu: Ext.create('Ext.menu.Menu', {
-                    id : 'newMenu',
-                    items : [{
-                        text: 'Proposal',
-                        handler: this.createProposal
-                        },
-                        {
-                        text: 'Session',
-                        handler: this.createSession
-                        }
-                    ]
-                    })
-                }
             ]
         });
         var proposalSummaryMenu = Ext.create('Ext.menu.Menu', {
             id: 'proposalSummaryMenu', 
+            items: [],
+            autoScroll: true,
+            }
+        );
+        var otherProposalSummaryMenu = Ext.create('Ext.menu.Menu', {
+            id: 'otherProposalSummaryMenu', 
+            items: [],
+            autoScroll: true,
+            }
+        );
+        var jointProposalSummaryMenu = Ext.create('Ext.menu.Menu', {
+            id: 'jointProposalSummaryMenu', 
             items: [],
             autoScroll: true,
             }
@@ -207,16 +230,40 @@ Ext.application({
             autoScroll: true,
             }
         );
+        var proposalExportMenu = Ext.create('Ext.menu.Menu', {
+            id: 'proposalExportMenu', 
+            items: [],
+            autoScroll: true,
+            }
+        );
+        var sessionExportMenu = Ext.create('Ext.menu.Menu', {
+            id: 'sessionExportMenu', 
+            items: [],
+            autoScroll: true,
+            }
+        );
+        var sourceExportMenu = Ext.create('Ext.menu.Menu', {
+            id: 'sourceExportMenu', 
+            items: [],
+            autoScroll: true,
+            }
+        );
         var store = this.getController('Proposals').getSemestersStore();
         store.load({
             scope: this,
             callback: function(records, operation, success) {
                 store.each(function(r){
                     var semester = r.get('semester');
-                    proposalSummaryMenu.add({
+                    otherProposalSummaryMenu.add({
                         text: semester,
                         handler: function() {
-                            window.open('/pht/reports/proposalsummary?semester=' + semester);
+                            window.open('/pht/reports/otherproposalsummary?semester=' + semester);
+                        }
+                    });
+                    jointProposalSummaryMenu.add({
+                        text: semester,
+                        handler: function() {
+                            window.open('/pht/reports/jointproposalsummary?semester=' + semester);
                         }
                     });
                     proposalRankingMenu.add({
@@ -231,71 +278,103 @@ Ext.application({
                             window.open('/pht/reports/semester_summary?semester=' + semester);
                         }
                     });
+                    proposalExportMenu.add({
+                        text: semester,
+                        handler: function() {
+                            window.open('/pht/proposals/export?semester=' + semester);
+                        }
+                    });
+                    sessionExportMenu.add({
+                        text: semester,
+                        handler: function() {
+                            window.open('/pht/sessions/export?semester=' + semester);
+                        }
+                    });
+                    sourceExportMenu.add({
+                        text: semester,
+                        handler: function() {
+                            window.open('/pht/sources/export?semester=' + semester);
+                        }
+                    });
                 });
             }
         });
         var reportsMenu = Ext.create('Ext.menu.Menu', {
             id : 'reportsMenu',
-            items : [{
+            items : [
+                {
                 text: 'Proposal Summary',
-                menu: proposalSummaryMenu
+                handler: this.getController('Proposals').proposalSummaryForm
                 },
                 {
-                text: 'Proposal Ranking',
-                menu: proposalRankingMenu
+                    text: 'Summary of Other Proposal',
+                    menu: otherProposalSummaryMenu
                 },
                 {
-                text: 'Semester Summary',
-                menu: semesterSummaryMenu
+                    text: 'Joint Proposal Summary',
+                    menu: jointProposalSummaryMenu
                 },
                 {
-                text: 'LST Pressures',
-                //menu: semesterSummaryMenu
-                handler: function() {
-                   lstReportWin.show() 
-                  },
-                }
+                text: 'Proposal Worksheet',
+                handler: this.getController('Proposals').proposalWorksheetForm
+                },
+                {
+                    text: 'Proposal Ranking',
+                    menu: proposalRankingMenu
+                },
+                {
+                    text: 'Semester Summary',
+                    menu: semesterSummaryMenu
+                },
+                {
+                    text: 'LST Pressures',
+                    //menu: semesterSummaryMenu
+                    handler: function() {
+                       lstReportWin.show() 
+                    },
+                },
+                {
+                    xtype: 'menuseparator'
+                },
+                {
+                    text: 'Export Proposals',
+                    menu: proposalExportMenu
+                },
+                {
+                    text: 'Export Sessions',
+                    menu: sessionExportMenu
+                },
+                {
+                    text: 'Export Sources',
+                    menu: sourceExportMenu
+                },
             ]
-        });
-        tb.add({
-            text: 'Edit',
-            menu: editMenu
         });
         tb.add({
             text: 'Tools',
             menu: toolsMenu
         });
         tb.add({
-            text: 'Import',
-            menu: importMenu
+            text: 'Transfer',
+            menu: xferMenu
         });
         tb.add({
             text: 'Reports',
             menu: reportsMenu
         });
-        viewport.layout.regions.center.add(propListWin);
-        viewport.layout.regions.center.add(sessListWin);
-        viewport.layout.regions.center.add(proposalAuthors);
-        viewport.layout.regions.center.add(proposalSources);
-        viewport.layout.regions.center.add(sessionSources);
-        viewport.layout.regions.center.add(overviewCalendarWin);
-        viewport.layout.regions.center.add(plot);
-        viewport.layout.regions.center.add(tac);
-        propListWin.show();
-        sessListWin.show();
-        tac.show();
+        //tac.hide();
         this.getController('OverviewCalendar').setOverviewCalendarWindow(overviewCalendarWin);
         this.getController('Sources').setProposalSourcesWindow(proposalSources);
         this.getController('Sources').setSessionSourcesWindow(sessionSources);
         this.getController('Authors').setProposalAuthorsWindow(proposalAuthors);
-        this.getController('Sessions').setSessionListWindow(sessListWin);
+        this.getController('Sessions').setSessionList(viewport.down('sessionlist'));
         this.getController('Sessions').setPeriodsWindow(overviewCalendarWin);
         this.getController('Periods').setPeriodsWindow(overviewCalendarWin);
         this.getController('Sessions').addObserver(this.getController('Sources'));
         this.getController('Proposals').addObserver(this.getController('Sources'));
         this.getController('Proposals').addObserver(this.getController('Sessions'));
         this.getController('Proposals').addObserver(this.getController('Dashboard'));
-        this.getController('Proposals').setTacToolWindow(tac);
+        this.getController('Proposals').setTacTool(viewport.down('tactool'));
         
         // TBF: better place for VTypes?
         // See: http://www.sencha.com/forum/archive/index.php/t-140812.html?s=01edc6b9436d419b2dae5754d39d9e04
@@ -393,18 +472,7 @@ Ext.application({
             elevationFieldText: 'Must be a value in Degrees, in sexigesimel format (+/- DDD:MM:SS.S), between 0 and 90.',
             elevationFieldMask: /[\d\.\:\+\-]/i,
         });
-    },
 
-    // TBF: should this be in the controller?
-    createProposal: function(button) {
-        var proposal = Ext.create('PHT.model.Proposal', {});
-        var view = Ext.widget('proposaledit');
-        view.down('form').loadRecord(proposal);
-    },
-    createSession: function(button) {
-        var session = Ext.create('PHT.model.Session', {});
-        var view = Ext.widget('sessionedit');
-        view.down('form').loadRecord(session);
     },
 });
 
@@ -438,7 +506,7 @@ function hasAllValues(values, validValues) {
 
 // Receiver Validation
 // TBF: get this from server? or at least put it in a 'data' dir
-var allRcvrs = ['NS','RRI','342','450','600','800','BAO','1070','L','S','C','X','Ku','K','Ka','Q','MBA','Z','Hol','KFPA','W']
+var allRcvrs = ['NS','RRI','342','450','600','800','BAO','1070','L','PAF','S','C','X','Ku','KuWide','K','Ka','Q','MBA','MBA1.5','Z','Hol','KFPA','W']
 // Convert our list of strings into both a list and a single string 
 var validRcvrs = makeObjFromList(allRcvrs)
 var rcvrsStr = allRcvrs.join(',');

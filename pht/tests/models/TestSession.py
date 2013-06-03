@@ -30,6 +30,15 @@ class TestSession(TestCase):
     fixtures = ['proposal_GBT12A-002.json']
 
     def setUp(self):
+
+        # too lazy to update the fixture, so adding new rx
+        mba15 = Receiver(name = 'Rcvr_PAR15'
+                       , abbreviation = 'MBA1.5'
+                       , freq_hi = 100.0
+                       , freq_low = 80.0
+                         )
+        mba15.save()
+
         # load the single proposal from the fixture
         self.proposal = Proposal.objects.get(pcode = "GBT12A-002")
         self.session = self.proposal.session_set.all().order_by('id')[0]
@@ -43,8 +52,27 @@ class TestSession(TestCase):
         self.session.allotment.repeats = 1
         self.session.allotment.save()
 
+    def test_getTotalAllocatedTime(self):
+
+        self.assertEqual(None, self.session.getTotalAllocatedTime())
+        self.session.allotment.allocated_time = 21.0
+        self.session.allotment.allocated_repeats = 1
+        self.session.allotment.save()
+
+        self.assertEqual(21.0, self.session.getTotalAllocatedTime())
+        self.session.allotment.allocated_repeats = 2
+        self.session.allotment.save()
+        self.assertEqual(42.0, self.session.getTotalAllocatedTime())
+        self.session.monitoring.outer_repeats = 3
+        self.session.monitoring.save()
+        self.assertEqual(42.0*3, self.session.getTotalAllocatedTime())
+
     def test_determineFreqCategory(self):
         self.assertEqual('LF', self.session.determineFreqCategory())
+        # change it to high freq
+        mba15 = Receiver.objects.get(abbreviation = 'MBA1.5')
+        self.session.receivers.add(mba15)
+        self.assertEqual('HF2', self.session.determineFreqCategory())
 
     def test_determineSessionType(self):
         self.assertEqual('Open - Low Freq'
@@ -53,6 +81,10 @@ class TestSession(TestCase):
     def test_determineWeatherType(self):
         self.assertEqual('Poor'
                        , self.session.determineWeatherType().type)
+        # change it to high freq
+        mba15 = Receiver.objects.get(abbreviation = 'MBA1.5')
+        self.session.receivers.add(mba15)
+        self.assertEqual('Excellent', self.session.determineWeatherType().type)
 
     def test_genPeriods(self):
 
@@ -116,7 +148,7 @@ class TestSession(TestCase):
         week = SessionSeparation.objects.get(separation = 'week')
         self.session.monitoring.start_time = start
         self.session.allotment.period_time = dur
-        self.session.allotment.repeats = 3
+        self.session.allotment.allocated_repeats = 3
         self.session.interval_time = 3
         self.session.separation = day
         self.session.monitoring.outer_repeats = 3
@@ -157,7 +189,7 @@ class TestSession(TestCase):
         day = SessionSeparation.objects.get(separation = 'day')
         self.session.monitoring.start_time = start
         self.session.allotment.period_time = dur
-        self.session.allotment.repeats = 5
+        self.session.allotment.allocated_repeats = 5
         self.session.interval_time = 4
         self.session.separation = day
         self.session.allotment.save()

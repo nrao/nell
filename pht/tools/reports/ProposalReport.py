@@ -27,17 +27,20 @@ setup_environ(settings)
 from datetime      import datetime
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units  import inch
 
 from pht.models import *
 from Report import Report
  
+def defaultFilter(proposal):
+    return 'TGBT' not in proposal.pcode
+
 class ProposalReport(Report):
 
     """
-    This is an abstract class for the Proposal reports, like
+    This is an abstract class for the Proposal table reports, like
     Proposal Ranking, etc.
     """
 
@@ -47,26 +50,78 @@ class ProposalReport(Report):
         self.title = ''
         self.proposals = []
 
-    def report(self, semester = None):
+    def report(self, semester = None, filter = None):
         self.semester = semester
         self.title = self.title if self.semester is None else \
                      self.title + " for Semester %s" % self.semester
 
         data = [self.genHeader()]
-        self.getProposals(semester)
+        self.getProposals(semester, filter = filter)
         data.extend(map(self.genRow, self.proposals))
-        t = Table(data, colWidths = self.colWidths())
+        data.append([])
+        proposalTable = Table(data, colWidths = self.colWidths())
         for i in range(6, len(self.proposals), 5):
             self.tableStyle.add('LINEABOVE', (0, i),(-1, i), 1, colors.black)
-        t.setStyle(self.tableStyle)
+        proposalTable.setStyle(self.tableStyle)
+
+        bandStatsTable = self.genBandStatsTable()
 
         # write the document to disk (or something)
-        self.doc.build([t], onFirstPage = self.makeHeaderFooter, onLaterPages = self.makeHeaderFooter)
+        self.doc.build([proposalTable, self.genStats(), PageBreak(), bandStatsTable]
+                     , onFirstPage = self.makeHeaderFooter
+                     , onLaterPages = self.makeHeaderFooter)
 
-    def getProposals(self, semester):
+    def genBandStatsTable(self):
+        data = [[Paragraph('<b>Band</b>', self.styleSheet)
+               , Paragraph('<b>#Proposals</b>', self.styleSheet)
+               , Paragraph('<b>Req Hrs</b>', self.styleSheet)
+               ]]
+        bandStats = {}
+        for rcvr in Receiver.objects.all():
+            bandStats[rcvr.code] = (0, 0)
+
+        for p in self.proposals:
+            bands = p.bands()
+            backends = p.backends()
+            if 'Z' in backends:
+                bands += 'Z'
+            for band in bands:
+                num, time = bandStats.get(band, (0,0))
+                bandStats[band] = (num + 1, time + (p.requestedTime() / float(len(bands))))
+    
+        sortedBandStats = sorted(bandStats.iteritems(), key = lambda stat: stat[0])
+        for band, stats in sortedBandStats:
+            data.append([Paragraph(band, self.styleSheet)
+                       , Paragraph('%s' % stats[0], self.styleSheet)
+                       , Paragraph('%s' % round(stats[1], 2), self.styleSheet)
+                       ])
+        bandStatsTable = Table(data, colWidths = [50, 50, 50])
+        bandStatsTable.setStyle(self.tableStyle)
+
+        return bandStatsTable
+
+    def genStats(self):
+        
+        numProp  = len(self.proposals)
+        reqhours = sum([p.requestedTime() for p in self.proposals])
+        typeStats = {}
+        for p in self.proposals:
+            num, hrs = typeStats.get(p.proposal_type.type, (0, 0))
+            typeStats[p.proposal_type.type] = num + 1, hrs + p.requestedTime()
+            
+        reqdays  = reqhours / 24.
+
+        stats = '<br/>'.join(['<b>%s: %s for %s hours (%.2f days)</b>' % (t, n, h, h / 24.)
+                              for t, (n, h) in typeStats.iteritems()])
+        stats += '<br/><b>Number of proposals %s for %s hours (%.2f days)</b>' % (numProp, reqhours, reqdays)
+        return Paragraph(stats, self.styleSheet)
+
+    def getProposals(self, semester, filter = None):
+        if filter is None:
+            filter = defaultFilter
         self.proposals = self.order(
-         [p for p in Proposal.objects.all() if 'TGBT' not in p.pcode] if semester is None else
-         [p for p in Proposal.objects.filter(semester__semester = semester) if 'TGBT' not in p.pcode])
+         [p for p in Proposal.objects.all() if filter(p)] if semester is None else
+         [p for p in Proposal.objects.filter(semester__semester = semester) if filter(p)])
         return self.proposals
 
     def makeHeaderFooter(self, canvas, doc):

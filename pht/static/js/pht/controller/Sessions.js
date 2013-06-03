@@ -5,6 +5,7 @@ Ext.define('PHT.controller.Sessions', {
         'Backend',
         'Receiver',
         'Session',
+        'SessionName',
         'SessionGrade',
         'SessionType',
         'SessionObservingType',
@@ -18,6 +19,7 @@ Ext.define('PHT.controller.Sessions', {
         'Proposals',
         'Receivers',
         'Sessions',
+        'SessionNames',
         'SessionGrades',
         'SessionTypes',
         'SessionObservingTypes',
@@ -59,9 +61,6 @@ Ext.define('PHT.controller.Sessions', {
             'sessionedit button[action=save]': {
                 click: this.updateSession
             },             
-            'proposaledit button[action=sessions]': {
-                click: this.proposalSessions
-            },             
             'sessionedit button[action=calculateLSTs]': {
                 click: this.calculateLSTs
             },             
@@ -72,6 +71,8 @@ Ext.define('PHT.controller.Sessions', {
 
         this.selectedSessions = [];
         this.callParent(arguments);
+        // helper class for keeping times correct
+        this.accounting = Ext.create('PHT.controller.TimeAccounting');
     },
 
     setPeriodsWindow: function(periodsWindow) {
@@ -133,7 +134,7 @@ Ext.define('PHT.controller.Sessions', {
 
     notify: function(data) {
         if (data['notification'] == 'proposalSelected') {
-            this.sessionListWindow.down('sessionlist').setProposal(data.pcode);
+            this.sessionList.setProposal(data.pcode);
         }
     },
 
@@ -181,14 +182,10 @@ Ext.define('PHT.controller.Sessions', {
         this.sessionListWindow = sessionListWindow;
     },
 
-    proposalSessions: function(button) {
-        var win = button.up('window');
-            form = win.down('form');
-            proposal = form.getRecord();
-        var pcode = proposal.get('pcode');
-        this.sessionListWindow.down('sessionlist').setProposal(pcode);
-        this.sessionListWindow.show();
+    setSessionList: function(sessionList) {
+        this.sessionList = sessionList;
     },
+
 
     clearFilter: function(button) {
         var store = this.getStore('Sessions');
@@ -260,7 +257,8 @@ Ext.define('PHT.controller.Sessions', {
         // simple enough - we need to subtract out the times 
         for (var i=0; i < records.length; i++) {
             var session = records[i];
-            this.updateProposalTimesFromSession(session, proposal, store, this.sub); 
+            this.accounting.updateProposalTimesFromSession(session, proposal, this.sub); 
+            store.sync();
         }    
 
         // now deal with grades
@@ -326,34 +324,6 @@ Ext.define('PHT.controller.Sessions', {
         return a - b;
     },
 
-    updateProposalTimesFromSession: function(session, proposal, store, op) {
-        // simple enough - we need to add or subtract these new values
-        var repeats = parseFloat(session.get('repeats'));
-        var requested = parseFloat(session.get('requested_time'));
-        var allocated = parseFloat(session.get('allocated_time'));
-        // update the proposal where appropriate
-        if ((!isNaN(repeats)) && (!isNaN(requested))) {
-            var pReq = parseFloat(proposal.get('requested_time'));
-            if (!isNaN(pReq)) {
-                pReq = op(pReq, (repeats * requested));
-            } else {
-                pReq = repeats * request;
-            }
-            proposal.set('requested_time', pReq);
-
-        }    
-        if (!isNaN(allocated)) {
-            var pAlloc = parseFloat(proposal.get('allocated_time'));
-            if (!isNaN(pAlloc)) {
-                pAlloc = op(pAlloc, allocated);
-            } else {
-                pAlloc = allocated;
-            }
-            proposal.set('allocated_time', pAlloc);
-        }    
-        store.sync()
-    },
-
     // make sure the proposal updates correctly when a session is duplicated
     duplicateSessionForProposal: function(session) {
 
@@ -363,7 +333,8 @@ Ext.define('PHT.controller.Sessions', {
         var ind = store.find('pcode', pcode);
         var proposal = store.getAt(ind);
 
-        this.updateProposalTimesFromSession(session, proposal, store, this.add); 
+        this.accounting.updateProposalTimesFromSession(session, proposal, this.add); 
+        store.sync()
 
     },
 
@@ -389,6 +360,8 @@ Ext.define('PHT.controller.Sessions', {
         sessFields = ['requested_time',
                       'repeats',
                       'allocated_time',
+                      'allocated_repeats',
+                      'outer_repeats',
                       'grade']
         if (this.selectedSessions.length <= 1) {
             record   = form.getRecord()
@@ -415,6 +388,10 @@ Ext.define('PHT.controller.Sessions', {
         // First, editing one, or multiple records?
         if (this.selectedSessions.length <= 1) {
             var record   = form.getRecord();
+            var sTypeStore = this.getSessionTypesStore();
+            var sType = sTypeStore.getAt(
+                sTypeStore.find('type', record.get('session_type')));
+            record.set('session_type_code', sType.get('abbreviation'));
             var f = form.getForm();
             if (f.isValid()) {
                 this.updateReadOnlyFields(record);
@@ -422,13 +399,17 @@ Ext.define('PHT.controller.Sessions', {
                 form.loadRecord(record);
             }        
         } else {
+            var sTypeStore = this.getSessionTypesStore();
             for (i=0; i < this.selectedSessions.length; i++) {
                 record = this.selectedSessions[i];
+                var sType = sTypeStore.getAt(
+                    sTypeStore.find('type', record.get('session_type')));
+                record.set('session_type_code', sType.get('abbreviation'));
                 this.updateReadOnlyFields(record);
             }
             this.updateProposalExplorerMulti(this.selectedSessions, originalValues, sessFields);
         }
-        this.getSessionsStore().sync();
+        this.getSessionNamesStore().load();
         this.selectedSessions = [];                 
     },
 
@@ -455,28 +436,6 @@ Ext.define('PHT.controller.Sessions', {
             }    
         }    
     },
-  
-    // covers things like when a session's allocated or requested time changes
-    // and the proposal needs updating
-    updateProposalTime: function(oldValue, newValue, proposal, fieldName) {
-        // first, if both new & old values are both NaN, no change, and exit
-        if (isNaN(oldValue) && isNaN(newValue)) {
-            return
-        }
-
-        // otherwise, see if there's been a change
-        if (oldValue != newValue) {
-            var pTime = proposal.get(fieldName);
-            // catch NaN's
-            if (!isNaN(oldValue)) {
-                pTime = pTime - oldValue
-            }
-            if (!isNaN(newValue)) {
-                pTime = pTime + newValue
-            }
-            proposal.set(fieldName, pTime);
-        }            
-    },
 
     // some of the proposal fields are dependent on their sessions
     updateProposalExplorer: function(session, originalValues, fieldNames) {
@@ -494,20 +453,23 @@ Ext.define('PHT.controller.Sessions', {
             var store = this.getProposalsStore();
             var ind = store.find('pcode', pcode);
             var proposal = store.getAt(ind);
-            // allocated is the least complicated
-            var alloc = 'allocated_time';
-            sOldAlloc = parseFloat(originalValues[alloc]);
-            sNewAlloc = parseFloat(session.get(alloc));
-            this.updateProposalTime(sOldAlloc, sNewAlloc, proposal, alloc);
-            // requested time is a little more complicated
-            var req = 'requested_time';
-            sOldReq = parseFloat(originalValues[req]);
-            sNewReq = parseFloat(session.get(req));
-            var rep = 'repeats';
-            sOldRep = parseFloat(originalValues[rep]);
-            sNewRep = parseFloat(session.get(rep));
-            this.updateProposalTime((sOldRep*sOldReq),
-                                    (sNewRep*sNewReq), proposal, req);
+
+            // requested time
+            var time = parseFloat(originalValues['requested_time']);
+            var reps = parseFloat(originalValues['repeats']);
+            oldTime = this.accounting.calculateRequestedTime(time, reps);
+            newTime = this.accounting.getTotalRequestedTime(session);                                                           
+            this.accounting.updateProposalTime(oldTime, newTime, proposal, 'requested_time')
+            // allocated time
+            var time = parseFloat(originalValues['allocated_time']);
+            var reps = parseFloat(originalValues['allocated_repeats']);
+            var outs = parseFloat(originalValues['outer_repeats']);
+            oldTime = this.accounting.calculateAllocatedTime(time
+                                                           , reps
+                                                           , outs);
+            newTime = this.accounting.getTotalAllocatedTime(session);
+            this.accounting.updateProposalTime(oldTime, newTime, proposal, 'allocated_time')
+
             // grades are also complicated
             var sOldGrade = originalValues['grade'];
             var sNewGrade = session.get('grade');
@@ -516,6 +478,7 @@ Ext.define('PHT.controller.Sessions', {
                 var newGrades = this.getProposalGrades(pcode, none);
                 proposal.set('grades', newGrades.join(','));
             }
+
             store.sync();
         }
     },
@@ -554,13 +517,11 @@ Ext.define('PHT.controller.Sessions', {
     // some of the fields shown for the session are read only and
     // derived from other fields - we need to keep these up to date.
     updateReadOnlyFields: function(session) {
-        var requested_time = session.get('requested_time');
-        var repeats = session.get('repeats');
-        if ((requested_time != null) && (repeats != null)) {
-            var total = requested_time * repeats;
-            session.set('requested_total', total);
-        }
-        session.set('inner_repeats', session.get('repeats'));
+        var time = this.accounting.getTotalRequestedTime(session);
+        session.set('requested_total', time);
+        var time = this.accounting.getTotalAllocatedTime(session);
+        session.set('allocated_total', time); 
+        session.set('inner_repeats', session.get('allocated_repeats'));
         session.set('inner_separation', session.get('separation'));
         session.set('inner_interval', session.get('interval_time'));
     },

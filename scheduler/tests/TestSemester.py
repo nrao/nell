@@ -81,6 +81,23 @@ class TestSemester(NellTestCase):
         for i in range(len(dts)):
             self.assertEqual(exp2[i], dts[i])
 
+    def testNumDays(self):
+
+        for y in [12, 13, 14, 15, 16]:
+            # leap years have an extra day
+            if y in [12, 16]:
+                lpOffset = 1
+            else:
+                lpOffset = 0
+            s, created = Semester.objects.get_or_create(semester = '%dA' % y)
+            a = s.numDays()
+            self.assertEqual(a, 181 + lpOffset)
+            s, created = Semester.objects.get_or_create(semester = '%dB' % y)
+            b = s.numDays()
+            self.assertEqual(b, 184)
+            # we should always get the right number of days in the year,
+            self.assertEqual(365 + lpOffset, a + b)
+
     def getPre11Adates(self, y):
         sem = str(y)[-2:]
         return [("%sA" % sem, '%d-02-01' % y, '%d-05-31' % y)

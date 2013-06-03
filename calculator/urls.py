@@ -21,6 +21,7 @@
 #       Green Bank, WV 24944-0002 USA
 
 from django.conf.urls.defaults import *
+from django.conf                   import settings
 
 urlpatterns = patterns('calculator.views',
     (r'^set_terms/$',  'set_terms'),

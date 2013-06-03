@@ -3,7 +3,7 @@ Ext.define('PHT.view.session.Form', {
     alias:  'widget.sessionform',
     bodyStyle:'padding:5px',
     trackResetOnLoad: true,
-    width: 600,
+    width: 675,
     fieldDefaults: {
         labelAlign: 'top',
         msgTarget: 'side',
@@ -18,7 +18,7 @@ Ext.define('PHT.view.session.Form', {
         border: false,
         items:[{
             // First Column
-            columnWidth: 0.3333,
+            columnWidth: 0.25,
             border: false,
             layout: 'anchor',
             items: [{
@@ -86,7 +86,7 @@ Ext.define('PHT.view.session.Form', {
            
         },{    
             // Second Column
-            columnWidth: 0.333,
+            columnWidth: 0.25,
             border: false,
             layout: 'anchor',
             defaults: {
@@ -116,18 +116,37 @@ Ext.define('PHT.view.session.Form', {
                 name: 'requested_total',
                 readOnly: true,
                 fieldCls: "x-pht-formfield-readonly",
-            },{
+            }]    
+        },{    
+            // Third Column
+            columnWidth: 0.25,
+            border: false,
+            layout: 'anchor',
+            defaults: {
+                minValue: 0,
+            },    
+            items: [{
                 xtype: 'numberfield',
                 fieldLabel: 'Period (Hrs)',
                 name: 'period_time'
             },{
                 xtype: 'numberfield',
-                fieldLabel: 'Allocated (Hrs)',
+                fieldLabel: 'Allocated Time (Hrs)',
                 name: 'allocated_time',
+            },{
+                xtype: 'numberfield',
+                fieldLabel: 'Allocated Repeats',
+                name: 'allocated_repeats'
+            },{
+                xtype: 'numberfield',
+                fieldLabel: 'Allocated Total (Hrs)',
+                name: 'allocated_total',
+                readOnly: true,
+                fieldCls: "x-pht-formfield-readonly",
             }]    
-        },{    
-            // Thrids Column
-            columnWidth: 0.333,
+        },{         
+            // Fourth Column
+            columnWidth: 0.25,
             border: false,
             layout: 'anchor',
             items: [{
@@ -501,7 +520,7 @@ Ext.define('PHT.view.session.Form', {
                         xtype: 'checkboxfield',
                         fieldLabel: 'Currently Complete?',
                         //boxLabel: 'Currently Complete?',
-                        name: 'complete',
+                        name: 'dss_session_complete',
                         uncheckedValue: 'false',
                         inputValue: 'true',
                         readOnly: true,

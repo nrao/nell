@@ -21,6 +21,7 @@
 #       Green Bank, WV 24944-0002 USA
 
 from datetime import datetime
+import settings, pg, psycopg2
 
 from utilities.TimeAgent import *
 from pht.utilities       import *
@@ -38,11 +39,90 @@ class PeriodHttpAdapter(PhtHttpAdapter):
 
     def setPeriod(self, period):
         self.period = period
+        
+    @staticmethod
+    def jsonDictHP(curr, keys, values):
+        data = dict(zip(keys, values))
 
+        # split up the start datetime into a date and time
+        dt = data['start_datetime']
+        data['date'] = formatExtDate(dt)
+        data['time'] = t2str(dt)
+
+        # original start datetime is not in JSON format, so either
+        # get rid of it or format it
+        data['start_datetime'] = formatExtDate(dt)
+
+        # construct the handle
+        data['handle'] = "%s (%s)" % (data['session'], data['pcode'])
+
+        # get the period's session's receivers, 
+        query = """
+          SELECT
+            r.abbreviation
+          FROM
+            pht_sessions as s
+            left outer join pht_sessions_receivers as rs on rs.session_id = s.id
+            left outer join pht_receivers as r on r.id = rs.receiver_id 
+          WHERE
+            s.id = %s
+        """ % data['session_id']
+        curr.execute(query)
+        rx = ",".join([r[0] for r in curr.fetchall()])
+
+        # and construct the session's json
+        sessionJson = {'type' : data['session_type'] 
+                     , 'observing_type' : data['observing_type'] 
+                     , 'receivers' : rx
+                      }
+        data['session_json'] = sessionJson
+
+        return data
+
+    @staticmethod
+    def jsonDictAllHP():
+        conn = psycopg2.connect(host   = settings.DATABASES['default']['HOST']
+                              , user   = settings.DATABASES['default']['USER']
+                              , password = settings.DATABASES['default']['PASSWORD']
+                              , database = settings.DATABASES['default']['NAME']
+                            )
+        curr = conn.cursor()
+        query = """
+        SELECT 
+          p.id,
+          s.name as session,
+          s.id as session_id,
+          s.dss_session_id,
+          pr.pcode,
+          p.start as start_datetime,
+          p.duration,
+          st.abbreviation as session_type_code,
+          st.type as session_type,
+          ob.type as observing_type,
+          m.window_size
+        FROM (((((
+          pht_periods as p
+          left outer join pht_sessions as s on s.id = p.session_id)
+          left outer join pht_proposals as pr on pr.id = s.proposal_id)
+          left outer join pht_session_types as st on st.id = s.session_type_id)
+          left outer join observing_types as ob on ob.id = s.observing_type_id)
+          left outer join pht_monitoring as m on m.id = s.monitoring_id)
+
+        ORDER BY p.start 
+        """
+        curr.execute(query)
+        keys = [d.name for d in curr.description]
+        return [PeriodHttpAdapter.jsonDictHP(curr, keys, values) for values in curr.fetchall()]
+        
     def jsonDict(self):
 
-        adapter  = SessionHttpAdapter(self.period.session)
-        sessionJson = adapter.jsonDict()
+        observingType = self.period.session.observing_type.type \
+            if self.period.session.observing_type is not None else None
+        sessType = self.period.session.session_type.type \
+            if self.period.session.session_type is not None else None
+        sessionJson = {'receivers' : self.period.session.get_receivers() 
+                     , 'observing_type' : observingType
+                     , 'type' : sessType}
         handle = "%s (%s)" % (self.period.session.name
                             , self.period.session.proposal.pcode)
         sessTypeCode = self.period.session.session_type.abbreviation if self.period.session.session_type is not None else None

@@ -30,10 +30,9 @@ from utilities       import TimeAgent
 
 import calendar
 
-ALL_PERIODS = [p for p in Period.objects.all() if p.session.project.is_science() and (p.isScheduled() or p.isCompleted())]
 
 def getPeriods():
-    return ALL_PERIODS
+    return [p for p in Period.objects.all() if p.session.project.is_science() and (p.isScheduled() or p.isCompleted())]
 
 def normalizePeriodStartStop(period, dt):
     """
@@ -52,19 +51,24 @@ def normalizePeriodStartStop(period, dt):
     return start, stop
 
 def filterPeriodsByDate(start):
-    "Returns the periods within a given month and year."
+    "Returns the periods (plus lost time) within a given month and year."
     _, day = calendar.monthrange(start.year, start.month)
     stop   = datetime(start.year, start.month, day, 23, 59, 59)
     ustart = TimeAgent.est2utc(start)
     ustop  = TimeAgent.est2utc(stop)
 
     periods = []
-    for p in ALL_PERIODS:
+    for p in getPeriods():
         if (p.start >= ustart or p.end() > ustart) and p.start < ustop:
             start, stop = normalizePeriodStartStop(p, start)
-            periods.append([p, start, stop])
+            # normalize lost time too!
+            lostTime = (diffHrs(start, stop)/p.duration) * p.accounting.lost_time()
+            periods.append([p, start, stop, lostTime]) 
 
     return periods
+
+def diffHrs(begin, end):
+    return TimeAgent.timedelta2frachours(end - begin)
 
 def generateReport(label, periods):
     outfile = open("./GBTObservingReport.txt", 'w')
@@ -74,11 +78,13 @@ def generateReport(label, periods):
 
     scheduled = {}
     observed  = {}
+    pids = []
     for p in periods:
-        period, start, stop = p
+        period, start, stop, lostTime = p
         pcode = period.session.project.pcode
-        scheduled[pcode] = scheduled.get(pcode, 0) + (stop - start).seconds / 3600.
-        observed[pcode] = observed.get(pcode, 0) + (stop - start).seconds / 3600. - period.accounting.lost_time()
+        scheduled[pcode] = scheduled.get(pcode, 0) + diffHrs(start, stop) 
+        observed[pcode] = observed.get(pcode, 0) + diffHrs(start, stop) - lostTime 
+        pids.append(period.id)
 
     projectNames = scheduled.keys()
     projectNames.sort()
@@ -87,7 +93,15 @@ def generateReport(label, periods):
         outfile.write("%s\t%.2f\t%.2f\n" % (p, s, o))
     outfile.write("Total\t%.2f\t%.2f\n" % (sum([scheduled[p] for p in scheduled.keys()]), sum([observed[p] for p in observed.keys()])))
 
+    # check for errors
+    outfile.write("\n")
+    for p in projectNames:
+        s, o = scheduled[p], observed[p]
+        if s < 0 or o < 0:
+            outfile.write("Warning: %s\t%.2f\t%.2f\n" % (p, s, o))
     outfile.close()
+    
+    return (projectNames, scheduled, observed)
 
 def show_help():
     print "\nThe arguments to ObservingReport are:"
@@ -110,7 +124,7 @@ if __name__=='__main__':
     quarter     = int(sys.argv[1])
     fiscal_year = int(sys.argv[2])
 
-    months = quarters[quarter]
+    months = quarters[quarter] 
     year   = fiscal_year if quarter != 1 else fiscal_year - 1
 
     periods = []

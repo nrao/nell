@@ -40,6 +40,11 @@ from scheduler.models import Semester as DSSSemester
 
 HRS = 24
 
+# Galactic Center LST range, used like ps[GC0:GC1], so 
+# endpoint is exclusive
+GC0 = 15
+GC1 = 21
+
 class Pressures(object):
 
     def __init__(self, poor = None, good = None, excellent = None):
@@ -91,6 +96,25 @@ class Pressures(object):
 
     def getType(self, type):
         return self.__getattribute__(type.lower())
+
+    def allTypes(self):
+        "Ignore the pressure distinctions by weather type"
+        return self.poor + self.good + self.excellent
+
+    def total(self, gc = False, type = None):
+        "What are all these LST pressures, added up?"
+        total = 0.0
+        if type is None:
+            types = ['poor', 'good', 'excellent']
+        else:
+            types = [type]
+        for t in types:
+            if not gc:
+                total += sum(self.getType(t))
+            else:
+                # just sum up across the galactic center
+                total += sum(self.getType(t)[GC0:GC1])
+        return total        
 
 class LstPressureWeather(object):
 
@@ -173,7 +197,7 @@ T_excellent_i = T_i
                 ):
 
         self.semester = DSSSemester.objects.get(semester = semester)
-        self.numDays = (self.semester.end() - self.semester.start()).days
+        self.numDays = self.semester.numDays() 
 
         self.wPoor = WeatherType.objects.get(type = 'Poor')
         self.wGood = WeatherType.objects.get(type = 'Good')
@@ -215,23 +239,12 @@ T_excellent_i = T_i
         if session.session_type is None:
             return Pressures() 
 
-        # in case pressures is a list
-        pressures = numpy.array(pressures)
-
-        type = session.session_type
-        if type == self.sFixed:
-            ps = self.binFixedSession(session, pressures)
-        elif type == self.sWindowed:
-            ps = self.binWindowedSession(session, pressures)
-        elif type == self.sElective:
-            #ps = self.binElectiveSession(session, pressures)
-            # TBF: for now, treat Electives like Fixed 
-            ps = self.binFixedSession(session, pressures)
-        else:
-            # must be one of the 3 open types
-            ps = self.binOpenSession(session, pressures)
-        
-        return ps
+        typeMap = {self.sFixed    : self.binFixedSession
+                 , self.sWindowed : self.binWindowedSession
+                   # TBF: for now, treat Electives like Fixed 
+                 , self.sElective : self.binFixedSession
+                 }
+        return typeMap.get(session.session_type, self.binOpenSession)(session, numpy.array(pressures))
 
     def binOpenSession(self, session, pressure):
         wType = session.weather_type.type

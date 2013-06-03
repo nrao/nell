@@ -202,6 +202,13 @@ class Sesshun(models.Model):
                (not self.status.complete) and \
                (not self.project.complete)
 
+    def isComplete(self):
+        "A simple check of session's AND project's flags"
+        if self.status is None or self.project is None:
+            return True
+        else:    
+            return self.status.complete or self.project.complete
+
     def delete(self, force = False):
         if len(self.period_set.all()) == 0 or force:
             self.allotment.delete()

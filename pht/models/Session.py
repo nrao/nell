@@ -51,7 +51,8 @@ from utilities     import TimeAgent
 class Session(models.Model):
 
     proposal                = models.ForeignKey(Proposal)
-    dss_session             = models.ForeignKey(DSSSession, null = True)
+    dss_session             = models.ForeignKey(DSSSession, null = True
+                                              , on_delete = models.SET_NULL, related_name = 'pht_sessions')
     sources                 = models.ManyToManyField(Source)
     receivers               = models.ManyToManyField(Receiver, related_name = 'sessions')
     backends                = models.ManyToManyField(Backend)
@@ -142,6 +143,21 @@ class Session(models.Model):
         return dt
 
     # *** End Section: accessing the corresponding DSS project
+
+    def getTotalAllocatedTime(self):
+        "Total = time * repeats [* outer_repeats]"
+        if self.allotment is not None and \
+          self.allotment.allocated_time is not None and \
+          self.allotment.allocated_repeats is not None:
+            total = self.allotment.allocated_time * self.allotment.allocated_repeats
+            if self.monitoring is None or \
+              self.monitoring.outer_repeats is None or \
+              self.monitoring.outer_repeats == 0:
+                return total
+            else:
+                return total * self.monitoring.outer_repeats
+        else:
+            return None
 
     def getTotalRequestedTime(self):
         "Total = requested * repeats"
@@ -249,8 +265,10 @@ class Session(models.Model):
 
     def determineFreqCategory(self):
         "From the receivers: High Frequency 1, 2, or Low Frequency?"
-        category = None
-        highFreq2 = ['MBA', 'W', 'KFPA']
+        # Lets assume the default category is LF rather than None.
+        # TBF: maybe this should be table-driven?
+        category = 'LF'
+        highFreq2 = ['MBA', 'MBA1.5', 'W', 'KFPA']
         highFreq1 = ['X', 'Ku', 'Ka', 'Q']
         r = self.get_highest_receiver()
         if r is not None:
@@ -352,7 +370,7 @@ class Session(models.Model):
         return self.monitoring is not None \
             and self.allotment is not None \
             and self.monitoring.start_time is not None \
-            and self.allotment.repeats is not None \
+            and self.allotment.allocated_repeats is not None \
             and self.allotment.period_time is not None \
             and self.separation is not None \
             and self.interval_time is not None
@@ -462,7 +480,7 @@ class Session(models.Model):
 
         # gather what we need
         start = self.monitoring.start_time 
-        repeats = self.allotment.repeats 
+        repeats = self.allotment.allocated_repeats 
         duration = self.allotment.period_time 
         interval = self.interval_time
         sep = 1 if self.separation.separation == 'day' else 7
@@ -488,7 +506,7 @@ class Session(models.Model):
 
         # gather what we need - inner
         start = self.monitoring.start_time 
-        repeats = self.allotment.repeats 
+        repeats = self.allotment.allocated_repeats 
         duration = self.allotment.period_time 
         interval = self.interval_time
         sep = 1 if self.separation.separation == 'day' else 7

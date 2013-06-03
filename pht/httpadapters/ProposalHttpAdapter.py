@@ -72,6 +72,23 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         curr.execute(query)
         results = curr.fetchall()
         data['authors'] = '; '.join(["%s, %s" % (last, first) for last, first in results])
+        # principal contact
+        query = """
+            select a.id, a.last_name, a.first_name
+            from pht_proposals as p, pht_authors as a
+            where p.contact_id = a.id AND p.id = %s
+        """ % id     
+        curr.execute(query)
+        results = curr.fetchall()
+        if len(results) > 0:
+            contact_id = int(results[0][0]) 
+            last = str(results[0][1])
+            first = str(results[0][2])
+            name = ("%s, %s") % (last, first)
+        else:
+            contact_id = name = None
+        data['contact_id'] = contact_id     
+        data['contact_name'] = name 
         # stuff from the associated sessions: grades, times, etc.
         # grades
         query = """
@@ -91,14 +108,29 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         """ % id
         curr.execute(query)
         data['requested_time'] = curr.fetchone()[0]
-        # allocated time
+        # allocated time - we have to take into account whether
+        # outer_repeats is being used or not:
+        # First sum them w/ out outer_repeats
         query = """
-          select sum(a.allocated_time) 
-          from pht_sessions as s join pht_allotements as a on s.allotment_id = a.id 
-          where proposal_id = %s
+          select sum(a.allocated_time * a.allocated_repeats) 
+          from (pht_sessions as s join pht_allotements as a on s.allotment_id = a.id) 
+          left outer join pht_monitoring as m on s.monitoring_id = m.id
+          where proposal_id = %s and (m.outer_repeats IS NULL or m.outer_repeats = 0)
         """ % id
         curr.execute(query)
-        data['allocated_time'] = curr.fetchone()[0]
+        time1 = curr.fetchone()[0]
+        time1 = time1 if time1 is not None else 0.0
+        # Next, sum them WITH outer_repeats
+        query = """
+          select sum(a.allocated_time * a.allocated_repeats * m.outer_repeats) 
+          from (pht_sessions as s join pht_allotements as a on s.allotment_id = a.id) 
+          left outer join pht_monitoring as m on s.monitoring_id = m.id
+          where proposal_id = %s and (m.outer_repeats IS NOT NULL or m.outer_repeats != 0)
+        """ % id
+        curr.execute(query)
+        time2 = curr.fetchone()[0]
+        time2 = time2 if time2 is not None else 0.0
+        data['allocated_time'] = time1 + time2 
         # now the hard time - all the DSS project's time accounting!
         tb_data = ProposalHttpAdapter.jsonProjectTimeAccounting(curr
             , id
@@ -122,17 +154,35 @@ class ProposalHttpAdapter(PhtHttpAdapter):
     def jsonProjectTimeAccounting(curr, proposal_id, dss_pcode):
 
         # init
+        fields = ['billed_time', 'scheduled_time', 'remaining_time']
         tb_data = {}
-        tb_data['dss_total_time'] = 0
-        tb_data['billed_time'] = 0
-        tb_data['scheduled_time'] = 0
-        tb_data['remaining_time'] = 0
+        for f in fields:
+            tb_data[f] = None
+        tb_data['dss_total_time'] = None
 
         # anything to compute?
         if dss_pcode is None:
             return tb_data
 
-        fields = ['billed_time', 'scheduled_time', 'remaining_time']
+        # prepare computation
+        for f in fields:
+            tb_data[f] = 0
+        tb_data['dss_total_time'] = 0
+
+        # what's the total time for this project?
+        query = """
+          select p.id, a.total_time 
+          from (((pht_proposals as p left outer join projects as pj on pj.id = p.dss_project_id) 
+            left outer join projects_allotments as pa on pa.project_id = pj.id ) 
+            left outer join allotment as a on pa.allotment_id = a.id) 
+          where p.id = %s
+        """ % proposal_id
+        curr.execute(query)
+        results = curr.fetchall()
+        for _, totalTime in results:
+            if totalTime is not None:
+                tb_data['dss_total_time'] += totalTime
+        projTotalTime = tb_data['dss_total_time']        
 
         # what are the sessions and their total time?
         query = """
@@ -147,14 +197,19 @@ class ProposalHttpAdapter(PhtHttpAdapter):
 
         # for each session, get their time accounting
         for sId, totalTime in results:
-            if totalTime is not None:
-                tb_data['dss_total_time'] += totalTime
+            #if totalTime is not None:
+            #    tb_data['dss_total_time'] += totalTime
             ta = SessionHttpAdapter.jsonSessionTimeAccounting(curr
                                                            , sId
                                                            , totalTime)
+            # most of these session fields just sum up for the proj 
             for f in fields:
-                if ta[f] is not None:
+                if ta[f] is not None and ta[f] != 'remaining_time':
                     tb_data[f] += ta[f]
+            # except remaining time uses the project total time, 
+            # NOT the sum of the session's total time
+            tb_data['remaining_time'] = projTotalTime - tb_data['billed_time']
+
         return tb_data 
 
     @staticmethod
@@ -194,7 +249,8 @@ class ProposalHttpAdapter(PhtHttpAdapter):
           c.srp_to_tac,
           c.tech_review_to_pi,
           c.tech_review_to_tac,
-          c.tac_to_pi
+          c.tac_to_pi,
+          c.tac_to_tac
 
         FROM (((((((
           pht_proposals as p
@@ -223,6 +279,8 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         friend_name = self.proposal.friend.__str__() if self.proposal.friend is not None else None
         pi_id   = self.proposal.pi.id if self.proposal.pi is not None else None
         pi_name = self.proposal.pi.getLastFirstName() if self.proposal.pi is not None else None
+        contact_id   = self.proposal.contact.id if self.proposal.contact is not None else None
+        contact_name = self.proposal.contact.getLastFirstName() if self.proposal.contact is not None else None
         dss_pcode = self.proposal.dss_project.pcode if self.proposal.dss_project is not None else None #'unknown'
 
         data = {'id'               : self.proposal.pcode
@@ -235,6 +293,8 @@ class ProposalHttpAdapter(PhtHttpAdapter):
               , 'semester'         : semester
               , 'pi_id'            : pi_id 
               , 'pi_name'          : pi_name
+              , 'contact_id'       : contact_id 
+              , 'contact_name'     : contact_name
               , 'friend_id'        : friend_id 
               , 'friend_name'      : friend_name
               , 'authors'          : authors
@@ -269,6 +329,7 @@ class ProposalHttpAdapter(PhtHttpAdapter):
                        , 'tech_review_to_pi': self.proposal.comments.tech_review_to_pi
                        , 'tech_review_to_tac': self.proposal.comments.tech_review_to_tac
                        , 'tac_to_pi'         : self.proposal.comments.tac_to_pi
+                       , 'tac_to_tac'        : self.proposal.comments.tac_to_tac
                         })
         else:
             data.update({'nrao_comment'      : None #''
@@ -277,6 +338,7 @@ class ProposalHttpAdapter(PhtHttpAdapter):
                        , 'tech_review_to_pi' : None #''
                        , 'tech_review_to_tac': None #''
                        , 'tac_to_pi'         : None #''
+                       , 'tac_to_tac'        : None #''
                         })
         return data
 
@@ -299,6 +361,11 @@ class ProposalHttpAdapter(PhtHttpAdapter):
             pi            = Author.objects.get(id = pi_id) if pi_id is not None else None
         except:
             pi = None
+        try:
+            contact_id = data.get('contact_id')
+            contact    = Author.objects.get(id = contact_id) if contact_id is not None else None
+        except:
+            contact = None
         try:    
             friend_id     = data.get('friend_id')
             friend        = DSSUser.objects.get(id = friend_id) if friend_id is not None else None
@@ -308,10 +375,15 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         status        = Status.objects.get(name = data.get('status'))
         semester      = Semester.objects.get(semester = data.get('semester'))
 
+        # watch for bad chars
+        abstract = data.get('abstract', '')
+        abstract = "".join([s if ord(s) < 128 else '?' for s in abstract])
+        self.proposal.abstract        = abstract 
 
         self.proposal.pst_proposal_id = data.get('pst_proposal_id')
         self.proposal.proposal_type   = proposalType
         self.proposal.pi              = pi
+        self.proposal.contact         = contact
         self.proposal.friend          = friend
         self.proposal.status          = status
         self.proposal.semester        = semester
@@ -320,7 +392,6 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         self.proposal.submit_date     = datetime.strptime(dt, dtfmt) 
         self.proposal.total_time      = data.get('total_time', 0.0)
         self.proposal.title           = data.get('title')
-        self.proposal.abstract        = data.get('abstract')
         self.proposal.spectral_line   = data.get('spectral_line')
         self.proposal.joint_proposal  = \
             data.get('joint_proposal') == 'true'
@@ -348,16 +419,26 @@ class ProposalHttpAdapter(PhtHttpAdapter):
             self.proposal.sci_categories.add(cat)
 
         # comments
+        try:
+            self.update_comments(data)
+        except AttributeError:
+            self.proposal.comments = ProposalComments()
+            self.proposal.comments.save()
+            self.proposal.save()
+            self.update_comments(data)
+
+        self.proposal.save()
+        self.notify(self.proposal)
+
+    def update_comments(self, data):
         self.proposal.comments.nrao_comment = data.get('nrao_comment')
         self.proposal.comments.srp_to_pi = data.get('srp_to_pi')
         self.proposal.comments.srp_to_tac = data.get('srp_to_tac')
         self.proposal.comments.tech_review_to_pi = data.get('tech_review_to_pi')
         self.proposal.comments.tech_review_to_tac = data.get('tech_review_to_tac')
         self.proposal.comments.tac_to_pi = data.get('tac_to_pi')
+        self.proposal.comments.tac_to_tac = data.get('tac_to_tac')
         self.proposal.comments.save()
-
-        self.proposal.save()    
-        self.notify(self.proposal)
 
     def copy(self, new_pcode):
         data = self.jsonDict()

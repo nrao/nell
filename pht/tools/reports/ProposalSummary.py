@@ -40,26 +40,36 @@ class ProposalSummary(ProposalReport):
         super(ProposalSummary, self).__init__(filename)
         self.title = 'Proposal Summary'
 
+    def setTitle(self, title):
+        self.title = title
+
     def genHeader(self):
         return [Paragraph('<b># </b>', self.styleSheet)
               , Paragraph('<b>Title </b>', self.styleSheet)
               , Paragraph('<b>PI </b>', self.styleSheet)
               , Paragraph('<b>Rq Time Hrs</b>', self.styleSheet)
-              , Paragraph('<b>Thesis </b>', self.styleSheet)
+              , Paragraph('<b>Th</b>', self.styleSheet)
               , Paragraph('<b>Bands </b>', self.styleSheet)
-              , Paragraph('<b>Backends </b>', self.styleSheet)
+              , Paragraph('<b>Bkd</b>', self.styleSheet)
               , Paragraph('<b>Obs Type </b>', self.styleSheet)
               , Paragraph('<b>Email </b>', self.styleSheet)
               ]
 
     def genRow(self, proposal):
+        title     = self.truncateStr(proposal.title, 65)
         pi_name   = proposal.pi.getLastFirstName() if proposal.pi is not None else ''
+        pi_name   = self.truncateStr(pi_name, 20)
         email     = proposal.pi.email if proposal.pi is not None else ''
         obs_types = [ot.code for ot in proposal.observing_types.all()]
         students  = len(proposal.author_set.filter(thesis_observing = True))
         thesis    = str(students)
-        return [Paragraph('%s' % proposal.id, self.styleSheet)
-              , Paragraph(proposal.title, self.styleSheet)
+        code      = proposal.pcode.split('-')
+        pcode     = code[1] if len(code) > 1 and 'GBT' in proposal.pcode else proposal.pcode
+        codes     = 'T' if proposal.proposal_type.type in ('Large', 'Triggered') else ''
+        if proposal.joint_proposal:
+            codes = codes + ' J'
+        return [Paragraph('%s' % pcode, self.styleSheet)
+              , Paragraph(title, self.styleSheet)
               , Paragraph(pi_name, self.styleSheet)
               , Paragraph(str(proposal.requestedTime()), self.styleSheet)
               , Paragraph(thesis, self.styleSheet)
@@ -67,10 +77,11 @@ class ProposalSummary(ProposalReport):
               , Paragraph(proposal.backends(), self.styleSheet)
               , Paragraph(''.join(obs_types), self.styleSheet)
               , Paragraph(email, self.styleSheet)
+              , Paragraph(codes, self.styleSheet)
               ]
 
     def colWidths(self):
-        return [20, 310, 80, 40, 30, 50, 50, 50, 120]
+        return [50, 300, 85, 40, 15, 40, 30, 50, 120, 25]
 
     def genFooter(self, canvas, doc):
         dateStr = self.getDateStr()
@@ -93,6 +104,14 @@ class ProposalSummary(ProposalReport):
         t.wrapOn(canvas, 3*72, 2*72)
         t.drawOn(canvas, 10, 10)
 
+    def order(self, proposals):
+        return sorted(proposals, key = lambda p: p.normalizedSRPScore)
+
 if __name__ == '__main__':
+    import sys
+    if len(sys.argv) < 2:
+        print 'Usage: ProposalSummary.py <semester>'
+        sys.exit()
+    semester = sys.argv[1]
     ps = ProposalSummary('proposalSummary.pdf')
-    ps.report()
+    ps.report(semester = semester)

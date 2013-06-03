@@ -29,6 +29,8 @@ Ext.define('PHT.model.Session', {
            , 'requested_time'
            , 'requested_total'
            , 'allocated_time'
+           , 'allocated_repeats'
+           , 'allocated_total'
            , 'semester_time'
            , 'period_time'
            , 'low_freq_time'
@@ -75,6 +77,7 @@ Ext.define('PHT.model.Session', {
            // dss session (readonly)
            , 'dss_session'
            , 'dss_total_time'
+           , 'dss_session_complete'
            , 'billed_time'
            , 'scheduled_time'
            , 'remaining_time'

@@ -40,9 +40,12 @@ Ext.define('PHT.controller.Proposals', {
         'proposal.ListWindow',
         'proposal.Edit',
         'proposal.Import',
+        'proposal.Export',
         'proposal.Navigate',
         'proposal.TacTool',
         'proposal.Allocate',
+        'proposal.ProposalSummaryForm',
+        'proposal.ProposalWorksheetForm',
     ],
 
     init: function() {
@@ -50,7 +53,10 @@ Ext.define('PHT.controller.Proposals', {
         this.control({
             'proposallist' : {
                 itemdblclick: this.editProposal,
-                itemclick: this.proposalSelected,
+                itemclick: function(grid, record) {
+                    this.proposalSelected(grid, record);
+                    this.editProposal(grid, record);
+                },
             },
             'proposallist toolbar button[action=create]': {
                 click: this.createProposal
@@ -85,6 +91,15 @@ Ext.define('PHT.controller.Proposals', {
             'proposalimport button[action=import]': {
                 click: this.importProposal
             },            
+            'proposalexport button[action=export]': {
+                click: this.exportProposal
+            },            
+            'proposalsummaryform button[action=submit]': {
+                click: this.proposalSummary
+            },            
+            'proposalworksheetform button[action=submit]': {
+                click: this.proposalWorksheet
+            },            
             'proposalnavigate': {
                 itemclick: this.editTreeNode
             }, 
@@ -109,9 +124,10 @@ Ext.define('PHT.controller.Proposals', {
 
     // load the form for allocating grades and time to proposal
     allocateForm: function(button) {
-        var win = button.up('window')
+        var view     = button.up('viewport').down('tactool');
         var allocate = Ext.create('PHT.view.proposal.Allocate');
-        var pcode = win.proposalCombo.getValue();
+        var pcode    = view.proposalCombo.getValue();
+        
         allocate.setProposal(pcode);
         allocate.setTitle('Allocate for Proposal ' + pcode);
         allocate.show();
@@ -149,12 +165,18 @@ Ext.define('PHT.controller.Proposals', {
                 if (scale == 'true') {
                     var requested = parseFloat(session.get('requested_time'));
                     var repeats = parseFloat(session.get('repeats'));
-                    var allocated = requested * repeats * (parseFloat(time)/100.0);
+                    //var allocated = requested * repeats * (parseFloat(time)/100.0);
+                    var allocatedRepeats = repeats
+                    var allocated = requested * (parseFloat(time)/100.0);
                 } else {
-                    var allocated = parseFloat(time);
+                    var repeats = parseFloat(session.get('repeats'));
+                    var allocated = parseFloat(time) / repeats;
+                    var allocatedRepeats = repeats;
                 }
-                pAllocated += allocated
+                pAllocated += allocated * allocatedRepeats
                 session.set('allocated_time', allocated);
+                session.set('allocated_repeats', allocatedRepeats);
+                session.set('allocated_total', allocated * allocatedRepeats);
             }
             session.save()
         }
@@ -162,17 +184,14 @@ Ext.define('PHT.controller.Proposals', {
 
         // update the proposal
         var pStore = this.getStore('Proposals');
-        pStore.filter('pcode', pcode);
-        var cnt = pStore.getCount();
-        for (i=0; i < cnt; i++) {
-            var proposal = pStore.getAt(i);
-            if ((time != null) && (time != '')) {
-                proposal.set('allocated_time', pAllocated);
-            }
-            if ((grade != null) && (grade != '')) {
-                proposal.set('grades', grade);
-            }
+        var proposal = pStore.findRecord('pcode', pcode);
+        if ((time != null) && (time != '')) {
+            proposal.set('allocated_time', pAllocated);
         }
+        if ((grade != null) && (grade != '')) {
+            proposal.set('grades', grade);
+        }
+        
         pStore.sync();
         
         win.hide();
@@ -192,15 +211,11 @@ Ext.define('PHT.controller.Proposals', {
             session.set('grade', null);
         }    
         store.sync()
-        // now the proposal
+        // update the proposal
         var pStore = this.getStore('Proposals');
-        pStore.filter('pcode', pcode);
-        var cnt = pStore.getCount();
-        for (i=0; i < cnt; i++) {
-            var proposal = pStore.getAt(i);
-            proposal.set('allocated_time', 0.0);
-            proposal.set('grades', '');
-        }
+        var proposal = pStore.findRecord('pcode', pcode);
+        proposal.set('allocated_time', 0.0);
+        proposal.set('grades', '');
         pStore.sync();
         win.hide();
     },
@@ -210,7 +225,7 @@ Ext.define('PHT.controller.Proposals', {
         this.notifyObservers({notification: 'proposalSelected'
                             , pcode : pcode});
         // part of this controller, so we don't need notification
-        this.tacToolWindow.setProposal(pcode, record);
+        this.tacTool.setProposal(pcode, record);
     },
 
     // How to respond to click's on the navigation tree?
@@ -267,6 +282,20 @@ Ext.define('PHT.controller.Proposals', {
         f.setValues({pstProposalsCheckbox : 'on'});
     },
 
+    exportProposalsForm: function() {
+        var view = Ext.widget('proposalexport');
+        var form = view.down('form');
+        var f = form.getForm()
+    },
+
+    proposalSummaryForm: function() {
+        var view = Ext.widget('proposalsummaryform');
+    },
+
+    proposalWorksheetForm: function() {
+        var view = Ext.widget('proposalworksheetform');
+    },
+
     refresh: function() {
         this.getProposalsStore().load();
         this.getProposalTreeStore().load();
@@ -299,7 +328,8 @@ Ext.define('PHT.controller.Proposals', {
             Ext.Ajax.request({
                 url: '/pht/import/semester',
                 params: {
-                    semester: values.semester
+                    semester: values.semester,
+                    srp:      values.srp,
                 },
                 method: 'POST',
                 timeout: 300000,
@@ -326,11 +356,70 @@ Ext.define('PHT.controller.Proposals', {
             win.close();
         }
     },
+    
+    exportProposal: function(button) {
+        var me     = this;
+        var win    = button.up('window');
+            form   = win.down('form');
+            values = form.getValues();
+
+        win.setLoading(true);
+        if (values.proposalsCheckbox == 'on'){
+            Ext.Ajax.request({
+                url: '/pht/export',
+                params: {
+                    proposals: values.pcode,
+                    astrid:   values.astrid
+                },
+                method: 'POST',
+                timeout: 300000,
+                success: function(response) {
+                    win.close();
+                },
+             });
+        } else if (values.semesterCheckbox == 'on') {
+            Ext.Ajax.request({
+                url: '/pht/export/semester',
+                params: {
+                    semester: values.semester,
+                    astrid:   values.astrid
+                },
+                method: 'POST',
+                timeout: 300000,
+                success: function(response) {
+                    win.close();
+                },
+                
+             });
+        } else {
+            win.close();
+        }
+    },
+
+    proposalSummary: function(button) {
+        var url = '/pht/reports/proposalsummary';
+        this.semesterSomethingSubmit(button, url);
+    },
+
+    proposalWorksheet: function(button) {
+        var url = '/pht/reports/proposalworksheet';
+        this.semesterSomethingSubmit(button, url);
+    },
+    
+    semesterSomethingSubmit: function(button, baseurl) {
+        var win    = button.up('window'),
+            form   = win.down('form'),
+            values = form.getValues();
+        var url = baseurl + '?semester=' + values.semester
+                  + '&allocated=' + values.allocated;
+        window.open(url);
+        win.close();
+    },
 
     createProposal: function(button) {
         var proposal = Ext.create('PHT.model.Proposal');
-        var view = Ext.widget('proposaledit');
-        view.down('form').loadRecord(proposal);
+        var view = button.up('viewport').down('proposaledit');
+        view.loadRecord(proposal);
     },
 
     deleteProposal: function(button) {
@@ -343,9 +432,10 @@ Ext.define('PHT.controller.Proposals', {
     },
     
     editProposal: function(grid, record) {
-        var view   = Ext.widget('proposaledit');
+        var view = grid.up('viewport').down('proposaledit');
         view.filterPis(record.get('pcode'));
-        view.down('form').loadRecord(record);        
+        view.setRecord(record);
+        view.loadRecord(record);        
     },   
 
     editSelectedProposals: function(button) {
@@ -356,16 +446,9 @@ Ext.define('PHT.controller.Proposals', {
             this.editProposal(grid, this.selectedProposals[0]);
         } else {
             var template = Ext.create('PHT.model.Proposal');
-            var view = Ext.widget('proposaledit');
-            var fields = view.down('form').getForm().getFields();
-            fields.each(function(item, index, length) {
-                var disabledItems = ['pcode', 'pi_id', 'joint_proposal'];
-                if (disabledItems.indexOf(item.getName()) > -1) {
-                    item.disable();
-                }
-                item.allowBlank = true;
-            }, this);
-            view.down('form').loadRecord(template);
+            var view = button.up('viewport').down('proposaledit');
+            view.prepMultiEditFields();
+            view.loadRecord(template);
         }
     },
 
@@ -377,10 +460,12 @@ Ext.define('PHT.controller.Proposals', {
             var store = this.getPrimaryInvestigatorsStore()
             var pi_id = values['pi_id'];
             var ind = store.find('id', pi_id);
-            var pi = store.getAt(ind);
-            // now extract their name and add it to our values
-            var pi_name = pi.get('name');
-            values['pi_name'] = pi_name;
+            if (ind > 0) {
+                var pi = store.getAt(ind);
+                // now extract their name and add it to our values
+                var pi_name = pi.get('name');
+                values['pi_name'] = pi_name;
+            }
             record.set(values);
     },
 
@@ -390,10 +475,12 @@ Ext.define('PHT.controller.Proposals', {
                         , this.getProposalsStore()
                          );
         this.selectedProposals = [];                  
+        var view = button.up('viewport').down('proposaledit');
+        view.resetMultiEditFields();
     },
 
-    setTacToolWindow: function(tacToolWindow) {
-        this.tacToolWindow = tacToolWindow;
-        this.tacToolWindow.setProposalsStore(this.getProposalsStore());
+    setTacTool: function(tacTool) {
+        this.tacTool = tacTool;
+        this.tacTool.setProposalsStore(this.getProposalsStore());
     },
 });

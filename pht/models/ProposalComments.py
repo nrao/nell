@@ -29,6 +29,7 @@ class ProposalComments(models.Model):
     tech_review_to_pi  = models.TextField(null = True)
     tech_review_to_tac = models.TextField(null = True)
     tac_to_pi          = models.TextField(null = True)
+    tac_to_tac         = models.TextField(null = True)
 
     class Meta:
         db_table  = "pht_proposal_comments"

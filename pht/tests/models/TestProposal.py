@@ -33,6 +33,7 @@ from pht.models import Semester
 from pht.httpadapters import SessionHttpAdapter
 from utilities import TimeAccounting
 from scheduler.tests.utils     import create_sesshun
+from pht.tests.utils import *
 
 from datetime import datetime, timedelta
 
@@ -83,6 +84,7 @@ class TestProposal(TestCase):
                     , 'TITLE' : 'Lynrd Sknyrd'
                     , 'ABSTRACT' : 'What song do you wanna hear?'
                     , 'proposal_id' : 0
+                    , 'JOINT_PROPOSAL_TYPE' : 'Not a joint Proposal'
                     }
         proposal = Proposal.createFromSqlResult(sqlResult)
         proposal.dss_project = self.project
@@ -103,33 +105,7 @@ class TestProposal(TestCase):
     # TBF: stick this in a utility somewhere        
     def createSession(self, p):
         "Create a new session for the tests"
-
-        sem = Semester.objects.get(semester = '12A')
-        data  = {
-            'name' : 'nextSemesterSession'
-          , 'pcode' : p.pcode
-          , 'grade' : 'A'  
-          , 'semester' : sem
-          , 'requested_time' : 3.5  
-          , 'allocated_time' : 3.5  
-          , 'session_type' : 'Open - Low Freq'
-          , 'observing_type' : 'continuum' 
-          , 'weather_type' : 'Poor'
-          , 'repeats' : 2 
-          , 'min_lst' : '10:00:00.0' 
-          , 'max_lst' : '20:00:00.0' 
-          , 'elevation_min' : '00:00:00.0' 
-          , 'next_sem_complete' : False
-          , 'next_sem_time' : 1.0
-          , 'receivers' : 'L'
-        }
-
-        adapter = SessionHttpAdapter()
-        adapter.initFromPost(data)
-        # just so that is HAS a DSS session.
-        #adapter.session.dss_session = self.maintProj.sesshun_set.all()[0]
-        adapter.session.save()
-        return adapter.session
+        return createSession(p)
 
     def test_requestedTime(self):
 
@@ -149,3 +125,46 @@ class TestProposal(TestCase):
 
         self.assertEqual(-12.0, self.ta.getTimeRemaining(self.project))
         self.assertEqual(-12.0, self.proposal.remainingTime())
+
+    def test_createFromSqlResult(self):
+
+        sqlResult = {'SUPPORTED': u'\x00', 'FIRST_NAME': u'Carl', 'LAST_NAME': u'Gwinn', 'EMAIL': u'cgwinn@physics.ucsb.edu', 'OLD_PI': u'None', 'TITLE': u'Substructure in the Scattering Disk of Sgr A*', 'RELATED_PROPOSALS': u'', 'ASSIGNMENT': u'None', 'ABSTRACT': u'We propose observations to detect, or set limits on, substructure within the smooth scattering disk of the celebrated galactic center radio source SgrA*.  Such structure is predicted theoretically, and it may have been detected in observations of pulsars with RadioAstron, and in earlier observations of SgrA*. Results will place constraints on the spatial spectrum of the electron-density fluctuations that are responsible for the scattering.', 'CREATED_DATE': u'2013-01-26 18:18:54', 'contact_id': u'33166', 'JOINT_PROPOSAL_TYPE': u'Joint with GBT and VLA', 'OLD_CONTACT': u'None', 'DEADLINE_DATE': u'2013-02-01 22:30:00', 'PROCESSED': u'\x00', 'category2_id': u'None', 'STAFF_SUPPORT': u'Consultation', 'scienceCategory': u'Interstellar Medium', 'comments': u'', 'justificationFile_id': u'7403', 'MODIFIED_DATE': u'2013-02-04 21:57:56', 'user_id': u'2554', 'TELESCOPE': u'VLBA', 'OTHER_AWARDS': u'', 'reviewersConflict': u'\x00', 'allocated_hours': u'0.0', 'objectversion': u'0', 'principal_investigator_id': u'33166', 'RAPID_RESPONSE_TYPE': u'None', 'technicalCategory_id': u'78', 'category3_id': u'None', 'GRADUATION_YEAR': u'-1', 'person_id': u'2552', 'proposal_id': u'7917', 'disposition_letter': u'None', 'public': u'\x00', 'PRESENT': u'no', 'STATUS': u'SUBMITTED', 'trigger_criteria': u'None', 'dissertationPlan_id': u'None', 'PLAN_SUBMITTED': u'no', 'category1_id': u'None', 'SUPPORT_REQUESTER': u'\x00', 'DOMESTIC': u'\x01', 'PROFESSIONAL_STATUS': u'All Others', 'THESIS_OBSERVING': u'\x00', 'LOCK_MILLIS': u'0', 'STORAGE_ORDER': u'0', 'editor_id': u'33166', 'author_id': u'33166', 'SUBMITTED_DATE': u'2013-02-04 21:56:27', 'displayTechnicalReviews': u'\x00', 'DISPLAY_POSITION': u'0', 'LOCK_USER_ID': u'None', 'NEW_USER': u'\x00', 'PREV_PROP_IDS': u'None', 'PROPOSAL_TYPE': u'Regular', 'TELEPHONE': u'805-8932814', 'LOCK_USER_INFO': u'None', 'AFFILIATION': u'California at Santa Barbara, University of', 'BUDGET': u'0.0', 'OBSERVING_TYPE_OTHER': u'None', 'LEGACY_ID': u'BG221', 'ADDRESS': u'', 'PROP_ID': u'VLBA/13B-395', 'OLDAUTHOR_ID': u'2554', 'OLD_EDITOR': u'None'}
+
+        p = Proposal.createFromSqlResult(sqlResult)
+        pcode = 'VLBA13B-395'
+        self.assertEqual(p.pcode, pcode)
+
+        # now get fresh copy from db
+        pdb = Proposal.objects.get(pcode = pcode)
+        self.assertEqual(datetime(2013, 2, 4, 21, 56, 27), pdb.submit_date)
+        self.assertEqual(datetime(2013, 2, 4, 21, 57, 56), pdb.modify_date)
+        self.assertEqual(datetime(2013, 1, 26, 18, 18, 54), pdb.create_date)
+
+        # now, recreate it, but w/ out the submit date
+        pdb.delete()
+        sqlResult['SUBMITTED_DATE'] = 'None'
+
+        p = Proposal.createFromSqlResult(sqlResult)
+        pcode = 'VLBA13B-395'
+        self.assertEqual(p.pcode, pcode)
+
+        # now get fresh copy from db
+        pdb = Proposal.objects.get(pcode = pcode)
+        self.assertEqual(datetime(2013, 2, 4, 21, 57, 56), pdb.modify_date)
+        self.assertEqual(datetime(2013, 1, 26, 18, 18, 54), pdb.create_date)
+
+        # the submit date should now be 'now'
+        self.assertNotEqual(datetime(2013, 2, 4, 21, 56, 27), pdb.submit_date)
+        frmt = '%Y-%m-%d %H:%M'
+        now = datetime.now().strftime(frmt)
+        self.assertEqual(now, pdb.submit_date.strftime(frmt))
+
+        # demonstrate that as long as it's unicode, we're cool
+        pdb.delete()
+        a =  u'dog\xe0\xe1cat'
+        sqlResult['ABSTRACT'] = a 
+        p = Proposal.createFromSqlResult(sqlResult)
+        pdb = Proposal.objects.get(pcode = pcode)
+        self.assertEqual(a, pdb.abstract)
+
+

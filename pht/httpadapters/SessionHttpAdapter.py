@@ -25,7 +25,7 @@ import settings
 setup_environ(settings)
 
 from datetime import datetime
-import settings, pg, psycopg2
+import settings, pg, psycopg2, logging
 
 from scheduler.models    import Observing_Type
 from pht.models          import *
@@ -40,6 +40,23 @@ class SessionHttpAdapter(PhtHttpAdapter):
 
     def __init__(self, session = None):
         self.setSession(session)
+        self.initLogger()
+
+    def initLogger(self):
+        "We need a logger to help debug problems in the deployment environment"
+        # where to put the actuall log file?
+        if settings.NELL_ROOT != '/home/dss2.gb.nrao.edu/active/nell':
+            # if not production, place in local dir.
+            file = 'phtSessionHttpAdapter.log'
+        else:
+            # for production
+            file = '/tmp/phtSessionHttpAdapter.log'
+        self.logger = logging.getLogger('phtSessionHttpAdapter')
+        hdlr = logging.FileHandler(file) #'/tmp/phtSessionHttpAdapter.log')
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        hdlr.setFormatter(formatter)
+        self.logger.addHandler(hdlr) 
+        self.logger.setLevel(logging.INFO)
 
     def setSession(self, session):
         self.session = session
@@ -135,7 +152,17 @@ class SessionHttpAdapter(PhtHttpAdapter):
             data['requested_total'] = requested * repeats
         except:    
             data['requested_total'] = None
-
+        # add in the total allocated time - not such simple math
+        allocated = data['allocated_time']
+        repeats = data['allocated_repeats']
+        outer = data['outer_repeats']
+        try:
+            total = allocated * repeats
+            if outer is not None and outer > 0:
+                total = total * outer
+            data['allocated_total'] = total    
+        except:    
+            data['allocated_total'] = None
         return data
 
     @staticmethod
@@ -219,6 +246,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
           a.requested_time,
           a.repeats,
           a.allocated_time,
+          a.allocated_repeats,
           a.semester_time,
           a.period_time,
           a.low_freq_time,
@@ -237,7 +265,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
           f.optical_night,
           f.transit_flat,
           f.guaranteed,
-          a.repeats as inner_repeats,
+          a.allocated_repeats as inner_repeats,
           s.interval_time as inner_interval,
           m.start_time,
           m.window_size,
@@ -254,8 +282,9 @@ class SessionHttpAdapter(PhtHttpAdapter):
           ns.repeats as next_sem_repeats,
           dss.name as dss_session,
           dss.id as dss_session_id,
-          dss_a.total_time as dss_total_time
-        from ((((((((((((((
+          dss_a.total_time as dss_total_time,
+          dss_s.complete as dss_session_complete
+        from (((((((((((((((
           pht_sessions as s 
           left outer join pht_allotements as a on a.id = s.allotment_id) 
           left outer join pht_session_flags as f on s.flags_id = f.id) 
@@ -271,7 +300,8 @@ class SessionHttpAdapter(PhtHttpAdapter):
           left outer join pht_session_grades as sg on sg.id = s.grade_id)
           left outer join pht_session_separations as ssm on ssm.id = m.outer_separation_id)
           left outer join sessions as dss on dss.id = s.dss_session_id)
-          left outer join allotment as dss_a on dss_a.id = dss.allotment_id
+          left outer join allotment as dss_a on dss_a.id = dss.allotment_id)
+          left outer join status as dss_s on dss_s.id = dss.status_id
         order by s.name  
         """
         curr.execute(query)
@@ -292,14 +322,17 @@ class SessionHttpAdapter(PhtHttpAdapter):
         sci_categories = [sc.category for sc in self.session.proposal.sci_categories.all()]
         dss_sess_name = self.session.dss_session.name if self.session.dss_session is not None else None        
         dss_sess_id = self.session.dss_session.id if self.session.dss_session is not None else None        
+        dss_sess_cmp = self.session.dss_session.status.complete if self.session.dss_session is not None else None        
         solar_avoid = self.session.target.solar_avoid
         if solar_avoid is not None:
             solar_avoid = rad2deg(solar_avoid)
-        requested_total = None
-        if self.session.allotment.requested_time is not None \
-            and self.session.allotment.repeats is not None:
-            requested_total = self.session.allotment.requested_time \
-                * self.session.allotment.repeats
+        #requested_total = None
+        #if self.session.allotment.requested_time is not None \
+        #    and self.session.allotment.repeats is not None:
+        #    requested_total = self.session.allotment.requested_time \
+        #        * self.session.allotment.repeats
+        requested_total = self.session.getTotalRequestedTime()
+        allocated_total = self.session.getTotalAllocatedTime()
 
         data = {'id'                      : self.session.id
               , 'name'                    : self.session.name
@@ -329,6 +362,8 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'requested_time'          : self.session.allotment.requested_time
               , 'repeats'                 : self.session.allotment.repeats
               , 'allocated_time'          : self.session.allotment.allocated_time
+              , 'allocated_repeats'       : self.session.allotment.allocated_repeats
+              , 'allocated_total'         : allocated_total 
               , 'semester_time'           : self.session.allotment.semester_time
               , 'period_time'             : self.session.allotment.period_time
               , 'low_freq_time'           : self.session.allotment.low_freq_time
@@ -355,7 +390,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
               , 'receivers_granted'       : self.session.get_receivers_granted()
               # monitoring
               # first some duplicates (readonly):
-              , 'inner_repeats'           : self.session.allotment.repeats
+              , 'inner_repeats'           : self.session.allotment.allocated_repeats
               , 'inner_separation'        : separation
               , 'inner_interval'          : self.session.interval_time
               # now stuff that is unique
@@ -377,6 +412,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
               # stuff from the DSS session (readonly)
               , 'dss_session'             : dss_sess_name
               , 'dss_session_id'          : dss_sess_id
+              , 'dss_session_complete'    : dss_sess_cmp
               , 'dss_total_time'          : self.session.dssAllocatedTime()
               , 'billed_time'             : self.session.billedTime()
               , 'scheduled_time'          : self.session.scheduledTime()
@@ -394,6 +430,8 @@ class SessionHttpAdapter(PhtHttpAdapter):
         return text is not None and text != ""
 
     def initFromPost(self, data):
+
+        self.logger.info('Creating new Session.')
 
         # init new objects before filling in their fields
         self.session = Session()
@@ -417,9 +455,10 @@ class SessionHttpAdapter(PhtHttpAdapter):
         # now fill in their fields
         self.updateFromPost(data)
 
-        self.notify(self.session.proposal)
-
     def updateFromPost(self, data):
+
+        msg = "Updatting Session %s: %s" % (data.get('name'), data)
+        self.logger.info(msg)
 
         # we can change which proposal this session belongs to
         pcode = data.get('pcode')
@@ -459,6 +498,7 @@ class SessionHttpAdapter(PhtHttpAdapter):
         self.session.allotment.repeats = self.getFloat(data, 'repeats') #data.get('repeats')
         self.session.allotment.requested_time = self.getFloat(data, 'requested_time')
         self.session.allotment.allocated_time = self.getFloat(data, 'allocated_time')
+        self.session.allotment.allocated_repeats = self.getFloat(data, 'allocated_repeats')
         self.session.allotment.semester_time = self.getFloat(data, 'semester_time')
         self.session.allotment.period_time = self.getFloat(data, 'period_time')
         self.session.allotment.low_freq_time = self.getFloat(data, 'low_freq_time')
@@ -481,6 +521,8 @@ class SessionHttpAdapter(PhtHttpAdapter):
         self.session.target.save()
 
         # flags
+        for f in ['thermal_night', 'rfi_night', 'optical_night']:
+            self.checkFlag(data, f)
         self.session.flags.thermal_night = self.getBool(data, 'thermal_night')
         self.session.flags.rfi_night = self.getBool(data, 'rfi_night')
         self.session.flags.optical_night = self.getBool(data, 'optical_night')
@@ -528,6 +570,13 @@ class SessionHttpAdapter(PhtHttpAdapter):
         self.session.save()
         self.notify(self.session.proposal)
 
+    def checkFlag(self, data, flagName):
+        "We keep having this problem where flags are unintentionally getting reset. Catch it."
+        if not self.getBool(data, flagName) and self.session.flags.__getattribute__(flagName):
+            msg = 'Flag getting unset: (%s, %s)' % (flagName, data)
+            self.logger.warning(msg)
+
+        #self.session.flags.thermal_night = self.getBool(data, 'thermal_night')
     def update_rcvrs_granted(self, data):
         "Converts comma-separated string to objects."
 

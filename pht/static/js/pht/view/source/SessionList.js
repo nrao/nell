@@ -131,6 +131,7 @@ Ext.define('PHT.view.source.SessionList' ,{
         {
             type: 'rest',
             url: '/pht/sessions/' + session_id + '/sources',
+            timeout: 600000,
             reader: {
                 type : 'json',
                 root: 'sources',

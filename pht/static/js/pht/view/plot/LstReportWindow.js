@@ -15,7 +15,26 @@ Ext.define('PHT.view.plot.LstReportWindow', {
             emptyText: 'Select a session...',
             fieldLabel: 'Session'
         });
-
+        var carryoverTypes = Ext.create('Ext.data.Store', {
+            fields: ['type'],
+            data:[
+                {'type' : 'Remaining Time'},
+                {'type' : 'Next Semester Time'},
+                ]
+        });        
+         this.carryoverTypesCombo = Ext.create('Ext.form.field.ComboBox', {
+            name: 'carryoverType',
+            fieldLabel: 'Carryover',
+            store: carryoverTypes,
+            queryMode: 'local',
+            //lastQuery: '',
+            displayField: 'type',
+            valueField: 'type',
+            value: 'Next Semester Time',
+            hideLabel: false,
+            editable: false,
+            //emptyText: 'Select a carryover type...',
+        });
         this.items = [{
             xtype: 'form',
             autoScroll: true,
@@ -23,12 +42,23 @@ Ext.define('PHT.view.plot.LstReportWindow', {
             items: [{
                 xtype: 'checkboxfield',
                 name: 'debug',
-                fieldLabel: 'Debug?',
+                fieldLabel: 'Details?',
                 uncheckedValue: 'false',
                 inputValue: 'true',
                 labelAlign: 'left',
             },
-            this.sessionCombo
+            this.sessionCombo,
+            this.carryoverTypesCombo,
+            {
+                xtype: 'checkboxfield',
+                name: 'adjustWeatherBins',
+                fieldLabel: 'Adjust Weather?',
+                uncheckedValue: 'false',
+                inputValue: 'true',
+                //value : 'checked',
+                checked: true,
+                labelAlign: 'left',
+            },
             ],
         }];    
 

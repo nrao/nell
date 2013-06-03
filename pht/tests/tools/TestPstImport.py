@@ -24,6 +24,7 @@ from django.test         import TestCase
 
 from pht.tools.database import PstImport
 from pht.models         import Proposal
+from pht.models         import Receiver
 from pht.models         import ImportReport
 
 class TestPstImport(TestCase):
@@ -32,6 +33,22 @@ class TestPstImport(TestCase):
 
     def setUp(self):
         self.pst = PstImport()
+
+        # too lazy to fix fixtures, so add new rx's here:
+        r = Receiver(name = 'RcvrWide12_18'
+                   , abbreviation = 'KuWide'
+                   , freq_low = 12.0
+                   , freq_hi = 18.0
+                   , code = 'D'
+                     )
+        r.save()             
+        r = Receiver(name = 'Rcvr_PAR15'
+                   , abbreviation = 'MBA1.5'
+                   , freq_low = 80.0
+                   , freq_hi = 100.0
+                   , code = 'G'
+                     )
+        r.save()             
 
     def test_importProposal(self):
         proposal = self.pst.importProposal('GBT/12A-002')
@@ -65,6 +82,12 @@ class TestPstImport(TestCase):
         self.assertTrue(0 < len(reports[0].report))
         proposal.delete()
 
+    def test_importProposal_GBT13A_072(self):
+        "Had problems import this ones resources."
+        proposal = self.pst.importProposal('GBT/13A-072')
+        for s in proposal.session_set.all():
+            self.assertTrue(len(s.receivers.all()) > 0)
+
     def test_semesterFromPcode(self):
 
         self.assertEquals("12A", self.pst.semesterFromPcode("GBT/12A-002"))
@@ -83,8 +106,41 @@ class TestPstImport(TestCase):
 
     def test_importProposals(self):
         self.pst.importProposals('12A')
-        self.assertTrue(len(Proposal.objects.all()) > 0)
         ps = Proposal.objects.all()
+        expSessTypes = [
+              'Fixed'
+            , 'Open - High Freq 1'
+            , 'Open - High Freq 2'
+            , 'Open - Low Freq'
+            , 'Windowed'
+            ]
+        expObsTypes = [ 'continuum'
+                      , 'pulsar'
+                      , 'radar'
+                      , 'spectral line'
+                      , 'vlbi']
+
+        self.checkProposals(ps, expSessTypes, expObsTypes)
+
+    def test_importProposals_13A(self):
+        self.pst.importProposals('13A')
+        ps = Proposal.objects.all()
+        expSessTypes = [
+              'Fixed'
+            , 'Open - High Freq 1'
+            , 'Open - High Freq 2'
+            , 'Open - Low Freq'
+            , 'Windowed'
+            ]
+        expObsTypes = [ 'continuum'
+                      , 'pulsar'
+                      , 'spectral line'
+                      , 'vlbi']
+
+        self.checkProposals(ps, expSessTypes, expObsTypes)
+
+    def checkProposals(self, ps, expSessTypes, expObsTypes):
+        self.assertTrue(len(ps) > 0)
         stypes = []
         otypes = []
         wtypes = []
@@ -96,6 +152,9 @@ class TestPstImport(TestCase):
                 for s in p.session_set.all():
                     self.assertEqual('Fixed', s.session_type.type)
             for s in p.session_set.all():
+                self.assertTrue(s.session_type is not None)
+                self.assertTrue(s.observing_type is not None)
+                self.assertTrue(s.weather_type is not None)
                 # collect the various types being set
                 if s.session_type is not None and \
                     s.session_type.type not in stypes:
@@ -112,18 +171,6 @@ class TestPstImport(TestCase):
 
         self.assertEqual(0, noObsType)
         # make sure the types we are setting are reasonable
-        expSessTypes = [
-              'Fixed'
-            , 'Open - High Freq 1'
-            , 'Open - High Freq 2'
-            , 'Open - Low Freq'
-            , 'Windowed'
-            ]
-        expObsTypes = [ 'continuum'
-                      , 'pulsar'
-                      , 'radar'
-                      , 'spectral line'
-                      , 'vlbi']
         self.assertEquals(expObsTypes, sorted(otypes))
         self.assertEquals(expSessTypes, sorted(stypes))
         self.assertEquals(['Excellent', 'Good', 'Poor'], sorted(wtypes))
@@ -133,8 +180,16 @@ class TestPstImport(TestCase):
 
     def test_importProposals_12B(self):
         self.pst.importProposals('12B')
-        self.assertTrue(len(Proposal.objects.all()) > 0)
-        for p in Proposal.objects.all():
+        ps = Proposal.objects.all()
+        self.assertTrue(len(ps) > 0)
+        # before cleaning up, check a few things
+        p = Proposal.objects.get(pcode = 'GBT12B-352')
+        # one of the few exceptions where they use a different pi
+        self.assertTrue(p.pi is not None)
+        self.assertTrue(p.contact is not None)
+        self.assertTrue(p.pi != p.contact)
+        # clean up
+        for p in ps:
             self.assertTrue(len(p.session_set.all()) > 0)
             p.delete()
 

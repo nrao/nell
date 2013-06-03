@@ -73,13 +73,20 @@ class LstPressureReport(Report):
 
         self.fltFrmt = "%5.2f"
 
-    def report(self, sessions = None, debug = False):
+    def report(self
+             , sessions = None
+             , debug = False
+             , carryOverUseNextSemester = True
+             , adjustWeatherBins = True
+              ):
 
         if sessions is not None:
             self.title += " for %s" % ",".join([s.name for s in sessions])
             self.titleOffset = 100 + len(self.title) 
 
         # crunch the numbers
+        self.lst.carryOverUseNextSemester = carryOverUseNextSemester
+        self.lst.adjustWeatherBins = adjustWeatherBins
         self.lst.getPressures(sessions) 
 
         # now mak'm pretty
@@ -216,6 +223,15 @@ class LstPressureReport(Report):
 
         els = [self.pg("Debug Info:", bold = True)]
 
+        # how did we calculate pressures?
+        method = "Next Semester Time" if self.lst.carryOverUseNextSemester else "Remaining Time"
+        msg = "Calculated Carryover using " + method
+        els.append(self.getBreak())
+        els.append(self.pg(msg))
+        msg = "Adjusted Weather Bins? " + str(self.lst.adjustWeatherBins)
+        els.append(self.getBreak())
+        els.append(self.pg(msg))
+
         # warnings ?
         valid, msgs = self.lst.checkPressures()
         if not valid:
@@ -234,6 +250,22 @@ class LstPressureReport(Report):
                          , bold = True))
         els.append(self.createChangesTable())
 
+        # breakdown of pre-assigned time
+        els.append(self.getBreak()) 
+        els.append(self.pg("Maintenance Pressure", bold = True))
+        els.append(self.createPressureTable(self.lst.maintenancePs.allTypes()
+                                          , self.lst.maintenancePs))
+        els.append(self.getBreak()) 
+        els.append(self.pg("Shutdown Pressure", bold = True))
+        els.append(self.createPressureTable(self.lst.shutdownPs.allTypes()
+                                          , self.lst.shutdownPs))
+        els.append(self.getBreak()) 
+        els.append(self.pg("Testing Pressure", bold = True))
+        els.append(self.createPressureTable(self.lst.testingPs.allTypes()
+                                          , self.lst.testingPs))
+        els.append(self.getBreak()) 
+
+
         # non traditional sessions
         if len(self.lst.badSessions) > 0:
             ss = self.createSessionElements("Session's without pressures (bad):"
@@ -247,22 +279,18 @@ class LstPressureReport(Report):
             ss = self.createSessionElements("Session's using semester time:"
                                          , self.lst.semesterSessions)
             els.extend(ss)
-        if len(self.lst.noGrades) > 0:
-            ss = self.createSessionElements("Session's without grades:"
-                                         , self.lst.noGrades)
-            els.extend(ss)
-        if len(self.lst.failingSessions) > 0:
-            ss = self.createSessionElements("Session's with failing grades:"
-                                         , self.lst.failingSessions)
-            els.extend(ss)
+
 
         # session details
         els.append(self.getBreak())
         els.append(self.pg("Session Details:", bold = True))
         data = [self.createLstRow()]
         for name in sorted(self.lst.pressuresBySession.keys()):
-            bucket, ps, total = self.lst.pressuresBySession[name]
-            label = "%s: (%s, %5.2f)" % (name, bucket, total)
+            cat, subcat, ps, total = self.lst.pressuresBySession[name]
+            if subcat == '':
+                label = "%s: (%s, %5.2f)" % (name, cat, total)
+            else:    
+                label = "%s: (%s, %s, %5.2f)" % (name, cat, subcat, total)
             data.append(self.getDataRow(label, ps))
         widths = [120]
         widths.extend([25]*(self.lst.hrs-1))

@@ -20,24 +20,25 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
+
 from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
 from datetime        import date, datetime, timedelta
-from scheduler.models import *
+from scheduler.models import Period
 from utilities       import TimeAgent
 
 import calendar
 
-ALL_PERIODS = [p for p in Period.objects.all() if p.isScheduled() or p.isCompleted()]
 
 def getPeriods():
-    return ALL_PERIODS
+    return [p for p in Period.objects.all().order_by('start') if p.isScheduled() or p.isCompleted()]
 
 def filterPeriods(periods, condition):
     "Filters periods according to some critia, e.g. is science?"
     return [p for p in periods if eval(condition)]
+    
 
 def filterPeriodsByDate(start):
     "Returns the periods within a given month and year."
@@ -45,7 +46,7 @@ def filterPeriodsByDate(start):
     stop  = datetime(start.year, start.month, day, 23, 59, 59)
     ustart = TimeAgent.est2utc(start)
     ustop  = TimeAgent.est2utc(stop)
-    return [p for p in ALL_PERIODS \
+    return [p for p in getPeriods() \
             if (p.start >= ustart or p.end() > ustart) and p.start < ustop]
 
 def normalizePeriodStartStop(period, dt):
@@ -66,8 +67,7 @@ def normalizePeriodStartStop(period, dt):
 
 def getTime(periods, month):
     periods.sort(key = lambda x: x.start)
-    ss = [(stop - start).seconds / 3600. for start, stop in [normalizePeriodStartStop(p, month) for p in periods]]
-    return sum([(stop - start).seconds / 3600. \
+    return sum([TimeAgent.timedelta2frachours(stop - start) \
                  for start, stop in [normalizePeriodStartStop(p, month) \
                                      for p in periods]])
 
@@ -77,9 +77,19 @@ def getScheduledTime(periods, month):
                  , month)
 
 def getDowntime(periods, month):
-    return sum([p.accounting.lost_time() \
-                for p in filterPeriods(periods
-                                     , 'p.session.project.is_science()')])
+    "This does not use getTime because lost time must be handled carefully"
+                                     
+    ps =  filterPeriods(periods, 'p.session.project.is_science()')
+    ps.sort(key = lambda x: x.start)
+    total = 0.0
+    for p in ps:
+        start, stop = normalizePeriodStartStop(p, month)
+        hrs = TimeAgent.timedelta2frachours(stop - start)
+        # We must normalize the lost time as well
+        lostTime = (hrs/p.duration) * p.accounting.lost_time()
+        total += lostTime
+    return total 
+
 
 def getMaintenance(periods, month):
     return getTime(filterPeriods(periods, 'p.session.project.is_maintenance() and not p.session.project.is_shutdown()')

@@ -78,6 +78,26 @@ class PstInterface(object):
         row  = self.cursor.fetchone()
         return dict(zip(keys, map(self.safeUnicode, row)))
 
+    def isJointProposal(self, pcode):
+        pcode    = pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/')
+        q = "select JOINT_PROPOSAL_TYPE from proposal where PROP_ID = '%s'" % pcode
+        self.cursor.execute(q)
+        row = self.cursor.fetchone()
+        if row is not None:
+            return row[0].lower() != 'not a joint proposal'
+        else:
+            return False
+
+    def getRelatedProposals(self, proposal):
+        if proposal.pst_proposal_id is None:
+            return None
+        q = """
+             select RELATED_PROPOSALS
+             from proposal
+             where proposal_id = %s""" % proposal.pst_proposal_id
+        self.cursor.execute(q)
+        return self.cursor.fetchone()[0]
+
     def getAuthor(self, author_id):
         q = """
             select * from author where author_id = %s
@@ -103,9 +123,22 @@ class PstInterface(object):
         self.cursor.execute(q)
         return dict([(k, v if v is not None and v != 'None' else '') for k, v in self.fetchoneDict().iteritems()])
 
+    def getProposalTechnicalReviews(self, pcode):
+        pcode = pcode.replace('GBT', 'GBT/').replace('VLBA', 'VLBA/')
+        q = """
+        select tr.commentsForAuthors, tr.commentsForTAC, person.firstName, person.lastName
+        from (((proposal as p 
+          join proposal_reviews as pr on pr.proposal_id = p.proposal_id) 
+          join technical_reviews as tr on tr.review_id = pr.review_id)
+          join referees as ref on ref.referee_id = pr.referee_id)
+          join person on person.person_id = ref.person_id
+        where PROP_ID = '%s'
+        """ % pcode
+        self.cursor.execute(q)
+        return self.cursor.fetchall()
+        
     def getSrcField(self, field, table):
         q = "select DISTINCT %s from %s order by %s" % (field, table, field)
-        print q
         self.cursor.execute(q)
         keys = self.getKeys()
         return [dict(zip(keys, map(self.safeUnicode, row))) for row in self.cursor.fetchall()]

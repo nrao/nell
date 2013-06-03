@@ -1,7 +1,7 @@
 Ext.define('PHT.store.Sessions', {
     extend: 'Ext.data.Store',
     model: 'PHT.model.Session',
-    autoLoad: false,
+    autoLoad: true,
     pageSize: 50,
     //remoteFilter: true,
     //remoteSort: true,

@@ -11,6 +11,8 @@ Ext.define('PHT.model.Proposal', {
            , 'friend_id'
            , 'pi_name'
            , 'pi_id'
+           , 'contact_name'
+           , 'contact_id'
            , 'authors'
            , 'sci_categories'
            , 'sci_cat_codes'
@@ -41,6 +43,7 @@ Ext.define('PHT.model.Proposal', {
            , 'tech_review_to_pi'
            , 'tech_review_to_tac'
            , 'tac_to_pi'
+           , 'tac_to_tac'
            ], 
     proxy: {
         type: 'rest',

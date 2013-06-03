@@ -195,6 +195,6 @@ class SessionInActiveAlerts(object):
                 sa.notify()
         
 if __name__ == "__main__":
-    sa = SessionAlerts()
+    sa = SessionInActiveAlerts()
     sa.raiseAlerts()
     sa.raiseAlertsDSSTeam()

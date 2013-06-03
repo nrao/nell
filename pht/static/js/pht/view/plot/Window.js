@@ -55,6 +55,35 @@ Ext.define('PHT.view.plot.Window', {
             hideLabel: true,
             emptyText: 'Select a plot type...',
         });
+        var carryoverTypes = Ext.create('Ext.data.Store', {
+            fields: ['type'],
+            data:[
+                {'type' : 'Remaining Time'},
+                {'type' : 'Next Semester Time'},
+                ]
+        });        
+         this.carryoverTypesCombo = Ext.create('Ext.form.field.ComboBox', {
+            name: 'carryoverType',
+            fieldLabel: 'Carryover',
+            store: carryoverTypes,
+            queryMode: 'local',
+            //lastQuery: '',
+            displayField: 'type',
+            valueField: 'type',
+            value: 'Next Semester Time',
+            hideLabel: false,
+            editable: false,
+            //emptyText: 'Select a carryover type...',
+        });
+        // TBF: why doesn't this work?
+        /*
+        this.adjustCheckBox = Ext.create('Ext.form.field.CheckBox', {
+            name : 'adjustWeatherBins',
+            fieldLabel: 'Adjust Weather?',
+            //allowBlank: false,
+            //value : 'checked',
+        });
+        */
         this.dockedItems = [{
             xtype: 'toolbar',
             items: [
@@ -78,6 +107,19 @@ Ext.define('PHT.view.plot.Window', {
                 {
                     text: 'Print',
                     action: 'print',
+                },
+                {
+                    xtype: 'tbseparator'
+                },
+                this.carryoverTypesCombo,
+                {
+                    xtype: 'tbseparator'
+                },
+                {
+                    xtype: 'checkboxfield',
+                    name: 'adjustWeatherBins',
+                    fieldLabel: 'Adjust Weather?',
+                    checked: true,
                 },
             ]
         }];

@@ -82,6 +82,7 @@ Ext.define('PHT.view.source.ProposalList' ,{
         {
             type: 'rest',
             url: '/pht/proposals/' + pcode + '/sources',
+            timeout: 600000,
             reader: {
                 type : 'json',
                 root: 'sources',

@@ -39,6 +39,8 @@ class PstImport(PstInterface):
         self.badFrontends = []
         self.badBackends = []
 
+        self.thermalNightRcvrs = ['W', 'MBA', 'MBA1.5']
+
         # for reporting
         self.lines = []
         self.quiet = quiet
@@ -67,9 +69,11 @@ class PstImport(PstInterface):
             , 'KFPA (shared risk)'              : 'KFPA'
             , 'Ku-Band (12.0-15.4 GHz)'         : 'Ku'
             , 'Ku-band Shared Risk (12-18 GHz)' : 'Ku'
+            , 'Ku-wideband Shared Risk (11-18 GHz)' : 'KuWide'
             , 'L-Band (1.15-1.73 GHz)'          : 'L'
             , 'Mustang'                         : 'MBA'
             , 'Mustang (90 GHz)'                : 'MBA'
+            , 'Mustang 1.5'                     : 'MBA1.5'
             , 'Other'                           : 'None'
             , 'PF1 340 MHz (0.290-0.395 GHz)'   : '342'
             , 'PF1 450 MHz (0.385-0.520 GHz)'   : '450'
@@ -84,7 +88,8 @@ class PstImport(PstInterface):
             , 'W-band MM4 (85-93.3 GHz)'        : 'W'
             , 'W-band Shared Risk (68-92 GHz)'  : 'W'
             , 'X-Band (8.0-10.0 GHz)'           : 'X'
-       }
+        }
+        self.frontendMapLower = dict([(k.lower(), v) for k, v in self.frontendMap.iteritems()])
 
 
         # PST backends to PHT backend abbreviations
@@ -105,6 +110,7 @@ class PstImport(PstInterface):
             'VEGAS': 'Vegas',
             'VEGAS Shared Risk': 'Vegas',
             'Zpectrometer': 'Zpect'}
+        self.backendMapLower = dict([(k.lower(), v) for k, v in self.backendMap.iteritems()])
 
     def importProposalsByPhtPcode(self, pcodes):
         "Handles differences in PST/PHT pcodes"
@@ -324,6 +330,10 @@ class PstImport(PstInterface):
         proposal.save()
 
     def fetchAuthors(self, proposal):
+        "While creating PHT authors for this proposal, also mark who is the contact"
+        # what id are we watching out for, so we can assign contact?
+        contactId = self.getPrincipalContactId(proposal)
+        # now query for all the authors
         q = """
             select person.person_id, a.* 
             from (author as a 
@@ -334,7 +344,22 @@ class PstImport(PstInterface):
         self.cursor.execute(q)
         keys = self.getKeys()
         for row in self.cursor.fetchall():
-            author = Author.createFromSqlResult(dict(zip(keys, map(self.safeUnicode, row))), proposal)
+            result = dict(zip(keys, map(self.safeUnicode, row)))
+            author = Author.createFromSqlResult(result, proposal)
+            # is this author actually the contact as well?
+            if int(author.pst_author_id) == contactId:
+                proposal.contact = author
+                proposal.save()
+
+    def getPrincipalContactId(self, proposal):
+        q = """
+            select contact_id 
+            from proposal
+            where proposal_id = '%s'
+            """ % proposal.pst_proposal_id
+        self.cursor.execute(q)
+        r = self.cursor.fetchone()
+        return int(r[0])
 
     def fixAuthorsBits(self):
         """
@@ -465,18 +490,18 @@ class PstImport(PstInterface):
     def importResources(self, session):
         "Get the front & back ends associated with this session."
 
-        type = self.fetchTypeOfResource(session.pst_session_id)
+        # Assume this is a GBT session and try to import its resources
+        success = self.importGBTResource(session)
 
-        # if it ain't GBT or VLBA, we don't bother
-        if type is not None and type == 'GBT':
-            self.importGBTResource(session)
-        elif type is not None and type == 'VLBA':
+        # If we failed to import the GBT resources assume its VLBA
+        if not success:
             b = Backend.objects.get(abbreviation = 'gbtVLBA')
             session.backends.add(b)
             session.save()
 
     def fetchTypeOfResource(self, pst_sess_id):    
         "We need to know if this is for GBT or VLA, or what."
+        # This relation is not always set in the PST.  Use at your own risk.
 
         q = """select r.TELESCOPE 
         from RESOURCES as r, sessionPair as sp, session as s 
@@ -489,44 +514,63 @@ class PstImport(PstInterface):
             return None
         return rows[0]
 
+    def findReceiver(self, rx):
+        rcvr = self.frontendMap.get(rx) or self.frontendMapLower.get(rx.lower())
+        if rcvr is None:
+            for k, v in self.frontendMap.iteritems():
+                if v.lower() + '-band' in rx.lower():
+                    rcvr = v
+                    break
+        return rcvr
+
+    def findBackend(self, backend):
+        backend = self.backendMap.get(backend) or self.backendMapLower.get(backend.lower())
+        return backend
+
     def importGBTResource(self, session):
         "Turn PST resource info into our front & back end objects."
 
         # ignore resource groups, and just get the resources for 
         # this session
         q = """
-        select gr.FRONT_END, gr.BACK_END 
+        select gr.FRONT_END, gr.BACK_END, gr.RECEIVER_OTHER 
         from GBT_RESOURCE as gr, sessionResource as sr 
         where gr.Id = sr.resource_id 
             AND sr.SESSION_ID = %d
         """ % session.pst_session_id
         self.cursor.execute(q)
         rows = self.cursor.fetchall()
+        if len(rows) == 0:
+            return False
         self.initMap()
         for r in rows:
             # associate the front end w/ this session
-            rcvr = self.frontendMap.get(r[0], None)
-            if rcvr is not None and rcvr != 'None':
-                rcvr = Receiver.get_rcvr(rcvr)
-                session.receivers.add(rcvr)
-                # default this receiver as granted
-                session.receivers_granted.add(rcvr)
-                self.checkForNightTimeRx(session, rcvr)
-            elif rcvr is None:
-                self.badFrontends.append((session, r[0]))
-            # associate the front end w/ this session
-            backend = self.backendMap.get(r[1], None)
+            if str(r[0]).strip() == 'Other':
+                # special case: use what they gave as the 'other'
+                other = str(r[2]).strip()
+                session.other_receiver = other
+            else:    
+                rcvr = self.findReceiver(r[0])
+                if rcvr is not None and rcvr != 'None':
+                    rcvr = Receiver.get_rcvr(rcvr)
+                    session.receivers.add(rcvr)
+                    # default this receiver as granted
+                    session.receivers_granted.add(rcvr)
+                    self.checkForNightTimeRx(session, rcvr)
+                elif rcvr is None:
+                    self.badFrontends.append((session, r[0]))
+            # associate the back end w/ this session
+            backend = self.findBackend(r[1])
             if backend is not None and backend != 'None':
                 backend = Backend.objects.get(abbreviation = backend)
                 session.backends.add(backend)
             elif backend is None:
                 self.badBackends.append((session, r[1]))
+        return True
     
     def checkForNightTimeRx(self, session, rcvr):
-        if rcvr.abbreviation == 'W' or rcvr.abbreviation == 'MBA':
+        if rcvr.abbreviation in self.thermalNightRcvrs:
             session.flags.thermal_night = True
-            session.flags.rfi_night     = True
-            session.flags.optical_night = True
             session.flags.save()
 
     def fetchSources(self, proposal):
@@ -581,11 +625,13 @@ class PstImport(PstInterface):
         result = None
         pi = ''
         tac = ''
-        for row in self.cursor.fetchall():
-            pi  += ' \n' + row[0]
-            tac += ' \n' + row[1]
-        if pi != '' and tac != '':
-            result = (pi, tac)
+        rows = self.cursor.fetchall()
+        for row in rows:
+            if row[0] is not None and row[1] is not None:
+                pi  += ' \n' + row[0]
+                tac += ' \n' + row[1]
+            if pi != '' and tac != '':
+                result = (pi, tac)
         return result    
 
     def fetchSRPComments(self, proposal_id):
@@ -661,6 +707,47 @@ class PstImport(PstInterface):
                 f.write("    New: %s, %s\n" % (v['new'][0], v['new'][1]))
         f.write("Changed %d of %d sessions.\n" % (changed, len(ss)))    
         f.close()    
+
+    def importAllContacts(self):
+        "For adding contacts to already imported proposals"
+        ps = Proposal.objects.all().order_by('pcode')
+        for p in ps:
+            self.importContact(p)
+
+    def importContact(self, proposal):
+        "Import the contact for the given proposal"
+        if proposal.pst_proposal_id is None:
+            return
+
+        q = """
+            select p.contact_id 
+            from proposal as p
+            where p.proposal_id = %d
+            order by p.PROP_ID
+        """ % proposal.pst_proposal_id
+        try:
+            self.cursor.execute(q)
+            r = self.cursor.fetchone()
+            # contact for this proposal?
+            if r is not None:
+                # who IS the contact?
+                authors = Author.objects.filter(pst_author_id = int(r[0]))
+                if len(authors) == 1:
+                    author = authors[0]
+                elif len(authors) == 0:
+                    author = None
+                    print "No contact for ", proposal.pcode
+                else:
+                    author = authors[0]
+                    print "Too many authors: ", proposal.pcode, authors
+                # assign the contact    
+                print proposal.pcode, r, author
+                proposal.contact = author
+                proposal.save()
+                if proposal.contact != proposal.pi:
+                    print "PI Different: ", proposal.pi
+        except:
+            print "Exception with proposal: ", proposal
 
     def reportLine(self, line):
         "Add line to stuff to go into report file, and maybe to stdout too."

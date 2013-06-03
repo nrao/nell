@@ -114,9 +114,15 @@ Ext.define('PHT.controller.PhtController', {
     },
 
     updateRecord: function(button, selectedRecords, store) {
-        var win      = button.up('window'),
-            form     = win.down('form'),
-            record = form.getRecord(),
+        var win      = button.up('window');
+        var nowin    = false;
+        if (!win) {
+            nowin = true;
+            var form = button.up('form');
+        } else {
+            var form   = win.down('form');
+        }
+        var record = form.getRecord(),
             values   = form.getValues();
 
         // editing one, or multiple records?
@@ -131,8 +137,8 @@ Ext.define('PHT.controller.PhtController', {
             this.setRecord(record, values);
 
             // Is this a new record?
-            if (record.get('id') == '') {
-                // save on the server side 
+            if (record.phantom){
+                // save on the server side
                 record.save({
                     callback: function(obj) {
                         // TBF: just used this object?
@@ -171,7 +177,7 @@ Ext.define('PHT.controller.PhtController', {
             store.sync();
             // clean up
             selectedRecords = [];
-            win.close();
+            if (!nowin) { win.close();}
         }
     },    
     

@@ -36,6 +36,10 @@ class SessionGrade(models.Model):
               , 'grade' : self.grade
                }
 
+    def isPassing(self):
+        "Only A, B, C is a passing grade"
+        return self.grade in ['A', 'B', 'C']
+
     @staticmethod
     def jsonDictOptions():
         return [ot.jsonDict() for ot in SessionGrade.objects.all()]

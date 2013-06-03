@@ -1,0 +1,1050 @@
+\documentclass{article} 
+\usepackage{phpn}
+\usepackage{epsfig}
+\usepackage{epstopdf}
+\usepackage{graphicx}
+\usepackage{algorithmic}
+
+
+
+%------------------------------------------------------------------------------
+\newcommand{\mydoctitle}     {LST Pressures in the Green Bank Telescope Proposal Handling Tool}
+\newcommand{\mydocauthors}   {P. Marganian \& T. Minter \& K. O'Neil}
+\newcommand{\mydocdate}      {\today}
+\newcommand{\mydocnumber}    {2.0}
+\newcommand{\mydocarchive}   {PH002}
+\newcommand{\mydockeys}      {PH, PHT, proposals, sessions, projects, scheduling}
+
+%------------------------------------------------------------------------------
+% Document starts here with some standard preamble
+
+\begin{document}
+
+% Make header
+\mydochead{\mydoctitle}{\mydocauthors}{\mydocdate}{\mydocnumber}
+     {\mydocarchive}{\mydockeys}
+
+\begin{abstract}
+This memo describes the way in which LST Pressures are done within the Proposal Handling Tool for the Robert C. Byrd Green Bank Telescope.
+\end{abstract}
+
+\toc
+
+\vspace{0.5in}
+{\Large\bf History}
+\begin{description}
+\item [2.0] Original Draft (Marganian)
+\end{description}
+
+\clearpage
+
+
+\section{Introduction}\label{intro}
+The Robert C. Byrd Green Bank Telescope (GBT) is implementing a new Proposal Handling Tool (PHT) which will replace the current way in which GBT proposals are handled and prepared for scheduling.  This document
+describes the LST Pressures that are calculated as part of the GBT PHT.
+
+\section{Introduction to Pressures}
+
+What are pressures? In this context, the pressure represents how loaded the GBT schedule is. In our case, we break this up by several categories. The first obvious break up is by LST. For example, there may be many more hours of desired GBT observations near the galactic center (LST's 15 -20, or so) than at other LSTs. These pressures can be further broken down by the type of observations: whether they represent pre-commited time (maintenance, testing, etc), or new proposals, etc.  On top of that, we can further break down some of these numbers by the grade of the newly allocated session, and the weather it requires.
+
+Note that the user sees this information represented in a plot, or perhaps a report. The display doesn't concern us much here - the calculations are what we're trying to describe.
+
+So, how do we figure this out in the context of the GB PHT? Well, here's what we have to map: a database of proposal information to a presentation of the plots. 
+
+\section{Definitions}
+
+Unless otherwise noted, the following terms can be represented by numbers split up by LST and poor, good, or excellent weather: 
+
+
+\begin{itemize}
+\item {\bf Semester}: NRAO breaks up the year into two segments, A and B.  The A semester goes from Feb. 1 to July 31.  The B semester goes from Aug. 1 to Jan 31.
+\item {\bf Current Semester}: Simply the semester that we are currently in.
+\item {\bf Next Semester}: This is the semester to follow the current one, and is the semester for which the TAC is considering.  If today were July 1, 2012, the Current Semester would be 12A, and the Next Semester would be 12B, starting August 1, 2012. 
+\item {\bf Past Semesters}: Any semester before the Current Semester.
+\item {\bf Future Semesters}: Any semester after the Next Semester.
+\item {\bf Availability} ($V$): Simply the number of hours in each day/LST for the Next Semester. For 12B this is 181 days, or 181 hours per LST.   
+\item {\bf Pressure Category}: This refers to what 'kind' of pressure a session will count against. The following are all different categories: requested, allocated, carryover, poor-A, poor-B, etc.   
+\item {\bf Requested} ($Q$): These are all the new proposals for the Next Semester that have yet to be allocated any time 
+\item {\bf Allocated} ($A$): These are all the new proposals for the Next Semester that {\bf have} been allocated time and grade.  
+\item {\bf Carryover} ($C$): this is basically all the other stuff from the Current and Past Semesters that's been previously allocated time on the GBT. This includes
+\begin{itemize}
+\item {\bf Astronomical Carryover} ($C_{\rm astro}$): Astronomy projects from previous semesters that haven't completed yet.  These can be further broken down by grade's A, B and C ($C_{\rm astro, \rm A}$, $C_{\rm astro, \rm B}$, $C_{\rm astro, \rm C}$). 
+\item {\bf Pre-Assigned} ($P$): Maintenance, Shutdown and Testing Sessions.
+\begin{itemize}
+\item {\bf Maintenance and Shutdown} - Any session that belongs to the DSS Projects name 'Maintenance' or 'Shutdown'
+\item {\bf Testing} - These are testing sessions from the Next Semester that are of observing type 'commissioning', 'testing', or 'calibration'
+\end{itemize}
+\end{itemize}
+\item {\bf Ignored} ($I$): These are all the proposals from past semesters that were never allocated time. 
+\item {\bf Failing Grade}: Any grade other then A, B, or C. This implies that a session with this grade won't be given time on the GBT in the Next Semester, and won't be moved over to the DSS for scheduling.  
+\item {\bf Time Remaining}: This refers to the DSS project and/or session field of the same name; Once a PHT proposal spawns a DSS project and begins observing, this quantity will continue to decrease, via all the complicated DSS Time Accounting rules. 
+\item {\bf Next Semester Time}: This is a PHT session field which the user can fill in to specify how much time the associated DSS session will still have left by the end of the current semester. These are usually based off a DSS 'lookahead' simulation. 
+\item {\bf Weather Types}: We break up the weather into 3 types: {\bf Poor}, {\bf Good}, {\bf Excellent}. We can break up all the above terms up by weather, for example: $V_{\rm poor}$ would be the Availability for Poor Weather.  We use simple ratios to break up Availability by weather (.50, .25, .25). So $V_{\rm poor}$ is simply 181 * .5 = 90.5 
+    \begin{itemize}
+    \item {\bf Poor}:  This is weather required by sessions observing less then 8 GHz. 
+    \item {\bf Good}:  This is weather required by sessions observing between 8 and 18 GHz, and 26 and 50 GHz.
+    \item {\bf Weather}:  This is weather required by sessions observing between 18 and 26 GHz, and larger then 60 GHz. 
+    \end{itemize}
+\item {\bf Weather-Grade}: This is a subset of the allocated pressure category. Each allocated session can be assigned poor, good, or excellent weather, and also gets a grade. So $A_{\rm poor, \rm A}$ is the total of the Sessions that have been assigned a grade A and Poor weather. 
+\item {\bf Remaining} ($R$): Simply {\bf Availability} minus {\bf Carryover}.  This is the time available for new astronomy in the Next Semester. 
+\item {\bf Astronomy Available}: {\bf Availability} - {Pre-Assigned}.  By taking away the Maintenance, Shutdown, and Testing already pre-assinged to the Next Semester, you see how much is left for astronomy.
+\end{itemize}
+
+\subsection{Arithmetic}
+
+All times can be broken down by weather type.  Generically:
+
+\begin{equation}
+Time = Time_{\rm poor} + Time_{\rm good} + Time_{\rm excellent} 
+\end{equation}
+
+The time remaining is the difference between the availability and the carryover:
+\begin{equation}
+R = V - C 
+\end{equation}
+
+Carryover, in turn is composed of astronomical carryover and pre-assigned time:
+\begin{equation}
+C = C_{\rm astro} + P 
+\end{equation}
+
+Astronomical Carryover can be broken down by grade:
+\begin{equation}
+C_{\rm astro} = C_{\rm astro, \rm A} +  C_{\rm astro, \rm B} +  C_{\rm astro, \rm C}   
+\end{equation}
+
+Finally, we break down the allocated time by grade {\bf and} weather type:
+\begin{equation}
+A = A_{\rm poor, \rm A} +  A_{\rm poor, \rm B} +  A_{\rm poor, \rm B} + A_{\rm good, \rm A} +  A_{\rm good, \rm B} +  A_{\rm good, \rm B} + A_{\rm excellent, \rm A} +  A_{\rm excellent, \rm B} +  A_{\rm excellent, \rm B} 
+\end{equation}
+
+\section{Computing Basic Pressures}
+
+Calculating the LST pressure for a session
+
+\subsection{Basic Pressures}
+
+\begin{equation}\label{pressure_eq}
+T_{\rm i} = (T_{\rm semester} w_{\rm i} f_{\rm i}) / ( \sum_i w_{\rm i} f_{\rm i})
+\end{equation}
+
+$T_{\rm semster}$ is the time in a session that is proposed to be observed in the semester in question.  Note that the value actually used for this variable depends on the sessions category (see below).
+
+The LST range 0.0-23.99999... will be broken into a number (24) of equal length segments. The $i$th segment is given by $T_{\rm i}$. This represents the total amount of time the session will need in LST segment $i$. There will also be two weights given by $w_{\rm i}$ and $f_{\rm i}$.
+
+$w_{\rm i}$ is a weight for what fraction of an observation can be in LST bin $i$.
+
+$f_{\rm i}$ is a flag for specific constraints (Sec.~\ref{session_flags}) that depend on the actual time observations are scheduled.
+
+The minimum and maximum LST are other session attributes to affect Equation~\ref{pressure_eq}.  Within minimum and maximum LST set $w_{\rm i}$ =  1.0. Outside the minimum and maximum LST set $w_{\rm i}$ = 0.0. 
+
+\subsection{LST Exclusion Range}
+
+If there is an LST exclusion then set $w_{\rm i}$ = 0.0 if the $i$th segment is in the exclusion.
+
+\subsection{Session Flags}\label{session_flags}
+
+The LST exclusions are for optical night time (observing only from sunset to sunrise), thermal nighttime (three hours after sunset to sunrise) and RFI night time (from 8:00 pm to 8:00 am local time). The sunrise and sunset times for the GBT (location given in the GBT Proposer's Guide) must be calculated for each day in the semester when these flags are to be used. The change between EDT/EST will have to be handled correctly also.
+
+If any flags are set (thermal night, rfi night, daylight night) then we must calculate the fraction of time that a given LST segment meets those criteria during the semester. This will give $f_{\rm i}$ with $f_{\rm i}$ being between 0 and 1. If there are no flags set then $f_{\rm i}$ = 1.0. For example if 65 of 180 days meet the flag conditions for the $i$th LST segment then $f_{\rm i}$ = 65/180 =0.3611. 
+
+
+\section{Pressure Categories and Sessions}
+
+Pressure Categories (carryover, requested, allocated, etc.) are not just required for their own sake, but also determine the actual value used for $T_{\rm semster}$ in Equation~\ref{pressure_eq}.  
+
+For details on time fields in the PHT, see \cite{marganian12a}. 
+
+Here we describe how to decide what category a session belongs to, and what session attribute to use for the $T_{\rm semster}$  value:
+
+\begin{algorithmic}
+\IF{Session has a corresponding session in the DSS {\bf and} Session's Proposal's Semester Current Semester {\bf and} Session does not have a Failing Grade}
+\STATE
+    \begin{itemize}
+        \item $category$ = carryover
+        \item $T_{\rm semester}$ = time remaining OR next semester time 
+        \item NOTE: as a caveat to the above rule, if the session belongs to Maintenance or Shutdown projects, then use the session's periods to determine the pressure (see below)
+        \item  NOTE: the check for failing grade should be redundant, since a PHT session with failing grade should not get allocated time, and never have an assocaited DSS session.
+        \item NOTE: which value to use for T-semester depends on the time for which the pressures are being calculated (see below). 
+    \end{itemize}  
+\ELSIF{is part of a proposal for the next semester (is part of a new proposal) {\bf and} has been allocated time {\bf and} has been assigned a non-failing grade (A, B, C). }
+\STATE 
+    \begin{itemize}
+        \item $category$ = allocated
+        \item \IF {Session has the Semester Time field set} 
+              \STATE $T_{\rm semester}$ = semester time
+              \ELSE
+              \STATE $T_{\rm semester}$ = allocated total
+              \ENDIF
+        \item break up the sessions into sub-categories according to grades A, B, C 
+    \end{itemize}
+\ELSIF{is part of a proposal for the next semester (is part of a new proposal)}
+\STATE 
+    \begin{itemize}
+        \item $category$ = requested
+        \item $T_{\rm semester}$ = requested total
+        \item NOTE: if a session from a new proposal has simply not been assigned a grade at all yet, then it will be in the requested category.
+    \end{itemize}
+\ELSE
+\STATE 
+    \begin{itemize}
+        \item $category$ = ignored
+        \item $T_{\rm semester}$ = 0.0 
+        \item Example: sessions from proposals from past semesters that became DSS projects, and observed until completion
+        \item Example: sessions from proposals from past semesters that got failing grades and never became DSS projects
+        \item Example: sessions that have been assigned a semester past the 'next semester' 
+    \end{itemize}
+\ENDIF
+\end{algorithmic}
+
+\subsection{Pressures from Periods}
+
+Sometimes we determine the pressure from a session's periods. In some ways this is much simpler then the usual case, since the period range tells us exactly which LSTs are getting blocked.
+
+For each period:
+\begin{itemize}
+\item Find the LST start and end of the period
+\item Convert this LST range to the fraction that each LST bin is covered by this range. 
+\end{itemize}
+
+There are special rules for Elective Sessions: For each elective group, choose only one period.  
+
+\subsection{Time Remaining vs. Next Semester Time}
+
+As mentioned above, which value to use for $T_{\rm semester}$ depends on the time for which the pressures are being calculated.  Close to halfway through a semester (close to preparations for the TAC meeting), a lookahead simulation is usually run, and the results are used as values for the sessions' next semester fields - once these values are updated, it is appropriate for next semester time to be used.  When new proposals have first been imported into the PHT, it is more appropriate to use the time remaining value. 
+
+However, even once this difference is clarified, there are more devils in the details: 
+
+\subsubsection{Time Remaining}
+
+If we are calculating carryover pressure via time remaining, then can get very complicated, and we need to decide how accurate we want to be. To be completely accurate, we must follow the same rules followed not just in nell's TimeAccounting class, which accurately gives us the time remainig for a given session, but we must also follow antioch's time accounting methods, which also determine whether the given session should be scheduled at all, based off the projects complete status, the session's complete status, and even such complex factors as maximum semester time \cite{marganian10a}.
+
+However, Toney has agreed that this level of accuracy is not needed here. Instead we use these simple rules:
+
+\begin{itemize}
+\item If the session's project is complete, time remaining = 0.0
+\item If the session is complete, time remaining = 0.0
+\item If the session's time remaining is negative, use 0.0
+\item Otherwise, use the time remaining as it is currenlty being calculated via nell's TimeAccounting class. 
+\end{itemize}
+
+\subsubsection{Next Semester Time}
+
+There are actually four next semester fields to take into account:
+
+\begin{itemize}
+\item project's next semester complete
+\item session's next semester complete
+\item session's next semester time
+\item session's next semester repeats 
+\end{itemize}
+
+How to use these:
+
+\begin{algorithmic}
+\IF {The project's or session's next semester complete flag is true} 
+\STATE $T_{\rm semester}$ = 0.0.
+\ELSE
+\STATE $T_{\rm semester}$ = next semester time
+\ENDIF
+\end{algorithmic}
+
+\section{Pressures and Weather}
+
+
+Calculating the Fraction of Time Going Against Different Weather Categories
+
+The weather group is determined by receiver: KFPA, MBA and W are in the excellent weather group. X, Ku, Ka and Q are in the good weather group. All others (342, 450, 600, 800, 1070, L, S, and C) are in the poor weather group.
+
+Let $g$ be the fraction of windowed session that are observed away from their default date. (These are the sessions that get moved to poor weather days.) The value of $g$ is an input parameter for a whole semester. The value of $g$ is between 0.0 and 1.0. This value will need to be a parameter we input for a given semster.
+
+Let $f_{\rm poor}$, $f_{\rm good}$ and $f_{\rm excellent}$ be the fraction of time available for each weather group. We get to set what these fractions are for a given semester and the values are between 0.0 and 1.0. 
+
+\subsection{Open Sessions}
+
+For open sessions the time should go only to the weather condition set for the session in the GB PHT.
+
+\subsection{Windowed Sessions}
+
+For weather monitoring sessions with widows less than or equal to 3 days: 
+\begin{equation}\label{win_poor_eq}
+T_{\rm poor \rm i} = T_{\rm i} f_{\rm poor} 
+\end{equation}
+\begin{equation}\label{win_good_eq}
+T_{\rm good \rm i} = T_{\rm i} f_{\rm good} 
+\end{equation}
+\begin{equation}\label{win_excellent_eq}
+T_{\rm excellent \rm i} = T_{\rm i} f_{\rm excellent}
+\end{equation}
+
+For monitoring sessions with windows greater than 3 days:
+
+\begin{equation}\label{win_poor_eq}
+T_{\rm poor \rm i} = (T_{\rm i} g ) + (T_{\rm i} f_{\rm poor} (1 - g))
+\end{equation}
+\begin{equation}\label{win_good_eq}
+T_{\rm good \rm i} = T_{\rm i}  f_{\rm good} (1 - g)
+\end{equation}
+\begin{equation}\label{win_excellent_eq}
+T_{\rm excellent \rm i} = T_{\rm i} f_{\rm excellent} (1 - g)
+\end{equation}
+
+\subsection{Elective Sessions}
+
+An elective session will have m observations occur within $n$ days. The fraction of observations occuring in the proper weather conditions is given by $h$, were
+
+\begin{equation}
+h = 1 - (m / n)
+\end{equation}
+
+T-i is determined from the LST Pressure Calculation formula. For poor weather elective sessions: 
+
+\begin{equation}\label{elp_poor_eq}
+T_{\rm poor \rm i} = (T_{\rm i}  h) + (T_{\rm i} f_{\rm poor}  (1 - h)) 
+\end{equation}
+\begin{equation}\label{elp_good_eq}
+T_{\rm good \rm i} = T_{\rm i}  f_{\rm good}  (1 - h) 
+\end{equation}
+\begin{equation}\label{elp_excellent_eq}
+T_{\rm excellent \rm i} = T_{\rm i}  f_{\rm excellent} (1 - h)
+\end{equation}
+
+For good weather elective sessions: 
+
+\begin{equation}\label{elg_good_eq}
+T_{\rm good \rm i} = (T_{\rm i}  h) + (T_{\rm i} f_{\rm good} (1 - h)) / (f_{\rm good} + f_{\rm excellent})
+\end{equation}
+\begin{equation}\label{elg_excellent_eq}
+T_{\rm excellent \rm i} = (T_{\rm i} f_{\rm excellent} (1 - h)) / (f_{\rm good} + f_{\rm excellent})
+\end{equation}
+
+For excellent weather elective sessions: 
+
+\begin{equation}\label{ele_excellent_eq}
+T_{\rm excellent \rm i} = T_{\rm i} 
+\end{equation}
+
+\subsection{Fixed Sessions}
+
+For poor weather fixed sessions: 
+
+\begin{equation}\label{fixedp_poor_eq}
+T_{\rm poor \rm i} = T_{\rm i} f_{\rm poor} 
+\end{equation}
+\begin{equation}\label{fixedp_good_eq}
+T_{\rm good \rm i} = T_{\rm i} f_{\rm good} 
+\end{equation}
+\begin{equation}\label{fixedp_excellent_eq}
+T_{\rm excellent \rm i} = T_{\rm i} f_{\rm excellent}
+\end{equation}
+
+For good weather fixed sessions: 
+
+\begin{equation}\label{fixedg_good_eq}
+T_{\rm good \rm i} = (T_{\rm i} f_{\rm good}) / (f_{\rm good} + f_{\rm excellent}) 
+\end{equation}
+\begin{equation}\label{fixedg_excellent_eq}
+T_{\rm excellent \rm i} = (T_{\rm i} f_{\rm excellent}) / (f_{\rm good} + f_{\rm excellent}) 
+\end{equation}
+
+
+For excellent weather fixed sessions: 
+
+\begin{equation}\label{fixede_excellent_eq}
+T_{\rm excellent \rm i} = T_{\rm i} 
+\end{equation}
+
+\subsection{Overfilled Weather Bins}
+
+Up to now, our arithmetic was pretty straightforward.  What we would represent in a plot of the LST Pressures is a sum of the LST Pressure for each individual session under consideration. This next step breaks that rule, and is therefore done last, and is implemented as an option.
+
+The basic idea here is to redistribute too much allocated time for poor weather, with grade A, to the allocated time for good weather, grade A.  If this grade A, good weather, in turn, is too much, then redistribute some of that to excellent weather, grade A.  The total amount of grade A allocated time does not change.
+
+Availability, $V$, is the number of hours available in the semester. $A_{\rm poor, \rm A}$ are the new sessions allocated time for the next semester with grade A for poor weather (see definitions above).
+
+\begin{algorithmic}
+\IF {$A_{\rm poor, \rm A} + C_{\rm poor} \le V_{\rm poor}$}
+\STATE
+    \begin{itemize}
+    \item {$A_{\rm poor, \rm A}$ =  $V_{\rm poor}$} - $C_{\rm poor}$
+    \item $r_{\rm poor}$ =  {$A_{\rm poor, \rm A}$ + $C_{\rm poor}$ - $V_{\rm poor}$}
+    \end{itemize}
+    \IF {$A_{\rm good, \rm A} + C_{\rm good} + r \ge V_{\rm good}$}
+    \STATE
+        \begin{itemize}
+        \item $r_{\rm good}$ =  {$A_{\rm good, \rm A}$ + $C_{\rm good}$ + $r_{\rm poor}$ - $V_{\rm good}$}
+        \item $A_{\rm good, \rm A}$ =  $V_{\rm good}$ - $C_{\rm good}$
+        \item $A_{\rm excellent, \rm A}$ = $A_{\rm excellent, \rm A}$ +  $r_{\rm good}$ 
+        \end{itemize}
+    \ELSE
+        \item {$A_{\rm good, \rm A}$ =  $A_{\rm good}$} - $r$
+
+    \ENDIF
+\ENDIF
+\end{algorithmic}
+
+\section{Use Cases}
+
+Now we flesh out the above rules with some specific use cases.
+
+\subsection{Use Case 1: Binning LSTs}
+
+
+\begin{table}[htb]
+{\footnotesize
+\caption{Binning LSTs Examples} 
+\label{binning_lsts}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccc}
+\hline \hline
+{\bf Case} & {\bf Min LST} & {\bf Max LST} & {\bf Bins}\\
+1 & 00:00 & 01:00 & 0\\
+2 &	00:00 & 10:00 &	0,1,2,3,4,5,6,7,8,9 ([0,9])\\
+3 &	00:30 &	01:30 &	0\\
+4 &	10:00 & 10:59 &	10\\
+5 &	00:30 &	10:59 &	[0-9]\\
+6 &	22:30 &	08:59 &	22,23,[0-7]\\
+\hline
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{binning_lsts} shows examples of how Min. and Max. LSTs are
+translated into LST bins for pressure calculatations.
+
+\subsection{Night Time Flags and Pressures}
+
+Here we describe examples of how the various night time flag weights are
+calculated.  In order to fit all 24 LST bins in the same table, the columns are: Day from August 1, 2012, Sun Rise (UTC), Sun Set (UTC), Sun Rise (LST), Sun Set (LST), followed by the 24 LST hours.   The last two dates are Jan 29 and Jan 30, 2013.
+
+\subsubsection{Use Case 2: Optical Night Flag}
+
+\begin{table}[htb]
+{\tiny
+\label{optical_night_flag}
+\caption{Optical Night Flag}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
+\hline \hline
+{\bf Day} & {\bf Rise} & {\bf Set} & {\bf R-LST} & {\bf S-LST} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3}\\
+\hline
+0 & 10:21:31 & 00:30:12 & 1.73 & 15.91 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1\\
+1 & 10:22:24 & 00:29:12 & 1.81 & 15.96 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1\\
+2 & 10:23:16 & 00:28:10 & 1.89 & 16.01 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1\\
+181 & 12:26:38 & 22:38:52 & 15.72 & 1.95 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
+182 & 12:25:49 & 22:40:00 & 15.77 & 2.03 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{optical_night_flag}  is an example of how the Optical Night Flag (Sec.~\ref{session_flags}) weights should be calcualted.  
+
+\subsubsection{Use Case 3: Thermal Night Flag}
+
+\begin{table}[htb]
+{\tiny
+\label{thermal_night_flag}
+\caption{Thermal Night Flag Examples}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
+\hline \hline
+{\bf Date} & {\bf Rise} & {\bf Set} & {\bf R-LST} & {\bf S-LST} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3}\\
+\hline
+0 & 10:21:31 & 03:30:12 & 1.73 & 18.92 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1\\
+1 & 10:22:24 & 03:29:12 & 1.81 & 18.97 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1\\
+2 & 10:23:16 & 03:28:10 & 1.89 & 19.02 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1\\
+181 & 12:26:38 & 01:38:52 & 15.72 & 4.96 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
+182 & 12:25:49 & 01:40:00 & 15.77 & 5.04 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+
+Table~\ref{thermal_night_flag} is an example of how the Thermal Night Flag (Sec.~\ref{session_flags})weights should be calcualted. 
+
+\subsubsection{Use Case 4: RFI Night Flag}
+
+\begin{table}[htb]
+{\tiny
+\label{rfi_night_flag}
+\caption{RFI Night Flag Examples} 
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
+
+\hline \hline
+{\bf Date} & {\bf Rise} & {\bf Set} & {\bf R-LST} & {\bf S-LST} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3}\\
+\hline
+0 & 12:00:00 & 00:00:00 & 3.38 & 15.41 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1\\
+1 & 12:00:00 & 00:00:00 & 3.44 & 15.48 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1\\
+2 & 12:00:00 & 00:00:00 & 3.51 & 15.54 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1\\
+181 & 13:00:00 & 01:00:00 & 16.27 & 4.31 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
+182 & 13:00:00 & 01:00:00 & 16.34 & 4.37 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{rfi_night_flag} is an example of how the RFI Night Flag (Sec.~\ref{session_flags}) weights should be calcualted. 
+
+\subsection{Use Case 5: Overfilled Weather Bin Use Cases}
+
+Since the rules for what happens with overfilled weather bins is independent of LST, the following use cases just focus on a generic LST bin.
+
+\subsubsection{Use Case 5.1 Simplest Case}
+
+\begin{table}[h]
+{\footnotesize
+\caption{Use Case 5.1: Simplest Case}
+\label{use_case_5_1}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
+\hline \hline
+{\bf Weather Type} & {\bf Availability} & {\bf Carryover} & {\bf Grade A}\\
+Poor & 90.5 & 22.0 & 28.0\\
+Good & 45.25 & N/A & 35.0\\
+Excellent & 45.25 & N/A & 25.0\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{use_case_5_1} shows our simplest case, where no hours are
+redistributed: not too  much Grade A, Poor Weather time, $A_{\rm poor, \rm A}$.  This is because 22 + 28 = 50, which is less then 90.5, so nothing needs to get redistributed.
+
+\subsubsection{Use Case 5.2 A little too much Grade A (Poor Weather)}
+
+\begin{table}[h]
+{\footnotesize
+\caption{Use Case 5.2: Before}
+\label{use_case_5_2_before}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
+\hline \hline
+{\bf Weather Type} & {\bf Availability} & {\bf Carryover} & {\bf Grade A}\\
+Poor & 90.5 & 45.0 & 59.5\\
+Good & 45.25 & 10.0 & 15.0\\
+Excellent & 45.25 & 0.0 & 25.0\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{use_case_5_2_before} shows a situation where there is a little too much
+Grade A, Poor Weather time, $A_{\rm poor, \rm A}$.
+\begin{itemize}
+\item 45 + 59.5 = 104.5 is greater then 90.5, so 
+\item $r_{\rm poor}$ = 45 + 59.5 - 90.5 = 14
+\item $A_{\rm poor, \rm A}$ = 90.5 - 45 = 45.5
+\end{itemize}
+
+How much do we need to add to Grade A (Good Weather)?
+
+\begin{itemize}
+\item 15 + 10 + 14 = 39 is less then 45.25, so
+\item $A_{\rm good, \rm A}$ = 15 + 14 = 29
+\end{itemize}
+
+\begin{table}[h]
+{\footnotesize
+\caption{Use Case 5.2: After}
+
+\label{use_case_5_2_after}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
+\hline \hline
+{\bf Weather Type} & {\bf Availability} & {\bf Carryover} & {\bf Grade A}\\
+Poor & 90.5 & 45.0 & 45.5\\
+Good & 45.25 & 10.0 & 29.0\\
+Excellent & 45.25 & 0.0 & 25.0\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{use_case_5_2_after} shows the final result after the distribution
+has been made.  In summary, 14 hours got taken off Grade A (Poor Weather), $A_{\rm poor, \rm A}$, and put into Grade A (Good Weather),  $A_{\rm good, \rm A}$
+
+
+\subsubsection{Use Case 5.3: Simply too much Grade A (Poor Weather)}
+
+\begin{table}[h]
+{\footnotesize
+\caption{Use Case 5.3: Before}
+\label{use_case_5_3_before}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
+\hline \hline
+{\bf Weather Type} & {\bf Availability} & {\bf Carryover} & {\bf Grade A}\\
+Poor & 90.5 & 45.0 & 79.5\\
+Good & 45.25 & 10.0 & 15.0\\
+Excellent & 45.25 & 0.0 & 25.0\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{use_case_5_3_before} shows a situation where there is way too much
+Grade A, Poor Weather time,  $A_{\rm poor, \rm A}$.
+
+\begin{itemize}
+\item 45 + 79.5 = 124.5 less then 90.5, so
+\item $r_{\rm poor}$ = 45 + 79.5 - 90.5 = 34
+\item $A_{\rm poor, \rm A}$ = 90.5 - 45 = 45.5
+\item How much do we need to add to Grade A (Good Weather)?
+\item 10 + 15 + 34 = 59 greater than 45.25, so
+\item $r_{\rm good}$ = 10 + 15 + 34 - 45.25 = 13.75
+\item $A_{\rm good, \rm A}$ = 45.25 - 10.0 = 35.25
+\item Now add this remainder to the excellent weather:
+\item $A_{\rm excellent, \rm A}$ = 25 + 13.75 = 38.75
+\end{itemize}
+
+\begin{table}[h]
+{\footnotesize
+\caption{Use Case 5.3: After}
+\label{use_case_5_3_after}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccc}
+\hline \hline
+{\bf Weather Type} & {\bf Availability} & {\bf Carryover} & {\bf Grade A}\\
+Poor & 90.5 & 45.0 & 45.5\\
+Good & 45.25 & 10.0 & 35.25\\
+Excellent & 45.25 & 0.0 & 38.75\\ 
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+
+Table~\ref{use_case_5_3_after} shows the final times after the redistribution
+has been made. 
+
+In summary, 34 hours were taken from Grade A (Poor), $A_{\rm poor, \rm A}$ , with 20.25 added to Grade A (Good), $A_{\rm good, \rm A}$, and 13.75 added to Grade A (Excellent), $A_{\rm excellent, \rm A}$.
+
+\clearpage
+
+\subsection{Use Case 6: Pressures from Periods}
+
+\begin{table}[h]
+{\tiny
+\caption{Use Case 6: Pressures from Periods}
+\label{pressures_from_periods}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
+\hline \hline
+{\bf StartDate} & {\bf Duration} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3}\\
+\hline
+2012-04-05T12:00:0 & 3 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & .38 & 1 & 1 & .63 & 0\\
+2012-04-05T12:00:0 & 12 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & .66 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & .38 & 1 & 1 & 1 & 1\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{pressures_from_periods} shows the results of pressures being
+calculated for different periods.  Note how the sum of LST weights should
+equal the period duration.  Also note how all weights are 1  or 0, except endpoints, that added together should equal one. 
+
+\subsection{Use Case 7: Binning Pressures by Weather Use Cases}
+
+The following tables, Table~\ref{fixed_weather_eq}, Table~\ref{windowed_small_weather_eq}, and Table~\ref{windowed_big_weather_eq}, show how sessions of different types get their pressures
+distributed across weather types.  The total row is the original pressure as calculated by Equation~\ref{pressure_eq}
+
+\begin{table}[h]
+{\tiny
+\caption{Use Case 7.1: Fixed Session}
+\label{fixed_weather_eq}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
+\hline \hline
+{\bf WeatherType} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3}\\
+\hline
+Total & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0\\
+Poor & 0 & 0 & 0 & 0 & 0 & 0 & .5 & .5 & .5 & .5 & .5 & .5 & .5 & .5 & .5 & .5 & .5 & .5 & 0 & 0 & 0 & 0 & 0 & 0\\
+Good & 0 & 0 & 0 & 0 & 0 & 0 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & 0 & 0 & 0 & 0 & 0 & 0\\
+Excellent & 0 & 0 & 0 & 0 & 0 & 0 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & 0 & 0 & 0 & 0 & 0 & 0\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+
+\begin{table}[h]
+{\tiny
+\caption{Use Case 7.2: Windowed Session (window size = 2 days)}
+\label{windowed_small_weather_eq}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
+\hline \hline
+{\bf WeatherType} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3}\\
+Total & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0\\
+Poor & 0 & 0 & 0 & 0 & 0 & 0 & .5 & .5 & .5 & .5 & .5 & .5 & .5 & .5 & .5 & .5 & .5 & .5 & 0 & 0 & 0 & 0 & 0 & 0\\
+Good & 0 & 0 & 0 & 0 & 0 & 0 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & 0 & 0 & 0 & 0 & 0 & 0\\
+Excellent & 0 & 0 & 0 & 0 & 0 & 0 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & .25 & 0 & 0 & 0 & 0 & 0 & 0\\
+
+\hline
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+
+\begin{table}[h]
+{\tiny
+\caption{Use Case 7.3: Windowed Session (window size = 20 days)}
+\label{windowed_big_weather_eq}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
+\hline \hline
+{\bf WeatherType} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3}\\
+\hline
+Total & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0\\
+Poor & 0 & 0 & 0 & 0 & 0 & 0 & .75 & .75 & .75 & .75 & .75 & .75 & .75 & .75 & .75 & .75 & .75 & .75 & 0 & 0 & 0 & 0 & 0 & 0\\
+Good & 0 & 0 & 0 & 0 & 0 & 0 & .12 & .12 & .12 & .12 & .12 & .12 & .12 & .12 & .12 & .12 & .12 & .12 & 0 & 0 & 0 & 0 & 0 & 0\\
+Excellent & 0 & 0 & 0 & 0 & 0 & 0 & .12 & .12 & .12 & .12 & .12 & .12 & .12 & .12 & .12 & .12 & .12 & .12 & 0 & 0 & 0 & 0 & 0 & 0\\
+\hline
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+
+\subsection{Use Case 8: LST Exclusion}
+
+
+\begin{table}[h]
+{\tiny
+\caption{Use Case 8: LST Exclusion}
+\label{lst_exclusion}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccccccccccccccccccccccccccccc}
+\hline \hline
+{\bf When} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3} & {\bf 4} & {\bf 5} & {\bf 6} & {\bf 7} & {\bf 8} & {\bf 9} & {\bf 0} & {\bf 1} & {\bf 2} & {\bf 3}\\
+\hline
+Before & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1\\
+After & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0 & 0 & 1 &\\
+\hline
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{lst_exclusion} shows how taking into account an LST exclusion range modifies that session's coefficients (w-i's).
+
+In our example, the pressure is 1.0 across all LST's; we see the affects of adding an exclusion range of '4.5-7.2,21.2-23.0'. 
+
+\clearpage
+
+\subsection{Use Case 9: Proposal Life Cycles}
+
+Here's a rather big use case that tries to examine how pressure categories change over multiple semesters.
+
+\subsubsection{The First Semester}
+
+The first time we used the PHT and tried to calculate pressures was during 12A; our new proposals were for 12B. At first, all we had were these fresh 12B proposals, none of which had been assigned a grade or allocated time, and they all were for the 12B semester. Therefore, all our sessions fell into the same category: requested.
+
+Then we had to start figuring out the carryover, so we pulled over from the DSS only those projects and sessions that were not complete and made corresponding legacy PHT proposals and sessions. These all fell into the carryover category, and we used time remaining for computing their pressure. 
+
+\begin{table}[h]
+{\footnotesize
+\caption{Use Case 9.1: Beginning of first semester}
+\label{use_case_9_1}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
+\hline \hline
+{\bf Category} & {\bf Hours} & {\bf Composition}\\
+\hline
+requested & 150.0 & the new proposals for 12B\\
+carryover & 110.0 & legacy projects from 12A and earlier\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{use_case_9_1} shows the total times at the very beginning of the semester.
+
+Then we started editing these 12B proposals: some get assigned a passing grade and time, other's get a failing grade and no time, and a few exceptional sessions get assigned a semester past 12B. 
+
+\begin{table}[h]
+{\footnotesize
+\caption{Use Case 9.2: Editing first semester}
+\label{use_case_9_2}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
+\hline \hline
+{\bf Category} & {\bf Hours} & {\bf Composition}\\
+\hline
+requested & 100.0 & the new proposals for 12B\\
+allocated & 40.0 & the new proposal for 12B that will become DSS projects\\
+ignored & 10.0 & right now, all that's contributing to this are the 'future' sessions\\
+carryover & 110.0 & legacy projects from 12A and earlier\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{use_case_9_2} shows the times after we start editing these new sessions.
+
+As we get closer to the TAC meeting, and the actual start of the 12B semester, we want the carryover to actually reflect what time is left at the start of 12B, not the current time remaining. So, a DSS lookahead simulation is run, and this is used to enter in next semester values for each carryover session (some are actually marked off as completed). 
+
+\begin{table}[h]
+{\footnotesize
+\caption{Use Case 9.3: Use Lookahead, first semester}
+\label{use_case_9_3}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
+\hline \hline
+{\bf Category} & {\bf Hours} & {\bf Composition}\\
+\hline
+requested & 100.0 & the new proposals for 12B\\
+allocated & 40.0 & the new proposal for 12B that will become DSS projects\\
+ignored & 10.0 & right now, all that's contributing to this are the 'future' sessions\\
+carryover & 75.0 & legacy projects from 12A and earlier\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+
+Table~\ref{use_case_9_3} shows the times after we apply the results of the lookahead simulation, and start using the next semester fields.
+
+The editing process continues, and the TAC meeting is held. The final decisions for these new proposals are finally made. 
+
+\begin{table}[h]
+{\footnotesize
+\caption{Use Case 9.4: TAC meeting, first semester}
+\label{use_case_9_4}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
+\hline \hline
+{\bf Category} & {\bf Hours} & {\bf Composition}\\
+\hline
+requested & 50.0 & the new proposals for 12B that won't become DSS projects\\
+allocated & 85.0 & the new proposal for 12B that will become DSS projects\\
+ignored & 15.0 & right now, all that's contributing to this are the 'future' sessions\\
+carryover & 110.0 & legacy projects from 12A and earlier\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{use_case_9_4} shows the times after the TAC makes its final decisions.
+
+Finally, 12B is about to start, so all the allocated sessions need to have equivalent sessions in the DSS. These are created, and it has no affect on our table above at all.
+
+\clearpage
+
+\subsubsection{The Second Semester}
+
+The first day of 12B arrives, but we have not yet imported any new proposals for 13A into the PHT. Our allocated category now moves into carryover, and the proposals in requested get moved to ignored, because the term 'current semester' has moved from 12B to 13A (see Note 1).
+
+\begin{table}[h]
+{\footnotesize
+\caption{Use Case 9.5: Beginning of second semester}
+\label{use_case_9_5}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}ccc}
+\hline \hline
+{\bf Category} & {\bf Hours} & {\bf Composition}\\
+\hline
+ignored & 65.0 & Sessions for 12B with failing grade, and 'future' sessions (see Note 2)\\
+carryover & 195.0 & legacy projects from 12B and earlier\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{use_case_9_5} shows the times at the very beginning of this second semester. 
+
+Now we import new proposals for 13A (on the second day of 12B). This introduces requested time into the system.
+
+\begin{table}[h]
+{\footnotesize
+\caption{Use Case 9.6: New proposals, second semester}
+\label{use_case_9_6}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
+\hline \hline
+{\bf Category} & {\bf Hours} & {\bf Composition}\\
+\hline
+requested & 100.0 & the new proposals for 13A\\
+ignored & 65.0 & Sessions for 12B with failing grade, and 'future' sessions (see Note 2)\\
+carryover & 195.0 & legacy projects from 12B and earlier\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{use_case_9_6} shows the times right after importing new requests for this second semester. 
+
+Then we start editing these 13A proposals: some get assigned a passing grade and time, other's get a failing grade and no time, and a few exceptional sessions get assigned a semester past 13A. 
+
+\begin{table}[h]
+{\footnotesize
+\caption{Use Case 9.7: Editing, second semester}
+\label{use_case_9_7}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
+\hline \hline
+{\bf Category} & {\bf Hours} & {\bf Composition}\\
+\hline
+requested & 50.0 & the new proposals for 13A\\
+allocated & 45.0 & the new 13A proposals that will get scheduled.\\
+ignored & 70.0 & Sessions for 12B with failing grade, and 'future' sessions (see Note 2)\\
+carryover & 195.0 & legacy projects from 12B and earlier\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{use_case_9_7} shows the times after editing the new requests for this second semester. 
+
+As we get closer to the TAC meeting, and the actual start of the 13A semester, we want the carryover to actually reflect what time is left at the start of 13A, not the current time remaining. So, a DSS lookahead simulation is run, and this is used to enter in next semester values for each carryover session (some are actually marked off as completed). 
+
+\clearpage
+
+\begin{table}[h]
+{\footnotesize
+\caption{Use Case 9.8: Using Lookhead, second semester}
+\label{use_case_9_8}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
+\hline \hline
+{\bf Category} & {\bf Hours} & {\bf Composition}\\
+\hline
+requested & 50.0 & the new proposals for 13A\\
+allocated & 45.0 & the new 13A proposals that will get scheduled.\\
+ignored & 70.0 & Sessions for 12B with failing grade, and 'future' sessions\\
+carryover & 150.0 & legacy projects from 12B and earlier\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{use_case_9_8} shows the times after running the lookahead simulations and using the next semester fields. 
+
+The editing process continues, and the TAC meeting is held. The final decisions for these new proposals are finally made. Here's what our numbers look like now:
+
+\begin{table}[h]
+{\footnotesize
+\caption{Use Case 9.9: TAC meeting, second semester}
+\label{use_case_9_9}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
+\hline \hline
+{\bf Category} & {\bf Hours} & {\bf Composition}\\
+\hline
+requested & 30.0 & the new proposals for 13A\\
+allocated & 65.0 & the new 13A proposals that will get scheduled.\\
+ignored & 70.0 & Sessions for 12B with failing grade, and 'future' sessions\\
+carryover & 150.0 & legacy projects from 12B and earlier\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{use_case_9_9} shows the times after the TAC meeting. 
+
+Note 1 - there are two sources of time for carryover sessions: either the time remaining from it's associated DSS session, or the PHT session's very own next semester time field. At the begining of the 12B semester, the 'old' carryover is still using the next semester field, but what will the 'new' carryover, that is the 12B sessions be using? If they were to be using the time remaining field, then this would reflect the numbers we have in the first table of 3.7.1. But we currently don't support two sources of time for carryover. We should figure this out. One option is for the source to be chosen by the user - in which case at the beginning of 12B they can choose to use time remaining. 
+
+Note 2 - this depends on what future sessions are specified. In this example assume they semesters WAY in the future ... need to discuss this further. 
+
+\clearpage
+
+\subsubsection{Fleshing out the example with more carryover}
+
+Adding more carryover, and taking into account Maintenance and Testing Sessions, here's how our example could be fleshed out:
+
+\begin{itemize}
+\item Maintenance Session from 12A - with a period in each week of semester 13A (that's about 200 hours)
+\item Testing Session for 13A - allocated 16 hours (observing type == 'commissioning')
+\item Additional Carryover - allocated lots of time, but labeled as 'complete' in the DSS, so does not contribute anything to the pressure 
+\end{itemize}
+
+Carryover, $C$:  150.0 + 200.54 + 16.0 = 366.54
+
+\begin{table}[h]
+{\footnotesize
+\caption{Use Case 9.10: Final Example}
+\label{use_case_9_10}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
+\hline \hline
+{\bf Category} & {\bf Hours} & {\bf Composition}\\
+\hline
+requested & 30.0 & the new proposals for 13A\\
+allocated & 65.0 & the new 13A proposals that will get scheduled.\\
+ignored & 70.0 & Sessions for 12B with failing grade, and 'future' sessions\\
+carryover & 366.54 & legacy projects from 12B and earlier, plus maintenance and testing\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{use_case_9_10} shows all the times after these new sources of carryover have been added.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{LstPressuresTimeLine.jpg}
+\caption{Lst Pressures Timeline}
+\label{timeline_image}
+\end{figure}
+
+Figure~\ref{timeline_image} gives a visual example of how the sessions in the PHT and DSS produce an LST Pressure plot.  The timeline above has been generalized such that a specific semester is not specified.  Instead, 'now' is sometime in the Current Semester. 
+
+Each colored oval above represents a PHT session.  Its position in the timeline represents its semester, and its color represents what category it falls into. This color is meant to be close the color of the category in the plot (Figure~\ref{pressure_plot_image}).  For simplicity, all sessions have an LST range between 10 and 20 Hours, are grade A, and have Poor weather.
+
+\clearpage
+
+\begin{table}[h]
+{\footnotesize
+\caption{Session Legend}
+\label{session_table}
+\begin{tabular*}{1.05\textwidth}{@{\extracolsep{\fill}}cccccc}
+\hline \hline
+{\bf Session} & {\bf Semester} & {\bf Category} & {\bf Hours} {\bf Notes}\\
+\hline
+1 & 12A & carryover & 75 & allocated two cycles ago, astronomy with 75 hrs left\\
+2 & 12A & carryover & 0 & allocated two cycles ago, but complete, so 0.0 hrs left\\
+3 & 12A & carryover & 200 & maintenance (pre-assigned), ~200 hrs from periods in Next Semester\\
+4 & 12B &  ignored & 0 & received failing grade during last cycle; never got scheduled\\
+5 & 12B &  carryover & 45 & astronomy allocated last cycle, with 45 hrs left\\
+6 & 12B &  carryover & 40 & allocated last cycle astronomy with 40 hrs left\\
+7 & 13A &  allocated & 45 & this cycle, 45 hrs\\
+8 & 13A &  allocated & 20 & this cycle, 20 hrs\\
+9 & 13A &  requested & 0 & requested this cycle, won’t get scheduled (ignored next cycle), 30 hrs\\
+10 & 13A &  carryover & 16 & testing (pre-assigned this cycle), 16 hrs\\
+11 & 13B &  future & 5 & allocated last cycle to future semester, 5 hrs\\
+12 & 13B &  future & 10 & allocated last cycle to future semester, 10 hrs\\
+13 & 13B &  future & 5 & allocated this cycle to future semester, 5 hrs\\
+\hline \hline
+\end{tabular*}
+}
+\end{table}
+
+Table~\ref{session_table} we briefly explain the category and time that each session contributes to the pressure.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{total.png}
+\caption{Lst Pressures Plot}
+\label{pressure_plot_image}
+\end{figure}
+
+Figure~\ref{pressure_plot_image} shows the resulting pressure plot.  Some notes on this:
+\begin{itemize}
+\item The three colors shown are from carryover (both types), allocated (Poor A specificially), and requested.
+\item All sessions have an LST range of 10 to 20 Hours.  Thus the spread of all sessions' time across those 10 LST bins.  The exception to this is the pressure from maintenance that is derived off the actual periods.  
+\item Note that 'ignored' and 'future' sessions do not appear in the plot.
+\end{itemize}
+
+\clearpage
+
+\begin{thebibliography}{}
+\bibitem[Marganian(2012)]{marganian12a}
+  Marganian, Paul, 2012, ``PHT Time Accounting''
+  PH/PN001.0
+\bibitem[Marganian(2010)]{marganian10a}
+  Marganian, Paul, 2010, ``DSS Time Accounting''
+  DS/PN011.0
+\end{thebibliography}{}
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

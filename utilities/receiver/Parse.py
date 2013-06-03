@@ -183,7 +183,10 @@ def parseT():
 def parseF():
     """builds a tree (nested list) that matches this grammar rule:
        F ::=  p  |  ( E )"""
-    if symbol.isalnum() : # p
+    if symbol == "MBA1.5" : # exception: '.' is not alpha numeric   
+        answer = symbol
+        getNext()
+    elif symbol.isalnum() : # p
         answer = symbol
         getNext()
     elif symbol == "(" :  # ( E ) 

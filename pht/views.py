@@ -6,11 +6,12 @@ from datetime   import datetime, timedelta
 import simplejson as json
 
 from utilities import *
+from nell.utilities.database.external import AstridDB
 from nell.utilities import SLATimeAgent
 from users.decorators import admin_only
 from scheduler.models import *
 from models import *
-from pht.tools.database import PstImport
+from pht.tools.database import PstImport, DssExport
 from pht.tools.LstPressures import LstPressures
 from pht.tools.PlotLstPressures import PlotLstPressures
 from httpadapters import *
@@ -102,22 +103,32 @@ def lst_pressure(request, *args, **kws):
     # specific ones?
     filters = request.GET.get('filter', None)
 
-    # TBF: even though it's possible to have two filters at once
-    # we will just use one of them
+    # TBF: even though it's possible to have the two project/session 
+    # filters at once we will just use one of them
+    ss = None
+    carryOverUseNextSemester = True
+    adjustWeatherBins = True
     if filters is not None:
+        filters = filters.replace('true', 'True')
+        filters = filters.replace('false', 'False')
         filters = eval(filters)
         for filter in filters:
             prop = filter.get('property')
             value = filter.get('value')
             if prop == 'pcode':
                 ss = Session.objects.filter(proposal__pcode = value)
-            else:
+            elif prop == 'session':
                 ss = Session.objects.filter(id = value)
-    else:
-        ss = None
+            elif prop == 'carryover':
+                carryOverUseNextSemester = value == 'Next Semester Time'
+            elif prop == 'adjust':
+                adjustWeatherBins = value 
+    #else:
+    #    ss = None
         
     # calcualte the LST pressures    
-    lst = LstPressures()
+    lst = LstPressures(carryOverUseNextSemester = carryOverUseNextSemester
+                     , adjustWeatherBins = adjustWeatherBins)
     pressure = lst.getPressures(sessions = ss)
 
     return HttpResponse(json.dumps({"success" : "ok"
@@ -131,13 +142,53 @@ def print_lst_pressure(request, *args, **kws):
  
     type = args[0]
     
+    # interpret request
+    carryover = request.GET.get('carryOverUseNextSemester', 'true')
+    carryover = carryover == 'true'
+    adjust = request.GET.get('adjustWeatherBins', 'true')
+    adjust = adjust == 'true'
+
     plot = PlotLstPressures()
-    plot.plot(type)
+    plot.plot(type
+            , carryOverUseNextSemester = carryover
+            , adjustWeatherBins = adjust)
 
     response=HttpResponse(content_type='image/png')
     plot.canvas.print_png(response)
     return response
 
+@login_required
+@admin_only
+def export_proposals(request, *args, **kws):
+    if request.method == 'POST':
+        astrid = request.POST.get('astrid', 'false') == 'true'
+        proposals = request.POST.getlist('proposals')
+        DssExport(quiet = True).exportProposals(proposals)
+        if astrid:
+            astridDB = AstridDB(dbname = None, quiet = True)
+            astridDB.addProjects(proposals)
+    return HttpResponse(json.dumps({"success" : "ok"})
+                      , content_type = 'application/json')
+
+@login_required
+@admin_only
+def export_semester(request, *args, **kws):
+    if request.method == 'POST':
+        astrid = request.POST.get('astrid', 'false') == 'true'
+        semester = request.POST.get('semester')
+        if semester is not None:
+            proposals = [p.pcode
+                         for p in Proposal.objects.filter(
+                           semester__semester = semester)
+                         if p.allocatedTime() > 0]
+            DssExport(quiet = True).exportProposals(proposals)
+            if astrid:
+                astridDB = AstridDB(dbname = None, quiet = True)
+                astridDB.addProjects(proposals)
+
+    return HttpResponse(json.dumps({"success" : "ok"})
+                      , content_type = 'application/json')
+                                  
 @login_required
 @admin_only
 def import_proposals(request, *args, **kws):
@@ -166,8 +217,15 @@ def import_semester(request, *args, **kws):
     if request.method == 'POST':
         pst      = PstImport()
         semester = request.POST.get('semester')
+        srp      = request.POST.get('srp', 'false') == 'true'
         if semester is not None:
-            pst.importProposals(semester)
+            if srp:
+                proposals = Proposal.objects.filter(semester__semester = semester).exclude(pst_proposal_id = 0).exclude(pst_proposal_id = None)
+                map(pst.fetchSRPScore, proposals)
+                map(pst.fetchComments, proposals)
+            else:
+                pst.importProposals(semester)
+
     return HttpResponse(json.dumps({"success" : "ok"})
                       , content_type = 'application/json')
                                   
@@ -219,8 +277,8 @@ def sources_import(request):
 def handle_uploaded_sources(f, pcode):
 
     try:
-        # TBF: where to really put the file?
-        filename = 'sourceImport.txt'
+        # We have to write to /tmp to avoid permission issues 
+        filename = '/tmp/sourceImport.txt'
         destination = open(filename, 'wb+')
         for chunk in f.chunks():
             destination.write(chunk)
@@ -398,7 +456,7 @@ def session_calculate_LSTs(request, *args):
 def users(request):
     pst   = PstInterface()
     users = [{'id' : r['person_id']
-            , 'person_id' : r['person_id']
+            , 'person_id' : int(r['person_id'])
             , 'name' : '%s, %s' % (r['lastName'], r['firstName'])}
              for r in pst.getUsers()]
     return HttpResponse(json.dumps({"success" : "ok" , 'users' : users })
@@ -464,23 +522,88 @@ def lst_range(request):
 
 @login_required
 @admin_only
-def proposal_summary(request):
+def proposal_worksheet(request):
     semester = request.GET.get('semester')
+    allocated = request.GET.get('allocated', 'false') == 'true'
+    filename = 'proposalWorksheet%s.pdf' % ('_' + semester) if semester is not None else ''
     # Create the HttpResponse object with the appropriate PDF headers.
     response = HttpResponse(mimetype='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename=proposalSummary.pdf'
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+
+    ps = ProposalWorksheet(response)
+    
+    if allocated:
+        ps.reports(semester = semester, filter = lambda p : p.allocatedTime() > 0 and 'TGBT' not in p.pcode)
+    else:
+        ps.reports(semester = semester)
+
+    return response
+
+@login_required
+@admin_only
+def proposal_summary(request):
+    semester = request.GET.get('semester')
+    allocated = request.GET.get('allocated', 'false') == 'true'
+    filename = 'proposalSummary%s.pdf' % ('_' + semester) if semester is not None else ''
+    # Create the HttpResponse object with the appropriate PDF headers.
+    response = HttpResponse(mimetype='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
 
     ps = ProposalSummary(response)
-    ps.report(semester = semester)
+    
+    if allocated:
+        ps.report(semester = semester, filter = lambda p : p.allocatedTime() > 0 and 'TGBT' not in p.pcode)
+    else:
+        ps.report(semester = semester)
+
+    return response
+
+@login_required
+@admin_only
+def other_proposal_summary(request):
+    semester = request.GET.get('semester')
+    filename = 'otherProposalSummary%s.pdf' % ('_' + semester) if semester is not None else ''
+    # Create the HttpResponse object with the appropriate PDF headers.
+    response = HttpResponse(mimetype='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename 
+
+    ps = ProposalSummary(response)
+    ps.setTitle('Summary of Other Proposals')
+    def filterProposals(proposal):
+        return 'GBT' not in proposal.pcode and proposal.pcode != 'Maintenance'
+    ps.report(semester = semester, filter = filterProposals)
+
+    return response
+
+@login_required
+@admin_only
+def joint_proposal_summary(request):
+    semester = request.GET.get('semester')
+    filename = 'jointProposalSummary%s.pdf' % ('_' + semester) if semester is not None else ''
+    # Create the HttpResponse object with the appropriate PDF headers.
+    response = HttpResponse(mimetype='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename 
+
+    ps = ProposalSummary(response)
+    ps.setTitle('Joint Proposals')
+    def filterProposals(proposal):
+        return proposal.joint_proposal
+    ps.report(semester = semester, filter = filterProposals)
 
     return response
 
 @login_required
 @admin_only
 def lst_pressure_report(request, *args, **kws):
-    #print "lst: ", request.GET, args, kws
+
+    # interpret request
     debug = request.GET.get('debug', 'false')
     debug = debug == 'true'
+    adjust = request.GET.get('adjustWeatherBins', 'false')
+    adjust = adjust == 'true'
+    carryover = request.GET.get('carryOverUseNextSemester', 'false')
+    carryover = carryover == 'true'
+    sessionId = request.GET.get('session', None)
     sessionId = request.GET.get('session', None)
     sessions = None
     if sessionId is not None:
@@ -492,8 +615,76 @@ def lst_pressure_report(request, *args, **kws):
     response['Content-Disposition'] = 'attachment; filename=LstPressureReport.pdf'
 
     lst = LstPressureReport(response)
-    lst.report(sessions = sessions, debug = debug)
+    lst.report(sessions = sessions
+             , debug = debug
+             , carryOverUseNextSemester = carryover
+             , adjustWeatherBins = adjust
+              )
 
+    return response
+
+@login_required
+@admin_only
+def proposals_export(request):
+    semester  = request.GET.get('semester')
+    if semester is not None:
+        proposals = [ProposalHttpAdapter(p).jsonDict() 
+                       for p in Proposal.objects.filter(semester__semester = semester)]
+    else:
+        proposals = [ProposalHttpAdapter(p).jsonDict() for p in Proposal.objects.all()]
+        semester  = 'all'
+    ignoredKeys = ('nrao_comment', 'srp_to_pi', 'srp_to_tac', 
+                   'tech_review_to_pi', 'tech_review_to_tac', 'tac_to_pi')
+    keys      = [k for k in proposals[0].keys() if k not in ignoredKeys]
+    keys.remove('id')
+    keys.insert(0, 'id')
+    proposals = [makeTabView(p, keys) for p in proposals]
+    proposals.insert(0, '\t'.join(keys))
+    response  = render(request
+                    , "pht/listDataViewNoHeader.txt"
+                    , {'listData' : proposals }
+                    , content_type = 'text/plain')
+    response['Content-Disposition'] = 'attachment; filename=proposals_' + semester + '.txt' 
+    return response
+
+@login_required
+@admin_only
+def sessions_export(request):
+    semester  = request.GET.get('semester')
+    if semester is not None:
+        sessions = [SessionHttpAdapter(s).jsonDict() 
+                       for s in Session.objects.filter(proposal__semester__semester = semester)]
+    else:
+        sessions = [SessionHttpAdapter(s).jsonDict() for s in Session.objects.all()]
+        semester = 'all'
+    keys     = sessions[0].keys()
+    sessions = [makeTabView(s, keys) for s in sessions]
+    sessions.insert(0, '\t'.join(keys))
+    response  = render(request
+                    , "pht/listDataViewNoHeader.txt"
+                    , {'listData' : sessions }
+                    , content_type = 'text/plain')
+    response['Content-Disposition'] = 'attachment; filename=sessions_' + semester + '.txt'
+    return response
+
+@login_required
+@admin_only
+def sources_export(request):
+    semester  = request.GET.get('semester')
+    if semester is not None:
+        sources = [SourceHttpAdapter(s).jsonDict() 
+                       for s in Source.objects.filter(proposal__semester__semester = semester)]
+    else:
+        sources  = [SourceHttpAdapter(s).jsonDict() for s in Source.objects.all()]
+        semester = 'all'
+    keys    = sources[0].keys()
+    sources = [makeTabView(s, keys) for s in sources]
+    sources.insert(0, '\t'.join(keys))
+    response  = render(request
+                    , "pht/listDataViewNoHeader.txt"
+                    , {'listData' : sources }
+                    , content_type = 'text/plain')
+    response['Content-Disposition'] = 'attachment; filename=sources_' + semester + '.txt'
     return response
 
 @login_required
@@ -550,6 +741,8 @@ def friends(request):
 
 @login_required
 @admin_only
+# TBF: misnomer: this is not reall primary investigators, but rather
+# simply authors and their proposal association.
 def pis(request):
     authors = [{'id': a.id, 'name': a.getLastFirstName(), 'pcode': a.proposal.pcode}
                for a in Author.objects.all()]

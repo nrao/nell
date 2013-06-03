@@ -4,6 +4,9 @@ Ext.define('PHT.view.proposal.List' ,{
     store : 'Proposals', 
     autoScroll: true,
     multiSelect: true,
+    viewConfig: {
+        preserveScrollOnRefresh: true,
+    },
 
     initComponent: function() {
         this.authorsFilterText = Ext.create('Ext.form.field.Text', {

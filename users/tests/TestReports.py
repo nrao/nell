@@ -26,19 +26,27 @@ from test_utils              import NellTestCase
 from tools.reports  import *
 from scheduler.tests.utils                   import create_sesshun
 import sys
+import calendar
 
 from tools.reports.CompletionReport  import GenerateReport as completionReport
 from tools.reports.BlackoutReport  import GenerateBlackoutReport
 from tools.reports.DBHealthReport  import GenerateReport as dbHealth
 from tools.reports.DBHealthReport  import report_overlaps
-#from tools.reports.NFSReport  import GenerateReport as nsfReport
+from tools.reports.ObservingReport  import generateReport as observingReport
+from tools.reports.ObservingReport  import filterPeriodsByDate as observingFilterPeriods
+from tools.reports.NSFReport  import GenerateReport as nsfReport
+from tools.reports.NSFReport  import normalizePeriodStartStop, getTime
+from tools.reports.NSFReport import filterPeriodsByDate, getScheduledTime, getPeriods 
+from tools.reports.NSFReport import getMaintenance, getDowntime, getTesting 
 from tools.reports.ProjectReport  import GenerateProjectReport
 from tools.reports.ProjTimeAcctReport  import GenerateProjectTimeAccountingReport
+from tools.reports.ReceiverObservingReport  import ReceiverObservingReport
 from tools.reports.ScheduleReport import ScheduleReport
 from tools.reports.SessionReport  import GenerateReport as sessionReport
 from tools.reports.StartEndReport  import get_projects_between_start_end 
 from tools.reports.WeeklyReport  import WeeklyReport
 from tools.reports.WindowsReport  import WindowsReport 
+from utilities import TimeAgent
 
 # This breaks the one unit test class per class pattern, since this 
 # is a single test class for all the reports, but wtf.
@@ -134,6 +142,23 @@ class TestReports(NellTestCase):
         p.save()
         pg = Period_Receiver(period = p, receiver = X)
         pg.save()
+
+
+    def test_receiverObservingReport(self):
+
+        y = 2010
+        r = ReceiverObservingReport()
+        r.setYears([y])
+        r.compute()
+
+        nonzero = ['L', 'X', 'total']
+        for k, v in r.data[y].items():
+            if k not in nonzero:
+                self.assertEqual(0.0, v)
+
+        self.assertEqual(0.50, r.data[y]['L'])        
+        self.assertEqual(5.00, r.data[y]['X'])        
+        self.assertEqual(5.50, r.data[y]['total'])        
 
     def test_rcvrTimeAccntReport(self):
 
@@ -471,8 +496,106 @@ Jan 01 00:00 | Jan 01 05:00 | 06:21 |  1.00 | O | S | Unknown   | L         | On
 Jan 01 01:00 | Jan 01 06:00 | 07:21 |  2.00 | O | S | Unknown   | X         | Two"""
         self.assertTrue(result in ls)
 
-    def xtest_nsfReport(self):
-        
+    def test_observingReport(self):
+
+        # Periods look like (UTC, EST subtract 5):
+        # 1 One: 2010-01-01 00:00:00 for  2.00 Hrs
+        # 3 Two: 2010-01-01 02:00:00 for  3.00 Hrs
+        # 2 One: 2010-01-01 05:00:00 for  1.00 Hrs - this one start in Jan, EST
+        # 4 Two: 2010-01-01 06:00:00 for  2.00 Hrs
+
+        # run the report to catch the 2cd half of our periods
+        periods = []
+        quarter = 2
+        year = 2010
+        fiscal_year = 2010
+        for m in [1,2,3]:
+            periods.extend(observingFilterPeriods(datetime(year, m, 1)))
+        pcodes, sch, obs = observingReport('Q%d FY %d' % (quarter, fiscal_year), periods)
+        self.assertEquals([u'GBT09A-001'], pcodes)
+        self.assertEquals({u'GBT09A-001': 3.0}, sch)
+        self.assertEquals({u'GBT09A-001': 2.5}, obs)
+
+        # now make huge period spanning across month boundary and w/ lost time
+        dur = 36.0
+        scheduled = Period_State.get_state("S")
+        pa = Period_Accounting(scheduled = dur, lost_time_rfi = 30.0)
+        pa.save()
+        p = Period(session = self.s1
+                 , start = datetime(2010, 1, 31, 0)
+                 , duration = dur
+                 , state = scheduled
+                 , accounting = pa
+                  )
+        p.save()
+
+        L = (Receiver.get_rcvr('L'))
+        pg = Period_Receiver(period = p, receiver = L)
+        pg.save()
+
+        periods = []
+        for m in [1,2,3]:
+            periods.extend(observingFilterPeriods(datetime(year, m, 1)))
+        pcodes, sch, obs = observingReport('Q%d FY %d' % (quarter, fiscal_year), periods)
+        pcode = u'GBT09A-001'
+        self.assertEquals([pcode], pcodes)
+        self.assertAlmostEquals(sch[pcode], 3.0 + dur, 2)
+        self.assertAlmostEquals(obs[pcode], 2.5 + dur - 30.0, 2)
+
+    def test_nsfReport(self):
+
+        # Periods look like (UTC, EST subtract 5):
+        # 1 One: 2010-01-01 00:00:00 for  2.00 Hrs
+        # 3 Two: 2010-01-01 02:00:00 for  3.00 Hrs
+        # 2 One: 2010-01-01 05:00:00 for  1.00 Hrs - this one start in Jan, EST
+        # 4 Two: 2010-01-01 06:00:00 for  2.00 Hrs
+       
+        decStart = datetime(2009,12, 1, 0)
+        janStart = datetime(2010, 1, 1, 0)
+        ps = Period.objects.all().order_by('start')
+        ps = list(ps)
+
+       
+        # what are the periods that lie in Dec (EST)?
+        filterd = filterPeriodsByDate(decStart)
+        self.assertEquals([1,3], [p.id for p in filterd])
+        # what are the periods that lie in Jan (EST)?
+        filterd = filterPeriodsByDate(janStart)
+        self.assertEquals([2,4], [p.id for p in filterd])
+
+        pids = [1,2,4]
+        dts = [decStart, janStart, janStart]
+        for pid, dt in zip(pids, dts):
+            p = Period.objects.get(id = pid)
+            start, stop = normalizePeriodStartStop(p, dt)
+            self.assertEquals(start, TimeAgent.utc2est(p.start))
+            self.assertEquals(stop, TimeAgent.utc2est(p.end()))
+        # Period 3 is a special case
+        p = Period.objects.get(id = 3)
+        start, stop = normalizePeriodStartStop(p, decStart)
+        self.assertEquals(start, TimeAgent.utc2est(p.start))
+        self.assertEquals(stop, datetime(2009, 12, 31, 23, 59, 59))
+
+
+        self.assertAlmostEquals(5.000, getTime(ps[:2], decStart), 2)    
+        self.assertAlmostEquals(3.000, getTime(ps[2:], janStart), 2)    
+
+        # tail of Q1
+        dt = decStart
+        fps = filterPeriodsByDate(dt)
+        self.assertAlmostEquals(5.000, getScheduledTime(fps, dt), 2)    
+        self.assertEquals(0.0, getDowntime(fps, dt))    
+        self.assertEquals(0.0, getMaintenance(fps, dt))    
+        self.assertEquals(0.0, getTesting(fps, dt))    
+
+        # Start of Q2!
+        dt = janStart
+        fps = filterPeriodsByDate(dt)
+        self.assertAlmostEquals(3.000, getScheduledTime(fps, dt), 2)    
+        self.assertEquals(0.5, getDowntime(fps, dt))    
+        self.assertEquals(0.0, getMaintenance(fps, dt))    
+        self.assertEquals(0.0, getTesting(fps, dt))    
+
         argv = ["program", "1", "2010"]
         quarters = {
             1: [10, 11, 12]
@@ -486,6 +609,35 @@ Jan 01 01:00 | Jan 01 06:00 | 07:21 |  2.00 | O | S | Unknown   | X         | Tw
     
         months = quarters[quarter]
         year   = fiscal_year if quarter != 1 else fiscal_year - 1
-    
-        #nsfReport('Q%dFY%d' % (quarter, fiscal_year)
-        #             , [datetime(year, m, 1) for m in months])
+   
+        nsfReport('Q%dFY%d' % (quarter, fiscal_year)
+                     , [datetime(year, m, 1) for m in months])
+
+
+        # can we handle 24 hour periods?
+        dur = 24.0
+        scheduled = Period_State.get_state("S")
+        pa = Period_Accounting(scheduled = dur)
+        pa.save()
+        p = Period(session = self.s1
+                 , start = datetime(2010, 1, 1, 8)
+                 , duration = dur
+                 , state = scheduled
+                 , accounting = pa
+                  )
+        p.save()
+
+        L = (Receiver.get_rcvr('L'))
+        pg = Period_Receiver(period = p, receiver = L)
+        pg.save()
+
+        start, stop = normalizePeriodStartStop(p, janStart)
+        self.assertEquals(start, TimeAgent.utc2est(p.start))
+        self.assertEquals(stop, TimeAgent.utc2est(p.end()))
+
+        dt = janStart
+        fps = filterPeriodsByDate(dt)
+        self.assertAlmostEquals(27.000, getScheduledTime(fps, dt), 2)    
+        self.assertEquals(0.5, getDowntime(fps, dt))    
+        self.assertEquals(0.0, getMaintenance(fps, dt))    
+        self.assertEquals(0.0, getTesting(fps, dt)) 

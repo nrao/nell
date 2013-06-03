@@ -28,6 +28,7 @@ import settings, sys
 setup_environ(settings)
 
 from scheduler.models              import *
+import numpy
 
 # From Story:
 # https://www.pivotaltracker.com/story/show/9267975
@@ -71,7 +72,7 @@ class RcvrTimeAccntReport():
 
     # Note: this does the logic AND the reporting.  It would be nice 
     # seperate out the logic so that we can unit test it easier
-    def report(self, start, end):
+    def report(self, start, end, scienceOnly = False):
 
         self.add("Receiver Time Accounting Report (in Hours)\n")
         self.add("For time range %s - %s\n\n" % (start, end))
@@ -85,14 +86,16 @@ class RcvrTimeAccntReport():
         periods = Period.get_periods(start, duration, ignore_deleted = True)
         # filter out the pending
         ps = [p for p in periods if p.state == scheduled]
+        if scienceOnly:
+            ps = [p for p in ps if p.session.project.is_science()]
 
         # for testing
         #for p in ps:
         #    print "Period (%s): %s-%s, %5.2f hrs, Rcvrs: %s" % (p.state, p.start, p.end(), p.duration, p.receiver_list())
         #    print p.accounting
 
-        rx = Receiver.objects.all()
-
+        rx = Receiver.objects.all().order_by('freq_low')
+        hiFreqRx =  ['MBA', 'MBA1.5', 'W', 'Q', 'Ka', 'K', 'KFPA', 'Ku', 'KFPA']
         glossary = {
             "SC" : "Scheduled"
           , "TB" : "Time Billed (OT - NB)"
@@ -111,6 +114,9 @@ class RcvrTimeAccntReport():
         data = ["Rcvr", "SC", "TB", "NB", "OT", "LT", "OS"]
         self.printData(data, cols, True)
 
+        # totals
+        total = numpy.array([0.]*6)
+        hiFreq = numpy.array([0.]*6)
         # report per receiver
         for r in rx:
             tb = lt = sc = nb = ot = os = 0.0
@@ -131,8 +137,19 @@ class RcvrTimeAccntReport():
                   , self.str(lt)
                   , self.str(os)
                    ]
+            total += numpy.array([sc, tb, nb, ot, lt, os])       
+            if r.abbreviation in hiFreqRx:
+                hiFreq += numpy.array([sc, tb, nb, ot, lt, os])       
             self.printData(data, cols)
 
+        # print the totals
+        data = ['Total']
+        data.extend([self.str(t) for t in total])
+        self.printData(data, cols)
+        data = ['>18GH']
+        data.extend([self.str(t) for t in hiFreq])
+        self.printData(data, cols)
+          
         self.writeReport()
 
     def str(self, flt):

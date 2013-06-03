@@ -20,7 +20,8 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from django.db                 import models
+from django.db          import models
+from datetime           import datetime
 
 from Author             import Author
 from Backend            import Backend
@@ -37,18 +38,17 @@ from scheduler.models   import User as DSSUser
 
 from utilities          import TimeAccounting
 
-from datetime           import datetime
-
 class Proposal(models.Model):
 
     pst_proposal_id = models.IntegerField(null = True)
-    dss_project     = models.ForeignKey(DSSProject, null = True)
+    dss_project     = models.ForeignKey(DSSProject, null = True, on_delete = models.SET_NULL)
     proposal_type   = models.ForeignKey(ProposalType)
     observing_types = models.ManyToManyField(ObservingType)
     status          = models.ForeignKey(Status)
     semester        = models.ForeignKey(Semester, null = True)
     friend          = models.ForeignKey(DSSUser, null = True)
     pi              = models.ForeignKey('Author', related_name = "pi_on", null = True)
+    contact         = models.ForeignKey('Author', related_name = "contact_on", null = True)
     investigators   = models.ManyToManyField('Author', related_name = 'investigator_on')
     sci_categories  = models.ManyToManyField(ScientificCategory)
     pcode           = models.CharField(max_length = 32, unique = True)
@@ -80,20 +80,25 @@ class Proposal(models.Model):
 
     def allocatedTime(self):
         "Simply the sum of the sessions' time"
-        return sum([s.allotment.allocated_time \
+        #return sum([s.allotment.allocated_time \
+        #    for s in self.session_set.all() \
+        #        if s.allotment is not None \
+        #        and s.allotment.allocated_time is not None])
+        return sum([s.getTotalAllocatedTime() \
             for s in self.session_set.all() \
-                if s.allotment is not None \
-                and s.allotment.allocated_time is not None])
+            if s.getTotalAllocatedTime() is not None])
 
     def allocatedTimeByGrade(self):
         "Sum the session times by grade."
         allotments = {}
         for s in self.session_set.all():
-            if s.allotment is not None and s.allotment.allocated_time is not None:
+            #if s.allotment is not None and s.allotment.allocated_time is not None:
+            time = s.getTotalAllocatedTime()
+            if time is not None:
                 if allotments.has_key(s.grade.grade):
-                    allotments[s.grade.grade] += s.allotment.allocated_time
+                    allotments[s.grade.grade] += time
                 else:
-                    allotments[s.grade.grade] = s.allotment.allocated_time
+                    allotments[s.grade.grade] = time
         return allotments.iteritems()
 
     def isThesis(self):
@@ -153,7 +158,7 @@ class Proposal(models.Model):
         "What are the bands associated with this proposal?"
         return ''.join([r.code for r in Receiver.objects.raw(
             """
-            select distinct r.id, r.abbreviation 
+            select distinct r.id, r.code
             from ((pht_sessions as s 
               join pht_proposals as p on p.id = s.proposal_id ) 
               join pht_sessions_receivers as sr on s.id = sr.session_id) 
@@ -194,7 +199,7 @@ class Proposal(models.Model):
         return sems.keys()
 
     @staticmethod
-    def createFromDssProject(project):
+    def createFromDssProject(project, pst):
         """
         Creates a new Proposal instance initialized using a DSS Project.
         """
@@ -212,7 +217,7 @@ class Proposal(models.Model):
                           , submit_date     = datetime.now()
                           , title           = project.name
                           , abstract        = abstract
-                          , joint_proposal  = False 
+                          , joint_proposal  = pst.isJointProposal(project.pcode)
                           )
 
         proposal.save()
@@ -225,23 +230,30 @@ class Proposal(models.Model):
         an SQL query.
         """
 
+        # locally needed for parsing datetime strings
+        def parseDTString(result, key):
+            frmt = "%Y-%m-%d %H:%M:%S"
+            try:
+                dtstr = result[key]
+                dt = datetime.strptime(dtstr, frmt) 
+            except:
+                dt = datetime.now().strftime(frmt)
+            return dt
+
         pcode         = result['PROP_ID'].replace('/', '')
         proposalType  = ProposalType.objects.get(type = result['PROPOSAL_TYPE'])
         status        = Status.objects.get(name = result['STATUS'].title())
-        submit_date  = result['SUBMITTED_DATE'] \
-            if result['SUBMITTED_DATE'] != 'None' \
-            else datetime.now().strftime("%Y-%M-%d %H:%m:%S")
-
+       
         proposal = Proposal(pst_proposal_id = result['proposal_id']
                           , proposal_type   = proposalType
                           , status          = status
                           , pcode           = pcode
-                          , create_date     = result['CREATED_DATE']
-                          , modify_date     = result['MODIFIED_DATE']
-                          , submit_date     = submit_date 
+                          , create_date     = parseDTString(result, 'CREATED_DATE') 
+                          , modify_date     = parseDTString(result, 'MODIFIED_DATE') 
+                          , submit_date     = parseDTString(result, 'SUBMITTED_DATE') 
                           , title           = result['TITLE']
                           , abstract        = result['ABSTRACT']
-                          , joint_proposal  = False #result['joint_proposal']
+                          , joint_proposal  = result['JOINT_PROPOSAL_TYPE'].lower() != 'not a joint proposal'
                           )
 
         proposal.save()
@@ -255,3 +267,4 @@ class Proposal(models.Model):
         proposal.save()
         return proposal
 
+    

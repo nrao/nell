@@ -78,12 +78,31 @@ def getMinElevation(dec):
 def getMaxElevation(dec):
     return dec2Els(dec)[1]
 
-def sourceSizeCorrection(diameter, fwhm):
+def getAppEff(wavelength, min_elevation, max_elevation, eta_long):
+    if wavelength > 3:
+        return eta_long
+    integrand1, integrand2 = 0, 0
+    min_elevation, max_elevation = map(int, (min_elevation, max_elevation))
+    for e in range(min_elevation, max_elevation + 1):
+        weight = 90 - e
+        integrand1 = integrand1 + weight * math.exp(-1 * math.pow(
+            0.00125664 * (500.954 - 10.4728 * e + 0.09766 * e * e) / wavelength, 2))
+        integrand2 = integrand2 + weight
+    # Should return 0.253494449914 when lambda = 0.3, e1 = 30, e2 = 90, n0
+    # = 0.70
+    return eta_long * integrand1 / float(integrand2)
+
+def sourceSizeCorrectionS(diameter, fwhm):
     try:
         x          = diameter / (1.2 * fwhm)
         correction = (1 - math.exp(-1 * math.pow(x, 2))) / math.pow(x, 2)
     except ZeroDivisionError:
-        return 1
+        correction = 1
+    return correction
+
+def sourceSizeCorrectionTr(diameter, fwhm):
+    x          = diameter / (1.2 * fwhm)
+    correction = 1.32*(1 - math.exp(-1 * math.pow(x, 2)))
     return correction
 
 def getKs(backend, bandwidth, bw, windows, receiver, beams):
@@ -93,7 +112,7 @@ def getKs(backend, bandwidth, bw, windows, receiver, beams):
         retval = 1.3, 1.21
     elif backend == 'GBT Spectrometer':
         values = spectrometerK1K2.get(bandwidth)
-        sampling = bw / (float(windows) * float(beams))
+        sampling = bw / (2.*float(windows) * float(beams))
         if bandwidth == 50 and sampling < 0.00076:
             retval = values[0]
         elif bandwidth == 50 and sampling >= 0.00076:
