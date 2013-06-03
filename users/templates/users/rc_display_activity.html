@@ -75,6 +75,23 @@
 	    if (ranks.length > 1)
 	    {
 	        var rank = prompt(
+	           "There are multiple maintenance period on this date. NOTE: Periods may be floating ('A', 'B', etc.) or fixed ('HH:MM')  Enter one of the following: "
+	           + ranks, ranks[0]);
+	    }
+            else
+            {
+                rank = ranks[0];
+            }
+
+	    return rank;
+        }
+
+	function getTimes(date) {
+	    ranks = $maintenanceGroups[date];
+
+	    if (ranks.length > 1)
+	    {
+	        var rank = prompt(
 	           "There is more than one maintenance period on this date.  Enter "
 	           + ranks, ranks[0]);
 	    }

@@ -253,7 +253,7 @@ def display_maintenance_activity(request, activity_id = None):
         supervisor_mode = True if (u  in supervisors) else False
         copymove_groups = _get_future_maintenance_dates3()
         copymove_dates = copymove_groups.keys()
-        
+
         params = {'subject'            : ma.subject,
                   'date'               : start.date(),
                   'time'               : start.time(),
@@ -546,10 +546,12 @@ def edit_activity(request, activity_id = None):
             group = _get_maintenance_activity_group_by_date(date, rank)
 
             if group:
-                ma.group = group          # assuming here 1 maintenance period
-                ma.approved = False       # per day.  UI does not support more
-                ma.add_modification(user) # than this.
+                ma.group = group
+                ma.approved = False
+                ma.add_modification(user)
                 ma.save()
+            else:
+                print "No group for", request.GET['Destination'], "Rank = ", rank
 
             return HttpResponseRedirect('/schedule/')
 
@@ -566,6 +568,8 @@ def edit_activity(request, activity_id = None):
                 new_ma = ma.clone(group)
                 new_ma.add_modification(user)
                 new_ma.save()
+            else:
+                print "No group for", request.GET['Destination'], "Rank = ", rank
 
             return HttpResponseRedirect('/schedule/')
 
@@ -584,16 +588,9 @@ def edit_activity(request, activity_id = None):
 # date.  For example, if there are 3 floating maintenance days, their
 # dates will all be on the Monday of the week, but the rank ('A', 'B',
 # 'C') would differentiate them.  However if the desired destination
-# is *not* a floating maintenance day (i.e. the rank will be 'x', not
-# 'A', 'B', etc.), then the actual date is used to pin down the
-# desired maintenance activity group.
-#
-# The first maintenance activity group that meets the criterion is the
-# one returned.  What this means is if there are two non-floating
-# maintenance periods on a given day, the maintenance activity group
-# returned by this function will be the one that shows up first in the
-# list returned by
-# Maintenance_Activity_Group.get_maintenance_activity_groups(week).
+# is *not* a floating maintenance day (i.e. the rank will be a time
+# 'HH:MM', not 'A', 'B', etc.), then the actual date and time is used
+# to pin down the desired maintenance activity group.
 #
 ######################################################################
 
@@ -602,8 +599,23 @@ def _get_maintenance_activity_group_by_date(date, rank):
     groups = Maintenance_Activity_Group.get_maintenance_activity_groups(week)
 
     if groups:
-        def comp_mag(mag):
-            return TimeAgent.truncateDt(mag.get_start()) == date and mag.rank.upper() == rank.upper()
+        if len(rank) == 5:      # fixed maintenance. rank = 'HH:MM'
+            try:
+                dt = date.replace(hour = int(rank[0:2]), minute = int(rank[3:5]))
+            except ValueError:  # badly formatted time, should be "HH:MM"
+                print "_get_maintenance_activity_group_by_date(", date, ",", rank, "); in resource_cal.py:"
+                print "ValueError: badly formatted time, should be 'HH:MM'"
+                return None     # cant make anything of this, return None.
+
+            def comp_mag(mag):
+                 return mag.get_start(tzname = 'ET') == dt
+        elif len(rank) == 1 and rank.isalpha():    # floating maintenance: rank = 'A', 'B', etc.
+            def comp_mag(mag):
+                return TimeAgent.truncateDt(mag.get_start(tzname = 'ET')) == date and mag.rank.upper() == rank.upper()
+        else:                   # whoops! rank should be either '[A-Z]' or 'HH:MM'
+            print "_get_maintenance_activity_group_by_date(", date, ",", rank, "); in resource_cal.py:"
+            print "poorly formated rank; must be either '[A-Z]' or 'HH:MM'."
+            return None
 
         groups = filter(comp_mag, groups)
         return groups[0] if groups else None
@@ -856,19 +868,30 @@ def _get_future_maintenance_dates3():
     # a day of the week: 'A' = 0 (Monday), 'B' = 1 (Tuesday), etc.
     # These dates are then entered into the list of possible future
     # dates.
-    
+
     while week < last_date:
         groups = Maintenance_Activity_Group.get_maintenance_activity_groups(week)
 
         for i in groups:
             d = str(i.get_start().date())
-            
+
             if not dates.has_key(d):
                 dates[d] = []
-                
-            dates[d].append(str(i.rank))
-            
+
+            # we want either the start time--in format "HH:MM"--if a
+            # period is assigned, or the rank, if still floating.
+            if (i.period):
+                # t will be in format "HH:MM:SS"
+                t = str(i.get_start(tzname = 'ET').time())
+                # use only "HH:MM" part of time string
+                dates[d].append(t[0:t.rfind(":")])
+            else:
+                dates[d].append(str(i.rank))
+
         week += timedelta(7)
+
+    for i in dates:
+        dates[i].sort()
 
     return dates
 
