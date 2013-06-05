@@ -2,8 +2,8 @@
 
 source /home/dss/conundrum/conundrum.bash
 
-#export DSS_NELL=/home/dss/release/nell
-export DSS_NELL=~mmccarty/sandbox/dss/nell
+export DSS_NELL=/home/dss/release/nell
+#export DSS_NELL=~mmccarty/sandbox/dss/nell
 export PYTHONPATH=$DSS_NELL:$PYTHONPATH
 
 python $DSS_NELL/pht/tools/reports/ProposalOverview.py $1 $2

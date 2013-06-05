@@ -65,7 +65,7 @@ class UpdateEphemeris():
                          , self.baseUrl + "Comets/Soft03Cmt.txt"
                          , self.parseCometLine)
                          , ("Asteroids"
-                         , self.baseUrl + "Bright/2011/Soft03Bright.txt"
+                         , self.baseUrl + "Bright/2013/Soft03Bright.txt"
                          , self.parseAsteroidLine)
                          , ("Unusual"
                          , self.baseUrl + "Unusual/Soft03Unusual.txt"
