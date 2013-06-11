@@ -78,6 +78,25 @@ def getMinElevation(dec):
 def getMaxElevation(dec):
     return dec2Els(dec)[1]
 
+def getSuggestedMinElevation(freq, dec):
+    etaHAMin = math.sqrt(0.5*calculateEtaMin(freq))
+    maxElev = dec2Els(dec)[1]
+    airMassAtTransit = 1./math.sin(math.radians(maxElev))
+    for el in range(5,int(maxElev)):
+	    if calculateEST0(freq, 1./math.sin(math.radians(el)))/calculateEST0(freq, airMassAtTransit) >= etaHAMin:
+		    return max(el, maxElev-5,5)
+    return max(5,maxElev-5)
+
+def calculateEtaMin(freq):
+    # Equations 22 and 22a
+    if freq <= 60000:
+        relF = freq/1000./12.8
+        eta_avrg = 0.74+0.155*math.cos(relF) + 0.120*math.cos(2*relF) - 0.030*math.cos(3*relF) - 0.010*math.cos(4*relF)
+    else:
+        eta_avrg = 0.5
+    # Equation 23 (rearranged)
+    return 1.1*eta_avrg - 0.12
+
 def getAppEff(wavelength, min_elevation, max_elevation, eta_long):
     if wavelength > 3:
         return eta_long

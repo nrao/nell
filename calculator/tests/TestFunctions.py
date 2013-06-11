@@ -168,3 +168,51 @@ class TestFunctions(TestCase):
     def test_getAppEff(self):
         appEff = getAppEff(0.3, 30, 90, 0.7)
         self.assertAlmostEqual(appEff, 0.2535, 4)
+
+    def test_calculateEtaMin(self):
+
+        inputsOutputs = [
+            (1000, 0.951806870543)
+          , (6000, 0.922116375739)
+          , (11000, 0.824282996949)
+          , (16000, 0.665969680288)
+          , (21000, 0.533952791312)
+          , (26000, 0.508899792477)
+          , (31000, 0.575382941633)
+          , (36000, 0.652488595023)
+          , (41000, 0.676595219781)
+          , (46000, 0.631849984379)
+          , (51000, 0.549159696647)
+          , (56000, 0.504091450641)
+        ]
+        for f in range(61, 91, 5):
+            inputsOutputs.append((f*1000, 0.43))
+        for i, o in inputsOutputs:
+            self.assertAlmostEquals(o, calculateEtaMin(i), 6)
+
+    def test_getSuggestedMinElevation(self):
+
+        freqs = [5, 10, 50, 51, 90] # MHz
+        decs = [30, 45, 80] # degrees
+        inputs = [(f, d) for f in freqs for d in decs]
+        minels= [76.5666666667
+               , 78.4333333333
+               , 43.4333333333
+               , 76.5666666667
+               , 78.4333333333
+               , 43.4333333333
+               , 76.5666666667
+               , 78.4333333333
+               , 43.4333333333
+               , 76.5666666667
+               , 78.4333333333
+               , 43.4333333333
+               , 76.5666666667
+               , 78.4333333333
+               , 43.4333333333
+                ]
+        for input, minel in zip(inputs, minels):
+            f, d = input
+            print f, d, getSuggestedMinElevation(f, d)
+            #self.assertAlmostEqual(minel, getSuggestedMinElevation(f, d))
+  
