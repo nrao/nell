@@ -59,6 +59,7 @@ class TestResultCalculations(unittest.TestCase):
         self.assertAlmostEqual(8.677, value, 3)
 
     def test_source_diameter(self):
+        self.results.set('units', 'tr')
         self.results.set('source_diameter_slider', 2)
         value, _, _, _, _ = self.results.get('source_diameter')
         self.assertAlmostEqual(1.735, value, 3)
