@@ -186,13 +186,17 @@ class TestViews(TestViewsBase):
               , 'redshift': [u'0']
               , 'frame': [u'Rest Frame']
               , 'source_diameter_slider': [u'0']
-              , 'right_ascension': [u'']
+              , 'right_ascension': [u'0'] # needs to not be '' to eval
               , 'rest_freq': [u'1440.0']
               , 'source_velocity': [u'0']
               , 'declination': [u'38']
               , 'estimated_continuum': [u'0']
               , 'topocentric_freq': [u'1440.0']
               , 'doppler-hidden': [u'Optical']
+              # need a value to force execution
+              , 'effective_bw': [u'0']
+              , 'duty_cycle': [u'0']
+              , 'min_elevation': [u'5']
               }
         response = self.client.post('/calculator/set_terms/', data)
         self.failUnlessEqual(response.status_code, 200)
@@ -213,3 +217,30 @@ class TestViews(TestViewsBase):
         self.failUnlessEqual(response.status_code, 200)
         response = self.client.get('/calculator/results')
         self.failUnlessEqual(response.status_code, 200)
+
+        # now actually examine the JSON response
+        response = self.client.get('/calculator/get_results')
+        results = response.content.replace('null', 'None').replace('true', 'True').replace('false', 'False')
+        results = eval(results)
+        rs = results['results']
+
+        # Use this code to find why the complete calculation is not being implemented
+        #terms = ['max_elevation', 'min_elevation', 't_rcvr', 't_spill', 't_atm', 'tau0', 'air_mass', 't_cmb', 'right_ascension', 'declination', 'topocentric_freq', 'galactic', 'estimated_continuum', 't_galactic_model', 'eta_track', 'eta_sruf', 'est0', 'eta_dss', 'est_ts', 'n_uncorr_samp', 't_tot', 'a', 'b', 'k1', 'k2', 'k_pulsar', 'bw', 'effective_bw', 'duty_cycle', 'mode']
+        #for r in rs:
+        #    if r['term'] in terms: 
+        #        print '  ', r['term'], r['value']
+        #print "inputs: "        
+        #for r in results['input']:
+        #    if r['term'] in terms: 
+        #        print '  ', r['term'], r['value']
+
+        # you should get a final result
+        def getTerm(results, term):
+            for r in rs:
+                if r['term'] == term:
+                    return r['value']
+            return None
+
+        self.assertTrue(getTerm(results, 't_tot') is not None)
+
+        
