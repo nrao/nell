@@ -216,7 +216,7 @@ class TestResultCalculations(unittest.TestCase):
               , 'galactic': [u'no_correction']
               , 'redshift': [u'0']
               , 'frame': [u'Rest Frame']
-              , 'source_diameter_slider': [u'0']
+              , 'source_diameter_slider': [u'1'] # to avoid t_tot None
               , 'right_ascension': [u'0'] # needs to not be '' to eval
               , 'rest_freq': [u'1440.0']
               , 'source_velocity': [u'0']
@@ -256,14 +256,17 @@ class TestResultCalculations(unittest.TestCase):
         value = self.results.get('t_sys')[0]
         self.assertAlmostEqual(16.61232745, value, 5)
         value = self.results.get('t_tot')[0]
-        self.assertAlmostEqual(106331.099382, value, 5)
-
+        self.assertAlmostEqual(1274241116.43, value, 2)
 
         # Use this code to find out why our final answers aren't evaluating.
-        #terms = ['max_elevation', 'min_elevation', 't_rcvr', 't_spill', 't_atm', 'tau0', 'air_mass', 't_cmb', 'right_ascension', 'declination', 'topocentric_freq', 'galactic', 'estimated_continuum', 't_galactic_model', 'eta_track', 'eta_surf', 'est0', 'eta_dss', 'est_ts', 'n_uncorr_samp', 't_tot', 'a', 'b', 'k1', 'k2', 'k_pulsar', 'bw', 'effective_bw', 'duty_cycle', 'mode']
         #print "Nones: "
-        #for term in sorted(terms):
-        #    if self.results.get(term)[0] is None:
-        #        print term
+        #terms = self.results.get()
+        #keys = sorted(terms.keys())
+        #for term in sorted([t.keyword for t in self.results.terms]): #sorted(terms):
+        #for k in keys:
+        #    v, _, _, _, _ = terms[k]
+        #    print k, v
+        #    if v is None:
+        #        print "NONE!!!!!!!!!!!!!!!!!!!!!!"
 
         

@@ -185,7 +185,7 @@ class TestViews(TestViewsBase):
               , 'galactic': [u'no_correction']
               , 'redshift': [u'0']
               , 'frame': [u'Rest Frame']
-              , 'source_diameter_slider': [u'0']
+              , 'source_diameter_slider': [u'1'] # need this to eval t_tot
               , 'right_ascension': [u'0'] # needs to not be '' to eval
               , 'rest_freq': [u'1440.0']
               , 'source_velocity': [u'0']
