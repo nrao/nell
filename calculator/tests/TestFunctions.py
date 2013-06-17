@@ -28,13 +28,16 @@ class TestFunctions(TestCase):
 
     def assertMinTopoFreq(self, backend, bandwidths, windows, receiver, beams, exp):
         i = 0
+        fs = []
         for bw in bandwidths:
            for w in windows:
               for b in beams:
                   f = getMinTopoFreq(backend, bw, w, receiver, b)
-                  self.assertAlmostEquals(exp[i], f, 6)
                   #print "bw = %.2f, w = %d, b = %d, f = %5.3f" % (bw, w, b, f)
+                  self.assertAlmostEquals(exp[i], f, 6)
+                  fs.append(f)
                   i += 1
+        #print fs
 
     def test_getMinTopoFreq(self):
 
@@ -63,8 +66,8 @@ class TestFunctions(TestCase):
         backend = 'VErsitile GB Astronomical Spectrometer'
         bandwidths = [11.72, 23.44, 100, 187.5, 850, 1250]
         windows = range(1, 9)
-        #print "VEGAS & PF1"
-        #self.assertMinTopoFreq(backend, bandwidths, windows, receiver, beams, [])
+        exp = [0.022, 0.022, 0.022, 0.022, 0.022, 0.022, 0.022, 0.022, 0.022, 0.022, 0.022, 0.022, 0.022, 0.022, 0.022, 0.022, 0.045000000000000005, 0.045000000000000005, 0.045000000000000005, 0.045000000000000005, 0.045000000000000005, 0.045000000000000005, 0.045000000000000005, 0.045000000000000005, 0.045000000000000005, 0.045000000000000005, 0.045000000000000005, 0.045000000000000005, 0.045000000000000005, 0.045000000000000005, 0.045000000000000005, 0.045000000000000005, 0.763, 0.763, 0.763, 0.763, 0.763, 0.763, 0.763, 0.763, 0.763, 0.763, 0.763, 0.763, 0.763, 0.763, 0.763, 0.763, 1.431, 1.431, 1.431, 1.431, 1.431, 1.431, 1.431, 1.431, 1.431, 1.431, 1.431, 1.431, 1.431, 1.431, 1.431, 1.431, 51.88, 51.88, 51.88, 51.88, 51.88, 51.88, 51.88, 51.88, 51.88, 51.88, 51.88, 51.88, 51.88, 51.88, 51.88, 51.88, 76.294, 76.294, 76.294, 76.294, 76.294, 76.294, 76.294, 76.294, 76.294, 76.294, 76.294, 76.294, 76.294, 76.294, 76.294, 76.294]
+        self.assertMinTopoFreq(backend, bandwidths, windows, receiver, beams, exp)
 
 
     def test_getTimeVisible(self):
