@@ -26,6 +26,47 @@ from calculator.utilities.functions import *
 
 class TestFunctions(TestCase):
 
+    def assertMinTopoFreq(self, backend, bandwidths, windows, receiver, beams, exp):
+        i = 0
+        for bw in bandwidths:
+           for w in windows:
+              for b in beams:
+                  f = getMinTopoFreq(backend, bw, w, receiver, b)
+                  self.assertAlmostEquals(exp[i], f, 6)
+                  #print "bw = %.2f, w = %d, b = %d, f = %5.3f" % (bw, w, b, f)
+                  i += 1
+
+    def test_getMinTopoFreq(self):
+
+        # GBT Spectrometer tests
+        backend = 'GBT Spectrometer'
+
+        # L band
+        receiver = 'L (1.15 - 1.73 GHz)'
+        bandwidths = [12.5, 50, 200, 800]
+        windows = [1, 2, 4, 8] 
+        beams = [1.0]
+        exp = [0.095367431640625, 0.19073486328125, 0.3814697265625, 0.762939453125, 0.3814697265625, 0.762939453125, 1.52587890625, 3.0517578125, 6.103515625, 12.20703125, 24.4140625, 48.828125, 97.65625, 195.3125, 390.625, 781.25]
+        self.assertMinTopoFreq(backend, bandwidths, windows, receiver, beams, exp)
+
+        # PF1
+        receiver = 'PF1 (0.29 - 0.395 GHz)'
+        beams = [1, 2]
+        exp = [0.095367431640625, 0.19073486328125, 0.19073486328125, 0.3814697265625, 0.3814697265625, 0.762939453125, 0.762939453125, 1.52587890625, 0.3814697265625, 0.762939453125, 0.762939453125, 1.52587890625, 1.52587890625, 3.0517578125, 3.0517578125, 6.103515625, 6.103515625, 12.20703125, 12.20703125, 24.4140625, 24.4140625, 48.828125, 48.828125, 97.65625, 97.65625, 195.3125, 195.3125, 390.625, 390.625, 781.25, 781.25, 1562.5]
+        self.assertMinTopoFreq(backend, bandwidths, windows, receiver, beams, exp)
+
+        # test backends w/ out known resolution:
+        f = getMinTopoFreq('Mustang 1.5', None, None, None, None)
+        self.assertEqual(1, f)
+
+        # the vegas stuff shouldn't work, because the DB lookup now don't work.
+        backend = 'VErsitile GB Astronomical Spectrometer'
+        bandwidths = [11.72, 23.44, 100, 187.5, 850, 1250]
+        windows = range(1, 9)
+        #print "VEGAS & PF1"
+        #self.assertMinTopoFreq(backend, bandwidths, windows, receiver, beams, [])
+
+
     def test_getTimeVisible(self):
 
         # Check against Ron's results for this min. elevation
