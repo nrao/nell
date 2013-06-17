@@ -192,27 +192,44 @@ class TestFunctions(TestCase):
 
     def test_getSuggestedMinElevation(self):
 
-        freqs = [5, 10, 50, 51, 90] # MHz
-        decs = [30, 45, 80] # degrees
+        freqs = [5000, 10000, 20000, 90000] # MHz
+        decs = [-40., -30., -20., -0., 20., 40., 60., 70. ] # degrees
         inputs = [(f, d) for f in freqs for d in decs]
-        minels= [76.5666666667
-               , 78.4333333333
-               , 43.4333333333
-               , 76.5666666667
-               , 78.4333333333
-               , 43.4333333333
-               , 76.5666666667
-               , 78.4333333333
-               , 43.4333333333
-               , 76.5666666667
-               , 78.4333333333
-               , 43.4333333333
-               , 76.5666666667
-               , 78.4333333333
-               , 43.4333333333
-                ]
-        for input, minel in zip(inputs, minels):
+        exp = [8.0
+          , 13.0
+          , 16.0
+          , 21.0
+          , 23.0
+          , 24.0
+          , 22.4333333333
+          , 21.4333333333
+          , 8.0
+          , 12.0
+          , 15.0
+          , 19.0
+          , 21.0
+          , 21.0
+          , 20.4333333333
+          , 19.4333333333
+          , 7.0
+          , 11.0
+          , 13.0
+          , 16.0
+          , 18.0
+          , 18.0
+          , 17.4333333333
+          , 18.4333333333
+          , 7.0
+          , 11.0
+          , 13.0
+          , 15.0
+          , 17.0
+          , 17.0
+          , 16.4333333333
+          , 18.4333333333                
+            ]
+
+        for input, output in zip(inputs, exp):
             f, d = input
-            print f, d, getSuggestedMinElevation(f, d)
-            #self.assertAlmostEqual(minel, getSuggestedMinElevation(f, d))
+            self.assertAlmostEqual(output, getSuggestedMinElevation(f, d))
   

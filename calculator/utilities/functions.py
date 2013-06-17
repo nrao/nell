@@ -78,14 +78,16 @@ def getMinElevation(dec):
 def getMaxElevation(dec):
     return dec2Els(dec)[1]
 
-def getSuggestedMinElevation(freq, dec):
-    etaHAMin = math.sqrt(0.5*calculateEtaMin(freq))
-    maxElev = dec2Els(dec)[1]
-    airMassAtTransit = 1./math.sin(math.radians(maxElev))
-    for el in range(5,int(maxElev)):
-	    if calculateEST0(freq, 1./math.sin(math.radians(el)))/calculateEST0(freq, airMassAtTransit) >= etaHAMin:
-		    return max(el, maxElev-5,5)
-    return max(5,maxElev-5)
+
+def getSuggestedMinElevation(freq, dec, backend = None):
+    sqrtEtaHAMin = math.sqrt(math.sqrt(0.5*calculateEtaMin(freq)))
+    (minElev, maxElev) = dec2Els(dec)
+    EST0Transit = calculateEST0(freq,1./math.sin(math.radians(maxElev)),backend)
+    el = minElev
+    while el < maxElev and \
+        EST0Transit/calculateEST0(freq,1./math.sin(math.radians(el)),backend) < sqrtEtaHAMin:
+        el = el + 1.
+    return el
 
 def calculateEtaMin(freq):
     # Equations 22 and 22a
