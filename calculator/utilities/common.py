@@ -252,6 +252,13 @@ def getMessages(request):
                     messages.append(msg)
                     break
 
+    # Frequency resolution
+    k2 = results.get("k2", {}).get("value", 1)
+    bandwidth  = ivalues.get('bw', {}).get('value')
+    minTopoFreq = results.get("min_topo_freq", {}).get("value", 1)
+    if k2 != '' and bandwidth != '' and minTopoFreq != '' and float(bandwidth)/float(minTopoFreq) < float(k2):
+        messages.append({'type' : 'Error', 'msg' : 'Desired frequency or velocity resolution is smaller than what the backend can provide.'})
+
     return messages
 
 def getHWList():
