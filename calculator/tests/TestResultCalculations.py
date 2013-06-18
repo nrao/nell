@@ -256,7 +256,7 @@ class TestResultCalculations(unittest.TestCase):
         value = self.results.get('t_sys')[0]
         self.assertAlmostEqual(16.61232745, value, 5)
         value = self.results.get('t_tot')[0]
-        self.assertAlmostEqual(1274241116.43, value, 2)
+        self.assertAlmostEqual(1541831750.8830104, value, 2)
 
         # Use this code to find out why our final answers aren't evaluating.
         #print "Nones: "

@@ -223,6 +223,9 @@ class TestViews(TestViewsBase):
 
         self.assertTrue(warning not in response.content)
 
+        warning2 = 'Desired frequency or velocity resolution is smaller than what the backend can provide.'
+        self.assertTrue(warning2    in response.content)
+
         # now actually examine the JSON response
         response = self.client.get('/calculator/get_results')
         results = response.content.replace('null', 'None').replace('true', 'True').replace('false', 'False')
@@ -326,6 +329,7 @@ class TestViews(TestViewsBase):
         self.failUnlessEqual(response.status_code, 200)
 
         self.assertTrue(warning in response.content)
+
 
         # now actually examine the JSON response
         response = self.client.get('/calculator/get_results')
