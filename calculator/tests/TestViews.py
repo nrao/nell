@@ -67,14 +67,14 @@ class TestViews(TestViewsBase):
         data = {'receiver': ['L']
               , 'beams-hidden': [u'1']
               , 'switching-hidden': [u'TP']
-              , 'bandwidth-hidden': [u'1500']
+              , 'bandwidth-hidden': [u'1250'] 
               , 'integration-hidden': [u'1.00']
               , 'polarization-hidden': [u'(I,Q,U,V)']
               , 'backend-hidden': [u'SP']
               , 'windows': [u'1']
               , 'switching': [u'TP']
               , 'polarization': [u'(I,Q,U,V)']
-              , 'bandwidth': [u'1500']
+              , 'bandwidth': [u'1250'] 
               , 'mode': [u'Spectral Line']
               , 'receiver': [u'L']
               , 'mode-hidden': [u'Spectral Line']
@@ -85,21 +85,21 @@ class TestViews(TestViewsBase):
         self.failUnlessEqual(response.status_code, 200)
         results = eval(response.content.replace("null", "None"))
         mtf     = [r for r in results['results'] if r['term'] == 'min_topo_freq']
-        self.assertAlmostEqual(mtf[0]['value'], 1464.844, 3)
+        self.assertAlmostEqual(mtf[0]['value'], 76.294, 3)
 
     def test_vegas2(self):
         response = self.client.get('/calculator/initiate_hardware')
         data = {'receiver': ['L']
               , 'beams-hidden': [u'1']
               , 'switching-hidden': [u'TP']
-              , 'bandwidth-hidden': [u'5']
+              , 'bandwidth-hidden': [u'11.72'] 
               , 'integration-hidden': [u'1.00']
               , 'polarization-hidden': [u'(I,Q,U,V)']
               , 'backend-hidden': [u'SP']
               , 'windows': [u'8']
               , 'switching': [u'TP']
               , 'polarization': [u'(I,Q,U,V)']
-              , 'bandwidth': [u'5']
+              , 'bandwidth': [u'11.72'] 
               , 'mode': [u'Spectral Line']
               , 'receiver': [u'L']
               , 'mode-hidden': [u'Spectral Line']
@@ -110,7 +110,7 @@ class TestViews(TestViewsBase):
         self.failUnlessEqual(response.status_code, 200)
         results = eval(response.content.replace("null", "None"))
         mtf     = [r for r in results['results'] if r['term'] == 'min_topo_freq']
-        self.assertAlmostEqual(mtf[0]['value'], 1.221, 3)
+        self.assertAlmostEqual(mtf[0]['value'], 0.022, 3)
 
     def test_spectral_line_mode(self):
         response = self.client.get('/calculator/initiate_hardware')
@@ -203,6 +203,9 @@ class TestViews(TestViewsBase):
         response = self.client.get('/calculator/results')
         self.failUnlessEqual(response.status_code, 200)
 
+        warning = 'Time*(Bandwidth resolution) exceeds the suggested limit'
+        self.assertTrue(warning not in response.content)
+
         # Data Reduction Information
         data = {'smoothing_resolution': [u'1']
               , 'diff_signal': [u'true']
@@ -217,6 +220,8 @@ class TestViews(TestViewsBase):
         self.failUnlessEqual(response.status_code, 200)
         response = self.client.get('/calculator/results')
         self.failUnlessEqual(response.status_code, 200)
+
+        self.assertTrue(warning not in response.content)
 
         # now actually examine the JSON response
         response = self.client.get('/calculator/get_results')
@@ -243,4 +248,96 @@ class TestViews(TestViewsBase):
 
         self.assertTrue(getTerm(results, 't_tot') is not None)
 
-        
+    def test_results2(self):
+        response = self.client.get('/calculator/initiate_hardware')
+
+        # General Information
+        data = {'units': [u'tr']
+              , 'conversion': [u'Sensitivity to Time']
+              , 'sensitivity': [u'1']
+              , 'semester': [u'A']
+              , 'time': [u'1']
+              }
+        response = self.client.post('/calculator/set_terms/', data)
+        self.failUnlessEqual(response.status_code, 200)
+        response = self.client.get('/calculator/results')
+        self.failUnlessEqual(response.status_code, 200)
+
+        # Hardware Information
+        data = {'receiver-hidden': [u'NA']
+              , 'beams-hidden': [u'64']
+              , 'switching-hidden': [u'Total Power']
+              , 'bandwidth-hidden': [u'20000']
+              , 'polarization-hidden': [u'NA']
+              , 'backend-hidden': [u'Mustang 1.5']
+              , 'windows-hidden': [u'1']
+              , 'switching': [u'Total Power']
+              , 'polarization': [u'NA']
+              , 'windows': [u'1']
+              , 'bandwidth': [u'12.5']
+              , 'receiver': [u'NA']
+              , 'mode-hidden': [u'Continuum']
+              , 'backend': [u'Mustang 1.5']
+              }
+        response = self.client.post('/calculator/set_terms/', data)
+        self.failUnlessEqual(response.status_code, 200)
+        response = self.client.get('/calculator/results')
+        self.failUnlessEqual(response.status_code, 200)
+
+        # Source Information
+        data = {'doppler': [u'Optical']
+              , 'galactic': [u'estimated']
+              , 'redshift': [u'0']
+              , 'frame': [u'Topocentric Frame']
+              , 'source_diameter_slider': [u'1'] # need this to eval t_tot
+              , 'right_ascension': [u'0'] # needs to not be '' to eval
+              , 'rest_freq': [u'342.5.0']
+              , 'source_velocity': [u'0']
+              , 'declination': [u'0']
+              , 'estimated_continuum': [u'0']
+              , 'topocentric_freq': [u'1440.0']
+              , 'doppler-hidden': [u'Optical']
+              # need a value to force execution
+              , 'effective_bw': [u'20000']
+              , 'duty_cycle': [u'10']
+              , 'min_elevation': [u'5']
+              }
+        response = self.client.post('/calculator/set_terms/', data)
+        self.failUnlessEqual(response.status_code, 200)
+        response = self.client.get('/calculator/results')
+        self.failUnlessEqual(response.status_code, 200)
+
+        warning = 'Time*(Bandwidth resolution) exceeds the suggested limit'
+        self.assertTrue(warning not in response.content)
+
+        # Data Reduction Information
+        data = {'smoothing_resolution': [u'1']
+              , 'diff_signal': [u'true']
+              , 'smoothing': [u'velocity_resolution_topo']
+              , 'r_sig_ref': [u'1']
+              , 'bw': [u'20000']
+              , 'smoothing_factor': [u'1']
+              , 'avg_pol': [u'true']
+              , 'no_avg_ref': [u'1']
+              }
+        response = self.client.post('/calculator/set_terms/', data)
+        self.failUnlessEqual(response.status_code, 200)
+        response = self.client.get('/calculator/results')
+        self.failUnlessEqual(response.status_code, 200)
+
+        self.assertTrue(warning in response.content)
+
+        # now actually examine the JSON response
+        response = self.client.get('/calculator/get_results')
+        results = response.content.replace('null', 'None').replace('true', 'True').replace('false', 'False')
+        results = eval(results)
+        rs = results['results']
+
+        # you should get a final result
+        def getTerm(results, term):
+            for r in rs:
+                if r['term'] == term:
+                    return r['value']
+            return None
+
+        self.assertTrue(getTerm(results, 't_tot') is not None)    

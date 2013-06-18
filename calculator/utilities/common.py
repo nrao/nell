@@ -221,6 +221,7 @@ def getMessages(request):
         if sensitivity != '' and confusion_limit != '' and sensitivity < confusion_limit:
             messages.append({'type' : 'Warning', 'msg' : 'Sensitivity is less than the confusion limit.'})
 
+    if mode == 'Continuum':
         # 1/F gain variations?
         backend    = ivalues.get('backend', {}).get('value')
         bandwidth  = ivalues.get('bw', {}).get('value')
@@ -229,14 +230,27 @@ def getMessages(request):
         t_tot      = results.get('t_tot', {}).get('value')
         msg = {'type' : 'Warning', 'msg' : 'Time*(Bandwidth resolution) exceeds the suggested limit for 1/F gain variations.  Advanced observing techniques may be required to reach your scientific goals.  Please address this issue in your technical justification.'}
         if rx != '' and bandwidth != '' and time != '' and t_tot != '' and conversion != '' and None not in (rx, bandwidth, time, t_tot, conversion):
+            # check for exceeding limit
             limit = sex2float(time) * float(bandwidth) if conversion == 'Time to Sensitivity' else \
                     sex2float(t_tot) * float(bandwidth)
-            if backend == 'Mustang' and limit >= 1e5:
-                messages.append(msg)
-            elif backend == 'Caltech Continuum Backend' and 'Ka' in rx and limit >= 1e5:
-                messages.append(msg)
-            elif limit >= 1e3:
-                messages.append(msg)
+            checks = [(backend == 'Mustang 1.5' and limit >= 1e5)
+                    , (backend == 'Caltech Continuum Backend' and 'Ka' in rx and limit >= 3.5e4)
+                    , (("3" in rx or "4" in rx or "6" in rx or "8" in rx) and limit >= 20)
+                    , ("A" in rx and limit >= 400)
+                    , ("L" in rx and limit >= 730)
+                    , ("S" in rx and limit >= 160)
+                    , ("C" in rx and limit >= 40)
+                    , ("X" in rx and limit >= 210)
+                    , (("U" in rx or "D" in rx) and limit >= 400)
+                    , ("KFPA" in rx and limit >= 370)
+                    , (("B1" in rx or "B2" in rx or "B3" in rx) and limit >= 400)
+                    , ("Q" in rx and limit >= 590)
+                    , (("W1" in rx or "W2" in rx or "W3" in rx or "W4" in rx) and limit >= 770)
+                    ]
+            for check in checks:
+                if check:
+                    messages.append(msg)
+                    break
 
     return messages
 
