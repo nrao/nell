@@ -22,7 +22,7 @@
 
 from django.db.models         import Q
 from calculator.models        import *
-from functions                import isNotVisible
+from functions                import isNotVisible, getSuggestedMinElevation
 from utilities.TimeAgent      import *
 
 # View utility functions go here.
@@ -193,6 +193,15 @@ def getMessages(request):
                        , 'msg'  : 'Source will never rise above min elevation.'
                         })
 
+    # Min elevation below the suggested minimum
+    topo_freq = results.get('topocentric_freq', {}).get('value', 0)
+    backend    = ivalues.get('backend', {}).get('value')
+    if dec != '' and min_elevation != '' and  topo_freq != '' and backend != '' \
+        and dec is not None and topo_freq is not None:
+        suggestMinElev = getSuggestedMinElevation(float(topo_freq), float(dec), backend)
+        if float(min_elevation) < suggestMinElev:
+            messages.append({'type' : 'Warning', 'msg'  : 'Minimum elevation is below the suggested minimum of %5.2f degrees.' % suggestMinElev})
+
     # source diameter
     diameter = results.get("source_diameter", {}).get("value", 1)
     if diameter != '' and float(diameter) > 0:
@@ -213,18 +222,21 @@ def getMessages(request):
         if not (topo_freq >= rx_low and topo_freq <= rx_hi):
             messages.append({'type' : 'Warning', 'msg' : 'Topocentric frequnecy is beyond the nominal range for the selected receiver.'})
 
-    mode       = ivalues.get('mode', {}).get('value')
-    if mode != 'Pulsar':
+    mode = ivalues.get('mode', {}).get('value')
+    if mode == 'Continuum':
         # sensitivity vs. confusion limit?
         sensitivity = results.get("sigma", {}).get("value")
         confusion_limit = results.get("confusion_limit", {}).get("value")
         if sensitivity != '' and confusion_limit != '' and sensitivity < confusion_limit:
             messages.append({'type' : 'Warning', 'msg' : 'Sensitivity is less than the confusion limit.'})
 
-    if mode == 'Continuum':
-        # 1/F gain variations?
+        # Analog Filter inputs to the DCR?
         backend    = ivalues.get('backend', {}).get('value')
         bandwidth  = ivalues.get('bw', {}).get('value')
+        if backend == "GBT Digital Continuum Receiver" and bandwidth in (12.5, 50., 50, 200., 200, 800., 800):
+            messages.append({'type' : 'Warning', 'msg' : 'Note: The desired bandwidth will require a complicated routing through the Analog Filter Rack'})
+
+        # 1/F gain variations?
         time       = ivalues.get('time', {}).get('value')
         conversion = ivalues.get('conversion', {}).get('value')
         t_tot      = results.get('t_tot', {}).get('value')
@@ -258,8 +270,9 @@ def getMessages(request):
     minTopoFreq = results.get("min_topo_freq", {}).get("value", 1)
     if k2 != '' and bandwidth != '' and minTopoFreq != '' and \
         k2 is not None and bandwidth is not None and minTopoFreq is not None and \
-        float(bandwidth)/float(minTopoFreq) < float(k2):
-        messages.append({'type' : 'Error', 'msg' : 'Desired frequency or velocity resolution is smaller than what the backend can provide.'})
+        1000.*float(bandwidth)/float(minTopoFreq) < float(k2):
+        threshold = float(k2)*float(minTopoFreq)
+        messages.append({'type' : 'Error', 'msg' : 'Desired resolution is smaller than %5.2f kHz, the minimum the backend can provide.' % threshold})
 
     return messages
 
