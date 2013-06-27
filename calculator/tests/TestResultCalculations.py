@@ -80,7 +80,7 @@ class TestResultCalculations(unittest.TestCase):
         self.results.set('source_diameter_slider', 2)
         self.results.set('units', 'flux')
         value, _, _, _, _ = self.results.get('extended_source_eff')
-        self.assertAlmostEqual(0.690, value, 3)
+        self.assertAlmostEqual(0.686957, value, 3)
 
     def test_confusion_limit(self):
         self.results.set('backend', 'GBT Spectrometer')
@@ -256,7 +256,7 @@ class TestResultCalculations(unittest.TestCase):
         value = self.results.get('t_sys')[0]
         self.assertAlmostEqual(16.61232745, value, 5)
         value = self.results.get('t_tot')[0]
-        self.assertAlmostEqual(1541831750.8830104, value, 2)
+        self.assertAlmostEqual(1667672275.52183, value, 2)
 
         # Use this code to find out why our final answers aren't evaluating.
         #print "Nones: "

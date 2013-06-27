@@ -85,7 +85,7 @@ class TestViews(TestViewsBase):
         self.failUnlessEqual(response.status_code, 200)
         results = eval(response.content.replace("null", "None"))
         mtf     = [r for r in results['results'] if r['term'] == 'min_topo_freq']
-        self.assertAlmostEqual(mtf[0]['value'], 76.294, 3)
+        self.assertAlmostEqual(mtf[0]['value'], 88.00, 3)
 
     def test_vegas2(self):
         response = self.client.get('/calculator/initiate_hardware')
@@ -224,7 +224,7 @@ class TestViews(TestViewsBase):
         self.assertTrue(warning not in response.content)
 
         warning2 = 'Desired frequency or velocity resolution is smaller than what the backend can provide.'
-        self.assertTrue(warning2    in response.content)
+        self.assertTrue(warning2 not in response.content)
 
         # now actually examine the JSON response
         response = self.client.get('/calculator/get_results')
