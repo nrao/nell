@@ -41,8 +41,8 @@ spectrometerK1K2  = {800  : (1.235, 1.21)
 
 vegasTopoFreq = { 100   : 0.000763
                 , 187.5 : 0.001431
-                , 850   : 0.051880
-                , 1250  : 0.076294
+                , 850   : 0.061
+                , 1250  : 0.088
                 }
 
 GBT_LAT = 38 + 26 / 60.
@@ -127,17 +127,27 @@ def getAppEff(wavelength, min_elevation, max_elevation, eta_long):
     return eta_long * integrand1 / float(integrand2)
 
 def sourceSizeCorrectionS(diameter, fwhm):
-    try:
-        x          = diameter / (1.2 * fwhm)
-        correction = (1 - math.exp(-1 * math.pow(x, 2))) / math.pow(x, 2)
-    except ZeroDivisionError:
-        correction = 1
-    return correction
+    x          = diameter / (1.2 * fwhm)
+    if x < 0.1:
+        return 1.0
+    # Here's a model that fits the theoretical beam shape better than 
+    # math.pow(x,2)/(1 - math.exp(-1 * math.pow(x, 2)))
+    # and works well to the 1st null.  Only good for Te = 13 dB
+    A = 1.0251535745047
+    B = -0.122057498194532
+    C = 0.475455422540657
+    D = 0.209232924819001
+    return 1./(A + B*x + C*math.pow(x,2) + D*math.pow(x,3))
 
 def sourceSizeCorrectionTr(diameter, fwhm):
     x          = diameter / (1.2 * fwhm)
-    correction = 1.32*(1 - math.exp(-1 * math.pow(x, 2)))
-    return correction
+    # Here's a model that fits the theoretical beam shape better than
+	# 1.2834*(1 - math.exp(-1 * math.pow(x, 2)))
+    # and works well out to the first null.  Only good for Te = 13 dB
+    A = 0.972173505743667
+    B = 1.2336105495135
+    D = -0.119234647391762
+    return 1./(D + A/(1.-math.exp(-B*pow(x,2))))
 
 def getKs(backend, bandwidth, bw, windows, receiver, beams):
     # Note: KFPA is a 7 beam rx, but we want to use 8 beams for calculations.
@@ -294,5 +304,4 @@ def getTimeVisible(declination, min_elevation):
         return 24.0
     else:
         return 2.0 * rad2hr(math.acos(n/d))
-
 
