@@ -223,10 +223,14 @@ def getMessages(request):
     mode = ivalues.get('mode', {}).get('value')
     if mode == 'Continuum':
         # sensitivity vs. confusion limit?
-        sensitivity = results.get("sigma", {}).get("value")
+        conv = ivalues.get("conversion", {}).get("value")
+        if conv == "Sensitivity to Time":
+            sensitivity =  ivalues.get("sensitivity", {}).get("value")
+        else:
+            sensitivity = results.get("sigma", {}).get("value")
         confusion_limit = results.get("confusion_limit", {}).get("value")
-        if sensitivity != '' and confusion_limit != '' and sensitivity < confusion_limit:
-            messages.append({'type' : 'Warning', 'msg' : 'Sensitivity %s is less than the confusion limit of %s mJy.' % (sensitivity, confusion_limit) })
+        if sensitivity != '' and confusion_limit != '' and float(sensitivity) < float(confusion_limit):
+            messages.append({'type' : 'Warning', 'msg' : 'Sensitivity %s is less than the confusion limit of %s.' % (sensitivity, confusion_limit) })
 
         # Analog Filter inputs to the DCR?
         backend    = ivalues.get('backend', {}).get('value')
