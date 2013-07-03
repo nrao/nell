@@ -189,9 +189,7 @@ def getMessages(request):
     dec = ivalues.get("declination", {}).get("value", 0)
     if dec != '' and min_elevation != '' and \
         isNotVisible(float(dec), float(min_elevation)):
-        messages.append({'type' : 'Error'
-                       , 'msg'  : 'Source will never rise above min elevation.'
-                        })
+        messages.append({'type' : 'Error', 'msg'  : 'Source will never rise above min elevation of %5.2f degrees.' % min_elevation})
 
     # Min elevation below the suggested minimum
     topo_freq = results.get('topocentric_freq', {}).get('value', 0)
@@ -220,7 +218,7 @@ def getMessages(request):
         rx_low, rx_hi = float(rx_low), float(rx_hi)
         topo_freq = round(float(topo_freq) * 1e-3, 3)
         if not (topo_freq >= rx_low and topo_freq <= rx_hi):
-            messages.append({'type' : 'Warning', 'msg' : 'Topocentric frequnecy is beyond the nominal range for the selected receiver.'})
+            messages.append({'type' : 'Warning', 'msg' : 'Topocentric frequnecy is beyond the nominal range (%7.2f - %7.2f GHz) for the selected receiver.' % (rx_low, rx_hi) })
 
     mode = ivalues.get('mode', {}).get('value')
     if mode == 'Continuum':
@@ -228,41 +226,54 @@ def getMessages(request):
         sensitivity = results.get("sigma", {}).get("value")
         confusion_limit = results.get("confusion_limit", {}).get("value")
         if sensitivity != '' and confusion_limit != '' and sensitivity < confusion_limit:
-            messages.append({'type' : 'Warning', 'msg' : 'Sensitivity is less than the confusion limit.'})
+            messages.append({'type' : 'Warning', 'msg' : 'Sensitivity %s is less than the confusion limit of %s mJy.' % (sensitivity, confusion_limit) })
 
         # Analog Filter inputs to the DCR?
         backend    = ivalues.get('backend', {}).get('value')
         bandwidth  = ivalues.get('bw', {}).get('value')
         if backend == "GBT Digital Continuum Receiver" and bandwidth in (12.5, 50., 50, 200., 200, 800., 800):
-            messages.append({'type' : 'Warning', 'msg' : 'Note: The desired bandwidth will require a complicated routing through the Analog Filter Rack'})
+            messages.append({'type' : 'Warning', 'msg' : 'Note: The desired bandwidth will require a complicated routing through the Analog Filter Rack.'})
 
         # 1/F gain variations?
         time       = ivalues.get('time', {}).get('value')
         conversion = ivalues.get('conversion', {}).get('value')
         t_tot      = results.get('t_tot', {}).get('value')
-        msg = {'type' : 'Warning', 'msg' : 'Time*(Bandwidth resolution) exceeds the suggested limit for 1/F gain variations.  Advanced observing techniques may be required to reach your scientific goals.  Please address this issue in your technical justification.'}
         if rx != '' and bandwidth != '' and time != '' and t_tot != '' and conversion != '' and None not in (rx, bandwidth, time, t_tot, conversion):
             # check for exceeding limit
-            limit = sex2float(time) * float(bandwidth) if conversion == 'Time to Sensitivity' else \
-                    sex2float(t_tot) * float(bandwidth)
-            checks = [(backend == 'Mustang 1.5' and limit >= 1e5)
-                    , (backend == 'Caltech Continuum Backend' and 'Ka' in rx and limit >= 3.5e4)
-                    , (("3" in rx or "4" in rx or "6" in rx or "8" in rx) and limit >= 20)
-                    , ("A" in rx and limit >= 400)
-                    , ("L" in rx and limit >= 730)
-                    , ("S" in rx and limit >= 160)
-                    , ("C" in rx and limit >= 40)
-                    , ("X" in rx and limit >= 210)
-                    , (("U" in rx or "D" in rx) and limit >= 400)
-                    , ("KFPA" in rx and limit >= 370)
-                    , (("B1" in rx or "B2" in rx or "B3" in rx) and limit >= 400)
-                    , ("Q" in rx and limit >= 590)
-                    , (("W1" in rx or "W2" in rx or "W3" in rx or "W4" in rx) and limit >= 770)
-                    ]
-            for check in checks:
-                if check:
-                    messages.append(msg)
-                    break
+            bwT = sex2float(time) * float(bandwidth) if conversion == 'Time to Sensitivity' else sex2float(t_tot) * float(bandwidth)
+            limitsByRcvr = {
+                '3':0.2, 
+                '4':0.2, 
+                '6':0.2, 
+                '8':0.2, 
+                'A':4.00, 
+                'L':7.3, 
+                'S':1.60, 
+                'C':0.40, 
+                'X':2.10, 
+                'U':4.00, 
+                'D':4.00, 
+                'KFPA':3.70, 
+                'B1':4.00, 
+                'B2':4.00,
+                'B3':4.00,
+                'Q':5.90,
+                'W1':7.70,
+                'W2':7.70,
+                'W3':7.70,
+                'W4':7.70
+            }
+            if backend == 'Mustang 1.5':
+                limit = 1e3
+            elif backend == 'Caltech Continuum Backend' and 'Ka' in rx:
+                limit = 3.5e2
+            elif rx in limitsByRcvr:
+                limit = limitsByRcvr[rx]
+            else:
+                limit = 4.00
+            if bwT > limit:
+                nBreakup = int(round(4*bwT/limit))
+                messages.append({'type' : 'Error', 'msg' : 'Time*resolution exceeds %5.2f , the limit from 1/F gain variations for the selected receiver.  Advanced observing techniques (e.g., breaking up the observations into %6i shorter ones) may be required.  Please address this issue in your technical justification.' % (limit, nBreakup)})
 
     # Frequency resolution
     k2 = results.get("k2", {}).get("value", 1)
