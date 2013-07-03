@@ -310,7 +310,7 @@ class TestViews(TestViewsBase):
         response = self.client.get('/calculator/results')
         self.failUnlessEqual(response.status_code, 200)
 
-        warning = 'Time*(Bandwidth resolution) exceeds the suggested limit'
+        warning = 'Time*resolution exceeds'
         self.assertTrue(warning not in response.content)
 
         # Data Reduction Information
