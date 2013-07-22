@@ -188,8 +188,9 @@ def getMessages(request):
     min_elevation =  ivalues.get("min_elevation", {}).get("value", 1)
     dec = ivalues.get("declination", {}).get("value", 0)
     if dec != '' and min_elevation != '' and \
+        dec is not None and min_elevation is not None and \
         isNotVisible(float(dec), float(min_elevation)):
-        messages.append({'type' : 'Error', 'msg'  : 'Source will never rise above min elevation of %5.2f degrees.' % min_elevation})
+        messages.append({'type' : 'Error', 'msg'  : 'Source will never rise above min elevation of %5.2f degrees.' % float(min_elevation)})
 
     # Min elevation below the suggested minimum
     topo_freq = results.get('topocentric_freq', {}).get('value', 0)
