@@ -221,10 +221,14 @@ def calculateEST0(freq, airmass, backend = None):
     wv = WeatherValues.objects.get(frequency = round(freq) / 1000)
     if wv is None:
         return None
-
+   
     t_spill, t_cmb = 3, 3
     t_rcvr         = wv.t_rcvr_mustang if backend == 'Mustang' else wv.t_rcvr
-    return (t_rcvr + t_spill + wv.t_atm) * math.exp(wv.tau0 * airmass) - (wv.t_atm - t_cmb) 
+
+    if t_rcvr is None or freq is None or airmass is None:
+        return None
+    else:    
+        return (t_rcvr + t_spill + wv.t_atm) * math.exp(wv.tau0 * airmass) - (wv.t_atm - t_cmb) 
 
 def calculateAttenuation(est0, freq, backend = None):
     """ Deprecated """
