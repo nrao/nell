@@ -278,4 +278,7 @@ class TestFunctions(TestCase):
         for input, output in zip(inputs, exp):
             f, d = input
             self.assertAlmostEqual(output, getSuggestedMinElevation(f, d))
-  
+            self.assertAlmostEqual(output, getSuggestedMinElevation(f, d, backend='MBA'))
+        # illegal values
+        self.assertEqual(None, getSuggestedMinElevation(None, None))
+        self.assertAlmostEqual(21.0, getSuggestedMinElevation(5000.0, 0.0, backend='notexist'), 3)

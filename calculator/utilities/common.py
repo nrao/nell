@@ -198,7 +198,7 @@ def getMessages(request):
     if dec != '' and min_elevation != '' and  topo_freq != '' and backend != '' \
         and dec is not None and topo_freq is not None:
         suggestMinElev = getSuggestedMinElevation(float(topo_freq), float(dec), backend)
-        if float(min_elevation) < suggestMinElev:
+        if suggestMinElev is not None and float(min_elevation) < suggestMinElev:
             messages.append({'type' : 'Warning', 'msg'  : 'Minimum elevation is below the suggested minimum of %5.2f degrees.' % suggestMinElev})
 
     # source diameter

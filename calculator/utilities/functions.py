@@ -93,13 +93,23 @@ def getMaxElevation(dec):
 
 
 def getSuggestedMinElevation(freq, dec, backend = None):
+    if freq is None or dec is None:
+        return None
     sqrtEtaHAMin = math.sqrt(math.sqrt(0.5*calculateEtaMin(freq)))
     (minElev, maxElev) = dec2Els(dec)
     EST0Transit = calculateEST0(freq,1./math.sin(math.radians(maxElev)),backend)
+    if EST0Transit is None:
+        return None
     el = minElev
+    newEST0 = calculateEST0(freq,1./math.sin(math.radians(el)),backend) 
+    if newEST0 is None:
+        return None
     while el < maxElev and \
-        EST0Transit/calculateEST0(freq,1./math.sin(math.radians(el)),backend) < sqrtEtaHAMin:
+        EST0Transit/newEST0 < sqrtEtaHAMin:
         el = el + 1.
+        newEST0 = calculateEST0(freq,1./math.sin(math.radians(el)),backend)
+        if newEST0 is None:
+            return None
     return el
 
 def calculateEtaMin(freq):
