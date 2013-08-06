@@ -53,6 +53,7 @@ from Schedule_Notification           import Schedule_Notification
 from Semester                        import Semester
 from Sesshun                         import Sesshun
 from Session_Type                    import Session_Type
+from Sponsor                         import Sponsor
 from Status                          import Status
 from System                          import System
 from Target                          import Target

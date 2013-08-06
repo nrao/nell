@@ -35,6 +35,7 @@ from Receiver           import Receiver
 
 from scheduler.models   import Project as DSSProject 
 from scheduler.models   import User as DSSUser 
+from scheduler.models   import Sponsor as DSSSponsor 
 
 from utilities          import TimeAccounting
 
@@ -44,6 +45,7 @@ class Proposal(models.Model):
     dss_project     = models.ForeignKey(DSSProject, null = True, on_delete = models.SET_NULL)
     proposal_type   = models.ForeignKey(ProposalType)
     observing_types = models.ManyToManyField(ObservingType)
+    sponsor         = models.ForeignKey(DSSSponsor, null = True, on_delete = models.SET_NULL)
     status          = models.ForeignKey(Status)
     semester        = models.ForeignKey(Semester, null = True)
     friend          = models.ForeignKey(DSSUser, null = True)
