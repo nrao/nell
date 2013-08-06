@@ -148,13 +148,24 @@ def GenerateReport(label, months):
     printSummary(outfile, "Shutdown    ", shutdown)
 
     total = zip(scheduled, maintenance, testing, shutdown)
+    totalHrs = sum([sum(t) for t in total])
     outfile.write("%s %s %s %s %s\n" % \
                   ('Total Hours '
-                 , ("%.2f" % sum([sum(t) for t in total])).center(8)
+                 , ("%.2f" % totalHrs).center(8)
                  , ("%.2f" % sum(total[0])).center(8)
                  , ("%.2f" % sum(total[1])).center(8)
                  , ("%.2f" % sum(total[2])).center(8)))
 
+    # basic error checking             
+    now = datetime.now()
+    thisMonth = datetime(now.year, now.month, 1)
+    for i, m in enumerate(months):
+        _, monthNumDays = calendar.monthrange(year, m.month)             
+        monthHrs = monthNumDays * 24.0              
+        monthTotal = sum(total[i])
+        if abs(monthTotal - monthHrs) > 1e-3 and m < thisMonth:
+            outfile.write("WARNING: Total number of hours for %s does not equal expected calendar hours of %d\n" % (m.strftime("%B"), monthHrs))
+        
     outfile.close()
 
 def show_help():
