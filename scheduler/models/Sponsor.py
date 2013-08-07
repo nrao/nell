@@ -31,6 +31,22 @@ class Sponsor(models.Model):
     def __str__(self):
         return self.abbreviation
 
+    def isBlank(self):
+        return self.name == ""
+
+    def isNone(self):
+        return self.isBlank()
+
+    def jsonDict(self):
+        return {'id'           : self.id
+              , 'abbreviation' : self.abbreviation
+              , 'name'         : self.name
+               }
     class Meta:
         db_table  = "sponsors"
         app_label = "scheduler"    
+
+    @staticmethod
+    def jsonDictOptions():
+        return [s.jsonDict() for s in Sponsor.objects.all().order_by('abbreviation')]
+

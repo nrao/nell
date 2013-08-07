@@ -82,6 +82,7 @@ urlpatterns = patterns(''
    , url(r'^receivers',                  receivers)
    , url(r'^backends',                   backends)
    , url(r'^friends',                    friends)
+   , url(r'^sponsors',                   sponsors)
    , url(r'^import_reports',             import_reports)
    , url(r'^source/epochs',              source_epochs)
    , url(r'^source/systems',             source_systems)

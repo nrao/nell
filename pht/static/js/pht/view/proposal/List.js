@@ -112,6 +112,7 @@ Ext.define('PHT.view.proposal.List' ,{
             {header: 'Requested Hrs', dataIndex: 'requested_time', flex: 1},
             {header: 'Allocated Hrs', dataIndex: 'allocated_time', flex: 1},
             {header: 'Grades', dataIndex: 'grades', flex: 1},
+            {header: 'Sponsor', dataIndex: 'sponsor_name', flex: 1},
             {header: 'Joint Proposal', dataIndex: 'joint_proposal', flex: 1}
         ];
 

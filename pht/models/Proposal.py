@@ -107,6 +107,9 @@ class Proposal(models.Model):
         students  = len(self.author_set.filter(thesis_observing = True))
         return students, students > 0
 
+    def isSponsored(self):
+        return self.sponsor is not None and not self.sponsor.isNone()
+
     def grades(self):
         "Return unique list of grades"
         return sorted(list(set([s.grade.grade \

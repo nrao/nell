@@ -825,3 +825,6 @@ def source_reference_frames(request):
 def simpleGetAllResponse(key, data):
     return HttpResponse(json.dumps({"success" : "ok" , key : data })
                       , content_type = 'application/json')
+
+def sponsors(request):
+    return simpleGetAllResponse('sponsors', Sponsor.jsonDictOptions())

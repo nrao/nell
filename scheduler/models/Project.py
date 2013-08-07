@@ -67,7 +67,7 @@ class Project(models.Model):
             raise Exception("Cannot delete projects with sessions.")
 
     def is_sponsored(self):
-        return self.sponsor is not None
+        return self.sponsor is not None and not self.sponsor.isNone()
 
     def is_science(self):
         return self.project_type.type == "science"
