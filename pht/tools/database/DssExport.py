@@ -68,6 +68,7 @@ class DssExport(object):
                             , schedulers_notes = '' #proposal.comments.nrao_comment
                             , disposition      = ''
                             , abstract         = proposal.abstract
+                            , sponsor          = proposal.sponsor
                             )
 
         project.save()
