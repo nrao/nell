@@ -433,6 +433,10 @@
           <h3 class="caps">Information</h3>
           <div class="box">
             <dl>
+              {% if p.is_sponsored %}
+                <dt>Sponsor</dt>
+                <dd>{{p.sponsor.abbreviation}}</dd>
+              {% endif %}
               {% if p.has_friends %}
                 <dt>Friends</dt>
                 {% for friend in p.friend_set.all %}
