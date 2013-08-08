@@ -59,6 +59,16 @@ Ext.define('PHT.view.plot.LstReportWindow', {
                 checked: true,
                 labelAlign: 'left',
             },
+            {
+                xtype: 'checkboxfield',
+                name: 'showSponsors',
+                fieldLabel: 'Show Sponsors?',
+                uncheckedValue: 'false',
+                inputValue: 'true',
+                //value : 'checked',
+                checked: false,
+                labelAlign: 'left',
+            },
             ],
         }];    
 

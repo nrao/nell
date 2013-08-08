@@ -603,7 +603,8 @@ def lst_pressure_report(request, *args, **kws):
     adjust = adjust == 'true'
     carryover = request.GET.get('carryOverUseNextSemester', 'false')
     carryover = carryover == 'true'
-    sessionId = request.GET.get('session', None)
+    showSponsors = request.GET.get('showSponsors', 'false')
+    showSponsors = showSponsors == 'true'
     sessionId = request.GET.get('session', None)
     sessions = None
     if sessionId is not None:
@@ -619,6 +620,7 @@ def lst_pressure_report(request, *args, **kws):
              , debug = debug
              , carryOverUseNextSemester = carryover
              , adjustWeatherBins = adjust
+             , hideSponsors = not showSponsors
               )
 
     return response

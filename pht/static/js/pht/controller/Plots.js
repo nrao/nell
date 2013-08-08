@@ -56,6 +56,7 @@ Ext.define('PHT.controller.Plots', {
         var debug = values['debug'];
         var carryover = values['carryoverType'];
         var adjust = values['adjustWeatherBins'];
+        var sponsors = values['showSponsors'];
         var url = 'reports/lst_pressures?debug=' + debug;
         if ((session != null) && (session != '')) {
             url = url + '&session=' + session
@@ -69,6 +70,7 @@ Ext.define('PHT.controller.Plots', {
             url = url + '&carryOverUseNextSemester=' + useNextSemester
         }
         url = url + '&adjustWeatherBins=' + adjust
+        url = url + '&showSponsors=' + sponsors
         window.open(url);
         win.hide();
     },

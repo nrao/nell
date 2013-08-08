@@ -186,7 +186,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                          , 'excellent' : 'Hi Freq 2'
                           }
         # yeah, lets get these from the DB
-        self.sponsors = [s.abbreviation for s in DSSSponsor.objects.all()]
+        self.sponsors = [s.abbreviation for s in DSSSponsor.objects.all() if s.name != '']
 
         self.initPressures()
         if initFlagWeights:
