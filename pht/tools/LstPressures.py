@@ -37,6 +37,7 @@ from pht.models       import *
 from scheduler.models import Observing_Type
 from scheduler.models import Period as DSSPeriod
 from scheduler.models import Semester as DSSSemester
+from scheduler.models import Sponsor as DSSSponsor
 from pht.tools.Sun    import Sun
 from pht.tools.LstPressureWeather import LstPressureWeather
 from pht.tools.LstPressureWeather import Pressures
@@ -58,6 +59,7 @@ SEMESTER = 'semester'
 PERIODS = 'periods'
 CARRYOVER_BAD_GRADE = 'carryover_bad_grade'
 CARRYOVER_NO_DSS = 'carryover_no_dss'
+SPONSORED = 'sponsored'
 
 class LstPressures(object):
 
@@ -119,10 +121,14 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                , carryOverUseNextSemester = True
                , adjustWeatherBins = True
                , initFlagWeights = True
+               , hideSponsors = True
                , today = None):
 
         self.hrs = 24
         self.bins = [0.0]*self.hrs
+
+        # do sponsored proposals for next semester get subsumed into carryover?
+        self.hideSponsors = hideSponsors
 
         # when calculating carry over, use the next semester field,
         # OR the current time remaining?
@@ -179,6 +185,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                          , 'good' : 'Hi Freq 1'
                          , 'excellent' : 'Hi Freq 2'
                           }
+        # yeah, lets get these from the DB
+        self.sponsors = [s.abbreviation for s in DSSSponsor.objects.all()]
 
         self.initPressures()
         if initFlagWeights:
@@ -197,6 +205,13 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                         , 'C' : Pressures()
                         })
                         
+    def sponsoredPsSummed(self):
+
+        total = Pressures()
+        for k, ps in self.sponsoredPs.items():
+            total += ps
+        return total
+
     def initPressures(self):
         """
         Here are the rules:
@@ -218,6 +233,13 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.totalPs  = numpy.array([0.0]*self.hrs)
 
         # totalAv: self.weather.availability
+
+        # the sponsored pressures are divided by sponsor name
+        self.sponsoredTotalPs = {}
+        self.sponsoredPs = {}
+        for s in self.sponsors:
+            self.sponsoredTotalPs[s] = self.newHrs()
+            self.sponsoredPs[s] = Pressures()
 
         # pre-assigned:
         self.maintenancePs = Pressures() 
@@ -247,9 +269,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.remainingTotalPs = self.newHrs()
         self.remainingPs = Pressures()
 
-        # newAstroAv = available for NEW astronomy in the semester.  newAstroAv = totalAv - preAssigned - astroCarryover
+        # newAstroAv = available for NEW astronomy in the semester.  newAstroAv = totalAv - preAssigned - astroCarryover - sponsored
         self.remainingFromAllGradesCarryoverPs = Pressures()
-        # newAstroAvCoA = available for NEW astronomy in the semester only taking grade A carryover into account.  newAstroAvCoA = totalAv - preAssigned - coA
+        # newAstroAvCoA = available for NEW astronomy in the semester only taking grade A carryover into account.  newAstroAvCoA = totalAv - preAssigned - coA - sponsored
         self.remainingFromGradeACarryoverPs = Pressures()
 
         # The new stuff that people have submitted proposals for,
@@ -281,7 +303,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         assert abs(self.carryoverPs.total() - totalCarryover.total()) < 0.01
 
         total = self.carryoverTotalPs + self.newAstronomyTotalPs + \
-            self.requestedTotalPs
+            self.requestedTotalPs + self.sponsoredPsSummed().allTypes() 
         assert self.almostEqual(self.totalPs, total)
         assert self.almostEqual(self.carryoverPs.allTypes()
                               , self.carryoverTotalPs)
@@ -564,6 +586,13 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         return ps
 
+    def isSessionSponsored(self, session):
+        "Its tagged as such and not from the past."
+
+        return session.proposal.isSponsored() \
+            and (session.proposal.semester.semester == self.nextSemester.semester \
+              or session.proposal.semester.semester in self.futureSemesters)
+
     def isSessionForFutureSemester(self, session):
         """
         Large projects may have some sessions assigned to future semesters,
@@ -666,17 +695,17 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # here's some more measures of 'availability':
         # what's available after all the pre-assigned maintenance,
         # testing, and shutdown?
-        self.preAssignedPs = self.maintenancePs + self.shutdownPs + self.testingPs
+        self.preAssignedPs = self.maintenancePs + self.shutdownPs + self.testingPs 
         self.postMaintAvailabilityPs = self.weather.availability - self.preAssignedPs 
 
         # what's available after just grade A carryover?
-        self.remainingFromGradeACarryoverPs = self.postMaintAvailabilityPs - self.carryoverGradePs['total']['A']
+        self.remainingFromGradeACarryoverPs = self.postMaintAvailabilityPs - self.carryoverGradePs['total']['A'] - self.sponsoredPsSummed()
 
         # what's available after all grades?
         allGrades = self.carryoverGradePs['total']['A'] \
                   + self.carryoverGradePs['total']['B'] \
                   + self.carryoverGradePs['total']['C']
-        self.remainingFromAllGradesCarryoverPs = self.postMaintAvailabilityPs - allGrades 
+        self.remainingFromAllGradesCarryoverPs = self.postMaintAvailabilityPs - allGrades - self.sponsoredPsSummed() 
 
 
         # What's *really* available for this semester?
@@ -747,6 +776,11 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             self.requestedTotalPs += ps
             wps = self.weather.binSession(session, ps)
             self.requestedPs += wps 
+        elif category == SPONSORED:
+            wps = self.weather.binSession(session, ps)
+            sponsor = session.proposal.sponsor.abbreviation
+            self.sponsoredTotalPs[sponsor] += ps
+            self.sponsoredPs[sponsor] += wps 
         else:
             raise 'unhandled category'
 
@@ -761,8 +795,14 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         totalTime = 0.0
         if category == CARRYOVER:
            # which method for determining carryover time to use?
+           # Test Sessions
            if session in self.testSessions:
                totalTime = session.getTotalAllocatedTime()
+           # Sponsored Sessions    
+           elif subCategory == SPONSORED:
+               # TBF: or requested time?
+               totalTime = session.getTotalAllocatedTime()
+           # All other Carryover    
            elif self.carryOverUseNextSemester:
                 if session.next_semester is not None \
                     and session.next_semester.complete == False:
@@ -772,7 +812,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                    ta = TimeAccounting()
                    totalTime = ta.getTimeRemaining(session.dss_session)
                    totalTime = totalTime if totalTime >= 0.0 else 0.0
-        elif category == ALLOCATED:    
+        elif category in [ALLOCATED, SPONSORED]:    
             # which time attribute of the session to use?
             if subCategory == SEMESTER:
                 # TBF: getTotalSemesterTime ?
@@ -794,6 +834,11 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             and session.grade is not None \
             and session.grade.grade in ['A', 'B', 'C']):
             return (CARRYOVER, '')
+        elif self.isSessionSponsored(session):
+            if self.hideSponsors:
+                return (CARRYOVER, SPONSORED)
+            else:
+                return (SPONSORED, session.proposal.sponsor.abbreviation)
         elif session.semester.semester == self.nextSemester.semester \
             and session.allotment is not None \
             and session.allotment.allocated_time is not None \
@@ -835,6 +880,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                          , Carryover = self.carryoverTotalPs[i] 
                          , Requested = self.requestedTotalPs[i] 
                           )
+            if not self.hideSponsors:              
+                for s in self.sponsors:              
+                    lstDict[s] = self.sponsoredTotalPs[s][i]              
             # now add in the weather details              
             for weather in self.weatherTypes: 
                 # availability
@@ -846,6 +894,11 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 # requested
                 requestedType = "Requested_%s" % weather
                 lstDict[requestedType] = self.requestedPs.getType(weather)[i]
+                # sponsored
+                if not self.hideSponsors:
+                    for s in self.sponsors:
+                        spnType = "%s_%s" % (s, weather)
+                        lstDict[spnType] = self.sponsoredPs[s].getType(weather)[i]
 
                 # new astronomy is further subdivied by grade
                 for grade in self.grades: 
@@ -949,7 +1002,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         msgs = []
         # total total
         total = self.carryoverTotalPs + self.newAstronomyTotalPs + \
-            self.requestedTotalPs
+            self.requestedTotalPs + self.sponsoredPsSummed().allTypes()
         if not self.almostEqual(self.totalPs, total):
             msgs.append("Total Pressure ! = Carryover Total + New Astro. Total")  
 
