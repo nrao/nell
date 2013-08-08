@@ -78,6 +78,7 @@ class LstPressureReport(Report):
              , debug = False
              , carryOverUseNextSemester = True
              , adjustWeatherBins = True
+             , hideSponsors = True
               ):
 
         if sessions is not None:
@@ -87,6 +88,7 @@ class LstPressureReport(Report):
         # crunch the numbers
         self.lst.carryOverUseNextSemester = carryOverUseNextSemester
         self.lst.adjustWeatherBins = adjustWeatherBins
+        self.lst.hideSponsors = hideSponsors
         self.lst.getPressures(sessions) 
 
         # now mak'm pretty
@@ -118,6 +120,14 @@ class LstPressureReport(Report):
                   , h6, t6
                    ]
 
+        # sponsors aren't really part of the 'debug section', yet we don't want
+        # them there if they aren't needed: they start page two!
+        if not hideSponsors:
+            for s in self.lst.sponsors:
+                hs = self.tableHeader("%s:" % s)
+                ts = self.createSponsorTable(s)
+                elements.extend([hs, ts, b])
+
         if debug:
             debugElements = self.createDebugElements()
             elements.extend(debugElements)
@@ -145,6 +155,10 @@ class LstPressureReport(Report):
     def createRemainingTable(self):
         return self.createPressureTable(self.lst.remainingTotalPs
                                       , self.lst.remainingPs)
+
+    def createSponsorTable(self, sponsor):
+        return self.createPressureTable(self.lst.sponsoredTotalPs[sponsor]
+                                      , self.lst.sponsoredPs[sponsor])
 
     def createAllocatedTable(self):
 

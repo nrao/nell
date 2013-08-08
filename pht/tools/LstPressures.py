@@ -711,8 +711,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         # What's *really* available for this semester?
         # note that *this* carryover includes maint, shutdown, & testing
         self.remainingTotalPs = self.weather.availabilityTotal - \
-            self.carryoverTotalPs
-        self.remainingPs = self.weather.availability - self.carryoverPs
+            self.carryoverTotalPs - self.sponsoredPsSummed().allTypes()
+        self.remainingPs = self.weather.availability - self.carryoverPs - self.sponsoredPsSummed() 
 
         # fail if shit doesn't add up?
         self.assertPressures()
@@ -1152,6 +1152,15 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
         self.reportPressures("Testing"
                            , self.testingPs.allTypes()
                            , self.testingPs)
+
+        if not self.hideSponsors:
+            print ""
+            print "Sponsored pressures: "
+            for s in self.sponsors:
+                self.reportPressures(s
+                                   , self.sponsoredPs[s].allTypes()
+                                   , self.sponsoredPs[s])
+
 
     def sessionKey2Id(self, key):
         "name (id) -> id"

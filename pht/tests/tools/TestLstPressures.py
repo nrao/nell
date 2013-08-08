@@ -162,11 +162,6 @@ class TestLstPressures(TestCase):
 
         # test inner functions first
         s = Session.objects.get(id = self.session.id)
-        #print "props: ", self.proposal, self.proposal.id, self.proposal.isSponsored(), s.proposal, s.proposal.id, s.proposal.isSponsored()
-        #print s.proposal.semester, lst.currentSemester, lst.nextSemester, s.proposal.semester == lst.nextSemester
-        #print "future: ", lst.futureSemesters,  s.proposal.semester in lst.futureSemesters
-        #print 'is sponsored: ', s.proposal.isSponsored()
-        #print lst.isSessionSponsored(s)
         self.assertTrue(lst.isSessionSponsored(s))
 
         cat, subcat = lst.getSessionCategories(s)
