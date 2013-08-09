@@ -12,6 +12,7 @@ Ext.define('PHT.view.plot.LstPressurePoor', {
                       'Poor_B',
                       'Poor_C',
                       'Requested_Poor',
+                      'WVU_Poor',
         ];
         this.availableField = 'Available_Poor';
         this.callParent();

@@ -169,19 +169,20 @@ class TestLstPressures(TestCase):
         self.assertEqual('sponsored', subcat)
 
         time = lst.getSessionTime(s, cat, subcat)
-        self.assertEqual(6.5, time)
+        self.assertEqual(21.0, time)
 
         # finally the whole sheebang
         ps = lst.getPressures()
-
+        p = 1.75
         for hr in range(12):
-            self.assertAlmostEqual(0.5416666, ps[hr]['Total'], 3)
-            self.assertAlmostEqual(0.5416666, ps[hr]['Carryover'], 3)
-            self.assertAlmostEqual(0.0,       ps[hr]['Poor_A'], 3)
-            self.assertAlmostEqual(0.0,       ps[hr]['Requested'], 3)
+            self.assertAlmostEqual(p,   ps[hr]['Total'], 3)
+            self.assertAlmostEqual(p,   ps[hr]['Carryover'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['Poor_A'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['Requested'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['WVU'], 3)
 
         # it shouldn't say *anything* about sponsors
-        self.assertTrue(not ps[0].has_key('WVU'))
+        #self.assertTrue(not ps[0].has_key('WVU'))
 
         # now, recalculate, but not hiding sponsors in
         # carryover.
@@ -191,18 +192,18 @@ class TestLstPressures(TestCase):
         self.assertEqual('sponsored', cat)
         self.assertEqual('WVU', subcat)
         time = lst.getSessionTime(s, cat, subcat)
-        self.assertEqual(6.5, time)
+        self.assertEqual(21.0, time)
         ps = lst.getPressures()
         # see how time got shifted from carryover to WVU:
         for hr in range(12):
-            self.assertAlmostEqual(0.5416666, ps[hr]['Total'], 3)
-            self.assertAlmostEqual(0.0,       ps[hr]['Carryover'], 3)
-            self.assertAlmostEqual(0.0,       ps[hr]['Poor_A'], 3)
-            self.assertAlmostEqual(0.0,       ps[hr]['Requested'], 3)
-            self.assertAlmostEqual(0.5416666, ps[0]['WVU'], 3)
-            self.assertAlmostEqual(0.5416666, ps[0]['WVU_Poor'], 3)
-            self.assertAlmostEqual(0.0,       ps[0]['WVU_Good'], 3)
-            self.assertAlmostEqual(0.0,       ps[0]['WVU_Excellent'], 3)
+            self.assertAlmostEqual(p,   ps[hr]['Total'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['Carryover'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['Poor_A'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['Requested'], 3)
+            self.assertAlmostEqual(p,   ps[hr]['WVU'], 3)
+            self.assertAlmostEqual(p,   ps[hr]['WVU_Poor'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['WVU_Good'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['WVU_Excellent'], 3)
 
     def test_getPressures(self):
 

@@ -118,8 +118,16 @@ Ext.define('PHT.view.plot.Window', {
                 {
                     xtype: 'checkboxfield',
                     name: 'adjustWeatherBins',
+                    itemId: 'adjustWeatherBins',
                     fieldLabel: 'Adjust Weather?',
                     checked: true,
+                },
+                {
+                    xtype: 'checkboxfield',
+                    name: 'sponsors',
+                    itemId: 'sponsors',
+                    fieldLabel: 'Show Sponsors?',
+                    checked: false,
                 },
             ]
         }];

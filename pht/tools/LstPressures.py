@@ -300,7 +300,10 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                                 + self.carryoverGradePs['total']['A'] \
                                 + self.carryoverGradePs['total']['B'] \
                                 + self.carryoverGradePs['total']['C'] 
-        assert abs(self.carryoverPs.total() - totalCarryover.total()) < 0.01
+        # these sums don't add up if we're hiding next semester's sponsored sessions
+        # in the carry over - cause those sessions aren't graded properly yet.
+        if not self.hideSponsors:                        
+            assert abs(self.carryoverPs.total() - totalCarryover.total()) < 0.01
 
         total = self.carryoverTotalPs + self.newAstronomyTotalPs + \
             self.requestedTotalPs + self.sponsoredPsSummed().allTypes() 
@@ -801,7 +804,8 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
            # Sponsored Sessions    
            elif subCategory == SPONSORED:
                # TBF: or requested time?
-               totalTime = session.getTotalAllocatedTime()
+               #totalTime = session.getTotalAllocatedTime()
+               totalTime = session.getTotalRequestedTime()
            # All other Carryover    
            elif self.carryOverUseNextSemester:
                 if session.next_semester is not None \
@@ -812,13 +816,15 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                    ta = TimeAccounting()
                    totalTime = ta.getTimeRemaining(session.dss_session)
                    totalTime = totalTime if totalTime >= 0.0 else 0.0
-        elif category in [ALLOCATED, SPONSORED]:    
+        elif category == ALLOCATED:    
             # which time attribute of the session to use?
             if subCategory == SEMESTER:
                 # TBF: getTotalSemesterTime ?
                 totalTime = session.allotment.semester_time 
             else:
                 totalTime = session.getTotalAllocatedTime() #session.allotment.allocated_time
+        elif category == SPONSORED:
+             totalTime = session.getTotalRequestedTime()
         elif category == REQUESTED:
             totalTime = session.getTotalRequestedTime()
         return totalTime
@@ -880,9 +886,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                          , Carryover = self.carryoverTotalPs[i] 
                          , Requested = self.requestedTotalPs[i] 
                           )
-            if not self.hideSponsors:              
-                for s in self.sponsors:              
-                    lstDict[s] = self.sponsoredTotalPs[s][i]              
+            #if not self.hideSponsors:              
+            for s in self.sponsors:              
+                lstDict[s] = self.sponsoredTotalPs[s][i]              
             # now add in the weather details              
             for weather in self.weatherTypes: 
                 # availability
@@ -895,10 +901,9 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
                 requestedType = "Requested_%s" % weather
                 lstDict[requestedType] = self.requestedPs.getType(weather)[i]
                 # sponsored
-                if not self.hideSponsors:
-                    for s in self.sponsors:
-                        spnType = "%s_%s" % (s, weather)
-                        lstDict[spnType] = self.sponsoredPs[s].getType(weather)[i]
+                for s in self.sponsors:
+                    spnType = "%s_%s" % (s, weather)
+                    lstDict[spnType] = self.sponsoredPs[s].getType(weather)[i]
 
                 # new astronomy is further subdivied by grade
                 for grade in self.grades: 
@@ -1658,14 +1663,14 @@ if __name__ == '__main__':
                      , adjustWeatherBins = adjustWeatherBins
     #                 , today = datetime(2012, 3, 1)
                       )
-    #s = Session.objects.get(id = 7569)                  
-    #ps = lst.getPressures(sessions = [s])
+    s = Session.objects.get(id = 9758)                  
+    ps = lst.getPressures(sessions = [s])
     #ss = Session.objects.all().exclude(semester__semester = '13A')
     #ss = Session.objects.filter(proposal__pcode = 'GBT12B-385')
     #s = Session.objects.get(name = 'BB303-01')
     #ss = [s]
     #ps = lst.getPressures(ss)
-    ps = lst.getPressures()
+    #ps = lst.getPressures()
     #lst.reportSocorroFormat('13B')
     #lst.reportSocorroWeatherFormat('12B')
     lst.report()

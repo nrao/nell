@@ -50,6 +50,7 @@ Ext.define('Ext.chart.theme.LstPressureThemeTotal', {
               greens[2].toString(), 
               reds[2].toString(), 
               'yellow',
+              'black',
              ];        
 
         this.callParent([Ext.apply({
@@ -71,6 +72,7 @@ Ext.define('Ext.chart.theme.LstPressureThemePoor', {
               reds[1].toString(), 
               reds[2].toString(), 
               'yellow',
+              'black',
         ];
 
         this.callParent([Ext.apply({
@@ -92,6 +94,7 @@ Ext.define('Ext.chart.theme.LstPressureThemeGood', {
               greens[1].toString(), 
               greens[2].toString(), 
               'yellow',
+              'black',
         ];
 
         this.callParent([Ext.apply({
@@ -112,6 +115,7 @@ Ext.define('Ext.chart.theme.LstPressureThemeEx', {
               blues[1].toString(), 
               blues[2].toString(), 
               'yellow',
+              'black',
         ];
 
         this.callParent([Ext.apply({

@@ -108,6 +108,7 @@ def lst_pressure(request, *args, **kws):
     ss = None
     carryOverUseNextSemester = True
     adjustWeatherBins = True
+    showSponsors = False
     if filters is not None:
         filters = filters.replace('true', 'True')
         filters = filters.replace('false', 'False')
@@ -123,14 +124,16 @@ def lst_pressure(request, *args, **kws):
                 carryOverUseNextSemester = value == 'Next Semester Time'
             elif prop == 'adjust':
                 adjustWeatherBins = value 
+            elif prop == 'sponsor':
+                showSponsors = value 
     #else:
     #    ss = None
         
     # calcualte the LST pressures    
     lst = LstPressures(carryOverUseNextSemester = carryOverUseNextSemester
-                     , adjustWeatherBins = adjustWeatherBins)
+                     , adjustWeatherBins = adjustWeatherBins
+                     , hideSponsors = not showSponsors)
     pressure = lst.getPressures(sessions = ss)
-
     return HttpResponse(json.dumps({"success" : "ok"
                                   , "lst_pressure" : pressure
                                    })

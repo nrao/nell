@@ -127,8 +127,14 @@ Ext.define('PHT.controller.Plots', {
             filters.push({property: 'carryover', value: carryover})
         }    
         // adjust weather bins?
-        var adjustWeather = win.down('checkboxfield').value
+        
+        //var adjustWeather = win.down('checkboxfield').value
+        var adjustWeather = win.down('#adjustWeatherBins').value
         filters.push({property: 'adjust', value: adjustWeather})
+        // show sponsors?
+        //var sponsor = win.down('checkboxfield').value
+        var sponsor = win.down('#sponsors').value
+        filters.push({property: 'sponsor', value: sponsor})
 
         if (filters.length == 0) {
             store.load()
