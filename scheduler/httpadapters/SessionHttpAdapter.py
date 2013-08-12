@@ -397,12 +397,13 @@ class SessionHttpAdapter (object):
         irradiance = self.sesshun.irradiance()
         solarAvoid = self.sesshun.get_solar_avoidance()
         solarAvoid = None if solarAvoid is None else TimeAgent.rad2deg(solarAvoid) # DB in radians
-
+        sponsor = self.sesshun.project.sponsor.abbreviation if self.sesshun.project.sponsor is not None else None
         d = {"id"         : self.sesshun.id
            , "pcode"      : self.sesshun.project.pcode
            , "handle"     : self.sesshun.toHandle()
            , "type"       : self.sesshun.session_type.type
            , "science"    : self.sesshun.observing_type.type
+           , "sponsor"    : sponsor
            , "total_time" : self.sesshun.allotment.total_time
            , "PSC_time"   : self.sesshun.allotment.psc_time
            , "sem_time"   : self.sesshun.allotment.max_semester_time

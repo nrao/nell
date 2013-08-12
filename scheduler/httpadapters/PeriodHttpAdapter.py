@@ -61,6 +61,8 @@ class PeriodHttpAdapter (object):
                                      if w is not None else None
               , "wstart"       : d2str(w.start_date()) if w is not None else None
               , "wend"         : d2str(w.last_date()) if w is not None else None
+              , "sponsored"    : self.period.session.project.is_sponsored().__str__()[0]
+              , "sponsor"      : self.period.session.project.sponsor_text()
               , "receivers"    : self.period.get_rcvrs_json()
                 }
         # include the accounting but keep the dict flat

@@ -66,6 +66,9 @@ class Project(models.Model):
         else:
             raise Exception("Cannot delete projects with sessions.")
 
+    def sponsor_text(self):
+        return self.sponsor.abbreviation if self.sponsor is not None else ""
+
     def is_sponsored(self):
         return self.sponsor is not None and not self.sponsor.isNone()
 

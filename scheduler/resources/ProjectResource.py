@@ -45,10 +45,10 @@ class ProjectResource(NellResource):
                                    sortField == "co_i" \
                                     else sortField
             sortField = "semester__semester" if sortField == "semester" else sortField
+            sortField = "sponsor__abbreviation" if sortField == "sponsor" else sortField
             order     = "-" if request.GET.get("sortDir", "ASC") == "DESC" else ""
             query_set = Project.objects
             if sortField == "pi":
-                print "sorting on pi"
                 sortField = "investigator__user__last_name"
                 query_set = query_set.filter(Q(investigator__principal_investigator = True))
     
@@ -65,6 +65,10 @@ class ProjectResource(NellResource):
             if filterSem is not None:
                 query_set = query_set.filter(semester__semester__icontains = filterSem)
     
+            filterSpn = request.GET.get("filterSpn", None)
+            if filterSpn is not None:
+                query_set = query_set.filter(sponsor__abbreviation__icontains = filterSpn)
+
             filterText = request.GET.get("filterText", None)
             if filterText is not None:
                 query_set = query_set.filter(
