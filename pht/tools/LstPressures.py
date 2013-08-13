@@ -623,7 +623,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             sessions = Session.objects.filter(proposal__semester = \
                 self.nextSemester).order_by('name')
             # filter out the test sessions    
-            sessions = [s for s in sessions if s not in self.testSessions]   
+            sessions = [s for s in sessions if s not in self.testSessions and not s.proposal.isSponsored()]   
 
         self.originalRequestedPs = Pressures()
         for s in sessions:
@@ -752,14 +752,20 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             else:
                 # Maintenance, Shutdown and testing was pre-assigned (above)
                 # , but we want to report on all the other carryover by grade
+                grade = None
                 if session.grade is not None and not self.hasFailingGrade(session):
                     grade = session.grade.grade
+                elif session.proposal.isSponsored():
+                    # sponsored proposals are assumed grade A
+                    grade = 'A'
+
+                if grade is not None:
+                    self.carryoverGradePs['total'][grade] += wps 
                     if session.session_type is not None and \
                         session.session_type == self.fixedType:
                         self.carryoverGradePs["fixed"][grade] += wps
                     else:    
                         self.carryoverGradePs["rest"][grade] += wps
-                    self.carryoverGradePs['total'][grade] += wps 
 
         elif category == ALLOCATED:
             # TBF: a few of these totals and checks aren't
