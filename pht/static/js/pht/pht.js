@@ -145,6 +145,9 @@ Ext.application({
         var plot = Ext.create('PHT.view.plot.Window', {
             //renderTo: viewport.layout.regions.center.getEl(),
         });
+        var timelinePlot = Ext.create('PHT.view.plot.TimelineWindow', {
+            //renderTo: viewport.layout.regions.center.getEl(),
+        });
         var lstReportWin = Ext.create('PHT.view.plot.LstReportWindow', {
             //renderTo: viewport.layout.regions.center.getEl(),
         });
@@ -194,9 +197,14 @@ Ext.application({
                     overviewCalendarWin.show();
                 }},
                 {
-                text: 'Plots',
+                text: 'LST Plots',
                 handler: function() {
                     plot.show();
+                }},
+                {
+                text: 'Timeline Plot',
+                handler: function() {
+                    timelinePlot.show();
                 }},
             ]
         });

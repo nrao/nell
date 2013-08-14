@@ -3,10 +3,12 @@ Ext.define('PHT.controller.Plots', {
    
     models: [
         'LstPressure',
+        'ProposalTimeline',
     ],
 
     stores: [
         'LstPressures',
+        'ProposalTimelines',
         'ProposalCodes',
         'Sessions',
     ],
@@ -19,6 +21,8 @@ Ext.define('PHT.controller.Plots', {
         'plot.LstPressureGood',
         'plot.LstPressureExcellent',
         'plot.LstReportWindow',
+        'plot.TimelineWindow',
+        'plot.ProposalTimelinePlot',
     ],
 
     init: function() {
@@ -35,6 +39,9 @@ Ext.define('PHT.controller.Plots', {
             'lstreportwindow button[action=ok]': {
                 click: this.lstReport
             },           
+            'timelineplotwindow toolbar button[action=update]': {
+                click: this.updateTimelinePlot
+            },
         }); 
 
         this.callParent(arguments);
@@ -136,6 +143,26 @@ Ext.define('PHT.controller.Plots', {
         var sponsor = win.down('#sponsors').value
         filters.push({property: 'sponsor', value: sponsor})
 
+        if (filters.length == 0) {
+            store.load()
+        } else {
+            store.load({filters: filters})
+        }    
+    },
+
+    updateTimelinePlot: function(button) {
+        var win = button.up('window')
+        var store = this.getStore('ProposalTimelines');
+        // which sessions are we calculating pressures for?
+        var filters = []
+        var pcode = win.proposalCombo.value 
+        if ((pcode != null) & (pcode != "")) {
+            filters.push({property: 'pcode', value: pcode})
+        }    
+        var sponsor = win.sponsorCombo.value 
+        if ((sponsor != null) & (sponsor != "")) {
+            filters.push({property: 'sponsor', value: sponsor})
+        }    
         if (filters.length == 0) {
             store.load()
         } else {

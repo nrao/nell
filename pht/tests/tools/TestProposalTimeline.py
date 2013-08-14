@@ -31,6 +31,8 @@ from pht.tools.ProposalTimeline import ProposalTimeline
 
 class TestProposalTimeline(TestCase):
 
+    fixtures = ['proposal_GBT12A-002.json']
+     
     def test_extendTimeline(self):
 
         pt = ProposalTimeline()
@@ -48,4 +50,20 @@ class TestProposalTimeline(TestCase):
         for i, e in enumerate(etl):
             dt, t = e
             self.assertEqual(start + timedelta(days = i), dt)
+
+        etl = pt.extendTimeline(tl
+                              , beginAt = datetime(2012, 12, 28)     
+                              , upTo = datetime(2013, 1, 20))     
+        self.assertEqual(23, len(etl))
+        start = datetime(2012, 12, 28)
+        for i, e in enumerate(etl):
+            dt, t = e
+            self.assertEqual(start + timedelta(days = i), dt)
+        
+    def test_getTimeline(self):
+
+        p = pht.Proposal.objects.all().order_by('pcode')[0]
+        pt = ProposalTimeline(proposal = p.pcode)
+        # no-op test, since this proposal has no dss project
+        tl = pt.getTimeline()
 

@@ -14,6 +14,7 @@ from models import *
 from pht.tools.database import PstImport, DssExport
 from pht.tools.LstPressures import LstPressures
 from pht.tools.PlotLstPressures import PlotLstPressures
+from pht.tools.ProposalTimeline import ProposalTimeline
 from httpadapters import *
 from tools.database import PstInterface, BulkSourceImport
 from tools.reports import *
@@ -139,6 +140,40 @@ def lst_pressure(request, *args, **kws):
                                    })
                       , content_type = 'application/json')
 
+@login_required
+@admin_only
+def proposal_timeline(request, *args, **kws):
+
+    filters = request.GET.get('filter', None)
+    pcode = None
+    sponsor = None
+    if filters is not None:
+        filters = filters.replace('true', 'True')
+        filters = filters.replace('false', 'False')
+        filters = eval(filters)
+        for filter in filters:
+            prop = filter.get('property')
+            value = filter.get('value')
+            if prop == 'pcode':
+                pcode = value
+            if prop == 'sponsor':
+                sponsor = value
+
+    # TBF: we aren't keeping them from specifying both!
+    if sponsor is not None:
+        pt = ProposalTimeline(sponsor = sponsor)
+    elif pcode is not None:    
+        pt = ProposalTimeline(proposal = pcode)
+    else:
+        # uh-oh, they haven't specified anything!
+        pt = ProposalTimeline(sponsor = 'WVU')
+
+    tl = pt.getTimelineJsonDict()
+    return HttpResponse(json.dumps({"success" : "ok"
+                                  , "timeline" : tl
+                                   })
+                      , content_type = 'application/json')
+    
 @login_required
 @admin_only
 def print_lst_pressure(request, *args, **kws):

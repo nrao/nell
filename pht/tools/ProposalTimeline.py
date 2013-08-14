@@ -24,7 +24,8 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from pht.models import *
+from pht.models    import *
+from pht.utilities import *
 
 from scheduler.models import Period as DSSPeriod
 from scheduler.models import Sponsor as DSSSponsor
@@ -55,8 +56,6 @@ class ProposalTimeline(object):
         changed for all the proposals of interest.
         """
 
-        #pcode = 'GBT13A-037'
-        #prop = Proposal.objects.get(pcode = pcode)
         now = datetime.now()
         start = now
 
@@ -103,7 +102,7 @@ class ProposalTimeline(object):
                                     , start__lt = now).order_by('start')
         return [(p.start, p.accounting.time_billed()) for p in ps]
 
-    def extendTimeline(self, timeline, upTo = None):
+    def extendTimeline(self, timeline, beginAt = None, upTo = None):
         "Extrapolates missing info."
 
         if len(timeline) < 2:
@@ -112,12 +111,17 @@ class ProposalTimeline(object):
         if upTo is None:
             now = datetime.now()
             upTo = datetime(year = now.year, month = now.month, day = now.day)
-        start, t0 = timeline[0]
-        end,   _  = timeline[-1]
-        
-        days = (end - start).days
 
-        extendedTl = [(start, t0)]
+        start, t0 = timeline[0]
+
+        extendedTl = []
+
+        # do we need to add stuff to the beginning?
+        if beginAt is not None and beginAt < start:
+            days = (start - beginAt).days
+            extendedTl.extend([(beginAt + timedelta(days = d), 0) for d in range(0, days)])
+            
+        extendedTl.append((start, t0))
         for i in range(len(timeline)-1):
             dt0, t0 = timeline[i]
             dt1, t1 = timeline[i+1]
@@ -133,6 +137,17 @@ class ProposalTimeline(object):
 
         return extendedTl    
 
+    def jsonDict(self, timeline):
+        "Converts list of (dt, hrs) to dict ready for json (should be in views.py really?)"
+        return [dict(date = datetime.strftime(dt, "%Y/%m/%d"), hrs = hrs) for dt, hrs in timeline]
+
+    def getTimelineJsonDict(self):
+        "Computes Timeline and returns it in proper format"
+        tl = self.getTimeline()
+        print tl
+        etl = self.extendTimeline(tl)
+        return self.jsonDict(etl)
+
     def report(self):
 
         tl = self.getTimeline()
@@ -140,6 +155,7 @@ class ProposalTimeline(object):
         etl = self.extendTimeline(tl)
         print etl
         print len(etl)
+        return etl
 
 if __name__ == '__main__':
 
