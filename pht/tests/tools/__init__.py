@@ -9,6 +9,7 @@ from TestPstImport        import TestPstImport
 from TestPstInterface     import TestPstInterface
 from TestProposalRanking  import TestProposalRanking
 from TestProposalSummary  import TestProposalSummary
+from TestProposalTimeline import TestProposalTimeline
 from TestSemesterTimeAccounting import TestSemesterTimeAccounting
 from TestSemesterSummary import TestSemesterSummary
 from TestSourceConflicts import TestSourceConflicts
