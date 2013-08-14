@@ -50,6 +50,9 @@ class ProposalTimeline(object):
     def inDtRange(self, dt, start, end):
         return dt > start and dt <= end
 
+    def getProposalsAllocatedTime(self):
+        return sum([p.allocatedTime() for p in self.proposals])
+
     def getTimeline(self):
         """
         Returns a list of tuples giving each day that the time billed has
@@ -139,12 +142,14 @@ class ProposalTimeline(object):
 
     def jsonDict(self, timeline):
         "Converts list of (dt, hrs) to dict ready for json (should be in views.py really?)"
-        return [dict(date = datetime.strftime(dt, "%Y/%m/%d"), hrs = hrs) for dt, hrs in timeline]
+        allocated = self.getProposalsAllocatedTime()
+        return [dict(date = datetime.strftime(dt, "%Y/%m/%d")
+                   , hrs = hrs
+                   , allocated = allocated) for dt, hrs in timeline]
 
     def getTimelineJsonDict(self):
         "Computes Timeline and returns it in proper format"
         tl = self.getTimeline()
-        print tl
         etl = self.extendTimeline(tl)
         return self.jsonDict(etl)
 

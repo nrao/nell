@@ -23,7 +23,7 @@ Ext.define('PHT.view.plot.ProposalTimelinePlot', {
             toDate: Date(2013, 9, 1),
             */
             label: {
-                font: '7px Helvetica, sans-serif',
+                font: '9px Helvetica, sans-serif',
                 rotate: {
                     degrees: 315
                 }
@@ -32,7 +32,7 @@ Ext.define('PHT.view.plot.ProposalTimelinePlot', {
             // Y-Axis:
             type: 'Numeric',
             position: 'left',
-            fields: ['hrs'], 
+            fields: ['hrs', 'allocated'], 
             grid: true,
             title: 'Time Billed (Hrs)',
             label: {
@@ -41,13 +41,18 @@ Ext.define('PHT.view.plot.ProposalTimelinePlot', {
         }];
 
        this.series = [{
-            // Pressure data
             type: 'line',
             showMarkers: false,
-            stacked: true,
             xField: 'date',
             yField: 'hrs', 
-        }];
+        },
+        {
+            type: 'line',
+            showMarkers: false,
+            xField: 'date',
+            yField: 'allocated', 
+        },
+        ];
 
         this.callParent();
     },

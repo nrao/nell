@@ -2,6 +2,7 @@ Ext.define('PHT.model.ProposalTimeline', {
     extend: 'Ext.data.Model',
     fields: ['date',
              'hrs',
+             'allocated',
              ],
     proxy: {
         type: 'ajax',
