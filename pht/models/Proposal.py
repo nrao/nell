@@ -141,6 +141,10 @@ class Proposal(models.Model):
         "From this proposal's project's time accounting."
         return self.getTime('scheduled')
 
+    def lostTime(self):
+        "From this proposal's project's time accounting."
+        return self.getTime('lost_time')
+
     def getTime(self, type):
         "Leverage time accounting for this proposal's project."
         if self.dss_project is not None:
