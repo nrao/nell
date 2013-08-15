@@ -29,12 +29,13 @@ from pht.utilities import *
 
 from scheduler.models import Period as DSSPeriod
 from scheduler.models import Sponsor as DSSSponsor
+from scheduler.models import Semester as DSSSemester
 
 from datetime import datetime, timedelta
 
 class ProposalTimeline(object):
 
-    def __init__(self, sponsor = None, proposal = None):
+    def __init__(self, sponsor = None, proposal = None, timeRange = None):
 
         if sponsor is not None and proposal is not None:
             raise "Mutually Exclusive options: sponsor and proposal"
@@ -47,8 +48,20 @@ class ProposalTimeline(object):
         else: # sponsors!
             self.proposals = Proposal.objects.exclude(sponsor = None)
 
+        if timeRange is not None:
+            sem = DSSSemester.objects.get(semester = timeRange)
+            self.timeRange = (sem.start(), sem.end())
+        else:
+            self.timeRange = None
+
     def inDtRange(self, dt, start, end):
         return dt > start and dt <= end
+
+    def getTimeRangeStart(self):
+        return self.timeRange[0] if self.timeRange is not None else None
+
+    def getTimeRangeEnd(self):
+        return self.timeRange[1] if self.timeRange is not None else None
 
     def getProposalsAllocatedTime(self):
         return sum([p.allocatedTime() for p in self.proposals])
@@ -65,7 +78,9 @@ class ProposalTimeline(object):
         # for each proposal, get the periods and how much each was billed
         times = []
         for prop in self.proposals:
-            ts = self.getTimesBilled(prop)
+            ts = self.getTimesBilled(prop
+                                   , start = self.getTimeRangeStart() 
+                                   , end = self.getTimeRangeEnd())
             if len(ts) > 0:
                 times.extend(ts)
                 # keep track of what the earliest date is
@@ -96,20 +111,30 @@ class ProposalTimeline(object):
 
         return steps
 
-    def getTimesBilled(self, prop):
+    def getTimesBilled(self, prop, start = None, end = None):
         "Returns the start time and time billed for all periods"
         if prop.dss_project is None:
             return []
-        now = datetime.now()
+        if start is None:
+            # start from the beginning of time
+            start = datetime(1971, 1, 22)
+        if end is None:    
+            # no point going past today
+            end = datetime.now()
         ps = DSSPeriod.objects.filter(session__project__pcode = prop.dss_project.pcode
-                                    , start__lt = now).order_by('start')
+                                    , start__gt = start
+                                    , start__lt = end).order_by('start')
         return [(p.start, p.accounting.time_billed()) for p in ps]
 
-    def extendTimeline(self, timeline, beginAt = None, upTo = None):
+    def extendTimeline(self, timeline):
         "Extrapolates missing info."
 
-        if len(timeline) < 2:
+     
+        if len(timeline) < 1 or (len(timeline) < 2 and self.timeRange is None):
             return timeline
+
+        beginAt = self.getTimeRangeStart()
+        upTo    = self.getTimeRangeEnd()
 
         if upTo is None:
             now = datetime.now()
@@ -158,8 +183,8 @@ class ProposalTimeline(object):
         tl = self.getTimeline()
         print tl
         etl = self.extendTimeline(tl)
-        print etl
-        print len(etl)
+        #print etl
+        #print len(etl)
         return etl
 
 if __name__ == '__main__':
@@ -175,6 +200,7 @@ if __name__ == '__main__':
     #    prop.save()
 
 
-    pt = ProposalTimeline(proposal = pcode)
-    #pt = ProposalTimeline(sponsor = 'WVU')
+    #pt = ProposalTimeline(proposal = pcode, timeRange = '12B')
+    pt = ProposalTimeline(sponsor = 'WVU', timeRange = '13A')
+    print pt.timeRange
     pt.report()

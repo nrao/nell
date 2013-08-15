@@ -163,6 +163,10 @@ Ext.define('PHT.controller.Plots', {
         if ((sponsor != null) & (sponsor != "")) {
             filters.push({property: 'sponsor', value: sponsor})
         }    
+        var time = win.timeCombo.value 
+        if ((time != null) & (time != "")) {
+            filters.push({property: 'time', value: time})
+        }    
         if (filters.length == 0) {
             store.load()
         } else {

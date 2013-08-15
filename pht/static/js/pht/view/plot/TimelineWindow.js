@@ -53,6 +53,17 @@ Ext.define('PHT.view.plot.TimelineWindow', {
             emptyText: 'Select a sponsor...',
         });
 
+        this.timeCombo = Ext.create('Ext.form.field.ComboBox', {
+            name: 'semester',
+            store: 'Semesters',
+            queryMode: 'local',
+            displayField: 'semester',
+            valueField: 'semester',
+            hideLabel: false,
+            fieldLabel: 'Time Range',
+            emptyText: 'Select a time range...',
+        });
+
         this.dockedItems = [{
             xtype: 'toolbar',
             items: [
@@ -68,6 +79,7 @@ Ext.define('PHT.view.plot.TimelineWindow', {
               {
                 xtype: 'tbseparator'
               },
+              this.timeCombo,
             ],
         }];        
         this.items =[

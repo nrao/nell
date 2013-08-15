@@ -147,6 +147,7 @@ def proposal_timeline(request, *args, **kws):
     filters = request.GET.get('filter', None)
     pcode = None
     sponsor = None
+    time = None
     if filters is not None:
         filters = filters.replace('true', 'True')
         filters = filters.replace('false', 'False')
@@ -158,15 +159,16 @@ def proposal_timeline(request, *args, **kws):
                 pcode = value
             if prop == 'sponsor':
                 sponsor = value
-
+            if prop == 'time':
+                time = value
     # TBF: we aren't keeping them from specifying both!
     if sponsor is not None:
-        pt = ProposalTimeline(sponsor = sponsor)
+        pt = ProposalTimeline(sponsor = sponsor, timeRange = time)
     elif pcode is not None:    
-        pt = ProposalTimeline(proposal = pcode)
+        pt = ProposalTimeline(proposal = pcode, timeRange = time)
     else:
         # uh-oh, they haven't specified anything!
-        pt = ProposalTimeline(sponsor = 'WVU')
+        pt = ProposalTimeline(sponsor = 'WVU', timeRange = time)
 
     tl = pt.getTimelineJsonDict()
     return HttpResponse(json.dumps({"success" : "ok"

@@ -44,16 +44,18 @@ class TestProposalTimeline(TestCase):
             , (datetime(2013, 1, 11), 19.)
             , (datetime(2013, 1, 15), 21.)
              ]
-        etl = pt.extendTimeline(tl, upTo = datetime(2013, 1, 20))     
+        upTo = datetime(2013, 1, 20)     
+        pt.timeRange = (None, upTo)     
+        etl = pt.extendTimeline(tl) 
         self.assertEqual(19, len(etl))
         start = datetime(2013, 1, 1)
         for i, e in enumerate(etl):
             dt, t = e
             self.assertEqual(start + timedelta(days = i), dt)
 
-        etl = pt.extendTimeline(tl
-                              , beginAt = datetime(2012, 12, 28)     
-                              , upTo = datetime(2013, 1, 20))     
+        beginAt = datetime(2012, 12, 28)     
+        pt.timeRange = (beginAt, upTo)
+        etl = pt.extendTimeline(tl)
         self.assertEqual(23, len(etl))
         start = datetime(2012, 12, 28)
         for i, e in enumerate(etl):
