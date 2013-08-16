@@ -245,13 +245,17 @@ def get_options(request, *args, **kws):
     if mode == "project_codes":
         semesters   = request.GET.get("semesters")
         notcomplete = request.GET.get("notcomplete")
-        if semesters is not None and notcomplete is not None:
+        sponsor     = request.GET.get("sponsor")
+        if semesters is not None and notcomplete is not None and sponsor is not None:
             notcompleteFlt = notcomplete == 'Not Complete'
             semesters      = semesters.replace('[', '').replace(']', '').split(', ') 
             filter   = " | " .join(["Q(semester__semester = '%s')" % s for s in semesters])
-            projects = Project.objects.filter(eval(filter))
+            projects = Project.objects.filter(eval(filter)).order_by('pcode')
             if notcomplete != 'All':
                 projects = projects.filter(complete = not notcompleteFlt).order_by('pcode')
+            if sponsor != 'All':
+                projects = projects.filter(sponsor__abbreviation = sponsor).order_by('pcode')
+
         else:
             projects = Project.objects.order_by('pcode')
         return HttpResponse(
@@ -280,7 +284,8 @@ def get_options(request, *args, **kws):
         semesters   = request.GET.get("semesters")
         enabled     = request.GET.get("enabled")
         notcomplete = request.GET.get("notcomplete")
-        if semesters is not None and enabled is not None and notcomplete is not None:
+        sponsor     = request.GET.get("sponsor")
+        if semesters is not None and enabled is not None and notcomplete is not None and sponsor is not None:
             notcompleteFlt = notcomplete == 'Not Complete'
             enabledFlt  = enabled == 'Enabled'
             semesters   = semesters.replace('[', '').replace(']', '').split(', ') 
@@ -290,6 +295,8 @@ def get_options(request, *args, **kws):
                 ss = ss.filter(status__complete = not notcompleteFlt)
             if enabled != 'All':
                 ss = ss.filter(status__enabled = enabledFlt)
+            if sponsor != 'All':
+                ss = ss.filter(project__sponsor__abbreviation = sponsor)
             ss = ss.order_by('name')
         else:
             ss = Sesshun.objects.all().order_by('name')
