@@ -270,6 +270,27 @@ class PstImport(PstInterface):
         # if we got here, no GBT!
         return False
 
+    def fetchSRPCommentsForProposal(self, proposal):
+        """
+        Used for getting SRP comments from PST for a proposal
+        already in the GB PHT.
+        """
+
+        # nothing to get?
+        if proposal.pst_proposal_id is None:
+            return 
+
+        if proposal.comments is None:
+            comments = ProposalComments()
+            proposal.comments = comments
+            proposal.save()
+
+        srps = self.fetchSRPComments(proposal.pst_proposal_id)
+        if srps is not None:
+            proposal.comments.srp_to_pi  = srps[0]
+            proposal.comments.srp_to_tac = srps[1]
+            proposal.comments.save()
+
     def fetchComments(self, proposal, propQueryResults = None):
 
         pid = int(proposal.pst_proposal_id)

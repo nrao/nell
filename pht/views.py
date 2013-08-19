@@ -222,7 +222,7 @@ def import_semester(request, *args, **kws):
             if srp:
                 proposals = Proposal.objects.filter(semester__semester = semester).exclude(pst_proposal_id = 0).exclude(pst_proposal_id = None)
                 map(pst.fetchSRPScore, proposals)
-                map(pst.fetchComments, proposals)
+                map(pst.fetchSRPCommentsForProposal, proposals)
             else:
                 pst.importProposals(semester)
 

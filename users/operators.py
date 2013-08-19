@@ -170,7 +170,6 @@ def summary(request, *args, **kws):
     for Operations, any logged in user may view it.
     """
     now        = datetime.now()
-    last_month = now - timedelta(days = 31)
     psummary = []
 
     if request.method == 'POST':
@@ -189,14 +188,14 @@ def summary(request, *args, **kws):
             start = datetime(int(year)
                            , [m for m in calendar.month_name].index(month)
                            , 1)
-        else: # Default to last month
-            start = datetime(last_month.year, last_month.month, 1)
+        else: # Default to this month
+            start = datetime(now.year, now.month, 1)
             month = calendar.month_name[start.month]
             year  = start.year
-    else: # Default to last month
+    else: # Default to this month
         summary    = 'schedule'
         project    = ''
-        start      = datetime(last_month.year, last_month.month, 1)
+        start      = datetime(now.year, now.month, 1)
         month      = calendar.month_name[start.month]
         year       = start.year
 

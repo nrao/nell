@@ -32,7 +32,7 @@ class TestSession(TestCase):
     def setUp(self):
 
         # too lazy to update the fixture, so adding new rx
-        mba15 = Receiver(name = 'Rcvr_PAR15'
+        mba15 = Receiver(name = 'Rcvr_MBA1_5'
                        , abbreviation = 'MBA1.5'
                        , freq_hi = 100.0
                        , freq_low = 80.0

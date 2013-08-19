@@ -42,7 +42,7 @@ class TestPstImport(TestCase):
                    , code = 'D'
                      )
         r.save()             
-        r = Receiver(name = 'Rcvr_PAR15'
+        r = Receiver(name = 'Rcvr_MBA1_5'
                    , abbreviation = 'MBA1.5'
                    , freq_low = 80.0
                    , freq_hi = 100.0
