@@ -384,7 +384,6 @@ class ProposalHttpAdapter(PhtHttpAdapter):
             sponsor        = DSSSponsor.objects.get(id = sponsor_id) if sponsor_id is not None else None
         except:
             sponsor = None
-        print "saving sponsor: ", sponsor
         proposalType  = ProposalType.objects.get(type = data.get('proposal_type'))
         status        = Status.objects.get(name = data.get('status'))
         semester      = Semester.objects.get(semester = data.get('semester'))
