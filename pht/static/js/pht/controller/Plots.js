@@ -114,7 +114,7 @@ Ext.define('PHT.controller.Plots', {
         var win = button.up('window')
         var store = this.getStore('LstPressures');
         // be patient ...
-        var storeMask = new Ext.LoadMask(Ext.getBody()
+        var storeMask = new Ext.LoadMask(win
             , {msg:"Loading LST Pressures ...",
                store: store,
               });
@@ -153,6 +153,11 @@ Ext.define('PHT.controller.Plots', {
     updateTimelinePlot: function(button) {
         var win = button.up('window')
         var store = this.getStore('ProposalTimelines');
+        // be patient ...
+        var storeMask = new Ext.LoadMask(win
+            , {msg:"Loading Timeline ...",
+               store: store,
+              });
         // which sessions are we calculating pressures for?
         var filters = []
         var pcode = win.proposalCombo.value 
