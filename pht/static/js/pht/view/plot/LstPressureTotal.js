@@ -33,8 +33,8 @@ Ext.define('PHT.view.plot.LstPressureTotal', {
               'Excellent_C',
               'Good_C',
               'Poor_C',
-              'Requested',
               'WVU',
+              'Requested',
         ];        
         this.availableField = 'Available';
         this.callParent();

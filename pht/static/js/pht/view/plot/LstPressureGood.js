@@ -9,8 +9,8 @@ Ext.define('PHT.view.plot.LstPressureGood', {
                       'Good_A',
                       'Good_B',
                       'Good_C',
-                      'Requested_Good',
                       'WVU_Good',
+                      'Requested_Good',
         ];
 
         // map to colors 
