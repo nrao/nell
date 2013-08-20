@@ -41,9 +41,14 @@ class WindowHttpAdapter (object):
             start = self.window.start_date().strftime("%Y-%m-%d")
             last_date = self.window.last_date().strftime("%Y-%m-%d")
             duration = self.window.duration()
-            
+        
+        sponsor = ''
+        if self.window.session.project.is_sponsored():
+            sponsor = self.window.session.project.sponsor.abbreviation
+
         js = {  "id"             : self.window.id
               , "handle"         : self.window.toHandle()
+              , "sponsor"        : sponsor
               , "start"          : start
               , "end"            : last_date
               , "duration"       : duration

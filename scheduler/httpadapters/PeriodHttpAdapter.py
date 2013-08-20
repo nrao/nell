@@ -39,6 +39,9 @@ class PeriodHttpAdapter (object):
         start = self.period.start if tz == 'UTC' else TimeAgent.utc2est(self.period.start)
         end   = self.period.end() if tz == 'UTC' else TimeAgent.utc2est(self.period.end())
         w = self.period.window
+        # stakeholder want's 'T' or '' for this
+        sponsored = self.period.session.project.is_sponsored()
+        sponsored = '' if not sponsored else 'T'
         js =   {"id"           : self.period.id
               , "session"      : SessionHttpAdapter(self.period.session).jsondict()
               , "session_name" : self.period.session.name
@@ -61,7 +64,7 @@ class PeriodHttpAdapter (object):
                                      if w is not None else None
               , "wstart"       : d2str(w.start_date()) if w is not None else None
               , "wend"         : d2str(w.last_date()) if w is not None else None
-              , "sponsored"    : self.period.session.project.is_sponsored().__str__()[0]
+              , "sponsored"    : sponsored
               , "sponsor"      : self.period.session.project.sponsor_text()
               , "receivers"    : self.period.get_rcvrs_json()
                 }
