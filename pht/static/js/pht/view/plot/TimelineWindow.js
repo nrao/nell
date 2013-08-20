@@ -5,16 +5,18 @@ Ext.define('PHT.view.plot.TimelineWindow', {
     title: 'Timeline Plot',
     constrain: true,
     layout: 'fit',
-    width: '100%',
-    height: '100%',
+    width: '95%',
+    height: '95%',
     plain: true,
     maximizable: true,
+    /*
     x: 0,
     y: 0,
     items: {
         border: false
     },
-    
+    */
+
     /*
     width: '95%',
     height: '95%',

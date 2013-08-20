@@ -32,10 +32,12 @@ from scheduler.models import Sponsor as DSSSponsor
 from scheduler.models import Semester as DSSSemester
 
 from datetime import datetime, timedelta
+import copy
 
 class ProposalTimeline(object):
 
-    def __init__(self, sponsor = None, proposal = None, timeRange = None):
+    def __init__(self, sponsor = None, proposal = None, timeRange = None, now = None):
+
 
         if sponsor is not None and proposal is not None:
             raise "Mutually Exclusive options: sponsor and proposal"
@@ -53,6 +55,12 @@ class ProposalTimeline(object):
             self.timeRange = (sem.start(), sem.end())
         else:
             self.timeRange = None
+
+        if now is None:
+            self.now = datetime.now()
+        else:
+            self.now = now
+        self.today = datetime(self.now.year, self.now.month, self.now.day)    
 
     def inDtRange(self, dt, start, end):
         return dt > start and dt <= end
@@ -78,9 +86,9 @@ class ProposalTimeline(object):
         # for each proposal, get the periods and how much each was billed
         times = []
         for prop in self.proposals:
-            ts = self.getTimesBilled(prop
-                                   , start = self.getTimeRangeStart() 
-                                   , end = self.getTimeRangeEnd())
+            ts = self.getTimesBilled(prop)
+            #                       , start = self.getTimeRangeStart() 
+            #                       , end = self.getTimeRangeEnd())
             if len(ts) > 0:
                 times.extend(ts)
                 # keep track of what the earliest date is
@@ -126,19 +134,62 @@ class ProposalTimeline(object):
                                     , start__lt = end).order_by('start')
         return [(p.start, p.accounting.time_billed()) for p in ps]
 
-    def extendTimeline(self, timeline):
+    def sliceTimeline(self, timeline, timeRange = None):
+        "Given time range overlaps timeline?"
+
+        now = self.now 
+        today = self.today 
+       
+        if timeline is None or len(timeline) == 0:
+            if timeRange is None:
+               # show last week
+               start = today - timedelta(days = 7)
+               tl = [(start, 0.), (today, 0.)]
+            else:
+               tl = [(timeRange[0], 0.), (timeRange[1], 0.)]
+        else:
+            if timeRange is None:
+                dt, t = timeline[-1]
+                tl = copy.copy(timeline)
+                tl.append((today, t))
+            else:
+                start = timeRange[0]
+                end = timeRange[1]
+                dtStart, tStart = timeline[0]
+                dtEnd, tEnd = timeline[-1]
+                # overlap?
+                if end < dtStart:
+                    # no overlap
+                    tl = [(start, 0.), (end, 0.)]
+                elif start > dtEnd:
+                    # no overlap
+                    tl = [(start, tEnd), (end, tEnd)]
+                else:
+                    # make an ordered set of the dates
+                    dts = [dt for dt, t in timeline]
+                    dts.extend([start, end])
+                    dts = sorted(list(set(sorted(dts))))
+
+                    # now associate the correct times with each of these
+                    tmp = []
+                    t = 0.0
+                    for dt in dts:
+                        # is there a time associated with this?
+                        for date, hrs in timeline:
+                            if dt == date:
+                                t = hrs
+                                break
+                        tmp.append((dt, t))
+                    # now just take the slice we want
+                    tl = [(dt, t) for dt, t in tmp if dt >= start and dt <= end]
+        return tl        
+
+                        
+    def extendTimeline(self, timeline, beginAt = None, upTo = None):
         "Extrapolates missing info."
 
-     
         if len(timeline) < 1 or (len(timeline) < 2 and self.timeRange is None):
             return timeline
-
-        beginAt = self.getTimeRangeStart()
-        upTo    = self.getTimeRangeEnd()
-
-        if upTo is None:
-            now = datetime.now()
-            upTo = datetime(year = now.year, month = now.month, day = now.day)
 
         start, t0 = timeline[0]
 
@@ -159,7 +210,7 @@ class ProposalTimeline(object):
             extendedTl.append((dt1, t1))
 
         # finish extending from the end to 'up to'    
-        if upTo > dt1:
+        if upTo is not None and upTo > dt1:
             days = (upTo - dt1).days
             extendedTl.extend([(dt1 + timedelta(days = d), t1) for d in range(1, days)])
 
@@ -175,32 +226,29 @@ class ProposalTimeline(object):
     def getTimelineJsonDict(self):
         "Computes Timeline and returns it in proper format"
         tl = self.getTimeline()
-        etl = self.extendTimeline(tl)
+        #print 'tl: ', tl
+        #print self.timeRange
+        stl = self.sliceTimeline(tl, self.timeRange)
+        #print 'stl: ', stl
+        etl = self.extendTimeline(stl)
         return self.jsonDict(etl)
-
-    def report(self):
-
-        tl = self.getTimeline()
-        print tl
-        etl = self.extendTimeline(tl)
-        #print etl
-        #print len(etl)
-        return etl
 
 if __name__ == '__main__':
 
     wvu = DSSSponsor.objects.get(abbreviation = 'WVU')
-    pcode = 'GBT13A-037'
+    #pcode = 'GBT13A-037'
+    pcode = 'GBT11A-025'
     prop = Proposal.objects.get(pcode = pcode)
-    prop.sponsor = wvu
-    prop.save()
+    #prop.sponsor = wvu
+    #prop.save()
     #ps = Proposal.objects.filter(semester__semester = '13A')
     #for prop in ps[5:10]:
     #    prop.sponsor = wvu
     #    prop.save()
 
 
-    #pt = ProposalTimeline(proposal = pcode, timeRange = '12B')
-    pt = ProposalTimeline(sponsor = 'WVU', timeRange = '13A')
+    #pt = ProposalTimeline(proposal = pcode) #, timeRange = '12B')
+    pt = ProposalTimeline(sponsor = 'WVU', timeRange = '13B')
     print pt.timeRange
-    pt.report()
+    j = pt.getTimelineJsonDict()
+    #pt.report()
