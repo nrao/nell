@@ -12,6 +12,7 @@ Ext.define('PHT.view.plot.LstPressureExcellent', {
                       'Excellent_A',
                       'Excellent_B',
                       'Excellent_C',
+                      'WVU_Excellent',
                       'Requested_Excellent',
         ];
         this.availableField = 'Available_Excellent';

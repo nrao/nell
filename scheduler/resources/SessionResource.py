@@ -61,6 +61,10 @@ class SessionResource(NellResource):
                 query_set = query_set.filter(
                     status__authorized = (filterAuth.lower() == "true"))
 
+            filterSpr= request.GET.get("filterSpr", None)
+            if filterSpr is not None:
+                query_set = query_set.filter(project__sponsor__abbreviation = filterSpr)
+
             filterClp= request.GET.get("filterClp", None)
             if filterClp is not None:
                 query_set = query_set.filter(

@@ -14,6 +14,7 @@ from models import *
 from pht.tools.database import PstImport, DssExport
 from pht.tools.LstPressures import LstPressures
 from pht.tools.PlotLstPressures import PlotLstPressures
+from pht.tools.ProposalTimeline import ProposalTimeline
 from httpadapters import *
 from tools.database import PstInterface, BulkSourceImport
 from tools.reports import *
@@ -108,6 +109,7 @@ def lst_pressure(request, *args, **kws):
     ss = None
     carryOverUseNextSemester = True
     adjustWeatherBins = True
+    showSponsors = False
     if filters is not None:
         filters = filters.replace('true', 'True')
         filters = filters.replace('false', 'False')
@@ -123,19 +125,57 @@ def lst_pressure(request, *args, **kws):
                 carryOverUseNextSemester = value == 'Next Semester Time'
             elif prop == 'adjust':
                 adjustWeatherBins = value 
+            elif prop == 'sponsor':
+                showSponsors = value 
     #else:
     #    ss = None
         
     # calcualte the LST pressures    
     lst = LstPressures(carryOverUseNextSemester = carryOverUseNextSemester
-                     , adjustWeatherBins = adjustWeatherBins)
+                     , adjustWeatherBins = adjustWeatherBins
+                     , hideSponsors = not showSponsors)
     pressure = lst.getPressures(sessions = ss)
-
     return HttpResponse(json.dumps({"success" : "ok"
                                   , "lst_pressure" : pressure
                                    })
                       , content_type = 'application/json')
 
+@login_required
+@admin_only
+def proposal_timeline(request, *args, **kws):
+
+    filters = request.GET.get('filter', None)
+    pcode = None
+    sponsor = None
+    time = None
+    if filters is not None:
+        filters = filters.replace('true', 'True')
+        filters = filters.replace('false', 'False')
+        filters = eval(filters)
+        for filter in filters:
+            prop = filter.get('property')
+            value = filter.get('value')
+            if prop == 'pcode':
+                pcode = value
+            if prop == 'sponsor':
+                sponsor = value
+            if prop == 'time':
+                time = value
+    # TBF: we aren't keeping them from specifying both!
+    if sponsor is not None:
+        pt = ProposalTimeline(sponsor = sponsor, timeRange = time)
+    elif pcode is not None:    
+        pt = ProposalTimeline(proposal = pcode, timeRange = time)
+    else:
+        # uh-oh, they haven't specified anything!
+        pt = ProposalTimeline(sponsor = 'WVU', timeRange = time)
+
+    tl = pt.getTimelineJsonDict()
+    return HttpResponse(json.dumps({"success" : "ok"
+                                  , "timeline" : tl
+                                   })
+                      , content_type = 'application/json')
+    
 @login_required
 @admin_only
 def print_lst_pressure(request, *args, **kws):
@@ -603,7 +643,8 @@ def lst_pressure_report(request, *args, **kws):
     adjust = adjust == 'true'
     carryover = request.GET.get('carryOverUseNextSemester', 'false')
     carryover = carryover == 'true'
-    sessionId = request.GET.get('session', None)
+    showSponsors = request.GET.get('showSponsors', 'false')
+    showSponsors = showSponsors == 'true'
     sessionId = request.GET.get('session', None)
     sessions = None
     if sessionId is not None:
@@ -619,6 +660,7 @@ def lst_pressure_report(request, *args, **kws):
              , debug = debug
              , carryOverUseNextSemester = carryover
              , adjustWeatherBins = adjust
+             , hideSponsors = not showSponsors
               )
 
     return response
@@ -730,6 +772,18 @@ def semester_summary(request):
 
 @login_required
 @admin_only
+def sponsored_proposals(request):
+    # Create the HttpResponse object with the appropriate PDF headers.
+    response = HttpResponse(mimetype='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=SponsorReport.pdf'
+
+    sr = SponsoredReport(response)
+    sr.report()
+
+    return response
+
+@login_required
+@admin_only
 def friends(request):
         users = [u for u in User.objects.all().order_by('last_name')
                    if u.isFriend() and u.username != 'dss']
@@ -825,3 +879,6 @@ def source_reference_frames(request):
 def simpleGetAllResponse(key, data):
     return HttpResponse(json.dumps({"success" : "ok" , key : data })
                       , content_type = 'application/json')
+
+def sponsors(request):
+    return simpleGetAllResponse('sponsors', Sponsor.jsonDictOptions())

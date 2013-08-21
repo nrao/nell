@@ -23,6 +23,11 @@ Ext.define('PHT.model.LstPressure', {
              'Excellent_A',
              'Excellent_B',
              'Excellent_C',
+             // TBF: is there a way to avoid hard-coding these?
+             'WVU',
+             'WVU_Poor',
+             'WVU_Good',
+             'WVU_Excellent',
              ],
     proxy: {
         type: 'ajax',

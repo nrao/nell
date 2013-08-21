@@ -49,6 +49,7 @@ Ext.define('Ext.chart.theme.LstPressureThemeTotal', {
               blues[2].toString(), 
               greens[2].toString(), 
               reds[2].toString(), 
+              'black',
               'yellow',
              ];        
 
@@ -70,6 +71,7 @@ Ext.define('Ext.chart.theme.LstPressureThemePoor', {
               reds[0].toString(),
               reds[1].toString(), 
               reds[2].toString(), 
+              'black',
               'yellow',
         ];
 
@@ -91,6 +93,7 @@ Ext.define('Ext.chart.theme.LstPressureThemeGood', {
               greens[0].toString(),
               greens[1].toString(), 
               greens[2].toString(), 
+              'black',
               'yellow',
         ];
 
@@ -111,6 +114,7 @@ Ext.define('Ext.chart.theme.LstPressureThemeEx', {
               blues[0].toString(),
               blues[1].toString(), 
               blues[2].toString(), 
+              'black',
               'yellow',
         ];
 

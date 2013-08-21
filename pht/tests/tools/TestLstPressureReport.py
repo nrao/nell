@@ -25,6 +25,10 @@ from django.test         import TestCase
 from pht.tools.reports.LstPressureReport import LstPressureReport
 from scheduler.models  import Observing_Type
 from scheduler.models  import Semester as DSSSemester
+from scheduler.models  import Sponsor as DSSSponsor
+from pht.tools.LstPressures import LstPressures
+from pht.utilities import *
+from pht.models import *
 
 class TestLstPressureReport(TestCase):
 
@@ -40,12 +44,47 @@ class TestLstPressureReport(TestCase):
                 s = DSSSemester(semester = semester)
                 s.save()
     
-    def test_report(self):
-
         # I'm too lazy to fix the scheduler.json - missing commissioning
         c = Observing_Type.objects.get_or_create(type = 'commissioning')
+        
+        self.sponsor = DSSSponsor(name = "WVU", abbreviation = "WVU")
+        self.sponsor.save()
+
+        # get the one proposal and it's one session
+        self.proposal = Proposal.objects.all()[0]
+        s = self.proposal.session_set.all()[0]
+
+        # give it some values so it will show up 
+        s.grade = SessionGrade.objects.get(grade = 'A')
+        s.target.min_lst = 0.0
+        s.target.max_lst = hr2rad(12.5)
+        s.target.save()
+        time = 6.5 # hrs
+        s.allotment.allocated_time = time # hrs
+        s.allotment.allocated_repeats = 1 
+        s.allotment.save()
+        s.save()
+        self.session = s
+
+    def test_report(self):
 
         f = file('LstPressures.pdf', 'w')
         lst = LstPressureReport(f)
         lst.report(debug = True)
+
+    def test_report_sponsored(self):
+
+        f = file('LstPressures.pdf', 'w')
+        r = LstPressureReport(f)
+        # Make sure are session belongs to the next semester,
+        # no matter when we are running this test.
+        # This is a 12A session, that starts 2012-02-01.
+        today = datetime(2012, 1, 15)
+        r.lst = LstPressures(today = today)
+
+        # make this session sponsored
+        self.session.proposal.sponsor = self.sponsor
+        self.session.proposal.save()
+
+        r.report(debug = True, hideSponsors = False)
         

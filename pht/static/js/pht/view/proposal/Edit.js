@@ -33,6 +33,17 @@ Ext.define('PHT.view.proposal.Edit', {
                             displayField: 'name',
                             valueField: 'id'
                         });
+        this.sponsorCombo = Ext.create('Ext.form.field.ComboBox', {
+                            name: 'sponsor_id',
+                            forceSelection: true,
+                            fieldLabel: 'Sponsor',
+                            labelStyle: '',
+                            store : 'Partners',
+                            queryMode: 'local',
+                            lastQuery: '',
+                            displayField: 'abbreviation',
+                            valueField: 'id',
+                        });
         this.items = [
             {
                 // Upper half has two columns
@@ -122,7 +133,9 @@ Ext.define('PHT.view.proposal.Edit', {
                         uncheckedValue: 'false',
                         inputValue: 'true'
     
-                    }]
+                    },
+                    this.sponsorCombo,
+                    ]
                 },
                 {
                     // third column

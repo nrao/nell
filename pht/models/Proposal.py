@@ -35,6 +35,7 @@ from Receiver           import Receiver
 
 from scheduler.models   import Project as DSSProject 
 from scheduler.models   import User as DSSUser 
+from scheduler.models   import Sponsor as DSSSponsor 
 
 from utilities          import TimeAccounting
 
@@ -44,6 +45,7 @@ class Proposal(models.Model):
     dss_project     = models.ForeignKey(DSSProject, null = True, on_delete = models.SET_NULL)
     proposal_type   = models.ForeignKey(ProposalType)
     observing_types = models.ManyToManyField(ObservingType)
+    sponsor         = models.ForeignKey(DSSSponsor, null = True, on_delete = models.SET_NULL)
     status          = models.ForeignKey(Status)
     semester        = models.ForeignKey(Semester, null = True)
     friend          = models.ForeignKey(DSSUser, null = True)
@@ -105,6 +107,9 @@ class Proposal(models.Model):
         students  = len(self.author_set.filter(thesis_observing = True))
         return students, students > 0
 
+    def isSponsored(self):
+        return self.sponsor is not None and not self.sponsor.isNone()
+
     def grades(self):
         "Return unique list of grades"
         return sorted(list(set([s.grade.grade \
@@ -135,6 +140,10 @@ class Proposal(models.Model):
     def scheduledTime(self):
         "From this proposal's project's time accounting."
         return self.getTime('scheduled')
+
+    def lostTime(self):
+        "From this proposal's project's time accounting."
+        return self.getTime('lost_time')
 
     def getTime(self, type):
         "Leverage time accounting for this proposal's project."

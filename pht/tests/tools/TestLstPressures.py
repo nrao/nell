@@ -35,6 +35,7 @@ from scheduler.models   import Period as DSSPeriod
 from scheduler.models   import Project as DSSProject
 from scheduler.models   import Semester as DSSSemester
 from scheduler.models   import Status as DSSStatus
+from scheduler.models   import Sponsor as DSSSponsor
 from utilities          import TimeAgent
 from pht.tests.utils    import *
 from scheduler.tests.utils        import create_sesshun
@@ -53,8 +54,8 @@ class TestLstPressures(TestCase):
 
 
         # get the one proposal and it's one session
-        proposal = Proposal.objects.all()[0]
-        s = proposal.session_set.all()[0]
+        self.proposal = Proposal.objects.all()[0]
+        s = self.proposal.session_set.all()[0]
 
         # give it some values so it will show up in plot
         s.grade = SessionGrade.objects.get(grade = 'A')
@@ -79,6 +80,9 @@ class TestLstPressures(TestCase):
         # again, too lazy to fix the fixture: add these observing types
         t = 'commissioning'
         ot, created = Observing_Type.objects.get_or_create(type = t)
+
+        self.sponsor = DSSSponsor(name = "WVU", abbreviation = "WVU")
+        self.sponsor.save()
 
         self.lst = LstPressures()
 
@@ -118,6 +122,88 @@ class TestLstPressures(TestCase):
         "Create a new session for the tests"
         p = Proposal.objects.all()[0]
         return createSession(p)
+
+    def test_sponsoredProposal(self):
+
+        wtypes = ['Poor', 'Good', 'Excellent']
+        grades = ['A', 'B', 'C']
+        types = ["%s_%s" % (w, g) for w in wtypes for g in grades]
+        # Make sure are session belongs to the next semester,
+        # no matter when we are running this test.
+        # This is a 12A session, that starts 2012-02-01.
+        today = datetime(2012, 1, 15)
+        lst = LstPressures(today = today)
+
+        # calc pressures
+        ps = lst.getPressures()
+
+        # make sure it shows up in it's LST range
+        for hr in range(12):
+            self.assertAlmostEqual(0.5416666, ps[hr]['Total'], 3)
+            self.assertAlmostEqual(0.5416666, ps[hr]['Poor_A'], 3)
+            self.assertAlmostEqual(0.0,       ps[hr]['Requested'], 3)
+            for t in types:
+                if t != 'Poor_A':
+                    self.assertEqual(0.0, ps[hr][t])
+
+        # make sure it doesn't show up out of it's range
+        for hr in range(12, 24):
+            self.assertEqual(float(hr), ps[hr]['LST'])
+            self.assertEqual(0.0, ps[hr]['Total'])
+            for t in types:
+                self.assertEqual(0.0, ps[hr][t])
+
+        # now make our one proposal sponsored, and make sure it moves from Poor_A (allocated)
+        # to carryover 
+        self.proposal.sponsor = self.sponsor
+        self.proposal.save()
+        
+        lst = LstPressures(today = today, hideSponsors = True)
+
+        # test inner functions first
+        s = Session.objects.get(id = self.session.id)
+        self.assertTrue(lst.isSessionSponsored(s))
+
+        cat, subcat = lst.getSessionCategories(s)
+        self.assertEqual('carryover', cat)
+        self.assertEqual('sponsored', subcat)
+
+        time = lst.getSessionTime(s, cat, subcat)
+        self.assertEqual(21.0, time)
+
+        # finally the whole sheebang
+        ps = lst.getPressures()
+        p = 1.75
+        for hr in range(12):
+            self.assertAlmostEqual(p,   ps[hr]['Total'], 3)
+            self.assertAlmostEqual(p,   ps[hr]['Carryover'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['Poor_A'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['Requested'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['WVU'], 3)
+
+        # it shouldn't say *anything* about sponsors
+        #self.assertTrue(not ps[0].has_key('WVU'))
+
+        # now, recalculate, but not hiding sponsors in
+        # carryover.
+        lst = LstPressures(today = today, hideSponsors = False)
+        self.assertTrue(lst.isSessionSponsored(s))
+        cat, subcat = lst.getSessionCategories(s)
+        self.assertEqual('sponsored', cat)
+        self.assertEqual('WVU', subcat)
+        time = lst.getSessionTime(s, cat, subcat)
+        self.assertEqual(21.0, time)
+        ps = lst.getPressures()
+        # see how time got shifted from carryover to WVU:
+        for hr in range(12):
+            self.assertAlmostEqual(p,   ps[hr]['Total'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['Carryover'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['Poor_A'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['Requested'], 3)
+            self.assertAlmostEqual(p,   ps[hr]['WVU'], 3)
+            self.assertAlmostEqual(p,   ps[hr]['WVU_Poor'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['WVU_Good'], 3)
+            self.assertAlmostEqual(0.0, ps[hr]['WVU_Excellent'], 3)
 
     def test_getPressures(self):
 

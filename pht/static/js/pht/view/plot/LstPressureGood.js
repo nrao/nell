@@ -9,6 +9,7 @@ Ext.define('PHT.view.plot.LstPressureGood', {
                       'Good_A',
                       'Good_B',
                       'Good_C',
+                      'WVU_Good',
                       'Requested_Good',
         ];
 

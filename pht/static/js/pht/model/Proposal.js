@@ -9,6 +9,8 @@ Ext.define('PHT.model.Proposal', {
            , 'semester'
            , 'friend_name'
            , 'friend_id'
+           , 'sponsor_name'
+           , 'sponsor_id'
            , 'pi_name'
            , 'pi_id'
            , 'contact_name'

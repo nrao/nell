@@ -8,6 +8,7 @@ Ext.define('PHT.controller.Proposals', {
     models: [
         'Friend',
         'ObservingType',
+        'Partner',
         'PrimaryInvestigator',
         'Proposal',
         'ProposalType',
@@ -21,6 +22,7 @@ Ext.define('PHT.controller.Proposals', {
     stores: [
         'Friends',
         'ObservingTypes',
+        'Partners',
         'PrimaryInvestigators',
         'Proposals',
         'ProposalCodes',
@@ -30,7 +32,6 @@ Ext.define('PHT.controller.Proposals', {
         'Statuses',
         'Semesters',
         'Sessions',
-        'ProposalTree',
     ],
 
     views: [
@@ -288,6 +289,15 @@ Ext.define('PHT.controller.Proposals', {
         var f = form.getForm()
     },
 
+    sponsoredProposalsReport: function() {
+        var url = '/pht/reports/sponsoredproposals';
+        window.open(url);
+        win.close();
+    },
+
+    createProposal: function(button) {
+    },
+
     proposalSummaryForm: function() {
         var view = Ext.widget('proposalsummaryform');
     },
@@ -452,22 +462,31 @@ Ext.define('PHT.controller.Proposals', {
         }
     },
 
-    // overrid this simple function so that we can add the pi's name
-    // which is needed to see the explorer update.
+    // overrid this simple function so that we can update the explorer properly 
     setRecord: function(record, values) {
             // first, get the Primary Investigator record
             // that corresponds to the id we've got
             var store = this.getPrimaryInvestigatorsStore()
-            var pi_id = values['pi_id'];
-            var ind = store.find('id', pi_id);
-            if (ind > 0) {
-                var pi = store.getAt(ind);
-                // now extract their name and add it to our values
-                var pi_name = pi.get('name');
-                values['pi_name'] = pi_name;
-            }
+            values = this.setAssociatedValue(values, store, 'pi_id', 'pi_name', 'name');
+            // now, make sure that the Sponsor name gets updated properly
+            var store = this.getPartnersStore()
+            values = this.setAssociatedValue(values, store, 'sponsor_id', 'sponsor_name', 'abbreviation');
             record.set(values);
     },
+
+    // extract an object of given value 'from', find out what it's 'objField' value
+    // is, and set this to the value to 'to'.
+    setAssociatedValue: function(values, store, from, to, objField) {
+            var id = values[from];
+            // get the object from the store we need to get the value needed
+            var ind = store.find('id', id);
+            if (ind >= 0) {
+                var obj = store.getAt(ind);
+                var field = obj.get(objField);
+                values[to] = field;
+            }
+            return values;
+    }, 
 
     updateProposal: function(button) {
         this.updateRecord(button

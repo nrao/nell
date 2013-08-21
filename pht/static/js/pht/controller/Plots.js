@@ -3,10 +3,12 @@ Ext.define('PHT.controller.Plots', {
    
     models: [
         'LstPressure',
+        'ProposalTimeline',
     ],
 
     stores: [
         'LstPressures',
+        'ProposalTimelines',
         'ProposalCodes',
         'Sessions',
     ],
@@ -19,6 +21,8 @@ Ext.define('PHT.controller.Plots', {
         'plot.LstPressureGood',
         'plot.LstPressureExcellent',
         'plot.LstReportWindow',
+        'plot.TimelineWindow',
+        'plot.ProposalTimelinePlot',
     ],
 
     init: function() {
@@ -35,6 +39,9 @@ Ext.define('PHT.controller.Plots', {
             'lstreportwindow button[action=ok]': {
                 click: this.lstReport
             },           
+            'timelineplotwindow toolbar button[action=update]': {
+                click: this.updateTimelinePlot
+            },
         }); 
 
         this.callParent(arguments);
@@ -56,6 +63,7 @@ Ext.define('PHT.controller.Plots', {
         var debug = values['debug'];
         var carryover = values['carryoverType'];
         var adjust = values['adjustWeatherBins'];
+        var sponsors = values['showSponsors'];
         var url = 'reports/lst_pressures?debug=' + debug;
         if ((session != null) && (session != '')) {
             url = url + '&session=' + session
@@ -69,6 +77,7 @@ Ext.define('PHT.controller.Plots', {
             url = url + '&carryOverUseNextSemester=' + useNextSemester
         }
         url = url + '&adjustWeatherBins=' + adjust
+        url = url + '&showSponsors=' + sponsors
         window.open(url);
         win.hide();
     },
@@ -105,7 +114,7 @@ Ext.define('PHT.controller.Plots', {
         var win = button.up('window')
         var store = this.getStore('LstPressures');
         // be patient ...
-        var storeMask = new Ext.LoadMask(Ext.getBody()
+        var storeMask = new Ext.LoadMask(win
             , {msg:"Loading LST Pressures ...",
                store: store,
               });
@@ -125,9 +134,44 @@ Ext.define('PHT.controller.Plots', {
             filters.push({property: 'carryover', value: carryover})
         }    
         // adjust weather bins?
-        var adjustWeather = win.down('checkboxfield').value
+        
+        //var adjustWeather = win.down('checkboxfield').value
+        var adjustWeather = win.down('#adjustWeatherBins').value
         filters.push({property: 'adjust', value: adjustWeather})
+        // show sponsors?
+        //var sponsor = win.down('checkboxfield').value
+        var sponsor = win.down('#sponsors').value
+        filters.push({property: 'sponsor', value: sponsor})
 
+        if (filters.length == 0) {
+            store.load()
+        } else {
+            store.load({filters: filters})
+        }    
+    },
+
+    updateTimelinePlot: function(button) {
+        var win = button.up('window')
+        var store = this.getStore('ProposalTimelines');
+        // be patient ...
+        var storeMask = new Ext.LoadMask(win
+            , {msg:"Loading Timeline ...",
+               store: store,
+              });
+        // which sessions are we calculating pressures for?
+        var filters = []
+        var pcode = win.proposalCombo.value 
+        if ((pcode != null) & (pcode != "")) {
+            filters.push({property: 'pcode', value: pcode})
+        }    
+        var sponsor = win.sponsorCombo.value 
+        if ((sponsor != null) & (sponsor != "")) {
+            filters.push({property: 'sponsor', value: sponsor})
+        }    
+        var time = win.timeCombo.value 
+        if ((time != null) & (time != "")) {
+            filters.push({property: 'time', value: time})
+        }    
         if (filters.length == 0) {
             store.load()
         } else {

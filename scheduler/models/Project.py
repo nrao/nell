@@ -31,10 +31,12 @@ from Receiver_Schedule import Receiver_Schedule
 from Reservation       import Reservation
 from Semester          import Semester
 from User              import User
+from Sponsor           import Sponsor
 
 class Project(models.Model):
     semester         = models.ForeignKey(Semester)
     project_type     = models.ForeignKey(Project_Type)
+    sponsor          = models.ForeignKey(Sponsor, null = True,  on_delete = models.SET_NULL)
     allotments       = models.ManyToManyField(Allotment, through = "Project_Allotment")
     pcode            = models.CharField(max_length = 32, unique = True)
     name             = models.CharField(max_length = 150)
@@ -63,6 +65,12 @@ class Project(models.Model):
             super(Project, self).delete()
         else:
             raise Exception("Cannot delete projects with sessions.")
+
+    def sponsor_text(self):
+        return self.sponsor.abbreviation if self.sponsor is not None else ""
+
+    def is_sponsored(self):
+        return self.sponsor is not None and not self.sponsor.isNone()
 
     def is_science(self):
         return self.project_type.type == "science"

@@ -30,6 +30,7 @@ from SessionHttpAdapter  import SessionHttpAdapter
 from SourceHttpAdapter   import SourceHttpAdapter
 
 from scheduler.models import User as DSSUser
+from scheduler.models import Sponsor as DSSSponsor
 
 class ProposalHttpAdapter(PhtHttpAdapter):
 
@@ -231,6 +232,8 @@ class ProposalHttpAdapter(PhtHttpAdapter):
           a.id as pi_id,
           a.last_name || ', ' || a.first_name as pi_name,
           u.id as friend_id,
+          sp.id as sponsor_id,
+          sp.abbreviation as sponsor_name,
           u.last_name || ', ' || u.first_name as friend_name,
           p.pcode,
           p.create_date,
@@ -252,13 +255,14 @@ class ProposalHttpAdapter(PhtHttpAdapter):
           c.tac_to_pi,
           c.tac_to_tac
 
-        FROM (((((((
+        FROM ((((((((
           pht_proposals as p
           left outer join pht_proposal_types as pt on pt.id = p.proposal_type_id)
           left outer join pht_status as ps on ps.id = p.status_id)
           left outer join pht_semesters as s on s.id = p.semester_id)
           left outer join pht_authors as a on a.id = p.pi_id)
           left outer join users as u on u.id = p.friend_id)
+          left outer join sponsors as sp on sp.id = p.sponsor_id)
           left outer join projects as pj on pj.id = p.dss_project_id)
           left outer join pht_proposal_comments as c on c.id = p.comments_id)
 
@@ -277,6 +281,8 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         semester = self.proposal.semester.semester if self.proposal.semester is not None else None
         friend_id   = self.proposal.friend.id if self.proposal.friend is not None else None
         friend_name = self.proposal.friend.__str__() if self.proposal.friend is not None else None
+        sponsor_id   = self.proposal.sponsor.id if self.proposal.sponsor is not None else None
+        sponsor_name = self.proposal.sponsor.__str__() if self.proposal.sponsor is not None else None
         pi_id   = self.proposal.pi.id if self.proposal.pi is not None else None
         pi_name = self.proposal.pi.getLastFirstName() if self.proposal.pi is not None else None
         contact_id   = self.proposal.contact.id if self.proposal.contact is not None else None
@@ -297,6 +303,8 @@ class ProposalHttpAdapter(PhtHttpAdapter):
               , 'contact_name'     : contact_name
               , 'friend_id'        : friend_id 
               , 'friend_name'      : friend_name
+              , 'sponsor_id'       : sponsor_id 
+              , 'sponsor_name'     : sponsor_name
               , 'authors'          : authors
               , 'sci_categories'   : sci_categories
               , 'sci_cat_codes'    : sci_cat_codes
@@ -371,6 +379,11 @@ class ProposalHttpAdapter(PhtHttpAdapter):
             friend        = DSSUser.objects.get(id = friend_id) if friend_id is not None else None
         except:
             friend = None
+        try:    
+            sponsor_id     = data.get('sponsor_id')
+            sponsor        = DSSSponsor.objects.get(id = sponsor_id) if sponsor_id is not None else None
+        except:
+            sponsor = None
         proposalType  = ProposalType.objects.get(type = data.get('proposal_type'))
         status        = Status.objects.get(name = data.get('status'))
         semester      = Semester.objects.get(semester = data.get('semester'))
@@ -385,6 +398,7 @@ class ProposalHttpAdapter(PhtHttpAdapter):
         self.proposal.pi              = pi
         self.proposal.contact         = contact
         self.proposal.friend          = friend
+        self.proposal.sponsor         = sponsor
         self.proposal.status          = status
         self.proposal.semester        = semester
         self.proposal.pcode           = data.get('pcode')

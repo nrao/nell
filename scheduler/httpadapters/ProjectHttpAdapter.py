@@ -20,8 +20,9 @@
 #       P. O. Box 2
 #       Green Bank, WV 24944-0002 USA
 
-from nell.utilities             import TimeAccounting
-from scheduler.models        import Allotment, Project_Allotment, Project_Type, Semester, User
+from nell.utilities   import TimeAccounting
+from scheduler.models import Allotment, Project_Allotment, Project_Type
+from scheduler.models import Sponsor, Semester, User
 
 class ProjectHttpAdapter (object):
 
@@ -39,6 +40,8 @@ class ProjectHttpAdapter (object):
         p_type     = Project_Type.objects.get(type = fproj_type)
         fsemester  = fdata.get("semester", "09C")
         semester   = Semester.objects.get(semester = fsemester)
+        sponsorAbr = fdata.get("sponsor", None)
+        sponsor = Sponsor.objects.get(abbreviation = sponsorAbr) if sponsorAbr is not None else None
         try:
             f_lname, f_fname = fdata.get("friend", "").split(", ")
         except ValueError:
@@ -46,6 +49,7 @@ class ProjectHttpAdapter (object):
 
         self.project.semester         = semester
         self.project.project_type     = p_type
+        self.project.sponsor          = sponsor
         self.project.pcode            = fdata.get("pcode", "")
         self.project.name             = fdata.get("name", "")
         self.project.thesis           = fdata.get("thesis", "false") == "true"
@@ -104,6 +108,7 @@ class ProjectHttpAdapter (object):
         co_i = '; '.join([i.user.name() for i in self.project.investigator_set.all()
                         if not i.principal_investigator])
         friends =  "; ".join([f.user.name() for f in self.project.friend_set.all()])
+        sponsor = self.project.sponsor.abbreviation if self.project.sponsor is not None else ''
 
         return {"id"           : self.project.id
               , "semester"     : self.project.semester.semester
@@ -121,6 +126,7 @@ class ProjectHttpAdapter (object):
               , "pi"           : pi
               , "co_i"         : co_i
               , "friends"      : friends
+              , "sponsor"      : sponsor
               , "notes"        : self.project.notes if self.project.notes is not None else ""
               , "schd_notes"   : self.project.schedulers_notes \
                                  if self.project.schedulers_notes is not None else ""
