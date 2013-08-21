@@ -40,8 +40,8 @@ class ProjectHttpAdapter (object):
         p_type     = Project_Type.objects.get(type = fproj_type)
         fsemester  = fdata.get("semester", "09C")
         semester   = Semester.objects.get(semester = fsemester)
-        sponsorAbr = fdata.get("sponsor", "")
-        sponsor    = Sponsor.objects.get(abbreviation = sponsorAbr)
+        sponsorAbr = fdata.get("sponsor", None)
+        sponsor = Sponsor.objects.get(abbreviation = sponsorAbr) if sponsorAbr is not None else None
         try:
             f_lname, f_fname = fdata.get("friend", "").split(", ")
         except ValueError:
