@@ -289,6 +289,15 @@ Ext.define('PHT.controller.Proposals', {
         var f = form.getForm()
     },
 
+    sponsoredProposalsReport: function() {
+        var url = '/pht/reports/sponsoredproposals';
+        window.open(url);
+        win.close();
+    },
+
+    createProposal: function(button) {
+    },
+
     proposalSummaryForm: function() {
         var view = Ext.widget('proposalsummaryform');
     },

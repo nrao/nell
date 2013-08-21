@@ -53,6 +53,7 @@ Ext.define('PHT.view.plot.TimelineWindow', {
             hideLabel: false,
             fieldLabel: 'Sponsor',
             emptyText: 'Select a sponsor...',
+            value: 'WVU',
         });
 
         this.timeCombo = Ext.create('Ext.form.field.ComboBox', {

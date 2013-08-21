@@ -342,6 +342,10 @@ Ext.application({
                     },
                 },
                 {
+                text: 'Sponsored Proposals',
+                handler: this.getController('Proposals').sponsoredProposalsReport
+                },
+                {
                     xtype: 'menuseparator'
                 },
                 {

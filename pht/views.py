@@ -772,6 +772,18 @@ def semester_summary(request):
 
 @login_required
 @admin_only
+def sponsored_proposals(request):
+    # Create the HttpResponse object with the appropriate PDF headers.
+    response = HttpResponse(mimetype='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=SponsorReport.pdf'
+
+    sr = SponsoredReport(response)
+    sr.report()
+
+    return response
+
+@login_required
+@admin_only
 def friends(request):
         users = [u for u in User.objects.all().order_by('last_name')
                    if u.isFriend() and u.username != 'dss']

@@ -28,6 +28,7 @@ urlpatterns = patterns(''
    , url(r'^reports/proposalranking$',           proposal_ranking)
    , url(r'^reports/proposalranking/export$',    proposal_ranking_export)
    , url(r'^reports/semester_summary$',          semester_summary)
+   , url(r'^reports/sponsoredproposals$',        sponsored_proposals)
    , url(r'^reports/lst_pressures$',             lst_pressure_report)
    , url(r'^sources/export$',                    sources_export)
    , url(r'^sources/import$',                    sources_import)
