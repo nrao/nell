@@ -112,7 +112,7 @@ def printSummary(outfile, label, items):
                  , ("%.2f" % items[1]).center(8)
                  , ("%.2f" % items[2]).center(8)))
 
-def GenerateReport(label, months):
+def GenerateReport(label, months, year):
     assert len(months) == 3, "Are we still doing quarters?"
 
     outfile = open("./NSFReport.txt", 'w')
@@ -193,4 +193,4 @@ if __name__=='__main__':
     year   = fiscal_year if quarter != 1 else fiscal_year - 1
 
     GenerateReport('Q%dFY%d' % (quarter, fiscal_year)
-                 , [datetime(year, m, 1) for m in months])
+                 , [datetime(year, m, 1) for m in months], year)

@@ -46,8 +46,8 @@ class TestPSTMirrorDB(NellTestCase):
         postals = \
             ['NRAO, PO Box 2, Green Bank, West Virginia, 24944, USA, (Office)'
            , '49 columbus Ave., W. Bridgewater, Massachusetts, 02379, United States, (Other)']
-        affiliations = ['National Radio Astronomy Observatory '
-                      , 'Oregon, University of']
+        affiliations = [u'National Radio Astronomy Observatory'
+                      , u'Oregon, University of']
         self.assertEquals(emails, info['emails'])
         self.assertEquals(emailDescs, info['emailDescs'])
         self.assertEquals(phones, info['phones'])

@@ -611,7 +611,7 @@ Jan 01 01:00 | Jan 01 06:00 | 07:21 |  2.00 | O | S | Unknown   | X         | Tw
         year   = fiscal_year if quarter != 1 else fiscal_year - 1
    
         nsfReport('Q%dFY%d' % (quarter, fiscal_year)
-                     , [datetime(year, m, 1) for m in months])
+                     , [datetime(year, m, 1) for m in months], year)
 
 
         # can we handle 24 hour periods?

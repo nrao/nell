@@ -58,7 +58,7 @@ class TestUpdateEphemeris(NellTestCase):
         self.assertEquals(0, len(up.errors))
 
         # now let's observe a famouse asteroid
-        s.target.source = "Ceres"
+        s.target.source = "Europa"
         s.target.save()
         up.update()
         self.assertEquals(1, len(up.updates))

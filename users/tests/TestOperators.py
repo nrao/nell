@@ -117,7 +117,7 @@ class TestOperators(TestObserversBase):
                   , accounting = pa
                   )
         p.save()          
-        
+
         # get - sets up the form
         response = self.get('/schedule/summary')
         self.failUnlessEqual(response.status_code, 200)
@@ -157,6 +157,8 @@ class TestOperators(TestObserversBase):
         # make sure we can handle all projects 
         response = self.post('/schedule/summary'
                           , {'summary' : 'project'
+                          ,  'month'   : lastMonth.strftime("%B")
+                          ,  'year'    : lastMonth.year
                            , 'project' : None}
                             )
         self.failUnlessEqual(response.status_code, 200)        
