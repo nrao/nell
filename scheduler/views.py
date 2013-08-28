@@ -253,7 +253,7 @@ def get_options(request, *args, **kws):
             projects = Project.objects.filter(eval(filter)).order_by('pcode')
             if notcomplete != 'All':
                 projects = projects.filter(complete = not notcompleteFlt).order_by('pcode')
-            if sponsor != 'All':
+            if sponsor != 'All' and sponsor != '':
                 projects = projects.filter(sponsor__abbreviation = sponsor).order_by('pcode')
 
         else:
