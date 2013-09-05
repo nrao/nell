@@ -591,10 +591,13 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
     def isSessionSponsored(self, session):
         "Its tagged as such and not from the past."
+        return session.proposal.isSponsored()
 
-        return session.proposal.isSponsored() \
-            and (session.proposal.semester.semester == self.nextSemester.semester \
-              or session.proposal.semester.semester in self.futureSemesters)
+        # TBF: since the first round of sponsored proposals include proposals from
+        # previous semesters, we need to ignore this until next semester.
+        #return session.proposal.isSponsored() \
+        #    and (session.proposal.semester.semester == self.nextSemester.semester \
+        #      or session.proposal.semester.semester in self.futureSemesters)
 
     def isSessionForFutureSemester(self, session):
         """
