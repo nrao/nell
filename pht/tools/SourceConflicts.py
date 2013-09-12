@@ -32,7 +32,7 @@ import copy
 
 class SourceConflicts(object):
 
-    def __init__(self, semester = None, quiet = True):
+    def __init__(self, semester = None, quiet = True, now = None):
 
         #if semester is None:
         #    self.semester = '12B'
@@ -57,6 +57,11 @@ class SourceConflicts(object):
         self.badDistances = []
         self.targetProposals = []
         self.checkedProposals = []
+
+        self.now = now
+
+        # caches
+        self.includeProposals = {}
 
     def setSemester(self, semester):
         self.semester = semester
@@ -94,6 +99,7 @@ class SourceConflicts(object):
     def findConflicts(self, proposals = None, allProposals = None):
         "Main entry point: find all source conflicts"
 
+
         # which proposals to check?
         if proposals is None:
             if self.semester is not None:
@@ -110,8 +116,13 @@ class SourceConflicts(object):
         self.targetProposals = [p.pcode for p in proposals]
         self.checkedProposals = [p.pcode for p in allProposals]
 
+        if not self.quiet:
+            print "Searching %d proposals in %d other proposals." % (len(proposals), len(allProposals))
+
         # start checking
         for p in proposals:
+            if not self.quiet:    
+                print "Checking: %s, # srcs: %d" % (p.pcode, len(p.source_set.all()))
             self.findConflictsForProposal(p, allProposals)
 
     def findConflictsForProposal(self, proposal, allProposals):
@@ -160,9 +171,10 @@ class SourceConflicts(object):
         for trgSrc in trgSrcs:
             for srchSrc in srchSrcs:
                 conflict = False
+                passesInc =  self.passesInclusionCheck(searchedProp, now = self.now)
                 try:
                     d = self.getAngularDistance(trgSrc, srchSrc)
-                    if d <= searchRadius and self.passesInclusionCheck(searchedProp):
+                    if d <= searchRadius and passesInc: 
                         conflict = True
                         srcConflict = {'targetSrc' : trgSrc
                                      , 'searchedSrc' : srchSrc
@@ -204,39 +216,89 @@ class SourceConflicts(object):
         searchedRcvrs = Set(list(searchedProp.bands()))
         return len(list(targetRcvrs.intersection(searchedRcvrs))) > 0
 
-    def passesInclusionCheck(self, searchedProp):
+    def getMaxGrade(self, proposal):
         """
-        This method checks to see if the searched proposal pass an inclusion check.
-        Exclusion Rule: If the grade is B or C and the semester is prior to the current 
-                        semester (proposed semester - 1 year) and the proposal had no 
-                        observing time then ignore the proposal. 
-                        If no last observed date and grade A then include proposal. 
-                        If no last observed date and the grade is B or C and proposal 
-                        is in the current semester then include proposal.
+        The order of the grades (from maximum to minimum is)
+        A
+        B
+        C
+        H
+        Blank
+        N
+        N*
+        W 
         """
-        # Get the grade of the proposal
-        grades = sorted(searchedProp.grades())
-        if len(grades) >= 1:
-            grade = grades[0]
+        grades = sorted(list(set([s.grade.grade if s.grade is not None else '' \
+            for s in proposal.session_set.order_by('grade')])))
+        # this should return order of ['', 'A', 'B', 'C', 'H', 'N', 'N*', 'W']
+        # so, we need to get that '' in the right spot
+        if len(grades) == 0:
+            return None
+        elif len(grades) == 1:
+            return grades[0]
         else:
-            return False # If there's no grade, ignore proposal.
+            if '' not in grades:
+                # no blank grade to worry about
+                return grades[0]
+            else:
+                if 'A' in grades or 'B' in grades or 'C' in grades or 'H' in grades:
+                    # if it's one of the higher ones, pick it as the max
+                    return grades[1]
+                else:
+                    # all the other's are below it, so '' is the max
+                    return grades[0]
+
+
+    def passesInclusionCheck(self, searchedProp, now = None):
+        """
+        #1: If maximum grade is N, N* or W then ignore (never observed).
+        #2: If last observed date is more than 1 year ago (today - 1 year) then ignore
+        (proprietary period is over).
+        #3: If last observed date is blank and the grade is B or C and the project is
+        marked as complete then ignore (project never observed).
+        #4: If project passes above checks then there is a potential conflict - keep it.
+        """
+        
+        # use a cache!
+        pcode = searchedProp.pcode
+        if self.includeProposals.has_key(pcode):
+            return self.includeProposals[pcode]
+
+        if now is None:
+            now = datetime.now()
+        else:
+            now = self.now
+
+        # get grades, but DONT ignore non-graded sessions
+        maxGrade = self.getMaxGrade(searchedProp)
+        
+        # Rule #1
+        ignoreGrades = ['W', 'N', 'N*']
+        if maxGrade in ignoreGrades:
+            self.includeProposals[pcode] = False
+            return False
 
         periods = searchedProp.dss_project.get_observed_periods() if searchedProp.dss_project is not None else []
-        # Rule 1
-        if grade in ('B', 'C') and \
-           searchedProp.semester.semester < dss.Semester.getCurrentSemester().semester and \
-           len(periods) == 0:
-            if not self.quiet:
-                print searchedProp.pcode, 'is too old and shitty'
+
+        last_obs_date = None
+        if len(periods) > 0:
+            last_period = periods[len(periods)-1]
+            last_obs_date = last_period.start
+
+        # Rule #3
+        if last_obs_date is None and maxGrade in ['B', 'C'] and searchedProp.dss_project is not None and searchedProp.dss_project.complete:
+            self.includeProposals[pcode] = False
+            return False 
+
+        # Rule #2
+        a_year_ago = now - timedelta(days = 365)
+        if last_obs_date is not None and last_obs_date < a_year_ago:
+            self.includeProposals[pcode] = False
             return False
-        # Rule 2
-        elif len(periods) == 0 and grade == 'A':
-            return True
-        # Rule 3
-        elif len(periods) == 0 and grade in ('B', 'C') and \
-           searchedProp.semester.semester == dss.Semester.getCurrentSemester().semester:
-            return True
-        return True # We shouldn't get here, but if we do might as well include proposal.
+
+        # we passed the above tests!
+        self.includeProposals[pcode] = True
+        return True
 
     def withinProprietaryDate(self, searchedProp, now = datetime.now()):
         "Any observations within a year?"
@@ -341,9 +403,19 @@ class SourceConflicts(object):
 
         
 if __name__ == '__main__':
-    semester = '12B'
-    sc = SourceConflicts(semester = semester, quiet = False)
-    sc.findConflicts()
-    sc.report()
+    #semester = '12B'
+    #sc = SourceConflicts(semester = semester, quiet = False)
+    #sc.findConflicts()
+    #sc.report()
+
             
+    pc = 'GBT14A-093'
+    pc2 = 'GBT13B-213'
+    #from pht.models import *
+    #from pht.tools.SourceConflicts import SourceConflicts
+    sc = SourceConflicts()
+    sc.quiet = False
+    p1 = Proposal.objects.get(pcode = pc)
+    p2 = Proposal.objects.get(pcode = pc2)
+    sc.findConflictsForProposal(p1, [p2])
 

@@ -24,13 +24,14 @@ from django.test         import TestCase
 
 from datetime import datetime, date, timedelta
 
-from scheduler  import models as dss
-from pht.tools.database import DssExport
-from pht.models import *
-from pht.utilities import *
+from scheduler.tests.utils               import create_sesshun
+from scheduler                           import models as dss
+from pht.tools.database                  import DssExport
 from pht.httpadapters.SessionHttpAdapter import SessionHttpAdapter
-from pht.tools.SourceConflicts import SourceConflicts
-from pht.tests.utils import *
+from pht.tools.SourceConflicts           import SourceConflicts
+from pht.models                          import *
+from pht.utilities                       import *
+from pht.tests.utils                     import *
 
 class TestSourceConflicts(TestCase):
 
@@ -58,6 +59,12 @@ class TestSourceConflicts(TestCase):
         s.allotment.save()
         s.save()
         self.session = s
+
+        # Too lazy to update fixture
+        g = SessionGrade(grade = 'N')
+        g.save()
+        g = SessionGrade(grade = 'W')
+        g.save()
 
     # TBF: stick this in a utility somewhere        
     def createSession(self, p):
@@ -259,6 +266,7 @@ class TestSourceConflicts(TestCase):
                              , sc.conflicts[tpcode]['searchRadius']
                              , 6)
         self.assertEqual(0, len(sc.conflicts[tpcode]['conflicts']))                             
+        
         # now make a conflict
         src1.target_name = src0.target_name
         src1.ra = src0.ra 
@@ -296,3 +304,127 @@ class TestSourceConflicts(TestCase):
         self.assertEqual('GBT10A-009', cf['searchedProp'].pcode)
         self.assertEqual(0, cf['level'])
         self.assertAlmostEqual(0.0009417, cf['distance'], 5)
+
+    def test_passesInclusionCheck(self):
+        """
+Examples: (assume today is March 21, 2013)
+Grade A, last observed date January 1, 2012
+     ignore since more than one year ago
+
+Grade B, last observed date January 1, 2012
+     ignore since more than one year ago
+
+Grade C, last observed date January 1, 2012
+     ignore since more than one year ago
+
+Grade N
+      ignore since never approved
+
+Grade N*
+      ignore since never approved
+
+Grade W
+      ignore since never approved
+
+Grade A, last observed date June 1, 2012
+      conflict possible
+
+Grade B, last observed date June 1, 2012
+      conflict possible
+
+Grade C, last observed date June 1, 2012
+      conflict possible
+
+Grade A, last observed date is blank
+      conflict possible
+
+Grade B, last observed date is blank, project is open
+      conflict possible
+
+Grade C, last observed date is blank, project is open
+      conflict possible
+
+Grade B, last observed date is blank, project is complete/closed
+      ignore - never observed
+
+Grade C, last observed date is blank, project is complete/closed
+      ignore - never observed
+        """
+
+        now = datetime(2013, 3, 21)
+        sc = SourceConflicts(now = now)
+
+        # create a new proposal w/ sessions and sources
+        newP = createProposal() 
+        newS = self.createSession(newP)
+        newS.receivers.add(Receiver.objects.get(abbreviation = 'Q'))
+        newS.receivers.add(Receiver.objects.get(abbreviation = '800'))
+        newS.save()
+        src1 = self.createSrc(newP) 
+        src2 = self.createSrc(newP) 
+
+        for g in ['N', 'N*', 'W']:
+            newS.grade = SessionGrade.objects.get(grade = g)
+            newS.save()
+            self.assertEqual(False, sc.passesInclusionCheck(newP, now = now))
+
+        
+        # now see how it works for other grades; this depends on dss project:
+        project = dss.Project.objects.order_by('pcode').all()[0]
+        project.complete = False
+        project.save()
+        newP.dss_project = project
+        newP.save()
+        for g in ['A', 'B', 'C']:
+            newS.grade = SessionGrade.objects.get(grade = g)
+            newS.save()
+            # clear the cache
+            sc.includeProposals = {}
+            self.assertEqual(True, sc.passesInclusionCheck(newP, now = now))
+
+        project.complete = True
+        project.save()
+        for g in ['B', 'C']:
+            newS.grade = SessionGrade.objects.get(grade = g)
+            newS.save()
+            # clear the cache
+            sc.includeProposals = {}
+            self.assertEqual(False, sc.passesInclusionCheck(newP, now = now))
+        
+        # now some tests using the last observed date.
+        s = create_sesshun()
+        s.project = newP.dss_project
+        s.save()
+        start = now - timedelta(days = 365 + 10) # more then a year ago
+        dur = 1
+        pa = dss.Period_Accounting(scheduled = dur)
+        pa.save()
+        state = dss.Period_State.objects.get(abbreviation = 'S')
+        p = dss.Period(session = s
+                  , start      = start
+                  , duration   = dur
+                  , state      = state
+                  , accounting = pa
+                  )
+        p.save()        
+
+        for g in ['A', 'B', 'C']:
+            newS.grade = SessionGrade.objects.get(grade = g)
+            newS.save()
+            # clear the cache
+            sc.includeProposals = {}
+            self.assertEqual(False, sc.passesInclusionCheck(newP, now = now))
+
+        start = now - timedelta(days = 365 - 10) # less then a year ago
+        p.start = start
+        p.save()
+
+        for g in ['A', 'B', 'C']:
+            newS.grade = SessionGrade.objects.get(grade = g)
+            newS.save()
+            # clear the cache
+            sc.includeProposals = {}
+            self.assertEqual(True, sc.passesInclusionCheck(newP, now = now))
+            
+
+
