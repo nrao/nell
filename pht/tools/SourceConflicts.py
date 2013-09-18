@@ -248,6 +248,32 @@ class SourceConflicts(object):
                     # all the other's are below it, so '' is the max
                     return grades[0]
 
+    def getLastObsDate(self, prop):
+        "Returns (date that this proposal/project last observed, list of obs. periods)"
+
+        none = (None, [])
+        if prop is None:
+            return none
+
+        if prop.dss_project is None:
+            return none
+
+        ps = prop.dss_project.get_observed_periods()
+        lps = len(ps)
+ 
+        if lps == 0:
+            return none
+        elif lps == 1:
+            return (ps[0].start, ps)
+        else:
+            # don't trust the sort order!!!
+            # the last observed date is either the first, or last!
+            dt1 = ps[0].start
+            dt2 = ps[lps-1].start
+            if dt1 > dt2:
+                return (dt1, ps)
+            else:
+                return (dt2, ps)
 
     def passesInclusionCheck(self, searchedProp, now = None):
         """
@@ -278,12 +304,7 @@ class SourceConflicts(object):
             self.includeProposals[pcode] = False
             return False
 
-        periods = searchedProp.dss_project.get_observed_periods() if searchedProp.dss_project is not None else []
-
-        last_obs_date = None
-        if len(periods) > 0:
-            last_period = periods[len(periods)-1]
-            last_obs_date = last_period.start
+        last_obs_date, _ = self.getLastObsDate(searchedProp)
 
         # Rule #3
         if last_obs_date is None and maxGrade in ['B', 'C'] and searchedProp.dss_project is not None and searchedProp.dss_project.complete:
@@ -304,9 +325,8 @@ class SourceConflicts(object):
         "Any observations within a year?"
         lastObsDate = None
         if searchedProp.dss_project is not None:
+            lastObsDate, periods = self.getLastObsDate(searchedProp)
             refTime = now - timedelta(days = 365)
-            periods = searchedProp.dss_project.get_observed_periods()
-            lastObsDate = periods[0].start if len(periods) > 0 else None
             periods     = [p for p in periods if p.start > refTime]
         else: 
             # No dss_project, no periods
