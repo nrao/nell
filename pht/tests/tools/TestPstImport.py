@@ -59,7 +59,7 @@ class TestPstImport(TestCase):
         self.assertEquals("GBT12A-002 - 1", s.name)
         self.assertTrue(len(proposal.source_set.all()) > 0)
         src = proposal.source_set.all()[0]
-        self.assertAlmostEquals(4.79908, src.ra, 2)
+        self.assertAlmostEquals(4.79908, src.ra, 1)
         self.assertAlmostEquals(4.7932, s.target.ra, 4)
         self.assertAlmostEquals(-0.2146, s.target.dec, 4)
         self.assertTrue(len(s.sources.all()) > 0)
@@ -132,10 +132,11 @@ class TestPstImport(TestCase):
             , 'Open - Low Freq'
             , 'Windowed'
             ]
-        expObsTypes = [ 'continuum'
-                      , 'pulsar'
-                      , 'spectral line'
-                      , 'vlbi']
+        expObsTypes = [ u'continuum'
+                      , u'pulsar'
+                      , u'radar'
+                      , u'spectral line'
+                      , u'vlbi']
 
         self.checkProposals(ps, expSessTypes, expObsTypes)
 

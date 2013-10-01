@@ -260,9 +260,7 @@ def import_semester(request, *args, **kws):
         srp      = request.POST.get('srp', 'false') == 'true'
         if semester is not None:
             if srp:
-                proposals = Proposal.objects.filter(semester__semester = semester).exclude(pst_proposal_id = 0).exclude(pst_proposal_id = None)
-                map(pst.fetchSRPScore, proposals)
-                map(pst.fetchSRPCommentsForProposal, proposals)
+                pst.importSRPRelatedInfo(semester)
             else:
                 pst.importProposals(semester)
 

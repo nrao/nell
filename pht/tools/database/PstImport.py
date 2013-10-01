@@ -270,7 +270,13 @@ class PstImport(PstInterface):
         # if we got here, no GBT!
         return False
 
-    def fetchSRPCommentsForProposal(self, proposal):
+    def importSRPRelatedInfo(self, semester):
+        "Import SRP related info for already imported proposals"
+        proposals = Proposal.objects.filter(semester__semester = semester).exclude(pst_proposal_id = 0).exclude(pst_proposal_id = None)
+        map(self.fetchSRPScore, proposals)
+        map(self.fetchSRPRelatedCommentsForProposal, proposals)
+
+    def fetchSRPRelatedCommentsForProposal(self, proposal):
         """
         Used for getting SRP comments from PST for a proposal
         already in the GB PHT.
@@ -289,6 +295,11 @@ class PstImport(PstInterface):
         if srps is not None:
             proposal.comments.srp_to_pi  = srps[0]
             proposal.comments.srp_to_tac = srps[1]
+            proposal.comments.save()
+        tech = self.fetchTechnicalReviews(proposal.pst_proposal_id)
+        if tech is not None:
+            proposal.comments.tech_review_to_pi  = tech[0]
+            proposal.comments.tech_review_to_tac = tech[1]
             proposal.comments.save()
 
     def fetchComments(self, proposal, propQueryResults = None):
