@@ -8,6 +8,17 @@ die () {
     exit 1
 }
 
+prompt()
+{
+while true; do
+    read -p "Have you checked the latest DB Health Report?  Look for periods outside their windows!  Continue?" yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
+}
 initCode()
 {
     echo "Updating Nell code tree."
@@ -85,6 +96,7 @@ echo "                                  - S. L. Clemens"
 echo ""
 echo "Actual results may vary."
 echo ""
+prompt
 initCode
 initDB
 runReports $1 "initialLookaheadSchedule" 
