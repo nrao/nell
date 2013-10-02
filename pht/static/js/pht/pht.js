@@ -274,12 +274,6 @@ Ext.application({
                             window.open('/pht/reports/jointproposalsummary?semester=' + semester);
                         }
                     });
-                    proposalRankingMenu.add({
-                        text: semester,
-                        handler: function() {
-                            window.open('/pht/reports/proposalranking?semester=' + semester);
-                        }
-                    });
                     semesterSummaryMenu.add({
                         text: semester,
                         handler: function() {
@@ -328,7 +322,7 @@ Ext.application({
                 },
                 {
                     text: 'Proposal Ranking',
-                    menu: proposalRankingMenu
+                    handler: this.getController('Proposals').proposalRankingForm
                 },
                 {
                     text: 'Semester Summary',

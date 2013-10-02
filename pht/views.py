@@ -731,12 +731,17 @@ def sources_export(request):
 @admin_only
 def proposal_ranking(request):
     semester = request.GET.get('semester')
+    hideSponsors = request.GET.get('hideSponsors')
     # Create the HttpResponse object with the appropriate PDF headers.
     response = HttpResponse(mimetype='application/pdf')
     response['Content-Disposition'] = 'attachment; filename=proposalRanking.pdf'
 
     ps = ProposalRanking(response)
-    ps.report(semester = semester)
+    hideSponsors = hideSponsors == 'true'
+    if not hideSponsors:
+        ps.report(semester = semester)
+    else:
+        ps.reportWithoutSponsors(semester = semester)
 
     return response
 

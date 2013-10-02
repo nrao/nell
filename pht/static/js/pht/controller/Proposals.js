@@ -46,6 +46,7 @@ Ext.define('PHT.controller.Proposals', {
         'proposal.TacTool',
         'proposal.Allocate',
         'proposal.ProposalSummaryForm',
+        'proposal.ProposalRankingForm',
         'proposal.ProposalWorksheetForm',
     ],
 
@@ -97,6 +98,9 @@ Ext.define('PHT.controller.Proposals', {
             },            
             'proposalsummaryform button[action=submit]': {
                 click: this.proposalSummary
+            },            
+            'proposalrankingform button[action=submit]': {
+                click: this.proposalRanking
             },            
             'proposalworksheetform button[action=submit]': {
                 click: this.proposalWorksheet
@@ -302,6 +306,10 @@ Ext.define('PHT.controller.Proposals', {
         var view = Ext.widget('proposalsummaryform');
     },
 
+    proposalRankingForm: function() {
+        var view = Ext.widget('proposalrankingform');
+    },
+
     proposalWorksheetForm: function() {
         var view = Ext.widget('proposalworksheetform');
     },
@@ -409,6 +417,18 @@ Ext.define('PHT.controller.Proposals', {
     proposalSummary: function(button) {
         var url = '/pht/reports/proposalsummary';
         this.semesterSomethingSubmit(button, url);
+    },
+
+    proposalRanking: function(button) {
+        var baseurl = '/pht/reports/proposalranking';
+        //this.semesterSomethingSubmit(button, url);
+        var win    = button.up('window'),
+            form   = win.down('form'),
+            values = form.getValues();
+        var url = baseurl + '?semester=' + values.semester
+                  + '&hideSponsors=' + values.hideSponsors;
+        window.open(url);
+        win.close();
     },
 
     proposalWorksheet: function(button) {
