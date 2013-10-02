@@ -156,3 +156,32 @@ class ProposalRanking(ProposalReport):
         self.proposalsDraft = sorted(proposals, key = lambda p: p.draft_normalizedSRPScore)
         return sorted(proposals, key = lambda p: p.normalizedSRPScore)
 
+    def proposalIsNotSponsored(self, proposal):
+        "For filtering out sponsored proposals."
+        return not proposal.isSponsored()
+
+    def reportWithoutSponsors(self, semester = None):
+        filter = self.proposalIsNotSponsored
+        self.report(semester = semester, filter = filter)
+
+if __name__ == '__main__':
+    import sys
+    import argparse
+    parser = argparse.ArgumentParser(description='Command line tool for running GB PHT Linear Ranking reports.  Specify at least a semester.')
+    parser.add_argument('-s','--semester', dest="semester", help='Semester of the proposals.')
+    parser.add_argument('-x', '--exclude_sponsors', help='Exclude sponsored proposals from this report', action='store_true')
+
+    args = parser.parse_args()
+
+    if args.semester is None:
+        print "Semester is a required option :)"
+        sys.exit(0)
+    else:
+        semester = args.semester
+
+    fn = 'proposalRanking.pdf'
+    pr = ProposalRanking(filename = fn)
+    filter = pr.proposalIsNotSponsored if args.exclude_sponsors else None
+    pr.report(semester = semester, filter = filter)
+
+
