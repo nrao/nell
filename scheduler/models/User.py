@@ -137,7 +137,7 @@ class User(models.Model):
     def loadStaticContactInfo(self):
         self.staticContactInfo = UserInfo().getProfileByID(self)
 
-    def getReservations(self): 
+    def getReservations(self, since = datetime.now(), till = None): 
         """
         Use the PST to get the one of the User's types of IDs.  Then
         use that ID to get the reservations from the BOS.
@@ -145,7 +145,7 @@ class User(models.Model):
         if self.pst_id is None:
             return []
         bosId = UserInfo().getUserAuthenticationIdFromId(self.pst_id)
-        return BOSMirrorDB().getReservationsByUserAuthId(bosId)
+        return BOSMirrorDB().getReservationsByUserAuthId(bosId, since = since, till = till)
 
     def getPeriods(self):
         retval = []

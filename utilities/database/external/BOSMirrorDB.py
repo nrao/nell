@@ -103,7 +103,7 @@ class BOSMirrorDB:
         "datetime to string for mysql query"
         return dt.strftime("%Y%m%d")
 
-    def getReservationsByUserAuthId(self, userAuthId, since = None):
+    def getReservationsByUserAuthId(self, userAuthId, since = None, till = None):
         """
         Uses BOS DB mirror to return list of reservations for
         user represented by it's PST user authentication ID,
@@ -115,14 +115,16 @@ class BOSMirrorDB:
             return []
 
         since = since if since is not None else datetime.now()    
+        till = till if till is not None else since + timedelta(days = 365*50) # 50 years from since
+
         try:
             sinceStr = self.dt2mysql(since)
-            till     = since + timedelta(days = 365)
+            #till     = since + timedelta(days = 365*50)
             tillStr  = self.dt2mysql(till)
         except:
             since = datetime.now()
-            till  = since + timedelta(days = 365)
-            sinceStr = self.dt2mysql(datetime.now())
+            till  = since + timedelta(days = 365*50)
+            sinceStr = self.dt2mysql(since)
             tillStr  = self.dt2mysql(till)
 
         # NOTE: remember that cas_user.global_id is a misnomer; see above
