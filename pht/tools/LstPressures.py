@@ -1148,11 +1148,16 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
 
         # for Brian Truitt:
         print "Remaining Hours (poor, good, excellent) by LST (0-23)"
-        #for r in self.remainingTotalPs:
         for hr in range(self.hrs):
             print "%.2f,%.2f,%.2f" % (self.remainingPs.poor[hr]
                                     , self.remainingPs.good[hr]
                                     , self.remainingPs.excellent[hr])
+
+        print "Carryover Hours (poor, good, excellent) by LST (0-23)"
+        for hr in range(self.hrs):
+            print "%.2f,%.2f,%.2f" % (self.carryoverPs.poor[hr]
+                                    , self.carryoverPs.good[hr]
+                                    , self.carryoverPs.excellent[hr])
 
         # for Toney
         print ""
@@ -1672,19 +1677,20 @@ if __name__ == '__main__':
                      , adjustWeatherBins = adjustWeatherBins
     #                 , today = datetime(2012, 3, 1)
                       )
-    s = Session.objects.get(id = 9758)                  
-    ps = lst.getPressures(sessions = [s])
+    #s = Session.objects.get(id = 9758)                  
+    #ps = lst.getPressures(sessions = [s])
     #ss = Session.objects.all().exclude(semester__semester = '13A')
     #ss = Session.objects.filter(proposal__pcode = 'GBT12B-385')
     #s = Session.objects.get(name = 'BB303-01')
     #ss = [s]
     #ps = lst.getPressures(ss)
-    #ps = lst.getPressures()
-    #lst.reportSocorroFormat('13B')
+    ps = lst.getPressures()
+    #lst.reportSocorroFormat('14A')
     #lst.reportSocorroWeatherFormat('12B')
     lst.report()
     #lst.reportSemesterSummary()
     #lst.compareNewAstronomyPressures()
+    #lst.compareNewAstronomyPressuresAll()
 
 
     #exp = []
