@@ -76,7 +76,7 @@ class Project(models.Model):
         return self.project_type.type == "science"
 
     def is_shutdown(self):
-        return self.name == 'Shutdown'
+        return self.name == 'Shutdown' or self.name == 'Government Shutdown'
 
     def is_maintenance(self):
         return any(s.observing_type.type == 'maintenance' \
