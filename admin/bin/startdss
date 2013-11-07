@@ -5,7 +5,7 @@ start ()
    source /home/dss/conundrum/conundrum.bash
    nginx
    cd /home/dss/release/antioch
-   ./serve </dev/null >~/antioch.out 2>&1 &
+   nohup ./serve +RTS -H500M &
    cd admin
    python forecasts/daemonCleoDBImport.py </dev/null >~/dss_weather.out 2>&1 &
    cd /home/dss/release/nell
