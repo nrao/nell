@@ -51,7 +51,7 @@ class TestUpdateEphemeris(NellTestCase):
         self.assertEquals(0, len(up.errors))
 
         # now let's observe a famouse comet
-        s.target.source = "C/1995 O1 (Hale-Bopp)"
+        s.target.source = "129P/Shoemaker-Levy"
         s.target.save()
         up.update()
         self.assertEquals(1, len(up.updates))

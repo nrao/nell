@@ -108,6 +108,7 @@ class TestOperators(TestObserversBase):
         # setup a period for a month before
         lastMonth = self.start - timedelta(days = 31)
         lastMonthEst = TimeAgent.utc2est(lastMonth)
+        thisMonthEst = TimeAgent.utc2est(self.start)
         pa = Period_Accounting(scheduled = self.dur)
         pa.save()
         p = Period( session = self.s
@@ -118,10 +119,10 @@ class TestOperators(TestObserversBase):
                   )
         p.save()          
 
-        # get - sets up the form
+        # get - sets up the form: defaults to CURRENT month
         response = self.get('/schedule/summary')
         self.failUnlessEqual(response.status_code, 200)
-        startStr = datetime.strftime(lastMonthEst, "%H:%M")
+        startStr = datetime.strftime(thisMonthEst, "%H:%M")
         self.assertTrue(startStr in response.content)
         self.assertTrue("mikes awesome project" in response.content)
 
