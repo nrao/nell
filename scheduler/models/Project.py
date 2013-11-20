@@ -120,7 +120,18 @@ class Project(models.Model):
         return category
 
     def get_category_code(self):
-        return self.get_category()[0]
+        """
+        This one letter code must match the codes used in the schedule pages,
+        which derive from users/GBTCalendarEvent's project_type()
+        """
+        cat = self.get_category()
+        if cat == "Shutdown":
+            code = 'D'
+        elif cat == "Commissioning":
+            code = 'K'
+        else:
+            code = cat[0]
+        return code    
 
     def get_allotments_display(self):
         return self.allotments.all()

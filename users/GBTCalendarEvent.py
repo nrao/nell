@@ -287,6 +287,7 @@ class CalEventPeriod(CalEvent):
 
     # returns the project/observing type.  The types: 'A', 'C', 'K',
     # 'T', for astronomy, commissioning, calibration, and test
+    # TBF: shouldn't this code be using Project.get_category_code?
     def project_type(self):
         project = self.contained.session.project
 

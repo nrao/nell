@@ -23,6 +23,7 @@
 from nell_utilities               import *
 from TestAstridDB                 import TestAstridDB
 from TestBOSMirrorDB              import TestBOSMirrorDB
+from TestCurrentObsXML            import TestCurrentObsXML
 from TestDBReporter               import TestDBReporter
 from TestDSSPrime2DSS             import TestDSSPrime2DSS
 from TestElecAlertNotifier        import TestElecAlertNotifier

@@ -35,6 +35,7 @@ from nell.utilities.TimeAgent       import EST, UTC, adjustDateTimeTz
 from reversion                      import revision
 from utilities                      import *
 from forms                          import BlackoutForm, PreferencesForm
+from tools                          import CurrentObsXML
 
 import pytz
 import simplejson as json
@@ -148,6 +149,16 @@ def adjustBlackoutTZ(tz, blackout):
           , 'until'       : blackout.getUntilTZ(tz)
           , 'description' : blackout.getDescription()
            }
+
+def current_obs_xml(request, *args, **kws):
+
+    co = CurrentObsXML.CurrentObsXML()
+    result, xmlStr = co.getXMLString()
+    xmlStr = xmlStr if result else "Error"
+    print xmlStr
+    return HttpResponse(
+            xmlStr
+          , mimetype = "text/xml")
 
 @revision.create_on_success
 @login_required

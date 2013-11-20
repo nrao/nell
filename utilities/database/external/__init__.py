@@ -22,5 +22,6 @@
 
 from AstridDB             import AstridDB
 from BOSMirrorDB          import BOSMirrorDB
+from GbtStatusDB          import GbtStatusDB
 from PSTMirrorDB          import PSTMirrorDB
 from UserInfo             import UserInfo
