@@ -36,8 +36,8 @@ class TestCurrentObsXML(NellTestCase):
        p.abstract = 'my abstract'
        p.save()
 
-       info = co.getCurrentObsInfo(p)
-       exp = {'source_name': 'srcname'
+       info = co.getCurrentObsInfo(project = p, useGbtStatus = False)
+       exp = {'source_name': 'unknown'
             , 'proposal_title': u'my title'
             , 'proposal_abstract': 'my abstract'
             , 'PI_institution': 'unknown'

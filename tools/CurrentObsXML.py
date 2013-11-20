@@ -84,7 +84,7 @@ class CurrentObsXML:
         # and validate
         return xmlschema.validate(doc)
 
-    def getCurrentObsInfo(self, project = None, now = None):
+    def getCurrentObsInfo(self, project = None, now = None, useGbtStatus = True):
         "Returns the desired info in a dict."
 
         # get the current project observing
@@ -116,7 +116,10 @@ class CurrentObsXML:
 
 
         # get the rest of other places (gbtstatus)
-        srcName, major, minor, epoch = self.statusDB.getSourceInfo()
+        if useGbtStatus:
+            srcName, major, minor, epoch = self.statusDB.getSourceInfo()
+        else:
+            srcName, major, minor, epoch = ('unknown', '0.0 (RA)', '0.0 (DEC)', 'J2000')
         ra = dec = "unknown"
         if epoch == 'J2000':
             # get rid of the (Ra/Dec) part
