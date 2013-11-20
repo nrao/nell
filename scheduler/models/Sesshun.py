@@ -102,7 +102,7 @@ class Sesshun(models.Model):
         return self.observing_type.type not in ("commissioning", "testing", "calibration", "maintenance")
 
     def isShutdown(self):
-        return self.project.name == 'Shutdown'
+        return self.project.name == 'Shutdown' or self.project.name == 'Government Shutdown'
 
     def isMaintenance(self):
         return self.observing_type.type == 'maintenance'

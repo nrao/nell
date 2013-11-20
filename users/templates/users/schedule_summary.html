@@ -24,6 +24,7 @@
     .type_commissioning {background-color:#F0E68C}
     .type_calibration {background-color:#FF9933}
     .type_maintenance {background-color:#98FB98}
+    .type_shutdown {background-color:#508416}
     td {white-space: nowrap}
     th {white-space: nowrap}
   </style>
@@ -99,7 +100,7 @@
     <tr class="day_header"> 
       <th>{{day|date:"F d"}}</th>
       <th title="Start and End times for the start day (timezone). '+' indicates that the period continues on in an undisplayed date.">{{day|date:"l"}}</th>
-      <th title="Project Type: 'A' : Astronomy, 'K' : Calibration, 'C' : Commissioning, 'M' : 'Maintenance', 'T' : Test">Type</th>
+      <th title="Project Type: 'A' : Astronomy, 'K' : Calibration, 'C' : Commissioning, 'M' : 'Maintenance', 'D' : Shutdown, 'T' : Test">Type</th>
       <th>Project</th>
       <th>Friend</th>
       <th title="Receivers (Names and frequency ranges in GHz) = (RRI) Rcvr_RRI:  0.10 -  1.60, (342) Rcvr_342:  0.29 -  0.40, (450) Rcvr_450:  0.39 -  0.52, (600) Rcvr_600:  0.51 -  0.69, (800) Rcvr_800:  0.68 -  0.92, (1070) Rcvr_1070:  0.91 -  1.23, (L) Rcvr1_2:  1.15 -  1.73, (S) Rcvr2_3:  1.73 -  2.60, (C) Rcvr4_6:  3.95 -  6.10, (X) Rcvr8_10:  8.00 - 10.00, (Hol) Holography: 11.70 - 12.20, (Ku) Rcvr12_18: 12.00 - 15.40, (KFPA) RcvrArray18_26: 17.00 - 27.50, (K) Rcvr18_26: 18.00 - 26.50, (Ka) Rcvr26_40: 26.00 - 39.50, (Q) Rcvr40_52: 38.20 - 49.80, (MBA) Rcvr_PAR: 80.00 - 100.00">Rcvrs</th>
@@ -122,13 +123,15 @@
       {% if event.non_science %}
         {% if event.is_maintenance %}
           <td class="project_type type_maintenance" >{{event.project_type}}</td>
+        {% else %} {% if event.is_shutdown %}
+          <td class="project_type type_shutdown" >{{event.project_type}}</td>
         {% else %} {% if event.is_calibration %}
           <td class="project_type type_calibration" >{{event.project_type}}</td>
         {% else %} {% if event.is_comissioning %}
           <td class="project_type type_commissioning" >{{event.project_type}}</td>
         {% else %}
           <td class="project_type type_test" >{{event.project_type}}</td>
-        {% endif %}{% endif %}{% endif %}
+        {% endif %}{% endif %}{% endif %}{% endif %}
       {% else %}
           <td class="project_type type_astronomy">{{event.project_type}}</td>
       {% endif %}
