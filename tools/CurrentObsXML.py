@@ -49,7 +49,7 @@ class CurrentObsXML:
         info = self.getCurrentObsInfo()
         xmlDoc = self.getXMLDoc(info)
         # validate
-        print etree.tostring(xmlDoc)
+        #print etree.tostring(xmlDoc)
         if not self.validate(xmlDoc):
            return (False, None)
 
@@ -84,30 +84,51 @@ class CurrentObsXML:
         # and validate
         return xmlschema.validate(doc)
 
-    def getCurrentObsInfo(self, project = None, now = None, useGbtStatus = True):
+    def getMostRecentScienceProject(self, now = None):
+        "We want the most recent science, not maintenance, testing, etc."
+
+        if now is None:
+            now = datetime.utcnow()
+
+        # get all periods that have started in the past (the first of these is the current period)
+        ps = Period.objects.filter(start__lt = now, state__abbreviation = 'S').order_by('-start')
+
+        # go through these until you find a 'science' period
+        sciencePeriod = None
+        for p in ps:
+            if p.session.project.is_science():
+                sciencePeriod = p
+                break
+
+        return sciencePeriod.session.project if sciencePeriod is not None else None        
+
+    def getCurrentObsInfo(self, project = None, start = None, useGbtStatus = True):
         "Returns the desired info in a dict."
+
+        # Init the info we need to get
+        pcode = title = abstract = pi = piInst = piName = "unknown"
+        srcName = ra = dec = "unknown"
 
         # get the current project observing
         if project is None:
-            # get the project that's observing now
-            if now is None:
-                now = datetime.now()
-            # first cast a wide net
-            ps = Period.objects.filter(start__lt = now + timedelta(days=1), start__gt = now - timedelta(days=1), state__name = 'Scheduled').order_by('start')
-            # now get the one you want
-            ps = [p for p in ps if p.start < now and p.end() > now] 
-            # TBF: check?
-            p = ps[0]
-            project = p.session.project
+            project = self.getMostRecentScienceProject(now = start)
+            if project is None:
+                # bail!
+                return dict(proposal_code=pcode
+                  , proposal_title=title
+                  , proposal_abstract=abstract
+                  , PI_name=piName
+                  , PI_institution=piInst
+                  , source_name=srcName
+                  , source_ra=ra
+                  , source_dec=dec
+                   )
 
-           
         # get all you can from DSS DB
         pcode = project.pcode
         title = project.name
         abstract = project.abstract
         pi = project.principal_investigator()
-        piInst = "unknown"
-        piName = "unknown"
         if pi is not None:
             piName = pi.display_name() 
             uInfo = pi.getStaticContactInfo()
@@ -120,7 +141,6 @@ class CurrentObsXML:
             srcName, major, minor, epoch = self.statusDB.getSourceInfo()
         else:
             srcName, major, minor, epoch = ('unknown', '0.0 (RA)', '0.0 (DEC)', 'J2000')
-        ra = dec = "unknown"
         if epoch == 'J2000':
             # get rid of the (Ra/Dec) part
             ra  = major.split(' ')[0]
