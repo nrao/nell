@@ -26,6 +26,7 @@ from scheduler.views     import *
 from scheduler.resources import *
 
 urlpatterns = patterns(''
+   , url(r'^currentobs$',                                  current_obs_xml) 
    , url(r'^configurations/explorer/columnConfigs$',       column_configurations_explorer)
    , url(r'^configurations/explorer/columnConfigs/(\d+)$', column_configurations_explorer)
    , url(r'^configurations/explorer/filterCombos$',        filter_combinations_explorer)
