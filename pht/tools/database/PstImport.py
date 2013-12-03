@@ -270,6 +270,32 @@ class PstImport(PstInterface):
         # if we got here, no GBT!
         return False
 
+    def importDispositions(self, semester):
+        "Import Dispositions fro already imported proposals"
+
+        # we only get dispostions for those proposals that:
+        #   * came out of the PST
+        #   * have been transferred to the DSS
+        proposals = Proposal.objects.filter(semester__semester = semester).exclude(pst_proposal_id = 0).exclude(pst_proposal_id = None).exclude(dss_project = None).order_by('pcode')
+        map(self.fetchDisposition, proposals)
+
+    def fetchDisposition(self, proposal):
+        "Grab the dispostion letter and associate it to the DSS Project"
+
+        # nothing to get? or nowhere to put it?
+        if proposal.pst_proposal_id is None \
+            or proposal.dss_project is None:
+            return 
+
+        query = "select disposition_letter from proposal where proposal_id = %s" \
+            % proposal.pst_proposal_id
+
+        self.cursor.execute(query)
+        row    = self.cursor.fetchone()
+        disposition = row[0]
+        proposal.dss_project.disposition = disposition 
+        proposal.dss_project.save()
+
     def importSRPRelatedInfo(self, semester):
         "Import SRP related info for already imported proposals"
         proposals = Proposal.objects.filter(semester__semester = semester).exclude(pst_proposal_id = 0).exclude(pst_proposal_id = None)

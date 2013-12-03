@@ -255,12 +255,15 @@ def import_pst_proposals(request, *args, **kws):
 @admin_only
 def import_semester(request, *args, **kws):
     if request.method == 'POST':
-        pst      = PstImport()
-        semester = request.POST.get('semester')
-        srp      = request.POST.get('srp', 'false') == 'true'
+        pst         = PstImport()
+        semester    = request.POST.get('semester')
+        srp         = request.POST.get('srp', 'false') == 'true'
+        disposition = request.POST.get('disposition', 'false') == 'true'
         if semester is not None:
             if srp:
                 pst.importSRPRelatedInfo(semester)
+            elif disposition:
+                pst.importDispositions(semester) 
             else:
                 pst.importProposals(semester)
 
