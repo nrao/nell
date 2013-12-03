@@ -49,7 +49,6 @@ def current_obs_xml(request, *args, **kws):
     co = CurrentObsXML.CurrentObsXML()
     result, xmlStr = co.getXMLString()
     xmlStr = xmlStr if result else "Error"
-    print xmlStr
     return HttpResponse(
             xmlStr
           , mimetype = "text/xml")

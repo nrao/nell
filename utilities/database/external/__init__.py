@@ -21,6 +21,7 @@
 #       Green Bank, WV 24944-0002 USA
 
 from AstridDB             import AstridDB
+from ArchiveDB            import ArchiveDB
 from BOSMirrorDB          import BOSMirrorDB
 from GbtStatusDB          import GbtStatusDB
 from PSTMirrorDB          import PSTMirrorDB

@@ -27,7 +27,8 @@ setup_environ(settings)
 from lxml                        import etree
 from StringIO                    import StringIO
 from datetime                    import datetime, timedelta
-from utilities.database.external import GbtStatusDB
+from utilities.database.external import ArchiveDB
+from utilities.database.external import AstridDB
 from scheduler.models            import *
 
 class CurrentObsXML:
@@ -42,7 +43,8 @@ class CurrentObsXML:
 
         self.schema = schema if schema is not None else self.getDefaultSchema()
 
-        self.statusDB = GbtStatusDB()
+        self.archiveDB = ArchiveDB()
+        self.astridDB  = AstridDB(dbname = "turtle")
 
     def getXMLString(self):
         "Returns (status, XMLString) of current observations"
@@ -102,12 +104,12 @@ class CurrentObsXML:
 
         return sciencePeriod.session.project if sciencePeriod is not None else None        
 
-    def getCurrentObsInfo(self, project = None, start = None, useGbtStatus = True):
+    def getCurrentObsInfo(self, project = None, start = None, useArchive = True):
         "Returns the desired info in a dict."
 
         # Init the info we need to get
-        pcode = title = abstract = pi = piInst = piName = "unknown"
-        srcName = ra = dec = "unknown"
+        pcode = title = abstract = pi = piInst = piName = srcName = "unknown"
+        ra = dec = '0.0'
 
         # get the current project observing
         if project is None:
@@ -136,15 +138,14 @@ class CurrentObsXML:
                 piInst = uInfo['affiliations'][0]
 
 
-        # get the rest of other places (gbtstatus)
-        if useGbtStatus:
-            srcName, major, minor, epoch = self.statusDB.getSourceInfo()
-        else:
-            srcName, major, minor, epoch = ('unknown', '0.0 (RA)', '0.0 (DEC)', 'J2000')
-        if epoch == 'J2000':
-            # get rid of the (Ra/Dec) part
-            ra  = major.split(' ')[0]
-            dec = minor.split(' ')[0]
+        # get the rest 
+        if useArchive:
+            # dont' try anything if you can't find the correct astrid code
+            projectCode = self.astridDB.dssCode2astridCode(project.pcode)
+            if self.astridDB.astridCodeExists(projectCode):
+                srcName, ra, dec = self.archiveDB.getSourceInfo(projectCode)
+                ra = str(ra)
+                dec = str(dec)
 
         return dict(proposal_code=pcode
                   , proposal_title=title
