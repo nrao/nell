@@ -44,6 +44,7 @@ urlpatterns = patterns(''
    , url(r'^schedule/$',                                   gbt_schedule)
    , url(r'^schedule/public/([^/]+)$',                     public_schedule)
    , url(r'^schedule/public',                              public_schedule)
+   , url(r'^schedule/currentobs$',                         current_obs_xml) #   
    , url(r'^schedule/summary$',                            summary)
    , url(r'^search$',                                      search)
    , url(r'^receivers$',          rcvr_schedule)
