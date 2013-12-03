@@ -26,15 +26,16 @@ from django.http                        import HttpResponse, HttpResponseRedirec
 from django.contrib.auth.models         import User as AuthUser
 from django.contrib.auth.decorators     import login_required
 from django.db.models                   import Q
-from django.shortcuts               import render_to_response
+from django.shortcuts                   import render_to_response
 from scheduler.httpadapters             import PeriodHttpAdapter
 from scheduler.utilities                import ScheduleTools
+from tools                              import CurrentObsXML
 from models                             import *
 from utilities                          import *
 from scheduler.models                   import User as NellUser
 from nell.tools                         import IcalMap
 from nell.utilities                     import TimeAccounting, TimeAgent
-from users.utilities                 import get_requestor
+from users.utilities                    import get_requestor
 from nell.utilities.notifiers           import SchedulingNotifier, Notifier, Email as EmailMessage
 from nell.utilities.FormatExceptionInfo import formatExceptionInfo, printException, JSONExceptionInfo
 from reversion                          import revision
@@ -42,6 +43,16 @@ from settings                           import DATABASES, DEBUG
 
 import simplejson as json
 import twitter
+
+def current_obs_xml(request, *args, **kws):
+
+    co = CurrentObsXML.CurrentObsXML()
+    result, xmlStr = co.getXMLString()
+    xmlStr = xmlStr if result else "Error"
+    print xmlStr
+    return HttpResponse(
+            xmlStr
+          , mimetype = "text/xml")
 
 @login_required
 def load_nubbles(request):
