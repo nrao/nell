@@ -21,6 +21,7 @@
 #       Green Bank, WV 24944-0002 USA
 
 from lxml             import etree
+from StringIO         import StringIO
 from test_utils       import NellTestCase
 from tools            import CurrentObsXML
 from scheduler.models import Project
@@ -45,6 +46,7 @@ class TestCurrentObsXML(NellTestCase):
             , 'PI_name': 'unknown'
             , 'proposal_code': u'09A-001' # GBT09A-001
             , 'source_ra': '0.0'
+            , 'telescope': 'GBT'
              }
        self.assertEqual(exp, info)     
 
@@ -59,11 +61,12 @@ class TestCurrentObsXML(NellTestCase):
             , 'PI_name': 'unknown'
             , 'proposal_code': u'09A-001'
             , 'source_ra': '0.0'
+            , 'telescope': 'GBT'
              }
 
        doc = co.getXMLDoc(info)
-       docStr = etree.tostring(doc)
-       exp = '<currently_observing telescope="GBT"><proposal_code>09A-001</proposal_code><proposal_title>my title</proposal_title><proposal_abstract>my abstract</proposal_abstract><PI_name>unknown</PI_name><PI_institution>unknown</PI_institution><source_name>srcname</source_name><source_ra>0.0</source_ra><source_dec>0.0</source_dec></currently_observing>'
+       docStr = co.xmlDoc2str(doc) #co.prepareXmlNamespace(etree.tostring(doc))
+       exp = '<nrao:currently_observing xmlns:nrao="http://www.nrao.edu/namespaces/nrao"><nrao:telescope>GBT</nrao:telescope><nrao:proposal_code>09A-001</nrao:proposal_code><nrao:proposal_title>my title</nrao:proposal_title><nrao:proposal_abstract>my abstract</nrao:proposal_abstract><nrao:PI_name>unknown</nrao:PI_name><nrao:PI_institution>unknown</nrao:PI_institution><nrao:source_name>srcname</nrao:source_name><nrao:source_ra>0.0</nrao:source_ra><nrao:source_dec>0.0</nrao:source_dec></nrao:currently_observing>'
        self.assertEqual(exp, docStr)
 
        self.assertTrue(co.validate(doc))
@@ -86,3 +89,27 @@ class TestCurrentObsXML(NellTestCase):
  
         p = "GBT13B-001"
         self.assertEquals('13B-001', co.createProjectCode(p))
+
+    def test_validate(self):
+
+        # make sure that our class can validate example XML given by 
+        # Stephan with schema given by Stephan
+        xmlStr = """<?xml version="1.0" encoding="UTF-8"?>
+<nrao:currently_observing xmlns:nrao="http://www.nrao.edu/namespaces/nrao">
+ <nrao:telescope>VLA</nrao:telescope>
+ <nrao:proposal_code>13B-001</nrao:proposal_code> 
+ <nrao:proposal_title>This is my fancy title.</nrao:proposal_title>
+ <nrao:proposal_abstract>This is my fancy abstract.</nrao:proposal_abstract>
+ <nrao:PI_name>Stephan Witz</nrao:PI_name>
+ <nrao:PI_institution>NRAO</nrao:PI_institution>
+ <nrao:source_name>TEST</nrao:source_name>
+ <nrao:source_ra>0.0000</nrao:source_ra>
+ <nrao:source_dec>0.0000</nrao:source_dec>
+</nrao:currently_observing>"""
+
+        xmlStrIo = StringIO(xmlStr)
+        doc = etree.parse(xmlStrIo)
+
+        co = CurrentObsXML.CurrentObsXML()
+        
+        self.assertTrue(co.validate(doc))
