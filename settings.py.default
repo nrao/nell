@@ -78,10 +78,32 @@ DATABASES = {
     }
 }
 
+
+# PST Database connection
+PST = {
+        'HOST'     : "trent.gb.nrao.edu" #"wirth.aoc.nrao.edu" #"trent.gb.nrao.edu"
+      , 'USER'     : ""
+      , 'PASSWORD' : ""
+      , 'NAME'     : ""
+}
+
 ASTRIDDB = {'HOST' : config.get('astrid', 'DatabaseHost')
           , 'NAME' : config.get('astrid', 'Turtle_Database')
           , 'USER' : config.get('astrid', 'Turtle_Database_User')
           , 'PASSWORD' : config.get('astrid', 'Turtle_Database_Passwd')
+            }
+
+
+ARCHIVEDB = {'HOST' : config.get('archive', 'DatabaseHost')
+          , 'NAME' : config.get('archive', 'Database')
+          , 'USER' : config.get('archive', 'Database_User')
+          , 'PASSWORD' : config.get('archive', 'Database_Passwd')
+            }
+
+GBTSTATUSDB = {'HOST' : config.get('gbtstatus', 'DatabaseHost')
+          , 'NAME' : config.get('gbtstatus', 'Database')
+          , 'USER' : config.get('gbtstatus', 'Database_User')
+          , 'PASSWORD' : config.get('gbtstatus', 'Database_Passwd')
             }
 
 BENCHMARK_DB_NAME = None      # Set to 'benchmark' for nightly unit tests
