@@ -133,6 +133,14 @@ class Project(models.Model):
             code = cat[0]
         return code    
 
+    def get_pst_proposal_id(self):
+        "If this Project has at least one related Proposal, did it come from the PST?"
+        pst_id = None
+        if len(self.proposal_set.all()) > 0:
+            p = self.proposal_set.all()[0]
+            pst_id = p.pst_proposal_id
+        return pst_id
+
     def get_allotments_display(self):
         return self.allotments.all()
 
