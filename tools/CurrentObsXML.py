@@ -27,6 +27,7 @@ setup_environ(settings)
 from lxml                        import etree
 from StringIO                    import StringIO
 from datetime                    import datetime, timedelta
+from utilities.TimeAgent         import *
 from utilities.database.external import ArchiveDB
 from utilities.database.external import AstridDB
 from scheduler.models            import *
@@ -46,6 +47,9 @@ class CurrentObsXML:
         self.archiveDB = ArchiveDB()
         self.astridDB  = AstridDB(dbname = "turtle")
 
+        self.uri = "http://www.nrao.edu/namespaces/nrao"
+        self.nsprefix = 'nrao'
+
     def getXMLString(self):
         "Returns (status, XMLString) of current observations"
         info = self.getCurrentObsInfo()
@@ -55,17 +59,20 @@ class CurrentObsXML:
         if not self.validate(xmlDoc):
            return (False, None)
 
-        return (True, etree.tostring(xmlDoc))
+        return (True, self.xmlDoc2str(xmlDoc))
            
 
     def getXMLDoc(self, info):
         "Returns xml tree based off dict of current obs. info"
-        root = etree.Element("currently_observing", telescope="GBT")
+        # KLUGE: lxml doesn't put the namespace prefixes in, so we have to do 
+        # this by hand; but 'nrao:' is invalid, so sticking in 'nrao-' now
+        # then replacing '-' with ':'
+        nsmap = {self.nsprefix : self.uri}
+        root = etree.Element("%s-currently_observing" % self.nsprefix, nsmap=nsmap) #, telescope="GBT")
         # shucks, order might matter
-        keys = ["proposal_code", "proposal_title", "proposal_abstract", "PI_name", "PI_institution", "source_name", "source_ra", "source_dec"]
-        #for key, value in info.items():
+        keys = ["telescope", "proposal_code", "proposal_title", "proposal_abstract", "PI_name", "PI_institution", "source_name", "source_ra", "source_dec"]
         for key in keys:
-            subel = etree.Element(key)
+            subel = etree.Element("%s-%s" % (self.nsprefix, key))
             subel.text = info[key]
             root.append(subel)
         return root
@@ -80,17 +87,28 @@ class CurrentObsXML:
 
         # prepare the xmlDoc
         xmlStr = etree.tostring(xmlDoc)
+        xmlStr = self.prepareXmlNamespace(xmlStr)
         xmlStrIo = StringIO(xmlStr)
         doc = etree.parse(xmlStrIo)
 
         # and validate
         return xmlschema.validate(doc)
 
+    def xmlDoc2str(self, xmlDoc):
+        return self.prepareXmlNamespace(etree.tostring(xmlDoc))
+
+    def prepareXmlNamespace(self, xmlStr):
+        "KLUGE: get the namepsace prefixes in there!"
+        # by replacing the appropriate - with :
+        xmlStr = xmlStr.replace("<nrao-", "<nrao:")
+        xmlStr = xmlStr.replace("</nrao-", "</nrao:")
+        return xmlStr
+
     def getMostRecentScienceProject(self, now = None):
         "We want the most recent science, not maintenance, testing, etc."
 
         if now is None:
-            now = datetime.utcnow()
+            now = datetime.datetime.utcnow()
 
         # get all periods that have started in the past (the first of these is the current period)
         ps = Period.objects.filter(start__lt = now, state__abbreviation = 'S').order_by('-start')
@@ -98,7 +116,7 @@ class CurrentObsXML:
         # go through these until you find a 'science' period
         sciencePeriod = None
         for p in ps:
-            if p.session.project.is_science():
+            if p.session.project.is_science(): # TBF: And has PST proposal
                 sciencePeriod = p
                 break
 
@@ -110,6 +128,7 @@ class CurrentObsXML:
         # Init the info we need to get
         pcode = title = abstract = pi = piInst = piName = srcName = "unknown"
         ra = dec = '0.0'
+        gbt = 'GBT'
 
         # get the current project observing
         if project is None:
@@ -124,10 +143,11 @@ class CurrentObsXML:
                   , source_name=srcName
                   , source_ra=ra
                   , source_dec=dec
+                  , telescope = gbt
                    )
 
         # get all you can from DSS DB
-        pcode = project.pcode
+        pcode = self.createProjectCode(project.pcode)
         title = project.name
         abstract = project.abstract
         pi = project.principal_investigator()
@@ -144,8 +164,8 @@ class CurrentObsXML:
             projectCode = self.astridDB.dssCode2astridCode(project.pcode)
             if self.astridDB.astridCodeExists(projectCode):
                 srcName, ra, dec = self.archiveDB.getSourceInfo(projectCode)
-                ra = str(ra)
-                dec = str(dec)
+                ra = str(deg2rad(ra))
+                dec = str(deg2rad(dec))
 
         return dict(proposal_code=pcode
                   , proposal_title=title
@@ -155,40 +175,77 @@ class CurrentObsXML:
                   , source_name=srcName
                   , source_ra=ra
                   , source_dec=dec
+                  , telescope = gbt
                    )
+
+    def createProjectCode(self, pcode):
+        "Ex: GBT13B-001 -> 13B-001"
+
+        # we need to convert project codes of the format:
+        # <telescope><semester>-nnn
+        #   where:
+        #     <telescope> is something like GBT or VLBA
+        #     <semester> is something like 12B, etc.
+        #     nnn - is 001 through 999
+
+        dash = pcode.find('-')
+        if dash == -1:
+            # this project code is not of the format '<tele><sem>-nnn'
+            return pcode
+        
+        # check the semester
+        sem = pcode[dash-3:dash]
+        try:
+            _ = int(sem[:2])
+        except:
+            return pcode
+        if sem[2] not in ['A', 'B', 'C']:
+            return pcode
+
+        # check the number nnn
+        try:
+            _ = int(pcode[dash+1:])
+        except:
+            return pcode
+
+        # okay, I think we can safely convert this project code now
+        return pcode[dash-3:]
 
     def getDefaultSchema(self):
         sch = """<?xml version="1.0" encoding="UTF-8"?>
-        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-        
-         <xs:element name="currently_observing">
-          <xs:complexType>
-           <xs:sequence>
-           <xs:element name="proposal_code" type="xs:string"/>
-           <xs:element name="proposal_title" type="xs:string" minOccurs="0"/>
-           <xs:element name="proposal_abstract" type="xs:string" minOccurs="0"/>
-           <xs:element name="PI_name" type="xs:string" minOccurs="0"/>
-           <xs:element name="PI_institution" type="xs:string" minOccurs="0"/>
-           <xs:element name="source_name" type="xs:string" minOccurs="0"/>
-           <xs:element name="source_ra" type="xs:double"/>
-           <xs:element name="source_dec" type="xs:double"/>
-           </xs:sequence>
-           <xs:attribute name="telescope" type="xs:string"/>
-          </xs:complexType>
-         </xs:element>
-        
-         <xs:simpleType name="telescopes">
-          <xs:restriction base="xs:string">
-           <xs:enumeration value="ALMA"/>
-           <xs:enumeration value="VLA"/>
-           <xs:enumeration value="VLBA"/>
-           <xs:enumeration value="GBT"/>
-           <xs:enumeration value="other"/>
-          </xs:restriction>
-         </xs:simpleType>
-        
-        </xs:schema>        
-        """
+<xs:schema
+  version         = "1.0"
+  xmlns:xs        = "http://www.w3.org/2001/XMLSchema"
+  targetNamespace = "http://www.nrao.edu/namespaces/nrao"
+  xmlns:nrao      = "http://www.nrao.edu/namespaces/nrao"
+  elementFormDefault = "qualified">
+
+ <xs:simpleType name="telescopeType">
+  <xs:restriction base="xs:string">
+   <xs:enumeration value="ALMA"/>
+   <xs:enumeration value="VLA"/>
+   <xs:enumeration value="VLBA"/>
+   <xs:enumeration value="GBT"/>
+   <xs:enumeration value="other"/>
+  </xs:restriction>
+ </xs:simpleType>
+
+ <xs:element name="currently_observing">
+  <xs:complexType>
+   <xs:sequence>
+    <xs:element name="telescope" type="nrao:telescopeType"/>
+    <xs:element name="proposal_code" type="xs:string"/>
+    <xs:element name="proposal_title" type="xs:string" minOccurs="0"/>
+    <xs:element name="proposal_abstract" type="xs:string" minOccurs="0"/>
+    <xs:element name="PI_name" type="xs:string" minOccurs="0"/>
+    <xs:element name="PI_institution" type="xs:string" minOccurs="0"/>
+    <xs:element name="source_name" type="xs:string" minOccurs="0"/>
+    <xs:element name="source_ra" type="xs:double"/>
+    <xs:element name="source_dec" type="xs:double"/>
+   </xs:sequence>
+  </xs:complexType>
+ </xs:element>
+</xs:schema>"""
         return sch
 
 if __name__ == '__main__':
