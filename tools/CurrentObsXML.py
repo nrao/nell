@@ -27,6 +27,7 @@ setup_environ(settings)
 from lxml                        import etree
 from StringIO                    import StringIO
 from datetime                    import datetime, timedelta
+from utilities.TimeAgent         import *
 from utilities.database.external import ArchiveDB
 from utilities.database.external import AstridDB
 from scheduler.models            import *
@@ -98,7 +99,7 @@ class CurrentObsXML:
         # go through these until you find a 'science' period
         sciencePeriod = None
         for p in ps:
-            if p.session.project.is_science():
+            if p.session.project.is_science(): # TBF: And has PST proposal
                 sciencePeriod = p
                 break
 
@@ -127,7 +128,7 @@ class CurrentObsXML:
                    )
 
         # get all you can from DSS DB
-        pcode = project.pcode
+        pcode = self.createProjectCode(project.pcode)
         title = project.name
         abstract = project.abstract
         pi = project.principal_investigator()
@@ -144,8 +145,8 @@ class CurrentObsXML:
             projectCode = self.astridDB.dssCode2astridCode(project.pcode)
             if self.astridDB.astridCodeExists(projectCode):
                 srcName, ra, dec = self.archiveDB.getSourceInfo(projectCode)
-                ra = str(ra)
-                dec = str(dec)
+                ra = str(deg2rad(ra))
+                dec = str(deg2rad(dec))
 
         return dict(proposal_code=pcode
                   , proposal_title=title
@@ -156,6 +157,39 @@ class CurrentObsXML:
                   , source_ra=ra
                   , source_dec=dec
                    )
+
+    def createProjectCode(self, pcode):
+        "Ex: GBT13B-001 -> 13B-001"
+
+        # we need to convert project codes of the format:
+        # <telescope><semester>-nnn
+        #   where:
+        #     <telescope> is something like GBT or VLBA
+        #     <semester> is something like 12B, etc.
+        #     nnn - is 001 through 999
+
+        dash = pcode.find('-')
+        if dash == -1:
+            # this project code is not of the format '<tele><sem>-nnn'
+            return pcode
+        
+        # check the semester
+        sem = pcode[dash-3:dash]
+        try:
+            _ = int(sem[:2])
+        except:
+            return pcode
+        if sem[2] not in ['A', 'B', 'C']:
+            return pcode
+
+        # check the number nnn
+        try:
+            _ = int(pcode[dash+1:])
+        except:
+            return pcode
+
+        # okay, I think we can safely convert this project code now
+        return pcode[dash-3:]
 
     def getDefaultSchema(self):
         sch = """<?xml version="1.0" encoding="UTF-8"?>

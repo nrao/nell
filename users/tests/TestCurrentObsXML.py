@@ -43,7 +43,7 @@ class TestCurrentObsXML(NellTestCase):
             , 'PI_institution': 'unknown'
             , 'source_dec': '0.0'
             , 'PI_name': 'unknown'
-            , 'proposal_code': u'GBT09A-001'
+            , 'proposal_code': u'09A-001' # GBT09A-001
             , 'source_ra': '0.0'
              }
        self.assertEqual(exp, info)     
@@ -57,13 +57,32 @@ class TestCurrentObsXML(NellTestCase):
             , 'PI_institution': 'unknown'
             , 'source_dec': '0.0'
             , 'PI_name': 'unknown'
-            , 'proposal_code': u'GBT09A-001'
+            , 'proposal_code': u'09A-001'
             , 'source_ra': '0.0'
              }
 
        doc = co.getXMLDoc(info)
        docStr = etree.tostring(doc)
-       exp = '<currently_observing telescope="GBT"><proposal_code>GBT09A-001</proposal_code><proposal_title>my title</proposal_title><proposal_abstract>my abstract</proposal_abstract><PI_name>unknown</PI_name><PI_institution>unknown</PI_institution><source_name>srcname</source_name><source_ra>0.0</source_ra><source_dec>0.0</source_dec></currently_observing>'
+       exp = '<currently_observing telescope="GBT"><proposal_code>09A-001</proposal_code><proposal_title>my title</proposal_title><proposal_abstract>my abstract</proposal_abstract><PI_name>unknown</PI_name><PI_institution>unknown</PI_institution><source_name>srcname</source_name><source_ra>0.0</source_ra><source_dec>0.0</source_dec></currently_observing>'
        self.assertEqual(exp, docStr)
 
        self.assertTrue(co.validate(doc))
+
+    def test_createProjectCode(self):
+
+        co = CurrentObsXML.CurrentObsXML()
+
+        p = "dog"
+        self.assertEquals(p, co.createProjectCode(p))
+ 
+        p = "GBTXXB-001"
+        self.assertEquals(p, co.createProjectCode(p))
+ 
+        p = "GBT13D-001"
+        self.assertEquals(p, co.createProjectCode(p))
+ 
+        p = "GBT13B-00X"
+        self.assertEquals(p, co.createProjectCode(p))
+ 
+        p = "GBT13B-001"
+        self.assertEquals('13B-001', co.createProjectCode(p))
