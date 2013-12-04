@@ -7,7 +7,7 @@ Ext.define('PHT.view.proposal.Import', {
     autoShow: true,
     plain: true,
     width: 400,
-    height: 200,
+    height: 300,
     //constrain: true,
 
     initComponent: function() {
@@ -66,6 +66,16 @@ Ext.define('PHT.view.proposal.Import', {
                     fieldLabel: 'SRP scores & comments only',
                     name: 'srp',
                     id: 'srp',
+                    uncheckedValue: 'false',
+                    inputValue: 'true',
+                    value: 'true',
+                    labelStyle: '',
+                 },
+                 {
+                    xtype: 'checkbox',
+                    fieldLabel: 'Dispositions only',
+                    name: 'disposition',
+                    id: 'disposition',
                     uncheckedValue: 'false',
                     inputValue: 'true',
                     value: 'true',

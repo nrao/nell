@@ -316,7 +316,7 @@ Ext.define('PHT.controller.Proposals', {
 
     refresh: function() {
         this.getProposalsStore().load();
-        this.getProposalTreeStore().load();
+        //this.getProposalTreeStore().load();
         this.getProposalCodesStore().load();
         this.getSessionsStore().load();
         this.notifyObservers({notification: 'newImport'});
@@ -346,8 +346,9 @@ Ext.define('PHT.controller.Proposals', {
             Ext.Ajax.request({
                 url: '/pht/import/semester',
                 params: {
-                    semester: values.semester,
-                    srp:      values.srp,
+                    semester:    values.semester,
+                    srp:         values.srp,
+                    disposition: values.disposition,
                 },
                 method: 'POST',
                 timeout: 300000,
