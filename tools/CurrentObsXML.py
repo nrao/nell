@@ -116,12 +116,22 @@ class CurrentObsXML:
         # go through these until you find a 'science' period
         sciencePeriod = None
         for p in ps:
-            if p.session.project.is_science(): # TBF: And has PST proposal
+            if self.isScienceObserving(p):
                 sciencePeriod = p
                 break
 
         return sciencePeriod.session.project if sciencePeriod is not None else None        
 
+    def isScienceObserving(self, period):
+        "Is this period for science and other factors?"
+        p = period.session.project
+        # make sure:
+        #  * its science and not things like testing, maintenance, etc.
+        #  * it has an entry in the PST: note that this works since all older projects
+        #    that might not have an associated PHT proposal (that in turn gives the
+        #    link to the PST) are completed, and shouldn't come up here.
+        return p.is_science() and p.get_pst_proposal_id() is not None 
+        
     def getCurrentObsInfo(self, project = None, start = None, useArchive = True):
         "Returns the desired info in a dict."
 
