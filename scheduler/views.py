@@ -352,6 +352,12 @@ def get_options(request, *args, **kws):
         return HttpResponse(
             json.dumps({'semesters': ["%s" % s.semester for s in semesters]}) 
           , mimetype = "text/plain")
+    elif mode == "receivers":
+        # return all the receiver names
+        rx = Receiver.objects.all().order_by("freq_low")
+        return HttpResponse(
+            json.dumps({'receivers': ["%s" % r.abbreviation for r in rx]}) 
+          , mimetype = "text/plain")
 
     else:
         return HttpResponse("")
