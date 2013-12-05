@@ -1,3 +1,20 @@
+  {% if messages %}
+  <h1>Messages</h1>
+  <hr/>
+  <ul>
+    {% for m in messages %}
+    <li>
+      {% ifequal m.type 'Error' %}
+      <span style="color: red; text-decoration: blink">{{m.type}}</span> - 
+      {% else %}
+      <span>{{m.type}}</span> - 
+      {% endifequal %}
+      <span>{{m.msg}}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  <hr/>
+  {% endif %}  
   <h1>Results</h1>
   <hr/>
   {% if e %}
@@ -33,23 +50,7 @@
     <tr> <td>{{e.k2.label}}:</td><td>{{e.k2.value}} {{e.k2.units}}</td></tr>
   </table>
   <hr/>
-  {% if messages %}
-  <h1>Messages</h1>
-  <hr/>
-  <ul>
-    {% for m in messages %}
-    <li>
-      {% ifequal m.type 'Error' %}
-      <span style="color: red; text-decoration: blink">{{m.type}}</span> - 
-      {% else %}
-      <span>{{m.type}}</span> - 
-      {% endifequal %}
-      <span>{{m.msg}}</span>
-    </li>
-    {% endfor %}
-  </ul>
-  <hr/>
-  {% endif %}
+
   {% if leftovers %}
   <h1>Other Results</h1>
   <hr/>
