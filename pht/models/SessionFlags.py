@@ -37,6 +37,16 @@ class SessionFlags(models.Model):
     transit_flat  = models.BooleanField(default = False)
     guaranteed    = models.BooleanField(default = False)
     
+    def __str__(self):
+
+        return "Thermal: %s, Optical: %s, RFI: %s, Transit: %s, Guaranteed: %s" % \
+            (self.thermal_night
+           , self.optical_night
+           , self.rfi_night
+           , self.transit_flat
+           , self.guaranteed
+            )
+
     class Meta:
         db_table  = "pht_session_flags"
         app_label = "pht"

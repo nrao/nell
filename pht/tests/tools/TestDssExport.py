@@ -99,6 +99,31 @@ class TestDssExport(TestCase):
                            , i.user.last_name == 'Marganian' 
                             )
 
+    def test_exportFlags(self):
+
+        export   = DssExport()
+
+        s = self.proposal.session_set.all()[0]
+
+        # set all the flags, and see how the transfer
+        s.flags.thermal_night = True
+        s.flags.optical_night = True
+        s.flags.rfi_night = True
+        s.flags.transit_flat = True
+        s.flags.guaranteed = True
+        s.flags.save()
+
+        project  = export.exportProposal(self.proposal.pcode)
+
+        s = project.sesshun_set.all()[0]
+
+        #self.assertTrue(s.guaranteed()) # TBF
+        self.assertTrue(s.transit())
+        # these two are mutually exclusive:
+        self.assertEqual(False, s.RfiNight())
+        self.assertTrue(s.PtcsNight())
+        # TBF: what about optical ?
+
     def test_exportProposal2(self):
 
 

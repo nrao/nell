@@ -25,8 +25,9 @@ from django.core.management import setup_environ
 import settings
 setup_environ(settings)
 
-from pht.models       import *
-from scheduler        import models as dss
+from pht.models                                import *
+from scheduler                                 import models as dss
+from scheduler.httpadapters.SessionHttpAdapter import SessionHttpAdapter
 
 class DssExport(object):
     "Exports a PHT proposal to a DSS project."
@@ -166,6 +167,9 @@ class DssExport(object):
           , min_duration   = min_dur
         )
 
+        # getting the flags over is non-trivial
+        self.exportSessionFlags(pht_session, dss_session)
+
         # Associate the new DSS session with its PHT session
         pht_session.dss_session = dss_session
         pht_session.save()
@@ -219,6 +223,40 @@ class DssExport(object):
                   , start_date = window_start
                   , duration   = pht_session.monitoring.window_size
                 )
+
+    def exportSessionFlags(self, pht_session, dss_session):
+        "In PHT, flags are booleans, in sessions they are really complex :("
+
+        # We don't use simple boolean fields for some flags in the DSS
+        # Sessions.  Instead, we have to add new 'Parameter' objects to 
+        # the DB.  We can leverage SessionHttpAdapter to do this for us!
+        sa = SessionHttpAdapter(dss_session)
+
+        # transit flag
+        if pht_session.flags.transit_flat:
+            fdata = {'transit' : 'true'}
+            sa.update_bool_obs_param(fdata, "transit", "Transit", None)
+
+        # TBF: GB PHT's default values for this field doesn't make sense,
+        # since new DSS sessions are all 'guaranteed'.  We should change
+        # this GB PHT field to 'not guaranteed'
+        #print 'first guaranteed: ', dss_session.guaranteed()
+        #if pht_session.flags.guaranteed:
+        #    fdata = {'guaranteed' : 'true'}
+        #    sa.update_guaranteed(fdata)
+        #print 'now guaranteed: ', dss_session.guaranteed()
+
+        # Minor issue here: rfi_night and ptcs_night are actually mutually 
+        # exclusive in the DSS: TimeOfDay can either by RfiNight or PtcsNight.
+        # For now, arbitrarily pick one to win out
+        if pht_session.flags.thermal_night:
+            fdata = {'time_of_day' : 'PtcsNight'}
+            sa.update_time_of_day(fdata, None)    
+        elif pht_session.flags.rfi_night:
+            fdata = {'time_of_day' : 'RfiNight'}
+            sa.update_time_of_day(fdata, None)    
+
+        # TBF: what to do with optical_night?
 
     def createPeriod(self, pht_period, dss_session):
         sType = dss_session.session_type.type
