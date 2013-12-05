@@ -184,6 +184,14 @@ def getMessages(request):
 
     # All right, slog through each problem child, and check on them
 
+    # backend issues?
+    backend = ivalues.get("backend", {}).get("value", 0)
+    if backend in ['GBT Spectrometer', 'Spectral Processor']:
+        msg =  'The GBT Spectrometer & Spectral Processor will retire in Feb., 2015.  These backends can be used only with DDT Proposals through July 31, 2014.'
+        messages.append({'type' : 'Warning', 'msg'  : msg})
+        
+
+
     # source not visible?
     min_elevation =  ivalues.get("min_elevation", {}).get("value", 1)
     dec = ivalues.get("declination", {}).get("value", 0)
