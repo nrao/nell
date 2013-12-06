@@ -173,7 +173,8 @@ class CurrentObsXML:
             # dont' try anything if you can't find the correct astrid code
             projectCode = self.astridDB.dssCode2astridCode(project.pcode)
             if self.astridDB.astridCodeExists(projectCode):
-                srcName, ra, dec = self.archiveDB.getSourceInfo(projectCode)
+                srcName, ra, dec = self.archiveDB.getSourceInfo(projectCode
+                                                              , start = start)
                 ra = str(deg2rad(ra))
                 dec = str(deg2rad(dec))
 
@@ -259,7 +260,6 @@ class CurrentObsXML:
         return sch
 
 if __name__ == '__main__':
-
     co = CurrentObsXML()
     xmlStr = co.getXMLString()
     print xmlStr
