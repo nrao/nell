@@ -25,6 +25,8 @@ from utilities                         import getConfigValue
 import MySQLdb as m
 import settings
 
+from datetime import datetime, timedelta
+
 class ArchiveDB(object):
 
     """
@@ -80,7 +82,14 @@ class ArchiveDB(object):
         else:
             return settings.ARCHIVEDB.get(keyword)
 
-    def getSourceInfo(self, projectName):
+    def getSourceInfo(self, projectName, start = None):
+
+        if start is None:
+            start = datetime.utcnow()
+
+        # we need to limit the following query or else it takes way to long
+        # so just look for recent observations
+        start -= timedelta(days = 3)
 
         # what we want should be the first in the list
         query = """
@@ -91,14 +100,16 @@ class ArchiveDB(object):
           left outer join scan as sc on sc.sessionID = ss.sessionID) 
           left outer join coordinates as c on c.coordinateID = sc.coordinateID) 
         WHERE
-          p.name = "%s" 
+          p.name = "%s" and sc.dateObserved > '%s' 
         ORDER BY 
           dateObserved DESC
-        LIMIT 1  
-        """ % projectName
+        """ % (projectName, start.strftime('%Y-%m-%d %H:%M:%S'))
         self.cursor.execute(query)
-        rs = self.cursor.fetchone() 
-        return (rs[2], rs[3], rs[4])
+        rs = self.cursor.fetchall()
+        if len(rs) > 0:
+            return (rs[0][2], rs[0][3], rs[0][4])
+        else:
+            return ('unknown', 0.0, 0.0)
 
         
 
