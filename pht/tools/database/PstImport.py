@@ -292,7 +292,7 @@ class PstImport(PstInterface):
 
         self.cursor.execute(query)
         row    = self.cursor.fetchone()
-        disposition = row[0]
+        disposition = self.safeUnicode(row[0])
         proposal.dss_project.disposition = disposition 
         proposal.dss_project.save()
 
