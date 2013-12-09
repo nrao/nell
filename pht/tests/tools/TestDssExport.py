@@ -117,12 +117,33 @@ class TestDssExport(TestCase):
 
         s = project.sesshun_set.all()[0]
 
-        #self.assertTrue(s.guaranteed()) # TBF
+        self.assertTrue(s.guaranteed()) # TBF
         self.assertTrue(s.transit())
         # these two are mutually exclusive:
         self.assertEqual(False, s.RfiNight())
         self.assertTrue(s.PtcsNight())
-        # TBF: what about optical ?
+        # Note: no 'optical night' in DSS
+
+        # clean up and try it again
+        s.delete()
+        project.delete()
+
+        # change the flags
+        s = self.proposal.session_set.all()[0]
+        s.flags.rfi_night = False
+        s.flags.thermal_night = False
+        s.flags.guaranteed = False
+        s.flags.save()
+
+        project  = export.exportProposal(self.proposal.pcode)
+
+        s = project.sesshun_set.all()[0]
+
+        self.assertEqual(False, s.guaranteed()) # TBF
+        self.assertTrue(s.transit())
+        # these two are mutually exclusive:
+        self.assertEqual(False, s.RfiNight())
+        self.assertTrue(s.PtcsNight())
 
     def test_exportProposal2(self):
 

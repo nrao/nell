@@ -240,23 +240,20 @@ class DssExport(object):
         # TBF: GB PHT's default values for this field doesn't make sense,
         # since new DSS sessions are all 'guaranteed'.  We should change
         # this GB PHT field to 'not guaranteed'
-        #print 'first guaranteed: ', dss_session.guaranteed()
         #if pht_session.flags.guaranteed:
-        #    fdata = {'guaranteed' : 'true'}
-        #    sa.update_guaranteed(fdata)
-        #print 'now guaranteed: ', dss_session.guaranteed()
+        fdata = {'guaranteed' : 'true' if  pht_session.flags.guaranteed else 'false'}
+        sa.update_guaranteed(fdata)
 
-        # Minor issue here: rfi_night and ptcs_night are actually mutually 
+        # Minor issue here: rfi_night, thermal_night and ptcs_night are actually mutually 
         # exclusive in the DSS: TimeOfDay can either by RfiNight or PtcsNight.
         # For now, arbitrarily pick one to win out
         if pht_session.flags.thermal_night:
             fdata = {'time_of_day' : 'PtcsNight'}
-            sa.update_time_of_day(fdata, None)    
+        elif pht_session.flags.optical_night:
+            fdata = {'time_of_day' : 'PtcsNight'}
         elif pht_session.flags.rfi_night:
             fdata = {'time_of_day' : 'RfiNight'}
-            sa.update_time_of_day(fdata, None)    
-
-        # TBF: what to do with optical_night?
+        sa.update_time_of_day(fdata, None)    
 
     def createPeriod(self, pht_period, dss_session):
         sType = dss_session.session_type.type

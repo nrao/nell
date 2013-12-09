@@ -35,7 +35,7 @@ class SessionFlags(models.Model):
     rfi_night     = models.BooleanField(default = False)
     optical_night = models.BooleanField(default = False)
     transit_flat  = models.BooleanField(default = False)
-    guaranteed    = models.BooleanField(default = False)
+    guaranteed    = models.BooleanField(default = True)
     
     def __str__(self):
 
