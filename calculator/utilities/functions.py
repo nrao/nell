@@ -39,10 +39,12 @@ spectrometerK1K2  = {800  : (1.235, 1.21)
                    , 12.5 : [(1.235, 1.21), (1.032, 1.21)]
                     }
 
-vegasTopoFreq = { 100   : 0.000763
-                , 187.5 : 0.001431
-                , 850   : 0.061
-                , 1250  : 0.088
+vegasTopoFreq = { 100    : 0.000763
+                , 187.5  : 0.001431
+                , 850    : 0.061
+                , 1250   : 0.092
+				, 11.72  : 0.000022
+				, 15.625 : 0.00024
                 }
 
 GBT_LAT = 38 + 26 / 60.
@@ -67,8 +69,6 @@ def getMinTopoFreq(backend, bandwidth, windows, receiver, beams):
     elif backend == 'VErsitile GB Astronomical Spectrometer':
         if bandwidth == 23.44:
             mhz =  0.000045 if int(windows) <= 8 else 0.000357
-        elif bandwidth == 11.72:
-            mhz = 0.000022 if int(windows) <= 8 else 0.000179
         else:
             mhz = vegasTopoFreq.get(bandwidth, None)
         return mhz * 1e3
