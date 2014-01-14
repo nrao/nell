@@ -85,7 +85,7 @@ class TestViews(TestViewsBase):
         self.failUnlessEqual(response.status_code, 200)
         results = eval(response.content.replace("null", "None"))
         mtf     = [r for r in results['results'] if r['term'] == 'min_topo_freq']
-        self.assertAlmostEqual(mtf[0]['value'], 88.00, 3)
+        self.assertAlmostEqual(mtf[0]['value'], 92.00, 3)
 
     def test_vegas2(self):
         response = self.client.get('/calculator/initiate_hardware')
