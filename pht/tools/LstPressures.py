@@ -45,6 +45,7 @@ from pht.tools.LstPressureWeather import Pressures
 from copy import deepcopy
 import numpy
 import sys
+import time
 
 # Session Categories
 CARRYOVER = 'carryover'
@@ -797,7 +798,13 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             raise 'unhandled category'
 
         # reporting
-        self.weatherPsBySession[session.__str__()] = (category, wps)
+        g = session.grade.grade if session.grade is not None else None
+        ptype = session.proposal.proposal_type.type if session.proposal.proposal_type is not None else None
+        self.weatherPsBySession[session.__str__()] = (category
+                                                    , session.proposal.pcode
+                                                    , ptype
+                                                    , g
+                                                    , wps)
 
     def getSessionTime(self, session, category, subCategory):
         """
@@ -838,6 +845,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             totalTime = session.getTotalRequestedTime()
         return totalTime
 
+        
     def getSessionCategories(self, session):
         "What category & sub-category to put this session into?"
 
@@ -1204,7 +1212,7 @@ T_i = [ (T_semester) * w_i * f_i ] / [ Sum_j (w_j * f_j) ]
             (lst, grade, wtype)
         total = 0.0    
         for name in sorted(self.weatherPsBySession.keys()):
-            cat, wps = self.weatherPsBySession[name]
+            cat, pcode, ptype, grade, wps = self.weatherPsBySession[name]
             sId = self.sessionKey2Id(name)
             s = Session.objects.get(id = sId)
             if cat == ALLOCATED and s.grade.grade == grade:
@@ -1677,22 +1685,33 @@ if __name__ == '__main__':
                      , adjustWeatherBins = adjustWeatherBins
     #                 , today = datetime(2012, 3, 1)
                       )
+    #lst.testSessCats()                  
     #s = Session.objects.get(id = 9758)                  
     #ps = lst.getPressures(sessions = [s])
     #ss = Session.objects.all().exclude(semester__semester = '13A')
-    #ss = Session.objects.filter(proposal__pcode = 'GBT12B-385')
+    #ss = Session.objects.filter(proposal__pcode = 'GBT14A-025')
     #s = Session.objects.get(name = 'BB303-01')
     #ss = [s]
     #ps = lst.getPressures(ss)
+    st = time.time()
     ps = lst.getPressures()
+    e = time.time()
+    print e - st
     #lst.reportSocorroFormat('14A')
     #lst.reportSocorroWeatherFormat('12B')
-    lst.report()
+    #lst.report()
     #lst.reportSemesterSummary()
     #lst.compareNewAstronomyPressures()
     #lst.compareNewAstronomyPressuresAll()
+    #socPs = dict(A = Pressures(), B = Pressures(), C = Pressures())
 
+    #print lst.weatherPsBySession
+    #for k in sorted(lst.weatherPsBySession.keys()):
+    #    cat, pcode, ptype, grade, wps = lst.weatherPsBySession[k]
+    #    if cat == ALLOCATED and grade is not None:
+    #        socPs[grade] += wps  
 
+    #print socPs
     #exp = []
     #eps = 0.001
     #for i in range(len(ps)):
