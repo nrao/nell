@@ -232,9 +232,13 @@ class CalEventPeriod(CalEvent):
     # returns a string (project title)
     def project_title(self):
         if self.is_science():
-            return self.contained.session.project.name
+            return self.truncate_project_name(self.contained.session.project.name)
 
         return self.contained.session.name
+
+    def truncate_project_name(self, name):
+        max_len = 80
+        return name if len(name) <= max_len else name[:(max_len-3)] + '...'
 
     # returns the name of the responsible person
     def principal_investigator(self):
