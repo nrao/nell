@@ -69,6 +69,7 @@ urlpatterns = patterns(''
    , url(r'^sessions$',                  login_required(sessionResource.requestHandler))
    , url(r'^options$',                   get_options)
    , url(r'^proposal_timeline$',         proposal_timeline)
+   , url(r'^nrao_pht_pressure$',              nrao_pht_pressure)
    , url(r'^lst_pressure$',              lst_pressure)
    , url(r'^lst_pressure/print/([^/]+)$', print_lst_pressure)
    , url(r'^session/grades',             session_grades)

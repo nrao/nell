@@ -58,12 +58,15 @@ class LstPrCompare:
             else:
                 # on the other hand, how much are the night time ones off by?
                 gbPs = numpy.array(gbPs)
-                socPs = numpy.array(self.socPs[gbId])
-                diffs = abs(gbPs - socPs)
-                self.nightDiffs['All'] += diffs
-                s = Session.objects.get(id = gbId)
-                grade = s.grade.grade if s.grade is not None else 'None'
-                self.nightDiffs[grade] += diffs
+                if self.socPs.has_key(gbId):
+                    socPs = numpy.array(self.socPs[gbId])
+                    diffs = abs(gbPs - socPs)
+                    self.nightDiffs['All'] += diffs
+                    s = Session.objects.get(id = gbId)
+                    grade = s.grade.grade if s.grade is not None else 'None'
+                    self.nightDiffs[grade] += diffs
+                else:
+                    print "missing from socPs: ", gbId
                 
     
         gbIds = set(self.gbPs.keys())                
@@ -159,8 +162,8 @@ class LstPrCompare:
 
 if __name__ == '__main__':
 
-    f = 'socPsV4.txt'
-    cmp = LstPrCompare(socFile = f, semester = '13B')
+    f = 'socPsV5.txt'
+    cmp = LstPrCompare(socFile = f, semester = '14A')
     cmp.compare()
     cmp.report()
 

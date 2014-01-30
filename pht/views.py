@@ -13,6 +13,7 @@ from scheduler.models import *
 from models import *
 from pht.tools.database import PstImport, DssExport
 from pht.tools.LstPressures import LstPressures
+from pht.tools.NraoPhtPressures import NraoPhtPressures
 from pht.tools.PlotLstPressures import PlotLstPressures
 from pht.tools.ProposalTimeline import ProposalTimeline
 from httpadapters import *
@@ -95,6 +96,23 @@ def tree(request, *args, **kws):
                                    })
                       , content_type = 'application/json')
 
+def nrao_pht_pressure(request, *args, **kws):
+
+    pcode = request.GET.get('pcode', None)
+    grade = request.GET.get('grade', None)
+    wtype = request.GET.get('wtype', None)
+    ptype = request.GET.get('ptype', None)
+    
+    nraoLst = NraoPhtPressures()
+    ps = nraoLst.getNraoPhtPressures(pcode = pcode
+                                   , grade = grade
+                                   , ptype = ptype
+                                   , weatherType = wtype)
+
+    return HttpResponse(json.dumps({"success" : "ok"
+                                  , "lst_pressure" : ps
+                                   })
+                      , content_type = 'application/json')
 
 @login_required
 @admin_only

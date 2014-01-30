@@ -116,6 +116,14 @@ class Pressures(object):
                 total += sum(self.getType(t)[GC0:GC1])
         return total        
 
+    def jsonDict(self):
+       "returns a representation that is JSON serializable"
+
+       d = dict( poor = list(self.poor)
+                ,good = list(self.good)
+                ,excellent = list(self.excellent)
+                )
+       return d        
 class LstPressureWeather(object):
 
     """

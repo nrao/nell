@@ -79,30 +79,41 @@ class NraoPhtPressures(object):
 
         # now figure out which of these sessions are part of the subset
         # that even gets plotted by the NRAO PHT:
-        print len(ss)
-        st = time.time()
         ss = [s for s in ss if self.lst.getSessionCategories(s)[0] in [ALLOCATED, REQUESTED]]
-        e = time.time()
-        print "time for cats: ", e - st
-        print len(ss)
 
-        #ps = self.lst.getPressures(sessions = ss)
         return ss
 
     def getNraoPhtPressures(self
                    , grade = None
                    , weatherType = None
                    , ptype = None
-                   , pcode = None):
+                   , pcode = None
+                   , jsonDict = True):
+
 
         ss = self.getNraoPhtSessions(gradeFltr = grade
                                    , pcodeFltr = pcode
                                    , ptypeFltr = ptype
                                      )
-        self.lst.getPressures(sessions = ss)                             
-        # TBF: convert this to JSON
-        return self.lst.weatherPsBySession
+        if len(ss) > 0:                             
+            self.lst.getPressures(sessions = ss)             
+            if jsonDict:
+                return self.pressureDict2Json(self.lst.weatherPsBySession)
+            else:
+                return self.lst.weatherPsBySession
+        else:
+            return {}
 
+    def pressureDict2Json(self, ps):
+        """Converts { session : (category, ..., pressures) } to similar JSON"""
+        jsonDict = {}
+        for sessName, value in ps.items():
+            # convert the key back from the 'handle' to just the session id:
+            id = self.lst.sessionKey2Id(sessName)
+            cat, pcode, ptype, grade, wps = value
+            jsonDict[id] = (cat, pcode, ptype, grade, wps.jsonDict())
+        return jsonDict
+        
     def testGetNraoPhtPressures(self
                    , grade = None
                    , weatherType = None
@@ -112,18 +123,14 @@ class NraoPhtPressures(object):
         """Test method: see if we can use our list of pressures to produce their plot"""
 
         # TBF: assert options choosen
-        
-        # Make this code run a lot faster when a specific proposal has been choosen 
-        #if pcode is not None:
-        #    ss = Session.objects.filter(proposal__pcode = pcode)
-        #    self.lst.getPressures(ss)
-        #else:
-        #    self.lst.getPressures()
 
+        # what sessions need to be looked at
         ss = self.getNraoPhtSessions(gradeFltr = grade
                                    , pcodeFltr = pcode
                                    , ptypeFltr = ptype
                                      )
+
+        # compute the pressures for these given sessions                                     
         self.lst.getPressures(sessions = ss)                             
         ps = self.lst.weatherPsBySession
 
@@ -190,15 +197,6 @@ class NraoPhtPressures(object):
             print "changes: ", changes
             print "new: ", newGrA
 
-        #    adjustedAllocated, adjustments = self.lst.adjustForOverfilledWeather(
-        #        nonFilteredGradeA
-        #      , self.lst.carryoverPs
-        #      , self.lst.weather.availability
-        #     )                
-        #print "adjusted: ", adjustedAllocated    
-        #print "adjustments: ", adjustments
-
-
         return (allocatedPs, requestedPs)
         
             
@@ -211,28 +209,32 @@ if __name__ == '__main__':
     
     nrao = NraoPhtPressures()
 
-    #allocated, unscheduled = nrao.getPressures(pcode = 'GBT14A-025')
-    wtype = 'Poor'
-    #allocated, unscheduled = nrao.getPressures(weatherType = None, grade = 'C')
-    #allocated, unscheduled = nrao.getPressures(ptype = 'Large')
+    wtype = None #'Excellent'
     s = time.time()
-    #allocated, unscheduled = nrao.getNraoPhtPressures(ptype = 'Regular',  weatherType = 'Poor')
-    allocated, unscheduled = nrao.getNraoPhtPressures()
+    allocated, unscheduled = nrao.testGetNraoPhtPressures(grade = 'A', weatherType = wtype)
     e = time.time()
     print "elapsed time: ", e - s
-    #sys.exit(1) 
     
+    # test these results against the other way we store these
     for g in ['A', 'B', 'C']:
         print g
         print allocated[g]
         print "VS:"
-        print nrao.lst.gradePs[g].allTypes() #getType(wtype) #allTypes()
-        print "diff: ",  allocated[g] - nrao.lst.gradePs[g].allTypes() #getType(wtype) #allTypes()
+        if wtype is None:
+            ps =  nrao.lst.gradePs[g].allTypes()
+        else:
+            ps =  nrao.lst.gradePs[g].getType(wtype)
+        print ps 
+        print "diff: ",  allocated[g] - ps
     print "unscheduled: "    
     print unscheduled
     print "vs."
-    print nrao.lst.requestedPs.allTypes()
-    print "diff: ",  unscheduled -  nrao.lst.requestedPs.allTypes() #getType(wtype) #allTypes()
+    if wtype is None:
+        ps = nrao.lst.requestedPs.allTypes()
+    else:    
+        ps = nrao.lst.requestedPs.getType(wtype)
+    print ps 
+    print "diff: ",  unscheduled - ps 
 
 
 
