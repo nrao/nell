@@ -195,7 +195,8 @@ class PstImport(PstInterface):
               join author as a on p.principal_investigator_id = a.author_id)
               join userAuthentication as ua on ua.userAuthentication_id = a.user_id)
               join person on person.personAuthentication_id = ua.userAuthentication_id
-            where PROP_ID like '%%%s%%' and (p.TELESCOPE = 'GBT' or p.TELESCOPE = 'VLBA')
+            where PROP_ID like '%%%s%%' and 
+              (p.TELESCOPE = 'GBT' or p.TELESCOPE = 'VLBA' or p.TELESCOPE = 'GMVA')
             order by PROP_ID
             """ % semester
         self.cursor.execute(q)
@@ -224,9 +225,14 @@ class PstImport(PstInterface):
 
     def proposalUsesGBT(self, proposal_id, telescope):
         "Does at least one of the proposal's resources include the GBT?"
-        # VLBA is a special case
         if telescope == "VLBA":
             return self.vlbaProposalUsesGBT(proposal_id)
+        elif telescope == "GMVA":
+            return self.gmvaProposalUsesGBT(proposal_id)
+        else: # GBT
+            return self.gbtProposalUsesGBT(proposal_id)
+
+    def gbtProposalUsesGBT(self, proposal_id):
         # This should work for GBT, VLA proposals (TBF: VLBI???)        
         q = """
             select r.TELESCOPE 
@@ -250,6 +256,19 @@ class PstImport(PstInterface):
         q = "select proposal_id from proposal where PROP_ID = '%s'" % pcode
         self.cursor.execute(q)
         return self.cursor.fetchone()[0]
+
+    def gmvaProposalUsesGBT(self, proposal_id):
+        q = """
+        SELECT prop_id 
+        FROM proposal, RESOURCES, GMVA_RESOURCE 
+        WHERE proposal.proposal_id = RESOURCES.proposal_id 
+          AND GMVA_RESOURCE.Id = RESOURCES.resource_id 
+          AND GMVA_RESOURCE.GREEN_BANK = b'1'
+          AND proposal.proposal_id = %d
+        """ % proposal_id
+        self.cursor.execute(q)
+        rows = self.cursor.fetchall()
+        return len(rows) > 0
 
     def vlbaProposalUsesGBT(self, proposal_id):
 
