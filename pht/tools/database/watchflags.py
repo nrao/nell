@@ -38,22 +38,38 @@ def checkSessions(sessions):
     f = open('flaggedSessions_old.txt', 'r')
     contents = f.readlines()
     numSessions = int(contents[0].replace('\n', ''))
+    sDropped, sAdded = diffSessions(contents, sessions)
     if numSessions > len(sessions):
-        soundTheAlarm(sessions, contents)
+        soundTheAlarm(sessions, contents, sDropped)
     f.close()
 
-def soundTheAlarm(sessions, contents):
+def diffSessions(sessionListing, sessions):
+
+    # ignore the first element, and get rid of unwanted chars
+    oldSessNames = [s.replace('\n', '') for s in sessionListing[1:]]
+    newSessNames = sessions #[s.name for s in sessions]
+
+    sDropped = [s for s in oldSessNames if s not in newSessNames]
+    sAdded   = [s for s in newSessNames if s not in oldSessNames]
+   
+    return (sDropped, sAdded)
+
+def soundTheAlarm(sessions, contents, droppedSessions):
     body  = """
-    The number of sessions with flags has gone down!
+    The number of sessions with flags has gone down!\n
+    Sessions that have lost flags are:
+    %s
 
     from:
     %s
 
     to:
     %s
-    """ % (''.join(contents), '%s\n%s' % (len(sessions), '\n'.join(sessions)))
+    """ % ('\n'.join(droppedSessions)
+         , ''.join(contents)
+         , '%s\n%s' % (len(sessions), '\n'.join(sessions)))
     email = Email(sender = 'dss@gb.nrao.edu'
-                , recipients = ['mmccarty@nrao.edu', 'pmargani@nrao.edu']
+                , recipients = ['tminter@nrao.edu', 'pmargani@nrao.edu']
                 , subject    = 'PHT Session Flags'
                 , body       = body
                 , date       = datetime.now()
