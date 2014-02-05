@@ -109,6 +109,7 @@ class PstImport(PstInterface):
             'Spectral Processor - spectral line mode': 'gbtSpecP',
             'VEGAS': 'Vegas',
             'VEGAS Shared Risk': 'Vegas',
+            'GBT VEGAS Shared Risk': 'Vegas',
             'Zpectrometer': 'Zpect'}
         self.backendMapLower = dict([(k.lower(), v) for k, v in self.backendMap.iteritems()])
 
