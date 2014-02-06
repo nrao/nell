@@ -578,12 +578,15 @@ class Session(models.Model):
 
         proposal   = Proposal.objects.get(id = proposal_id)
         separation = SessionSeparation.objects.get(separation = result['SEPARATION'].strip())
+        snum = 1 + len(proposal.session_set.all())
+        sname = "%s - %02d" % (proposal.pcode, snum)
+
         session = Session(pst_session_id = result['session_id']
                           # Don't use result's because that's for the
                           # PST, not our GB PHT DB!
                         , proposal_id = proposal_id #result['PROPOSAL_ID']
                         #, name = result['SESSION_NAME']
-                        , name = proposal.pcode + ' - ' + str(1 + len(proposal.session_set.all()))
+                        , name = sname 
                         , separation = separation 
                         , interval_time = result['INTERVAL_TIME']
                         , constraint_field = result['CONSTRAINT_FIELD']
