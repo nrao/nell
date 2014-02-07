@@ -139,7 +139,12 @@ def float2sexigesimel(signed_decimaldegrees):
     if seconds >= 10.0:
         secStr = "%2.1f" % seconds
     else:
-        secStr = "0%1.1f" % seconds
+        # watch for what rounding does
+        if len("%1.1f" % seconds) < 4:
+            secStr = "0%1.1f" % seconds
+        else:    
+            secStr = "%1.1f" % seconds
+
     return "%s%s:%02d:%s" % (sign, degStr, minutes, secStr)
         
 def sexHrs2rad(value):

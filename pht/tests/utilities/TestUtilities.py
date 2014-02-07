@@ -154,6 +154,7 @@ class TestUtilities(unittest.TestCase):
         self.assertEquals('01:30:00.0', float2sexigesimel(1.5))
         self.assertEquals('01:30:30.0', float2sexigesimel(1.508333))
         self.assertEquals('23:58:58.8', float2sexigesimel(23.983))
+        self.assertEquals('22:25:10.0', float2sexigesimel( 22.41943755041336))
 
     def test_sex2flt(self):
         self.assertAlmostEquals(0.0,         sexHrs2rad('00:00:00.0'), 2)
