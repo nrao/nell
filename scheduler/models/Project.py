@@ -127,7 +127,7 @@ class Project(models.Model):
         cat = self.get_category()
         if cat == "Shutdown":
             code = 'D'
-        elif cat == "Commissioning":
+        elif cat == "Calibration":
             code = 'K'
         else:
             code = cat[0]
