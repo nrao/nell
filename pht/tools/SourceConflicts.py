@@ -129,6 +129,12 @@ class SourceConflicts(object):
 
         # init the results
         lowestRx = self.getLowestRcvr(proposal)
+
+
+        if lowestRx is None:
+            print "skipping findConflictsForProposal (lowestRx is None) for ", proposal
+            return 
+
         rad = self.searchRadi.get(lowestRx.abbreviation, None)
         pcode = proposal.pcode
         self.conflicts[pcode] = {'proposal' : proposal
