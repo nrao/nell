@@ -198,7 +198,7 @@ class SourceConflicts(object):
                     }
                     self.badDistances.append(srcConflict)
                 if conflict:
-                    lastObsDate, proprietaryPeriod = self.withinProprietaryDate(searchedProp)
+                    lastObsDate, proprietaryPeriod = self.withinProprietaryDate(searchedProp, targetProp)
                     self.conflicts[tpcode]['conflicts'][-1]['lastObsDate'] = lastObsDate
                     # see if it's even worse - check the other levels
                     if self.hasSameRcvrConflict(targetProp, searchedProp):
@@ -327,7 +327,7 @@ class SourceConflicts(object):
         self.includeProposals[pcode] = True
         return True
 
-    def withinProprietaryDate(self, searchedProp, now = datetime.now()):
+    def withinProprietaryDate(self, searchedProp, targetProp, now = datetime.now()):
         "Any observations within a year?"
         lastObsDate = None
         if searchedProp.dss_project is not None:
@@ -335,8 +335,12 @@ class SourceConflicts(object):
             refTime = now - timedelta(days = 365)
             periods     = [p for p in periods if p.start > refTime]
         else: 
-            # No dss_project, no periods
-            periods = []
+            if searchedProp.semester == targetProp.semester:
+                # same semester so cheat
+                periods = ['a','b']
+            else:    
+                # No dss_project, no periods
+                periods = []
         return lastObsDate, len(periods) > 0
                     
     def getLowestRcvr(self, proposal):
