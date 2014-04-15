@@ -360,7 +360,16 @@ class Maintenance_Activity_Group(models.Model):
                 return True
 
             if is_P(self):
-                dm = {-4: 40, -3: 30, -2: 20, -1: 10, 0: 0, 1: 15, 2: 25, 3: 35, 4: 45}
+                # Here we generate a dictionary to weigh the possible dates that a 
+                # repeat event can be substantiated in. The lower the number the better. 
+                # A slight preference is given to the date that comes before the due date
+                # over one that comes after, but that's really just for tie-breaking purposes.
+                #dm = {-4: 40, -3: 30, -2: 20, -1: 10, 0: 0, 1: 15, 2: 25, 3: 35, 4: 45}
+                dayLen = 30
+                dm = [(i,10*abs(i)) for i in range(-dayLen,1)]
+                dm.extend([(i,(10*i)+5) for i in range(1,dayLen)])
+                dm = dict(dm)
+
                 today = TimeAgent.truncateDt(self.period.start)
                 p = [mag.period for mag in published_groups_this_week]
                 due_date = get_due_date(template)
