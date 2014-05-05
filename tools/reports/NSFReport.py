@@ -130,9 +130,24 @@ def GenerateReport(label, months, year):
     maintenance = []
     testing     = []
     shutdown    = []
+    badPeriods  = []
 
     for m in months:
         ps = filterPeriodsByDate(m)
+
+        # TBF: the scheduled, maintenance, testing and shutdown times should be mutually
+        # exclusive, so any one period shouldn't have more then one non-zero time for these.
+        # However, this report is not designed well for checking this kind of thing, so
+        # we do it here instead.
+        for p in ps:
+            s = getScheduledTime([p], m)
+            n = getMaintenance([p], m)
+            t = getTesting([p], m)
+            h = getShutdown([p], m)
+            ts = [s, n, t, h]
+            if len([i for i in ts if i != 0]) > 1:
+               print "BAD PERIOD: ", p, s, n, t, h
+               badPeriods.append((p, ts))
         scheduled.append(getScheduledTime(ps, m))
         downtime.append(getDowntime(ps, m))
         astronomy.append(scheduled[-1] - downtime[-1])
@@ -166,6 +181,12 @@ def GenerateReport(label, months, year):
         if abs(monthTotal - monthHrs) > 1e-3 and m < thisMonth:
             outfile.write("WARNING: Total number of hours for %s does not equal expected calendar hours of %d\n" % (m.strftime("%B"), monthHrs))
         
+    if len(badPeriods) > 0:
+        outfile.write("WARNING: the following periods should only have one non-zero time.\n")
+        for p, ts in badPeriods:
+            s, n, t, h = ts
+            outfile.write("  %s, times: sch=%5.2f, mnt=%5.2f, test=%5.2f, shut=%5.2f\n" % \
+                (p.__str__(), s, n, t, h))
     outfile.close()
 
 def show_help():
